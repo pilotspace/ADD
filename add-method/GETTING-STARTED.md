@@ -42,20 +42,35 @@ contract → review the result.** Everything between is the agent.
 
 ## 0 · Prerequisites
 
-- **Node.js ≥ 18** (to install) and **Python 3.10+** (the tool is stdlib-only).
+- **Python 3.10+** — required; the tool itself is stdlib-only (no pip dependencies).
+- **One installer**, whichever you already have: **Node.js ≥ 18** (for `npx`) *or*
+  **pip** (Python). Both install the exact same `.add/` runtime.
 - A project folder. It can be empty or an existing repo.
+
+> **Windows:** use `py` wherever this guide writes `python3` (the Python launcher on
+> Windows) — e.g. `py .add\tooling\add.py status`. Both installers handle the install
+> step for you; only the by-hand `add.py` commands below differ.
 
 ---
 
 ## 1 · Install
 
-From your project root:
+From your project root, pick **one** path — both produce the same install:
+
+**Option A — npm (Node.js ≥ 18):**
 
 ```bash
 npx @pilotspace/add init --name "My App" --stage prototype
 ```
 
-This creates `.add/` (your runtime), drops the `add` skill into
+**Option B — pip (Python 3.10+):**
+
+```bash
+pip install pilotspace-add
+pilotspace-add init --name "My App" --stage prototype
+```
+
+Either one creates `.add/` (your runtime), drops the `add` skill into
 `.claude/skills/add/`, and bundles the book into `.add/docs/`. Pick the stage that
 matches your intent — `prototype`, `poc`, `mvp`, or `production`. You can change it
 later with `python3 .add/tooling/add.py stage mvp`.

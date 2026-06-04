@@ -17,7 +17,9 @@ import add
 GUIDE = Path(__file__).resolve().parent.parent / "GETTING-STARTED.md"
 
 REQUIRED_STRINGS = [
-    "npx @pilotspace/add init",
+    "npx @pilotspace/add init",      # npm install path
+    "pip install pilotspace-add",    # PyPI install path — must be documented too
+    "pilotspace-add init",           # the console-script the pip package exposes
     "add.py status",
     "add.py new-task",
     "add.py advance",

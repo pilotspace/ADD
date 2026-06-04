@@ -39,18 +39,27 @@ function parseArgs(argv) {
   return args;
 }
 
-function copyDir(src, dest, { skipIfExists } = {}) {
+function copyDir(src, dest, { skipIfExists, cleanReplace } = {}) {
   if (!fs.existsSync(src)) fail("missing packaged source: " + src);
   if (skipIfExists && fs.existsSync(dest)) {
     warn(dest + " exists — leaving it untouched");
     return;
+  }
+  // Clean replace: drop a stale dest before copying so a `--force` re-install can
+  // never leave orphaned files from a previous version behind. fs.cpSync merges
+  // (it never removes), so without this `--force` is a merge, not a replace. Mirrors
+  // _installer.py's `shutil.rmtree(skill_dest)` so npm and pip behave identically.
+  if (cleanReplace && fs.existsSync(dest)) {
+    fs.rmSync(dest, { recursive: true, force: true });
   }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.cpSync(src, dest, { recursive: true });
 }
 
 function hasPython() {
-  for (const py of ["python3", "python"]) {
+  // python3/python cover macOS+Linux; `py` is the Windows Python launcher, where
+  // python3 is often absent and bare `python` may be a no-op Store shim.
+  for (const py of ["python3", "python", "py"]) {
     const r = spawnSync(py, ["--version"], { stdio: "ignore" });
     if (r.status === 0) return py;
   }
@@ -66,7 +75,7 @@ function cmdInit(args) {
   copyDir(
     path.join(PKG_ROOT, "skill", "add"),
     path.join(target, ".claude", "skills", "add"),
-    { skipIfExists: !args.force }
+    { skipIfExists: !args.force, cleanReplace: args.force }
   );
   log("  ✓ skill      -> .claude/skills/add/");
 
@@ -92,9 +101,10 @@ function cmdInit(args) {
   const py = hasPython();
   const addPy = path.join(toolingDest, "add.py");
   if (!py) {
-    warn("python3 not found — skipping `add.py init`.");
-    log("\nFinish setup manually once Python is available:");
-    log("  python3 .add/tooling/add.py init" +
+    const launcher = process.platform === "win32" ? "py" : "python3";
+    warn("Python not found on PATH — skipping `add.py init`.");
+    log("\nInstall Python 3.10+ and finish setup manually:");
+    log(`  ${launcher} .add/tooling/add.py init` +
         (args.name ? ` --name "${args.name}"` : "") + ` --stage ${args.stage}`);
     return;
   }

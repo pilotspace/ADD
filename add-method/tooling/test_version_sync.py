@@ -17,6 +17,7 @@ from pathlib import Path
 _PKG_ROOT = Path(__file__).resolve().parent.parent      # add-method/
 _PACKAGE_JSON = _PKG_ROOT / "package.json"
 _PYPROJECT = _PKG_ROOT / "pyproject.toml"
+_INIT = _PKG_ROOT / "src" / "add_method" / "__init__.py"  # runtime __version__
 
 _SEMVER = re.compile(r"^\d+\.\d+\.\d+([.-].+)?$")
 
@@ -33,17 +34,32 @@ def _pypi_version() -> str:
     return m.group(1)
 
 
+def _init_version() -> str:
+    # the runtime version the PyPI package reports (add_method.__version__). It is a
+    # THIRD source that can drift independently of pyproject's build version, so the
+    # guard must include it — not just the two manifests.
+    m = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', _INIT.read_text(encoding="utf-8"))
+    assert m, "src/add_method/__init__.py has no `__version__ = \"...\"` line"
+    return m.group(1)
+
+
 class VersionSyncTest(unittest.TestCase):
     def test_both_manifests_exist(self):
         self.assertTrue(_PACKAGE_JSON.is_file(), "package.json missing")
         self.assertTrue(_PYPROJECT.is_file(), "pyproject.toml missing")
+        self.assertTrue(_INIT.is_file(), "src/add_method/__init__.py missing")
 
     def test_versions_are_identical(self):
-        npm, pypi = _npm_version(), _pypi_version()
+        npm, pypi, runtime = _npm_version(), _pypi_version(), _init_version()
         self.assertEqual(
             npm, pypi,
             f"version drift: package.json={npm!r} but pyproject.toml={pypi!r}. "
             f"One tag publishes both registries — they must agree.",
+        )
+        self.assertEqual(
+            pypi, runtime,
+            f"version drift: pyproject.toml={pypi!r} but add_method.__version__={runtime!r}. "
+            f"The runtime version the package reports must match what it was built as.",
         )
 
     def test_version_is_semver(self):
