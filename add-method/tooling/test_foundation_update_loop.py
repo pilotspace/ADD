@@ -136,8 +136,17 @@ class FoundationUpdateLoopTest(unittest.TestCase):
         # Change-request test 12 (frozen @ v2): the contract ships a "Foundation version" glossary
         # entry across three doc trees; v5 built it but left it unguarded. Guard its PRESENCE here
         # (byte-parity stays test_bundle_parity.py's job — no redundant md5 check).
-        for tree in GLOSSARY_TREES:
-            self.assertTrue(tree.exists(), f"missing glossary tree {tree}")
+        #
+        # The third tree (.add/docs) is the dogfood install, which is gitignored and
+        # regenerated on `add.py init` — so it is ABSENT on a clean checkout / CI. Guard
+        # the PRESENT trees and require the two tracked sources (canonical + bundle),
+        # mirroring test_flow_diagram's present-trees pattern. Asserting all three exist
+        # would fail in CI on a directory that is never a committed source.
+        present = [t for t in GLOSSARY_TREES if t.exists()]
+        self.assertGreaterEqual(
+            len(present), 2,
+            "expected at least the canonical + bundled glossary trees to be present")
+        for tree in present:
             self.assertIsNotNone(
                 re.search(r"\*\*Foundation version\*\*", tree.read_text(encoding="utf-8"),
                           re.IGNORECASE),
