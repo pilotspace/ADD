@@ -119,6 +119,7 @@ inside TASK.md):
 ```bash
 python3 .add/tooling/add.py advance            # next phase of the active task
 python3 .add/tooling/add.py gate PASS          # at verify: records PASS, marks done
+python3 .add/tooling/add.py use <slug>         # switch the active task (e.g. across parallel streams)
 ```
 
 ## Depth by stage

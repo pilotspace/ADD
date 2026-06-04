@@ -46,6 +46,7 @@ LIFECYCLE = [
     ["guide"],
     ["stage", "mvp"],
     ["set-milestone", "t", "none"], ["set-milestone", "t", "mvp"],
+    ["use", "t"],                              # set active_task to an existing slug (read/writes state, not docs/)
     ["phase", "specify", "t"],
     ["advance", "t"], ["advance", "t"], ["advance", "t"],
     ["advance", "t"], ["advance", "t"],        # specify -> ... -> verify

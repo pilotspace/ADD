@@ -162,7 +162,14 @@ def _require_root() -> Path:
 
 
 def load_state(root: Path) -> dict:
-    return json.loads((root / STATE_FILE).read_text(encoding="utf-8"))
+    """Load + parse state.json, failing CLOSED. A corrupt or unreadable state file
+    dies with a clean 'state_invalid' message (never a raw traceback), so every
+    command that loads state degrades gracefully (design-for-failure)."""
+    try:
+        return json.loads((root / STATE_FILE).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        _die(f"state_invalid: {root / STATE_FILE} is corrupt or unreadable "
+             f"({e.__class__.__name__}) — restore it from git or a backup")
 
 
 def _load_state_for_json() -> tuple[Path, dict]:
@@ -531,8 +538,8 @@ def cmd_status(args: argparse.Namespace) -> None:
     state = load_state(root)
     active = state.get("active_task")
     tasks = state.get("tasks", {})
-    print(f"project : {state['project']}")
-    print(f"stage   : {state['stage']}")
+    print(f"project : {state.get('project', '(unknown)')}")
+    print(f"stage   : {state.get('stage', '(unknown)')}")
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
         print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
@@ -580,7 +587,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
     if open_deltas:
         print(f"deltas  : {open_deltas} open — fold at milestone close (add.py deltas)")
-    if active:
+    if active and active in tasks:
         ph = tasks[active]["phase"]
         if ph == "done":
             print(f"\nresume  : task '{active}' is done ({tasks[active]['gate']}).")
@@ -879,6 +886,15 @@ def cmd_archive_milestone(args: argparse.Namespace) -> None:
             t = tasks[s]
             print(f"  - {s} (phase={t.get('phase')}, gate={t.get('gate')})", file=sys.stderr)
         _die("milestone_has_incomplete_tasks")
+    # pre-archive snapshot (design-for-failure): the archived record below keeps only a
+    # slug-list, so capture the full milestone + member task records to a .bak BEFORE the
+    # destructive deletes — an accidental archive stays recoverable (phase/gate/waiver/deps
+    # the record drops). Mirrors the .bak the guideline injector writes before mutating.
+    _atomic_write(
+        root / "milestones" / slug / "pre-archive-state.bak.json",
+        json.dumps({"milestone": ms, "tasks": {s: tasks[s] for s in members},
+                    "archived_at": _now()}, indent=2) + "\n",
+    )
     # a slug-list summary (never task bodies) so the active state can't regrow,
     # yet cross-milestone deps on these tasks still resolve (see _archived_task_slugs)
     state.setdefault("archived", []).append({
@@ -916,6 +932,20 @@ def cmd_set_milestone(args: argparse.Namespace) -> None:
     state["tasks"][task]["updated"] = _now()
     save_state(root, state)
     print(f"task '{task}' -> milestone '{new}'" if new else f"task '{task}' -> milestone (none)")
+
+
+def cmd_use(args: argparse.Namespace) -> None:
+    """Set the active task to an EXISTING task (switch focus) without scaffolding a new
+    one or hand-editing state.json. advance/gate/phase still take an explicit slug; `use`
+    just moves the default focus, closing the only gap that forced manual state edits."""
+    root = _require_root()
+    state = load_state(root)
+    slug = args.slug
+    if slug not in state.get("tasks", {}):
+        _die("unknown_task")
+    state["active_task"] = slug
+    save_state(root, state)
+    print(f"active task -> '{slug}' (phase={state['tasks'][slug]['phase']})")
 
 
 def _find_cycle(tasks: dict) -> list[str] | None:
@@ -1416,7 +1446,7 @@ def _write_retro(root: Path, state: dict, mslug: str) -> Path:
     trust the locale default), never mutates state.json."""
     content = render_report(root, state, mslug, width=_DEFAULT_WIDTH, ascii=False)
     path = root / "milestones" / mslug / "RETRO.md"
-    path.write_text(content, encoding="utf-8")
+    _atomic_write(path, content)   # honor the module's atomic-write contract (no half-write)
     return path
 
 
@@ -1728,6 +1758,10 @@ def build_parser() -> argparse.ArgumentParser:
     psm.add_argument("task")
     psm.add_argument("milestone", help="milestone slug, or 'none' to detach")
     psm.set_defaults(func=cmd_set_milestone)
+
+    pu = sub.add_parser("use", help="set the active task to an existing one (switch focus)")
+    pu.add_argument("slug")
+    pu.set_defaults(func=cmd_use)
 
     pam = sub.add_parser("archive-milestone",
                          help="collapse a done milestone out of active state (files stay on disk)")
