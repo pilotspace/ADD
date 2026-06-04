@@ -26,7 +26,8 @@ CHAPTER = ROOT / "add-method" / "docs" / "02-the-flow.md"   # the tested content
 CHECKLIST = ROOT / "add-method" / "diagrams" / "CHECKLIST.md"  # the reusable pipeline
 
 # Phases the FLOW depicts = PHASES minus the terminal bookkeeping state "done".
-# ch02 is "six steps, then an observation loop"; "done" is an engine state, not a step.
+# ch02 is "seven steps" (six build the feature, Observe is the seventh); "done" is an
+# engine state, not a step — so the FLOW depicts every phase except the terminal "done".
 FLOW_PHASES = [p for p in add.PHASES if p != "done"]
 
 

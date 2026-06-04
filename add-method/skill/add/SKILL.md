@@ -57,13 +57,21 @@ Load the phase guide **only for the phase you are in** (progressive disclosure):
 | Phase | Guide | Produces (TASK.md section) | Who leads |
 |-------|-------|----------------------------|-----------|
 | setup | `phases/0-setup.md` | `.add/` + survivor files | human |
-| specify | `phases/1-specify.md` | §1 rules + ranked least-sure flag | human + AI (co-specify) |
-| scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | human |
-| contract | `phases/3-contract.md` | §3 frozen shape | human + AI |
-| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | human sets, AI writes |
+| specify | `phases/1-specify.md` | §1 rules + ranked least-sure flag | AI drafts (co-specify)† |
+| scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | AI drafts† |
+| contract | `phases/3-contract.md` | §3 frozen shape | AI drafts → **human approves once** (the seam)† |
+| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† |
 | build | `phases/5-build.md` | code in `src/`, tests green | **AI** |
-| verify | `phases/6-verify.md` | §6 checks + gate record | **human** |
+| verify | `phases/6-verify.md` | §6 checks + gate record | **AI auto-gates on evidence**; human on residue/security‡ |
 | observe | `phases/7-observe.md` | §7 spec delta | human + AI |
+
+† **One-approval front (v7).** §1–§4 are drafted by the AI as a single bundle and frozen
+together; the human gives **one approval, at the contract freeze** (the autonomy seam) — not
+three separate sign-offs. The AI presents the bundle least-sure-first. See `run.md`.
+‡ **Verify auto-gate (v6–v7).** Under `autonomy: auto` (the default) a run may auto-PASS once
+the evidence is complete (all tests green · loops dry · no residue) — recorded as *auto-resolved*,
+an explicit PASS, not a skip. **Security always escalates** (HARD-STOP), as do concurrency /
+architecture residue and `conservative` autonomy. See `run.md`.
 
 In **observe**, also emit **competency deltas** — learnings tagged by which of the five
 (`DDD · SDD · UDD · TDD · ADD`) they improve — so the foundation self-improves across loops.
@@ -71,13 +79,14 @@ You write them as `open`; the human folds them into `PROJECT.md`. Read `deltas.m
 grammar and the status lifecycle. At milestone close (or on demand), run the fold ritual that
 gathers confirmed deltas into a versioned foundation — read `fold.md`.
 
-## The dynamic run (v6)
+## The dynamic run (v6–v7)
 
-Once **§3 CONTRACT is FROZEN**, the build→verify half MAY run as a dynamic, auto-gated run —
-fan-out + in-run convergence — instead of a manual build. Read `run.md` for the trigger, the
-touch-boundary, the evidence auto-gate, and the autonomy dial. The human-led front
-(specify·scenarios·contract) is unchanged; the run never edits a frozen contract and never
-auto-passes a security finding.
+Once **§3 CONTRACT is FROZEN**, the build→verify half runs as a dynamic, auto-gated run —
+fan-out + in-run convergence — instead of a manual build (`autonomy: auto` is the default; lower
+to `conservative` to keep a human at the gate). Read `run.md` for the trigger, the touch-boundary,
+the evidence auto-gate, and the autonomy dial. The human-led front still owns *direction*, but v7
+compresses it to a **single approval at the contract seam**; the run never edits a frozen contract
+and never auto-passes a security finding.
 
 ## Parallel streams — pipelining independent tasks (opt-in)
 

@@ -65,6 +65,11 @@ never drops to zero (`run.md:22`). That floor is correct; do not engineer around
 
 ## Design for failure (required)
 
+- **Fresh worktree base (verify base == HEAD)** — create each worker's worktree from current
+  `HEAD` **after** you commit the task's frozen front (spec · scenarios · contract · tests). A
+  worktree forked from a stale base forces the worker to recreate the frozen artifacts by hand
+  (the v10 dogfood hit exactly this). Before the worker starts, confirm `git -C <worktree>
+  rev-parse HEAD` equals the orchestrator's `HEAD`; if it drifted, `git merge` the base in first.
 - **Lease + timeout** — record which worker holds which task; if a worker dies, release
   the claim back to READY (re-spawn, do not assume partial work is sound).
 - **Failure isolates** — a worker that hits a STOP-and-escalate (below) blocks only its
@@ -181,7 +186,7 @@ worktree, then points the agent at that directory.
 |-----------|----------|----------------------------------|-----------------------------------------------|
 | spawn a worker | prompt + label | `Task(description=…, prompt=…)` | `cd $WT && <agent> run --prompt-file PROMPT.md` |
 | pick the model | tier → id | `model="opus"\|"sonnet"` | a `--model <id>` flag |
-| isolate | worktree | `isolation="worktree"` | `git worktree add $WT <base>`, then run inside it |
+| isolate | worktree | `isolation="worktree"` | `git worktree add $WT HEAD` (after committing the front; verify base == HEAD), then run inside it |
 | load context | files / cwd | `<context_files>` + repo cwd | run inside `$WT`; paths are relative |
 | domain expertise | skill / preamble | a Claude skill in `<expertise>` | a system-prompt / profile preamble |
 | return a verdict | structured | final message (optionally a schema) | stdout JSON the orchestrator parses |

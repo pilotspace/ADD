@@ -6,6 +6,8 @@
 > **Produces:** `features/<name>.feature`.
 > **Person's job:** decide what "correct" looks like in concrete situations. **AI's job:** draft the scenarios.
 
+> **Part of the one-approval front (v7).** In the default flow these scenarios are drafted by the AI alongside the spec, contract, and failing tests as **one bundle**, approved by a person **once**, at the contract freeze — not signed off step by step. This chapter is how to get the scenarios *right*; [05 Contract](./05-step-3-contract.md) is where the bundle is frozen. See [11 Governance](./11-governance.md).
+
 ---
 
 ## Why turn rules into scenarios

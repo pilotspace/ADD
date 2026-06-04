@@ -6,6 +6,8 @@
 > **Produces:** `contracts/<name>.md` (plus a mock and contract tests).
 > **Person's job:** approve and freeze the shape. **AI's job:** generate the first draft, the mock, and the contract tests.
 
+> **The one approval lands here (v7).** In the default flow the AI drafts the whole front — spec, scenarios, this contract, and the failing tests — as **one bundle**, and a person gives a **single approval at this freeze**. Freezing the contract is the one human gate of the front, not the third of three sign-offs; reject any part and the whole bundle returns to draft (backward correction, not failure). See [11 Governance](./11-governance.md).
+
 ---
 
 ## The seam of the whole method

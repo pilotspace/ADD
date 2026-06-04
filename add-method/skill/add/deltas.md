@@ -10,7 +10,7 @@ You (the AI) **emit** deltas as `open`. Only the **human** moves a delta to `fol
 
 ## The grammar (frozen)
 
-Each delta is ONE line, exactly:
+Each delta begins on its own **tag line**; the learning may wrap onto continuation lines:
 
 ```
 - [<COMPETENCY> · <status>] <learning> (evidence: <pointer>)
@@ -18,9 +18,19 @@ Each delta is ONE line, exactly:
 
 - `<COMPETENCY>` — exactly one of the five (below).
 - `<status>` — `open` | `folded` | `rejected`. A **newly emitted delta is `open`**.
-- `<learning>` — the insight, in one phrase ("the domain model missed multi-tenancy").
+- `<learning>` — the insight ("the domain model missed multi-tenancy"). It may run past one line;
+  the `- [COMPETENCY · status]` tag line must come **first**, and the `(evidence: …)` clause must
+  **close** the delta (on its last line).
 - `(evidence: …)` — **required**, non-empty: a failing scenario, a production signal, a review
   note. No evidence → it is an opinion, not a delta.
+
+A long learning may wrap — the lint (`add.py check`) joins continuation lines, so this is **one**
+delta, not two:
+
+```
+- [SDD · open] the export endpoint must reject a tenant-scoped token used cross-tenant,
+  returning `forbidden` (not `not_found`) (evidence: scenario_cross_tenant_export failed)
+```
 
 ## The five competencies (pick exactly one per delta)
 

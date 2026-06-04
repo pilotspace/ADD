@@ -1,8 +1,16 @@
 # Phase 6 — Verify (evidence + blind-spot checks)
 
 Goal: establish trust and record an outcome. Passing tests are necessary, not
-sufficient. This phase is **human-led** — there is no AI role. Fill **§6** in
-TASK.md including the GATE RECORD.
+sufficient. Fill **§6** in TASK.md including the GATE RECORD.
+
+> **Who resolves this gate depends on the `autonomy:` header (see `run.md`).**
+> Under `autonomy: auto` (the default) a run auto-PASSes once the evidence is
+> complete — every test green, the convergence loops dry, and **no residue**
+> (security · concurrency · architecture) — recording it as *auto-resolved* with
+> the named run as accountable owner: an explicit PASS, not a skip. **Security is
+> always a HARD-STOP and is never auto-passed.** Under `autonomy: conservative`,
+> or whenever residue is found, this phase is **human-led** and the checks below
+> are the human's.
 
 ## Part one — confirm the evidence
 
@@ -30,7 +38,8 @@ If any is false, stop and return to Build — there is nothing to verify yet.
 
 ## Exit gate / Next
 
-- [ ] Evidence confirmed, blind-spots checked, a person approved, outcome recorded.
+- [ ] Evidence confirmed, blind-spots checked, outcome recorded — a person approved, or
+  (under `autonomy: auto` with no residue) the run auto-resolved as the accountable owner.
 
 ```bash
 python3 .add/tooling/add.py gate PASS          # marks the task done

@@ -36,3 +36,6 @@ change request back to Specify. Honor the feature-specific safety rule named in 
 
 `python3 .add/tooling/add.py advance` → read `phases/6-verify.md`.
 Book: `docs/07-step-5-build.md`.
+
+> Under `autonomy: auto` (the default) Build and Verify run together as one dynamic,
+> evidence-auto-gated run — not two manual stops. See `run.md`.

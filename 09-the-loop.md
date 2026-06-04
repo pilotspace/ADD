@@ -33,6 +33,24 @@ Every defect, surprise, or new need is written up as a change to the specificati
 
 This is also where the AI returns to a useful role: summarizing telemetry, clustering errors into themes, and drafting the proposed spec delta for a person to review. But the production decisions — what to roll back, what to prioritize — remain human.
 
+## Competency deltas and the foundation fold
+
+A spec delta feeds the *next feature*. But a loop also teaches the **method itself** — that the domain model missed a boundary, that a whole class of scenario was never tested, that a build convention helped or hurt. AIDD captures those as **competency deltas**: a single tagged learning, written in the Observe step, marking which of the five competencies it sharpens.
+
+| tag | competency | a delta here means you learned something about… |
+|-----|------------|--------------------------------------------------|
+| `DDD` | Domain | the domain model — an entity, rule, or boundary the spec assumed wrong |
+| `SDD` | Spec | what the feature must do or reject — a missing or wrong requirement |
+| `UDD` | UI/UX | the user-facing shape — a flow, affordance, or wording that misled |
+| `TDD` | Test | how we prove correctness — a missing scenario, a flaky or hollow test |
+| `ADD` | AI/build | how the AI builds — a harness, prompt, or convention that helped or hurt |
+
+Each delta is one tagged entry — `- [COMPETENCY · status] the learning (evidence: a pointer)` — and the evidence is **required**: a failing scenario, a production signal, a review note. No evidence means it is an opinion, not a delta. The AI **emits** deltas as `open`; it never folds its own. Folding is judgment, and judgment is the human's — the same verify/observe seam that keeps the AI from grading its own work.
+
+**The fold.** At milestone close (or on demand, when open deltas pile up), a person runs the fold ritual: **gather** every `open` delta across the milestone's tasks, **group** them by competency, **propose** the exact foundation edit for each, **confirm** with the human one by one, then **write** — append-only — flipping each delta to `folded` (merged) or `rejected` (considered and deliberately not merged, left in place so the trail survives), and bumping the `foundation-version:` marker. `DDD`/`SDD`/`UDD` deltas fold into the matching section of `PROJECT.md`; `TDD`/`ADD` fold into `CONVENTIONS.md` (they sharpen the engine, not the product); and **every** fold also appends one row to `PROJECT.md` §Key Decisions — the universal, auditable record of what the foundation learned.
+
+**Tooling.** `add.py deltas` lists every open delta across the project (so nothing waiting to be folded is invisible); `add.py check` lints each delta's well-formedness — known competency tag, valid status, non-empty evidence. There is deliberately **no `add.py fold`**: the engine stays judgment-free, and the ritual lives with the human who owns it.
+
 ## Re-entrancy: the loop is the whole point
 
 Two principles converge here. *The flow is re-entrant* — any step can send you back to an earlier one — and *the flow is a loop* — production feeds the next specification. Together they mean the artifacts you built are never "finished"; they are living documents that the next cycle refines.

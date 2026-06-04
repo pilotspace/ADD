@@ -12,7 +12,7 @@ This appendix maps every AIDD document to a three-level project hierarchy, so th
 |-------|-----------|--------------|-------|
 | **Project** | the whole product or engagement | the survivor layer — documents created once and kept for the life of the product | all milestones |
 | **Milestone** | a stage or release | one pass of the flow at a chosen depth: Prototype, POC, MVP, or Production-Ready; groups many tasks | many tasks |
-| **Task** | one feature through the flow | a single pass of Specify → … → Verify; the smallest unit with its own gate records | the six steps |
+| **Task** | one feature through the flow | a single pass of Specify → … → Verify → Observe; the smallest unit with its own gate records | the seven steps |
 
 A **project** sets up the survivor-layer documents once. A **milestone** is a depth-bounded goal that groups tasks and has its own entry and exit document gates. A **task** is one feature, and it produces the per-feature artifacts.
 
@@ -87,7 +87,7 @@ Which documents must exist, and at what depth, to **exit** each milestone. Depth
 
 ---
 
-## Matrix 3 — Documents required per task (the six steps)
+## Matrix 3 — Documents required per task (the seven steps)
 
 Every task, regardless of milestone, produces this artifact chain. The depth varies by milestone (Matrix 2); the *sequence and exit gate* do not.
 
@@ -98,9 +98,10 @@ Every task, regardless of milestone, produces this artifact chain. The depth var
 | 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./05-step-3-contract.md) |
 | 4 Tests | `tests/<task>_*` | one test per scenario, red first | [06](./06-step-4-tests.md) |
 | 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./07-step-5-build.md) |
-| 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` | [08](./08-step-6-verify.md) |
+| 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./08-step-6-verify.md) |
+| 7 Observe | `TASK.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + competency deltas captured | [09](./09-the-loop.md) |
 
-A task is **done** only when all six documents exist and the Verify record reads `PASS` (or a signed `RISK-ACCEPTED`). See the master shippable checklist in [Appendix E](./appendix-e-checklists.md).
+A task is **done** when the build's documents exist and the Verify record reads `PASS` (or a signed `RISK-ACCEPTED`); the seventh step — **Observe** (§7) — then runs in production and feeds the next loop's Specify. See the master shippable checklist in [Appendix E](./appendix-e-checklists.md).
 
 ---
 
