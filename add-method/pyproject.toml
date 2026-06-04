@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pilotspace-add"
-version = "1.0.0"
+version = "1.1.0"
 description = "ADD (AI-Driven Development) — install the ADD skill, tooling, and AIDD book into any project"
 readme = "README.md"
 license = "MIT"
