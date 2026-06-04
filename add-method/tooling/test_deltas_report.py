@@ -110,6 +110,32 @@ class DeltasReportTest(unittest.TestCase):
         self.assertEqual(code, 0, "a malformed line must not crash the report")
         self.assertIn("valid-open-one", out)
 
+    def test_multiline_open_delta_not_truncated(self):
+        # Regression: a delta whose learning wraps onto a continuation line — with the
+        # (evidence: …) clause on the last line — must be reported in full, not truncated
+        # to its first line, and its evidence must not be lost. (The lint already groups
+        # continuations; the report did not — they must agree on the multi-line shape.)
+        self._add_deltas("a",
+                         "- [SDD · open] the export endpoint must reject a cross-tenant token,",
+                         "  returning forbidden not not_found (evidence: scenario_cross_tenant_export failed)")
+        code, out, _ = _run(["deltas", "--json"])
+        self.assertEqual(code, 0)
+        entry = json.loads(out)["by_competency"]["SDD"][0]
+        self.assertIn("returning forbidden", entry["text"],
+                      "multi-line delta truncated — continuation text dropped")
+        self.assertEqual(entry["evidence"], "scenario_cross_tenant_export failed",
+                         "evidence on the continuation line was lost")
+
+    def test_unreadable_task_skipped_not_fatal(self):
+        # design-for-failure: an existing-but-unreadable TASK.md is skipped, never crashes.
+        from unittest import mock
+        self._add_deltas("a", "- [TDD · open] one (evidence: e)")
+        root = add.find_root()
+        with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
+            by_comp = add._collect_open_deltas(root)
+        self.assertEqual(sum(len(v) for v in by_comp.values()), 0,
+                         "unreadable task must be skipped (no crash, no deltas)")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -108,6 +108,16 @@ class DeltasLintTest(unittest.TestCase):
         self.assertEqual(code, 0, "folded history must be skipped, not re-validated")
         self.assertNotIn("no_evidence", out)
 
+    def test_unreadable_task_emits_no_check(self):
+        # design-for-failure: an existing-but-unreadable TASK.md yields no lint check
+        # (None), never a crash/traceback.
+        from unittest import mock
+        self._add_deltas("a", "- [TDD · open] one (evidence: e)")
+        root = add.find_root()
+        with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
+            result = add._lint_task_deltas(root, "a")
+        self.assertIsNone(result, "unreadable TASK.md must yield no check (None), not a crash")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

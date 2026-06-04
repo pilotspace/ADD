@@ -575,6 +575,11 @@ def cmd_status(args: argparse.Namespace) -> None:
         dep_s = f"  deps={','.join(deps)}" if deps else ""
         ms_s = f"  [{t['milestone']}]" if t.get("milestone") else ""
         print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}")
+    # fold-pressure nudge: surface unfolded competency deltas so emission can't
+    # silently outrun the human fold (read-only; v11). Silent when none are open.
+    open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
+    if open_deltas:
+        print(f"deltas  : {open_deltas} open — fold at milestone close (add.py deltas)")
     if active:
         ph = tasks[active]["phase"]
         if ph == "done":
@@ -844,6 +849,12 @@ def cmd_milestone_done(args: argparse.Namespace) -> None:
     print(f"milestone '{slug}' -> done ({len(members)} tasks complete{tail}).")
     print(f"wrote {retro_path.relative_to(root.parent)}  (milestone exit report)")
     print("Confirm the MILESTONE.md exit criteria are checked, then archive/start the next.")
+    # fold-pressure nudge: milestone close is the natural fold point for open deltas (v11)
+    open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
+    if open_deltas:
+        noun = "delta" if open_deltas == 1 else "deltas"
+        print(f"note: {open_deltas} open competency {noun} to fold into the foundation "
+              f"— review with: add.py deltas")
 
 
 def cmd_archive_milestone(args: argparse.Namespace) -> None:
@@ -1540,18 +1551,32 @@ def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
         if not block_match:
             continue
         block = block_match.group(1)
+        # Group lines into entries (tag line + continuations) so a multi-line delta —
+        # whose learning wraps and whose (evidence: …) may land on a later line — is read
+        # in FULL, not truncated to its first line. A tag line starts an entry; a line
+        # that does not begin a new "- " list item continues it; a blank/comment or a
+        # new "- " item ends it (a trailing malformed item can't pollute a delta's text).
+        entries: list[list[str]] = []
+        current: list[str] | None = None
         for line in block.splitlines():
-            # Skip HTML-comment lines (<!-- ... -->) and blank lines.
             stripped = line.strip()
             if not stripped or stripped.startswith("<!--"):
+                current = None
                 continue
-            m = _DELTA_RE.match(stripped)
-            if not m:
-                continue  # malformed — skip silently
-            comp, status, tail = m.group(1), m.group(2), m.group(3).strip()
+            if _DELTA_RE.match(stripped):
+                current = [stripped]
+                entries.append(current)
+            elif current is not None and not stripped.startswith("-"):
+                current.append(stripped)  # genuine wrap of the current learning
+            else:
+                current = None             # a new / malformed list item ends the run
+        for unit in entries:
+            m = _DELTA_RE.match(unit[0])
+            comp, status = m.group(1), m.group(2)
             if status != "open":
                 continue
-            # Split off "(evidence: ...)" suffix if present.
+            # Join the tag line's tail with any continuation lines, then split evidence.
+            tail = " ".join([m.group(3).strip(), *unit[1:]]).strip()
             em = _EVIDENCE_RE.match(tail)
             if em:
                 delta_text, evidence = em.group(1).strip(), em.group(2).strip()
