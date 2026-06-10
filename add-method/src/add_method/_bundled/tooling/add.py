@@ -37,6 +37,18 @@ GRADUATION_CUE = "MVP covered → propose graduation"
 PHASES = ("specify", "scenarios", "contract", "tests", "build", "verify", "observe", "done")
 GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 
+# --- independent verification (Generator–Verifier separation) ----------------
+# In-context self-critique is unreliable: a model favours its own output
+# (self-enhancement bias) and repeats its own errors, so an in-context
+# "skeptic" approves it uncritically. The auto-gate decision is therefore computed by the
+# engine from STRUCTURED verdicts produced by fresh, context-isolated verifier
+# subagents (one per lens) — see skill/add/verify-critic.md. The engine validates
+# shape and computes the deterministic decision; it never judges the code itself.
+VERDICT_VALUES = ("pass", "fail", "risk")
+VERIFY_LENSES = ("wiring", "concurrency-security", "contract-conformance")
+MIN_CONSENSUS_LENSES = 3            # distinct lenses required for an auto-PASS (self-consistency)
+VERDICT_LEDGER = "verdicts.jsonl"  # append-only, per-task; verdicts are durable, labelled data
+
 
 def _phase_index(name: str) -> int:
     """Ordinal of a phase in PHASES; used to enforce forward-skip rules."""
@@ -650,6 +662,208 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     _sync_task_marker(root, slug, target)
     save_state(root, state)
     print(f"task '{slug}' reopened: done -> {target} (reason recorded); gate reset to none")
+
+
+# --- independent verification: schema · consensus · ledger · eval ------------
+
+def _validate_verdict(obj: object) -> list[str]:
+    """Return a list of shape errors for one verifier verdict ([] == valid).
+
+    A verdict is DATA, not free-form prose: a lens (which independent verifier),
+    a call (pass|fail|risk), and non-empty evidence (no shallow 'looks good'). This
+    is the structured-output guard — it is what stops a vague auto-PASS."""
+    if not isinstance(obj, dict):
+        return ["verdict must be a JSON object"]
+    errs: list[str] = []
+    lens = obj.get("lens")
+    if not isinstance(lens, str) or not lens.strip():
+        errs.append("lens: required non-empty string (which independent verifier)")
+    if obj.get("verdict") not in VERDICT_VALUES:
+        errs.append(f"verdict: must be one of {', '.join(VERDICT_VALUES)}")
+    ev = obj.get("evidence")
+    if not isinstance(ev, str) or not ev.strip():
+        errs.append("evidence: required non-empty string (no shallow verify)")
+    if "security" in obj and not isinstance(obj["security"], bool):
+        errs.append("security: must be a boolean")
+    if "refutation" in obj and not isinstance(obj["refutation"], str):
+        errs.append("refutation: must be a string")
+    return errs
+
+
+def _consensus(verdicts: list[dict],
+               min_lenses: int = MIN_CONSENSUS_LENSES) -> tuple[str, str]:
+    """The deterministic auto-gate decision over recorded verdicts → (outcome, reason).
+
+    outcome ∈ {PASS, HARD-STOP, ESCALATE}. The rule, in priority order:
+      1. ANY security finding (fail|risk) → HARD-STOP — security is never auto-passed.
+      2. ANY refutation (a `fail`)        → HARD-STOP — return to Build.
+      3. ANY residue (a `risk`)           → ESCALATE  — human-led gate (principle 2).
+      4. all `pass` but < min distinct lenses → ESCALATE — independence too thin.
+      5. all `pass` across ≥ min distinct lenses → PASS — self-consistent agreement.
+    The engine computes this from data; the resolver still records the gate."""
+    if not verdicts:
+        return "ESCALATE", "no independent verdicts recorded — an auto-PASS needs evidence"
+    for vd in verdicts:
+        if vd.get("security") and vd.get("verdict") in ("fail", "risk"):
+            return "HARD-STOP", (f"security finding from lens '{vd.get('lens')}' — "
+                                 "never auto-passed")
+    fails = [vd for vd in verdicts if vd.get("verdict") == "fail"]
+    if fails:
+        return "HARD-STOP", f"lens '{fails[0].get('lens')}' refuted the build — return to Build"
+    risks = [vd for vd in verdicts if vd.get("verdict") == "risk"]
+    if risks:
+        return "ESCALATE", f"lens '{risks[0].get('lens')}' flagged residue — human-led gate"
+    distinct = {str(vd.get("lens", "")).strip()
+                for vd in verdicts if str(vd.get("lens", "")).strip()}
+    if len(distinct) < min_lenses:
+        return "ESCALATE", (f"insufficient independent coverage: {len(distinct)}/{min_lenses} "
+                            "distinct lenses passed")
+    return "PASS", f"{len(distinct)} independent lenses agree, none refuted"
+
+
+def _verdict_ledger_path(root: Path, slug: str) -> Path:
+    return root / "tasks" / slug / VERDICT_LEDGER
+
+
+def _load_verdicts(root: Path, slug: str) -> list[dict]:
+    """Read the append-only verdict ledger, failing closed on a corrupt line."""
+    p = _verdict_ledger_path(root, slug)
+    if not p.exists():
+        return []
+    out: list[dict] = []
+    try:
+        for line in p.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                out.append(json.loads(line))
+    except (OSError, json.JSONDecodeError) as e:
+        _die(f"verdict_ledger_invalid: {p} is unreadable or corrupt ({e.__class__.__name__})")
+    return out
+
+
+def cmd_verdict(args: argparse.Namespace) -> None:
+    """Append one (or, via --file, many) structured verifier verdict(s) to the task ledger.
+
+    The agent records a fresh, context-isolated verifier's call here; the engine
+    validates SHAPE before writing (fail closed — a malformed verdict is never stored)."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)
+    if args.file:
+        try:
+            raw = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+            data = json.loads(raw)
+        except (OSError, json.JSONDecodeError) as e:
+            _die(f"verdict_input_invalid: {e.__class__.__name__}: {e}")
+        records = data if isinstance(data, list) else [data]
+    else:
+        if args.lens is None or args.verdict is None or args.evidence is None:
+            _die("verdict_incomplete: supply --lens, --verdict and --evidence (or --file)")
+        rec: dict = {"lens": args.lens, "verdict": args.verdict, "evidence": args.evidence}
+        if args.refutation is not None:
+            rec["refutation"] = args.refutation
+        if args.security:
+            rec["security"] = True
+        records = [rec]
+    # validate EVERY record before writing ANY (no partial ledger)
+    for i, rec in enumerate(records):
+        errs = _validate_verdict(rec)
+        if errs:
+            _die(f"verdict_invalid (record {i}): " + "; ".join(errs))
+    now = _now()
+    p = _verdict_ledger_path(root, slug)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "a", encoding="utf-8") as fh:        # append-only ledger
+        for rec in records:
+            rec = dict(rec)
+            rec.setdefault("at", now)
+            fh.write(json.dumps(rec, separators=(",", ":")) + "\n")
+    print(f"recorded {len(records)} verdict(s) for '{slug}' -> tasks/{slug}/{VERDICT_LEDGER}")
+
+
+def cmd_consensus(args: argparse.Namespace) -> None:
+    """Read-only: compute the auto-gate decision from the recorded independent verdicts.
+
+    The run consults this before `gate`: PASS → `gate PASS`; HARD-STOP → `gate HARD-STOP`
+    (return to Build); ESCALATE → human-led gate (no auto-PASS)."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)
+    verdicts = _load_verdicts(root, slug)
+    outcome, reason = _consensus(verdicts, args.min_lenses)
+    lenses = sorted({str(v.get("lens", "")).strip()
+                     for v in verdicts if str(v.get("lens", "")).strip()})
+    if getattr(args, "json", False):
+        print(json.dumps({"slug": slug, "outcome": outcome, "reason": reason,
+                          "verdicts": len(verdicts), "lenses": lenses},
+                         separators=(",", ":")))
+    else:
+        print(f"consensus for '{slug}': {outcome} — {reason}")
+        print(f"  {len(verdicts)} verdict(s) across {len(lenses)} lens(es): "
+              f"{', '.join(lenses) or '(none)'}")
+
+
+def cmd_eval(args: argparse.Namespace) -> None:
+    """Read-only: score the consensus decision logic against labeled verdict fixtures.
+
+    Each fixture is `{ "verdicts": [...], "label": "PASS|HARD-STOP|ESCALATE" }` — the
+    decision the gate SHOULD make for a known build (e.g. a seeded-bad build → HARD-STOP).
+    Reports exact accuracy plus a binary 'should-block' confusion: `recall` is the safety
+    metric — every seeded-bad build must be caught (fn = 0). This is red/green TDD applied
+    to the AI gate's own judgment, not just to the code."""
+    root = find_root()
+    explicit = args.fixtures is not None
+    fixtures_dir = Path(args.fixtures) if explicit else (root / "eval" if root else None)
+    files = sorted(fixtures_dir.glob("*.json")) if (fixtures_dir and fixtures_dir.exists()) else []
+    if not files:
+        # An explicit --fixtures that resolves to nothing is a user error (fail closed).
+        # The bare default (no fixtures laid down yet) is a clean no-op, not a failure.
+        if explicit:
+            _die(f"eval_no_fixtures: no *.json fixtures at {fixtures_dir} — check --fixtures")
+        print("eval: no fixtures (default .add/eval/ is empty) — nothing to score")
+        return
+    valid_labels = ("PASS", "HARD-STOP", "ESCALATE")
+    tp = fp = tn = fn = correct = 0
+    rows: list[tuple] = []
+    for f in files:
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            _die(f"eval_fixture_invalid: {f.name}: {e.__class__.__name__}")
+        label = data.get("label")
+        if label not in valid_labels:
+            _die(f"eval_fixture_invalid: {f.name}: label must be one of {', '.join(valid_labels)}")
+        outcome, reason = _consensus(data.get("verdicts", []), args.min_lenses)
+        ok = (outcome == label)
+        correct += ok
+        should_block = (label != "PASS")        # binary safety view: did NOT auto-pass
+        did_block = (outcome != "PASS")
+        if should_block and did_block:
+            tp += 1
+        elif should_block and not did_block:
+            fn += 1                              # the dangerous miss: a bad build auto-passed
+        elif not should_block and did_block:
+            fp += 1                              # a false alarm: a good build blocked
+        else:
+            tn += 1
+        rows.append((f.name, label, outcome, ok, reason))
+    n = len(files)
+    accuracy = correct / n
+    precision = tp / (tp + fp) if (tp + fp) else 1.0
+    recall = tp / (tp + fn) if (tp + fn) else 1.0
+    if getattr(args, "json", False):
+        print(json.dumps({
+            "fixtures": n, "accuracy": accuracy, "precision": precision, "recall": recall,
+            "tp": tp, "fp": fp, "tn": tn, "fn": fn,
+            "rows": [{"fixture": r[0], "label": r[1], "outcome": r[2], "match": r[3]}
+                     for r in rows],
+        }, separators=(",", ":")))
+    else:
+        for name, label, outcome, ok, _reason in rows:
+            mark = "ok" if ok else "MISMATCH"
+            print(f"  {mark:>8}  {name:<28} label={label:<11} consensus={outcome}")
+        print(f"eval: {correct}/{n} exact ({accuracy:.0%}) · catch precision={precision:.0%} "
+              f"recall={recall:.0%} · missed-bad(fn)={fn}")
 
 
 def cmd_lock(args: argparse.Namespace) -> None:
@@ -2884,6 +3098,43 @@ def build_parser() -> argparse.ArgumentParser:
 
     ppj = sub.add_parser("project", help="print .add/PROJECT.md (the read-first foundation)")
     ppj.set_defaults(func=cmd_project)
+
+    # --- independent verification (Generator–Verifier auto-gate) -------------
+    pvd = sub.add_parser("verdict",
+                         help="record an independent verifier's structured verdict "
+                              "(append-only ledger; validated before write)")
+    pvd.add_argument("slug", nargs="?", default=None)
+    pvd.add_argument("--lens", default=None,
+                     help="which independent verifier (e.g. wiring, concurrency-security, "
+                          "contract-conformance)")
+    pvd.add_argument("--verdict", choices=VERDICT_VALUES, default=None, help="this lens's call")
+    pvd.add_argument("--evidence", default=None,
+                     help="what the verifier observed (required — no shallow verify)")
+    pvd.add_argument("--refutation", default=None,
+                     help="the strongest counter-argument it tried and the result")
+    pvd.add_argument("--security", action="store_true",
+                     help="mark this a security finding (forces HARD-STOP, never auto-passed)")
+    pvd.add_argument("--file", default=None,
+                     help="read a verdict object or JSON array from a file ('-' = stdin)")
+    pvd.set_defaults(func=cmd_verdict)
+
+    pcs = sub.add_parser("consensus",
+                         help="read-only: compute the auto-gate decision "
+                              "(PASS · HARD-STOP · ESCALATE) from recorded verdicts")
+    pcs.add_argument("slug", nargs="?", default=None)
+    pcs.add_argument("--min-lenses", type=int, default=MIN_CONSENSUS_LENSES, dest="min_lenses",
+                     help="distinct lenses required for an auto-PASS (self-consistency)")
+    pcs.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    pcs.set_defaults(func=cmd_consensus)
+
+    pev = sub.add_parser("eval",
+                         help="read-only: score the consensus decision logic against "
+                              "labeled verdict fixtures (recall = no seeded-bad build slips through)")
+    pev.add_argument("--fixtures", default=None,
+                     help="dir of *.json fixtures ({verdicts, label}); default .add/eval/")
+    pev.add_argument("--min-lenses", type=int, default=MIN_CONSENSUS_LENSES, dest="min_lenses")
+    pev.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    pev.set_defaults(func=cmd_eval)
 
     return p
 

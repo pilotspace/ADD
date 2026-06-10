@@ -1,0 +1,8 @@
+{
+  "verdicts": [
+    { "lens": "wiring", "verdict": "pass", "evidence": "transfer() is reachable and called" },
+    { "lens": "concurrency-security", "verdict": "fail", "evidence": "read-modify-write on balance with no lock; two concurrent transfers double-spend", "refutation": "tried to argue the ORM serializes it — it does not", "security": false },
+    { "lens": "contract-conformance", "verdict": "pass", "evidence": "single-threaded behaviour matches §3" }
+  ],
+  "label": "HARD-STOP"
+}

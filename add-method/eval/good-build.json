@@ -1,0 +1,8 @@
+{
+  "verdicts": [
+    { "lens": "wiring", "verdict": "pass", "evidence": "transfer() is called from the route; dead-code scan clean", "refutation": "looked for an unreachable export — none" },
+    { "lens": "concurrency-security", "verdict": "pass", "evidence": "balance update is atomic under a row lock; no secrets in diff", "refutation": "tried a double-spend interleaving — rejected" },
+    { "lens": "contract-conformance", "verdict": "pass", "evidence": "all §3 shapes and the insufficient-funds rejection match", "refutation": "probed the rejection path — conforms" }
+  ],
+  "label": "PASS"
+}

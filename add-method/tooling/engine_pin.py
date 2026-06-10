@@ -10,4 +10,4 @@ it can never detect drift. The literal was recorded at the commit that first
 introduced it and is updated only by a deliberate, human-approved task.
 """
 
-ENGINE_MD5 = "cc890d6c773700d87501714be495b462"  # re-aimed @ unflagged-freeze guard (flag-first freeze: advance refuse + audit verified-marker)
+ENGINE_MD5 = "39367becb7525b3af4137e6f9006051f"  # re-aimed @ independent-verifier auto-gate (verdict · consensus · eval commands)
