@@ -31,6 +31,23 @@ If any is false, stop and return to Build — there is nothing to verify yet.
   note reviewed by the auto-gate is an audit finding (`unescalated_security_note`).
 - **Architecture** — does it respect layering/dependency rules in CONVENTIONS.md?
 
+## Part two-and-a-half — independent verification (auto runs)
+
+Under `autonomy: auto`, the adversarial check is **not role-played in this
+context** — it is delegated to fresh, **context-isolated** verifier subagents that
+see only the contract, tests, and diff (never the build conversation). In-context
+self-critique is biased and unreliable; independence is what makes the skeptic
+trustworthy. See `verify-critic.md`.
+
+Run ≥3 lenses, record each structured verdict with `add.py verdict`, then:
+
+```bash
+add.py consensus <slug>          # PASS | HARD-STOP | ESCALATE
+```
+
+Auto-PASS requires `consensus` == `PASS` over ≥3 independent lenses; **security is
+never auto-passed**. Map HARD-STOP → return to Build, ESCALATE → human-led gate.
+
 ## Part three — the deep check (do not skim)
 
 Green tests prove behavior on the inputs you thought of. They do not prove the change

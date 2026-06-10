@@ -82,8 +82,11 @@ on a trustworthy result with three loops:
 
 - **loop-until-dry** — keep hunting failures and gaps until N consecutive passes find nothing new.
   Stopping at the first green is how defects survive; the run stops only when the well runs dry.
-- **adversarial verify** — for every "done" claim, an independent skeptic tries to REFUTE it. The
-  claim survives only if it withstands refutation, not because one pass looked plausible.
+- **adversarial verify (structurally independent)** — for every "done" claim, the skeptic is a
+  FRESH, **context-isolated** subagent that sees only the contract, tests, and diff — never the
+  build transcript (in-context self-critique is biased and approves uncritically). Run ≥3 lenses, record each
+  with `add.py verdict`, and let `add.py consensus` decide. The claim survives only if it withstands
+  refutation. See `verify-critic.md`.
 - **completeness-critic** — a final pass that asks "what did we NOT cover — a scenario, a non-functional risk,
   an unstated assumption?" Whatever it finds re-enters the run.
 
@@ -99,8 +102,10 @@ sufficient and the result is recorded (principle 7, reframed: an automated, reco
 explicit pass, not a skip).
 
 - **Auto-PASS requires ALL of:** every test green; coverage not decreased; no test weakened and no
-  contract edited; the convergence loops dry; the completeness-critic found nothing open; and the
-  deep check below recorded.
+  contract edited; the convergence loops dry; the completeness-critic found nothing open; the
+  deep check below recorded; and **`add.py consensus` == `PASS`** — agreement across ≥3 fresh,
+  **context-isolated** verifier lenses (`verify-critic.md`). A green suite alone never auto-passes;
+  structural independence is the evidence.
 - **The deep check (every gate, no skim).** Deep check — do not skim. If the task produced code, record
   that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it
   produced prose or non-code, record a semantic read — what you read in full and what it confirmed.
