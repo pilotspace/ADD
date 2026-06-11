@@ -203,6 +203,7 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 ### GATE RECORD
 Outcome: PASS — human-gated (green EARNED per the refute-read; the only residue is the freeze-approved deferred-enforcement flag, now logged as `engine-merge-base-enforcement`)
 Reviewed by: Tin Dang · date: 2026-06-11
+Post-gate refinement (honest record): the PR #7 careful review found Amendment A stated the merge-time shift in the design-for-failure bullet but NOT in the ledger "Evidence cells" paragraph (a same-file second mention). One clause was added there — Amendment A's OTHER §3-named home ("the evidence-cell `unverified_fork_base` note … either spot is conformant", see §3 + the freeze flag). WITHIN the frozen contract, no test weakened, no contract edited; streams.md ×3 re-synced (md5 `82e08b0d`), suite 843 OK on py3.10. Text changed AFTER the PASS — disclosed here so the record is honest.
 
 <!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. -->
 

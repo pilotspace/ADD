@@ -120,7 +120,10 @@ base: <orchestrator HEAD at spawn — the sha every fork must equal>
 `git -C <worktree> rev-parse HEAD`, and it must equal `base:`. A tick is not evidence; a row
 you can only fill by running the command is the fresh-worktree-base check EXECUTING — the
 v12-1 lesson (words-exist ≠ method-works) closed structurally. Spawning a worker whose roster
-row lacks that evidence is refused (`unverified_fork_base`).
+row lacks that evidence is refused (`unverified_fork_base`). On a spawn-time pool runner this
+PRE-spawn paste is unsatisfiable (the pooled base is stale until the worker syncs), so the cell
+instead holds the worker's **step-0** post-sync echo (still `== base:`) and the `unverified_fork_base`
+refusal **shifts to merge-time**, before merge-back — it shifts, it never lifts.
 
 **Lifecycle — open → consume → digest → delete.** Open the ledger when the first worker
 spawns. The serial integration Verify consumes it (the merge order is read from it, one
