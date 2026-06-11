@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "wave-protocol-runtime",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -472,10 +472,19 @@
       "depends_on": [],
       "created": "2026-06-08T01:44:06+00:00",
       "updated": "2026-06-08T01:44:06+00:00"
+    },
+    "engine-argv-portability": {
+      "title": "CLI accepts flags-before-slug on Python <=3.12 (argparse intermixing)",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-11T10:42:52+00:00",
+      "updated": "2026-06-11T10:42:52+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-11T08:48:05+00:00",
+  "updated": "2026-06-11T10:42:52+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
