@@ -466,12 +466,19 @@
     },
     "wave-protocol-runtime": {
       "title": "streams.md: merge-time fork-base check + worker commits SUMMARY.md",
-      "phase": "specify",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-06-08T01:44:06+00:00",
-      "updated": "2026-06-08T01:44:06+00:00"
+      "updated": "2026-06-11T11:30:45+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c4da67533b946210e17c43175997efa7",
+        "tests": {
+          "add-method/tooling/test_streams.py": "a957a3351ddb3b6b56c20d6f6f509661"
+        }
+      }
     },
     "engine-argv-portability": {
       "title": "CLI accepts flags-before-slug on Python <=3.12 (argparse intermixing)",
@@ -481,10 +488,19 @@
       "depends_on": [],
       "created": "2026-06-11T10:42:52+00:00",
       "updated": "2026-06-11T10:42:52+00:00"
+    },
+    "engine-merge-base-enforcement": {
+      "title": "Engine guards the merge-time fork-base echo on merge-back",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-11T11:31:40+00:00",
+      "updated": "2026-06-11T11:31:40+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-11T10:42:52+00:00",
+  "updated": "2026-06-11T11:31:40+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

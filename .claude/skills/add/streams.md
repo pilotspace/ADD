@@ -72,6 +72,12 @@ never drops to zero (`run.md:22`). That floor is correct; do not engineer around
   worktree forked from a stale base forces the worker to recreate the frozen artifacts by hand
   (the v10 dogfood hit exactly this). Before the worker starts, confirm `git -C <worktree>
   rev-parse HEAD` equals the orchestrator's `HEAD`; if it drifted, `git merge` the base in first.
+  On a runner that creates each worktree **at spawn** from a pool (e.g. Claude Code), that pool can hand
+  out a STALE base, so the pre-spawn `rev-parse` evidence cell is unsatisfiable. The `unverified_fork_base`
+  check then **shifts** — it never skips: the worker's **step-0** syncs to base (`git merge` the orchestrator's
+  `HEAD`) and re-echoes `rev-parse HEAD`, which the orchestrator verifies at **merge-time**, before merge-back.
+  The pre-spawn check stays the DEFAULT for fresh-`HEAD`-worktree runners; the merge-time path is the additive
+  ALTERNATIVE for spawn-time runners — never a replacement of the pre-spawn rule.
 - **Lease + timeout** — record which worker holds which task (in the wave ledger, below);
   if a worker dies, release the claim back to READY (re-spawn, do not assume partial work is sound).
 - **Failure isolates** — a worker that hits a STOP-and-escalate (below) blocks only its
@@ -204,7 +210,9 @@ ripgrep otherwise. Design every IO path for failure — timeouts, retries, rollb
 </tools>
 
 <return>   <!-- the worker PROPOSES; the orchestrator RECORDS. A worker never runs add.py. -->
-End with a structured verdict AND write the same into SUMMARY.md in the task dir:
+End with a structured verdict AND write the same into SUMMARY.md in the task dir, then
+**commit SUMMARY.md + deltas.md** in the worktree (uncommitted worktree files survive only by
+harness courtesy — commit them so the serial-integration merge-back carries your report):
 { task, outcome: PASS|RISK-ACCEPTED|HARD-STOP|ESCALATE, evidence: <tests+coverage>,
   residue: [security|concurrency|architecture findings], deltas: [open lessons learned] }.
 Do NOT touch add.py or any shared file — the orchestrator gates on your verdict.

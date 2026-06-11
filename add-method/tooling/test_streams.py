@@ -19,6 +19,7 @@ guarantees live in two places that must not drift apart:
 Run: python3 -m unittest test_streams -v
 """
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -157,6 +158,58 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         st = self._state()
         self.assertEqual(st["tasks"]["b"]["phase"], "specify", "omitted slug must step the active task")
         self.assertEqual(st["tasks"]["a"]["phase"], "ground", "the non-active task must be untouched")
+
+
+# ── wave-protocol-runtime: merge-time fork-base shift + worker commits its report ──
+# v19 wave deltas #7 (merge-time fork-base) + #8 (worker commits SUMMARY.md). streams.md must
+# MIRROR the folded CONVENTIONS runtime-exception: on a spawn-time-worktree runner the pre-spawn
+# rev-parse cell is unsatisfiable, so the `unverified_fork_base` check SHIFTS to worker step-0
+# (sync + re-echo) verified at MERGE-time; and the worker `<return>` contract must COMMIT its
+# SUMMARY.md/deltas.md. Token-presence guards (phrasing free, behaviour locked) + ×3 parity.
+_REPO = _ADD_METHOD.parent
+_STREAMS_TREES = (
+    SKILL / "streams.md",                                                              # canonical
+    _REPO / ".claude" / "skills" / "add" / "streams.md",                               # dogfood
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "streams.md",  # bundle
+)
+
+
+class WaveProtocolRuntimeTest(unittest.TestCase):
+    """streams.md states the merge-time fork-base shift for spawn-time runners and requires the
+    worker to COMMIT its report — mirroring the folded CONVENTIONS runtime-exception — while the
+    pre-spawn rule is PRESERVED and the ×3 copies stay byte-identical. RED until the build amends
+    streams.md (the 2 new-behaviour tests); the 2 invariant tests stay green throughout."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.low = (SKILL / "streams.md").read_text(encoding="utf-8").lower()
+
+    def test_merge_time_fork_base_shift_stated(self):        # Scenario 1 / Must 1
+        self.assertIn("merge-time", self.low,
+                      "the fork-base check must SHIFT to merge-time on a spawn-time-worktree runner")
+        self.assertIn("step-0", self.low,
+                      "the shift names the worker step-0 (sync-to-base + re-echo)")
+        self.assertIn("unverified_fork_base", self.low,
+                      "the shifted check keeps its refusal code — it shifts, it never skips")
+
+    def test_worker_commits_its_report(self):                # Scenario 2 / Must 2
+        self.assertIn("commit summary.md", self.low,
+                      "the worker <return> contract must require COMMITTING SUMMARY.md, not just writing it")
+        self.assertIn("deltas.md", self.low,
+                      "the worker commits deltas.md alongside SUMMARY.md")
+
+    def test_pre_spawn_rule_preserved(self):                 # Scenario 4 / Must 4 · Reject 1
+        self.assertIn("fresh worktree base", self.low,
+                      "the pre-spawn rule stays the DEFAULT — deleting it is fork_base_rule_weakened")
+        self.assertIn("base == head", self.low,
+                      "the concrete pre-spawn check (worker base == orchestrator HEAD) must remain")
+
+    def test_three_streams_copies_byte_identical(self):      # Scenario 3 / Must 3 · Reject 2
+        present = [p for p in _STREAMS_TREES if p.exists()]
+        self.assertEqual(len(present), 3,
+                         f"all 3 streams.md copies must exist: {[str(p) for p in _STREAMS_TREES]}")
+        hashes = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
+        self.assertEqual(len(hashes), 1, f"streams.md mirror_drift across the 3 copies: {hashes}")
 
 
 if __name__ == "__main__":
