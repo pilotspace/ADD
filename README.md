@@ -51,6 +51,10 @@ npx @pilotspace/add init
 pip install pilotspace-add && pilotspace-add init
 ```
 
+Already installed? Update in place with `npx @pilotspace/add@latest update` (npm)
+or `pipx run pilotspace-add update` (pip) — it refreshes the skill, tooling, and
+book and leaves your project state untouched (`update --check` reports drift).
+
 ### 2 · Spawn your first feature — talk to the agent
 
 In Claude Code, run **`/add`** and say what you want to build:

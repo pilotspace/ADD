@@ -4,6 +4,24 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [Unreleased]
+
+### Added
+- **`update` — refresh a project without re-installing.** The launchers
+  (`@pilotspace/add` on npm, `pilotspace-add` on PyPI) gained an `update` verb
+  that re-materializes the managed layer (the `add` skill, `.add/tooling`,
+  `.add/docs`) to the installed package version. It **clean-replaces** each tree,
+  so a file removed upstream no longer lingers as an orphan (the prior
+  `init --force` merge behaviour), and it never touches your work — `state.json`,
+  `PROJECT.md`, milestones, tasks, and archive are preserved (state is backed up
+  to `pre-update-state.bak.json` first regardless). It is idempotent (the same
+  version twice is a no-op), records a `.add/.add-version` stamp, and
+  `update --check` reports version drift read-only. One-shot per ecosystem:
+  `npx @pilotspace/add@latest update` · `pipx run pilotspace-add update`.
+- **State-migration framework** — `update` carries a forward-only, idempotent
+  migration registry (empty today) so the next state-schema change ships as an
+  in-place update, never a re-install.
+
 ## [1.2.0] — 2026-06-10
 
 The decision-arc release: the method now narrates the build as one continuous

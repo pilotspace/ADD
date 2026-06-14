@@ -46,6 +46,17 @@ pilotspace-add init
 No flags needed — the project name is inferred from your folder and the stage
 defaults to `prototype` (pass `--name "My App" --stage mvp` to choose up front).
 
+**Already installed? Update in place — no re-install:**
+
+```bash
+npx @pilotspace/add@latest update      # npm (one shot)
+pipx run pilotspace-add update         # pip (one shot)
+```
+
+`update` refreshes the skill, tooling, and book to the latest version and leaves
+your project state (`state.json`, `PROJECT.md`, milestones, tasks) untouched;
+`update --check` reports whether a project is behind.
+
 **New here?** Follow the [10-minute Quickstart](./GETTING-STARTED.md) — it walks
 your first feature end to end.
 

@@ -63,6 +63,28 @@ handoff — from here on it's conversation, not terminal commands.
 > Why stages exist: the steps never change, only how *deeply* you run them.
 > See `.add/docs/10-setup-and-stages.md`.
 
+### Updating to a newer ADD — no re-install
+
+When a new ADD version ships, refresh a project in two steps: bump the package
+(your package manager), then re-materialize it into the project with `update`:
+
+```bash
+# npm — one shot (npx fetches latest, then re-materializes into this project):
+npx @pilotspace/add@latest update
+
+# pip — one shot via pipx (the npx analog: fetch latest + run):
+pipx run pilotspace-add update
+
+# …or plain pip, in two steps:
+pip install -U pilotspace-add && pilotspace-add update
+```
+
+`update` clean-replaces the managed layer (`skill` · `.add/tooling` · `.add/docs`)
+and **never touches your work** — `state.json`, `PROJECT.md`, milestones, tasks and
+archive are left exactly as they were (it backs `state.json` up first regardless). It
+is idempotent (same version twice is a no-op) and writes a `.add/.add-version` stamp.
+Run `… update --check` to see whether a project is behind the installed package.
+
 ---
 
 ## 2 · Your first feature — talk to the agent

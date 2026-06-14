@@ -8,7 +8,17 @@ both distribution channels: `@pilotspace/add` (npm) and `pilotspace-add` (PyPI).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **`update` — refresh a project without re-installing.** Both launchers gained an
+  `update` verb that re-materializes the managed layer (the `add` skill,
+  `.add/tooling`, `.add/docs`) to the installed package version. It clean-replaces
+  each tree (so a file removed upstream leaves no orphan — the prior `init --force`
+  merge behaviour) and never touches user work: `state.json`, `PROJECT.md`,
+  milestones, tasks, and archive are preserved, with state backed up first. It is
+  idempotent, records a `.add/.add-version` stamp, and `update --check` reports
+  drift read-only. One-shot: `npx @pilotspace/add@latest update` ·
+  `pipx run pilotspace-add update`. Carries an empty forward-only state-migration
+  registry so the next schema change ships as an in-place update.
 
 ## [1.1.0] — 2026-06-04
 
