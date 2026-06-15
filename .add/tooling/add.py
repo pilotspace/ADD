@@ -19,7 +19,8 @@ import os
 import re
 import sys
 import tempfile
-from datetime import date, datetime, timezone
+import urllib.request
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 # --- constants ---------------------------------------------------------------
@@ -4171,11 +4172,120 @@ def _rebind_optional_positionals(parser: argparse.ArgumentParser,
     return args
 
 
+# --- agent-agnostic update nudge --------------------------------------------
+# ADD is agent-agnostic: ANY agent (Claude Code · Gemini CLI · Codex) is told by the
+# guideline block to run `add.py status`/`guide` FIRST, every session. That is the one
+# universal chokepoint to tell a stale install to refresh — a plain line on STDERR the
+# agent reads and acts on. Bounded + fail-open by design (see _maybe_nudge_update).
+#
+# This is the engine's ONE deliberate, isolated network touch. It is justified narrowly:
+# an agent that is offline cannot run at all, so when the network is unreachable this
+# silently does nothing and nothing is lost. It NEVER changes a command's stdout or exit.
+_UPDATE_CACHE = ".update-cache.json"
+_UPDATE_TTL = timedelta(hours=24)          # hit the registry at most once / day
+_REGISTRY_LATEST = "https://registry.npmjs.org/@pilotspace/add/latest"
+
+
+def _read_json_safe(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _write_json_safe(path: Path, obj) -> None:
+    try:
+        path.write_text(json.dumps(obj, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _version_gt(a: str, b: str) -> bool:
+    """True if version a is newer than b (dotted numeric; prerelease suffix dropped)."""
+    def key(v: str):
+        out = []
+        for part in str(v).split("."):
+            part = part.split("-", 1)[0]
+            out.append((0, int(part)) if part.isdigit() else (1, part))
+        return out
+    try:
+        return key(a) > key(b)
+    except Exception:
+        return False
+
+
+def _fetch_latest_version(timeout: float = 1.5):
+    """GET the registry's latest version. Returns a string, or None on ANY failure
+    (offline, timeout, bad payload) — the caller treats None as 'unknown, skip'."""
+    try:
+        req = urllib.request.Request(_REGISTRY_LATEST, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        v = data.get("version")
+        return v if isinstance(v, str) and v else None
+    except Exception:
+        return None
+
+
+def _cached_latest(add_dir: Path):
+    """The registry's latest version, throttled: served from .update-cache.json within
+    the TTL, else refreshed over the network (fail-open). None when unknown."""
+    cache = _read_json_safe(add_dir / _UPDATE_CACHE)
+    if cache and cache.get("latest") and cache.get("checked_at"):
+        try:
+            ts = datetime.fromisoformat(cache["checked_at"])
+            if datetime.now(timezone.utc) - ts < _UPDATE_TTL:
+                return cache["latest"]                     # fresh -> no network
+        except ValueError:
+            pass
+    latest = _fetch_latest_version()
+    if latest:
+        _write_json_safe(add_dir / _UPDATE_CACHE, {
+            "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "latest": latest,
+        })
+        return latest
+    return cache.get("latest") if cache else None          # stale beats nothing
+
+
+def _maybe_nudge_update(args: argparse.Namespace) -> None:
+    """If the tooling is stale, print an ACTION-REQUIRED line to STDERR so the agent
+    updates before the user's task. Fully bounded + fail-open — never raises, never
+    touches stdout or the exit code."""
+    try:
+        if os.environ.get("ADD_NO_UPDATE_CHECK"):
+            return
+        fn = getattr(args, "func", None)
+        # orientation reads only — never a mid-run mutating verb (gate/advance/...)
+        if getattr(fn, "__name__", "") not in ("cmd_status", "cmd_guide"):
+            return
+        add_dir = find_root()
+        if add_dir is None:
+            return
+        stamp = _read_json_safe(add_dir / ".add-version")
+        current = (stamp or {}).get("version")
+        if not current:
+            return            # no launcher stamp -> inert (engine-only/test projects)
+        latest = _cached_latest(add_dir)
+        if not latest or not _version_gt(latest, current):
+            return
+        cmd = ("pipx run pilotspace-add update"
+               if (stamp or {}).get("channel") == "pip"
+               else "npx @pilotspace/add@latest update")
+        sys.stderr.write(
+            f"\n⚠ ADD is out of date: this project is on {current}, latest is {latest}.\n"
+            f"  ACTION REQUIRED before the user's task: run `{cmd}`, then re-read the "
+            f"guide from disk, then continue.\n\n")
+    except Exception:
+        return                # a nudge must NEVER break a command (design-for-failure)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args, extras = parser.parse_known_args(argv)
     if extras:
         args = _rebind_optional_positionals(parser, args, extras)
+    _maybe_nudge_update(args)        # advisory preamble; stderr-only, fail-open
     args.func(args)
     return 0
 
