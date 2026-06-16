@@ -2,7 +2,7 @@
 
 ### A complete, practical book on building software when AI writes the code
 
-**Edition:** 1.3.0 · **Type:** AI Workflow Methodology
+**Edition:** 1.4.0 · **Type:** AI Workflow Methodology
 
 ---
 
