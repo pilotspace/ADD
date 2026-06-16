@@ -111,6 +111,14 @@ review the domain → research and reuse components → wireframe → render a r
 human confirms **before** build — so the build matches the expected layout. Tool-agnostic; the
 engine never renders.
 
+When an **AI feature** reaches specify (a task created with `new-task <slug> --kind ai`), run the
+**eval-definition loop** in `ai.md` (EDD): write `AI-SPEC.md`, then freeze the eval contract
+(`eval-set.jsonl` · `rubric.json` · `eval-spec.json` · `io-contract.json`) as the AI analog of the
+red suite. From the frozen contract on, the `phases/ai.md` overlay re-aims the run — verify gates
+on the eval **threshold** (score ≥ threshold AND > baseline AND lineage recorded), not a green
+unit suite, and observe adds an online-eval / drift beat. The engine never runs the eval; it only
+**measures** the recorded scores. Silent-when-absent: a non-AI project sees none of this.
+
 When a milestone's tasks are all done but its **goal** (the `MILESTONE.md` exit criteria) is not
 yet met, `milestone-done` holds the milestone open — read `loop.md` for the dynamic loop that turns
 open deltas + extras into the next tasks, proposed by you and confirmed by the human, until the goal is met.
@@ -141,6 +149,9 @@ the tag / publish / deploy. A release bundles ≥1 milestone and is orthogonal t
    `PASS`, `RISK-ACCEPTED` (signed, non-security only), or `HARD-STOP`. A security
    finding is always `HARD-STOP`.
 5. **Ask, don't guess.** If a requirement is unclear, stop and ask the user.
+6. **For an AI task (`kind: ai`)** the eval contract is frozen before build, the held-out test
+   split is never tuned on (leakage is a `HARD-STOP`), and verify gates on the eval threshold —
+   see `ai.md` / `phases/ai.md`. A safety or guardrail finding is part of rule 4 (always `HARD-STOP`).
 </constraints>
 
 ## Advancing

@@ -89,7 +89,7 @@ PHASE_OWNER = {
     "specify": "human", "scenarios": "human", "contract": "seam",
     "tests": "ai", "build": "ai", "verify": "human", "observe": "ai", "done": "human",
 }
-SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md")
+SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "AI-SPEC.md")
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts
 # never reach git. Bare-filename patterns match at any depth under .add/ (tasks/,
@@ -494,6 +494,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         "title": title,
         "phase": "ground",
         "gate": "none",
+        "kind": getattr(args, "kind", "code"),   # 'ai' reroutes verify to an eval-score gate
         "milestone": milestone,
         "depends_on": depends_on,
         "created": _now(),
@@ -598,7 +599,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
         # §3 md5s so the verify gate can prove the green was EARNED, not edited into
         # place. UNCONDITIONAL overwrite — a legit change-request that re-crosses
         # tests->build re-snapshots cleanly. Co-witnessed by flag_verified (above).
-        state["tasks"][slug]["tripwire"] = _tripwire_snapshot(root, slug, raw3)
+        state["tasks"][slug]["tripwire"] = _tripwire_snapshot(root, slug, raw3, kind=state["tasks"][slug].get("kind", "code"))
         # §5 scope gate (build-scope-lock): when the task declares its Scope, freeze
         # the project tree into a sidecar (payload) + a state.json anchor (md5 of the
         # sidecar bytes). Same UNCONDITIONAL-overwrite semantics as the tripwire.
@@ -748,6 +749,14 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
+        # kind:ai verify is EVAL-GATED: a completing PASS requires the recorded eval run
+        # to clear the FROZEN threshold + baseline with its lineage (not "tests green").
+        # After the tamper + scope guards, before the waiver - a below-threshold or
+        # unrecorded run is refused here and never launderable through RISK-ACCEPTED.
+        if (state.get("tasks", {}).get(slug, {}) or {}).get("kind") == "ai":
+            _ai_ok, _ai_why = _ai_verify_gate(root, slug)
+            if not _ai_ok:
+                _die(_ai_why)
     if args.outcome == "RISK-ACCEPTED":
         # A waiver must be SIGNED: owner, ticket, expiry (glossary). Stored in state
         # so a later `check` can read/expire it. Refuse a partial waiver outright.
@@ -1643,6 +1652,687 @@ def _missing_captures(root: Path) -> list[str]:
             if not any((cap_dir / f"{n}.{ext}").is_file() for ext in _CAPTURE_EXTS)]
 
 
+# --- AI vertical (ai-check-lint) validators ---------------------------------
+# Pure / total / read-only named-set linters for a project's .add/ai/ set.
+# Mirror the UDD validators exactly: fail-closed on malformed JSON (named
+# code, never a crash), silent-when-absent (compositor returns [] when no
+# .add/ai/ exists). hashlib + json + Path are already in scope above.
+_AI_BUCKETS = ("capability", "generation", "instruction", "cost_latency")
+
+# --- the failure modes fallback.md must define a safe state for --------------
+# Base set (every AI task) + the RAG / agent specializations, declared as the
+# H2 heading STEMS the doc must carry. Matching is case-insensitive on a
+# normalized heading (lowercased, non-alnum collapsed to a single space).
+_FALLBACK_BASE_MODES = (
+    "timeout", "error", "low confidence", "schema invalid output", "guardrail trip",
+)
+_FALLBACK_RAG_MODE = "empty retrieval"
+_FALLBACK_AGENT_MODE = "tool failure"
+
+# words that mark a fallback line as a NON-degraded (unsafe) state — a fallback
+# that 'crashes' or 'hangs' is not a safe state by construction.
+_UNSAFE_FALLBACK_WORDS = ("crash", "hang", "panic", "unhandled", "propagate")
+
+# guardrail classes the safety floor recognizes (io-contract.json `guardrails`).
+_GUARDRAIL_CLASSES = (
+    "toxicity", "pii", "injection", "indirect_injection", "jailbreak",
+    "refusal", "prompt_injection",
+)
+
+# the required, non-negotiable judge bias mitigations (verbosity + position).
+_REQUIRED_JUDGE_MITIGATIONS = ("randomized_order", "length_normalized")
+
+
+# ===========================================================================
+# pure, total content validators — one per artifact (mirrors
+# _token_layer_violations / _catalog_tree_violations: never mutate, never
+# touch disk, never raise on bad content, deterministic document order).
+# ===========================================================================
+def _eval_set_violations(rows: list, *, floor: int = 10) -> list[tuple[str, str, str]]:
+    """Validate the PARSED eval-set rows against the held-out-set rules.
+
+    `rows` is the list of already-parsed JSONL objects (the compositor owns the
+    line-by-line parse + malformed_eval_set). PURE / TOTAL / deterministic.
+    Emits, in order: empty_eval_set, eval_set_too_small (WARN), split_undeclared,
+    split_overlap, empty_test_split, group_leakage, duplicate_leakage.
+    Leakage codes are HARD-STOP-class at the gate (the wiring routes them to
+    `checks`); eval_set_too_small is the one WARN here.
+    """
+    out: list[tuple[str, str, str]] = []
+    if not isinstance(rows, list):
+        return [("malformed_eval_set", "", "eval-set is not a list of rows")]
+
+    cases = [r for r in rows if isinstance(r, dict)]
+    if not cases:
+        out.append(("empty_eval_set", "", "eval-set.jsonl has zero parseable cases"))
+        return out                                  # nothing further to check
+    if len(cases) < floor:
+        out.append(("eval_set_too_small", "",
+                    f"{len(cases)} cases < recommended floor {floor} — thin evidence"))
+
+    # partition every case by split; an absent/unknown split makes the partition
+    # undeclarable (split_undeclared is also raised by eval-spec, but a row with
+    # no split is undeclared at the row level too).
+    by_split: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
+    id_to_splits: dict[str, set[str]] = {}
+    input_hash_to_splits: dict[str, set[str]] = {}
+    group_to_splits: dict[str, set[str]] = {}
+    any_split_declared = False
+    for i, c in enumerate(cases):
+        sp = c.get("split")
+        cid = c.get("id", f"#{i}")
+        if sp in by_split:
+            any_split_declared = True
+            by_split[sp].append(c)
+        # index id / input-hash / group across splits for leakage detection
+        if isinstance(sp, str):
+            id_to_splits.setdefault(str(cid), set()).add(sp)
+            ih = _input_hash(c.get("input"))
+            input_hash_to_splits.setdefault(ih, set()).add(sp)
+            gk = c.get("group_key")
+            if isinstance(gk, str) and gk:
+                group_to_splits.setdefault(gk, set()).add(sp)
+
+    if not any_split_declared:
+        out.append(("split_undeclared", "",
+                    "no row declares a train/val/test split"))
+        return out
+
+    if not by_split["test"]:
+        out.append(("empty_test_split", "", "the test partition has zero rows"))
+
+    # split_overlap: an id in more than one partition (the most basic leakage).
+    for cid, splits in sorted(id_to_splits.items()):
+        if len(splits) > 1:
+            out.append(("split_overlap", str(cid),
+                        f"id appears in {sorted(splits)} — split is not disjoint"))
+
+    # group_leakage: a group_key straddling train and test.
+    for gk, splits in sorted(group_to_splits.items()):
+        if "train" in splits and "test" in splits:
+            out.append(("group_leakage", gk,
+                        "group_key straddles train and test — identity memorization"))
+
+    # duplicate_leakage: an identical input hash in both train and test.
+    for ih, splits in sorted(input_hash_to_splits.items()):
+        if "train" in splits and "test" in splits:
+            out.append(("duplicate_leakage", ih,
+                        "identical input appears in both train and test"))
+
+    return out
+
+
+def _rubric_violations(rubric: object) -> list[tuple[str, str, str]]:
+    """Validate rubric.json: four buckets covered, every threshold numeric.
+
+    Emits rubric_missing_bucket, rubric_missing_threshold, metric_mismatch (WARN).
+    judge_self_preference / judge_bias_unmitigated live in _eval_spec_violations
+    (the judge is pinned in eval-spec.json); this validator only checks the
+    rubric's own shape. PURE / TOTAL / deterministic.
+    """
+    out: list[tuple[str, str, str]] = []
+    if not isinstance(rubric, dict):
+        return [("rubric_missing_bucket", "", "rubric is not a JSON object")]
+
+    criteria = rubric.get("criteria")
+    if not isinstance(criteria, list) or not criteria:
+        out.append(("rubric_missing_bucket", "criteria",
+                    "rubric declares no criteria list"))
+        return out
+
+    seen_buckets: set[str] = set()
+    only_accuracy = True
+    for i, c in enumerate(criteria):
+        path = f"criteria[{i}]"
+        if not isinstance(c, dict):
+            out.append(("rubric_missing_threshold", path, "criterion is not an object"))
+            continue
+        bucket = c.get("bucket")
+        if bucket in _AI_BUCKETS:
+            seen_buckets.add(bucket)
+        name = c.get("name")
+        if not (isinstance(name, str) and "accuracy" in name.lower()):
+            only_accuracy = False
+        thr = c.get("threshold")
+        if not _is_number(thr):
+            out.append(("rubric_missing_threshold", f"{path}.threshold",
+                        f"criterion {name!r} declares no numeric threshold"))
+
+    for bucket in _AI_BUCKETS:
+        if bucket not in seen_buckets:
+            out.append(("rubric_missing_bucket", bucket,
+                        f"required bucket {bucket!r} is not scored by any criterion"))
+
+    overall = rubric.get("overall_threshold")
+    if not _is_number(overall):
+        out.append(("rubric_missing_threshold", "overall_threshold",
+                    "rubric declares no numeric overall_threshold"))
+
+    # metric_mismatch (WARN): bare accuracy as the SOLE metric — a majority-class
+    # predictor would already score high. Only fires when every criterion is an
+    # accuracy criterion (the imbalanced-eval foot-gun).
+    if only_accuracy and len(criteria) >= 1:
+        out.append(("metric_mismatch", "criteria",
+                    "accuracy is the sole metric — a majority-class predictor scores high; "
+                    "add a balanced metric (F1 / per-class / calibrated)"))
+
+    return out
+
+
+def _eval_spec_violations(
+    spec: object, *, model_under_test: object = None
+) -> list[tuple[str, str, str]]:
+    """Validate eval-spec.json: metric+threshold+baseline, disjoint split, pinned judge.
+
+    `model_under_test` (the list of {id,version} from io-contract.json, or None)
+    is passed so judge_self_preference can compare the judge model against it
+    WITHOUT this validator reading disk. Emits: threshold_undeclared,
+    baseline_missing, split_undeclared, split_overlap, empty_test_split,
+    selection_on_test, judge_unpinned, judge_self_preference, judge_bias_unmitigated,
+    rag_retrieval_uneval, rag_faithfulness_unchecked, agent_unbounded.
+    PURE / TOTAL / deterministic.
+    """
+    out: list[tuple[str, str, str]] = []
+    if not isinstance(spec, dict):
+        return [("threshold_undeclared", "", "eval-spec is not a JSON object")]
+
+    # --- the gate the verify reads: primary metric + threshold + baseline -----
+    if not spec.get("primary_metric") or not isinstance(spec.get("primary_metric"), str):
+        out.append(("threshold_undeclared", "primary_metric",
+                    "no primary_metric declared — nothing to gate on at verify"))
+    if not _is_number(spec.get("threshold")):
+        out.append(("threshold_undeclared", "threshold",
+                    "no numeric pass threshold declared"))
+
+    baseline = spec.get("baseline")
+    if not (isinstance(baseline, dict)
+            and baseline.get("kind") in ("majority", "random", "heuristic", "human", "prior_model")
+            and _is_number(baseline.get("score"))):
+        out.append(("baseline_missing", "baseline",
+                    "no baseline-to-beat declared (kind + score)"))
+
+    # --- the disjoint train/val/test partition --------------------------------
+    split = spec.get("split")
+    if not isinstance(split, dict) or not split.get("key"):
+        out.append(("split_undeclared", "split",
+                    "eval-spec declares no split (train/val/test counts + key)"))
+    else:
+        counts = {k: split.get(k) for k in ("train", "val", "test")}
+        for k, v in counts.items():
+            if not isinstance(v, int) or isinstance(v, bool):
+                out.append(("split_undeclared", f"split.{k}",
+                            f"split.{k} is not an integer row count"))
+        if isinstance(counts["test"], int) and not isinstance(counts["test"], bool) \
+                and counts["test"] <= 0:
+            out.append(("empty_test_split", "split.test",
+                        "the declared test partition has zero rows"))
+
+    # --- selection_on_test: the sacred test set used to tune -------------------
+    if spec.get("selection_partition") == "test":
+        out.append(("selection_on_test", "selection_partition",
+                    "the test partition is named the model-selection/early-stop partition"))
+
+    # --- the pinned, bias-mitigated judge -------------------------------------
+    judge = spec.get("judge")
+    if isinstance(judge, dict):                     # null judge == no judged dimension
+        missing = [f for f in ("model", "version", "seed")
+                   if judge.get(f) in (None, "")]
+        if judge.get("temperature") != 0:
+            missing.append("temperature(=0)")
+        if missing:
+            out.append(("judge_unpinned", "judge",
+                        "judge is not reproducibly pinned — missing " + ", ".join(missing)))
+        # judge_self_preference: judge model == model-under-test.
+        muts = _model_ids(model_under_test)
+        if isinstance(judge.get("model"), str) and judge["model"] in muts:
+            out.append(("judge_self_preference", "judge.model",
+                        f"judge {judge['model']!r} equals the model-under-test — "
+                        "self-preference bias"))
+        # judge_bias_unmitigated: required mitigations + >= 2 samples.
+        mits = judge.get("bias_mitigations")
+        mits = mits if isinstance(mits, list) else []
+        missing_mits = [m for m in _REQUIRED_JUDGE_MITIGATIONS if m not in mits]
+        samples = judge.get("samples")
+        too_few = not (isinstance(samples, int) and not isinstance(samples, bool) and samples >= 2)
+        if missing_mits or too_few:
+            why = []
+            if missing_mits:
+                why.append("missing mitigations " + ", ".join(missing_mits))
+            if too_few:
+                why.append(f"samples={samples!r} < 2 (variance, not one sample)")
+            out.append(("judge_bias_unmitigated", "judge", "; ".join(why)))
+
+    # --- RAG specialization ---------------------------------------------------
+    rag = spec.get("rag")
+    if isinstance(rag, dict):
+        if not _nonempty_str_list(rag.get("retrieval_metrics")):
+            out.append(("rag_retrieval_uneval", "rag.retrieval_metrics",
+                        "a RAG task declares no retrieval metric (precision/recall/hit-rate/MRR)"))
+        gen = rag.get("generation_metrics")
+        gen = gen if isinstance(gen, list) else []
+        if not any(isinstance(m, str) and ("faith" in m.lower() or "ground" in m.lower())
+                   for m in gen):
+            out.append(("rag_faithfulness_unchecked", "rag.generation_metrics",
+                        "a RAG task declares no faithfulness/grounding metric — "
+                        "the anti-hallucination gate is absent"))
+
+    # --- agent specialization -------------------------------------------------
+    agent = spec.get("agent")
+    if isinstance(agent, dict):
+        bounded = (isinstance(agent.get("max_steps"), int)
+                   and _is_number(agent.get("max_cost"))
+                   and isinstance(agent.get("max_latency_ms"), int))
+        traj = agent.get("trajectory_metric")
+        if not bounded or not (isinstance(traj, str) and traj):
+            out.append(("agent_unbounded", "agent",
+                        "an agent task declares no max_steps/max_cost/max_latency "
+                        "or no trajectory success metric"))
+
+    return out
+
+
+def _io_contract_violations(
+    contract: object, *, has_side_effect: bool = False
+) -> list[tuple[str, str, str]]:
+    """Validate io-contract.json: pinned model, response schema, budget, reader policy.
+
+    Emits: io_contract_unbound, model_unpinned, budget_undeclared,
+    io_contract_strict_reject, io_no_idempotency_key. (guardrail_without_fallback
+    is cross-file — _ai_foundation_violations raises it against fallback.md.)
+    PURE / TOTAL / deterministic.
+    """
+    out: list[tuple[str, str, str]] = []
+    if not isinstance(contract, dict):
+        return [("io_contract_unbound", "", "io-contract is not a JSON object")]
+
+    # response_schema present == the boundary can format-validate an output.
+    if not isinstance(contract.get("response_schema"), dict) or not contract["response_schema"]:
+        out.append(("io_contract_unbound", "response_schema",
+                    "no response_schema — an output that cannot be format-validated is a gap"))
+
+    # model_unpinned: at least one {id, version}.
+    models = contract.get("model")
+    if not (isinstance(models, list) and models
+            and all(isinstance(m, dict) and m.get("id") and m.get("version") for m in models)):
+        out.append(("model_unpinned", "model", "no model id+version pinned"))
+
+    # budget_undeclared: latency p50/p90/p99 + cost-per-request.
+    budget = contract.get("budget")
+    lat = budget.get("latency_ms") if isinstance(budget, dict) else None
+    has_latency = isinstance(lat, dict) and all(_is_number(lat.get(p)) for p in ("p50", "p90", "p99"))
+    has_cost = isinstance(budget, dict) and _is_number(budget.get("cost_per_req"))
+    if not (has_latency and has_cost):
+        out.append(("budget_undeclared", "budget",
+                    "no latency p50/p90/p99 + cost_per_req envelope — "
+                    "cost+latency are first-class acceptance constraints"))
+
+    # io_contract_strict_reject: a strict reader with no documented reason.
+    policy = contract.get("reader_policy")
+    if policy not in ("lenient", None) and not contract.get("strict_reason"):
+        out.append(("io_contract_strict_reject", "reader_policy",
+                    f"reader_policy {policy!r} rejects unknown fields with no strict_reason — "
+                    "breaks forward-compatible evolution"))
+
+    # io_no_idempotency_key: a side-effecting / retried op with no key or no
+    # explicit no-side-effect assertion.
+    idem = contract.get("idempotency")
+    retry = contract.get("retry")
+    retried = isinstance(retry, dict) and isinstance(retry.get("max"), int) and retry["max"] > 0
+    safe_asserted = isinstance(idem, dict) and idem.get("no_side_effect") is True
+    keyed = isinstance(idem, dict) and isinstance(idem.get("key_field"), str) and idem["key_field"]
+    if (has_side_effect or retried) and not (keyed or safe_asserted):
+        out.append(("io_no_idempotency_key", "idempotency",
+                    "a side-effecting/retried op declares neither an idempotency key_field "
+                    "nor an explicit no_side_effect assertion"))
+
+    return out
+
+
+# ===========================================================================
+# the compositor — mirrors _udd_named_set_checks(root) EXACTLY:
+# silent-when-absent, fail-closed via a local _load, yields (ok, desc, reason).
+# ===========================================================================
+def _ai_foundation_violations(root: Path) -> list[tuple[bool, str, str]]:
+    """Lint a project's AI named set under `.add/ai/` (silent when absent).
+
+    Composes _eval_set_violations + _rubric_violations + _eval_spec_violations +
+    _io_contract_violations + the cross-file fallback / guardrail checks into
+    cmd_check's (ok, desc, reason) triples. READ-ONLY; FAIL-CLOSED on malformed
+    JSON/JSONL (a named code, never a crash). Returns [] when no named set exists
+    — so a non-AI project stays untouched (the UDD `_udd_named_set_checks` mirror).
+
+    SEVERITY: the WARN-severity codes (eval_set_too_small, metric_mismatch) are
+    emitted here as (False, ...) too; the AI-foundation section in cmd_check
+    splits them off into `warnings` by code name before they can feed `failed`.
+    """
+    ai = root / "ai"
+    eval_path = ai / "eval-set.jsonl"
+    rubric_path = ai / "rubric.json"
+    spec_path = ai / "eval-spec.json"
+    io_path = ai / "io-contract.json"
+    fallback_path = ai / "fallback.md"
+    monitor_path = ai / "monitor.json"
+    present = [p for p in (eval_path, rubric_path, spec_path, io_path,
+                           fallback_path, monitor_path) if p.exists()]
+    if not present:
+        return []                                   # silent-when-absent
+
+    def _load(p: Path) -> tuple[object, str | None]:
+        try:
+            return json.loads(p.read_text(encoding="utf-8")), None
+        except (json.JSONDecodeError, OSError) as e:
+            return None, str(e)
+
+    out: list[tuple[bool, str, str]] = []
+
+    # --- eval-set.jsonl (JSONL: fail-closed PER LINE -> malformed_eval_set) ----
+    rows: list | None = None
+    if eval_path.exists():
+        try:
+            raw = eval_path.read_text(encoding="utf-8")
+        except OSError as e:
+            out.append((False, "eval-set.jsonl reads", f"malformed_eval_set: {e}"))
+            raw = None
+        if raw is not None:
+            rows = []
+            bad_line: str | None = None
+            for n, line in enumerate(raw.splitlines(), 1):
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    bad_line = f"line {n}: {e}"
+                    break
+            if bad_line is not None:
+                out.append((False, "eval-set.jsonl parses",
+                            f"malformed_eval_set: {bad_line}"))
+                rows = None
+            else:
+                v = _eval_set_violations(rows)
+                if not v:
+                    out.append((True, "eval-set.jsonl held-out-valid", ""))
+                else:
+                    out += [(False, "eval-set.jsonl held-out-valid", f"{c}: {p} — {d}")
+                            for c, p, d in v]
+    else:
+        # The freeze precondition: a populated .add/ai/ set with no held-out
+        # eval-set.jsonl is "no held-out set, no build" — a HARD red, not silent.
+        # (Whole-set absence already returned [] above; this fires only when the
+        # rest of the named set exists but the eval set itself is missing.)
+        out.append((False, "eval-set.jsonl present",
+                    "missing_eval_set: .add/ai/ is populated but eval-set.jsonl is "
+                    "absent — no held-out set, no build"))
+
+    # --- io-contract.json (loaded early: eval-spec's judge_self_preference and
+    #     the cross-file guardrail check both need its model + guardrails) ------
+    contract = None
+    if io_path.exists():
+        contract, err = _load(io_path)
+        if err is not None:
+            out.append((False, "io-contract.json parses",
+                        f"malformed_io_contract_json: {err}"))
+            contract = None
+        else:
+            v = _io_contract_violations(contract)
+            if not v:
+                out.append((True, "io-contract.json bound", ""))
+            else:
+                out += [(False, "io-contract.json bound", f"{c}: {p} — {d}")
+                        for c, p, d in v]
+    else:
+        # io_contract_unbound: a named set exists but the boundary contract is absent.
+        out.append((False, "io-contract.json bound",
+                    "io_contract_unbound:  — no io-contract.json in the named set"))
+
+    models = contract.get("model") if isinstance(contract, dict) else None
+
+    # --- rubric.json ----------------------------------------------------------
+    if rubric_path.exists():
+        rubric, err = _load(rubric_path)
+        if err is not None:
+            out.append((False, "rubric.json parses", f"malformed_rubric_json: {err}"))
+        else:
+            v = _rubric_violations(rubric)
+            if not v:
+                out.append((True, "rubric.json four-bucket-valid", ""))
+            else:
+                out += [(False, "rubric.json four-bucket-valid", f"{c}: {p} — {d}")
+                        for c, p, d in v]
+
+    # --- eval-spec.json -------------------------------------------------------
+    if spec_path.exists():
+        spec, err = _load(spec_path)
+        if err is not None:
+            out.append((False, "eval-spec.json parses", f"malformed_eval_spec_json: {err}"))
+        else:
+            v = _eval_spec_violations(spec, model_under_test=models)
+            if not v:
+                out.append((True, "eval-spec.json gate-valid", ""))
+            else:
+                out += [(False, "eval-spec.json gate-valid", f"{c}: {p} — {d}")
+                        for c, p, d in v]
+
+    # --- fallback.md + cross-file guardrail_without_fallback ------------------
+    fallback_text: str | None = None
+    if fallback_path.exists():
+        try:
+            fallback_text = fallback_path.read_text(encoding="utf-8")
+        except OSError as e:
+            out.append((False, "fallback.md reads", f"fallback_missing: {e}"))
+    v = _fallback_violations(fallback_text, contract)
+    if fallback_text is not None or v:
+        if not v:
+            out.append((True, "fallback.md safe-state-complete", ""))
+        else:
+            out += [(False, "fallback.md safe-state-complete", f"{c}: {p} — {d}")
+                    for c, p, d in v]
+
+    return out
+
+
+def _fallback_violations(
+    text: str | None, contract: object
+) -> list[tuple[str, str, str]]:
+    """Validate fallback.md against the per-failure-mode safe-state rules.
+
+    PURE / TOTAL. Emits fallback_missing, fallback_no_timeout,
+    guardrail_without_fallback. `text` is None when the file is absent (then
+    fallback_missing fires only if the named set otherwise exists — the
+    compositor decides whether to call this). The RAG/agent extra modes are
+    required only when io-contract.json's guardrails / schema imply them; here we
+    require the BASE modes always and escalate a declared guardrail with no wired
+    fallback line to guardrail_without_fallback.
+    """
+    if text is None:
+        return [("fallback_missing", "",
+                 "no .add/ai/fallback.md — a probabilistic system with no safe state")]
+    out: list[tuple[str, str, str]] = []
+    headings = _normalized_h2(text)
+    body = text.lower()
+
+    for mode in _FALLBACK_BASE_MODES:
+        if mode not in headings:
+            out.append(("fallback_missing", mode,
+                        f"no '## {mode.title()}' safe-state section"))
+
+    # fallback_no_timeout: a ## Limits with a timeout + bounded retry/breaker.
+    has_timeout = any(w in body for w in ("timeout_ms", "timeout", "circuit", "breaker"))
+    has_retry_bound = any(w in body for w in ("retry", "max attempts", "backoff", "circuit"))
+    if not (has_timeout and has_retry_bound):
+        out.append(("fallback_no_timeout", "limits",
+                    "no declared timeout + bounded retry/circuit-breaker — "
+                    "an unbounded wait on a probabilistic dependency"))
+
+    # guardrail_without_fallback: every io-contract guardrail must name a wired line.
+    guardrails = contract.get("guardrails") if isinstance(contract, dict) else None
+    if isinstance(guardrails, list):
+        for g in guardrails:
+            if isinstance(g, str) and g.lower() not in body:
+                out.append(("guardrail_without_fallback", g,
+                            f"guardrail {g!r} declared in io-contract.json has no "
+                            "wired fallback line"))
+
+    return out
+
+
+# ===========================================================================
+# the never-red WARN — the exact analog of _missing_captures(root):
+# pure, total (missing dirs -> []), read-only.
+# ===========================================================================
+def _missing_monitors(root: Path, state: dict) -> list[str]:
+    """Slugs of shipped / observe-phase 'ai' tasks lacking a monitor.json.
+
+    PURE · TOTAL (no tasks / no .add/ai -> []) · READ-ONLY. The engine MEASURES
+    monitor presence; writing monitor.json is the agent's choice (ai.md beat 4).
+    A task counts as 'ai'-kind iff state records kind == 'ai'. A monitor counts
+    as present iff `.add/ai/monitor.json` exists. Returns the shipped/observe
+    'ai' slugs with no monitor, in sorted order — the never-red missing_monitor
+    WARN feed (mirrors _missing_captures' missing_capture).
+    """
+    tasks = state.get("tasks") if isinstance(state.get("tasks"), dict) else {}
+    has_monitor = (root / "ai" / "monitor.json").is_file()
+    if has_monitor:
+        return []
+    out: list[str] = []
+    for slug in sorted(tasks):
+        t = tasks[slug]
+        if not isinstance(t, dict) or t.get("kind") != "ai":
+            continue
+        if t.get("phase") in ("observe", "done"):
+            out.append(slug)
+    return out
+
+
+def _monitor_violations(monitor: object) -> list[tuple[str, str, str]]:
+    """Validate a PRESENT monitor.json (>=1 feedback signal + a drift baseline).
+
+    Emits the WARN-severity monitor_no_drift_baseline (and a missing_monitor WARN
+    for an unfilled signal threshold). PURE / TOTAL. The compositor calls this
+    only when monitor.json exists; absence is _missing_monitors' job.
+    """
+    out: list[tuple[str, str, str]] = []
+    if not isinstance(monitor, dict):
+        return [("monitor_no_drift_baseline", "", "monitor is not a JSON object")]
+    signals = monitor.get("signals")
+    signals = signals if isinstance(signals, list) else []
+    if not any(isinstance(s, dict) and s.get("kind") == "feedback" for s in signals):
+        out.append(("missing_monitor", "signals",
+                    "no implicit user-feedback signal declared"))
+    for i, s in enumerate(signals):
+        if isinstance(s, dict) and s.get("threshold") is None:
+            out.append(("missing_monitor", f"signals[{i}]",
+                        f"signal {s.get('name')!r} has an unfilled threshold"))
+    drift = monitor.get("drift")
+    if not (isinstance(drift, dict)
+            and drift.get("baseline_metric")
+            and _is_number(drift.get("baseline_score"))
+            and _is_number(drift.get("alert_threshold"))):
+        out.append(("monitor_no_drift_baseline", "drift",
+                    "no drift baseline (baseline_metric + baseline_score + alert_threshold)"))
+    return out
+
+
+# ===========================================================================
+# small pure helpers (drop any the engine already defines and reuse its copy)
+# ===========================================================================
+def _is_number(x: object) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def _nonempty_str_list(x: object) -> bool:
+    return isinstance(x, list) and bool(x) and all(isinstance(i, str) and i for i in x)
+
+
+def _model_ids(models: object) -> set[str]:
+    """The set of model ids from io-contract.json's `model` list (or {})."""
+    if not isinstance(models, list):
+        return set()
+    return {m["id"] for m in models if isinstance(m, dict) and isinstance(m.get("id"), str)}
+
+
+def _input_hash(value: object) -> str:
+    """Stable md5 of a normalized eval-case input (for duplicate_leakage)."""
+    norm = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.md5(norm.encode("utf-8")).hexdigest()
+
+
+def _md5_lines(lines: list[str]) -> str:
+    """md5 of the frozen test-partition rows (the tamper-snapshot hash).
+
+    Mirrors the engine's existing red-suite/§3 md5 snapshot; the eval-set hash
+    eval-spec.json carries (eval_set_hash) and the tripwire snapshots is exactly
+    this over the frozen `split == 'test'` rows in document order.
+    """
+    h = hashlib.md5()
+    for ln in lines:
+        h.update(ln.encode("utf-8"))
+        h.update(b"\n")
+    return h.hexdigest()
+
+
+def _normalized_h2(markdown: str) -> set[str]:
+    """The set of normalized H2 heading texts in a markdown doc.
+
+    Normalize: strip leading '## ', lowercase, collapse any run of non-alnum to a
+    single space, strip. '## Low-confidence' and '## Low confidence' both -> the
+    same key 'low confidence'.
+    """
+    out: set[str] = set()
+    for line in markdown.splitlines():
+        s = line.strip()
+        if s.startswith("## "):
+            raw = s[3:].strip().lower()
+            norm = "".join(ch if ch.isalnum() else " " for ch in raw)
+            out.add(" ".join(norm.split()))
+    return out
+
+
+def _ai_verify_gate(root: Path, slug: str) -> tuple[bool, str]:
+    """Read-only eval-gated verify for a kind:ai task (the AI analog of 'tests green').
+    A completing PASS requires a recorded run whose measured score clears the FROZEN
+    eval-spec threshold AND beats the baseline AND carries its lineage, scored against
+    the frozen eval set. Fail-closed: a missing/unparseable spec or run -> a named FAIL
+    reason, never a silent pass. The eval-set/spec/rubric are ALSO frozen in the tamper
+    tripwire (a lowered threshold trips build_tampered before this runs); this gate adds
+    the score + baseline + lineage check the byte-tripwire cannot. A recorded safety /
+    guardrail finding is a HARD-STOP."""
+    def _load(name: str):
+        try:
+            return json.loads((root / "ai" / name).read_text(encoding="utf-8")), None
+        except (OSError, json.JSONDecodeError) as e:
+            return None, str(e)
+    spec, e1 = _load("eval-spec.json")
+    if spec is None:
+        return (False, f"ai_eval_contract_absent: no readable .add/ai/eval-spec.json ({e1}) "
+                       "- freeze the eval contract before the gate")
+    run, e2 = _load("eval-run.json")
+    if run is None:
+        return (False, "ai_eval_unrecorded: record the measured run at .add/ai/eval-run.json "
+                       "(score, eval_set_hash, model_version, data_version) before the gate")
+    score, threshold = run.get("score"), spec.get("threshold")
+    if not _is_number(score) or not _is_number(threshold):
+        return (False, "ai_eval_unscored: eval-run.json 'score' and eval-spec.json 'threshold' "
+                       "must both be numbers")
+    if not (run.get("eval_set_hash") and (run.get("model_version") or run.get("model"))
+            and run.get("data_version")):
+        return (False, "lineage_unrecorded: eval-run.json must carry eval_set_hash + "
+                       "model_version + data_version - a score with no provenance is not evidence")
+    if spec.get("eval_set_hash") and run.get("eval_set_hash") != spec.get("eval_set_hash"):
+        return (False, "eval_run_stale: the recorded run was scored against a different eval set "
+                       "than frozen in eval-spec.json (eval_set_hash mismatch)")
+    if run.get("safety_findings") or run.get("guardrail_pass") is False:
+        return (False, "safety_hard_stop: the recorded run carries a safety/guardrail finding "
+                       "- always a HARD-STOP, never a completing gate")
+    if float(score) < float(threshold):
+        return (False, f"below_threshold: score {score} < frozen threshold {threshold} - return "
+                       "to Build; never lower the threshold to pass")
+    base = (spec.get("baseline") or {}).get("score")
+    if _is_number(base) and float(score) <= float(base):
+        return (False, f"no_baseline_gain: score {score} does not beat the baseline {base}")
+    return (True, "")
+
+
 def cmd_check(args: argparse.Namespace) -> None:
     """Read-only integrity check of the .add project. Exit 1 if anything fails."""
     as_json = getattr(args, "json", False)
@@ -1818,6 +2508,41 @@ def cmd_check(args: argparse.Namespace) -> None:
                          f"prototype '{_pname}' has no design-confirm capture at "
                          f".add/design/captures/{_pname}.<png|svg|…> — render + confirm it "
                          "before build (design.md beat 4)"))
+
+    # AI foundation (ai-check-lint): lint a project's named set under .add/ai/ —
+    # composes the eval-set + rubric + eval-spec + io-contract + fallback
+    # validators. Silent when absent; read-only; fail-closed on malformed
+    # JSON/JSONL. The two WARN-severity codes ride `warnings`, never `checks`
+    # (so they never feed `failed`) — the never-weaken / measure-not-block split.
+    _AI_WARN_CODES = ("eval_set_too_small", "metric_mismatch")
+    for ok, desc, reason in _ai_foundation_violations(root):
+        code = reason.split(":", 1)[0] if reason else ""
+        if (not ok) and code in _AI_WARN_CODES:
+            warnings.append((code, reason))
+        else:
+            checks.append((ok, desc, reason))
+
+    # online-eval WARN: a shipped/observe-phase 'ai' task with no monitor.json —
+    # the never-red nudge mirroring missing_capture. Rides `warnings`, NEVER
+    # `checks`; silent-when-absent (no 'ai' task / monitor present -> []).
+    for _slug in _missing_monitors(root, state):
+        warnings.append(("missing_monitor",
+                         f"shipped 'ai' task '{_slug}' has no .add/ai/monitor.json — "
+                         "wire the online-eval/drift signals before observe closes "
+                         "(ai.md beat 4)"))
+
+    # monitor.json drift-baseline WARN: a PRESENT monitor missing its drift
+    # baseline (or a signal with an unfilled threshold) — never red.
+    _mon = root / "ai" / "monitor.json"
+    if _mon.is_file():
+        try:
+            _mj = json.loads(_mon.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as _e:
+            checks.append((False, "monitor.json parses",
+                           f"malformed_monitor_json: {_e}"))
+        else:
+            for _c, _p, _d in _monitor_violations(_mj):
+                warnings.append((_c, f"monitor.json {_p}: {_d}"))
 
     passed = sum(1 for ok, _, _ in checks if ok)
     failed = len(checks) - passed
@@ -2766,7 +3491,7 @@ def _md5_file(p: Path) -> str | None:
         return None
 
 
-def _tripwire_snapshot(root: Path, slug: str, raw3: str) -> dict:
+def _tripwire_snapshot(root: Path, slug: str, raw3: str, *, kind: str = "code") -> dict:
     """Freeze the md5 of the resolved red test files + the frozen §3 contract — the
     tamper baseline (verify-integrity). Keys are project-root-relative paths (stable
     across the snapshot->gate window). Tool-agnostic: hashes bytes only, never runs
@@ -2782,6 +3507,21 @@ def _tripwire_snapshot(root: Path, slug: str, raw3: str) -> dict:
         except (ValueError, OSError):
             rel = str(f)
         tests[rel] = h
+    # kind:ai — the eval contract IS the red suite: freeze the eval-set + spec + rubric
+    # into the same tamper baseline, so a lowered threshold, a mutated test row, or a
+    # weakened rubric after the freeze trips build_tampered (un-launderable), exactly
+    # like a code task's edited red test.
+    if kind == "ai":
+        for _name in ("ai/eval-set.jsonl", "ai/eval-spec.json", "ai/rubric.json"):
+            _f = root / _name
+            _h = _md5_file(_f)
+            if _h is None:
+                continue
+            try:
+                _rel = str(_f.resolve().relative_to(rootp))
+            except (ValueError, OSError):
+                _rel = str(_f)
+            tests[_rel] = _h
     return {"contract_md5": _md5_text(raw3), "tests": tests}
 
 
@@ -4582,6 +5322,8 @@ def build_parser() -> argparse.ArgumentParser:
     pn.add_argument("--depends-on", dest="depends_on", default=None,
                     help="comma-separated task slugs this task depends on")
     pn.add_argument("--force", action="store_true", help="overwrite TASK.md if present")
+    pn.add_argument("--kind", default="code", choices=("code", "ai"),
+                    help="task kind; 'ai' gates verify on an eval score, not green tests")
     pn.set_defaults(func=cmd_new_task)
 
     pm = sub.add_parser("new-milestone", help="scaffold a milestone (SDD living doc)")

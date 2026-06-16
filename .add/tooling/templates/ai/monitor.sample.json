@@ -1,0 +1,61 @@
+{
+  "signals": [
+    {
+      "name": "online_answer_correctness",
+      "kind": "quality",
+      "threshold": 0.85,
+      "baseline": 0.88
+    },
+    {
+      "name": "groundedness_sample",
+      "kind": "safety",
+      "threshold": 0.90,
+      "baseline": 0.93
+    },
+    {
+      "name": "injection_block_rate",
+      "kind": "safety",
+      "threshold": 1.00,
+      "baseline": 1.00
+    },
+    {
+      "name": "latency_p90_ms",
+      "kind": "latency",
+      "threshold": 1800,
+      "baseline": 1200
+    },
+    {
+      "name": "cost_per_req_usd",
+      "kind": "cost",
+      "threshold": 0.004,
+      "baseline": 0.0031
+    },
+    {
+      "name": "thumbs_down_rate",
+      "kind": "feedback",
+      "threshold": 0.10,
+      "baseline": 0.04
+    },
+    {
+      "name": "question_topic_drift",
+      "kind": "input_dist",
+      "threshold": 0.15,
+      "baseline": 0.0
+    }
+  ],
+  "drift": {
+    "baseline_metric": "answer_correctness",
+    "baseline_score": 0.88,
+    "alert_threshold": 0.85
+  },
+  "audit_log": {
+    "fields": ["request_id", "question_hash", "retrieved_chunk_ids", "answer", "confidence", "guardrail_flags", "model_id", "contract_version"],
+    "retention": "90d",
+    "stamp_contract_version": true
+  },
+  "alert": {
+    "policy": "page on-call if online answer_correctness < 0.85 over a rolling 200-request window, or any safety signal below its threshold",
+    "channel": "#ai-oncall",
+    "runbook": "docs/runbooks/docs-qa-drift.md"
+  }
+}

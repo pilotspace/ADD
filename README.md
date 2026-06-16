@@ -121,6 +121,11 @@ Releases: `@pilotspace/add` (npm) · `pilotspace-add` (PyPI) — one tag publish
 **Releasing**
 - [16 · Releasing](./16-releasing.md)
 
+**The AI vertical**
+- [17 · AI-Driven — the AI vertical](./17-ai-driven-the-ai-vertical.md)
+- [18 · The AI eval contract and validators](./18-ai-eval-contract-and-validators.md)
+- [19 · AI verify and observe](./19-ai-verify-and-observe.md)
+
 **Part IV — Reference**
 - [Appendix A · Templates](./appendix-a-templates.md)
 - [Appendix B · Prompt library](./appendix-b-prompts.md)

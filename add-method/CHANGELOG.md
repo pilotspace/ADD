@@ -4,6 +4,43 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [1.7.0] — 2026-06-17
+
+The AI-engineering release: ADD now has an **AI vertical** (EDD —
+eval-driven development), the AI analog of the red suite. An AI feature freezes
+an **eval contract** before build, verify gates on a **measured eval score**
+instead of a green unit suite, and the frozen eval rides ADD's existing tamper
+tripwire so it can never be quietly weakened. Additive and silent-when-absent: a
+non-AI project sees none of it (SemVer MINOR).
+
+### Added
+- **The AI vertical (`ai.md`, `phases/ai.md`)** — the eval-definition loop
+  (spec → ladder → eval-set → freeze-the-contract) and the `kind: ai` run
+  overlay, loaded on demand like the UDD `design.md`.
+- **`new-task <slug> --kind ai`** — records the task kind in `state.json`; the
+  kind drives the eval-contract validators and the eval-gated verify.
+- **AI eval validators in `add.py check`** — lint the `.add/ai/` named set
+  (`eval-set.jsonl` · `rubric.json` · `eval-spec.json` · `io-contract.json` ·
+  `fallback.md` · `monitor.json`): held-out-split leakage (HARD-STOP), the
+  four rubric buckets thresholded, a pinned bias-mitigated judge, a declared
+  baseline, per-failure-mode fallbacks. Silent when `.add/ai/` is absent.
+- **`missing_eval_set`** — the freeze precondition: a populated `.add/ai/` set
+  with no held-out `eval-set.jsonl` is a hard red (no held-out set, no build).
+- **Eval-gated verify** — for a `kind: ai` task, `add.py gate PASS` requires a
+  recorded eval run whose score clears the frozen threshold AND beats the
+  baseline AND carries its lineage, scored against the frozen eval set
+  (`below_threshold` · `no_baseline_gain` · `lineage_unrecorded` ·
+  `eval_run_stale` · `safety_hard_stop`). The engine measures; it never runs the
+  eval.
+- **Eval-contract tamper freeze** — the `eval-set.jsonl` / `eval-spec.json` /
+  `rubric.json` are snapshotted into ADD's build-integrity tripwire at
+  tests→build; a post-freeze lowered threshold, mutated test row, or weakened
+  rubric trips `build_tampered` (un-launderable), exactly like an edited red test.
+- **AI templates** — `AI-SPEC.md` (the binding entry doc, the `DESIGN.md`
+  analog), the `ai/*` named-set samples, and the `ai-eval.md` dialect.
+- **Book chapters 17–19** — the AI vertical, the eval contract and validators,
+  and AI verify and observe, plus glossary entries for the EDD terms.
+
 ## [1.6.0] — 2026-06-16
 
 The releasing release: shipping a versioned cut is now a first-class **5th ADD

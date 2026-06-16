@@ -22,6 +22,11 @@ is the user's call (`udd-tokens.md`). For a UI feature with a screen, run the de
 loop in `design.md` — domain → research and reuse components → wireframe → a real captured screen
 the human confirms before build — and carry the confirmed layout into the contract.
 
+**AI feature (EDD).** For a task created with `--kind ai`, run the eval-definition loop in `ai.md`
+instead — spec → ladder → eval-set → freeze-the-contract — and carry the frozen eval contract
+(`AI-SPEC.md` + the `.add/ai/` named set) into the bundle. Verify will gate on the measured eval
+score, not a green unit suite. Silent for a non-AI task.
+
 ## Produce (in TASK.md §1)
 
 <output_format>

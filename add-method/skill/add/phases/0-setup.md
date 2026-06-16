@@ -75,7 +75,9 @@ gate: auto-complete NEVER skips the human baseline approval — the `lock` (§4)
    milestone · UI/UX · Key Decisions, one screen), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`,
    `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (the design source of truth: identity ·
    principles · screens · the named-set foundation pointers + render recipe; delete it if there's no UI;
-   the design-definition loop that fills it — domain → components → wireframe → a captured screen confirmed before build — is `design.md`).
+   the design-definition loop that fills it — domain → components → wireframe → a captured screen confirmed before build — is `design.md`), and — for an
+   AI feature — `AI-SPEC.md` (the eval source of truth: success metric · adaptation rung · the `.add/ai/` named-set pointers; delete it if there's no AI feature;
+   the eval-definition loop that fills it — spec → ladder → eval-set → freeze-the-contract — is `ai.md`).
    Brownfield: from the code. Greenfield: from the interview, gaps flagged `guessed`.
 2. **Propose, then size it.** You just read the codebase (brownfield) or interviewed (greenfield) — so
    don't silently draft. First float a **kickoff suggestion** for the first milestone the human reacts to:

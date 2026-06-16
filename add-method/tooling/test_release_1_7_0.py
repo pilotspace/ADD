@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.6.0 release readiness (the RELEASE scope level).
+"""Red/green tests for the 1.7.0 release readiness (the RELEASE scope level).
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 1.6.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 1.7.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
 Run:
-    python3 -m unittest test_release_1_6_0 -v
+    python3 -m unittest test_release_1_7_0 -v
 """
 import hashlib
 import json
@@ -21,18 +21,18 @@ CHANGELOG = PKG / "CHANGELOG.md"
 CI_YML = REPO / ".github" / "workflows" / "ci.yml"
 PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
-VERSION = "1.6.0"
-PRIOR_VERSIONS = ("1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
+VERSION = "1.7.0"
+PRIOR_VERSIONS = ("1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline capabilities the release notes must name (the release-altitude
-# milestone: the release.md guide, the release-report gather, the RELEASES.md
-# ledger, and the book chapter 16)
-FEATURE_ANCHORS = ("release.md", "release-report", "RELEASES.md", "16-releasing.md")
+# the headline capabilities the release notes must name (the AI-engineering
+# vertical: the EDD loop, the held-out eval set + its freeze precondition, the
+# eval-gated verify, and the binding AI spec)
+FEATURE_ANCHORS = ("ai.md", "eval-set.jsonl", "missing_eval_set", "AI-SPEC.md")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_1_6_0_entry(self):
+    def test_changelog_has_1_7_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -41,7 +41,7 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"1.6.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"1.7.0 entry must name: {anchor}")
 
     def test_changelog_ships_in_both_channels(self):
         files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
@@ -65,7 +65,7 @@ class WorkflowHygieneTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    def test_versions_agree_at_1_6_0(self):
+    def test_versions_agree_at_1_7_0(self):
         pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
         py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
                        (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)

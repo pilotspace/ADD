@@ -1,0 +1,156 @@
+# {{project}} — AI Spec (AI-SPEC.md)
+
+> The AI-component source of truth for **{{project}}** ({{stage}}) — drafted {{date}}.
+> The AI builds the component against this doc; the JSON/MD foundation below is what
+> the validators lint and the eval gate scores.
+>
+> **No AI component in this project? This doc is optional — delete it.**
+
+This doc is the **prose front-door** to the `.add/ai/` foundation: it carries the
+*identity*, the *bar*, and the *budget* a human owns, then points at the named-set
+artifacts (`eval-set.jsonl` · `rubric.json` · `eval-spec.json` · `io-contract.json` ·
+`fallback.md` · `monitor.json`) the AI builds against and the eval gate scores.
+
+## Identity
+
+The AI component's identity is **human-owned** — set it here at specify; never let the
+AI invent the task. Fill each prompt with your real values, then delete the comment.
+
+- **Component** — <!-- the one AI feature this doc binds, e.g. "support-reply drafter" -->
+- **Task type** — <!-- generation | rag | agent — decides which eval-spec blocks are required -->
+- **What it hires the model to do** — <!-- one line: the job, in the user's terms -->
+
+## Success metric
+
+The bar is **human-owned** — the engine measures the recorded score, it never invents
+the metric or sets the threshold. Tie it to business impact, not to a vanity number.
+
+- **Business impact** — <!-- the outcome that pays for this component, e.g. "deflect 30% of tickets" -->
+- **Top-line quality metric** — <!-- the single primary metric the verify gate reads (names eval-spec.json primary_metric) -->
+- **Threshold to ship** — <!-- the pass bar; below this returns to Build, never lower it (names eval-spec.json threshold) -->
+- **Baseline to beat** — <!-- majority | random | heuristic | human | prior-model + its score; quality > baseline or it is non-evidence -->
+
+## Criteria
+
+The four buckets every AI component is scored on — each names the `rubric.json`
+criterion that measures it. Fill each prompt; a missing bucket goes red.
+
+- **Capability** — <!-- can it do the task at all? names the rubric criterion -->
+- **Generation faithfulness** — <!-- is the output grounded / non-hallucinated? names the rubric criterion -->
+- **Instruction following** — <!-- does it honor format + constraints? names the rubric criterion -->
+- **Cost / latency** — <!-- is each call inside budget? names the rubric criterion -->
+
+## Model pin
+
+The model-under-test is **pinned** — a recorded score is only reproducible when the run
+is fixed. Pin it here and mirror it into `MODEL_REGISTRY.md`; a change is a change
+request, not a silent edit.
+
+- **Model + version** — <!-- the model id and version the score is earned against -->
+- **Temperature** — <!-- the sampling temperature; judges pin temperature = 0 -->
+- **Seed** — <!-- the fixed seed; report variance over ≥ 2 samples, never one -->
+- **Prompt / template version** — <!-- the prompt or template version, so the score is rebuildable -->
+
+## Method ladder
+
+The **prompt → RAG → finetune** ladder is the default — the cheapest adaptation that
+works. An escalation must be earned; record the cheaper rungs shown exhausted.
+
+- **Chosen rung** — <!-- prompt | rag | finetune -->
+- **Why the cheaper rungs were exhausted** — <!-- what prompting/RAG was tried first and where it fell short; a finetune is a flagged decision the human approves -->
+
+## Eval strategy
+
+The eval contract is the AI analog of the red suite — frozen before build, never
+weakened. It points at the `.add/ai/` set the validators lint.
+
+- **Eval set** — <!-- the held-out distribution scored against; names eval-set.jsonl (≥ 1 case, ≥ 10 recommended) -->
+- **Disjoint split** — <!-- train / val / test row counts + the split key; the test split is sacred, never tuned on -->
+- **Judge pin** — <!-- if any dimension is judge-scored: judge model + version + temperature 0 + seed + samples ≥ 2, judge ≠ model-under-test -->
+- **Lineage** — <!-- the eval-set content hash + model/data version the verify gate records (mirrored in eval-spec.json + MODEL_REGISTRY.md) -->
+
+## Guardrails
+
+The safety floor is **non-negotiable** — a guardrail eval finding is a HARD-STOP, never
+auto-passed. Declare the classes here; wire each to a fallback line in `fallback.md`.
+
+- **Guardrail classes** — <!-- prompt-injection · indirect-injection · PII · toxicity · jailbreak · refusal -->
+- **PII / external-API boundary** — <!-- what must never leave to an external model -->
+- **Trip behavior** — <!-- the safe path each tripped guardrail takes (names a fallback.md line) -->
+
+## Budget
+
+Cost and latency are **first-class acceptance constraints** — the verify eval run
+measures them; an over-budget build fails even when quality passes.
+
+- **Latency envelope** — <!-- p50 / p90 / p99 ceilings the eval run measures (mirrored in io-contract.json budget) -->
+- **Cost per request** — <!-- the per-call cost ceiling -->
+
+## Data provenance
+
+Where the eval and any training data come from — the leakage and contamination guard.
+
+- **Data sources** — <!-- where eval-set.jsonl cases originate; what licence / consent covers them -->
+- **Train-only transforms** — <!-- any scaler/vocab/encoder fit on train only, never test (names io-contract.json train_only_transforms) -->
+- **Contamination check** — <!-- confirm no eval case appears in a finetune/training set — a model scored on its own training data is non-evidence -->
+
+## I/O contract
+
+The pinned I/O boundary — the same contract both sides, output-schema-validated before
+use. Points at `io-contract.json`.
+
+- **Request / response schema** — <!-- the pinned request + response schema the boundary validates (names io-contract.json) -->
+- **Reader policy** — <!-- lenient: unknown fields tolerated + preserved; a strict-reject needs a documented reason -->
+- **Idempotency / retry** — <!-- the idempotency key or no-side-effect assertion + the bounded retry/backoff -->
+- **Schema-invalid output** — <!-- a non-conforming output takes the fallback path and never propagates -->
+
+## Fallback
+
+A probabilistic system without a declared fallback is unsafe by construction — every
+failure mode names a concrete safe path. Points at `fallback.md`.
+
+- **Per-failure safe state** — <!-- timeout · error · low-confidence · schema-invalid · guardrail-trip (+ empty-retrieval for RAG / tool-failure for agent), each a cached/default/cheaper-model/human-in-loop/hard-deny path — never crash/hang -->
+- **Timeout + bound** — <!-- the timeout_ms + bounded retry / circuit-breaker (names fallback.md ## Limits) -->
+
+## Observe / monitor
+
+The Observe-phase online-eval + drift artifact — re-run a sample of the eval set against
+production, record the offline-vs-online delta. Points at `monitor.json`.
+
+- **Live signals** — <!-- quality/safety drift vs the frozen score · latency p50/p90/p99 · cost/request · ≥ 1 implicit user-feedback signal (names monitor.json signals) -->
+- **Drift baseline** — <!-- the baseline metric + score + alert threshold the live delta is measured against -->
+- **Drift → reopen** — <!-- drift below the frozen threshold surfaces as a spec delta / reopen at Specify — never a silent regression -->
+
+## Foundation
+
+The named-set artifacts the validators lint and the eval gate scores — live under
+`.add/ai/`; author them at the contract freeze, then never weaken them:
+
+- **Eval set** — `ai/eval-set.jsonl` · the frozen, held-out cases (one JSON object per
+  line); the AI analog of the red suite. Disjoint train/val/test split; the test split
+  is sacred.
+- **Rubric** — `ai/rubric.json` · the scored acceptance rubric (the four buckets +
+  per-criterion thresholds) the verify gate reads.
+- **Eval spec** — `ai/eval-spec.json` · the reproducible run config + the pre-registered
+  gate (primary metric + threshold + baseline + disjoint split + pinned judge +
+  eval-set hash).
+- **I/O contract** — `ai/io-contract.json` · the pinned model id(s), request/response
+  schema, guardrails, idempotency/retry, and budget — validated at the boundary.
+- **Fallback** — `ai/fallback.md` · the per-failure-mode safe state + the timeout /
+  bounded-retry limits.
+- **Monitor** — `ai/monitor.json` · the Observe-phase online-eval + drift signals, the
+  drift baseline, and the alert policy.
+
+`add.py check` lints this named set in place — a missing / malformed / leaky /
+unthresholded artifact goes red with a named code; it is silent when there is no
+`ai/` set. The frozen eval set + thresholds are hashed into the tamper-tripwire:
+lowering a threshold, mutating a frozen test row, or weakening the rubric is a
+`build_tampered` HARD-STOP, never launderable through RISK-ACCEPTED.
+
+## Gate
+
+For a task-kind `ai`, the verify gate reads the **eval score, not a green unit test**:
+it PASSES only when measured-score ≥ the frozen threshold **AND** > baseline **AND** the
+lineage (eval-set hash + model/data version) is recorded. A below-threshold score
+returns to Build — never lower the threshold, never trim the eval set. A safety /
+guardrail finding and any leakage finding are HARD-STOP.

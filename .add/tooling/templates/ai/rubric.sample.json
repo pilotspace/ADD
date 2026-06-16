@@ -1,0 +1,33 @@
+{
+  "criteria": [
+    {
+      "name": "answer_correctness",
+      "bucket": "capability",
+      "method": "llm_judge",
+      "threshold": 0.85,
+      "weight": 0.35
+    },
+    {
+      "name": "groundedness",
+      "bucket": "generation",
+      "method": "llm_judge",
+      "threshold": 0.90,
+      "weight": 0.30
+    },
+    {
+      "name": "refusal_on_out_of_scope",
+      "bucket": "instruction",
+      "method": "exact",
+      "threshold": 1.00,
+      "weight": 0.20
+    },
+    {
+      "name": "latency_and_cost_budget",
+      "bucket": "cost_latency",
+      "method": "metric",
+      "threshold": 1.00,
+      "weight": 0.15
+    }
+  ],
+  "overall_threshold": 0.85
+}

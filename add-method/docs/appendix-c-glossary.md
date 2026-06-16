@@ -130,6 +130,30 @@
 
 **Design-confirm** — the human touchpoint closing the UDD **design-definition loop** (`review-domain → research-components → wireframe → render-capture-confirm`, beat 4 of the `add` skill's `design.md`): approving the captured screen image **before build**, show-before-ask, so the implementation matches the layout the human has already seen instead of discovering it.
 
+**EDD (eval-driven development)** — the AI vertical of ADD: the discipline of fixing what *good* means as a **frozen eval contract before build**, the AI analog of the red suite. An open-ended generative component has no green/red unit test — correctness is a statistical property over a held-out set — so EDD measures it. Loaded on demand for a `kind: ai` task via the `add` skill's `ai.md`; silent for a non-AI project. See [[Eval contract]].
+
+**Eval contract** — the frozen bundle that defines and gates an AI feature: `eval-set.jsonl` (the held-out cases) · `rubric.json` (the four scored buckets) · `eval-spec.json` (primary metric · threshold · baseline-to-beat · the pinned judge) · `io-contract.json` (the boundary schema + guardrails) · `fallback.md` (the per-failure-mode safe states). The human approves it **once**, before any build; `add.py check` lints it and the `eval-set`/`eval-spec`/`rubric` ride ADD's tamper tripwire so a later weakening trips `build_tampered`. The EDD analog of the frozen §3 contract + red suite.
+
+**Eval-set** — `eval-set.jsonl`, the frozen, held-out set of real cases an AI feature is measured against (≥1 row; ten or more preferred). It is the bar the build clears, never material to tune on. A populated `.add/ai/` set with no eval-set is `missing_eval_set` — no held-out set, no build.
+
+**Held-out test split** — the `split: "test"` rows of the eval-set: **sacred**, informing no prompt, no retrieval tuning, no preprocessing, and no model selection. The train / val / test partitions must be disjoint; a row in two splits (`split_overlap`), a `group_key` straddling train and test (`group_leakage`), or a duplicated input across them (`duplicate_leakage`) is a leakage **HARD-STOP**. See [[Leakage]].
+
+**Leakage** — any path by which the held-out test split informs the build, inflating the measured score above true generalization. The engine lints the statically detectable forms within `eval-set.jsonl` — `split_overlap`, `group_leakage`, `duplicate_leakage`, plus `selection_on_test` from `eval-spec.json` — as HARD-STOPs. Preprocessing leakage and finetune-set contamination, which the engine cannot see, are runner-enforced disciplines. See [[Held-out test split]].
+
+**Rubric (four buckets)** — `rubric.json`, scoring an AI feature across **capability**, **generation faithfulness**, **instruction following**, and **cost & latency**, each bucket with a numeric pass threshold plus an `overall_threshold`. A missing bucket is `rubric_missing_bucket`; an un-numeric threshold is `rubric_missing_threshold`; accuracy as the sole metric is the `metric_mismatch` WARN (a majority-class predictor would already score high).
+
+**Judge independence** — the rule that an LLM-judge must be **pinned** (model + version + temperature 0 + seed), **bias-mitigated** (order randomized over ≥2 samples), and **not the model-under-test**. An unpinned judge is `judge_unpinned`; an un-mitigated one `judge_bias_unmitigated`; a judge equal to the model-under-test `judge_self_preference`. Declared in `eval-spec.json`.
+
+**AI-SPEC.md** — the human-owned binding entry doc for an AI feature (the `DESIGN.md` analog): the **success metric tied to business impact**, the four rubric buckets, the safety floor, and the chosen rung on the **prompt → RAG → finetune** ladder (cheaper rungs shown exhausted, not skipped). Scaffolded at setup; the eval-definition loop that fills it is `ai.md`.
+
+**Eval-gated verify** — for a `kind: ai` task, `add.py gate PASS` requires a recorded eval run whose score clears the frozen threshold **AND** beats the baseline **AND** carries its lineage, scored against the frozen eval-set — not a green unit suite. The refusals are `ai_eval_unrecorded`, `below_threshold`, `no_baseline_gain`, `lineage_unrecorded`, `eval_run_stale`, and `safety_hard_stop` (a guardrail finding is always a HARD-STOP). The engine **measures** the recorded score; it never runs the eval.
+
+**Io-contract** — `io-contract.json`, the boundary contract for an AI feature: the response schema validated at the edge, the guardrail set (prompt injection incl. indirect · PII · jailbreak · toxicity), and idempotency / retry. An unbound output is `io_contract_unbound`; a strict-mode reject path missing is `io_contract_strict_reject`. The probabilistic-IO analog of the frozen §3 shape.
+
+**Fallback (safe state)** — `fallback.md`, a declared safe state for every failure mode of a probabilistic component — timeout, error, low-confidence, schema-invalid, guardrail trip, empty retrieval, tool failure — so the system degrades, never *crashes* or *hangs*. A missing mode is `fallback_missing`; no timeout + bounded retry is `fallback_no_timeout`; a guardrail with no wired safe state is `guardrail_without_fallback`.
+
+**Online eval / drift** — the observe-phase beat for a shipped AI feature: `monitor.json` declares the production signals and a drift baseline, so degradation against the frozen eval is caught in the wild. A shipped `kind: ai` task with no monitor is the never-red `missing_monitor` WARN; a monitor with no baseline is `monitor_no_drift_baseline`. The AI analog of the observe loop's capture WARN.
+
 ---
 
 ## Optional mapping to formal phase names

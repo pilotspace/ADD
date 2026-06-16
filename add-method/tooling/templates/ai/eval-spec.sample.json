@@ -1,0 +1,34 @@
+{
+  "primary_metric": "answer_correctness",
+  "threshold": 0.85,
+  "baseline": {
+    "kind": "heuristic",
+    "score": 0.42
+  },
+  "split": {
+    "train": 3,
+    "val": 2,
+    "test": 5,
+    "key": "id",
+    "stratify": "topic"
+  },
+  "selection_partition": "val",
+  "eval_set_hash": "19d183e9994c258463f954aa2841fcd8",
+  "judge": {
+    "model": "claude-haiku-judge",
+    "version": "2025-09-01",
+    "temperature": 0,
+    "seed": 7,
+    "samples": 3,
+    "bias_mitigations": [
+      "randomized_order",
+      "length_normalized",
+      "judge_ne_model_under_test"
+    ]
+  },
+  "rag": {
+    "retrieval_metrics": ["context_recall", "context_precision", "mrr"],
+    "generation_metrics": ["faithfulness", "answer_relevance"]
+  },
+  "agent": null
+}
