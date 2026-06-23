@@ -1,8 +1,6 @@
 # Phase 4 — Tests (failing-first suite)
 
-Goal: turn scenarios + contract into automated tests and confirm they FAIL before
-any code exists. This operationalizes red/green TDD: red now, green only after
-Build. Fill **§4 TESTS** and write the suite into `.add/tasks/<slug>/tests/`.
+Goal: turn scenarios + contract into automated tests and confirm they FAIL before any code exists — red now, green only after Build. Fill **§4 TESTS** and write the suite into `.add/tasks/<slug>/tests/`.
 
 ## The must-fail principle
 
@@ -28,9 +26,8 @@ Resolution: `./…` → this task's dir · a token containing `/` → the projec
 (the parent of `.add/`) · a bare name → a sibling of the previous token's
 directory (else the task dir). A directory token counts the `*.py` files directly
 inside it (non-recursive); a `.py` file token counts itself; anything else is
-ignored. Resolved files are deduped, and reports mark declared counts with `†`.
-Paths are confined: anything resolving (symlinks followed)
-outside the project root counts 0 — `..` traversal, absolute paths, and
+ignored. Resolved files are deduped; reports mark declared counts with `†`.
+Paths are confined: anything resolving outside the project root counts 0 — `..` traversal, absolute paths, and
 symlink escapes are never read.
 
 ## AI prompt

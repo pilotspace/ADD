@@ -1,8 +1,6 @@
 # Phase 7 — Observe (feed the next loop)
 
-Goal: release deliberately, watch reality, and turn what you learn into the next
-spec. Release is not the finish line — it is where the most reliable information
-about the feature finally appears. Fill **§7** in TASK.md.
+Goal: release deliberately, watch reality, and turn what you learn into the next spec. Fill **§7** in TASK.md.
 
 ## Do
 

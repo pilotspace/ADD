@@ -2,14 +2,13 @@
 
 When a **UI feature** reaches specify, design it before you build it. This loop takes the
 feature from the **domain** to a screen the human has **seen and confirmed** — a real captured
-image — *before* any implementation, so the build matches the expected layout instead of
-discovering it. It is loaded on demand (like `advisor.md` / `confidence.md`); the engine never
-runs it for you.
+image — *before* any implementation. It is loaded on demand (like `advisor.md` / `confidence.md`);
+the engine never runs it for you.
 
 Design before code is the UDD half of the method. The token + component foundation a UI project
 draws from already exists — `tokens.json` (the compact-DTCG dialect, `udd-tokens.md`),
-`catalog.json` + `prototypes/<name>.json` (`udd-catalog.md`). This loop is how you *fill* that
-foundation for a feature and earn the human's sign-off on the look before build.
+`catalog.json` + `prototypes/<name>.json` (`udd-catalog.md`). This loop fills that foundation
+for a feature and earns the human's sign-off on the look before build.
 
 ## The loop — four beats
 
@@ -20,52 +19,47 @@ review-domain  →  research-components  →  wireframe  →  render-capture-con
 Run the beats in order. Each feeds the next; the last ends at a human design-confirm.
 
 ### 1 · review-domain
-Start from the **domain**, not from a blank canvas. Read the domain model — entities, flows, the
+Start from the **domain**, not a blank canvas. Read the domain model — entities, flows, the
 ubiquitous language in `PROJECT.md` / `GLOSSARY.md` — and derive **which screens** the feature
 needs and the **regions** each screen holds. Map each domain entity to a *presentational*
 component (it shows state; it does not own a domain decision). The screen list + per-screen
-regions are this beat's output, and they are grounded in the domain you just read.
+regions are this beat's output, grounded in the domain you just read.
 
 ### 2 · research-components (reuse before you invent)
-Check `catalog.json` **first** and **reuse** the components already there — that is what keeps
-screens consistent. Research a reference UI (a websearch over pattern galleries / component
-libraries for this kind of screen) only to fill a **genuine gap**, and propose a **new** catalog
+Check `catalog.json` **first** and **reuse** the components already there — that keeps screens
+consistent. Research a reference UI only to fill a **genuine gap**, and propose a **new** catalog
 component for that gap with a **cited** reference. Reuse before invention; a new component is the
-exception, named and justified, not the default.
+exception, not the default.
 
 ### 3 · wireframe
 Draw a **low-fi**, **structural** layout for each screen — regions and component slots, no
-styling, no color. This is the cheapest possible artifact that shows the *expected layout*, so
-the human can correct the structure before a pixel is styled. Confirm the wireframe, then move on.
+styling, no color. This is the cheapest artifact that shows the *expected layout*, so the human
+can correct structure before a pixel is styled. Confirm the wireframe, then move on.
 
 ### 4 · render-capture-confirm
 Render the screen as a **self-contained HTML mock** — the project's component library via CDN,
 bound to `tokens.json` (resolved to CSS variables), composed from the **reusable per-component
 kit** (one token-bound partial per catalog component), populated with realistic **mock** data.
-**Capture** a real image of it (a headless screenshot) and present that image to the human for
+**Capture** a real image (a headless screenshot) and present that image to the human for
 **design-confirm** — show-before-ask, **before build**. On confirm, record the layout back to
 `prototypes/<name>.json` + `catalog.json`, save the captured image to
-`.add/design/captures/<name>.<ext>`, and **attach or mention it in the feature's `TASK.md`**
-(alongside the §6 evidence) — so the screen the human approved is traceable from the task that
-builds it. The HTML mock is the *visible evidence*; the json-render tree is the
-*machine-checkable* record of the same screen.
+`.add/design/captures/<name>.<ext>`, and **attach or mention it in the feature's `TASK.md`** —
+so the screen the human approved is traceable from the task that builds it. The HTML mock is the
+*visible evidence*; the json-render tree is the *machine-checkable* record.
 
 ## Tool-agnostic capture
 
-How you render and capture is **your** choice, not the engine's: a headless browser
-(Playwright / Puppeteer), an `html2image`-style renderer, a browser-automation skill, a design
-tool, or a hosted screenshot service — whatever the agent has. The recommended default is the
-self-contained HTML mock above, captured headless, because it needs no app build yet still wears
-the project's real tokens and component vocabulary. For a project that renders json-render, the
-recommended default is **`@json-render/image`** (Satori → PNG/SVG, no browser) — a deterministic
-`Spec` → image. The captured image is a **design-confirm evidence** artifact the human approves;
-it is never an engine output, and the engine never renders. This keeps the loop tool-agnostic and
-the method renderer-free.
+How you render and capture is **your** choice: a headless browser (Playwright / Puppeteer), an
+`html2image`-style renderer, a browser-automation skill, a design tool, or a hosted screenshot
+service. The recommended default is the self-contained HTML mock above, captured headless,
+because it needs no app build yet still wears the project's real tokens and component vocabulary.
+For a project that renders json-render, the recommended default is **`@json-render/image`**
+(Satori → PNG/SVG, no browser). The captured image is **design-confirm evidence** the human
+approves; the engine never renders. This keeps the loop tool-agnostic and the method renderer-free.
 
-Captures live at **`.add/design/captures/<name>.<ext>`** (one per prototype) and are
-attached/mentioned in the feature's `TASK.md`. `add.py check` raises a never-red
-`missing_capture` WARN for any prototype under `.add/design/prototypes/` that still lacks a
-capture — a nudge to render + confirm it, never a blocker.
+Captures live at **`.add/design/captures/<name>.<ext>`** and are attached/mentioned in the
+feature's `TASK.md`. `add.py check` raises a never-red `missing_capture` WARN for any prototype
+under `.add/design/prototypes/` that still lacks a capture — a nudge to render + confirm it.
 
 The loop **binds** the existing UDD contracts **read-only**: `tokens.json`, `catalog.json`, and
 `prototypes/<name>.json` are read and composed, never reshaped — the `prototypes/<name>.json`
