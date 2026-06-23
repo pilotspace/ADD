@@ -152,6 +152,47 @@ Outcome:
 """
 
 
+# Fast-lane fallback: the minimal TASK.md variant (sections {0,1,3,4,5,6}; §2 + §7 dropped).
+# Mirrors templates/TASK.fast.md.tmpl's section set (circuit-breaker parity); a deleted
+# templates/ never hard-fails the fast lane. Keeps the trust floor: §3 freeze-flag + Status,
+# §6 GATE RECORD/Outcome, §0 Anchors, §4 red-before-build, §5 Scope.
+_FALLBACK_TASK_FAST = """# TASK: {title}
+
+slug: {slug} · created: {date} · stage: {stage}
+autonomy: auto
+phase: ground
+fast: true
+
+## 0 · GROUND
+Touches (files · symbols):
+Anchors the contract cites:
+
+## 1 · SPECIFY
+Feature:
+Must:
+Reject:
+Accept:
+Assumptions: ⚠ <most likely wrong> — why; if wrong: <cost>
+
+## 3 · CONTRACT
+Least-sure flag surfaced at freeze:
+Status: DRAFT
+
+## 4 · TESTS
+Plan:
+Tests live in: `./tests/` · MUST run red before Build.
+
+## 5 · BUILD
+Scope (may touch): `./src/`
+
+## 6 · VERIFY
+Build expectations (from §1 Accept + §3 CONTRACT):
+### GATE RECORD
+Outcome:
+Reviewed by:
+"""
+
+
 # --- low-level IO (designed for failure: atomic, no silent clobber) ----------
 
 def _now() -> str:
@@ -237,13 +278,14 @@ def _templates_dir() -> Path:
 def _render_template(name: str, **subs: str) -> str:
     """Load templates/<name>.tmpl and substitute {{key}} tokens.
 
-    Falls back to a built-in minimal template only for TASK.md.
+    Falls back to a built-in minimal template for TASK.md and the fast-lane TASK.fast.md.
     """
     tmpl = _templates_dir() / f"{name}.tmpl"
+    _fallbacks = {"TASK.md": _FALLBACK_TASK, "TASK.fast.md": _FALLBACK_TASK_FAST}
     if tmpl.exists():
         text = tmpl.read_text(encoding="utf-8")
-    elif name == "TASK.md":
-        text = _FALLBACK_TASK.replace("{title}", "{{title}}").replace(
+    elif name in _fallbacks:
+        text = _fallbacks[name].replace("{title}", "{{title}}").replace(
             "{slug}", "{{slug}}").replace("{date}", "{{date}}").replace("{stage}", "{{stage}}")
     else:
         text = ""
@@ -876,8 +918,13 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # inherit the project's DECLARED autonomy default (task init-auto-default) — fail-SAFE:
     # absent -> auto, garbled -> conservative; the posture is project-scoped, not hardcoded.
     autonomy = _project_autonomy(root)
+    # fast lane (fast-new-task-flag): --fast scaffolds the MINIMAL template instead of the full one.
+    # The human opts in explicitly (the engine never guesses ceremony); the freeze floor is held by
+    # the freeze-before-build gate's fast arm (cmd_advance), so the lighter shape never drops the trust seam.
+    fast = bool(getattr(args, "fast", False))
     rendered = _render_template(
-        "TASK.md", title=title, slug=slug, date=date.today().isoformat(),
+        "TASK.fast.md" if fast else "TASK.md",
+        title=title, slug=slug, date=date.today().isoformat(),
         stage=state["stage"], autonomy=autonomy)
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
@@ -902,6 +949,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     }
     if from_delta:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
+    if fast:
+        state["tasks"][slug]["fast"] = True                 # durable lane marker (absent == not-fast)
     _set_active_task(state, slug, milestone)
     save_state(root, state)
     print(f"created task '{slug}' -> {task_md}")
@@ -1018,18 +1067,29 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # freezes — the unmarked predecessors are never retro-redded). REFUSE writes
     # nothing (fail-closed); below the build boundary the flag is never checked.
     if nxt == "build":
-        # build-expectations gate (flow-enforcement, OPTED-IN only): a task whose PARENT milestone
-        # opted into --await-confirm (has a `confirmed` key) may not enter build until its §6
-        # `### Build expectations` are pre-declared — so verify checks the build is RIGHT, not just
-        # green. Same opt-in switch as the contract-fill gate, one level out. A task under a plain/
-        # no milestone is never gated (every existing advance-to-build flow stays green).
-        # validate-then-write — refuse BEFORE the tripwire/scope snapshots below.
+        # the OPTED-IN crossing guards (fast-lane + flow-enforcement): a task whose PARENT
+        # milestone opted into --await-confirm is held to the trust floor at tests->build. A
+        # task under a plain / no milestone is never gated (every existing advance-to-build flow
+        # stays green). validate-then-write — every refusal runs BEFORE the tripwire/scope
+        # snapshots below, writing nothing; the task stays at `tests`.
         _ms = state["tasks"][slug].get("milestone")
-        if _ms and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True:
+        _optin = bool(_ms) and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True
+        raw3 = _raw_phase_bodies(root, slug).get(3, "")
+        # freeze-before-build gate (fast-lane): "collapse-never-skip" made REAL — the freeze is
+        # engine-enforced for an opted-in milestone OR any --fast task (the fast arm, fast-new-task-flag:
+        # a fast task is held to the floor under ANY milestone, so the lighter lane never drops the
+        # trust seam). PRECEDES build-expectations: you freeze §3 before pre-declaring §6's outcomes.
+        _freeze_gated = _optin or state["tasks"][slug].get("fast") is True
+        if _freeze_gated and not _contract_frozen(raw3):
+            _die("contract_not_frozen: freeze §3 before crossing into build — approve "
+                 f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN)")
+        # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
+        # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
+        # not just green. Same opt-in switch as the contract-fill gate, one level out.
+        if _optin:
             if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
                 _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
                      f"of {slug}'s TASK.md before crossing into build")
-        raw3 = _raw_phase_bodies(root, slug).get(3, "")
         if _contract_frozen(raw3):
             if not _flag_well_formed(raw3):
                 _die("unflagged_freeze: a frozen §3 must surface a well-formed "
@@ -1623,7 +1683,10 @@ def cmd_status(args: argparse.Namespace) -> None:
     if _rel:
         print(f"  → {RELEASABLE_CUE.format(n=len(_rel))}")
 
-    print(f"active  : {active or '(none)'}")
+    # fast-lane marker (fast-new-task-flag): tag an ACTIVE fast task so the lane is visible at a
+    # glance. Presentation-only, existence-gated — a plain/absent active task is byte-unchanged.
+    _fast_mark = " · fast" if active and tasks.get(active, {}).get("fast") is True else ""
+    print(f"active  : {active or '(none)'}{_fast_mark}")
     # parallel streams (parallel-status-view): when >=2 milestones are active, render each as its
     # own stream (active task + phase) so a user working N fronts reads them all at once. ADDITIVE —
     # the N<=1 output above is byte-identical (the standing additive-cue convention); presentation
@@ -5835,6 +5898,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="with --from-delta: target the UNIQUE open SPEC delta whose text "
                          "contains SUBSTR (case-insensitive) instead of the first")
     pn.add_argument("--force", action="store_true", help="overwrite TASK.md if present")
+    pn.add_argument("--fast", action="store_true",
+                    help="opt into the fast lane: scaffold the minimal TASK.fast.md template + "
+                         "hold the task to the freeze floor under any milestone")
     pn.set_defaults(func=cmd_new_task)
 
     pdd = sub.add_parser("drop-delta",

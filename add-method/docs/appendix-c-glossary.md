@@ -22,6 +22,8 @@
 
 **Foundation version** — a monotonic integer marker in `PROJECT.md` that advances by one each time confirmed lessons learned are consolidated into the foundation. It makes the living documentation's evolution auditable: a rising version with fewer new deltas per milestone is the signal that a competency is converging rather than drifting. Bumped only by the retrospective consolidation (see the `add` skill's `fold.md`).
 
+**Fast lane** — the collapsed, opt-in task path for small, low-risk work. `add.py new-task <slug> --fast` scaffolds a minimal `TASK.fast.md` (sections {0,1,3,4,5,6}; scenarios and observe dropped) and the specification bundle is approved in one freeze. It runs the SAME flow with fewer sections — it never drops the trust floor: a `--fast` task is held to a frozen contract, a red test before build, and a recorded verify gate under any milestone. Collapse, never skip; the human opts in (the engine never auto-classifies a task as small). See the `add` skill's `phases/fast-lane.md`.
+
 **Gate** — a checkpoint with an explicit pass/fail exit. Its outcome is `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`.
 
 **Ground (phase-0 preamble)** — the per-task phase *before* Specify in which the AI gathers the real current codebase the task touches — files, symbols, signatures, patterns, conventions — into a lean **grounding map**, surfacing the **anchors** the frozen contract will cite. It is AI-owned and adds no approval (the one approval stays at the contract freeze); it precedes the seven steps as step 0 so the contract, tests, and build are grounded in the code as it actually is, not in assumption. Lives in the `add` skill's `phases/0-ground.md`.
