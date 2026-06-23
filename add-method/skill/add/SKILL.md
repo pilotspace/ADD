@@ -67,8 +67,9 @@ Classify a raw request BEFORE any milestone or task: read `intake.md`, place it 
 `new-major` · `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`;
 the human confirms. A question or unsharp intent? **Interview before you size** (`intake.md`). Once
 `new-major`/`sub-milestone`, draft the `MILESTONE.md` (goal · scope · exit criteria · breadth-first
-tasks) — read `scope.md` (how to fill it well, the confirm-before-create rule). For
-`task`/`change-request`: `add.py new-task` then the first phase guide. You propose; the human confirms.
+tasks) — read `scope.md`. Create it `new-milestone --await-confirm`, then `milestone-confirm <slug>`
+gates `new-task` until the parent is agreed. For `task`/`change-request`: `add.py new-task` then the
+first phase guide.
 
 ## The flow and which file to load
 

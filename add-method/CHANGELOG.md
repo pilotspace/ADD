@@ -4,6 +4,33 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [Unreleased]
+
+Lean-pass major — make ADD's own surface the most-effective prompt at optimized
+token cost (not token-golf). Bundles the `skill-effectiveness` (M1) and
+`flow-simplification` (M3) milestones. Behavior is unchanged except for one
+opt-in gate; the rest is a leaner skill tree that routes identically.
+
+### Added
+- **Confirm-parent gate (opt-in, `flow-simplification`)** — `new-milestone
+  <slug> --await-confirm` seeds the milestone *unconfirmed*, so `new-task` is
+  HELD (reject `milestone_unconfirmed`) until you show the filled `MILESTONE.md`,
+  get the human's go, and run the new `add.py milestone-confirm <slug>`. Closes
+  the gap where the AI would detail a task's §0–§5 before the human had agreed
+  the parent milestone. WITHOUT the flag no `confirmed` key is written →
+  grandfathered → no gate, so every existing flow is byte-unchanged. Mirrors
+  `init --await-lock` one level down.
+
+### Changed
+- **Skill tree 25% lighter (`skill-effectiveness`)** — the on-demand skill
+  guides were compacted tree-wide (164,333 → ~123,000 bytes) with zero routing,
+  gate, reject-code, threshold, or rule lost; an independent adversarial review
+  confirmed every operative element preserved. Same flow an agent reads, fewer
+  tokens to load.
+- **One home for the worker-spawn model tiers (`spawn-fold`)** — the tier→model
+  mapping (mid→sonnet / top→opus) now lives only in `streams.md`; `advisor.md`
+  points at it instead of copying. Advisor keeps its own advisory template.
+
 ## [1.8.0] — 2026-06-23
 
 Team collaboration: ADD becomes git-native and multi-user, with N

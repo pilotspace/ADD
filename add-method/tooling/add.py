@@ -543,6 +543,20 @@ def _setup_locked(state: dict) -> bool:
     return ("setup" not in state) or (state["setup"].get("locked") is True)
 
 
+def _milestone_confirmed(state: dict, mslug: str) -> bool:
+    """True when milestone `mslug` is confirmed — i.e. the new-task gate is OPEN.
+
+    Mirrors `_setup_locked` one level down. A milestone record with NO "confirmed" key is
+    GRANDFATHERED-confirmed: every milestone created WITHOUT `--await-confirm` (and every
+    pre-existing one) is never gated. Opt-in: `new-milestone --await-confirm` seeds confirmed:false,
+    so the gate is active in exactly one case: the record is present AND confirmed is False. An
+    unknown milestone is treated as confirmed here (existence is cmd_new_task's separate check)."""
+    m = (state.get("milestones") or {}).get(mslug)
+    if not isinstance(m, dict) or "confirmed" not in m:
+        return True
+    return m["confirmed"] is True
+
+
 def _die(msg: str, code: int = 1) -> None:
     print(f"add: error: {msg}", file=sys.stderr)
     raise SystemExit(code)
@@ -763,6 +777,12 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     milestone = getattr(args, "milestone", None) or _active_milestone(state)
     if milestone and milestone not in state.get("milestones", {}):
         _die("unknown_milestone")
+    # confirm-parent gate (OPT-IN): a task may not be detailed before its parent milestone is
+    # human-confirmed — but ONLY when the milestone opted in via `new-milestone --await-confirm`.
+    # validate-then-write — refuse BEFORE any scaffold/state mutation. A milestone with no
+    # `confirmed` key (non-flag + pre-existing) is grandfathered (mirrors the setup-lock).
+    if milestone and not _milestone_confirmed(state, milestone):
+        _die(f"milestone_unconfirmed: confirm it first — add.py milestone-confirm {milestone}")
     depends_on = _parse_deps(getattr(args, "depends_on", None))
 
     # SEED (--from-delta): resolve a prior task's FIRST open SPEC delta into THIS task.
@@ -2577,15 +2597,48 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     _atomic_write(mfile, _render_template(
         "MILESTONE.md", title=title, goal=args.goal or "<goal>",
         stage=args.stage, date=date.today().isoformat()))
-    state["milestones"][slug] = {
+    # confirm-parent gate (OPT-IN, mirrors `init --await-lock`): `--await-confirm` seeds the
+    # milestone UNCONFIRMED so new-task is held until `add.py milestone-confirm`. WITHOUT the flag
+    # NO `confirmed` key is written → grandfathered-confirmed → no gate (so the existing engine
+    # tests stay byte-green). The guided skill flow passes the flag at the human-review point.
+    await_confirm = bool(getattr(args, "await_confirm", False))
+    record = {
         "title": title, "goal": args.goal or "", "stage": args.stage,
         "status": "active", "created": _now(), "updated": _now(),
     }
+    if await_confirm:
+        record.update(confirmed=False, confirmed_at=None, confirmed_by=None)
+    state["milestones"][slug] = record
     _set_active_milestone(state, slug)
     save_state(root, state)
     print(f"created milestone '{slug}' -> {mfile}")
-    print("active milestone set.")
+    print("active milestone set." + ("" if not await_confirm else
+          "  (unconfirmed — show the MILESTONE.md, then: add.py milestone-confirm " + slug + ")"))
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
+
+
+def cmd_milestone_confirm(args: argparse.Namespace) -> None:
+    """The human gate that opens new-task for a milestone (confirm-parent). Mirrors `cmd_lock`
+    one level down: the human reviews the filled MILESTONE.md, then RECORDS confirmation here.
+    The engine never self-confirms. Validate-then-write; re-confirm is an idempotent note."""
+    root = _require_root()
+    state = load_state(root)
+    slug = args.slug
+    if slug not in state.get("milestones", {}):
+        _die("unknown_milestone")
+    m = state["milestones"][slug]
+    if m.get("confirmed") is True:
+        print(f"milestone '{slug}' already confirmed (by {m.get('confirmed_by', '?')}).")
+        return
+    who = getattr(args, "by", None) or getpass.getuser()
+    m["confirmed"] = True
+    m["confirmed_at"] = _now()
+    m["confirmed_by"] = who
+    m["actor"] = _actor_stamp(state)   # structured actor alongside the free-text confirmed_by
+    m["updated"] = _now()
+    save_state(root, state)
+    print(f"confirmed milestone '{slug}' (by {who}) — new-task is now open for it.")
+    print(_next_footer(root, state))
 
 
 def cmd_ready(args: argparse.Namespace) -> None:
@@ -5712,7 +5765,17 @@ def build_parser() -> argparse.ArgumentParser:
     pm.add_argument("--goal", default=None, help="one-sentence outcome")
     pm.add_argument("--stage", default="mvp", choices=STAGES)
     pm.add_argument("--force", action="store_true", help="overwrite MILESTONE.md if present")
+    pm.add_argument("--await-confirm", action="store_true",
+                    help="opt into the confirm-parent gate: seed the milestone unconfirmed so "
+                         "new-task is held until `milestone-confirm` (mirrors `init --await-lock`); "
+                         "the guided skill flow passes this at the human-review point")
     pm.set_defaults(func=cmd_new_milestone)
+
+    pmc = sub.add_parser("milestone-confirm",
+                         help="confirm a milestone (the human gate that opens new-task for it)")
+    pmc.add_argument("slug")
+    pmc.add_argument("--by", default=None, help="free-text confirmer name (defaults to the OS user)")
+    pmc.set_defaults(func=cmd_milestone_confirm)
 
     pr = sub.add_parser("ready", help="list tasks whose dependencies are satisfied")
     pr.add_argument("--json", action="store_true", help="machine-readable JSON output")

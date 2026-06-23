@@ -57,6 +57,11 @@ LIFECYCLE = [
     ["lock", "--force"],                       # setup lock-down: reads/writes state.json, never docs/
                                                # (--force: a plain-init project is grandfathered-locked)
     ["new-milestone", "mvp", "--goal", "g", "--stage", "mvp"],
+    ["milestone-confirm", "mvp"],              # confirm-parent gate (opt-in): the human gate that
+                                               # opens new-task for mvp — here mvp was created without
+                                               # --await-confirm (no key, grandfathered), so this is an
+                                               # idempotent confirm that exercises the verb (reads/writes
+                                               # state, never docs/)
     ["new-task", "t", "--title", "Feature"],   # auto-linked to mvp
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
     ["whoami"],                                # read-only actor resolve (git config -> OS user; reads state, never docs/)
