@@ -557,6 +557,28 @@ def _milestone_confirmed(state: dict, mslug: str) -> bool:
     return m["confirmed"] is True
 
 
+def _section_unfilled(md_text: str, header: str) -> bool:
+    """True iff the `header` section is PRESENT but UNFILLED — empty (no real bullet) or
+    still a `<…>` template placeholder. ABSENT section -> False (grandfathered legacy);
+    a filled section (>=1 real bullet, no `<…>`) -> False. Pure predicate — the shared
+    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build)."""
+    body, in_sec, present = [], False, False
+    for ln in md_text.splitlines():
+        if ln.startswith(header):
+            in_sec, present = True, True
+            continue
+        if in_sec:
+            if ln.startswith("## "):       # next section ends ours
+                break
+            body.append(ln)
+    if not present:
+        return False                        # absent -> grandfather
+    text = "\n".join(body).strip()
+    if not text:
+        return True                         # present but empty
+    return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
+
+
 def _die(msg: str, code: int = 1) -> None:
     print(f"add: error: {msg}", file=sys.stderr)
     raise SystemExit(code)
@@ -2630,6 +2652,17 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     if m.get("confirmed") is True:
         print(f"milestone '{slug}' already confirmed (by {m.get('confirmed_by', '?')}).")
         return
+    # contract-fill gate (flow-enforcement, OPTED-IN only): a milestone that opted into
+    # --await-confirm (carries a `confirmed` key) may not be confirmed until its cross-task
+    # `## Shared / risky contracts` section is filled — so "confirmed" MEANS the contracts
+    # were present at confirm time. A grandfathered no-key milestone keeps the plain stamp
+    # (gate skipped — keeps the census + existing flows green). Validate-then-write.
+    if "confirmed" in m:
+        mfile = root / "milestones" / slug / MILESTONE_FILE
+        md = mfile.read_text(encoding="utf-8") if mfile.exists() else ""
+        if _section_unfilled(md, "## Shared / risky contracts"):
+            _die("milestone_contracts_unfilled: fill the '## Shared / risky contracts' "
+                 f"section of {slug}'s MILESTONE.md before confirming")
     who = getattr(args, "by", None) or getpass.getuser()
     m["confirmed"] = True
     m["confirmed_at"] = _now()

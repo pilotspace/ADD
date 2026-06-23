@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-review",
+  "active_task": "contract-fill-gate",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,10 +1195,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "contract-fill-gate": {
+      "title": "milestone-confirm refuses unfilled cross-task contracts",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-enforcement",
+      "depends_on": [],
+      "created": "2026-06-23T11:20:53+00:00",
+      "updated": "2026-06-23T11:38:09+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "544ce2d2853cd0a9595ce461dd01447c",
+        "tests": {
+          "add-method/tooling/test_contract_fill_gate.py": "638285112c640e83c214abff06d28c54"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_contract_fill_gate.py",
+          "add-method/tooling/test_confirm_parent.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py"
+        ],
+        "snapshot_md5": "74af0313f9d8371af127f3dad421f673"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T08:04:24+00:00",
+  "updated": "2026-06-23T11:38:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1380,9 +1412,25 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "flow-enforcement": {
+      "title": "Flow enforcement \u2014 turn convention fill-seams into engine gates",
+      "goal": "the method's three fill-seams are engine-enforced rather than convention, so a task is detailed, built, and gated only after the milestone contracts, the build-expectations, and the gate outcome are actually present in the file",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-23T11:17:29+00:00",
+      "updated": "2026-06-23T11:20:53+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-23T11:20:53+00:00",
+      "confirmed_by": "Tin Dang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "flow-simplification",
+  "active_milestone": "flow-enforcement",
   "archived": [
     {
       "slug": "v5",
@@ -1815,9 +1863,10 @@
     }
   ],
   "active_milestones": [
-    "flow-simplification"
+    "flow-enforcement"
   ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "flow-enforcement": "contract-fill-gate"
   }
 }
