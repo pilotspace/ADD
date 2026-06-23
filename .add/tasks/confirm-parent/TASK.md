@@ -238,9 +238,9 @@ Constraints: do NOT change any existing test or weaken one; the gate is risk:hig
 - [x] SEMANTIC (prose / non-code) — read the SKILL.md + scope.md edits in full: the guided flow reads correctly, the gate is described as opt-in, byte-budgets held (core 14849≤14866 · reference 40405≤40406 · tree 123198≤123249) by reclaiming genuine redundancy (no rule lost)
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>   (awaiting human — risk:high gate)
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
+Reviewed by: Tin Dang · date: 2026-06-23
 
 <!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. -->
 

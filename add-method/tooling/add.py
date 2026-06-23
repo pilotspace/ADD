@@ -557,6 +557,66 @@ def _milestone_confirmed(state: dict, mslug: str) -> bool:
     return m["confirmed"] is True
 
 
+def _section_unfilled(md_text: str, header: str) -> bool:
+    """True iff the `header` section is PRESENT but UNFILLED — empty (no real bullet) or
+    still a `<…>` template placeholder. ABSENT section -> False (grandfathered legacy);
+    a filled section (>=1 real bullet, no `<…>`) -> False. Pure predicate — the shared
+    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build)."""
+    body, in_sec, present = [], False, False
+    for ln in md_text.splitlines():
+        if ln.startswith(header):
+            in_sec, present = True, True
+            continue
+        if in_sec:
+            if ln.startswith("#"):          # ANY next header (## or ###) ends our section
+                break
+            if ln.lstrip().startswith(">"):  # skip blockquote GUIDANCE — it is not content
+                continue
+            body.append(ln)
+    if not present:
+        return False                        # absent -> grandfather
+    text = "\n".join(body).strip()
+    if not text:
+        return True                         # present but empty
+    return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
+
+
+def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None:
+    """Write-back (gate-record-writeback): mirror the resolved gate verdict into the task's
+    §6 `### GATE RECORD`, so the file and state.json never silently diverge (Finding C). Runs
+    for EVERY task — the write is ADDITIVE and never refuses, so (unlike the two refusal gates)
+    it needs no `--await-confirm` opt-in to protect the census. GRANDFATHER is the safety: a
+    GATE RECORD line is rewritten ONLY while it still holds a `<…>` placeholder; a resolved
+    (hand-filled) line is byte-untouched. No GATE RECORD block / no placeholder line / an
+    unreadable file -> silent no-op, the file stays byte-identical. Called AFTER save_state —
+    state is the source of truth; the file only mirrors it, so a write fault never loses a verdict."""
+    f = root / "tasks" / slug / "TASK.md"
+    try:
+        text = f.read_text(encoding="utf-8")
+    except OSError:
+        return                                   # unreadable -> no-op (never blocks the gate)
+    if "### GATE RECORD" not in text:
+        return                                   # nothing to mirror into
+    actor = _actor_stamp(state)
+    today = date.today().isoformat()
+    # each rule matches ONLY a line still carrying a `<…>` placeholder -> grandfather a resolved line.
+    rules = [
+        (r"(?m)^(Outcome:[ \t]*)<[^>\n]*>.*$", f"Outcome: {outcome}"),
+        (r"(?m)^Reviewed by:[ \t]*.*<[^>\n]*>.*$",
+         f"Reviewed by: {actor['name']} · date: {today}"),
+    ]
+    if outcome == "RISK-ACCEPTED":
+        w = ((state.get("tasks") or {}).get(slug) or {}).get("waiver") or {}
+        rules.append((r"(?m)^If RISK-ACCEPTED ->.*<[^>\n]*>.*$",
+                      f"If RISK-ACCEPTED -> owner: {w.get('owner', '?')} · "
+                      f"ticket: {w.get('ticket', '?')} · expires: {w.get('expires', '?')}"))
+    new = text
+    for pat, repl in rules:
+        new = re.sub(pat, repl, new, count=1)
+    if new != text:                              # no-op = no write (mtime stable)
+        _atomic_write(f, new)
+
+
 def _die(msg: str, code: int = 1) -> None:
     print(f"add: error: {msg}", file=sys.stderr)
     raise SystemExit(code)
@@ -958,6 +1018,17 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # freezes — the unmarked predecessors are never retro-redded). REFUSE writes
     # nothing (fail-closed); below the build boundary the flag is never checked.
     if nxt == "build":
+        # build-expectations gate (flow-enforcement, OPTED-IN only): a task whose PARENT milestone
+        # opted into --await-confirm (has a `confirmed` key) may not enter build until its §6
+        # `### Build expectations` are pre-declared — so verify checks the build is RIGHT, not just
+        # green. Same opt-in switch as the contract-fill gate, one level out. A task under a plain/
+        # no milestone is never gated (every existing advance-to-build flow stays green).
+        # validate-then-write — refuse BEFORE the tripwire/scope snapshots below.
+        _ms = state["tasks"][slug].get("milestone")
+        if _ms and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True:
+            if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
+                _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
+                     f"of {slug}'s TASK.md before crossing into build")
         raw3 = _raw_phase_bodies(root, slug).get(3, "")
         if _contract_frozen(raw3):
             if not _flag_well_formed(raw3):
@@ -1146,6 +1217,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
     state["tasks"][slug]["gate_actor"] = _actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)
+    _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     print(f"task '{slug}' gate -> {args.outcome}")
     # the engine-sourced next step (next-footer-engine): a completing gate hands off to the
     # state arm; HARD-STOP routes to "resolve HARD-STOP …" — converging the old bespoke line.
@@ -2607,7 +2679,10 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         "status": "active", "created": _now(), "updated": _now(),
     }
     if await_confirm:
-        record.update(confirmed=False, confirmed_at=None, confirmed_by=None)
+        # `await_confirm` is the STABLE opt-in marker (set ONLY here, at creation). `confirmed`
+        # alone is NOT a reliable opt-in signal: milestone-confirm stamps confirmed:true on a plain
+        # milestone too, so a later build-entry gate must key on `await_confirm`, not `confirmed`.
+        record.update(confirmed=False, confirmed_at=None, confirmed_by=None, await_confirm=True)
     state["milestones"][slug] = record
     _set_active_milestone(state, slug)
     save_state(root, state)
@@ -2630,6 +2705,17 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     if m.get("confirmed") is True:
         print(f"milestone '{slug}' already confirmed (by {m.get('confirmed_by', '?')}).")
         return
+    # contract-fill gate (flow-enforcement, OPTED-IN only): a milestone that opted into
+    # --await-confirm (carries a `confirmed` key) may not be confirmed until its cross-task
+    # `## Shared / risky contracts` section is filled — so "confirmed" MEANS the contracts
+    # were present at confirm time. A grandfathered no-key milestone keeps the plain stamp
+    # (gate skipped — keeps the census + existing flows green). Validate-then-write.
+    if "confirmed" in m:
+        mfile = root / "milestones" / slug / MILESTONE_FILE
+        md = mfile.read_text(encoding="utf-8") if mfile.exists() else ""
+        if _section_unfilled(md, "## Shared / risky contracts"):
+            _die("milestone_contracts_unfilled: fill the '## Shared / risky contracts' "
+                 f"section of {slug}'s MILESTONE.md before confirming")
     who = getattr(args, "by", None) or getpass.getuser()
     m["confirmed"] = True
     m["confirmed_at"] = _now()

@@ -36,6 +36,14 @@ class ConfirmParentTest(unittest.TestCase):
     def _milestone(self, slug="mvp"):
         return self._state()["milestones"][slug]
 
+    def _fill_contracts(self, slug="mvp"):
+        """v2 contract-fill gate (flow-enforcement): an OPTED-IN milestone needs a filled
+        '## Shared / risky contracts' section before milestone-confirm will record it."""
+        p = Path(self.tmp) / ".add" / "milestones" / slug / "MILESTONE.md"
+        p.write_text(p.read_text().replace(
+            "- <contract name> -> owning task <slug>",
+            "- real contract -> owning task alpha"), encoding="utf-8")
+
     @staticmethod
     def _die_stderr(argv):
         """Run add.main(argv) expecting SystemExit; return (code, stderr text)."""
@@ -73,6 +81,7 @@ class ConfirmParentTest(unittest.TestCase):
 
     def test_milestone_confirm_opens_gate(self):
         add.main(["new-milestone", "mvp", "--goal", "g", "--stage", "mvp", "--await-confirm"])
+        self._fill_contracts()   # v2: opted-in confirm needs filled cross-task contracts
         add.main(["milestone-confirm", "mvp"])
         m = self._milestone()
         self.assertIs(m.get("confirmed"), True)
@@ -122,6 +131,7 @@ class ConfirmParentTest(unittest.TestCase):
 
     def test_reconfirm_idempotent(self):
         add.main(["new-milestone", "mvp", "--goal", "g", "--stage", "mvp", "--await-confirm"])
+        self._fill_contracts()   # v2: opted-in confirm needs filled cross-task contracts
         add.main(["milestone-confirm", "mvp"])
         first = self._milestone().get("confirmed_at")
         with contextlib.redirect_stdout(io.StringIO()):

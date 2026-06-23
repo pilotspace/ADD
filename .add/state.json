@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-review",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1198,7 +1198,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T08:04:24+00:00",
+  "updated": "2026-06-23T12:58:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1382,7 +1382,7 @@
       }
     }
   },
-  "active_milestone": "flow-simplification",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -1812,11 +1812,20 @@
         "reference-trim"
       ],
       "archived": "2026-06-23"
+    },
+    {
+      "slug": "flow-enforcement",
+      "title": "Flow enforcement \u2014 turn convention fill-seams into engine gates",
+      "tasks": 3,
+      "task_slugs": [
+        "contract-fill-gate",
+        "build-expectations-gate",
+        "gate-record-writeback"
+      ],
+      "archived": "2026-06-23"
     }
   ],
-  "active_milestones": [
-    "flow-simplification"
-  ],
+  "active_milestones": [],
   "active_tasks": {
     "flow-simplification": "phase-review"
   }
