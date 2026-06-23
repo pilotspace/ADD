@@ -7,30 +7,21 @@ removed all ambiguity. Write code into `.add/tasks/<slug>/src/`.
 ## Work in small batches
 
 Pick ONE task-sized slice, restate the tests it must satisfy, implement, run
-tests, iterate to green. Keep each batch small enough to review in full — you
-cannot move faster than you can verify.
+tests, iterate to green. Keep each batch small enough to review in full.
 
 ## Declaring the scope of impact (Scope + Strategy)
 
-§5 of TASK.md opens with two declarations, drafted WITH the specification bundle
-and frozen by the one §3 approval — never invented mid-build:
+§5 of TASK.md opens with two declarations, drafted WITH the specification bundle and frozen by the §3 approval — never invented mid-build:
 
-- **Scope (may touch)** — the allowlist of every file the build may write
-  (backticked tokens; grammar in the template comment). During build, needing a
-  file outside the declared Scope is a **STOP → change request** back to Specify,
-  never improvisation.
-- **Strategy (ordered batches)** — the planned build order. Guidance, not
-  enforced: it aims the small-batches loop, it does not gate it.
+- **Scope (may touch)** — the allowlist of every file the build may write (backticked tokens). Needing a file outside the declared Scope is a **STOP → change request** back to Specify, never improvisation.
+- **Strategy (ordered batches)** — the planned build order. Guidance, not enforced.
 
-Deferral, named: the engine gate (touched ⊆ declared) lands in the
-`scope-gate-enforce` task — until it ships this section is prose discipline.
+Deferral, named: the engine gate (touched ⊆ declared) lands in the `scope-gate-enforce` task — until it ships this section is prose discipline.
 
 ## The cardinal rule
 
 **Never weaken or delete a test to make it pass, and never edit the frozen
-contract.** That makes the code judge itself. A genuine need to change either is a
-change request back to Specify. Honor the feature-specific safety rule named in §5
-(e.g. atomic balance update) — the one property tests alone may not force.
+contract.** A genuine need to change either is a change request back to Specify. Honor the feature-specific safety rule named in §5 (e.g. atomic balance update).
 
 ## AI prompt
 
@@ -62,11 +53,6 @@ Never: change a test or the contract; use a package off the allow-list; or push 
 `python3 .add/tooling/add.py advance` → read `phases/6-verify.md`.
 Book: `docs/07-step-5-build.md`.
 
-> Under `autonomy: auto` (the default) Build and Verify run together as one dynamic,
-> evidence-auto-gated run — not two manual stops. See `run.md`.
+> Under `autonomy: auto` Build and Verify run together as one evidence-auto-gated run. See `run.md`.
 >
-> **Honest redo.** If the verify gate finds a confirmed cheat (a tamper, or a reported
-> earned-green failure), the task returns HERE for an honest redo — revert the tampered
-> file or de-overfit src, then advance again. This is the bounded self-heal loop (`run.md`),
-> capped: after the cap a confirmed cheat HARD-STOPs to the human. Never weaken a test or
-> edit the frozen contract to pass.
+> **Honest redo.** A confirmed cheat returns the task HERE — revert the tampered file or de-overfit src, then advance again. This is the bounded self-heal loop (`run.md`), capped: after the cap it HARD-STOPs to the human. Never weaken a test or edit the frozen contract to pass.

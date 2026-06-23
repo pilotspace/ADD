@@ -3,44 +3,29 @@
 Goal: state what the feature MUST do and what it must REJECT, with zero ambiguity
 for the AI to resolve by guessing. Fill **§1 SPECIFY** in TASK.md.
 
-Specify is **co-specification**: brainstorm the shape WITH the user, draft it, then let
-the user validate with your advice. If you cannot write the spec, you do not yet
-understand the feature — that is information, not an obstacle. Stop and ask.
+Specify is **co-specification**: brainstorm the shape WITH the user, draft it, then validate. If you cannot write the spec, you do not yet understand the feature — stop and ask.
 
 ## Co-specify in three moves
 
-1. **Diverge** — before drafting, surface the decision space: the 2–3 genuine framings of the
-   feature + the open questions you would otherwise guess. Invite the user to add, kill,
-   redirect. (Conversational — no new file. At prototype/poc this shortens to one sentence.)
+1. **Diverge** — surface the decision space: the 2–3 genuine framings of the feature + the open questions you would otherwise guess. Invite the user to add, kill, redirect. (Conversational — no new file. At prototype/poc this shortens to one sentence.)
 2. **Converge** — draft §1, then RANK where your confidence is lowest (below).
 3. **Validate** — present the ranked uncertainty first; the user confirms, corrects, or sends back.
 
-**Identity is direction, not default (UDD).** For UI/design work, identity values — the brand
-color, the core palette, the typeface — are human-owned. Surface them for discussion during
-Diverge; never assume a brand value. The UDD token dialect checks a token's *shape*; its *value*
-is the user's call (`udd-tokens.md`). For a UI feature with a screen, run the design-definition
-loop in `design.md` — domain → research and reuse components → wireframe → a real captured screen
-the human confirms before build — and carry the confirmed layout into the contract.
+**Identity is direction, not default (UDD).** Brand color, palette, typeface are human-owned — surface them during Diverge, never assume. For a UI feature with a screen, run the design-definition loop in `design.md`.
 
 ## Produce (in TASK.md §1)
 
 <output_format>
-- **Framings weighed** — a one-line trace of what you considered: `X (chosen) · Y · Z`.
+- **Framings weighed** — one-line trace: `X (chosen) · Y · Z`.
 - **Must** — each required behavior.
-- **Reject** — each refused input/situation, paired with a **named error code**
-  (`amount <= 0 -> "amount_invalid"`, never "handle bad input").
+- **Reject** — each refused input/situation, paired with a **named error code** (`amount <= 0 -> "amount_invalid"`, never "handle bad input").
 - **After** — the state that is true once it succeeds.
-- **Assumptions — lowest-confidence first** — ranked most-likely-wrong → least. The top 1–2 carry a
-  `⚠` flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. The rest are the
-  low-stakes `[x]` tail. Keep the ranking visible — a flat list of equal `[x]` ticks gets approved without reading.
+- **Assumptions — lowest-confidence first** — ranked most-likely-wrong → least. The top 1–2 carry a `⚠` flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Keep the ranking visible — a flat list of equal `[x]` ticks gets approved without reading.
 </output_format>
 
 ## The lowest-confidence flag is bundle-wide
 
-The single human approval happens once, at the contract freeze, over the whole bundle. So your
-§1 ranking is the first input into a bundle-level flag the user reads at the decision point (`run.md`):
-*"of everything I'm asking you to freeze, these 1–2 are most likely wrong."* A flag may point at
-a §1 assumption, an uncovered scenario, or the contract shape.
+The single human approval happens at the contract freeze, over the whole bundle. So your §1 ranking feeds a bundle-level flag the user reads at the decision point (`run.md`): *"of everything I'm asking you to freeze, these 1–2 are most likely wrong."*
 
 ## AI prompt
 

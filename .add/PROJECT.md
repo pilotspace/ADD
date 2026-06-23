@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 45
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 46
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -37,6 +37,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
   not (v22 · DDD; same archive seam as graduation-analytics' traversal-basis convention).
 
 ## Spec / Living Document (SDD) — what we are building, now
+- (SDD) the suite IS the behavior contract for a prose compaction — 2 wording slips ("Tie-break order", "never the artifact") were caught only by the FULL suite, not the 33-subset (evidence: gate-on-full-suite mitigation paid off).  [folded foundation-version 46 · from skill-core-compact]
 - (SDD) a new runtime dependency falsifies any "zero-dep" prose; grep + fix the claim in the SAME change (evidence: cli.js header corrected from "Zero npm dependencies"; README/GETTING-STARTED/docs grepped clean).  [folded foundation-version 38 · from installer-prompts]
 - (SDD) one glossary term touches 9 files across 3 sync regimes (book ×4 · template ×3 · dogfood ×1) and must be written in EACH type's native format (appendix `**T** — d` · template/dogfood `t: d`) — parity guards catch byte-divergence but the per-type FORMAT is a manual judgment the test must pin per type (evidence: test_B2 asserts format-by-type)  [folded foundation-version 37 · from close-book-accord]
 - (SDD) the wording-lint scans skill guides for bare status/process slang AND exempts code spans — the lifecycle `milestone-done → fold → compact → archive` must be backticked (as release.md does), not bare prose; a bare "fold" turned the full suite red (evidence: test_slang_absent_extended_surface term='fold' until the code-span reword)  [folded foundation-version 37 · from close-guide]
@@ -262,6 +263,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-06-23 | fold all → foundation-version 46 (SDD 1 · ADD 4) | consolidate captured OBSERVE lessons into the versioned foundation | 5 lessons open→folded; +5 routed bullets; 45→46 |
 | 2026-06-22 | fold all → foundation-version 45 (TDD 3 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 6 lessons open→folded; +6 routed bullets; 44→45 |
 | 2026-06-22 | fold all → foundation-version 44 (TDD 2 · ADD 2) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 43→44 |
 | 2026-06-22 | fold all → foundation-version 43 (DDD 1 · TDD 1 · ADD 1) | consolidate captured OBSERVE lessons into the versioned foundation | 3 lessons open→folded; +3 routed bullets; 42→43 |

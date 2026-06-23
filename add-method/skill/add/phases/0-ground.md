@@ -12,23 +12,15 @@ the work — gathering them IS the job, not a detour.
 ## Gather (in TASK.md §0)
 
 - **Touches** — the real files · symbols · signatures the task will read or change,
-  named from the actual code (use your code-navigation tools — grep / symbol search,
-  never memory). Each as `path:symbol — what it is / how it is keyed`.
-- **Context (working folder)** — beyond code, the NON-code artifacts the task touches:
-  docs/textbase (README · `*.md` · design notes) · TODOs (`TODO.md` · `FIXME`/`TODO`/`HACK`
-  comments · task lists) · config/manifests (configs · `.env.example` · `pyproject`/`package`
-  · CI) · data/fixtures (samples · fixtures · schemas). Gather only the TASK-SPECIFIC
-  delta — never index the whole repo.
-- **Honors** — the patterns and conventions the work must respect, cited from
-  `PROJECT.md` / `CONVENTIONS.md`. Gather only the TASK-SPECIFIC delta — never
-  re-derive the architecture or re-run the setup brownfield scan.
-- **Anchors the contract cites** — the specific symbols §3 CONTRACT will name. The
-  contract may cite only anchors that appear here.
+  named from the actual code (use code-navigation tools — grep / symbol search, never memory).
+  Each as `path:symbol — what it is / how it is keyed`.
+- **Context (working folder)** — NON-code artifacts the task touches: docs/textbase (README · `*.md` · design notes) · TODOs (`TODO.md` · `FIXME`/`TODO`/`HACK` comments) · config/manifests (configs · `.env.example` · `pyproject`/`package` · CI) · data/fixtures. Task-specific delta only — never index the whole repo.
+- **Honors** — the patterns and conventions the work must respect, cited from `PROJECT.md` / `CONVENTIONS.md`. Task-specific delta only — never re-derive the architecture.
+- **Anchors the contract cites** — the specific symbols §3 CONTRACT will name. The contract may cite only anchors that appear here.
 
 **How — gather efficiently:** for the BROAD sweep, prefer a small-model subagent / fast
 index / skim (offload to a cheap context, return a compact map); then DEEPEN on what THIS
-task specifically needs — never lock a shallow first pass. A recommendation: the engine
-never spawns a subagent (tool-agnostic), so the orchestrating agent chooses.
+task specifically needs — never lock a shallow first pass.
 
 ## Greenfield / first task
 

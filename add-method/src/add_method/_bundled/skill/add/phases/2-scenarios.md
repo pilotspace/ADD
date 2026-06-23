@@ -1,8 +1,6 @@
 # Phase 2 — Scenarios (pass/fail cases)
 
-Goal: rewrite each rule as a concrete Given/When/Then that is readable by people
-and checkable by machines. This is the highest-leverage artifact — the tests are
-generated from it. Fill **§2 SCENARIOS** in TASK.md.
+Goal: rewrite each rule as a concrete Given/When/Then that is readable by people and checkable by machines. Fill **§2 SCENARIOS** in TASK.md.
 
 ## Produce (in TASK.md §2)
 
