@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "contract-fill-gate",
+  "active_task": "build-expectations-gate",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1227,10 +1227,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "build-expectations-gate": {
+      "title": "advance tests->build refuses an unfilled \u00a76 Build-expectations block",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-enforcement",
+      "depends_on": [],
+      "created": "2026-06-23T11:41:29+00:00",
+      "updated": "2026-06-23T12:26:46+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "786df111ee67f8fa0f9121c217b4305b",
+        "tests": {
+          "add-method/tooling/test_build_expectations_gate.py": "d2b7eb98d5c75d570e46e492be860b34"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_build_expectations_gate.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py"
+        ],
+        "snapshot_md5": "14c1b2273ee75deac122aaaf927ea6ce"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T11:38:09+00:00",
+  "updated": "2026-06-23T12:26:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1427,7 +1458,8 @@
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
-      }
+      },
+      "await_confirm": true
     }
   },
   "active_milestone": "flow-enforcement",
@@ -1867,6 +1899,6 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-enforcement": "contract-fill-gate"
+    "flow-enforcement": "build-expectations-gate"
   }
 }

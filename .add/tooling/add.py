@@ -568,8 +568,10 @@ def _section_unfilled(md_text: str, header: str) -> bool:
             in_sec, present = True, True
             continue
         if in_sec:
-            if ln.startswith("## "):       # next section ends ours
+            if ln.startswith("#"):          # ANY next header (## or ###) ends our section
                 break
+            if ln.lstrip().startswith(">"):  # skip blockquote GUIDANCE — it is not content
+                continue
             body.append(ln)
     if not present:
         return False                        # absent -> grandfather
@@ -980,6 +982,17 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # freezes — the unmarked predecessors are never retro-redded). REFUSE writes
     # nothing (fail-closed); below the build boundary the flag is never checked.
     if nxt == "build":
+        # build-expectations gate (flow-enforcement, OPTED-IN only): a task whose PARENT milestone
+        # opted into --await-confirm (has a `confirmed` key) may not enter build until its §6
+        # `### Build expectations` are pre-declared — so verify checks the build is RIGHT, not just
+        # green. Same opt-in switch as the contract-fill gate, one level out. A task under a plain/
+        # no milestone is never gated (every existing advance-to-build flow stays green).
+        # validate-then-write — refuse BEFORE the tripwire/scope snapshots below.
+        _ms = state["tasks"][slug].get("milestone")
+        if _ms and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True:
+            if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
+                _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
+                     f"of {slug}'s TASK.md before crossing into build")
         raw3 = _raw_phase_bodies(root, slug).get(3, "")
         if _contract_frozen(raw3):
             if not _flag_well_formed(raw3):
@@ -2629,7 +2642,10 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         "status": "active", "created": _now(), "updated": _now(),
     }
     if await_confirm:
-        record.update(confirmed=False, confirmed_at=None, confirmed_by=None)
+        # `await_confirm` is the STABLE opt-in marker (set ONLY here, at creation). `confirmed`
+        # alone is NOT a reliable opt-in signal: milestone-confirm stamps confirmed:true on a plain
+        # milestone too, so a later build-entry gate must key on `await_confirm`, not `confirmed`.
+        record.update(confirmed=False, confirmed_at=None, confirmed_by=None, await_confirm=True)
     state["milestones"][slug] = record
     _set_active_milestone(state, slug)
     save_state(root, state)
