@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "gate-record-writeback",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,104 +1195,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "contract-fill-gate": {
-      "title": "milestone-confirm refuses unfilled cross-task contracts",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-enforcement",
-      "depends_on": [],
-      "created": "2026-06-23T11:20:53+00:00",
-      "updated": "2026-06-23T11:38:09+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "544ce2d2853cd0a9595ce461dd01447c",
-        "tests": {
-          "add-method/tooling/test_contract_fill_gate.py": "638285112c640e83c214abff06d28c54"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/test_contract_fill_gate.py",
-          "add-method/tooling/test_confirm_parent.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py"
-        ],
-        "snapshot_md5": "74af0313f9d8371af127f3dad421f673"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "build-expectations-gate": {
-      "title": "advance tests->build refuses an unfilled \u00a76 Build-expectations block",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-enforcement",
-      "depends_on": [],
-      "created": "2026-06-23T11:41:29+00:00",
-      "updated": "2026-06-23T12:26:46+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "786df111ee67f8fa0f9121c217b4305b",
-        "tests": {
-          "add-method/tooling/test_build_expectations_gate.py": "d2b7eb98d5c75d570e46e492be860b34"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/test_build_expectations_gate.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py"
-        ],
-        "snapshot_md5": "14c1b2273ee75deac122aaaf927ea6ce"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "gate-record-writeback": {
-      "title": "gate write-back: stamp resolved outcome into \u00a76 GATE RECORD",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-enforcement",
-      "depends_on": [],
-      "created": "2026-06-23T12:31:26+00:00",
-      "updated": "2026-06-23T12:49:47+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "6e7594ed322cd8f1a668db87a467a742",
-        "tests": {
-          "add-method/tooling/test_gate_record_writeback.py": "9a0d28668b9b67e76d8816e19e344380"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/test_gate_record_writeback.py",
-          "add-method/tooling/engine_pin.py"
-        ],
-        "snapshot_md5": "0dd7afa87ba57a7a05ed239061fce703"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T12:49:47+00:00",
+  "updated": "2026-06-23T12:58:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1474,26 +1380,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "flow-enforcement": {
-      "title": "Flow enforcement \u2014 turn convention fill-seams into engine gates",
-      "goal": "the method's three fill-seams are engine-enforced rather than convention, so a task is detailed, built, and gated only after the milestone contracts, the build-expectations, and the gate outcome are actually present in the file",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-06-23T11:17:29+00:00",
-      "updated": "2026-06-23T11:20:53+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-06-23T11:20:53+00:00",
-      "confirmed_by": "Tin Dang",
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "await_confirm": true
     }
   },
-  "active_milestone": "flow-enforcement",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -1923,13 +1812,21 @@
         "reference-trim"
       ],
       "archived": "2026-06-23"
+    },
+    {
+      "slug": "flow-enforcement",
+      "title": "Flow enforcement \u2014 turn convention fill-seams into engine gates",
+      "tasks": 3,
+      "task_slugs": [
+        "contract-fill-gate",
+        "build-expectations-gate",
+        "gate-record-writeback"
+      ],
+      "archived": "2026-06-23"
     }
   ],
-  "active_milestones": [
-    "flow-enforcement"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "flow-enforcement": "gate-record-writeback"
+    "flow-simplification": "phase-review"
   }
 }

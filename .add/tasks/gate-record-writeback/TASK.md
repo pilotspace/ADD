@@ -230,4 +230,5 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [ADD · folded] an ADDITIVE write-seam needs no opt-in shield the way a REFUSAL gate does — grandfather (rewrite only a `<…>` placeholder, never a resolved line) contains ripple instead, and lets the feature apply project-wide (evidence: gate-record-writeback dropped tasks-1&2's await_confirm opt-in, stayed zero-ripple via grandfather, full suite 1589/0) [folded foundation-version 47]
+- [ADD · folded] a no-op scenario must assert the FEATURE's effect, not whole-file byte-equality — a command can carry an orthogonal pre-existing write (here `gate` always re-syncs the `phase:` marker), so "file unchanged" over-claims; scope the assertion + re-anchor the tests→build snapshot honestly after a legitimate test correction rather than forcing the gate (evidence: test_no_gate_record_block_is_noop corrected at build, reopened→re-crossed, build_tampered cleared) [folded foundation-version 47]
