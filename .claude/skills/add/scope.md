@@ -17,7 +17,7 @@
 
 ## Position the goal — ground in assets, relate to the milestone map   (do this FIRST)
 
-Before drafting the goal sentence, position the request in what already exists.
+Before drafting the goal sentence, position the request in what already exists — distinct from intake's classification, not redundant with it.
 
 1. **Ground in current assets.** Read the goal against `PROJECT.md` (domain · spec · UI/UX), the code it touches, and existing docs — the goal must reflect what the project already is.
 2. **Relate to the milestone map.** Read every existing goal — `.add/milestones/*/MILESTONE.md` and `.add/archive/*` — and name THIS request's relationship: *extends* X · *depends-on* Y · *overlaps* Z. Record in the `rationale` line.
@@ -69,4 +69,4 @@ Propose only a well-formed draft — an incomplete one lets a milestone reach ta
 
 ## Worked example
 
-Request: *"open the Interface & Intake milestone"* → intake classified it `sub-milestone` of v4 → scope drafting produced **`.add/milestones/v4-1/MILESTONE.md`**: goal *make ADD harness-drivable and self-scoping*; tasks (breadth-first) `machine-state-json` · `versioning-policy` · `scope-loop`; each exit criterion maps to its slug (`--json` emits owner+stop ← machine-state-json · AI proposes a bucket ← versioning-policy · AI drafts a versioned MILESTONE.md ← scope-loop).
+Request: *"open the Interface & Intake milestone"* → intake classified it `sub-milestone` of v4 → scope drafting produced **`.add/milestones/v4-1/MILESTONE.md`**: goal *make ADD harness-drivable and self-scoping*; tasks (breadth-first) `machine-state-json` · `versioning-policy` · `scope-loop`; each exit criterion maps to its slug.
