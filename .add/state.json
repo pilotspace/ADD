@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "build-expectations-gate",
+  "active_task": "gate-record-writeback",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1258,10 +1258,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "gate-record-writeback": {
+      "title": "gate write-back: stamp resolved outcome into \u00a76 GATE RECORD",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-enforcement",
+      "depends_on": [],
+      "created": "2026-06-23T12:31:26+00:00",
+      "updated": "2026-06-23T12:49:47+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6e7594ed322cd8f1a668db87a467a742",
+        "tests": {
+          "add-method/tooling/test_gate_record_writeback.py": "9a0d28668b9b67e76d8816e19e344380"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_gate_record_writeback.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "0dd7afa87ba57a7a05ed239061fce703"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T12:26:46+00:00",
+  "updated": "2026-06-23T12:49:47+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1899,6 +1930,6 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-enforcement": "build-expectations-gate"
+    "flow-enforcement": "gate-record-writeback"
   }
 }

@@ -581,6 +581,42 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
 
 
+def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None:
+    """Write-back (gate-record-writeback): mirror the resolved gate verdict into the task's
+    §6 `### GATE RECORD`, so the file and state.json never silently diverge (Finding C). Runs
+    for EVERY task — the write is ADDITIVE and never refuses, so (unlike the two refusal gates)
+    it needs no `--await-confirm` opt-in to protect the census. GRANDFATHER is the safety: a
+    GATE RECORD line is rewritten ONLY while it still holds a `<…>` placeholder; a resolved
+    (hand-filled) line is byte-untouched. No GATE RECORD block / no placeholder line / an
+    unreadable file -> silent no-op, the file stays byte-identical. Called AFTER save_state —
+    state is the source of truth; the file only mirrors it, so a write fault never loses a verdict."""
+    f = root / "tasks" / slug / "TASK.md"
+    try:
+        text = f.read_text(encoding="utf-8")
+    except OSError:
+        return                                   # unreadable -> no-op (never blocks the gate)
+    if "### GATE RECORD" not in text:
+        return                                   # nothing to mirror into
+    actor = _actor_stamp(state)
+    today = date.today().isoformat()
+    # each rule matches ONLY a line still carrying a `<…>` placeholder -> grandfather a resolved line.
+    rules = [
+        (r"(?m)^(Outcome:[ \t]*)<[^>\n]*>.*$", f"Outcome: {outcome}"),
+        (r"(?m)^Reviewed by:[ \t]*.*<[^>\n]*>.*$",
+         f"Reviewed by: {actor['name']} · date: {today}"),
+    ]
+    if outcome == "RISK-ACCEPTED":
+        w = ((state.get("tasks") or {}).get(slug) or {}).get("waiver") or {}
+        rules.append((r"(?m)^If RISK-ACCEPTED ->.*<[^>\n]*>.*$",
+                      f"If RISK-ACCEPTED -> owner: {w.get('owner', '?')} · "
+                      f"ticket: {w.get('ticket', '?')} · expires: {w.get('expires', '?')}"))
+    new = text
+    for pat, repl in rules:
+        new = re.sub(pat, repl, new, count=1)
+    if new != text:                              # no-op = no write (mtime stable)
+        _atomic_write(f, new)
+
+
 def _die(msg: str, code: int = 1) -> None:
     print(f"add: error: {msg}", file=sys.stderr)
     raise SystemExit(code)
@@ -1181,6 +1217,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
     state["tasks"][slug]["gate_actor"] = _actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)
+    _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     print(f"task '{slug}' gate -> {args.outcome}")
     # the engine-sourced next step (next-footer-engine): a completing gate hands off to the
     # state arm; HARD-STOP routes to "resolve HARD-STOP …" — converging the old bespoke line.

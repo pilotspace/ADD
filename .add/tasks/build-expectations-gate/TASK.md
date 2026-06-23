@@ -191,9 +191,9 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [x] SEMANTIC (prose / non-code) — re-read the §3 v1 contract + the engine_pin v1.1 note: the gate keys on the stable `await_confirm` marker (not `confirmed`, which milestone-confirm stamps on plain milestones); grandfather holds for plain/no-milestone tasks
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
+Reviewed by: Tin Dang · date: 2026-06-23
 
 <!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. -->
 
