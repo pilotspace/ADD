@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "confirm-parent",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1100,10 +1100,89 @@
         ],
         "snapshot_md5": "a3541073baafacd97a03b9c0d560afe7"
       }
+    },
+    "spawn-fold": {
+      "title": "one canonical worker-contract + model tiers, referenced by run/streams/advisor",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-simplification",
+      "depends_on": [],
+      "created": "2026-06-23T05:10:17+00:00",
+      "updated": "2026-06-23T06:24:01+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "45acd73f4111844072a5a1ca4eac0754",
+        "tests": {
+          "add-method/tooling/test_spawn_fold.py": "ff461660e4f5c7d77e27ffea9a3587d9",
+          "add-method/tooling/test_advisor_strategy.py": "2f960bc37b96328844587f4806987364"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/advisor.md",
+          ".claude/skills/add/advisor.md",
+          "add-method/src/add_method/_bundled/skill/add/advisor.md",
+          "add-method/tooling/test_spawn_fold.py",
+          "add-method/tooling/test_advisor_strategy.py"
+        ],
+        "snapshot_md5": "140f8b07b9e9bce117782582c195a543"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "confirm-parent": {
+      "title": "engine seam: hold new-task until the parent MILESTONE.md is confirmed",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-simplification",
+      "depends_on": [],
+      "created": "2026-06-23T05:10:18+00:00",
+      "updated": "2026-06-23T07:37:17+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "e1829bfbedc6e0b0305ea4f15ec0abd7",
+        "tests": {
+          "add-method/tooling/test_confirm_parent.py": "a60ed1355589e1015aa0d5b9113d7a60"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_confirm_parent.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_min_pillar.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/skill/add/SKILL.md",
+          "add-method/skill/add/scope.md",
+          ".claude/skills/add/SKILL.md",
+          ".claude/skills/add/scope.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/scope.md"
+        ],
+        "snapshot_md5": "a077645b4a32544a1989e423fb855be0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "phase-review": {
+      "title": "drop only provably-redundant guide/phase ceremony",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "flow-simplification",
+      "depends_on": [],
+      "created": "2026-06-23T05:10:18+00:00",
+      "updated": "2026-06-23T05:10:18+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T04:23:57+00:00",
+  "updated": "2026-06-23T07:37:17+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1272,9 +1351,17 @@
       "status": "done",
       "created": "2026-06-18T13:48:30+00:00",
       "updated": "2026-06-18T13:58:42+00:00"
+    },
+    "flow-simplification": {
+      "title": "lean-pass M3 \u00b7 flow simplification",
+      "goal": "the flow surface is simpler \u2014 the spawn/delegation machinery and any redundant ceremony live in one place, and a task can't be detailed before its milestone is confirmed \u2014 with no gate, security stop, or spec-first discipline weakened",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-23T05:08:43+00:00",
+      "updated": "2026-06-23T05:08:43+00:00"
     }
   },
-  "active_milestone": null,
+  "active_milestone": "flow-simplification",
   "archived": [
     {
       "slug": "v5",
@@ -1706,6 +1793,10 @@
       "archived": "2026-06-23"
     }
   ],
-  "active_milestones": [],
-  "active_tasks": {}
+  "active_milestones": [
+    "flow-simplification"
+  ],
+  "active_tasks": {
+    "flow-simplification": "confirm-parent"
+  }
 }

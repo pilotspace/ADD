@@ -53,10 +53,10 @@ Do NOT run add.py or write any shared state — you propose, the orchestrator re
 
 ## Choosing the model — vendor-neutral tiers
 
-Reuse `streams.md`'s tiers, never a new vocabulary: **mid** (Claude Code: `sonnet`) for ordinary,
-well-scoped pieces with a clear contract; **top** (Claude Code: `opus`) for complex, ambiguous, or
-cross-cutting pieces. The tier maps to the runner's model id through the same adapter `streams.md`
-defines. A stronger model never buys back a human gate: high-risk scope still escalates.
+Pick the tier from `streams.md`'s vocabulary: **mid** for an ordinary, well-scoped piece; **top**
+for a complex, ambiguous, or cross-cutting one. The tier→model-id mapping and the spawn adapter
+live there — one home, not repeated here. A stronger model never buys back a human gate: high-risk
+scope still escalates.
 
 ## The hard rule — you delegate, you do not abdicate
 

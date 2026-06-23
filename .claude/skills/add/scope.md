@@ -1,6 +1,6 @@
 # Scope drafting — turn a classified request into a versioned MILESTONE.md
 
-`intake.md` CLASSIFIES a request into a bucket; scope drafting turns that into a confirmed, well-formed, versioned `MILESTONE.md` through discussion. The MILESTONE.md template is the SHAPE; this rubric is HOW to fill it well. You **propose**; the human **confirms before anything is created**.
+`intake.md` CLASSIFIES a request into a bucket; scope drafting turns that into a confirmed, well-formed, versioned `MILESTONE.md` through discussion. The MILESTONE.md template is the SHAPE; this rubric is HOW to fill it well.
 
 ## What to do per intake outcome
 
@@ -11,7 +11,9 @@
 | `change-request` | route to SPECIFY/CONTRACT of the affected task | 0 milestones |
 | `split_required` | draft ALL N items as a batch in ONE pass | N milestones/tasks |
 
-**Confirm before create is the invariant.** "One pass" means one drafting pass, NOT auto-creation. Nothing is written to disk until the human confirms.
+**Confirm before create is the invariant.** "One pass" means one drafting pass, NOT auto-creation — nothing is written until the human confirms.
+
+**Confirm the milestone before detailing tasks.** `new-milestone <slug> --await-confirm` seeds it *unconfirmed* — `new-task` is HELD (`milestone_unconfirmed`) until you show the filled `MILESTONE.md`, get the human's go, and run `milestone-confirm <slug>`. Keeps you from digging into task §0–§5 before the parent is agreed. (Omit the flag: no gate.)
 
 ## Position the goal — ground in assets, relate to the milestone map   (do this FIRST)
 
@@ -20,8 +22,6 @@ Before drafting the goal sentence, position the request in what already exists.
 1. **Ground in current assets.** Read the goal against `PROJECT.md` (domain · spec · UI/UX), the code it touches, and existing docs — the goal must reflect what the project already is.
 2. **Relate to the milestone map.** Read every existing goal — `.add/milestones/*/MILESTONE.md` and `.add/archive/*` — and name THIS request's relationship: *extends* X · *depends-on* Y · *overlaps* Z. Record in the `rationale` line.
 3. **If the goal is already delivered** by an existing milestone, reject `duplicate_goal` and route as `task` or `change-request`.
-
-This complements `intake.md`'s bucket test by grounding the goal in the prior milestone map.
 
 ## Brainstorm before you draft — co-specify at milestone level
 
@@ -34,7 +34,7 @@ Diverge seeds (pick the live ones):
 - **Done-looks-like** — how do we SEE each outcome without reading code?
 - **First slice** — which task unblocks the rest?
 
-Rank assumptions lowest-confidence first; top 1–2 get the flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Present via `report-template.md` — open with the ARC (goal · done · plan). Render as a guided choice (per `report-template.md`).
+Rank assumptions lowest-confidence first; top 1–2 get the flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Present via `report-template.md` — open with the ARC (goal · done · plan), render as a guided choice.
 
 ## Drafting a good MILESTONE.md (section by section)
 
@@ -70,5 +70,3 @@ Propose only a well-formed draft — an incomplete one lets a milestone reach ta
 ## Worked example
 
 Request: *"open the Interface & Intake milestone"* → intake classified it `sub-milestone` of v4 → scope drafting produced **`.add/milestones/v4-1/MILESTONE.md`**: goal *make ADD harness-drivable and self-scoping*; tasks (breadth-first) `machine-state-json` · `versioning-policy` · `scope-loop`; each exit criterion maps to its slug (`--json` emits owner+stop ← machine-state-json · AI proposes a bucket ← versioning-policy · AI drafts a versioned MILESTONE.md ← scope-loop).
-
-The ARC and `report --decide` wire this gate into the engine output — see `report-template.md`.

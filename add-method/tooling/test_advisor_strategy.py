@@ -19,13 +19,15 @@ from pathlib import Path
 
 _TOOLING = Path(__file__).resolve().parent
 _DOC = _TOOLING.parent / "skill" / "add" / "advisor.md"
+_STREAMS = _TOOLING.parent / "skill" / "add" / "streams.md"   # the canonical worker-contract HOME (spawn-fold, Design C)
 
 _spec = importlib.util.spec_from_file_location(
     "xmlconv_for_advisor", _TOOLING / "test_xml_convention.py")
 _xmlconv = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_xmlconv)  # type: ignore[union-attr]
 
-# the worker-contract tags the fenced template reuses (mirrors test_xml_convention.WORKER_CONTRACT_TAGS)
+# the worker-contract tags the fenced template reuses (mirrors test_xml_convention.WORKER_CONTRACT_TAGS).
+# spawn-fold (Design C′) keeps advisor's advisory template; only the tier MAPPING folds to streams.md.
 _TEMPLATE_TAGS = {"objective", "persona", "return"}
 
 
@@ -33,9 +35,12 @@ class TestAdvisorStrategy(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         assert _DOC.exists(), f"advisor.md missing: {_DOC}"
+        assert _STREAMS.exists(), f"streams.md (worker-contract home) missing: {_STREAMS}"
         cls.text = _DOC.read_text(encoding="utf-8")
         cls.lower = cls.text.lower()
         cls.stripped = _xmlconv._strip_code_fences(cls.text)
+        cls.streams = _STREAMS.read_text(encoding="utf-8")
+        cls.streams_lower = cls.streams.lower()
 
     def test_intro_names_advisor_and_plan(self) -> None:
         self.assertIn("advisor", self.lower, "intro must name the advisor strategy")
@@ -49,7 +54,8 @@ class TestAdvisorStrategy(unittest.TestCase):
                         "must state the in-context default (when NOT to spawn)")
 
     def test_template_is_fenced(self) -> None:
-        # raw text carries the worker tags; after fence-strip they are gone (⇒ they live in a fence)
+        # advisor KEEPS its advisory template (spawn-fold C′ folds only the tier mapping). raw text
+        # carries the worker tags; after fence-strip they are gone (⇒ they live in a code fence).
         raw_tags = _xmlconv._paired_tags(self.text)
         self.assertTrue(_TEMPLATE_TAGS <= raw_tags,
                         f"plan-following template missing tags: {sorted(_TEMPLATE_TAGS - raw_tags)}")
@@ -58,8 +64,10 @@ class TestAdvisorStrategy(unittest.TestCase):
                          f"template tags {sorted(leaked)} leaked OUTSIDE a code fence — must stay fenced/exempt")
 
     def test_tier_pick_reuses_streams(self) -> None:
+        # spawn-fold C′: the tier vocabulary lives at the home (streams.md); advisor references it
+        # rather than repeating the sonnet/opus mapping — a pointer, not a 2nd copy.
         for token in ("mid", "top", "sonnet", "opus"):
-            self.assertIn(token, self.lower, f"tier vocabulary missing: {token}")
+            self.assertIn(token, self.streams_lower, f"streams.md (the home) missing tier vocabulary: {token}")
         self.assertIn("streams.md", self.lower, "tier pick must point at streams.md (one vocabulary)")
 
     def test_subagent_self_scores_and_proposes(self) -> None:
