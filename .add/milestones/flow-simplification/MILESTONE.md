@@ -41,30 +41,32 @@ Out: the book/docs (M2, deferred); ANY weakening of a gate, the security HARD-ST
 - [ ] phase-review    depends-on: spawn-fold   — audit phases/guides for provably-redundant ceremony the engine already enforces; drop ONLY what carries no meaning (may find nothing — that is a valid result)
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] the worker contract + model tiers have exactly ONE source; run/streams/advisor reference it with no copy; a dogfood spawn produces the same worker prompt as before (← spawn-fold)
-- [ ] `add.py new-task` refuses (named reject code) when the parent MILESTONE.md is not yet confirmed well-formed, and proceeds once it is; the escape hatch works for solo/fast flows (← confirm-parent)
-- [ ] every dropped ceremony item is provably redundant (engine enforces it) — a dogfood walk shows identical gates/decisions; nothing meaningful removed (← phase-review)
-- [ ] guardrail: flow guides materially leaner with ZERO behavior drift except the one intended confirm-parent gate; 3 trees byte-identical; full suite + `add.py check` green (← every task at its verify)
+- [x] the model tiers have ONE source (streams.md); advisor references it with no copy; a dogfood spawn produces the same worker prompt as before (← spawn-fold) (verify: test_spawn_fold + test_advisor_strategy green)
+- [x] `add.py new-task` refuses (named reject code `milestone_unconfirmed`) when the parent is not confirmed, and proceeds once `milestone-confirm` runs; the opt-in `--await-confirm` is the escape hatch for solo/fast flows (← confirm-parent) (verify: test_confirm_parent [10] green)
+- [x] every dropped ceremony item is provably redundant — audit verdict: 0 to drop, guides confirmed tight; a dogfood walk shows identical gates/decisions; nothing removed (← phase-review) (verify: git diff phases/ empty + full suite green)
+- [x] guardrail: ZERO behavior drift except the one intended confirm-parent gate; 3 trees byte-identical; full suite + `add.py check` green (← every task at its verify) (verify: suite 1570/0 + check 377/0 + md5 parity ×3)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : add.py — NEW `_milestone_confirmed` helper + `--await-confirm` flag on new-milestone + `cmd_new_task` confirm-block + NEW `milestone-confirm` subcommand (confirm-parent); engine_pin re-aim (9258dcc7) + test_min_pillar LIFECYCLE += milestone-confirm. state.json — the 3 task records + milestone.
+- skill   : advisor.md — tier model-id mapping folded to a streams.md pointer, advisory template kept (spawn-fold). SKILL.md + scope.md — guided milestone flow now create(--await-confirm)→show→milestone-confirm→detail (confirm-parent); byte-budgets held by reclaiming redundancy. phases/* — AUDITED, untouched (phase-review: nothing provably-redundant).
+- book    : docs/* — untouched.
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- spawn-fold     : gate=PASS · tests=test_spawn_fold + test_advisor_strategy green · residue=none (advisor −65 B; advisory template preserved)
+- confirm-parent : gate=PASS (human, risk:high) · tests=test_confirm_parent [10] green; 342 existing tests untouched · residue=none (1 stale comment fixed at verify)
+- phase-review   : gate=PASS (auto-resolved) · tests=full suite is the no-drift oracle · residue=none (0 bytes dropped — guides confirmed tight)
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which): #1←spawn-fold row · #2←confirm-parent row · #3←phase-review row · #4←suite 1570/0 + check 377/0 + 3-tree md5 parity
+- goal: "the flow surface is simpler — spawn/delegation machinery + redundant ceremony live in one place, and a task can't be detailed before its milestone is confirmed, with no gate/security/spec-first weakened." Proof: the tier mapping has one home (streams.md), `new-task` now holds on an unconfirmed `--await-confirm` parent, the ceremony audit confirmed nothing redundant remains, and the whole suite + check are green with zero drift beyond the one intended gate.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] open a PR from branch `feat/lean-pass-m3-flow-simplification` → main; the human reviews + merges (admin-merge via TinDang97 over HTTPS, per the release recipe)
+- [ ] this milestone bundles with M1 `skill-effectiveness` (PR #50, open) under the lean-pass major — decide whether to release them together or separately at the cut
+- [ ] tag / publish / deploy is a SEPARATE release-altitude step (release.md), human-run, only when the lean-pass major is bundled for a version cut

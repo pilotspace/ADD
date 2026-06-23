@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "confirm-parent",
+  "active_task": "phase-review",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1173,16 +1173,32 @@
     },
     "phase-review": {
       "title": "drop only provably-redundant guide/phase ceremony",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "flow-simplification",
       "depends_on": [],
       "created": "2026-06-23T05:10:18+00:00",
-      "updated": "2026-06-23T05:10:18+00:00"
+      "updated": "2026-06-23T08:02:11+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "73f5d148d68ce3626a2f5bbc26290eec",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".add/tasks/phase-review/"
+        ],
+        "snapshot_md5": "16e2b3b18c7ac9455e2a00d3e3ba2eff"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-23T07:37:17+00:00",
+  "updated": "2026-06-23T08:04:24+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1356,9 +1372,14 @@
       "title": "lean-pass M3 \u00b7 flow simplification",
       "goal": "the flow surface is simpler \u2014 the spawn/delegation machinery and any redundant ceremony live in one place, and a task can't be detailed before its milestone is confirmed \u2014 with no gate, security stop, or spec-first discipline weakened",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-06-23T05:08:43+00:00",
-      "updated": "2026-06-23T05:08:43+00:00"
+      "updated": "2026-06-23T08:04:24+00:00",
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "active_milestone": "flow-simplification",
@@ -1797,6 +1818,6 @@
     "flow-simplification"
   ],
   "active_tasks": {
-    "flow-simplification": "confirm-parent"
+    "flow-simplification": "phase-review"
   }
 }
