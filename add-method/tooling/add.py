@@ -230,6 +230,20 @@ def _atomic_write(path: Path, text: str) -> None:
             os.unlink(tmp)
 
 
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    """Binary sibling of `_atomic_write` — lands `data` UNCHANGED (no newline translation), so a
+    byte-for-byte copy stays exact. Same temp-then-replace crash-safety."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
 def _atomic_write_many(writes: list[tuple[Path, str]]) -> None:
     """True all-or-nothing commit across N files — design-for-failure for a multi-file write.
 
@@ -2553,6 +2567,41 @@ def _missing_captures(root: Path) -> list[str]:
             if not any((cap_dir / f"{n}.{ext}").is_file() for ext in _CAPTURE_EXTS)]
 
 
+def cmd_federate(args: argparse.Namespace) -> None:
+    """Multi-repo federation: pull a producer repo's published, immutable contract snapshot into
+    this repo. Mono vs multi-repo differ ONLY in snapshot-transport — this lands the byte-copy at
+    the SAME local `.add/contracts/<id>.json` the monorepo path (tasks 3/4) already reads, so a
+    `consumes: <id>` task then holds/pins identically. Designed-for-failure: unknown / missing /
+    invalid / version-mismatched sources HARD-STOP and land NOTHING (never build blind)."""
+    root = find_root()
+    if root is None:
+        _die("no_project")
+    fid = args.id
+    fed = _federation(root)
+    if fid not in fed:
+        _die(f"federation_unknown: no [federation.{fid}] in components.toml — declare the producer "
+             f"repo's published snapshot source before pulling")
+    source = (root.parent / fed[fid]["source"])
+    try:
+        raw = source.read_bytes()       # bytes — the landed snapshot must be a byte-for-byte copy
+    except OSError:
+        _die(f"federation_source_missing: cannot read the producer snapshot at '{fed[fid]['source']}' "
+             f"(resolved {source}) — publish/commit it in the producer repo first")
+    try:
+        snap = json.loads(raw.decode("utf-8"))
+    except (json.JSONDecodeError, ValueError, UnicodeDecodeError):
+        snap = None
+    if not isinstance(snap, dict) or snap.get("id") != fid or not snap.get("hash"):
+        _die(f"federation_snapshot_invalid: the source for '{fid}' is not a valid contract snapshot "
+             f"(needs JSON with matching id + a hash) — refusing to land a guessed shape")
+    pin = fed[fid]["pin"]
+    if pin and snap.get("version") != pin:
+        _die(f"federation_version_mismatch: [federation.{fid}] pins '{pin}' but the source is "
+             f"'{snap.get('version')}' — bump the pin or wait for the producer to publish {pin}")
+    _atomic_write_bytes(_contract_snapshot(root, fid), raw)
+    print(f"federated '{fid}' {snap.get('version', '?')} {snap['hash']} from {fed[fid]['source']}")
+
+
 def cmd_check(args: argparse.Namespace) -> None:
     """Read-only integrity check of the .add project. Exit 1 if anything fails."""
     as_json = getattr(args, "json", False)
@@ -2747,6 +2796,15 @@ def cmd_check(args: argparse.Namespace) -> None:
     # integrity FAIL (same fail-closed RED discipline; the readers stay degrade-safe).
     for _ccode, _cdetail in _contract_findings(root):
         checks.append((False, f"contract registry ({_ccode})", _cdetail))
+    # multirepo-federation: a declared [federation.<id>] whose producer-repo source is unreadable
+    # is a BROKEN JOIN — surface it EARLY as a WARN (never red alone; `federate pull` is where it
+    # HARD-STOPs). Silent when no federation is declared (opt-in / byte-identical).
+    for _fid, _fspec in _federation(root).items():
+        if not (root.parent / _fspec["source"]).is_file():
+            warnings.append((f"federation '{_fid}'",
+                             f"federation_source_unreadable — the producer snapshot at "
+                             f"'{_fspec['source']}' is missing/unreadable; `federate pull {_fid}` "
+                             "will hard-stop until the producer repo publishes it"))
 
     # UDD foundation (udd-check-lint): lint a project's named set under .add/design/ —
     # composes the token + catalog/tree validators + the cross-file prop-token resolution.
@@ -4136,6 +4194,27 @@ def _contracts(root: Path) -> dict[str, dict]:
         cons = spec.get("consumers")
         out[cid] = {"producer": spec["producer"],
                     "consumers": [c for c in cons if isinstance(c, str)] if isinstance(cons, list) else []}
+    return out
+
+
+def _federation(root: Path) -> dict[str, dict]:
+    """[federation.<id>] from .add/components.toml -> {id: {source: str, pin: str|None}}.
+    The cross-REPO join: a consumer repo names where a producer repo's published snapshot lives.
+    A malformed entry (no string source) is skipped; a non-string `pin` degrades to None. Degrade-safe
+    — never raises. PURE. On Python < 3.11 (no tomllib) this returns {} like the other component
+    readers, so `federate` reports federation_unknown — components.toml needs a 3.11+ runtime."""
+    if tomllib is None:
+        return {}
+    try:
+        data = tomllib.loads((root / "components.toml").read_bytes().decode("utf-8"))
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
+        return {}
+    out: dict[str, dict] = {}
+    for fid, spec in (data.get("federation") or {}).items():
+        if not isinstance(spec, dict) or not isinstance(spec.get("source"), str):
+            continue
+        pin = spec.get("pin")
+        out[fid] = {"source": spec["source"], "pin": pin if isinstance(pin, str) else None}
     return out
 
 
@@ -6517,6 +6596,14 @@ def build_parser() -> argparse.ArgumentParser:
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")
     pck.add_argument("--json", action="store_true", help="machine-readable JSON output")
     pck.set_defaults(func=cmd_check)
+
+    pfed = sub.add_parser("federate", help="multi-repo: pull a producer repo's published, immutable "
+                                           "contract snapshot into this repo (fail-loud)")
+    pfedsub = pfed.add_subparsers(dest="action", required=True)
+    pfedpull = pfedsub.add_parser("pull", help="land [federation.<id>].source at the local "
+                                               ".add/contracts/<id>.json (hard-stops on a bad source)")
+    pfedpull.add_argument("id", help="the contract id declared under [federation.<id>]")
+    pfedpull.set_defaults(func=cmd_federate)
 
     pdoc = sub.add_parser("doctor", help="read-only diagnosis of state.json integrity + "
                                          "referential consistency (run after a git merge)")

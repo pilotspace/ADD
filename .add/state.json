@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "cross-component-milestone",
+  "active_task": "multirepo-federation",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1309,10 +1309,39 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "multirepo-federation": {
+      "title": "Multirepo Federation",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "component-aware-add",
+      "depends_on": [],
+      "created": "2026-06-24T17:33:00+00:00",
+      "updated": "2026-06-24T17:49:12+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cd24594d808ff8bafe7e509b4136c188",
+        "tests": {
+          "add-method/tooling/test_multirepo_federation.py": "4856c95081f2186ad014beeb1bce4b33"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/add.py"
+        ],
+        "snapshot_md5": "edcba57720889b81027a3dc510f265d0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T17:32:07+00:00",
+  "updated": "2026-06-24T17:49:12+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1992,6 +2021,6 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "component-aware-add": "cross-component-milestone"
+    "component-aware-add": "multirepo-federation"
   }
 }
