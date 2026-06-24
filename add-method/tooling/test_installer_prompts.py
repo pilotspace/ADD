@@ -252,5 +252,50 @@ class EnginePinTest(unittest.TestCase):
                              f"{p} changed — the installer onramp never edits the engine")
 
 
+# --- rule-file mode parity (ccsk projects relocate the CLAUDE.md pointer) ----
+
+def _assert_rule_file_layout(test, root: Path):
+    """Both Phase-1 installers, in a ccsk project, must drop the Claude pointer into
+    .claude/rules/add-workflows.md + a reference bullet in CLAUDE.md (no inline block)."""
+    rules = root / ".claude" / "rules" / "add-workflows.md"
+    test.assertTrue(rules.exists(), "rule file must be created in a ccsk project")
+    test.assertIn("ADD:BEGIN", rules.read_text(encoding="utf-8"),
+                  "rule file must hold the marked ADD pointer")
+    claude = (root / "CLAUDE.md").read_text(encoding="utf-8")
+    test.assertIn("add-workflows.md", claude, "CLAUDE.md must reference the rule file")
+    test.assertNotIn("ADD:BEGIN", claude, "CLAUDE.md must NOT hold the inline block")
+
+
+@unittest.skipUnless(NODE, "node not on PATH — npx-side check skipped (honest skip)")
+class RuleFileModeNpmTest(unittest.TestCase):
+    def test_ccsk_relocates_npm(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / ".ccsk").mkdir()
+            res = _run_node(["init"], cwd=tmp, env_extra={"CLAUDECODE": "1"})
+            self.assertEqual(res.returncode, 0, res.stderr)
+            _assert_rule_file_layout(self, Path(tmp))
+
+    def test_flag_relocates_npm(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            res = _run_node(["init", "--rule-file"], cwd=tmp, env_extra={"CLAUDECODE": "1"})
+            self.assertEqual(res.returncode, 0, res.stderr)
+            _assert_rule_file_layout(self, Path(tmp))
+
+
+class RuleFileModePipTest(unittest.TestCase):
+    def test_ccsk_relocates_pip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / ".ccsk").mkdir()
+            res = _run_pip(["init", tmp], env_extra={"CLAUDECODE": "1"})
+            self.assertEqual(res.returncode, 0, res.stderr)
+            _assert_rule_file_layout(self, Path(tmp))
+
+    def test_flag_relocates_pip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            res = _run_pip(["init", tmp, "--rule-file"], env_extra={"CLAUDECODE": "1"})
+            self.assertEqual(res.returncode, 0, res.stderr)
+            _assert_rule_file_layout(self, Path(tmp))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

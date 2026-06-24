@@ -88,6 +88,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--global-data", dest="as_global_data", action="store_true",
                         help="(implies --global) ALSO persist this project's user-data "
                              "under <home>/data/<key> keyed by path")
+    parser.add_argument("--rule-file", dest="rule_file", action="store_true",
+                        help="write the ADD block to .claude/rules/add-workflows.md and "
+                             "reference it from CLAUDE.md (auto-on when a .ccsk/ dir is present)")
 
     args = parser.parse_args(rest)
 
@@ -101,6 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         non_interactive=args.non_interactive,
         as_global=args.as_global,
         as_global_data=args.as_global_data,
+        rule_file=args.rule_file,
     )
 
 
