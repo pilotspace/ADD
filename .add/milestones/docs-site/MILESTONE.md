@@ -27,10 +27,10 @@ Out: a custom domain / CNAME (default `*.github.io` for now) · versioned-docs (
 - [ ] pages-deploy    depends-on: site-scaffold   — GitHub Actions workflow building the site `--strict` and deploying to GitHub Pages on push to main (official Pages deploy); update `homepage`/README links to the Pages URL.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `mkdocs build --strict` produces a static site with every chapter (00→16) + appendix (a–g) in the nav and all 4 diagrams rendering, no broken-link/nav warnings   (← site-scaffold)   (verify: `mkdocs build --strict` exits 0)
-- [ ] a home/landing page renders at the site root with search and dark/light mode working   (← site-scaffold)   (verify: test asserts `site/index.html` exists + `search` plugin + `palette` toggle in `mkdocs.yml`)
-- [ ] pushing to main triggers a CI workflow that builds `--strict` and deploys the site to GitHub Pages   (← pages-deploy)   (verify: GitHub Actions Pages workflow run is green on a PR/dry-run build)
-- [ ] the published book is reachable at the project's public GitHub Pages URL and `homepage`/README point to it   (← pages-deploy)   (verify: `curl -sI <pages-url>` returns 200 + grep README/package.json for the URL)
+- [x] `mkdocs build --strict` produces a static site with every chapter (00→16) + appendix (a–g) in the nav and all 4 diagrams rendering, no broken-link/nav warnings   (← site-scaffold)   (verify: `mkdocs build --strict` exits 0; live ch16/glossary/diagram all 200)
+- [x] a home/landing page renders at the site root with search and dark/light mode working   (← site-scaffold)   (verify: live home 200 + search_index.json 200; README→index.html; palette toggle in mkdocs.yml)
+- [x] pushing to main triggers a CI workflow that builds `--strict` and deploys the site to GitHub Pages   (← pages-deploy)   (verify: the `docs` workflow run on the #59 merge completed = success)
+- [x] the published book is reachable at the project's public GitHub Pages URL and `homepage`/README point to it   (← pages-deploy)   (verify: `curl -sI https://pilotspace.github.io/ADD/` → 200; home/ch16/glossary/diagram/search all 200; links point to the URL)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
@@ -49,9 +49,9 @@ Out: a custom domain / CNAME (default `*.github.io` for now) · versioned-docs (
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
 - [x] criterion 1 (strict build, all chapters+appendices+diagrams, no warnings) — met by site-scaffold (local `mkdocs build --strict` exit 0; 24 pages + 4 PNG + search index)
 - [x] criterion 2 (home/landing + search + dark/light) — met by site-scaffold (README→index.html; rendered HTML carries the search box + palette toggle)
-- [~] criterion 3 (push triggers CI build+deploy) — BUILT + locally verified (workflow YAML shape + the same `mkdocs build --strict`); the live green run is PENDING the human enabling Pages + merge/push (honest ceiling, not faked)
-- [~] criterion 4 (reachable at the public URL + links point to it) — links DONE (homepage/pyproject/README → Pages URL); reachability PENDING the first live deploy
-- goal: a reader can browse + search the full AIDD book at a public Pages URL — PROVEN buildable end-to-end locally; the public URL goes live on the human's enable-Pages + merge. Criteria 3–4 close once the first `docs` workflow run is green.
+- [x] criterion 3 (push triggers CI build+deploy) — MET: the human enabled Pages (Source = GitHub Actions) + merged #59; the `docs` workflow run completed = success
+- [x] criterion 4 (reachable at the public URL + links point to it) — MET: https://pilotspace.github.io/ADD/ → 200 (home/ch16/glossary/diagram/search all 200); homepage/pyproject/README link to it
+- goal: a reader can browse + search the full AIDD book at a public Pages URL — **MET, LIVE** at https://pilotspace.github.io/ADD/ (deploy run success; all spot-checked pages + the search index return 200). All 4/4 exit criteria satisfied.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one

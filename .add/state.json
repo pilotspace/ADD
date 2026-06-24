@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "pages-deploy",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,81 +1195,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "site-scaffold": {
-      "title": "MkDocs Material site scaffold over the canonical book",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "docs-site",
-      "depends_on": [],
-      "created": "2026-06-24T06:16:19+00:00",
-      "updated": "2026-06-24T06:44:17+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "30b92ed40cb80e0c702f4f27d1b2f85d",
-        "tests": {
-          ".add/tasks/site-scaffold/tests/test_site_scaffold.py": "e55c8bb45b924d0a5c9a5a513a50adc3"
-        }
-      },
-      "scope": {
-        "declared": [
-          "mkdocs.yml",
-          "requirements-docs.txt",
-          ".gitignore",
-          "./"
-        ],
-        "snapshot_md5": "0ab4f2ea9a4980955307e9e29ad933cc"
-      },
-      "heal": {
-        "attempts": 1,
-        "history": [
-          {
-            "at": "2026-06-24T06:42:29+00:00",
-            "reason": "scope_violation: task 'site-scaffold' touched outside its declared \u00a75 Scope \u2014 .gitignore \u00b7 mkdocs.yml \u00b7 requirements-docs.txt (3 total)",
-            "source": "scope"
-          }
-        ]
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "pages-deploy": {
-      "title": "GitHub Actions workflow: build --strict + deploy the docs site to Pages",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "docs-site",
-      "depends_on": [],
-      "created": "2026-06-24T06:45:26+00:00",
-      "updated": "2026-06-24T07:02:31+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "131e62dd7d5445893cdcc7a12ec079c5",
-        "tests": {
-          ".add/tasks/pages-deploy/tests/test_pages_deploy.py": "0e997e2d80d719975b5536e8ac17451f"
-        }
-      },
-      "scope": {
-        "declared": [
-          ".github/workflows/pages.yml",
-          "add-method/package.json",
-          "add-method/pyproject.toml",
-          "README.md",
-          "./"
-        ],
-        "snapshot_md5": "0ab4f2ea9a4980955307e9e29ad933cc"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T07:02:31+00:00",
+  "updated": "2026-06-24T08:39:38+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1451,26 +1380,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "docs-site": {
-      "title": "Docs site \u2014 ship the AIDD book to GitHub Pages",
-      "goal": "a reader can browse and search the full AIDD book at a public GitHub Pages URL, built with MkDocs Material from the canonical add-method/docs/ and deployed automatically by CI",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-06-24T06:13:01+00:00",
-      "updated": "2026-06-24T06:16:16+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-06-24T06:16:16+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
-  "active_milestone": "docs-site",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -1923,13 +1835,20 @@
         "fast-lane-guide"
       ],
       "archived": "2026-06-23"
+    },
+    {
+      "slug": "docs-site",
+      "title": "Docs site \u2014 ship the AIDD book to GitHub Pages",
+      "tasks": 2,
+      "task_slugs": [
+        "site-scaffold",
+        "pages-deploy"
+      ],
+      "archived": "2026-06-24"
     }
   ],
-  "active_milestones": [
-    "docs-site"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "docs-site": "pages-deploy"
+    "flow-simplification": "phase-review"
   }
 }

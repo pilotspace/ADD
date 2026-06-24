@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 48
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 49
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -37,6 +37,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
   not (v22 · DDD; same archive seam as graduation-analytics' traversal-basis convention).
 
 ## Spec / Living Document (SDD) — what we are building, now
+- (SDD) YAML 1.1 parses a bare `on:` key as the boolean True — a workflow-shape test must read `cfg.get("on", cfg.get(True))` or it silently asserts against a missing key (evidence: the trigger test needed the True-key fallback to see the `on:` block).  [folded foundation-version 49 · from pages-deploy]
 - (SDD) a frozen DESCRIPTIVE parenthetical can mis-count while the binding SEAM holds — "6 < 9" vs the true "6 < 8" (the §3 set {0,1,3,4,5,6} is unambiguous); disclose at verify, don't retro-edit the frozen contract (evidence: tests assert 6 < 8; disclosed in §6).  [folded foundation-version 48 · from fast-lane-template]
 - (SDD) the suite IS the behavior contract for a prose compaction — 2 wording slips ("Tie-break order", "never the artifact") were caught only by the FULL suite, not the 33-subset (evidence: gate-on-full-suite mitigation paid off).  [folded foundation-version 46 · from skill-core-compact]
 - (SDD) a new runtime dependency falsifies any "zero-dep" prose; grep + fix the claim in the SAME change (evidence: cli.js header corrected from "Zero npm dependencies"; README/GETTING-STARTED/docs grepped clean).  [folded foundation-version 38 · from installer-prompts]
@@ -166,6 +167,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 - settled fv1–fv20 — ADD bootstrapping → production-ready: SDD foundation · self-driving run · one-approval auto · awareness surface · decision-point reports · zero-command on-ramp · prompt & file hygiene · dynamic loop (see git)
 
 ## Users (UDD) — UI/UX: design before code
+- (UDD) keeping the site home OUT of the book (README→index.html via MkDocs default) is the lean choice for a book whose source is mirror-guarded — it adds zero new file, zero bundle/parity work, and the existing README already carries an intro + linked TOC that makes a good landing (evidence: human chose it over a new index.md; strict build confirmed README is the site root).  [folded foundation-version 49 · from site-scaffold]
 <!-- No-UI project: ADD ships as a CLI + a Claude skill. The "interface" is the
      command surface and the text it prints — there is no screen, so this stays short. -->
 - **The UDD design-definition loop SHIPPED end-to-end (udd-design-loop · UDD):** the loop
@@ -264,6 +266,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-06-24 | fold all → foundation-version 49 (SDD 1 · UDD 1 · TDD 2 · ADD 2) | consolidate captured OBSERVE lessons into the versioned foundation | 6 lessons open→folded; +6 routed bullets; 48→49 |
 | 2026-06-23 | fold all → foundation-version 48 (SDD 1 · ADD 2) | consolidate captured OBSERVE lessons into the versioned foundation | 3 lessons open→folded; +3 routed bullets; 47→48 |
 | 2026-06-23 | fold all → foundation-version 47 (ADD 4) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 46→47 |
 | 2026-06-23 | fold all → foundation-version 46 (SDD 1 · ADD 4) | consolidate captured OBSERVE lessons into the versioned foundation | 5 lessons open→folded; +5 routed bullets; 45→46 |
