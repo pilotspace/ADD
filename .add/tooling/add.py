@@ -1260,6 +1260,44 @@ def cmd_advance(args: argparse.Namespace) -> None:
                 side.unlink()
             except OSError:
                 pass
+    # cross-component contract artifact (cross-component-contract): the contract->tests crossing
+    # is the producer's freeze-approval moment. A `produces:` task WRITES the immutable snapshot;
+    # a `consumes:` task PINS the live hash — a missing/unreadable snapshot HARD-STOPS here (the
+    # phase stays at `contract`, nothing pinned), so a consumer never builds against a guessed
+    # shape. No role / no contracts ⇒ neither branch is taken (byte-identical).
+    if nxt == "tests":
+        _prod = _task_produces(root, slug)
+        if _prod:
+            raw3c = _raw_phase_bodies(root, slug).get(3, "")
+            vm = re.search(r"FROZEN @ (v\d+)", raw3c)
+            snap = {"id": _prod, "producer": (_contracts(root).get(_prod) or {}).get("producer", "?"),
+                    "task": slug, "version": vm.group(1) if vm else "?",
+                    "frozen": date.today().isoformat(), "hash": _contract_body_hash(raw3c)}
+            sp = _contract_snapshot(root, _prod)
+            cur_snap = None
+            if sp.exists():
+                try:
+                    cur_snap = json.loads(sp.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    cur_snap = None
+            # idempotent: re-write only when the shape-hash or version actually changed (so a
+            # no-op re-cross leaves the file — and its `frozen` date — byte-identical).
+            if not (cur_snap and cur_snap.get("hash") == snap["hash"]
+                    and cur_snap.get("version") == snap["version"]):
+                sp.parent.mkdir(parents=True, exist_ok=True)
+                _atomic_write(sp, json.dumps(snap, sort_keys=True))
+        _cons = _task_consumes(root, slug)
+        if _cons:
+            sp = _contract_snapshot(root, _cons)
+            try:
+                pinned = json.loads(sp.read_text(encoding="utf-8")).get("hash")
+            except (OSError, ValueError, AttributeError):
+                pinned = None
+            if not pinned:        # absent / unreadable / valid-JSON-but-no-hash all fail loud
+                _die(f"contract_snapshot_missing: no readable hashed .add/contracts/{_cons}.json — the "
+                     f"producer of '{_cons}' must freeze its contract first "
+                     "(never build against a guessed shape)")
+            state["tasks"][slug]["contract_pin"] = {"id": _cons, "hash": pinned}
     state["tasks"][slug]["phase"] = nxt
     state["tasks"][slug]["updated"] = _now()
     _sync_task_marker(root, slug, nxt)
@@ -1302,6 +1340,9 @@ _AUTONOMY_LINE_RE = re.compile(r"(?:^|·)[ \t]*autonomy:[ \t]*([^\s<#|]+)", re.M
 # header token — the SAME anchored grammar as autonomy (line-start or the `·`-inline
 # slug-line form), and an unfilled `<name>` placeholder captures nothing (reads UNBOUND).
 _COMPONENT_LINE_RE = re.compile(r"(?:^|·)[ \t]*component:[ \t]*([^\s<#|]+)", re.MULTILINE)
+# cross-component-contract: a task's role in a cross-component seam — same anchored grammar.
+_PRODUCES_LINE_RE = re.compile(r"(?:^|·)[ \t]*produces:[ \t]*([^\s<#|]+)", re.MULTILINE)
+_CONSUMES_LINE_RE = re.compile(r"(?:^|·)[ \t]*consumes:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 
 def _autonomy_level(hdr: str):
@@ -2553,6 +2594,23 @@ def cmd_check(args: argparse.Namespace) -> None:
         if _tc and _tc != "?" and not (_components(root).get(_tc) or {}).get("green_bar"):
             warnings.append((f"task '{slug}'", f"component_green_bar_unset — bound component '{_tc}' "
                              "declares no green_bar; the per-component gate cannot check a bar"))
+        # cross-component-contract: a consumer whose pinned hash drifted from the live snapshot
+        # (the producer re-froze a CHANGED shape) — the §7-stale cue. Degrade-safe (unreadable
+        # snapshot ⇒ no finding here; the missing-snapshot HARD-STOP lives at the advance crossing).
+        _pin = t.get("contract_pin")
+        if _pin:
+            try:
+                _live = json.loads(_contract_snapshot(root, _pin["id"]).read_text(encoding="utf-8")).get("hash")
+            except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                _live = None
+            if _live is None:                # missing / corrupt / hash-less ⇒ SURFACE, never mask
+                warnings.append((f"task '{slug}'", f"contract_snapshot_unreadable — pinned contract "
+                                 f"'{_pin.get('id')}' snapshot is missing or corrupt; re-publish the "
+                                 "producer contract (cannot confirm the pin is current)"))
+            elif _live != _pin.get("hash"):
+                warnings.append((f"task '{slug}'", f"contract_consumer_stale — pinned contract "
+                                 f"'{_pin.get('id')}' changed shape since pin; re-pin (re-cross contract→tests) "
+                                 "after reviewing the producer's new frozen shape"))
         for dep in t.get("depends_on") or []:
             checks.append((dep in tasks or dep in archived_slugs,
                            f"task '{slug}' dep '{dep}' resolves", "unknown task"))
@@ -2672,6 +2730,10 @@ def cmd_check(args: argparse.Namespace) -> None:
     # themselves degrade-safe). Silent when there is no components.toml.
     for _ccode, _cdetail in _component_findings(root):
         checks.append((False, f"component registry ({_ccode})", _cdetail))
+    # cross-component-contract: a [contract.<id>] naming an unregistered producer is an
+    # integrity FAIL (same fail-closed RED discipline; the readers stay degrade-safe).
+    for _ccode, _cdetail in _contract_findings(root):
+        checks.append((False, f"contract registry ({_ccode})", _cdetail))
 
     # UDD foundation (udd-check-lint): lint a project's named set under .add/design/ —
     # composes the token + catalog/tree validators + the cross-file prop-token resolution.
@@ -4039,6 +4101,62 @@ def _component_findings(root: Path) -> list[tuple[str, str]]:
         tc = _task_component(root, d.name)
         if tc is not None and tc not in known:      # "?" or a stale name
             findings.append(("component_unknown", f"task {d.name} binds an unregistered component"))
+    return findings
+
+
+# ── cross-component contracts (cross-component-contract) ──────────────────────────────────
+# OPT-IN + DEGRADE-SAFE, like the component readers: no [contract.*] / no produces|consumes
+# header ⇒ every path below is byte-identical to pre-contract ADD. A read NEVER raises.
+def _contracts(root: Path) -> dict[str, dict]:
+    """[contract.<id>] from .add/components.toml -> {id: {producer: str, consumers: list[str]}}.
+    A malformed entry (producer not a str) is skipped (the finding surface reports it). PURE."""
+    if tomllib is None:
+        return {}
+    try:
+        data = tomllib.loads((root / "components.toml").read_bytes().decode("utf-8"))
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
+        return {}
+    out: dict[str, dict] = {}
+    for cid, spec in (data.get("contract") or {}).items():
+        if not isinstance(spec, dict) or not isinstance(spec.get("producer"), str):
+            continue
+        cons = spec.get("consumers")
+        out[cid] = {"producer": spec["producer"],
+                    "consumers": [c for c in cons if isinstance(c, str)] if isinstance(cons, list) else []}
+    return out
+
+
+def _task_produces(root: Path, slug: str) -> str | None:
+    m = _PRODUCES_LINE_RE.search(_task_header(root, slug))
+    return m.group(1).strip() if m else None
+
+
+def _task_consumes(root: Path, slug: str) -> str | None:
+    m = _CONSUMES_LINE_RE.search(_task_header(root, slug))
+    return m.group(1).strip() if m else None
+
+
+def _contract_snapshot(root: Path, cid: str) -> Path:
+    return root / "contracts" / f"{cid}.json"
+
+
+def _contract_body_hash(raw3: str) -> str:
+    """md5 of the §3 contract SHAPE — the first ```fenced``` block, whitespace-normalized. The
+    version stamp + freeze flags are excluded (fallback strips Status:/flag/change-request lines)
+    so a pure version bump does NOT churn pinned consumers stale. PURE."""
+    m = re.search(r"```(.*?)```", raw3, re.DOTALL)
+    body = m.group(1) if m else re.sub(r"(?m)^(Status:|.*surfaced at freeze:|v\d+ CHANGE REQUEST).*$", "", raw3)
+    return _md5_text(re.sub(r"\s+", " ", body).strip())
+
+
+def _contract_findings(root: Path) -> list[tuple[str, str]]:
+    """The loud gate surface for cross-component contracts — [] when clean / opted-out."""
+    findings: list[tuple[str, str]] = []
+    known = set(_components(root))
+    for cid, spec in _contracts(root).items():
+        if spec["producer"] not in known:
+            findings.append(("contract_producer_unknown",
+                             f"[contract.{cid}] producer {spec['producer']!r} is not a declared component"))
     return findings
 
 
