@@ -4,32 +4,50 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [Unreleased]
+## [1.9.0] — 2026-06-24
 
-Lean-pass major — make ADD's own surface the most-effective prompt at optimized
-token cost (not token-golf). Bundles the `skill-effectiveness` (M1) and
-`flow-simplification` (M3) milestones. Behavior is unchanged except for one
-opt-in gate; the rest is a leaner skill tree that routes identically.
+Lean-pass major — make ADD's own surface (skill · flow · engine) the most-effective
+prompt at optimized token cost, *not* token-golf. Bundles four closed milestones:
+`skill-effectiveness` (M1), `flow-simplification` (M3), `flow-enforcement` (M4), and
+the `fast-lane` sub-milestone. The skill tree routes identically but loads lighter;
+the method's three fill-seams are now engine-enforced rather than convention; and a
+new opt-in **fast lane** collapses ceremony for small tasks without lowering the trust
+floor. Every new gate is opt-in or grandfathered — existing flows are byte-unchanged.
 
 ### Added
-- **Confirm-parent gate (opt-in, `flow-simplification`)** — `new-milestone
-  <slug> --await-confirm` seeds the milestone *unconfirmed*, so `new-task` is
-  HELD (reject `milestone_unconfirmed`) until you show the filled `MILESTONE.md`,
-  get the human's go, and run the new `add.py milestone-confirm <slug>`. Closes
-  the gap where the AI would detail a task's §0–§5 before the human had agreed
-  the parent milestone. WITHOUT the flag no `confirmed` key is written →
-  grandfathered → no gate, so every existing flow is byte-unchanged. Mirrors
+- **Fast lane (`fast-lane`)** — `add.py new-task <slug> --fast` runs a small task
+  through a minimal `TASK.fast.md` (sections {0,1,3,4,5,6}) that still freezes a
+  contract, proves a red→green, and reads back cold in a later session. The lane is
+  *collapse-never-skip*: a `--fast` task is freeze-gated under ANY milestone (the floor
+  fires on `_optin OR fast`). Human-triggered only — the engine never auto-classifies a
+  task as "small". New `phases/fast-lane.md` guide + a SKILL.md quick-ref document it.
+- **Freeze-before-build gate (`fast-lane`)** — crossing tests→build now refuses
+  `contract_not_frozen` when §3 is still DRAFT and the task is opted-in or fast, closing
+  the gap where a task could reach `gate=PASS` without an approved, frozen contract.
+- **Contract-fill + build-expectations gates (opt-in, `flow-enforcement`)** — under
+  `new-milestone --await-confirm`, the engine HOLDS a task whose §3 CONTRACT or §6
+  Build-expectations block is still a placeholder, so the method's fill-seams are
+  enforced rather than trusted. `await_confirm` is the master switch; without it no key
+  is written → grandfathered → byte-unchanged.
+- **Gate-record write-back (`flow-enforcement`)** — recording a verify gate now stamps
+  the verdict into the §6 GATE RECORD of the TASK.md for ALL tasks (grandfathered
+  backfill), so the file itself carries the outcome the Seam audit reads.
+- **Confirm-parent gate (opt-in, `flow-simplification`)** — `new-milestone <slug>
+  --await-confirm` seeds the milestone *unconfirmed*, so `new-task` is HELD (reject
+  `milestone_unconfirmed`) until you show the filled `MILESTONE.md`, get the human's go,
+  and run the new `add.py milestone-confirm <slug>`. Closes the gap where the AI would
+  detail a task's §0–§5 before the human had agreed the parent milestone. Mirrors
   `init --await-lock` one level down.
 
 ### Changed
-- **Skill tree 25% lighter (`skill-effectiveness`)** — the on-demand skill
-  guides were compacted tree-wide (164,333 → ~123,000 bytes) with zero routing,
-  gate, reject-code, threshold, or rule lost; an independent adversarial review
-  confirmed every operative element preserved. Same flow an agent reads, fewer
-  tokens to load.
-- **One home for the worker-spawn model tiers (`spawn-fold`)** — the tier→model
-  mapping (mid→sonnet / top→opus) now lives only in `streams.md`; `advisor.md`
-  points at it instead of copying. Advisor keeps its own advisory template.
+- **Skill tree 25% lighter (`skill-effectiveness`)** — the on-demand skill guides were
+  compacted tree-wide (164,333 → ~123,000 bytes) with zero routing, gate, reject-code,
+  threshold, or rule lost; an independent adversarial review confirmed every operative
+  element preserved (it flagged 6 dropped nuances → all restored). Same flow an agent
+  reads, fewer tokens to load.
+- **One home for the worker-spawn model tiers (`spawn-fold`)** — the tier→model mapping
+  (mid→sonnet / top→opus) now lives only in `streams.md`; `advisor.md` points at it
+  instead of copying. Advisor keeps its own advisory template.
 
 ## [1.8.0] — 2026-06-23
 
