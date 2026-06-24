@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "component-registry",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,10 +1195,39 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "component-registry": {
+      "title": "Component registry: declare components with root + verify + green-bar",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "component-aware-add",
+      "depends_on": [],
+      "created": "2026-06-24T14:59:00+00:00",
+      "updated": "2026-06-24T15:48:13+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4bec1ea52853d16567e76b5bb02197e4",
+        "tests": {
+          "add-method/tooling/test_component_registry.py": "622450f6a1db543fb2f6509aea955f4b"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/add.py"
+        ],
+        "snapshot_md5": "9027a472917b85021de3037b1933edcb"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T14:23:36+00:00",
+  "updated": "2026-06-24T15:48:13+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1380,9 +1409,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "component-aware-add": {
+      "title": "Component-aware ADD",
+      "goal": "ADD treats every codebase as a graph of components \u2014 each owning its source root, green-bar, and produced/consumed contracts \u2014 so a single milestone can ship a vertical slice across components living in one repo or many.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-24T14:52:41+00:00",
+      "updated": "2026-06-24T14:55:27+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-24T14:55:27+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": null,
+  "active_milestone": "component-aware-add",
   "archived": [
     {
       "slug": "v5",
@@ -1856,8 +1902,11 @@
       "archived": "2026-06-24"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "component-aware-add"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "component-aware-add": "component-registry"
   }
 }

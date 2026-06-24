@@ -25,6 +25,11 @@ import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+try:                       # component-aware-add registry parse (Python 3.11+ stdlib)
+    import tomllib
+except ModuleNotFoundError:   # < 3.11: the registry is unsupported → degrade to opt-out
+    tomllib = None
+
 # --- constants ---------------------------------------------------------------
 
 ROOT_DIRNAME = ".add"
@@ -1285,6 +1290,11 @@ _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
 # value stops at space/`<`/`#`/`|` so an unfilled `<manual | … >` placeholder captures nothing
 # and reads as UNSET.
 _AUTONOMY_LINE_RE = re.compile(r"(?:^|·)[ \t]*autonomy:[ \t]*([^\s<#|]+)", re.MULTILINE)
+
+# component-aware-add: a task binds to a registered component via a `component: <name>`
+# header token — the SAME anchored grammar as autonomy (line-start or the `·`-inline
+# slug-line form), and an unfilled `<name>` placeholder captures nothing (reads UNBOUND).
+_COMPONENT_LINE_RE = re.compile(r"(?:^|·)[ \t]*component:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 
 def _autonomy_level(hdr: str):
@@ -2628,6 +2638,13 @@ def cmd_check(args: argparse.Namespace) -> None:
     checks.append((cycle is None, "task dependencies are acyclic",
                    f"cycle: {' -> '.join(cycle)}" if cycle else ""))
 
+    # component registry (component-aware-add): a malformed .add/components.toml, a root
+    # escaping the project, or a task binding an unregistered component are integrity FAILS
+    # — fail-closed RED (like wave_ledger_malformed), loud but never a crash (the readers
+    # themselves degrade-safe). Silent when there is no components.toml.
+    for _ccode, _cdetail in _component_findings(root):
+        checks.append((False, f"component registry ({_ccode})", _cdetail))
+
     # UDD foundation (udd-check-lint): lint a project's named set under .add/design/ —
     # composes the token + catalog/tree validators + the cross-file prop-token resolution.
     # Silent when absent; read-only; fail-closed on malformed JSON.
@@ -3876,6 +3893,102 @@ _SCOPE_EXCLUDE_FILES = (".DS_Store",)                  # plus *.pyc / *.tsbuildi
 _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")
 
 
+# ── component registry (component-aware-add): declared components + task binding ─────
+# OPT-IN + DEGRADE-SAFE: with no .add/components.toml every reader is byte-identical to
+# pre-component ADD. A read NEVER raises (absent/unreadable/malformed → {} / dropped
+# cover); the loud surface is _component_findings, consumed by the scope gate (cmd_check).
+def _components(root: Path) -> dict[str, dict]:
+    """The registry from .add/components.toml → {name: {root, verify, green_bar,
+    language}}. `root` required per entry; an entry missing it is skipped (the finding
+    surface reports it). `verify` is stored OPAQUE — parsed as data, NEVER executed. PURE."""
+    if tomllib is None:
+        return {}
+    try:
+        raw = (root / "components.toml").read_bytes()
+    except OSError:
+        return {}
+    try:
+        data = tomllib.loads(raw.decode("utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
+        return {}
+    out: dict[str, dict] = {}
+    for name, spec in (data.get("component") or {}).items():
+        # "?" is the reserved unknown-binding sentinel (_task_component) — a component
+        # named "?" would collide and silently drop cover, so it never registers.
+        if name == "?" or not isinstance(spec, dict) or not isinstance(spec.get("root"), str):
+            continue
+        out[name] = {"root": spec["root"], "verify": spec.get("verify"),
+                     "green_bar": spec.get("green_bar"), "language": spec.get("language")}
+    return out
+
+
+def _component_root(root: Path, name: str) -> str | None:
+    """Project-root-relative path (trailing '/') of component `name`'s root, or None
+    when the name is absent OR the root escapes the project (fail-closed — grants no
+    scope cover, mirroring _declared_scope's _confined drop). PURE."""
+    spec = _components(root).get(name)
+    if not spec:
+        return None
+    rootp = root.parent.resolve()
+    p = root.parent / spec["root"]
+    if not _confined(p, rootp):
+        return None
+    try:
+        return str(p.resolve().relative_to(rootp)).rstrip("/") + "/"
+    except (OSError, ValueError):
+        return None
+
+
+def _task_component(root: Path, slug: str):
+    """The component a task binds to via its `component:` header token (anchored like
+    autonomy). None = no line / unfilled `<…>` placeholder; "?" = a real token absent
+    from the registry; otherwise the component name. PURE."""
+    m = _COMPONENT_LINE_RE.search(_task_header(root, slug))
+    if not m:
+        return None
+    tok = m.group(1).strip()
+    return tok if tok in _components(root) else "?"
+
+
+def _component_findings(root: Path) -> list[tuple[str, str]]:
+    """The loud gate surface for the registry — the codes a degrade-safe read passes
+    over silently. Consumed by cmd_check (the scope_violation surface). [] when clean."""
+    findings: list[tuple[str, str]] = []
+    try:
+        raw = (root / "components.toml").read_bytes()
+    except OSError:
+        return findings                       # absent/unreadable = opt-out, nothing to report
+    data = None
+    if tomllib is None:
+        findings.append(("components_malformed", "components.toml present but tomllib unavailable (Python < 3.11)"))
+    else:
+        try:
+            data = tomllib.loads(raw.decode("utf-8"))
+        except (tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError) as e:
+            findings.append(("components_malformed", f"components.toml: {e}"))
+    if data is not None:
+        rootp = root.parent.resolve()
+        for name, spec in (data.get("component") or {}).items():
+            if name == "?":
+                findings.append(("components_malformed", "component name '?' is reserved (the unknown-binding sentinel)"))
+                continue
+            if not isinstance(spec, dict) or not isinstance(spec.get("root"), str):
+                findings.append(("components_malformed", f"[component.{name}] missing required `root`"))
+                continue
+            if not _confined(root.parent / spec["root"], rootp):
+                findings.append(("component_root_outside", f"[component.{name}] root {spec['root']!r} escapes the project"))
+    known = set(_components(root))
+    try:
+        task_dirs = sorted(p for p in (root / "tasks").iterdir() if p.is_dir())
+    except OSError:
+        task_dirs = []                       # unreadable tasks/ degrades safe — never crash a read
+    for d in task_dirs:
+        tc = _task_component(root, d.name)
+        if tc is not None and tc not in known:      # "?" or a stale name
+            findings.append(("component_unknown", f"task {d.name} binds an unregistered component"))
+    return findings
+
+
 def _declared_scope(root: Path, slug: str) -> list[str] | None:
     """Resolve the §5 'Scope (may touch):' declaration to project-root-relative
     strings (directory tokens keep a trailing '/'). The frozen scope-decl-template
@@ -3885,11 +3998,19 @@ def _declared_scope(root: Path, slug: str) -> list[str] | None:
     root, fail-closed — with ONE divergence: a directory token covers its WHOLE
     subtree (containment, judged by _in_scope). None = no Scope line (UNDECLARED,
     grandfathered — never retro-red); [] = a line whose every token was dropped
-    (a garbage declaration grants NO cover)."""
+    (a garbage declaration grants NO cover).
+
+    component-aware-add: when the task binds a known `component:` (_task_component),
+    that component's root subtree (_component_root) is APPENDED to the resolved tokens
+    (dedup) — composing with the explicit declaration, never redrawing token resolution.
+    A bound task with NO Scope line returns [component_root] (not None); an UNBOUND task
+    is byte-identical to before."""
+    comp = _task_component(root, slug)
+    croot = _component_root(root, comp) if comp and comp != "?" else None
     body = _raw_phase_bodies(root, slug).get(5, "")
     m = re.search(r"^\s*Scope \(may touch\):.*$", body, re.M)
     if not m:
-        return None
+        return [croot] if croot else None
     tdir = root / "tasks" / slug
     rootp = root.parent.resolve()
     out: list[str] = []
@@ -3915,6 +4036,8 @@ def _declared_scope(root: Path, slug: str) -> list[str] | None:
             continue
         if rel not in out:
             out.append(rel)
+    if croot and croot not in out:        # component-aware-add: compose, never redraw
+        out.append(croot)
     return out
 
 
