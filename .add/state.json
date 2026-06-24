@@ -1198,7 +1198,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T08:39:38+00:00",
+  "updated": "2026-06-24T14:23:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1843,6 +1843,15 @@
       "task_slugs": [
         "site-scaffold",
         "pages-deploy"
+      ],
+      "archived": "2026-06-24"
+    },
+    {
+      "slug": "loop-steering",
+      "title": "Loop Steering",
+      "tasks": 1,
+      "task_slugs": [
+        "loop-aware-orient"
       ],
       "archived": "2026-06-24"
     }

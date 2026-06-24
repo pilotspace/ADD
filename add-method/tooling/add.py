@@ -1699,6 +1699,38 @@ def cmd_stage(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def _done_resume(root: Path, state: dict, slug: str) -> tuple[str, str, str]:
+    """At a DONE task, what should the agent do NEXT? Classify from the task's
+    milestone exit-criteria tally (_exit_criteria) so the orient surfaces (status,
+    guide) STEER into the loop instead of always saying "start the next feature".
+
+    Returns (headline, next_step, chapter) where chapter is a docs/ filename:
+      LOOP-JUNCTURE  total>0 and met<total -> name the unmet goal, route to the loop
+      GOAL-MET       total>0 and met==total -> point at milestone-done
+      PLAIN          no criteria / no milestone / any read error -> today's "next feature"
+    PURE and fail-closed (design-for-failure): a missing milestone or unreadable
+    MILESTONE.md degrades to PLAIN — it never raises into a status/guide print path."""
+    PLAIN = ("this task is done",
+             "start the next feature -> add.py new-task <slug>",
+             "02-the-flow.md")
+    try:
+        ms = ((state.get("tasks") or {}).get(slug) or {}).get("milestone")
+        if not ms:
+            return PLAIN
+        met, total = _exit_criteria(root, ms)
+    except Exception:                       # noqa: BLE001 — never break orient output
+        return PLAIN
+    if total > 0 and met < total:
+        return (f"milestone '{ms}' goal not met ({met}/{total} exit criteria)",
+                "propose the next tasks from open deltas / the unscaffolded plan -> add.py deltas",
+                "09-the-loop.md")
+    if total > 0 and met == total:
+        return (f"milestone '{ms}' goal met ({met}/{total})",
+                f"close it -> add.py milestone-done {ms}",
+                "09-the-loop.md")
+    return PLAIN
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     if getattr(args, "json", False):
         root, state = _load_state_for_json()
@@ -1893,8 +1925,16 @@ def cmd_status(args: argparse.Namespace) -> None:
     elif active and active in tasks:
         ph = tasks[active]["phase"]
         if ph == "done":
+            # loop-aware resume (loop-aware-orient): a done task is NOT always "start the
+            # next feature" — if its milestone goal is unmet we are at the loop juncture, so
+            # STEER into the loop; if met, point at the close. PLAIN stays byte-identical.
+            _hl, _nxt, _chap = _done_resume(root, state, active)
             print(f"\nresume  : task '{active}' is done ({tasks[active]['gate']}).")
-            print("          start the next feature: add.py new-task <slug>")
+            if _chap == "02-the-flow.md":
+                print("          start the next feature: add.py new-task <slug>")
+            else:
+                print(f"          {_hl} — {_nxt}")
+                print(f"          (the loop: .add/docs/{_chap})")
         else:
             print(f"\nresume  : task '{active}' is at phase '{ph}'.")
             print(f"          read .add/tasks/{active}/TASK.md and continue that phase.")
@@ -1944,6 +1984,10 @@ def cmd_guide(args: argparse.Namespace) -> None:
         phase = t.get("phase")
         owner = _phase_owner(phase)            # _die unmapped_phase before any stdout
         action, chapter = PHASE_GUIDE[phase]   # phase is mapped, so PHASE_GUIDE has it too
+        if phase == "done":                    # loop-aware-orient: steer the --json surface too
+            _hl, _nxt, _chap = _done_resume(json_root, state, slug)
+            if _chap != "02-the-flow.md":      # loop juncture / goal met; PLAIN stays unchanged
+                action, chapter = _nxt, _chap
         print(json.dumps({"task": slug, "phase": phase, "owner": owner,
                           "stop": owner != "ai", "next_step": action,
                           "chapter": f".add/docs/{chapter}", "gate": t.get("gate"),
@@ -1964,6 +2008,10 @@ def cmd_guide(args: argparse.Namespace) -> None:
     if entry is None:           # corrupted/hand-edited state.json — fail clean, not KeyError
         _die(f"task '{slug}' has unknown phase '{phase}' (state.json corrupted?)")
     action, chapter = entry
+    if phase == "done":                        # loop-aware-orient: steer at the loop juncture
+        _hl, _nxt, _chap = _done_resume(root, state, slug)
+        if _chap != "02-the-flow.md":          # loop juncture / goal met; PLAIN stays unchanged
+            action, chapter = _nxt, _chap
     # the guide names the driver too (task gate-owner-marker) — the SAME _driver_stop the
     # footer renders, on the next-step line. Computed AFTER the unknown-phase guard above,
     # so a bad phase fails clean and never reaches the marker (it invents no default).
@@ -1980,7 +2028,10 @@ def cmd_guide(args: argparse.Namespace) -> None:
     if phase == "verify":
         print("then   : add.py gate PASS | RISK-ACCEPTED | HARD-STOP")
     elif phase == "done":
-        print("then   : start the next feature -> add.py new-task <slug>")
+        if chapter != "02-the-flow.md":        # loop juncture / goal met -> the steered command
+            print(f"then   : {action}")
+        else:
+            print("then   : start the next feature -> add.py new-task <slug>")
     else:
         print("then   : add.py advance")
 
