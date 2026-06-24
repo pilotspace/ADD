@@ -1381,7 +1381,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T18:03:27+00:00",
+  "updated": "2026-06-24T18:06:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1568,14 +1568,19 @@
       "title": "Component-aware ADD",
       "goal": "ADD treats every codebase as a graph of components \u2014 each owning its source root, green-bar, and produced/consumed contracts \u2014 so a single milestone can ship a vertical slice across components living in one repo or many.",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-06-24T14:52:41+00:00",
-      "updated": "2026-06-24T14:55:27+00:00",
+      "updated": "2026-06-24T18:06:31+00:00",
       "confirmed": true,
       "confirmed_at": "2026-06-24T14:55:27+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"

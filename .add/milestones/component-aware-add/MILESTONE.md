@@ -66,36 +66,41 @@ Out:
   consumer-pin · stale-delta-on-refreeze) -> owning task `cross-component-contract`  (tasks 4–5 build on this)
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] component-registry        depends-on: none                    — define + parse `.add/components.toml`; a task may declare `component:`; §5 scope anchors to the component `root`; zero-components ⇒ byte-identical to today. (freezes the registry schema)
-- [ ] per-component-verify      depends-on: component-registry       — verify gate runs the task's component `verify` profile + green-bar; Close "Ship by domain" auto-derives per component. (the unlock for mixed milestones)
-- [ ] cross-component-contract  depends-on: component-registry       — contract-as-artifact: producer §3 freeze writes `.add/contracts/<id>.json`, consumer pins it, producer re-freeze flags consumers stale. (freezes the seam protocol)
-- [ ] cross-component-milestone depends-on: cross-component-contract — milestone tasks carry `component:` + `depends-on:`; engine HOLDS a consumer's §3 until the producer contract is frozen (intra-milestone BE→FE).
-- [ ] multirepo-federation      depends-on: cross-component-contract — federation manifest joins a milestone across repos by contract id; producer publishes the immutable snapshot, consumer repo pins the version; bounded fail-loud transport.
-- [ ] component-method-docs      depends-on: per-component-verify, cross-component-milestone — book chapter + skill guide + GLOSSARY entries for the component pillar (component · cross-component contract · federation).
+- [x] component-registry        depends-on: none                    — define + parse `.add/components.toml`; a task may declare `component:`; §5 scope anchors to the component `root`; zero-components ⇒ byte-identical to today. (freezes the registry schema)
+- [x] per-component-verify      depends-on: component-registry       — verify gate runs the task's component `verify` profile + green-bar; Close "Ship by domain" auto-derives per component. (the unlock for mixed milestones)
+- [x] cross-component-contract  depends-on: component-registry       — contract-as-artifact: producer §3 freeze writes `.add/contracts/<id>.json`, consumer pins it, producer re-freeze flags consumers stale. (freezes the seam protocol)
+- [x] cross-component-milestone depends-on: cross-component-contract — milestone tasks carry `component:` + `depends-on:`; engine HOLDS a consumer's §3 until the producer contract is frozen (intra-milestone BE→FE).
+- [x] multirepo-federation      depends-on: cross-component-contract — federation manifest joins a milestone across repos by contract id; producer publishes the immutable snapshot, consumer repo pins the version; bounded fail-loud transport.
+- [x] component-method-docs      depends-on: per-component-verify, cross-component-milestone — book chapter + skill guide + GLOSSARY entries for the component pillar (component · cross-component contract · federation).
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] A project can declare ≥2 components (root + verify + green-bar) in `.add/components.toml`, and a task can be tagged to one; a project with zero components behaves exactly as today   (← component-registry)
-- [ ] At verify, a task gates against ITS component's suite + green-bar — two tasks in one milestone can pass on two different toolchains (e.g. pytest and vitest)   (← per-component-verify)
-- [ ] A producer task's §3 freeze writes a contract snapshot; a consumer task pins it; changing the producer's frozen shape flags every consumer stale via a §7 delta   (← cross-component-contract)
-- [ ] One milestone holds a producer (BE) and consumer (FE) task where the consumer cannot enter §3 until the producer's contract is frozen — proving a full-stack vertical slice in one milestone   (← cross-component-milestone)
-- [ ] A milestone spans two repos: the producer repo publishes a frozen snapshot, the consumer repo pins that version, and a missing/mismatched pin hard-stops rather than building blind   (← multirepo-federation)
-- [ ] The book + skill + glossary document the component / cross-component-contract / federation model; method suite green   (← component-method-docs)
+- [x] A project can declare ≥2 components (root + verify + green-bar) in `.add/components.toml`, and a task can be tagged to one; a project with zero components behaves exactly as today   (← component-registry) (verify: test_component_registry + test_per_component_verify)
+- [x] At verify, a task gates against ITS component's suite + green-bar — two tasks in one milestone can pass on two different toolchains (e.g. pytest and vitest)   (← per-component-verify) (verify: test_per_component_verify.CiteGate)
+- [x] A producer task's §3 freeze writes a contract snapshot; a consumer task pins it; changing the producer's frozen shape flags every consumer stale via a §7 delta   (← cross-component-contract) (verify: test_cross_component_contract)
+- [x] One milestone holds a producer (BE) and consumer (FE) task where the consumer cannot enter §3 until the producer's contract is frozen — proving a full-stack vertical slice in one milestone   (← cross-component-milestone) (verify: test_cross_component_milestone.Hold)
+- [x] A milestone spans two repos: the producer repo publishes a frozen snapshot, the consumer repo pins that version, and a missing/mismatched pin hard-stops rather than building blind   (← multirepo-federation) (verify: test_multirepo_federation)
+- [x] The book + skill + glossary document the component / cross-component-contract / federation model; method suite green   (← component-method-docs) (verify: test_component_pillar_docs + full suite 1737/0)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `add.py` gained the whole component pillar — `_components`/`_contracts`/`_federation` readers, the `component:`/`produces:`/`consumes:` header grammar, the per-component green-bar cite-gate (`cmd_gate`), the producer-write/consumer-pin hooks + the scenarios→contract HOLD (`cmd_advance`), the `federate pull` command + `_atomic_write_bytes`, and the `cmd_check` findings. components.toml `[component]`/`[contract]`/`[federation]` is the new declared registry. ENGINE_MD5 → 2669f273. Opt-in throughout (no components ⇒ byte-identical).
+- skill   : NEW `add/components.md` guide + a SKILL.md load-on-demand pointer (lean fence rebaselined, ratios kept).
+- book    : NEW chapter `17-components.md` (4-tree mirrored, nav + ToC) + 3 glossary terms (Component · Cross-component contract · Federation).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- component-registry        : gate=PASS · tests green · residue=none (the registry schema + `component:` binding + scope anchor)
+- per-component-verify       : gate=PASS · tests green (test_per_component_verify, 16) · residue=none (3 refute-reads → cite-gate hardened v1→v3)
+- cross-component-contract   : gate=PASS · tests green (test_cross_component_contract, 15) · residue=none (refute-read GREEN-NOT-EARNED → self-healed: real stale-path fixture + fail-loud HARD-STOPs)
+- cross-component-milestone  : gate=PASS · tests green (test_cross_component_milestone, 5) · residue=none (refute-read GREEN-EARNED; cmd_phase-bypass + stale-snapshot seeded as §7 deltas)
+- multirepo-federation       : gate=PASS · tests green (test_multirepo_federation, 11) · residue=none (refute-read GREEN-NOT-EARNED → self-healed: binary byte-copy honoring the frozen contract; 3 §7 deltas)
+- component-method-docs      : gate=PASS · tests green (test_component_pillar_docs, 4) · residue=none (docs-only; engine byte-unchanged)
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — criteria 1–5 map 1:1 to the five engine tasks' suites (tooling row); criterion 6 to component-method-docs (book/skill row + full suite 1737/0).
+- goal: **ADD treats every codebase as a graph of components — each owning a source root, green-bar, and produced/consumed contracts — so one milestone ships a vertical slice across components in one repo or many.** Proof: a producer (BE) and consumer (FE) coexist in one milestone ordered by the frozen contract (the HOLD), and `federate pull` carries that same frozen snapshot across repos fail-loud — both green in the suite, both opt-in over a byte-identical single-component default.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
