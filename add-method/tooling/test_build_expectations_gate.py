@@ -60,6 +60,16 @@ class BuildExpectationsGateTest(unittest.TestCase):
             "- <contract name> -> owning task <slug>",
             "- real contract -> owning task t"), encoding="utf-8")
 
+    def _freeze(self, slug="t"):
+        """Stamp §3 FROZEN + a well-formed least-sure flag so an opted-in task clears the
+        freeze-before-build gate (fast-lane) and reaches THIS build-expectations gate."""
+        p = self._task_path(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-23.\n"
+            "Least-sure flag surfaced at freeze: [contract] the §6 outcomes may under-specify "
+            "— cost: a follow-up gate"), encoding="utf-8")
+
     def _fill_build_expectations(self, slug="t"):
         p = self._task_path(slug)
         t = p.read_text()
@@ -79,6 +89,7 @@ class BuildExpectationsGateTest(unittest.TestCase):
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
         self._to_tests(slug)
+        self._freeze(slug)   # opted-in tasks must freeze §3 to clear the freeze-before-build gate
 
     def _plain_task_at_tests(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm

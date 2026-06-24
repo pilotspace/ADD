@@ -15,11 +15,11 @@ user-invocable: true
 when_to_use: "Invoke in any repo with a `.add/` directory, or when the user wants spec/tests-first feature work, resumes ADD work, or asks to start/advance a task."
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, scenarios, verify, milestone, task-orchestration]
-argument-hint: "[describe your goals] OR [describe what is your expectation] (e.g., implement authentication flows for both server api and client side to handle email + Google OAuth login, session refresh, RBAC guards, and a profile page that survives page reloads)"
+argument-hint: "status | init | continue | [describe new short goals or expectation]"
 license: MIT
 metadata:
   author: add
-  version: "1.0.0"
+  version: "1.8.0"
 ---
 
 # ADD — the orchestration engine
@@ -60,6 +60,9 @@ self-improving via the `soul-self-improve` path). Then branch on state:
 - **A task is active** → open its `.add/tasks/<active>/TASK.md`, read the `phase:` marker, load the
   matching `phases/<n>-<phase>.md`. Work *only* that phase.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
+
+**Quick ref** — `status` resume · `init` bootstrap · `advance` continue · `gate PASS` at verify.
+**Opt-in flags** (human picks, never auto): `new-task --fast` = fast lane (minimal template, freeze-gated) · `new-milestone --await-confirm` = confirm-gate the milestone's tasks.
 
 ## Intake — size a request before creating scope
 
@@ -111,6 +114,9 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
   contracts — `streams.md`. Delegate one piece of your plan to a subagent (when to spawn, the prompt
   template, the tier) — `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9)
   — `confidence.md`. Both advisory: the engine never spawns; the self-score is never a gate.
+- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
+  `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
+  red test · verify gate; `--fast` is freeze-gated under any milestone). Collapse, never skip; opt-in.
 - **UI feature** at specify → the **design-definition loop** (UDD): review the domain → research and
   reuse components → wireframe → a real captured screen the human confirms **before** build — `design.md`.
   Tool-agnostic; the engine never renders.

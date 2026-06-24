@@ -23,8 +23,15 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # and the frozen ratio. target = int(baseline * ratio). Per-task targets are unchanged from the
 # four original fences; the ratios differ because heavily test-pinned pools have an effectiveness
 # floor (core 0.88, phases 0.80) while the load-on-demand reference pool carries the tree-wide cut.
+# Baselines REBASELINED @ fast-lane-guide (human-approved "rebaseline for new surface"): the fast lane
+# adds a genuinely NEW load-on-demand guide (`phases/fast-lane.md`, 1733 B) + a SKILL.md pointer — surface
+# that did not exist at the M1 freeze. The RATIOS (the won compaction on every existing guide) are kept
+# EXACTLY; each affected baseline grows by the new surface ÷ ratio, so the fence still pins the won ground:
+#   reference 59421 → 61970 (+ ⌈1733/0.68⌉, the new guide), core 16894 → 17233 (+ ⌈pointer/0.88⌉).
+# core 17233 → 17560: a SHORT SKILL.md quick-ref (orient commands + the opt-in feature flags --fast /
+# --await-confirm) — new always-loaded surface, human-requested; ratio 0.88 kept.
 POOLS = [
-    {"name": "core",          "ratio": 0.88, "baseline": 16894,
+    {"name": "core",          "ratio": 0.88, "baseline": 17560,
      "guides": ["SKILL.md", "intake.md"]},
     {"name": "orchestration", "ratio": 0.75, "baseline": 50098,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
@@ -32,15 +39,15 @@ POOLS = [
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
-    {"name": "reference",     "ratio": 0.68, "baseline": 59421,
+    {"name": "reference",     "ratio": 0.68, "baseline": 61970,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
-                "compact-foundation.md"]},
+                "compact-foundation.md", "phases/fast-lane.md"]},
 ]
 
 # The whole-tree headline guardrail: every .md in the canonical skill tree, ≥25% under baseline.
-TREE_BASELINE_BYTES = 16894 + 50098 + 37920 + 59421   # = 164333, the sum of the four pool baselines
-TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)    # ≤123249 — ≥25% lighter tree-wide
+TREE_BASELINE_BYTES = 17560 + 50098 + 37920 + 61970   # = 167548, the sum of the four pool baselines
+TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)    # ≤125661 — still ≥25% lighter tree-wide
 
 # Routing rows the SKILL.md phase table MUST keep (one guide per phase).
 PHASE_GUIDES = [
