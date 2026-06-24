@@ -1,6 +1,6 @@
 # 16 · Releasing
 
-[← 15 Foundations & Lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 15 Foundations & Lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [17 Components →](./17-components.md)
 
 ---
 
@@ -179,4 +179,4 @@ the risk, record the marker, and let a person make the outward call.
 
 ---
 
-[← 15 Foundations & Lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 15 Foundations & Lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [17 Components →](./17-components.md)

@@ -130,6 +130,10 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
   (security HARD-STOP is un-forceable) → human confirms → `add.py release <version>` records the cut
   (CHANGELOG + `RELEASES.md` ledger + milestone attribution). The engine records; the human runs the
   tag / publish / deploy. A release bundles ≥1 milestone and is orthogonal to stage.
+- **Monorepo / multi-repo** — a milestone spans more than one green bar (a BE + its FE, services across
+  repos) → the **component pillar**: declare components in `.add/components.toml`, gate each task on its
+  component's green-bar, freeze cross-component contracts (`produces:`/`consumes:`), hold the FE until the
+  BE freezes, and `federate pull` a contract across repos — `components.md`. Opt-in; no components = today.
 
 ## Non-negotiable rules (from the method)
 

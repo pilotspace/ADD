@@ -166,7 +166,7 @@ class TestLiveSurfaceGreen(unittest.TestCase):
         self.assertEqual([f for f in live if f.code == "banned_idiom_present"], [])
 
     def test_surface_files_cover_the_contract(self) -> None:
-        """The surface is skill/add (28 files: +loop.md @ v20, +graduate.md @ v22, +confidence.md +advisor.md @ advisor-context, +compact-foundation.md @ foundation-compaction, +soul.md @ soul-self-improve, +design.md @ udd-design-loop, +release.md @ release-altitude, +phases/fast-lane.md @ fast-lane) + docs/appendix-b-prompts.md, per §3."""
+        """The surface is skill/add (29 files: +loop.md @ v20, +graduate.md @ v22, +confidence.md +advisor.md @ advisor-context, +compact-foundation.md @ foundation-compaction, +soul.md @ soul-self-improve, +design.md @ udd-design-loop, +release.md @ release-altitude, +phases/fast-lane.md @ fast-lane, +components.md @ component-method-docs) + docs/appendix-b-prompts.md, per §3."""
         files = wl.surface_files()
         names = {p.name for p in files}
         self.assertIn("SKILL.md", names)
@@ -179,8 +179,9 @@ class TestLiveSurfaceGreen(unittest.TestCase):
         self.assertIn("design.md", names)
         self.assertIn("release.md", names)
         self.assertIn("fast-lane.md", names)
+        self.assertIn("components.md", names)
         self.assertIn("appendix-b-prompts.md", names)
-        self.assertEqual(len(files), 29, f"expected 28 skill files + appendix-b, got {len(files)}")
+        self.assertEqual(len(files), 30, f"expected 29 skill files + appendix-b, got {len(files)}")
 
 
 if __name__ == "__main__":

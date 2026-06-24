@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "multirepo-federation",
+  "active_task": "component-method-docs",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1338,10 +1338,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "component-method-docs": {
+      "title": "Component Method Docs",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "component-aware-add",
+      "depends_on": [],
+      "created": "2026-06-24T17:51:14+00:00",
+      "updated": "2026-06-24T18:03:27+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b42e935db522cd16d3e285413734b5e4",
+        "tests": {
+          "add-method/tooling/test_component_pillar_docs.py": "71385e5f53e00125528eac18bae65fdf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/",
+          "add-method/src/add_method/_bundled/docs/",
+          ".add/docs/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/",
+          ".claude/skills/add/mkdocs.yml",
+          ".claude/skills/add/README.md",
+          ".claude/skills/add/17-components.md",
+          ".claude/skills/add/appendix-c-glossary.md",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_component_pillar_docs.py",
+          "add-method/tooling/test_per_step_hooks.py",
+          "add-method/tooling/test_wording_lint.py"
+        ],
+        "snapshot_md5": "aa734947ab92483740d1b93a42bddce7"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T17:49:12+00:00",
+  "updated": "2026-06-24T18:03:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2021,6 +2061,6 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "component-aware-add": "multirepo-federation"
+    "component-aware-add": "component-method-docs"
   }
 }

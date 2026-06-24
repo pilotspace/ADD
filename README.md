@@ -135,6 +135,9 @@ Releases: `@pilotspace/add` (npm) · `pilotspace-add` (PyPI) — one tag publish
 **Releasing**
 - [16 · Releasing](./16-releasing.md)
 
+**Components**
+- [17 · Components — monorepo and multi-repo](./17-components.md)
+
 **Part IV — Reference**
 - [Appendix A · Templates](./appendix-a-templates.md)
 - [Appendix B · Prompt library](./appendix-b-prompts.md)
