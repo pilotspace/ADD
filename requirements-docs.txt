@@ -1,0 +1,6 @@
+# Build-time-only dependency for the GitHub Pages docs site (mkdocs.yml).
+# NOT a runtime dependency of the published packages — @pilotspace/add (npm) and
+# pilotspace-add (PyPI) stay zero-dependency. Install only to build/serve the docs:
+#   pip install -r requirements-docs.txt
+#   mkdocs build --strict   # or: mkdocs serve
+mkdocs-material>=9,<10

@@ -1,0 +1,72 @@
+# Build the AIDD book (MkDocs Material) and deploy it to GitHub Pages.
+#
+# One-time human setup (engine/CI builds, the human ships):
+#   Settings ▸ Pages ▸ Build and deployment ▸ Source = "GitHub Actions"
+# After that, every push to main re-publishes the site at:
+#   https://pilotspace.github.io/ADD/
+# Use the Actions tab ▸ "docs" ▸ "Run workflow" to deploy manually (workflow_dispatch).
+#
+# The build job runs the SAME `mkdocs build --strict` used locally, so a broken
+# intra-book link or an orphaned page fails the deploy instead of shipping silently.
+#
+# Security note: the only template expression here is the trusted
+# `${{ steps.deployment.outputs.page_url }}` (GitHub-provided deploy output). No
+# untrusted event input (issue/PR/commit text) flows into any `run:` step.
+
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'add-method/docs/**'
+      - 'mkdocs.yml'
+      - 'requirements-docs.txt'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# Least privilege: read the repo, write the Pages deployment, mint the OIDC token.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; don't cancel an in-flight publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site (mkdocs --strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install docs build deps
+        run: pip install -r requirements-docs.txt
+
+      - name: Build the site (strict)
+        run: mkdocs build --strict
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
