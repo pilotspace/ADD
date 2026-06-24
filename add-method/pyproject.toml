@@ -32,7 +32,8 @@ requires-python = ">=3.10"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/pilotspace/ADD"
+Homepage = "https://pilotspace.github.io/ADD/"
+Documentation = "https://pilotspace.github.io/ADD/"
 Repository = "https://github.com/pilotspace/ADD"
 Issues = "https://github.com/pilotspace/ADD/issues"
 

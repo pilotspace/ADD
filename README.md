@@ -4,6 +4,8 @@
 
 **Edition:** 1.6.0 · **Type:** AI Workflow Methodology
 
+📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
+
 ---
 
 ![Foundation Domain Documents](add-foundation.png)

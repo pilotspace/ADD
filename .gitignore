@@ -14,6 +14,10 @@ dist/
 node_modules/
 *.tgz
 
+# MkDocs build output (the GitHub Pages docs site is built from add-method/docs/;
+# the static site/ is a build artifact, deployed by CI — never committed)
+site/
+
 # OS
 .DS_Store
 
