@@ -46,7 +46,7 @@ jobs:
     name: Test suite + tag/version match
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -95,7 +95,7 @@ jobs:
       contents: read
       id-token: write          # required for npm --provenance
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -135,7 +135,7 @@ jobs:
       contents: read
       id-token: write          # required for PyPI OIDC trusted publishing
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
