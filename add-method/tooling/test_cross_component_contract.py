@@ -176,8 +176,12 @@ class ConsumerPin(_Board):
         self.assertEqual(self._state()["tasks"]["c"]["contract_pin"], {"id": "gateway-api", "hash": live})
 
     def test_consumer_without_snapshot_hard_stops(self):
-        self._registry()
-        self._new_at_contract("c", "consumes: gateway-api")
+        # the PIN safety net (designed-for-failure): a snapshot present at §3-entry but GONE by the
+        # contract->tests crossing HARD-STOPs the pin. (A never-present snapshot for a declared
+        # contract is caught earlier by the cross-component-milestone hold — tested there.)
+        self._seed_snapshot()
+        self._new_at_contract("c", "consumes: gateway-api")     # enters §3 (snapshot present)
+        (self.addp / "contracts" / "gateway-api.json").unlink()  # producer snapshot vanishes
         out, err = self._advance("c")
         self.assertIsNotNone(err)
         self.assertIn("contract_snapshot_missing", err or "")

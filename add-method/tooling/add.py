@@ -1197,6 +1197,19 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # into build/verify/observe/done is refused until `add.py lock`.
     if not _setup_locked(state) and nxt in ("build", "verify", "observe", "done"):
         _die("setup_unlocked: lock the foundation first — add.py lock")
+    # intra-milestone cross-component HOLD (cross-component-milestone): a consumer of a DECLARED
+    # contract may not enter §3 (scenarios->contract) until its producer froze — proven by the
+    # snapshot the producer's contract->tests crossing writes (task 3). This orders a BE→FE slice
+    # inside ONE milestone (the FE stays downstream of the frozen endpoint). Validate-before-write:
+    # the HARD-STOP precedes the phase bump, so the task stays at `scenarios`. Undeclared id / no
+    # `consumes:` header -> no hold (byte-identical; a typo'd id is a cmd_check registry finding).
+    if nxt == "contract":
+        _cid = _task_consumes(root, slug)
+        _cmap = _contracts(root)
+        if _cid and _cid in _cmap and not _contract_snapshot(root, _cid).exists():
+            _die(f"producer_contract_unfrozen: the producer '{_cmap[_cid].get('producer', '?')}' of "
+                 f"contract '{_cid}' must freeze its contract before you write §3 — wait for "
+                 f".add/contracts/{_cid}.json")
     # flag-first freeze guard (task unflagged-freeze): a FROZEN §3 may not cross
     # into build without a WELL-FORMED lowest-confidence flag. On pass, stamp the
     # verified marker so `audit` enforces the flag on THIS record only (open/new
