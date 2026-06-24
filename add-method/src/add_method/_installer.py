@@ -17,6 +17,7 @@ import hashlib
 import importlib.resources
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -460,6 +461,137 @@ def _write_agent_pointer(target, profile: dict) -> str:
         return "skipped"
 
 
+# --- rule-file mode: ccsk-style relocation of the CLAUDE.md block ----------------------
+# Mirror of add.py's rule-file logic (twins by duplication). For ccsk projects (.ccsk/ dir)
+# or an explicit --rule-file, the ADD pointer/block goes to .claude/rules/add-workflows.md
+# and CLAUDE.md keeps only a reference bullet. CLAUDE-only: .claude/rules/ is a Claude
+# convention, so AGENTS.md/.clinerules are never relocated. The init-time `add.py
+# sync-guidelines` later supersedes this drop-time pointer (the rule file it leaves carries
+# the mode forward, so re-derivation stays consistent across both install phases).
+_RULES_FILE_REL = Path(".claude") / "rules" / "add-workflows.md"
+_WORKFLOW_HEADINGS = ("Rules & Workflows", "Workflows", "Rules")
+_RULE_REF_LINE = "- ADD (AI-Driven Development) Workflows rules: ./.claude/rules/add-workflows.md"
+
+
+def _rule_file_mode(project_root, flag: bool = False) -> bool:
+    """True when the ADD block belongs in .claude/rules/add-workflows.md instead of inline.
+    Re-derived from disk: explicit flag, a ccsk project (.ccsk/), or a rule file already
+    present. Pure + fail-soft."""
+    if flag:
+        return True
+    root = Path(project_root)
+    try:
+        if (root / ".ccsk").is_dir():
+            return True
+        if (root / _RULES_FILE_REL).exists():
+            return True
+    except OSError:
+        pass
+    return False
+
+
+def _strip_inline_block(text: str) -> str:
+    """Remove an inline ADD:BEGIN..END region (migration), collapsing the gap. An unterminated
+    BEGIN is left as-is rather than eating the rest of the file."""
+    begin = text.find(_GUIDE_BEGIN)
+    if begin == -1:
+        return text
+    end = text.find(_GUIDE_END, begin)
+    if end == -1:
+        return text
+    end += len(_GUIDE_END)
+    head = text[:begin].rstrip("\n")
+    tail = text[end:].lstrip("\n")
+    if head and tail:
+        return head + "\n\n" + tail
+    return head or tail
+
+
+def _insert_rule_reference(text: str) -> str:
+    """Insert the ADD rule-file bullet under an existing Workflows/Rules heading, or append a
+    fresh '## Workflows' section. Caller guarantees the bullet is absent."""
+    lines = text.split("\n")
+    heading_idx = -1
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.*?)\s*$", line)
+        if m and any(m.group(2).strip().lower() == h.lower() for h in _WORKFLOW_HEADINGS):
+            heading_idx = i
+            break
+    if heading_idx == -1:
+        body = text.rstrip("\n")
+        sep = "\n\n" if body else ""
+        return f"{body}{sep}## Workflows\n\n{_RULE_REF_LINE}\n"
+    level = len(re.match(r"^(#{1,6})", lines[heading_idx]).group(1))
+    end = len(lines)
+    for j in range(heading_idx + 1, len(lines)):
+        m = re.match(r"^(#{1,6})\s+", lines[j])
+        if m and len(m.group(1)) <= level:
+            end = j
+            break
+    insert_at = heading_idx + 1
+    for j in range(heading_idx + 1, end):
+        if lines[j].strip():
+            insert_at = j + 1
+    lines.insert(insert_at, _RULE_REF_LINE)
+    return "\n".join(lines)
+
+
+def _ensure_claude_reference(claude_md: Path) -> str:
+    """Make CLAUDE.md reference the ADD rule file under a Workflows/Rules heading, migrating any
+    prior inline ADD block out. created|updated|unchanged|skipped; .bak on change; fail-soft."""
+    try:
+        existed = claude_md.exists()
+        current = claude_md.read_text(encoding="utf-8") if existed else ""
+        new = _strip_inline_block(current)
+        if "add-workflows.md" not in new:
+            new = _insert_rule_reference(new)
+        if not new.endswith("\n"):
+            new += "\n"
+        if new == current:
+            return "unchanged"
+        if existed:
+            Path(str(claude_md) + ".bak").write_text(current, encoding="utf-8")
+        claude_md.write_text(new, encoding="utf-8")
+        return "updated" if existed else "created"
+    except (OSError, UnicodeDecodeError) as exc:
+        sys.stderr.write(f"warn: could not write CLAUDE.md — {exc}; skipped\n")
+        sys.stderr.flush()
+        return "skipped"
+
+
+def _write_rule_file_pointer(target, profile: dict) -> str:
+    """Rule-file variant of _write_agent_pointer for the Claude profile: write the ADD pointer
+    block to .claude/rules/add-workflows.md and leave a reference in CLAUDE.md. Fail-soft."""
+    root = Path(target)
+    rules_path = root / _RULES_FILE_REL
+    block = _agent_pointer_block(profile)
+    try:
+        if rules_path.exists():
+            current = rules_path.read_text(encoding="utf-8")
+            begin = current.find(_GUIDE_BEGIN)
+            if begin != -1:
+                end = current.find(_GUIDE_END, begin)
+                if end != -1:
+                    end += len(_GUIDE_END)
+                    new = current[:begin] + block + current[end:]
+                else:
+                    new = current.rstrip("\n") + "\n\n" + block + "\n"
+            else:
+                new = current.rstrip("\n") + "\n\n" + block + "\n"
+            if new != current:
+                Path(str(rules_path) + ".bak").write_text(current, encoding="utf-8")
+                rules_path.write_text(new, encoding="utf-8")
+        else:
+            rules_path.parent.mkdir(parents=True, exist_ok=True)
+            rules_path.write_text(block + "\n", encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        sys.stderr.write(f"warn: could not write {_RULES_FILE_REL} — {exc}; skipped\n")
+        sys.stderr.flush()
+        return "skipped"
+    _ensure_claude_reference(root / "CLAUDE.md")
+    return "ok"
+
+
 # --- global home: an OPT-IN shared install of the managed layer (engine+book+skill) ----
 # Resolution is PURE + total (never throws); the home MIRRORS the bundled managed layer so
 # `update --global` propagation reuses the SAME MANAGED map. Mirrored by behaviour in cli.js.
@@ -622,6 +754,7 @@ def install(
     env=None,
     as_global: bool = False,
     as_global_data: bool = False,
+    rule_file: bool = False,
 ) -> int:
     """Install ADD into `target` directory — RECONCILES the managed layer (restore
     missing trees + refresh present ones, sweeping orphans), never touching user data.
@@ -721,7 +854,14 @@ def install(
         profile = _detect_agent_enriched(env, target_path)
     else:
         profile = _detect_agent(env)
-    _write_agent_pointer(target_path, profile)
+    # Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
+    # .claude/rules/add-workflows.md + a reference bullet — CLAUDE-only; other agents stay inline.
+    if profile["integration_file"] == "CLAUDE.md" and _rule_file_mode(target_path, rule_file):
+        if (target_path / ".ccsk").is_dir():
+            _log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md")
+        _write_rule_file_pointer(target_path, profile)
+    else:
+        _write_agent_pointer(target_path, profile)
 
     # Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
     # .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.

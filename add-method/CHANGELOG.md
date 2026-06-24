@@ -4,6 +4,20 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [Unreleased]
+
+### Added
+- **Rule-file mode for ccsk projects (`--rule-file`)** — when a project keeps its
+  workflow rules as separate files under `.claude/rules/` (the convention scaffolded
+  by ccsk — the Claude Code Starter Kit — detected by a `.ccsk/` dir), ADD relocates CLAUDE.md's
+  block to `.claude/rules/add-workflows.md` and leaves a single reference bullet under a
+  Workflows/Rules heading in CLAUDE.md, instead of inlining. Triggers three ways
+  (re-derived from disk each phase, no persisted state): the explicit `--rule-file` flag on
+  `init` / `sync-guidelines` / the installer, a `.ccsk/` directory, or a rule file already
+  present. **CLAUDE-only** — `AGENTS.md` / `.clinerules` keep the inline block. Migrates a
+  prior inline block out (`.bak` on change), idempotent, and fail-soft. Mirrored across all
+  three installers (engine `add.py`, pip `_installer.py`, npm `cli.js`).
+
 ## [1.9.0] — 2026-06-24
 
 Lean-pass major — make ADD's own surface (skill · flow · engine) the most-effective

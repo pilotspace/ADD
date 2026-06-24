@@ -39,7 +39,7 @@ function parseArgs(argv) {
   // defaults the stage and infers the name from the folder, so the manual-init
   // hint only echoes flags the user actually chose (shortest true command).
   const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
-                 yes: false, nonInteractive: false, global: false, globalData: false };
+                 yes: false, nonInteractive: false, global: false, globalData: false, ruleFile: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
@@ -58,6 +58,9 @@ function parseArgs(argv) {
     // already provides the `add` skill, so a plugin bootstrap uses this to materialize
     // .add/tooling/ + .add/docs/ into the project without a duplicate .claude/skills/add.
     else if (a === "--no-skill") args.noSkill = true;
+    // --rule-file: write the ADD block to .claude/rules/add-workflows.md + reference it from
+    // CLAUDE.md instead of inlining (auto-on for ccsk projects with a .ccsk/ dir).
+    else if (a === "--rule-file") args.ruleFile = true;
     else if (a === "--stage" || a === "--name") {
       const v = argv[++i];
       // fail loudly on a trailing/abutting flag — never silently drop a value
@@ -247,6 +250,126 @@ function writeAgentPointer(target, profile) {
          (e && e.message ? e.message : e) + "; skipped");
     return "skipped";
   }
+}
+
+// --- rule-file mode: ccsk-style relocation of the CLAUDE.md block ---------------------
+// Mirror of add.py / _installer.py rule-file logic (twins by duplication). For ccsk projects
+// (.ccsk/ dir) or an explicit --rule-file, the ADD pointer goes to .claude/rules/add-workflows.md
+// and CLAUDE.md keeps only a reference bullet. CLAUDE-only — AGENTS.md/.clinerules stay inline.
+const RULES_FILE_REL = path.join(".claude", "rules", "add-workflows.md");
+const WORKFLOW_HEADINGS = ["Rules & Workflows", "Workflows", "Rules"];
+const RULE_REF_LINE = "- ADD (AI-Driven Development) Workflows rules: ./.claude/rules/add-workflows.md";
+
+// True when the ADD block belongs in .claude/rules/add-workflows.md instead of inline.
+// Re-derived from disk: explicit flag, a ccsk project (.ccsk/), or a rule file already present.
+function ruleFileMode(root, flag) {
+  if (flag) return true;
+  try {
+    if (fs.existsSync(path.join(root, ".ccsk")) &&
+        fs.statSync(path.join(root, ".ccsk")).isDirectory()) return true;
+    if (fs.existsSync(path.join(root, RULES_FILE_REL))) return true;
+  } catch (_e) { /* fail-soft */ }
+  return false;
+}
+
+// Remove an inline ADD:BEGIN..END region (migration), collapsing the gap. An unterminated
+// BEGIN is left as-is rather than eating the rest of the file.
+function stripInlineBlock(text) {
+  const begin = text.indexOf(GUIDE_BEGIN);
+  if (begin === -1) return text;
+  let end = text.indexOf(GUIDE_END, begin);
+  if (end === -1) return text;
+  end += GUIDE_END.length;
+  const head = text.slice(0, begin).replace(/\n+$/, "");
+  const tail = text.slice(end).replace(/^\n+/, "");
+  if (head && tail) return head + "\n\n" + tail;
+  return head || tail;
+}
+
+// Insert the ADD rule-file bullet under an existing Workflows/Rules heading, or append a fresh
+// '## Workflows' section. Caller guarantees the bullet is absent.
+function insertRuleReference(text) {
+  const lines = text.split("\n");
+  let headingIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^(#{1,6})\s+(.*?)\s*$/);
+    if (m && WORKFLOW_HEADINGS.some((h) => m[2].trim().toLowerCase() === h.toLowerCase())) {
+      headingIdx = i;
+      break;
+    }
+  }
+  if (headingIdx === -1) {
+    const body = text.replace(/\n+$/, "");
+    const sep = body ? "\n\n" : "";
+    return body + sep + "## Workflows\n\n" + RULE_REF_LINE + "\n";
+  }
+  const level = lines[headingIdx].match(/^(#{1,6})/)[1].length;
+  let end = lines.length;
+  for (let j = headingIdx + 1; j < lines.length; j++) {
+    const m = lines[j].match(/^(#{1,6})\s+/);
+    if (m && m[1].length <= level) { end = j; break; }
+  }
+  let insertAt = headingIdx + 1;
+  for (let j = headingIdx + 1; j < end; j++) {
+    if (lines[j].trim()) insertAt = j + 1;
+  }
+  lines.splice(insertAt, 0, RULE_REF_LINE);
+  return lines.join("\n");
+}
+
+// Make CLAUDE.md reference the ADD rule file under a Workflows/Rules heading, migrating any prior
+// inline ADD block out. created|updated|unchanged|skipped; .bak on change; fail-soft.
+function ensureClaudeReference(claudeMd) {
+  try {
+    const existed = fs.existsSync(claudeMd);
+    const current = existed ? fs.readFileSync(claudeMd, "utf8") : "";
+    let next = stripInlineBlock(current);
+    if (next.indexOf("add-workflows.md") === -1) next = insertRuleReference(next);
+    if (!next.endsWith("\n")) next += "\n";
+    if (next === current) return "unchanged";
+    if (existed) fs.writeFileSync(claudeMd + ".bak", current);
+    fs.writeFileSync(claudeMd, next);
+    return existed ? "updated" : "created";
+  } catch (e) {
+    warn("could not write CLAUDE.md — " + (e && e.message ? e.message : e) + "; skipped");
+    return "skipped";
+  }
+}
+
+// Rule-file variant of writeAgentPointer for the Claude profile: write the ADD pointer block to
+// .claude/rules/add-workflows.md and leave a reference in CLAUDE.md. Fail-soft.
+function writeRuleFilePointer(target, profile) {
+  const rulesPath = path.join(target, RULES_FILE_REL);
+  const block = agentPointerBlock(profile);
+  try {
+    if (fs.existsSync(rulesPath)) {
+      const current = fs.readFileSync(rulesPath, "utf8");
+      const begin = current.indexOf(GUIDE_BEGIN);
+      let next;
+      if (begin !== -1) {
+        const endIdx = current.indexOf(GUIDE_END, begin);
+        if (endIdx !== -1) {
+          next = current.slice(0, begin) + block + current.slice(endIdx + GUIDE_END.length);
+        } else {
+          next = current.replace(/\n+$/, "") + "\n\n" + block + "\n";
+        }
+      } else {
+        next = current.replace(/\n+$/, "") + "\n\n" + block + "\n";
+      }
+      if (next !== current) {
+        fs.writeFileSync(rulesPath + ".bak", current);
+        fs.writeFileSync(rulesPath, next);
+      }
+    } else {
+      fs.mkdirSync(path.dirname(rulesPath), { recursive: true });
+      fs.writeFileSync(rulesPath, block + "\n");
+    }
+  } catch (e) {
+    warn("could not write " + RULES_FILE_REL + " — " + (e && e.message ? e.message : e) + "; skipped");
+    return "skipped";
+  }
+  ensureClaudeReference(path.join(target, "CLAUDE.md"));
+  return "ok";
 }
 
 // --- interactive layer (clack on a real TTY; plain text everywhere else) -----
@@ -450,7 +573,16 @@ function dropFiles(args, target, profile, intent) {
   // Agent detection: write THE detected agent's integration file (a marker-delimited
   // pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
   // Best-effort + fail-soft — never aborts the successful drop above.
-  writeAgentPointer(target, profile);
+  // Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
+  // .claude/rules/add-workflows.md + a reference — CLAUDE-only; other agents stay inline.
+  if (profile.integration_file === "CLAUDE.md" && ruleFileMode(target, args.ruleFile)) {
+    if (fs.existsSync(path.join(target, ".ccsk"))) {
+      log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md");
+    }
+    writeRuleFilePointer(target, profile);
+  } else {
+    writeAgentPointer(target, profile);
+  }
 
   // Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
   // .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.
@@ -847,4 +979,7 @@ module.exports = {
   scopeOptions: scopeOptions,
   writeIntentNote: writeIntentNote,
   writeGeminiSettings: writeGeminiSettings,
+  ruleFileMode: ruleFileMode,
+  ensureClaudeReference: ensureClaudeReference,
+  writeRuleFilePointer: writeRuleFilePointer,
 };

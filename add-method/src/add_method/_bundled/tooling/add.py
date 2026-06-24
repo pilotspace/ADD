@@ -116,6 +116,16 @@ GUIDELINE_FILES = ("AGENTS.md", "CLAUDE.md")
 _GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->"
 _GUIDE_END = "<!-- ADD:END -->"
 
+# Rule-file mode (ccsk-style projects): instead of inlining the block into CLAUDE.md,
+# write it to a dedicated rule file under .claude/rules/ and leave a one-line reference
+# in CLAUDE.md's Workflows section. .claude/rules/ is a CLAUDE-only convention, so this
+# mode only ever relocates CLAUDE.md — AGENTS.md/.clinerules keep the inline block.
+RULES_FILE_REL = Path(".claude") / "rules" / "add-workflows.md"
+# Headings (most→least specific) a project may already use to group rule/workflow links.
+# Match is case-insensitive on the heading TEXT, at any `#` level.
+WORKFLOW_HEADINGS = ("Rules & Workflows", "Workflows", "Rules")
+_RULE_REF_LINE = "- ADD (AI-Driven Development) Workflows rules: ./.claude/rules/add-workflows.md"
+
 # Minimal embedded fallback so the tool still works if templates/ is missing
 # (circuit breaker: never hard-fail just because a template file was deleted).
 _FALLBACK_TASK = """# TASK: {title}
@@ -740,17 +750,131 @@ def _inject_block(path: Path) -> str:
     return "created"
 
 
-def _inject_guidelines(project_root: Path) -> list[tuple[str, str]]:
+def _rule_file_mode(project_root: Path, flag: bool = False) -> bool:
+    """True when the ADD block should live in .claude/rules/add-workflows.md (referenced
+    from CLAUDE.md) instead of inline. Re-derived from disk EACH phase — no persisted
+    state — so an explicit `--rule-file` at install carries into init via the rule file it
+    leaves behind. Three triggers: the explicit flag, a ccsk project (.ccsk/ sibling to
+    .claude/), or a rule file already written by a prior run. Pure + fail-soft."""
+    if flag:
+        return True
+    try:
+        if (project_root / ".ccsk").is_dir():
+            return True
+        if (project_root / RULES_FILE_REL).exists():
+            return True
+    except OSError:
+        pass
+    return False
+
+
+def _strip_inline_block(text: str) -> str:
+    """Remove an inline ADD:BEGIN..ADD:END region (migration to rule-file mode), collapsing
+    the blank-line gap it leaves behind. An unterminated BEGIN (no END) is left as-is rather
+    than eating the rest of the file (design-for-failure)."""
+    begin = text.find(_GUIDE_BEGIN)
+    if begin == -1:
+        return text
+    end = text.find(_GUIDE_END, begin)
+    if end == -1:
+        return text
+    end += len(_GUIDE_END)
+    head = text[:begin].rstrip("\n")
+    tail = text[end:].lstrip("\n")
+    if head and tail:
+        return head + "\n\n" + tail
+    return head or tail
+
+
+def _insert_rule_reference(text: str) -> str:
+    """Insert the ADD rule-file bullet under an existing Workflows/Rules heading, or append a
+    fresh '## Workflows' section when none is found. Caller guarantees the bullet is absent."""
+    lines = text.split("\n")
+    heading_idx = -1
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.*?)\s*$", line)
+        if m and any(m.group(2).strip().lower() == h.lower() for h in WORKFLOW_HEADINGS):
+            heading_idx = i
+            break
+    if heading_idx == -1:                       # no section — append a fresh one
+        body = text.rstrip("\n")
+        sep = "\n\n" if body else ""
+        return f"{body}{sep}## Workflows\n\n{_RULE_REF_LINE}\n"
+    level = len(re.match(r"^(#{1,6})", lines[heading_idx]).group(1))
+    end = len(lines)                            # section ends at next same/higher heading or EOF
+    for j in range(heading_idx + 1, len(lines)):
+        m = re.match(r"^(#{1,6})\s+", lines[j])
+        if m and len(m.group(1)) <= level:
+            end = j
+            break
+    insert_at = heading_idx + 1                 # after the last non-blank line in the section
+    for j in range(heading_idx + 1, end):
+        if lines[j].strip():
+            insert_at = j + 1
+    lines.insert(insert_at, _RULE_REF_LINE)
+    return "\n".join(lines)
+
+
+def _ensure_claude_reference(claude_md: Path) -> str:
+    """Make CLAUDE.md reference the ADD rule file under a Workflows/Rules heading, migrating
+    any prior inline ADD block out. Returns created|updated|unchanged.
+
+    - Strips a prior inline ADD:BEGIN..END block (rule-file mode supersedes inline).
+    - If a reference to add-workflows.md already exists -> no bullet change.
+    - Else inserts the bullet into the first matching section, or appends '## Workflows'.
+    .bak on change; idempotent. User content outside the touched region is preserved.
+    """
+    existed = claude_md.exists()
+    current = claude_md.read_text(encoding="utf-8") if existed else ""
+    new = _strip_inline_block(current)
+    if "add-workflows.md" not in new:
+        new = _insert_rule_reference(new)
+    if not new.endswith("\n"):
+        new += "\n"
+    if new == current:
+        return "unchanged"
+    if existed:
+        _atomic_write(Path(str(claude_md) + ".bak"), current)   # rollback path before mutate
+    _atomic_write(claude_md, new)
+    return "updated" if existed else "created"
+
+
+def _inject_guidelines(project_root: Path, rule_file: bool = False) -> list[tuple[str, str]]:
     """Inject the block into each guideline file under `project_root`.
 
     Symlink-dedup: targets resolving (os.path.realpath) to the same inode are
     written once, against the REAL file (never replacing the symlink with a
     regular file). Per-target OSError is isolated (warn+skip) so one unwritable
     file never aborts the run or `init`.
+
+    Rule-file mode (ccsk projects / `--rule-file`): CLAUDE.md's full block is relocated
+    to .claude/rules/add-workflows.md and CLAUDE.md keeps only a reference bullet. This is
+    CLAUDE-only — AGENTS.md (and any other guideline file) keeps the inline block.
     """
     results: list[tuple[str, str]] = []
     seen: set[str] = set()
+    mode = _rule_file_mode(project_root, rule_file)
     for name in GUIDELINE_FILES:
+        if name == "CLAUDE.md" and mode:
+            rules_path = project_root / RULES_FILE_REL
+            real = os.path.realpath(rules_path)
+            if real not in seen:
+                seen.add(real)
+                try:
+                    action = _inject_block(rules_path)
+                except (OSError, UnicodeDecodeError) as exc:
+                    print(f"add: warning: could not sync {RULES_FILE_REL} — {exc}; skipped",
+                          file=sys.stderr)
+                    action = "skipped"
+                results.append((str(RULES_FILE_REL), action))
+            try:
+                ref_action = _ensure_claude_reference(project_root / "CLAUDE.md")
+            except (OSError, UnicodeDecodeError) as exc:
+                print(f"add: warning: could not sync CLAUDE.md — {exc}; skipped",
+                      file=sys.stderr)
+                ref_action = "skipped"
+            results.append(("CLAUDE.md", ref_action))
+            continue
         target = project_root / name
         real = os.path.realpath(target)
         if real in seen:
@@ -841,7 +965,7 @@ def cmd_init(args: argparse.Namespace) -> None:
         state["setup"] = {"locked": False, "locked_at": None, "locked_by": None, "layers": []}
     save_state(root, state)
     # zero-config: give any agent a stable pointer into the ADD runtime.
-    for name, action in _inject_guidelines(base):
+    for name, action in _inject_guidelines(base, getattr(args, "rule_file", False)):
         if action != "unchanged":
             print(f"{action:>9}  {name}")
     print(f"initialised ADD project '{state['project']}' (stage: {state['stage']}) at {root}")
@@ -857,7 +981,7 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 def cmd_sync_guidelines(args: argparse.Namespace) -> None:
     project_root = _require_root().parent
-    for name, action in _inject_guidelines(project_root):
+    for name, action in _inject_guidelines(project_root, getattr(args, "rule_file", False)):
         print(f"{action:>9}  {name}")
 
 
@@ -5847,6 +5971,9 @@ def build_parser() -> argparse.ArgumentParser:
     pi.add_argument("--force", action="store_true", help="reset state.json if present")
     pi.add_argument("--await-lock", dest="await_lock", action="store_true",
                     help="seed an unlocked setup; gates new-task/advance/gate until `add.py lock`")
+    pi.add_argument("--rule-file", dest="rule_file", action="store_true",
+                    help="write the ADD block to .claude/rules/add-workflows.md and reference it "
+                         "from CLAUDE.md (auto-on for ccsk projects with a .ccsk/ dir)")
     pi.set_defaults(func=cmd_init)
 
     pl = sub.add_parser("lock",
@@ -6053,6 +6180,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     psg = sub.add_parser("sync-guidelines",
                          help="(re)write the ADD guideline block into AGENTS.md + CLAUDE.md")
+    psg.add_argument("--rule-file", dest="rule_file", action="store_true",
+                     help="relocate CLAUDE.md's block to .claude/rules/add-workflows.md + reference "
+                          "it (auto-on for ccsk projects)")
     psg.set_defaults(func=cmd_sync_guidelines)
 
     pgd = sub.add_parser("guide", help="print the one concrete next step for the active task")

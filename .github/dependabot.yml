@@ -1,0 +1,47 @@
+# Dependabot version updates. Security updates are enabled separately in repo
+# settings (Dependabot alerts + security updates) and are not configured here.
+version: 2
+updates:
+  # GitHub Actions used by the workflows in .github/workflows/.
+  # github-actions ALWAYS uses directory "/" (repo root), not .github/workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # npm package: add-method/package.json + package-lock.json (@clack/prompts).
+  # increase-if-necessary keeps the published library's declared range as wide as
+  # possible (only widens when a release falls outside the existing caret).
+  - package-ecosystem: "npm"
+    directory: "/add-method"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    versioning-strategy: "increase-if-necessary"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+
+  # Python: add-method/pyproject.toml + uv.lock (uv is handled by the pip
+  # ecosystem). Near-empty today; auto-activates when runtime deps are added.
+  - package-ecosystem: "pip"
+    directory: "/add-method"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
