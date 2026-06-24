@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.0 — 2026-06-24
+
+- lean-pass M3 · flow simplification — 0 carried · 0 key decision(s)
+- lean-pass M1 · skill effectiveness — 5 carried · 0 key decision(s)
+- Flow enforcement — turn convention fill-seams into engine gates — 2 carried · 0 key decision(s)
+- fast-lane — 3 carried · 0 key decision(s)
+
 ## 1.8.0 — 2026-06-23
 
 - Multi-active state model + migration (team-collaboration foundation) — 8 carried · 0 key decision(s)

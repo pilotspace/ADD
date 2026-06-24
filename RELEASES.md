@@ -1,5 +1,11 @@
 # Releases
 
+## 1.9.0 — 2026-06-24
+milestones: flow-simplification, skill-effectiveness, flow-enforcement, fast-lane
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: suite 1642/0 · check 378/0 · audit clean (74 tasks) · 4 milestones (lean-pass M1 skill-effectiveness + M3 flow-simplification + M4 flow-enforcement + fast-lane)
+
 ## 1.8.0 — 2026-06-23
 milestones: state-model-reshape, user-identity, ownership-assignment, git-merge-safety, multi-active-UX, delta-resolution-polish
 waivers: none
