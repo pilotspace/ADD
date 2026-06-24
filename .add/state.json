@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "component-registry",
+  "active_task": "per-component-verify",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1224,10 +1224,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "per-component-verify": {
+      "title": "Per-component verify: gate a bound task on its component's suite + green-bar",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "component-aware-add",
+      "depends_on": [
+        "component-registry"
+      ],
+      "created": "2026-06-24T15:54:55+00:00",
+      "updated": "2026-06-24T16:51:39+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "760322938fcfc9c4fd8859c8d68287f9",
+        "tests": {
+          "add-method/tooling/test_per_component_verify.py": "370b7371fd3eae76585dff3128111ea5"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/add.py"
+        ],
+        "snapshot_md5": "e2c898cbeb699bbd5251e8722a325f6b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T15:48:13+00:00",
+  "updated": "2026-06-24T16:51:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1907,6 +1938,6 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "component-aware-add": "component-registry"
+    "component-aware-add": "per-component-verify"
   }
 }

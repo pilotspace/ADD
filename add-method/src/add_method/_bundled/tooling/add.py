@@ -670,6 +670,13 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
     new = text
     for pat, repl in rules:
         new = re.sub(pat, repl, new, count=1)
+    # component-aware-add (per-component-verify): record WHICH green-bar a bound task gated
+    # against, right after the Outcome line. Unbound / no green_bar -> no line (byte-identical).
+    _bar = _task_green_bar(root, slug)
+    if _bar:
+        _line = f"component: {_task_component(root, slug)} · expected green-bar: {_bar}"
+        if _line not in new:
+            new = re.sub(r"(?m)^(Outcome:.*$)", lambda m: m.group(1) + "\n" + _line, new, count=1)
     if new != text:                              # no-op = no write (mtime stable)
         _atomic_write(f, new)
 
@@ -1394,6 +1401,18 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
+        # per-component verify (component-aware-add): a component-bound task with a declared
+        # green_bar must CITE that bar in its §6 evidence before a completing outcome — the
+        # engine never runs the suite, it checks the right bar was recorded. Unbound / no
+        # green_bar -> _bar is None -> this is skipped (byte-identical). HARD-STOP never here.
+        _bar = _task_green_bar(root, slug)
+        # the cite must live in the user-authored Build-expectations evidence region (_cite_region,
+        # v3): excludes the §6 checklist boilerplate + the GATE RECORD template/stamp, works for both
+        # the standard and fast-lane §6 shapes. Unbound / no green_bar -> _bar None -> skipped.
+        if _bar and _bar not in _cite_region(_raw_phase_bodies(root, slug).get(6, "")):
+            _die(f"component_green_bar_uncited: task '{slug}' is bound to component "
+                 f"'{_task_component(root, slug)}'; its §6 Build-expectations must cite the "
+                 f"green-bar '{_bar}' — record the evidence that bar was met before PASS")
     if args.outcome == "RISK-ACCEPTED":
         # A waiver must be SIGNED: owner, ticket, expiry (glossary). Stored in state
         # so a later `check` can read/expire it. Refuse a partial waiver outright.
@@ -1413,6 +1432,9 @@ def cmd_gate(args: argparse.Namespace) -> None:
     save_state(root, state)
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     print(f"task '{slug}' gate -> {args.outcome}")
+    _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
+    if _gbar:
+        print(f"component: {_task_component(root, slug)} · expected green-bar: {_gbar}")
     # the engine-sourced next step (next-footer-engine): a completing gate hands off to the
     # state arm; HARD-STOP routes to "resolve HARD-STOP …" — converging the old bespoke line.
     print(_next_footer(root, state))
@@ -2525,6 +2547,12 @@ def cmd_check(args: argparse.Namespace) -> None:
         if _alvl is None and t.get("phase") not in ("done", "observe"):
             warnings.append((f"task '{slug}'", "has no explicit autonomy level (implicit_autonomy) "
                              "— run `add.py autonomy set <level>` to set it"))
+        # per-component-verify: a bound task whose component declares no green_bar can't be
+        # gated on a bar — surface it (WARN, never red). Unbound / "?" -> silent.
+        _tc = _task_component(root, slug)
+        if _tc and _tc != "?" and not (_components(root).get(_tc) or {}).get("green_bar"):
+            warnings.append((f"task '{slug}'", f"component_green_bar_unset — bound component '{_tc}' "
+                             "declares no green_bar; the per-component gate cannot check a bar"))
         for dep in t.get("depends_on") or []:
             checks.append((dep in tasks or dep in archived_slugs,
                            f"task '{slug}' dep '{dep}' resolves", "unknown task"))
@@ -3948,6 +3976,31 @@ def _task_component(root: Path, slug: str):
         return None
     tok = m.group(1).strip()
     return tok if tok in _components(root) else "?"
+
+
+def _task_green_bar(root: Path, slug: str) -> str | None:
+    """The green_bar phrase of the task's bound component (per-component-verify), else
+    None — unbound, "?", or no green_bar declared all yield None. PURE."""
+    comp = _task_component(root, slug)
+    if not comp or comp == "?":
+        return None
+    return (_components(root).get(comp) or {}).get("green_bar") or None
+
+
+def _cite_region(body: str) -> str:
+    """The user-authored "Build expectations" evidence region of a §6 body, stamp-stripped —
+    the only place a per-component green-bar cite counts (per-component-verify, v3). PURE.
+
+    The marker matches BOTH template shapes: the standard "### Build expectations …" heading AND
+    the fast-lane bare "Build expectations (from …):" line, running up to the GATE RECORD sub-block.
+    So the top-of-§6 checklist ("- [ ] all tests pass") and the "Outcome: <PASS|…>" placeholder are
+    excluded, and a component-bound FAST task is still citable. The trailing strip removes the
+    engine's own "component: … · expected green-bar: …" stamp wherever it landed, so a stamp that
+    fell inside the region can never self-satisfy the gate. No marker -> "" (fail-closed for a bound
+    task: it must declare its evidence)."""
+    m = re.search(r"(?im)^#*[ \t]*Build expectations\b.*?(?=\n#+[ \t]*GATE RECORD\b|\Z)", body, re.DOTALL)
+    region = m.group(0) if m else ""
+    return re.sub(r"(?m)^component:.*·.*expected green-bar:.*$", "", region)
 
 
 def _component_findings(root: Path) -> list[tuple[str, str]]:
