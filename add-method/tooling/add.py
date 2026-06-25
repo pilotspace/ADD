@@ -1587,6 +1587,45 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
     _print_autonomy(root, state, slug)
 
 
+def cmd_todo(args: argparse.Namespace) -> None:
+    """Capture / list / close a lightweight backlog todo (task: todo-capture).
+
+    A todo is a JOTTED IDEA, not a task — it carries no spec/contract/gate. It lets you
+    record an intent without sizing it. Promote one to a real task with
+    `add.py new-task <slug> --fast` when you decide to build it. Stored in state["todos"]
+    as {id (1-based = max+1), text, created, status:"open"|"done"}.
+    """
+    root = _require_root()                                   # reused -> "no .add/ project found …"
+    state = load_state(root)
+    todos = state.get("todos")
+    if not isinstance(todos, list):                          # absent / corrupt -> fresh list (drift-safe)
+        todos = state["todos"] = []
+    done_id = getattr(args, "done", None)
+    if done_id is not None:                                  # --done <id> : close an OPEN todo
+        for t in todos:
+            if isinstance(t, dict) and t.get("id") == done_id and t.get("status") == "open":
+                t["status"] = "done"
+                save_state(root, state)
+                print(f"todo #{done_id} done")
+                return
+        _die(f"todo_unknown: no open todo #{done_id}")
+    if args.text is not None:                                # capture attempt (text positional present)
+        text = args.text.strip()
+        if not text:
+            _die("todo_empty: a todo needs text")
+        new_id = max((t.get("id", 0) for t in todos if isinstance(t, dict)), default=0) + 1
+        todos.append({"id": new_id, "text": text, "created": _now(), "status": "open"})
+        save_state(root, state)
+        print(f"captured todo #{new_id}: {text}")
+        return
+    open_todos = [t for t in todos if isinstance(t, dict) and t.get("status") == "open"]
+    if not open_todos:                                       # bare `todo` -> list OPEN todos
+        print("no open todos")
+        return
+    for t in open_todos:
+        print(f"#{t.get('id')}  {t.get('text')}")
+
+
 def cmd_reopen(args: argparse.Namespace) -> None:
     """Return an already-`done` task to an earlier phase with a never-silent record.
 
@@ -6584,6 +6623,13 @@ def build_parser() -> argparse.ArgumentParser:
     pan.add_argument("--yes", action="store_true",
                      help="confirm a RAISE toward auto (a human-owned trust escalation)")
     pan.set_defaults(func=cmd_autonomy, _opt_positionals=("a1", "a2"))
+
+    pto = sub.add_parser("todo", help="capture / list / close a lightweight backlog todo (jot an idea)")
+    pto.add_argument("text", nargs="?", default=None,
+                     help="todo text to capture; omit to LIST open todos")
+    pto.add_argument("--done", type=int, default=None, metavar="ID",
+                     help="close an open todo by id")
+    pto.set_defaults(func=cmd_todo)
 
     pr = sub.add_parser("reopen", help="return a done task to an earlier phase with a recorded reason")
     pr.add_argument("slug", nargs="?", default=None)
