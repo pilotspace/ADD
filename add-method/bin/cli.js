@@ -562,6 +562,26 @@ function writeGeminiSettings(target) {
   }
 }
 
+// Seed .add/SOUL.md from the bundled template if it does not yet exist. Mirror of
+// _installer.py:_seed_soul_md (npm <-> pip parity): skip-if-exists (SOUL.md is
+// user-owned — never clobber); fail-soft (warn + return, never abort install/update).
+function seedSoulMd(target) {
+  const dest = path.join(target, ".add", "SOUL.md");
+  if (fs.existsSync(dest)) return;                       // skip-if-exists (never clobber)
+  const source = path.join(PKG_ROOT, "tooling", "templates", "SOUL.md.tmpl");
+  if (!fs.existsSync(source)) {
+    warn("soul_seed_skipped: SOUL.md.tmpl not found in bundled tooling/templates/");
+    return;
+  }
+  try {
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, fs.readFileSync(source, "utf8"));
+  } catch (e) {
+    warn("soul_seed_skipped: could not write .add/SOUL.md — " + (e && e.message ? e.message : e));
+  }
+}
+
+
 // The drop — now a RECONCILE: restore missing managed trees + refresh present ones
 // (sweep orphans) + report per-tree status. Byte-compatible handoff with the prior
 // installer. The interactive path resolves a target then calls straight into this.
@@ -569,6 +589,7 @@ function dropFiles(args, target, profile, intent) {
   profile = profile || detectAgent(process.env);
   log("Installing ADD into " + target);
   reconcile(args, target);
+  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
 
   // Agent detection: write THE detected agent's integration file (a marker-delimited
   // pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
@@ -932,6 +953,7 @@ function cmdUpdate(args) {
     fs.copyFileSync(stateFile, path.join(addDir, "pre-update-state.bak.json"));
   }
   reconcile(args, target);
+  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
       " · managed layer reconciled · your project state untouched.");
