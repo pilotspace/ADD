@@ -56,7 +56,7 @@ then render a real screen and **capture** it. That capture is the **design-confi
 evidence — a real image the person approves *before* implementation, so the build
 matches the layout instead of discovering it. The book keeps the *why*; the
 operational recipe (the wireframe format, the token-bound mock, the capture engines)
-lives in the `add` skill's `design.md` and `udd-wireframe.md`.
+lives in the `add` skill's `design.md` and the `udd-wireframe.md` template (`tooling/templates/`).
 
 These three foundation competencies, together with the **TDD ⇄ ADD** engine of
 [Part II](./02-the-flow.md), are ADD's five. The first four feed context to the
