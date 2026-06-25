@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "save-state-harden",
+  "active_task": "force-preserve-heal",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1503,16 +1503,37 @@
     },
     "force-preserve-heal": {
       "title": "F8: new-task --force preserves the monotonic heal counter",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "audit-hardening",
       "depends_on": [],
       "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "updated": "2026-06-25T13:53:47+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1588f423993b1c8d03c21c9d183505e1",
+        "tests": {
+          "add-method/tooling/test_heal_then_escalate.py": "8720e3db5ce854785f5dfde3703934cf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_heal_then_escalate.py"
+        ],
+        "snapshot_md5": "8e52c69d18dfd8e74984ea8884627b24"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T11:48:36+00:00",
+  "updated": "2026-06-25T13:53:47+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2197,7 +2218,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "audit-hardening": "save-state-harden"
+    "audit-hardening": "force-preserve-heal"
   },
   "todos": [
     {

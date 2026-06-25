@@ -1104,6 +1104,11 @@ def cmd_new_task(args: argparse.Namespace) -> None:
               f"autonomy token; new task seeded fail-safe '{autonomy}' "
               "(fix it with `add.py autonomy set <level> --project`)", file=sys.stderr)
 
+    # F8 (force-preserve-heal): a --force overwrite RE-CREATES the record; capture the prior
+    # MONOTONIC heal counter first so it survives. Else a task that accrued heal attempts (or
+    # was HARD-STOP escalated) could launder the cap (HEAL_CAP) to zero by re-creating itself —
+    # a zero-human cap bypass (the same invariant _heal_or_escalate guards: "never auto-resets").
+    prior_heal = state["tasks"].get(slug, {}).get("heal") if args.force else None
     state["tasks"][slug] = {
         "title": title,
         "phase": "ground",
@@ -1113,6 +1118,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         "created": _now(),
         "updated": _now(),
     }
+    if prior_heal is not None:
+        state["tasks"][slug]["heal"] = prior_heal   # monotonic — survives the --force re-create
     if from_delta:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
     if fast:
