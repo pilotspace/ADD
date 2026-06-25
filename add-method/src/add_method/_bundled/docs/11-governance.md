@@ -31,7 +31,7 @@ Every checkpoint produces three short reports — **Test** (does it pass?), **Qu
 
 - **`PASS`** — criteria met; proceed.
 - **`RISK-ACCEPTED`** — proceed with a signed waiver carrying a named owner, a linked ticket, and an expiry. Allowed for non-security gaps only.
-- **`HARD-STOP`** — cannot proceed. Triggered by any failing test or any security finding; overridable only by the most senior accountable owner, and never for security.
+- **`HARD-STOP`** — cannot proceed. Triggered by any failing test or any security finding. A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry; security is never waved through.
 
 The rule behind the protocol is *no silent skips.* A report nobody is accountable for approving is just a document; an outcome with an owner is governance.
 

@@ -2,9 +2,29 @@
 
 ### A complete, practical book on building software when AI writes the code
 
-**Edition:** 1.6.0 · **Type:** AI Workflow Methodology
+**Edition:** 1.10.0 · **Type:** AI Workflow Methodology
 
 📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
+
+---
+
+## Why ADD
+
+- **Approve once, then let it run** — one human sign-off at the frozen contract; the agent builds the rest.
+- **Tests it can't fake** — red→green TDD against a locked contract; tests can't be weakened to force a pass.
+- **Proof, not promises** — verify on observed behavior and pre-declared build-expectations, not code-reading.
+- **Security never gets waved through** — any security finding is a HARD-STOP; release gates can't be `--force`d.
+- **The AI can't grade its own homework** — `add.py audit` checks every human seam in CI, off the agent's machine.
+- **No surprise changes** — declared scope is frozen at build and enforced at verify; creep can't ride a green suite to merge.
+- **You decide how much rope** — a per-task autonomy dial; a `risk: high` task is fail-closed until trust is lowered.
+- **Pick up where you left off** — state lives in `.add/state.json`; `add.py status` resumes any agent, any day.
+- **Prototype to production** — task → milestone → graduate (analytics-gated) → recorded release, one method.
+- **Across your whole stack** — components as a graph: ship a full-stack slice in one milestone, federate contracts across repos.
+- **Smarter as you go** — competency deltas fold into a living, compacting foundation carried across milestones.
+- **See it before you build it** — a UDD wireframe + zero-dependency HTML mock, approved before any code.
+- **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves (`add.py waves`).
+- **Small jobs stay fast** — a collapsed fast lane and minimal `TASK.md`, with the trust floor intact.
+- **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
 ---
 
