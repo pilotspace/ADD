@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "force-preserve-heal",
+  "active_task": "ground-phase-harden",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1423,54 +1423,62 @@
         "source": "git"
       }
     },
-    "phase-build-guard": {
-      "title": "F4: cmd_phase build must refuse an unfrozen contract (heal-loop exempt)",
-      "phase": "ground",
-      "gate": "none",
-      "milestone": "audit-hardening",
+    "ground-phase-harden": {
+      "title": "Enrich the \u00a70 GROUND guide + template: require all four fields, richer prompt + exit gate",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
       "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
-    },
-    "consumer-stale-gate": {
-      "title": "F5: cmd_gate refuses a completing outcome when the pinned contract hash is stale",
-      "phase": "ground",
-      "gate": "none",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
-    },
-    "setup-tests-before-build": {
-      "title": "F6: 0-setup routes through 4-tests.md \u2014 a red test before build",
-      "phase": "ground",
-      "gate": "none",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
-    },
-    "save-state-harden": {
-      "title": "F7: save_state OSError -> _die (named code) + tests for gate/advance",
-      "phase": "ground",
-      "gate": "none",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
-    },
-    "force-preserve-heal": {
-      "title": "F8: new-task --force preserves the monotonic heal counter",
-      "phase": "ground",
-      "gate": "none",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "created": "2026-06-25T14:43:59+00:00",
+      "updated": "2026-06-25T15:25:23+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1b1ae31d853da9ae6c01e76d45486014",
+        "tests": {
+          "add-method/tooling/test_ground_wiring.py": "47b5b7b3d90df7d87b72f8dadc96be98"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/0-ground.md",
+          "add-method/skill/add/scope.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-ground.md",
+          "add-method/src/add_method/_bundled/skill/add/scope.md",
+          ".claude/skills/add/phases/0-ground.md",
+          ".claude/skills/add/scope.md",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_ground_wiring.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "0f25f74667e9fdde983eff3eeaa9ffa0"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-06-25T15:23:37+00:00",
+            "reason": "tamper_detected:contract_tampered,build_tampered:add-method/tooling/test_ground_wiring.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-06-25T15:24:50+00:00",
+            "reason": "tamper_detected:contract_tampered,build_tampered:add-method/tooling/test_ground_wiring.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T10:13:51+00:00",
+  "updated": "2026-06-25T15:27:40+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1652,17 +1660,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "audit-hardening": {
-      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
-      "goal": "make the engine enforce at gate-time the invariants the post-hoc audit catches \u2014 no PASS against an unfrozen or stale contract, crash-safe state writes, and a monotonic heal counter \u2014 closing the gaps the 2026-06-25 deep audit surfaced",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-06-25T10:13:32+00:00",
-      "updated": "2026-06-25T10:13:32+00:00"
     }
   },
-  "active_milestone": "audit-hardening",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -2148,14 +2148,24 @@
         "component-method-docs"
       ],
       "archived": "2026-06-25"
+    },
+    {
+      "slug": "audit-hardening",
+      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
+      "tasks": 5,
+      "task_slugs": [
+        "phase-build-guard",
+        "consumer-stale-gate",
+        "setup-tests-before-build",
+        "save-state-harden",
+        "force-preserve-heal"
+      ],
+      "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [
-    "audit-hardening"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "audit-hardening": "force-preserve-heal"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {
@@ -2192,7 +2202,7 @@
       "id": 6,
       "text": "F12 (audit): cmd_gate should save_state BEFORE _sync_task_marker (invert order per documented invariant)",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 7,
@@ -2204,6 +2214,24 @@
       "id": 8,
       "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs \u2014 add shutil.rmtree in tearDown (shared base class)",
       "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 9,
+      "text": "ground phase harden",
+      "created": "2026-06-25T11:08:16+00:00",
+      "status": "done"
+    },
+    {
+      "id": 10,
+      "text": "list",
+      "created": "2026-06-25T14:36:24+00:00",
+      "status": "done"
+    },
+    {
+      "id": 11,
+      "text": "multi-active milestones: clarify + analyze requirements, then allow persisting MORE THAN ONE active milestone across sessions (extends team-collaboration M5 multi-active) \u2014 needs a requirements interview BEFORE sizing: what 'persist/allow' means (concurrency cap? per-user? resume UX?), the exact gap vs today's multi-active support",
+      "created": "2026-06-25T14:36:55+00:00",
       "status": "open"
     }
   ]

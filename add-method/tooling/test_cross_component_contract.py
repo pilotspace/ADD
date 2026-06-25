@@ -272,5 +272,92 @@ class OptIn(_Board):
         self.assertFalse((self.addp / "contracts").exists())
 
 
+class GateConsumerStale(_Board):
+    """F5 (consumer-stale-gate): cmd_gate must REFUSE a completing outcome when the consumer's
+    pinned contract hash is stale (the producer re-froze a changed shape). Today the drift is only
+    a cmd_check warning — a consumer can PASS against an out-of-date contract."""
+
+    def _flag(self, slug):
+        # a well-formed least-sure flag so the consumer's tests->build crossing does not die on
+        # the unconditional unflagged_freeze check (the §3 is FROZEN via _new_at_contract).
+        p = self._task_path(slug)
+        p.write_text(p.read_text().replace(
+            "Status: FROZEN @ v1 — approved by T",
+            "Status: FROZEN @ v1 — approved by T\n"
+            "Least-sure flag surfaced at freeze: [contract] reuse — cost: a re-pin"), encoding="utf-8")
+
+    def _consumer_to_verify(self, slug="c"):
+        self._new_at_contract(slug, "consumes: gateway-api")   # at contract (pins on next advance)
+        self._flag(slug)
+        for _ in range(3):                                     # contract->tests (pin) -> build -> verify
+            self._advance(slug)
+
+    def _refreeze_producer(self, fence):
+        self._quiet(["phase", "contract", "p"])
+        pp = self._task_path("p")
+        import re
+        pp.write_text(re.sub(r"(## 3 · CONTRACT.*?)```.*?```", rf"\1```\n{fence}\n```",
+                             pp.read_text(), count=1, flags=re.DOTALL), encoding="utf-8")
+        self._advance("p")
+
+    def _gate(self, *argv):
+        out, errbuf = io.StringIO(), io.StringIO()
+        err = None
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(errbuf):
+                add.main(["gate", *argv])
+        except SystemExit:
+            err = errbuf.getvalue()
+        return out.getvalue(), err
+
+    def _arrange(self):
+        self._registry()
+        self._new_at_contract("p", "produces: gateway-api", fence="SHAPE A")
+        self._advance("p")
+        self._consumer_to_verify("c")
+        self.assertEqual(self._phase("c"), "verify", "consumer must reach verify before the gate")
+
+    def test_gate_refuses_stale_consumer_pin(self):
+        self._arrange()
+        self._refreeze_producer("SHAPE B (breaking)")          # c's pin now stale
+        out, err = self._gate("PASS", "c")
+        self.assertIsNotNone(err, "a stale pin must refuse the completing gate")
+        self.assertIn("contract_consumer_stale", err)
+        self.assertNotEqual(self._phase("c"), "done", "a refused gate must not mark the task done")
+
+    def test_risk_accepted_also_refused_on_stale_pin(self):
+        self._arrange()
+        self._refreeze_producer("SHAPE B (breaking)")
+        out, err = self._gate("RISK-ACCEPTED", "c",
+                              "--owner", "T", "--ticket", "T-1", "--expires", "2099-01-01")
+        self.assertIsNotNone(err)
+        self.assertIn("contract_consumer_stale", err)
+        self.assertNotIn("waiver", self._state()["tasks"]["c"],
+                         "a stale pin is refused BEFORE the waiver write — not launderable")
+
+    def test_gate_passes_fresh_consumer_pin(self):
+        self._arrange()                                        # producer unchanged -> pin fresh
+        out, err = self._gate("PASS", "c")
+        self.assertIsNone(err, f"a fresh pin must complete normally; got {err}")
+        self.assertEqual(self._phase("c"), "done")
+
+    def test_gate_passes_on_pure_version_bump(self):
+        self._arrange()
+        self._refreeze_producer("SHAPE A")                     # same shape, re-frozen -> same hash
+        out, err = self._gate("PASS", "c")
+        self.assertIsNone(err, f"a pure version bump is not stale; got {err}")
+        self.assertEqual(self._phase("c"), "done")
+
+    def test_plain_task_unaffected(self):
+        # a task with no consumes: carries no contract_pin -> the guard returns early (byte-identical)
+        self._quiet(["new-task", "t"])
+        for _ in range(6):                                     # ground -> ... -> verify (6 hops)
+            self._quiet(["advance", "t"])
+        self.assertEqual(self._phase("t"), "verify")
+        out, err = self._gate("PASS", "t")
+        self.assertIsNone(err, f"a no-pin task must complete as today; got {err}")
+        self.assertEqual(self._phase("t"), "done")
+
+
 if __name__ == "__main__":
     unittest.main()

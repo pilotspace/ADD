@@ -38,24 +38,35 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # "Flag mode" quick-ref naming BOTH dials — fast (task lane) + auto (autonomy mode) — plus the blessed
 # standalone lane + `todo` capture; +366 B new always-loaded surface, human-approved; ratio 0.88 kept
 # (+⌈366/0.88⌉=416). The won ground is untouched.
+# phases 37920 → 38298 @ setup-tests-before-build (F6, same method): 0-setup.md now drafts the full
+# §1–§4 bundle (the §4 red suite via phases/4-tests.md) + the Exit gate requires it RED before build —
+# closing the audit hole where setup reached build with NO red test; +302 B routing surface, human-approved;
+# ratio 0.80 kept (+⌈302/0.80⌉=378). The won ground is untouched.
+# phases 38298 → 39008 @ ground-phase-harden (same method): 0-ground.md's <exit_gate> now names all four
+# grounding fields (the missing Context check) + a "grounding is complete when…" STRONG-vs-placeholder
+# rubric; +568 B human-approved surface, ratio 0.80 kept (+⌈568/0.80⌉=710). The won ground is untouched.
+# reference 65756 → 66345 @ ground-phase-harden (same method): scope.md's "Position the goal — ground in
+# assets" step gained the SAME four-field rubric at milestone altitude (a milestone grounds as rigorously as
+# a task §0); +400 B human-approved surface, ratio 0.68 kept (+⌈400/0.68⌉=589). The won ground is untouched.
 POOLS = [
     {"name": "core",          "ratio": 0.88, "baseline": 18465,
      "guides": ["SKILL.md", "intake.md"]},
     {"name": "orchestration", "ratio": 0.75, "baseline": 50098,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
-    {"name": "phases",        "ratio": 0.80, "baseline": 37920,
+    {"name": "phases",        "ratio": 0.80, "baseline": 39008,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
-    {"name": "reference",     "ratio": 0.68, "baseline": 65756,
+    {"name": "reference",     "ratio": 0.68, "baseline": 66345,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md"]},
 ]
 
 # The whole-tree headline guardrail: every .md in the canonical skill tree, ≥25% under baseline.
-TREE_BASELINE_BYTES = 18049 + 50098 + 37920 + 65756   # = 171823, the sum of the four pool baselines
-TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)    # ≤125661 — still ≥25% lighter tree-wide
+TREE_BASELINE_BYTES = 18049 + 50098 + 37920 + 65756 + 1291   # = 173114 (171823 + ⌈968/0.75⌉ @ ground-phase-harden:
+#   0-ground.md +568 B + scope.md +400 B = 968 B of human-approved four-field-rubric surface; tree ratio 0.75 kept)
+TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)    # ≤129835 — still ≥25% lighter tree-wide
 
 # Routing rows the SKILL.md phase table MUST keep (one guide per phase).
 PHASE_GUIDES = [

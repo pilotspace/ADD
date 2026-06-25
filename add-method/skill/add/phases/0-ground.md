@@ -47,10 +47,16 @@ Never: invent a file, symbol, or signature you have not opened.
 ## Exit gate
 
 <exit_gate>
-- [ ] The real files/symbols the task touches are named (from the code, not assumed).
-- [ ] The conventions to honor are cited (task-delta only; no architecture re-scan).
-- [ ] The anchors §3 will cite are listed — §3 names only anchors that exist here.
+- [ ] **Touches** — the real files/symbols the task touches are named (from the code, not assumed).
+- [ ] **Context** (working folder) — the non-code artifacts the task touches (docs · todos · config · data) are named, task-delta only.
+- [ ] **Honors** — the patterns/conventions to honor are cited (task-delta only; no architecture re-scan).
+- [ ] **Anchors** — the anchors §3 will cite are listed — §3 names only anchors that exist here.
 </exit_gate>
+
+**Grounding is complete when** all four fields are filled from real assets: a STRONG grounding cites
+actual files/symbols/docs/conventions you opened; a WEAK one leaves a `<…>` placeholder or names what you
+assume. All four are non-optional — skipping **Context** (the working folder beyond code) is the usual
+silent gap. §3 may cite only anchors that appear here.
 
 > **Advisor · Confidence** — a broad sweep is the canonical spawn case (advisor.md); self-score your grounding before you specify against it (confidence.md).
 

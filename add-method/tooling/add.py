@@ -607,7 +607,14 @@ def _phase_owner(phase: str) -> str:
 
 def save_state(root: Path, state: dict) -> None:
     state["updated"] = _now()
-    _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
+    try:
+        _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
+    except OSError as e:
+        # Fail CLOSED like load_state: a named, recoverable error — never a raw traceback. The
+        # atomic temp+replace leaves the prior state.json byte-unchanged, so it is safe to retry.
+        _die(f"state_write_failed: could not write {root / STATE_FILE} "
+             f"({e.__class__.__name__}) — the prior state.json is intact; "
+             "free disk / fix permissions and re-run")
 
 
 def _setup_locked(state: dict) -> bool:
@@ -1097,6 +1104,11 @@ def cmd_new_task(args: argparse.Namespace) -> None:
               f"autonomy token; new task seeded fail-safe '{autonomy}' "
               "(fix it with `add.py autonomy set <level> --project`)", file=sys.stderr)
 
+    # F8 (force-preserve-heal): a --force overwrite RE-CREATES the record; capture the prior
+    # MONOTONIC heal counter first so it survives. Else a task that accrued heal attempts (or
+    # was HARD-STOP escalated) could launder the cap (HEAL_CAP) to zero by re-creating itself —
+    # a zero-human cap bypass (the same invariant _heal_or_escalate guards: "never auto-resets").
+    prior_heal = state["tasks"].get(slug, {}).get("heal") if args.force else None
     state["tasks"][slug] = {
         "title": title,
         "phase": "ground",
@@ -1106,6 +1118,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         "created": _now(),
         "updated": _now(),
     }
+    if prior_heal is not None:
+        state["tasks"][slug]["heal"] = prior_heal   # monotonic — survives the --force re-create
     if from_delta:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
     if fast:
@@ -1198,16 +1212,93 @@ def _resolve_task(state: dict, slug: str | None) -> str:
     return slug
 
 
+def _build_entry(root: Path, state: dict, slug: str) -> None:
+    """The shared tests->build entry guards + snapshots (task phase-build-guard, F4).
+
+    Extracted VERBATIM from cmd_advance's `nxt == "build"` block so BOTH `advance` and the
+    `phase build` admin override run the identical gate stack — the freeze gate, the
+    build-expectations gate, the unflagged-freeze check + flag stamp, the tamper tripwire, and
+    the §5 scope snapshot. validate-then-write: every `_die` precedes the first state mutation,
+    so a refused entry leaves the task byte-unchanged. The heal loop sets phase=build DIRECTLY
+    and never routes here, so it stays exempt.
+    """
+    # the OPTED-IN crossing guards (fast-lane + flow-enforcement): a task whose PARENT
+    # milestone opted into --await-confirm is held to the trust floor at tests->build. A
+    # task under a plain / no milestone is never gated (every existing advance-to-build flow
+    # stays green). validate-then-write — every refusal runs BEFORE the tripwire/scope
+    # snapshots below, writing nothing; the task stays at `tests`.
+    _ms = state["tasks"][slug].get("milestone")
+    _optin = bool(_ms) and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True
+    raw3 = _raw_phase_bodies(root, slug).get(3, "")
+    # freeze-before-build gate (fast-lane): "collapse-never-skip" made REAL — the freeze is
+    # engine-enforced for an opted-in milestone OR any --fast task (the fast arm, fast-new-task-flag:
+    # a fast task is held to the floor under ANY milestone, so the lighter lane never drops the
+    # trust seam). PRECEDES build-expectations: you freeze §3 before pre-declaring §6's outcomes.
+    _freeze_gated = _optin or state["tasks"][slug].get("fast") is True
+    if _freeze_gated and not _contract_frozen(raw3):
+        _die("contract_not_frozen: freeze §3 before crossing into build — approve "
+             f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN)")
+    # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
+    # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
+    # not just green. Same opt-in switch as the contract-fill gate, one level out.
+    if _optin:
+        if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
+            _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
+                 f"of {slug}'s TASK.md before crossing into build")
+    if _contract_frozen(raw3):
+        if not _flag_well_formed(raw3):
+            _die("unflagged_freeze: a frozen §3 must surface a well-formed "
+                 "'Least-sure flag surfaced at freeze:' unit (>=1 [part] tag "
+                 "+ substantive content; bare 'none' only as 'none material — "
+                 "biggest risk: X') before crossing into build")
+        state["tasks"][slug]["flag_verified"] = True
+    # tamper tripwire (verify-integrity): snapshot the red test files + the frozen
+    # §3 md5s so the verify gate can prove the green was EARNED, not edited into
+    # place. UNCONDITIONAL overwrite — a legit change-request that re-crosses
+    # tests->build re-snapshots cleanly. Co-witnessed by flag_verified (above).
+    state["tasks"][slug]["tripwire"] = _tripwire_snapshot(root, slug, raw3)
+    # §5 scope gate (build-scope-lock): when the task declares its Scope, freeze
+    # the project tree into a sidecar (payload) + a state.json anchor (md5 of the
+    # sidecar bytes). Same UNCONDITIONAL-overwrite semantics as the tripwire.
+    # UNDECLARED (no Scope line) takes no snapshot — grandfathered, never retro-red
+    # — and CLEANS UP a previous declaration's leftovers (v3): a declared->
+    # undeclared re-cross pops the stale anchor + unlinks the stale sidecar, so
+    # "UNDECLARED is never refused" holds on every path.
+    declared = _declared_scope(root, slug)
+    side = root / "tasks" / slug / "scope-snapshot.json"
+    if declared is not None:
+        payload = json.dumps({"version": 1,
+                              "files": _scope_walk(root.parent.resolve())},
+                             sort_keys=True)
+        side.write_text(payload, encoding="utf-8")
+        state["tasks"][slug]["scope"] = {"declared": declared,
+                                         "snapshot_md5": _md5_text(payload)}
+    else:
+        state["tasks"][slug].pop("scope", None)
+        try:
+            side.unlink()
+        except OSError:
+            pass
+
+
 def cmd_phase(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
     slug = _resolve_task(state, args.slug)
     if args.phase not in PHASES:
         _die(f"phase must be one of: {', '.join(PHASES)}")
+    # phase-build-guard (F4): the admin override is NOT a backdoor around the tests->build gate
+    # stack — setting a task to build runs the SAME _build_entry guards `advance` runs (freeze
+    # gate · build-expectations · flag check · tamper tripwire · scope snapshot), so verify's
+    # _tamper_guard is armed and a freeze-gated DRAFT §3 is refused. Other targets are unchanged.
+    # validate-then-write: a refusal raises BEFORE the phase is set, so nothing moves. The heal
+    # loop sets phase=build directly (never via cmd_phase) and so stays exempt.
+    if args.phase == "build":
+        _build_entry(root, state, slug)
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
-    _sync_task_marker(root, slug, args.phase)
-    save_state(root, state)
+    save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, args.phase)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' phase -> {args.phase}")
     print(_next_footer(root, state))
 
@@ -1244,63 +1335,10 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # freezes — the unmarked predecessors are never retro-redded). REFUSE writes
     # nothing (fail-closed); below the build boundary the flag is never checked.
     if nxt == "build":
-        # the OPTED-IN crossing guards (fast-lane + flow-enforcement): a task whose PARENT
-        # milestone opted into --await-confirm is held to the trust floor at tests->build. A
-        # task under a plain / no milestone is never gated (every existing advance-to-build flow
-        # stays green). validate-then-write — every refusal runs BEFORE the tripwire/scope
-        # snapshots below, writing nothing; the task stays at `tests`.
-        _ms = state["tasks"][slug].get("milestone")
-        _optin = bool(_ms) and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True
-        raw3 = _raw_phase_bodies(root, slug).get(3, "")
-        # freeze-before-build gate (fast-lane): "collapse-never-skip" made REAL — the freeze is
-        # engine-enforced for an opted-in milestone OR any --fast task (the fast arm, fast-new-task-flag:
-        # a fast task is held to the floor under ANY milestone, so the lighter lane never drops the
-        # trust seam). PRECEDES build-expectations: you freeze §3 before pre-declaring §6's outcomes.
-        _freeze_gated = _optin or state["tasks"][slug].get("fast") is True
-        if _freeze_gated and not _contract_frozen(raw3):
-            _die("contract_not_frozen: freeze §3 before crossing into build — approve "
-                 f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN)")
-        # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
-        # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
-        # not just green. Same opt-in switch as the contract-fill gate, one level out.
-        if _optin:
-            if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
-                _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
-                     f"of {slug}'s TASK.md before crossing into build")
-        if _contract_frozen(raw3):
-            if not _flag_well_formed(raw3):
-                _die("unflagged_freeze: a frozen §3 must surface a well-formed "
-                     "'Least-sure flag surfaced at freeze:' unit (>=1 [part] tag "
-                     "+ substantive content; bare 'none' only as 'none material — "
-                     "biggest risk: X') before crossing into build")
-            state["tasks"][slug]["flag_verified"] = True
-        # tamper tripwire (verify-integrity): snapshot the red test files + the frozen
-        # §3 md5s so the verify gate can prove the green was EARNED, not edited into
-        # place. UNCONDITIONAL overwrite — a legit change-request that re-crosses
-        # tests->build re-snapshots cleanly. Co-witnessed by flag_verified (above).
-        state["tasks"][slug]["tripwire"] = _tripwire_snapshot(root, slug, raw3)
-        # §5 scope gate (build-scope-lock): when the task declares its Scope, freeze
-        # the project tree into a sidecar (payload) + a state.json anchor (md5 of the
-        # sidecar bytes). Same UNCONDITIONAL-overwrite semantics as the tripwire.
-        # UNDECLARED (no Scope line) takes no snapshot — grandfathered, never retro-red
-        # — and CLEANS UP a previous declaration's leftovers (v3): a declared->
-        # undeclared re-cross pops the stale anchor + unlinks the stale sidecar, so
-        # "UNDECLARED is never refused" holds on every path.
-        declared = _declared_scope(root, slug)
-        side = root / "tasks" / slug / "scope-snapshot.json"
-        if declared is not None:
-            payload = json.dumps({"version": 1,
-                                  "files": _scope_walk(root.parent.resolve())},
-                                 sort_keys=True)
-            side.write_text(payload, encoding="utf-8")
-            state["tasks"][slug]["scope"] = {"declared": declared,
-                                             "snapshot_md5": _md5_text(payload)}
-        else:
-            state["tasks"][slug].pop("scope", None)
-            try:
-                side.unlink()
-            except OSError:
-                pass
+        # the tests->build entry guards + snapshots now live in the shared _build_entry helper
+        # (task phase-build-guard, F4) so `advance` and the `phase build` admin override run the
+        # IDENTICAL gate stack. Behavior here is byte-unchanged — this is a pure extraction.
+        _build_entry(root, state, slug)
     # cross-component contract artifact (cross-component-contract): the contract->tests crossing
     # is the producer's freeze-approval moment. A `produces:` task WRITES the immutable snapshot;
     # a `consumes:` task PINS the live hash — a missing/unreadable snapshot HARD-STOPS here (the
@@ -1341,8 +1379,8 @@ def cmd_advance(args: argparse.Namespace) -> None:
             state["tasks"][slug]["contract_pin"] = {"id": _cons, "hash": pinned}
     state["tasks"][slug]["phase"] = nxt
     state["tasks"][slug]["updated"] = _now()
-    _sync_task_marker(root, slug, nxt)
-    save_state(root, state)
+    save_state(root, state)             # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, nxt)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' phase {cur} -> {nxt}")
     if nxt == "observe":
         # OBSERVE is where this loop's lessons get captured (TASK.md §7) — suggest routing
@@ -1483,6 +1521,10 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
+        # consumer-stale gate (consumer-stale-gate): a `consumes:` task whose pinned producer
+        # contract hash has drifted from the live snapshot built against an out-of-date shape —
+        # refuse the completing outcome (same before-the-waiver discipline). Re-pin to recover.
+        _consumer_stale_guard(root, state, slug)
         # per-component verify (component-aware-add): a component-bound task with a declared
         # green_bar must CITE that bar in its §6 evidence before a completing outcome — the
         # engine never runs the suite, it checks the right bar was recorded. Unbound / no
@@ -1507,11 +1549,12 @@ def cmd_gate(args: argparse.Namespace) -> None:
         }
     if completing:
         state["tasks"][slug]["phase"] = "done"
-        _sync_task_marker(root, slug, "done")
     state["tasks"][slug]["gate"] = args.outcome
     state["tasks"][slug]["gate_actor"] = _actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
-    save_state(root, state)
+    save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
+    if completing:
+        _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     print(f"task '{slug}' gate -> {args.outcome}")
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
@@ -1669,8 +1712,8 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     t["phase"] = target
     t["gate"] = "none"
     t["updated"] = now
-    _sync_task_marker(root, slug, target)
-    save_state(root, state)
+    save_state(root, state)                # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, target)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' reopened: done -> {target} (reason recorded); gate reset to none")
     print(_next_footer(root, state))
 
@@ -4515,6 +4558,28 @@ def _heal_or_escalate(root: Path, state: dict, slug: str, *, reason: str, source
           f"HONEST redo, attempt {heal['attempts']} of {HEAL_CAP}. Revert the tampered file or "
           "rebuild src honestly, then advance back to verify.")
     raise SystemExit(3)                       # redo signal (distinct from _die's 1, argparse's 2)
+
+
+def _consumer_stale_guard(root: Path, state: dict, slug: str) -> None:
+    """Refuse a COMPLETING gate when a `consumes:` task's pinned producer contract hash is STALE
+    (the producer re-froze a CHANGED shape since the pin) — the consumer built against an
+    out-of-date contract (consumer-stale-gate, the gate twin of cmd_check's contract_consumer_stale
+    warning). Recoverable, not a cheat: re-pin by re-crossing contract->tests after reviewing the
+    new frozen shape. Degrade-safe — an unreadable/missing live snapshot is NOT decided here (it
+    stays a cmd_check warning + the advance-time contract_snapshot_missing HARD-STOP); only a
+    CONFIRMED hash drift blocks. Placed with the other completing guards, BEFORE the waiver write,
+    so a stale pin is never launderable through RISK-ACCEPTED; HARD-STOP never reaches here."""
+    pin = state["tasks"][slug].get("contract_pin")
+    if not pin:
+        return
+    try:
+        live = json.loads(_contract_snapshot(root, pin["id"]).read_text(encoding="utf-8")).get("hash")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return  # unreadable -> surfaced by cmd_check, not confirmable as stale here
+    if live is not None and live != pin.get("hash"):
+        _die(f"contract_consumer_stale: task '{slug}' pinned contract '{pin['id']}' changed shape "
+             "since the pin (the producer re-froze) — re-pin by re-crossing contract->tests after "
+             "reviewing the producer's new frozen shape; never complete against a stale contract")
 
 
 def _tamper_guard(root: Path, state: dict, slug: str) -> None:

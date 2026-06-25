@@ -22,6 +22,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -237,6 +238,70 @@ class FreezeChecklistTest(unittest.TestCase):
                          BUNDLE.joinpath(*rel)):
                 self.assertEqual(canon.read_bytes(), twin.read_bytes(),
                                  f"divergence (synced ×3): {twin}")
+
+
+# ---------------------------------------------------------------------------
+# ground-phase-harden — enrich BOTH grounding seams (per-task §0 + milestone-level)
+# to one consistent four-field rubric. Guide + template only; no engine gate.
+# ---------------------------------------------------------------------------
+_SKILL = HERE.parent / "skill" / "add"
+GROUND_MD = _SKILL / "phases" / "0-ground.md"
+SCOPE_MD = _SKILL / "scope.md"
+TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
+FAST_TMPL = HERE / "templates" / "TASK.fast.md.tmpl"
+GROUND_FIELDS = ("Touches", "Context", "Honors", "Anchors")
+
+
+class GroundHardenTest(unittest.TestCase):
+    """The four-field grounding rubric is demanded at both altitudes (per-task §0 guide
+    + milestone-level scope.md), and the §0 template conveys required-not-optional."""
+
+    def _exit_gate(self, text: str) -> str:
+        m = re.search(r"<exit_gate>(.*?)</exit_gate>", text, re.DOTALL)
+        return m.group(1) if m else ""
+
+    def test_ground_exit_gate_names_all_four_fields(self):
+        gate = self._exit_gate(GROUND_MD.read_text(encoding="utf-8"))
+        self.assertTrue(gate, "0-ground.md must keep its <exit_gate> block")
+        missing = [f for f in GROUND_FIELDS if f not in gate]
+        self.assertEqual(missing, [],
+                         f"the per-task ground exit gate must name all four fields; missing {missing}")
+
+    def test_ground_guide_has_completeness_rubric(self):
+        text = GROUND_MD.read_text(encoding="utf-8").lower()
+        self.assertIn("grounding is complete when", text,
+                      "0-ground.md must carry a 'grounding is complete when…' rubric")
+
+    def test_scope_position_goal_names_four_field_rubric(self):
+        sec = md_section.section(SCOPE_MD.read_text(encoding="utf-8"),
+                                 "## Position the goal — ground in assets, relate to the milestone map")
+        missing = [f for f in GROUND_FIELDS if f not in sec]
+        self.assertEqual(missing, [],
+                         f"the milestone-level grounding step must name the same four fields; missing {missing}")
+
+    def test_task_template_section0_names_four_fields(self):
+        # change request @ v2 (human-approved): the §0 <!-- EXIT --> comment clause was DROPPED —
+        # it collided with the lean-pass comment fence (test_template_form_tags, count < 12). The
+        # template keeps all four field labels; the completeness guidance lives in 0-ground.md.
+        sec = md_section.section(TASK_TMPL.read_text(encoding="utf-8"),
+                                 "## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md")
+        for f in GROUND_FIELDS:
+            self.assertIn(f, sec, f"TASK.md.tmpl §0 must keep the {f} field")
+
+    def test_fast_template_section0_names_four_fields(self):
+        # §1 ⚠ flag RESOLVED at freeze: human chose uniform grounding — the fast §0 also
+        # NAMES the four fields (compactly; it need not carry the full prose rubric).
+        sec = md_section.section(FAST_TMPL.read_text(encoding="utf-8"),
+                                 "## 0 · GROUND — the real codebase")
+        missing = [f for f in GROUND_FIELDS if f not in sec]
+        self.assertEqual(missing, [],
+                         f"the fast §0 must name all four grounding fields (uniform); missing {missing}")
+
+    def test_ground_harden_three_tree_parity(self):
+        for rel in ("phases/0-ground.md", "scope.md"):
+            canon = (_SKILL / rel).read_bytes()
+            bundled = (BUNDLE / "skill" / "add" / rel).read_bytes()
+            self.assertEqual(canon, bundled, f"{rel} drifted: canonical vs _bundled")
 
 
 class EngineParityTest(unittest.TestCase):

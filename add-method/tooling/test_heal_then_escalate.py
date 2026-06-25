@@ -296,5 +296,40 @@ class LoopDocumentedTest(unittest.TestCase):
                       "run.md must state the cap as '3 honest ...' re-build attempts")
 
 
+class ForcePreservesHeal(_Board):
+    """F8 (force-preserve-heal): `new-task --force` re-creates a task's record, but the
+    MONOTONIC heal counter must survive — else a task that accrued heal attempts (or was
+    HARD-STOP escalated) could launder the cap to zero by re-creating itself."""
+
+    def _poke_heal(self, slug: str, heal: dict) -> None:
+        p = self._root() / "state.json"
+        st = json.loads(p.read_text(encoding="utf-8"))
+        st["tasks"][slug]["heal"] = heal
+        p.write_text(json.dumps(st, indent=2) + "\n", encoding="utf-8")
+
+    def test_force_preserves_heal_counter(self):
+        self._silent("new-task", "t")
+        self._poke_heal("t", {"attempts": 2,
+                              "history": [{"at": "2026-06-25", "reason": "tamper", "source": "scope-tamper"}]})
+        self._silent("new-task", "t", "--force")
+        self.assertEqual(self._attempts("t"), 2,
+                         "the monotonic heal counter must survive a --force re-create")
+        self.assertEqual(len(self._heal("t").get("history", [])), 1, "heal history preserved")
+        self.assertEqual(self._task_state("t")["phase"], "ground",
+                         "the rest of the record still resets on a --force overwrite")
+
+    def test_force_over_fresh_task_adds_no_heal(self):
+        self._silent("new-task", "t")
+        self._silent("new-task", "t", "--force")
+        self.assertNotIn("heal", self._task_state("t"),
+                         "--force must not fabricate a zero-counter on a task that never healed")
+
+    def test_new_task_no_force_still_refuses_existing(self):
+        self._silent("new-task", "t")
+        _, err, code = self._run("new-task", "t")
+        self.assertEqual(code, 1)
+        self.assertIn("already exists", err)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
