@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "test-tempdir-cleanup",
+  "active_task": "scope-level-enum-reconcile",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1599,10 +1599,43 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "scope-level-enum-reconcile": {
+      "title": "reconcile the scope-level enumeration across ch10/ch16/appendix-c to one canonical ordered list",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T16:50:49+00:00",
+      "updated": "2026-06-25T17:00:00+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b01ad492b6e78a970192d3316a707ab6",
+        "tests": {
+          "add-method/tooling/test_scope_level_enum.py": "b72c83db39f526b5e927a0b5585f940f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/16-releasing.md",
+          "add-method/docs/appendix-c-glossary.md",
+          "add-method/src/add_method/_bundled/docs/16-releasing.md",
+          "add-method/src/add_method/_bundled/docs/appendix-c-glossary.md",
+          "add-method/tooling/test_scope_level_enum.py",
+          "16-releasing.md",
+          "appendix-c-glossary.md"
+        ],
+        "snapshot_md5": "3d68b2cdab811ee657c1f3f01942e41c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T16:48:01+00:00",
+  "updated": "2026-06-25T17:00:13+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2308,7 +2341,7 @@
       "id": 3,
       "text": "F9 (audit): reconcile scope-level enumeration across ch10/ch16/appendix-c \u2014 pick one canonical ordered list (needs a direction call)",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 4,
