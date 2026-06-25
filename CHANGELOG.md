@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.0 — 2026-06-25
+
+- Docs site — ship the AIDD book to GitHub Pages — 6 carried · 0 key decision(s)
+- Loop Steering — 0 carried · 0 key decision(s)
+- Component-aware ADD — 4 carried · 0 key decision(s)
+
 ## 1.9.0 — 2026-06-24
 
 - lean-pass M3 · flow simplification — 0 carried · 0 key decision(s)

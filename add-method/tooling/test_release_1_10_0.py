@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.9.0 release readiness (lean-pass major bundle).
+"""Red/green tests for the 1.10.0 release readiness (component-aware major bundle).
 
-Bundles four closed milestones — skill-effectiveness (M1), flow-simplification (M3),
-flow-enforcement (M4), and the fast-lane sub-milestone.
+Bundles the closed `component-aware-add` major plus the `docs-site` and `loop-steering`
+milestones and the ccsk `--rule-file` mode.
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 1.9.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 1.10.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
 Run:
-    python3 -m unittest test_release_1_9_0 -v
+    python3 -m unittest test_release_1_10_0 -v
 """
 import hashlib
 import json
@@ -24,19 +24,20 @@ CHANGELOG = PKG / "CHANGELOG.md"
 CI_YML = REPO / ".github" / "workflows" / "ci.yml"
 PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
-VERSION = "1.9.0"
-PRIOR_VERSIONS = ("1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0",
-                  "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
+VERSION = "1.10.0"
+PRIOR_VERSIONS = ("1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0",
+                  "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline capabilities the release notes must name (the lean-pass bundle:
-# fast lane + the three engine-enforced fill-seams + the lighter skill tree)
-FEATURE_ANCHORS = ("fast-lane", "--fast", "Freeze-before-build", "flow-enforcement",
-                   "Gate-record write-back", "Skill tree 25% lighter", "Confirm-parent")
+# the headline capabilities the release notes must name (the component-aware bundle:
+# the component registry, cross-component contracts, multi-repo federation, the live
+# MkDocs site, and the ccsk rule-file mode)
+FEATURE_ANCHORS = ("components.toml", "produces:", "Cross-component", "federate pull",
+                   "MkDocs", "--rule-file")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_1_9_0_entry(self):
+    def test_changelog_has_1_10_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -45,7 +46,7 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"1.9.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"1.10.0 entry must name: {anchor}")
 
     def test_changelog_ships_in_both_channels(self):
         files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
@@ -84,9 +85,25 @@ class WorkflowHygieneTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    # The live version-equality asserts (package.json / pyproject / plugin / __init__ all == the
-    # shipped version) MOVED FORWARD to test_release_1_10_0.py — only the current cut owns them, so
-    # the lineage tests below stay green after the bump. This file keeps the version-AGNOSTIC checks.
+    def test_versions_agree_at_1_10_0(self):
+        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
+        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+        self.assertEqual((pkg, py), (VERSION, VERSION),
+                         "publish.yml's guard would fail this release closed")
+
+    def test_plugin_version_agrees(self):
+        plugin = json.loads(
+            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.assertEqual(plugin, VERSION,
+                         "the Claude Code plugin manifest must match the shipped version")
+
+    def test_runtime_version_agrees(self):
+        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
+        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
+        self.assertEqual(runtime, VERSION,
+                         "add_method.__version__ must match the shipped version")
 
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")

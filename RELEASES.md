@@ -1,5 +1,11 @@
 # Releases
 
+## 1.10.0 — 2026-06-25
+milestones: docs-site, loop-steering, component-aware-add
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: suite 1745/0 · audit clean (74 tasks) · mkdocs --strict clean; bundles component-aware-add + docs-site + loop-steering + ccsk --rule-file
+
 ## 1.9.0 — 2026-06-24
 milestones: flow-simplification, skill-effectiveness, flow-enforcement, fast-lane
 waivers: none
