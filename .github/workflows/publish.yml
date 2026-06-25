@@ -57,7 +57,7 @@ jobs:
       # seam, so @clack/prompts must be importable for the clack-cancel branch to be
       # exercised — without it the run degrades to the plain-text fallback (exit 0
       # != 130) and the gate fails closed. Mirrors the same step in ci.yml.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
 
@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
