@@ -5919,6 +5919,15 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
         elif gate != "none" and outcomes[0] != gate:
             f(slug, "gate_record_mismatch",
               f"§6 records {outcomes[0]} but state.json records {gate}")
+        elif gate == "none":
+            # F13 ungated_verdict: §6 carries a verdict the engine never gated.
+            # cmd_gate is the ONLY writer of `gate` (it also marks done), so a
+            # done/observe task at gate=="none" reached its verdict without the
+            # engine — a hand-stamped §6 or an `advance` past verify. Constraint 4
+            # requires a RECORDED outcome; a §6 verdict without one is not trusted.
+            f(slug, "ungated_verdict",
+              f"§6 records {outcomes[0]} but state.json recorded no gate (gate=none) — "
+              f"the verdict was written without the engine gate")
         sec = _AUDIT_SECURITY_RE.search(s6)
         marked = bool(sec and ("NOTE" in sec.group(0) or "⚠" in sec.group(0)))
         rev = _AUDIT_REVIEWED_RE.search(s6)

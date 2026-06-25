@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "lean-tree-baseline-derive",
+  "active_task": "audit-ungated-verdict",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1532,10 +1532,40 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "audit-ungated-verdict": {
+      "title": "_audit_findings flags a \u00a76 verdict recorded with no engine gate (gate=none)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T16:04:01+00:00",
+      "updated": "2026-06-25T16:15:16+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ec526cc7f8414afd41077033d215dc70",
+        "tests": {
+          "add-method/tooling/test_gate_audit.py": "2c51d4281ff4c61c3aa3006706890765"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_gate_audit.py"
+        ],
+        "snapshot_md5": "3326981d2a4e333dfc447a764241314d"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T15:42:36+00:00",
+  "updated": "2026-06-25T16:15:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2265,7 +2295,7 @@
       "id": 7,
       "text": "F13 (audit): _audit_findings misses gate/\u00a76 mismatch when gate=='none' but \u00a76 has a verdict",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 8,
