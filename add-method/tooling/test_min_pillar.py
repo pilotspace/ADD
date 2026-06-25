@@ -109,6 +109,9 @@ LIFECYCLE = [
     ["fold"],                                  # consolidation verb: this board has no open competency
                                                # lesson -> refuses no_open_deltas (expected nonzero,
                                                # tolerated; reads TASK/PROJECT/CONVENTIONS, never docs/)
+    ["federate", "pull", "x"],                 # multi-repo pull verb: this board declares no
+                                               # [federation.x] -> refuses federation_unknown (expected
+                                               # nonzero, tolerated; reads components.toml, never docs/)
     ["graduation-report"], ["graduation-report", "--json"],  # read-only harvest (reads TASK/RETRO/state, never docs/)
     ["release-report"], ["release-report", "--json"],  # read-only release inventory (reads state/RELEASES.md/TASK, never docs/)
     ["release", "0.0.0"],                      # guarded record-only cut: no milestone is closed yet
@@ -137,7 +140,9 @@ _EXERCISED_IN_SETUP = {"init"}
 # (no_open_spec_delta) — exercised under the read-spy (reads TASK.md/state, never docs/).
 # fold is likewise a refusal verb here: no open competency lesson exists, so it refuses
 # (no_open_deltas) — exercised under the read-spy (reads TASK/PROJECT/CONVENTIONS, never docs/).
-_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "fold"}
+# federate is a refusal verb on this board: no [federation.x] is declared, so `federate pull x`
+# refuses (federation_unknown) — exercised under the read-spy (reads components.toml, never docs/).
+_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "fold", "federate"}
 
 
 class MinimalPillarTest(unittest.TestCase):

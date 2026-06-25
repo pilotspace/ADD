@@ -1198,7 +1198,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T14:23:36+00:00",
+  "updated": "2026-06-25T02:16:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1854,6 +1854,20 @@
         "loop-aware-orient"
       ],
       "archived": "2026-06-24"
+    },
+    {
+      "slug": "component-aware-add",
+      "title": "Component-aware ADD",
+      "tasks": 6,
+      "task_slugs": [
+        "component-registry",
+        "per-component-verify",
+        "cross-component-contract",
+        "cross-component-milestone",
+        "multirepo-federation",
+        "component-method-docs"
+      ],
+      "archived": "2026-06-25"
     }
   ],
   "active_milestones": [],
