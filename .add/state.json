@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "loose-task-release",
+  "active_task": "setup-commit-prompt",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1324,10 +1324,108 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "soul-seed-npm-parity": {
+      "title": "Port SOUL.md seed-if-missing to the npm cli.js installer (pip parity)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T05:28:09+00:00",
+      "updated": "2026-06-25T06:10:43+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4829f395aaa472897525e098a5a504fc",
+        "tests": {
+          "add-method/tooling/test_soul_seed_npm_parity.py": "bd82928950ca1c321440496f06b1b824"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_soul_seed_npm_parity.py"
+        ],
+        "snapshot_md5": "dc08862d3c50380a113f9c3b4a3c4b84"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "gitignore-bak-seed": {
+      "title": "Seed .add/.gitignore (incl. pre-update-state.bak.json) if missing on update/init",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T06:11:32+00:00",
+      "updated": "2026-06-25T07:24:14+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1cb0ae077e5732d894ca19cb19dc9a82",
+        "tests": {
+          "add-method/tooling/test_gitignore_bak_seed.py": "474f674d389dfa3f737bff316630918c"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/templates/gitignore.tmpl",
+          ".add/tooling/templates/gitignore.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/gitignore.tmpl",
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_gitignore_bak_seed.py"
+        ],
+        "snapshot_md5": "7073d4cebf3637dc0505f7763dec21e3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "setup-commit-prompt": {
+      "title": "Prompt the user to commit the .add/ folder at setup/init",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T07:24:29+00:00",
+      "updated": "2026-06-25T09:01:01+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b901a47d1dd9752440eb3961fac9b8e8",
+        "tests": {
+          "add-method/tooling/test_setup_commit_prompt.py": "f3cef3948c498a2a7c2ca0ee164000a4"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_setup_commit_prompt.py"
+        ],
+        "snapshot_md5": "961cdc9ea399430d95216b34d967bf20"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T05:08:19+00:00",
+  "updated": "2026-06-25T09:01:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2008,13 +2106,13 @@
       "id": 1,
       "text": "seed soul.md if missed when update/init ADD into project",
       "created": "2026-06-25T04:17:00+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 2,
       "text": "seed .add/.gitignore to skip committing .bak files if missed on update/init; and at setup phase ask the user to commit the .add/ folder",
       "created": "2026-06-25T04:34:02+00:00",
-      "status": "open"
+      "status": "done"
     }
   ]
 }

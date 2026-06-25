@@ -743,6 +743,36 @@ def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
         _log(f"soul_seed_skipped: could not write .add/SOUL.md — {exc}")
 
 
+def _seed_gitignore(target_path: Path, bundled_root: Path) -> None:
+    """Ensure .add/.gitignore lists the engine's transient artifacts. Seed it from the
+    bundled tooling/templates/gitignore.tmpl if absent; else APPEND-IF-ABSENT each pattern
+    line the template carries that the existing file lacks — additive only, never reorders
+    or removes user-added lines, idempotent. Comment/blank template lines are not appended
+    to an existing file. Fail-soft: any problem logs a warning and returns (rc unaffected).
+    Twin of bin/cli.js:seedGitignore."""
+    source = bundled_root / "tooling" / "templates" / "gitignore.tmpl"
+    if not source.exists():
+        _log("gitignore_seed_skipped: gitignore.tmpl not found in bundled tooling/templates/")
+        return
+    dest = target_path / ".add" / ".gitignore"
+    try:
+        body = source.read_text(encoding="utf-8")
+        if not dest.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(body, encoding="utf-8")            # seed-if-missing
+            return
+        current = dest.read_text(encoding="utf-8")
+        have = {ln.strip() for ln in current.splitlines()}
+        missing = [ln for ln in body.splitlines()
+                   if ln.strip() and not ln.lstrip().startswith("#") and ln.strip() not in have]
+        if not missing:
+            return                                             # idempotent — nothing to add
+        suffix = "" if current.endswith("\n") or current == "" else "\n"
+        dest.write_text(current + suffix + "\n".join(missing) + "\n", encoding="utf-8")
+    except OSError as exc:
+        _log(f"gitignore_seed_skipped: could not update .add/.gitignore — {exc}")
+
+
 def install(
     target: str = ".",
     force: bool = False,
@@ -843,6 +873,7 @@ def install(
     _reconcile(target_path, bundled_root)
 
     _seed_soul_md(target_path, bundled_root)
+    _seed_gitignore(target_path, bundled_root)
 
     # Agent detection: write THE detected agent's integration file (a marker-delimited
     # pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
@@ -1114,6 +1145,7 @@ def update(
     _run_migrations(state_file, cur_version, new_version)
     _write_stamp(add_dir, new_version, channel=channel)
     _seed_soul_md(target_path, bundled_root)
+    _seed_gitignore(target_path, bundled_root)
 
     _log(
         f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
