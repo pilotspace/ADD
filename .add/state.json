@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "engine-package-skeleton",
+  "active_task": "extract-io-state",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1672,10 +1672,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-io-state": {
+      "title": "Extract IO + state primitives to add_engine/io_state.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T17:54:35+00:00",
+      "updated": "2026-06-25T18:03:22+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "35ab082896894abcdabdd52b9ab35db7",
+        "tests": {
+          "add-method/tooling/test_engine_extract_io_state.py": "18f1dc770cff0a5d7305101d91ad4537"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/io_state.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
+        ],
+        "snapshot_md5": "9efd1d21ebc9d0969e15dcd2ec34d55a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T17:42:30+00:00",
+  "updated": "2026-06-25T18:03:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2373,7 +2404,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "engine-package-skeleton"
+    "engine-modularization": "extract-io-state"
   },
   "todos": [
     {
@@ -2446,6 +2477,12 @@
       "id": 12,
       "text": "split add.py (the ~6k-line engine) into focused modules \u2014 e.g. state/commands/audit/scope/release \u2014 behind a stable import surface; keep the 3-tree mirror + ENGINE_MD5 pin working (needs a design pass on module boundaries + how the mirror/pin adapt to multi-file)",
       "created": "2026-06-25T16:34:48+00:00",
+      "status": "open"
+    },
+    {
+      "id": 13,
+      "text": "enhance the UDD design-definition loop (design.md) to interview UI/UX explicitly: ask FIDELITY (lo-fi wireframe vs hi-fi mockup vs production), CONCEPT (the design idea/mood/direction), LAYOUT (structure/grid/hierarchy), and VISUAL DESIGN (color/type/spacing/imagery) \u2014 a guided per-axis design intake before the captured-screen confirm",
+      "created": "2026-06-25T17:48:10+00:00",
       "status": "open"
     }
   ]
