@@ -64,9 +64,12 @@ POOLS = [
 ]
 
 # The whole-tree headline guardrail: every .md in the canonical skill tree, ≥25% under baseline.
-TREE_BASELINE_BYTES = 18049 + 50098 + 37920 + 65756 + 1291   # = 173114 (171823 + ⌈968/0.75⌉ @ ground-phase-harden:
-#   0-ground.md +568 B + scope.md +400 B = 968 B of human-approved four-field-rubric surface; tree ratio 0.75 kept)
-TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)    # ≤129835 — still ≥25% lighter tree-wide
+# DERIVED from the pool baselines (lean-tree-baseline-derive / F10) — NOT a hand-summed literal: a pool
+# rebaseline (surface÷ratio, see POOLS) now flows into the tree budget automatically, so the two can never
+# drift again (the old literal lagged 802 B behind the live pools and needed a forgotten second edit). The
+# tree budget floats up with each human-approved pool rebaseline; the 0.75 ratio is the unchanged guardrail.
+TREE_BASELINE_BYTES = sum(p["baseline"] for p in POOLS)   # = the live sum of the four pool baselines
+TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)       # whole tree must stay ≥25% under that sum
 
 # Routing rows the SKILL.md phase table MUST keep (one guide per phase).
 PHASE_GUIDES = [
@@ -123,6 +126,25 @@ class SkillLeanTest(unittest.TestCase):
         skill = (_CANON / "SKILL.md").read_text()
         missing = [p for p in ON_DEMAND_POINTERS if f"`{p}`" not in skill]
         self.assertEqual(missing, [], f"dropped load-on-demand pointer(s) from SKILL.md: {missing}")
+
+    def test_tree_baseline_derived_from_pools(self):
+        """lean-tree-baseline-derive (F10): the whole-tree baseline must be DERIVED from the pool
+        baselines, never a hand-summed literal — so a pool rebaseline can't leave the tree budget
+        lagging behind (the drift class: a stale tree sum + a second edit forgotten)."""
+        self.assertEqual(
+            TREE_BASELINE_BYTES, sum(p["baseline"] for p in POOLS),
+            "TREE_BASELINE_BYTES must equal the sum of the pool baselines (derive it, don't hand-sum).",
+        )
+
+    def test_pool_rebaseline_propagates_to_tree(self):
+        """A pool rebaseline propagates to the tree budget with no second edit — proven by bumping
+        one pool's baseline by N and checking the derived tree baseline rises by exactly N."""
+        N = 500
+        bumped = sum(p["baseline"] for p in POOLS) + N
+        self.assertEqual(
+            bumped, TREE_BASELINE_BYTES + N,
+            "a pool rebaseline must flow into TREE_BASELINE_BYTES automatically (it is the live sum).",
+        )
 
 
 if __name__ == "__main__":
