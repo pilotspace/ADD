@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-io-state",
+  "active_task": "extract-state",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1703,10 +1703,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-state": {
+      "title": "Extract state + root + _die helpers to add_engine/io_state.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T18:08:56+00:00",
+      "updated": "2026-06-25T18:22:11+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "de74cb38fb372f22db785c45a3b3451f",
+        "tests": {
+          "add-method/tooling/test_engine_extract_state.py": "4ed8fd3f7ba9d87db1dc88138da8adc8"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/io_state.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
+        ],
+        "snapshot_md5": "ca0fee7f432eabf8287e46ebac9d645a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T18:03:22+00:00",
+  "updated": "2026-06-25T18:22:11+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2404,7 +2435,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-io-state"
+    "engine-modularization": "extract-state"
   },
   "todos": [
     {
