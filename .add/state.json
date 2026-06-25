@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "setup-commit-prompt",
+  "active_task": "force-preserve-heal",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1422,10 +1422,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "phase-build-guard": {
+      "title": "F4: cmd_phase build must refuse an unfrozen contract (heal-loop exempt)",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "audit-hardening",
+      "depends_on": [],
+      "created": "2026-06-25T10:13:40+00:00",
+      "updated": "2026-06-25T10:13:40+00:00"
+    },
+    "consumer-stale-gate": {
+      "title": "F5: cmd_gate refuses a completing outcome when the pinned contract hash is stale",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "audit-hardening",
+      "depends_on": [],
+      "created": "2026-06-25T10:13:40+00:00",
+      "updated": "2026-06-25T10:13:40+00:00"
+    },
+    "setup-tests-before-build": {
+      "title": "F6: 0-setup routes through 4-tests.md \u2014 a red test before build",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "audit-hardening",
+      "depends_on": [],
+      "created": "2026-06-25T10:13:40+00:00",
+      "updated": "2026-06-25T10:13:40+00:00"
+    },
+    "save-state-harden": {
+      "title": "F7: save_state OSError -> _die (named code) + tests for gate/advance",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "audit-hardening",
+      "depends_on": [],
+      "created": "2026-06-25T10:13:40+00:00",
+      "updated": "2026-06-25T10:13:40+00:00"
+    },
+    "force-preserve-heal": {
+      "title": "F8: new-task --force preserves the monotonic heal counter",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "audit-hardening",
+      "depends_on": [],
+      "created": "2026-06-25T10:13:40+00:00",
+      "updated": "2026-06-25T10:13:40+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T09:01:30+00:00",
+  "updated": "2026-06-25T10:13:51+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1607,9 +1652,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "audit-hardening": {
+      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
+      "goal": "make the engine enforce at gate-time the invariants the post-hoc audit catches \u2014 no PASS against an unfrozen or stale contract, crash-safe state writes, and a monotonic heal counter \u2014 closing the gaps the 2026-06-25 deep audit surfaced",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-25T10:13:32+00:00",
+      "updated": "2026-06-25T10:13:32+00:00"
     }
   },
-  "active_milestone": null,
+  "active_milestone": "audit-hardening",
   "archived": [
     {
       "slug": "v5",
@@ -2097,9 +2150,12 @@
       "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "audit-hardening"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "audit-hardening": "force-preserve-heal"
   },
   "todos": [
     {
@@ -2113,6 +2169,42 @@
       "text": "seed .add/.gitignore to skip committing .bak files if missed on update/init; and at setup phase ask the user to commit the .add/ folder",
       "created": "2026-06-25T04:34:02+00:00",
       "status": "done"
+    },
+    {
+      "id": 3,
+      "text": "F9 (audit): reconcile scope-level enumeration across ch10/ch16/appendix-c \u2014 pick one canonical ordered list (needs a direction call)",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "text": "F10 (audit): test_skill_lean TREE_BASELINE_BYTES -> sum(p['baseline'] for p in POOLS) to kill the drift class",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "text": "F11 (audit): cmd_advance scope-sidecar write should use _atomic_write (non-atomic today)",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "text": "F12 (audit): cmd_gate should save_state BEFORE _sync_task_marker (invert order per documented invariant)",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 7,
+      "text": "F13 (audit): _audit_findings misses gate/\u00a76 mismatch when gate=='none' but \u00a76 has a verdict",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 8,
+      "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs \u2014 add shutil.rmtree in tearDown (shared base class)",
+      "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
     }
   ]
 }
