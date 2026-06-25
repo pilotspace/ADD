@@ -18,6 +18,20 @@ from pathlib import Path
 
 import add
 
+try:
+    import tomllib  # the component pillar requires tomllib (stdlib, Python 3.11+)
+    _HAS_TOMLLIB = True
+except ModuleNotFoundError:
+    _HAS_TOMLLIB = False
+
+
+def setUpModule():
+    # Python < 3.11 has no tomllib, so components.toml cannot be parsed and the component
+    # pillar is unavailable (the engine fails loud with components_malformed). The feature's
+    # behavior can only be exercised where it exists; 3.12+ runs the full suite.
+    if not _HAS_TOMLLIB:
+        raise unittest.SkipTest("component pillar requires tomllib (Python 3.11+)")
+
 
 class _Board(unittest.TestCase):
     def setUp(self):
