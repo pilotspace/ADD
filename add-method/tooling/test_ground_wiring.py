@@ -192,10 +192,14 @@ class CheckWarnTest(_Board):
         self.assertNotIn("task_not_grounded", self._warn_blob(d))
 
     def test_no_new_json_key_on_check(self):
-        # the warning rides the EXISTING `warnings` array; the frozen key set is unchanged
+        # the task_not_grounded warning rides the EXISTING `warnings` array (adds no key).
+        # The key set is a SURFACE LOCK — it grows ONLY by a deliberate, frozen contract:
+        # standalone-fast-task added the additive `informed`/`infos` soft-info tier (a fast
+        # standalone is an INFO, never a WARN). The lock stays strict at this exact set.
         self._make_active_task(anchors=PLACEHOLDER, frozen=True)
         d, _ = self._check_json()
-        self.assertEqual(set(d.keys()), {"passed", "failed", "warned", "warnings", "checks"})
+        self.assertEqual(set(d.keys()),
+                         {"passed", "failed", "warned", "warnings", "informed", "infos", "checks"})
 
 
 # ---------------------------------------------------------------------------
