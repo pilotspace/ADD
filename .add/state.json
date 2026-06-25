@@ -1576,7 +1576,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T14:31:19+00:00",
+  "updated": "2026-06-25T14:33:08+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1763,9 +1763,14 @@
       "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
       "goal": "make the engine enforce at gate-time the invariants the post-hoc audit catches \u2014 no PASS against an unfrozen or stale contract, crash-safe state writes, and a monotonic heal counter \u2014 closing the gaps the 2026-06-25 deep audit surfaced",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-06-25T10:13:32+00:00",
-      "updated": "2026-06-25T10:13:32+00:00"
+      "updated": "2026-06-25T14:33:08+00:00",
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "active_milestone": "audit-hardening",
