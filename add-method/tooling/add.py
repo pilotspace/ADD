@@ -104,13 +104,18 @@ SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md
 # is the tests->build touch baseline the verify scope-gate reads from disk (the
 # durable scope declaration is the state.json anchor); pre-archive-state.bak.json is
 # archive-milestone's pre-delete recovery net — needed on disk, never in history;
-# .update-cache.json is the update-nudge's once-a-day registry throttle. All stay on
-# disk; git-ignoring them is hygiene, never deletion.
+# pre-update-state.bak.json is the installer update's pre-write state backup (cli.js
+# cmdUpdate / pip _installer.update) — same "on disk, never in git" need; .update-cache.json
+# is the update-nudge's once-a-day registry throttle. All stay on disk; git-ignoring them
+# is hygiene, never deletion. SINGLE-SOURCED: this constant is kept byte-identical to
+# tooling/templates/gitignore.tmpl (test_gitignore_bak_seed parity) so the installers,
+# which seed/refresh .add/.gitignore from that template on update, never drift from init.
 _GITIGNORE_BODY = """\
 # ADD engine transient artifacts — local working state, never committed.
-# (Scaffolded by `add.py init`; edit freely — init never clobbers an existing copy.)
+# (Scaffolded by `add.py init`; refreshed additively by the installer on update.)
 scope-snapshot.json
 pre-archive-state.bak.json
+pre-update-state.bak.json
 .update-cache.json
 """
 

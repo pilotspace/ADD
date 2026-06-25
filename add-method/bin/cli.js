@@ -581,6 +581,37 @@ function seedSoulMd(target) {
   }
 }
 
+// Ensure .add/.gitignore lists the engine's transient artifacts. Seed it from the bundled
+// tooling/templates/gitignore.tmpl if absent; else APPEND-IF-ABSENT each pattern line the
+// template carries that the file lacks — additive only, never reorders/removes user lines,
+// idempotent; comment/blank lines are not appended to an existing file. Fail-soft. Twin of
+// _installer.py:_seed_gitignore.
+function seedGitignore(target) {
+  const source = path.join(PKG_ROOT, "tooling", "templates", "gitignore.tmpl");
+  if (!fs.existsSync(source)) {
+    warn("gitignore_seed_skipped: gitignore.tmpl not found in bundled tooling/templates/");
+    return;
+  }
+  const dest = path.join(target, ".add", ".gitignore");
+  try {
+    const body = fs.readFileSync(source, "utf8");
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, body);                       // seed-if-missing
+      return;
+    }
+    const current = fs.readFileSync(dest, "utf8");
+    const have = new Set(current.split("\n").map((l) => l.trim()));
+    const missing = body.split("\n").filter(
+      (l) => l.trim() && !l.trim().startsWith("#") && !have.has(l.trim())
+    );
+    if (missing.length === 0) return;                     // idempotent — nothing to add
+    const suffix = current === "" || current.endsWith("\n") ? "" : "\n";
+    fs.writeFileSync(dest, current + suffix + missing.join("\n") + "\n");
+  } catch (e) {
+    warn("gitignore_seed_skipped: could not update .add/.gitignore — " + (e && e.message ? e.message : e));
+  }
+}
 
 // The drop — now a RECONCILE: restore missing managed trees + refresh present ones
 // (sweep orphans) + report per-tree status. Byte-compatible handoff with the prior
@@ -590,6 +621,7 @@ function dropFiles(args, target, profile, intent) {
   log("Installing ADD into " + target);
   reconcile(args, target);
   seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
+  seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
 
   // Agent detection: write THE detected agent's integration file (a marker-delimited
   // pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
@@ -954,6 +986,7 @@ function cmdUpdate(args) {
   }
   reconcile(args, target);
   seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
+  seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
       " · managed layer reconciled · your project state untouched.");
