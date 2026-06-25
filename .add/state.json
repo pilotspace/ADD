@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "consumer-stale-gate",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1422,161 +1422,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "phase-build-guard": {
-      "title": "F4: cmd_phase build must refuse an unfrozen contract (heal-loop exempt)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T11:09:31+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "d3a41f9079908485117598a42d96de5b",
-        "tests": {
-          "add-method/tooling/test_phase_build_guard.py": "c97173a540ed972571cc487f08a9a84e"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_phase_build_guard.py"
-        ],
-        "snapshot_md5": "324f8493f8af5892841e4e2e791f6771"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "consumer-stale-gate": {
-      "title": "F5: cmd_gate refuses a completing outcome when the pinned contract hash is stale",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T14:31:19+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "21745900cafaaebb079ee68271526279",
-        "tests": {
-          "add-method/tooling/test_cross_component_contract.py": "db748f4ff014878d8ac30718ec28ca9f"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_cross_component_contract.py"
-        ],
-        "snapshot_md5": "67fbf96b4b9b8728eb0384ec6a387c57"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "setup-tests-before-build": {
-      "title": "F6: 0-setup routes through 4-tests.md \u2014 a red test before build",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T14:17:33+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "2e1f04f21373147336dbf2b33ed19a94",
-        "tests": {
-          "add-method/tooling/test_setup_tests_before_build.py": "6c1256ebc367cd226e139a17db9ee517"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/skill/add/phases/0-setup.md",
-          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
-          ".claude/skills/add/phases/0-setup.md",
-          "add-method/tooling/test_setup_tests_before_build.py",
-          "add-method/tooling/test_skill_lean.py"
-        ],
-        "snapshot_md5": "a8e6bde443ca36c5bc2cd2f3b0505963"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "save-state-harden": {
-      "title": "F7: save_state OSError -> _die (named code) + tests for gate/advance",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T11:48:36+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "275e8832ecf2aa412ab22254ee1caa8a",
-        "tests": {
-          "add-method/tooling/test_state_hardening.py": "093af70f169e99b3432efe643c2089f6"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_state_hardening.py"
-        ],
-        "snapshot_md5": "50bc639c5dd3eb257c87e3396a71bd5a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "force-preserve-heal": {
-      "title": "F8: new-task --force preserves the monotonic heal counter",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "audit-hardening",
-      "depends_on": [],
-      "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T13:53:47+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "1588f423993b1c8d03c21c9d183505e1",
-        "tests": {
-          "add-method/tooling/test_heal_then_escalate.py": "8720e3db5ce854785f5dfde3703934cf"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_heal_then_escalate.py"
-        ],
-        "snapshot_md5": "8e52c69d18dfd8e74984ea8884627b24"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T14:33:08+00:00",
+  "updated": "2026-06-25T14:34:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1758,22 +1607,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "audit-hardening": {
-      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
-      "goal": "make the engine enforce at gate-time the invariants the post-hoc audit catches \u2014 no PASS against an unfrozen or stale contract, crash-safe state writes, and a monotonic heal counter \u2014 closing the gaps the 2026-06-25 deep audit surfaced",
-      "stage": "mvp",
-      "status": "done",
-      "created": "2026-06-25T10:13:32+00:00",
-      "updated": "2026-06-25T14:33:08+00:00",
-      "done_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
-  "active_milestone": "audit-hardening",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -2259,14 +2095,24 @@
         "component-method-docs"
       ],
       "archived": "2026-06-25"
+    },
+    {
+      "slug": "audit-hardening",
+      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
+      "tasks": 5,
+      "task_slugs": [
+        "phase-build-guard",
+        "consumer-stale-gate",
+        "setup-tests-before-build",
+        "save-state-harden",
+        "force-preserve-heal"
+      ],
+      "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [
-    "audit-hardening"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "audit-hardening": "consumer-stale-gate"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {
