@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-accessors",
+  "active_task": "extract-predicates",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1765,10 +1765,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-predicates": {
+      "title": "Extract state/markdown predicates to add_engine/predicates.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T18:35:16+00:00",
+      "updated": "2026-06-25T18:38:47+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "55145901653698b9b81b1a74152daa88",
+        "tests": {
+          "add-method/tooling/test_engine_extract_predicates.py": "18f64ffe222fc077bf0654ed9b3bc390"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/predicates.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/predicates.py"
+        ],
+        "snapshot_md5": "8defee716a6ddb43ad40ae417de12fa8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T18:30:27+00:00",
+  "updated": "2026-06-25T18:38:47+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2466,7 +2497,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-accessors"
+    "engine-modularization": "extract-predicates"
   },
   "todos": [
     {
