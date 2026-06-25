@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "setup-tests-before-build",
+  "active_task": "consumer-stale-gate",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1455,12 +1455,33 @@
     },
     "consumer-stale-gate": {
       "title": "F5: cmd_gate refuses a completing outcome when the pinned contract hash is stale",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "audit-hardening",
       "depends_on": [],
       "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "updated": "2026-06-25T14:31:19+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "21745900cafaaebb079ee68271526279",
+        "tests": {
+          "add-method/tooling/test_cross_component_contract.py": "db748f4ff014878d8ac30718ec28ca9f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_cross_component_contract.py"
+        ],
+        "snapshot_md5": "67fbf96b4b9b8728eb0384ec6a387c57"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "setup-tests-before-build": {
       "title": "F6: 0-setup routes through 4-tests.md \u2014 a red test before build",
@@ -1555,7 +1576,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T14:17:33+00:00",
+  "updated": "2026-06-25T14:31:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2240,7 +2261,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "audit-hardening": "setup-tests-before-build"
+    "audit-hardening": "consumer-stale-gate"
   },
   "todos": [
     {

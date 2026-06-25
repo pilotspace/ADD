@@ -1521,6 +1521,10 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
+        # consumer-stale gate (consumer-stale-gate): a `consumes:` task whose pinned producer
+        # contract hash has drifted from the live snapshot built against an out-of-date shape —
+        # refuse the completing outcome (same before-the-waiver discipline). Re-pin to recover.
+        _consumer_stale_guard(root, state, slug)
         # per-component verify (component-aware-add): a component-bound task with a declared
         # green_bar must CITE that bar in its §6 evidence before a completing outcome — the
         # engine never runs the suite, it checks the right bar was recorded. Unbound / no
@@ -4554,6 +4558,28 @@ def _heal_or_escalate(root: Path, state: dict, slug: str, *, reason: str, source
           f"HONEST redo, attempt {heal['attempts']} of {HEAL_CAP}. Revert the tampered file or "
           "rebuild src honestly, then advance back to verify.")
     raise SystemExit(3)                       # redo signal (distinct from _die's 1, argparse's 2)
+
+
+def _consumer_stale_guard(root: Path, state: dict, slug: str) -> None:
+    """Refuse a COMPLETING gate when a `consumes:` task's pinned producer contract hash is STALE
+    (the producer re-froze a CHANGED shape since the pin) — the consumer built against an
+    out-of-date contract (consumer-stale-gate, the gate twin of cmd_check's contract_consumer_stale
+    warning). Recoverable, not a cheat: re-pin by re-crossing contract->tests after reviewing the
+    new frozen shape. Degrade-safe — an unreadable/missing live snapshot is NOT decided here (it
+    stays a cmd_check warning + the advance-time contract_snapshot_missing HARD-STOP); only a
+    CONFIRMED hash drift blocks. Placed with the other completing guards, BEFORE the waiver write,
+    so a stale pin is never launderable through RISK-ACCEPTED; HARD-STOP never reaches here."""
+    pin = state["tasks"][slug].get("contract_pin")
+    if not pin:
+        return
+    try:
+        live = json.loads(_contract_snapshot(root, pin["id"]).read_text(encoding="utf-8")).get("hash")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return  # unreadable -> surfaced by cmd_check, not confirmable as stale here
+    if live is not None and live != pin.get("hash"):
+        _die(f"contract_consumer_stale: task '{slug}' pinned contract '{pin['id']}' changed shape "
+             "since the pin (the producer re-froze) — re-pin by re-crossing contract->tests after "
+             "reviewing the producer's new frozen shape; never complete against a stale contract")
 
 
 def _tamper_guard(root: Path, state: dict, slug: str) -> None:
