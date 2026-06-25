@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-state",
+  "active_task": "extract-accessors",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1734,10 +1734,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-accessors": {
+      "title": "Extract pure active-task/milestone accessors to add_engine/accessors.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T18:26:49+00:00",
+      "updated": "2026-06-25T18:30:27+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "edeb2aac642ed603dba9cc3129bb38ca",
+        "tests": {
+          "add-method/tooling/test_engine_extract_accessors.py": "54413ced7d6e03268a5621dd94b9d885"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/accessors.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/accessors.py"
+        ],
+        "snapshot_md5": "2a2f8a6bf2d02aa81c6441131a2a884b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T18:22:11+00:00",
+  "updated": "2026-06-25T18:30:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2435,7 +2466,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-state"
+    "engine-modularization": "extract-accessors"
   },
   "todos": [
     {
