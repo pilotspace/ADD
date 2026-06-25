@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "force-preserve-heal",
+  "active_task": "phase-build-guard",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1425,12 +1425,33 @@
     },
     "phase-build-guard": {
       "title": "F4: cmd_phase build must refuse an unfrozen contract (heal-loop exempt)",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "audit-hardening",
       "depends_on": [],
       "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "updated": "2026-06-25T11:09:31+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d3a41f9079908485117598a42d96de5b",
+        "tests": {
+          "add-method/tooling/test_phase_build_guard.py": "c97173a540ed972571cc487f08a9a84e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_phase_build_guard.py"
+        ],
+        "snapshot_md5": "324f8493f8af5892841e4e2e791f6771"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "consumer-stale-gate": {
       "title": "F5: cmd_gate refuses a completing outcome when the pinned contract hash is stale",
@@ -1470,7 +1491,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T10:13:51+00:00",
+  "updated": "2026-06-25T11:09:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2155,7 +2176,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "audit-hardening": "force-preserve-heal"
+    "audit-hardening": "phase-build-guard"
   },
   "todos": [
     {
@@ -2204,6 +2225,12 @@
       "id": 8,
       "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs \u2014 add shutil.rmtree in tearDown (shared base class)",
       "created": "2026-06-25T10:13:51+00:00",
+      "status": "open"
+    },
+    {
+      "id": 9,
+      "text": "ground phase harden",
+      "created": "2026-06-25T11:08:16+00:00",
       "status": "open"
     }
   ]
