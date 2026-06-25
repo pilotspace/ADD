@@ -1,6 +1,6 @@
 {
   "name": "@pilotspace/add",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "ADD (AI-Driven Development). One skill. Eight steps. Five disciplines. Every feature ships through the loop — a minimal, state-tracked Claude Code skill that ships the AIDD book as its trust layer.",
   "bin": {
     "add": "bin/cli.js"

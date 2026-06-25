@@ -6,17 +6,67 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-06-25
+
+Component-aware major — ADD now models every codebase as a **graph of components**,
+each owning a source root, its own green bar, and the contracts it produces or
+consumes, so **one milestone can ship a vertical slice across components** in a
+monorepo or across repos. Bundles the closed `component-aware-add` major plus the
+`docs-site` (the book as a live MkDocs site) and `loop-steering` milestones, and the
+ccsk `--rule-file` mode. Every new gate is **opt-in or grandfathered** — a project
+that declares no components is byte-identical to 1.9.0.
+
 ### Added
+- **Component registry (`component-aware-add`)** — declare parts of a multi-part
+  codebase in `.add/components.toml` under `[component.<name>]` (a `root` + a
+  `green-bar`). A task binds to one with a `component:` header line, which anchors its
+  §5 Scope to that component's root. Declared, never inferred; zero components ⇒
+  byte-identical to today.
+- **Per-component verify** — a bound task is held to ITS component's green-bar at the
+  verify gate (the cite-gate refuses `component_green_bar_uncited`), so two tasks in
+  one milestone can pass on two different toolchains (e.g. `pytest` and `vitest`). The
+  engine still never runs a suite — the AI runs it, the gate checks the right bar was
+  cited.
+- **Cross-component contracts (`produces:` / `consumes:`)** — declare `[contract.<id>]`
+  (producer + consumers). A producer's §3 freeze writes an immutable snapshot at
+  `.add/contracts/<id>.json`; a consumer pins its hash; a changed re-freeze flags every
+  consumer stale. A missing/malformed snapshot HARD-STOPS — never build against a
+  guessed shape.
+- **One milestone, full-stack slice** — a `consumes:` task is HELD from entering §3
+  (`producer_contract_unfrozen`) until its producer's contract is frozen, so a BE→FE
+  vertical slice ships in one milestone, ordered by the frozen contract.
+- **Multi-repo federation (`add.py federate pull <id>`)** — a consumer repo declares
+  `[federation.<id>]` (a `source` path + optional `pin`) and pulls a byte-for-byte copy
+  of a producer repo's published snapshot into its local `.add/contracts/`, where the
+  rest of ADD treats mono- and multi-repo identically. Fail-loud: unknown id /
+  unreadable source / invalid snapshot / version mismatch each HARD-STOPS and lands
+  nothing.
+- **Component pillar docs** — a new book chapter `17 · Components`, a skill guide
+  (`components.md`), and glossary terms (Component · Cross-component contract ·
+  Federation) teach the whole loop.
+- **The book as a live site (`docs-site`)** — the AIDD book ships to GitHub Pages as a
+  MkDocs-Material site (`mkdocs.yml` + `requirements-docs.txt`, build-time only — the
+  published packages stay zero-dependency); `mkdocs build --strict` fails the deploy on
+  a broken intra-book link.
 - **Rule-file mode for ccsk projects (`--rule-file`)** — when a project keeps its
-  workflow rules as separate files under `.claude/rules/` (the convention scaffolded
-  by ccsk — the Claude Code Starter Kit — detected by a `.ccsk/` dir), ADD relocates CLAUDE.md's
-  block to `.claude/rules/add-workflows.md` and leaves a single reference bullet under a
-  Workflows/Rules heading in CLAUDE.md, instead of inlining. Triggers three ways
-  (re-derived from disk each phase, no persisted state): the explicit `--rule-file` flag on
-  `init` / `sync-guidelines` / the installer, a `.ccsk/` directory, or a rule file already
-  present. **CLAUDE-only** — `AGENTS.md` / `.clinerules` keep the inline block. Migrates a
-  prior inline block out (`.bak` on change), idempotent, and fail-soft. Mirrored across all
-  three installers (engine `add.py`, pip `_installer.py`, npm `cli.js`).
+  workflow rules under `.claude/rules/` (the ccsk convention, detected by a `.ccsk/`
+  dir), ADD relocates CLAUDE.md's block to `.claude/rules/add-workflows.md` and leaves a
+  single reference bullet, instead of inlining. Triggers three ways (the explicit
+  `--rule-file` flag, a `.ccsk/` directory, or a rule file already present),
+  **CLAUDE-only**, migrates a prior inline block out (`.bak` on change), idempotent and
+  fail-soft. Mirrored across all three installers (engine `add.py`, pip `_installer.py`,
+  npm `cli.js`).
+
+### Changed
+- **Guided dynamic loop (`loop-steering`)** — `status` and `guide` now STEER into the
+  build→verify loop at the loop juncture rather than only reporting it, so an agent is
+  pointed at the next loop step instead of having to infer it.
+
+### Compatibility
+- Python 3.11+ is required to USE the component pillar (it parses `components.toml` with
+  the stdlib `tomllib`); on 3.10 the engine runs unchanged but a declared
+  `components.toml` fails loud (`components_malformed`). The published packages remain
+  zero-dependency.
 
 ## [1.9.0] — 2026-06-24
 
