@@ -62,7 +62,13 @@ self-improving via the `soul-self-improve` path). Then branch on state:
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
 **Quick ref** — `status` resume · `init` bootstrap · `advance` continue · `gate PASS` at verify.
-**Opt-in flags** (human picks, never auto): `new-task --fast` = fast lane (minimal template, freeze-gated) · `new-milestone --await-confirm` = confirm-gate the milestone's tasks.
+**Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
+- **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is a
+  blessed standalone low-ceremony lane. Jot ideas first with `add.py todo "<text>"` (then `todo` to
+  list · `todo --done <id>`).
+- **auto** — `autonomy: auto` (default) auto-gates verify on evidence; lower the autonomy level with
+  `add.py autonomy set conservative|manual` for a human gate · `new-milestone --await-confirm`
+  confirm-gates a milestone's tasks.
 
 ## Intake — size a request before creating scope
 

@@ -34,8 +34,12 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # pillar adds a NEW load-on-demand guide (`components.md`, 2574 B) to the reference pool + a SKILL.md
 # pointer (430 B). RATIOS kept EXACTLY; each baseline grows by new-surface ÷ ratio:
 #   reference 61970 → 65756 (+⌈2574/0.68⌉), core 17560 → 18049 (+⌈430/0.88⌉). The won ground is untouched.
+# core 18049 → 18465 @ flag-mode-quickref (same method): the "Opt-in flags" line becomes a labelled
+# "Flag mode" quick-ref naming BOTH dials — fast (task lane) + auto (autonomy mode) — plus the blessed
+# standalone lane + `todo` capture; +366 B new always-loaded surface, human-approved; ratio 0.88 kept
+# (+⌈366/0.88⌉=416). The won ground is untouched.
 POOLS = [
-    {"name": "core",          "ratio": 0.88, "baseline": 18049,
+    {"name": "core",          "ratio": 0.88, "baseline": 18465,
      "guides": ["SKILL.md", "intake.md"]},
     {"name": "orchestration", "ratio": 0.75, "baseline": 50098,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
