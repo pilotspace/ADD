@@ -1635,16 +1635,47 @@
     },
     "engine-package-skeleton": {
       "title": "Bootstrap add_engine/ package + manifest-digest pin (first leaf module: constants)",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "engine-modularization",
       "depends_on": [],
       "created": "2026-06-25T17:13:03+00:00",
-      "updated": "2026-06-25T17:17:24+00:00"
+      "updated": "2026-06-25T17:42:30+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "85c606b136eaa252846f8097c1d976a3",
+        "tests": {
+          "add-method/tooling/test_engine_package_skeleton.py": "71e905ea635730dee45a9ff1dddcb96c",
+          "add-method/tooling/test_shared_engine_pin.py": "eb8beef973160e9ae6245b9bbe41bba9",
+          "add-method/tooling/test_engine_repin_parity.py": "d0979ca23ce5e91fa82916d7b5ef2611",
+          "add-method/tooling/test_bundle_parity.py": "573d3879b8d3f7f212a1a3e69860aeba"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/__init__.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/engine_manifest.py",
+          "add-method/scripts/prepare_bundle.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/__init__.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "bin/cli.js",
+          "add-method/src/add_method/cli.py"
+        ],
+        "snapshot_md5": "92b5152ef2fcedcf6960c3799cc7d819"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T17:17:24+00:00",
+  "updated": "2026-06-25T17:42:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
