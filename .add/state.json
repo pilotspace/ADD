@@ -1505,7 +1505,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T15:42:18+00:00",
+  "updated": "2026-06-25T15:42:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2217,7 +2217,7 @@
       "id": 4,
       "text": "F10 (audit): test_skill_lean TREE_BASELINE_BYTES -> sum(p['baseline'] for p in POOLS) to kill the drift class",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 5,
