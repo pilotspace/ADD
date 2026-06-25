@@ -24,6 +24,7 @@ import json
 import os
 import sys
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -74,6 +75,7 @@ def _make_project(root: Path) -> Path:
 class UpdateBehaviorTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="add-update-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.bundled = _make_bundled(self.tmp / "pkg")
         self.proj = _make_project(self.tmp / "proj")
 
@@ -137,6 +139,7 @@ class UpdateBehaviorTest(unittest.TestCase):
 class UpdateCheckTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="add-check-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.proj = _make_project(self.tmp / "proj")
 
     def test_check_reports_drift_without_writing(self):

@@ -20,6 +20,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -52,6 +53,8 @@ class _Board(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-next-footer-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         self._silent("init", "--name", "demo")
         self._silent("new-milestone", "v1", "--title", "T", "--goal", "g")
@@ -264,6 +267,8 @@ class FooterSweepTest(_Board):
     def _fresh(self, *init_args) -> str:
         """init in a throwaway dir and return the verb's stdout; restore cwd."""
         d = Path(tempfile.mkdtemp(prefix="add-sweep-")).resolve()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         prev = Path.cwd()
         os.chdir(d)
         try:
@@ -303,6 +308,8 @@ class FooterSweepTest(_Board):
         # --- init + lock in fresh dirs ---
         _, covered["init"] = self._fresh()
         ld = Path(tempfile.mkdtemp(prefix="add-sweep-lock-")).resolve()
+        self.addCleanup(shutil.rmtree, ld, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         prev = Path.cwd()
         os.chdir(ld)
         try:

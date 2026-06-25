@@ -18,6 +18,7 @@ import re
 import shlex
 import subprocess
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -69,6 +70,8 @@ class ProjectCmdTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-ship-clean-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
         self.root = add.find_root()

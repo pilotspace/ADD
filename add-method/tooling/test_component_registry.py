@@ -21,6 +21,7 @@ Run: cd add-method/tooling && python3 -m unittest test_component_registry -v
 """
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -56,6 +57,7 @@ class _Project(unittest.TestCase):
 
     def setUp(self):
         self.proj = Path(tempfile.mkdtemp(prefix="add-comp-")).resolve()
+        self.addCleanup(shutil.rmtree, self.proj, ignore_errors=True)
         self.add = self.proj / ".add"
         (self.add / "tasks").mkdir(parents=True)
         # a real component tree so root resolution / _confined has something on disk

@@ -25,6 +25,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -47,6 +48,8 @@ class UpdateNudgeTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-nudge-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
         self.add_dir = add.find_root()

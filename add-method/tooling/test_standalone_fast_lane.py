@@ -22,6 +22,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 
 import add
@@ -43,6 +44,8 @@ class BlessedStandaloneFastLane(unittest.TestCase):
     def setUp(self):
         self._cwd = os.getcwd()
         self.tmp = tempfile.mkdtemp(prefix="add-standalone-fast-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])   # fresh project: no active milestone
 

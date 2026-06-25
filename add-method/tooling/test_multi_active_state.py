@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -77,6 +78,8 @@ class LoadSeamTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-mas-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         (self.tmp / ".add").mkdir()
 
     def tearDown(self):
@@ -108,6 +111,8 @@ class InitBornMigratedTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-mas-init-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
 
     def tearDown(self):

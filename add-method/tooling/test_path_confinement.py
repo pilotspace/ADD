@@ -14,6 +14,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -49,8 +50,12 @@ class PathConfinementTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-confine-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         # a REAL out-of-tree test file: sibling of the project root in the temp area
         self.evil = Path(tempfile.mkdtemp(prefix="add-evil-")).resolve()
+        self.addCleanup(shutil.rmtree, self.evil, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         (self.evil / "t.py").write_text(_tests_src(3), encoding="utf-8")
         os.chdir(self.tmp)
         buf, err = io.StringIO(), io.StringIO()

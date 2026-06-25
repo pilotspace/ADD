@@ -20,6 +20,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -42,6 +43,8 @@ class SeedAndDropTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-seed-drop-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])  # no "setup" key -> grandfathered-locked
 

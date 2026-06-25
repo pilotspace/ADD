@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -37,6 +38,8 @@ class _Board(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-autonomy-cmd-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         self._silent("init", "--name", "demo")               # plain init -> grandfathered-locked
 
@@ -225,6 +228,8 @@ class AutonomyRejectTest(_Board):
 
     def test_no_add_project_rejected(self):
         outside = Path(tempfile.mkdtemp(prefix="add-no-project-")).resolve()
+        self.addCleanup(shutil.rmtree, outside, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(outside)
         try:
             out, err, code = self._run("autonomy")

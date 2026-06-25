@@ -13,6 +13,7 @@ Run: python3 -m unittest test_cospecify_scaffold -v
 """
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -29,6 +30,8 @@ class CospecifyScaffoldTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-cospec-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
 
     def tearDown(self):

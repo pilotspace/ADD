@@ -60,6 +60,7 @@ class DetectTest(unittest.TestCase):
 class MergeTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="gemini-merge-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
     def test_fresh_creates_settings(self):
         action = _installer._write_gemini_settings(self.tmp)
@@ -101,6 +102,7 @@ class MergeTest(unittest.TestCase):
 class InstallFlowTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="gemini-inst-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.bundled = _make_bundled(self.tmp / "pkg")
         self.proj = self.tmp / "proj"
         self.proj.mkdir()

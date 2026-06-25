@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -57,6 +58,8 @@ class CommandTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-mac-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo", "--stage", "mvp"])
         add.main(["new-milestone", "m1", "--stage", "mvp"])

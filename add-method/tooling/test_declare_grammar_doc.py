@@ -11,6 +11,7 @@ import hashlib
 import io
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -58,6 +59,8 @@ class DeclareGrammarDocTest(unittest.TestCase):
     def test_scaffold_carries_grammar(self):
         cwd = Path.cwd()
         tmp = Path(tempfile.mkdtemp(prefix="add-grammar-")).resolve()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         try:
             os.chdir(tmp)
             buf, err = io.StringIO(), io.StringIO()

@@ -7,6 +7,7 @@ Realizes the AIDD diagram's foundation (Domain/DDD · Spec/SDD · Users/UDD) tha
 import io
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -18,6 +19,8 @@ class FoundationTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-found-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
 
@@ -65,6 +68,8 @@ class FoundationTest(unittest.TestCase):
         add._render_template = fake
         try:
             d = tempfile.mkdtemp(prefix="add-blank-")
+            self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+            self.addCleanup(os.chdir, os.getcwd())
             os.chdir(d)
             add.main(["init", "--name", "blank"])
             pj = Path(d) / ".add" / "PROJECT.md"

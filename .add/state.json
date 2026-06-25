@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "audit-ungated-verdict",
+  "active_task": "test-tempdir-cleanup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1562,10 +1562,47 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "test-tempdir-cleanup": {
+      "title": "test suite stops leaking tempfile.mkdtemp dirs (leak-guard + cleanup sweep)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T16:20:16+00:00",
+      "updated": "2026-06-25T16:47:46+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "db47eda36589ab95613114f556846ba6",
+        "tests": {
+          "add-method/tooling/test_temp_hygiene.py": "47ef8720bb1fd398283310fc4a65ca98"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/"
+        ],
+        "snapshot_md5": "a2da6cc78ea8acd8dae78af2dae85282"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-25T16:47:12+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_temp_hygiene.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T16:15:30+00:00",
+  "updated": "2026-06-25T16:48:01+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2301,7 +2338,7 @@
       "id": 8,
       "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs \u2014 add shutil.rmtree in tearDown (shared base class)",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 9,
@@ -2319,6 +2356,12 @@
       "id": 11,
       "text": "multi-active milestones: clarify + analyze requirements, then allow persisting MORE THAN ONE active milestone across sessions (extends team-collaboration M5 multi-active) \u2014 needs a requirements interview BEFORE sizing: what 'persist/allow' means (concurrency cap? per-user? resume UX?), the exact gap vs today's multi-active support",
       "created": "2026-06-25T14:36:55+00:00",
+      "status": "open"
+    },
+    {
+      "id": 12,
+      "text": "split add.py (the ~6k-line engine) into focused modules \u2014 e.g. state/commands/audit/scope/release \u2014 behind a stable import surface; keep the 3-tree mirror + ENGINE_MD5 pin working (needs a design pass on module boundaries + how the mirror/pin adapt to multi-file)",
+      "created": "2026-06-25T16:34:48+00:00",
       "status": "open"
     }
   ]

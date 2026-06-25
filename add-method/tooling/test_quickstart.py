@@ -9,6 +9,7 @@ import argparse
 import os
 import re
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -55,6 +56,8 @@ class QuickstartGuideTest(unittest.TestCase):
         # the command spine the guide teaches must drive a project to done/PASS
         cwd = Path.cwd()
         tmp = tempfile.mkdtemp(prefix="quickstart-")
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         try:
             os.chdir(tmp)
             add.main(["init", "--name", "demo", "--stage", "mvp"])

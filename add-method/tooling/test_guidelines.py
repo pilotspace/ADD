@@ -9,6 +9,7 @@ injection automatically. Run: python3 -m unittest test_guidelines -v
 import io
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -36,6 +37,8 @@ class GuidelineInjectTest(unittest.TestCase):
         afterwards to exercise sync-guidelines from a clean starting state.
         """
         d = Path(tempfile.mkdtemp(prefix="add-guide-")).resolve()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(d)
         add.main(["init", "--name", "demo"])
         for name in ("AGENTS.md", "CLAUDE.md", "AGENTS.md.bak", "CLAUDE.md.bak"):
@@ -120,6 +123,8 @@ class GuidelineInjectTest(unittest.TestCase):
 
     def test_init_auto_syncs(self):
         d = Path(tempfile.mkdtemp(prefix="add-guide-init-")).resolve()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(d)
         add.main(["init", "--name", "demo"])
         for name in ("AGENTS.md", "CLAUDE.md"):
