@@ -143,6 +143,63 @@ class StateHardeningTest(unittest.TestCase):
         self.assertEqual(data["tasks"]["t"]["gate"], "PASS",
                          "snapshot must preserve gate data the archived record drops")
 
+    # --- save_state fails CLOSED on an IO error (task save-state-harden, F7) -----
+    def _fail_state_write(self):
+        """A mock side_effect for add._atomic_write that raises OSError ONLY on the
+        state.json path (so an earlier snapshot write is never what trips), else delegates
+        to the real implementation. Mirrors test_retro_write_is_atomic's failure-injection."""
+        real = add._atomic_write
+
+        def side_effect(path, text):
+            if str(path).endswith("state.json"):
+                raise OSError("disk full")
+            return real(path, text)
+        return side_effect
+
+    def test_save_state_oserror_dies_named(self):
+        before = self.state_path.read_bytes()
+        with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
+            code, out, err = _run(["new-task", "t"])   # a mutating command ends in save_state
+        self.assertEqual(code, 1, "a failed state write must exit 1, not raise a traceback")
+        self.assertIn("state_write_failed", err)
+        self.assertNotIn("Traceback", out + err)
+        self.assertEqual(self.state_path.read_bytes(), before,
+                         "a failed atomic state write must leave state.json byte-unchanged")
+
+    def test_advance_state_write_failure_named(self):
+        add.main(["new-task", "t"])                    # at ground
+        before = self.state_path.read_bytes()
+        with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
+            code, _, err = _run(["advance", "t"])      # ground -> specify, no snapshots
+        self.assertEqual(code, 1)
+        self.assertIn("state_write_failed", err)
+        self.assertEqual(self.state_path.read_bytes(), before,
+                         "advance must not mutate state.json when its write fails")
+
+    def test_gate_state_write_failure_named(self):
+        add.main(["new-task", "t"])
+        add.main(["phase", "verify", "t"])
+        before = self.state_path.read_bytes()
+        with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
+            code, _, err = _run(["gate", "PASS", "t"])
+        self.assertEqual(code, 1)
+        self.assertIn("state_write_failed", err)
+        self.assertEqual(self.state_path.read_bytes(), before,
+                         "gate must not record into state.json when the write fails")
+
+    def test_gate_save_failure_no_split_brain(self):
+        # F12: save_state runs BEFORE _sync_task_marker, so a failed save dies before the
+        # TASK.md marker moves — the file is never ahead of state (no split-brain).
+        add.main(["new-task", "t"])
+        add.main(["phase", "verify", "t"])
+        task_md = Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
+        with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
+            code, _, err = _run(["gate", "PASS", "t"])
+        self.assertEqual(code, 1)
+        self.assertIn("state_write_failed", err)
+        self.assertRegex(task_md.read_text(encoding="utf-8"), r"(?m)^phase:\s*verify\b",
+                         "a failed gate save must NOT advance the TASK.md marker to done")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

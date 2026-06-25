@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-build-guard",
+  "active_task": "save-state-harden",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1473,12 +1473,33 @@
     },
     "save-state-harden": {
       "title": "F7: save_state OSError -> _die (named code) + tests for gate/advance",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "audit-hardening",
       "depends_on": [],
       "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "updated": "2026-06-25T11:48:36+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "275e8832ecf2aa412ab22254ee1caa8a",
+        "tests": {
+          "add-method/tooling/test_state_hardening.py": "093af70f169e99b3432efe643c2089f6"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_state_hardening.py"
+        ],
+        "snapshot_md5": "50bc639c5dd3eb257c87e3396a71bd5a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "force-preserve-heal": {
       "title": "F8: new-task --force preserves the monotonic heal counter",
@@ -1491,7 +1512,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T11:09:31+00:00",
+  "updated": "2026-06-25T11:48:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2176,7 +2197,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "audit-hardening": "phase-build-guard"
+    "audit-hardening": "save-state-harden"
   },
   "todos": [
     {

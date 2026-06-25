@@ -607,7 +607,14 @@ def _phase_owner(phase: str) -> str:
 
 def save_state(root: Path, state: dict) -> None:
     state["updated"] = _now()
-    _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
+    try:
+        _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
+    except OSError as e:
+        # Fail CLOSED like load_state: a named, recoverable error — never a raw traceback. The
+        # atomic temp+replace leaves the prior state.json byte-unchanged, so it is safe to retry.
+        _die(f"state_write_failed: could not write {root / STATE_FILE} "
+             f"({e.__class__.__name__}) — the prior state.json is intact; "
+             "free disk / fix permissions and re-run")
 
 
 def _setup_locked(state: dict) -> bool:
@@ -1283,8 +1290,8 @@ def cmd_phase(args: argparse.Namespace) -> None:
         _build_entry(root, state, slug)
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
-    _sync_task_marker(root, slug, args.phase)
-    save_state(root, state)
+    save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, args.phase)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' phase -> {args.phase}")
     print(_next_footer(root, state))
 
@@ -1365,8 +1372,8 @@ def cmd_advance(args: argparse.Namespace) -> None:
             state["tasks"][slug]["contract_pin"] = {"id": _cons, "hash": pinned}
     state["tasks"][slug]["phase"] = nxt
     state["tasks"][slug]["updated"] = _now()
-    _sync_task_marker(root, slug, nxt)
-    save_state(root, state)
+    save_state(root, state)             # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, nxt)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' phase {cur} -> {nxt}")
     if nxt == "observe":
         # OBSERVE is where this loop's lessons get captured (TASK.md §7) — suggest routing
@@ -1531,11 +1538,12 @@ def cmd_gate(args: argparse.Namespace) -> None:
         }
     if completing:
         state["tasks"][slug]["phase"] = "done"
-        _sync_task_marker(root, slug, "done")
     state["tasks"][slug]["gate"] = args.outcome
     state["tasks"][slug]["gate_actor"] = _actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
-    save_state(root, state)
+    save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
+    if completing:
+        _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     print(f"task '{slug}' gate -> {args.outcome}")
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
@@ -1693,8 +1701,8 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     t["phase"] = target
     t["gate"] = "none"
     t["updated"] = now
-    _sync_task_marker(root, slug, target)
-    save_state(root, state)
+    save_state(root, state)                # F12: durable state FIRST (source of truth) — may _die
+    _sync_task_marker(root, slug, target)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' reopened: done -> {target} (reason recorded); gate reset to none")
     print(_next_footer(root, state))
 
