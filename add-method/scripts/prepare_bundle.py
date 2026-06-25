@@ -81,8 +81,12 @@ def main() -> None:
         print(f"error: {add_py_src} does not exist", file=sys.stderr)
         sys.exit(1)
     shutil.copy2(str(add_py_src), str(tooling_dest / "add.py"))
+    # the engine is a package now: ship tooling/add_engine/ (runtime modules; no tests)
+    engine_pkg_src = TOOLING_SRC / "add_engine"
+    if engine_pkg_src.is_dir():
+        _copy_tree(engine_pkg_src, tooling_dest / "add_engine", exclude_test_py=True)
     _copy_tree(TOOLING_SRC / "templates", tooling_dest / "templates")
-    print("  copied tooling/add.py + templates/")
+    print("  copied tooling/add.py + add_engine/ + templates/")
 
     # 3. docs/
     docs_dest = BUNDLE_ROOT / "docs"

@@ -83,6 +83,9 @@ def _install(tmp: Path) -> None:
     tooling = tmp / ".add" / "tooling"
     tooling.mkdir(parents=True)
     shutil.copy2(PKG_ROOT / "tooling" / "add.py", tooling / "add.py")
+    # the engine is a package now: add.py imports add_engine.constants — copy it too
+    shutil.copytree(PKG_ROOT / "tooling" / "add_engine", tooling / "add_engine",
+                    ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copytree(PKG_ROOT / "tooling" / "templates", tooling / "templates")
 
 

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-level-enum-reconcile",
+  "active_task": "engine-package-skeleton",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1632,10 +1632,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-package-skeleton": {
+      "title": "Bootstrap add_engine/ package + manifest-digest pin (first leaf module: constants)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T17:13:03+00:00",
+      "updated": "2026-06-25T17:42:30+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "85c606b136eaa252846f8097c1d976a3",
+        "tests": {
+          "add-method/tooling/test_engine_package_skeleton.py": "71e905ea635730dee45a9ff1dddcb96c",
+          "add-method/tooling/test_shared_engine_pin.py": "eb8beef973160e9ae6245b9bbe41bba9",
+          "add-method/tooling/test_engine_repin_parity.py": "d0979ca23ce5e91fa82916d7b5ef2611",
+          "add-method/tooling/test_bundle_parity.py": "573d3879b8d3f7f212a1a3e69860aeba"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/__init__.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/engine_manifest.py",
+          "add-method/scripts/prepare_bundle.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/__init__.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "bin/cli.js",
+          "add-method/src/add_method/cli.py"
+        ],
+        "snapshot_md5": "92b5152ef2fcedcf6960c3799cc7d819"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T17:00:13+00:00",
+  "updated": "2026-06-25T17:42:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1817,9 +1857,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-modularization": {
+      "title": "Split the 7k-line add.py engine into a focused add_engine/ package",
+      "goal": "the engine is a navigable package of focused modules behind a stable import surface, with the entry path, 3-tree mirror, and ENGINE_MD5 pin all preserved",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-25T17:12:05+00:00",
+      "updated": "2026-06-25T17:12:05+00:00"
     }
   },
-  "active_milestone": null,
+  "active_milestone": "engine-modularization",
   "archived": [
     {
       "slug": "v5",
@@ -2320,9 +2368,12 @@
       "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "engine-modularization"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "engine-modularization": "engine-package-skeleton"
   },
   "todos": [
     {

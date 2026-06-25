@@ -104,6 +104,9 @@ class WiringBehaviorTest(unittest.TestCase):
         tooling = self.tmp / ".add" / "tooling"
         tooling.mkdir(parents=True, exist_ok=True)
         shutil.copy2(HERE / "add.py", tooling / "add.py")
+        # the engine is a package now: add.py imports add_engine.constants — copy it too
+        shutil.copytree(HERE / "add_engine", tooling / "add_engine",
+                        ignore=shutil.ignore_patterns("__pycache__"))
 
     def tearDown(self):
         os.chdir(self._cwd)
@@ -120,7 +123,10 @@ class WiringBehaviorTest(unittest.TestCase):
                               capture_output=True, text=True, timeout=60)
 
     def _snapshot(self):
-        return sorted(str(p) for p in self.tmp.rglob("*") if p.is_file())
+        # ignore Python bytecode: importing the add_engine package writes
+        # __pycache__/*.pyc, which is not a meaningful "write" by the CI command
+        return sorted(str(p) for p in self.tmp.rglob("*")
+                      if p.is_file() and "__pycache__" not in p.parts)
 
     def test_ci_command_passes_clean_board(self):
         files = self._snapshot()
