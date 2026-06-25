@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "loose-task-release",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,10 +1195,139 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "standalone-fast-task": {
+      "title": "Bless milestone-free fast tasks as a first-class low-ceremony lane",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T03:41:52+00:00",
+      "updated": "2026-06-25T04:05:07+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1dbdabee912d9bc573263638d6b3e99d",
+        "tests": {
+          "add-method/tooling/test_standalone_fast_lane.py": "bd5900b56aacfe111dedf4afcadcc3ea"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_standalone_fast_lane.py",
+          "add-method/tooling/test_ground_wiring.py"
+        ],
+        "snapshot_md5": "2acf46bc932e24ca9d2faa2d941a7b94"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "todo-capture": {
+      "title": "Capture todo tasks (lightweight backlog primitive)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T03:41:52+00:00",
+      "updated": "2026-06-25T04:17:22+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9903b117e7678991a2668d781b6e2685",
+        "tests": {
+          "add-method/tooling/test_todo_capture.py": "2f175f659c76c92d497aa1797d693fb5"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_todo_capture.py",
+          "add-method/tooling/test_min_pillar.py"
+        ],
+        "snapshot_md5": "c72fa7adb6e802a345961272646e4bfb"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "flag-mode-quickref": {
+      "title": "Flag-mode quick-ref in SKILL.md (fast=task, auto=mode)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T03:41:52+00:00",
+      "updated": "2026-06-25T04:40:36+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "f5a670ea22a5cff1c8a6ee34f961c786",
+        "tests": {
+          "add-method/tooling/test_flag_mode_quickref.py": "f30b1f7b3f46e7dc3f826c86884e329f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/SKILL.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_flag_mode_quickref.py"
+        ],
+        "snapshot_md5": "d0d547610e95399e72672d9224edafd5"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "loose-task-release": {
+      "title": "Release-attribute milestone-free done tasks as RELEASES.md loose items",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T04:52:29+00:00",
+      "updated": "2026-06-25T05:08:19+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "3f03b1311ae48a4d106b16280e35c783",
+        "tests": {
+          "add-method/tooling/test_loose_task_release.py": "7d9a6e856694290940008d201f673598"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_loose_task_release.py"
+        ],
+        "snapshot_md5": "d1d60d2e49e965da0328d91dc5604877"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T02:16:30+00:00",
+  "updated": "2026-06-25T05:08:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1873,5 +2002,19 @@
   "active_milestones": [],
   "active_tasks": {
     "flow-simplification": "phase-review"
-  }
+  },
+  "todos": [
+    {
+      "id": 1,
+      "text": "seed soul.md if missed when update/init ADD into project",
+      "created": "2026-06-25T04:17:00+00:00",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "text": "seed .add/.gitignore to skip committing .bak files if missed on update/init; and at setup phase ask the user to commit the .add/ folder",
+      "created": "2026-06-25T04:34:02+00:00",
+      "status": "open"
+    }
+  ]
 }

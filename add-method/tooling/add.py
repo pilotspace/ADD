@@ -1982,6 +1982,12 @@ def cmd_status(args: argparse.Namespace) -> None:
     _rel = _releasable(root, state)
     if _rel:
         print(f"  → {RELEASABLE_CUE.format(n=len(_rel))}")
+    # loose-task release cue (loose-task-release): a SEPARATE additive line — done milestone-free
+    # tasks not yet attributed to a RELEASES.md `loose tasks:` row. Peer to the milestone cue (its
+    # constant is untouched); fires even with zero releasable milestones. Fail-open ledger read.
+    _loose = _releasable_loose_tasks(root, state)
+    if _loose:
+        print(f"  → releasable: {len(_loose)} loose task(s) since last release")
 
     # fast-lane marker (fast-new-task-flag): tag an ACTIVE fast task so the lane is visible at a
     # glance. Presentation-only, existence-gated — a plain/absent active task is byte-unchanged.
@@ -6071,6 +6077,40 @@ def _releasable(root: Path, state: dict) -> list[dict]:
     return [m for m in _closed_milestones(state) if m["slug"] not in released]
 
 
+def _released_loose_tasks(root: Path) -> set[str]:
+    """Slugs already attributed to a release as LOOSE tasks — the union of every
+    `loose tasks:` row in RELEASES.md. The exact parallel of _released_milestones:
+    fail-OPEN (a missing/unreadable/malformed ledger yields the empty set, so every
+    done loose task reads as still-releasable). READ-ONLY."""
+    try:
+        text = _releases_path(root).read_text(encoding="utf-8")
+    except OSError:
+        return set()                         # no ledger -> nothing released yet
+    out: set[str] = set()
+    for line in text.splitlines():
+        st = line.strip()
+        if st.lower().startswith("loose tasks:"):
+            for tok in re.split(r"[,\s]+", st.split(":", 1)[1]):
+                tok = tok.strip()
+                if tok and tok.lower() != "none":
+                    out.add(tok)
+    return out
+
+
+def _releasable_loose_tasks(root: Path, state: dict) -> list[dict]:
+    """Done milestone-free tasks NOT yet attributed to any RELEASES.md `loose tasks:` row —
+    the loose half of the cut's candidate bundle, peer to _releasable. A loose task is a
+    first-class releasable item: milestone-free (a standalone, fast OR full) AND done (a
+    completing gate). Drives the loose status cue + release_data["loose"]. READ-ONLY."""
+    released = _released_loose_tasks(root)
+    out: list[dict] = []
+    for slug, t in (state.get("tasks") or {}).items():
+        if (isinstance(t, dict) and t.get("milestone") is None and _task_done(t)
+                and slug not in released):
+            out.append({"slug": slug, "title": t.get("title", slug)})
+    return out
+
+
 def _key_decisions_for(root: Path, slug: str) -> list[str]:
     """Best-effort §Key-Decisions rows from PROJECT.md that NAME this milestone slug — the
     consolidated decisions the changelog can cite. Fail-open: a missing section / unreadable
@@ -6148,15 +6188,19 @@ def release_data(root: Path, state: dict) -> dict:
                 monitors.append({"slug": slug, "watch": st})
                 break
 
+    # loose — done milestone-free tasks not yet attributed (the cut's loose bundle, peer to releasable)
+    loose = _releasable_loose_tasks(root, state)
+
     return {
         "releasable": releasable,
         "changed": changed,
         "waivers": waivers,
         "blockers": blockers,
         "monitors": monitors,
+        "loose": loose,
         "summary": {
             "releasable": len(releasable), "changed": len(changed), "waivers": len(waivers),
-            "blockers": len(blockers), "monitors": len(monitors),
+            "blockers": len(blockers), "monitors": len(monitors), "loose": len(loose),
         },
     }
 
@@ -6237,15 +6281,19 @@ def _render_changelog_block(version: str, day: str, bundle: list[dict],
 
 def _render_releases_row(version: str, day: str, bundle: list[dict],
                          waiver_slugs: list[str], evidence: str | None,
-                         actor: str | None = None) -> str:
-    """One append-only RELEASES.md row — the attribution source (`milestones:` membership).
-    The `actor:` line records WHO cut the release (structured-actor stamping); absent on a
-    legacy row (back-compat) when no actor is supplied."""
+                         actor: str | None = None, loose: list[dict] | None = None) -> str:
+    """One append-only RELEASES.md row — the attribution source (`milestones:` membership +,
+    additively, `loose tasks:` membership for done milestone-free standalones). The `actor:`
+    line records WHO cut the release (structured-actor stamping); absent on a legacy row
+    (back-compat) when no actor is supplied. `loose` defaults to None so existing callers keep
+    working; the `loose tasks:` line always renders (`none` when empty), the other lines unchanged."""
     ms = ", ".join(m["slug"] for m in bundle) if bundle else "none"
+    lt = ", ".join(t["slug"] for t in loose) if loose else "none"
     wv = ", ".join(waiver_slugs) if waiver_slugs else "none"
     actor_line = f"actor: {actor}\n" if actor else ""
     return (f"## {version} — {day}\n"
             f"milestones: {ms}\n"
+            f"loose tasks: {lt}\n"
             f"waivers: {wv}\n"
             f"{actor_line}"
             f"evidence: {evidence or 'recorded by add.py release'}\n\n")
@@ -6274,9 +6322,11 @@ def cmd_release(args: argparse.Namespace) -> None:
         _die("release_tests_red: a build is in flight without a recorded green gate — finish and "
              "gate it first, or pass --force to override.")
     bundle = _releasable(root, state)
-    if not forced and not bundle:
+    loose_bundle = _releasable_loose_tasks(root, state)
+    if not forced and not bundle and not loose_bundle:
         _die("release_no_closed_milestone: nothing closed-and-unreleased to bundle — the cut "
-             "would be a no-op. Close a milestone first, or pass --force to override.")
+             "would be a no-op. Close a milestone (or a standalone task) first, or pass --force "
+             "to override.")
     if not forced and d["waivers"] and not disclosed:
         _die("release_undisclosed_waiver: a RISK-ACCEPTED waiver rides into this release — pass "
              "--with-waivers to disclose it in the notes, or --force to override.")
@@ -6294,7 +6344,7 @@ def cmd_release(args: argparse.Namespace) -> None:
     new_rel = _prepend_block(rel_before, "# Releases",
                              _render_releases_row(args.version, day, bundle, waiver_slugs,
                                                   getattr(args, "evidence", None),
-                                                  _render_actor_line(state)))
+                                                  _render_actor_line(state), loose_bundle))
     try:                                              # CHANGELOG + RELEASES as one all-or-nothing commit
         _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)])
     except OSError as e:
@@ -6303,7 +6353,9 @@ def cmd_release(args: argparse.Namespace) -> None:
 
     # NO save_state — attribution lives in RELEASES.md (the cue re-reads it), never state.json
     ms = ", ".join(m["slug"] for m in bundle) if bundle else "none"
-    print(f"released {args.version} — recorded {len(bundle)} milestone(s): {ms}")
+    lt = ", ".join(t["slug"] for t in loose_bundle) if loose_bundle else "none"
+    print(f"released {args.version} — recorded {len(bundle)} milestone(s): {ms} "
+          f"+ {len(loose_bundle)} loose task(s): {lt}")
     print("  CHANGELOG.md + RELEASES.md updated (project root). The engine records; "
           "you run the tag / publish / deploy.")
     if forced:
