@@ -89,6 +89,26 @@ class GateAuditTest(unittest.TestCase):
         ])
         (self._root() / "tasks" / slug / "TASK.md").write_text(body, encoding="utf-8")
 
+    def _mk_ungated(self, slug, sec6=None, phase="observe"):
+        """A task pushed to done/observe via the admin `phase` override — NO engine
+        gate, so state.gate stays 'none' — whose §6 we then control byte-exactly.
+        This is the F13 shape: a §6 verdict the engine never recorded."""
+        buf, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(err):
+            add.main(["new-task", slug, "--title", slug])   # active task; gate stays 'none'
+            add.main(["phase", phase, slug])                # admin override — no gate recorded
+        body = "\n".join([
+            f"# TASK: {slug}", "",
+            "## 1 · SPECIFY", "Feature: f", "",
+            "## 2 · SCENARIOS", "(none)", "",
+            "## 3 · CONTRACT", "```\nshape\n```", "", GOOD3, "",
+            "## 4 · TESTS", "plan", "",
+            "## 5 · BUILD", "code", "",
+            "## 6 · VERIFY", sec6 if sec6 is not None else _sec6(), "",
+            "## 7 · OBSERVE", "watch", "",
+        ])
+        (self._root() / "tasks" / slug / "TASK.md").write_text(body, encoding="utf-8")
+
     def _codes(self, out):
         return [f["code"] for f in json.loads(out)["findings"]]
 
@@ -139,6 +159,32 @@ class GateAuditTest(unittest.TestCase):
         out, _, code = self._run("--json")
         self.assertEqual(code, 1)
         self.assertIn("gate_record_mismatch", self._codes(out))
+
+    # ---- F13 ungated_verdict (a §6 verdict the engine never gated) -----------
+    def test_ungated_verdict_flagged(self):
+        # done/observe + gate=="none" + exactly one §6 Outcome -> ungated_verdict
+        self._mk_ungated("alpha")          # §6 carries Outcome: PASS, but no engine gate
+        out, _, code = self._run("--json")
+        self.assertEqual(code, 1)
+        self.assertIn("ungated_verdict", self._codes(out))
+        text, _, _ = self._run()
+        self.assertIn("ungated_verdict alpha", text)
+
+    def test_engine_gated_task_not_flagged(self):
+        # a normally-gated PASS task stays clean — the new arm must not over-fire
+        self._mk_done("alpha")
+        out, _, code = self._run("--json")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("ungated_verdict", self._codes(out))
+
+    def test_mismatch_takes_precedence_over_ungated(self):
+        # gate!=none and §6!=state -> gate_record_mismatch, NOT ungated_verdict
+        rec = "### GATE RECORD\nOutcome: HARD-STOP\nReviewed by: Tin"
+        self._mk_done("alpha", sec6=SEC_CLEAN + "\n\n" + rec, gate="PASS")
+        out, _, code = self._run("--json")
+        self.assertEqual(code, 1)
+        self.assertIn("gate_record_mismatch", self._codes(out))
+        self.assertNotIn("ungated_verdict", self._codes(out))
 
     # ---- F4 three-way matrix -------------------------------------------------
     def test_security_note_autogate_flagged(self):
