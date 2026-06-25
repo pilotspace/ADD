@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "force-preserve-heal",
+  "active_task": "setup-tests-before-build",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1464,12 +1464,34 @@
     },
     "setup-tests-before-build": {
       "title": "F6: 0-setup routes through 4-tests.md \u2014 a red test before build",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "audit-hardening",
       "depends_on": [],
       "created": "2026-06-25T10:13:40+00:00",
-      "updated": "2026-06-25T10:13:40+00:00"
+      "updated": "2026-06-25T14:17:33+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "2e1f04f21373147336dbf2b33ed19a94",
+        "tests": {
+          "add-method/tooling/test_setup_tests_before_build.py": "6c1256ebc367cd226e139a17db9ee517"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/0-setup.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
+          ".claude/skills/add/phases/0-setup.md",
+          "add-method/tooling/test_setup_tests_before_build.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "a8e6bde443ca36c5bc2cd2f3b0505963"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "save-state-harden": {
       "title": "F7: save_state OSError -> _die (named code) + tests for gate/advance",
@@ -1533,7 +1555,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T13:53:47+00:00",
+  "updated": "2026-06-25T14:17:33+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2218,7 +2240,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "audit-hardening": "force-preserve-heal"
+    "audit-hardening": "setup-tests-before-build"
   },
   "todos": [
     {

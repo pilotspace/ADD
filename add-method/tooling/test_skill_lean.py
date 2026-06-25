@@ -38,12 +38,16 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # "Flag mode" quick-ref naming BOTH dials — fast (task lane) + auto (autonomy mode) — plus the blessed
 # standalone lane + `todo` capture; +366 B new always-loaded surface, human-approved; ratio 0.88 kept
 # (+⌈366/0.88⌉=416). The won ground is untouched.
+# phases 37920 → 38298 @ setup-tests-before-build (F6, same method): 0-setup.md now drafts the full
+# §1–§4 bundle (the §4 red suite via phases/4-tests.md) + the Exit gate requires it RED before build —
+# closing the audit hole where setup reached build with NO red test; +302 B routing surface, human-approved;
+# ratio 0.80 kept (+⌈302/0.80⌉=378). The won ground is untouched.
 POOLS = [
     {"name": "core",          "ratio": 0.88, "baseline": 18465,
      "guides": ["SKILL.md", "intake.md"]},
     {"name": "orchestration", "ratio": 0.75, "baseline": 50098,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
-    {"name": "phases",        "ratio": 0.80, "baseline": 37920,
+    {"name": "phases",        "ratio": 0.80, "baseline": 38298,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},

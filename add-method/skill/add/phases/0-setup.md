@@ -57,7 +57,7 @@ Capture each surfaced decision as an **ADR** into `PROJECT.md` **Key Decisions**
    ```bash
    python3 .add/tooling/add.py new-task <slug> --title "<first feature>"
    ```
-   Draft §1 · §2 · §3. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses crossing into build** until you `lock` (`setup_unlocked`). Sequence: bundle → lock → build.
+   Draft the full bundle **§1–§4** — incl. the **§4 red suite** (`phases/4-tests.md`); the lock approves it whole. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses crossing into build** until you `lock` (`setup_unlocked`). Sequence: **bundle (§1–§4, tests RED) → lock → build** — the red suite must FAIL **before build** (never start Build until §1–§4 exist and tests are red).
 4. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
 
 ## Run mode — how the build will be driven (propose parallel + auto; confirm to keep)
@@ -93,7 +93,7 @@ Typing it themselves stays the **escape hatch** — the decision is always the h
 <exit_gate>
 - [ ] `.add/state.json` exists; setup was seeded unlocked (`--await-lock`) then locked.
 - [ ] Living docs filled (brownfield: from code, tagged evidence-grounded; greenfield: from the interview).
-- [ ] First task created; §1–§3 drafted; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
+- [ ] First task created; **§1–§4 drafted — the red suite (per `phases/4-tests.md`) runs RED before build opens**; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
 - [ ] Human confirmed the baseline approval and `add.py lock --by` ran with their name; first task §3 `FROZEN @ v1`; build open.
 </exit_gate>
 
