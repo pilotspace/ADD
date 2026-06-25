@@ -1478,7 +1478,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T15:25:23+00:00",
+  "updated": "2026-06-25T15:27:40+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2220,7 +2220,7 @@
       "id": 9,
       "text": "ground phase harden",
       "created": "2026-06-25T11:08:16+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 10,
