@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-level-enum-reconcile",
+  "active_task": "engine-package-skeleton",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1632,10 +1632,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-package-skeleton": {
+      "title": "Bootstrap add_engine/ package + manifest-digest pin (first leaf module: constants)",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-25T17:13:03+00:00",
+      "updated": "2026-06-25T17:17:24+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T17:12:05+00:00",
+  "updated": "2026-06-25T17:17:24+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2332,7 +2341,8 @@
     "engine-modularization"
   ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "engine-modularization": "engine-package-skeleton"
   },
   "todos": [
     {
