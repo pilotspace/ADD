@@ -8,10 +8,17 @@ monkeypatch sites (`add._atomic_write = spy`) keep resolving unchanged.
 """
 from __future__ import annotations
 
+import json
 import os
+import re
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+from add_engine.constants import ROOT_DIRNAME, STATE_FILE
+
+_CONFLICT_MARKER_RE = re.compile(r"(?m)^(<{7}|={7}|>{7})")  # git merge-conflict markers in state
 
 
 # --- low-level IO (designed for failure: atomic, no silent clobber) ----------
@@ -104,3 +111,64 @@ def _atomic_write_many(writes: list[tuple[Path, str]]) -> None:
         for path, bak, landed in committed:       # leftover .bak (success, or orphaned post-rollback)
             if bak is not None and os.path.exists(bak):
                 os.unlink(bak)
+
+
+# --- root finding + state load/save + the shared error primitive ------------
+
+def find_root(start: Path | None = None) -> Path | None:
+    """Walk up from cwd to find a .add/ project root."""
+    cur = (start or Path.cwd()).resolve()
+    for d in (cur, *cur.parents):
+        if (d / ROOT_DIRNAME / STATE_FILE).exists():
+            return d / ROOT_DIRNAME
+    return None
+
+def _require_root() -> Path:
+    root = find_root()
+    if root is None:
+        _die("no .add/ project found. Run `add.py init` first.")
+    return root
+
+def _migrate_state(state: dict) -> dict:
+    """Forward-migrate a single-active state to the multi-active schema (team-collaboration
+    foundation). PURE · idempotent · TOTAL · never raises · no I/O.
+
+    A state lacking the `active_milestones` key gains it — DERIVED from the scalar
+    `active_milestone` (grandfather-by-missing-key, mirroring `_setup_locked`): None -> [],
+    "x" -> ["x"]. A per-milestone active-task map `active_tasks` is added; the old global
+    `active_task` is placed under its owning active milestone only when it genuinely belongs
+    there, else it stays as the top-level scalar fallback (orphan rule, FROZEN decision (a)).
+    The scalar `active_milestone` / `active_task` keys are KEPT as the N<=1 mirror so the
+    not-yet-routed readers keep working. An already-migrated state (key present) is returned
+    unchanged — never re-derived, never clobbered. Corrupt parsing stays the loader's job.
+
+    PURE in the observable sense: the caller's dict is NEVER mutated — a state that needs
+    migrating is upgraded on a fresh top-level copy (nested objects are shared but only read)."""
+    if not isinstance(state, dict) or "active_milestones" in state:
+        return state
+    migrated = dict(state)
+    active_ms = migrated.get("active_milestone")
+    migrated["active_milestones"] = [] if active_ms is None else [active_ms]
+    active_task = migrated.get("active_task")
+    tasks = migrated.get("tasks") or {}
+    owns = (active_ms is not None and active_task is not None
+            and isinstance(tasks.get(active_task), dict)
+            and tasks[active_task].get("milestone") == active_ms)
+    migrated["active_tasks"] = {active_ms: active_task} if owns else {}
+    return migrated
+
+def _state_text_or_die(root: Path) -> str:
+    """Read state.json's raw text, failing CLOSED with a merge-SPECIFIC `state_conflicted`
+    message when it carries git conflict markers (an unresolved merge — the major's #1 failure
+    mode). A genuine read OSError is NOT swallowed: it propagates to the caller, which maps it
+    to its own existing code (state_invalid / no_state). The guard only READS — never writes."""
+    text = (root / STATE_FILE).read_text(encoding="utf-8")
+    if _CONFLICT_MARKER_RE.search(text):
+        _die(f"state_conflicted: {root / STATE_FILE} has unresolved git merge markers "
+             f"(<<<<<<< / ======= / >>>>>>>) — resolve them (or "
+             f"`git checkout --ours/--theirs {STATE_FILE}`), then run `add.py doctor` to verify")
+    return text
+
+def _die(msg: str, code: int = 1) -> None:
+    print(f"add: error: {msg}", file=sys.stderr)
+    raise SystemExit(code)

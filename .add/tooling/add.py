@@ -43,9 +43,38 @@ def _phase_index(name: str) -> int:
     return PHASES.index(name)
 
 # --- low-level IO (moved to add_engine/io_state.py — engine-modularization) -
-from add_engine.io_state import (  # re-exported as module globals: callers use
-    _now, _atomic_write, _atomic_write_bytes, _atomic_write_many,  # bare names so
-)  # `add._atomic_write = spy` still intercepts every add.py-level caller.
+from add_engine.io_state import (  # re-exported as module globals: callers use bare
+    _now, _atomic_write, _atomic_write_bytes, _atomic_write_many,  # names so patches
+    find_root, _require_root, _migrate_state, _state_text_or_die,  # on add.<name>
+    _die,                                                          # still resolve;
+    _CONFLICT_MARKER_RE,                                            # conflict-marker re
+)
+
+
+# --- state load/save (KEPT in add.py: write-path pinned by add._atomic_write tests) -
+
+def load_state(root: Path) -> dict:
+    """Load + parse state.json, failing CLOSED. A git-conflicted file dies with a merge-specific
+    'state_conflicted'; any other corrupt/unreadable file dies with a clean 'state_invalid'
+    message (never a raw traceback), so every command that loads state degrades gracefully
+    (design-for-failure). The parsed state is forward-migrated to the multi-active schema."""
+    try:
+        return _migrate_state(json.loads(_state_text_or_die(root)))
+    except (json.JSONDecodeError, OSError) as e:
+        _die(f"state_invalid: {root / STATE_FILE} is corrupt or unreadable "
+             f"({e.__class__.__name__}) — restore it from git or a backup")
+
+
+def save_state(root: Path, state: dict) -> None:
+    state["updated"] = _now()
+    try:
+        _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
+    except OSError as e:
+        # Fail CLOSED like load_state: a named, recoverable error — never a raw traceback. The
+        # atomic temp+replace leaves the prior state.json byte-unchanged, so it is safe to retry.
+        _die(f"state_write_failed: could not write {root / STATE_FILE} "
+             f"({e.__class__.__name__}) — the prior state.json is intact; "
+             "free disk / fix permissions and re-run")
 
 
 def _templates_dir() -> Path:
@@ -69,54 +98,6 @@ def _render_template(name: str, **subs: str) -> str:
     for key, val in subs.items():
         text = text.replace("{{" + key + "}}", val)
     return text
-
-
-# --- state -------------------------------------------------------------------
-
-def find_root(start: Path | None = None) -> Path | None:
-    """Walk up from cwd to find a .add/ project root."""
-    cur = (start or Path.cwd()).resolve()
-    for d in (cur, *cur.parents):
-        if (d / ROOT_DIRNAME / STATE_FILE).exists():
-            return d / ROOT_DIRNAME
-    return None
-
-
-def _require_root() -> Path:
-    root = find_root()
-    if root is None:
-        _die("no .add/ project found. Run `add.py init` first.")
-    return root
-
-
-def _migrate_state(state: dict) -> dict:
-    """Forward-migrate a single-active state to the multi-active schema (team-collaboration
-    foundation). PURE · idempotent · TOTAL · never raises · no I/O.
-
-    A state lacking the `active_milestones` key gains it — DERIVED from the scalar
-    `active_milestone` (grandfather-by-missing-key, mirroring `_setup_locked`): None -> [],
-    "x" -> ["x"]. A per-milestone active-task map `active_tasks` is added; the old global
-    `active_task` is placed under its owning active milestone only when it genuinely belongs
-    there, else it stays as the top-level scalar fallback (orphan rule, FROZEN decision (a)).
-    The scalar `active_milestone` / `active_task` keys are KEPT as the N<=1 mirror so the
-    not-yet-routed readers keep working. An already-migrated state (key present) is returned
-    unchanged — never re-derived, never clobbered. Corrupt parsing stays the loader's job.
-
-    PURE in the observable sense: the caller's dict is NEVER mutated — a state that needs
-    migrating is upgraded on a fresh top-level copy (nested objects are shared but only read)."""
-    if not isinstance(state, dict) or "active_milestones" in state:
-        return state
-    migrated = dict(state)
-    active_ms = migrated.get("active_milestone")
-    migrated["active_milestones"] = [] if active_ms is None else [active_ms]
-    active_task = migrated.get("active_task")
-    tasks = migrated.get("tasks") or {}
-    owns = (active_ms is not None and active_task is not None
-            and isinstance(tasks.get(active_task), dict)
-            and tasks[active_task].get("milestone") == active_ms)
-    migrated["active_tasks"] = {active_ms: active_task} if owns else {}
-    return migrated
-
 
 # --- active milestone/task accessor seam (multi-active foundation) -----------
 #
@@ -298,32 +279,6 @@ def _my_work(state: dict, me: dict) -> list[dict]:
 # A git conflict marker BEGINS a line with 7 of `<`, `=`, or `>` (`(?m)^…`). An unresolved
 # merge writes these into state.json, making it invalid JSON; the line-anchor keeps a
 # legitimate value (always on an INDENTED JSON line) from false-tripping the guard.
-_CONFLICT_MARKER_RE = re.compile(r"(?m)^(<{7}|={7}|>{7})")
-
-
-def _state_text_or_die(root: Path) -> str:
-    """Read state.json's raw text, failing CLOSED with a merge-SPECIFIC `state_conflicted`
-    message when it carries git conflict markers (an unresolved merge — the major's #1 failure
-    mode). A genuine read OSError is NOT swallowed: it propagates to the caller, which maps it
-    to its own existing code (state_invalid / no_state). The guard only READS — never writes."""
-    text = (root / STATE_FILE).read_text(encoding="utf-8")
-    if _CONFLICT_MARKER_RE.search(text):
-        _die(f"state_conflicted: {root / STATE_FILE} has unresolved git merge markers "
-             f"(<<<<<<< / ======= / >>>>>>>) — resolve them (or "
-             f"`git checkout --ours/--theirs {STATE_FILE}`), then run `add.py doctor` to verify")
-    return text
-
-
-def load_state(root: Path) -> dict:
-    """Load + parse state.json, failing CLOSED. A git-conflicted file dies with a merge-specific
-    'state_conflicted'; any other corrupt/unreadable file dies with a clean 'state_invalid'
-    message (never a raw traceback), so every command that loads state degrades gracefully
-    (design-for-failure). The parsed state is forward-migrated to the multi-active schema."""
-    try:
-        return _migrate_state(json.loads(_state_text_or_die(root)))
-    except (json.JSONDecodeError, OSError) as e:
-        _die(f"state_invalid: {root / STATE_FILE} is corrupt or unreadable "
-             f"({e.__class__.__name__}) — restore it from git or a backup")
 
 
 def _load_state_for_json() -> tuple[Path, dict]:
@@ -346,18 +301,6 @@ def _phase_owner(phase: str) -> str:
     if owner is None:
         _die("unmapped_phase")
     return owner
-
-
-def save_state(root: Path, state: dict) -> None:
-    state["updated"] = _now()
-    try:
-        _atomic_write(root / STATE_FILE, json.dumps(state, indent=2) + "\n")
-    except OSError as e:
-        # Fail CLOSED like load_state: a named, recoverable error — never a raw traceback. The
-        # atomic temp+replace leaves the prior state.json byte-unchanged, so it is safe to retry.
-        _die(f"state_write_failed: could not write {root / STATE_FILE} "
-             f"({e.__class__.__name__}) — the prior state.json is intact; "
-             "free disk / fix permissions and re-run")
 
 
 def _setup_locked(state: dict) -> bool:
@@ -448,11 +391,6 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
             new = re.sub(r"(?m)^(Outcome:.*$)", lambda m: m.group(1) + "\n" + _line, new, count=1)
     if new != text:                              # no-op = no write (mtime stable)
         _atomic_write(f, new)
-
-
-def _die(msg: str, code: int = 1) -> None:
-    print(f"add: error: {msg}", file=sys.stderr)
-    raise SystemExit(code)
 
 
 # --- guideline injection (dynamic-by-reference; designed for failure) --------
