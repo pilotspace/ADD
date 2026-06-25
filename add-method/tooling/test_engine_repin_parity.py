@@ -25,6 +25,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -86,6 +87,8 @@ class MultiActiveInvariants(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-erp-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
 
     def tearDown(self):

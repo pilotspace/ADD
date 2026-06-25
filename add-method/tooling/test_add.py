@@ -3,6 +3,7 @@
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,8 @@ class AddToolTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-test-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
 
     def tearDown(self):

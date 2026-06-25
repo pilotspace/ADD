@@ -15,6 +15,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -29,6 +30,8 @@ class BuildExpectationsGateTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-be-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         self._quiet(["init", "--name", "demo"])
         self._quiet(["lock", "--force"])     # plain-init grandfathered lock so build-entry is allowed

@@ -12,6 +12,7 @@ Run: python3 -m unittest test_rule_file_mode -v
 import io
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -35,6 +36,8 @@ class RuleFileModeTest(unittest.TestCase):
     def _fresh_project(self) -> Path:
         """A valid .add/ project with the auto-synced guideline files stripped."""
         d = Path(tempfile.mkdtemp(prefix="add-rule-")).resolve()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(d)
         add.main(["init", "--name", "demo"])
         for name in ("AGENTS.md", "CLAUDE.md", "AGENTS.md.bak", "CLAUDE.md.bak"):
@@ -99,6 +102,8 @@ class RuleFileModeTest(unittest.TestCase):
 
     def test_init_autodetect_ccsk(self):
         d = Path(tempfile.mkdtemp(prefix="add-rule-init-")).resolve()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(d)
         (d / ".ccsk").mkdir()
         add.main(["init", "--name", "demo"])

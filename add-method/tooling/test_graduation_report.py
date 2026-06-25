@@ -22,6 +22,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -110,6 +111,8 @@ class GraduationReportTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-grad-report-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
         add.main(["new-milestone", "v1", "--goal", "ship the core loop"])
@@ -140,6 +143,8 @@ class GraduationReportTest(unittest.TestCase):
         self.assertEqual(heavy, 0, "heavy evidence still exits 0 (a gather, not a gate)")
         # a project with no accumulated evidence: still exit 0
         empty_dir = tempfile.mkdtemp(prefix="add-grad-empty-")
+        self.addCleanup(shutil.rmtree, empty_dir, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(empty_dir)
         add.main(["init", "--name", "empty"])
         empty, _, _ = _run(["graduation-report"])
@@ -214,6 +219,8 @@ class GraduationReportTest(unittest.TestCase):
     # ---- Reject (each asserts what stays unchanged) -----------------------
     def test_no_project(self):                                              # no_project
         clean = tempfile.mkdtemp(prefix="add-grad-noproj-")   # OUTSIDE any .add/ tree
+        self.addCleanup(shutil.rmtree, clean, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(clean)
         before = sorted(os.listdir(clean))
         code, _, err = _run(["graduation-report"])

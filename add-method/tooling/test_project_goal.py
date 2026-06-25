@@ -9,6 +9,7 @@ orientation never crashes. Run: python3 -m unittest test_project_goal -v
 import io
 import os
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -22,6 +23,8 @@ class ProjectGoalTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-project-goal-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])              # grandfathered-locked (no setup key)
         self.add_dir = self.tmp / ".add"

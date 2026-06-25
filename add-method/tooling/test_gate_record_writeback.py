@@ -15,6 +15,7 @@ import json
 import os
 import re
 import tempfile
+import shutil
 import unittest
 from datetime import date
 from pathlib import Path
@@ -26,6 +27,8 @@ class GateRecordWritebackTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-grw-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         self._quiet(["init", "--name", "demo"])
         self._quiet(["lock", "--force"])     # build-boundary: a verdict needs a locked setup

@@ -18,6 +18,7 @@ import contextlib
 import io
 import os
 import tempfile
+import shutil
 import unittest
 
 import add
@@ -41,6 +42,8 @@ class TodoCapture(unittest.TestCase):
     def setUp(self):
         self._cwd = os.getcwd()
         self.tmp = tempfile.mkdtemp(prefix="add-todo-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
 

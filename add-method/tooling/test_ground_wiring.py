@@ -24,6 +24,7 @@ import json
 import os
 import re
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -86,6 +87,8 @@ class _Board(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-grw-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             add.main(["init", "--name", "demo"])

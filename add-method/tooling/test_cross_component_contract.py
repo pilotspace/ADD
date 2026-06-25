@@ -14,6 +14,7 @@ import io
 import json
 import os
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -38,6 +39,8 @@ class _Board(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = Path(tempfile.mkdtemp(prefix="add-ccc-")).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         self._quiet(["init", "--name", "demo"])
         self._quiet(["lock", "--force"])

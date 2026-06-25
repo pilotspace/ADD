@@ -16,6 +16,7 @@ import json
 import os
 import re
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -28,6 +29,8 @@ class ContractFillGateTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
         self.tmp = tempfile.mkdtemp(prefix="add-contractfill-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.tmp)
         add.main(["init", "--name", "demo"])
 

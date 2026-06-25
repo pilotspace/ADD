@@ -17,6 +17,7 @@ import io
 import os
 import re
 import tempfile
+import shutil
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -69,6 +70,8 @@ class ScopeDeclTemplateTest(unittest.TestCase):
     def test_scaffold_carries_scope_of_impact_lines(self):
         cwd = Path.cwd()
         tmp = Path(tempfile.mkdtemp(prefix="add-scope-decl-")).resolve()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
         try:
             os.chdir(tmp)
             buf, err = io.StringIO(), io.StringIO()

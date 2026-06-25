@@ -86,6 +86,7 @@ class DetectTest(unittest.TestCase):
 class PointerTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="agent-ptr-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.claude = _installer._detect_agent({"CLAUDECODE": "1"})
         self.generic = _installer._detect_agent({})
 
@@ -141,6 +142,7 @@ class PointerTest(unittest.TestCase):
 class InstallFlowTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="agent-inst-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.bundled = _make_bundled(self.tmp / "pkg")
         self.proj = self.tmp / "proj"
         self.proj.mkdir()
@@ -192,6 +194,7 @@ NEW_AGENTS = {
 class NewAgentProfilesTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="new-agent-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
     def test_detect_each_new_agent_from_env(self):                # one Must
         for agent_id, (env, _file) in NEW_AGENTS.items():
