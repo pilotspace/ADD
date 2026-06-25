@@ -221,4 +221,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] a new agent-facing prose file ripples into THREE registries — the wording-lint surface count (×2 tests) + the skill lean fence — not just parity; a new skill guide's true cost is registration in all of them (evidence: component-method-docs build hit test_wording_lint + test_per_step_hooks + test_skill_lean before green).
+- [ADD · folded] a new agent-facing prose file ripples into THREE registries — the wording-lint surface count (×2 tests) + the skill lean fence — not just parity; a new skill guide's true cost is registration in all of them (evidence: component-method-docs build hit test_wording_lint + test_per_step_hooks + test_skill_lean before green). [folded foundation-version 50]

@@ -249,4 +249,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a byte-equality claim needs a fixture that can actually DIFFER in bytes — a `json.dumps` (\n-only) fixture made the byte-copy assert vacuous; the CRLF case exposed the text-mode-translation bug (evidence: refute-read Finding 1; red→green after `_atomic_write_bytes`).
+- [TDD · folded] a byte-equality claim needs a fixture that can actually DIFFER in bytes — a `json.dumps` (\n-only) fixture made the byte-copy assert vacuous; the CRLF case exposed the text-mode-translation bug (evidence: refute-read Finding 1; red→green after `_atomic_write_bytes`). [folded foundation-version 50]

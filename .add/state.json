@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "component-method-docs",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1195,193 +1195,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "component-registry": {
-      "title": "Component registry: declare components with root + verify + green-bar",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [],
-      "created": "2026-06-24T14:59:00+00:00",
-      "updated": "2026-06-24T15:48:13+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "4bec1ea52853d16567e76b5bb02197e4",
-        "tests": {
-          "add-method/tooling/test_component_registry.py": "622450f6a1db543fb2f6509aea955f4b"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          ".add/tooling/add.py"
-        ],
-        "snapshot_md5": "9027a472917b85021de3037b1933edcb"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "per-component-verify": {
-      "title": "Per-component verify: gate a bound task on its component's suite + green-bar",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [
-        "component-registry"
-      ],
-      "created": "2026-06-24T15:54:55+00:00",
-      "updated": "2026-06-24T16:51:39+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "760322938fcfc9c4fd8859c8d68287f9",
-        "tests": {
-          "add-method/tooling/test_per_component_verify.py": "370b7371fd3eae76585dff3128111ea5"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          ".add/tooling/add.py"
-        ],
-        "snapshot_md5": "e2c898cbeb699bbd5251e8722a325f6b"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "cross-component-contract": {
-      "title": "Cross Component Contract",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [],
-      "created": "2026-06-24T16:57:18+00:00",
-      "updated": "2026-06-24T17:19:13+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "76f0d2667f941e60d49c4edd09223de1",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          ".add/tooling/add.py"
-        ],
-        "snapshot_md5": "d0b5428336d071dccc88e837b660b206"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "cross-component-milestone": {
-      "title": "Cross Component Milestone",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [],
-      "created": "2026-06-24T17:20:01+00:00",
-      "updated": "2026-06-24T17:32:07+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "0fe0777b446d89593dfd2101fb175ead",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          ".add/tooling/add.py"
-        ],
-        "snapshot_md5": "326af4f7263a25d46170eb0fe1514b5c"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "multirepo-federation": {
-      "title": "Multirepo Federation",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [],
-      "created": "2026-06-24T17:33:00+00:00",
-      "updated": "2026-06-24T17:49:12+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "cd24594d808ff8bafe7e509b4136c188",
-        "tests": {
-          "add-method/tooling/test_multirepo_federation.py": "4856c95081f2186ad014beeb1bce4b33"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          ".add/tooling/add.py"
-        ],
-        "snapshot_md5": "edcba57720889b81027a3dc510f265d0"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "component-method-docs": {
-      "title": "Component Method Docs",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "component-aware-add",
-      "depends_on": [],
-      "created": "2026-06-24T17:51:14+00:00",
-      "updated": "2026-06-24T18:03:27+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "b42e935db522cd16d3e285413734b5e4",
-        "tests": {
-          "add-method/tooling/test_component_pillar_docs.py": "71385e5f53e00125528eac18bae65fdf"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/docs/",
-          "add-method/src/add_method/_bundled/docs/",
-          ".add/docs/",
-          "add-method/skill/",
-          "add-method/src/add_method/_bundled/skill/",
-          ".claude/skills/add/",
-          ".claude/skills/add/mkdocs.yml",
-          ".claude/skills/add/README.md",
-          ".claude/skills/add/17-components.md",
-          ".claude/skills/add/appendix-c-glossary.md",
-          "add-method/tooling/test_skill_lean.py",
-          "add-method/tooling/test_component_pillar_docs.py",
-          "add-method/tooling/test_per_step_hooks.py",
-          "add-method/tooling/test_wording_lint.py"
-        ],
-        "snapshot_md5": "aa734947ab92483740d1b93a42bddce7"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-24T18:06:31+00:00",
+  "updated": "2026-06-25T02:16:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1563,31 +1380,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "component-aware-add": {
-      "title": "Component-aware ADD",
-      "goal": "ADD treats every codebase as a graph of components \u2014 each owning its source root, green-bar, and produced/consumed contracts \u2014 so a single milestone can ship a vertical slice across components living in one repo or many.",
-      "stage": "mvp",
-      "status": "done",
-      "created": "2026-06-24T14:52:41+00:00",
-      "updated": "2026-06-24T18:06:31+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-06-24T14:55:27+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "done_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
-  "active_milestone": "component-aware-add",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -2059,13 +1854,24 @@
         "loop-aware-orient"
       ],
       "archived": "2026-06-24"
+    },
+    {
+      "slug": "component-aware-add",
+      "title": "Component-aware ADD",
+      "tasks": 6,
+      "task_slugs": [
+        "component-registry",
+        "per-component-verify",
+        "cross-component-contract",
+        "cross-component-milestone",
+        "multirepo-federation",
+        "component-method-docs"
+      ],
+      "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [
-    "component-aware-add"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "component-aware-add": "component-method-docs"
+    "flow-simplification": "phase-review"
   }
 }
