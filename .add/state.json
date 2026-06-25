@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "ground-phase-harden",
+  "active_task": "lean-tree-baseline-derive",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1475,10 +1475,37 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "lean-tree-baseline-derive": {
+      "title": "Derive test_skill_lean TREE_BASELINE_BYTES from the pool baselines (kill the drift class)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T15:35:52+00:00",
+      "updated": "2026-06-25T15:42:18+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1f8a3584fc5854fa5ad648c082f5d68f",
+        "tests": {
+          "add-method/tooling/test_skill_lean.py": "d90481980456a3ff48dbfd1a20c28369"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "28ae84671d5b013fb83349ca42948922"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T15:27:40+00:00",
+  "updated": "2026-06-25T15:42:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
