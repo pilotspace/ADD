@@ -1270,7 +1270,8 @@ def _build_entry(root: Path, state: dict, slug: str) -> None:
         payload = json.dumps({"version": 1,
                               "files": _scope_walk(root.parent.resolve())},
                              sort_keys=True)
-        side.write_text(payload, encoding="utf-8")
+        _atomic_write(side, payload)   # temp+replace, like save_state — a crash can't leave a
+                                       # torn sidecar (payload verbatim, no newline → md5 anchor holds)
         state["tasks"][slug]["scope"] = {"declared": declared,
                                          "snapshot_md5": _md5_text(payload)}
     else:

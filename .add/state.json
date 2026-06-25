@@ -1502,6 +1502,36 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "atomic-scope-sidecar": {
+      "title": "cmd_advance scope-sidecar write uses _atomic_write (crash-safe, was non-atomic)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T15:46:45+00:00",
+      "updated": "2026-06-25T15:52:43+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4dae66fae55430f17ee4614fa31199c9",
+        "tests": {
+          "add-method/tooling/test_scope_gate_enforce.py": "d478c23bd9f103904935dc8d71b85a85"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_scope_gate_enforce.py"
+        ],
+        "snapshot_md5": "c44d0cf40541d099abfaa33fce27e095"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
@@ -2223,7 +2253,7 @@
       "id": 5,
       "text": "F11 (audit): cmd_advance scope-sidecar write should use _atomic_write (non-atomic today)",
       "created": "2026-06-25T10:13:51+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 6,

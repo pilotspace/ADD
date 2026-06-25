@@ -375,6 +375,49 @@ class StandingMonitorTest(_Board):
         self.assertIn("pending", text)
 
 
+# ── atomic-scope-sidecar (F11): the sidecar write is crash-safe (temp+replace) ─
+class AtomicSidecarTest(_Board):
+    """The §5 scope sidecar must be written via _atomic_write (temp file + os.replace), like
+    state.json — so a crash mid-write can't leave a torn scope-snapshot.json the next gate
+    misreads as tamper. The on-disk bytes (and thus snapshot_md5) stay byte-identical."""
+
+    def _spy_atomic_write(self):
+        """Wrap add._atomic_write to record the Paths it is called with; returns (calls, restore)."""
+        calls = []
+        real = add._atomic_write
+        def spy(path, text):
+            calls.append(Path(path).resolve())
+            return real(path, text)
+        add._atomic_write = spy
+        return calls, (lambda: setattr(add, "_atomic_write", real))
+
+    def test_scope_sidecar_written_atomically(self):
+        calls, restore = self._spy_atomic_write()
+        try:
+            self._arm("atom", SCOPED_SRC)            # declared scope; crosses tests->build
+        finally:
+            restore()
+        self.assertIn(self._sidecar("atom").resolve(), calls,
+                      "scope-snapshot.json must be written via _atomic_write, not a raw write_text")
+
+    def test_sidecar_md5_anchor_preserved(self):
+        self._arm("anchor", SCOPED_SRC)
+        side = self._sidecar("anchor")
+        self.assertTrue(side.exists(), "a declared-scope task must write the sidecar")
+        self.assertEqual(
+            add._md5_text(side.read_text(encoding="utf-8")),
+            self._task_state("anchor")["scope"]["snapshot_md5"],
+            "the on-disk sidecar md5 must still match the state anchor (no trailing-newline drift)",
+        )
+        _, _, code = self._to_verify_and_gate("anchor", "PASS")
+        self.assertEqual(code, 0, "a clean build with a preserved anchor must gate PASS")
+
+    def test_undeclared_task_writes_no_sidecar(self):
+        self._arm("nodecl", None)                    # no §5 Scope line
+        self.assertFalse(self._sidecar("nodecl").exists(),
+                         "an UNDECLARED task takes no sidecar (the skip/unlink path is unchanged)")
+
+
 # ── the discipline: ×3 parity + pin (GREEN pin at write, survives the re-pin) ─
 class EnginePinTest(unittest.TestCase):
     def test_mirrors_and_pin(self):
