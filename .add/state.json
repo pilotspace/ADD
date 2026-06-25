@@ -1635,7 +1635,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T17:00:13+00:00",
+  "updated": "2026-06-25T17:12:05+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1817,9 +1817,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-modularization": {
+      "title": "Split the 7k-line add.py engine into a focused add_engine/ package",
+      "goal": "the engine is a navigable package of focused modules behind a stable import surface, with the entry path, 3-tree mirror, and ENGINE_MD5 pin all preserved",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-25T17:12:05+00:00",
+      "updated": "2026-06-25T17:12:05+00:00"
     }
   },
-  "active_milestone": null,
+  "active_milestone": "engine-modularization",
   "archived": [
     {
       "slug": "v5",
@@ -2320,7 +2328,9 @@
       "archived": "2026-06-25"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "engine-modularization"
+  ],
   "active_tasks": {
     "flow-simplification": "phase-review"
   },
