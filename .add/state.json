@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "ground-phase-harden",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1422,10 +1422,63 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-phase-harden": {
+      "title": "Enrich the \u00a70 GROUND guide + template: require all four fields, richer prompt + exit gate",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-25T14:43:59+00:00",
+      "updated": "2026-06-25T15:25:23+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1b1ae31d853da9ae6c01e76d45486014",
+        "tests": {
+          "add-method/tooling/test_ground_wiring.py": "47b5b7b3d90df7d87b72f8dadc96be98"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/0-ground.md",
+          "add-method/skill/add/scope.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-ground.md",
+          "add-method/src/add_method/_bundled/skill/add/scope.md",
+          ".claude/skills/add/phases/0-ground.md",
+          ".claude/skills/add/scope.md",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_ground_wiring.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "0f25f74667e9fdde983eff3eeaa9ffa0"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-06-25T15:23:37+00:00",
+            "reason": "tamper_detected:contract_tampered,build_tampered:add-method/tooling/test_ground_wiring.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-06-25T15:24:50+00:00",
+            "reason": "tamper_detected:contract_tampered,build_tampered:add-method/tooling/test_ground_wiring.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T14:36:55+00:00",
+  "updated": "2026-06-25T15:25:23+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
