@@ -1008,6 +1008,10 @@ def cmd_init(args: argparse.Namespace) -> None:
     else:
         print("next: open Claude Code, run `/add`, and say what you want to build —")
         print("      the `add` skill sizes it into a milestone and drives the build with you.")
+    # setup hygiene (both branches): the .add/ folder IS the shared project state — commit it
+    # so the team shares one source of truth; its transient working files are already gitignored.
+    print("tip:  commit the .add/ folder to git so your team shares the ADD state "
+          "(its transient files are already .gitignored).")
 
 
 def cmd_sync_guidelines(args: argparse.Namespace) -> None:
