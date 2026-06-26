@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-guidelines",
+  "active_task": "extract-render",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1911,10 +1911,44 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-render": {
+      "title": "Extract terminal-render primitives (8 fns) to add_engine/render.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T01:40:28+00:00",
+      "updated": "2026-06-26T01:44:44+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "885502071b22988d7261c7cc7a0ffcf8",
+        "tests": {
+          "add-method/tooling/test_engine_extract_render.py": "5c410119fbec07ff183388439aa5340a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/render.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_render.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/render.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
+        ],
+        "snapshot_md5": "cb3aebe4ecb1c81202849ddf56faae69"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T01:35:09+00:00",
+  "updated": "2026-06-26T01:44:44+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2612,7 +2646,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-guidelines"
+    "engine-modularization": "extract-render"
   },
   "todos": [
     {
