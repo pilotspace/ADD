@@ -8,6 +8,7 @@ monkeypatch sites (`add._atomic_write = spy`) keep resolving unchanged.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -186,3 +187,15 @@ def _load_state_for_json() -> tuple[Path, dict]:
         return root, _migrate_state(json.loads(_state_text_or_die(root)))
     except (json.JSONDecodeError, OSError):
         _die("no_state")
+
+
+def _md5_text(s: str) -> str:
+    return hashlib.md5(s.encode("utf-8")).hexdigest()
+
+def _md5_file(p: Path) -> str | None:
+    """md5 of a file's bytes; None on ANY read error (fail-closed — a tracked file
+    that cannot be read counts as DIVERGED at the gate, never a crash)."""
+    try:
+        return hashlib.md5(p.read_bytes()).hexdigest()
+    except OSError:
+        return None
