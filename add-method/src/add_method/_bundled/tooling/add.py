@@ -2424,6 +2424,12 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     slug = args.slug
     if not slug.replace("-", "").replace("_", "").isalnum():
         _die("bad_slug")
+    # Prefer a short DESCRIPTIVE slug over a bare version (v2, v1-1, 1.2): a descriptive
+    # name keeps the milestones list legible. Advisory only — never blocks (matches the
+    # engine's `note:` convention); a deliberate version slug still creates.
+    if re.match(r"^v?\d+([._-]\d+)*$", slug, re.IGNORECASE):
+        print(f"note: slug '{slug}' looks like a bare version — prefer a short "
+              f"descriptive name (e.g. 'payment-retries'). Creating anyway.")
     state.setdefault("milestones", {})
     mdir = root / "milestones" / slug
     mfile = mdir / MILESTONE_FILE
@@ -2431,9 +2437,12 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         _die("milestone_exists")
     mdir.mkdir(parents=True, exist_ok=True)
     title = args.title or slug.replace("-", " ").replace("_", " ").title()
+    # One _now() instant feeds BOTH the MILESTONE.md render and the state record, so the
+    # human-facing `created:` is a full ISO timestamp provably equal to state.json.
+    now = _now()
     _atomic_write(mfile, _render_template(
         "MILESTONE.md", title=title, goal=args.goal or "<goal>",
-        stage=args.stage, date=date.today().isoformat()))
+        stage=args.stage, date=now))
     # confirm-parent gate (OPT-IN, mirrors `init --await-lock`): `--await-confirm` seeds the
     # milestone UNCONFIRMED so new-task is held until `add.py milestone-confirm`. WITHOUT the flag
     # NO `confirmed` key is written → grandfathered-confirmed → no gate (so the existing engine
@@ -2441,7 +2450,7 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     await_confirm = bool(getattr(args, "await_confirm", False))
     record = {
         "title": title, "goal": args.goal or "", "stage": args.stage,
-        "status": "active", "created": _now(), "updated": _now(),
+        "status": "active", "created": now, "updated": now,
     }
     if await_confirm:
         # `await_confirm` is the STABLE opt-in marker (set ONLY here, at creation). `confirmed`
