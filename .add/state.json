@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-version",
+  "active_task": "extract-release",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2073,10 +2073,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-release": {
+      "title": "Extract changelog/release-render helpers (6 fns) to add_engine/release.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T02:18:16+00:00",
+      "updated": "2026-06-26T02:21:45+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "520deec6edb95c8bf24e78ec198f5182",
+        "tests": {
+          "add-method/tooling/test_engine_extract_release.py": "be2890adcdd38d49ad78cc94ed646fee"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/release.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_release.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/release.py"
+        ],
+        "snapshot_md5": "756feee265de49ea1c058eebeee486f2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T02:16:00+00:00",
+  "updated": "2026-06-26T02:21:45+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2774,7 +2806,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-version"
+    "engine-modularization": "extract-release"
   },
   "todos": [
     {
