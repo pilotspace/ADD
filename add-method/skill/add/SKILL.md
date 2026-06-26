@@ -123,8 +123,8 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
 - **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
   `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
   red test · verify gate; `--fast` is freeze-gated under any milestone). Collapse, never skip; opt-in.
-- **UI feature** at specify → the **design-definition loop** (UDD): review the domain → research and
-  reuse components → wireframe → a real captured screen the human confirms **before** build — `design.md`.
+- **UI feature** at specify → the **design-definition loop** (UDD): intake the design axes → review the
+  domain → research and reuse components → wireframe → a captured screen the human confirms **before** build — `design.md`.
   Tool-agnostic; the engine never renders.
 - Tasks all done but the milestone **goal** unmet → `milestone-done` holds it open; the loop turns open
   deltas + extras into the next tasks (you propose, the human confirms) until the goal is met — `loop.md`.
