@@ -160,4 +160,4 @@ Watch: milestone/graduation/report paths · ENGINE_PKG_MD5 stability
 - [SPEC · open] next clean clusters: md5 (trivial) · components (tomllib-guard care) · version-update (_fetch_latest_version PATCHED) · deltas (7 shared constants → constants.py) · release/changelog; THEN cmd_*/save/load/main core (evidence: per-cluster coupling map in memory)
 
 ### Competency deltas
-- [ADD · open] a scattered cluster member (e.g. _has_production_roadmap far from the rest) extracts fine — AST line-range capture handles non-contiguity (evidence: this cluster spanned 1105 + 3056-3174)
+- [ADD · folded] a scattered cluster member (e.g. _has_production_roadmap far from the rest) extracts fine — AST line-range capture handles non-contiguity (evidence: this cluster spanned 1105 + 3056-3174) [folded foundation-version 52]

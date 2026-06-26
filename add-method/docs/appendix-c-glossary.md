@@ -134,13 +134,15 @@
 
 **Newest-first append-only** — every append-only foundation sequence prepends the newest record at the top; the rolled-up settled line anchors at the bottom (the oldest end), so compaction collapses upward.
 
+**Design intake** — beat 0 of the UDD **design-definition loop**: the agent interviews the human on four design **axes** *before* reading the domain, so the look is directed not guessed. **Fidelity** (lo-fi wireframe · hi-fi mockup · production — how far the design renders), **Concept** (idea · mood · direction), **Layout** (structure · grid · hierarchy), and **Visual design** (color · type · spacing · imagery — surfaced for the human, never auto-picked). Recorded as project defaults in `DESIGN.md`'s `## Design intake` and per-screen overrides in the prototype note. Fidelity is recorded intent, not an engine gate.
+
 **Wireframe** — the Stage-A low-fidelity, *structural* map of one screen: its regions and the component **slots** inside them, derived from `prototypes/<name>.json` *before* any color, type, or spacing — it answers "what goes where", not "what it looks like". Beat 3 of the UDD **design-definition loop**; the low-fi half of the two-stage fidelity that ends in a confirmed capture. See the `udd-wireframe.md` template (`tooling/templates/`, Stage A).
 
 **Design mock** — the Stage-B high-fidelity, **self-contained** HTML render of a screen: the `catalog.json` components as a reusable token-bound kit, bound to `tokens.json` and populated with mock data, openable offline and screenshot-able. The human-facing *visible* evidence the human confirms (the frozen `prototypes/<name>.json` tree is its machine-checkable twin). Beat 4's hi-fi artifact; the recipe lives in the `udd-wireframe.md` template (`tooling/templates/`, Stage B).
 
 **Capture** — the real rendered image (PNG/SVG) of a design mock: the **design-confirm evidence** artifact. Captures live at `.add/design/captures/<name>.<ext>` (one per prototype) and are attached or mentioned in the feature's `TASK.md`; `@json-render/image` (Satori → PNG/SVG, no browser) is the named default capture engine, otherwise the self-contained mock is screenshot headless. The engine never renders — it only MEASURES presence: `add.py check` raises a never-red `missing_capture` WARN for a prototype with no capture.
 
-**Design-confirm** — the human touchpoint closing the UDD **design-definition loop** (`review-domain → research-components → wireframe → render-capture-confirm`, beat 4 of the `add` skill's `design.md`): approving the captured screen image **before build**, show-before-ask, so the implementation matches the layout the human has already seen instead of discovering it.
+**Design-confirm** — the human touchpoint closing the UDD **design-definition loop** (`design-intake → review-domain → research-components → wireframe → render-capture-confirm`, the final beat of the `add` skill's `design.md`): approving the captured screen image **before build**, show-before-ask, so the implementation matches the layout the human has already seen instead of discovering it.
 
 ---
 

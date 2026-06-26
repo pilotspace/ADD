@@ -10,13 +10,28 @@ draws from already exists — `tokens.json` (the compact-DTCG dialect, `udd-toke
 `catalog.json` + `prototypes/<name>.json` (`udd-catalog.md`). This loop fills that foundation
 for a feature and earns the human's sign-off on the look before build.
 
-## The loop — four beats
+## The loop — five beats
 
 ```
-review-domain  →  research-components  →  wireframe  →  render-capture-confirm
+design-intake  →  review-domain  →  research-components  →  wireframe  →  render-capture-confirm
 ```
 
 Run the beats in order. Each feeds the next; the last ends at a human design-confirm.
+
+### 0 · design-intake
+Before you read the domain, interview the human on **four design axes** — so the look is
+*directed*, not guessed. Ask each, show the options, record the pick:
+
+- **FIDELITY** — how far this design goes: *lo-fi wireframe* · *hi-fi mockup* · *production*.
+  Recorded **intent** that **informs** how far the later beats render (it is not an engine gate).
+- **CONCEPT** — the design *idea / mood / direction* in a line.
+- **LAYOUT** — the *structure / grid / hierarchy* the screens lean on.
+- **VISUAL DESIGN** — *color · type · spacing · imagery*. **Surface** identity values for the
+  human to choose — never auto-pick a brand value (identity stays **human-owned**, `udd-tokens.md`).
+
+Record the answers **before** review-domain, at both levels: project **defaults** in DESIGN.md's
+`## Design intake` section; per-screen **overrides** (only the deltas) in the per-feature design
+note (the `prototypes/<name>.json` companion). Show-before-ask — confirm the picks, never assume.
 
 ### 1 · review-domain
 Start from the **domain**, not a blank canvas. Read the domain model — entities, flows, the
@@ -70,6 +85,8 @@ human to decide, never auto-pick a brand value (`udd-tokens.md`).
 ## The hard rules
 
 <constraints>
+- **Intake before domain.** The four axes (FIDELITY · CONCEPT · LAYOUT · VISUAL DESIGN) are
+  interviewed and recorded — DESIGN.md defaults + per-screen overrides — before beat 1.
 - **Domain first.** A screen is derived from the domain (beat 1), never sketched blind.
 - **Reuse before invent.** Beat 2 checks the catalog first; a new component is a justified,
   cited exception — never the reflex.

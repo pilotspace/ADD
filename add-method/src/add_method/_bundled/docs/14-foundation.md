@@ -49,10 +49,12 @@ the method already names, made explicit as three concerns.
 
 When a milestone has screens, UDD is not only a static `DESIGN.md` — it runs a
 **design-definition loop** that turns the domain into a screen the human has *seen
-and confirmed before build*. Its four beats are `review-domain → research-components
-→ wireframe → render-capture-confirm`: read the domain into screens and regions,
-research and reuse components before inventing them, wireframe the structure low-fi,
-then render a real screen and **capture** it. That capture is the **design-confirm**
+and confirmed before build*. Its five beats are `design-intake → review-domain →
+research-components → wireframe → render-capture-confirm`: interview the human on the
+four design axes (fidelity · concept · layout · visual design) so the look is directed
+not guessed, read the domain into screens and regions, research and reuse components
+before inventing them, wireframe the structure low-fi, then render a real screen and
+**capture** it. That capture is the **design-confirm**
 evidence — a real image the person approves *before* implementation, so the build
 matches the layout instead of discovering it. The book keeps the *why*; the
 operational recipe (the wireframe format, the token-bound mock, the capture engines)

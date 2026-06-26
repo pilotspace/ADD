@@ -172,4 +172,4 @@ Watch (reuse scenarios as monitors): suite green count · ENGINE_PKG_MD5 stabili
 - [SPEC · open] next = the identity cluster (own module + repoint identity-test patches) or a guideline-injection sub-slice (evidence: remaining regions are entangled)
 
 ### Competency deltas
-- [ADD · open] new module per cohesive concern keeps each extraction a clean leaf with a distinct dependency profile (evidence: accessors=import-free, predicates=re/const/io_state)
+- [ADD · folded] new module per cohesive concern keeps each extraction a clean leaf with a distinct dependency profile (evidence: accessors=import-free, predicates=re/const/io_state) [folded foundation-version 52]

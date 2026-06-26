@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 51
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 53
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -167,6 +167,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 - settled fv1–fv20 — ADD bootstrapping → production-ready: SDD foundation · self-driving run · one-approval auto · awareness surface · decision-point reports · zero-command on-ramp · prompt & file hygiene · dynamic loop (see git)
 
 ## Users (UDD) — UI/UX: design before code
+- (UDD) a design feature now opens with an explicit four-axis intake (FIDELITY · CONCEPT · LAYOUT · VISUAL DESIGN) BEFORE the domain read — the look is directed, not guessed (evidence: design-intake beat 0 shipped this milestone)  [folded foundation-version 53 · from design-intake-beat]
 - (UDD) keeping the site home OUT of the book (README→index.html via MkDocs default) is the lean choice for a book whose source is mirror-guarded — it adds zero new file, zero bundle/parity work, and the existing README already carries an intro + linked TOC that makes a good landing (evidence: human chose it over a new index.md; strict build confirmed README is the site root).  [folded foundation-version 49 · from site-scaffold]
 <!-- No-UI project: ADD ships as a CLI + a Claude skill. The "interface" is the
      command surface and the text it prints — there is no screen, so this stays short. -->
@@ -266,6 +267,8 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-06-26 | fold --task design-intake-beat → foundation-version 53 (UDD 1 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 52→53 |
+| 2026-06-26 | fold all → foundation-version 52 (ADD 16) | consolidate captured OBSERVE lessons into the versioned foundation | 16 lessons open→folded; +16 routed bullets; 51→52 |
 | 2026-06-25 | fold all → foundation-version 51 (ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 3 lessons open→folded; +3 routed bullets; 50→51 |
 | 2026-06-25 | fold all → foundation-version 50 (TDD 1 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 49→50 |
 | 2026-06-24 | fold all → foundation-version 49 (SDD 1 · UDD 1 · TDD 2 · ADD 2) | consolidate captured OBSERVE lessons into the versioned foundation | 6 lessons open→folded; +6 routed bullets; 48→49 |

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "milestone-naming",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1665,7 +1665,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T03:48:31+00:00",
+  "updated": "2026-06-26T07:50:32+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2372,6 +2372,15 @@
         "extract-autonomy"
       ],
       "archived": "2026-06-26"
+    },
+    {
+      "slug": "udd-design-intake",
+      "title": "UDD design intake",
+      "tasks": 1,
+      "task_slugs": [
+        "design-intake-beat"
+      ],
+      "archived": "2026-06-26"
     }
   ],
   "active_milestones": [],
@@ -2449,7 +2458,7 @@
       "id": 12,
       "text": "split add.py (the ~6k-line engine) into focused modules \u2014 e.g. state/commands/audit/scope/release \u2014 behind a stable import surface; keep the 3-tree mirror + ENGINE_MD5 pin working (needs a design pass on module boundaries + how the mirror/pin adapt to multi-file)",
       "created": "2026-06-25T16:34:48+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 13,

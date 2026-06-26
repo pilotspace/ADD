@@ -51,7 +51,12 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 POOLS = [
     {"name": "core",          "ratio": 0.88, "baseline": 18465,
      "guides": ["SKILL.md", "intake.md"]},
-    {"name": "orchestration", "ratio": 0.75, "baseline": 50098,
+    # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
+    # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
+    # FIDELITY·CONCEPT·LAYOUT·VISUAL DESIGN) + a hard rule — +1225 B human-approved surface (milestone
+    # udd-design-intake, contract FROZEN @ v1). RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio
+    # (+⌈1225/0.75⌉=1634). The won compaction on every orchestration guide is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 51732,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     {"name": "phases",        "ratio": 0.80, "baseline": 39008,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
