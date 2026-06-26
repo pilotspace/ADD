@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "milestone-naming",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1632,10 +1632,40 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "milestone-naming": {
+      "title": "Prefer descriptive milestone slugs + full-ISO created stamp",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-26T03:41:24+00:00",
+      "updated": "2026-06-26T03:48:31+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ad11db4aa2445f8a89af1cfa504fbc46",
+        "tests": {
+          "add-method/tooling/test_milestone_naming.py": "a29384a54ff037608d772eadbade6299"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py"
+        ],
+        "snapshot_md5": "19d05c07851c749b32446597cb1fa22b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T03:02:09+00:00",
+  "updated": "2026-06-26T03:48:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
