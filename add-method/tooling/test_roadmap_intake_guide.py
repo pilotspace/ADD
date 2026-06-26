@@ -86,15 +86,17 @@ class RoadmapIntakeTest(unittest.TestCase):
         self.assertEqual(canon, (_DOGFOOD_SKILL / "intake.md").read_bytes(),
                          "intake.md: canonical ≠ dogfood (mirror_drift)")
 
-    def test_engine_unchanged(self):
-        # This guarded that roadmap-intake-guide (task 2) was convention-only — it did NOT touch the
-        # engine (pin stayed at task-1's 8a6440cf…). Task 3 (queue-resume-surface) legitimately
-        # re-pins the engine within the same milestone, so the constant is updated in lockstep to
-        # the current pin (a milestone-internal engine advance, human-approved at task 3's freeze —
-        # NOT a test weakening: the assertion still guards the deliberate, exact current pin).
+    def test_engine_pin_is_current(self):
+        # Originally a hardcoded-literal guard (8a6440cf… → e81bef8b…) that broke on every later
+        # engine task — the fv54 TDD lesson ("prefer ENGINE_MD5 == md5(add.py) over a frozen literal
+        # when a later sibling task may touch the engine"). Now SELF-RELATIVE: assert the pin equals
+        # md5(the actual canonical add.py). Stronger invariant (a stale pin is the real bug) and it
+        # never needs a per-task literal bump again. (queued-await-confirm-hint v2 amendment.)
+        import hashlib
+        canon = (Path(__file__).resolve().parent / "add.py").read_bytes()
         from engine_pin import ENGINE_MD5
-        self.assertEqual(ENGINE_MD5, "e81bef8b5c31c4c4a5266ba9f0920822",
-                         "ENGINE_MD5 must equal the deliberate current pin")
+        self.assertEqual(ENGINE_MD5, hashlib.md5(canon).hexdigest(),
+                         "ENGINE_MD5 must equal md5(add.py) — the pin must track the engine")
 
 
 if __name__ == "__main__":

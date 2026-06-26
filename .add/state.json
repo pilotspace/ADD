@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "queued-await-confirm-hint",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1662,10 +1662,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "queued-await-confirm-hint": {
+      "title": "queued + await-confirm prints the milestone-confirm reminder",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-26T09:22:42+00:00",
+      "updated": "2026-06-26T09:33:22+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "17c8c4ff6bd6b45c898197db4ba81f2b",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_queued_await_confirm_hint.py",
+          "add-method/tooling/test_roadmap_intake_guide.py"
+        ],
+        "snapshot_md5": "1e93abb086312957f0358be1d09c3258"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T09:03:55+00:00",
+  "updated": "2026-06-26T09:33:35+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2482,6 +2513,18 @@
       "text": "BE-UI deeper on each feature",
       "created": "2026-06-26T03:02:09+00:00",
       "status": "done"
+    },
+    {
+      "id": 15,
+      "text": "new-milestone --queued + --await-confirm: print the milestone-confirm reminder hint in the queued output branch (PR#98 review Finding 1, UX nit; state already correct, gate fires)",
+      "created": "2026-06-26T09:20:25+00:00",
+      "status": "done"
+    },
+    {
+      "id": 16,
+      "text": "list",
+      "created": "2026-06-26T09:33:31+00:00",
+      "status": "open"
     }
   ]
 }
