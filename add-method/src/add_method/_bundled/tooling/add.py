@@ -49,6 +49,12 @@ from add_engine.milestones import (
     _exit_criteria_cited, _stage_criteria, _all_milestones_done,
 )
 
+# --- component/federation subsystem (moved to add_engine/components.py) ------
+from add_engine.components import (
+    _confined, _components, _cite_region, _contracts, _federation,
+    _contract_snapshot, _in_scope,
+)
+
 
 def _phase_index(name: str) -> int:
     """Ordinal of a phase in PHASES; used to enforce forward-skip rules."""
@@ -3113,15 +3119,6 @@ def _tests_count(root: Path, slug: str) -> int:
     return sum(_count_test_defs(f) for f in _primary_test_files(root, slug))
 
 
-def _confined(p: Path, rootp: Path) -> bool:
-    """True only if p resolves (symlinks followed) inside rootp; errors -> False.
-    The v2 confinement check — no read is attempted on a path that fails it."""
-    try:
-        return p.resolve().is_relative_to(rootp)
-    except OSError:
-        return False
-
-
 def _declared_test_files(root: Path, slug: str) -> list[Path]:
     """Resolve the §4 'Tests live in:' declared path(s) to a deduped file list. PURE.
     Tokens are the backticked spans on the FIRST declaring line of the raw §4 body.
@@ -3254,31 +3251,6 @@ _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")
 # OPT-IN + DEGRADE-SAFE: with no .add/components.toml every reader is byte-identical to
 # pre-component ADD. A read NEVER raises (absent/unreadable/malformed → {} / dropped
 # cover); the loud surface is _component_findings, consumed by the scope gate (cmd_check).
-def _components(root: Path) -> dict[str, dict]:
-    """The registry from .add/components.toml → {name: {root, verify, green_bar,
-    language}}. `root` required per entry; an entry missing it is skipped (the finding
-    surface reports it). `verify` is stored OPAQUE — parsed as data, NEVER executed. PURE."""
-    if tomllib is None:
-        return {}
-    try:
-        raw = (root / "components.toml").read_bytes()
-    except OSError:
-        return {}
-    try:
-        data = tomllib.loads(raw.decode("utf-8"))
-    except (tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
-        return {}
-    out: dict[str, dict] = {}
-    for name, spec in (data.get("component") or {}).items():
-        # "?" is the reserved unknown-binding sentinel (_task_component) — a component
-        # named "?" would collide and silently drop cover, so it never registers.
-        if name == "?" or not isinstance(spec, dict) or not isinstance(spec.get("root"), str):
-            continue
-        out[name] = {"root": spec["root"], "verify": spec.get("verify"),
-                     "green_bar": spec.get("green_bar"), "language": spec.get("language")}
-    return out
-
-
 def _component_root(root: Path, name: str) -> str | None:
     """Project-root-relative path (trailing '/') of component `name`'s root, or None
     when the name is absent OR the root escapes the project (fail-closed — grants no
@@ -3314,22 +3286,6 @@ def _task_green_bar(root: Path, slug: str) -> str | None:
     if not comp or comp == "?":
         return None
     return (_components(root).get(comp) or {}).get("green_bar") or None
-
-
-def _cite_region(body: str) -> str:
-    """The user-authored "Build expectations" evidence region of a §6 body, stamp-stripped —
-    the only place a per-component green-bar cite counts (per-component-verify, v3). PURE.
-
-    The marker matches BOTH template shapes: the standard "### Build expectations …" heading AND
-    the fast-lane bare "Build expectations (from …):" line, running up to the GATE RECORD sub-block.
-    So the top-of-§6 checklist ("- [ ] all tests pass") and the "Outcome: <PASS|…>" placeholder are
-    excluded, and a component-bound FAST task is still citable. The trailing strip removes the
-    engine's own "component: … · expected green-bar: …" stamp wherever it landed, so a stamp that
-    fell inside the region can never self-satisfy the gate. No marker -> "" (fail-closed for a bound
-    task: it must declare its evidence)."""
-    m = re.search(r"(?im)^#*[ \t]*Build expectations\b.*?(?=\n#+[ \t]*GATE RECORD\b|\Z)", body, re.DOTALL)
-    region = m.group(0) if m else ""
-    return re.sub(r"(?m)^component:.*·.*expected green-bar:.*$", "", region)
 
 
 def _component_findings(root: Path) -> list[tuple[str, str]]:
@@ -3374,46 +3330,6 @@ def _component_findings(root: Path) -> list[tuple[str, str]]:
 # ── cross-component contracts (cross-component-contract) ──────────────────────────────────
 # OPT-IN + DEGRADE-SAFE, like the component readers: no [contract.*] / no produces|consumes
 # header ⇒ every path below is byte-identical to pre-contract ADD. A read NEVER raises.
-def _contracts(root: Path) -> dict[str, dict]:
-    """[contract.<id>] from .add/components.toml -> {id: {producer: str, consumers: list[str]}}.
-    A malformed entry (producer not a str) is skipped (the finding surface reports it). PURE."""
-    if tomllib is None:
-        return {}
-    try:
-        data = tomllib.loads((root / "components.toml").read_bytes().decode("utf-8"))
-    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
-        return {}
-    out: dict[str, dict] = {}
-    for cid, spec in (data.get("contract") or {}).items():
-        if not isinstance(spec, dict) or not isinstance(spec.get("producer"), str):
-            continue
-        cons = spec.get("consumers")
-        out[cid] = {"producer": spec["producer"],
-                    "consumers": [c for c in cons if isinstance(c, str)] if isinstance(cons, list) else []}
-    return out
-
-
-def _federation(root: Path) -> dict[str, dict]:
-    """[federation.<id>] from .add/components.toml -> {id: {source: str, pin: str|None}}.
-    The cross-REPO join: a consumer repo names where a producer repo's published snapshot lives.
-    A malformed entry (no string source) is skipped; a non-string `pin` degrades to None. Degrade-safe
-    — never raises. PURE. On Python < 3.11 (no tomllib) this returns {} like the other component
-    readers, so `federate` reports federation_unknown — components.toml needs a 3.11+ runtime."""
-    if tomllib is None:
-        return {}
-    try:
-        data = tomllib.loads((root / "components.toml").read_bytes().decode("utf-8"))
-    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
-        return {}
-    out: dict[str, dict] = {}
-    for fid, spec in (data.get("federation") or {}).items():
-        if not isinstance(spec, dict) or not isinstance(spec.get("source"), str):
-            continue
-        pin = spec.get("pin")
-        out[fid] = {"source": spec["source"], "pin": pin if isinstance(pin, str) else None}
-    return out
-
-
 def _task_produces(root: Path, slug: str) -> str | None:
     m = _PRODUCES_LINE_RE.search(_task_header(root, slug))
     return m.group(1).strip() if m else None
@@ -3422,10 +3338,6 @@ def _task_produces(root: Path, slug: str) -> str | None:
 def _task_consumes(root: Path, slug: str) -> str | None:
     m = _CONSUMES_LINE_RE.search(_task_header(root, slug))
     return m.group(1).strip() if m else None
-
-
-def _contract_snapshot(root: Path, cid: str) -> Path:
-    return root / "contracts" / f"{cid}.json"
 
 
 def _contract_body_hash(raw3: str) -> str:
@@ -3498,18 +3410,6 @@ def _declared_scope(root: Path, slug: str) -> list[str] | None:
     if croot and croot not in out:        # component-aware-add: compose, never redraw
         out.append(croot)
     return out
-
-
-def _in_scope(rel: str, declared: list[str]) -> bool:
-    """True when rel falls under any declared token — exact match for a file
-    token, whole-subtree prefix containment for a directory token ('…/')."""
-    for tok in declared:
-        if tok.endswith("/"):
-            if rel.startswith(tok) or rel == tok.rstrip("/"):
-                return True
-        elif rel == tok:
-            return True
-    return False
 
 
 def _scope_walk(rootp: Path) -> dict[str, str]:
