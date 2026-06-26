@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-autonomy",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1632,562 +1632,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "engine-package-skeleton": {
-      "title": "Bootstrap add_engine/ package + manifest-digest pin (first leaf module: constants)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-25T17:13:03+00:00",
-      "updated": "2026-06-25T17:42:30+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "85c606b136eaa252846f8097c1d976a3",
-        "tests": {
-          "add-method/tooling/test_engine_package_skeleton.py": "71e905ea635730dee45a9ff1dddcb96c",
-          "add-method/tooling/test_shared_engine_pin.py": "eb8beef973160e9ae6245b9bbe41bba9",
-          "add-method/tooling/test_engine_repin_parity.py": "d0979ca23ce5e91fa82916d7b5ef2611",
-          "add-method/tooling/test_bundle_parity.py": "573d3879b8d3f7f212a1a3e69860aeba"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/__init__.py",
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/engine_manifest.py",
-          "add-method/scripts/prepare_bundle.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/__init__.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
-          "bin/cli.js",
-          "add-method/src/add_method/cli.py"
-        ],
-        "snapshot_md5": "92b5152ef2fcedcf6960c3799cc7d819"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-io-state": {
-      "title": "Extract IO + state primitives to add_engine/io_state.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-25T17:54:35+00:00",
-      "updated": "2026-06-25T18:03:22+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "35ab082896894abcdabdd52b9ab35db7",
-        "tests": {
-          "add-method/tooling/test_engine_extract_io_state.py": "18f1dc770cff0a5d7305101d91ad4537"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/io_state.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
-        ],
-        "snapshot_md5": "9efd1d21ebc9d0969e15dcd2ec34d55a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-state": {
-      "title": "Extract state + root + _die helpers to add_engine/io_state.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-25T18:08:56+00:00",
-      "updated": "2026-06-25T18:22:11+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "de74cb38fb372f22db785c45a3b3451f",
-        "tests": {
-          "add-method/tooling/test_engine_extract_state.py": "4ed8fd3f7ba9d87db1dc88138da8adc8"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/io_state.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
-        ],
-        "snapshot_md5": "ca0fee7f432eabf8287e46ebac9d645a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-accessors": {
-      "title": "Extract pure active-task/milestone accessors to add_engine/accessors.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-25T18:26:49+00:00",
-      "updated": "2026-06-25T18:30:27+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "edeb2aac642ed603dba9cc3129bb38ca",
-        "tests": {
-          "add-method/tooling/test_engine_extract_accessors.py": "54413ced7d6e03268a5621dd94b9d885"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/accessors.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/accessors.py"
-        ],
-        "snapshot_md5": "2a2f8a6bf2d02aa81c6441131a2a884b"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-predicates": {
-      "title": "Extract state/markdown predicates to add_engine/predicates.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-25T18:35:16+00:00",
-      "updated": "2026-06-25T18:38:47+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "55145901653698b9b81b1a74152daa88",
-        "tests": {
-          "add-method/tooling/test_engine_extract_predicates.py": "18f64ffe222fc077bf0654ed9b3bc390"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/predicates.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/predicates.py"
-        ],
-        "snapshot_md5": "8defee716a6ddb43ad40ae417de12fa8"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-identity": {
-      "title": "Extract identity/actor cluster to add_engine/identity.py (call-qualification refactor)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T01:04:56+00:00",
-      "updated": "2026-06-26T01:14:55+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "dc7a909273c83c8690ba9b7ba23d89ad",
-        "tests": {
-          "add-method/tooling/test_engine_extract_identity.py": "8ebbf4d66d0a939cb923b3b0b9ccea8d",
-          "add-method/tooling/test_actor_identity.py": "bea92d43b7320877207d2999a6c8a46f",
-          "add-method/tooling/test_actor_stamping.py": "c2155affac17de98fad4a64d3a0800f9",
-          "add-method/tooling/test_identity_in_status.py": "109a76152ad4d54ffe13d73fe4e330b1",
-          "add-method/tooling/test_ownership_model.py": "6c514143e68ae2516800a678692b6624"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/identity.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/identity.py",
-          "add-method/tooling/test_actor_identity.py",
-          "add-method/tooling/test_actor_stamping.py",
-          "add-method/tooling/test_identity_in_status.py",
-          "add-method/tooling/test_ownership_model.py"
-        ],
-        "snapshot_md5": "86e1f027696b7ff8d7ac97d3958fee7a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-pure-leaves": {
-      "title": "Extract the last two pure leaves: _task_done -> predicates.py, _load_state_for_json -> io_state.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T01:20:01+00:00",
-      "updated": "2026-06-26T01:24:29+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "1346c3ecb803eebc8a7af5faa6e74b4b",
-        "tests": {
-          "add-method/tooling/test_engine_extract_pure_leaves.py": "7d4e73d1cae75dc3a547ebc2fd4f351f"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/predicates.py",
-          "add-method/tooling/add_engine/io_state.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_pure_leaves.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/predicates.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
-        ],
-        "snapshot_md5": "b06d37abe84b1bc9d628f746c5e0b8a3"
-      },
-      "heal": {
-        "attempts": 1,
-        "history": [
-          {
-            "at": "2026-06-26T01:23:50+00:00",
-            "reason": "scope_violation: task 'extract-pure-leaves' touched outside its declared \u00a75 Scope \u2014 add-method/tooling/test_engine_extract_pure_leaves.py (1 total)",
-            "source": "scope"
-          }
-        ]
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-guidelines": {
-      "title": "Extract the guidelines/CLAUDE.md-injection subsystem (8 fns) to add_engine/guidelines.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T01:31:01+00:00",
-      "updated": "2026-06-26T01:35:09+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "802a37c2789d07321d21c1535e139b3c",
-        "tests": {
-          "add-method/tooling/test_engine_extract_guidelines.py": "f24f5de41a69de41b7780332eeed0982"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/guidelines.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_guidelines.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py"
-        ],
-        "snapshot_md5": "9e97b9b78733f21212e1493abf22f426"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-render": {
-      "title": "Extract terminal-render primitives (8 fns) to add_engine/render.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T01:40:28+00:00",
-      "updated": "2026-06-26T01:44:44+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "885502071b22988d7261c7cc7a0ffcf8",
-        "tests": {
-          "add-method/tooling/test_engine_extract_render.py": "5c410119fbec07ff183388439aa5340a"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/render.py",
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_render.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/render.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
-        ],
-        "snapshot_md5": "cb3aebe4ecb1c81202849ddf56faae69"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-milestones": {
-      "title": "Extract milestone-doc readers (7 fns) to add_engine/milestones.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T01:51:42+00:00",
-      "updated": "2026-06-26T01:56:21+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "dc66387c92b4dffad76c9849fda51d44",
-        "tests": {
-          "add-method/tooling/test_engine_extract_milestones.py": "212b220253d8c95b245426c900cb4dcf"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/milestones.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_milestones.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/milestones.py"
-        ],
-        "snapshot_md5": "1af96bb8c30ed1ec31750d2afa9bfbf2"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-components": {
-      "title": "Extract component/federation subsystem (7 fns) to add_engine/components.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:00:23+00:00",
-      "updated": "2026-06-26T02:04:21+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "a8ddeb581217e853c661f8aa60c425be",
-        "tests": {
-          "add-method/tooling/test_engine_extract_components.py": "a171b833215b86f410415b797396a119"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/components.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_components.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/components.py"
-        ],
-        "snapshot_md5": "3e85127d58401fbbf4b4cd233af9e17a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-md5": {
-      "title": "Fold md5 hashing helpers (2 fns) into add_engine/io_state.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:06:56+00:00",
-      "updated": "2026-06-26T02:10:00+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "113b2153ea124f11d209203f6174f78c",
-        "tests": {
-          "add-method/tooling/test_engine_extract_md5.py": "46cdb3f76177e982f064935ab78b53c4"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/io_state.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_md5.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
-        ],
-        "snapshot_md5": "c172a2a9ac102320a22133e8aba509a5"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-version": {
-      "title": "Extract version-check helpers (3 fns) to add_engine/version.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:12:08+00:00",
-      "updated": "2026-06-26T02:16:00+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "6b47f65fe4c3cf56416215e26d8914e6",
-        "tests": {
-          "add-method/tooling/test_engine_extract_version.py": "65206d016fdebccfd91f0c47436d78be"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/version.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_version.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/version.py"
-        ],
-        "snapshot_md5": "ae42a6f05426a70365da90478bb0b864"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-release": {
-      "title": "Extract changelog/release-render helpers (6 fns) to add_engine/release.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:18:16+00:00",
-      "updated": "2026-06-26T02:21:45+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "520deec6edb95c8bf24e78ec198f5182",
-        "tests": {
-          "add-method/tooling/test_engine_extract_release.py": "be2890adcdd38d49ad78cc94ed646fee"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/release.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_release.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/release.py"
-        ],
-        "snapshot_md5": "756feee265de49ea1c058eebeee486f2"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-taskdoc": {
-      "title": "Extract TASK.md structural readers (11 fns) to add_engine/taskdoc.py + relocate 3 shared delta regexes to constants.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:23:59+00:00",
-      "updated": "2026-06-26T02:33:44+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "969fee8fb37ef952672402314e0ba78e",
-        "tests": {
-          "add-method/tooling/test_engine_extract_taskdoc.py": "f1ebc4748d476f1e27fccdce2ae1381d"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/taskdoc.py",
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_taskdoc.py",
-          "add-method/tooling/test_delta_grammar_dedup.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/taskdoc.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
-        ],
-        "snapshot_md5": "4765a010e05078b6fc0953b2ebb3a8ed"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "extract-autonomy": {
-      "title": "Extract autonomy-level resolvers (4 fns) to add_engine/autonomy.py + relocate shared _AUTONOMY_LEVELS to constants.py",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "engine-modularization",
-      "depends_on": [],
-      "created": "2026-06-26T02:35:43+00:00",
-      "updated": "2026-06-26T02:42:34+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "54a511b7ec2cd851e75f0e5d23dbee42",
-        "tests": {
-          "add-method/tooling/test_engine_extract_autonomy.py": "3ea9c254bd6d105319af1842f4fac128"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/autonomy.py",
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_engine_extract_autonomy.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/autonomy.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
-        ],
-        "snapshot_md5": "41da2ef2b29197d15640cbdc643b27bd"
-      },
-      "heal": {
-        "attempts": 1,
-        "history": [
-          {
-            "at": "2026-06-26T02:42:07+00:00",
-            "reason": "tamper_detected:build_tampered:add-method/tooling/test_engine_extract_autonomy.py",
-            "source": "tamper"
-          }
-        ]
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T02:42:34+00:00",
+  "updated": "2026-06-26T02:51:43+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2369,17 +1817,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "engine-modularization": {
-      "title": "Split the 7k-line add.py engine into a focused add_engine/ package",
-      "goal": "the engine is a navigable package of focused modules behind a stable import surface, with the entry path, 3-tree mirror, and ENGINE_MD5 pin all preserved",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-06-25T17:12:05+00:00",
-      "updated": "2026-06-25T17:12:05+00:00"
     }
   },
-  "active_milestone": "engine-modularization",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -2878,14 +2318,35 @@
         "force-preserve-heal"
       ],
       "archived": "2026-06-25"
+    },
+    {
+      "slug": "engine-modularization",
+      "title": "Split the 7k-line add.py engine into a focused add_engine/ package",
+      "tasks": 16,
+      "task_slugs": [
+        "engine-package-skeleton",
+        "extract-io-state",
+        "extract-state",
+        "extract-accessors",
+        "extract-predicates",
+        "extract-identity",
+        "extract-pure-leaves",
+        "extract-guidelines",
+        "extract-render",
+        "extract-milestones",
+        "extract-components",
+        "extract-md5",
+        "extract-version",
+        "extract-release",
+        "extract-taskdoc",
+        "extract-autonomy"
+      ],
+      "archived": "2026-06-26"
     }
   ],
-  "active_milestones": [
-    "engine-modularization"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "engine-modularization": "extract-autonomy"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {
