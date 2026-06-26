@@ -164,16 +164,20 @@ from add_engine.identity import (          # re-exported for `add.<name>` attr c
 )
 
 
-def _my_work(state: dict, me: dict) -> list[dict]:
-    """The "my work" lens (multi-active-UX): across ALL active milestones, the NOT-done tasks
-    whose owner OR assignee is `me`. Returns ordered rows {slug, milestone, phase, role} with
-    role in {owner, assignee, both}, sorted by active-milestone order then slug. PURE · no I/O."""
+def _my_work(state: dict, me: dict, scope_all: bool = False) -> list[dict]:
+    """The "my work" lens (multi-active-UX): the NOT-done tasks whose owner OR assignee is `me`.
+    By default the lens is the active SET; `scope_all=True` (mine-all-lens) widens it to EVERY
+    milestone plus loose (milestone-less) tasks. Returns ordered rows {slug, milestone, phase,
+    role} with role in {owner, assignee, both}, sorted by active-milestone order then slug
+    (non-active/loose sort after the active block, then by slug). PURE · no I/O."""
     active = list(state.get("active_milestones") or [])
     active_set = set(active)
     tasks = state.get("tasks") if isinstance(state.get("tasks"), dict) else {}
     rows: list[dict] = []
     for slug, t in tasks.items():
-        if not isinstance(t, dict) or t.get("milestone") not in active_set or _task_done(t):
+        if not isinstance(t, dict) or _task_done(t):
+            continue
+        if not scope_all and t.get("milestone") not in active_set:
             continue
         owns = identity._actor_matches(t.get("owner"), me)
         assigned = identity._actor_matches(t.get("assignee"), me)
@@ -2368,25 +2372,29 @@ def cmd_doctor(args: argparse.Namespace) -> None:
 
 
 def cmd_mine(args: argparse.Namespace) -> None:
-    """Read-only `add.py mine`: across all active milestones, the not-done tasks owned-by or
-    assigned-to the resolved actor (`_whoami`, or `--actor "Name <email>"`). Text or `--json`.
-    An empty queue is a plain exit-0 line, not an error. NEVER writes state."""
+    """Read-only `add.py mine`: the not-done tasks owned-by or assigned-to the resolved actor
+    (`_whoami`, or `--actor "Name <email>"`). Default lens is the active SET; `--all` widens it
+    to EVERY milestone plus loose (milestone-less) tasks. Text or `--json`. An empty queue is a
+    plain exit-0 line, not an error. NEVER writes state."""
     root = find_root()
     if root is None:
         _die("no_project")
     state = load_state(root)
     me = identity._parse_actor_arg(args.actor) if getattr(args, "actor", None) else identity._whoami(state)
-    rows = _my_work(state, me)
+    scope_all = getattr(args, "all", False)
+    rows = _my_work(state, me, scope_all=scope_all)
     if getattr(args, "json", False):
         print(json.dumps({"actor": me, "tasks": rows}))
         return
+    scope = "all" if scope_all else "active"
     who = _fmt_actor(me) or me.get("name", "you")
     if not rows:
-        print(f"mine: no open tasks for {who} across active milestones")
+        print(f"mine: no open tasks for {who} across {scope} milestones")
         return
-    print(f"mine: {who} — {len(rows)} open task(s) across active milestones:")
+    print(f"mine: {who} — {len(rows)} open task(s) across {scope} milestones:")
     for r in rows:
-        print(f"  {r['slug']:<24} [{r['milestone']}]  phase={r['phase']}  ({r['role']})")
+        loc = f"[{r['milestone']}]" if r["milestone"] else "[loose]"
+        print(f"  {r['slug']:<24} {loc}  phase={r['phase']}  ({r['role']})")
 
 
 # ---------------------------------------------------------------------------
@@ -5654,6 +5662,8 @@ def build_parser() -> argparse.ArgumentParser:
     pmine.add_argument("--actor", default=None, metavar="\"Name <email>\"",
                        help="inspect another actor's queue instead of your own")
     pmine.add_argument("--json", action="store_true", help="emit one JSON object instead of text")
+    pmine.add_argument("--all", action="store_true",
+                       help="widen past the active SET: every milestone + loose tasks, not just active")
     pmine.set_defaults(func=cmd_mine)
 
     pwv = sub.add_parser("wave-verify",
