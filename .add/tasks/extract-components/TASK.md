@@ -165,7 +165,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch: component/federation paths · py3.10 import safety · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] next clean clusters: md5 (trivial) · version-update (_fetch_latest_version PATCHED) · deltas (7 shared constants → constants.py) · release/changelog; THEN cmd_*/save/load/main core (evidence: per-cluster coupling map in memory)
+- [SPEC · dropped] next clean clusters: md5 (trivial) · version-update (_fetch_latest_version PATCHED) · deltas (7 shared constants → constants.py) · release/changelog; THEN cmd_*/save/load/main core (evidence: per-cluster coupling map in memory)
 
 ### Competency deltas
 - [ADD · folded] a degrade-safe stdlib guard (try/except import → None) must be REPLICATED in the new module, not bare-imported — the staying module keeps its own copy for its own users (evidence: tomllib in both components.py and add.py for _component_findings) [folded foundation-version 52]

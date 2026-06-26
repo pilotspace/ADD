@@ -461,6 +461,74 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+# a §3 still carrying this template placeholder is NOT a drafted contract yet
+_CONTRACT_TEMPLATE_RE = re.compile(r"<METHOD>")
+
+
+def _next_freeze_version(state: dict, slug: str) -> str:
+    """v1 on the first freeze; N+1 of the highest prior freeze version recorded on the
+    task's state record on a re-freeze (after a change request). PURE — reads state only."""
+    prior = ((state.get("tasks") or {}).get(slug) or {}).get("freeze") or {}
+    m = re.fullmatch(r"v(\d+)", str(prior.get("version", "")))
+    return f"v{int(m.group(1)) + 1}" if m else "v1"
+
+
+def cmd_freeze(args: argparse.Namespace) -> None:
+    """The §3 contract-freeze write command — the 5th engine-WRITTEN human approval (task
+    freeze-actor-stamp), joining lock · gate · milestone-done · release. Flips the target
+    task's §3 `Status: DRAFT` -> `FROZEN @ vN — approved by <name>` AND records a structured
+    actor on the task's state record (mirrors cmd_lock's `setup.actor`), so the audit trail
+    has no hole at freeze. The human RUNS it as their approval — never pre-stamped.
+
+    validate-then-write: every refusal fires before any write. Writes TASK.md first, then
+    state; a crash between degrades to today's legacy text-only freeze (never corrupt state),
+    design-for-failure."""
+    root = _require_root()
+    state = load_state(root)
+    raw_slug = getattr(args, "slug", None)
+    if not raw_slug and not _active_task(state):
+        _die("no_active_task: no task given and no active task is set")
+    slug = _resolve_task(state, raw_slug)                  # unknown slug -> _die
+    task_md = root / "tasks" / slug / "TASK.md"
+    text = task_md.read_text(encoding="utf-8")
+    raw3 = _phase_spans(text).get(3, "")
+    phase = (state["tasks"].get(slug) or {}).get("phase", "specify")
+    # --- validate (no writes); error precedence: frozen -> not-drafted -> unflagged ---
+    if _contract_frozen(raw3):
+        _die(f"already_frozen: {slug}'s §3 is already FROZEN — re-freeze only via a change "
+             f"request back to SPECIFY")
+    if _phase_index(phase) < _phase_index("contract") or _CONTRACT_TEMPLATE_RE.search(raw3):
+        _die(f"contract_not_drafted: {slug}'s §3 is not a drafted contract yet — reach the "
+             f"`contract` phase and replace the template before freezing")
+    if not _flag_well_formed(raw3):
+        _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
+             f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # --- write ---
+    ver = _next_freeze_version(state, slug)
+    who = args.by or identity._actor_stamp(state)["name"]
+    # flip the `Status: DRAFT` line WITHIN the §3 region only — a bare `Status: DRAFT` in
+    # §1/§2 prose must never be frozen by mistake (refute-read finding). §3 span runs from
+    # its `## 3 ·` heading to the next `## `/`---`/EOF (same boundary as _phase_spans).
+    h3 = re.search(r"(?m)^##\s*3\s*·.*$", text)
+    if not h3:
+        _die(f"contract_not_drafted: {slug}'s TASK.md has no §3 CONTRACT section")
+    seg_start = h3.end()
+    nxt = re.search(r"(?m)^(?:##\s|---\s*$)", text[seg_start:])
+    seg_end = seg_start + (nxt.start() if nxt else len(text) - seg_start)
+    new_seg, n = re.subn(r"(?m)^(\s*)Status:\s*DRAFT\s*$",
+                         lambda m: f"{m.group(1)}Status: FROZEN @ {ver} — approved by {who}",
+                         text[seg_start:seg_end], count=1)
+    if n == 0:
+        _die(f"contract_not_drafted: {slug}'s §3 has no 'Status: DRAFT' line to freeze")
+    new_text = text[:seg_start] + new_seg + text[seg_end:]
+    _atomic_write(task_md, new_text)                       # TASK.md first (audit source of truth)
+    state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": _now(),
+                                      "approved_by": who, "actor": identity._actor_stamp(state)}
+    save_state(root, state)
+    print(f"froze §3 of {slug} @ {ver} — approved by {who}")
+    print(_next_footer(root, state))
+
+
 def _parse_deps(raw: str | None) -> list[str]:
     if not raw:
         return []
@@ -5275,6 +5343,14 @@ def build_parser() -> argparse.ArgumentParser:
     pl.add_argument("--force", action="store_true", help="re-lock an already-locked project")
     pl.add_argument("--json", action="store_true", help="emit one JSON object instead of text")
     pl.set_defaults(func=cmd_lock)
+
+    pfz = sub.add_parser("freeze",
+                         help="freeze a task's §3 contract (the human approval) — stamps "
+                              "FROZEN @ vN + a structured actor on the task record")
+    pfz.add_argument("slug", nargs="?", default=None,
+                     help="task to freeze (default: the active task)")
+    pfz.add_argument("--by", default=None, help="approver name (default: the resolved actor)")
+    pfz.set_defaults(func=cmd_freeze)
 
     pwho = sub.add_parser("whoami",
                           help="show / set the git-native actor (git config -> OS user; --name to override)")

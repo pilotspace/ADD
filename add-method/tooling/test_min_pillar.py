@@ -108,6 +108,9 @@ LIFECYCLE = [
     ["drop-delta", "t"],                       # SPEC-delta dismiss verb: task t holds no open
                                                # SPEC delta here -> refuses no_open_spec_delta
                                                # (expected nonzero, tolerated; reads TASK.md, never docs/)
+    ["freeze", "t"],                           # §3 contract-freeze write-seam: task t's §3 is still
+                                               # the unfilled template here -> refuses contract_not_drafted
+                                               # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
     ["fold"],                                  # consolidation verb: this board has no open competency
                                                # lesson -> refuses no_open_deltas (expected nonzero,
                                                # tolerated; reads TASK/PROJECT/CONVENTIONS, never docs/)
@@ -144,7 +147,9 @@ _EXERCISED_IN_SETUP = {"init"}
 # (no_open_deltas) — exercised under the read-spy (reads TASK/PROJECT/CONVENTIONS, never docs/).
 # federate is a refusal verb on this board: no [federation.x] is declared, so `federate pull x`
 # refuses (federation_unknown) — exercised under the read-spy (reads components.toml, never docs/).
-_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "fold", "federate"}
+# freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
+# refuses (contract_not_drafted) — exercised under the read-spy (reads TASK.md/state, never docs/).
+_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "fold", "federate", "freeze"}
 
 
 class MinimalPillarTest(unittest.TestCase):

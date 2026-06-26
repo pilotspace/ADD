@@ -185,7 +185,7 @@ Reviewed by: Tin Dang · date: 2026-06-26   (auto mode — v2 after a faithful c
 Watch (reuse scenarios as monitors): suite green count · ENGINE_PKG_MD5 stability across trees
 
 ### Spec delta
-- [SPEC · open] next extraction = accessors (active task/milestone seam) (evidence: milestone plan, 10 tasks left after this)
+- [SPEC · dropped] next extraction = accessors (active task/milestone seam) (evidence: milestone plan, 10 tasks left after this)
 
 ### Competency deltas
 - [ADD · folded] the re-export pattern preserves cross-module monkeypatching for add.py-level callers; only INTERNAL-call patches need repointing (evidence: tasks 1-3 needed zero patch edits) [folded foundation-version 52]

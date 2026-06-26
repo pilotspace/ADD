@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "queued-await-confirm-hint",
+  "active_task": "freeze-actor-stamp",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1693,10 +1693,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "freeze-actor-stamp": {
+      "title": "add.py freeze write seam \u2014 engine-stamped actor at the \u00a73 contract freeze",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-26T10:16:39+00:00",
+      "updated": "2026-06-26T11:07:42+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d927a0c68dac461b3f57853f38e4d615",
+        "tests": {
+          "add-method/tooling/test_freeze_command.py": "b0866448363f2bee1f1437f86da7ff88",
+          "add-method/tooling/test_min_pillar.py": "956d9f375b485a61f91a01b586fa11a0"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_freeze_command.py",
+          "add-method/tooling/test_min_pillar.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "8d5f9b13d8633bfd187df13253ca6d7c"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-26T11:07:00+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_freeze_command.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T09:33:35+00:00",
+  "updated": "2026-06-26T11:07:42+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1878,6 +1921,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "multi-active-polish": {
+      "title": "multi-active-polish \u2014 finish the deferred team-collaboration seams",
+      "goal": "make parallel-front work and ownership first-class: complete the multi-active accessors, state-doctor, ownership surface, and command-policy seams 1.8.0 carried forward",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-26T10:28:42+00:00",
+      "updated": "2026-06-26T10:28:42+00:00",
+      "confirmed": false,
+      "confirmed_at": null,
+      "confirmed_by": null,
+      "await_confirm": true
+    },
+    "component-polish": {
+      "title": "component-polish \u2014 close the component-pillar gaps and harden the cross-repo edges",
+      "goal": "give the component pillar an end-to-end worked example, a components.toml validator, freeze-recency safety, and a path-confined federation source",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-26T10:28:42+00:00",
+      "updated": "2026-06-26T10:28:42+00:00",
+      "confirmed": false,
+      "confirmed_at": null,
+      "confirmed_by": null,
+      "await_confirm": true
+    },
+    "installer-polish": {
+      "title": "installer-polish \u2014 round out the global-home and installer lane",
+      "goal": "complete the global lane: data restore, orphan prune, update --global concurrency + path-safety, reconcile roll-up, and a reusable PTY test helper",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-26T10:28:42+00:00",
+      "updated": "2026-06-26T10:28:42+00:00",
+      "confirmed": false,
+      "confirmed_at": null,
+      "confirmed_by": null,
+      "await_confirm": true
     }
   },
   "active_milestone": null,

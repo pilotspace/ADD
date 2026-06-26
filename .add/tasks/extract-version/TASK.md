@@ -159,7 +159,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch: update-nudge path · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] version was the LAST clean closed cluster. The residual add.py is the coupled CORE (deltas/autonomy/next-pair/cmd_* dispatch/report_data/save/load/main, a 31-fn web around load_state) — probe for closed SUB-clusters (autonomy-only, delta-lint-only) to extract; what remains is the legitimate entry/orchestrator module (you don't dissolve the entry point). Milestone extraction phase nears its natural end at ~13 modules (evidence: closure scans 2026-06-26)
+- [SPEC · dropped] version was the LAST clean closed cluster. The residual add.py is the coupled CORE (deltas/autonomy/next-pair/cmd_* dispatch/report_data/save/load/main, a 31-fn web around load_state) — probe for closed SUB-clusters (autonomy-only, delta-lint-only) to extract; what remains is the legitimate entry/orchestrator module (you don't dissolve the entry point). Milestone extraction phase nears its natural end at ~13 modules (evidence: closure scans 2026-06-26)
 
 ### Competency deltas
 - [ADD · folded] a test that REBINDS a module global (`add.X = lambda`, not patch.object) is re-export-safe IFF the caller stays in the host module (bare call resolves the host global) AND the moved fns don't call X internally — same rule as patch.object, different syntax (evidence: test_update_nudge.py rebinds add._fetch_latest_version; caller is the staying nudge-check) [folded foundation-version 52]

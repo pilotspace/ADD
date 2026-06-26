@@ -182,7 +182,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch (reuse scenarios as monitors): identity/ownership suite green · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] the big regions (commands/report/udd) need the SAME qualification technique or a DI refactor — scope as a sub-milestone (evidence: this task proved qualification works for a patched cluster)
+- [SPEC · dropped] the big regions (commands/report/udd) need the SAME qualification technique or a DI refactor — scope as a sub-milestone (evidence: this task proved qualification works for a patched cluster)
 
 ### Competency deltas
 - [ADD · folded] when commands call a fn BOTH directly and via an intermediary, a single patch target requires CALL-QUALIFICATION at every add.py site (evidence: identity dual-path; Tin authorized over reduce) [folded foundation-version 52]
