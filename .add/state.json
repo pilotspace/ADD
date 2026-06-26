@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-render",
+  "active_task": "extract-milestones",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1945,10 +1945,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-milestones": {
+      "title": "Extract milestone-doc readers (7 fns) to add_engine/milestones.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T01:51:42+00:00",
+      "updated": "2026-06-26T01:56:21+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "dc66387c92b4dffad76c9849fda51d44",
+        "tests": {
+          "add-method/tooling/test_engine_extract_milestones.py": "212b220253d8c95b245426c900cb4dcf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/milestones.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_milestones.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/milestones.py"
+        ],
+        "snapshot_md5": "1af96bb8c30ed1ec31750d2afa9bfbf2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T01:44:44+00:00",
+  "updated": "2026-06-26T01:56:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2646,7 +2678,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-render"
+    "engine-modularization": "extract-milestones"
   },
   "todos": [
     {
