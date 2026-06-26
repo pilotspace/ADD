@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-pure-leaves",
+  "active_task": "extract-guidelines",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1879,10 +1879,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-guidelines": {
+      "title": "Extract the guidelines/CLAUDE.md-injection subsystem (8 fns) to add_engine/guidelines.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T01:31:01+00:00",
+      "updated": "2026-06-26T01:35:09+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "802a37c2789d07321d21c1535e139b3c",
+        "tests": {
+          "add-method/tooling/test_engine_extract_guidelines.py": "f24f5de41a69de41b7780332eeed0982"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/guidelines.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_guidelines.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py"
+        ],
+        "snapshot_md5": "9e97b9b78733f21212e1493abf22f426"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T01:24:29+00:00",
+  "updated": "2026-06-26T01:35:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2580,7 +2612,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-pure-leaves"
+    "engine-modularization": "extract-guidelines"
   },
   "todos": [
     {
