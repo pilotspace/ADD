@@ -37,6 +37,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _RULE_REF_LINE, _FALLBACK_TASK, _FALLBACK_TASK_FAST,
     _DEFAULT_WIDTH,
     _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
+    _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
 )
 
 # --- terminal-render primitives (moved to add_engine/render.py) -------------
@@ -72,6 +73,11 @@ from add_engine.taskdoc import (
     _task_header, _count_test_defs, _primary_test_files, _tests_count,
     _declared_test_files, _declared_tests_count, _tests_info, _task_prose,
     _phase_spans, _raw_phase_bodies, _spec_delta_entries,
+)
+
+# --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
+from add_engine.autonomy import (
+    _autonomy_level, _effective_autonomy, _project_autonomy, _project_autonomy_token,
 )
 
 
@@ -681,12 +687,10 @@ _RISK_HIGH_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*high\b", re.MULTILINE)
 
 # the explicit 3-mode autonomy dial (task explicit-autonomy-dial): an ordered ladder
 # manual < conservative < auto, declared as a per-task `autonomy:` header token.
-_AUTONOMY_LEVELS = ("manual", "conservative", "auto")
 # anchored to a DECLARATION position — line-start `autonomy:` OR the inline slug-line form
 # `… · autonomy: conservative` (the `·`-preceded shape) — never a title/prose substring; the
 # value stops at space/`<`/`#`/`|` so an unfilled `<manual | … >` placeholder captures nothing
 # and reads as UNSET.
-_AUTONOMY_LINE_RE = re.compile(r"(?:^|·)[ \t]*autonomy:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 # component-aware-add: a task binds to a registered component via a `component: <name>`
 # header token — the SAME anchored grammar as autonomy (line-start or the `·`-inline
@@ -697,33 +701,10 @@ _PRODUCES_LINE_RE = re.compile(r"(?:^|·)[ \t]*produces:[ \t]*([^\s<#|]+)", re.M
 _CONSUMES_LINE_RE = re.compile(r"(?:^|·)[ \t]*consumes:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 
-def _autonomy_level(hdr: str):
-    """The declared autonomy rung from a TASK.md header region (HTML comments
-    already stripped by _task_header). Returns a member of _AUTONOMY_LEVELS, or
-    None when no `autonomy:` line is present (UNSET — an unfilled `<…>` placeholder,
-    whose value the regex declines, counts as unset), or "?" when a REAL token outside
-    the set was written (unknown). PURE."""
-    m = _AUTONOMY_LINE_RE.search(hdr)
-    if not m:
-        return None
-    tok = m.group(1).strip().lower()
-    return tok if tok in _AUTONOMY_LEVELS else "?"
-
-
 def _autonomy_lowered(hdr: str) -> bool:
     """True iff the declared rung is high-risk-safe (manual or conservative). A
     high-risk scope must be lowered to one of these; `auto` and UNSET are not."""
     return _autonomy_level(hdr) in ("manual", "conservative")
-
-
-def _effective_autonomy(root: Path, state: dict, slug: str) -> str:
-    """The autonomy rung that governs `slug` right now: the task's own declared rung,
-    falling back to the project default when the task line is UNSET (None) or an
-    unrecognized token ("?") — the same fail-safe chain cmd_new_task seeds from
-    (_project_autonomy: absent -> auto, garbled -> conservative). PURE. `state` is unused
-    today; it is kept in the signature beside _driver_stop for symmetry."""
-    lvl = _autonomy_level(_task_header(root, slug))
-    return lvl if lvl in _AUTONOMY_LEVELS else _project_autonomy(root)
 
 
 def _driver_stop(root: Path, state: dict, slug: str, phase: str) -> bool:
@@ -3066,27 +3047,6 @@ def _sync_task_marker(root: Path, slug: str, phase: str) -> None:
 _UNICODE = {"reached": "●", "current": "◉", "pending": "○", "h": "═", "rule": "─", "bullet": "•"}
 _ASCII = {"reached": "#", "current": ">", "pending": ".", "h": "=", "rule": "-", "bullet": "*"}
 _GATE_SHORT = {"PASS": "PASS", "RISK-ACCEPTED": "RISK", "HARD-STOP": "STOP", "none": "—"}
-def _project_autonomy_token(root: Path):
-    """The RAW autonomy declaration in PROJECT.md — a recognized rung, None when no
-    declaration line is present, or "?" for a real-but-unrecognized token. Uses the
-    anchored _autonomy_level (a title/prose substring is never a declaration) with
-    HTML comments stripped. Unreadable foundation -> None. Read-only and PURE."""
-    try:
-        text = (root / "PROJECT.md").read_text(encoding="utf-8")
-    except OSError:
-        return None
-    return _autonomy_level(re.sub(r"<!--.*?-->", "", text, flags=re.S))
-
-
-def _project_autonomy(root: Path) -> str:
-    """The autonomy rung a new task INHERITS from the project default. Fail-SAFE:
-    no declaration -> "auto" (the method default; v7: absent = auto); an unrecognized
-    token -> "conservative" (NEVER silently "auto"); an unreadable foundation -> "auto".
-    Read-only and PURE — mirrors _project_goal; the seed source for cmd_new_task."""
-    tok = _project_autonomy_token(root)
-    return "auto" if tok is None else ("conservative" if tok == "?" else tok)
-
-
 # A non-empty `(verify: <citation>)` on an exit-criterion line — at least one non-whitespace
 # char inside, so a bare `(verify:)`/`(verify: )` does NOT count (the mid-text substring trap).
 def _goal_auto_ready(root: Path, mslug: str) -> bool:
