@@ -77,6 +77,19 @@ class NpmTarballTest(unittest.TestCase):
             self.assertTrue(any(p.startswith(prefix) for p in self.paths),
                             f"no file under {prefix} shipped")
 
+    def test_add_engine_package_ships(self):
+        """add.py imports `from add_engine.<module> import …` at load — the whole
+        package MUST ship in the tarball or `bin/cli.js init` materializes an add.py
+        that crashes with ModuleNotFoundError on the first `add.py status`. Pin every
+        canonical module so a future split/rename can't silently drop one again."""
+        shipped = {p.split("tooling/add_engine/", 1)[1]
+                   for p in self.paths if "tooling/add_engine/" in p and p.endswith(".py")}
+        canonical = {f.name for f in (PKG_ROOT / "tooling" / "add_engine").glob("*.py")}
+        self.assertTrue(canonical, "no add_engine/*.py found on disk — test is vacuous")
+        missing = sorted(canonical - shipped)
+        self.assertEqual(missing, [],
+                         f"the add_engine package must ship whole — missing: {missing}")
+
 
 class PackageConfigTest(unittest.TestCase):
     """No npm needed — reads package.json directly."""
