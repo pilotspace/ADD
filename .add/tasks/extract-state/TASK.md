@@ -188,4 +188,4 @@ Watch (reuse scenarios as monitors): suite green count · ENGINE_PKG_MD5 stabili
 - [SPEC · open] next extraction = accessors (active task/milestone seam) (evidence: milestone plan, 10 tasks left after this)
 
 ### Competency deltas
-- [ADD · open] the re-export pattern preserves cross-module monkeypatching for add.py-level callers; only INTERNAL-call patches need repointing (evidence: tasks 1-3 needed zero patch edits)
+- [ADD · folded] the re-export pattern preserves cross-module monkeypatching for add.py-level callers; only INTERNAL-call patches need repointing (evidence: tasks 1-3 needed zero patch edits) [folded foundation-version 52]

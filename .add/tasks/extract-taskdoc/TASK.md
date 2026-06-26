@@ -173,4 +173,4 @@ Watch: TASK.md-read + deltas-web lint paths · ENGINE_PKG_MD5 stability
 - [SPEC · open] next + last closed cluster: autonomy (`_autonomy_level`·`_effective_autonomy`·`_project_autonomy`·`_project_autonomy_token`) — imports `_task_header` from taskdoc. THEN the orchestrator spine (load_state/save_state/report_data/_decide_next_pair/_collect_open_deltas/cmd_*/main) STAYS as the add.py entry module (evidence: closure probe 2026-06-26)
 
 ### Competency deltas
-- [ADD · open] a SHARED constant interleaved with same-concern siblings is relocated by precise AST Assign-node ranges (move ONLY the shared names), leaving the siblings — text-region deletion would over-capture the interleaved keepers (evidence: 3 delta regexes among _SPEC_STATUSES/_STATUS_SETS/_TAG_BROAD_RE)
+- [ADD · folded] a SHARED constant interleaved with same-concern siblings is relocated by precise AST Assign-node ranges (move ONLY the shared names), leaving the siblings — text-region deletion would over-capture the interleaved keepers (evidence: 3 delta regexes among _SPEC_STATUSES/_STATUS_SETS/_TAG_BROAD_RE) [folded foundation-version 52]

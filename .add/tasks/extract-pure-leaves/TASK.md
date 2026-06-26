@@ -163,4 +163,4 @@ Watch (reuse scenarios as monitors): suite green · ENGINE_PKG_MD5 stability
 - [SPEC · open] clean-leaf phase COMPLETE; remaining = the entangled giant regions (commands/udd/report) → scope as a sub-milestone using the qualification technique proven on identity (evidence: this finishes the pure leaves)
 
 ### Competency deltas
-- [ADD · open] a pure helper's rightful home is the existing module that owns its concern/deps (predicate→predicates, state-load→io_state) — extend, don't proliferate modules (evidence: _task_done, _load_state_for_json)
+- [ADD · folded] a pure helper's rightful home is the existing module that owns its concern/deps (predicate→predicates, state-load→io_state) — extend, don't proliferate modules (evidence: _task_done, _load_state_for_json) [folded foundation-version 52]

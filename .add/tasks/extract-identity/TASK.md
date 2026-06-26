@@ -185,4 +185,4 @@ Watch (reuse scenarios as monitors): identity/ownership suite green · ENGINE_PK
 - [SPEC · open] the big regions (commands/report/udd) need the SAME qualification technique or a DI refactor — scope as a sub-milestone (evidence: this task proved qualification works for a patched cluster)
 
 ### Competency deltas
-- [ADD · open] when commands call a fn BOTH directly and via an intermediary, a single patch target requires CALL-QUALIFICATION at every add.py site (evidence: identity dual-path; Tin authorized over reduce)
+- [ADD · folded] when commands call a fn BOTH directly and via an intermediary, a single patch target requires CALL-QUALIFICATION at every add.py site (evidence: identity dual-path; Tin authorized over reduce) [folded foundation-version 52]
