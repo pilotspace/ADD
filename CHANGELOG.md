@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.0 — 2026-06-26
+
+- (no milestone bundled)
+
 ## 1.11.0 — 2026-06-26
 
 - Audit hardening — close gate/atomicity/coverage gaps — 3 carried · 0 key decision(s)
