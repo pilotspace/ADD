@@ -1,5 +1,5 @@
 # (ADD) AI-Driven Development 
-AI Workflow Methodology - AI Tool
+AI Workflow Methodology - AI Tool - MIT
 
 📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
 
