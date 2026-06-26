@@ -48,6 +48,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     find_root, _require_root, _migrate_state, _state_text_or_die,  # on add.<name>
     _die,                                                          # still resolve;
     _CONFLICT_MARKER_RE,                                            # conflict-marker re
+    _load_state_for_json,                                          # --json state loader
 )
 
 
@@ -108,6 +109,7 @@ def _render_template(name: str, **subs: str) -> str:
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
+    _task_done,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -144,20 +146,6 @@ def _my_work(state: dict, me: dict) -> list[dict]:
 # A git conflict marker BEGINS a line with 7 of `<`, `=`, or `>` (`(?m)^…`). An unresolved
 # merge writes these into state.json, making it invalid JSON; the line-anchor keeps a
 # legitimate value (always on an INDENTED JSON line) from false-tripping the guard.
-
-
-def _load_state_for_json() -> tuple[Path, dict]:
-    """Fail-closed state load for `--json` paths: a missing project or unparseable
-    state.json -> `no_state` on stderr + exit 1, with EMPTY stdout (never a partial
-    JSON object a harness might parse). Built from State only — reads no docs/ chapter.
-    The parsed state is forward-migrated to the multi-active schema before it is returned."""
-    root = find_root()
-    if root is None:
-        _die("no_state")
-    try:
-        return root, _migrate_state(json.loads(_state_text_or_die(root)))
-    except (json.JSONDecodeError, OSError):
-        _die("no_state")
 
 
 def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None:
@@ -668,16 +656,6 @@ def _parse_deps(raw: str | None) -> list[str]:
     if not raw:
         return []
     return [d.strip() for d in raw.split(",") if d.strip()]
-
-
-def _task_done(t: dict) -> bool:
-    # Matrix 3: a task is done when Verify reads PASS *or a signed RISK-ACCEPTED*.
-    # Both completing gates advance phase to "done" (cmd_gate), and a waiver is
-    # signed at gate time — so a verdict gate is enough here; we need not re-read
-    # the waiver. HARD-STOP never reaches "done". A bare `phase done` (escape
-    # hatch, gate still "none") deliberately does NOT count: completion needs a
-    # recorded verdict, not just a phase marker.
-    return t.get("phase") == "done" and t.get("gate") in ("PASS", "RISK-ACCEPTED")
 
 
 def _archived_task_slugs(state: dict) -> set[str]:

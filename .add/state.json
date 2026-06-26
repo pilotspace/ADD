@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-identity",
+  "active_task": "extract-pure-leaves",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1835,10 +1835,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-pure-leaves": {
+      "title": "Extract the last two pure leaves: _task_done -> predicates.py, _load_state_for_json -> io_state.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T01:20:01+00:00",
+      "updated": "2026-06-26T01:24:29+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1346c3ecb803eebc8a7af5faa6e74b4b",
+        "tests": {
+          "add-method/tooling/test_engine_extract_pure_leaves.py": "7d4e73d1cae75dc3a547ebc2fd4f351f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/predicates.py",
+          "add-method/tooling/add_engine/io_state.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_pure_leaves.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/predicates.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
+        ],
+        "snapshot_md5": "b06d37abe84b1bc9d628f746c5e0b8a3"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-26T01:23:50+00:00",
+            "reason": "scope_violation: task 'extract-pure-leaves' touched outside its declared \u00a75 Scope \u2014 add-method/tooling/test_engine_extract_pure_leaves.py (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T01:14:55+00:00",
+  "updated": "2026-06-26T01:24:29+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2536,7 +2580,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-identity"
+    "engine-modularization": "extract-pure-leaves"
   },
   "todos": [
     {

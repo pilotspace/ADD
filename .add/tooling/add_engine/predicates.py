@@ -63,3 +63,13 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     if not text:
         return True                         # present but empty
     return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
+
+
+def _task_done(t: dict) -> bool:
+    # Matrix 3: a task is done when Verify reads PASS *or a signed RISK-ACCEPTED*.
+    # Both completing gates advance phase to "done" (cmd_gate), and a waiver is
+    # signed at gate time — so a verdict gate is enough here; we need not re-read
+    # the waiver. HARD-STOP never reaches "done". A bare `phase done` (escape
+    # hatch, gate still "none") deliberately does NOT count: completion needs a
+    # recorded verdict, not just a phase marker.
+    return t.get("phase") == "done" and t.get("gate") in ("PASS", "RISK-ACCEPTED")
