@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-predicates",
+  "active_task": "extract-identity",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1796,10 +1796,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-identity": {
+      "title": "Extract identity/actor cluster to add_engine/identity.py (call-qualification refactor)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T01:04:56+00:00",
+      "updated": "2026-06-26T01:14:55+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "dc7a909273c83c8690ba9b7ba23d89ad",
+        "tests": {
+          "add-method/tooling/test_engine_extract_identity.py": "8ebbf4d66d0a939cb923b3b0b9ccea8d",
+          "add-method/tooling/test_actor_identity.py": "bea92d43b7320877207d2999a6c8a46f",
+          "add-method/tooling/test_actor_stamping.py": "c2155affac17de98fad4a64d3a0800f9",
+          "add-method/tooling/test_identity_in_status.py": "109a76152ad4d54ffe13d73fe4e330b1",
+          "add-method/tooling/test_ownership_model.py": "6c514143e68ae2516800a678692b6624"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/identity.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/identity.py",
+          "add-method/tooling/test_actor_identity.py",
+          "add-method/tooling/test_actor_stamping.py",
+          "add-method/tooling/test_identity_in_status.py",
+          "add-method/tooling/test_ownership_model.py"
+        ],
+        "snapshot_md5": "86e1f027696b7ff8d7ac97d3958fee7a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-25T18:38:47+00:00",
+  "updated": "2026-06-26T01:14:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2497,7 +2536,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-predicates"
+    "engine-modularization": "extract-identity"
   },
   "todos": [
     {

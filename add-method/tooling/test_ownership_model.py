@@ -17,6 +17,7 @@ from pathlib import Path
 from unittest import mock
 
 import add
+from add_engine import identity
 from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
@@ -84,7 +85,7 @@ class ParseTest(unittest.TestCase):
 
 class AssignTest(_Harness):
     def test_bare_assign_sets_both_to_self(self):
-        with mock.patch.object(add, "_whoami", return_value=dict(SELF)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(SELF)):
             self._silent("assign", "t")
         rec = self._state()["tasks"]["t"]
         self.assertEqual(rec["owner"], SELF)

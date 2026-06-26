@@ -110,100 +110,12 @@ from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
 )
 
-# --- active milestone/task accessor seam (multi-active foundation) -----------
-#
-# Every engine call site reads & writes the active milestone(s)/task through these
-# four helpers, so multi-active SEMANTICS can land in one place later. Today they
-# preserve single-active behavior exactly: reads return the scalar mirror, writes
-# keep the scalar AND the new active_milestones/active_tasks structures in sync.
-
-def _git_config(key: str) -> str | None:
-    """Read one `git config --get <key>`, STRICTLY fail-soft: the engine's FIRST git call,
-    so it never raises, never hangs, never shells. Returns the trimmed value, or None when
-    git is absent / errors / times out / the value is empty."""
-    if shutil.which("git") is None:
-        return None
-    try:
-        out = subprocess.run(
-            ["git", "config", "--get", key],
-            capture_output=True, text=True, timeout=2,
-        ).stdout.strip()
-    except (OSError, subprocess.SubprocessError, ValueError):
-        # OSError: git vanished between which() and run() / spawn error · SubprocessError:
-        # TimeoutExpired · ValueError: a non-UTF-8 config value (latin-1 legacy name) makes
-        # text=True decoding raise UnicodeDecodeError (a ValueError) — all fail soft to None.
-        return None
-    return out or None
-
-
-def _os_user() -> str:
-    """The guaranteed non-empty OS floor. getpass.getuser() reads LOGNAME/USER/... then
-    falls back to the passwd database — but in a bare container (no env var AND no passwd
-    entry) CPython raises KeyError (OSError only on 3.13+). Catch broadly and return a
-    sentinel so _whoami stays TOTAL: it always yields a non-empty name, never crashes."""
-    try:
-        return getpass.getuser() or "unknown"
-    except (KeyError, OSError):
-        return "unknown"
-
-
-def _whoami(state: dict) -> dict:
-    """Resolve the current git-native ACTOR -> {name, email, source}. Priority:
-    (1) an `actor_override` (whoami --set) with a non-blank name -> source 'override';
-    (2) `git config user.name`/`user.email` -> source 'git';
-    (3) the OS user (_os_user) -> source 'os', the guaranteed non-empty floor.
-    Total: always returns a dict with a non-empty name; `email` may be None."""
-    ov = state.get("actor_override")
-    if ov and (ov.get("name") or "").strip():
-        return {"name": ov["name"], "email": ov.get("email"), "source": "override"}
-    name = _git_config("user.name")
-    if name:
-        return {"name": name, "email": _git_config("user.email"), "source": "git"}
-    return {"name": _os_user(), "email": None, "source": "os"}
-
-
-def _actor_stamp(state: dict) -> dict:
-    """The SINGLE source of the structured-actor stamp every engine-WRITTEN human action
-    records — lock · gate · milestone-done · release (user-identity actor-stamping). It IS
-    `_whoami(state)`: a TOTAL {name,email,source} (always a non-empty name), so a stamp can
-    never fail or block a write. Descriptive only — no command's decision reads it."""
-    return _whoami(state)
-
-
-def _render_actor_line(state: dict) -> str:
-    """Render the actor stamp as one human-readable line: name, an optional angle-bracketed
-    email, then the source in parens — used on the RELEASES.md row (no state.json write)."""
-    a = _actor_stamp(state)
-    email = f" <{a['email']}>" if a.get("email") else ""
-    return f"{a['name']}{email} ({a['source']})"
-
-
-def _parse_actor_arg(s: str) -> dict:
-    """Parse an `assign --owner`/`--assignee` value into a {name, email, source: "assigned"}
-    actor (ownership-assignment). "Name <email>" -> both; a bare "Name" -> email None. TOTAL:
-    a malformed value (no closing bracket) never raises — the whole stripped string is the name.
-    `source` is "assigned" — a human typed this name (not git-resolved nor an ADD override)."""
-    m = re.match(r"^\s*(.*?)\s*<([^>]*)>\s*$", s)
-    if m:
-        return {"name": m.group(1), "email": m.group(2) or None, "source": "assigned"}
-    return {"name": s.strip(), "email": None, "source": "assigned"}
-
-
-def _actor_matches(rec_actor: dict | None, me: dict) -> bool:
-    """Does a recorded owner/assignee actor identify the SAME person as `me` (multi-active-UX)?
-    Email-first (the stabler key): when BOTH carry a non-empty email, emails decide; otherwise
-    fall back to name-equality. Both comparisons are stripped + case-insensitive. TOTAL — a None,
-    non-dict, or blank-name record returns False (an unowned/garbage slot is no one's)."""
-    if not isinstance(rec_actor, dict):
-        return False
-    rec_name = (rec_actor.get("name") or "").strip()
-    if not rec_name:
-        return False
-    rec_email = (rec_actor.get("email") or "").strip()
-    me_email = (me.get("email") or "").strip()
-    if rec_email and me_email:
-        return rec_email.lower() == me_email.lower()
-    return rec_name.lower() == (me.get("name") or "").strip().lower()
+# --- git-native identity/actor seam (moved to add_engine/identity.py) --------
+from add_engine import identity            # qualified calls: identity._whoami(...)
+from add_engine.identity import (          # re-exported for `add.<name>` attr compat
+    _git_config, _os_user, _whoami, _actor_stamp,
+    _render_actor_line, _parse_actor_arg, _actor_matches,
+)
 
 
 def _my_work(state: dict, me: dict) -> list[dict]:
@@ -217,8 +129,8 @@ def _my_work(state: dict, me: dict) -> list[dict]:
     for slug, t in tasks.items():
         if not isinstance(t, dict) or t.get("milestone") not in active_set or _task_done(t):
             continue
-        owns = _actor_matches(t.get("owner"), me)
-        assigned = _actor_matches(t.get("assignee"), me)
+        owns = identity._actor_matches(t.get("owner"), me)
+        assigned = identity._actor_matches(t.get("assignee"), me)
         if not (owns or assigned):
             continue
         role = "both" if owns and assigned else ("owner" if owns else "assignee")
@@ -264,7 +176,7 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
         return                                   # unreadable -> no-op (never blocks the gate)
     if "### GATE RECORD" not in text:
         return                                   # nothing to mirror into
-    actor = _actor_stamp(state)
+    actor = identity._actor_stamp(state)
     today = date.today().isoformat()
     # each rule matches ONLY a line still carrying a `<…>` placeholder -> grandfather a resolved line.
     rules = [
@@ -1130,7 +1042,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
     if completing:
         state["tasks"][slug]["phase"] = "done"
     state["tasks"][slug]["gate"] = args.outcome
-    state["tasks"][slug]["gate_actor"] = _actor_stamp(state)   # WHO recorded the verdict (every outcome)
+    state["tasks"][slug]["gate_actor"] = identity._actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
     if completing:
@@ -1344,7 +1256,7 @@ def cmd_lock(args: argparse.Namespace) -> None:
     when = _now()
     # ONE atomic write — no partial lock state.
     state["setup"] = {"locked": True, "locked_at": when, "locked_by": who, "layers": layers,
-                      "actor": _actor_stamp(state)}   # structured actor alongside the free-text locked_by
+                      "actor": identity._actor_stamp(state)}   # structured actor alongside the free-text locked_by
     save_state(root, state)
     if getattr(args, "json", False):
         print(json.dumps(
@@ -1371,7 +1283,7 @@ def cmd_whoami(args: argparse.Namespace) -> None:
             _die("actor_name_blank")
         state["actor_override"] = {"name": args.name, "email": args.email or None}
         save_state(root, state)
-    who = _whoami(state)
+    who = identity._whoami(state)
     if getattr(args, "json", False):
         print(json.dumps(who, separators=(",", ":")))
         return
@@ -1400,14 +1312,14 @@ def cmd_assign(args: argparse.Namespace) -> None:
         _die("unknown_slug")
     # parse + validate ALL flags BEFORE the first write — a blank name is rejected on the
     # PARSED name (so "<>" or " <a@x.io>", whose name parses empty, is caught like "   ").
-    parsed_owner = _parse_actor_arg(args.owner) if args.owner is not None else None
-    parsed_assignee = _parse_actor_arg(args.assignee) if args.assignee is not None else None
+    parsed_owner = identity._parse_actor_arg(args.owner) if args.owner is not None else None
+    parsed_assignee = identity._parse_actor_arg(args.assignee) if args.assignee is not None else None
     if parsed_owner is not None and not parsed_owner["name"].strip():
         _die("owner_name_blank")
     if parsed_assignee is not None and not parsed_assignee["name"].strip():
         _die("assignee_name_blank")
     if parsed_owner is None and parsed_assignee is None:
-        who = _whoami(state)
+        who = identity._whoami(state)
         rec["owner"] = dict(who)
         rec["assignee"] = dict(who)
     else:
@@ -1522,7 +1434,7 @@ def cmd_status(args: argparse.Namespace) -> None:
         grad_ready, grad_met, grad_total = _graduation_ready(root, state)
         print(json.dumps({
             "project": state.get("project"), "stage": state.get("stage"),
-            "actor": _whoami(state),
+            "actor": identity._whoami(state),
             "active_task": _active_task(state),
             "active_milestones": list(state.get("active_milestones") or []),
             "active_tasks": dict(state.get("active_tasks") or {}),
@@ -1547,7 +1459,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"project autonomy: {_project_autonomy(root)}   (default — new tasks inherit)")
     # git-native actor (user-identity): who ADD sees you as this session — the identity every
     # human-owned stamp records. Always present (the resolver is TOTAL). Read-only, no write.
-    _who = _whoami(state)
+    _who = identity._whoami(state)
     _who_email = f" <{_who['email']}>" if _who.get("email") else ""
     print(f"actor   : {_who['name']}{_who_email} (source: {_who['source']})")
     print(f"stage   : {state.get('stage', '(unknown)')}")
@@ -2611,7 +2523,7 @@ def cmd_mine(args: argparse.Namespace) -> None:
     if root is None:
         _die("no_project")
     state = load_state(root)
-    me = _parse_actor_arg(args.actor) if getattr(args, "actor", None) else _whoami(state)
+    me = identity._parse_actor_arg(args.actor) if getattr(args, "actor", None) else identity._whoami(state)
     rows = _my_work(state, me)
     if getattr(args, "json", False):
         print(json.dumps({"actor": me, "tasks": rows}))
@@ -2830,7 +2742,7 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     m["confirmed"] = True
     m["confirmed_at"] = _now()
     m["confirmed_by"] = who
-    m["actor"] = _actor_stamp(state)   # structured actor alongside the free-text confirmed_by
+    m["actor"] = identity._actor_stamp(state)   # structured actor alongside the free-text confirmed_by
     m["updated"] = _now()
     save_state(root, state)
     print(f"confirmed milestone '{slug}' (by {who}) — new-task is now open for it.")
@@ -3083,7 +2995,7 @@ def cmd_milestone_done(args: argparse.Namespace) -> None:
     # Stamp WHO closed it BEFORE rendering the retro, so the persisted exit report records
     # the closer (identity-in-status: the retro IS the report `report <ms>` re-renders, so both
     # must reflect the same final state). In-memory only here — save_state below commits it.
-    state["milestones"][slug]["done_actor"] = _actor_stamp(state)
+    state["milestones"][slug]["done_actor"] = identity._actor_stamp(state)
     # Fail-closed: render+persist the exit report (RETRO.md) BEFORE committing the
     # status flip, so a write failure rolls back naturally (status never commits ->
     # no done-without-retro state). The retro step is read-only on state.json.
@@ -6007,7 +5919,7 @@ def cmd_release(args: argparse.Namespace) -> None:
     new_rel = _prepend_block(rel_before, "# Releases",
                              _render_releases_row(args.version, day, bundle, waiver_slugs,
                                                   getattr(args, "evidence", None),
-                                                  _render_actor_line(state), loose_bundle))
+                                                  identity._render_actor_line(state), loose_bundle))
     try:                                              # CHANGELOG + RELEASES as one all-or-nothing commit
         _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)])
     except OSError as e:
