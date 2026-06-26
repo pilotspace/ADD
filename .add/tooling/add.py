@@ -67,6 +67,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _die,                                                          # still resolve;
     _CONFLICT_MARKER_RE,                                            # conflict-marker re
     _load_state_for_json,                                          # --json state loader
+    _md5_text, _md5_file,                                          # md5 hashing helpers
 )
 
 
@@ -3183,19 +3184,6 @@ def _resolved_test_files(root: Path, slug: str) -> list[Path]:
     if sum(_count_test_defs(f) for f in primary) > 0:
         return primary
     return _declared_test_files(root, slug)
-
-
-def _md5_text(s: str) -> str:
-    return hashlib.md5(s.encode("utf-8")).hexdigest()
-
-
-def _md5_file(p: Path) -> str | None:
-    """md5 of a file's bytes; None on ANY read error (fail-closed — a tracked file
-    that cannot be read counts as DIVERGED at the gate, never a crash)."""
-    try:
-        return hashlib.md5(p.read_bytes()).hexdigest()
-    except OSError:
-        return None
 
 
 def _tripwire_snapshot(root: Path, slug: str, raw3: str) -> dict:

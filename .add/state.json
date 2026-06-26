@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-components",
+  "active_task": "extract-md5",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2009,10 +2009,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-md5": {
+      "title": "Fold md5 hashing helpers (2 fns) into add_engine/io_state.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T02:06:56+00:00",
+      "updated": "2026-06-26T02:10:00+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "113b2153ea124f11d209203f6174f78c",
+        "tests": {
+          "add-method/tooling/test_engine_extract_md5.py": "46cdb3f76177e982f064935ab78b53c4"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/io_state.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_md5.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py"
+        ],
+        "snapshot_md5": "c172a2a9ac102320a22133e8aba509a5"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T02:04:21+00:00",
+  "updated": "2026-06-26T02:10:00+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2710,7 +2742,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-components"
+    "engine-modularization": "extract-md5"
   },
   "todos": [
     {
