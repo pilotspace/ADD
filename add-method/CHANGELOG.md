@@ -6,6 +6,46 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-06-26
+
+Engine-modularization + audit-hardening release — the 7k-line monolith becomes a
+navigable package, the verify/atomicity/coverage gates get five fixes, and the
+standalone (milestone-free) lane becomes first-class. **No behavior change** to the
+CLI, the flow, or any output: this is an internal architecture + hardening release.
+
+### Changed
+- **The engine is now a focused package.** `add-method/tooling/add.py` (7049 → 5640
+  lines, −20%) split into **13 `add_engine/*.py` modules** — `constants`, `io_state`,
+  `accessors`, `predicates`, `identity`, `guidelines`, `render`, `milestones`,
+  `components`, `version`, `release`, `taskdoc`, `autonomy` — behind a stable
+  re-export surface (`import add; add.<name>` still resolves, public AND `_`-prefixed,
+  so every existing test is untouched). `add.py` stays the runnable **orchestrator
+  entry** (the `load_state`/`save_state`/`report_data`/`cmd_*`/`main` spine). Each of
+  the 16 extractions was its own CI-green PR, proven verbatim by an AST source-segment
+  diff and gated by the full suite (1815 → 1959 green throughout, no test weakened).
+- **Two-pin integrity model.** Alongside `ENGINE_MD5` (md5 of `add.py`),
+  `ENGINE_PKG_MD5` is a manifest digest over every `add_engine/*.py`; both are literal
+  pins (never self-hashed) and are checked byte-identical across the 3-tree mirror
+  (canonical · `.add` · `_bundled`). `prepare_bundle` + both installers + the `.add`
+  mirror now ship the whole `add_engine/` package.
+
+### Fixed (audit-hardening)
+- Five gate/atomicity/coverage fixes: a phase-build guard, hardened save-state
+  atomicity, force-preserve self-healing, setup-tests-before-build ordering, and a
+  consumer-stale gate. A security finding remains an un-forceable HARD-STOP.
+
+### Added (the standalone / lightweight lane)
+- **`add.py todo`** — capture a milestone-free backlog item without scaffolding a task.
+- **`loose tasks:` release attribution** — a release now attributes *any* done,
+  milestone-free task on its `RELEASES.md` row (not only milestone membership), with a
+  separate status cue for releasable loose work.
+- **`fast` (task) + `auto` (mode) flag modes** — the standalone lane is first-class:
+  a minimal `TASK.fast.md`, freeze-gated under any milestone, with a flag-mode quick
+  reference.
+
+This release bundles **2 closed milestones** (`audit-hardening`,
+`engine-modularization`) and **27 loose tasks** since 1.10.0.
+
 ## [1.10.0] — 2026-06-25
 
 Component-aware major — ADD now models every codebase as a **graph of components**,

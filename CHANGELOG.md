@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.0 — 2026-06-26
+
+- Audit hardening — close gate/atomicity/coverage gaps — 3 carried · 0 key decision(s)
+- Split the 7k-line add.py engine into a focused add_engine/ package — 14 carried · 0 key decision(s)
+
 ## 1.10.0 — 2026-06-25
 
 - Docs site — ship the AIDD book to GitHub Pages — 6 carried · 0 key decision(s)
