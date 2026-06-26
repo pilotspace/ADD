@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-milestones",
+  "active_task": "extract-components",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1977,10 +1977,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-components": {
+      "title": "Extract component/federation subsystem (7 fns) to add_engine/components.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T02:00:23+00:00",
+      "updated": "2026-06-26T02:04:21+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a8ddeb581217e853c661f8aa60c425be",
+        "tests": {
+          "add-method/tooling/test_engine_extract_components.py": "a171b833215b86f410415b797396a119"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/components.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_components.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/components.py"
+        ],
+        "snapshot_md5": "3e85127d58401fbbf4b4cd233af9e17a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T01:56:21+00:00",
+  "updated": "2026-06-26T02:04:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2678,7 +2710,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-milestones"
+    "engine-modularization": "extract-components"
   },
   "todos": [
     {
