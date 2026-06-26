@@ -1,0 +1,252 @@
+"""add_engine.guidelines — the guidelines / CLAUDE.md-injection subsystem (engine-modularization 8/N).
+
+Inject one stable, marker-delimited ADD block into the project root's AGENTS.md and
+CLAUDE.md. DYNAMIC-BY-REFERENCE: the block tells the agent to run `add.py status` and
+read PROJECT.md — it never embeds live state. A closed, self-contained cluster (8 fns +
+the cluster-private _INIT_EXCLUDE); transitive-closure AST scan: ZERO outbound calls to
+non-cluster add fns. Deps: constants + _atomic_write (io_state) + stdlib. None patched.
+"""
+from __future__ import annotations
+
+import os
+import re
+import sys
+from pathlib import Path
+
+from add_engine.constants import (
+    GUIDELINE_FILES, RULES_FILE_REL, WORKFLOW_HEADINGS,
+    _GUIDE_BEGIN, _GUIDE_END, _RULE_REF_LINE,
+)
+from add_engine.io_state import _atomic_write
+
+
+def _guideline_block() -> str:
+    """The canonical ADD block (markers + body, no trailing newline).
+
+    Agent-agnostic by design (v14 agent-portability): the routing steps depend
+    only on the CLI and plain files, so any agent — Claude, Cursor, Copilot,
+    Codex — can follow them. Claude additionally gets the `add` skill."""
+    return (
+        f"{_GUIDE_BEGIN}\n"
+        "## ADD — how to work in this repo\n"
+        "\n"
+        "This project uses **ADD (AI-Driven Development)**: you, the AI, drive the build;\n"
+        "the human owns direction and verification. The loop below works for any agent —\n"
+        "Claude, Cursor, Copilot, Codex — through the CLI alone. Before you change code:\n"
+        "\n"
+        "1. Run `python3 .add/tooling/add.py status` — where the project is and what's\n"
+        "   next (the resume point; read it first every session).\n"
+        "2. Read `.add/PROJECT.md` — the foundation (domain · spec · UI/UX) every task\n"
+        "   builds on.\n"
+        "3. Run `python3 .add/tooling/add.py guide` — it names the phase and the exact\n"
+        "   phase-guide file to read (the `guide  :` line). Work ONLY that phase — each\n"
+        "   guide ends with its exit gate and the command to move on.\n"
+        "\n"
+        "The flow: INTAKE sizes a request into a milestone; each task runs the\n"
+        "**specification bundle** — Spec+Scenarios+Contract+Tests as one bundle,\n"
+        "ONE human approval at the frozen contract — then a self-driving build→verify\n"
+        "run. Non-negotiable for every agent:\n"
+        "Never weaken a test or edit a frozen contract to make a build pass; a security\n"
+        "finding is always HARD-STOP — never auto-passed.\n"
+        "\n"
+        "On Claude Code the `add` skill drives this loop automatically; other agents\n"
+        "follow the three steps. The book is in `.add/docs/`. This block is generated\n"
+        "by `add.py sync-guidelines`; edit outside the markers, not inside.\n"
+        f"{_GUIDE_END}"
+    )
+
+
+def _inject_block(path: Path) -> str:
+    """Write the ADD block into `path`. Returns created|updated|unchanged.
+
+    - unchanged: on-disk block already matches -> no write, no .bak (idempotent).
+    - updated:   existing content changes -> back up the original to <path>.bak first.
+    - created:   file did not exist -> write the block, no .bak.
+    User content outside the markers is always preserved.
+    """
+    block = _guideline_block()
+    if path.exists():
+        current = path.read_text(encoding="utf-8")
+        begin = current.find(_GUIDE_BEGIN)
+        if begin != -1:
+            end = current.find(_GUIDE_END, begin)
+            if end != -1:                      # replace only the marked region
+                end += len(_GUIDE_END)
+                new = current[:begin] + block + current[end:]
+            else:                              # begin without end: corrupt — append fresh
+                print(f"add: warning: {path.name}: found an ADD:BEGIN with no ADD:END "
+                      "— appending a fresh block; review the result", file=sys.stderr)
+                new = current.rstrip("\n") + "\n\n" + block + "\n"
+        else:                                  # no block yet — append, keep user content
+            new = current.rstrip("\n") + "\n\n" + block + "\n"
+        if new == current:
+            return "unchanged"
+        _atomic_write(Path(str(path) + ".bak"), current)   # rollback path before mutate
+        _atomic_write(path, new)
+        return "updated"
+    _atomic_write(path, block + "\n")
+    return "created"
+
+
+def _rule_file_mode(project_root: Path, flag: bool = False) -> bool:
+    """True when the ADD block should live in .claude/rules/add-workflows.md (referenced
+    from CLAUDE.md) instead of inline. Re-derived from disk EACH phase — no persisted
+    state — so an explicit `--rule-file` at install carries into init via the rule file it
+    leaves behind. Three triggers: the explicit flag, a ccsk project (.ccsk/ sibling to
+    .claude/), or a rule file already written by a prior run. Pure + fail-soft."""
+    if flag:
+        return True
+    try:
+        if (project_root / ".ccsk").is_dir():
+            return True
+        if (project_root / RULES_FILE_REL).exists():
+            return True
+    except OSError:
+        pass
+    return False
+
+
+def _strip_inline_block(text: str) -> str:
+    """Remove an inline ADD:BEGIN..ADD:END region (migration to rule-file mode), collapsing
+    the blank-line gap it leaves behind. An unterminated BEGIN (no END) is left as-is rather
+    than eating the rest of the file (design-for-failure)."""
+    begin = text.find(_GUIDE_BEGIN)
+    if begin == -1:
+        return text
+    end = text.find(_GUIDE_END, begin)
+    if end == -1:
+        return text
+    end += len(_GUIDE_END)
+    head = text[:begin].rstrip("\n")
+    tail = text[end:].lstrip("\n")
+    if head and tail:
+        return head + "\n\n" + tail
+    return head or tail
+
+
+def _insert_rule_reference(text: str) -> str:
+    """Insert the ADD rule-file bullet under an existing Workflows/Rules heading, or append a
+    fresh '## Workflows' section when none is found. Caller guarantees the bullet is absent."""
+    lines = text.split("\n")
+    heading_idx = -1
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.*?)\s*$", line)
+        if m and any(m.group(2).strip().lower() == h.lower() for h in WORKFLOW_HEADINGS):
+            heading_idx = i
+            break
+    if heading_idx == -1:                       # no section — append a fresh one
+        body = text.rstrip("\n")
+        sep = "\n\n" if body else ""
+        return f"{body}{sep}## Workflows\n\n{_RULE_REF_LINE}\n"
+    level = len(re.match(r"^(#{1,6})", lines[heading_idx]).group(1))
+    end = len(lines)                            # section ends at next same/higher heading or EOF
+    for j in range(heading_idx + 1, len(lines)):
+        m = re.match(r"^(#{1,6})\s+", lines[j])
+        if m and len(m.group(1)) <= level:
+            end = j
+            break
+    insert_at = heading_idx + 1                 # after the last non-blank line in the section
+    for j in range(heading_idx + 1, end):
+        if lines[j].strip():
+            insert_at = j + 1
+    lines.insert(insert_at, _RULE_REF_LINE)
+    return "\n".join(lines)
+
+
+def _ensure_claude_reference(claude_md: Path) -> str:
+    """Make CLAUDE.md reference the ADD rule file under a Workflows/Rules heading, migrating
+    any prior inline ADD block out. Returns created|updated|unchanged.
+
+    - Strips a prior inline ADD:BEGIN..END block (rule-file mode supersedes inline).
+    - If a reference to add-workflows.md already exists -> no bullet change.
+    - Else inserts the bullet into the first matching section, or appends '## Workflows'.
+    .bak on change; idempotent. User content outside the touched region is preserved.
+    """
+    existed = claude_md.exists()
+    current = claude_md.read_text(encoding="utf-8") if existed else ""
+    new = _strip_inline_block(current)
+    if "add-workflows.md" not in new:
+        new = _insert_rule_reference(new)
+    if not new.endswith("\n"):
+        new += "\n"
+    if new == current:
+        return "unchanged"
+    if existed:
+        _atomic_write(Path(str(claude_md) + ".bak"), current)   # rollback path before mutate
+    _atomic_write(claude_md, new)
+    return "updated" if existed else "created"
+
+
+def _inject_guidelines(project_root: Path, rule_file: bool = False) -> list[tuple[str, str]]:
+    """Inject the block into each guideline file under `project_root`.
+
+    Symlink-dedup: targets resolving (os.path.realpath) to the same inode are
+    written once, against the REAL file (never replacing the symlink with a
+    regular file). Per-target OSError is isolated (warn+skip) so one unwritable
+    file never aborts the run or `init`.
+
+    Rule-file mode (ccsk projects / `--rule-file`): CLAUDE.md's full block is relocated
+    to .claude/rules/add-workflows.md and CLAUDE.md keeps only a reference bullet. This is
+    CLAUDE-only — AGENTS.md (and any other guideline file) keeps the inline block.
+    """
+    results: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    mode = _rule_file_mode(project_root, rule_file)
+    for name in GUIDELINE_FILES:
+        if name == "CLAUDE.md" and mode:
+            rules_path = project_root / RULES_FILE_REL
+            real = os.path.realpath(rules_path)
+            if real not in seen:
+                seen.add(real)
+                try:
+                    action = _inject_block(rules_path)
+                except (OSError, UnicodeDecodeError) as exc:
+                    print(f"add: warning: could not sync {RULES_FILE_REL} — {exc}; skipped",
+                          file=sys.stderr)
+                    action = "skipped"
+                results.append((str(RULES_FILE_REL), action))
+            try:
+                ref_action = _ensure_claude_reference(project_root / "CLAUDE.md")
+            except (OSError, UnicodeDecodeError) as exc:
+                print(f"add: warning: could not sync CLAUDE.md — {exc}; skipped",
+                      file=sys.stderr)
+                ref_action = "skipped"
+            results.append(("CLAUDE.md", ref_action))
+            continue
+        target = project_root / name
+        real = os.path.realpath(target)
+        if real in seen:
+            continue
+        seen.add(real)
+        write_target = Path(real) if target.is_symlink() else target
+        try:
+            action = _inject_block(write_target)
+        except (OSError, UnicodeDecodeError) as exc:
+            # design for failure: an unwritable target OR a non-UTF-8 existing file
+            # (e.g. a UTF-16 CLAUDE.md from a Windows editor) must not crash init or
+            # abort the other target — warn and skip this one.
+            print(f"add: warning: could not sync {name} — {exc}; skipped",
+                  file=sys.stderr)
+            action = "skipped"
+        results.append((name, action))
+    return results
+
+
+# --- commands ----------------------------------------------------------------
+
+_INIT_EXCLUDE = {
+    ".add", "AGENTS.md", "CLAUDE.md", ".git",
+    ".gitignore", ".gitattributes", ".github", ".editorconfig",  # VCS/CI/editor scaffolding — no domain signal
+    "LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING",            # legal boilerplate — no domain signal
+}  # README/docs/source are NOT excluded: they carry domain content adopt.md maps -> brownfield
+
+
+def _is_brownfield(base: Path) -> bool:
+    """True when `base` already holds project content beyond the tool's own scaffolding.
+
+    Judgment-free: a mechanical fact (does the dir hold a non-excluded entry?), so the
+    autonomous-onboarding flow knows to map existing code into the living documentation. INTERPRETING
+    that code stays with the AI (skill/add/adopt.md) — the engine only detects + signals."""
+    if not base.is_dir():
+        return False
+    return any(child.name not in _INIT_EXCLUDE for child in base.iterdir())
