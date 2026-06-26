@@ -2476,6 +2476,10 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     print(f"created milestone '{slug}' -> {mfile}")
     if queued:
         print(f"queued (not active) — promote it with: add.py activate {slug}")
+        # surface the recorded confirm gate for a queued+await_confirm milestone (queued-await-confirm-hint):
+        # additive — prints ONLY when await_confirm, so plain `--queued` output stays byte-identical.
+        if await_confirm:
+            print(f"  (unconfirmed — after promote: add.py milestone-confirm {slug})")
     else:
         print("active milestone set." + ("" if not await_confirm else
               "  (unconfirmed — show the MILESTONE.md, then: add.py milestone-confirm " + slug + ")"))
