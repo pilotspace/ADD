@@ -2639,25 +2639,34 @@ def cmd_ready(args: argparse.Namespace) -> None:
 
 
 def _wave_schedule(state: dict, mslug: str) -> dict:
-    """Pure, total: derive the DAG schedule for milestone `mslug` from state — never
-    mutates, never raises on dict input. Returns one of:
+    """One-element wrapper: a single milestone's schedule is the merge over just [mslug].
+    Output is byte-identical to the historical per-milestone scheduler (the suite is the oracle)."""
+    return _wave_schedule_merged(state, [mslug])
+
+
+def _wave_schedule_merged(state: dict, mslugs: list[str]) -> dict:
+    """Pure, total: derive ONE DAG schedule over the UNION of open members across `mslugs`
+    (a single-element list is the historical per-milestone case) — never mutates, never raises
+    on dict input. Returns one of:
       {"cycle": [slug, ...]}                                       — unschedulable cycle
       {"waves", "critical_path", "critical_path_len", "tiers", "blocked"}  — a schedule
 
     A dep is SATISFIED (does not block) if it is archived or `_task_done` — the SAME
-    predicate cmd_ready uses. A not-done dep that is an OPEN MEMBER of this milestone
-    forces a later wave. A not-done dep that is NOT an open member (external/unknown)
-    is UNSATISFIABLE here -> the task is `blocked`, never scheduled. Critical path is the
-    longest chain (most tasks) through the scheduled sub-DAG; ties break by sorted slug.
-    Tier is advisory: `top` on the critical path, `mid` elsewhere (scheduled tasks only)."""
+    predicate cmd_ready uses. A not-done dep that is an OPEN MEMBER of ANY target milestone
+    forces a later wave (so a cross-milestone dep ORDERS, it does not block). A not-done dep
+    that is NOT an open member of any target (external/unknown) is UNSATISFIABLE here -> the
+    task is `blocked`, never scheduled. Critical path is the longest chain (most tasks) through
+    the scheduled sub-DAG; ties break by sorted slug. Tier is advisory: `top` on the critical
+    path, `mid` elsewhere (scheduled tasks only)."""
     tasks = state.get("tasks") or {}
     archived = _archived_task_slugs(state)
+    targetset = set(mslugs)
 
     def _ok(d: str) -> bool:                       # satisfied externally / already done
         return d in archived or (d in tasks and _task_done(tasks[d]))
 
     open_members = {s: t for s, t in tasks.items()
-                    if t.get("milestone") == mslug and not _task_done(t)}
+                    if t.get("milestone") in targetset and not _task_done(t)}
 
     # partition open members into blocked vs schedulable — to a FIXED POINT, so blocking
     # propagates transitively: a task is blocked if any dep is unsatisfiable here, where
@@ -2758,16 +2767,71 @@ def _wave_block_lines(state: dict, mslug: str, sched: dict) -> list[str]:
     return lines
 
 
+def _wave_block_lines_merged(state: dict, mslugs: list[str], sched: dict) -> list[str]:
+    """The text lines `waves --merge` renders for ONE unified schedule over the milestone SET:
+    a `merged: …` header naming the set + each scheduled task tagged with its `[milestone]` so
+    cross-milestone tasks are unambiguous. Critical-path / tier-hint / blocked lines mirror
+    `_wave_block_lines`."""
+    n = len(mslugs)
+    lines = [f"merged: {' + '.join(mslugs)} ({n} milestone{'s' if n != 1 else ''})"]
+    if not sched["waves"]:
+        if sched["blocked"]:
+            for s in sched["blocked"]:
+                lines.append(f"blocked: {s} (waiting on {', '.join(sched['blocked'][s])})")
+        else:
+            lines.append("all tasks done — nothing to schedule")
+        return lines
+    scheduled_set = {x for w in sched["waves"] for x in w}
+    for i, wave in enumerate(sched["waves"], start=1):
+        parts = []
+        for s in wave:
+            label = f"{s} [{state['tasks'][s].get('milestone')}]"
+            md = sorted(d for d in (state["tasks"][s].get("depends_on") or [])
+                        if d in scheduled_set)
+            parts.append(f"{label} (deps: {', '.join(md)})" if md else label)
+        lines.append(f"wave {i}: {', '.join(parts)}")
+    crit = sched["critical_path"]
+    lines.append(f"critical path: {' → '.join(crit)}  ({sched['critical_path_len']} tasks)")
+    tops = [s for s, tier in sched["tiers"].items() if tier == "top"]
+    mids = [s for s, tier in sched["tiers"].items() if tier == "mid"]
+    lines.append(f"tier hint: top → {', '.join(tops)}; mid → {', '.join(mids) or '(none)'}")
+    for s in sched["blocked"]:
+        lines.append(f"blocked: {s} (waiting on {', '.join(sched['blocked'][s])})")
+    return lines
+
+
 def cmd_waves(args: argparse.Namespace) -> None:
     """READ-ONLY DAG scheduler: print the topological waves, critical path, advisory tier hint,
-    and blocked set. With no --milestone it spans EVERY active milestone (cross-active-waves);
-    a single target / --milestone renders byte-identically. Writes nothing; no `next:` footer."""
+    and blocked set. With no --milestone it spans EVERY active milestone (cross-active-waves)
+    as SEPARATE streams; a single target / --milestone renders byte-identically. With --merge it
+    unifies the active SET into ONE schedule so cross-milestone deps order, not block.
+    Writes nothing; no `next:` footer."""
     is_json = getattr(args, "json", False)
     if is_json:
         _, state = _load_state_for_json()
     else:
         state = load_state(_require_root())
     mslug_arg = getattr(args, "milestone", None)
+    if getattr(args, "merge", False):
+        if mslug_arg:                                  # explicit target → a 1-milestone merge (NOT a conflict)
+            if mslug_arg not in (state.get("milestones") or {}):
+                _die(f"unknown_milestone: '{mslug_arg}' is not a milestone in this project")
+            targets = [mslug_arg]
+        else:
+            primary = _active_milestone(state)
+            if not primary:
+                _die("no_active_milestone: no active milestone and no --milestone given")
+            targets = [primary] + [m for m in (state.get("active_milestones") or [])
+                                   if m != primary]
+        sched = _wave_schedule_merged(state, targets)
+        if "cycle" in sched:
+            _die(f"dependency_cycle: not-done deps form a cycle "
+                 f"({' -> '.join(sched['cycle'])}) — no valid schedule")
+        if is_json:
+            print(json.dumps({"merged": targets, **sched}))
+        else:
+            print("\n".join(_wave_block_lines_merged(state, targets, sched)))
+        return
     if mslug_arg:
         targets = [mslug_arg]                          # explicit single target — unchanged
     else:
@@ -5435,6 +5499,8 @@ def build_parser() -> argparse.ArgumentParser:
                                        "waves + critical path + advisory tier hint")
     pwa.add_argument("--milestone", default=None,
                      help="milestone slug to schedule (default: the active milestone)")
+    pwa.add_argument("--merge", action="store_true",
+                     help="unify the active SET into ONE schedule (cross-milestone deps order, not block)")
     pwa.add_argument("--json", action="store_true", help="machine-readable JSON output")
     pwa.set_defaults(func=cmd_waves)
 

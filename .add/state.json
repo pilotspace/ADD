@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "freeze-actor-stamp",
+  "active_task": "waves-merge",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1736,10 +1736,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "waves-merge": {
+      "title": "waves --merge: cross-milestone critical-path scheduling across the active SET",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "multi-active-polish",
+      "depends_on": [],
+      "created": "2026-06-26T12:31:15+00:00",
+      "updated": "2026-06-26T12:52:07+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-26T12:39:40+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "40a6ac0ebd5e91798f0d0f3396663846",
+        "tests": {
+          "add-method/tooling/test_waves_merge.py": "daea352b55c875092921fa2442689d53"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_waves_merge.py"
+        ],
+        "snapshot_md5": "ed8888b81e96b9bb50b9c3d76b6023f8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T11:07:42+00:00",
+  "updated": "2026-06-26T12:52:07+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -1926,13 +1967,18 @@
       "title": "multi-active-polish \u2014 finish the deferred team-collaboration seams",
       "goal": "make parallel-front work and ownership first-class: complete the multi-active accessors, state-doctor, ownership surface, and command-policy seams 1.8.0 carried forward",
       "stage": "mvp",
-      "status": "queued",
+      "status": "active",
       "created": "2026-06-26T10:28:42+00:00",
-      "updated": "2026-06-26T10:28:42+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
+      "updated": "2026-06-26T12:13:59+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-26T12:13:59+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "component-polish": {
       "title": "component-polish \u2014 close the component-pillar gaps and harden the cross-repo edges",
@@ -1959,7 +2005,7 @@
       "await_confirm": true
     }
   },
-  "active_milestone": null,
+  "active_milestone": "multi-active-polish",
   "archived": [
     {
       "slug": "v5",
@@ -2504,9 +2550,12 @@
       "archived": "2026-06-26"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "multi-active-polish"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "multi-active-polish": "waves-merge"
   },
   "todos": [
     {
