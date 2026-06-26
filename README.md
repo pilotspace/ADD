@@ -2,7 +2,7 @@
 
 ### A complete, practical book on building software when AI writes the code
 
-**Edition:** 1.10.0 · **Type:** AI Workflow Methodology
+**Edition:** 1.11.0 · **Type:** AI Workflow Methodology
 
 📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
 
