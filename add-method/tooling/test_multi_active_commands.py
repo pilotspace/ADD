@@ -110,11 +110,13 @@ class CommandTest(unittest.TestCase):
         self.assertIn("m2", st["active_milestones"])
 
     def test_deactivate_nonmember_rejected(self):
-        # m1 is not active yet (only m2 from the replace-focus new-milestone)
+        # new-milestone PRESERVES the active SET (new-milestone-add-focus), so both m1+m2 are
+        # active after setUp — make a GENUINE non-member with a queued milestone and reject that.
+        add.main(["new-milestone", "m3", "--stage", "mvp", "--queued"])
         st = self._state()
-        self.assertNotIn("m1", st["active_milestones"])
+        self.assertNotIn("m3", st["active_milestones"])
         with self.assertRaises(SystemExit):
-            add.main(["deactivate", "m1"])
+            add.main(["deactivate", "m3"])
 
     def test_archive_deactivates_from_set(self):
         add.main(["activate", "m1"])

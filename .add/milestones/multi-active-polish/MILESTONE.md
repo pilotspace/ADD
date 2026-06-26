@@ -1,39 +1,37 @@
-# MILESTONE: multi-active-polish — finish the deferred team-collaboration seams
+# MILESTONE: multi-active-polish — close the genuinely-open parallel-front residuals
 
-goal: make parallel-front work and ownership first-class: complete the multi-active accessors, state-doctor, ownership surface, and command-policy seams 1.8.0 carried forward
-rationale: sub-milestone — harvested from the team-collaboration SPEC deltas 1.8.0 deliberately carried forward (open SPEC deltas across active-accessors, ownership-*, state-doctor, multi-active-commands, cross-active-waves). Grouped because they all complete the multi-active / parallel-front model.
-stage: mvp · status: queued · created: 2026-06-26T10:28:42+00:00
+goal: close the multi-active residuals an audit confirmed still open: cross-milestone wave scheduling, a widened ownership lens, doctor value-domain validation, and parallel-preserving milestone creation.
+rationale: sub-milestone — originally harvested from the team-collaboration SPEC deltas 1.8.0 carried forward. A 2026-06-26 running-evidence audit (69 area tests green + behavior probes) found the bulk already shipped by intervening work: `use`-under-own-milestone DONE, owner/assignee surfacing DONE, `doctor`+`--json` + referential pointers DONE. RE-SCOPED to the 4 genuinely-open residuals; the original 5 task slugs were retired (they collide with the done/archived 1.8.0 tasks of the same name).
+stage: mvp · status: active · created: 2026-06-26T10:28:42+00:00 · re-scoped: 2026-06-26 (audit-driven slim, 5→4 tasks)
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,
 > written just-in-time. Update this doc whenever a task reveals a milestone gap.
 
 ## Scope
-In:  the deferred multi-active seams — (1) multi-active state accessors that own the active-task lifecycle, (2) an `add.py doctor` state integrity + referential validator, (3) owner/assignee surfaced in status·report·--json + per-stream, (4) consistent use/activate/new-milestone command policy for a parallel active SET, (5) cross-milestone waves + a wider `mine` lens.
-Out: NEW collaboration features beyond closing the carried-forward deltas; remote/multi-machine federation (that's component-polish); any change to the frozen state-schema migration shape beyond safe-read tolerance.
+In:  the audit-confirmed open residuals — (1) `waves --merge` cross-milestone critical-path scheduling, (2) `mine --all` widening the ownership lens past active milestones (email-OR-name match), (3) `doctor` VALUE-domain checks beyond referential pointers (gate∈{PASS,RISK-ACCEPTED,HARD-STOP} · phase∈PHASES · archived consistency · owner/assignee shape), (4) `new-milestone` ADD-and-focus so creating a milestone in parallel preserves the active SET (add, not replace).
+Out: the already-shipped 1.8.0 work (active-accessors · `use`-under-own-milestone · ownership surfacing · doctor referential pointers + `--json`) — DONE, not re-touched; the standalone `_parse_actor_arg` double-bracket guard (dropped as low-value; may ride along in new-milestone-add-focus if trivial); remote/multi-machine federation (that's component-polish); any change to the frozen state-schema migration shape beyond safe-read tolerance.
 
 ## Shared decisions & glossary deltas   (living — every task must honor these)
 - "active SET" = the N active milestones + their active tasks; reads must treat `active_tasks` as advisory and filter against LIVE milestones.
 - byte-identical default: single-active projects must see no behavior change from any seam here.
-- never widen a referential check into a retro-red of grandfathered records — doctor reports, it does not auto-fail history.
+- never widen a referential check into a retro-red of grandfathered records — doctor REPORTS findings, it does not auto-fail history (critical for doctor-value-checks).
 
 ## Shared / risky contracts (freeze these first)
-- the `add.py doctor` output shape (text + `--json`) -> owning task `state-doctor` (other tasks may read it)
-- the per-task active-task accessor seam -> owning task `active-accessors` (ownership-surface + multi-active-commands depend on it)
+- These 4 residuals are independent additive changes — no cross-task freeze dependency; each freezes its OWN contract in its bundle.
+- the riskiest is `doctor-value-checks` (it widens `_doctor_findings` output): freeze that it ADDS findings only, never auto-fails or retro-reds grandfathered records.
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] active-accessors      depends-on: none              — `cmd_use` records the active task under its OWN milestone; filter `active_tasks` vs LIVE milestones; `.get("active_tasks",{})` read-tolerance for partial migrations
-- [ ] state-doctor          depends-on: none              — `add.py doctor` integrity + referential validator (+ `--json`); widen set: owner/assignee shape · gate∈{PASS,RISK-ACCEPTED,HARD-STOP} · phase∈PHASES · archived consistency
-- [ ] ownership-surface     depends-on: active-accessors  — show owner/assignee in status + report + `--json`; per-stream owner+assignee in the `streams:` block
-- [ ] multi-active-commands depends-on: active-accessors  — unify `use`/`activate` done-milestone policy; `new-milestone` ADD-and-focus (preserve the active SET); `_parse_actor_arg` rejects a double-bracket value
-- [ ] cross-active-waves    depends-on: none              — `waves --merge` cross-milestone critical path; corrupt `active_milestones` entry SKIPs (not dies); `mine --all` + email-OR-name match
+- [ ] waves-merge             depends-on: none   — `waves --merge` cross-milestone critical path (today `waves` is per-milestone only: `--milestone`/`--json`); fold the active SET into one DAG/schedule
+- [ ] mine-all-lens           depends-on: none   — `mine --all` widens past active milestones; email-OR-name match (today `mine` is `--actor`/`--json` over active only)
+- [ ] doctor-value-checks     depends-on: none   — extend `_doctor_findings` with value-domain validation: gate∈{PASS,RISK-ACCEPTED,HARD-STOP} · phase∈PHASES · archived consistency · owner/assignee shape (ADD findings; never retro-red)
+- [ ] new-milestone-add-focus depends-on: none   — `cmd_new_milestone` preserves the active SET (swap `_set_active_milestone` replace → `_activate_milestone` add-and-focus); optional: fold in the actor double-bracket reject if trivial
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `add.py use <task>` labels the active task under the task's own milestone, never the primary   (← active-accessors)
-- [ ] `add.py doctor` reports state integrity + referential health and supports `--json`             (← state-doctor)
-- [ ] status / report / `--json` show owner + assignee per active stream                              (← ownership-surface)
-- [ ] `use`/`activate` share one done-milestone policy; `new-milestone` preserves the active SET      (← multi-active-commands)
-- [ ] `waves --merge` unifies cross-milestone deps; `mine --all` widens past active milestones        (← cross-active-waves)
+- [x] `add.py waves --merge` unifies cross-milestone deps into one critical path                      (← waves-merge · PASS 2026-06-26 · +11 tests, suite 2037 green)
+- [x] `add.py mine --all` lists work across ALL milestones with email-OR-name match                   (← mine-all-lens · PASS 2026-06-26 · +6 tests, suite 2054 green; email-OR-name already in _actor_matches)
+- [x] `add.py doctor` flags a bad gate/phase enum, archived inconsistency, or malformed owner/assignee (← doctor-value-checks · PASS 2026-06-26 · +11 tests, suite 2048 green, live doctor PASS on 91 tasks)
+- [x] creating a milestone while one is active PRESERVES the active SET (adds, never replaces)         (← new-milestone-add-focus · PASS 2026-06-26 · +6 tests, suite 2060 green; swap _set→_activate, blast radius measured = 1 test)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
