@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "mine-all-lens",
+  "active_task": "new-milestone-add-focus",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1869,10 +1869,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "new-milestone-add-focus": {
+      "title": "new-milestone preserves the active SET (adds, never replaces)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "multi-active-polish",
+      "depends_on": [],
+      "created": "2026-06-26T13:26:58+00:00",
+      "updated": "2026-06-26T13:46:55+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-26T13:42:14+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c00b2cc7edb7871fc3efcbc4b528c6e7",
+        "tests": {
+          "add-method/tooling/test_new_milestone_add_focus.py": "31f884230ef7b5a757ad9862d73b3cc4"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_new_milestone_add_focus.py",
+          "add-method/tooling/test_multi_active_commands.py"
+        ],
+        "snapshot_md5": "83799adfb95f450414dae043d71ede90"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T13:18:44+00:00",
+  "updated": "2026-06-26T13:46:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2647,7 +2689,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "multi-active-polish": "mine-all-lens"
+    "multi-active-polish": "new-milestone-add-focus"
   },
   "todos": [
     {

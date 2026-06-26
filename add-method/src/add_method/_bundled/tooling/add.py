@@ -2580,7 +2580,10 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         record.update(confirmed=False, confirmed_at=None, confirmed_by=None, await_confirm=True)
     state["milestones"][slug] = record
     if not queued:
-        _set_active_milestone(state, slug)
+        # PRESERVE the active SET (new-milestone-add-focus): ADD this milestone + focus it, rather
+        # than REPLACING the set and evicting the others. Single-active is identical ([] -> [slug]);
+        # a user who already had P active now keeps P active alongside the new primary.
+        _activate_milestone(state, slug)
     save_state(root, state)
     print(f"created milestone '{slug}' -> {mfile}")
     if queued:
