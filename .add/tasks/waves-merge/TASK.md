@@ -290,4 +290,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] a NEW add.py prose string must dodge the reserved ubiquitous-language terms (here "fold") — the lint fires at FULL-SUITE time, not at write time, so an engine edit that adds help/docstring prose should grep the new strings against the ban list before the first full run (evidence: `--merge` help + docstring used "fold", caught by test_ubiquitous_language, reworded → "unify", this task)
+- [ADD · folded] a NEW add.py prose string must dodge the reserved ubiquitous-language terms (here "fold") — the lint fires at FULL-SUITE time, not at write time, so an engine edit that adds help/docstring prose should grep the new strings against the ban list before the first full run (evidence: `--merge` help + docstring used "fold", caught by test_ubiquitous_language, reworded → "unify", this task) [folded foundation-version 55]

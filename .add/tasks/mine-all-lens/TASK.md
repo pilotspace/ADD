@@ -245,4 +245,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a fixture that calls `new-task` with no `--milestone` does NOT make a loose task — new-task auto-links to the active milestone; a "loose" fixture must poke milestone=None explicitly. The red test passed its assertion against the WRONG arrange until the build surfaced it (evidence: test_all_includes_loose_renders_loose showed `[m1]` not `[loose]`)
+- [TDD · folded] a fixture that calls `new-task` with no `--milestone` does NOT make a loose task — new-task auto-links to the active milestone; a "loose" fixture must poke milestone=None explicitly. The red test passed its assertion against the WRONG arrange until the build surfaced it (evidence: test_all_includes_loose_renders_loose showed `[m1]` not `[loose]`) [folded foundation-version 55]

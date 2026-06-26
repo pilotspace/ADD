@@ -273,4 +273,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] before adding a doctor/audit check, GREP the real long-lived state.json for the values it will judge (gates/phases/archived shape) — a check that trips on legitimate history is a false-positive that erodes trust; here all 91 tasks + 45 archived passed, verified pre-build (evidence: the §0 GROUND "VERIFIED" note, this task)
+- [ADD · folded] before adding a doctor/audit check, GREP the real long-lived state.json for the values it will judge (gates/phases/archived shape) — a check that trips on legitimate history is a false-positive that erodes trust; here all 91 tasks + 45 archived passed, verified pre-build (evidence: the §0 GROUND "VERIFIED" note, this task) [folded foundation-version 55]
