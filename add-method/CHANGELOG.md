@@ -8,25 +8,65 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [1.12.0] — 2026-06-26
 
-Milestone-naming polish — `new-milestone` now steers toward legible names and
-records a precise creation time. Backward-compatible; no breaking change.
+Multi-milestone polish release — the intake/roadmap front grows a real **queue**,
+the parallel-front residuals close, and the UDD loop gains a design-intake beat.
+Backward-compatible throughout; a single-active project sees no behavior change.
 
-### Added
-- **Descriptive-slug nudge.** A milestone slug that is a bare version number
-  (`v2`, `v1-1`, `1.2` — matched by `^v?\d+([._-]\d+)*$`) now prints an advisory
-  `note:` suggesting a short descriptive name (e.g. `payment-retries`) and **still
-  creates the milestone**. It never blocks — a deliberate version slug is honored.
-  Keeps the `status` milestones list legible instead of a column of `v1-1 / v2 / v3`.
+### Added (multi-milestone-intake — a request that is several milestones)
+- **`queued` milestone status.** The milestone status enum becomes
+  **active · queued · done** (was active · done). A milestone can now exist
+  non-active, awaiting promotion — created with `new-milestone --queued` and made
+  active with an explicit `activate`. Migration-safe: an old state with no `queued`
+  milestones reads byte-identically.
+- **Roadmap intake.** `intake.md` now guides decomposing a request that is *several*
+  milestones into a roadmap that creates **all N — 1 active + N−1 queued** — instead
+  of only the first. Promotion stays human-gated; the whole set is never auto-activated.
+- **Queued-backlog resume cue.** `status` surfaces the queued backlog (active
+  milestone + what's queued next), so a multi-milestone session resumes cleanly. The
+  cue is present-only — byte-identical output when nothing is queued.
 
-### Changed
-- **Full-ISO `created:` stamp in MILESTONE.md.** The human-facing `created:` line
-  goes from a date (`2026-06-26`) to the full UTC ISO timestamp
-  (`2026-06-26T03:47:28+00:00`). A single `_now()` instant feeds both the rendered
-  file and the `state.json` record, so the two are provably equal.
+### Added (multi-active-polish — close the parallel-front residuals)
+- **`waves --merge`** folds the active SET into one cross-milestone DAG and critical
+  path (today's `waves` is per-milestone only).
+- **`mine --all`** widens the ownership lens past the active milestones — every
+  not-done task you own or are assigned, across all milestones plus loose, with an
+  email-OR-name match. Plain `mine` (active-only) stays byte-identical.
+- **`doctor` value-domain checks.** `doctor` now flags a bad `gate` enum
+  (∉ {PASS, RISK-ACCEPTED, HARD-STOP}), a bad `phase`, archived inconsistency, or a
+  malformed owner/assignee — beyond the existing referential pointers. It **adds
+  findings only**; it never auto-fails or retro-reds grandfathered history.
+- **`new-milestone` add-and-focus.** Creating a milestone while one is active now
+  **preserves the active SET** (adds the new one and focuses it) instead of replacing
+  the set and evicting the others. `--queued` and single-active stay byte-identical.
 
-Built end-to-end through ADD's own spec→tests→build→verify flow as a dogfood of the
-1.11.0 engine; the two design choices (warn-not-block · upgrade `created:`) were
-human-decided at the contract freeze.
+### Added (udd-design-intake)
+- **`design-intake` beat.** The UDD design loop opens with a new front beat that
+  interviews the human on four axes — **FIDELITY · CONCEPT · LAYOUT · VISUAL DESIGN**
+  — recorded in `DESIGN.md` before review-capture-confirm. Convention-only (the engine
+  never renders); identity values (brand color/type) stay human-owned — surfaced to
+  decide, never auto-picked.
+
+### Added / Changed (loose tasks since 1.11.0)
+- **Descriptive-slug nudge (`new-milestone`).** A milestone slug that is a bare
+  version number (`v2`, `v1-1`, `1.2` — matched by `^v?\d+([._-]\d+)*$`) prints an
+  advisory `note:` suggesting a short **descriptive** name (e.g. `payment-retries`) and
+  **still creates the milestone** — never blocks.
+- **Full-ISO `created:` stamp.** MILESTONE.md's `created:` line is the full UTC ISO
+  timestamp (`2026-06-26T03:47:28+00:00`); a single `_now()` instant feeds both the
+  rendered file and the `state.json` record.
+- **`add.py freeze`** — an engine-stamped human-approval write at the §3 contract
+  freeze (DRAFT → FROZEN @ vN with a structured actor line). A security finding remains
+  an un-forceable HARD-STOP.
+- **Queued + await-confirm reminder.** A milestone that is both `queued` and
+  `--await-confirm` now surfaces its `milestone-confirm` reminder at resume.
+- **Flow docs.** Book ch.02 gains a subsection explaining the milestone-scale
+  composition rule — tasks are **listed breadth-first up front** (the DAG), then each
+  **specified just-in-time**.
+
+This release bundles **3 closed milestones** (`udd-design-intake`,
+`multi-milestone-intake`, `multi-active-polish`) and the loose tasks above since
+1.11.0. Every milestone was built end-to-end through ADD's own
+spec→tests→build→verify flow.
 
 ## [1.11.0] — 2026-06-26
 
