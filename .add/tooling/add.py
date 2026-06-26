@@ -55,6 +55,11 @@ from add_engine.components import (
     _contract_snapshot, _in_scope,
 )
 
+# --- update-nudge version helpers (moved to add_engine/version.py) ----------
+from add_engine.version import (
+    _read_json_safe, _version_gt, _fetch_latest_version,
+)
+
 
 def _phase_index(name: str) -> int:
     """Ordinal of a phase in PHASES; used to enforce forward-skip rules."""
@@ -5885,48 +5890,11 @@ def _rebind_optional_positionals(parser: argparse.ArgumentParser,
 # silently does nothing and nothing is lost. It NEVER changes a command's stdout or exit.
 _UPDATE_CACHE = ".update-cache.json"
 _UPDATE_TTL = timedelta(hours=24)          # hit the registry at most once / day
-_REGISTRY_LATEST = "https://registry.npmjs.org/@pilotspace/add/latest"
-
-
-def _read_json_safe(path: Path):
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-
-
 def _write_json_safe(path: Path, obj) -> None:
     try:
         path.write_text(json.dumps(obj, indent=2) + "\n", encoding="utf-8")
     except OSError:
         pass
-
-
-def _version_gt(a: str, b: str) -> bool:
-    """True if version a is newer than b (dotted numeric; prerelease suffix dropped)."""
-    def key(v: str):
-        out = []
-        for part in str(v).split("."):
-            part = part.split("-", 1)[0]
-            out.append((0, int(part)) if part.isdigit() else (1, part))
-        return out
-    try:
-        return key(a) > key(b)
-    except Exception:
-        return False
-
-
-def _fetch_latest_version(timeout: float = 1.5):
-    """GET the registry's latest version. Returns a string, or None on ANY failure
-    (offline, timeout, bad payload) — the caller treats None as 'unknown, skip'."""
-    try:
-        req = urllib.request.Request(_REGISTRY_LATEST, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        v = data.get("version")
-        return v if isinstance(v, str) and v else None
-    except Exception:
-        return None
 
 
 def _cached_latest(add_dir: Path):
