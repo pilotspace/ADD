@@ -2315,6 +2315,39 @@ def _doctor_findings(root: Path) -> list[str]:
         if m is not None and m not in milestones:
             findings.append(f"task '{slug}' references missing milestone '{m}' — fix: set its "
                             "milestone to a real one (or none)")
+    # value-domain checks (doctor-value-checks): gate/phase enum (required) · owner/assignee
+    # shape (optional) · archived consistency. Present-but-invalid + missing-required only;
+    # absent owner/assignee is fine. Pure/total — .get-guarded, isinstance-checked, never raises.
+    for slug, t in tasks.items():
+        if not isinstance(t, dict):
+            continue
+        g = t.get("gate")
+        if g is None:
+            findings.append(f"task '{slug}' is missing its gate — fix: one of {', '.join(GATES)}")
+        elif g not in GATES:
+            findings.append(f"task '{slug}' has invalid gate '{g}' — fix: one of {', '.join(GATES)}")
+        p = t.get("phase")
+        if p is None:
+            findings.append(f"task '{slug}' is missing its phase — fix: one of {', '.join(PHASES)}")
+        elif p not in PHASES:
+            findings.append(f"task '{slug}' has invalid phase '{p}' — fix: one of {', '.join(PHASES)}")
+        for role in ("owner", "assignee"):
+            v = t.get(role)
+            if v is not None and not (isinstance(v, dict) and isinstance(v.get("name"), str) and v.get("name")):
+                findings.append(f"task '{slug}' has a malformed {role} — fix: an actor object "
+                                "{name, email, source} or remove it")
+    archived = state.get("archived") if isinstance(state.get("archived"), list) else []
+    for a in archived:
+        if not isinstance(a, dict):
+            continue
+        aslug = a.get("slug")
+        if aslug is not None and aslug in milestones:
+            findings.append(f"archived milestone '{aslug}' is also a live milestone — fix: remove "
+                            "the live duplicate or the archived entry")
+        ts = a.get("task_slugs")
+        if isinstance(ts, list) and isinstance(a.get("tasks"), int) and a.get("tasks") != len(ts):
+            findings.append(f"archived milestone '{aslug}' task count {a.get('tasks')} ≠ {len(ts)} "
+                            "listed — fix: reconcile its task_slugs")
     return findings
 
 

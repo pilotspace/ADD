@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "waves-merge",
+  "active_task": "doctor-value-checks",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1777,10 +1777,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "doctor-value-checks": {
+      "title": "doctor value-domain checks: gate/phase enum, archived consistency, owner/assignee shape",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "multi-active-polish",
+      "depends_on": [],
+      "created": "2026-06-26T12:55:17+00:00",
+      "updated": "2026-06-26T13:07:35+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-26T13:02:19+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "23443179eb602b91f4ed5ed644bc0a0e",
+        "tests": {
+          "add-method/tooling/test_doctor_value_checks.py": "6e470e5adb4fb51511e1250ced314c64"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_doctor_value_checks.py"
+        ],
+        "snapshot_md5": "1635d8ed64d70bf6c484b159ef63e5da"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T12:52:07+00:00",
+  "updated": "2026-06-26T13:07:35+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2555,7 +2596,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "multi-active-polish": "waves-merge"
+    "multi-active-polish": "doctor-value-checks"
   },
   "todos": [
     {

@@ -30,7 +30,7 @@ Out: the already-shipped 1.8.0 work (active-accessors · `use`-under-own-milesto
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] `add.py waves --merge` unifies cross-milestone deps into one critical path                      (← waves-merge · PASS 2026-06-26 · +11 tests, suite 2037 green)
 - [ ] `add.py mine --all` lists work across ALL milestones with email-OR-name match                   (← mine-all-lens)
-- [ ] `add.py doctor` flags a bad gate/phase enum, archived inconsistency, or malformed owner/assignee (← doctor-value-checks)
+- [x] `add.py doctor` flags a bad gate/phase enum, archived inconsistency, or malformed owner/assignee (← doctor-value-checks · PASS 2026-06-26 · +11 tests, suite 2048 green, live doctor PASS on 91 tasks)
 - [ ] creating a milestone while one is active PRESERVES the active SET (adds, never replaces)         (← new-milestone-add-focus)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
