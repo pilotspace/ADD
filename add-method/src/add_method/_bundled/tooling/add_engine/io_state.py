@@ -172,3 +172,17 @@ def _state_text_or_die(root: Path) -> str:
 def _die(msg: str, code: int = 1) -> None:
     print(f"add: error: {msg}", file=sys.stderr)
     raise SystemExit(code)
+
+
+def _load_state_for_json() -> tuple[Path, dict]:
+    """Fail-closed state load for `--json` paths: a missing project or unparseable
+    state.json -> `no_state` on stderr + exit 1, with EMPTY stdout (never a partial
+    JSON object a harness might parse). Built from State only — reads no docs/ chapter.
+    The parsed state is forward-migrated to the multi-active schema before it is returned."""
+    root = find_root()
+    if root is None:
+        _die("no_state")
+    try:
+        return root, _migrate_state(json.loads(_state_text_or_die(root)))
+    except (json.JSONDecodeError, OSError):
+        _die("no_state")
