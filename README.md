@@ -1,7 +1,9 @@
 # (ADD) AI-Driven Development 
 AI Workflow Methodology - AI Tool - MIT
 
-📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
+📖 **Read the book online:** <https://pilotspace.github.io/ADD/> 
+
+**Example**: [.add](https://github.com/pilotspace/ADD/tree/main/.add)
 
 ---
 
@@ -46,6 +48,7 @@ Here is the whole path, from nothing to your first running feature.
 ### 1 · Install into your project
 
 From your project root (an empty folder or an existing repo), pick either ecosystem:
+> Example [.add](https://github.com/pilotspace/ADD/tree/main/.add)
 
 ```bash
 # Node / npm
