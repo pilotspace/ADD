@@ -166,7 +166,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch: status/report dashboard render · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] remaining clean clusters (deps already in modules): deltas (_lint_task_deltas/_collect_open_deltas/_spec_delta_*) · release (_render_changelog_block/_render_releases_row/_closed_milestones) · milestone-doc (_project_goal/_exit_criteria/_stage_criteria) · components (_components/_contracts/_federation) · version-io (_read_json_safe/_version_gt/_fetch_latest_version[PATCHED]) · md5 (_md5_text/_md5_file). Then the cmd_*/save/load/main core. (evidence: 85 leaf-now candidates found)
+- [SPEC · dropped] remaining clean clusters (deps already in modules): deltas (_lint_task_deltas/_collect_open_deltas/_spec_delta_*) · release (_render_changelog_block/_render_releases_row/_closed_milestones) · milestone-doc (_project_goal/_exit_criteria/_stage_criteria) · components (_components/_contracts/_federation) · version-io (_read_json_safe/_version_gt/_fetch_latest_version[PATCHED]) · md5 (_md5_text/_md5_file). Then the cmd_*/save/load/main core. (evidence: 85 leaf-now candidates found)
 
 ### Competency deltas
 - [ADD · folded] a SHARED constant (used by both moving + staying code) relocates to constants.py as the single source — distinguish from a cluster-PRIVATE const (travels with the cluster, like _ANSI/_INIT_EXCLUDE) (evidence: _DEFAULT_WIDTH vs _ANSI) [folded foundation-version 52]

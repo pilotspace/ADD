@@ -219,7 +219,7 @@ Watch (reuse scenarios as monitors): a legacy/unstamped record ever rendering a 
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] add an `add.py` freeze write command so the §3-freeze human seam is engine-WRITTEN (and thus actor-stampable) like lock/gate/milestone-done — today freeze is human-authored TASK.md text read via `_AUDIT_STAMP_RE`, so the actor trail has a hole at freeze (evidence: actor-stamping scoped to the 4 engine-written seams precisely because freeze has no write seam; carried forward through this task).
+- [SPEC · dropped] add an `add.py` freeze write command so the §3-freeze human seam is engine-WRITTEN (and thus actor-stampable) like lock/gate/milestone-done — today freeze is human-authored TASK.md text read via `_AUDIT_STAMP_RE`, so the actor trail has a hole at freeze (evidence: actor-stamping scoped to the 4 engine-written seams precisely because freeze has no write seam; carried forward through this task).
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

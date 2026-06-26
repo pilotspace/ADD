@@ -160,7 +160,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch (reuse scenarios as monitors): suite green · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] clean-leaf phase COMPLETE; remaining = the entangled giant regions (commands/udd/report) → scope as a sub-milestone using the qualification technique proven on identity (evidence: this finishes the pure leaves)
+- [SPEC · dropped] clean-leaf phase COMPLETE; remaining = the entangled giant regions (commands/udd/report) → scope as a sub-milestone using the qualification technique proven on identity (evidence: this finishes the pure leaves)
 
 ### Competency deltas
 - [ADD · folded] a pure helper's rightful home is the existing module that owns its concern/deps (predicate→predicates, state-load→io_state) — extend, don't proliferate modules (evidence: _task_done, _load_state_for_json) [folded foundation-version 52]

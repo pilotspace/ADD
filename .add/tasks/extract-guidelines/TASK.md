@@ -164,7 +164,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch (reuse scenarios as monitors): init/sync block injection · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] remaining core = cmd_* dispatch (~1100L) · UDD validator (~1500L) · report (~3100L) — each needs its own task; cmd_* extraction needs the dispatch table repointed (evidence: this banked the last closed helper-cluster)
+- [SPEC · dropped] remaining core = cmd_* dispatch (~1100L) · UDD validator (~1500L) · report (~3100L) — each needs its own task; cmd_* extraction needs the dispatch table repointed (evidence: this banked the last closed helper-cluster)
 
 ### Competency deltas
 - [ADD · folded] a transitive-closure AST scan (not just one-level free-names) proves a cluster is self-contained → a closed unpatched cluster moves by plain re-export, no qualification (evidence: the 8-fn guidelines subsystem, empty outbound set) [folded foundation-version 52]

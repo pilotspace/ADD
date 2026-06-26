@@ -172,7 +172,7 @@ Reviewed by: Tin Dang · date: 2026-06-26   (auto mode — pure verbatim refacto
 Watch (reuse scenarios as monitors): suite green count · ENGINE_PKG_MD5 stability across trees
 
 ### Spec delta
-- [SPEC · open] next = extract-contracts (or the deferred identity/_stamp_gate_record accessor sub-tasks) (evidence: the 14 remaining accessor-seam fns are entangled — own tasks)
+- [SPEC · dropped] next = extract-contracts (or the deferred identity/_stamp_gate_record accessor sub-tasks) (evidence: the 14 remaining accessor-seam fns are entangled — own tasks)
 
 ### Competency deltas
 - [ADD · folded] running the AST free-name scan UPFRONT (at ground) pre-empts the 806-error class from extract-state (evidence: this task's scan was clean before any code moved) [folded foundation-version 52]

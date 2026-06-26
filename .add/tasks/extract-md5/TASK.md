@@ -152,7 +152,7 @@ Reviewed by: Tin Dang · date: 2026-06-26
 Watch: snapshot/contract/scope-gate md5 paths · ENGINE_PKG_MD5 stability
 
 ### Spec delta
-- [SPEC · open] remaining clean cluster: version (`_fetch_latest_version`/`_read_json_safe`/`_version_gt` + private `_REGISTRY_LATEST`; the test reassigns `add._fetch_latest_version` → standard re-export, caller stays in add.py). THEN the coupled CORE (deltas/autonomy/next-pair/cmd_*/report_data/save/load/main) is a 31-fn web around load_state — NOT a clean cluster; probe for closed SUB-clusters, else it stays as the add.py entry/orchestrator module (evidence: closure scan from cmd_deltas = 31 fns crossing load_state/report_data/autonomy)
+- [SPEC · dropped] remaining clean cluster: version (`_fetch_latest_version`/`_read_json_safe`/`_version_gt` + private `_REGISTRY_LATEST`; the test reassigns `add._fetch_latest_version` → standard re-export, caller stays in add.py). THEN the coupled CORE (deltas/autonomy/next-pair/cmd_*/report_data/save/load/main) is a 31-fn web around load_state — NOT a clean cluster; probe for closed SUB-clusters, else it stays as the add.py entry/orchestrator module (evidence: closure scan from cmd_deltas = 31 fns crossing load_state/report_data/autonomy)
 
 ### Competency deltas
 - [ADD · folded] a 2-line low-level helper folds INTO the nearest foundational module (io_state) rather than spawning a thin single-purpose module — modularization groups by concern, not by maximizing module count (evidence: md5 → io_state, not a new hashing.py) [folded foundation-version 52]

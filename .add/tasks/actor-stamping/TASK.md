@@ -246,7 +246,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] add an `add.py freeze` write command that records a structured actor at the contract freeze (the 5th human seam), so freeze joins lock/gate/milestone-done/release (evidence: actor-stamping stamped only the 4 engine-WRITTEN seams; freeze stays human-authored TASK.md text with no write seam — human-confirmed 2026-06-22 to defer to a follow-up task)
+- [SPEC · dropped] add an `add.py freeze` write command that records a structured actor at the contract freeze (the 5th human seam), so freeze joins lock/gate/milestone-done/release (evidence: actor-stamping stamped only the 4 engine-WRITTEN seams; freeze stays human-authored TASK.md text with no write seam — human-confirmed 2026-06-22 to defer to a follow-up task)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
