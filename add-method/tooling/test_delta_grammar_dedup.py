@@ -3,10 +3,16 @@
 
 CONTRACT (frozen @ v1): the enumerated delta grammar
   (DDD|SDD|UDD|TDD|ADD) · (open|folded|rejected)
-is compiled EXACTLY ONCE in add.py (the module-level `_DELTA_RE`), reused by
+is compiled EXACTLY ONCE in the ENGINE — the module-level `_DELTA_RE`, reused by
 `_task_prose`, `_collect_open_deltas`, and `_lint_task_deltas`. The canonical
 regex stays PERMISSIVE (leading whitespace tolerated) because `_task_prose`
 feeds it un-stripped lines. Behaviour of report/`deltas`/lint is unchanged.
+
+(engine-modularization 15/N: `_DELTA_RE` was relocated from add.py to
+`add_engine/constants.py` — the taskdoc readers `_task_prose`/`_spec_delta_entries`
+import it, so it cannot live in add.py without a cycle. The single-source
+invariant is UNCHANGED; only its home moved. `_engine_source()` therefore scans
+the whole engine — add.py + add_engine/*.py — so a duplicate anywhere still fails.)
 
 RED driver: test_one_canonical_delta_grammar_source (2 copies exist today).
 The other two are the behaviour-preserving safety net (green now AND after).
@@ -28,8 +34,17 @@ import add
 _ENUM = re.compile(r"\(DDD\|SDD\|UDD\|TDD\|ADD\)")
 
 
-def _add_source() -> str:
-    return Path(inspect.getfile(add)).read_text(encoding="utf-8")
+def _engine_source() -> str:
+    """The WHOLE engine source — add.py + the add_engine package — concatenated.
+    The canonical grammar now lives in add_engine/constants.py (relocated in
+    engine-modularization 15/N), so the single-source count must span the package,
+    not just add.py. A duplicate compiled anywhere in the engine still trips the count."""
+    add_py = Path(inspect.getfile(add))
+    parts = [add_py.read_text(encoding="utf-8")]
+    pkg = add_py.parent / "add_engine"
+    for mod in sorted(pkg.glob("*.py")):
+        parts.append(mod.read_text(encoding="utf-8"))
+    return "\n".join(parts)
 
 
 class DeltaGrammarDedupTest(unittest.TestCase):
@@ -57,9 +72,9 @@ class DeltaGrammarDedupTest(unittest.TestCase):
     # --- RED driver: one canonical source -----------------------------------
     def test_one_canonical_delta_grammar_source(self):
         """Exactly one compiled regex enumerates the competency grammar."""
-        src = _add_source()
+        src = _engine_source()
         # Count only lines that BOTH enumerate the grammar AND are a compiled-regex literal
-        # (a pattern string). The canonical lives in a re.compile(...) call.
+        # (a pattern string). The canonical lives in a re.compile(...) call (now in constants.py).
         hits = [ln for ln in src.splitlines() if _ENUM.search(ln)]
         self.assertEqual(
             len(hits), 1,

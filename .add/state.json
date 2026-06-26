@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-release",
+  "active_task": "extract-taskdoc",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2105,10 +2105,45 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-taskdoc": {
+      "title": "Extract TASK.md structural readers (11 fns) to add_engine/taskdoc.py + relocate 3 shared delta regexes to constants.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T02:23:59+00:00",
+      "updated": "2026-06-26T02:33:44+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "969fee8fb37ef952672402314e0ba78e",
+        "tests": {
+          "add-method/tooling/test_engine_extract_taskdoc.py": "f1ebc4748d476f1e27fccdce2ae1381d"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/taskdoc.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_taskdoc.py",
+          "add-method/tooling/test_delta_grammar_dedup.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/taskdoc.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
+        ],
+        "snapshot_md5": "4765a010e05078b6fc0953b2ebb3a8ed"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T02:21:45+00:00",
+  "updated": "2026-06-26T02:33:44+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2806,7 +2841,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-release"
+    "engine-modularization": "extract-taskdoc"
   },
   "todos": [
     {

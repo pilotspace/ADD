@@ -4,6 +4,7 @@ Pure module-level constants. add.py re-exports these so `import add; add.STAGES`
 (and the 6 _-prefixed names) still resolve. `__all__` lists the public names so
 `from add_engine.constants import *` brings exactly them (not the Path import).
 """
+import re
 from pathlib import Path
 
 __all__ = [
@@ -204,3 +205,13 @@ Reviewed by:
 """
 
 _DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETRO.md)
+
+
+# --- shared delta-parsing regexes (used by taskdoc readers AND the deltas-web lint) ---
+_DELTA_RE = re.compile(
+    r"\s*-\s*\[\s*(DDD|SDD|UDD|TDD|ADD)\s*·\s*(open|folded|rejected)\s*\]\s*(.+)$"
+)
+_EVIDENCE_RE = re.compile(r"^(.*?)\s*\(evidence:\s*(.*?)\)\s*$")
+_SPEC_DELTA_RE = re.compile(
+    r"\s*-\s*\[\s*(SPEC)\s*·\s*(open|seeded|dropped)\s*\]\s*(.+)$"
+)
