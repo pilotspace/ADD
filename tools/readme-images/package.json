@@ -1,0 +1,14 @@
+{
+  "name": "add-readme-images",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generate the README's section graphics with Satori (HTML/CSS -> SVG -> PNG). Re-run with `npm install && npm run build`.",
+  "scripts": {
+    "build": "node generate.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.12.1"
+  }
+}

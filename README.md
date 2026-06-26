@@ -1,62 +1,47 @@
-# AI-Driven Development
-
-### A complete, practical book on building software when AI writes the code
-
-**Edition:** 1.11.0 · **Type:** AI Workflow Methodology
+# (ADD) AI-Driven Development 
+AI Workflow Methodology - AI Tool
 
 📖 **Read the book online:** <https://pilotspace.github.io/ADD/>
 
 ---
 
-## Why ADD
+## Highlight
 
-- **Approve once, then let it run** — one human sign-off at the frozen contract; the agent builds the rest.
-- **Proof, not promises** — verify on observed behavior and pre-declared build-expectations, not code-reading.
-- **Security never gets waved through** — any security finding is a HARD-STOP; release gates can't be `--force`d.
-- **You decide how much rope** — a per-task autonomy dial; a `risk: high` task is fail-closed until trust is lowered.
-- **Prototype to production** — task → milestone → graduate (analytics-gated) → recorded release, one method.
-- **Smarter as you go** — competency deltas fold into a living, compacting foundation carried across milestones.
-- **See it before you build it** — a UDD wireframe + zero-dependency HTML mock, approved before any code.
-- **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves (`add.py waves`).
-- **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+- ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent builds the rest.
+- 🔬 **Proof, not promises** — verify on observed behavior and pre-declared build-expectations, not code-reading.
+- 🔒 **Security never gets waved through** — any security finding is a HARD-STOP; release gates can't be `--force`d.
+- 🚀 **You decide how much rope** — a per-task autonomy dial; a `risk: high` task is fail-closed until trust is lowered.
+- 🚀 **Prototype to production** — task → milestone → graduate (analytics-gated) → recorded release, one method.
+- 🚀 **Smarter as you go** — competency deltas fold into a living, compacting foundation carried across milestones.
+- 🚀 **See it before you build it** — a UDD wireframe + zero-dependency HTML mock, approved before any code.
+- 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves (`add.py waves`).
+- 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+
+> _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
 
 ---
 
 ![Foundation Domain Documents](add-foundation.png)
 
-## What this book is
-
 This is a complete guide to **AIDD (AI-Driven Development)** — a way of building software in which an AI agent writes most of the code and people do the two things AI cannot reliably do alone: decide *what* to build, and *verify* that what was built is correct.
-
-It is written to be read once front to back, then kept open beside you as a working manual. The early chapters explain *why* the method has the shape it does; the middle chapters explain each step in detail; the later chapters explain how to operate it across a real team and product; the appendices are copy-paste reference material.
-
-## Who it is for
 
 Anyone who builds software with AI in the loop: engineers, architects, testers, designers, product owners, and the managers who lead them. No part assumes you have read the others; cross-references point you to what you need.
 
-## The method in one paragraph in SDLC
-
-For every feature, before AI writes any code, you write four short artifacts in order — the rules it must obey, those rules as pass/fail scenarios, the data and interface contract, and the failing tests — and then you direct the AI to make the tests pass without changing them, and finally you verify the result through evidence rather than inspection. That ordered set of artifacts *is* the method. The code is disposable; the artifacts are the durable asset. Direction comes before speed, and trust comes from passing tests rather than from reading code and finding it plausible.
-
-## The flow
+[ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
 
 ![ADD Flow](add-flow.png)
 
-> **Specify → Scenarios → Contract → Tests → Build → Verify → observe, then repeat.**
-
 ---
 
-## Install and run your first feature
+## 🚀 Install
 
-ADD ships as AI Agent skill — you install it once, then 
-
-> **talk to the agent and it drives the method**.
+![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives in .add/state.json, no context rot](add-install.png)
 
 Here is the whole path, from nothing to your first running feature.
 
-- **Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*
-- **CLI Coding Agent:** Claude Code, Codex, ...
-- **Maximize performance with agent's skillset**: https://github.com/ccsk-org/ccsk-cli (recommended - opt-in)
+- 🧱 **Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*
+- 🤖 **CLI Coding Agent:** Claude Code, Codex, ...
+- ⚡ **Maximize performance with agent's skillset**: https://github.com/ccsk-org/ccsk-cli (recommended — opt-in)
 
 ### 1 · Install into your project
 
@@ -81,47 +66,47 @@ or, on **Claude Code**, install the skill straight from the marketplace — no n
 /plugin install add@add-method
 ```
 
-Open `/add` and say what you want to build. On first run the skill materializes the engine
-and the AIDD book into your project (`.add/tooling/` + `.add/docs/`) straight from the plugin,
-then scaffolds `.add/`. The result is self-contained and portable — identical to an npm or pip
-install, so every agent and a human at the shell can run `python3 .add/tooling/add.py`.
-
 ### 2 · Spawn your first feature — talk to the agent
 
 In Claude Code, run **`/add`** and say what you want to build:
 
 > `/add 'Describe your goal'`
 
+*Example: `/add simple JWT auth`*
+
 From there the agent runs the on-ramp for you:
 
-1. **Orients** from `add.py status` (the resume point) — never re-reading your repo.
-2. **Sizes** your request into a **milestone** (goal · scope · breadth-first tasks ·
+1. 🧭 **Orients** from `add.py status` (the resume point) — never re-reading your repo.
+2. 📐 **Sizes** your request into a **milestone** (goal · scope · breadth-first tasks ·
    exit criteria) — *you confirm the shape.*
-3. Drafts each feature's **one-approval front** — Spec + Scenarios + Contract + Tests
+3. ✍️ Drafts each feature's **one-approval front** — Spec + Scenarios + Contract + Tests
    as one bundle — *you give one approval at the frozen contract.*
-4. Runs **build → verify** to green; a security finding always stops back to you.
+4. ✅ Runs **build → verify** to green; a security finding always stops back to you.
 
-So your first feature is: **describe it → confirm the milestone → approve the contract
-→ review the result.** Everything in between is the agent.
+So your first feature is: **describe it → confirm the milestone → approve the contract → review the result.** Everything in between is the agent.
 
 ### 3 · Resume anytime
 
-> `/add` 
+> `/add status|continue`
 
 *AI will report to you how are current status of this project?*
 
 State lives on disk, not in the chat — close your laptop, come back tomorrow, and this
 tells you exactly where you left off. No context rot.
 
-**Go deeper:** the [2-minute Getting Started](./GETTING-STARTED.md) · the
-[full hands-on walkthrough](./add-method/GETTING-STARTED.md) (one real feature, end to
-end) · [package source](./add-method/README.md) · [`CHANGELOG`](./add-method/CHANGELOG.md).
-Releases: `@pilotspace/add` (npm) · `pilotspace-add` (PyPI) — one tag publishes both
-(see [`.github/workflows/publish.yml`](./.github/workflows/publish.yml)).
+**Go deeper:** 
+- the [2-minute Getting Started](./GETTING-STARTED.md) 
+- the [full hands-on walkthrough](./add-method/GETTING-STARTED.md) (one real feature, end to end)
+- [package source](./add-method/README.md)
+- [`CHANGELOG`](./add-method/CHANGELOG.md). 
+
+Releases: 
+- `@pilotspace/add` (npm) - https://www.npmjs.com/package/@pilotspace/add
+-  `pilotspace-add` (PyPI) — https://pypi.org/project/pilotspace-add/
 
 ---
 
-## Table of contents
+## 📚 Deepdive
 
 **Part I — Foundations**
 - [00 · The shift: why AIDD exists](./00-introduction.md)
@@ -161,13 +146,3 @@ Releases: `@pilotspace/add` (npm) · `pilotspace-add` (PyPI) — one tag publish
 - [Appendix E · Checklists](./appendix-e-checklists.md)
 - [Appendix F · Document requirements matrix (Project → Milestone → Task)](./appendix-f-requirements-matrix.md)
 - [Appendix G · References & lineage](./appendix-g-references.md)
-
----
-
-## Conventions used in this book
-
-- **▶ Example** marks the running worked example.
-- **Do / Don't** boxes give the rule in its shortest form.
-- A **gate** is a checkpoint with an explicit pass/fail exit. Its outcome is always one of `PASS`, `RISK-ACCEPTED` (a signed waiver), or `HARD-STOP`.
-- File names like `SPEC.md`, `features/*.feature`, `contracts/*` refer to the artifacts you create per feature; see [Appendix A](./appendix-a-templates.md).
-- Where this book uses a plain step name, the formal phase name (for teams mapping to a larger standard) appears once in [Appendix C](./appendix-c-glossary.md).
