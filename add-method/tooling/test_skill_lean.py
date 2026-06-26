@@ -49,7 +49,12 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # assets" step gained the SAME four-field rubric at milestone altitude (a milestone grounds as rigorously as
 # a task §0); +400 B human-approved surface, ratio 0.68 kept (+⌈400/0.68⌉=589). The won ground is untouched.
 POOLS = [
-    {"name": "core",          "ratio": 0.88, "baseline": 18465,
+    # core 18465 → 19675 @ roadmap-intake-guide (same "rebaseline for human-approved new surface" method):
+    # intake.md gains a NEW "## Roadmap" section (decompose an N-milestone request → 1 active + N−1
+    # `new-milestone --queued`, promote with `activate`) — +1064 B human-approved surface (milestone
+    # multi-milestone-intake 2/3, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows by
+    # surface ÷ ratio (+⌈1064/0.88⌉=1210). The won compaction on SKILL.md + intake.md is untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 19675,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes

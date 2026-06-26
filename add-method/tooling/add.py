@@ -1303,6 +1303,14 @@ def cmd_status(args: argparse.Namespace) -> None:
             _so = _fmt_actor(_owner_rec) if _owner_rec.get("name") else ""
             _own_frag = f"  · owner: {_so}" if _so else ""
             print(f"  {_mk} {_m:<20} task={_tk or '(none)'}  phase={_ph}{_tag}{_own_frag}")
+    # queued backlog (queue-resume-surface): surface milestones awaiting promotion so a
+    # multi-milestone session resumes cleanly — `active` is what you're on, `queued` is what's
+    # next. ADDITIVE + present-only: silent when zero queued (byte-identical), exactly like the
+    # release/loose/streams cues; reads state, writes nothing, changes no command decision.
+    _queued = [ms for ms, m in milestones.items() if m.get("status") == "queued"]
+    if _queued:
+        print(f"queued  : {len(_queued)} milestone(s) next — {', '.join(_queued)}")
+        print(f"          promote next: add.py activate {_queued[0]}")
     # surface the active task's autonomy level (task explicit-autonomy-dial) so the human
     # reads the throttle every session; "unset" when no explicit `autonomy:` line is present.
     if active and active in tasks:
@@ -2448,9 +2456,13 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     # NO `confirmed` key is written → grandfathered-confirmed → no gate (so the existing engine
     # tests stay byte-green). The guided skill flow passes the flag at the human-review point.
     await_confirm = bool(getattr(args, "await_confirm", False))
+    # --queued (OPT-IN): create the milestone non-active (status=queued) without stealing focus.
+    # The active set is left UNCHANGED so the default path (no flag) stays byte-identical. Promote
+    # later with `activate` (queued→active). Foundation for roadmap intake (1 active + N queued).
+    queued = bool(getattr(args, "queued", False))
     record = {
         "title": title, "goal": args.goal or "", "stage": args.stage,
-        "status": "active", "created": now, "updated": now,
+        "status": "queued" if queued else "active", "created": now, "updated": now,
     }
     if await_confirm:
         # `await_confirm` is the STABLE opt-in marker (set ONLY here, at creation). `confirmed`
@@ -2458,11 +2470,15 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         # milestone too, so a later build-entry gate must key on `await_confirm`, not `confirmed`.
         record.update(confirmed=False, confirmed_at=None, confirmed_by=None, await_confirm=True)
     state["milestones"][slug] = record
-    _set_active_milestone(state, slug)
+    if not queued:
+        _set_active_milestone(state, slug)
     save_state(root, state)
     print(f"created milestone '{slug}' -> {mfile}")
-    print("active milestone set." + ("" if not await_confirm else
-          "  (unconfirmed — show the MILESTONE.md, then: add.py milestone-confirm " + slug + ")"))
+    if queued:
+        print(f"queued (not active) — promote it with: add.py activate {slug}")
+    else:
+        print("active milestone set." + ("" if not await_confirm else
+              "  (unconfirmed — show the MILESTONE.md, then: add.py milestone-confirm " + slug + ")"))
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
@@ -2947,6 +2963,11 @@ def cmd_activate(args: argparse.Namespace) -> None:
         _die("unknown_milestone")
     if state["milestones"][slug].get("status") == "done":
         _die("milestone_done")
+    # PROMOTE a queued milestone: activating it flips queued→active (human-gated promotion —
+    # the chosen verb, reusing `activate` rather than a separate `promote`). An already-active
+    # milestone is just refocused (status unchanged), keeping the default path byte-identical.
+    if state["milestones"][slug].get("status") == "queued":
+        state["milestones"][slug]["status"] = "active"
     _activate_milestone(state, slug)
     save_state(root, state)
     print(f"activated '{slug}' — active: {', '.join(state['active_milestones'])}")
@@ -5310,6 +5331,10 @@ def build_parser() -> argparse.ArgumentParser:
     pm.add_argument("--goal", default=None, help="one-sentence outcome")
     pm.add_argument("--stage", default="mvp", choices=STAGES)
     pm.add_argument("--force", action="store_true", help="overwrite MILESTONE.md if present")
+    pm.add_argument("--queued", action="store_true",
+                    help="create the milestone QUEUED (status=queued), not active: it is recorded "
+                         "and its MILESTONE.md written, but the active focus is unchanged. Promote it "
+                         "later with `activate <slug>`. Foundation for roadmap intake (1 active + N queued).")
     pm.add_argument("--await-confirm", action="store_true",
                     help="opt into the confirm-parent gate: seed the milestone unconfirmed so "
                          "new-task is held until `milestone-confirm` (mirrors `init --await-lock`); "

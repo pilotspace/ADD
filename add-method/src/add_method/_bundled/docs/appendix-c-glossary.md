@@ -84,6 +84,10 @@
 
 **Baseline approval** (formerly "the lock-down") — the single human gate ending autonomous setup: an explicit yes that freezes the foundation, first scope, and first contract together; runs as `add.py lock --by <name>`.
 
+**Queued milestone** — a milestone created non-active: its status is `queued` (the milestone status enum is **active · queued · done**). It is recorded with its `MILESTONE.md` on disk but does not hold the active focus; `add.py new-milestone --queued <slug>` creates it, and `add.py activate <slug>` promotes it queued→active one at a time. A queued milestone is not `done`, so it does not satisfy the graduation gate.
+
+**Roadmap** — the multi-milestone intake artifact: when a request decomposes into N>1 milestones of the same line, the AI proposes the ordered roadmap and, on human confirm, creates all N — the first active, the rest **queued** — then promotes each with `activate` as it is started. Distinct from `split_required` (which spans different buckets). Lives in the `add` skill's `intake.md`.
+
 **Scope level** (formerly "altitude") — the granularity a decision lives at, as one ordered ladder of five: **setup/foundation** · **intake** (request → versioned scope) · **the milestone loop** (the task is its inner unit) · **stage graduation** (changes rigor, not version; see **Stage graduation**) · **release** (≥1 closed milestone → a versioned, watched cut; see **Release scope level**). One ⚠-assumption notation is shared across every scope level.
 
 **Autonomy level** (formerly "autonomy dial") — the explicit per-task setting (`autonomy: manual | conservative | auto`, an ordered ladder manual < conservative < auto) choosing who resolves Verify: `auto` auto-PASSes on complete evidence, `conservative` keeps a human at the gate, `manual` is the strict floor (the human owns the gate; nothing auto-resolves). A high-risk scope refuses an unguarded `auto` — it must be lowered to `manual` or `conservative`. New tasks seed a visible, overridable `autonomy: auto`; a live task with no level warns (`implicit_autonomy`), a token outside the set is rejected (`unknown_autonomy_level`).

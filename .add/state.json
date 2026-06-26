@@ -1665,7 +1665,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T07:50:32+00:00",
+  "updated": "2026-06-26T09:03:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2381,6 +2381,17 @@
         "design-intake-beat"
       ],
       "archived": "2026-06-26"
+    },
+    {
+      "slug": "multi-milestone-intake",
+      "title": "Multi-milestone intake",
+      "tasks": 3,
+      "task_slugs": [
+        "milestone-queued-state",
+        "roadmap-intake-guide",
+        "queue-resume-surface"
+      ],
+      "archived": "2026-06-26"
     }
   ],
   "active_milestones": [],
@@ -2452,7 +2463,7 @@
       "id": 11,
       "text": "multi-active milestones: clarify + analyze requirements, then allow persisting MORE THAN ONE active milestone across sessions (extends team-collaboration M5 multi-active) \u2014 needs a requirements interview BEFORE sizing: what 'persist/allow' means (concurrency cap? per-user? resume UX?), the exact gap vs today's multi-active support",
       "created": "2026-06-25T14:36:55+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 12,
@@ -2464,13 +2475,13 @@
       "id": 13,
       "text": "enhance the UDD design-definition loop (design.md) to interview UI/UX explicitly: ask FIDELITY (lo-fi wireframe vs hi-fi mockup vs production), CONCEPT (the design idea/mood/direction), LAYOUT (structure/grid/hierarchy), and VISUAL DESIGN (color/type/spacing/imagery) \u2014 a guided per-axis design intake before the captured-screen confirm",
       "created": "2026-06-25T17:48:10+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 14,
       "text": "BE-UI deeper on each feature",
       "created": "2026-06-26T03:02:09+00:00",
-      "status": "open"
+      "status": "done"
     }
   ]
 }
