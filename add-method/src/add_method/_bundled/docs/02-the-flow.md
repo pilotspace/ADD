@@ -52,6 +52,16 @@ The shape is deliberate: the human-led steps establish direction, a frozen contr
 
 > **What changed in v7 (the diagrams above show the structural flow, which is unchanged).** The *steps* and their order are exactly as drawn — only **who resolves them** moved. The AI now drafts the whole specification bundle (steps 1–4) and a person approves it **once**, at the contract freeze (not a sign-off at each step); and **Verify is auto-gated on evidence** under `autonomy: auto` (the default), escalating security — always a `HARD-STOP` — and other residue to a person. Lower the autonomy level to `conservative` to keep a human at the Verify gate. See [11 Governance](./11-governance.md).
 
+## Many features, one at a time — listed up front, specified just-in-time
+
+The flow above runs *one* feature. A milestone holds many, and they compose by one rule: **list every task up front, specify each just-in-time.**
+
+- **Listed up front (breadth-first).** When a milestone is created it is decomposed **breadth-first** into a task *list* — `slug · depends-on · one line` each. That is the whole plan and its dependency DAG (`add.py waves` views the order and the critical path). The milestone living-doc (`MILESTONE.md`) holds this list plus the shared decisions and the exit criteria, and it stays **thin** — no per-task detail lives there.
+- **Specified just-in-time.** Each listed task runs the full seven-step flow (0 Ground … 6 Verify) only when work reaches it. Its specification bundle — §1–§4 — is written then, **not** bundled for every task before any build begins.
+- **Why just-in-time.** A later task's spec absorbs what earlier tasks' Observe step taught (a sharper contract, a convention that emerged, a delta fed back), and a bundle written too early rots before you arrive at it. This is the same backward-correction principle — Observe → Specify — applied at milestone scale rather than within one feature. So: list all the tasks, then specify each in turn.
+
+The sequence is therefore **decompose the milestone → schedule the task DAG → run each task's seven-step flow just-in-time → close the milestone** — breadth planned once, depth earned one task at a time.
+
 ## Why the order is the order
 
 Each step produces exactly one artifact, and each artifact is the input to the next step. The order is not a preference; it is a dependency chain.

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "flow-jit-tasks-doc",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1736,10 +1736,67 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "flow-jit-tasks-doc": {
+      "title": "Book ch.02: explain breadth-first task list + just-in-time per-task spec at milestone scale",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-26T14:18:51+00:00",
+      "updated": "2026-06-26T14:28:20+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-26T14:23:40+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fe6a827b665f36e27f93aafe509fd6bd",
+        "tests": {
+          "add-method/tooling/test_flow_jit_doc.py": "b9b47fc9b9fc8e9e41a9ad8a343fe0ae"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/02-the-flow.md",
+          "02-the-flow.md",
+          ".add/docs/02-the-flow.md",
+          "add-method/src/add_method/_bundled/docs/02-the-flow.md",
+          "add-method/tooling/test_flow_jit_doc.py"
+        ],
+        "snapshot_md5": "2e282f71e6b20cb834ce832aceccb9a1"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-06-26T14:26:39+00:00",
+            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared \u00a75 Scope \u2014 02-the-flow.md (1 total)",
+            "source": "scope"
+          },
+          {
+            "at": "2026-06-26T14:27:36+00:00",
+            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared \u00a75 Scope \u2014 02-the-flow.md (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T13:54:09+00:00",
+  "updated": "2026-06-26T14:28:20+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2604,6 +2661,12 @@
       "text": "list",
       "created": "2026-06-26T09:33:31+00:00",
       "status": "open"
+    },
+    {
+      "id": 17,
+      "text": "Verify/document whether the ADD flow follows the ideal sequence: init milestone -> draft ALL tasks up front -> schedule a DAG of tasks -> implement tasks -> milestone close. Today new-milestone drafts breadth-first tasks in MILESTONE.md, waves gives the DAG, but tasks are spec-bundled+built one at a time (not all drafted before any build). Decide if that gap is intentional or a flow improvement.",
+      "created": "2026-06-26T13:57:46+00:00",
+      "status": "done"
     }
   ]
 }
