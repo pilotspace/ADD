@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "extract-taskdoc",
+  "active_task": "extract-autonomy",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2140,10 +2140,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "extract-autonomy": {
+      "title": "Extract autonomy-level resolvers (4 fns) to add_engine/autonomy.py + relocate shared _AUTONOMY_LEVELS to constants.py",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-modularization",
+      "depends_on": [],
+      "created": "2026-06-26T02:35:43+00:00",
+      "updated": "2026-06-26T02:42:34+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "54a511b7ec2cd851e75f0e5d23dbee42",
+        "tests": {
+          "add-method/tooling/test_engine_extract_autonomy.py": "3ea9c254bd6d105319af1842f4fac128"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/autonomy.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_extract_autonomy.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/autonomy.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py"
+        ],
+        "snapshot_md5": "41da2ef2b29197d15640cbdc643b27bd"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-26T02:42:07+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_engine_extract_autonomy.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-26T02:33:44+00:00",
+  "updated": "2026-06-26T02:42:34+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2841,7 +2885,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "engine-modularization": "extract-taskdoc"
+    "engine-modularization": "extract-autonomy"
   },
   "todos": [
     {

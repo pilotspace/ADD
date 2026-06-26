@@ -215,3 +215,7 @@ _EVIDENCE_RE = re.compile(r"^(.*?)\s*\(evidence:\s*(.*?)\)\s*$")
 _SPEC_DELTA_RE = re.compile(
     r"\s*-\s*\[\s*(SPEC)\s*·\s*(open|seeded|dropped)\s*\]\s*(.+)$"
 )
+
+
+# --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
+_AUTONOMY_LEVELS = ("manual", "conservative", "auto")
