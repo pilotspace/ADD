@@ -33,7 +33,7 @@ Anyone who builds software with AI in the loop: engineers, architects, testers, 
 
 ---
 
-## 🚀 Install
+## 🚀 Get Started
 
 ![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives in .add/state.json, no context rot](add-install.png)
 
@@ -50,6 +50,9 @@ From your project root (an empty folder or an existing repo), pick either ecosys
 ```bash
 # Node / npm
 npx @pilotspace/add init
+
+# Update
+npx @pilotspace/add update
 ```
 
 or
@@ -57,6 +60,8 @@ or
 ```bash
 # Python / pip
 pip install pilotspace-add && pilotspace-add init
+
+pilotspace-add update
 ```
 
 or, on **Claude Code**, install the skill straight from the marketplace — no npm or pip needed:
