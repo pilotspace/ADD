@@ -54,9 +54,9 @@ ADD ships as AI Agent skill — you install it once, then
 
 Here is the whole path, from nothing to your first running feature.
 
-> **Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*
-> **CLI Coding Agent:** Claude Code, Codex, ...
-> **Maximize performance with agent's skillset**: https://github.com/ccsk-org/ccsk-cli (recommend - opt-in)
+- **Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*
+- **CLI Coding Agent:** Claude Code, Codex, ...
+- **Maximize performance with agent's skillset**: https://github.com/ccsk-org/ccsk-cli (recommended - opt-in)
 
 ### 1 · Install into your project
 
