@@ -2,7 +2,9 @@
 
 ## 1.12.0 — 2026-06-26
 
-- (no milestone bundled)
+- UDD design intake — 0 carried · 0 key decision(s)
+- Multi-milestone intake — 0 carried · 0 key decision(s)
+- multi-active-polish — finish the deferred team-collaboration seams — 5 carried · 0 key decision(s)
 
 ## 1.11.0 — 2026-06-26
 

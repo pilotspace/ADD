@@ -1,11 +1,11 @@
 # Releases
 
 ## 1.12.0 — 2026-06-26
-milestones: none
-loose tasks: milestone-naming
+milestones: udd-design-intake, multi-milestone-intake, multi-active-polish
+loose tasks: milestone-naming, queued-await-confirm-hint, freeze-actor-stamp, flow-jit-tasks-doc
 waivers: none
 actor: Tin Dang <tindang.ht97@gmail.com> (git)
-evidence: milestone-naming feature (bare-version slug nudge + full-ISO created stamp); suite 1972/0; ENGINE_MD5 acda5c26
+evidence: 3 milestones (udd-design-intake + multi-milestone-intake + multi-active-polish) + 4 loose tasks since 1.11.0; suite 2063/0; ENGINE_MD5 0d03e178
 
 ## 1.11.0 — 2026-06-26
 milestones: audit-hardening, engine-modularization
