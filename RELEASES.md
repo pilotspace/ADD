@@ -1,5 +1,12 @@
 # Releases
 
+## 1.12.0 — 2026-06-26
+milestones: none
+loose tasks: milestone-naming
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: milestone-naming feature (bare-version slug nudge + full-ISO created stamp); suite 1972/0; ENGINE_MD5 acda5c26
+
 ## 1.11.0 — 2026-06-26
 milestones: audit-hardening, engine-modularization
 loose tasks: add-check, quickstart-guide, milestone-layer, onboarding-align, question-summary-layer, intake-interview, ubiquitous-language, wave-ledger, wave-status-hint, wave-protocol-runtime, engine-argv-portability, engine-merge-base-enforcement, gitignore-scaffold, autonomy-command, standalone-fast-task, todo-capture, flag-mode-quickref, loose-task-release, soul-seed-npm-parity, gitignore-bak-seed, setup-commit-prompt, ground-phase-harden, lean-tree-baseline-derive, atomic-scope-sidecar, audit-ungated-verdict, test-tempdir-cleanup, scope-level-enum-reconcile

@@ -6,6 +6,28 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-06-26
+
+Milestone-naming polish — `new-milestone` now steers toward legible names and
+records a precise creation time. Backward-compatible; no breaking change.
+
+### Added
+- **Descriptive-slug nudge.** A milestone slug that is a bare version number
+  (`v2`, `v1-1`, `1.2` — matched by `^v?\d+([._-]\d+)*$`) now prints an advisory
+  `note:` suggesting a short descriptive name (e.g. `payment-retries`) and **still
+  creates the milestone**. It never blocks — a deliberate version slug is honored.
+  Keeps the `status` milestones list legible instead of a column of `v1-1 / v2 / v3`.
+
+### Changed
+- **Full-ISO `created:` stamp in MILESTONE.md.** The human-facing `created:` line
+  goes from a date (`2026-06-26`) to the full UTC ISO timestamp
+  (`2026-06-26T03:47:28+00:00`). A single `_now()` instant feeds both the rendered
+  file and the `state.json` record, so the two are provably equal.
+
+Built end-to-end through ADD's own spec→tests→build→verify flow as a dogfood of the
+1.11.0 engine; the two design choices (warn-not-block · upgrade `created:`) were
+human-decided at the contract freeze.
+
 ## [1.11.0] — 2026-06-26
 
 Engine-modularization + audit-hardening release — the 7k-line monolith becomes a
