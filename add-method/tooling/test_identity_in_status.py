@@ -17,6 +17,7 @@ from pathlib import Path
 from unittest import mock
 
 import add
+from add_engine import identity
 from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
@@ -76,7 +77,7 @@ class _Harness(unittest.TestCase):
         self._silent("new-milestone", ms, "--goal", "g", "--stage", "mvp")
         self._silent("new-task", t, "--title", "Feature")
         self._silent("phase", "verify", t)
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("gate", "PASS", t)
             self._meet_exit_criteria(ms)
             self._silent("milestone-done", ms)
@@ -91,7 +92,7 @@ class StatusActorTest(_Harness):
         self.assertIn("project :", out)        # existing lines untouched
 
     def test_status_json_has_actor(self):
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             out = self._silent("status", "--json")
         obj = json.loads(out)
         self.assertEqual(obj["actor"], KNOWN)

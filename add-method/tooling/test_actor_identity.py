@@ -16,6 +16,7 @@ from pathlib import Path
 from unittest import mock
 
 import add
+from add_engine import identity
 from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
@@ -29,27 +30,27 @@ ENGINE_COPIES = (
 
 class WhoamiResolverTest(unittest.TestCase):
     def test_resolves_from_git(self):
-        with mock.patch.object(add, "_git_config",
+        with mock.patch.object(identity, "_git_config",
                                side_effect=lambda k: {"user.name": "Ada", "user.email": "ada@x.io"}[k]):
             who = add._whoami({})
         self.assertEqual(who, {"name": "Ada", "email": "ada@x.io", "source": "git"})
 
     def test_falls_back_to_os(self):
-        with mock.patch.object(add, "_git_config", return_value=None), \
+        with mock.patch.object(identity, "_git_config", return_value=None), \
              mock.patch.object(add.getpass, "getuser", return_value="osuser"):
             who = add._whoami({})
         self.assertEqual(who, {"name": "osuser", "email": None, "source": "os"})
 
     def test_override_wins(self):
         st = {"actor_override": {"name": "Bob", "email": "bob@y.io"}}
-        with mock.patch.object(add, "_git_config", return_value="SomeoneElse"):
+        with mock.patch.object(identity, "_git_config", return_value="SomeoneElse"):
             who = add._whoami(st)
         self.assertEqual(who, {"name": "Bob", "email": "bob@y.io", "source": "override"})
 
     def test_blank_override_ignored(self):
         # an override with a blank name is NOT a valid identity -> fall through to git/os
         st = {"actor_override": {"name": "   ", "email": None}}
-        with mock.patch.object(add, "_git_config", return_value=None), \
+        with mock.patch.object(identity, "_git_config", return_value=None), \
              mock.patch.object(add.getpass, "getuser", return_value="osuser"):
             who = add._whoami(st)
         self.assertEqual(who["source"], "os")
@@ -58,7 +59,7 @@ class WhoamiResolverTest(unittest.TestCase):
         # the TOTAL invariant: in a bare container getpass.getuser() raises KeyError
         # (no passwd entry + no LOGNAME/USER env). _whoami must NOT crash — it floors
         # to the "unknown" sentinel so it always returns a non-empty name.
-        with mock.patch.object(add, "_git_config", return_value=None), \
+        with mock.patch.object(identity, "_git_config", return_value=None), \
              mock.patch.object(add.getpass, "getuser", side_effect=KeyError("getpwuid(): uid not found")):
             who = add._whoami({})
         self.assertEqual(who, {"name": "unknown", "email": None, "source": "os"})

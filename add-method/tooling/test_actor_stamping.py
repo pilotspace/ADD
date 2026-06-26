@@ -17,6 +17,7 @@ from pathlib import Path
 from unittest import mock
 
 import add
+from add_engine import identity
 from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
@@ -84,7 +85,7 @@ class _Harness(unittest.TestCase):
 
 class LockStampTest(_Harness):
     def test_lock_stamps_actor(self):
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("lock", "--force")
         setup = self._state()["setup"]
         self.assertEqual(setup["actor"], KNOWN)
@@ -101,7 +102,7 @@ class LockStampTest(_Harness):
 class GateStampTest(_Harness):
     def test_gate_stamps_gate_actor_on_pass(self):
         self._task_to_verify()
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("gate", "PASS", "t")
         rec = self._state()["tasks"]["t"]
         self.assertEqual(rec["gate_actor"], KNOWN)
@@ -109,7 +110,7 @@ class GateStampTest(_Harness):
 
     def test_gate_stamps_gate_actor_on_hard_stop(self):
         self._task_to_verify()
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("gate", "HARD-STOP", "t")
         rec = self._state()["tasks"]["t"]
         self.assertEqual(rec["gate_actor"], KNOWN)
@@ -121,7 +122,7 @@ class MilestoneDoneStampTest(_Harness):
         self._task_to_verify()
         self._silent("gate", "PASS", "t")
         self._meet_exit_criteria("m")
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("milestone-done", "m")
         rec = self._state()["milestones"]["m"]
         self.assertEqual(rec["done_actor"], KNOWN)
@@ -135,7 +136,7 @@ class ReleaseStampTest(_Harness):
         self._meet_exit_criteria("m")
         self._silent("milestone-done", "m")
         before = self._state()
-        with mock.patch.object(add, "_whoami", return_value=dict(KNOWN)):
+        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("release", "0.1.0")
         releases = (self.tmp / "RELEASES.md").read_text(encoding="utf-8")
         self.assertIn("actor: Ada <ada@x.io> (git)", releases)
