@@ -56,6 +56,22 @@ request, emit ONE of:
 When confirmed, record the `rationale` in the artifact you create or affect — the new MILESTONE.md
 goal/body, the new TASK.md, or a note in the affected TASK.md — never in state.json.
 
+## Roadmap — a request that is several milestones
+
+Some requests decompose into **N>1 milestones of the same line** — a roadmap, not one milestone.
+Don't create only the first and lose the rest. Instead:
+
+1. **Propose** the roadmap — the ordered milestone list, each with a one-line goal. (AI proposes.)
+2. **Confirm** — the human confirms the roadmap before anything is created. Never auto-create N
+   milestones unprompted — the intake floor (`ask_human`) still holds.
+3. **Create** all N on confirm — the first with `add.py new-milestone <slug>` (active), the rest
+   with `add.py new-milestone --queued <slug>` (status `queued`, not focused).
+4. **Promote** one at a time — as each is started, `add.py activate <slug>` flips it queued→active.
+   You work one active milestone at a time; the queue is the agreed backlog, surfaced at resume.
+
+This is NOT `split_required`: that code is for a request spanning **different buckets** (propose the
+smallest correctly-sized set). A roadmap is several milestones of the **same line**, created queued.
+
 ## Worked examples (from this project's own history)
 
 | request | bucket | rationale |
