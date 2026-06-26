@@ -202,3 +202,5 @@ Build expectations (from §1 Accept + §3 CONTRACT):
 Outcome:
 Reviewed by:
 """
+
+_DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETRO.md)
