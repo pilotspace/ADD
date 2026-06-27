@@ -38,6 +38,16 @@ class GuideTest(unittest.TestCase):
             add.main(["guide", *args])
         return buf.getvalue()
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def test_guide_specify_phase(self):
         add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=ground
         add.main(["advance", "feat-a"])                          # ground -> specify
@@ -68,6 +78,7 @@ class GuideTest(unittest.TestCase):
 
     def test_guide_explicit_slug(self):
         add.main(["new-task", "feat-a"])
+        self._freeze("feat-a")                   # freeze-gate-universal sweep
         add.main(["phase", "build", "feat-a"])
         add.main(["new-task", "feat-b"])             # active becomes feat-b (specify)
         out = self._guide("feat-a")                  # explicit slug overrides active

@@ -52,6 +52,17 @@ class QuickstartGuideTest(unittest.TestCase):
         unknown = {t for t in tokens if t not in valid}
         self.assertFalse(unknown, f"guide references unknown commands: {unknown}")
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        root = add.find_root()
+        p = root / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def test_golden_spine_reaches_pass(self):
         # the command spine the guide teaches must drive a project to done/PASS
         cwd = Path.cwd()
@@ -62,6 +73,7 @@ class QuickstartGuideTest(unittest.TestCase):
             os.chdir(tmp)
             add.main(["init", "--name", "demo", "--stage", "mvp"])
             add.main(["new-task", "transfer", "--title", "Transfer money"])
+            self._freeze("transfer")             # freeze-gate-universal sweep
             for _ in range(6):  # ground -> specify -> scenarios -> contract -> tests -> build -> verify
                 add.main(["advance"])
             add.main(["gate", "PASS"])

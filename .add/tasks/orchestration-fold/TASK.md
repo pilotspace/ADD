@@ -187,7 +187,7 @@ Reviewed by: Tin Dang (full-auto authorization) + quality-review subagents (EQUI
 Watch (reuse scenarios as monitors): pool bytes vs ≤37,573 fence · full-suite green per propagation · 3-tree md5 parity.
 
 ### Spec delta
-- [SPEC · open] streams.md still holds the most remaining bytes (20,274→16,204); a deeper structural fold (M3) could merge run/streams overlap further (evidence: 25% met with margin; streams compacted least proportionally).
+- [SPEC · carried] streams.md still holds the most remaining bytes (20,274→16,204); a deeper structural fold (M3) could merge run/streams overlap further (evidence: 25% met with margin; streams compacted least proportionally). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] a 25% pure-compaction tends to land EQUIVALENT, not CLEARER — the realistic effectiveness bar for already-tight guides is "no rule/nuance lost + leaner", and a quality-review subagent reliably surfaces the dropped sidebars to restore (evidence: review flagged 5, all restored, suite stayed green). [folded foundation-version 46]

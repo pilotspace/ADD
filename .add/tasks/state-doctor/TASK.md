@@ -238,8 +238,8 @@ Watch (reuse scenarios as monitors): doctor-exit-nonzero rate post-merge · whic
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] widen doctor's referential set as merges reveal new break surfaces — owner/assignee dict shape, gate ∈ {PASS,RISK-ACCEPTED,HARD-STOP}, phase ∈ PHASES, archived consistency (evidence: §1 ⚠ flagged the MVP set covers only cross-reference invariants; `_doctor_findings` is an append-only list so each new rule is one block, no command-surface change)
-- [SPEC · open] a `doctor --json` machine surface for CI gating on state health (evidence: §1 confirmed non-zero-exit-on-findings is for scripted gates; a structured `{problems:[…]}` would let a CI wrapper read each finding, mirroring `check --json`)
+- [SPEC · carried] widen doctor's referential set as merges reveal new break surfaces — owner/assignee dict shape, gate ∈ {PASS,RISK-ACCEPTED,HARD-STOP}, phase ∈ PHASES, archived consistency (evidence: §1 ⚠ flagged the MVP set covers only cross-reference invariants; `_doctor_findings` is an append-only list so each new rule is one block, no command-surface change) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] a `doctor --json` machine surface for CI gating on state health (evidence: §1 confirmed non-zero-exit-on-findings is for scripted gates; a structured `{problems:[…]}` would let a CI wrapper read each finding, mirroring `check --json`) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

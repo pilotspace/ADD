@@ -61,9 +61,19 @@ POOLS = [
     # FIDELITY·CONCEPT·LAYOUT·VISUAL DESIGN) + a hard rule — +1225 B human-approved surface (milestone
     # udd-design-intake, contract FROZEN @ v1). RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈1225/0.75⌉=1634). The won compaction on every orchestration guide is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 51732,
+    # orchestration 51732 → 51994 @ security-escalation-disclosure (same "rebaseline for human-approved
+    # new surface" method): run.md's auto bullet gains the honest "security escalates only a finding the
+    # AI SURFACES; one it misses is invisible to the engine → human spot-audit is the only backstop"
+    # disclosure — +196 B human-approved surface (milestone flow-honesty, contract FROZEN @ v1). RATIO
+    # 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈196/0.75⌉=262). The won compaction is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 51994,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
-    {"name": "phases",        "ratio": 0.80, "baseline": 39008,
+    # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
+    # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a
+    # finding never marked is invisible to the engine, so a human spot-audit is the only backstop under
+    # `auto` — +350 B human-approved surface (milestone flow-honesty, contract FROZEN @ v1). RATIO 0.80
+    # kept EXACTLY; baseline grows by surface ÷ ratio (+⌈350/0.80⌉=438). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 39446,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},

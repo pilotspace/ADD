@@ -92,6 +92,9 @@ class WiringBehaviorTest(unittest.TestCase):
         self._task_md = self.tmp / ".add" / "tasks" / "alpha" / "TASK.md"
         self._task_md.write_text("\n".join([
             "# TASK: alpha", "",
+            # a well-formed done task declares its risk level — keeps the board clean of the
+            # presence-only `risk_unset` notice (guarantee-audit-lints, flow-honesty M3).
+            "slug: alpha · risk: normal", "",
             "## 1 · SPECIFY", "Feature: f", "",
             "## 2 · SCENARIOS", "(none)", "",
             "## 3 · CONTRACT", "```\nshape\n```", "", tga.GOOD3, "",

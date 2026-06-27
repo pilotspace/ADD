@@ -316,8 +316,8 @@ each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open
 the retry path (evidence: prod herd spikes)`).
 
 - [SPEC · seeded] [→ pty-clack-harness] extract a reusable PTY test helper that drives clack select/confirm so the interactive agent-select step (D8) is covered in CI (evidence: D8 disclosed as PTY-only-reachable at the gate; consolidated with the installer-prompts PTY-helper delta into the installer-smarts-polish task pty-clack-harness — flipped by hand because this task is archived out of the live state registry, so `--from-delta` could not reach it)
-- [SPEC · open] widen the agent registry to Cursor + Copilot (.cursor/rules · .github/copilot-instructions.md) with their own integration files (evidence: the user's "etc." in the ask; the milestone scoped only claude/codex/opencode/generic for mvp)
-- [SPEC · open] confirm the real env signals each agent sets (CODEX_*/OPENCODE*) against their shipping CLIs and pin them (evidence: D-A1 accepted at freeze as best-effort, refinable data)
+- [SPEC · carried] widen the agent registry to Cursor + Copilot (.cursor/rules · .github/copilot-instructions.md) with their own integration files (evidence: the user's "etc." in the ask; the milestone scoped only claude/codex/opencode/generic for mvp) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] confirm the real env signals each agent sets (CODEX_*/OPENCODE*) against their shipping CLIs and pin them (evidence: D-A1 accepted at freeze as best-effort, refinable data) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

@@ -54,6 +54,16 @@ class ReportTest(unittest.TestCase):
             code = e.code if isinstance(e.code, int) else 1
         return buf.getvalue(), err.getvalue(), code
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self._task_md(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _done_pass(self, slug):
         add.main(["phase", "verify", slug])
         add.main(["gate", "PASS", slug])
@@ -317,6 +327,7 @@ class ReportTest(unittest.TestCase):
         out, _, _ = self._report("v9")
         self.assertIn("DONE", out)                        # all tasks done
         add.main(["new-task", "beta"])
+        self._freeze("beta")                     # freeze-gate-universal sweep
         add.main(["phase", "build", "beta"])
         add.main(["gate", "HARD-STOP", "beta"])
         out, _, _ = self._report("v9")

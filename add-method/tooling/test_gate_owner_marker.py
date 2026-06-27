@@ -106,6 +106,16 @@ class _Board(unittest.TestCase):
         self.assertTrue(lines, f"expected a `next:` footer line, got:\n{out}")
         return lines[-1]
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self._task_md(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     # ---- autonomy arrangement ---------------------------------------------
     def _task(self, slug="t", autonomy="auto"):
         """A real seeded task (keeps its TASK.md header), with the autonomy rung set."""
@@ -198,6 +208,7 @@ class DriverMarkerArmATest(_Board):
 
     def test_ai_owned_phase_names_ai(self):
         self._task("t", "conservative")          # even lowered, an ai-owned phase is the AI's
+        self._freeze("t")                        # freeze-gate-universal sweep
         out, _, _ = self._run("phase", "build", "t")
         self.assertTrue(self._footer(out).endswith(" [you drive]"), self._footer(out))
 

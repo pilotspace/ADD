@@ -192,7 +192,7 @@ Reviewed by: Tin Dang · date: 2026-06-25
 Watch (reuse scenarios as monitors): rate of `new-task --force` over a healing task (a forced re-create that carries heal forward is the monitor that the cap held).
 
 ### Spec delta
-- [SPEC · open] anti-cheat state that is RE-DERIVED at a phase crossing (the tripwire, re-snapshotted unconditionally at tests->build) cannot be protected by carry-forward — closing a `--force`/`reopen` tamper-launder needs a REFUSE-style barrier instead (evidence: F8 tripwire fold-in proved a no-op at add.py:1252).
+- [SPEC · carried] anti-cheat state that is RE-DERIVED at a phase crossing (the tripwire, re-snapshotted unconditionally at tests->build) cannot be protected by carry-forward — closing a `--force`/`reopen` tamper-launder needs a REFUSE-style barrier instead (evidence: F8 tripwire fold-in proved a no-op at add.py:1252). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] before "preserving" state across a re-create, check whether the engine RE-DERIVES it downstream — a carry-forward of re-derived state (tripwire) is a hollow guard; only state owned by a single writer (heal ← _heal_or_escalate) survives meaningfully (evidence: F8 — the approved tripwire fold-in was withdrawn after reading _build_entry's unconditional re-snapshot). [folded foundation-version 51]

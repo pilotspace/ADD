@@ -37,6 +37,16 @@ class ProofHarnessTest(unittest.TestCase):
     def _state(self):
         return json.loads((Path(self.tmp) / ".add" / "state.json").read_text())
 
+    def _freeze(self, slug="t"):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     # --- Matrix 3 / principle 7: no silent skips -----------------------------
     def test_gate_pass_refused_before_verify(self):
         # the divergence: the engine must REFUSE PASS before the task reaches verify
@@ -49,6 +59,7 @@ class ProofHarnessTest(unittest.TestCase):
 
     # --- Matrix 3: done only when Verify reads PASS ---------------------------
     def test_gate_pass_at_verify_reaches_done(self):
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
         for _ in range(6):                            # ground -> ... -> verify
             add.main(["advance"])
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
@@ -65,6 +76,7 @@ class ProofHarnessTest(unittest.TestCase):
 
     # --- book invariant: a security finding is ALWAYS HARD-STOP, any phase ----
     def test_hardstop_recordable_mid_build(self):
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before entering build
         add.main(["phase", "build", "t"])
         add.main(["gate", "HARD-STOP"])
         st = self._state()["tasks"]["t"]

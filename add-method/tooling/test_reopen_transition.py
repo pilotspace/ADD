@@ -86,6 +86,16 @@ class ReopenBoard(unittest.TestCase):
     def _task(self, slug: str) -> dict:
         return self._state()["tasks"][slug]
 
+    def _freeze(self, slug: str):
+        """Stamp §3 FROZEN + a well-formed lowest-confidence flag so the universal freeze gate
+        (and the unflagged_freeze check) pass at tests->build. freeze-gate-universal sweep."""
+        p = self._root() / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _run(self, *argv):
         """Run an add.main call; return (stdout, stderr, exit-code)."""
         buf, err = io.StringIO(), io.StringIO()
@@ -100,6 +110,7 @@ class ReopenBoard(unittest.TestCase):
     def _mk_done(self, slug: str, risk_accepted: bool = False):
         """Drive a fresh task ground -> verify -> done (PASS or RISK-ACCEPTED)."""
         self._run("new-task", slug, "--title", slug)
+        self._freeze(slug)
         for _ in range(6):                      # ground -> ... -> verify
             self._run("advance", slug)
         if risk_accepted:
@@ -111,6 +122,7 @@ class ReopenBoard(unittest.TestCase):
     def _mk_at(self, slug: str, phase: str):
         """A task parked at an arbitrary (non-done) phase."""
         self._run("new-task", slug, "--title", slug)
+        self._freeze(slug)
         self._run("phase", phase, slug)
 
     # ---- happy path -------------------------------------------------------

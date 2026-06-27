@@ -82,6 +82,9 @@ class GateAuditTest(unittest.TestCase):
             add.main(gate_args)
         body = "\n".join([
             f"# TASK: {slug}", "",
+            # a well-formed done task declares its risk level — keeps the board clean of the
+            # presence-only `risk_unset` notice (guarantee-audit-lints, flow-honesty M3).
+            f"slug: {slug} · risk: normal", "",
             "## 1 · SPECIFY", "Feature: f", "",
             "## 2 · SCENARIOS", "(none)", "",
             "## 3 · CONTRACT", "```\nshape\n```", "", sec3, "",
@@ -102,6 +105,9 @@ class GateAuditTest(unittest.TestCase):
             add.main(["phase", phase, slug])                # admin override — no gate recorded
         body = "\n".join([
             f"# TASK: {slug}", "",
+            # a well-formed done task declares its risk level — keeps the board clean of the
+            # presence-only `risk_unset` notice (guarantee-audit-lints, flow-honesty M3).
+            f"slug: {slug} · risk: normal", "",
             "## 1 · SPECIFY", "Feature: f", "",
             "## 2 · SCENARIOS", "(none)", "",
             "## 3 · CONTRACT", "```\nshape\n```", "", GOOD3, "",

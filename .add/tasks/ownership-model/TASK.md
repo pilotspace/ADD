@@ -273,8 +273,8 @@ Watch (reuse scenarios as monitors): a `--owner`/`--assignee` value whose name p
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] `_parse_actor_arg` silently mis-parses a double-bracket value (`"Alice <b> <c>"` → name `"Alice <b>"`, email `"c"`) — total + non-raising but wrong; tighten the grammar or reject a value with >1 `<...>` group (evidence: adversarial-review NIT on ownership-model).
-- [SPEC · open] the ownership SURFACE (owner/assignee in status + report + --json) is the sibling task `ownership-surface` — already planned; this delta records the seam this task left open (evidence: assign/unassign write owner/assignee to state but no command yet SHOWS them).
+- [SPEC · carried] `_parse_actor_arg` silently mis-parses a double-bracket value (`"Alice <b> <c>"` → name `"Alice <b>"`, email `"c"`) — total + non-raising but wrong; tighten the grammar or reject a value with >1 `<...>` group (evidence: adversarial-review NIT on ownership-model). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] the ownership SURFACE (owner/assignee in status + report + --json) is the sibling task `ownership-surface` — already planned; this delta records the seam this task left open (evidence: assign/unassign write owner/assignee to state but no command yet SHOWS them). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

@@ -52,6 +52,16 @@ class SetupLockTest(unittest.TestCase):
     def _state(self):
         return add.load_state(add.find_root())
 
+    def _freeze(self, slug):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _init_await(self):
         add.main(["init", "--name", "demo", "--await-lock"])
 
@@ -93,6 +103,7 @@ class SetupLockTest(unittest.TestCase):
         self.assertEqual(_run(["new-task", "a"])[0], 0)
         self.assertEqual(_run(["new-task", "b"])[0], 0)
         add.main(["phase", "tests", "a"])
+        self._freeze("a")  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
         self.assertEqual(_run(["advance", "a"])[0], 0)          # tests -> build, ungated
         self.assertEqual(self._state()["tasks"]["a"]["phase"], "build")
         add.main(["phase", "verify", "a"])
@@ -140,6 +151,7 @@ class SetupLockTest(unittest.TestCase):
         add.main(["new-task", "a"])
         _run(["lock", "--by", "Tin"])
         add.main(["phase", "tests", "a"])
+        self._freeze("a")  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
         self.assertEqual(_run(["advance", "a"])[0], 0)   # tests -> build now allowed
         self.assertEqual(self._state()["tasks"]["a"]["phase"], "build")
         add.main(["phase", "verify", "a"])

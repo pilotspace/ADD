@@ -283,8 +283,8 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] decide whether `use <task-in-done-milestone>` should re-activate a DONE milestone — `cmd_use` calls `_activate_milestone` with no done-check while `cmd_activate` rejects `milestone_done`; latent policy inconsistency (evidence: independent verify-gate review NOTE, contract-faithful but a UX gap)
-- [SPEC · open] consider switching `new-milestone` from REPLACE-to-focus to ADD-and-focus so creating scope mid-parallel-work preserves the active SET (evidence: §3 freeze flag — today a user must re-`activate` siblings after `new-milestone`)
+- [SPEC · carried] decide whether `use <task-in-done-milestone>` should re-activate a DONE milestone — `cmd_use` calls `_activate_milestone` with no done-check while `cmd_activate` rejects `milestone_done`; latent policy inconsistency (evidence: independent verify-gate review NOTE, contract-faithful but a UX gap) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] consider switching `new-milestone` from REPLACE-to-focus to ADD-and-focus so creating scope mid-parallel-work preserves the active SET (evidence: §3 freeze flag — today a user must re-`activate` siblings after `new-milestone`) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

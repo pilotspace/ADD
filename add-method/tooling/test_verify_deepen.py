@@ -160,8 +160,13 @@ class VerifyDeepenTest(unittest.TestCase):
             "to the pinned engine (no engine logic in this task)",
         )
         src = ADD_PY.read_text(encoding="utf-8")
-        self.assertNotIn("Deep check", src, "no deep-verify prose belongs in the engine")
-        self.assertNotIn("WIRING", src, "no deep-verify token belongs in the engine")
+        # NOTE: guarantee-audit-lints (flow-honesty M3) added a PRESENCE-ONLY `shallow_deep_check`
+        # audit notice that NAMES the "### Deep checks" block to surface an unfilled one. The engine
+        # may now reference the block HEADING for that lint — but the original invariant holds where
+        # it matters: the engine embeds NONE of the deep-check CONTENT tokens (WIRING/DEAD-CODE/
+        # SEMANTIC) and renders no verdict — presence via _section_unfilled, never judgment.
+        self.assertNotIn("WIRING", src, "no deep-verify CONTENT token belongs in the engine")
+        self.assertNotIn("DEAD-CODE", src, "no deep-verify CONTENT token belongs in the engine")
 
     # --- the rubric names the shallow-verify reject (verify_shallow) --------
     def test_verify_shallow_named(self):

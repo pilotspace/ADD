@@ -360,8 +360,8 @@ marker drift); honest-skip rate (a spike on a runner that SHOULD have node+pty =
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] route test_installer_prompts' npm happy-path + test_agent_detect's D8 through pty_clack for deeper cross-file reuse (evidence: §3 Schema named import-site edits; deferred as minimal-build — one consumer today)
-- [SPEC · open] drive the clack_unavailable fallback + the "fail" seam under a PTY too; today only the force="1" happy/override/cancel paths are PTY-covered (evidence: completeness gap noted at verify)
+- [SPEC · carried] route test_installer_prompts' npm happy-path + test_agent_detect's D8 through pty_clack for deeper cross-file reuse (evidence: §3 Schema named import-site edits; deferred as minimal-build — one consumer today) [carried: deferred to backlog 2026-06-27 (delta-drain) — not now-actionable; retrievable via 'add.py deltas --carried', reopen or seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] drive the clack_unavailable fallback + the "fail" seam under a PTY too; today only the force="1" happy/override/cancel paths are PTY-covered (evidence: completeness gap noted at verify) [carried: deferred to backlog 2026-06-27 (delta-drain) — not now-actionable; retrievable via 'add.py deltas --carried', reopen or seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

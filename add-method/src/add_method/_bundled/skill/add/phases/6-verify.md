@@ -26,7 +26,7 @@ If any is false, stop and return to Build.
 ## Part two — check what tests miss
 
 - **Concurrency/timing** — correct when two run at once? (Tests run serially and miss races.)
-- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`).
+- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`). **But that check sees only what you wrote down:** it fires on a *marked* note that slipped through as an auto-gate PASS — a finding you never marked is **invisible** to the engine, escalated to no one. Honest disclosure, not false cover: under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
 - **Architecture** — respects layering/dependency rules in CONVENTIONS.md?
 
 ## Part three — the deep check (do not skim)

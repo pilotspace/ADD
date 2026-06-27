@@ -267,8 +267,8 @@ Watch (reuse scenarios as monitors): does `doctor` ever flag a value-domain prob
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] "archived consistency" covers only slug-also-live + count≠len(task_slugs); a deeper check (every task_slug resolvable to a real/archived task record) was deliberately left out — widen if a real inconsistency of that kind ever appears (evidence: the freeze flag, this task)
-- [SPEC · open] the value checks DETECT bad enums/actors but don't PREVENT them — write-side validation in the commands that stamp gate/phase/owner is the natural follow-up (evidence: doctor is read-only by design; the milestone scoped detection, not prevention)
+- [SPEC · carried] "archived consistency" covers only slug-also-live + count≠len(task_slugs); a deeper check (every task_slug resolvable to a real/archived task record) was deliberately left out — widen if a real inconsistency of that kind ever appears (evidence: the freeze flag, this task) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] the value checks DETECT bad enums/actors but don't PREVENT them — write-side validation in the commands that stamp gate/phase/owner is the natural follow-up (evidence: doctor is read-only by design; the milestone scoped detection, not prevention) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

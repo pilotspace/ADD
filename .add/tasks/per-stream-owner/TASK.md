@@ -214,7 +214,7 @@ Watch (reuse scenarios as monitors): do streams actually carry owners (are miles
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] add the assignee to the human stream line (not just owner) if teams lead streams by assignee (evidence: §3 freeze flag — owner chosen as the single compact signal; the assignee is now in `status --json` but not the human one-liner)
+- [SPEC · carried] add the assignee to the human stream line (not just owner) if teams lead streams by assignee (evidence: §3 freeze flag — owner chosen as the single compact signal; the assignee is now in `status --json` but not the human one-liner) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

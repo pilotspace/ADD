@@ -215,8 +215,8 @@ Watch (reuse scenarios as monitors): chapter/glossary/skill parity (the guards) 
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the book chapter teaches the pillar but the worked example (Appendix D) is still single-component — a multi-component worked example would close the gap from "read it" to "did it" (evidence: chapter 17 is concept-first; no end-to-end BE→FE transcript).
-- [SPEC · open] `components.toml` has no engine `add.py components` reader/validator command surfaced to the operator — the doc shows the format but a `check`-time schema lint would catch typos earlier (evidence: chapter 17 documents the TOML by hand).
+- [SPEC · carried] the book chapter teaches the pillar but the worked example (Appendix D) is still single-component — a multi-component worked example would close the gap from "read it" to "did it" (evidence: chapter 17 is concept-first; no end-to-end BE→FE transcript). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] `components.toml` has no engine `add.py components` reader/validator command surfaced to the operator — the doc shows the format but a `check`-time schema lint would catch typos earlier (evidence: chapter 17 documents the TOML by hand). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

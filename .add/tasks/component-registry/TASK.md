@@ -285,8 +285,8 @@ Reviewed by: Tin Dang · date: 2026-06-24
 Watch (reuse scenarios as monitors): `add.py check` red rate for `components_malformed`/`component_unknown`/`component_root_outside` once projects adopt `.add/components.toml`.
 
 ### Spec delta
-- [SPEC · open] add the `component:` affordance hint to `TASK.fast.md.tmpl` too (evidence: refute-read noted the fast-lane template omits it — fast tasks in a monorepo can't see the binding option) (evidence: refute-read non-finding #7).
-- [SPEC · open] `per-component-verify` (task 2) should consume `_components()[name]["verify"]` + `green_bar` to run a bound task's own suite at the gate (evidence: that field is parsed-but-unused until task 2 — the deliberate opaque-now freeze) (evidence: §1 verify-opaque decision).
+- [SPEC · carried] add the `component:` affordance hint to `TASK.fast.md.tmpl` too (evidence: refute-read noted the fast-lane template omits it — fast tasks in a monorepo can't see the binding option) (evidence: refute-read non-finding #7). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] `per-component-verify` (task 2) should consume `_components()[name]["verify"]` + `green_bar` to run a bound task's own suite at the gate (evidence: that field is parsed-but-unused until task 2 — the deliberate opaque-now freeze) (evidence: §1 verify-opaque decision). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] a degrade-safe contract clause ("never raise on a read") needs an explicit unreadable-dir/permission test — the happy-path tests passed while one OSError-subclass path (PermissionError from iterdir) still crashed; the refute-read caught it (evidence: refute-read MAJOR, fixed by `test_unreadable_tasks_dir_degrades_safe`). [folded foundation-version 50]

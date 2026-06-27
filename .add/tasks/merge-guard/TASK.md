@@ -237,8 +237,8 @@ Watch (reuse scenarios as monitors): a real git conflict ever slipping past the 
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the proactive `add.py doctor` that the state_conflicted message POINTS at is the sibling task `state-doctor` — this task only references it; doctor must validate integrity + referential consistency and report (evidence: the guard's actionable hint says "run `add.py doctor` to verify", a command this task does not yet provide).
-- [SPEC · open] route `cmd_check`'s direct state read through `_migrate_state` (it bypasses migration, reading legacy keys only) so a multi-active read added there is safe — pre-existing, surfaced again by this task's audit of the 3 read sites (evidence: review NIT; already tracked under state-schema-migration).
+- [SPEC · carried] the proactive `add.py doctor` that the state_conflicted message POINTS at is the sibling task `state-doctor` — this task only references it; doctor must validate integrity + referential consistency and report (evidence: the guard's actionable hint says "run `add.py doctor` to verify", a command this task does not yet provide). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] route `cmd_check`'s direct state read through `_migrate_state` (it bypasses migration, reading legacy keys only) so a multi-active read added there is safe — pre-existing, surfaced again by this task's audit of the 3 read sites (evidence: review NIT; already tracked under state-schema-migration). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

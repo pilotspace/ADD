@@ -250,8 +250,8 @@ Watch (reuse scenarios as monitors): do teams actually run ≥2 active milestone
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] a `waves --merge` mode that unifies cross-milestone deps into one critical path, if real cross-milestone DAGs matter (evidence: §3 freeze flag — the per-milestone-block model was chosen as the safe default; merge is the documented escape hatch)
-- [SPEC · open] decide whether a corrupt `active_milestones` entry (slug not in milestones) should SKIP rather than `unknown_milestone`-die in the auto-expanded `waves` set (evidence: §0 foot-gun note — today it dies, which is loud but blocks the whole multi-stream view on one bad entry; `doctor` would catch it, so dying may be fine)
+- [SPEC · carried] a `waves --merge` mode that unifies cross-milestone deps into one critical path, if real cross-milestone DAGs matter (evidence: §3 freeze flag — the per-milestone-block model was chosen as the safe default; merge is the documented escape hatch) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] decide whether a corrupt `active_milestones` entry (slug not in milestones) should SKIP rather than `unknown_milestone`-die in the auto-expanded `waves` set (evidence: §0 foot-gun note — today it dies, which is loud but blocks the whole multi-stream view on one bad entry; `doctor` would catch it, so dying may be fine) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
