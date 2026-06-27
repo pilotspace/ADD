@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "security-escalation-disclosure",
+  "active_task": "guarantee-audit-lints",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1910,10 +1910,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "guarantee-audit-lints": {
+      "title": "Add shallow_deep_check + risk_unset measure-not-block lints to add.py audit",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-honesty",
+      "depends_on": [],
+      "created": "2026-06-27T14:19:00+00:00",
+      "updated": "2026-06-27T15:06:54+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T14:34:21+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d143b9bb6859e9fe348b2bb9b5800143",
+        "tests": {
+          "add-method/tooling/test_guarantee_lints.py": "d2f4e75c3109fa3976c5a0b962f794b9"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "21a4562c85b1be4f462c744040206657"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T14:10:16+00:00",
+  "updated": "2026-06-27T15:06:54+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2700,7 +2739,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "security-escalation-disclosure"
+    "flow-honesty": "guarantee-audit-lints"
   },
   "todos": [
     {

@@ -4992,6 +4992,30 @@ def _freeze_skip_notices(state: dict) -> list[dict]:
     return out
 
 
+# Any `risk:` declaration in the header (high|normal|low|…) — read from the `·`-delimited header
+# region only (mirrors _RISK_HIGH_RE's anchoring so a title substring can never look like one).
+_RISK_ANY_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*\S", re.MULTILINE)
+
+
+def _guarantee_lint_notices(root: Path, state: dict) -> dict:
+    """PRESENCE-ONLY, MEASURE-NOT-BLOCK lints SURFACED (never failed-on) by `add.py audit`
+    (guarantee-audit-lints). For tasks that reached verify (phase ∈ {verify, observe, done}):
+      shallow[]    = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an ABSENT
+                     block grandfathers a legacy task — never retro-flagged);
+      risk_unset[] = the header carries NO `risk:` token (an undeclared risk level at verify).
+    Honest visibility for two verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
+    TASK.md + state only, writes nothing."""
+    shallow, risk_unset = [], []
+    for slug in sorted(state.get("tasks") or {}):
+        if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
+            continue
+        if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Deep checks"):
+            shallow.append(slug)
+        if not _RISK_ANY_RE.search(_task_header(root, slug)):
+            risk_unset.append(slug)
+    return {"shallow": shallow, "risk_unset": risk_unset}
+
+
 def cmd_audit(args: argparse.Namespace) -> None:
     """Read-only: audit recorded human decision points for well-formedness. Exit 0 clean,
     exit 1 with findings — the enforcement gate CI consumes (audit-ci). Also SURFACES (never
@@ -5001,17 +5025,26 @@ def cmd_audit(args: argparse.Namespace) -> None:
     state = load_state(root)
     checked, findings = _audit_findings(root, state)
     skips = _freeze_skip_notices(state)
+    glints = _guarantee_lint_notices(root, state)
     if getattr(args, "json", False):
-        print(json.dumps({"checked": checked, "findings": findings, "freeze_skips": skips},
-                         ensure_ascii=False, indent=2))
+        print(json.dumps({"checked": checked, "findings": findings, "freeze_skips": skips,
+                          "guarantee_lints": glints}, ensure_ascii=False, indent=2))
     else:
         for x in findings:
             print(f"audit: {x['code']} {x['task']} — {x['detail']}")
         for s in skips:
             print(f"audit: freeze_skipped {s['task']} — crossed tests->build with a DRAFT §3 "
                   f"(by {s['by']} at {s['at']})")
-        if not findings and not skips:
+        for slug in glints["shallow"]:
+            print(f"audit: shallow_deep_check {slug} — §6 Deep-checks block unfilled "
+                  f"(a shallow verify, not a pass)")
+        if glints["risk_unset"]:
+            rs = glints["risk_unset"]
+            print(f"audit: risk_unset — {len(rs)} task(s) reached verify with no risk: "
+                  f"declaration: {', '.join(rs)}")
+        if not findings and not skips and not glints["shallow"] and not glints["risk_unset"]:
             print(f"audit: clean ({checked} tasks checked)")
+    # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:
         sys.exit(1)
 
