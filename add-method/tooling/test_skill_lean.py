@@ -54,7 +54,11 @@ POOLS = [
     # `new-milestone --queued`, promote with `activate`) — +1064 B human-approved surface (milestone
     # multi-milestone-intake 2/3, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈1064/0.88⌉=1210). The won compaction on SKILL.md + intake.md is untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 19675,
+    # core 19675 → 20004 @ skill-todo-flag (same method): SKILL.md gains a front-of-skill `--todo`
+    # fast-path block (route `/add --todo` to `add.py todo`: capture/list/close, then STOP) + the
+    # argument-hint names --todo — +289 B human-approved surface (loose fast-lane task, contract FROZEN
+    # @ v1). RATIO 0.88 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈289/0.88⌉=329). Won ground untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20004,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
@@ -66,7 +70,20 @@ POOLS = [
     # AI SURFACES; one it misses is invisible to the engine → human spot-audit is the only backstop"
     # disclosure — +196 B human-approved surface (milestone flow-honesty, contract FROZEN @ v1). RATIO
     # 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈196/0.75⌉=262). The won compaction is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 51994,
+    # orchestration 51994 → 52464 @ build-strategy-solutions (same method): advisor.md's fenced plan-following
+    # template gains a <strategy> block (mirrors the task's §5 Strategy + Known-problem fixes) + a prose clause —
+    # +352 B human-approved surface (loose task, contract FROZEN @ v1). RATIO 0.75 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈352/0.75⌉=470). The won compaction is untouched.
+    # orchestration 52464 → 52731 @ streams-strategy-pull (same method): streams.md's worker-contract
+    # ```xml fence gains the SAME fenced <strategy> block (mirrors the task's §5), so the parallel-spawn
+    # home matches the single advisor — +200 B human-approved surface (loose task, contract FROZEN @ v1).
+    # RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈200/0.75⌉=267). The won compaction is untouched.
+    # orchestration 52731 → 53125 @ strategy-soft-not-hard (change-request, §3 FROZEN @ v1): the <strategy>
+    # block is SOFTENED (preferred-not-hard + self-improve + report-the-strategy-used-for-audit) in BOTH
+    # advisor.md and streams.md, and advisor's intro clause softened to match — +295 B human-approved surface
+    # (block 198→327 ×2 files = +258, advisor intro 151→188 = +37). RATIO 0.75 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈295/0.75⌉=394). The won compaction is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 53125,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a

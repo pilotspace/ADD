@@ -188,7 +188,7 @@ class TestXmlConventionPhaseGuides(unittest.TestCase):
 # is ENUMERATED so the over-tagging guard is real, not hollow.
 ENGINE_SUBSET = {"constraints", "reject_codes"}  # STRICT — excludes output_format on purpose
 WORKER_CONTRACT_TAGS = {
-    "objective", "persona", "touch_boundary", "context_files", "expertise", "tools", "return",
+    "objective", "persona", "strategy", "touch_boundary", "context_files", "expertise", "tools", "return",
 }
 ENGINE_FILES = {
     "confidence.md": {
