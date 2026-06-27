@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "strategy-soft-not-hard",
+  "active_task": "strategy-actual-writeback",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2132,10 +2132,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "strategy-actual-writeback": {
+      "title": "\u00a75 records the AI's actual build strategy (Strategy actually used) \u2014 closes the report\u2192\u00a75 loop",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "adr-at-observe",
+      "depends_on": [],
+      "created": "2026-06-27T17:44:21+00:00",
+      "updated": "2026-06-27T17:52:29+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T17:48:37+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "76181a1ee79680a6d16c87bc7cb32ec1",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_scope_decl_template.py"
+        ],
+        "snapshot_md5": "305e098b74539c1bd045efb40167bdad"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T17:16:52+00:00",
+  "updated": "2026-06-27T17:52:29+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2358,9 +2399,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "adr-at-observe": {
+      "title": "Decision/ADR record harvested at OBSERVE",
+      "goal": "every task ends with a durable engine-harvested Decisions (ADR) block in \u00a77 \u2014 the key decisions by both human and AI (who \u00b7 what \u00b7 why \u00b7 alternatives), gathered from the actor-stamps already in the file, with an audit lint that it is present at done",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-27T17:43:42+00:00",
+      "updated": "2026-06-27T17:44:21+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-27T17:44:21+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "flow-honesty",
+  "active_milestone": "adr-at-observe",
   "archived": [
     {
       "slug": "v5",
@@ -2918,11 +2976,13 @@
     }
   ],
   "active_milestones": [
-    "flow-honesty"
+    "flow-honesty",
+    "adr-at-observe"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "strategy-soft-not-hard"
+    "flow-honesty": "strategy-soft-not-hard",
+    "adr-at-observe": "strategy-actual-writeback"
   },
   "todos": [
     {

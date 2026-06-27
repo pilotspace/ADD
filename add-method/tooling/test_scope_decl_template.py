@@ -55,6 +55,7 @@ STRATEGY_LABEL = "Strategy (ordered batches):"
 KNOWN_FIX_LABEL = "Known-problem fixes:"             # ADD-1 (full §5)
 FAST_STRATEGY_LABEL = "Strategy & known-problem fixes:"  # ADD-2 (fast §5)
 SAFETY_LINE = "Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>"
+ACTUAL_LABEL = "Strategy actually used:"             # strategy-actual-writeback (full + fast §5) — the §7 ADR harvest key
 SECTION_HEADING = "## Declaring the scope of impact"
 # the three pre-existing §5 lines that MUST stay byte-identical (additive change)
 EXISTING_LINES = (
@@ -200,8 +201,41 @@ class ScopeDeclTemplateTest(unittest.TestCase):
             fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
             self.assertIn(KNOWN_FIX_LABEL, full, "full scaffold missing Known-problem fixes")
             self.assertIn(FAST_STRATEGY_LABEL, fast, "fast scaffold missing the strategy line")
+            self.assertIn(ACTUAL_LABEL, full, "full scaffold missing the Strategy-actually-used field")
+            self.assertIn(ACTUAL_LABEL, fast, "fast scaffold missing the Strategy-actually-used field")
         finally:
             os.chdir(cwd)
+
+    # ---- strategy-actual-writeback: §5 gains a "Strategy actually used:" field (the §7 ADR harvest key) --
+    def test_full_template_actual_strategy_line(self):
+        text = CANON_TMPL.read_text(encoding="utf-8")
+        self.assertIn(ACTUAL_LABEL, text, "full §5 missing the Strategy-actually-used line")
+        # additive placement: Known-problem fixes < Strategy actually used < Safety rule
+        self.assertLess(text.index(KNOWN_FIX_LABEL), text.index(ACTUAL_LABEL),
+                        "Strategy-actually-used must sit BELOW Known-problem fixes")
+        self.assertLess(text.index(ACTUAL_LABEL),
+                        text.index("Safety rule (feature-specific):"),
+                        "Strategy-actually-used must sit ABOVE the Safety rule line")
+        for line in EXISTING_LINES:
+            self.assertIn(line, text, "pre-existing §5 line changed - the add is additive")
+
+    def test_fast_template_actual_strategy_line(self):
+        text = CANON_FAST.read_text(encoding="utf-8")
+        self.assertIn(ACTUAL_LABEL, text, "fast §5 missing the Strategy-actually-used line")
+        self.assertLess(text.index(FAST_STRATEGY_LABEL), text.index(ACTUAL_LABEL),
+                        "Strategy-actually-used must sit BELOW the fast strategy line")
+
+    def test_actual_strategy_label_identical_across_templates(self):
+        # one stable harvest key -> label_drift if the two templates diverge
+        full = CANON_TMPL.read_text(encoding="utf-8")
+        fast = CANON_FAST.read_text(encoding="utf-8")
+        self.assertIn(ACTUAL_LABEL, full)
+        self.assertIn(ACTUAL_LABEL, fast)
+        # the label prefix is one byte-identical string in both files
+        self.assertEqual(
+            full[full.index(ACTUAL_LABEL):full.index(ACTUAL_LABEL) + len(ACTUAL_LABEL)],
+            fast[fast.index(ACTUAL_LABEL):fast.index(ACTUAL_LABEL) + len(ACTUAL_LABEL)],
+            "the Strategy-actually-used label drifted between the full and fast templates")
 
 
 if __name__ == "__main__":
