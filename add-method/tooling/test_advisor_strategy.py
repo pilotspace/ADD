@@ -107,6 +107,24 @@ class TestAdvisorStrategy(unittest.TestCase):
         self.assertIsNotNone(block, "no <strategy>…</strategy> block")
         self.assertIn("§5", block.group(1), "the <strategy> block must point at the task's §5")
 
+    def test_strategy_block_is_preferred_not_hard(self) -> None:
+        # strategy-soft-not-hard: §5 is the builder's PREFERRED plan it self-improves on and
+        # reports for audit — NOT a hard "do not invent your own" directive.
+        block = re.search(r"\n<strategy>\n(.*?)\n</strategy>", self.text, re.DOTALL)
+        self.assertIsNotNone(block, "no line-anchored <strategy> block")
+        body = block.group(1)
+        self.assertIn("not a hard rule", body, "block must frame §5 as preferred, not a hard rule")
+        self.assertIn("Improve on it", body, "block must invite the builder to self-improve the plan")
+        self.assertIn("report the strategy", body, "block must ask the builder to report the strategy used")
+        self.assertIn("audit", body, "the report must feed the §5 audit trail")
+        self.assertNotIn("do not invent your own", self.text,
+                         "the rigid 'do not invent your own' phrasing must be gone")
+        # the advisor intro clause is softened to match (no rigid 'builds in the planned order')
+        self.assertNotIn("builds in the planned order", self.text,
+                         "advisor intro clause is still rigid")
+        self.assertIn("self-improves on that plan", self.text,
+                      "advisor intro must describe the preferred/self-improve framing")
+
 
 if __name__ == "__main__":
     unittest.main()

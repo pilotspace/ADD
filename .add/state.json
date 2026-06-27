@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "streams-strategy-pull",
+  "active_task": "strategy-soft-not-hard",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2085,10 +2085,57 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "strategy-soft-not-hard": {
+      "title": "Soften the <strategy> block: \u00a75 is preferred, builder self-improves + reports actual strategy for audit",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-27T17:03:22+00:00",
+      "updated": "2026-06-27T17:16:52+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T17:11:59+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "223f592a55127bf6bfd2c7032eb10ec6",
+        "tests": {
+          "add-method/tooling/test_advisor_strategy.py": "48e32f1b6c3265105ed194ab41321433",
+          "add-method/tooling/test_streams.py": "aa17b7200da15183078c02f78defeb91",
+          "add-method/tooling/test_skill_lean.py": "f1eeb288386e457e78f5d21b632b49cd"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/advisor.md",
+          "add-method/skill/add/streams.md",
+          ".claude/skills/add/advisor.md",
+          ".claude/skills/add/streams.md",
+          "add-method/src/add_method/_bundled/skill/add/advisor.md",
+          "add-method/src/add_method/_bundled/skill/add/streams.md",
+          "add-method/tooling/test_advisor_strategy.py",
+          "add-method/tooling/test_streams.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "03d71dd159af4eaab369140ee068d1c3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T16:40:59+00:00",
+  "updated": "2026-06-27T17:16:52+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2875,7 +2922,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "streams-strategy-pull"
+    "flow-honesty": "strategy-soft-not-hard"
   },
   "todos": [
     {
@@ -3002,6 +3049,12 @@
       "id": 21,
       "text": "how are AI retrieve decision in ground phase",
       "created": "2026-06-27T15:24:54+00:00",
+      "status": "open"
+    },
+    {
+      "id": 22,
+      "text": "Harden decision/ADR recording at the OBSERVE phase \u2014 capture decisions made by BOTH human and AI (who decided, what, why, alternatives) as a durable Architecture-Decision-Record-style artifact, not just spec/competency deltas",
+      "created": "2026-06-27T16:45:08+00:00",
       "status": "open"
     }
   ]

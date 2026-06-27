@@ -24,7 +24,7 @@ independent enough to earn it. When in doubt, do it in-context.
 
 Give the subagent the *piece of your plan it owns* and a fixed return shape. This reuses
 `streams.md`'s worker-contract tags for a single advisory subagent — the contract is identical
-on any runner; only the spawn adapter (see `streams.md`) changes. The `<strategy>` block mirrors the task's §5 (Strategy + Known-problem fixes), so the subagent builds in the planned order and dodges the known traps.
+on any runner; only the spawn adapter (see `streams.md`) changes. The `<strategy>` block mirrors the task's §5 (Strategy + Known-problem fixes) as the subagent's PREFERRED path — it self-improves on that plan and reports the strategy it actually used.
 
 ```xml
 <objective>
@@ -41,8 +41,10 @@ Work step by step, following the plan:
 </persona>
 
 <strategy>
-Follow the task's §5 plan — do not invent your own: the Strategy (ordered batches) build
-order and the Known-problem fixes (trap → fix for each anticipated failure mode).
+The task's §5 plan — the Strategy (ordered batches) order and the Known-problem fixes — is
+your PREFERRED starting path, not a hard rule. Improve on it when a better strategy emerges
+as you build; on done, report the strategy you ACTUALLY used so the orchestrator can update
+§5 for the audit trail.
 </strategy>
 
 <context_files>

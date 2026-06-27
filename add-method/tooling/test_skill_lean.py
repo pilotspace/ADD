@@ -78,7 +78,12 @@ POOLS = [
     # ```xml fence gains the SAME fenced <strategy> block (mirrors the task's §5), so the parallel-spawn
     # home matches the single advisor — +200 B human-approved surface (loose task, contract FROZEN @ v1).
     # RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈200/0.75⌉=267). The won compaction is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 52731,
+    # orchestration 52731 → 53125 @ strategy-soft-not-hard (change-request, §3 FROZEN @ v1): the <strategy>
+    # block is SOFTENED (preferred-not-hard + self-improve + report-the-strategy-used-for-audit) in BOTH
+    # advisor.md and streams.md, and advisor's intro clause softened to match — +295 B human-approved surface
+    # (block 198→327 ×2 files = +258, advisor intro 151→188 = +37). RATIO 0.75 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈295/0.75⌉=394). The won compaction is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 53125,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a

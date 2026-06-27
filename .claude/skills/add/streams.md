@@ -180,8 +180,10 @@ Self-Eval; if any < 0.9, refine before returning.
 </persona>
 
 <strategy>
-Follow the task's §5 plan — do not invent your own: the Strategy (ordered batches) build
-order and the Known-problem fixes (trap → fix for each anticipated failure mode).
+The task's §5 plan — the Strategy (ordered batches) order and the Known-problem fixes — is
+your PREFERRED starting path, not a hard rule. Improve on it when a better strategy emerges
+as you build; on done, report the strategy you ACTUALLY used so the orchestrator can update
+§5 for the audit trail.
 </strategy>
 
 <touch_boundary>   <!-- from run.md; the worker's contract, identical on every runner -->
