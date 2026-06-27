@@ -186,7 +186,7 @@ Reviewed by: Tin Dang (full-auto authorization) + quality-review subagent (CLEAR
 Watch (reuse scenarios as monitors): phase pool vs ≤30,336 fence · full-suite green · 3-tree parity · exit_gate count = 9.
 
 ### Spec delta
-- [SPEC · open] 4 non-behavioral nits restorable if budget loosens: 0-setup run-mode "order/throttle vs whether-contract-fires" framing + "Concurrency/flow behavior" header · 5-build "cannot move faster than you can verify" heuristic · 0-ground tool-agnostic-spawn note (evidence: quality review nits, CLEARER overall).
+- [SPEC · carried] 4 non-behavioral nits restorable if budget loosens: 0-setup run-mode "order/throttle vs whether-contract-fires" framing + "Concurrency/flow behavior" header · 5-build "cannot move faster than you can verify" heuristic · 0-ground tool-agnostic-spawn note (evidence: quality review nits, CLEARER overall). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] test-pinned per-phase guides have an effectiveness floor like the always-loaded core — set the target at the realistic ceiling (20%) UP-FRONT with rationale, rather than freezing 25% and re-speccing after build (saves the tamper/reopen cycle); the tree-wide 25% is carried by the load-on-demand reference pool (evidence: 20% hit cleanly, CLEARER, no re-spec needed). [folded foundation-version 46]

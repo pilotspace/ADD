@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "freeze-gate-universal",
+  "active_task": "delta-drain",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1833,10 +1833,47 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "delta-drain": {
+      "title": "loud forceable open-SPEC-delta release floor + status staleness line",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-honesty",
+      "depends_on": [],
+      "created": "2026-06-27T09:50:24+00:00",
+      "updated": "2026-06-27T12:20:05+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-27T12:05:32+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "78c392258a2f9e4d2726bec611c1766a",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "23c365036020e5dd3623aa5973b9c85f"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T09:45:46+00:00",
+  "updated": "2026-06-27T12:20:05+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2623,7 +2660,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "freeze-gate-universal"
+    "flow-honesty": "delta-drain"
   },
   "todos": [
     {

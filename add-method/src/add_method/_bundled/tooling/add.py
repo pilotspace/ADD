@@ -465,6 +465,82 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def _open_spec_delta_indices(text: str) -> list[int]:
+    """Every splitlines(keepends=True) index of an `[SPEC · open]` line (carry-delta --all). PURE.
+    A SPEC flip preserves line count + position, so these indices stay valid across sequential
+    flips."""
+    return [i for i, ln in enumerate(text.splitlines(keepends=True))
+            if (m := _SPEC_DELTA_RE.match(ln.rstrip("\n"))) and m.group(2) == "open"]
+
+
+def cmd_carry_delta(args: argparse.Namespace) -> None:
+    """DEFER a task's open SPEC delta(s) non-lossily — `[SPEC · open]` -> `[SPEC · carried]`
+    + a ` [carried: <reason>]` stamp (delta-drain). A carried delta clears the release floor and
+    the `status` staleness count but SURVIVES on disk: retrievable via `add.py deltas --carried`
+    and re-activatable via `reopen-delta`. `--reason` is REQUIRED (no silent carry); `--all` carries
+    every open delta in the task; `--match` targets the unique one. Validate-then-write."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
+    reason = (getattr(args, "reason", None) or "").strip()
+    if not reason:
+        _die("carry_reason_required: carry-delta needs a --reason — a deferral must say why "
+             "(it is the breadcrumb a future loop reads)")
+    task_md = root / "tasks" / slug / "TASK.md"
+    text = task_md.read_text(encoding="utf-8")
+    stamp = f"[carried: {reason}]"
+    if getattr(args, "all", False):
+        idxs = _open_spec_delta_indices(text)
+        if not idxs:
+            _die(f"no_open_spec_delta: task '{slug}' has no open SPEC delta to carry")
+        for idx in idxs:                                   # indices stay valid (flip is in-place)
+            text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
+        _atomic_write(task_md, text)
+        print(f"carried {len(idxs)} open SPEC delta(s) in '{slug}' -> [SPEC · carried]  ({reason})")
+        print(_next_footer(root, state))
+        return
+    match = getattr(args, "match", None)
+    status, idx, _disp = _select_spec_delta(text, match)
+    if status in ("no_open", "no_match"):                  # contract: a --match miss is no_open too
+        _die(f"no_open_spec_delta: task '{slug}' has no open SPEC delta to carry"
+             + (f" matching --match '{match}'" if status == "no_match" else ""))
+    if status == "ambiguous":
+        _die(f"ambiguous_spec_delta: --match '{match}' matches multiple open SPEC deltas in "
+             f"'{slug}' — narrow it, or use --all")
+    new_text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
+    _atomic_write(task_md, new_text)
+    print(f"carried the {'matched' if match else 'first'} open SPEC delta in '{slug}' -> "
+          f"[SPEC · carried]  ({reason})")
+    print(_next_footer(root, state))
+
+
+def cmd_reopen_delta(args: argparse.Namespace) -> None:
+    """RE-ACTIVATE a carried SPEC delta — `[SPEC · carried]` -> `[SPEC · open]` (delta-drain).
+    The inverse of carry: a deferred delta re-enters the open count + release floor + staleness.
+    The ` [carried: …]` breadcrumb is stripped so a re-activated delta reads clean. `--match`
+    targets the unique carried delta. Validate-then-write; refuse `no_carried_spec_delta`."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)
+    task_md = root / "tasks" / slug / "TASK.md"
+    text = task_md.read_text(encoding="utf-8")
+    match = getattr(args, "match", None)
+    status, idx, _disp = _select_spec_delta(text, match, status="carried")
+    if status in ("no_open", "no_match"):
+        _die(f"no_carried_spec_delta: task '{slug}' has no carried SPEC delta to reopen"
+             + (f" matching --match '{match}'" if status == "no_match" else ""))
+    if status == "ambiguous":
+        _die(f"ambiguous_spec_delta: --match '{match}' matches multiple carried SPEC deltas in "
+             f"'{slug}' — narrow it")
+    new_text = _resolve_spec_delta(text, "open", line_index=idx, from_status="carried")
+    lines = new_text.splitlines(keepends=True)             # drop the carried breadcrumb (no accretion)
+    eol = lines[idx][len(lines[idx].rstrip("\n")):]
+    lines[idx] = re.sub(r"\s*\[carried:[^\]]*\]\s*$", "", lines[idx].rstrip("\n")) + eol
+    _atomic_write(task_md, "".join(lines))
+    print(f"reopened the {'matched' if match else 'first'} carried SPEC delta in '{slug}' -> [SPEC · open]")
+    print(_next_footer(root, state))
+
+
 # a §3 still carrying this template placeholder is NOT a drafted contract yet
 _CONTRACT_TEMPLATE_RE = re.compile(r"<METHOD>")
 
@@ -1434,12 +1510,16 @@ def cmd_status(args: argparse.Namespace) -> None:
     open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
     if open_deltas:
         print(f"deltas  : {open_deltas} open — consolidate at milestone close (add.py deltas)")
-    # SPEC-delta nudge (project-wide): surface unresolved forward hand-offs so a seed/drop
-    # can't be silently skipped (read-only; silent when none). Sibling of the fold nudge.
+    # SPEC-delta staleness nudge (project-wide): surface unresolved forward hand-offs as STALE
+    # backpressure so they drain instead of silently accumulating (delta-drain). Read-only;
+    # PRESENT-ONLY (silent when none → byte-identical). The prefix stays `spec :` (the cue the
+    # spec-delta guards pin); the wording now names the staleness + the drain surface, which now
+    # includes carry-delta (defer non-lossily) beside seed/drop.
     open_spec = len(_collect_open_spec_deltas(root))
     if open_spec:
         noun = "delta" if open_spec == 1 else "deltas"
-        print(f"spec    : {open_spec} open SPEC {noun} — resolve: new-task --from-delta / drop-delta")
+        print(f"spec    : {open_spec} open SPEC {noun} — stale; drain via add.py deltas "
+              "(carry-delta / new-task --from-delta / drop-delta)")
     # When the setup is unlocked, the only terminal guidance that matters is
     # review+lock; suppress the generic resume block so it does not compete.
     if unlocked:
@@ -4360,7 +4440,7 @@ _DELTA_STATUSES = ("open", "folded", "rejected")
 # dismissed (dropped) — never consolidated into the foundation. _STATUS_SETS keys each
 # tag to its legal status set so the ONE lint can reject a cross-set pairing
 # ([SPEC · folded], [SDD · seeded]) without a parallel grammar.
-_SPEC_STATUSES = ("open", "seeded", "dropped")
+_SPEC_STATUSES = ("open", "seeded", "dropped", "carried")
 _STATUS_SETS = {**{c: _DELTA_STATUSES for c in _COMPETENCY_ORDER}, "SPEC": _SPEC_STATUSES}
 
 # Broad structural tag detector: finds ANY "- [tok · tok]" line (valid OR malformed).
@@ -4516,13 +4596,13 @@ def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
     return by_comp
 
 
-def _collect_open_spec_deltas(root: Path) -> list[dict]:
-    """Scan every .add/tasks/*/TASK.md "### Spec delta" block for OPEN SPEC deltas.
+def _collect_spec_deltas(root: Path, status: str = "open") -> list[dict]:
+    """Scan every .add/tasks/*/TASK.md "### Spec delta" block for SPEC deltas of `status`.
 
-    Returns a FLAT list of {task, text, evidence} dicts (SPEC is one tag, never
-    bucketed by competency). A SPEC delta is a forward hand-off that resolves into
-    a TASK — never consolidated into the foundation — so it is collected SEPARATELY from
-    _collect_open_deltas. READ-ONLY; never mutates any file."""
+    Returns a FLAT list of {task, text, evidence} dicts (SPEC is one tag, never bucketed by
+    competency). A SPEC delta is a forward hand-off that resolves into a TASK (seeded), is
+    dismissed (dropped), or is DEFERRED non-lossily (carried) — the open/carried VIEWS are this
+    one scan keyed on `status`. READ-ONLY; never mutates any file."""
     out: list[dict] = []
     tasks_dir = root / "tasks"
     if not tasks_dir.is_dir():
@@ -4535,7 +4615,7 @@ def _collect_open_spec_deltas(root: Path) -> list[dict]:
             continue
         for unit in _spec_delta_entries(text):
             m = _SPEC_DELTA_RE.match(unit[0])
-            if m.group(2) != "open":         # seeded / dropped are resolved — excluded
+            if m.group(2) != status:         # other statuses are excluded from this view
                 continue
             tail = " ".join([m.group(3).strip(), *unit[1:]]).strip()
             em = _EVIDENCE_RE.match(tail)
@@ -4547,51 +4627,69 @@ def _collect_open_spec_deltas(root: Path) -> list[dict]:
     return out
 
 
-# The FIRST writer of the seeded/dropped statuses (task 1 only TOLERATED them on read).
-# seed-and-drop's resolution verbs both route through here.
-_SPEC_OPEN_TOKEN_RE = re.compile(r"(\[\s*SPEC\s*·\s*)open(\s*\])")
+def _collect_open_spec_deltas(root: Path) -> list[dict]:
+    """Open SPEC deltas — the release-floor + `deltas` + `status` count source (a thin view)."""
+    return _collect_spec_deltas(root, "open")
+
+
+def _collect_carried_spec_deltas(root: Path) -> list[dict]:
+    """Carried (deferred, non-lossy) SPEC deltas — the `deltas --carried` retrieval surface."""
+    return _collect_spec_deltas(root, "carried")
+
+
+# The FIRST writer of the seeded/dropped/carried statuses (task 1 only TOLERATED them on read).
+# seed-and-drop's resolution verbs AND delta-drain's carry/reopen all route through here. The token
+# regex matches ANY current SPEC status, so the flip works in either direction (open->carried,
+# carried->open) — not only away from open.
+_SPEC_STATUS_TOKEN_RE = re.compile(r"(\[\s*SPEC\s*·\s*)(?:open|seeded|dropped|carried)(\s*\])")
 
 
 def _resolve_spec_delta(text: str, new_status: str, pointer: str | None = None,
-                        line_index: int | None = None) -> str | None:
-    """Flip ONE `[SPEC · open]` line in `text` to `new_status`; return the new text.
+                        line_index: int | None = None, *, from_status: str = "open",
+                        stamp: str | None = None) -> str | None:
+    """Flip ONE `[SPEC · <from_status>]` line in `text` to `new_status`; return the new text.
 
     PURE — no IO. With `line_index` (a splitlines(keepends=True) index, as `_select_spec_delta`
-    returns) flip THAT line; without it, flip the FIRST open delta (back-compat). Only the status
-    token changes (+ a trailing ` [→ <pointer>]` provenance stamp when seeding); the entry's text
-    and `(evidence: …)` are byte-preserved. Returns None when there is NO open SPEC delta to flip —
+    returns) flip THAT line; without it, flip the FIRST `from_status` delta (back-compat;
+    `from_status` defaults to "open"). Only the status token changes (+ a trailing ` [→ <pointer>]`
+    seed stamp, or a free-form ` <stamp>` e.g. `[carried: <reason>]`); the entry's text and
+    `(evidence: …)` are byte-preserved. Returns None when there is NO matching delta to flip —
     the caller then refuses and writes nothing. Mirrors the `_autonomy_decl_line` pure-transform."""
     lines = text.splitlines(keepends=True)
     target = line_index
-    if target is None:                             # back-compat: the FIRST open delta
+    if target is None:                             # back-compat: the FIRST from_status delta
         for i, ln in enumerate(lines):
             m = _SPEC_DELTA_RE.match(ln.rstrip("\n"))
-            if m and m.group(2) == "open":
+            if m and m.group(2) == from_status:
                 target = i
                 break
         if target is None:
             return None
     ln = lines[target]
     eol = ln[len(ln.rstrip("\n")):]                # preserve the exact line ending
-    body = _SPEC_OPEN_TOKEN_RE.sub(rf"\g<1>{new_status}\g<2>", ln.rstrip("\n"), count=1)
+    body = _SPEC_STATUS_TOKEN_RE.sub(rf"\g<1>{new_status}\g<2>", ln.rstrip("\n"), count=1)
     if pointer:
         body = f"{body} [→ {pointer}]"
+    if stamp:
+        body = f"{body} {stamp}"
     lines[target] = body + eol
     return "".join(lines)
 
 
-def _select_spec_delta(text: str, match: str | None = None) -> tuple[str, int | None, str | None]:
-    """Pick the open SPEC delta to resolve (delta-match-selector). PURE — no IO.
+def _select_spec_delta(text: str, match: str | None = None,
+                       status: str = "open") -> tuple[str, int | None, str | None]:
+    """Pick the SPEC delta (of `status`, default "open") to resolve (delta-match-selector). PURE.
 
-    `match=None` -> the FIRST open delta. `match=<substr>` -> the UNIQUE open delta whose display
-    text (status token + `(evidence: …)` excluded) contains <substr>, case-insensitive. Returns
-    (status, line_index, display_text) where status is one of: "ok" (line_index/display set),
-    "no_open" (no open delta at all), "no_match" (--match hit zero), "ambiguous" (--match hit >1).
-    line_index is a splitlines(keepends=True) index, the same `_resolve_spec_delta` flips."""
+    `match=None` -> the FIRST such delta. `match=<substr>` -> the UNIQUE one whose display text
+    (status token + `(evidence: …)` excluded) contains <substr>, case-insensitive. Returns
+    (result, line_index, display_text) where result is one of: "ok" (line_index/display set),
+    "no_open" (none of `status` at all), "no_match" (--match hit zero), "ambiguous" (--match hit >1).
+    line_index is a splitlines(keepends=True) index, the same `_resolve_spec_delta` flips. (The
+    "no_open" token is status-agnostic; the carried-track caller maps it to `no_carried_spec_delta`.)"""
     opens: list[tuple[int, str]] = []
     for i, ln in enumerate(text.splitlines(keepends=True)):
         m = _SPEC_DELTA_RE.match(ln.rstrip("\n"))
-        if not m or m.group(2) != "open":
+        if not m or m.group(2) != status:
             continue
         tail = m.group(3).strip()
         cut = tail.find("(evidence:")             # exclude the evidence tail even if its paren is unclosed
@@ -5182,6 +5280,15 @@ def release_data(root: Path, state: dict) -> dict:
     # loose — done milestone-free tasks not yet attributed (the cut's loose bundle, peer to releasable)
     loose = _releasable_loose_tasks(root, state)
 
+    # open_spec_deltas — unresolved SPEC deltas riding into the cut (the forceable floor's count
+    # source; one record-set so the floor + release-report can never disagree). GATHER, never judge.
+    # LIVE-only: a SPEC delta blocks the cut only while its task is in active state. Archived tasks
+    # are PASS-done history (their deltas stay preserved + visible PROJECT-WIDE in `add.py deltas` /
+    # the `status` cue, but never block a fresh release — they cannot be cleared by the live-scoped
+    # carry/drop verbs). This makes the floor count == the set the CLI can actually drain.
+    live_tasks = state.get("tasks") or {}
+    open_deltas = [d for d in _collect_open_spec_deltas(root) if d["task"] in live_tasks]
+
     return {
         "releasable": releasable,
         "changed": changed,
@@ -5189,9 +5296,12 @@ def release_data(root: Path, state: dict) -> dict:
         "blockers": blockers,
         "monitors": monitors,
         "loose": loose,
+        "open_spec_deltas": {"count": len(open_deltas),
+                             "items": [{"task": d["task"], "text": d["text"]} for d in open_deltas]},
         "summary": {
             "releasable": len(releasable), "changed": len(changed), "waivers": len(waivers),
             "blockers": len(blockers), "monitors": len(monitors), "loose": len(loose),
+            "open_spec_deltas": len(open_deltas),
         },
     }
 
@@ -5278,6 +5388,12 @@ def cmd_release(args: argparse.Namespace) -> None:
     if not forced and d["waivers"] and not disclosed:
         _die("release_undisclosed_waiver: a RISK-ACCEPTED waiver rides into this release — pass "
              "--with-waivers to disclose it in the notes, or --force to override.")
+    open_spec = d["open_spec_deltas"]["count"]
+    if not forced and open_spec > 0:
+        _die(f"release_open_spec_deltas: {open_spec} open SPEC delta(s) unresolved — drain them "
+             "first (carry-delta / new-task --from-delta / drop-delta; see `add.py deltas`), or "
+             "pass --force to cut anyway (they ride into the release unresolved). Unlike "
+             "release_security_open, this floor IS forceable.")
 
     # ── RECORD — build both contents in memory, then write CHANGELOG, then RELEASES (commit) ──
     day = date.today().isoformat()
@@ -5312,16 +5428,22 @@ def cmd_release(args: argparse.Namespace) -> None:
 
 
 def cmd_deltas(args: argparse.Namespace) -> None:
-    """Read-only: report open competency lessons AND open SPEC deltas, SEPARATELY.
+    """Read-only: report open competency lessons AND open SPEC deltas, SEPARATELY — plus, with
+    `--carried`/`--all`, the carried (deferred, non-lossy) SPEC deltas as a RETRIEVAL surface.
 
-    Scans every .add/tasks/*/TASK.md: '### Competency deltas' → open lessons grouped
-    by competency (DDD·SDD·UDD·TDD·ADD), and '### Spec delta' → open forward hand-offs
-    in their own section (a SPEC delta resolves into a task, never consolidates). --json emits
-    one JSON object with both under separate keys. Exit 0 ALWAYS. Writes NOTHING."""
+    Scans every .add/tasks/*/TASK.md: '### Competency deltas' → open lessons grouped by competency
+    (DDD·SDD·UDD·TDD·ADD), and '### Spec delta' → open forward hand-offs in their own section (a SPEC
+    delta resolves into a task, never consolidates). `--carried` lists the carried deltas (re-activate
+    via `reopen-delta`); `--all` shows open + carried. Bare output is BYTE-IDENTICAL to before.
+    --json emits one object (carried keys only when requested). Exit 0 ALWAYS. Writes NOTHING."""
     root = _require_root()
     by_comp = _collect_open_deltas(root)
     total = sum(len(v) for v in by_comp.values())
     spec = _collect_open_spec_deltas(root)
+    only_carried = getattr(args, "carried", False)
+    want_carried = only_carried or getattr(args, "all", False)
+    want_open = not only_carried                          # --carried hides open; --all keeps it
+    carried = _collect_carried_spec_deltas(root) if want_carried else []
 
     if getattr(args, "json", False):
         payload: dict = {
@@ -5330,26 +5452,40 @@ def cmd_deltas(args: argparse.Namespace) -> None:
             "spec": spec,
             "spec_total": len(spec),
         }
+        if want_carried:
+            payload["carried"] = carried
+            payload["carried_total"] = len(carried)
         print(json.dumps(payload, ensure_ascii=False))
         return
 
-    if total == 0 and not spec:
-        print("no open deltas.")
-        return
-
-    if total:
-        print(f"open lessons learned ({total} total):")
-        for comp in _COMPETENCY_ORDER:
-            entries = by_comp[comp]
-            if not entries:
-                continue
-            print(f"  {comp} ({len(entries)}):")
-            for e in entries:
+    printed = False
+    if want_open:
+        if total:
+            print(f"open lessons learned ({total} total):")
+            for comp in _COMPETENCY_ORDER:
+                entries = by_comp[comp]
+                if not entries:
+                    continue
+                print(f"  {comp} ({len(entries)}):")
+                for e in entries:
+                    print(f"    - {e['text']}  [{e['task']}]")
+            printed = True
+        if spec:
+            print(f"open spec deltas ({len(spec)} total):")
+            for e in spec:
                 print(f"    - {e['text']}  [{e['task']}]")
-    if spec:
-        print(f"open spec deltas ({len(spec)} total):")
-        for e in spec:
-            print(f"    - {e['text']}  [{e['task']}]")
+            printed = True
+    if want_carried:
+        if carried:
+            print(f"carried spec deltas ({len(carried)} total — reopen via add.py reopen-delta):")
+            for e in carried:
+                print(f"    - {e['text']}  [{e['task']}]")
+            printed = True
+        elif only_carried:                                # --carried alone, nothing carried
+            print("no carried spec deltas.")
+            printed = True
+    if not printed:
+        print("no open deltas.")
 
 
 def cmd_project(args: argparse.Namespace) -> None:
@@ -5538,6 +5674,27 @@ def build_parser() -> argparse.ArgumentParser:
                      help="target the UNIQUE open SPEC delta whose text contains SUBSTR "
                           "(case-insensitive) instead of the first")
     pdd.set_defaults(func=cmd_drop_delta)
+
+    pcd = sub.add_parser("carry-delta",
+                         help="defer a task's open SPEC delta non-lossily -> [SPEC · carried]")
+    pcd.add_argument("slug", help="task whose open SPEC delta to carry (defer)")
+    pcd.add_argument("--reason", default=None, metavar="TEXT",
+                     help="REQUIRED — why it is deferred (the breadcrumb a future loop reads)")
+    grp = pcd.add_mutually_exclusive_group()
+    grp.add_argument("--match", default=None, metavar="SUBSTR",
+                     help="target the UNIQUE open SPEC delta whose text contains SUBSTR "
+                          "(case-insensitive) instead of the first")
+    grp.add_argument("--all", action="store_true",
+                     help="carry EVERY open SPEC delta in the task")
+    pcd.set_defaults(func=cmd_carry_delta)
+
+    prd = sub.add_parser("reopen-delta",
+                         help="re-activate a carried SPEC delta -> [SPEC · open]")
+    prd.add_argument("slug", help="task whose carried SPEC delta to reopen")
+    prd.add_argument("--match", default=None, metavar="SUBSTR",
+                     help="target the UNIQUE carried SPEC delta whose text contains SUBSTR "
+                          "(case-insensitive) instead of the first")
+    prd.set_defaults(func=cmd_reopen_delta)
 
     pm = sub.add_parser("new-milestone", help="scaffold a milestone (SDD living doc)")
     pm.add_argument("slug")
@@ -5743,6 +5900,11 @@ def build_parser() -> argparse.ArgumentParser:
     pdt = sub.add_parser("deltas",
                          help="read-only report: open lessons learned grouped by competency")
     pdt.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    pdt_g = pdt.add_mutually_exclusive_group()
+    pdt_g.add_argument("--carried", action="store_true",
+                       help="list the carried (deferred) SPEC deltas instead of the open ones")
+    pdt_g.add_argument("--all", action="store_true",
+                       help="list open AND carried SPEC deltas")
     pdt.set_defaults(func=cmd_deltas)
 
     pfo = sub.add_parser(_FOLD_VERB,

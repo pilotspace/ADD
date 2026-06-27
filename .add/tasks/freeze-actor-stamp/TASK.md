@@ -253,8 +253,8 @@ Watch (reuse scenarios as monitors): freeze refusal-rate per code · re-freeze v
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] make the §3 freeze + the state freeze-stamp ONE recoverable unit — today they are two sequential atomic writes, so a crash between leaves §3 FROZEN with no state actor; add an `unfreeze`/repair path or a write-state-first ordering with a §3 rollback (evidence: refute-read residue 1 — `cmd_freeze` writes TASK.md then state.json, no transaction)
-- [SPEC · open] `cmd_freeze` should set `flag_verified` (like `_build_entry`) so audit's flag-integrity check is armed at freeze, not only after tests→build — a post-freeze flag removal is invisible to audit until the build crossing (evidence: refute-read residue 2; existing engine gap surfaced by this task)
+- [SPEC · carried] make the §3 freeze + the state freeze-stamp ONE recoverable unit — today they are two sequential atomic writes, so a crash between leaves §3 FROZEN with no state actor; add an `unfreeze`/repair path or a write-state-first ordering with a §3 rollback (evidence: refute-read residue 1 — `cmd_freeze` writes TASK.md then state.json, no transaction) [carried: deferred to backlog 2026-06-27 (delta-drain) — not now-actionable; retrievable via 'add.py deltas --carried', reopen or seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] `cmd_freeze` should set `flag_verified` (like `_build_entry`) so audit's flag-integrity check is armed at freeze, not only after tests→build — a post-freeze flag removal is invisible to audit until the build crossing (evidence: refute-read residue 2; existing engine gap surfaced by this task) [carried: deferred to backlog 2026-06-27 (delta-drain) — not now-actionable; retrievable via 'add.py deltas --carried', reopen or seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

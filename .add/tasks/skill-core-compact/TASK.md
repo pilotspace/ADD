@@ -237,7 +237,7 @@ Reviewed by: Tin Dang (re-spec approval) + quality-review subagent (CLEARER) · 
 Watch (reuse scenarios as monitors): full-suite green per propagation · core byte count vs the ≤14,866 fence · 3-tree md5 parity.
 
 ### Spec delta
-- [SPEC · open] the always-loaded core has a hard effectiveness floor (~12%); deeper leanness must come from the on-demand guides (evidence: 25% needed cutting the phase routing table / trigger description — quality-review would flag REGRESSION).
+- [SPEC · carried] the always-loaded core has a hard effectiveness floor (~12%); deeper leanness must come from the on-demand guides (evidence: 25% needed cutting the phase routing table / trigger description — quality-review would flag REGRESSION). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] a token-reduction TARGET can collide with the effectiveness floor; the honest resolution is a human-approved change-request that re-specs the number, NEVER weakening the test or gutting the prompt (evidence: v1 ≥25% re-specced to ≥12% on build evidence; full suite stayed green). [folded foundation-version 46]

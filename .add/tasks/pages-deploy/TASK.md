@@ -285,8 +285,8 @@ Watch (reuse scenarios as monitors): the `docs` workflow's run status on each pu
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the docs `pages.yml` and the suite `ci.yml` both rebuild on docs changes; a future polish could fold the strict-build check into ci.yml so a broken book link fails a PR BEFORE merge, not only on the post-merge deploy (evidence: pages.yml only runs on push to main + dispatch, not PRs).
-- [SPEC · open] consider adding `requirements-docs.txt` (mkdocs-material) to Dependabot/renovate so the docs toolchain stays patched like the npm/pip deps (evidence: it's a new, separately-pinned dep file).
+- [SPEC · carried] the docs `pages.yml` and the suite `ci.yml` both rebuild on docs changes; a future polish could fold the strict-build check into ci.yml so a broken book link fails a PR BEFORE merge, not only on the post-merge deploy (evidence: pages.yml only runs on push to main + dispatch, not PRs). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] consider adding `requirements-docs.txt` (mkdocs-material) to Dependabot/renovate so the docs toolchain stays patched like the npm/pip deps (evidence: it's a new, separately-pinned dep file). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

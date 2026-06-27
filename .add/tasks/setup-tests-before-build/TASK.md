@@ -199,7 +199,7 @@ Reviewed by: Tin Dang · date: 2026-06-25
 Watch (reuse scenarios as monitors): a first-task `phase build` reached with an empty §4/tests/ (the guide-only seam slipped) — the signal a follow-up engine gate would catch.
 
 ### Spec delta
-- [SPEC · open] add a build-boundary engine gate refusing the FIRST task's crossing into build when §4/`tests/` is empty (the human-approved follow-up to F6's guide-only fix) — note: "red" is not mechanically detectable, so the gate can only assert tests EXIST, not that they fail; the guide stays the primary seam (evidence: F6 freeze flag — a determined agent can still `phase build` past the guide).
+- [SPEC · carried] add a build-boundary engine gate refusing the FIRST task's crossing into build when §4/`tests/` is empty (the human-approved follow-up to F6's guide-only fix) — note: "red" is not mechanically detectable, so the gate can only assert tests EXIST, not that they fail; the guide stays the primary seam (evidence: F6 freeze flag — a determined agent can still `phase build` past the guide). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] a scope-correct mid-build discovery (needing an out-of-scope file — here the lean fence) is resolved by declaring it in §5 AND surgically patching `state.scope.declared`, NOT by re-crossing tests→build — re-crossing re-walks the DIRTY tree and neuters the touch baseline (evidence: F6 — test_skill_lean.py rebaseline added mid-build, sidecar md5 preserved). [folded foundation-version 51]

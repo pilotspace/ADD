@@ -275,8 +275,8 @@ Forward changes for the next loop — each re-enters at Specify as the next task
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`).
 
-- [SPEC · open] tree-level "missing" (absent/empty dir) won't heal a PARTIALLY-gutted present tree on a same-version update — consider a manifest/file-count check if drift is seen in the wild (evidence: H-A2 accepted at freeze with this exact gap noted)
-- [SPEC · open] reconcile reports per-tree status but not a one-line "N restored / M refreshed" summary — global-install will reconcile a shared home where a roll-up reads better (evidence: global-install is the next milestone task and consumes reconcile)
+- [SPEC · carried] tree-level "missing" (absent/empty dir) won't heal a PARTIALLY-gutted present tree on a same-version update — consider a manifest/file-count check if drift is seen in the wild (evidence: H-A2 accepted at freeze with this exact gap noted) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] reconcile reports per-tree status but not a one-line "N restored / M refreshed" summary — global-install will reconcile a shared home where a roll-up reads better (evidence: global-install is the next milestone task and consumes reconcile) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

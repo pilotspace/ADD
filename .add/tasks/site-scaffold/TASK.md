@@ -294,8 +294,8 @@ Forward changes for the next loop — each re-enters at Specify as the next task
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
 - [SPEC · seeded] pages-deploy (task 2) — GitHub Actions workflow building `--strict` + deploying to Pages on push to main; set `site_url` + update `homepage`/README links (evidence: site builds locally; needs CI + the public URL to satisfy exit criteria 3–4).
-- [SPEC · open] a new book chapter/appendix added later must also be added to `mkdocs.yml` nav or `--strict` orphan-fails — consider a tiny guard test (assert every `add-method/docs/*.md` is in nav) so the book and site can't drift (evidence: nav is an explicit hand-maintained list).
-- [SPEC · open] nav labels are hand-typed in mkdocs.yml and duplicate each chapter's H1 — a future polish could derive them, low priority (evidence: 24 labels maintained by hand).
+- [SPEC · carried] a new book chapter/appendix added later must also be added to `mkdocs.yml` nav or `--strict` orphan-fails — consider a tiny guard test (assert every `add-method/docs/*.md` is in nav) so the book and site can't drift (evidence: nav is an explicit hand-maintained list). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] nav labels are hand-typed in mkdocs.yml and duplicate each chapter's H1 — a future polish could derive them, low priority (evidence: 24 labels maintained by hand). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

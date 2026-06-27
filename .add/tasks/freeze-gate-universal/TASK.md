@@ -253,7 +253,7 @@ Watch (reuse scenarios as monitors): the `freeze_skipped` count in `add.py audit
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the §5 Scope parser resolves ANY backticked token as a path, so a backticked CLI flag becomes a bogus declared entry (evidence: this task's original §5 placeholder backticked `--skip-freeze` → `_declared_scope` produced `.../tooling/--skip-freeze`; harmless here but a latent false-declaration — skip tokens matching `^--` in `_declared_scope`)
+- [SPEC · carried] the §5 Scope parser resolves ANY backticked token as a path, so a backticked CLI flag becomes a bogus declared entry (evidence: this task's original §5 placeholder backticked `--skip-freeze` → `_declared_scope` produced `.../tooling/--skip-freeze`; harmless here but a latent false-declaration — skip tokens matching `^--` in `_declared_scope`) [carried: deferred to backlog 2026-06-27 (delta-drain) — not now-actionable; retrievable via 'add.py deltas --carried', reopen or seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

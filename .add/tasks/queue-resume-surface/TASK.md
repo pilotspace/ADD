@@ -222,7 +222,7 @@ Watch (reuse scenarios as monitors): rate of `queued :` cue appearing with no qu
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] `add.py guide` could also steer into promoting the next queued milestone at the loop juncture (this task surfaced the backlog in `status` only) (evidence: MILESTONE.md task line said "status/guide"; the exit criterion + freeze scoped it to status — guide steering is a clean follow-up)
+- [SPEC · carried] `add.py guide` could also steer into promoting the next queued milestone at the loop juncture (this task surfaced the backlog in `status` only) (evidence: MILESTONE.md task line said "status/guide"; the exit criterion + freeze scoped it to status — guide steering is a clean follow-up) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

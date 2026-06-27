@@ -246,8 +246,8 @@ Watch (reuse scenarios as monitors): mine-returns-empty rate (are owners being a
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] a `mine --all` flag to widen the lens past ACTIVE milestones to every not-done task assigned to me (evidence: §1 scoped to active milestones as the MVP; a paused-stream owner can't see their backlog without it)
-- [SPEC · open] widen `_actor_matches` to "email OR name matches" if real teams see false misses (evidence: §3 freeze flag — the same person git-resolved by email on one record and assigned by bare name on another won't match under email-first; the single-seam fix is pre-planned)
+- [SPEC · carried] a `mine --all` flag to widen the lens past ACTIVE milestones to every not-done task assigned to me (evidence: §1 scoped to active milestones as the MVP; a paused-stream owner can't see their backlog without it) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] widen `_actor_matches` to "email OR name matches" if real teams see false misses (evidence: §3 freeze flag — the same person git-resolved by email on one record and assigned by bare name on another won't match under email-first; the single-seam fix is pre-planned) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

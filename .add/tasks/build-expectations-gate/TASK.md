@@ -204,7 +204,7 @@ Reviewed by: Tin Dang · date: 2026-06-23
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Spec delta
-- [SPEC · open] reconcile the §3 opt-in prose ("`confirmed` in milestone") to the stable `await_confirm` marker the build actually uses (evidence: build v1.1 — milestone-confirm stamps confirmed:true on plain milestones too, so the census broke; the marker is the correct opt-in signal — observable contract unchanged)
+- [SPEC · carried] reconcile the §3 opt-in prose ("`confirmed` in milestone") to the stable `await_confirm` marker the build actually uses (evidence: build v1.1 — milestone-confirm stamps confirmed:true on plain milestones too, so the census broke; the marker is the correct opt-in signal — observable contract unchanged) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] a content gate placed at a LATER lifecycle point than its opt-in marker can mis-read a field a sibling command mutates in between — key gates on a STABLE creation-time marker (`await_confirm`), not a mutable one (`confirmed`) (evidence: milestone-confirm stamps confirmed on plain milestones → census false-positive at advance time) [folded foundation-version 47]

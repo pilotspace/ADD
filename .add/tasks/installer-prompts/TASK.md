@@ -271,8 +271,8 @@ Watch (reuse scenarios as monitors): clack import failure rate (clack_unavailabl
 
 ### Spec delta
 - [SPEC · seeded] the agent-detect prompt is a STEP in this interactive flow — render it through the established npm `ui` layer / clack flow, not a separate prompt stack (evidence: §3 ui layer + the milestone decomposition; agent-detect depends conceptually on this shell) [→ agent-detect]
-- [SPEC · open] give pip a richer interactive prompt lib (e.g. questionary/rich) for true parity with npm's two-step clack flow — deferred per A2 / milestone Out-list (evidence: pip is a single stdlib input() confirm by deliberate choice).
-- [SPEC · open] extract a reusable PTY test helper so interactive happy-paths are automatable in CI (agent-detect/heal will need it too) (evidence: M1 was verified by an ad-hoc pty probe, not a committed test).
+- [SPEC · carried] give pip a richer interactive prompt lib (e.g. questionary/rich) for true parity with npm's two-step clack flow — deferred per A2 / milestone Out-list (evidence: pip is a single stdlib input() confirm by deliberate choice). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
+- [SPEC · carried] extract a reusable PTY test helper so interactive happy-paths are automatable in CI (agent-detect/heal will need it too) (evidence: M1 was verified by an ad-hoc pty probe, not a committed test). [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 - [ADD · folded] an ESM-only dep forces a CJS installer to dynamic-import() + go async; keep the non-interactive path await-free so exit-code/stdout ordering the piped tests assert is preserved (evidence: A1 flag held; clack 1.x is type:module; full suite stayed green after the async refactor). [folded foundation-version 38]

@@ -277,7 +277,7 @@ Watch (reuse scenarios as monitors): whether design.md / DESIGN.md.tmpl / book s
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] consider a never-red `check` WARN nudging a design whose recorded FIDELITY is "production" but has no hi-fi capture (evidence: this task scoped FIDELITY as record-only intent; an engine-side nudge was deliberately deferred as out-of-scope)
+- [SPEC · carried] consider a never-red `check` WARN nudging a design whose recorded FIDELITY is "production" but has no hi-fi capture (evidence: this task scoped FIDELITY as record-only intent; an engine-side nudge was deliberately deferred as out-of-scope) [carried: deferred to backlog 2026-06-27 (delta-drain) — archived-task delta, not now-actionable; retrievable via 'add.py deltas --carried', reopen/seed via 'new-task --from-delta' when scheduled]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

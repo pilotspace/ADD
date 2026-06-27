@@ -108,6 +108,12 @@ LIFECYCLE = [
     ["drop-delta", "t"],                       # SPEC-delta dismiss verb: task t holds no open
                                                # SPEC delta here -> refuses no_open_spec_delta
                                                # (expected nonzero, tolerated; reads TASK.md, never docs/)
+    ["carry-delta", "t", "--reason", "x"],     # SPEC-delta defer verb: task t holds no open SPEC
+                                               # delta here -> refuses no_open_spec_delta
+                                               # (expected nonzero, tolerated; reads TASK.md, never docs/)
+    ["reopen-delta", "t"],                      # SPEC-delta re-activate verb: task t holds no carried
+                                               # SPEC delta here -> refuses no_carried_spec_delta
+                                               # (expected nonzero, tolerated; reads TASK.md, never docs/)
     ["freeze", "t"],                           # §3 contract-freeze write-seam: task t's §3 is still
                                                # the unfilled template here -> refuses contract_not_drafted
                                                # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
@@ -149,7 +155,8 @@ _EXERCISED_IN_SETUP = {"init"}
 # refuses (federation_unknown) — exercised under the read-spy (reads components.toml, never docs/).
 # freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
 # refuses (contract_not_drafted) — exercised under the read-spy (reads TASK.md/state, never docs/).
-_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "fold", "federate", "freeze"}
+_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "carry-delta", "reopen-delta",
+               "fold", "federate", "freeze"}
 
 
 class MinimalPillarTest(unittest.TestCase):
