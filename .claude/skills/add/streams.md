@@ -179,6 +179,11 @@ Score confidence (0-1) on Completeness · Clarity · Practicality · Optimizatio
 Self-Eval; if any < 0.9, refine before returning.
 </persona>
 
+<strategy>
+Follow the task's §5 plan — do not invent your own: the Strategy (ordered batches) build
+order and the Known-problem fixes (trap → fix for each anticipated failure mode).
+</strategy>
+
 <touch_boundary>   <!-- from run.md; the worker's contract, identical on every runner -->
 MAY:  rewrite code in src/ · drive tests green WITHOUT weakening them · gather verify evidence.
 MUST NOT: edit the frozen CONTRACT or locked scope · weaken/delete/skip any test ·

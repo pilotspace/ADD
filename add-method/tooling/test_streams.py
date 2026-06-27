@@ -23,6 +23,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import tempfile
 import shutil
 import unittest
@@ -33,6 +34,8 @@ import add
 _TOOLING = Path(__file__).resolve().parent
 _ADD_METHOD = _TOOLING.parent
 SKILL = _ADD_METHOD / "skill" / "add"
+
+_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 
 
 def _run(argv):
@@ -213,6 +216,28 @@ class WaveProtocolRuntimeTest(unittest.TestCase):
                          f"all 3 streams.md copies must exist: {[str(p) for p in _STREAMS_TREES]}")
         hashes = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
         self.assertEqual(len(hashes), 1, f"streams.md mirror_drift across the 3 copies: {hashes}")
+
+
+class WorkerStrategyPullTest(unittest.TestCase):
+    """streams-strategy-pull: streams.md's worker-contract fence carries a <strategy> block that
+    points the worker at the task's §5 (mirroring advisor.md). It must stay INSIDE the fence."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = (SKILL / "streams.md").read_text(encoding="utf-8")
+
+    def test_strategy_block_present_and_names_section5(self):
+        block = re.search(r"<strategy>(.*?)</strategy>", self.text, re.DOTALL)
+        self.assertIsNotNone(block, "streams.md worker contract missing the <strategy> block")
+        self.assertIn("§5", block.group(1), "the <strategy> block must point at the task's §5")
+        # placed inside the worker contract: between </persona> and <touch_boundary>
+        self.assertLess(self.text.index("</persona>"), self.text.index("<strategy>"))
+        self.assertLess(self.text.index("</strategy>"), self.text.index("<touch_boundary>"))
+
+    def test_strategy_stays_fenced(self):
+        stripped = _FENCE_RE.sub("", self.text)
+        self.assertNotIn("<strategy>", stripped,
+                         "<strategy> leaked OUTSIDE the worker-contract code fence")
 
 
 if __name__ == "__main__":

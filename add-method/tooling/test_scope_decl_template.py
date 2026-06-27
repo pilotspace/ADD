@@ -34,6 +34,11 @@ CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
 DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
 BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
 
+# fast-lane template trio (build-strategy-solutions ADD-2)
+CANON_FAST = HERE / "templates" / "TASK.fast.md.tmpl"
+DOG_FAST = REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl"
+BUNDLE_FAST = BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl"
+
 CANON_BUILD = ADD_METHOD / "skill" / "add" / "phases" / "5-build.md"
 DOG_BUILD = REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md"
 BUNDLE_BUILD = BUNDLE / "skill" / "add" / "phases" / "5-build.md"
@@ -47,6 +52,9 @@ ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
 
 SCOPE_LABEL = "Scope (may touch):"
 STRATEGY_LABEL = "Strategy (ordered batches):"
+KNOWN_FIX_LABEL = "Known-problem fixes:"             # ADD-1 (full §5)
+FAST_STRATEGY_LABEL = "Strategy & known-problem fixes:"  # ADD-2 (fast §5)
+SAFETY_LINE = "Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>"
 SECTION_HEADING = "## Declaring the scope of impact"
 # the three pre-existing §5 lines that MUST stay byte-identical (additive change)
 EXISTING_LINES = (
@@ -149,6 +157,51 @@ class ScopeDeclTemplateTest(unittest.TestCase):
                                      CANON_TMPL.read_text(encoding="utf-8"))))
         self.assertEqual(tags, FROZEN_TAGS,
                          "template tag census changed - the v16 vocab is frozen")
+
+    # ---- build-strategy-solutions ADD-1: full §5 gains a Known-problem fixes line --
+    def test_full_template_known_problem_fixes_line(self):
+        text = CANON_TMPL.read_text(encoding="utf-8")
+        self.assertIn(KNOWN_FIX_LABEL, text, "full §5 missing the Known-problem fixes line")
+        # additive placement: Strategy < Known-problem fixes < Safety rule
+        self.assertLess(text.index(STRATEGY_LABEL), text.index(KNOWN_FIX_LABEL),
+                        "Known-problem fixes must sit BELOW Strategy")
+        self.assertLess(text.index(KNOWN_FIX_LABEL),
+                        text.index("Safety rule (feature-specific):"),
+                        "Known-problem fixes must sit ABOVE the Safety rule line")
+        for line in EXISTING_LINES:
+            self.assertIn(line, text, "pre-existing §5 line changed - the add is additive")
+
+    # ---- ADD-2: fast §5 gains a single strategy & known-problem fixes line --------
+    def test_fast_template_strategy_line(self):
+        text = CANON_FAST.read_text(encoding="utf-8")
+        self.assertIn(FAST_STRATEGY_LABEL, text, "fast §5 missing the strategy line")
+        self.assertLess(text.index(SCOPE_LABEL), text.index(FAST_STRATEGY_LABEL),
+                        "the fast strategy line must sit BELOW Scope")
+
+    def test_fast_template_mirrors(self):
+        self.assertEqual(_md5(CANON_FAST), _md5(DOG_FAST), "fast template: dogfood diverged")
+        self.assertEqual(_md5(CANON_FAST), _md5(BUNDLE_FAST), "fast template: bundle diverged")
+
+    # ---- ADD-1/2: a fresh scaffold carries the new lines (full + fast) ------------
+    def test_scaffold_carries_strategy_solutions(self):
+        cwd = Path.cwd()
+        tmp = Path(tempfile.mkdtemp(prefix="add-strat-sol-")).resolve()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, os.getcwd())
+        try:
+            os.chdir(tmp)
+            buf, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(buf), redirect_stderr(err):
+                add.main(["init", "--name", "demo"])
+                add.main(["lock", "--force"])
+                add.main(["new-task", "fullx", "--title", "fullx"])
+                add.main(["new-task", "fastx", "--title", "fastx", "--fast"])
+            full = (tmp / ".add" / "tasks" / "fullx" / "TASK.md").read_text(encoding="utf-8")
+            fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
+            self.assertIn(KNOWN_FIX_LABEL, full, "full scaffold missing Known-problem fixes")
+            self.assertIn(FAST_STRATEGY_LABEL, fast, "fast scaffold missing the strategy line")
+        finally:
+            os.chdir(cwd)
 
 
 if __name__ == "__main__":

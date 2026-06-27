@@ -95,6 +95,18 @@ class TestAdvisorStrategy(unittest.TestCase):
         self.assertEqual(_xmlconv.ENGINE_FILES["advisor.md"]["tags"], {"constraints"},
                          "advisor.md must register tags={'constraints'}")
 
+    def test_strategy_block_fenced_and_points_at_section5(self) -> None:
+        # build-strategy-solutions ADD-3: the fenced template gains a <strategy> element that
+        # mirrors the task's §5 (Strategy + Known-problem fixes). It must stay INSIDE the fence
+        # (present raw, gone after fence-strip) so the outside-fence vocab stays {constraints}.
+        self.assertIn("strategy", _xmlconv._paired_tags(self.text),
+                      "fenced plan-following template missing the <strategy> element")
+        self.assertNotIn("strategy", _xmlconv._paired_tags(self.stripped),
+                         "<strategy> leaked OUTSIDE the code fence — must stay fenced/exempt")
+        block = re.search(r"<strategy>(.*?)</strategy>", self.text, re.DOTALL)
+        self.assertIsNotNone(block, "no <strategy>…</strategy> block")
+        self.assertIn("§5", block.group(1), "the <strategy> block must point at the task's §5")
+
 
 if __name__ == "__main__":
     unittest.main()

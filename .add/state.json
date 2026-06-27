@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "skill-todo-flag",
+  "active_task": "streams-strategy-pull",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1990,10 +1990,105 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "build-strategy-solutions": {
+      "title": "\u00a75 Strategy & known-problem solutions, fed consistently into subagent spawns",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-27T16:08:49+00:00",
+      "updated": "2026-06-27T16:31:13+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T16:21:49+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fe0e8c83ff820ff64a384dfd0137b370",
+        "tests": {
+          "add-method/tooling/test_scope_decl_template.py": "a7da044251a671eebc5d57ffbb3b4a1c",
+          "add-method/tooling/test_advisor_strategy.py": "bfceab42bb8a3d65679f2627415c667b",
+          "add-method/tooling/test_skill_lean.py": "26cee9de7405a75cfd50e5568f1c511c"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/skill/add/advisor.md",
+          "add-method/src/add_method/_bundled/skill/add/advisor.md",
+          ".claude/skills/add/advisor.md",
+          "add-method/tooling/test_scope_decl_template.py",
+          "add-method/tooling/test_advisor_strategy.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "19faccd53b5308fb27bedc31b532e1c8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "streams-strategy-pull": {
+      "title": "Extend the \u00a75-strategy pull to streams.md's worker contract",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-27T16:34:30+00:00",
+      "updated": "2026-06-27T16:40:59+00:00",
+      "from_delta": "build-strategy-solutions",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T16:37:30+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4dc67d0325806bbb9030c677f4a82598",
+        "tests": {
+          "add-method/tooling/test_streams.py": "348a2d06d6920486bcd1f272d6be9f3d",
+          "add-method/tooling/test_xml_convention.py": "a220611f34d64c51116a3e9106e6a357",
+          "add-method/tooling/test_skill_lean.py": "ad2ffed44bfedb13141fabaf7159c4c6"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/streams.md",
+          "add-method/src/add_method/_bundled/skill/add/streams.md",
+          ".claude/skills/add/streams.md",
+          "add-method/tooling/test_xml_convention.py",
+          "add-method/tooling/test_streams.py",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "0232fa7e8dcda0de3d4beb6793f3c966"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T15:44:39+00:00",
+  "updated": "2026-06-27T16:40:59+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2780,7 +2875,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "skill-todo-flag"
+    "flow-honesty": "streams-strategy-pull"
   },
   "todos": [
     {
@@ -2889,7 +2984,7 @@
       "id": 18,
       "text": "advisor.md subagent-spawn template has NO explicit implementation-strategy field \u2014 strategy is delegated to whatever the orchestrator writes into {{PIECE}}; only the persona's generic step-2 ('do the work in small steps, honoring the orchestrator's plan') nods to it. Consider adding an ordered-batches / dependency-aware strategy section (cf. the richer global-CLAUDE.md Rule-5 persona step-plan + success_criteria), weighed against the lean-pass skill byte budget.",
       "created": "2026-06-27T15:14:28+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 19,
