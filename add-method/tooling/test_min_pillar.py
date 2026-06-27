@@ -164,6 +164,16 @@ class MinimalPillarTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self._cwd)
 
+    def _freeze(self, slug):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _docs_dirs(self):
         return list(Path(self.tmp).rglob("docs"))
 
@@ -178,6 +188,8 @@ class MinimalPillarTest(unittest.TestCase):
             except SystemExit as e:
                 if e.code and argv[0] not in _NONZERO_OK:
                     self.fail(f"command {argv} failed (exit {e.code}) with no Story present")
+            if argv[0] == "new-task":
+                self._freeze(argv[1])  # freeze-gate-universal: stamp §3 FROZEN after task creation
         # the flow completing never created a Story either
         self.assertEqual(self._docs_dirs(), [], "no command may create a docs/ Story")
 
@@ -201,6 +213,8 @@ class MinimalPillarTest(unittest.TestCase):
                 except SystemExit as e:
                     if e.code and argv[0] not in _NONZERO_OK:
                         self.fail(f"command {argv} failed during read-spy (exit {e.code})")
+                if argv[0] == "new-task":
+                    self._freeze(argv[1])  # freeze-gate-universal: stamp §3 FROZEN after task creation
         finally:
             pathlib.Path.read_text = orig
 

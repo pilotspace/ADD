@@ -101,6 +101,16 @@ class _Board(unittest.TestCase):
         self.assertTrue(lines, f"expected a `next:` footer line, got:\n{out}")
         return lines[-1]
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self._task_md(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     # ---- arrangement (a frozen §3 + red test so tests->build snapshots) ----
     _CONTRACT_BODY = "shape: next footer { command, why }"
 
@@ -172,6 +182,7 @@ class FooterArmATest(_Board):
 
     def test_advance_into_verify_footer_is_gate(self):
         self._silent("new-task", "foo")
+        self._freeze("foo")                              # freeze-gate-universal sweep
         self._silent("phase", "build", "foo")
         out, _, _ = self._run("advance", "foo")          # build -> verify
         footer = self._footer(out)

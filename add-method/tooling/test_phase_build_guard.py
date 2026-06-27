@@ -151,12 +151,24 @@ class PhaseBuildGuardTest(unittest.TestCase):
         self.assertIn("unflagged_freeze", err)
         self.assertEqual(self._task().get("phase"), "tests")
 
-    def test_plain_milestone_unfrozen_arms_tripwire(self):
+    # freeze-gate-universal (flow-honesty): a plain task is now freeze-gated even via the `phase
+    # build` admin override, so reaching build (and arming the tripwire) requires a FROZEN §3.
+    def test_plain_milestone_frozen_arms_tripwire(self):
         self._plain_task_at_tests()
-        self._quiet(["phase", "build", "t"])     # DRAFT §3, milestone not opted-in -> no freeze gate
+        self._freeze()                           # universal freeze gate: §3 must be frozen to reach build
+        self._quiet(["phase", "build", "t"])     # frozen §3 -> the override runs the full gate stack
         t = self._task()
         self.assertEqual(t.get("phase"), "build")
-        self.assertIn("tripwire", t, "plain task still gets the same tripwire baseline as advance")
+        self.assertIn("tripwire", t, "the override arms the same tripwire baseline as advance")
+
+    # the override is NOT a backdoor: a plain UNFROZEN task is blocked at `phase build` too
+    # (the universal gate, matching test_fast_unfrozen_blocks_phase_build for the fast case).
+    def test_plain_milestone_unfrozen_blocks_phase_build(self):
+        self._plain_task_at_tests()
+        code, err = self._die_stderr(["phase", "build", "t"])   # DRAFT §3 -> universal gate refuses
+        self.assertEqual(code, 1)
+        self.assertIn("contract_not_frozen", err)
+        self.assertEqual(self._task().get("phase"), "tests")
 
     def test_fast_unfrozen_blocks_phase_build(self):
         self._fast_task_at_tests()

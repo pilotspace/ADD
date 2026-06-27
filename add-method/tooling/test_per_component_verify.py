@@ -67,6 +67,16 @@ class _Board(unittest.TestCase):
     def _task_path(self, slug):
         return self.addp / "tasks" / slug / "TASK.md"
 
+    def _freeze(self, slug):
+        """Stamp §3 FROZEN + a well-formed lowest-confidence flag so the universal freeze gate
+        (and the unflagged_freeze check) pass at tests->build. freeze-gate-universal sweep."""
+        p = self._task_path(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _bind(self, slug, name="dashboard"):
         p = self._task_path(slug)
         t = p.read_text(encoding="utf-8")
@@ -124,6 +134,7 @@ class CiteGate(_Board):
     def test_uncited_completing_gate_refused(self):
         self._registry()
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._to_verify("t")
         out, err = self._gate("t", "PASS")
@@ -134,6 +145,7 @@ class CiteGate(_Board):
     def test_cited_gate_passes_and_stamps(self):
         self._registry()
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._cite_in_six("t", "vitest + a11y")
         self._to_verify("t")
@@ -148,6 +160,7 @@ class CiteGate(_Board):
     def test_no_green_bar_does_not_block(self):
         self._registry(green_bar="")
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._to_verify("t")
         out, err = self._gate("t", "PASS")
@@ -157,6 +170,7 @@ class CiteGate(_Board):
     def test_hard_stop_never_blocked(self):
         self._registry()
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._to_verify("t")
         out, err = self._gate("t", "HARD-STOP")
@@ -167,6 +181,7 @@ class CiteGate(_Board):
         # PASS must NOT be satisfied by the engine's OWN stamp — only user evidence counts.
         self._registry()
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._to_verify("t")
         self._gate("t", "HARD-STOP")             # stamps the bar phrase into §6
@@ -181,6 +196,7 @@ class CiteGate(_Board):
         # self-satisfy the cite-gate. The search is scoped to the Build-expectations block.
         self._registry(green_bar='"all tests pass"')
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._to_verify("t")
         out, err = self._gate("t", "PASS")
@@ -192,6 +208,7 @@ class CiteGate(_Board):
         # the same generic bar PASSES once the user cites it in the Build-expectations evidence block.
         self._registry(green_bar='"all tests pass"')
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._bind("t")
         self._cite_in_six("t", "all tests pass")
         self._to_verify("t")
@@ -202,6 +219,7 @@ class CiteGate(_Board):
     def test_unbound_gate_byte_identical(self):
         # no components.toml at all -> the gate path is exactly today's
         self._quiet(["new-task", "t"])
+        self._freeze("t")
         self._to_verify("t")
         out, err = self._gate("t", "PASS")
         self.assertIsNone(err)

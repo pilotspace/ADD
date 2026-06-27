@@ -91,6 +91,27 @@ class DecideDigestTest(unittest.TestCase):
             code = e.code if isinstance(e.code, int) else 1
         return buf.getvalue(), err.getvalue(), code
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep.
+        _task_md_text does not include 'Status: DRAFT', so append before ## 4 · TESTS."""
+        p = self._root() / "tasks" / slug / "TASK.md"
+        txt = p.read_text(encoding="utf-8")
+        if "Status: DRAFT" in txt:
+            txt = txt.replace(
+                "Status: DRAFT",
+                "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+                "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+            )
+        else:
+            txt = txt.replace(
+                "\n## 4 · TESTS\n",
+                "\nStatus: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+                "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none\n"
+                "\n## 4 · TESTS\n",
+            )
+        p.write_text(txt, encoding="utf-8")
+
     def _mk_task(self, slug, phase=None, sec1="", sec3="", sec6="", deps=None):
         argv = ["new-task", slug, "--title", slug]
         if deps:
@@ -247,7 +268,9 @@ class DecideDigestTest(unittest.TestCase):
         self.assertIn("HARD-STOP", footer)
 
     def test_footer_run_in_progress(self):
-        self._mk_task("alpha", phase="build")
+        self._mk_task("alpha")                   # create at ground (no phase jump yet)
+        self._freeze("alpha")                    # freeze-gate-universal sweep
+        add.main(["phase", "build", "alpha"])    # now allowed by frozen §3
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
         footer = out[out.index("DECIDE NEXT"):]

@@ -45,11 +45,23 @@ class MachineStateTest(unittest.TestCase):
         os.chdir(self._cwd)
 
     # --- helpers -------------------------------------------------------------
+    def _freeze(self, slug: str):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _task_at(self, phase, slug="t"):
         """Create task `slug` and move it to `phase` (via explicit `phase` set)."""
         root = add.find_root()
-        if slug not in (add.load_state(root).get("tasks") or {}):
+        is_new = slug not in (add.load_state(root).get("tasks") or {})
+        if is_new:
             add.main(["new-task", slug, "--title", "Feature"])
+            self._freeze(slug)
         add.main(["phase", phase, slug])
 
     def _json_only(self, stdout):

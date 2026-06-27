@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Red/green tests for the freeze-before-build gate (milestone fast-lane, task `freeze-before-build-gate`).
 
-Makes the "collapse-never-skip" floor REAL: a task under an `--await-confirm` milestone may NOT
-cross tests->build while its §3 contract is unfrozen. The guard sits at the `nxt == "build"` crossing
-in `cmd_advance`, BEFORE the existing build-expectations gate, keyed on the SAME opt-in switch
-(`state["milestones"][M]["await_confirm"] is True`). A plain / no-milestone task is never gated, so
-the existing advance-to-build suites stay green (zero ripple).
+Makes the "collapse-never-skip" floor REAL: a task may NOT cross tests->build while its §3 contract
+is unfrozen. The guard sits at the `nxt == "build"` crossing in `_build_entry`, BEFORE the existing
+build-expectations gate. As of `freeze-gate-universal` (flow-honesty) the gate is UNIVERSAL — it
+fires for EVERY task, not just `--await-confirm` / `--fast` ones; the recorded `--skip-freeze` escape
+is the only bypass (see test_freeze_gate_universal). Scenarios 3 & 4 below were INVERTED accordingly.
 
 Run: python3 -m unittest test_freeze_before_build_gate -v
 """
@@ -125,19 +125,25 @@ class FreezeBeforeBuildGateTest(unittest.TestCase):
         self._quiet(["advance", "t"])
         self.assertEqual(self._task().get("phase"), "build")
 
-    # ── scenario 3: plain (no-key) milestone + DRAFT §3 -> never gated ───────────────────
-    def test_plain_milestone_unfrozen_advances(self):
+    # ── scenario 3: plain (no-key) milestone + DRAFT §3 -> now BLOCKED (universal gate) ───
+    # INVERTED by `freeze-gate-universal` (flow-honesty): the gate is no longer opt-in, so a
+    # plain-milestone DRAFT §3 is refused at tests->build (full coverage in test_freeze_gate_universal).
+    def test_plain_milestone_unfrozen_blocks(self):
         self._plain_task_at_tests()
-        self._quiet(["advance", "t"])     # DRAFT §3, but milestone not opted-in
-        self.assertEqual(self._task().get("phase"), "build")
+        code, err = self._die_stderr(["advance", "t"])   # DRAFT §3 — universal gate refuses
+        self.assertEqual(code, 1)
+        self.assertIn("contract_not_frozen", err)
+        self.assertEqual(self._task().get("phase"), "tests")
 
-    # ── scenario 4: no milestone + DRAFT §3 -> never gated ───────────────────────────────
-    def test_no_milestone_unfrozen_advances(self):
+    # ── scenario 4: no milestone + DRAFT §3 -> now BLOCKED (universal gate) ───────────────
+    def test_no_milestone_unfrozen_blocks(self):
         self._quiet(["new-task", "loose"])   # no active milestone -> milestone-less
         self.assertIsNone(self._task("loose").get("milestone"))
         self._to_tests("loose")
-        self._quiet(["advance", "loose"])
-        self.assertEqual(self._task("loose").get("phase"), "build")
+        code, err = self._die_stderr(["advance", "loose"])
+        self.assertEqual(code, 1)
+        self.assertIn("contract_not_frozen", err)
+        self.assertEqual(self._task("loose").get("phase"), "tests")
 
     # ── scenario 5: freeze precedes build-expectations (DRAFT §3 + empty §6) ──────────────
     def test_freeze_precedes_build_expectations(self):

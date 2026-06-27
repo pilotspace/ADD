@@ -97,6 +97,17 @@ def _run(tmp: Path, argv: list[str]):
 class ProtocolWalkTest(unittest.TestCase):
     """The journey itself — every command issued by the walker (the agent)."""
 
+    @staticmethod
+    def _freeze(tmp: Path, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = tmp / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def test_protocol_walk_zero_typed_commands(self):
         text = _setup_text()
         with tempfile.TemporaryDirectory(prefix="add-onramp-") as td:
@@ -135,6 +146,7 @@ class ProtocolWalkTest(unittest.TestCase):
             # 5 · first feature, driven to the gate — all agent-issued
             res = _run(tmp, ["new-task", "walk", "--title", "Protocol walk"])
             self.assertEqual(res.returncode, 0, res.stderr)
+            self._freeze(tmp, "walk")                   # freeze-gate-universal sweep
             for _ in range(6):                          # ground → verify
                 res = _run(tmp, ["advance"])
                 self.assertEqual(res.returncode, 0, res.stderr)

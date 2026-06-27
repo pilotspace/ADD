@@ -94,6 +94,16 @@ class ArgvBoard(unittest.TestCase):
             code = e.code if isinstance(e.code, int) else 1
         return buf.getvalue(), err.getvalue(), code
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _mk_at(self, slug: str, phase: str = "verify"):
         """A task parked at an arbitrary (non-done) phase."""
         self._run("new-task", slug, "--title", slug)
@@ -102,6 +112,7 @@ class ArgvBoard(unittest.TestCase):
     def _mk_done(self, slug: str):
         """Drive a fresh task ground -> verify -> done (PASS)."""
         self._run("new-task", slug, "--title", slug)
+        self._freeze(slug)                      # freeze-gate-universal sweep
         for _ in range(6):                      # ground -> ... -> verify
             self._run("advance", slug)
         self._run("gate", "PASS", slug)
@@ -161,6 +172,7 @@ class ArgvBoard(unittest.TestCase):
     def test_optional_slug_verbs_regression_sweep(self):
         # phase / advance / guide / heal / reopen keep their working shapes.
         self._mk_at("t", "specify")
+        self._freeze("t")                        # freeze-gate-universal sweep
         self._run("phase", "build", "t")
         self.assertEqual(self._task("t")["phase"], "build")
         self._run("advance", "t")

@@ -63,10 +63,21 @@ class _Project(unittest.TestCase):
     def _to_phase(self, phase):
         _run(["phase", phase, "t"])
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
 
 class GuideLineTest(_Project):
     def test_guide_names_playbook_per_phase(self):
         self._install_skill_tree()
+        self._freeze("t")                        # freeze-gate-universal sweep
         for phase, fname in PHASE_FILES.items():
             self._to_phase(phase)
             out, err, code = _run(["guide"])

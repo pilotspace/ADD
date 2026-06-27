@@ -86,6 +86,16 @@ class _Board(unittest.TestCase):
         for _ in range(3):    # ground -> specify -> scenarios -> contract
             self._quiet(["advance", slug])
 
+    def _freeze(self, slug: str) -> None:
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = self._task_path(slug)
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def _advance(self, slug):
         out, errbuf = io.StringIO(), io.StringIO()
         err = None
@@ -354,6 +364,7 @@ class GateConsumerStale(_Board):
     def test_plain_task_unaffected(self):
         # a task with no consumes: carries no contract_pin -> the guard returns early (byte-identical)
         self._quiet(["new-task", "t"])
+        self._freeze("t")                                      # freeze-gate-universal sweep
         for _ in range(6):                                     # ground -> ... -> verify (6 hops)
             self._quiet(["advance", "t"])
         self.assertEqual(self._phase("t"), "verify")

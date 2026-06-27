@@ -27,6 +27,16 @@ class AddToolTest(unittest.TestCase):
     def _state(self):
         return json.loads((Path(self.tmp) / ".add" / "state.json").read_text())
 
+    def _freeze(self, slug="t"):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        tests->build. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     # --- init ---
     def test_init_creates_state_and_setup_files(self):
         self._run("init", "--name", "demo", "--stage", "mvp")
@@ -132,6 +142,7 @@ class AddToolTest(unittest.TestCase):
     def test_phase_explicit_set(self):
         self._run("init")
         self._run("new-task", "t")
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before entering build
         self._run("phase", "build", "t")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "build")
 
@@ -139,6 +150,7 @@ class AddToolTest(unittest.TestCase):
     def test_gate_pass_marks_done(self):
         self._run("init")
         self._run("new-task", "t")
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
         for _ in range(6):  # ground -> ... -> verify: PASS requires verify (no silent skip)
             self._run("advance")
         self._run("gate", "PASS")

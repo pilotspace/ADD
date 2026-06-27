@@ -116,13 +116,18 @@ class FastNewTaskFlagTest(unittest.TestCase):
                       "fast ⇒ freeze-gated even though the milestone did not opt in")
         self.assertEqual(self._task("quick").get("phase"), "tests", "refused advance stays at tests")
 
-    # ── a NON-fast task under the same plain milestone is NOT freeze-gated (zero ripple) ──
-    def test_plain_task_not_freeze_gated(self):
+    # ── a NON-fast task under a plain milestone is NOW freeze-gated too ───────────────────
+    # INVERTED by freeze-gate-universal (flow-honesty): the freeze gate is no longer fast/opt-in
+    # only — it fires for EVERY task. So `--fast` no longer DISTINGUISHES freeze-gating (it now
+    # only selects the lighter template); a plain DRAFT-§3 task is refused at tests->build too.
+    def test_plain_task_now_freeze_gated(self):
         self._plain_milestone()
         self._quiet(["new-task", "normal"])              # DRAFT §3, not fast
         self._to_tests("normal")
-        self._quiet(["advance", "normal"])               # crosses into build unfrozen
-        self.assertEqual(self._task("normal").get("phase"), "build")
+        code, err = self._die_stderr(["advance", "normal"])   # universal gate refuses
+        self.assertEqual(code, 1)
+        self.assertIn("contract_not_frozen", err)
+        self.assertEqual(self._task("normal").get("phase"), "tests")
 
     # ── scenario 4: a fast task completes through the same gates ──────────────────────────
     def test_fast_task_completes_through_gates(self):

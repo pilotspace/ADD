@@ -562,7 +562,7 @@ def _resolve_task(state: dict, slug: str | None) -> str:
     return slug
 
 
-def _build_entry(root: Path, state: dict, slug: str) -> None:
+def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) -> None:
     """The shared tests->build entry guards + snapshots (task phase-build-guard, F4).
 
     Extracted VERBATIM from cmd_advance's `nxt == "build"` block so BOTH `advance` and the
@@ -572,22 +572,28 @@ def _build_entry(root: Path, state: dict, slug: str) -> None:
     so a refused entry leaves the task byte-unchanged. The heal loop sets phase=build DIRECTLY
     and never routes here, so it stays exempt.
     """
-    # the OPTED-IN crossing guards (fast-lane + flow-enforcement): a task whose PARENT
-    # milestone opted into --await-confirm is held to the trust floor at tests->build. A
-    # task under a plain / no milestone is never gated (every existing advance-to-build flow
-    # stays green). validate-then-write — every refusal runs BEFORE the tripwire/scope
-    # snapshots below, writing nothing; the task stays at `tests`.
+    # the crossing guards. validate-then-write — every refusal runs BEFORE the tripwire/scope
+    # snapshots below, writing nothing; the task stays at `tests` (the lone exception is the
+    # recorded freeze_skipped marker on the explicit --skip-freeze path).
     _ms = state["tasks"][slug].get("milestone")
     _optin = bool(_ms) and (state.get("milestones") or {}).get(_ms, {}).get("await_confirm") is True
     raw3 = _raw_phase_bodies(root, slug).get(3, "")
-    # freeze-before-build gate (fast-lane): "collapse-never-skip" made REAL — the freeze is
-    # engine-enforced for an opted-in milestone OR any --fast task (the fast arm, fast-new-task-flag:
-    # a fast task is held to the floor under ANY milestone, so the lighter lane never drops the
-    # trust seam). PRECEDES build-expectations: you freeze §3 before pre-declaring §6's outcomes.
-    _freeze_gated = _optin or state["tasks"][slug].get("fast") is True
-    if _freeze_gated and not _contract_frozen(raw3):
-        _die("contract_not_frozen: freeze §3 before crossing into build — approve "
-             f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN)")
+    # freeze gate — UNIVERSAL (freeze-gate-universal, flow-honesty): closes audit finding H1.
+    # The gate used to be opt-in (`_optin or fast`), so a plain-milestone task could cross
+    # tests->build on a DRAFT §3 — the method's decision point was engine-enforced for only a
+    # subset. It now fires for EVERY task. The ONLY bypass is the RECORDED `--skip-freeze` escape:
+    # it stamps an auditable `freeze_skipped` marker (never silent) and never auto-freezes §3
+    # (Status stays DRAFT). Still PRECEDES build-expectations: freeze §3 before pre-declaring §6.
+    if not _contract_frozen(raw3):
+        if not skip_freeze:
+            _die("contract_not_frozen: freeze §3 before crossing into build — approve "
+                 f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN), or pass "
+                 "--skip-freeze to cross with a recorded skip")
+        state["tasks"][slug]["freeze_skipped"] = {
+            "by": identity._actor_stamp(state)["name"],
+            "at": _now(),
+            "from_phase": state["tasks"][slug].get("phase", "tests"),
+        }
     # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
     # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
     # not just green. Same opt-in switch as the contract-fill gate, one level out.
@@ -645,7 +651,7 @@ def cmd_phase(args: argparse.Namespace) -> None:
     # validate-then-write: a refusal raises BEFORE the phase is set, so nothing moves. The heal
     # loop sets phase=build directly (never via cmd_phase) and so stays exempt.
     if args.phase == "build":
-        _build_entry(root, state, slug)
+        _build_entry(root, state, slug, skip_freeze=getattr(args, "skip_freeze", False))
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
@@ -688,8 +694,9 @@ def cmd_advance(args: argparse.Namespace) -> None:
     if nxt == "build":
         # the tests->build entry guards + snapshots now live in the shared _build_entry helper
         # (task phase-build-guard, F4) so `advance` and the `phase build` admin override run the
-        # IDENTICAL gate stack. Behavior here is byte-unchanged — this is a pure extraction.
-        _build_entry(root, state, slug)
+        # IDENTICAL gate stack. `--skip-freeze` (freeze-gate-universal) threads through to the
+        # universal freeze gate — the only recorded bypass of the now-mandatory §3 freeze.
+        _build_entry(root, state, slug, skip_freeze=getattr(args, "skip_freeze", False))
     # cross-component contract artifact (cross-component-contract): the contract->tests crossing
     # is the producer's freeze-approval moment. A `produces:` task WRITES the immutable snapshot;
     # a `consumes:` task PINS the live hash — a missing/unreadable snapshot HARD-STOPS here (the
@@ -4873,20 +4880,39 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
     return checked, findings
 
 
+def _freeze_skip_notices(state: dict) -> list[dict]:
+    """The recorded `--skip-freeze` crossings (freeze-gate-universal): tasks that crossed
+    tests->build on a DRAFT §3 via the explicit escape. SURFACED by `add.py audit` so no skip is
+    silent — but NOT a finding: a recorded, sanctioned bypass never fails CI; the human judges it.
+    PURE — reads only."""
+    out = []
+    for slug in sorted(state.get("tasks") or {}):
+        mark = (state["tasks"][slug] or {}).get("freeze_skipped")
+        if isinstance(mark, dict):
+            out.append({"task": slug, "by": mark.get("by", "?"),
+                        "at": mark.get("at", "?"), "from_phase": mark.get("from_phase", "?")})
+    return out
+
+
 def cmd_audit(args: argparse.Namespace) -> None:
     """Read-only: audit recorded human decision points for well-formedness. Exit 0 clean,
-    exit 1 with findings — the enforcement gate CI consumes (audit-ci). Writes
-    NOTHING; every other command is byte-identical."""
+    exit 1 with findings — the enforcement gate CI consumes (audit-ci). Also SURFACES (never
+    fails on) recorded `--skip-freeze` crossings, so a skipped freeze is visible in review.
+    Writes NOTHING; every other command is byte-identical."""
     root = _require_root()
-    checked, findings = _audit_findings(root, load_state(root))
+    state = load_state(root)
+    checked, findings = _audit_findings(root, state)
+    skips = _freeze_skip_notices(state)
     if getattr(args, "json", False):
-        print(json.dumps({"checked": checked, "findings": findings},
+        print(json.dumps({"checked": checked, "findings": findings, "freeze_skips": skips},
                          ensure_ascii=False, indent=2))
     else:
-        if findings:
-            for x in findings:
-                print(f"audit: {x['code']} {x['task']} — {x['detail']}")
-        else:
+        for x in findings:
+            print(f"audit: {x['code']} {x['task']} — {x['detail']}")
+        for s in skips:
+            print(f"audit: freeze_skipped {s['task']} — crossed tests->build with a DRAFT §3 "
+                  f"(by {s['by']} at {s['at']})")
+        if not findings and not skips:
             print(f"audit: clean ({checked} tasks checked)")
     if findings:
         sys.exit(1)
@@ -5588,10 +5614,16 @@ def build_parser() -> argparse.ArgumentParser:
     pp = sub.add_parser("phase", help="set a task's phase explicitly")
     pp.add_argument("phase", choices=PHASES)
     pp.add_argument("slug", nargs="?", default=None)
+    pp.add_argument("--skip-freeze", action="store_true",
+                    help="cross tests->build on a DRAFT §3, recording an auditable freeze_skipped "
+                         "marker (the universal freeze gate's only bypass; never auto-freezes §3)")
     pp.set_defaults(func=cmd_phase, _opt_positionals=("slug",))
 
     pa = sub.add_parser("advance", help="move a task to the next phase")
     pa.add_argument("slug", nargs="?", default=None)
+    pa.add_argument("--skip-freeze", action="store_true",
+                    help="cross tests->build on a DRAFT §3, recording an auditable freeze_skipped "
+                         "marker (the universal freeze gate's only bypass; never auto-freezes §3)")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
 
     pg = sub.add_parser("gate", help="record a verify gate outcome")

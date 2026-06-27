@@ -98,6 +98,7 @@ class BuildExpectationsGateTest(unittest.TestCase):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
         self._quiet(["new-task", slug])
         self._to_tests(slug)
+        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
 
     @staticmethod
     def _die_stderr(argv):
@@ -138,6 +139,7 @@ class BuildExpectationsGateTest(unittest.TestCase):
         self._quiet(["new-task", "loose"])   # no active milestone -> milestone-less
         self.assertIsNone(self._task("loose").get("milestone"))
         self._to_tests("loose")
+        self._freeze("loose")  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
         self._quiet(["advance", "loose"])
         self.assertEqual(self._task("loose").get("phase"), "build")
 
