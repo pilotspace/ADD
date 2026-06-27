@@ -118,7 +118,9 @@ autonomy: manual | conservative | auto
 ```
 
 - **auto (the default)** — the run may auto-PASS when evidence + residue checks are satisfied.
-  Security still always escalates.
+  Security still always escalates — but only a finding the AI *surfaces*: a security issue the
+  reviewer misses is **invisible** to the engine, so under `auto` a human **spot-audit** is the
+  only backstop for a missed finding.
 - **conservative** — the deliberate *lowering*: the run converges but STOPS at the verify gate.
 - **manual** — the strict floor: the human owns the verify gate; the engine never auto-resolves.
 

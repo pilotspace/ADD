@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "delta-drain",
+  "active_task": "security-escalation-disclosure",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1870,10 +1870,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "security-escalation-disclosure": {
+      "title": "Disclose that a MISSED security finding is invisible to the engine under auto",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "flow-honesty",
+      "depends_on": [],
+      "created": "2026-06-27T12:58:23+00:00",
+      "updated": "2026-06-27T14:10:16+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-27T13:13:27+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "50d08897cfc1385e89c4d0ba6a79a52e",
+        "tests": {
+          "add-method/tooling/test_security_escalation_disclosure.py": "78cd2d99182953bce76a0c4ebe0772ac"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/",
+          ".claude/skills/add/",
+          "add-method/src/add_method/_bundled/skill/add/",
+          "add-method/tooling/"
+        ],
+        "snapshot_md5": "95fc8aeb92f4101bfeb88174ee676cb6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T12:20:05+00:00",
+  "updated": "2026-06-27T14:10:16+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2660,7 +2700,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "flow-honesty": "delta-drain"
+    "flow-honesty": "security-escalation-disclosure"
   },
   "todos": [
     {
