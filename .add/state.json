@@ -1952,7 +1952,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-27T15:06:54+00:00",
+  "updated": "2026-06-27T15:15:17+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2843,6 +2843,18 @@
       "text": "Verify/document whether the ADD flow follows the ideal sequence: init milestone -> draft ALL tasks up front -> schedule a DAG of tasks -> implement tasks -> milestone close. Today new-milestone drafts breadth-first tasks in MILESTONE.md, waves gives the DAG, but tasks are spec-bundled+built one at a time (not all drafted before any build). Decide if that gap is intentional or a flow improvement.",
       "created": "2026-06-26T13:57:46+00:00",
       "status": "done"
+    },
+    {
+      "id": 18,
+      "text": "advisor.md subagent-spawn template has NO explicit implementation-strategy field \u2014 strategy is delegated to whatever the orchestrator writes into {{PIECE}}; only the persona's generic step-2 ('do the work in small steps, honoring the orchestrator's plan') nods to it. Consider adding an ordered-batches / dependency-aware strategy section (cf. the richer global-CLAUDE.md Rule-5 persona step-plan + success_criteria), weighed against the lean-pass skill byte budget.",
+      "created": "2026-06-27T15:14:28+00:00",
+      "status": "open"
+    },
+    {
+      "id": 19,
+      "text": "GROUND phase (phases/0-ground.md) retrieves CONVENTIONS + foundation decisions (Honors field <- PROJECT.md/CONVENTIONS.md) + code-level decisions (Touches <- grep/symbol search), but has NO explicit field to retrieve prior TASK-level DECISIONS: sibling frozen \u00a73 contracts, \u00a76 GATE RECORD outcomes (PASS/RISK-ACCEPTED ledger), or open \u00a77 spec deltas this task depends on / shares a surface with. Consider a 'Prior decisions' ground input (or an  recall helper) so a new task grounds on adjacent decisions, not just conventions + raw code.",
+      "created": "2026-06-27T15:15:17+00:00",
+      "status": "open"
     }
   ]
 }
