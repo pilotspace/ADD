@@ -15,7 +15,7 @@ user-invocable: true
 when_to_use: "Invoke in any repo with a `.add/` directory, or when the user wants spec/tests-first feature work, resumes ADD work, or asks to start/advance a task."
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, scenarios, verify, milestone, task-orchestration]
-argument-hint: "status | init | continue | [describe new short goals or expectation]"
+argument-hint: "status | init | continue | --todo <text> | [describe new short goals or expectation]"
 license: MIT
 metadata:
   author: add
@@ -31,6 +31,10 @@ result through passing evidence rather than a plausible-looking diff.
 **One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — a §0 ground
 preamble plus seven step sections, filled top to bottom. The Python tool tracks where you
 are so context never rots across sessions.
+
+**The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
+`add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
+`--todo --done <id>` closes (engine errors surfaced verbatim) — then STOP.
 
 ## Always start here (orient — do not skip)
 

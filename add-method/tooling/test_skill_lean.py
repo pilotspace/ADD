@@ -54,7 +54,11 @@ POOLS = [
     # `new-milestone --queued`, promote with `activate`) — +1064 B human-approved surface (milestone
     # multi-milestone-intake 2/3, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈1064/0.88⌉=1210). The won compaction on SKILL.md + intake.md is untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 19675,
+    # core 19675 → 20004 @ skill-todo-flag (same method): SKILL.md gains a front-of-skill `--todo`
+    # fast-path block (route `/add --todo` to `add.py todo`: capture/list/close, then STOP) + the
+    # argument-hint names --todo — +289 B human-approved surface (loose fast-lane task, contract FROZEN
+    # @ v1). RATIO 0.88 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈289/0.88⌉=329). Won ground untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20004,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
