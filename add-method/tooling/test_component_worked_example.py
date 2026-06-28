@@ -42,17 +42,24 @@ NEW_CODES = (
     "contract_snapshot_hashless",     # cross-component-recency (R1 WARN)
 )
 
-# --- book files this task edits, each across 4 trees (canon · root · dogfood · bundle) ---
+# --- book files this task edits ---
 BOOK_FILES = ("appendix-d-worked-example.md", "17-components.md", "appendix-c-glossary.md")
 
 
-def _book_trees(name: str):
+def _tracked_book_trees(name: str):
+    """The THREE git-tracked book trees that ship — canon, the repo-root mirror
+    (test_book_parity), and the package bundle. `.add/docs/` is a RUNTIME mirror
+    (gitignored, regenerated from the bundle by `init`/`update`) — absent on a
+    fresh CI checkout, so it is checked only-if-present, never required."""
     return (
         ADD_METHOD / "docs" / name,
-        REPO / name,                              # the repo-root mirror (test_book_parity)
-        REPO / ".add" / "docs" / name,            # the dogfood mirror
-        BUNDLE / "docs" / name,                   # the package bundle
+        REPO / name,
+        BUNDLE / "docs" / name,
     )
+
+
+def _dogfood_doc(name: str) -> Path:
+    return REPO / ".add" / "docs" / name          # gitignored runtime mirror
 
 
 SKILL_TREES = (
@@ -137,17 +144,21 @@ class VerifySurfacing(unittest.TestCase):
 class Parity(unittest.TestCase):
     """The touched files stay byte-identical across their trees."""
 
-    def test_book_files_byte_identical_across_four_trees(self):
+    def test_book_files_byte_identical_across_tracked_trees(self):
         for name in BOOK_FILES:
-            trees = _book_trees(name)
-            present = [p for p in trees if p.is_file()]
+            tracked = _tracked_book_trees(name)
+            missing = [str(p) for p in tracked if not p.is_file()]
             self.assertEqual(
-                len(present), len(trees),
-                f"{name}: missing tree(s): "
-                + ", ".join(str(p) for p in trees if not p.is_file()),
+                missing, [],
+                f"{name}: missing tracked book tree(s): " + ", ".join(missing),
             )
-            digests = {_md5(p) for p in trees}
-            self.assertEqual(len(digests), 1, f"{name}: diverged across its 4 book trees")
+            digests = {_md5(p) for p in tracked}
+            # the dogfood `.add/docs/` mirror is gitignored (regenerated from the
+            # bundle) — absent on a fresh CI checkout; fold it in only if present.
+            dog = _dogfood_doc(name)
+            if dog.is_file():
+                digests.add(_md5(dog))
+            self.assertEqual(len(digests), 1, f"{name}: diverged across its book trees")
 
     def test_skill_beat_byte_identical_across_three_trees(self):
         present = [p for p in SKILL_TREES if p.is_file()]

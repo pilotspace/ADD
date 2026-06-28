@@ -17,6 +17,7 @@ AI Workflow Methodology - AI Tool - MIT
 - 🚀 **Smarter as you go** — competency deltas fold into a living, compacting foundation carried across milestones.
 - 🚀 **See it before you build it** — a UDD wireframe + zero-dependency HTML mock, approved before any code.
 - 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves (`add.py waves`).
+- 🧩 **One slice across many components** — monorepo or multi-repo: declare components in `components.toml`, gate each task on its own green bar, freeze the contract between a backend and its frontend (the FE is held until the BE freezes), and `federate pull` it across repos. Opt-in — no components declared = unchanged. ([ch.17](./17-components.md) · [worked example](./appendix-d-worked-example.md))
 - 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
 > _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
