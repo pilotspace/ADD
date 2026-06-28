@@ -270,4 +270,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] a spawn template that doesn't reference the task's own §5 plan lets each spawn re-invent strategy (the ai-proxy trace: 319 spawns pulled strategy from global Rule-5, never from §5) — fixed for the advisor; streams.md still open (evidence: test_advisor_strategy now asserts the <strategy>→§5 link)
+- [ADD · folded] a spawn template that doesn't reference the task's own §5 plan lets each spawn re-invent strategy (the ai-proxy trace: 319 spawns pulled strategy from global Rule-5, never from §5) — fixed for the advisor; streams.md still open (evidence: test_advisor_strategy now asserts the <strategy>→§5 link) [folded foundation-version 56]

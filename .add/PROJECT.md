@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 55
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 56
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -267,6 +267,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-06-28 | fold all → foundation-version 56 (TDD 5 · ADD 9) | consolidate captured OBSERVE lessons into the versioned foundation | 14 lessons open→folded; +14 routed bullets; 55→56 |
 | 2026-06-26 | fold all → foundation-version 55 (TDD 2 · ADD 5) | consolidate captured OBSERVE lessons into the versioned foundation | 7 lessons open→folded; +7 routed bullets; 54→55 |
 | 2026-06-26 | fold --task queue-resume-surface → foundation-version 54 (TDD 1 · ADD 1) | consolidate captured OBSERVE lessons into the versioned foundation | 2 lessons open→folded; +2 routed bullets; 53→54 |
 | 2026-06-26 | fold --task design-intake-beat → foundation-version 53 (UDD 1 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 52→53 |
