@@ -748,8 +748,30 @@ function writeStamp(addDir, version, channel) {
   );
 }
 
+// The set of FILE paths (recursive leaves) under root, RELATIVE to root. ∅ if absent.
+// Directories are not counted — only files (the "manifest" the roll-up measures).
+function treeFiles(root) {
+  const out = new Set();
+  if (!fs.existsSync(root)) return out;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else out.add(path.relative(root, full));
+    }
+  };
+  walk(root);
+  return out;
+}
+
+// Returns a file-level roll-up of the heal: { restored, refreshed } where `restored` = a
+// file in the FINAL tree whose relative path was ABSENT before the wipe (fresh or
+// partially-gutted trees heal these), `refreshed` = a final file that was PRESENT before
+// (re-materialized). Orphans (present before, gone after) are swept, counted as neither.
+// Pure observation — copy semantics unchanged. Mirror of _installer.py:_clean_replace.
 function cleanReplaceTree(src, dest, stripTests) {
   if (!fs.existsSync(src)) fail("missing packaged source: " + src);
+  const before = treeFiles(dest);                 // snapshot BEFORE the wipe, or it's always ∅
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
   fs.cpSync(src, dest, { recursive: true });
@@ -759,6 +781,9 @@ function cleanReplaceTree(src, dest, stripTests) {
       if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(dest, entry), { force: true });
     }
   }
+  let restored = 0, refreshed = 0;
+  for (const f of treeFiles(dest)) (before.has(f) ? refreshed++ : restored++);
+  return { restored: restored, refreshed: refreshed };
 }
 
 const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs" };
@@ -787,8 +812,11 @@ function reconcile(args, target, srcRoot) {
     }
   }
   const status = managedStatus(target);
+  let restored = 0, refreshed = 0;
   for (const [sub, destParts, stripTests] of trees) {
-    cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
+    const roll = cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
+    restored += roll.restored;
+    refreshed += roll.refreshed;
     const dest = destParts.join("/");
     if (status[sub] === "missing") {
       log("  ✓ restored  " + TREE_LABEL[sub].padEnd(8) + "-> " + dest + "  (was missing)");
@@ -796,7 +824,8 @@ function reconcile(args, target, srcRoot) {
       log("  ✓ refreshed " + TREE_LABEL[sub].padEnd(8) + "-> " + dest);
     }
   }
-  return status;
+  log("  → " + restored + " restored · " + refreshed + " refreshed");
+  return { restored: restored, refreshed: refreshed, trees: status };
 }
 
 // --- global home: an OPT-IN shared install (engine+book+skill) updated for all projects ----
@@ -1137,12 +1166,13 @@ function cmdUpdate(args) {
   if (fs.existsSync(stateFile)) {
     fs.copyFileSync(stateFile, path.join(addDir, "pre-update-state.bak.json"));
   }
-  reconcile(args, target);
+  const roll = reconcile(args, target);
   seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
-      " · managed layer reconciled · your project state untouched.");
+      " · managed layer reconciled (" + roll.restored + " restored · " + roll.refreshed +
+      " refreshed) · your project state untouched.");
 }
 
 async function main() {

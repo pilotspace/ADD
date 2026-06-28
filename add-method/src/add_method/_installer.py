@@ -1094,10 +1094,25 @@ def _write_stamp(add_dir: Path, version: str, channel: str = "pip") -> None:
     )
 
 
-def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> None:
+def _tree_files(root: Path) -> set:
+    """The set of FILE paths (recursive leaves) under root, RELATIVE to root. ∅ if absent.
+    Directories are not counted — only files (the 'manifest' the rollup measures)."""
+    if not root.exists():
+        return set()
+    return {p.relative_to(root) for p in root.rglob("*") if p.is_file()}
+
+
+def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     """Wipe dest, then copy src -> dest — so a file REMOVED upstream leaves no orphan
     behind (the bug a merge-copy `init --force` had). The managed trees hold no user
-    data, so wipe-and-copy is safe."""
+    data, so wipe-and-copy is safe.
+
+    Returns a file-level roll-up of the heal: {"restored": N, "refreshed": M} where
+    `restored` = a file in the FINAL tree whose relative path was ABSENT before the wipe
+    (a fresh or partially-gutted tree heals these), and `refreshed` = a final file that
+    was PRESENT before (re-materialized). Orphans (present before, gone after) are swept
+    and counted as neither. The counts are pure observation — copy semantics are unchanged."""
+    before = _tree_files(dest)                       # snapshot BEFORE the wipe, or it's always ∅
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         shutil.rmtree(dest)
@@ -1109,6 +1124,8 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> None:
         for child in dest.iterdir():
             if child.name.startswith("test_") and child.name.endswith(".py"):
                 child.unlink()
+    after = _tree_files(dest)                         # the FINAL tree (post-strip)
+    return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
 _TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs"}
@@ -1126,16 +1143,24 @@ def _managed_status(target_path: Path) -> dict:
 
 def _reconcile(target_path: Path, bundled_root: Path) -> dict:
     """Clean-replace every managed tree (restore-if-missing / refresh-if-present, sweeping
-    orphans) and REPORT per-tree status. Touches ONLY managed trees — never user data.
-    The caller verifies sources exist first (design-for-failure). Returns the pre-status."""
+    orphans) and REPORT both per-tree status AND a file-level roll-up. Touches ONLY managed
+    trees — never user data. The caller verifies sources exist first (design-for-failure).
+
+    Returns {"restored": N, "refreshed": M, "trees": <pre-status>} — N/M summed across all
+    managed trees at FILE granularity, so a PRESENT-but-gutted tree (tree-level "refreshed")
+    still surfaces its restored files in the roll-up."""
     status = _managed_status(target_path)
+    restored = refreshed = 0
     for sub, dest_rel, strip in MANAGED:
-        _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
+        roll = _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
+        restored += roll["restored"]
+        refreshed += roll["refreshed"]
         if status[sub] == "missing":
             _log(f"  ✓ restored  {_TREE_LABEL[sub]:8s}-> {dest_rel}  (was missing)")
         else:
             _log(f"  ✓ refreshed {_TREE_LABEL[sub]:8s}-> {dest_rel}")
-    return status
+    _log(f"  → {restored} restored · {refreshed} refreshed")
+    return {"restored": restored, "refreshed": refreshed, "trees": status}
 
 
 def _run_migrations(state_file: Path, from_version: str | None, to_version: str) -> None:
@@ -1322,7 +1347,7 @@ def update(
     if state_file.exists():
         shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
 
-    _reconcile(target_path, bundled_root)
+    roll = _reconcile(target_path, bundled_root)
     _run_migrations(state_file, cur_version, new_version)
     _write_stamp(add_dir, new_version, channel=channel)
     _seed_soul_md(target_path, bundled_root)
@@ -1330,7 +1355,9 @@ def update(
 
     _log(
         f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-        "skill · tooling · docs refreshed · your project state untouched."
+        f"skill · tooling · docs refreshed "
+        f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
+        "your project state untouched."
     )
     return 0
 

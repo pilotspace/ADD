@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "global-update-harden",
+  "active_task": "reconcile-rollup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2053,10 +2053,46 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "reconcile-rollup": {
+      "title": "Reconcile roll-up: file-level heal of a partially-gutted tree + an 'N restored / M refreshed' summary",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "installer-polish",
+      "depends_on": [],
+      "created": "2026-06-28T16:09:55+00:00",
+      "updated": "2026-06-28T16:44:03+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-28T16:33:58+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "97d2d003bdc8354d0b1e0ab9d05289fb",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "688caa45a6666b4eeb106ef85bdef587"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T16:05:31+00:00",
+  "updated": "2026-06-28T16:44:03+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2858,7 +2894,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "installer-polish": "global-update-harden"
+    "installer-polish": "reconcile-rollup"
   },
   "todos": [
     {
