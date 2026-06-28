@@ -239,6 +239,112 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
         _atomic_write(f, new)
 
 
+def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
+    """Write-back (adr-at-observe): HARVEST a §7 `### Decisions (ADR)` block from the actor-stamps
+    ALREADY in the task — §1 framing (AI) · §3 freeze (human) · §5 strategy-actually-used (AI) · §6
+    gate (human|AI by autonomy). HARVEST-not-author: every rendered line is sourced from an existing
+    stamp; the engine invents no decision content (NO-EXEC). GRANDFATHER like _stamp_gate_record:
+    fills ONLY while the block still holds its `<harvested…>` placeholder line; a resolved/absent
+    block or an unreadable file -> a byte-identical no-op (legacy + fast tasks untouched). NEVER
+    raises: any per-source parse fault renders "<unrecorded>". Called from cmd_gate AFTER
+    _stamp_gate_record (so §6 is already mirrored) and AFTER save_state (state is the source of
+    truth; the file only mirrors it, so a write fault never loses the verdict).
+
+    §7-OBSERVE-scoped (INV-7): the placeholder is matched ONLY inside the "## 7 · OBSERVE" section,
+    so a "<harvested at done…>" line elsewhere — e.g. a §3 contract that ILLUSTRATES this very
+    feature — is never touched (a file-wide first-match would corrupt the frozen contract; caught
+    by dogfooding adr-harvest on itself)."""
+    f = root / "tasks" / slug / "TASK.md"
+    try:
+        text = f.read_text(encoding="utf-8")
+    except OSError:
+        return                                   # unreadable -> no-op
+    sec7 = re.search(r"(?ms)^## 7 · OBSERVE\b.*?(?=\n## \d+ ·|\Z)", text)
+    if not sec7:
+        return                                   # no §7 OBSERVE (fast / legacy) -> no-op
+    m = re.search(r"(?m)^<harvested at done[^\n]*>$", sec7.group(0))
+    if not m:
+        return                                   # resolved (hand-edited) or absent -> grandfather no-op
+    ph_start, ph_end = sec7.start() + m.start(), sec7.start() + m.end()
+    UN = "<unrecorded>"
+    bodies = _raw_phase_bodies(root, slug)
+
+    def _framing():                              # §1 -> [AI]: chosen + rejected
+        try:
+            m = re.search(r"(?m)^Framings weighed:[ \t]*(.+)$", bodies.get(1, ""))
+            if not m:
+                return UN, ""
+            chosen, rejected = UN, []
+            for p in (s.strip() for s in m.group(1).split("·") if s.strip()):
+                cm = re.match(r"(.*?)\s*\(chosen\b.*\)\s*$", p)  # "(chosen)" OR "(chosen — rationale)"
+                if cm:
+                    chosen = cm.group(1).strip() or UN
+                else:
+                    rejected.append(p)
+            # an UNFILLED §1 is a "<chosen>" placeholder token — degrade to <unrecorded>, but a
+            # real framing that merely CONTAINS a "<" (e.g. quoting a type) is kept (faithful capture)
+            if chosen is UN or chosen.startswith("<"):
+                return UN, ""
+            return chosen, " · ".join(rejected)
+        except Exception:
+            return UN, ""
+
+    def _freeze():                               # §3 -> [human]: "FROZEN @ vN — approved by NAME"
+        try:
+            m = re.search(r"(?m)^.*FROZEN @ (v\d+).*?approved by ([^\n<]+?)\s*$", bodies.get(3, ""))
+            if m:
+                return m.group(1), m.group(2).strip()
+        except Exception:
+            pass
+        t = ((state.get("tasks") or {}).get(slug) or {})
+        fr = t.get("freeze") or {}
+        ver = fr.get("version") or t.get("contract_version")
+        return (f"v{ver}" if ver else UN), (fr.get("by") or fr.get("actor") or UN)
+
+    def _strategy():                             # §5 -> [AI]: the value, default "as planned"
+        try:
+            m = re.search(r"(?m)^Strategy actually used:[ \t]*(.+)$", bodies.get(5, ""))
+            if m:
+                # UNFILLED is the "<fill at …>" template token; a real value may legitimately
+                # contain "<" (quoting `<tag>`, "x < y") and must NOT degrade to the default
+                val = m.group(1).strip()
+                if val and not val.startswith("<fill"):
+                    return val
+        except Exception:
+            pass
+        return "as planned"
+
+    def _gate():                                 # §6 -> [human|AI]: outcome + reviewer
+        try:
+            mo = re.search(r"(?m)^Outcome:[ \t]*(\S+)", bodies.get(6, ""))
+            outcome = mo.group(1) if mo else (((state.get("tasks") or {}).get(slug) or {}).get("gate") or UN)
+            mr = re.search(r"(?m)^Reviewed by:[ \t]*([^·\n<]+)", bodies.get(6, ""))
+            rev = mr.group(1).strip() if mr else UN
+        except Exception:
+            outcome, rev = UN, UN
+        am = re.search(r"(?m)^autonomy:[ \t]*(\w+)", text)
+        actor = "AI" if (am and am.group(1) == "auto") else "human"
+        return outcome, rev, actor
+
+    try:
+        chosen, rejected = _framing()
+        fver, fby = _freeze()
+        strat = _strategy()
+        outcome, rev, gate_actor = _gate()
+    except Exception:
+        return                                   # never block the gate
+    rej = f"; rejected {rejected}" if rejected else ""
+    lines = [
+        f"- [AI] specify — chose {chosen}{rej}",
+        f"- [human] freeze — froze §3 @ {fver} (approved by {fby})",
+        f"- [AI] build — strategy used: {strat}",
+        f"- [{gate_actor}] verify — gate {outcome} (reviewed by {rev})",
+    ]
+    new = text[:ph_start] + "\n".join(lines) + text[ph_end:]
+    if new != text:
+        _atomic_write(f, new)
+
+
 # --- guidelines / CLAUDE.md-injection subsystem (moved to add_engine/guidelines.py) -
 from add_engine.guidelines import (
     _guideline_block, _inject_block, _rule_file_mode, _strip_inline_block,
@@ -955,6 +1061,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
     if completing:
         _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
+    _stamp_adr_record(root, state, slug)                  # adr-at-observe: harvest §7 Decisions (ADR) — AFTER §6 is mirrored
     print(f"task '{slug}' gate -> {args.outcome}")
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
     if _gbar:
@@ -4975,6 +5082,14 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
                        for k in ("owner", "ticket", "expires")):
                 f(slug, "waiver_incomplete",
                   "RISK-ACCEPTED needs owner · ticket · expires")
+        # adr-at-observe: a gated/done task whose §7 Decisions (ADR) block STILL holds its bare
+        # <harvested…> placeholder never harvested its decision record. GRANDFATHER (INV-1): a §7
+        # with NO block is legacy → skipped. BARE-LINE probe (INV-2, the same regex _stamp_adr_record
+        # writes through) → harvested prose that merely quotes "<harvested at done" is not a false hit.
+        s7 = raw.get(7, "")
+        if "### Decisions (ADR)" in s7 and re.search(r"(?m)^<harvested at done[^\n]*>$", s7):
+            f(slug, "adr_record_missing",
+              "§7 Decisions (ADR) block still holds its <harvested…> placeholder (never harvested at gate)")
     return checked, findings
 
 

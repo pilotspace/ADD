@@ -23,36 +23,43 @@ Out: a separate DECISIONS.md / ADR file · an `add.py decision` authoring comman
 - the §7 "Decisions (ADR)" block shape + the four source→actor mappings -> owning task `adr-harvest`
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] strategy-actual-writeback   depends-on: none                    — §5 gains a "Strategy actually used:" field; verify/observe records the AI's real build strategy (closes the report→§5 seeded delta)
-- [ ] adr-harvest                 depends-on: strategy-actual-writeback — engine renders the §7 "Decisions (ADR)" block from §1/§3/§5/§6 stamps, each tagged human/AI (write-back at done)
-- [ ] adr-audit-and-docs          depends-on: adr-harvest              — audit lint `adr_record_missing` at done + observe guide + book chapter + glossary + 3-tree skill parity
+- [x] strategy-actual-writeback   depends-on: none                    — §5 gains a "Strategy actually used:" field; verify/observe records the AI's real build strategy (closes the report→§5 seeded delta)
+- [x] adr-harvest                 depends-on: strategy-actual-writeback — engine renders the §7 "Decisions (ADR)" block from §1/§3/§5/§6 stamps, each tagged human/AI (write-back at done)
+- [x] adr-audit-and-docs          depends-on: adr-harvest              — audit lint `adr_record_missing` at done + observe guide + book chapter + glossary + 3-tree skill parity
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] a done task carries an engine-harvested §7 "Decisions (ADR)" block, each line tagged [human]/[AI], sourced from §1 framing / §3 freeze / §5 strategy-used / §6 gate        (← adr-harvest)
-- [ ] the AI's actual build strategy is recorded in §5 ("Strategy actually used:"), closing the report→§5 loop        (← strategy-actual-writeback)
-- [ ] `add.py audit` fires `adr_record_missing` when a done (non-grandfathered) task lacks the record        (← adr-audit-and-docs)
-- [ ] the observe guide + book + glossary document the ADR record; the 3-tree skill parity holds        (← adr-audit-and-docs)
-- [ ] the engine change is pinned (ENGINE_MD5 / ENGINE_PKG_MD5 bumped) and the full suite is green        (← adr-harvest + adr-audit-and-docs)
+- [x] a done task carries an engine-harvested §7 "Decisions (ADR)" block, each line tagged [human]/[AI], sourced from §1 framing / §3 freeze / §5 strategy-used / §6 gate        (← adr-harvest)
+- [x] the AI's actual build strategy is recorded in §5 ("Strategy actually used:"), closing the report→§5 loop        (← strategy-actual-writeback)
+- [x] `add.py audit` fires `adr_record_missing` when a done (non-grandfathered) task lacks the record        (← adr-audit-and-docs)
+- [x] the observe guide + book + glossary document the ADR record; the 3-tree skill parity holds        (← adr-audit-and-docs)
+- [x] the engine change is pinned (ENGINE_MD5 / ENGINE_PKG_MD5 bumped) and the full suite is green        (← adr-harvest + adr-audit-and-docs)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : add.py — `_stamp_adr_record` (harvests the §7 "Decisions (ADR)" block at the gate, beside `_stamp_gate_record`) + `adr_record_missing` audit lint in `_audit_findings` (bare-line probe, block-absent grandfather, pure read → exit 1); §5 "Strategy actually used:" field in TASK.md.tmpl + TASK.fast.md.tmpl. ENGINE_MD5 → 03b422b2; ENGINE_PKG_MD5 e87f5652 UNCHANGED (add_engine/* untouched).
+- skill   : phases/7-observe.md gains the "Decisions (ADR)" note (its own prose leaned ~180 B to hold the frozen lean budget rather than weaken it); fast-lane template carries the §5 field.
+- book    : docs/09-the-loop.md "The decision record (ADR)" section + docs/appendix-c-glossary.md "Decisions (ADR)" term (canonical · dogfood · bundle · repo-root mirror all byte-identical).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- strategy-actual-writeback : gate=PASS · the §5 "Strategy actually used:" field (the harvest's [AI] build input) · residue=none
+- adr-harvest               : gate=PASS · §7 block + `_stamp_adr_record` · re-froze §3 @ v2 after dogfooding caught a §7-scoping bug (it had corrupted its own frozen §3) · residue=none
+- adr-audit-and-docs        : gate=PASS · full suite 2132/0 (+6 test_adr_audit.py) · adversarial refute-read = EARNED · residue=none
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
+  - EC1 harvested §7 block → adr-harvest (`_stamp_adr_record`); proven on this very task's §7 (4 actor-tagged lines)
+  - EC2 §5 strategy recorded → strategy-actual-writeback (tooling row)
+  - EC3 `adr_record_missing` fires → adr-audit-and-docs (audit lint; `audit --json` count 0 on real tasks = correct grandfather)
+  - EC4 observe guide + book + glossary + 3-tree parity → adr-audit-and-docs (book row; test_book_parity + test_v8_docs + test_adr_audit green)
+  - EC5 pinned + suite green → ENGINE_MD5 03b422b2, ENGINE_PKG_MD5 unchanged, suite 2132/0
+- goal: every task now ends with a durable engine-harvested, actor-tagged §7 Decisions (ADR) block, audited at done — proven by this milestone's own final task carrying [AI] specify / [human] freeze @ v1 / [AI] build / [AI] verify in its §7.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] open a PR from a feature branch (all 3 tasks in one commit, per Tin's "commit everything together"); the human reviews + merges
+- [ ] the retrospective consolidation (fold open deltas) — separate step after merge, on demand
+- [ ] bundle into the next release cut (release.md) — tag / publish is human-run

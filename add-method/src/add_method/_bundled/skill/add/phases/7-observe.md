@@ -1,20 +1,21 @@
 # Phase 7 — Observe (feed the next loop)
 
-Goal: release deliberately, watch reality, and turn what you learn into the next spec. Fill **§7** in TASK.md.
+Goal: release deliberately, watch reality, turn what you learn into the next spec. Fill **§7** in TASK.md.
 
 ## Do
 
-1. **Release behind a scope-of-impact limit** — feature flag and/or gradual rollout.
+1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout.
 2. **Reuse scenarios as monitors** — the §2 scenarios that defined "correct" now
-   define what you alert on: overall error rate, each rejection's rate (a spike in
-   one is a signal), latency of the risky operation under load.
+   define what you alert on: overall error rate, each rejection's rate (a spike is a
+   signal), latency of the risky op under load.
 3. **Draft the next spec delta** — every defect, surprise, or new need becomes a
-   concrete change that re-enters the flow at Specify (a new task).
-4. **Propose a voice delta** — you just worked a whole task alongside the human, so
-   notice where your voice diverged from theirs (their wordings + flow) and propose a
-   confirmable **voice delta** that tunes `SOUL.md`. Emit it `open`; the human confirms;
-   only then do you rewrite the routed SOUL.md section. Read `soul.md` for the grammar,
-   the routing, and the human-is-only-writer rule.
+   change that re-enters the flow at Specify (a new task).
+4. **Propose a voice delta** — note where your voice diverged from the human's (wordings +
+   flow); propose a confirmable **voice delta** tuning `SOUL.md`, emitted `open`. The human
+   confirms, then you rewrite the routed section. Read `soul.md` (grammar, routing,
+   human-is-only-writer).
+
+> **Decisions (ADR)** — at the gate the engine harvests §7's ADR block (§1/§3/§5/§6); `add.py audit` flags one never harvested.
 
 ## AI prompt
 

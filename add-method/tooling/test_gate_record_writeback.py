@@ -113,9 +113,12 @@ class GateRecordWritebackTest(unittest.TestCase):
         p = self._task_path()
         stripped = re.sub(r"### GATE RECORD.*?(?=\n##\s|\n---|\Z)", "", p.read_text(), flags=re.S)
         p.write_text(stripped, encoding="utf-8")
-        # `gate PASS` always syncs the `phase:` marker (verify->done) — orthogonal to write-back;
-        # normalize that one line so this asserts the write-back fabricated NOTHING.
-        norm = lambda s: re.sub(r"(?m)^phase:.*$", "phase:", s)
+        # `gate PASS` syncs the `phase:` marker (verify->done) AND, on a full template, harvests the
+        # §7 Decisions (ADR) block (adr-at-observe) — both orthogonal to THIS write-back; normalize
+        # them out so this still asserts the GATE-RECORD write-back fabricated nothing.
+        def norm(s):
+            s = re.sub(r"(?m)^phase:.*$", "phase:", s)
+            return re.sub(r"### Decisions \(ADR\).*?(?=\n##\s|\n---|\Z)", "### Decisions (ADR)\n", s, flags=re.S)
         before = norm(p.read_text())
         self._quiet(["gate", "PASS"])            # must not raise
         self.assertEqual(norm(p.read_text()), before, "no GATE RECORD block -> write-back adds nothing")
