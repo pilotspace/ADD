@@ -33,6 +33,10 @@ Every defect, surprise, or new need is written up as a change to the specificati
 
 This is also where the AI returns to a useful role: summarizing telemetry, clustering errors into themes, and drafting the proposed spec delta for a person to review. But the production decisions — what to roll back, what to prioritize — remain human.
 
+## The decision record (ADR)
+
+Observe is also where the loop's **decisions** become durable. At the gate the engine harvests §7's **Decisions (ADR)** block from the stamps the task already carries — the §1 framing it chose (and the alternatives it rejected), the §3 contract a person froze, the §5 strategy it actually used, and the §6 gate outcome — tagging each line `[human]` or `[AI]`. It is *harvested, not authored*: the engine writes no decision of its own, only what the task already recorded, so the trail can never drift from what actually happened. The result is one consolidated, auditable record of who decided what — and `add.py audit` flags a done task whose block never harvested (`adr_record_missing`), so the record cannot silently go missing.
+
 ## Lessons learned and the retrospective consolidation
 
 A spec delta feeds the *next feature*. But a loop also teaches the **method itself** — that the domain model missed a boundary, that a whole class of scenario was never tested, that a build convention helped or hurt. AIDD captures those as **lessons learned**: a single tagged learning, written in the Observe step, marking which of the five competencies it sharpens.
