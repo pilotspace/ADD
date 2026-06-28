@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.12.0 release readiness (milestone-naming feature).
+"""Red/green tests for the 1.13.0 release readiness.
 
-Bundles one loose task: `milestone-naming` — new-milestone nudges bare-version
-slugs toward descriptive names + stamps MILESTONE.md `created:` with the full ISO
-timestamp. Backward-compatible (advisory; never blocks).
+Bundles two milestones — adr-at-observe (engine harvests a §7 Decisions/ADR record
+at the gate, audited at done) + flow-honesty (every flow gate engine-true or honestly
+disclosed) — plus 4 loose tasks (skill-todo-flag, build-strategy-solutions,
+streams-strategy-pull, strategy-soft-not-hard) and the npm Trusted Publishing (OIDC)
+release-pipeline migration. Backward-compatible throughout.
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 1.12.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 1.13.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
 Run:
-    python3 -m unittest test_release_1_12_0 -v
+    python3 -m unittest test_release_1_13_0 -v
 """
 import hashlib
 import json
@@ -25,17 +27,19 @@ CHANGELOG = PKG / "CHANGELOG.md"
 CI_YML = REPO / ".github" / "workflows" / "ci.yml"
 PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
-VERSION = "1.12.0"
-PRIOR_VERSIONS = ("1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
-                  "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
+VERSION = "1.13.0"
+PRIOR_VERSIONS = ("1.12.0", "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2",
+                  "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0",
+                  "1.1.0", "1.0.0")
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline the release notes must name (the milestone-naming bundle)
-FEATURE_ANCHORS = ("new-milestone", "descriptive", "created:")
+# the headline features the 1.13.0 notes must name (adr-at-observe + flow-honesty +
+# the Trusted Publishing migration)
+FEATURE_ANCHORS = ("ADR", "flow-honesty", "Trusted Publishing")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_1_12_0_entry(self):
+    def test_changelog_has_1_13_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -44,7 +48,7 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"1.12.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"1.13.0 entry must name: {anchor}")
 
     def test_changelog_ships_in_both_channels(self):
         files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
@@ -83,10 +87,25 @@ class WorkflowHygieneTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    # NOTE: the version-equality asserts (package.json / pyproject / plugin / __version__
-    # all == "1.12.0") migrated FORWARD to test_release_1_13_0.py when the version bumped
-    # off 1.12.0 — the live version is pinned by exactly one release test at a time. The
-    # 1.12.0 changelog-lineage + workflow-hygiene + ship-channel guards below stay valid.
+    def test_versions_agree_at_1_13_0(self):
+        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
+        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+        self.assertEqual((pkg, py), (VERSION, VERSION),
+                         "publish.yml's guard would fail this release closed")
+
+    def test_plugin_version_agrees(self):
+        plugin = json.loads(
+            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.assertEqual(plugin, VERSION,
+                         "the Claude Code plugin manifest must match the shipped version")
+
+    def test_runtime_version_agrees(self):
+        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
+        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
+        self.assertEqual(runtime, VERSION,
+                         "add_method.__version__ must match the shipped version")
 
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")

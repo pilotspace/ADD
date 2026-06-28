@@ -1,5 +1,12 @@
 # Releases
 
+## 1.13.0 — 2026-06-28
+milestones: adr-at-observe, flow-honesty
+loose tasks: skill-todo-flag, build-strategy-solutions, streams-strategy-pull, strategy-soft-not-hard
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: 2 milestones (adr-at-observe + flow-honesty) + 4 loose tasks since 1.12.0 + npm Trusted Publishing (OIDC) migration; suite 2173/0; ENGINE_MD5 9d73e5abb8f0536c9192234efc7ba053
+
 ## 1.12.0 — 2026-06-26
 milestones: udd-design-intake, multi-milestone-intake, multi-active-polish
 loose tasks: milestone-naming, queued-await-confirm-hint, freeze-actor-stamp, flow-jit-tasks-doc
