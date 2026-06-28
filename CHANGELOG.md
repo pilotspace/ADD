@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.14.0 — 2026-06-29
+
+- component-polish — close the component-pillar gaps and harden the cross-repo edges — 14 carried · 0 key decision(s)
+- installer-polish — round out the global-home and installer lane — 7 carried · 0 key decision(s)
+
 ## 1.13.0 — 2026-06-28
 
 - Decision/ADR record harvested at OBSERVE — 1 carried · 0 key decision(s)
