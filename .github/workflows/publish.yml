@@ -8,16 +8,23 @@
 #
 # ── One-time setup (do this once, then every tag self-publishes) ──────────────
 #
-# npm  — Settings ▸ Secrets and variables ▸ Actions ▸ repository secret:
-#          name:  NPM_TOKEN
-#          value: a **granular access token** with publish rights on
-#                 @pilotspace/add AND "bypass two-factor" enabled — a token
-#                 without the 2FA bypass fails in CI with EOTP (no OTP can be
-#                 entered). Granular tokens EXPIRE (~90 days): when the npm job
-#                 starts failing auth, mint a fresh one and update the secret.
-#        `--provenance` works because pilotspace/ADD is a public repo.
-#        (OIDC Trusted Publishing was attempted at v1.1.0 — the mint never
-#        engaged from this workflow; revisit later if npm's GHA flow matures.)
+# npm  — Trusted Publishing (OIDC) — NO token to store or rotate. On npmjs.com:
+#          @pilotspace/add ▸ Settings ▸ Trusted Publisher ▸ GitHub Actions, matching
+#          EXACTLY:
+#            Organization or user:  pilotspace
+#            Repository:            ADD
+#            Workflow filename:     publish.yml      (filename only, not the path)
+#            Environment name:      (leave blank — the npm job declares none)
+#            Allowed actions:       npm publish
+#        Once registered, the npm CLI auto-detects the GitHub OIDC environment and
+#        authenticates with no secret; provenance is generated automatically because
+#        pilotspace/ADD is a public repo (no `--provenance` flag needed). Requires
+#        npm >= 11.5.1 — Node 24 + the `npm install -g npm@latest` step below (Node
+#        24.0 itself ships npm 11.3, under the floor).
+#        ## REGISTER THE TRUSTED PUBLISHER ON npmjs.com BEFORE THE NEXT TAG — there is
+#        no token fallback; an unregistered publisher fails the npm job closed.
+#        (History: a stored npm access token + `--provenance` published through
+#        v1.12.0; migrated to trusted publishing for TODO #23 — ends the token churn.)
 #
 # PyPI — uses OIDC Trusted Publishing (no token to store/rotate). On PyPI:
 #          Account ▸ Publishing ▸ Add a pending publisher (the project pilotspace-add
@@ -93,13 +100,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write          # required for npm --provenance
+      id-token: write          # required for OIDC trusted publishing (+ automatic provenance)
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'     # trusted publishing needs npm 11.5.1+, which ships with Node 24+
           registry-url: 'https://registry.npmjs.org'
 
       # prepublishOnly runs test_packaging.py, whose wheel check drives the PEP 517
@@ -113,17 +120,20 @@ jobs:
       - name: Provision the declared build requirement (setuptools>=77)
         run: python3 -m pip install --upgrade 'setuptools>=77'
 
+      # Trusted publishing requires npm >= 11.5.1; Node 24.0 ships npm 11.3, so bump
+      # explicitly rather than depending on the bundled version.
+      - name: Ensure npm >= 11.5.1 for trusted publishing
+        run: npm install -g npm@latest
+
       - name: Publish if this version is new (idempotent — safe to re-run a tag)
         working-directory: add-method
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           if npm view "@pilotspace/add@${VERSION}" version >/dev/null 2>&1; then
             echo "@pilotspace/add@${VERSION} already on the registry — skipping (no deps)."
           else
-            npm publish --access public --provenance
+            npm publish --access public      # OIDC auth + provenance are automatic
           fi
 
   pypi:

@@ -1979,7 +1979,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T08:20:38+00:00",
+  "updated": "2026-06-28T09:02:11+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2911,7 +2911,7 @@
       "id": 23,
       "text": "Fix npm provenance warning before next release: npmjs shows 'taking too long to fetch the source commit' for @pilotspace/add (Provenance panel, source commit pilotspace/ADD@991ac85, build file .github/workflows/publish.yml). Verify publish.yml provenance/attestation config + that the tagged commit is fetchable; resolve before publishing the next version.",
       "created": "2026-06-28T06:07:24+00:00",
-      "status": "open"
+      "status": "done"
     }
   ]
 }
