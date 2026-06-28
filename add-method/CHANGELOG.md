@@ -6,6 +6,46 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [1.14.0] — 2026-06-29
+
+Two milestones round out lanes that shipped partially in earlier releases: the
+**global-home / installer** lane gets its missing inverse + safety, and the
+**component** pillar closes its remaining gaps and hardens its cross-repo edges.
+Installer- and engine-pin-neutral — the ADD engine is byte-identical (ENGINE_MD5
+unchanged); all changes live in the installer twins and the component validator.
+Backward-compatible throughout.
+
+### Added (installer-polish — complete the global lane)
+- **Restore the global home.** `init --from-global-data` (and an `init` that detects a
+  matching `<home>/data/<key>`) rehydrates a project's user-data from the global home on
+  a fresh clone — the non-destructive inverse of the one-way backup. Fill-gaps by default;
+  `--force` writes a `<name>.bak` sidecar before overwriting.
+- **`prune-data` orphan cleanup.** A new `prune-data` command removes home snapshots with
+  no live registry owner — dry-run by default, `--force` to delete. Both installer twins
+  (pip + npm) carry the behavior, byte-for-byte.
+- **`update --global` made safe.** An O_EXCL home lock (`<home>/.update.lock`) serializes
+  concurrent runs **cross-twin** (a pip-held lock blocks an npm run and vice-versa), and
+  every registered path is validated before any write — a relative/traversal entry aborts
+  the whole run loud (`unsafe_registry_path`), a directory without `.add/` is dropped.
+- **Reconcile roll-up.** Every reconcile now reports a file-level `N restored · M refreshed`
+  summary, so a partially-gutted-but-present managed tree's heal is finally visible (it
+  healed silently before). Pure observation — copy semantics are unchanged.
+
+### Added (component-polish — close the pillar gaps + harden the edges)
+- **`add.py components` reader + validator.** A `components.toml` schema-lint surfaces
+  `component_unknown_key` / `component_type_mismatch` / `component_unknown_table` — all
+  measure-not-block warnings at `check`.
+- **Federation hardening.** `federate pull` path-confines the manifest `source` to a
+  sibling-repo allowlist with a fail-closed HARD-STOP (`federation_source_escapes`) before
+  any read; a stale leftover contract snapshot that no longer admits a consumer is surfaced
+  (`producer_contract_stale`, never red).
+- **Registry fill + a worked example.** The component registry round-trips completely, and
+  a full worked example threads the component flow end-to-end in the book.
+
+### Changed
+- Five version sources bump in lockstep to **1.14.0** (`package.json`, `package-lock.json`
+  ×2, `pyproject.toml`, `.claude-plugin/plugin.json`, `add_method.__version__`).
+
 ## [1.13.0] — 2026-06-28
 
 Two method milestones make ADD's loop more **self-auditing** and more **honest**:

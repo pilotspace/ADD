@@ -1,5 +1,12 @@
 # Releases
 
+## 1.14.0 — 2026-06-29
+milestones: component-polish, installer-polish
+loose tasks: none
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: 2 milestones (component-polish + installer-polish); suite 2279/0; engine pins unchanged (installer/validator only); PR #114 merged a8bad226; independent pre-merge review MERGE-SAFE
+
 ## 1.13.0 — 2026-06-28
 milestones: adr-at-observe, flow-honesty
 loose tasks: skill-todo-flag, build-strategy-solutions, streams-strategy-pull, strategy-soft-not-hard
