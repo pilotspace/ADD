@@ -57,10 +57,12 @@ class _Board(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             add.main(argv)
 
-    def _registry(self, *, green_bar='"vitest + a11y"', name="dashboard"):
+    def _registry(self, *, green_bar='"vitest + a11y"', name="dashboard", verify=None):
         body = f'[component.{name}]\nroot = "apps/{name}"\n'
         if green_bar:
             body += f"green_bar = {green_bar}\n"
+        if verify:
+            body += f"verify = {verify}\n"
         (self.addp / "components.toml").write_text(body, encoding="utf-8")
         (self.tmp / "apps" / name).mkdir(parents=True, exist_ok=True)
 
@@ -274,6 +276,78 @@ class CiteRegion(unittest.TestCase):
 
     def test_no_marker_yields_empty_region(self):
         self.assertEqual(add._cite_region("## 6\n### GATE RECORD\nOutcome: PASS\n"), "")
+
+
+class TaskVerify(_Board):
+    """component-registry-fill: `_task_verify` is the twin of `_task_green_bar` — the bound
+    component's `verify` COMMAND (parsed as DATA, never executed). Unbound / "?" / no verify -> None."""
+
+    def test_bound_returns_verify(self):
+        self._registry(verify='"pytest -q"')
+        self._quiet(["new-task", "t"])
+        self._bind("t")
+        self.assertEqual(add._task_verify(self.addp, "t"), "pytest -q")
+
+    def test_unbound_returns_none(self):
+        self._registry(verify='"pytest -q"')
+        self._quiet(["new-task", "t"])             # no component: line
+        self.assertIsNone(add._task_verify(self.addp, "t"))
+
+    def test_bound_but_no_verify_returns_none(self):
+        self._registry(verify=None)                # green_bar only, no verify
+        self._quiet(["new-task", "t"])
+        self._bind("t")
+        self.assertIsNone(add._task_verify(self.addp, "t"))
+
+
+class VerifySurface(_Board):
+    """The gate SURFACES the bound component's verify command + records it in §6 (NO-EXEC —
+    printed for the operator to run, never executed). Unbound / no verify -> byte-identical."""
+
+    def test_gate_surfaces_verify_no_green_bar(self):
+        # verify but NO green_bar -> no cite-gate; the verify command is still surfaced.
+        self._registry(green_bar="", verify='"pytest -q"')
+        self._quiet(["new-task", "t"])
+        self._freeze("t")
+        self._bind("t")
+        self._to_verify("t")
+        out, err = self._gate("t", "PASS")
+        self.assertIsNone(err, f"a bound component with no green_bar must not block, got {err!r}")
+        self.assertEqual(self._phase("t"), "done")
+        self.assertIn("verify: pytest -q", out, "the component's verify command is surfaced at the gate")
+        six = self._task_path("t").read_text(encoding="utf-8")
+        self.assertIn("verify: pytest -q", six, "the verify command is recorded in §6")
+
+    def test_gate_surfaces_verify_and_green_bar(self):
+        self._registry(green_bar='"vitest + a11y"', verify='"pytest -q"')
+        self._quiet(["new-task", "t"])
+        self._freeze("t")
+        self._bind("t")
+        self._cite_in_six("t", "vitest + a11y")
+        self._to_verify("t")
+        out, err = self._gate("t", "PASS")
+        self.assertIsNone(err, f"cited gate should pass, got {err!r}")
+        self.assertIn("expected green-bar: vitest + a11y", out)
+        self.assertIn("verify: pytest -q", out)
+
+    def test_writeback_records_verify_once(self):
+        self._registry(green_bar="", verify='"pytest -q"')
+        self._quiet(["new-task", "t"])
+        self._freeze("t")
+        self._bind("t")
+        self._to_verify("t")
+        self._gate("t", "PASS")
+        six = self._task_path("t").read_text(encoding="utf-8")
+        self.assertEqual(six.count("verify: pytest -q"), 1, "the verify command is recorded exactly once")
+
+    def test_unbound_gate_has_no_verify_line(self):
+        self._quiet(["new-task", "t"])             # no registry, no binding
+        self._freeze("t")
+        self._to_verify("t")
+        out, err = self._gate("t", "PASS")
+        self.assertIsNone(err)
+        self.assertEqual(self._phase("t"), "done")
+        self.assertNotIn("verify:", out, "an unbound gate is byte-identical (no verify line)")
 
 
 class CheckWarn(_Board):

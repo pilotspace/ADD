@@ -106,6 +106,13 @@ class TrustFloorRetained(unittest.TestCase):
     def test_floor_not_missing(self):
         self.assertEqual(_floor_missing(self.text), set())
 
+    def test_component_affordance_present(self):      # component-registry-fill: monorepo hint
+        # the fast lane carries the same `component:` binding affordance as the full template,
+        # so a fast task in a monorepo can bind a component (its root joins §5, its bar gates).
+        self.assertIn("component:", self.text)
+        # it is an in-template HINT (a comment), not a live header line that would parse as a binding
+        self.assertRegex(self.text, r"<!--[^>]*component:\s*<name>")
+
 
 class HeaderAndRender(unittest.TestCase):
     def setUp(self):

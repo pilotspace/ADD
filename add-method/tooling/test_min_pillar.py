@@ -123,6 +123,9 @@ LIFECYCLE = [
     ["federate", "pull", "x"],                 # multi-repo pull verb: this board declares no
                                                # [federation.x] -> refuses federation_unknown (expected
                                                # nonzero, tolerated; reads components.toml, never docs/)
+    ["components"],                             # registry reader/validator: this board has no
+                                               # components.toml -> friendly single-component no-op,
+                                               # exit 0 (reads components.toml, never docs/)
     ["graduation-report"], ["graduation-report", "--json"],  # read-only harvest (reads TASK/RETRO/state, never docs/)
     ["release-report"], ["release-report", "--json"],  # read-only release inventory (reads state/RELEASES.md/TASK, never docs/)
     ["release", "0.0.0"],                      # guarded record-only cut: no milestone is closed yet

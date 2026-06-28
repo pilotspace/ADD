@@ -140,5 +140,137 @@ class Hold(_Board):
         self.assertEqual(self._phase("plain"), "contract")
 
 
+class Recency(_Board):
+    """cross-component-recency: snapshot EXISTENCE is necessary but not sufficient. When a LIVE
+    producer task backs the contract, its current FROZEN §3 body-hash must equal the landed
+    snapshot — else a consumer entering §3 (via `advance` OR the `phase contract` override) HARD-
+    STOPs `producer_contract_stale`. No live producer (archived / federation) -> existence-only."""
+
+    import re as _re
+
+    def _make_producer(self, slug="be", cid="gateway-api", shape="BE SHAPE v1"):
+        """Create a producer task, freeze §3 with `shape`, drive it ground->tests so the
+        contract->tests crossing writes a REAL snapshot (hash = body-hash of `shape`)."""
+        self._quiet(["new-task", slug])
+        bp = self._task_path(slug)
+        t = bp.read_text()
+        t = t.replace("phase: ground", f"produces: {cid}\nphase: ground", 1)
+        t = t.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by T")
+        t = self._re.sub(r"(## 3 · CONTRACT.*?)```.*?```", rf"\1```\n{shape}\n```",
+                         t, count=1, flags=self._re.DOTALL)
+        bp.write_text(t, encoding="utf-8")
+        for _ in range(4):    # ground -> specify -> scenarios -> contract -> tests (writes snapshot)
+            self._quiet(["advance", slug])
+        return bp
+
+    def _drift_producer(self, bp, shape="DRIFTED SHAPE v2"):
+        """Edit the producer's live §3 fence WITHOUT re-crossing — its live body-hash now
+        differs from the snapshot still on disk (simulates a re-opened/edited producer §3)."""
+        t = bp.read_text()
+        t = self._re.sub(r"(## 3 · CONTRACT.*?)```.*?```", rf"\1```\n{shape}\n```",
+                         t, count=1, flags=self._re.DOTALL)
+        bp.write_text(t, encoding="utf-8")
+
+    def _phase_to(self, slug, phase):
+        out, errbuf, err = io.StringIO(), io.StringIO(), None
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(errbuf):
+                add.main(["phase", phase, slug])
+        except SystemExit:
+            err = errbuf.getvalue()
+        return out.getvalue(), err
+
+    def _check(self):
+        out, errbuf = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(errbuf):
+                add.main(["check"])
+        except SystemExit:
+            pass
+        return out.getvalue() + errbuf.getvalue()
+
+    # ── advance path ──────────────────────────────────────────────────────────────────
+    def test_stale_leftover_blocks_at_advance(self):
+        bp = self._make_producer()
+        self._drift_producer(bp)                       # live §3 hash now != snapshot hash
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out, err = self._advance("fe")
+        self.assertIsNotNone(err)
+        self.assertIn("producer_contract_stale", err or "")
+        self.assertEqual(self._phase("fe"), "scenarios")   # held; nothing pinned
+
+    def test_current_snapshot_admits_at_advance(self):
+        self._make_producer()                          # snapshot hash == live producer §3 hash
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out, err = self._advance("fe")
+        self.assertIsNone(err, f"a current snapshot must admit, got {err!r}")
+        self.assertEqual(self._phase("fe"), "contract")
+
+    def test_no_live_producer_is_existence_only(self):
+        # a hand-rolled leftover snapshot with NO backing producer task -> existence-only (a
+        # cross-milestone / federation consume of an earlier-frozen contract is not blocked).
+        self._write_snapshot()                         # {id,producer,hash:"h1"} — no `task`, no producer
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out, err = self._advance("fe")
+        self.assertIsNone(err, f"no live producer must be existence-only, got {err!r}")
+        self.assertEqual(self._phase("fe"), "contract")
+
+    # ── phase-contract override (the closed bypass) ─────────────────────────────────────
+    def test_phase_contract_runs_stale_hold(self):
+        bp = self._make_producer()
+        self._drift_producer(bp)
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out, err = self._phase_to("fe", "contract")
+        self.assertIsNotNone(err, "phase contract must not bypass the recency hold")
+        self.assertIn("producer_contract_stale", err or "")
+        self.assertEqual(self._phase("fe"), "scenarios")
+
+    def test_phase_contract_enforces_absent_hold(self):
+        # no snapshot at all -> the override still enforces the existence hold
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out, err = self._phase_to("fe", "contract")
+        self.assertIsNotNone(err)
+        self.assertIn("producer_contract_unfrozen", err or "")
+        self.assertEqual(self._phase("fe"), "scenarios")
+
+    def test_phase_contract_no_role_byte_identical(self):
+        self._at_scenarios("plain")
+        out, err = self._phase_to("plain", "contract")
+        self.assertIsNone(err, f"a no-role task must not hold at phase contract, got {err!r}")
+        self.assertEqual(self._phase("plain"), "contract")
+
+    # ── check WARN (measure-not-block) ──────────────────────────────────────────────────
+    def test_check_warns_drifted_consumer_never_red(self):
+        bp = self._make_producer()
+        self._drift_producer(bp)
+        self._at_scenarios("fe", "consumes: gateway-api")     # fe held at scenarios, snapshot stale
+        out = self._check()
+        self.assertIn("contract_producer_stale", out)
+        code = 0
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            try:
+                add.main(["check"])
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else 1
+        self.assertEqual(code, 0, "a stale producer must not turn check red")
+
+    def test_check_warns_hashless_snapshot_never_red(self):
+        # R1 close: a landed snapshot with NO `hash` key degrades the recency check to existence-
+        # only (frozen behavior) — surface it (measure-not-block) so the blind spot is visible.
+        (self.addp / "contracts").mkdir(parents=True, exist_ok=True)
+        (self.addp / "contracts" / "gateway-api.json").write_text(
+            json.dumps({"id": "gateway-api", "producer": "gateway"}), encoding="utf-8")  # no hash
+        self._at_scenarios("fe", "consumes: gateway-api")
+        out = self._check()
+        self.assertIn("contract_snapshot_hashless", out)
+        code = 0
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            try:
+                add.main(["check"])
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else 1
+        self.assertEqual(code, 0, "a hash-less snapshot must not turn check red")
+
+
 if __name__ == "__main__":
     unittest.main()
