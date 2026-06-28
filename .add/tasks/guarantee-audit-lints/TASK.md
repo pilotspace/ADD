@@ -244,8 +244,8 @@ Watch (reuse scenarios as monitors): the 78-task `risk_unset` count is the drain
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] make `risk:` a FIRST-CLASS task-template field (default `risk: normal` on the slug line) so new tasks declare it explicitly and the risk_unset count drains toward 0 (evidence: 78 existing verify/done tasks have no risk: token; the lint surfaces the gap but the template never prompts for it)
-- [SPEC · open] add a one-line note to 6-verify.md / run.md that `add.py audit` now SURFACES the shallow_deep_check + risk_unset lints (evidence: the guides describe the deep-check + risk rubric but not that audit measures their presence — a stale-guide-sync candidate)
+- [SPEC · carried] make `risk:` a FIRST-CLASS task-template field (default `risk: normal` on the slug line) so new tasks declare it explicitly and the risk_unset count drains toward 0 (evidence: 78 existing verify/done tasks have no risk: token; the lint surfaces the gap but the template never prompts for it) [carried: engine/template-scope: default risk: normal on the slug line; deferred past flow-honesty]
+- [SPEC · dropped] add a one-line note to 6-verify.md / run.md that `add.py audit` now SURFACES the shallow_deep_check + risk_unset lints (evidence: the guides describe the deep-check + risk rubric but not that audit measures their presence — a stale-guide-sync candidate)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

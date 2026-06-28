@@ -16,7 +16,7 @@ tests, iterate to green. Keep each batch small enough to review in full.
 - **Scope (may touch)** — the allowlist of every file the build may write (backticked tokens). Needing a file outside the declared Scope is a **STOP → change request** back to Specify, never improvisation.
 - **Strategy (ordered batches)** — the planned build order. Guidance, not enforced.
 
-Deferral, named: the engine gate (touched ⊆ declared) lands in the `scope-gate-enforce` task — until it ships this section is prose discipline.
+Enforced: a completing verify gate refuses an out-of-scope build (`scope_violation` → self-heal); `add.py check` surfaces it.
 
 ## The cardinal rule
 

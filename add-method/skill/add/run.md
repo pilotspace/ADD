@@ -1,11 +1,9 @@
 # The dynamic run — executing a locked scope
 
-Once a task's CONTRACT is frozen (phase 3), the scope is *locked*. That lock is ADD's autonomy
-decision point — below it code is disposable; above it nothing breaks. This rubric covers the
-**build->verify half, executed as a dynamic, self-improving run**. The human-led **specification
-bundle** (Specify · Scenarios · Contract) still owns *direction*, but v7 compresses it to a
-**single human approval at the decision point** — the AI drafts the whole bundle, a human approves
-it once. The engine stays judgment-free: this is a rubric, not `add.py`.
+Once a task's CONTRACT is frozen (phase 3), the scope is *locked* — ADD's autonomy decision point:
+below it code is disposable; above it nothing breaks. This rubric covers the **build->verify half,
+executed as a dynamic, self-improving run**. The human-led **specification bundle** (Specify ·
+Scenarios · Contract) still owns *direction*. The engine stays judgment-free: this is a rubric, not `add.py`.
 
 ## The specification bundle (v7)
 
@@ -14,19 +12,18 @@ bundle in one pass** — Spec, Scenarios, Contract, and failing Tests — and pr
 The human gives **one approval, at the frozen contract** (the decision point).
 
 Why one and not zero: the decision point **stays human**. The AI *drafts* the contract but never
-*freezes its own* — a person approves the frozen shape before any auto-run touches code. What the
-human approves: that the Spec captures real intent, the Scenarios cover the cases that matter, and
-the Contract shape is the one to freeze. Reject any part and the bundle goes back to draft —
-backward-correction (principle 4), not failure. The decision-point guide (`phases/3-contract.md`) carries the **freeze review checklist** —
-seven lines that walk the human through exactly this, ⚠-first.
+*freezes its own* — a person approves the frozen shape before any auto-run touches code: that the
+Spec captures real intent, the Scenarios cover the cases that matter, and the Contract shape is the
+one to freeze. Reject any part → back to draft (backward-correction, principle 4, not failure). The
+decision-point guide (`phases/3-contract.md`) carries the **freeze review checklist** — seven lines,
+⚠-first.
 
 **The lowest-confidence flag.** The AI presents the bundle **lowest-confidence first**: the
 **1–2 points most likely to be wrong**, tagged by part
-(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). The `because` names the §1
-assumption that makes it uncertain; the `if wrong` names what it costs if that assumption is off.
-If nothing is materially uncertain, the AI still names the single biggest risk — never a blank "none".
-Raising this flag is honor-system: the lint cannot force the AI to engage with it — closing that
-gap is a CI checker's job, not prose.
+(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`) — `because` names the §1
+assumption behind the doubt, `if wrong` its cost. If nothing is materially uncertain, the AI still
+names the single biggest risk — never a blank "none". This flag is honor-system: the lint cannot
+force engagement — closing that gap is a CI checker's job, not prose.
 
 ## When the run begins — the scope-lock trigger
 
@@ -71,6 +68,7 @@ recorded pass is an explicit pass, not a skip).
 - **Auto-PASS requires ALL of:** every test green; coverage not decreased; no test weakened and no
   contract edited; loops dry; completeness-critic clean; and the deep check below.
 - **The deep check (every gate, do not skim).** If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read. An unfilled deep check is a **shallow verify**, not an auto-PASS.
+- **The recorded refute-read (under `auto`).** The earned-green refute-read (`6-verify.md`) is not just run — its **verdict is recorded** in §6 (`EARNED | NOT-EARNED`); `add.py audit` surfaces an unrecorded one as `refute_unrecorded` — one of three shape lints it lists (with `shallow_deep_check` + `risk_unset`) — and a human spot-audit is the backstop. NOT-EARNED routes to `add.py heal`, never an auto-PASS.
 - **Always escalates to a human (never auto-passed):** any **security** finding (HARD-STOP, always);
   a **concurrency**/timing risk the tests cannot exercise; an **architecture**/layering violation;
   any failing test.
@@ -140,7 +138,7 @@ in its header is not blocked by the v14 mechanical guard.
 
 **Autonomy is earned by goal-clarity — the auto-ready goal.** A milestone goal is auto-ready
 when **every exit criterion cites a verifier** — `(verify: <test | command | metric>)`.
-`add.py check` raises a `goal_not_auto_ready` WARN while criteria are uncited, and `status`
-prints a `goal-ready:` line every session. It **measures, never blocks**. The lint cannot prove
-the citation is honest — `(verify: it works)` passes the check — that judgment stays the human's.
+`add.py check` raises `goal_not_auto_ready` while criteria are uncited; `status` prints a
+`goal-ready:` line. It **measures, never blocks** — the lint cannot prove the citation honest
+(`(verify: it works)` passes); that judgment stays the human's.
 </constraints>

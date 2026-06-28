@@ -46,9 +46,9 @@ def _key_decisions_for(root: Path, slug: str) -> list[str]:
             if st.startswith(("-", "*")) and slug in st]
 
 def _build_in_flight(state: dict) -> bool:
-    """release_tests_red proxy (PURE): is any ACTIVE task mid-build without a recorded green gate
-    — phase ∈ {build, verify} AND gate == 'none'? The tool-agnostic engine never runs the suite,
-    so an entered-but-ungated build is the recorded-evidence stand-in for 'the suite is red'."""
+    """release_build_in_flight proxy (PURE): is any ACTIVE task mid-build without a recorded green
+    gate — phase ∈ {build, verify} AND gate == 'none'? The tool-agnostic engine never runs the
+    suite, so an entered-but-ungated build is the recorded-evidence stand-in for 'the suite is red'."""
     return any(t.get("phase") in ("build", "verify") and t.get("gate") == "none"
                for t in (state.get("tasks") or {}).values())
 

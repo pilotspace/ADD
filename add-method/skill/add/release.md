@@ -35,7 +35,7 @@ One arc, seven steps: **cue → gather → draft notes → readiness floor → h
 
 <reject_codes>
 - `release_security_open` — open security HARD-STOP exists. Never shipped. `--force` does NOT override this.
-- `release_tests_red` — suite not green.
+- `release_build_in_flight` — a build is in flight, ungated.
 - `release_no_closed_milestone` — nothing new since last release.
 - `release_undisclosed_waiver` — a RISK-ACCEPTED waiver rides into the release but is absent from the notes.
 </reject_codes>

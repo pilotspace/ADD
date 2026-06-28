@@ -119,7 +119,8 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
      outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
      whole subtree (containment — diverges from §4's non-recursive counting) ·
      absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) lands in scope-gate-enforce.
+     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
+     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
      EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
@@ -146,6 +147,14 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
 - [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
 - [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+
+### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
+> Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
+> recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
+> MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
+> is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
+Verdict: <EARNED | NOT-EARNED>
+By: <self | agent-id> · adversarially checked: <what was probed>
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>

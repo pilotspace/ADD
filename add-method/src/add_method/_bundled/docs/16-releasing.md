@@ -86,7 +86,7 @@ refusing with a non-zero exit and leaving every file byte-unchanged on any of fo
 
 - `release_security_open` — an open security `HARD-STOP` exists. This is the non-negotiable one: a
   security finding is never shipped. Resolve it first, as a change request back to Specify.
-- `release_tests_red` — the suite is not green. A release ships on evidence, not on a plausible diff.
+- `release_build_in_flight` — a build is in flight: a task sits in build/verify with no recorded green gate. A release ships on evidence, not on a plausible diff.
 - `release_no_closed_milestone` — nothing new since the last release. The cut would be a no-op; do not
   bump a version to mark time.
 - `release_undisclosed_waiver` — a `RISK-ACCEPTED` waiver rides into the release but is missing from the

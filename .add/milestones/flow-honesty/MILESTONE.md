@@ -21,7 +21,7 @@ Out: the lower-priority sweep (parallel-stream scope false-positive on serial me
 ## Shared / risky contracts (freeze these first)
 - the universal freeze-gate trigger + `--skip-freeze` escape semantics (changes the tests→build crossing for EVERY task) -> owning task `freeze-gate-universal`
 - the delta-drain floor shape — where it fires (release floor), its reject code, and that it is `--force`-able but loud -> owning task `delta-drain`
-- the recorded earned-green refute-read verdict field in §6 that the audit shape-checks -> owning task `self-grading-refute-record`
+- the recorded earned-green refute-read verdict field in §6 that the audit MEASURES (`refute_unrecorded`, never a gate-block) -> owning task `self-grading-refute-record`
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
 - [ ] freeze-gate-universal        depends-on: none                                                   — fire `contract_not_frozen` for every task at tests→build (drop the `_optin or fast` condition); add `--skip-freeze` escape + grandfather pre-existing tasks [H1]
@@ -29,37 +29,45 @@ Out: the lower-priority sweep (parallel-stream scope false-positive on serial me
 - [ ] guarantee-audit-lints        depends-on: none                                                   — add shape-level lints: `shallow_deep_check` (§6 Deep-checks block unfilled at gate/audit) + `risk_unset` (`risk:` absent when a task reaches verify); presence-only [M3-lints]
 - [ ] honest-reject-naming         depends-on: none                                                   — rename `release_tests_red`→`release_build_in_flight` (code + release.md); relabel scope.md "the invariant"→opt-in gate; reframe `goal_not_auto_ready` "earns trust"→"measures citation presence" [M3-naming]
 - [ ] security-escalation-disclosure depends-on: none                                                 — document in 6-verify.md + run.md that `unescalated_security_note` catches MIS-escalation but cannot detect a MISSED finding; name the human spot-audit as the only backstop under `auto` [M1]
-- [ ] self-grading-refute-record   depends-on: none                                                   — make the earned-green refute-read a MANDATORY recorded verdict (a §6 field) the audit shape-checks before an auto-PASS is valid; engine still never spawns it (the AI records the verdict) [M4]
+- [ ] self-grading-refute-record   depends-on: none                                                   — make the earned-green refute-read a recorded §6 verdict that `add.py audit` MEASURES (`refute_unrecorded`, never a gate-block) + disclose the auto mandate in run.md/6-verify.md/book; engine still never spawns it (the AI records the verdict) [M4]
 - [ ] stale-guide-sync             depends-on: freeze-gate-universal, guarantee-audit-lints, honest-reject-naming — remove 5-build's stale "scope gate deferred" note; make the auto-PASS precondition list identical across run.md / 6-verify.md / book ch.08; add a book ch.03/04 → TASK.md §1/§2 artifact cross-ref [M5]
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] a full-lane task on a plain milestone cannot cross tests→build with a DRAFT §3 — `--skip-freeze` is the only bypass   (verify: test_freeze_gate_universal)        (← freeze-gate-universal)
-- [ ] `add.py release` refuses (forceable, loud) when open SPEC deltas > 0; the 61 are drained or explicitly carried   (verify: test_release_delta_floor + `add.py deltas`=0)  (← delta-drain)
-- [ ] `add.py audit` flags an unfilled §6 Deep-checks block and an unset `risk:` at verify                            (verify: test_guarantee_lints)               (← guarantee-audit-lints)
-- [ ] `release_tests_red` is gone (renamed) everywhere; scope.md + `goal_not_auto_ready` framing read honestly         (verify: grep + test_reject_names)            (← honest-reject-naming)
-- [ ] 6-verify.md + run.md state plainly that a MISSED security finding is invisible to the engine                    (verify: doc grep for the disclosure line)    (← security-escalation-disclosure)
-- [ ] an auto-PASS is invalid without a recorded earned-green refute-read verdict in §6                               (verify: test_refute_record_required)        (← self-grading-refute-record)
-- [ ] 5-build deferral note removed; auto-PASS precondition list identical across the three files; book→TASK.md cross-ref present   (verify: test_skill_parity + doc grep)  (← stale-guide-sync)
+- [x] a full-lane task on a plain milestone cannot cross tests→build with a DRAFT §3 — `--skip-freeze` is the only bypass   (verify: test_freeze_gate_universal — PASS)        (← freeze-gate-universal)
+- [x] `add.py release` refuses (forceable, loud) when open SPEC deltas > 0; the 61 are drained or explicitly carried   (verify: test_delta_drain — PASS + `add.py deltas` = 0 open)  (← delta-drain)
+- [x] `add.py audit` flags an unfilled §6 Deep-checks block and an unset `risk:` at verify                            (verify: test_guarantee_lints — PASS)               (← guarantee-audit-lints)
+- [x] `release_tests_red` is gone (renamed) everywhere; scope.md + `goal_not_auto_ready` framing read honestly         (verify: grep clean + test_reject_names — PASS)            (← honest-reject-naming)
+- [x] 6-verify.md + run.md state plainly that a MISSED security finding is invisible to the engine                    (verify: doc grep — run.md:120 + 6-verify.md present)    (← security-escalation-disclosure)
+- [x] under `auto` the earned-green refute-read verdict is recorded in §6; `add.py audit` surfaces an unrecorded one (`refute_unrecorded`, a measure not a gate) + run.md/6-verify.md/book disclose the mandate   (verify: test_refute_record_required — PASS)        (← self-grading-refute-record)
+- [x] 5-build deferral note removed; auto-PASS precondition list identical across the three files; book→TASK.md cross-ref present   (verify: test_tree_parity + test_stale_guide_sync — PASS + doc grep clean)  (← stale-guide-sync)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : two REAL (forceable, loud) gates — universal freeze (`contract_not_frozen` for every task at tests→build + `--skip-freeze` escape) and the delta-drain release floor (`release_build_in_flight`, `--force`-able + `status` staleness line); three measure-not-block audit lints (`shallow_deep_check`, `risk_unset`, `refute_unrecorded`); honest reject-name rename (`release_tests_red`→`release_build_in_flight`); the §6 `### Refute-read verdict` template field the audit measures. Engine grew across tasks 1–6; task 7 was PROSE-ONLY (ENGINE_MD5 9d73e5ab unchanged).
+- skill   : run.md owns the ONE canonical 8-item auto-PASS list; 6-verify.md records the mandatory earned-green refute verdict under `auto` + the missed-finding disclosure + points to run.md; 5-build.md says the scope gate is ENFORCED (stale `scope-gate-enforce` deferral removed); scope.md "the invariant"→opt-in gate; `goal_not_auto_ready` reframed "measures citation presence".
+- book    : ch.08 names the same auto-PASS set + the never-marked-security-finding blind spot + spot-audit backstop; ch.03/04 "Produces:" cross-ref §1/§2 of TASK.md.
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- freeze-gate-universal        : gate=PASS · test_freeze_gate_universal green · residue=none (recorded `--skip-freeze` escape + grandfather)
+- delta-drain                  : gate=PASS · test_delta_drain green · residue=none (open SPEC deltas drained/carried → 0)
+- guarantee-audit-lints        : gate=PASS · test_guarantee_lints green · residue=none (presence-only, exit stays gated on findings)
+- honest-reject-naming         : gate=PASS · test_reject_names green + grep clean · residue=none
+- security-escalation-disclosure : gate=PASS · doc-grep disclosure present (run.md:120 + 6-verify.md) · residue=none
+- self-grading-refute-record   : gate=PASS · test_refute_record_required green · residue=none (dogfooded its own §6 verdict)
+- stale-guide-sync             : gate=PASS · test_stale_guide_sync + test_tree_parity green · residue=ONE flagged collateral test-token edit (test_scope_decl_template scope-gate-enforce→scope_violation), refute-read EARNED-flagged for spot-audit
+- whole-suite                  : full suite 2167/0 · check 478/0 · audit exit 0 · 0 open SPEC deltas · ENGINE_MD5 9d73e5ab
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — EC1↔freeze-gate-universal · EC2↔delta-drain · EC3↔guarantee-audit-lints · EC4↔honest-reject-naming · EC5↔security-escalation-disclosure · EC6↔self-grading-refute-record · EC7↔stale-guide-sync
+- goal: close the gap between ADD's stated guarantees and what the engine mechanically enforces — every gate now either engine-true (universal freeze, delta-drain floor, scope gate) or honestly disclosed (missed-finding blind spot, the three measure-not-block lints, the recorded earned-green refute-read). Proof: the two STRUCTURAL holes became real forceable gates; the four honor-system edges became plain disclosures + presence lints — no new claim in the guides/book contradicts the engine (verified live: scope_violation ships via cmd_gate, audit emits the 3 lints, freeze gate fires universally).
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] commit tasks 5–7 (uncommitted on the working branch) with the standard message format; review the diff first
+- [ ] open a PR from this branch — the human reviews + merges (spot-audit the one flagged test-token edit in stale-guide-sync)
+- [ ] fold confirmed deltas → archive the 7 done tasks (`add.py fold` → `compact-foundation` → `milestone-archive`)
+- [ ] bundle into the next release cut (release.md) when ≥1 milestone is releasable — tag / publish / deploy is human-run

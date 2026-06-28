@@ -110,14 +110,14 @@ class ScopeDeclTemplateTest(unittest.TestCase):
         self.assertIn(SCOPE_LABEL, text)
         self.assertIn(STRATEGY_LABEL, text)
         for form in ("this task dir", "project root", "sibling of the previous",
-                     "whole subtree", "fail-closed", "scope-gate-enforce"):
+                     "whole subtree", "fail-closed", "scope_violation"):
             self.assertIn(form, text, f"template misses grammar form: {form}")
 
-    # ---- scenario: the build guide teaches the discipline, deferral said ----
+    # ---- scenario: the build guide teaches the discipline, gate ENFORCED ----
     def test_build_guide_scope_of_impact_section(self):
         text = CANON_BUILD.read_text(encoding="utf-8")
         self.assertIn(SECTION_HEADING, text)
-        for token in ("frozen", "change request", "scope-gate-enforce"):
+        for token in ("frozen", "change request", "scope_violation"):
             self.assertIn(token, text, f"build guide misses: {token}")
         # placed between small-batches and the cardinal rule
         self.assertLess(text.index("## Work in small batches"),
