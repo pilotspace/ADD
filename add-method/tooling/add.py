@@ -228,11 +228,18 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
     new = text
     for pat, repl in rules:
         new = re.sub(pat, repl, new, count=1)
-    # component-aware-add (per-component-verify): record WHICH green-bar a bound task gated
-    # against, right after the Outcome line. Unbound / no green_bar -> no line (byte-identical).
+    # component-aware-add (per-component-verify) + component-registry-fill: record WHICH green-bar
+    # the bound task gated against AND the component's verify COMMAND, right after the Outcome line.
+    # Unbound / neither declared -> no line (byte-identical). green-bar-only output is unchanged.
     _bar = _task_green_bar(root, slug)
-    if _bar:
-        _line = f"component: {_task_component(root, slug)} · expected green-bar: {_bar}"
+    _vfy = _task_verify(root, slug)
+    if _bar or _vfy:
+        _parts = [f"component: {_task_component(root, slug)}"]
+        if _bar:
+            _parts.append(f"expected green-bar: {_bar}")
+        if _vfy:
+            _parts.append(f"verify: {_vfy}")
+        _line = " · ".join(_parts)        # deterministic per task -> idempotent on re-stamp
         if _line not in new:
             new = re.sub(r"(?m)^(Outcome:.*$)", lambda m: m.group(1) + "\n" + _line, new, count=1)
     if new != text:                              # no-op = no write (mtime stable)
@@ -835,6 +842,10 @@ def cmd_phase(args: argparse.Namespace) -> None:
     # loop sets phase=build directly (never via cmd_phase) and so stays exempt.
     if args.phase == "build":
         _build_entry(root, state, slug, skip_freeze=getattr(args, "skip_freeze", False))
+    # cross-component-recency: the `phase contract` override runs the SAME consumer HOLD `advance`
+    # runs (existence + recency), so it is not a backdoor around producer_contract_unfrozen/_stale.
+    if args.phase == "contract":
+        _consumer_contract_hold(root, state, slug)
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
@@ -863,12 +874,10 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # the HARD-STOP precedes the phase bump, so the task stays at `scenarios`. Undeclared id / no
     # `consumes:` header -> no hold (byte-identical; a typo'd id is a cmd_check registry finding).
     if nxt == "contract":
-        _cid = _task_consumes(root, slug)
-        _cmap = _contracts(root)
-        if _cid and _cid in _cmap and not _contract_snapshot(root, _cid).exists():
-            _die(f"producer_contract_unfrozen: the producer '{_cmap[_cid].get('producer', '?')}' of "
-                 f"contract '{_cid}' must freeze its contract before you write §3 — wait for "
-                 f".add/contracts/{_cid}.json")
+        # existence + RECENCY (cross-component-recency): a missing snapshot HARD-STOPs
+        # producer_contract_unfrozen; a present-but-stale leftover (live producer drifted/unfroze)
+        # HARD-STOPs producer_contract_stale. Shared with cmd_phase so the override is no backdoor.
+        _consumer_contract_hold(root, state, slug)
     # flag-first freeze guard (task unflagged-freeze): a FROZEN §3 may not cross
     # into build without a WELL-FORMED lowest-confidence flag. On pass, stamp the
     # verified marker so `audit` enforces the flag on THIS record only (open/new
@@ -1067,6 +1076,9 @@ def cmd_gate(args: argparse.Namespace) -> None:
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
     if _gbar:
         print(f"component: {_task_component(root, slug)} · expected green-bar: {_gbar}")
+    _vfy = _task_verify(root, slug)                       # component-registry-fill: surface the verify command
+    if _vfy:
+        print(f"verify: {_vfy}   # run this suite — the engine does not (NO-EXEC)")
     # the engine-sourced next step (next-footer-engine): a completing gate hands off to the
     # state arm; HARD-STOP routes to "resolve HARD-STOP …" — converging the old bespoke line.
     print(_next_footer(root, state))
@@ -2179,12 +2191,25 @@ def _missing_captures(root: Path) -> list[str]:
             if not any((cap_dir / f"{n}.{ext}").is_file() for ext in _CAPTURE_EXTS)]
 
 
+def _federation_source_confined(root: Path, source: str) -> bool:
+    """True iff a federation manifest `source` resolves INSIDE the sibling-repo allowlist — the
+    workspace dir (root.parent.parent) that holds this project and its sibling checkouts. A legit
+    cross-repo source is one level up + down (`../<repo>/…`); an absolute path or a `../../` escape
+    resolves OUTSIDE and returns False. PURE + TOTAL — never raises (every error, incl. an embedded
+    NUL, → False, fail-closed), so cmd_federate can gate on it BEFORE any read (federation-harden)."""
+    try:
+        allow = root.parent.parent.resolve()
+        return _confined(root.parent / source, allow)
+    except (OSError, ValueError):
+        return False
+
+
 def cmd_federate(args: argparse.Namespace) -> None:
     """Multi-repo federation: pull a producer repo's published, immutable contract snapshot into
     this repo. Mono vs multi-repo differ ONLY in snapshot-transport — this lands the byte-copy at
     the SAME local `.add/contracts/<id>.json` the monorepo path (tasks 3/4) already reads, so a
-    `consumes: <id>` task then holds/pins identically. Designed-for-failure: unknown / missing /
-    invalid / version-mismatched sources HARD-STOP and land NOTHING (never build blind)."""
+    `consumes: <id>` task then holds/pins identically. Designed-for-failure: unknown / escaping /
+    missing / invalid / version-mismatched sources HARD-STOP and land NOTHING (never build blind)."""
     root = find_root()
     if root is None:
         _die("no_project")
@@ -2193,6 +2218,13 @@ def cmd_federate(args: argparse.Namespace) -> None:
     if fid not in fed:
         _die(f"federation_unknown: no [federation.{fid}] in components.toml — declare the producer "
              f"repo's published snapshot source before pulling")
+    # federation-harden: confine the source to the sibling-repo allowlist BEFORE any read — an
+    # absolute path or a `../../` traversal must HARD-STOP and land nothing (never read a path
+    # that escapes the project's sibling repos). Checked after the id lookup, before read_bytes.
+    if not _federation_source_confined(root, fed[fid]["source"]):
+        _die(f"federation_source_escapes: the source '{fed[fid]['source']}' for '{fid}' resolves "
+             f"outside the sibling-repo allowlist (the workspace dir) — refusing to read a path "
+             f"that escapes the project's sibling repos")
     source = (root.parent / fed[fid]["source"])
     try:
         raw = source.read_bytes()       # bytes — the landed snapshot must be a byte-for-byte copy
@@ -2212,6 +2244,47 @@ def cmd_federate(args: argparse.Namespace) -> None:
              f"'{snap.get('version')}' — bump the pin or wait for the producer to publish {pin}")
     _atomic_write_bytes(_contract_snapshot(root, fid), raw)
     print(f"federated '{fid}' {snap.get('version', '?')} {snap['hash']} from {fed[fid]['source']}")
+
+
+def cmd_components(args: argparse.Namespace) -> None:
+    """Read-only: print + validate the component registry (.add/components.toml).
+
+    Opt-in — with no registry this is a friendly single-component no-op (exit 0). Prints
+    the parsed components/contracts/federation, then the existing RED integrity findings
+    (_component_findings + _contract_findings), then the new schema-lint WARNs
+    (_component_schema_findings); exits 1 IFF a RED finding exists (a typo/WARN never fails).
+    NO-EXEC — `verify` is shown as data, never run. Reads no docs/ chapter."""
+    root = find_root()
+    if root is None:
+        _die("no_project")
+    if not (root / "components.toml").exists():
+        print("single-component project (no components.toml) — nothing to validate")
+        return
+    comps, cons, feds = _components(root), _contracts(root), _federation(root)
+    for name in sorted(comps):
+        c = comps[name]
+        print(f"component {name}  root={c['root']}  verify={c.get('verify') or '-'}  "
+              f"green_bar={c.get('green_bar') or '-'}  language={c.get('language') or '-'}")
+    for cid in sorted(cons):
+        c = cons[cid]
+        print(f"contract {cid}  producer={c['producer']}  consumers={c['consumers']}")
+    for fid in sorted(feds):
+        f = feds[fid]
+        print(f"federation {fid}  source={f['source']}  pin={f.get('pin') or '-'}")
+    reds = sorted(_component_findings(root) + _contract_findings(root))
+    warns = sorted(_component_schema_findings(root))
+    for code, detail in reds:
+        print(f"ERROR {code}: {detail}")
+    for code, detail in warns:
+        print(f"WARN {code}: {detail}")
+    head = f"components: {len(comps)} · contracts: {len(cons)} · federation: {len(feds)}"
+    if reds or warns:
+        seg = ([f"{len(reds)} error(s)"] if reds else []) + ([f"{len(warns)} warning(s)"] if warns else [])
+        print(f"{head} — {', '.join(seg)}")
+    else:
+        print(f"{head} — valid")
+    if reds:
+        raise SystemExit(1)
 
 
 def cmd_check(args: argparse.Namespace) -> None:
@@ -2290,6 +2363,28 @@ def cmd_check(args: argparse.Namespace) -> None:
                 warnings.append((f"task '{slug}'", f"contract_consumer_stale — pinned contract "
                                  f"'{_pin.get('id')}' changed shape since pin; re-pin (re-cross contract→tests) "
                                  "after reviewing the producer's new frozen shape"))
+        # cross-component-recency: a consumer whose landed snapshot's LIVE producer drifted/unfroze
+        # since the snapshot — surfaced EARLY (never red) before the consumer re-enters §3, the
+        # check twin of the producer_contract_stale advance HARD-STOP. Degrade-safe.
+        _ccons = _task_consumes(root, slug)
+        if _ccons and _ccons in _contracts(root):
+            _csnap = _contract_snapshot(root, _ccons)
+            if _csnap.exists():
+                try:
+                    _chash = json.loads(_csnap.read_text(encoding="utf-8")).get("hash")
+                except (OSError, ValueError, AttributeError):
+                    _chash = None
+                if _chash is None:
+                    # cross-component-recency R1: a present-but-hash-less snapshot degrades the
+                    # recency check to existence-only (frozen behavior) — SURFACE the blind spot
+                    # (never red) so a hand-tampered/hash-stripped snapshot is not silently trusted.
+                    warnings.append((f"task '{slug}'", f"contract_snapshot_hashless — the landed "
+                                     f"snapshot for '{_ccons}' carries no hash; recency cannot be "
+                                     "verified (re-publish the producer contract / re-cross contract→tests)"))
+                elif _producer_snapshot_stale(root, _ccons, _chash):
+                    warnings.append((f"task '{slug}'", f"contract_producer_stale — the live producer "
+                                     f"of '{_ccons}' changed or re-opened its §3 since the landed "
+                                     "snapshot; re-cross the producer contract→tests, then re-enter"))
         for dep in t.get("depends_on") or []:
             checks.append((dep in tasks or dep in archived_slugs,
                            f"task '{slug}' dep '{dep}' resolves", "unknown task"))
@@ -2417,11 +2512,23 @@ def cmd_check(args: argparse.Namespace) -> None:
     # is a BROKEN JOIN — surface it EARLY as a WARN (never red alone; `federate pull` is where it
     # HARD-STOPs). Silent when no federation is declared (opt-in / byte-identical).
     for _fid, _fspec in _federation(root).items():
-        if not (root.parent / _fspec["source"]).is_file():
+        if not _federation_source_confined(root, _fspec["source"]):
+            # federation-harden: an out-of-allowlist source surfaced EARLY as a never-red WARN
+            # (escape takes precedence over unreadable — a real /etc/passwd passes is_file()).
+            warnings.append((f"federation '{_fid}'",
+                             f"federation_source_escapes — '{_fspec['source']}' resolves outside the "
+                             f"sibling-repo allowlist; `federate pull {_fid}` will HARD-STOP"))
+        elif not (root.parent / _fspec["source"]).is_file():
             warnings.append((f"federation '{_fid}'",
                              f"federation_source_unreadable — the producer snapshot at "
                              f"'{_fspec['source']}' is missing/unreadable; `federate pull {_fid}` "
                              "will hard-stop until the producer repo publishes it"))
+    # components-validator: the schema-lint (typo'd/unknown key · wrong-type value · unknown
+    # table) is a never-red WARN — measure-not-block, forward-compat-safe. Rides `warnings`,
+    # NEVER `checks`/`failed`. Silent when no components.toml. `add.py components` is the
+    # richer surface; this catches the same typos EARLY in CI without failing the build.
+    for _scode, _sdetail in _component_schema_findings(root):
+        warnings.append((_scode, _sdetail))
 
     # UDD foundation (udd-check-lint): lint a project's named set under .add/design/ —
     # composes the token + catalog/tree validators + the cross-file prop-token resolution.
@@ -3572,6 +3679,16 @@ def _task_green_bar(root: Path, slug: str) -> str | None:
     return (_components(root).get(comp) or {}).get("green_bar") or None
 
 
+def _task_verify(root: Path, slug: str) -> str | None:
+    """The `verify` COMMAND of the task's bound component (component-registry-fill) — the literal
+    suite the operator runs at the gate. Twin of _task_green_bar: unbound / "?" / no verify
+    declared all yield None. PURE. SURFACED as data only — the engine NEVER executes it (NO-EXEC)."""
+    comp = _task_component(root, slug)
+    if not comp or comp == "?":
+        return None
+    return (_components(root).get(comp) or {}).get("verify") or None
+
+
 def _component_findings(root: Path) -> list[tuple[str, str]]:
     """The loud gate surface for the registry — the codes a degrade-safe read passes
     over silently. Consumed by cmd_check (the scope_violation surface). [] when clean."""
@@ -3624,6 +3741,64 @@ def _task_consumes(root: Path, slug: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
+def _producer_snapshot_stale(root: Path, cid: str, snap_hash: str | None) -> bool:
+    """True IFF a LIVE producer task backs `cid` (some task under root/tasks/ whose header carries
+    `produces: cid`) AND that producer's current §3 is NOT frozen, OR its frozen body-hash differs
+    from `snap_hash` (the landed snapshot's hash) — i.e. the producer re-opened/changed its contract
+    since the snapshot was written (cross-component-recency). No live producer task (archived in a
+    prior milestone, or a federation/external snapshot) -> False = existence-only, recency is the
+    producer repo's job via the federation version pin. snap_hash None / unreadable §3 -> False (not
+    confirmable here). PURE + TOTAL — never raises (a read error is a non-confirmation, not a block)."""
+    if snap_hash is None:
+        return False
+    tasks_dir = root / "tasks"
+    if not tasks_dir.is_dir():
+        return False
+    try:
+        producers = sorted(td.name for td in tasks_dir.iterdir() if td.is_dir())
+    except OSError:
+        return False
+    for pslug in producers:
+        if _task_produces(root, pslug) != cid:
+            continue
+        raw3 = _raw_phase_bodies(root, pslug).get(3, "")
+        if "FROZEN @" not in raw3:
+            return True                                  # live producer exists but its §3 is not frozen
+        return _contract_body_hash(raw3) != snap_hash    # frozen but drifted from the landed snapshot
+    return False                                         # no live producer backs cid -> existence-only
+
+
+def _consumer_contract_hold(root: Path, state: dict, slug: str) -> None:
+    """The cross-component consumer HOLD at the §3 boundary, shared by cmd_advance (nxt=="contract")
+    and cmd_phase (phase=="contract") so the admin override is not a backdoor (mirrors the
+    phase build -> _build_entry precedent). A `consumes: <cid>` task targeting a DECLARED contract:
+    a MISSING snapshot HARD-STOPs `producer_contract_unfrozen` (producer hasn't frozen); a PRESENT
+    snapshot whose live producer has drifted/unfrozen HARD-STOPs `producer_contract_stale`
+    (cross-component-recency — a stale leftover must not admit a consumer). No consumes / undeclared
+    id -> return (byte-identical; a typo'd id is a cmd_check finding). `state` is accepted for call-site
+    symmetry with _build_entry (unused here — the hold reads the task + contract files). Validate-
+    then-write: every _die precedes the caller's phase bump, so a refused task does not move."""
+    cid = _task_consumes(root, slug)
+    if not cid:
+        return
+    cmap = _contracts(root)
+    if cid not in cmap:
+        return
+    snap = _contract_snapshot(root, cid)
+    if not snap.exists():
+        _die(f"producer_contract_unfrozen: the producer '{cmap[cid].get('producer', '?')}' of "
+             f"contract '{cid}' must freeze its contract before you write §3 — wait for "
+             f".add/contracts/{cid}.json")
+    try:
+        snap_hash = json.loads(snap.read_text(encoding="utf-8")).get("hash")
+    except (OSError, ValueError, AttributeError):
+        snap_hash = None
+    if _producer_snapshot_stale(root, cid, snap_hash):
+        _die(f"producer_contract_stale: the live producer of contract '{cid}' changed or re-opened "
+             f"its §3 since the landed .add/contracts/{cid}.json — re-cross the producer "
+             "contract->tests to refresh the snapshot, then re-enter (never build against a stale shape)")
+
+
 def _contract_body_hash(raw3: str) -> str:
     """md5 of the §3 contract SHAPE — the first ```fenced``` block, whitespace-normalized. The
     version stamp + freeze flags are excluded (fallback strips Status:/flag/change-request lines)
@@ -3642,6 +3817,67 @@ def _contract_findings(root: Path) -> list[tuple[str, str]]:
             findings.append(("contract_producer_unknown",
                              f"[contract.{cid}] producer {spec['producer']!r} is not a declared component"))
     return findings
+
+
+# ── components.toml schema-lint (components-validator) ─────────────────────────────────
+# The SOFT typo surface: the keys/tables a DEGRADE-SAFE read silently drops. All three
+# codes are WARN-severity (measure-not-block) — forward-compat-safe (an older engine
+# reading a newer file flags, never fails). Surfaced at `check` (as warnings) AND by
+# `add.py components`. PURE · DEGRADE-SAFE · NO-EXEC: reads only .add/components.toml,
+# never raises, never executes `verify`. A parse break is _component_findings' RED job.
+_SCHEMA_KNOWN_KEYS: dict[str, tuple[str, ...]] = {
+    "component": ("root", "verify", "green_bar", "language"),
+    "contract": ("producer", "consumers"),
+    "federation": ("source", "pin"),
+}
+_SCHEMA_KEY_TYPES: dict[str, dict[str, type]] = {
+    # `root` is intentionally absent — a missing/non-str root is already RED `components_malformed`
+    "component": {"verify": str, "green_bar": str, "language": str},
+    "contract": {"producer": str, "consumers": list},
+    "federation": {"source": str, "pin": str},
+}
+_SCHEMA_TYPENAME = {str: "a string", list: "a list"}
+
+
+def _component_schema_findings(root: Path) -> list[tuple[str, str]]:
+    """Schema-lint the components.toml registry for typos a degrade-safe read drops:
+    an unknown/misspelled key, a wrong-type value on a known key, or an unrecognized
+    top-level table. Returns [(code, detail)] (deterministic file order); [] when the
+    file is absent / opted-out / unparseable (no double-report with the RED surface).
+    All codes WARN: component_unknown_key · component_type_mismatch · component_unknown_table."""
+    if tomllib is None:
+        return []
+    try:
+        data = tomllib.loads((root / "components.toml").read_bytes().decode("utf-8"))
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError, ValueError):
+        return []                       # a parse break is _component_findings' RED job
+    if not isinstance(data, dict):
+        return []
+    out: list[tuple[str, str]] = []
+    for top in data:                    # 1. unrecognized top-level tables/keys
+        if top not in _SCHEMA_KNOWN_KEYS:
+            out.append(("component_unknown_table",
+                        f"top-level [{top}] is not a known table "
+                        f"(expected one of: {', '.join(_SCHEMA_KNOWN_KEYS)})"))
+    for table, known in _SCHEMA_KNOWN_KEYS.items():     # 2/3. per-entry keys + value types
+        entries = data.get(table)
+        if not isinstance(entries, dict):
+            continue
+        types = _SCHEMA_KEY_TYPES[table]
+        for name, spec in entries.items():
+            if not isinstance(spec, dict):
+                continue                # a non-table entry is the RED surface's job
+            for key, val in spec.items():
+                if key not in known:
+                    out.append(("component_unknown_key",
+                                f"[{table}.{name}] has unknown key {key!r} "
+                                f"(known: {', '.join(known)})"))
+                elif key in types and not isinstance(val, types[key]):
+                    out.append(("component_type_mismatch",
+                                f"[{table}.{name}].{key} should be "
+                                f"{_SCHEMA_TYPENAME.get(types[key], types[key].__name__)}, "
+                                f"got {type(val).__name__}"))
+    return out
 
 
 def _declared_scope(root: Path, slug: str) -> list[str] | None:
@@ -5997,6 +6233,11 @@ def build_parser() -> argparse.ArgumentParser:
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")
     pck.add_argument("--json", action="store_true", help="machine-readable JSON output")
     pck.set_defaults(func=cmd_check)
+
+    pcomp = sub.add_parser("components",
+                           help="read-only: print + validate the component registry "
+                                "(.add/components.toml) — RED integrity errors + schema-lint typo warnings")
+    pcomp.set_defaults(func=cmd_components)
 
     pfed = sub.add_parser("federate", help="multi-repo: pull a producer repo's published, immutable "
                                            "contract snapshot into this repo (fail-loud)")

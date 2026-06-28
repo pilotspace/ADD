@@ -150,3 +150,82 @@ A week later, telemetry shows an unexpectedly high `forbidden` rate. The `6_obse
 ---
 
 This is the whole method in one feature: four artifacts written in order, an AI build bounded by them, a verification grounded in evidence plus the one check tests miss, and a loop that turns production reality into the next specification.
+
+---
+
+## Multi-component, end to end
+
+The example above is a single codebase with one green bar. Real slices often cross components — a backend endpoint and the frontend that calls it. ADD ships that slice *inside one milestone* using the component pillar (chapter 17). Here is the same flow, now spanning two components: a `gateway` backend that **produces** an `orders` contract, and a `web` frontend that **consumes** it.
+
+### Declare the components
+
+The two parts and the boundary between them are declared in `.add/components.toml` — never inferred:
+
+```toml
+[component.gateway]
+root      = "apps/gateway"
+green_bar = "pytest + pyright"
+verify    = "pytest -q apps/gateway"
+
+[component.web]
+root      = "apps/web"
+green_bar = "vitest + a11y"
+verify    = "pnpm -C apps/web test"
+
+[contract.orders]
+producer  = "gateway"
+consumers = ["web"]
+```
+
+One milestone, **list-orders slice**, holds two tasks: `orders-api` (the BE, `produces: orders`) and `orders-list` (the FE, `consumes: orders`).
+
+### The backend freezes first → an immutable snapshot
+
+`orders-api` carries a `component: gateway` and a `produces: orders` header. It runs the normal flow — specify, scenarios, contract — and the human freezes its §3:
+
+```
+GET /orders?status=  ->  200 { orders: [{ id, status, total, placedAt }], nextCursor }
+                          400 { error: "bad_status" }
+Status: FROZEN @ v1 — approved by the tech lead
+```
+
+The moment that contract freezes and the task crosses contract→tests, the engine writes an immutable snapshot — `.add/contracts/orders.json` — recording the id, producer, version, frozen date, and a hash over the frozen §3 shape. That file *is* the published interface.
+
+### The frontend is held until the backend freezes
+
+`orders-list` (`component: web`, `consumes: orders`) was started in the same milestone, but it must not commit to a shape the backend has not frozen. When it tries to advance scenarios→contract before the snapshot exists, the engine refuses:
+
+```
+$ python3 .add/tooling/add.py advance
+add: error: producer_contract_unfrozen: orders-list consumes 'orders' but no frozen producer snapshot exists yet — the FE is held until gateway freezes
+```
+
+Once `orders.json` exists, the same `advance` succeeds: the FE writes its §3 against the frozen shape and **pins that snapshot's hash**. The slice is ordered by the contract, not by splitting BE and FE across two milestones.
+
+If the backend later *re-opens* its §3 to change the shape, the engine holds the consumer `producer_contract_stale` rather than letting it pin a shape that is mid-change — and `add.py check` separately surfaces `contract_producer_stale` / `contract_snapshot_hashless` as never-red warnings. Freeze-recency, not just existence.
+
+### Each task verifies against its own green bar
+
+At the gate, the engine holds each task to *its* component. `orders-api` must cite `pytest + pyright` in its §6 evidence; `orders-list` must cite `vitest + a11y` — cite the wrong bar (or none) and the gate refuses `component_green_bar_uncited`. The engine never runs either suite; it **surfaces** the component's `verify` command so the operator sees exactly what to run:
+
+```
+$ python3 .add/tooling/add.py gate PASS
+task 'orders-api' gate -> PASS
+component: gateway · expected green-bar: pytest + pyright · verify: pytest -q apps/gateway   # run this suite — the engine does not (NO-EXEC)
+```
+
+Two tasks, one milestone, two green bars — each held to its own, each suite run by you.
+
+### Across repositories — federation
+
+When `gateway` and `web` live in *separate* repos, only the snapshot transport changes. The `web` repo declares where the producer publishes:
+
+```toml
+[federation.orders]
+source = "../gateway/.add/contracts/orders.json"
+pin    = "v1"
+```
+
+`add.py federate pull orders` validates the producer repo's published snapshot (valid JSON, matching id, a hash, matching version) and lands a byte-for-byte copy locally — from there the FE holds and pins exactly as in a monorepo. The pull is fail-loud: an unknown id, an unreadable source, a `source` that escapes the repo's allowlist (`federation_source_escapes`), an invalid snapshot, or a version mismatch each HARD-STOPS and lands nothing. Federation never builds the FE against a guessed, out-of-tree, or stale endpoint.
+
+That is the component pillar in one slice: declare the parts, freeze the boundary, hold the consumer behind the producer, verify each part on its own bar, and carry the frozen contract across repos — all within the same six-step flow and its single contract-freeze approval.

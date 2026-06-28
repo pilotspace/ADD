@@ -1979,7 +1979,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T09:02:11+00:00",
+  "updated": "2026-06-28T13:24:10+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2161,18 +2161,6 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "component-polish": {
-      "title": "component-polish \u2014 close the component-pillar gaps and harden the cross-repo edges",
-      "goal": "give the component pillar an end-to-end worked example, a components.toml validator, freeze-recency safety, and a path-confined federation source",
-      "stage": "mvp",
-      "status": "queued",
-      "created": "2026-06-26T10:28:42+00:00",
-      "updated": "2026-06-26T10:28:42+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
     },
     "installer-polish": {
       "title": "installer-polish \u2014 round out the global-home and installer lane",
@@ -2766,6 +2754,19 @@
         "honest-reject-naming",
         "self-grading-refute-record",
         "stale-guide-sync"
+      ],
+      "archived": "2026-06-28"
+    },
+    {
+      "slug": "component-polish",
+      "title": "component-polish \u2014 close the component-pillar gaps and harden the cross-repo edges",
+      "tasks": 5,
+      "task_slugs": [
+        "components-validator",
+        "federation-harden",
+        "cross-component-recency",
+        "component-registry-fill",
+        "component-worked-example"
       ],
       "archived": "2026-06-28"
     }

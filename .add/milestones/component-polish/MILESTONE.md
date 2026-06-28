@@ -22,34 +22,38 @@ Out: a remote federation transport (git URL / artifact registry resolve) and `fe
 - the federation manifest `source` path-confinement rule -> owning task `federation-harden`
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] components-validator    depends-on: none                  — `add.py components` reader/validator + a `check`-time `components.toml` schema lint (catch typos early)
-- [ ] component-worked-example depends-on: none                 — multi-component BE→FE worked example (book ch.17 Appendix D end-to-end transcript)
-- [ ] component-registry-fill depends-on: components-validator  — `component:` hint in `TASK.fast.md.tmpl`; `per-component-verify` consumes `verify` + `green_bar` to run a bound task's own suite at the gate
-- [ ] cross-component-recency depends-on: none                  — freeze-recency check (snapshot existence admits a stale leftover); document/guard the `cmd_phase` HOLD bypass
-- [ ] federation-harden       depends-on: none                  — path-confinement guard on manifest `source` (reject `../`/absolute traversal under a sibling-repo allowlist)
+- [x] components-validator    depends-on: none                  — `add.py components` reader/validator + a `check`-time `components.toml` schema lint (catch typos early)
+- [x] component-worked-example depends-on: none                 — multi-component BE→FE worked example (book ch.17 Appendix D end-to-end transcript)
+- [x] component-registry-fill depends-on: components-validator  — `component:` hint in `TASK.fast.md.tmpl`; `per-component-verify` consumes `verify` + `green_bar` to run a bound task's own suite at the gate
+- [x] cross-component-recency depends-on: none                  — freeze-recency check (snapshot existence admits a stale leftover); document/guard the `cmd_phase` HOLD bypass
+- [x] federation-harden       depends-on: none                  — path-confinement guard on manifest `source` (reject `../`/absolute traversal under a sibling-repo allowlist)
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `add.py components` validates `components.toml`; `check` flags a malformed entry              (← components-validator)
-- [ ] the book carries a complete multi-component BE→FE worked example                              (← component-worked-example)
-- [ ] a fast-lane task in a monorepo can declare `component:`; per-component-verify runs its suite  (← component-registry-fill)
-- [ ] a stale leftover snapshot no longer admits a consumer into build                              (← cross-component-recency)
-- [ ] a manifest `source` resolving outside the sibling-repo allowlist is rejected, not landed      (← federation-harden)
+- [x] `add.py components` validates `components.toml`; `check` flags a malformed entry              (← components-validator)
+- [x] the book carries a complete multi-component BE→FE worked example                              (← component-worked-example)
+- [x] a fast-lane task in a monorepo can declare `component:`; per-component-verify runs its suite  (← component-registry-fill)
+- [x] a stale leftover snapshot no longer admits a consumer into build                              (← cross-component-recency)
+- [x] a manifest `source` resolving outside the sibling-repo allowlist is rejected, not landed      (← federation-harden)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `add.py` gained `_components`/`cmd_components` reader+validator + a `check`-time schema lint (components-validator), `_federation_source_confined` + a HARD-STOP `federation_source_escapes` (federation-harden), `_producer_snapshot_stale`/`_consumer_contract_hold` freeze-recency holds + 2 never-red check WARNs (cross-component-recency), `_task_verify` + gate verify-surfacing + writeback (component-registry-fill). `TASK.fast.md.tmpl` (3 trees) gained the `component:` affordance. ENGINE_MD5 → 6cc73630; **ENGINE_PKG_MD5 795abe88 UNCHANGED** all milestone; component-worked-example was DOCS-ONLY (no engine touch).
+- skill   : `skill/add/components.md` (3 trees) updated for the verify-surfacing + the new fail-loud codes (component-worked-example); lean fence respected (reclaimed from prose, budget unweakened).
+- book    : ch.17, the glossary, and Appendix D (4 trees each) gained the multi-component BE→FE worked example + the 4 new codes + the verify-surfacing (component-worked-example).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- components-validator     : gate=PASS · tests=full suite green · residue=none (opt-in, byte-identical-when-zero)
+- federation-harden        : gate=PASS · tests=HardenConfine 6 green · residue=TOCTOU symlink-swap, LOW + outside threat model → forward delta (security-expert reviewed)
+- cross-component-recency  : gate=PASS · tests=Recency 8 green · residue=none (R1 hashless-snapshot closed as a never-red WARN; refute EARNED)
+- component-registry-fill  : gate=PASS · tests=TaskVerify 3 + VerifySurface 4 green · residue=none (surface-only/NO-EXEC; refute EARNED)
+- component-worked-example : gate=PASS · tests=test_component_worked_example 11 green · residue=none (scope under-declaration self-healed: §5 corrected + declared re-snapshot, sidecar intact)
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which): EC1←components-validator · EC2←component-worked-example (book) · EC3←component-registry-fill · EC4←cross-component-recency · EC5←federation-harden
+- goal: give the component pillar an end-to-end worked example, a components.toml validator, freeze-recency safety, and a path-confined federation source — MET: all 5 tasks gate=PASS; suite 2235/0, check 470/0, audit clean; opt-in/byte-identical-when-zero-components held throughout.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one

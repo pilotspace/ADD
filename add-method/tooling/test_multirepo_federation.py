@@ -167,5 +167,71 @@ class Check(_Board):
         self.assertNotIn("federation", self._check())
 
 
+class HardenConfine(_Board):
+    """federation-harden: a manifest `source` may reach a DIRECT sibling repo
+    (../<repo>/…, under the workspace root.parent.parent) but an absolute path or a
+    deeper `../../` escape HARD-STOPs `federate pull` BEFORE any read, and surfaces
+    early at `check` as a never-red WARN. The legit sibling pattern is unchanged."""
+
+    def _check(self):
+        out, errbuf = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(errbuf):
+                add.main(["check"])
+        except SystemExit:
+            pass
+        return out.getvalue() + errbuf.getvalue()
+
+    def test_sibling_source_still_pulls(self):
+        # non-regression: the documented one-level sibling source stays allowed
+        self._manifest('[federation.gateway-api]\nsource = "../producer/.add/contracts/gateway-api.json"\n')
+        out, err = self._federate("pull", "gateway-api")
+        self.assertIsNone(err, f"a legit sibling source must pull, got {err!r}")
+        self.assertTrue(self._landed().exists())
+
+    def test_absolute_source_escapes(self):
+        self._manifest('[federation.gateway-api]\nsource = "/etc/passwd"\n')
+        out, err = self._federate("pull", "gateway-api")
+        self.assertIsNotNone(err)
+        self.assertIn("federation_source_escapes", err or "")
+        self.assertFalse((self.addp / "contracts").exists(),
+                         "an escaping pull must create no contracts/ dir")
+
+    def test_deep_traversal_escapes(self):
+        # "../../x" from root.parent climbs ABOVE the workspace (root.parent.parent) -> rejected
+        self._manifest('[federation.gateway-api]\nsource = "../../escape.json"\n')
+        out, err = self._federate("pull", "gateway-api")
+        self.assertIn("federation_source_escapes", err or "")
+        self.assertFalse(self._landed().exists())
+
+    def test_escape_checked_before_read(self):
+        # an escaping source that also does NOT exist must report escapes, not missing
+        self._manifest('[federation.gateway-api]\nsource = "/nope/does/not/exist.json"\n')
+        out, err = self._federate("pull", "gateway-api")
+        self.assertIn("federation_source_escapes", err or "")
+        self.assertNotIn("federation_source_missing", err or "")
+        self.assertFalse(self._landed().exists())
+
+    def test_confined_helper_is_pure_and_total(self):
+        ok = add._federation_source_confined(self.addp, "../producer/.add/contracts/gateway-api.json")
+        self.assertTrue(ok, "a direct sibling must be confined")
+        for bad in ("/etc/passwd", "../../escape.json", "../../../../../../etc/x", "\x00bad"):
+            self.assertFalse(add._federation_source_confined(self.addp, bad),
+                             f"{bad!r} must be rejected (never raise)")
+
+    def test_check_warns_escaping_source_never_red(self):
+        self._manifest('[federation.gateway-api]\nsource = "/etc/passwd"\n')
+        out = self._check()
+        self.assertIn("federation_source_escapes", out)
+        # measure-not-block: an escaping source never turns check red
+        code = 0
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            try:
+                add.main(["check"])
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else 1
+        self.assertEqual(code, 0, "an escaping federation source must not fail check")
+
+
 if __name__ == "__main__":
     unittest.main()

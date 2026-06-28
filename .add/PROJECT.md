@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 57
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 58
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -37,6 +37,8 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
   not (v22 · DDD; same archive seam as graduation-analytics' traversal-basis convention).
 
 ## Spec / Living Document (SDD) — what we are building, now
+- (SDD) the skill lean fence is a hard floor: genuinely-new doc-truth on a guide is reclaimed from the same guide's prose, not a budget rebaseline, absent an explicit human bump (evidence: reference pool +418 B → terser components.md, ratio 0.68 kept)  [folded foundation-version 58 · from component-worked-example]
+- (SDD) a new CLI subcommand ripples into test_min_pillar LIFECYCLE + _NONZERO_OK classification + the tri-tree ENGINE_MD5 pin — pre-listing those traps in §5 Known-problem fixes made the build trap-free (evidence: 0 surprises; the 2202-test suite went green on the first re-run after the re-pin)  [folded foundation-version 58 · from components-validator]
 - (SDD) YAML 1.1 parses a bare `on:` key as the boolean True — a workflow-shape test must read `cfg.get("on", cfg.get(True))` or it silently asserts against a missing key (evidence: the trigger test needed the True-key fallback to see the `on:` block).  [folded foundation-version 49 · from pages-deploy]
 - (SDD) a frozen DESCRIPTIVE parenthetical can mis-count while the binding SEAM holds — "6 < 9" vs the true "6 < 8" (the §3 set {0,1,3,4,5,6} is unambiguous); disclose at verify, don't retro-edit the frozen contract (evidence: tests assert 6 < 8; disclosed in §6).  [folded foundation-version 48 · from fast-lane-template]
 - (SDD) the suite IS the behavior contract for a prose compaction — 2 wording slips ("Tie-break order", "never the artifact") were caught only by the FULL suite, not the 33-subset (evidence: gate-on-full-suite mitigation paid off).  [folded foundation-version 46 · from skill-core-compact]
@@ -267,6 +269,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-06-28 | fold all → foundation-version 58 (SDD 2 · TDD 4 · ADD 8) | consolidate captured OBSERVE lessons into the versioned foundation | 14 lessons open→folded; +14 routed bullets; 57→58 |
 | 2026-06-28 | fold all → foundation-version 57 (TDD 1 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 56→57 |
 | 2026-06-28 | fold all → foundation-version 56 (TDD 5 · ADD 9) | consolidate captured OBSERVE lessons into the versioned foundation | 14 lessons open→folded; +14 routed bullets; 55→56 |
 | 2026-06-26 | fold all → foundation-version 55 (TDD 2 · ADD 5) | consolidate captured OBSERVE lessons into the versioned foundation | 7 lessons open→folded; +7 routed bullets; 54→55 |

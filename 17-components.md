@@ -24,11 +24,11 @@ guess. You name them in `.add/components.toml`:
 ```toml
 [component.gateway]
 root      = "apps/gateway"
-green-bar = "pytest + pyright"
+green_bar = "pytest + pyright"
 
 [component.dashboard]
 root      = "apps/web"
-green-bar = "vitest + a11y"
+green_bar = "vitest + a11y"
 ```
 
 Each component owns a **root** (the source subtree it governs) and a
@@ -48,6 +48,13 @@ The engine never *runs* the suite — that invariant holds here too. The AI runs
 the right suite for the bound component; the gate checks the **right bar was
 cited** in the evidence. Two tasks, one milestone, two green bars — each held to
 its own.
+
+At the gate the engine also **surfaces** the bound component's `verify` command —
+the literal suite to run (e.g. `pytest -q`) — beside the expected green-bar, and
+records it in the §6 gate record so the ledger shows which suite backed the gate.
+It prints *what* to run; it never runs it (NO-EXEC). In the fast lane the same
+`component:` affordance is available, so a small task in a monorepo can bind a
+component and get its bar and `verify` surfaced too.
 
 ## Freeze a contract between components
 
@@ -83,6 +90,15 @@ frontend proceeds and pins it. The slice is **ordered by the frozen contract**,
 all inside one milestone — the FE stays downstream of the BE endpoint, not split
 into a later milestone.
 
+The hold checks more than existence. Even once a snapshot exists, if a live
+producer task has *re-opened or drifted* its §3 — the snapshot no longer matches
+a frozen producer — the consumer is held `producer_contract_stale` rather than
+pinning a shape that is mid-change (the freeze-recency guard). Outside the hold,
+`add.py check` surfaces the softer `contract_producer_stale` (a live producer
+drifted past a pinned consumer) and `contract_snapshot_hashless` (a snapshot
+carrying no hash to verify against) as **never-red warnings** — measured and
+reported, never blocking.
+
 ## Across repositories: federation
 
 Components in separate repositories work the same way; only the
@@ -99,9 +115,11 @@ pin    = "v1"        # optional — the version this repo expects
 matching id, a hash, and — if `pin` is set — a matching version), and lands a
 **byte-for-byte copy** at the local `.add/contracts/gateway-api.json`. From
 there, the consuming repo's task holds and pins exactly as in a monorepo. The
-pull is **fail-loud by design**: an unknown id, an unreadable source, an invalid
-snapshot, or a version mismatch each HARD-STOPS and lands nothing — federation
-never builds an FE against a guessed or stale endpoint. The producer's snapshot
+pull is **fail-loud by design**: an unknown id, an unreadable source, a `source`
+that **escapes the consumer repo's allowlist** (`federation_source_escapes` — the
+path is confined to a sibling of the repo root, so a `../../etc`-style traversal
+lands nothing), an invalid snapshot, or a version mismatch each HARD-STOPS — federation
+never builds an FE against a guessed, out-of-tree, or stale endpoint. The producer's snapshot
 is the published artifact; "publishing" is committing that file in the producer
 repo. Each repo keeps its own git-native `state.json`; federation transports only
 the immutable frozen shape, never shared mutable state.
