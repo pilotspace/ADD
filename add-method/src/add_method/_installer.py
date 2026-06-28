@@ -13,6 +13,7 @@ Designed for failure:
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.resources
 import json
@@ -677,7 +678,8 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # Strictly additive to the global home; the per-project local + git-tracked default is untouched.
 # The snapshot copies ONLY user-data (the managed trees + transient/managed-meta are excluded),
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE}   # managed trees + managed-meta
+LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE}   # managed trees + managed-meta + the lock
 
 
 def data_key(project_abspath) -> str:
@@ -1162,18 +1164,55 @@ def _add_dir(target_path: Path) -> Path:
     return target_path / ".add"
 
 
+@contextlib.contextmanager
+def _update_lock(home: Path):
+    """Serialize `update --global` with an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock —
+    the SAME mechanism as the npm twin (cli.js `fs.openSync(.., "wx")`), so a pip-held lock
+    blocks an npm run and vice-versa (a `fcntl.flock` would NOT serialize cross-twin: npm holds
+    only the file, never the kernel flock). Already present -> raises BlockingIOError (the caller
+    maps it to "update_in_progress"). The file is unlinked on exit for success OR exception, so a
+    normal/handled exit never outlives the process. A hard crash / SIGKILL may leave a stale
+    lockfile -> the update_in_progress message hints to remove it (symmetric with the npm twin)."""
+    home.mkdir(parents=True, exist_ok=True)
+    lock_path = home / LOCK_FILE
+    try:
+        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:            # held -> caught upstream -> update_in_progress
+        raise BlockingIOError(f"{lock_path} is held") from exc
+    try:
+        yield
+    finally:
+        os.close(fd)
+        try:
+            os.unlink(str(lock_path))
+        except OSError:                       # pragma: no cover — already gone
+            pass
+
+
+def _valid_registry_path(p) -> bool:
+    """True iff `os.path.normpath(p)` is an EXISTING ADD project — a dir that contains `.add/`.
+    Decides reconcile-vs-drop for an absolute registry entry; absoluteness is the SEPARATE LOUD
+    gate in `_update_global` (a relative path is the traversal vector). This is the security
+    backstop: a managed-file reconcile NEVER lands in a dir without a `.add/` marker."""
+    np = os.path.normpath(str(p))
+    return os.path.isdir(np) and os.path.isdir(os.path.join(np, ".add"))
+
+
 def _update_global(target, *, force=False, bundled=None, version=None, env=None) -> int:
-    """`update --global`: refresh the shared home (mirror + skill, re-stamp) then propagate to
-    every registered+existing project via `reconcile(p, source=<home>)`; prune vanished projects
-    (warn) and rewrite the registry atomically. Fail-closed: no home install yet -> no_global_home;
-    a corrupt registry -> LOUD fail with the registry LEFT INTACT (read BEFORE any home write, so a
-    corrupt registry aborts with zero mutations)."""
+    """`update --global`: under a home lock, refresh the shared home (mirror + skill, re-stamp)
+    then propagate to every registered+VALID project via `reconcile(p, source=<home>)`; prune
+    vanished projects, DROP existing non-ADD-project entries (warn), and rewrite the registry
+    atomically with the surviving NORMALIZED paths. Fail-closed: no home install -> no_global_home;
+    a concurrent run -> update_in_progress; a corrupt registry -> registry_corrupt (LEFT INTACT);
+    a NON-ABSOLUTE registry entry (the traversal vector) -> unsafe_registry_path (zero mutations,
+    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD."""
     env_map = os.environ if env is None else env
     home = resolve_global_home(env_map)
     claude_dir = _claude_skills_dir(env_map)
     if not _stamp_path(home).exists():
         return _fail(
-            f"no global ADD install at {home} (.add-version not found) — run `init --global` first"
+            f"no_global_home: no global ADD install at {home} (.add-version not found) — "
+            f"run `init --global` first"
         )
     try:
         bundled_root = Path(bundled) if bundled else _bundled_root()
@@ -1182,36 +1221,60 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
     for sub, _dest, _strip in MANAGED:
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
-    # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
-    # writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
     try:
-        reg = _read_registry(home)
-    except ValueError:
+        with _update_lock(home):
+            # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with
+            # ZERO writes (never a silent empty-list no-op), leaving the file for the user to fix.
+            try:
+                reg = _read_registry(home)
+            except ValueError:
+                return _fail(
+                    f"registry_corrupt: global registry {_registry_path(home)} is corrupt — "
+                    f"fix or delete it; not propagating"
+                )
+            # PRE-SCAN (security, BEFORE any write): a NON-ABSOLUTE entry is the traversal vector —
+            # it cannot be a trusted abspath, so abort the WHOLE run with zero mutations.
+            for p in reg:
+                if not os.path.isabs(p):
+                    return _fail(
+                        f"unsafe_registry_path: registered project {p!r} is not an absolute path — "
+                        f"fix or remove it in {_registry_path(home)}; not propagating"
+                    )
+            new_version = version or _pkg_version()
+            try:
+                _reconcile_global(home, claude_dir, bundled_root)
+            except OSError as exc:
+                return _fail(f"cannot write global home {home} — {exc}")
+            _write_stamp(home, new_version, channel="global")
+            # Propagate from the home mirror to each still-existing ADD project (at its NORMALIZED
+            # path); prune the vanished, DROP an existing non-project (the is-.add/ backstop).
+            kept: list = []
+            pruned = 0
+            dropped = 0
+            for p in reg:
+                np = os.path.normpath(p)                  # absolute (pre-scan) -> lexically normalized
+                if not Path(np).exists():
+                    _log(f"  ⚠ registered project {np} not found — pruning")
+                    pruned += 1
+                    continue                              # a vanished project's data snapshot is KEPT
+                if not (Path(np) / ".add").is_dir():
+                    _log(f"  ⚠ registered path {np} is not an ADD project (no .add/) — dropping")
+                    dropped += 1
+                    continue                              # NEVER reconcile managed files into a non-project
+                _reconcile(Path(np), home)                # standard MANAGED map, sourced from the home mirror
+                if (home / "data" / data_key(np)).exists():
+                    _persist_data(home, np)               # keep the opted-in project's snapshot current
+                kept.append(np)                           # store the NORMALIZED path (heals a bent legit entry)
+            _write_registry(home, kept)
+            bits = ([f"{pruned} pruned"] if pruned else []) + ([f"{dropped} dropped"] if dropped else [])
+            tail = f" ({', '.join(bits)})" if bits else ""
+            _log(f"ADD {new_version} · global home + {len(kept)} project(s) reconciled{tail}.")
+            return 0
+    except BlockingIOError:
         return _fail(
-            f"global registry {_registry_path(home)} is corrupt — fix or delete it; not propagating"
+            f"update_in_progress: another `update --global` is already running — retry shortly "
+            f"(remove {home / LOCK_FILE} if it is stale)"
         )
-    new_version = version or _pkg_version()
-    try:
-        _reconcile_global(home, claude_dir, bundled_root)
-    except OSError as exc:
-        return _fail(f"cannot write global home {home} — {exc}")
-    _write_stamp(home, new_version, channel="global")
-    # Propagate from the home mirror to each still-existing project; prune the vanished.
-    kept: list = []
-    pruned = 0
-    for p in reg:
-        if not Path(p).exists():
-            _log(f"  ⚠ registered project {p} not found — pruning")
-            pruned += 1
-            continue                        # a vanished project's data snapshot is KEPT (the backup outlives it)
-        _reconcile(Path(p), home)          # standard MANAGED map, sourced from the home mirror
-        if (home / "data" / data_key(p)).exists():
-            _persist_data(home, p)          # keep the opted-in project's snapshot current
-        kept.append(p)
-    _write_registry(home, kept)
-    tail = f" ({pruned} pruned)" if pruned else ""
-    _log(f"ADD {new_version} · global home + {len(kept)} project(s) reconciled{tail}.")
-    return 0
 
 
 def update(

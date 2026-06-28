@@ -727,6 +727,7 @@ const MANAGED = [
   ["docs", [".add", "docs"], false],
 ];
 const STAMP_FILE = ".add-version";
+const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 
 function pkgVersion() {
   try { return require(path.join(PKG_ROOT, "package.json")).version; }
@@ -866,7 +867,7 @@ function reconcileGlobal(home, claudeDir, noSkill) {
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------
 // Strictly additive; copies ONLY user-data (managed trees + transient excluded), clean-replaced,
 // one-way (project->home). Mirror of _installer.py (identical key + include/exclude rule).
-const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE];   // managed trees + meta
+const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE];   // managed trees + meta + lock
 
 // data_key twin: <sanitized-basename>-<sha1(abspath_utf8)[:12]>. Pure · total · separator-free.
 function dataKey(projectAbspath) {
@@ -1028,34 +1029,82 @@ function installGlobal(args, chosenTarget) {
 
 // update --global: refresh the home mirror + skill, then propagate to every registered+existing
 // project via reconcile(.., home); prune vanished projects (warn) + rewrite the registry atomically.
+// True iff path.normalize(p) is an EXISTING ADD project (a dir containing .add/). The is-.add/
+// backstop: a managed-file reconcile NEVER lands in a dir without a .add/ marker. Absoluteness is
+// the SEPARATE LOUD gate in cmdUpdateGlobal (a relative path is the traversal vector). pip twin:
+// _installer.py:_valid_registry_path.
+function validRegistryPath(p) {
+  const np = path.normalize(String(p));
+  try { return fs.statSync(np).isDirectory() && fs.statSync(path.join(np, ".add")).isDirectory(); }
+  catch (_e) { return false; }
+}
+
+// Serialize `update --global` with an EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag).
+// Already held -> update_in_progress (fail-fast). Released on process exit (normal completion OR
+// fail()'s process.exit), so it never outlives the run; a hard crash may leave a stale lock to
+// remove by hand. pip twin: _installer.py:_update_lock (the SAME O_EXCL lockfile, cross-compatible).
+function acquireUpdateLock(home) {
+  fs.mkdirSync(home, { recursive: true });
+  const lockPath = path.join(home, LOCK_FILE);
+  let fd;
+  try { fd = fs.openSync(lockPath, "wx"); }
+  catch (e) {
+    if (e && e.code === "EEXIST") {
+      fail("update_in_progress: another `update --global` is already running — retry shortly " +
+           "(remove " + lockPath + " if it is stale)");
+    }
+    throw e;
+  }
+  const release = () => {
+    try { fs.closeSync(fd); } catch (_e) {}
+    try { fs.unlinkSync(lockPath); } catch (_e) {}
+  };
+  process.on("exit", release);   // covers normal completion AND fail()'s process.exit
+  return release;
+}
+
 function cmdUpdateGlobal(args) {
   const home = resolveGlobalHome(process.env);
   const claudeDir = claudeSkillsDir(process.env);
   if (!fs.existsSync(path.join(home, STAMP_FILE))) {
-    fail("no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
+    fail("no_global_home: no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
   }
+  acquireUpdateLock(home);   // exclusive; EEXIST -> update_in_progress; released on process exit
   // Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
   // writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
   let reg;
   try { reg = readRegistry(home); }
-  catch (_e) { fail("global registry " + registryPath(home) + " is corrupt — fix or delete it; not propagating"); }
+  catch (_e) { fail("registry_corrupt: global registry " + registryPath(home) + " is corrupt — fix or delete it; not propagating"); }
+  // PRE-SCAN (security): a NON-ABSOLUTE entry is the traversal vector -> abort with zero mutations.
+  for (const p of reg) {
+    if (!path.isAbsolute(p)) {
+      fail("unsafe_registry_path: registered project '" + p + "' is not an absolute path — fix or remove it in " + registryPath(home) + "; not propagating");
+    }
+  }
   try { reconcileGlobal(home, claudeDir, args.noSkill); }
   catch (e) { fail("cannot write global home " + home + " — " + (e && e.message ? e.message : e)); }
   const version = pkgVersion();
   writeStamp(home, version, "global");
   const kept = [];
-  let pruned = 0;
+  let pruned = 0, dropped = 0;
   for (const p of reg) {
-    if (!fs.existsSync(p)) { log("  ⚠ registered project " + p + " not found — pruning"); pruned++; continue; }
-    reconcile(args, p, home);     // standard MANAGED map, sourced from the home mirror
+    const np = path.normalize(p);   // absolute (pre-scan) -> lexically normalized
+    if (!fs.existsSync(np)) { log("  ⚠ registered project " + np + " not found — pruning"); pruned++; continue; }
+    if (!validRegistryPath(np)) {   // exists but no .add/ -> NEVER reconcile managed files into it
+      log("  ⚠ registered path " + np + " is not an ADD project (no .add/) — dropping"); dropped++; continue;
+    }
+    reconcile(args, np, home);      // standard MANAGED map, sourced from the home mirror
     // re-persist an opted-in project (one that already has a snapshot); a vanished
     // project's snapshot is KEPT above (the backup outlives the dir).
-    if (fs.existsSync(path.join(home, "data", dataKey(p)))) persistData(home, p);
-    kept.push(p);
+    if (fs.existsSync(path.join(home, "data", dataKey(np)))) persistData(home, np);
+    kept.push(np);                  // store the NORMALIZED path (heals a bent legit entry)
   }
   writeRegistry(home, kept);
+  const bits = [];
+  if (pruned) bits.push(pruned + " pruned");
+  if (dropped) bits.push(dropped + " dropped");
   log("ADD " + version + " · global home + " + kept.length + " project(s) reconciled" +
-      (pruned ? " (" + pruned + " pruned)" : "") + ".");
+      (bits.length ? " (" + bits.join(", ") + ")" : "") + ".");
 }
 
 function cmdUpdate(args) {

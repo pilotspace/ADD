@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "global-data-restore",
+  "active_task": "global-update-harden",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2015,10 +2015,48 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "global-update-harden": {
+      "title": "Harden update --global: file-lock concurrent runs + validate/reject traversal & non-project registry paths",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "installer-polish",
+      "depends_on": [],
+      "created": "2026-06-28T15:02:11+00:00",
+      "updated": "2026-06-28T16:05:31+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-28T15:54:11+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "39e9a009638f86f3176c666e5ebfaee2",
+        "tests": {
+          "add-method/tooling/test_global_update_harden.py": "08d28387ad8e3993e7a29291cc5cb71f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "1425d95cadda607bf992cf7147da0090"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T14:57:52+00:00",
+  "updated": "2026-06-28T16:05:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2820,7 +2858,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "installer-polish": "global-data-restore"
+    "installer-polish": "global-update-harden"
   },
   "todos": [
     {
