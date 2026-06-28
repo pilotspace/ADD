@@ -6,6 +6,56 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-06-28
+
+Two method milestones make ADD's loop more **self-auditing** and more **honest**:
+the observe step now harvests a decision record automatically, and every flow gate
+is either mechanically enforced or plainly disclosed where it is not. Plus the npm
+release pipeline moves to tokenless **Trusted Publishing**. Backward-compatible
+throughout; nothing retro-changes an existing task or milestone record.
+
+### Added (adr-at-observe — a decision record, harvested not hand-written)
+- **`### Decisions (ADR)` harvested at the gate.** On `add.py gate PASS`, the engine
+  harvests a §7 Architecture-Decision-Record block from §1/§3/§5/§6 — one
+  actor-tagged line per decision (`[AI] specify · [human] freeze · [AI] build ·
+  [human] verify`), refilled only while the placeholder stands (never hand-edited).
+- **`add.py audit` checks the ADR at done.** A done task whose §7 ADR block is unfilled
+  is surfaced — presence-only, never a semantic judgment of the decisions themselves.
+- **Strategy write-back.** The §6 GATE RECORD is stamped with the git actor + date, and
+  the §5 "Strategy actually used" line is harvested into the ADR as the `[AI] build` row.
+
+### Added (flow-honesty — every gate engine-true or honestly disclosed)
+- **Two structural holes became real, forceable gates.** A **universal freeze gate**
+  (`contract_not_frozen` fires for every task at tests→build, with a recorded
+  `--skip-freeze` escape) and a **delta-drain release floor**
+  (`release_build_in_flight`, `--force`-able but loud) — the two places the method
+  promised enforcement and now delivers it.
+- **Four honor-system edges became plain disclosures + measure-not-block lints.**
+  `add.py audit` now surfaces `shallow_deep_check`, `risk_unset`, and
+  `refute_unrecorded` (presence-only, never blocking); the guides + book state plainly
+  that a *missed* security finding is invisible to the engine (a human spot-audit is
+  the only backstop under `auto`); reject-code names read honestly
+  (`release_tests_red`→`release_build_in_flight`).
+- **The earned-green refute-read is now a recorded verdict.** Under `auto`, the §6
+  `### Refute-read verdict` block records `EARNED | NOT-EARNED`; the engine measures it
+  is filled but never spawns the read — the resolver still does the judging.
+- **Stale guidance synced to the shipped engine.** The 5-build "scope gate deferred"
+  note is gone (the scope gate enforces today); the auto-PASS precondition list is now
+  identical across `run.md`, `6-verify.md`, and the book.
+
+### Added (loose tasks)
+- **`/add --todo` flag** (`skill-todo-flag`) — capture/list/close backlog todos.
+- **§5 Strategy fed into spawns** (`build-strategy-solutions` · `streams-strategy-pull`)
+  — the planned build order + known-problem fixes flow into subagent prompts.
+- **`<strategy>` softened** (`strategy-soft-not-hard`) — §5 is the *preferred* plan; the
+  builder may self-improve during build and reports the strategy actually used for audit.
+
+### Changed (release infrastructure)
+- **npm Trusted Publishing (OIDC).** `publish.yml` drops the stored npm token (no more
+  ~90-day rotation), publishes via OIDC (`id-token: write`, Node 24 + npm ≥ 11.5.1),
+  and generates provenance automatically (`--provenance` no longer needed). A guard test
+  locks the tokenless shape. PyPI already used OIDC.
+
 ## [1.12.0] — 2026-06-26
 
 Multi-milestone polish release — the intake/roadmap front grows a real **queue**,

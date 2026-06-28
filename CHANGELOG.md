@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0 — 2026-06-28
+
+- Decision/ADR record harvested at OBSERVE — 1 carried · 0 key decision(s)
+- flow-honesty — make ADD's stated guarantees engine-true or honestly labeled — 15 carried · 0 key decision(s)
+
 ## 1.12.0 — 2026-06-26
 
 - UDD design intake — 0 carried · 0 key decision(s)
