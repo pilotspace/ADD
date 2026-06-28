@@ -228,4 +228,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] the AI's actual build decision now has a stable home (§5 "Strategy actually used:") — half of the report→§5 loop from strategy-soft-not-hard; the harvest into §7 completes it (evidence: field shipped; adr-harvest pending)
+- [ADD · folded] the AI's actual build decision now has a stable home (§5 "Strategy actually used:") — half of the report→§5 loop from strategy-soft-not-hard; the harvest into §7 completes it (evidence: field shipped; adr-harvest pending) [folded foundation-version 56]

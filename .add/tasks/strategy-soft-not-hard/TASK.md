@@ -244,9 +244,9 @@ Watch (reuse scenarios as monitors): a future spawn prompt drifting back to a ha
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] make the report→§5 loop real at OBSERVE — the builder's reported actual-strategy is written back into §5 as a durable ADR-style record for BOTH human and AI decisions, not just prose guidance (evidence: this task only softened the prompt wording; the write-back is still manual — ties to todo #22)
+- [SPEC · dropped] make the report→§5 loop real at OBSERVE — the builder's reported actual-strategy is written back into §5 as a durable ADR-style record for BOTH human and AI decisions, not just prose guidance (evidence: this task only softened the prompt wording; the write-back is still manual — ties to todo #22)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] spawn-prompt strategy guidance must be PREFERRED-not-hard + self-improve-during-build + report-actual-for-audit, never a rigid "do not invent your own" (evidence: the shipped block contradicted advisor.md's own confidence.md self-score/refine ethos; the user flagged it as too hard)
+- [ADD · folded] spawn-prompt strategy guidance must be PREFERRED-not-hard + self-improve-during-build + report-actual-for-audit, never a rigid "do not invent your own" (evidence: the shipped block contradicted advisor.md's own confidence.md self-score/refine ethos; the user flagged it as too hard) [folded foundation-version 56]
