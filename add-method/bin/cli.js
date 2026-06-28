@@ -39,7 +39,8 @@ function parseArgs(argv) {
   // defaults the stage and infers the name from the folder, so the manual-init
   // hint only echoes flags the user actually chose (shortest true command).
   const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
-                 yes: false, nonInteractive: false, global: false, globalData: false, ruleFile: false };
+                 yes: false, nonInteractive: false, global: false, globalData: false,
+                 fromGlobalData: false, ruleFile: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
@@ -50,6 +51,9 @@ function parseArgs(argv) {
     // --global-data: (implies --global) ALSO persist this project's user-data under
     // <home>/data/<key> keyed by path (opt-in, one-way snapshot).
     else if (a === "--global-data") args.globalData = true;
+    // --from-global-data: the INVERSE — rehydrate this project's user-data FROM the shared
+    // home on a fresh clone (non-destructive fill-gaps; --force overwrites with a .bak).
+    else if (a === "--from-global-data") args.fromGlobalData = true;
     // --yes / --non-interactive: skip all prompts, take defaults — the explicit
     // non-interactive selector the interactive() gate honors (CI/pipes do this too).
     else if (a === "--yes" || a === "-y") args.yes = true;
@@ -694,12 +698,23 @@ async function cmdInit(args) {
     }
   }
   if (args.globalData) args.global = true;   // --global-data implies --global (need a home)
+  // OPT-IN restore: the home MUST already exist — no_global_home is a HARD fail, checked FAST
+  // here so nothing lands in the target on a missing home (the restore itself runs after the drop).
+  if (args.fromGlobalData) {
+    const home = resolveGlobalHome(process.env);
+    if (!fs.existsSync(path.join(home, STAMP_FILE))) {
+      fail("no global ADD install at " + home + " (.add-version not found) — nothing to restore " +
+           "from; run `init --global-data` on a source checkout first");
+    }
+  }
   // OPT-IN global home, BEFORE the per-project drop (fail-closed if the home is unwritable
   // or its registry is corrupt — the package + the self-contained default stay usable).
   if (args.global) installGlobal(args, chosenTarget);
   dropFiles(args, chosenTarget, profile, intent);
   // OPT-IN data persist, AFTER the drop (one-way snapshot of existing user-data).
   if (args.globalData) installGlobalData(chosenTarget);
+  // OPT-IN restore (consume), AFTER the drop: rehydrate user-data from the home into this clone.
+  if (args.fromGlobalData) installGlobalDataRestore(chosenTarget, args.force);
 }
 
 // --- update: re-materialize the managed layer without a re-install -----------
@@ -712,6 +727,7 @@ const MANAGED = [
   ["docs", [".add", "docs"], false],
 ];
 const STAMP_FILE = ".add-version";
+const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 
 function pkgVersion() {
   try { return require(path.join(PKG_ROOT, "package.json")).version; }
@@ -732,8 +748,30 @@ function writeStamp(addDir, version, channel) {
   );
 }
 
+// The set of FILE paths (recursive leaves) under root, RELATIVE to root. ∅ if absent.
+// Directories are not counted — only files (the "manifest" the roll-up measures).
+function treeFiles(root) {
+  const out = new Set();
+  if (!fs.existsSync(root)) return out;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else out.add(path.relative(root, full));
+    }
+  };
+  walk(root);
+  return out;
+}
+
+// Returns a file-level roll-up of the heal: { restored, refreshed } where `restored` = a
+// file in the FINAL tree whose relative path was ABSENT before the wipe (fresh or
+// partially-gutted trees heal these), `refreshed` = a final file that was PRESENT before
+// (re-materialized). Orphans (present before, gone after) are swept, counted as neither.
+// Pure observation — copy semantics unchanged. Mirror of _installer.py:_clean_replace.
 function cleanReplaceTree(src, dest, stripTests) {
   if (!fs.existsSync(src)) fail("missing packaged source: " + src);
+  const before = treeFiles(dest);                 // snapshot BEFORE the wipe, or it's always ∅
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
   fs.cpSync(src, dest, { recursive: true });
@@ -743,6 +781,9 @@ function cleanReplaceTree(src, dest, stripTests) {
       if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(dest, entry), { force: true });
     }
   }
+  let restored = 0, refreshed = 0;
+  for (const f of treeFiles(dest)) (before.has(f) ? refreshed++ : restored++);
+  return { restored: restored, refreshed: refreshed };
 }
 
 const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs" };
@@ -771,8 +812,11 @@ function reconcile(args, target, srcRoot) {
     }
   }
   const status = managedStatus(target);
+  let restored = 0, refreshed = 0;
   for (const [sub, destParts, stripTests] of trees) {
-    cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
+    const roll = cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
+    restored += roll.restored;
+    refreshed += roll.refreshed;
     const dest = destParts.join("/");
     if (status[sub] === "missing") {
       log("  ✓ restored  " + TREE_LABEL[sub].padEnd(8) + "-> " + dest + "  (was missing)");
@@ -780,7 +824,8 @@ function reconcile(args, target, srcRoot) {
       log("  ✓ refreshed " + TREE_LABEL[sub].padEnd(8) + "-> " + dest);
     }
   }
-  return status;
+  log("  → " + restored + " restored · " + refreshed + " refreshed");
+  return { restored: restored, refreshed: refreshed, trees: status };
 }
 
 // --- global home: an OPT-IN shared install (engine+book+skill) updated for all projects ----
@@ -851,7 +896,7 @@ function reconcileGlobal(home, claudeDir, noSkill) {
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------
 // Strictly additive; copies ONLY user-data (managed trees + transient excluded), clean-replaced,
 // one-way (project->home). Mirror of _installer.py (identical key + include/exclude rule).
-const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE];   // managed trees + meta
+const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE];   // managed trees + meta + lock
 
 // data_key twin: <sanitized-basename>-<sha1(abspath_utf8)[:12]>. Pure · total · separator-free.
 function dataKey(projectAbspath) {
@@ -902,6 +947,95 @@ function installGlobalData(chosenTarget) {
   else log("  (no project data to persist yet — run /add to create one, then re-run --global-data)");
 }
 
+function isSymlink(p) {
+  try { return fs.lstatSync(p).isSymbolicLink(); } catch (_e) { return false; }
+}
+
+// Restore USER-DATA from <home>/data/<key> into <project>/.add — the NON-DESTRUCTIVE inverse of
+// persistData. FILL-GAPS by default (write only ABSENT entries); force overwrites a present entry,
+// writing a <name>.bak FIRST. Copies only isUserData entries; DEREFERENCES symlinks to content
+// (cpSync dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable
+// dest -> restore_failed. Mirror of _installer.py:_restore_data (identical key + fill-gaps rule).
+function restoreData(home, projectAbspath, force) {
+  const src = path.join(home, "data", dataKey(projectAbspath));
+  if (!fs.existsSync(src)) return false;
+  const entries = fs.readdirSync(src).filter(isUserData).sort();
+  if (entries.length === 0) return false;
+  const addDir = path.join(projectAbspath, ".add");
+  fs.mkdirSync(addDir, { recursive: true });
+  let restored = false;
+  for (const e of entries) {
+    const dest = path.join(addDir, e);
+    if (fs.existsSync(dest) || isSymlink(dest)) {
+      if (!force) continue;                                 // fill-gaps: never clobber a present entry
+      const bak = dest + ".bak";
+      if (fs.existsSync(bak) || isSymlink(bak)) fs.rmSync(bak, { recursive: true, force: true });
+      fs.renameSync(dest, bak);                             // back up the original BEFORE replacing
+    }
+    fs.cpSync(path.join(src, e), dest, { recursive: true, dereference: true });   // deref symlinks
+    restored = true;
+  }
+  return restored;
+}
+
+// init --from-global-data: rehydrate user-data after the per-project drop. Resolves the SAME
+// realpath the snapshot key uses. The home is verified BEFORE the drop (no_global_home fails fast,
+// in cmdInit). An unwritable dest -> restore_failed; a missing snapshot is an honest skip.
+function installGlobalDataRestore(chosenTarget, force) {
+  const home = resolveGlobalHome(process.env);
+  let resolved = chosenTarget;
+  try { resolved = fs.realpathSync(chosenTarget); } catch (_e) { /* fall back to the abspath */ }
+  const snap = path.join(home, "data", dataKey(resolved));
+  let restored;
+  try { restored = restoreData(home, resolved, force); }
+  catch (e) {
+    fail("restore_failed: cannot write restored data into " + path.join(resolved, ".add") +
+         " — " + (e && e.message ? e.message : e));
+  }
+  if (restored) log("  ✓ restored data <- " + snap);
+  else log("  (no snapshot for this project at " + snap + " — nothing restored)");
+}
+
+// prune-data: reclaim ORPHANED snapshots under <home>/data. An orphan is a <home>/data/<key>
+// whose key is owned by NO LIVE registry entry (LIVE = a registered path that still EXISTS on
+// disk) — so unregistered AND registered-but-vanished are BOTH orphans (the explicit reclaim;
+// DIVERGES from update --global's keep-vanished). Reads the registry FIRST (corrupt throws,
+// before any removal). Returns {orphans, removed}. Mirror of _installer.py:_prune_data.
+function pruneData(home, force) {
+  const reg = readRegistry(home);                           // corrupt -> throw (LOUD, zero removal)
+  const live = new Set(reg.filter((p) => fs.existsSync(p)).map(dataKey));
+  const dataDir = path.join(home, "data");
+  if (!fs.existsSync(dataDir)) return { orphans: [], removed: [] };
+  const orphans = fs.readdirSync(dataDir).filter((name) => {
+    try { return fs.statSync(path.join(dataDir, name)).isDirectory() && !live.has(name); }
+    catch (_e) { return false; }
+  }).sort();
+  const removed = [];
+  if (force) {
+    for (const key of orphans) {
+      fs.rmSync(path.join(dataDir, key), { recursive: true, force: true });
+      removed.push(key);
+    }
+  }
+  return { orphans: orphans, removed: removed };
+}
+
+// prune-data command: dry-run lists orphans (removes nothing); --force deletes. no_global_home /
+// registry_corrupt = fail-closed (LOUD, nothing removed). Mirror of pip _installer.prune_data.
+function cmdPruneData(args) {
+  const home = resolveGlobalHome(process.env);
+  if (!fs.existsSync(path.join(home, STAMP_FILE))) {
+    fail("no global ADD install at " + home + " (.add-version not found) — nothing to prune");
+  }
+  let result;
+  try { result = pruneData(home, args.force); }
+  catch (_e) { fail("global registry " + registryPath(home) + " is corrupt — fix or delete it; not pruning"); }
+  if (result.orphans.length === 0) { log("  no orphaned snapshots — nothing to prune"); return; }
+  if (args.force) { log("  ✓ " + result.removed.length + " removed"); return; }
+  for (const key of result.orphans) log("  orphan: " + key);
+  log("  " + result.orphans.length + " orphan(s); re-run with --force to remove");
+}
+
 // init --global: install the managed layer ONCE to the shared home + register this project,
 // fail-closed BEFORE the per-project drop. Returns the resolved target for the normal drop.
 function installGlobal(args, chosenTarget) {
@@ -924,34 +1058,82 @@ function installGlobal(args, chosenTarget) {
 
 // update --global: refresh the home mirror + skill, then propagate to every registered+existing
 // project via reconcile(.., home); prune vanished projects (warn) + rewrite the registry atomically.
+// True iff path.normalize(p) is an EXISTING ADD project (a dir containing .add/). The is-.add/
+// backstop: a managed-file reconcile NEVER lands in a dir without a .add/ marker. Absoluteness is
+// the SEPARATE LOUD gate in cmdUpdateGlobal (a relative path is the traversal vector). pip twin:
+// _installer.py:_valid_registry_path.
+function validRegistryPath(p) {
+  const np = path.normalize(String(p));
+  try { return fs.statSync(np).isDirectory() && fs.statSync(path.join(np, ".add")).isDirectory(); }
+  catch (_e) { return false; }
+}
+
+// Serialize `update --global` with an EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag).
+// Already held -> update_in_progress (fail-fast). Released on process exit (normal completion OR
+// fail()'s process.exit), so it never outlives the run; a hard crash may leave a stale lock to
+// remove by hand. pip twin: _installer.py:_update_lock (the SAME O_EXCL lockfile, cross-compatible).
+function acquireUpdateLock(home) {
+  fs.mkdirSync(home, { recursive: true });
+  const lockPath = path.join(home, LOCK_FILE);
+  let fd;
+  try { fd = fs.openSync(lockPath, "wx"); }
+  catch (e) {
+    if (e && e.code === "EEXIST") {
+      fail("update_in_progress: another `update --global` is already running — retry shortly " +
+           "(remove " + lockPath + " if it is stale)");
+    }
+    throw e;
+  }
+  const release = () => {
+    try { fs.closeSync(fd); } catch (_e) {}
+    try { fs.unlinkSync(lockPath); } catch (_e) {}
+  };
+  process.on("exit", release);   // covers normal completion AND fail()'s process.exit
+  return release;
+}
+
 function cmdUpdateGlobal(args) {
   const home = resolveGlobalHome(process.env);
   const claudeDir = claudeSkillsDir(process.env);
   if (!fs.existsSync(path.join(home, STAMP_FILE))) {
-    fail("no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
+    fail("no_global_home: no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
   }
+  acquireUpdateLock(home);   // exclusive; EEXIST -> update_in_progress; released on process exit
   // Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
   // writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
   let reg;
   try { reg = readRegistry(home); }
-  catch (_e) { fail("global registry " + registryPath(home) + " is corrupt — fix or delete it; not propagating"); }
+  catch (_e) { fail("registry_corrupt: global registry " + registryPath(home) + " is corrupt — fix or delete it; not propagating"); }
+  // PRE-SCAN (security): a NON-ABSOLUTE entry is the traversal vector -> abort with zero mutations.
+  for (const p of reg) {
+    if (!path.isAbsolute(p)) {
+      fail("unsafe_registry_path: registered project '" + p + "' is not an absolute path — fix or remove it in " + registryPath(home) + "; not propagating");
+    }
+  }
   try { reconcileGlobal(home, claudeDir, args.noSkill); }
   catch (e) { fail("cannot write global home " + home + " — " + (e && e.message ? e.message : e)); }
   const version = pkgVersion();
   writeStamp(home, version, "global");
   const kept = [];
-  let pruned = 0;
+  let pruned = 0, dropped = 0;
   for (const p of reg) {
-    if (!fs.existsSync(p)) { log("  ⚠ registered project " + p + " not found — pruning"); pruned++; continue; }
-    reconcile(args, p, home);     // standard MANAGED map, sourced from the home mirror
+    const np = path.normalize(p);   // absolute (pre-scan) -> lexically normalized
+    if (!fs.existsSync(np)) { log("  ⚠ registered project " + np + " not found — pruning"); pruned++; continue; }
+    if (!validRegistryPath(np)) {   // exists but no .add/ -> NEVER reconcile managed files into it
+      log("  ⚠ registered path " + np + " is not an ADD project (no .add/) — dropping"); dropped++; continue;
+    }
+    reconcile(args, np, home);      // standard MANAGED map, sourced from the home mirror
     // re-persist an opted-in project (one that already has a snapshot); a vanished
     // project's snapshot is KEPT above (the backup outlives the dir).
-    if (fs.existsSync(path.join(home, "data", dataKey(p)))) persistData(home, p);
-    kept.push(p);
+    if (fs.existsSync(path.join(home, "data", dataKey(np)))) persistData(home, np);
+    kept.push(np);                  // store the NORMALIZED path (heals a bent legit entry)
   }
   writeRegistry(home, kept);
+  const bits = [];
+  if (pruned) bits.push(pruned + " pruned");
+  if (dropped) bits.push(dropped + " dropped");
   log("ADD " + version + " · global home + " + kept.length + " project(s) reconciled" +
-      (pruned ? " (" + pruned + " pruned)" : "") + ".");
+      (bits.length ? " (" + bits.join(", ") + ")" : "") + ".");
 }
 
 function cmdUpdate(args) {
@@ -984,12 +1166,13 @@ function cmdUpdate(args) {
   if (fs.existsSync(stateFile)) {
     fs.copyFileSync(stateFile, path.join(addDir, "pre-update-state.bak.json"));
   }
-  reconcile(args, target);
+  const roll = reconcile(args, target);
   seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
-      " · managed layer reconciled · your project state untouched.");
+      " · managed layer reconciled (" + roll.restored + " restored · " + roll.refreshed +
+      " refreshed) · your project state untouched.");
 }
 
 async function main() {
@@ -1003,16 +1186,21 @@ async function main() {
     case "update":
       cmdUpdate(args);
       break;
+    case "prune-data":
+      cmdPruneData(args);
+      break;
     case "help":
     case "--help":
-      log("usage: npx @pilotspace/add <init|update> [targetDir] [--force] [--check] [--no-skill] [--global] [--yes|--non-interactive]");
+      log("usage: npx @pilotspace/add <init|update|prune-data> [targetDir] [--force] [--check] [--no-skill] [--global] [--yes|--non-interactive]");
       log("  init    install the ADD skill + tooling + book into a project");
       log("          (--no-skill drops the engine + book only — used by the Claude Code plugin)");
       log("          (--global ALSO installs to a shared home [ADD_HOME|XDG_DATA_HOME/add|~/.add] + registers the project)");
       log("          (--global-data implies --global + persists this project's user-data under <home>/data/<key>)");
+      log("          (--from-global-data rehydrates this project's user-data FROM the shared home on a fresh clone)");
       log("          (interactive in a real terminal; --yes / --non-interactive force the plain path)");
       log("  update  re-materialize skill/tooling/docs to this package version (preserves your state)");
       log("          (--global refreshes the shared home + propagates to every registered project)");
+      log("  prune-data  remove orphaned per-project snapshots from the shared home (dry-run; --force deletes)");
       break;
     default:
       fail("unknown command '" + cmd + "'. Try: npx @pilotspace/add init");

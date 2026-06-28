@@ -1979,7 +1979,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T13:24:10+00:00",
+  "updated": "2026-06-28T16:48:41+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2161,18 +2161,6 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "installer-polish": {
-      "title": "installer-polish \u2014 round out the global-home and installer lane",
-      "goal": "complete the global lane: data restore, orphan prune, update --global concurrency + path-safety, reconcile roll-up, and a reusable PTY test helper",
-      "stage": "mvp",
-      "status": "queued",
-      "created": "2026-06-26T10:28:42+00:00",
-      "updated": "2026-06-26T10:28:42+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
     }
   },
   "active_milestone": null,
@@ -2769,6 +2757,17 @@
         "component-worked-example"
       ],
       "archived": "2026-06-28"
+    },
+    {
+      "slug": "installer-polish",
+      "title": "installer-polish \u2014 round out the global-home and installer lane",
+      "tasks": 3,
+      "task_slugs": [
+        "global-data-restore",
+        "global-update-harden",
+        "reconcile-rollup"
+      ],
+      "archived": "2026-06-28"
     }
   ],
   "active_milestones": [],
@@ -2913,6 +2912,12 @@
       "text": "Fix npm provenance warning before next release: npmjs shows 'taking too long to fetch the source commit' for @pilotspace/add (Provenance panel, source commit pilotspace/ADD@991ac85, build file .github/workflows/publish.yml). Verify publish.yml provenance/attestation config + that the tagged commit is fetchable; resolve before publishing the next version.",
       "created": "2026-06-28T06:07:24+00:00",
       "status": "done"
+    },
+    {
+      "id": 24,
+      "text": "pty-test-helper (deferred from installer-polish): extract a reusable PTY test helper so the installer's interactive-prompt + agent-detect happy-paths run under a committed CI test (today they only run interactively). Standalone fast task \u2014 milestone-free.",
+      "created": "2026-06-28T16:47:03+00:00",
+      "status": "open"
     }
   ]
 }

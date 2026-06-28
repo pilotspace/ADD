@@ -13,6 +13,7 @@ Designed for failure:
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.resources
 import json
@@ -677,7 +678,8 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # Strictly additive to the global home; the per-project local + git-tracked default is untouched.
 # The snapshot copies ONLY user-data (the managed trees + transient/managed-meta are excluded),
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE}   # managed trees + managed-meta
+LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE}   # managed trees + managed-meta + the lock
 
 
 def data_key(project_abspath) -> str:
@@ -724,6 +726,94 @@ def _persist_data(home: Path, project_abspath) -> bool:
         else:
             shutil.copyfile(str(e), str(target))
     return True
+
+
+def _restore_data(home: Path, project_abspath, *, force: bool = False) -> bool:
+    """Restore a project's USER-DATA from <home>/data/<key> into <project>/.add — the
+    NON-DESTRUCTIVE inverse of _persist_data. FILL-GAPS by default: write only entries ABSENT
+    in the dest; a present entry is left untouched (no clobber). force=True overwrites a present
+    entry, writing a `<name>.bak` sidecar of the original FIRST. Copies only _is_user_data
+    entries (a polluted snapshot can't drop managed files); DEREFERENCES symlinks to content (a
+    link lands as a regular file/tree — byte parity with the JS twin). Returns True if >=1 entry
+    was restored, False if there is nothing to restore (snapshot dir absent or holds no user-data
+    — an honest skip, not an error). Raises OSError on an unwritable dest — the caller fails
+    'restore_failed'. Mirrored by behaviour in cli.js."""
+    proj = Path(project_abspath).resolve()              # snapshots are ALWAYS keyed by the
+    src = home / "data" / data_key(str(proj))           # resolved abspath (install resolves first)
+    if not src.exists():
+        return False
+    entries = [e for e in sorted(src.iterdir()) if _is_user_data(e.name)]
+    if not entries:
+        return False
+    add_dir = proj / ".add"
+    add_dir.mkdir(parents=True, exist_ok=True)
+    restored = False
+    for e in entries:
+        dest = add_dir / e.name
+        if dest.exists() or dest.is_symlink():
+            if not force:
+                continue                            # fill-gaps: never clobber a present entry
+            bak = dest.with_name(dest.name + ".bak")
+            if bak.exists() or bak.is_symlink():    # a stale .bak: replace it, don't merge
+                if bak.is_dir() and not bak.is_symlink():
+                    shutil.rmtree(bak)
+                else:
+                    bak.unlink()
+            os.replace(str(dest), str(bak))         # back up the original BEFORE replacing
+        if e.is_dir():
+            shutil.copytree(str(e), str(dest), symlinks=False)   # symlinks=False -> deref to content
+        else:
+            shutil.copyfile(str(e), str(dest))                   # copyfile follows a symlink source
+        restored = True
+    return restored
+
+
+def _prune_data(home: Path, *, force: bool = False):
+    """Find (and, with force, remove) ORPHANED per-project snapshots under <home>/data. An
+    orphan is a <home>/data/<key> dir whose key is owned by NO LIVE registry entry — LIVE = a
+    registered project path that still EXISTS on disk. So an UNregistered key AND a registered-
+    but-vanished-on-disk key are BOTH orphans (the explicit reclaim — INTENTIONALLY DIVERGES
+    from `update --global`, which keeps vanished). Reads the registry FIRST: a
+    ValueError('registry_corrupt') propagates (LOUD, before any removal). Returns
+    (orphans, removed) as sorted key-name lists; removed == [] on a dry-run, == orphans under
+    force (each orphan dir shutil.rmtree'd). Mirrored by behaviour in cli.js."""
+    reg = _read_registry(home)                          # corrupt -> ValueError (LOUD, zero removal)
+    live = {data_key(p) for p in reg if Path(p).exists()}
+    data_dir = home / "data"
+    if not data_dir.exists():
+        return [], []
+    orphans = sorted(d.name for d in data_dir.iterdir() if d.is_dir() and d.name not in live)
+    removed: list = []
+    if force:
+        for key in orphans:
+            shutil.rmtree(data_dir / key)
+            removed.append(key)
+    return orphans, removed
+
+
+def prune_data(*, force: bool = False, env=None) -> int:
+    """`prune-data` command: reclaim ORPHANED per-project snapshots from the shared home.
+    Dry-run by default (lists orphans, removes nothing); --force deletes. Resolves the home from
+    env; a missing home is no_global_home (fail-closed). A corrupt registry is a LOUD fail with
+    nothing removed. Returns 0 on success, 1 on a fail-closed reject. Mirrored by cli.js."""
+    env_map = os.environ if env is None else env
+    home = resolve_global_home(env_map)
+    if not _stamp_path(home).exists():
+        return _fail(f"no global ADD install at {home} (.add-version not found) — nothing to prune")
+    try:
+        orphans, removed = _prune_data(home, force=force)
+    except ValueError as exc:
+        return _fail(f"global registry {_registry_path(home)} is corrupt — fix or delete it; {exc}")
+    if not orphans:
+        _log("  no orphaned snapshots — nothing to prune")
+        return 0
+    if force:
+        _log(f"  ✓ {len(removed)} removed")
+    else:
+        for key in orphans:
+            _log(f"  orphan: {key}")
+        _log(f"  {len(orphans)} orphan(s); re-run with --force to remove")
+    return 0
 
 
 def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
@@ -784,6 +874,7 @@ def install(
     env=None,
     as_global: bool = False,
     as_global_data: bool = False,
+    as_global_data_restore: bool = False,
     rule_file: bool = False,
 ) -> int:
     """Install ADD into `target` directory — RECONCILES the managed layer (restore
@@ -793,7 +884,10 @@ def install(
     injects the home/skill base for hermetic global tests. `as_global` ALSO installs the
     managed layer to the shared home + registers the project (the per-project drop still runs).
     `as_global_data` IMPLIES `as_global` and ALSO persists the project's user-data to
-    <home>/data/<key> (opt-in; one-way snapshot).
+    <home>/data/<key> (opt-in; one-way snapshot). `as_global_data_restore` is the INVERSE
+    (--from-global-data): it rehydrates user-data from <home>/data/<key> into this clone
+    (non-destructive fill-gaps; --force overwrites with a .bak). Independent of as_global —
+    CONSUME-only: no register, no persist. A missing home is no_global_home (fails fast).
     Returns 0 on success, 1 on error, 130 on a user cancel (nothing written).
     """
     if as_global_data:
@@ -840,6 +934,17 @@ def install(
     for sub, _dest, _strip in MANAGED:
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
+
+    # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
+    # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
+    # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
+    if as_global_data_restore:
+        restore_home = resolve_global_home(os.environ if env is None else env)
+        if not _stamp_path(restore_home).exists():
+            return _fail(
+                f"no global ADD install at {restore_home} (.add-version not found) — nothing "
+                "to restore from; run `init --global-data` on a source checkout first"
+            )
 
     # OPT-IN global home: install the managed layer ONCE to a shared home + register this
     # project, THEN fall through to the NORMAL per-project drop below (the self-contained
@@ -930,6 +1035,21 @@ def install(
             _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
         else:
             _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
+
+    # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
+    # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
+    # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
+    if as_global_data_restore:
+        home = resolve_global_home(os.environ if env is None else env)
+        snap = home / "data" / data_key(str(target_path))
+        try:
+            restored = _restore_data(home, target_path, force=force)
+        except OSError as exc:
+            return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
+        if restored:
+            _log(f"  ✓ restored data <- {snap}")
+        else:
+            _log(f"  (no snapshot for this project at {snap} — nothing restored)")
     _log("")
     return 0
 
@@ -974,10 +1094,25 @@ def _write_stamp(add_dir: Path, version: str, channel: str = "pip") -> None:
     )
 
 
-def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> None:
+def _tree_files(root: Path) -> set:
+    """The set of FILE paths (recursive leaves) under root, RELATIVE to root. ∅ if absent.
+    Directories are not counted — only files (the 'manifest' the rollup measures)."""
+    if not root.exists():
+        return set()
+    return {p.relative_to(root) for p in root.rglob("*") if p.is_file()}
+
+
+def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     """Wipe dest, then copy src -> dest — so a file REMOVED upstream leaves no orphan
     behind (the bug a merge-copy `init --force` had). The managed trees hold no user
-    data, so wipe-and-copy is safe."""
+    data, so wipe-and-copy is safe.
+
+    Returns a file-level roll-up of the heal: {"restored": N, "refreshed": M} where
+    `restored` = a file in the FINAL tree whose relative path was ABSENT before the wipe
+    (a fresh or partially-gutted tree heals these), and `refreshed` = a final file that
+    was PRESENT before (re-materialized). Orphans (present before, gone after) are swept
+    and counted as neither. The counts are pure observation — copy semantics are unchanged."""
+    before = _tree_files(dest)                       # snapshot BEFORE the wipe, or it's always ∅
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         shutil.rmtree(dest)
@@ -989,6 +1124,8 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> None:
         for child in dest.iterdir():
             if child.name.startswith("test_") and child.name.endswith(".py"):
                 child.unlink()
+    after = _tree_files(dest)                         # the FINAL tree (post-strip)
+    return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
 _TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs"}
@@ -1006,16 +1143,24 @@ def _managed_status(target_path: Path) -> dict:
 
 def _reconcile(target_path: Path, bundled_root: Path) -> dict:
     """Clean-replace every managed tree (restore-if-missing / refresh-if-present, sweeping
-    orphans) and REPORT per-tree status. Touches ONLY managed trees — never user data.
-    The caller verifies sources exist first (design-for-failure). Returns the pre-status."""
+    orphans) and REPORT both per-tree status AND a file-level roll-up. Touches ONLY managed
+    trees — never user data. The caller verifies sources exist first (design-for-failure).
+
+    Returns {"restored": N, "refreshed": M, "trees": <pre-status>} — N/M summed across all
+    managed trees at FILE granularity, so a PRESENT-but-gutted tree (tree-level "refreshed")
+    still surfaces its restored files in the roll-up."""
     status = _managed_status(target_path)
+    restored = refreshed = 0
     for sub, dest_rel, strip in MANAGED:
-        _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
+        roll = _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
+        restored += roll["restored"]
+        refreshed += roll["refreshed"]
         if status[sub] == "missing":
             _log(f"  ✓ restored  {_TREE_LABEL[sub]:8s}-> {dest_rel}  (was missing)")
         else:
             _log(f"  ✓ refreshed {_TREE_LABEL[sub]:8s}-> {dest_rel}")
-    return status
+    _log(f"  → {restored} restored · {refreshed} refreshed")
+    return {"restored": restored, "refreshed": refreshed, "trees": status}
 
 
 def _run_migrations(state_file: Path, from_version: str | None, to_version: str) -> None:
@@ -1044,18 +1189,55 @@ def _add_dir(target_path: Path) -> Path:
     return target_path / ".add"
 
 
+@contextlib.contextmanager
+def _update_lock(home: Path):
+    """Serialize `update --global` with an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock —
+    the SAME mechanism as the npm twin (cli.js `fs.openSync(.., "wx")`), so a pip-held lock
+    blocks an npm run and vice-versa (a `fcntl.flock` would NOT serialize cross-twin: npm holds
+    only the file, never the kernel flock). Already present -> raises BlockingIOError (the caller
+    maps it to "update_in_progress"). The file is unlinked on exit for success OR exception, so a
+    normal/handled exit never outlives the process. A hard crash / SIGKILL may leave a stale
+    lockfile -> the update_in_progress message hints to remove it (symmetric with the npm twin)."""
+    home.mkdir(parents=True, exist_ok=True)
+    lock_path = home / LOCK_FILE
+    try:
+        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:            # held -> caught upstream -> update_in_progress
+        raise BlockingIOError(f"{lock_path} is held") from exc
+    try:
+        yield
+    finally:
+        os.close(fd)
+        try:
+            os.unlink(str(lock_path))
+        except OSError:                       # pragma: no cover — already gone
+            pass
+
+
+def _valid_registry_path(p) -> bool:
+    """True iff `os.path.normpath(p)` is an EXISTING ADD project — a dir that contains `.add/`.
+    Decides reconcile-vs-drop for an absolute registry entry; absoluteness is the SEPARATE LOUD
+    gate in `_update_global` (a relative path is the traversal vector). This is the security
+    backstop: a managed-file reconcile NEVER lands in a dir without a `.add/` marker."""
+    np = os.path.normpath(str(p))
+    return os.path.isdir(np) and os.path.isdir(os.path.join(np, ".add"))
+
+
 def _update_global(target, *, force=False, bundled=None, version=None, env=None) -> int:
-    """`update --global`: refresh the shared home (mirror + skill, re-stamp) then propagate to
-    every registered+existing project via `reconcile(p, source=<home>)`; prune vanished projects
-    (warn) and rewrite the registry atomically. Fail-closed: no home install yet -> no_global_home;
-    a corrupt registry -> LOUD fail with the registry LEFT INTACT (read BEFORE any home write, so a
-    corrupt registry aborts with zero mutations)."""
+    """`update --global`: under a home lock, refresh the shared home (mirror + skill, re-stamp)
+    then propagate to every registered+VALID project via `reconcile(p, source=<home>)`; prune
+    vanished projects, DROP existing non-ADD-project entries (warn), and rewrite the registry
+    atomically with the surviving NORMALIZED paths. Fail-closed: no home install -> no_global_home;
+    a concurrent run -> update_in_progress; a corrupt registry -> registry_corrupt (LEFT INTACT);
+    a NON-ABSOLUTE registry entry (the traversal vector) -> unsafe_registry_path (zero mutations,
+    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD."""
     env_map = os.environ if env is None else env
     home = resolve_global_home(env_map)
     claude_dir = _claude_skills_dir(env_map)
     if not _stamp_path(home).exists():
         return _fail(
-            f"no global ADD install at {home} (.add-version not found) — run `init --global` first"
+            f"no_global_home: no global ADD install at {home} (.add-version not found) — "
+            f"run `init --global` first"
         )
     try:
         bundled_root = Path(bundled) if bundled else _bundled_root()
@@ -1064,36 +1246,60 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
     for sub, _dest, _strip in MANAGED:
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
-    # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
-    # writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
     try:
-        reg = _read_registry(home)
-    except ValueError:
+        with _update_lock(home):
+            # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with
+            # ZERO writes (never a silent empty-list no-op), leaving the file for the user to fix.
+            try:
+                reg = _read_registry(home)
+            except ValueError:
+                return _fail(
+                    f"registry_corrupt: global registry {_registry_path(home)} is corrupt — "
+                    f"fix or delete it; not propagating"
+                )
+            # PRE-SCAN (security, BEFORE any write): a NON-ABSOLUTE entry is the traversal vector —
+            # it cannot be a trusted abspath, so abort the WHOLE run with zero mutations.
+            for p in reg:
+                if not os.path.isabs(p):
+                    return _fail(
+                        f"unsafe_registry_path: registered project {p!r} is not an absolute path — "
+                        f"fix or remove it in {_registry_path(home)}; not propagating"
+                    )
+            new_version = version or _pkg_version()
+            try:
+                _reconcile_global(home, claude_dir, bundled_root)
+            except OSError as exc:
+                return _fail(f"cannot write global home {home} — {exc}")
+            _write_stamp(home, new_version, channel="global")
+            # Propagate from the home mirror to each still-existing ADD project (at its NORMALIZED
+            # path); prune the vanished, DROP an existing non-project (the is-.add/ backstop).
+            kept: list = []
+            pruned = 0
+            dropped = 0
+            for p in reg:
+                np = os.path.normpath(p)                  # absolute (pre-scan) -> lexically normalized
+                if not Path(np).exists():
+                    _log(f"  ⚠ registered project {np} not found — pruning")
+                    pruned += 1
+                    continue                              # a vanished project's data snapshot is KEPT
+                if not (Path(np) / ".add").is_dir():
+                    _log(f"  ⚠ registered path {np} is not an ADD project (no .add/) — dropping")
+                    dropped += 1
+                    continue                              # NEVER reconcile managed files into a non-project
+                _reconcile(Path(np), home)                # standard MANAGED map, sourced from the home mirror
+                if (home / "data" / data_key(np)).exists():
+                    _persist_data(home, np)               # keep the opted-in project's snapshot current
+                kept.append(np)                           # store the NORMALIZED path (heals a bent legit entry)
+            _write_registry(home, kept)
+            bits = ([f"{pruned} pruned"] if pruned else []) + ([f"{dropped} dropped"] if dropped else [])
+            tail = f" ({', '.join(bits)})" if bits else ""
+            _log(f"ADD {new_version} · global home + {len(kept)} project(s) reconciled{tail}.")
+            return 0
+    except BlockingIOError:
         return _fail(
-            f"global registry {_registry_path(home)} is corrupt — fix or delete it; not propagating"
+            f"update_in_progress: another `update --global` is already running — retry shortly "
+            f"(remove {home / LOCK_FILE} if it is stale)"
         )
-    new_version = version or _pkg_version()
-    try:
-        _reconcile_global(home, claude_dir, bundled_root)
-    except OSError as exc:
-        return _fail(f"cannot write global home {home} — {exc}")
-    _write_stamp(home, new_version, channel="global")
-    # Propagate from the home mirror to each still-existing project; prune the vanished.
-    kept: list = []
-    pruned = 0
-    for p in reg:
-        if not Path(p).exists():
-            _log(f"  ⚠ registered project {p} not found — pruning")
-            pruned += 1
-            continue                        # a vanished project's data snapshot is KEPT (the backup outlives it)
-        _reconcile(Path(p), home)          # standard MANAGED map, sourced from the home mirror
-        if (home / "data" / data_key(p)).exists():
-            _persist_data(home, p)          # keep the opted-in project's snapshot current
-        kept.append(p)
-    _write_registry(home, kept)
-    tail = f" ({pruned} pruned)" if pruned else ""
-    _log(f"ADD {new_version} · global home + {len(kept)} project(s) reconciled{tail}.")
-    return 0
 
 
 def update(
@@ -1141,7 +1347,7 @@ def update(
     if state_file.exists():
         shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
 
-    _reconcile(target_path, bundled_root)
+    roll = _reconcile(target_path, bundled_root)
     _run_migrations(state_file, cur_version, new_version)
     _write_stamp(add_dir, new_version, channel=channel)
     _seed_soul_md(target_path, bundled_root)
@@ -1149,7 +1355,9 @@ def update(
 
     _log(
         f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-        "skill · tooling · docs refreshed · your project state untouched."
+        f"skill · tooling · docs refreshed "
+        f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
+        "your project state untouched."
     )
     return 0
 
