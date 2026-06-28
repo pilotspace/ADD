@@ -102,7 +102,7 @@
 
 **Release steps** — the AI-defined, per-milestone ordered hints to ship a closed milestone, of which `merge` is one small step (a pull request, an exported hand-off document, a tag or a publish are others). Defined at close and **fed** into the release scope (see **Release**), never a second flow.
 
-**Readiness floor** — the engine-enforced pre-cut gate `add.py release` applies before it records anything: a green suite, zero open security `HARD-STOP`, a closed-and-unreleased milestone to bundle, and every riding `RISK-ACCEPTED` waiver disclosed in the notes. Its four rejects are `release_security_open` (un-forceable) · `release_tests_red` · `release_no_closed_milestone` · `release_undisclosed_waiver`; `--force` may override every reject except the security stop.
+**Readiness floor** — the engine-enforced pre-cut gate `add.py release` applies before it records anything: a green suite, zero open security `HARD-STOP`, a closed-and-unreleased milestone to bundle, and every riding `RISK-ACCEPTED` waiver disclosed in the notes. Its four rejects are `release_security_open` (un-forceable) · `release_build_in_flight` · `release_no_closed_milestone` · `release_undisclosed_waiver`; `--force` may override every reject except the security stop.
 
 **RELEASES.md ledger** — the append-only, newest-first trail of release rows at the project root (date · version · milestones · waivers shipped · evidence). Like the §Key Decisions log it is never rewritten; a superseded or yanked version is recorded as a new row. The ledger is the attribution source — a milestone is "released" because a row says so — which is why the `→ releasable` cue never has to read a milestone file.
 

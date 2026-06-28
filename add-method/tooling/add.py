@@ -607,11 +607,12 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
         return
     match = getattr(args, "match", None)
     status, idx, _disp = _select_spec_delta(text, match)
-    if status in ("no_open", "no_match"):                  # contract: a --match miss is no_open too
-        _die(f"no_open_spec_delta: task '{slug}' has no open SPEC delta to carry"
-             + (f" matching --match '{match}'" if status == "no_match" else ""))
+    if status == "no_open":
+        _die(f"no_open_spec_delta: task '{slug}' has no open SPEC delta to carry")
+    if status == "no_match":                               # a --match miss is DISTINCT from no-open
+        _die(f"no_matching_spec_delta: no open SPEC delta in '{slug}' matches --match '{match}'")
     if status == "ambiguous":
-        _die(f"ambiguous_spec_delta: --match '{match}' matches multiple open SPEC deltas in "
+        _die(f"ambiguous_spec_match: --match '{match}' matches multiple open SPEC deltas in "
              f"'{slug}' — narrow it, or use --all")
     new_text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
     _atomic_write(task_md, new_text)
@@ -636,7 +637,7 @@ def cmd_reopen_delta(args: argparse.Namespace) -> None:
         _die(f"no_carried_spec_delta: task '{slug}' has no carried SPEC delta to reopen"
              + (f" matching --match '{match}'" if status == "no_match" else ""))
     if status == "ambiguous":
-        _die(f"ambiguous_spec_delta: --match '{match}' matches multiple carried SPEC deltas in "
+        _die(f"ambiguous_spec_match: --match '{match}' matches multiple carried SPEC deltas in "
              f"'{slug}' — narrow it")
     new_text = _resolve_spec_delta(text, "open", line_index=idx, from_status="carried")
     lines = new_text.splitlines(keepends=True)             # drop the carried breadcrumb (no accretion)
@@ -5115,20 +5116,27 @@ _RISK_ANY_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*\S", re.MULTILINE)
 def _guarantee_lint_notices(root: Path, state: dict) -> dict:
     """PRESENCE-ONLY, MEASURE-NOT-BLOCK lints SURFACED (never failed-on) by `add.py audit`
     (guarantee-audit-lints). For tasks that reached verify (phase ∈ {verify, observe, done}):
-      shallow[]    = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an ABSENT
-                     block grandfathers a legacy task — never retro-flagged);
-      risk_unset[] = the header carries NO `risk:` token (an undeclared risk level at verify).
-    Honest visibility for two verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
+      shallow[]          = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an
+                           ABSENT block grandfathers a legacy task — never retro-flagged);
+      risk_unset[]       = the header carries NO `risk:` token (an undeclared risk level at verify);
+      refute_unrecorded[]= §6 '### Refute-read verdict' block present-but-unfilled (self-grading-
+                           refute-record, M4) — the earned-green verdict the AI must record under
+                           `auto`; ABSENT block grandfathers exactly like shallow. MEASURE-NOT-BLOCK:
+                           never auto-blocks a gate, only surfaced here for review + a human spot-audit.
+    Honest visibility for three verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
     TASK.md + state only, writes nothing."""
-    shallow, risk_unset = [], []
+    shallow, risk_unset, refute_unrecorded = [], [], []
     for slug in sorted(state.get("tasks") or {}):
         if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
             continue
-        if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Deep checks"):
+        body6 = _raw_phase_bodies(root, slug).get(6, "")
+        if _section_unfilled(body6, "### Deep checks"):
             shallow.append(slug)
+        if _section_unfilled(body6, "### Refute-read verdict"):
+            refute_unrecorded.append(slug)
         if not _RISK_ANY_RE.search(_task_header(root, slug)):
             risk_unset.append(slug)
-    return {"shallow": shallow, "risk_unset": risk_unset}
+    return {"shallow": shallow, "risk_unset": risk_unset, "refute_unrecorded": refute_unrecorded}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -5157,7 +5165,12 @@ def cmd_audit(args: argparse.Namespace) -> None:
             rs = glints["risk_unset"]
             print(f"audit: risk_unset — {len(rs)} task(s) reached verify with no risk: "
                   f"declaration: {', '.join(rs)}")
-        if not findings and not skips and not glints["shallow"] and not glints["risk_unset"]:
+        if glints["refute_unrecorded"]:
+            ru = glints["refute_unrecorded"]
+            print(f"audit: refute_unrecorded — {len(ru)} task(s): {', '.join(ru)} "
+                  f"— record the earned-green refute verdict (§6); a spot-audit is the backstop")
+        if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
+                and not glints["refute_unrecorded"]:
             print(f"audit: clean ({checked} tasks checked)")
     # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:
@@ -5525,8 +5538,8 @@ def cmd_release(args: argparse.Namespace) -> None:
              "never shipped. Resolve it (a change request back to Specify) before releasing. "
              "--force does NOT override this.")
     if not forced and _build_in_flight(state):
-        _die("release_tests_red: a build is in flight without a recorded green gate — finish and "
-             "gate it first, or pass --force to override.")
+        _die("release_build_in_flight: a build is in flight without a recorded green gate — finish "
+             "and gate it first, or pass --force to override.")
     bundle = _releasable(root, state)
     loose_bundle = _releasable_loose_tasks(root, state)
     if not forced and not bundle and not loose_bundle:

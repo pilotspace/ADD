@@ -3,7 +3,7 @@
 [← 03 Step 1 Specify](./03-step-1-specify.md) · [Contents](./README.md) · Next: [05 Step 3 Contract →](./05-step-3-contract.md)
 
 > **Purpose:** rewrite each rule from the spec as a concrete, pass-or-fail scenario.
-> **Produces:** `features/<name>.feature`.
+> **Produces:** the **§2 SCENARIOS** block of the task's `TASK.md` (one file per task — what this chapter is the *why* behind; historically a separate `features/<name>.feature`).
 > **Person's job:** decide what "correct" looks like in concrete situations. **AI's job:** draft the scenarios.
 
 > **Part of the specification bundle (v7).** In the default flow these scenarios are drafted by the AI alongside the spec, contract, and failing tests as **one bundle**, approved by a person **once** (the one approval), at the contract freeze — not signed off step by step. This chapter is how to get the scenarios *right*; [05 Contract](./05-step-3-contract.md) is where the bundle is frozen. See [11 Governance](./11-governance.md).

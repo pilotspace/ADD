@@ -3,7 +3,7 @@
 [← 02 The flow](./02-the-flow.md) · [Contents](./README.md) · Next: [04 Step 2 Scenarios →](./04-step-2-scenarios.md)
 
 > **Purpose:** state, in plain language, what the feature must do and what it must reject, with no ambiguity left for the AI to resolve by guessing.
-> **Produces:** `SPEC.md` for the feature.
+> **Produces:** the **§1 SPECIFY** block of the task's `TASK.md` (one file per task — what this chapter is the *why* behind; historically a separate `SPEC.md`).
 > **How it works — co-specification:** AI and human **brainstorm the shape together**; the AI drafts; the **human validates, with the AI's advice.** The decisive advice is a *lowest-confidence flag* — the AI names the one or two things most likely to be wrong, so the human's attention lands where it matters. The human owns the decision; the AI owns surfacing what it does not yet know.
 
 ---

@@ -11,7 +11,7 @@
 | `change-request` | route to SPECIFY/CONTRACT of the affected task | 0 milestones |
 | `split_required` | draft ALL N items as a batch in ONE pass | N milestones/tasks |
 
-**Confirm before create is the invariant.** "One pass" means one drafting pass, NOT auto-creation — nothing is written until the human confirms.
+**Confirm before create is the convention.** "One pass" means one drafting pass, NOT auto-creation — nothing is written until the human confirms; enforced only by the opt-in `--await-confirm` (below).
 
 **Confirm the milestone before detailing tasks.** `new-milestone <slug> --await-confirm` seeds it *unconfirmed* — `new-task` is HELD (`milestone_unconfirmed`) until you show the filled `MILESTONE.md`, get the human's go, and run `milestone-confirm <slug>`. Keeps you from digging into task §0–§5 before the parent is agreed. (Omit the flag: no gate.)
 

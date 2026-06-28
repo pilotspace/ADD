@@ -10,7 +10,7 @@ CONTRACT (frozen @ v1) — backpressure so SPEC deltas resolve instead of accumu
   release_data[...]["open_spec_deltas"] = {count, items}   (PURE; wraps _collect_open_spec_deltas)
   add.py carry-delta <slug> [--match S | --all] --reason "<t>"
     -> [SPEC · open] -> [SPEC · carried] + " [carried: <t>]"  (text + (evidence:) byte-preserved)
-    reject: carry_reason_required · no_open_spec_delta · ambiguous_spec_delta
+    reject: carry_reason_required · no_open_spec_delta · ambiguous_spec_match  (reconciled by honest-reject-naming)
   add.py reopen-delta <slug> [--match S]   -> [SPEC · carried] -> [SPEC · open]
     reject: no_carried_spec_delta
   add.py deltas [--carried | --all]   -> carried section (retrieval); bare = open only (unchanged)
@@ -176,11 +176,11 @@ class CarryReopenTest(_Harness):
         self.assertIn("no_open_spec_delta", out)
         self.assertEqual(self._task_md("t").read_bytes(), before)
 
-    def test_carry_match_ambiguous(self):                      # Reject (ambiguous_spec_delta)
+    def test_carry_match_ambiguous(self):                      # Reject (ambiguous_spec_match)
         self._set_spec("t", "tune the cache", "tune the queue")
         code, out = self._run("carry-delta", "t", "--match", "tune", "--reason", "later")
         self.assertNotEqual(code, 0)
-        self.assertIn("ambiguous_spec_delta", out)
+        self.assertIn("ambiguous_spec_match", out)             # reconciled vocab (honest-reject-naming)
 
     def test_carry_all_carries_every_open(self):               # Must (--all)
         self._set_spec("t", "first", "second")

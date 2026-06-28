@@ -232,7 +232,7 @@ Watch (reuse scenarios as monitors): a future skill-guide reword that drops the 
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] sync the same missed-finding disclosure into the BOOK chapter `docs/08-step-6-verify.md` (+ `.add/docs/` + `_bundled/docs/`) — the skill guides now disclose the blind spot but the book chapter still presents `unescalated_security_note` without the "blind to a never-marked finding" caveat (evidence: this task scoped the book out; skill↔book drift on the security-escalation claim)
+- [SPEC · dropped] sync the same missed-finding disclosure into the BOOK chapter `docs/08-step-6-verify.md` (+ `.add/docs/` + `_bundled/docs/`) — the skill guides now disclose the blind spot but the book chapter still presents `unescalated_security_note` without the "blind to a never-marked finding" caveat (evidence: this task scoped the book out; skill↔book drift on the security-escalation claim)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

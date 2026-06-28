@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "strategy-soft-not-hard",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1794,162 +1794,6 @@
         "source": "git"
       }
     },
-    "freeze-gate-universal": {
-      "title": "freeze-gate-universal \u2014 fire contract_not_frozen for every task, with a --skip-freeze escape",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-honesty",
-      "depends_on": [],
-      "created": "2026-06-27T07:55:27+00:00",
-      "updated": "2026-06-27T09:45:46+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-06-27T08:06:13+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "e0ee88e467c758cd5be0cde78582af9a",
-        "tests": {
-          "add-method/tooling/test_freeze_gate_universal.py": "cc01a37ce41c16eef57ae07320bced6b",
-          "add-method/tooling/test_freeze_before_build_gate.py": "ea0b3b6f416fff465477dde51b11fb30"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py"
-        ],
-        "snapshot_md5": "f70fd36a32dfad78665858b9feb0bcab"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "delta-drain": {
-      "title": "loud forceable open-SPEC-delta release floor + status staleness line",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-honesty",
-      "depends_on": [],
-      "created": "2026-06-27T09:50:24+00:00",
-      "updated": "2026-06-27T12:20:05+00:00",
-      "freeze": {
-        "version": "v2",
-        "frozen_at": "2026-06-27T12:05:32+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "78c392258a2f9e4d2726bec611c1766a",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/",
-          "add-method/src/add_method/_bundled/tooling/"
-        ],
-        "snapshot_md5": "23c365036020e5dd3623aa5973b9c85f"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "security-escalation-disclosure": {
-      "title": "Disclose that a MISSED security finding is invisible to the engine under auto",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-honesty",
-      "depends_on": [],
-      "created": "2026-06-27T12:58:23+00:00",
-      "updated": "2026-06-27T14:10:16+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-06-27T13:13:27+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "50d08897cfc1385e89c4d0ba6a79a52e",
-        "tests": {
-          "add-method/tooling/test_security_escalation_disclosure.py": "78cd2d99182953bce76a0c4ebe0772ac"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/skill/add/",
-          ".claude/skills/add/",
-          "add-method/src/add_method/_bundled/skill/add/",
-          "add-method/tooling/"
-        ],
-        "snapshot_md5": "95fc8aeb92f4101bfeb88174ee676cb6"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "guarantee-audit-lints": {
-      "title": "Add shallow_deep_check + risk_unset measure-not-block lints to add.py audit",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "flow-honesty",
-      "depends_on": [],
-      "created": "2026-06-27T14:19:00+00:00",
-      "updated": "2026-06-27T15:06:54+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-06-27T14:34:21+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "d143b9bb6859e9fe348b2bb9b5800143",
-        "tests": {
-          "add-method/tooling/test_guarantee_lints.py": "d2f4e75c3109fa3976c5a0b962f794b9"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/",
-          "add-method/src/add_method/_bundled/tooling/"
-        ],
-        "snapshot_md5": "21a4562c85b1be4f462c744040206657"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
     "skill-todo-flag": {
       "title": "Capture/list/close todos via /add --todo flag",
       "phase": "done",
@@ -2135,7 +1979,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T05:15:31+00:00",
+  "updated": "2026-06-28T08:20:38+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2341,26 +2185,9 @@
       "confirmed_at": null,
       "confirmed_by": null,
       "await_confirm": true
-    },
-    "flow-honesty": {
-      "title": "flow-honesty \u2014 make ADD's stated guarantees engine-true or honestly labeled",
-      "goal": "close the gap between ADD's stated guarantees and what the engine mechanically enforces, making each gate either engine-true or honestly disclosed",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-06-27T07:52:15+00:00",
-      "updated": "2026-06-27T07:55:27+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-06-27T07:55:27+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
-  "active_milestone": "flow-honesty",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -2926,14 +2753,26 @@
         "adr-audit-and-docs"
       ],
       "archived": "2026-06-28"
+    },
+    {
+      "slug": "flow-honesty",
+      "title": "flow-honesty \u2014 make ADD's stated guarantees engine-true or honestly labeled",
+      "tasks": 7,
+      "task_slugs": [
+        "freeze-gate-universal",
+        "delta-drain",
+        "security-escalation-disclosure",
+        "guarantee-audit-lints",
+        "honest-reject-naming",
+        "self-grading-refute-record",
+        "stale-guide-sync"
+      ],
+      "archived": "2026-06-28"
     }
   ],
-  "active_milestones": [
-    "flow-honesty"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "flow-honesty": "strategy-soft-not-hard"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {
@@ -3066,6 +2905,12 @@
       "id": 22,
       "text": "Harden decision/ADR recording at the OBSERVE phase \u2014 capture decisions made by BOTH human and AI (who decided, what, why, alternatives) as a durable Architecture-Decision-Record-style artifact, not just spec/competency deltas",
       "created": "2026-06-27T16:45:08+00:00",
+      "status": "open"
+    },
+    {
+      "id": 23,
+      "text": "Fix npm provenance warning before next release: npmjs shows 'taking too long to fetch the source commit' for @pilotspace/add (Provenance panel, source commit pilotspace/ADD@991ac85, build file .github/workflows/publish.yml). Verify publish.yml provenance/attestation config + that the tagged commit is fetchable; resolve before publishing the next version.",
+      "created": "2026-06-28T06:07:24+00:00",
       "status": "open"
     }
   ]

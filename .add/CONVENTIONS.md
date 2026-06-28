@@ -26,6 +26,10 @@ Architecture:
   - The method is tool-agnostic: gates are enforced by process/CI, not inside the agent.
 
 ## Method learnings (folded from OBSERVE deltas)
+- (TDD) when an honest-reframe ADDS prose bytes and trips `test_skill_lean`, reclaim from the same guide's own gloss (book carries the full description; the guide stays terse) rather than rebaselining the budget (evidence: reference pool 45148→≤45114 after a 2-line trim, ratios untouched).  [folded foundation-version 57 · from honest-reject-naming]
+- (ADD) a code rename ripples beyond emit sites into folded foundation lessons (`CONVENTIONS.md`) + the shipped template; a hygiene grep / refute-read scoped to "engine+guide+book" misses them — sweep ALL tracked files (exclude only CHANGELOG/archive/`.add/tasks`/`.add/milestones`/engine_pin-genealogy/worktrees) (evidence: comprehensive `git grep` caught `.add/CONVENTIONS.md:171` after the narrow refute-read passed EARNED).  [folded foundation-version 57 · from honest-reject-naming]
+- (ADD) `.add/` is `_SCOPE_EXCLUDE_DIRS`-pruned, so editing any `.add/`-tree file is invisible to the scope gate — a `.add/` §5 token is documentary, not gated, and re-anchoring an excluded-dir fix needs NO tests→build re-cross (evidence: the verify-time CONVENTIONS.md fix tripped no `scope_violation`; corrects the §5 "Known-problem" note that assumed a re-cross).  [folded foundation-version 57 · from honest-reject-naming]
+- (ADD) method/trust-layer edits (the BOOK + guides + reject-code strings) escalate the verify gate to a human even under `autonomy: auto` — a built-in auto-gate carve-out like security (PROJECT.md v6 residue category) (evidence: this gate escalated via AskUserQuestion; not auto-passed).  [folded foundation-version 57 · from honest-reject-naming]
 - (TDD) a status/format-cue test must pin the LINE (prefix + count + framing + pointer) via assertRegex, not `assertIn` a single keyword — a keyword-only assert under-specifies the contract and lets a non-conforming impl pass invisibly (evidence: `assertIn("stale")` passed a `spec :`-prefixed line the v1 contract said must be `stale :`)  [folded foundation-version 56 · from delta-drain]
 - (TDD) when a fixture drove a plain task to build on a DRAFT §3, the FAITHFUL fix is to freeze a real stub §3 in setup (not `--skip-freeze`) — every fixture stays a true frozen-contract task; an adversarial refute-read across all 25 edited files confirmed no assertion was weakened (evidence: refute-read VERDICT EARNED, 551 diff lines)  [folded foundation-version 56 · from freeze-gate-universal]
 - (TDD) a behavior change to a SHARED output surface (audit) ripples into sibling "clean board" fixtures — fix by making the fixture WELL-FORMED (declare risk) not by loosening the assertion; a presence/format test stays strong (evidence: 3 collateral fixtures gained `risk: normal`; refute-read confirmed no coverage lost)  [folded foundation-version 56 · from guarantee-audit-lints]
@@ -168,7 +172,7 @@ Architecture:
   `CHANGELOG.md` + appends one newest-first `RELEASES.md` row + attributes the bundled milestones — and NEVER
   writes `state.json`, tags, publishes, or deploys (attribution lives in RELEASES.md membership, so the
   `→ releasable` cue re-reads the ledger and release stays a pure 2-file write with a CHANGELOG-rollback if the
-  2nd write fails). Because a tool-agnostic engine cannot run the suite, `release_tests_red` is a recorded-evidence
+  2nd write fails). Because a tool-agnostic engine cannot run the suite, `release_build_in_flight` is a recorded-evidence
   PROXY (an in-flight build with no green gate); the human's real run is the `release.md` readiness backstop.
   `release` writes `CHANGELOG.md` at the project ROOT — a repo with a different convention (e.g. a nested-package
   root pointer) gets release blocks prepended ABOVE its content (preserved, not clobbered); reconcile per repo.

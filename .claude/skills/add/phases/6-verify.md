@@ -3,16 +3,15 @@
 Goal: establish trust and record an outcome. Passing tests are necessary, not
 sufficient. Fill **§6** in TASK.md including the GATE RECORD.
 
-> **Who resolves this gate depends on the `autonomy:` header (see `run.md`).**
-> Under `autonomy: auto` (the default) a run auto-PASSes once evidence is complete —
-> every test green, convergence loops dry, and **no residue** (security · concurrency · architecture) —
-> recorded as *auto-resolved* with the named run as accountable owner. **Security is
-> always a HARD-STOP and is never auto-passed.** Under `autonomy: conservative`, or
-> whenever residue is found, this phase is **human-led**.
+> **Who resolves this gate depends on the `autonomy:` header.** Under `autonomy: auto` (the default)
+> a run auto-PASSes on complete evidence with **no residue** (security · concurrency · architecture),
+> recorded *auto-resolved* with the named run as owner;
+> **security is always a HARD-STOP and is never auto-passed**. Under `conservative`, or whenever
+> residue is found, this phase is **human-led** (auto-PASS conditions: `run.md`).
 
 ## Before you build — declare the build expectations
 
-Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes derived from §2 SCENARIOS + §3 CONTRACT. At this gate, confirm each against real evidence (the `confirmed by` column). An expectation with no evidence is not yet verified.
+Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes derived from §2 + §3. At this gate, confirm each against real evidence (the `confirmed by` column) — one with no evidence is not yet verified.
 
 ## Part one — confirm the evidence
 
@@ -31,17 +30,17 @@ If any is false, stop and return to Build.
 
 ## Part three — the deep check (do not skim)
 
-Deep check — do not skim. If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. Which path applies is the resolver's judgement; the engine never classifies.
+If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. The resolver judges which path; the engine never classifies.
 
-Record it in the §6 **Deep checks** block. An unfilled Deep checks block is a **shallow verify**, not a PASS.
+Record it in the §6 **Deep checks** block — an unfilled one is a **shallow verify**, not a PASS.
 
 ## Part four — was the green earned?
 
-A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (tautological — green against an empty implementation), and real logic stubbed away. These are invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md).
+A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (green against an empty implementation), and real logic stubbed away — all invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md). Under `auto`, **record the verdict** in §6's `### Refute-read verdict` block — `add.py audit` flags an unrecorded `refute_unrecorded`, one of three measure-not-block shape lints it surfaces (also `shallow_deep_check` + `risk_unset`).
 
 ## Record exactly one outcome (no silent pass)
 
-When you present this gate, open with the ARC per `report-template.md`, render the DECISION as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count before the ask.
+Present this gate via `report-template.md`'s ARC, render DECISION as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count first.
 
 | Outcome | When |
 |---------|------|
@@ -53,10 +52,10 @@ When you present this gate, open with the ARC per `report-template.md`, render t
 
 <exit_gate>
 - [ ] Evidence confirmed, non-functional risks checked, outcome recorded — a person approved, or
-  (under `autonomy: auto` with no residue) the run auto-resolved as the accountable owner.
+  (under `autonomy: auto`, no residue) the run auto-resolved as accountable owner.
 </exit_gate>
 
-> **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (advisor.md); score the verdict before you record the gate (confidence.md).
+> **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (advisor.md); score it before recording the gate (confidence.md).
 
 ```bash
 python3 .add/tooling/add.py gate PASS          # marks the task done
