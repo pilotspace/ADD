@@ -54,6 +54,14 @@ def main(argv: list[str] | None = None) -> int:
         return update(target=args.target, force=args.force, channel="pip",
                       as_global=args.as_global)
 
+    if cmd == "prune-data":
+        parser = argparse.ArgumentParser(prog="pilotspace-add prune-data")
+        parser.add_argument("--force", action="store_true",
+                            help="actually remove the orphaned snapshots (default: dry-run lists only)")
+        args = parser.parse_args(rest)
+        from add_method._installer import prune_data
+        return prune_data(force=args.force)
+
     if cmd != "init":
         print(f"pilotspace-add: error: unknown command '{cmd}'. Try: pilotspace-add init",
               file=sys.stderr)
@@ -88,6 +96,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--global-data", dest="as_global_data", action="store_true",
                         help="(implies --global) ALSO persist this project's user-data "
                              "under <home>/data/<key> keyed by path")
+    parser.add_argument("--from-global-data", dest="from_global_data", action="store_true",
+                        help="rehydrate this project's user-data FROM the shared home "
+                             "(<home>/data/<key>) on a fresh clone — fill-gaps; --force overwrites "
+                             "with a .bak")
     parser.add_argument("--rule-file", dest="rule_file", action="store_true",
                         help="write the ADD block to .claude/rules/add-workflows.md and "
                              "reference it from CLAUDE.md (auto-on when a .ccsk/ dir is present)")
@@ -104,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         non_interactive=args.non_interactive,
         as_global=args.as_global,
         as_global_data=args.as_global_data,
+        as_global_data_restore=args.from_global_data,
         rule_file=args.rule_file,
     )
 

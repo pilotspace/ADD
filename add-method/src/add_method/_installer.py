@@ -726,6 +726,94 @@ def _persist_data(home: Path, project_abspath) -> bool:
     return True
 
 
+def _restore_data(home: Path, project_abspath, *, force: bool = False) -> bool:
+    """Restore a project's USER-DATA from <home>/data/<key> into <project>/.add — the
+    NON-DESTRUCTIVE inverse of _persist_data. FILL-GAPS by default: write only entries ABSENT
+    in the dest; a present entry is left untouched (no clobber). force=True overwrites a present
+    entry, writing a `<name>.bak` sidecar of the original FIRST. Copies only _is_user_data
+    entries (a polluted snapshot can't drop managed files); DEREFERENCES symlinks to content (a
+    link lands as a regular file/tree — byte parity with the JS twin). Returns True if >=1 entry
+    was restored, False if there is nothing to restore (snapshot dir absent or holds no user-data
+    — an honest skip, not an error). Raises OSError on an unwritable dest — the caller fails
+    'restore_failed'. Mirrored by behaviour in cli.js."""
+    proj = Path(project_abspath).resolve()              # snapshots are ALWAYS keyed by the
+    src = home / "data" / data_key(str(proj))           # resolved abspath (install resolves first)
+    if not src.exists():
+        return False
+    entries = [e for e in sorted(src.iterdir()) if _is_user_data(e.name)]
+    if not entries:
+        return False
+    add_dir = proj / ".add"
+    add_dir.mkdir(parents=True, exist_ok=True)
+    restored = False
+    for e in entries:
+        dest = add_dir / e.name
+        if dest.exists() or dest.is_symlink():
+            if not force:
+                continue                            # fill-gaps: never clobber a present entry
+            bak = dest.with_name(dest.name + ".bak")
+            if bak.exists() or bak.is_symlink():    # a stale .bak: replace it, don't merge
+                if bak.is_dir() and not bak.is_symlink():
+                    shutil.rmtree(bak)
+                else:
+                    bak.unlink()
+            os.replace(str(dest), str(bak))         # back up the original BEFORE replacing
+        if e.is_dir():
+            shutil.copytree(str(e), str(dest), symlinks=False)   # symlinks=False -> deref to content
+        else:
+            shutil.copyfile(str(e), str(dest))                   # copyfile follows a symlink source
+        restored = True
+    return restored
+
+
+def _prune_data(home: Path, *, force: bool = False):
+    """Find (and, with force, remove) ORPHANED per-project snapshots under <home>/data. An
+    orphan is a <home>/data/<key> dir whose key is owned by NO LIVE registry entry — LIVE = a
+    registered project path that still EXISTS on disk. So an UNregistered key AND a registered-
+    but-vanished-on-disk key are BOTH orphans (the explicit reclaim — INTENTIONALLY DIVERGES
+    from `update --global`, which keeps vanished). Reads the registry FIRST: a
+    ValueError('registry_corrupt') propagates (LOUD, before any removal). Returns
+    (orphans, removed) as sorted key-name lists; removed == [] on a dry-run, == orphans under
+    force (each orphan dir shutil.rmtree'd). Mirrored by behaviour in cli.js."""
+    reg = _read_registry(home)                          # corrupt -> ValueError (LOUD, zero removal)
+    live = {data_key(p) for p in reg if Path(p).exists()}
+    data_dir = home / "data"
+    if not data_dir.exists():
+        return [], []
+    orphans = sorted(d.name for d in data_dir.iterdir() if d.is_dir() and d.name not in live)
+    removed: list = []
+    if force:
+        for key in orphans:
+            shutil.rmtree(data_dir / key)
+            removed.append(key)
+    return orphans, removed
+
+
+def prune_data(*, force: bool = False, env=None) -> int:
+    """`prune-data` command: reclaim ORPHANED per-project snapshots from the shared home.
+    Dry-run by default (lists orphans, removes nothing); --force deletes. Resolves the home from
+    env; a missing home is no_global_home (fail-closed). A corrupt registry is a LOUD fail with
+    nothing removed. Returns 0 on success, 1 on a fail-closed reject. Mirrored by cli.js."""
+    env_map = os.environ if env is None else env
+    home = resolve_global_home(env_map)
+    if not _stamp_path(home).exists():
+        return _fail(f"no global ADD install at {home} (.add-version not found) — nothing to prune")
+    try:
+        orphans, removed = _prune_data(home, force=force)
+    except ValueError as exc:
+        return _fail(f"global registry {_registry_path(home)} is corrupt — fix or delete it; {exc}")
+    if not orphans:
+        _log("  no orphaned snapshots — nothing to prune")
+        return 0
+    if force:
+        _log(f"  ✓ {len(removed)} removed")
+    else:
+        for key in orphans:
+            _log(f"  orphan: {key}")
+        _log(f"  {len(orphans)} orphan(s); re-run with --force to remove")
+    return 0
+
+
 def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
     """Seed .add/SOUL.md from the bundled template if it does not yet exist.
     Skip-if-exists (SOUL.md is user-owned — never clobber). Fail-soft: any
@@ -784,6 +872,7 @@ def install(
     env=None,
     as_global: bool = False,
     as_global_data: bool = False,
+    as_global_data_restore: bool = False,
     rule_file: bool = False,
 ) -> int:
     """Install ADD into `target` directory — RECONCILES the managed layer (restore
@@ -793,7 +882,10 @@ def install(
     injects the home/skill base for hermetic global tests. `as_global` ALSO installs the
     managed layer to the shared home + registers the project (the per-project drop still runs).
     `as_global_data` IMPLIES `as_global` and ALSO persists the project's user-data to
-    <home>/data/<key> (opt-in; one-way snapshot).
+    <home>/data/<key> (opt-in; one-way snapshot). `as_global_data_restore` is the INVERSE
+    (--from-global-data): it rehydrates user-data from <home>/data/<key> into this clone
+    (non-destructive fill-gaps; --force overwrites with a .bak). Independent of as_global —
+    CONSUME-only: no register, no persist. A missing home is no_global_home (fails fast).
     Returns 0 on success, 1 on error, 130 on a user cancel (nothing written).
     """
     if as_global_data:
@@ -840,6 +932,17 @@ def install(
     for sub, _dest, _strip in MANAGED:
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
+
+    # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
+    # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
+    # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
+    if as_global_data_restore:
+        restore_home = resolve_global_home(os.environ if env is None else env)
+        if not _stamp_path(restore_home).exists():
+            return _fail(
+                f"no global ADD install at {restore_home} (.add-version not found) — nothing "
+                "to restore from; run `init --global-data` on a source checkout first"
+            )
 
     # OPT-IN global home: install the managed layer ONCE to a shared home + register this
     # project, THEN fall through to the NORMAL per-project drop below (the self-contained
@@ -930,6 +1033,21 @@ def install(
             _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
         else:
             _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
+
+    # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
+    # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
+    # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
+    if as_global_data_restore:
+        home = resolve_global_home(os.environ if env is None else env)
+        snap = home / "data" / data_key(str(target_path))
+        try:
+            restored = _restore_data(home, target_path, force=force)
+        except OSError as exc:
+            return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
+        if restored:
+            _log(f"  ✓ restored data <- {snap}")
+        else:
+            _log(f"  (no snapshot for this project at {snap} — nothing restored)")
     _log("")
     return 0
 

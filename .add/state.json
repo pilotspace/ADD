@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "global-data-restore",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -1976,10 +1976,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "global-data-restore": {
+      "title": "Restore user-data from the global home on a fresh clone (--from-global-data) + prune-data orphan cleanup",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "installer-polish",
+      "depends_on": [],
+      "created": "2026-06-28T14:08:30+00:00",
+      "updated": "2026-06-28T14:57:52+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-28T14:31:04+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "21d39a1dd657410300436105c66aeb91",
+        "tests": {
+          "add-method/tooling/test_global_restore.py": "6c255c0afc089e63d8683929ffb13dfc"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/src/add_method/_cli.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "d61e1889089776e1b8442a08361027da"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-28T13:24:10+00:00",
+  "updated": "2026-06-28T14:57:52+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2166,16 +2205,21 @@
       "title": "installer-polish \u2014 round out the global-home and installer lane",
       "goal": "complete the global lane: data restore, orphan prune, update --global concurrency + path-safety, reconcile roll-up, and a reusable PTY test helper",
       "stage": "mvp",
-      "status": "queued",
+      "status": "active",
       "created": "2026-06-26T10:28:42+00:00",
-      "updated": "2026-06-26T10:28:42+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
+      "updated": "2026-06-28T14:08:30+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-28T14:08:30+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": null,
+  "active_milestone": "installer-polish",
   "archived": [
     {
       "slug": "v5",
@@ -2771,9 +2815,12 @@
       "archived": "2026-06-28"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "installer-polish"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "installer-polish": "global-data-restore"
   },
   "todos": [
     {

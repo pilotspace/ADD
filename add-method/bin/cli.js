@@ -39,7 +39,8 @@ function parseArgs(argv) {
   // defaults the stage and infers the name from the folder, so the manual-init
   // hint only echoes flags the user actually chose (shortest true command).
   const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
-                 yes: false, nonInteractive: false, global: false, globalData: false, ruleFile: false };
+                 yes: false, nonInteractive: false, global: false, globalData: false,
+                 fromGlobalData: false, ruleFile: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
@@ -50,6 +51,9 @@ function parseArgs(argv) {
     // --global-data: (implies --global) ALSO persist this project's user-data under
     // <home>/data/<key> keyed by path (opt-in, one-way snapshot).
     else if (a === "--global-data") args.globalData = true;
+    // --from-global-data: the INVERSE — rehydrate this project's user-data FROM the shared
+    // home on a fresh clone (non-destructive fill-gaps; --force overwrites with a .bak).
+    else if (a === "--from-global-data") args.fromGlobalData = true;
     // --yes / --non-interactive: skip all prompts, take defaults — the explicit
     // non-interactive selector the interactive() gate honors (CI/pipes do this too).
     else if (a === "--yes" || a === "-y") args.yes = true;
@@ -694,12 +698,23 @@ async function cmdInit(args) {
     }
   }
   if (args.globalData) args.global = true;   // --global-data implies --global (need a home)
+  // OPT-IN restore: the home MUST already exist — no_global_home is a HARD fail, checked FAST
+  // here so nothing lands in the target on a missing home (the restore itself runs after the drop).
+  if (args.fromGlobalData) {
+    const home = resolveGlobalHome(process.env);
+    if (!fs.existsSync(path.join(home, STAMP_FILE))) {
+      fail("no global ADD install at " + home + " (.add-version not found) — nothing to restore " +
+           "from; run `init --global-data` on a source checkout first");
+    }
+  }
   // OPT-IN global home, BEFORE the per-project drop (fail-closed if the home is unwritable
   // or its registry is corrupt — the package + the self-contained default stay usable).
   if (args.global) installGlobal(args, chosenTarget);
   dropFiles(args, chosenTarget, profile, intent);
   // OPT-IN data persist, AFTER the drop (one-way snapshot of existing user-data).
   if (args.globalData) installGlobalData(chosenTarget);
+  // OPT-IN restore (consume), AFTER the drop: rehydrate user-data from the home into this clone.
+  if (args.fromGlobalData) installGlobalDataRestore(chosenTarget, args.force);
 }
 
 // --- update: re-materialize the managed layer without a re-install -----------
@@ -902,6 +917,95 @@ function installGlobalData(chosenTarget) {
   else log("  (no project data to persist yet — run /add to create one, then re-run --global-data)");
 }
 
+function isSymlink(p) {
+  try { return fs.lstatSync(p).isSymbolicLink(); } catch (_e) { return false; }
+}
+
+// Restore USER-DATA from <home>/data/<key> into <project>/.add — the NON-DESTRUCTIVE inverse of
+// persistData. FILL-GAPS by default (write only ABSENT entries); force overwrites a present entry,
+// writing a <name>.bak FIRST. Copies only isUserData entries; DEREFERENCES symlinks to content
+// (cpSync dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable
+// dest -> restore_failed. Mirror of _installer.py:_restore_data (identical key + fill-gaps rule).
+function restoreData(home, projectAbspath, force) {
+  const src = path.join(home, "data", dataKey(projectAbspath));
+  if (!fs.existsSync(src)) return false;
+  const entries = fs.readdirSync(src).filter(isUserData).sort();
+  if (entries.length === 0) return false;
+  const addDir = path.join(projectAbspath, ".add");
+  fs.mkdirSync(addDir, { recursive: true });
+  let restored = false;
+  for (const e of entries) {
+    const dest = path.join(addDir, e);
+    if (fs.existsSync(dest) || isSymlink(dest)) {
+      if (!force) continue;                                 // fill-gaps: never clobber a present entry
+      const bak = dest + ".bak";
+      if (fs.existsSync(bak) || isSymlink(bak)) fs.rmSync(bak, { recursive: true, force: true });
+      fs.renameSync(dest, bak);                             // back up the original BEFORE replacing
+    }
+    fs.cpSync(path.join(src, e), dest, { recursive: true, dereference: true });   // deref symlinks
+    restored = true;
+  }
+  return restored;
+}
+
+// init --from-global-data: rehydrate user-data after the per-project drop. Resolves the SAME
+// realpath the snapshot key uses. The home is verified BEFORE the drop (no_global_home fails fast,
+// in cmdInit). An unwritable dest -> restore_failed; a missing snapshot is an honest skip.
+function installGlobalDataRestore(chosenTarget, force) {
+  const home = resolveGlobalHome(process.env);
+  let resolved = chosenTarget;
+  try { resolved = fs.realpathSync(chosenTarget); } catch (_e) { /* fall back to the abspath */ }
+  const snap = path.join(home, "data", dataKey(resolved));
+  let restored;
+  try { restored = restoreData(home, resolved, force); }
+  catch (e) {
+    fail("restore_failed: cannot write restored data into " + path.join(resolved, ".add") +
+         " — " + (e && e.message ? e.message : e));
+  }
+  if (restored) log("  ✓ restored data <- " + snap);
+  else log("  (no snapshot for this project at " + snap + " — nothing restored)");
+}
+
+// prune-data: reclaim ORPHANED snapshots under <home>/data. An orphan is a <home>/data/<key>
+// whose key is owned by NO LIVE registry entry (LIVE = a registered path that still EXISTS on
+// disk) — so unregistered AND registered-but-vanished are BOTH orphans (the explicit reclaim;
+// DIVERGES from update --global's keep-vanished). Reads the registry FIRST (corrupt throws,
+// before any removal). Returns {orphans, removed}. Mirror of _installer.py:_prune_data.
+function pruneData(home, force) {
+  const reg = readRegistry(home);                           // corrupt -> throw (LOUD, zero removal)
+  const live = new Set(reg.filter((p) => fs.existsSync(p)).map(dataKey));
+  const dataDir = path.join(home, "data");
+  if (!fs.existsSync(dataDir)) return { orphans: [], removed: [] };
+  const orphans = fs.readdirSync(dataDir).filter((name) => {
+    try { return fs.statSync(path.join(dataDir, name)).isDirectory() && !live.has(name); }
+    catch (_e) { return false; }
+  }).sort();
+  const removed = [];
+  if (force) {
+    for (const key of orphans) {
+      fs.rmSync(path.join(dataDir, key), { recursive: true, force: true });
+      removed.push(key);
+    }
+  }
+  return { orphans: orphans, removed: removed };
+}
+
+// prune-data command: dry-run lists orphans (removes nothing); --force deletes. no_global_home /
+// registry_corrupt = fail-closed (LOUD, nothing removed). Mirror of pip _installer.prune_data.
+function cmdPruneData(args) {
+  const home = resolveGlobalHome(process.env);
+  if (!fs.existsSync(path.join(home, STAMP_FILE))) {
+    fail("no global ADD install at " + home + " (.add-version not found) — nothing to prune");
+  }
+  let result;
+  try { result = pruneData(home, args.force); }
+  catch (_e) { fail("global registry " + registryPath(home) + " is corrupt — fix or delete it; not pruning"); }
+  if (result.orphans.length === 0) { log("  no orphaned snapshots — nothing to prune"); return; }
+  if (args.force) { log("  ✓ " + result.removed.length + " removed"); return; }
+  for (const key of result.orphans) log("  orphan: " + key);
+  log("  " + result.orphans.length + " orphan(s); re-run with --force to remove");
+}
+
 // init --global: install the managed layer ONCE to the shared home + register this project,
 // fail-closed BEFORE the per-project drop. Returns the resolved target for the normal drop.
 function installGlobal(args, chosenTarget) {
@@ -1003,16 +1107,21 @@ async function main() {
     case "update":
       cmdUpdate(args);
       break;
+    case "prune-data":
+      cmdPruneData(args);
+      break;
     case "help":
     case "--help":
-      log("usage: npx @pilotspace/add <init|update> [targetDir] [--force] [--check] [--no-skill] [--global] [--yes|--non-interactive]");
+      log("usage: npx @pilotspace/add <init|update|prune-data> [targetDir] [--force] [--check] [--no-skill] [--global] [--yes|--non-interactive]");
       log("  init    install the ADD skill + tooling + book into a project");
       log("          (--no-skill drops the engine + book only — used by the Claude Code plugin)");
       log("          (--global ALSO installs to a shared home [ADD_HOME|XDG_DATA_HOME/add|~/.add] + registers the project)");
       log("          (--global-data implies --global + persists this project's user-data under <home>/data/<key>)");
+      log("          (--from-global-data rehydrates this project's user-data FROM the shared home on a fresh clone)");
       log("          (interactive in a real terminal; --yes / --non-interactive force the plain path)");
       log("  update  re-materialize skill/tooling/docs to this package version (preserves your state)");
       log("          (--global refreshes the shared home + propagates to every registered project)");
+      log("  prune-data  remove orphaned per-project snapshots from the shared home (dry-run; --force deletes)");
       break;
     default:
       fail("unknown command '" + cmd + "'. Try: npx @pilotspace/add init");
