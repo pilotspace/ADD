@@ -704,9 +704,11 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     # unknown sensitivity token is refused here (validate-then-write — nothing is written);
     # an absent token is grandfathered (allowed), a valid member proceeds. The engine never
     # classifies — it only validates the human's declaration.
-    if _task_sensitivity(_task_header(root, slug)) == "?":
+    _valid_sens = _project_sensitivity_values(root)        # base ∪ project GLOSSARY classes (sensitivity-glossary)
+    if _task_sensitivity(_task_header(root, slug), valid=_valid_sens) == "?":
         _die(f"sensitivity_invalid: {slug} declares an unknown sensitivity — use one of "
-             f"{', '.join(_SENSITIVITY_VALUES)} (or omit the line)")
+             f"{', '.join(_valid_sens)} (or add the class to GLOSSARY.md's '## Sensitivity classes', "
+             "or omit the line)")
     # --- write ---
     ver = _next_freeze_version(state, slug)
     who = args.by or identity._actor_stamp(state)["name"]
@@ -971,16 +973,65 @@ _RISK_HIGH_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*high\b", re.MULTILINE)
 # `·`, value stops at whitespace/`<`/`#`/`|`), so a title/prose substring is never a declaration.
 _SENSITIVITY_RE = re.compile(r"(?:^|·)[ \t]*sensitivity:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
-def _task_sensitivity(hdr: str):
+def _task_sensitivity(hdr: str, valid=None):
     """The declared sensitivity from a TASK.md header region (HTML comments already stripped by
-    _task_header). A member of _SENSITIVITY_VALUES, None when no `sensitivity:` line is present,
-    or "?" when a REAL token outside the enum was written. PURE — the engine validates a
-    human-declared token, it never infers it (mirrors _autonomy_level)."""
+    _task_header). A member of `valid`, None when no `sensitivity:` line is present, or "?" when a
+    REAL token outside `valid` was written. `valid` defaults to _SENSITIVITY_VALUES (the universal
+    base — back-compat); callers that honor a project's GLOSSARY domain classes pass
+    valid=_project_sensitivity_values(root) (sensitivity-glossary). PURE — the engine validates a
+    human-declared token against the project's vocabulary, it never infers it (mirrors _autonomy_level)."""
+    if valid is None:
+        valid = _SENSITIVITY_VALUES
     m = _SENSITIVITY_RE.search(hdr)
     if not m:
         return None
     tok = m.group(1).strip().lower()
-    return tok if tok in _SENSITIVITY_VALUES else "?"
+    return tok if tok in valid else "?"
+
+
+# sensitivity-glossary: a project EXTENDS the universal base with domain risk-classes declared in
+# GLOSSARY.md's "## Sensitivity classes" section (the AI keeps it current per the skill guide). The
+# base four stay method-universal (advisor-gate-relax keys off `mechanical`) — a project never
+# REMOVES them. Read live like _project_autonomy/_project_streams (no state.json field). The first
+# GLOSSARY reader in the engine; degrade-safe by construction (design-for-failure).
+_SENS_CLASSES_HEADING_RE = re.compile(r"(?im)^##[ \t]+sensitivity[ \t]+classes\b.*$")
+# a domain line is "- <token>: …" or "- <token> — …"; the token must START with a letter, so a
+# placeholder ("- <token>: …") begins with "<" and never matches, and the ": "/"—" separator keeps
+# a prose bullet from being read as a class. HTML comments are stripped FIRST (mirrors _project_
+# autonomy/_project_streams) so a commented-out template example is never a declaration.
+_SENS_CLASS_LINE_RE = re.compile(r"(?m)^[ \t]*-[ \t]+([A-Za-z][\w-]*)[ \t]*(?::|—)")
+
+def _project_sensitivity_domain(root: Path) -> tuple:
+    """Domain sensitivity tokens declared in GLOSSARY.md's "## Sensitivity classes" section,
+    lowercased and deduped in document order. FAIL-SAFE: no GLOSSARY.md / no section / unreadable
+    -> () (the caller always unions the base in, so the vocabulary is never empty)."""
+    try:
+        text = (root / "GLOSSARY.md").read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)    # a commented example is never a declaration
+    m = _SENS_CLASSES_HEADING_RE.search(text)
+    if not m:
+        return ()
+    body = text[m.end():]
+    nxt = re.search(r"(?m)^##[ \t]", body)        # stop at the next section heading
+    if nxt:
+        body = body[:nxt.start()]
+    seen, out = set(), []
+    for tok in (t.strip().lower() for t in _SENS_CLASS_LINE_RE.findall(body)):
+        if tok and tok not in seen:
+            seen.add(tok)
+            out.append(tok)
+    return tuple(out)
+
+def _project_sensitivity_values(root: Path) -> tuple:
+    """The full sensitivity vocabulary for a project: the universal base _SENSITIVITY_VALUES
+    (always present, listed first) ∪ the project's GLOSSARY.md domain classes. Base-first, deduped."""
+    out = list(_SENSITIVITY_VALUES)
+    for tok in _project_sensitivity_domain(root):
+        if tok not in out:
+            out.append(tok)
+    return tuple(out)
 
 # the explicit 3-mode autonomy dial (task explicit-autonomy-dial): an ordered ladder
 # manual < conservative < auto, declared as a per-task `autonomy:` header token.
@@ -1654,7 +1705,7 @@ def cmd_status(args: argparse.Namespace) -> None:
         print(f"autonomy: {_autonomy_level(_task_header(root, active)) or 'unset'}")
         # the human-declared risk-CLASS (risk-sensitivity-taxonomy): present-only when a valid
         # sensitivity is declared; "unset" cue when absent; "?" surfaces a typo to fix at freeze.
-        _sens = _task_sensitivity(_task_header(root, active))
+        _sens = _task_sensitivity(_task_header(root, active), valid=_project_sensitivity_values(root))
         print(f"sensitivity: {('unset' if _sens is None else _sens)}")
         # owner/assignee of the active task (ownership-assignment) — present-only, never a
         # placeholder; an unassigned active task adds no line (additive-cue convention).
@@ -2535,6 +2586,17 @@ def cmd_check(args: argparse.Namespace) -> None:
             warnings.append(("task_not_grounded",
                              f"task '{_at}' froze its contract without grounding — fill the "
                              "§0 GROUND anchors the contract cites (add.py guide)"))
+
+    # sensitivity-glossary: nudge a project to declare its DOMAIN sensitivity classes. WARN, NEVER
+    # red (measure-not-block, mirrors goal_not_auto_ready) — the base four always apply; this only
+    # invites the project's own risk-class vocabulary into GLOSSARY.md (the AI maintains it per the
+    # skill guide). Fires IFF the "## Sensitivity classes" section declares no domain class.
+    if not _project_sensitivity_domain(root):
+        warnings.append(("sensitivity_classes_unset",
+                         "no domain sensitivity classes declared — add the project's risk-class "
+                         "vocabulary to GLOSSARY.md's '## Sensitivity classes' section (the base "
+                         "security|data|architecture|mechanical always apply; the AI keeps the "
+                         "domain classes current — see the sensitivity skill guide)"))
 
     # wave-ledger fork-base (engine-merge-base-enforcement): the engine EXECUTES the
     # streams.md rule — every roster echo must match `base:`. A FILLED mismatch is red at

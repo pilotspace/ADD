@@ -144,6 +144,10 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
   repos) → the **component pillar**: declare components in `.add/components.toml`, gate each task on its
   component's green-bar, freeze cross-component contracts (`produces:`/`consumes:`), hold the FE until the
   BE freezes, and `federate pull` a contract across repos — `components.md`. Opt-in; no components = today.
+- **Risk-class of a task** — declare `sensitivity:` in the TASK header (base `security|data|architecture|
+  mechanical`, always valid). EXTEND it with your project's domain classes in `GLOSSARY.md`'s `## Sensitivity
+  classes` section; freeze/status/check read base ∪ project. The AI keeps the domain vocabulary current —
+  `sensitivity.md`. Security is a human floor in every tier; only `mechanical` is advisor-gatable.
 
 ## Non-negotiable rules (from the method)
 

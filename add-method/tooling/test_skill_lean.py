@@ -58,7 +58,11 @@ POOLS = [
     # fast-path block (route `/add --todo` to `add.py todo`: capture/list/close, then STOP) + the
     # argument-hint names --todo — +289 B human-approved surface (loose fast-lane task, contract FROZEN
     # @ v1). RATIO 0.88 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈289/0.88⌉=329). Won ground untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 20004,
+    # core 20004 → 20490 @ sensitivity-glossary (same method): SKILL.md's "Beyond the bundle" gains a
+    # `sensitivity.md` pointer (the project-extensible risk-class vocabulary) — +427 B human-approved
+    # surface (milestone advisor-gated-autonomy, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline
+    # grows by surface ÷ ratio (+⌈427/0.88⌉=486). The won compaction is untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20490,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
@@ -94,10 +98,14 @@ POOLS = [
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
-    {"name": "reference",     "ratio": 0.68, "baseline": 66345,
+    # reference 66345 → 70282 @ sensitivity-glossary (same "rebaseline for genuinely-new surface" method):
+    # a NEW load-on-demand guide (`sensitivity.md`, 2677 B — how the AI maintains the project's extensible
+    # risk-class vocabulary) joins the reference pool. RATIO 0.68 kept EXACTLY; baseline grows by new-surface
+    # ÷ ratio (+⌈2677/0.68⌉=3937). The won ground is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 70282,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
-                "compact-foundation.md", "phases/fast-lane.md", "components.md"]},
+                "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},
 ]
 
 # The whole-tree headline guardrail: every .md in the canonical skill tree, ≥25% under baseline.
@@ -120,7 +128,7 @@ ON_DEMAND_POINTERS = [
     "advisor.md", "compact-foundation.md", "confidence.md", "deltas.md",
     "design.md", "fold.md", "graduate.md", "intake.md", "loop.md",
     "release.md", "report-template.md", "run.md", "scope.md", "soul.md",
-    "streams.md", "components.md",
+    "streams.md", "components.md", "sensitivity.md",
 ]
 
 

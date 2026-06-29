@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "risk-sensitivity-taxonomy",
+  "active_task": "sensitivity-glossary",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2379,10 +2379,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "sensitivity-glossary": {
+      "title": "Project-extensible sensitivity glossary + AI guide",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "risk-sensitivity-taxonomy"
+      ],
+      "created": "2026-06-29T04:26:26+00:00",
+      "updated": "2026-06-29T05:07:33+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T04:32:43+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a55093fba03ab806ff6003c33ca67cd8",
+        "tests": {
+          "add-method/tooling/test_sensitivity_glossary.py": "725c7f9b4198ddee53d57f9293898577"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/"
+        ],
+        "snapshot_md5": "809d3353b79ea0fda908b8e717b8fd10"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T04:24:56+00:00",
+  "updated": "2026-06-29T05:07:33+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3195,7 +3238,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "advisor-gated-autonomy": "risk-sensitivity-taxonomy"
+    "advisor-gated-autonomy": "sensitivity-glossary"
   },
   "todos": [
     {

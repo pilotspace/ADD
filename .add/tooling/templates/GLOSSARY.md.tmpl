@@ -2,6 +2,18 @@
 
 <term>: <definition>
 
+## Sensitivity classes
+The risk-CLASS a task declares (`sensitivity:` in the TASK header) — read live by freeze/status/check.
+The base four below are method-UNIVERSAL and always apply; you EXTEND them with your project's own
+DOMAIN classes (the AI keeps these current as the domain is learned — see the `sensitivity` skill guide).
+
+Base (always apply): security · data · architecture · mechanical
+
+<!-- Domain classes — uncomment and add yours, one `- <token>: <definition>` bullet per line:
+- pii: personally identifiable information; any task touching it escalates to human review
+- payments: money movement; reconciliation + an audit trail are required
+-->
+
 # ADD method vocabulary (domain-standard names; bridges to legacy terms)
 GOAL: the one durable outcome a project (and each milestone) runs toward — the loop's orientation anchor, declared as the lowercase `goal:` line in PROJECT.md / MILESTONE.md and surfaced by status/guide every session; distinct from a task's §1 Must (a single required behavior, not the whole-project outcome).
 deep verify: the deepened Verify evidence (v20) required beyond passing tests — for a task that produced code, that every new symbol is referenced (wiring) and no new dead/unused code exists; for prose/non-code, a recorded no-skim semantic read; which path applies is resolver-judged and the engine never classifies (a rubric, not add.py).
