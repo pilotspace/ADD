@@ -37,6 +37,18 @@ Anyone who builds software with AI in the loop: engineers, architects, testers, 
 
 ---
 
+## 🌱 How the work grows
+
+**One task · eight steps · one file.** Every feature is a single **`TASK.md`** that fills in section by section as it moves around the loop — each step produces exactly one durable artifact. The contract freeze is the *one* human approval; the agent drives the rest. (The artifacts are what you keep — the code is disposable.)
+
+![How one TASK.md grows — eight steps circle a single TASK.md file; each step writes its own section, from §0 grounding map through §3 frozen contract (the one approval) to §7 deltas; a red⇄green engine runs between Tests and Build, and Observe loops back to the next Specify](add-task-growth-wheel.png)
+
+**Tasks compound into milestones; milestones grow the project.** A milestone decomposes breadth-first into a task DAG; each task runs just-in-time and emits deltas; the milestone is **goal-gated** until its exit criteria are met. At close, lessons **fold** into a living foundation (`PROJECT.md` · `CONVENTIONS.md`) that grounds the next milestone — so the project compounds, loop after loop.
+
+![MILESTONE.md and TASK.md lifecycle — a milestone decomposes breadth-first into a task DAG of TASK.md files run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons into PROJECT.md and CONVENTIONS.md, which loop back to ground the next milestone](add-milestone-task-lifecycle.png)
+
+---
+
 ## 🚀 Get Started
 
 ![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives in .add/state.json, no context rot](add-install.png)
