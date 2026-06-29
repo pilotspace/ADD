@@ -2,11 +2,27 @@
 
 <term>: <definition>
 
+## Sensitivity classes
+The risk-CLASS a task declares (`sensitivity:` in the TASK header) — read live by freeze/status/check.
+The base four below are method-UNIVERSAL and always apply; you EXTEND them with your project's own
+DOMAIN classes (the AI keeps these current as the domain is learned — see the `sensitivity` skill guide).
+
+Base (always apply): security · data · architecture · mechanical
+
+<!-- Domain classes — uncomment and add yours, one `- <token>: <definition>` bullet per line:
+- pii: personally identifiable information; any task touching it escalates to human review
+- payments: money movement; reconciliation + an audit trail are required
+-->
+
 # ADD method vocabulary (domain-standard names; bridges to legacy terms)
 GOAL: the one durable outcome a project (and each milestone) runs toward — the loop's orientation anchor, declared as the lowercase `goal:` line in PROJECT.md / MILESTONE.md and surfaced by status/guide every session; distinct from a task's §1 Must (a single required behavior, not the whole-project outcome).
 deep verify: the deepened Verify evidence (v20) required beyond passing tests — for a task that produced code, that every new symbol is referenced (wiring) and no new dead/unused code exists; for prose/non-code, a recorded no-skim semantic read; which path applies is resolver-judged and the engine never classifies (a rubric, not add.py).
 earned green: the build-integrity property — the green is EARNED when the implementation makes the UNCHANGED red suite pass by GENERAL behavior, not by overfitting src to the test fixtures, vacuous/tautological asserts, or stubbing real logic away; task 1's tamper tripwire protects it mechanically and the adversarial refute-read by judgment, and a confirmed earned-green failure is HARD-STOP-class (never auto-passed, never RISK-ACCEPTED).
 adversarial refute-read: the verify-gate, whole-suite specialization of run.md's adversarial verify — an independent reviewer (a subagent under autonomy:auto is recommended; the engine never spawns one) prompted to argue "the green was NOT earned", scoring the earned-green cheats (overfit · vacuous · stub) the mechanical tripwire cannot see.
+advisor 3-lens verdict: the sequential security→concurrency→architecture non-functional sweep recorded in §6 (Verdict · Residue · Binding fields); Verdict is PASS or HARD-STOP only; a Security HARD-STOP short-circuits the remaining lenses.
+advisor-gate-relax: a risk:high + sensitivity:mechanical task with a recorded Verdict:PASS and Residue:none in the §6 Advisor 3-lens verdict may auto-complete via gate PASS without requiring a lowered autonomy level; security and all non-mechanical sensitivity classes are never relaxed via this pathway.
+advisory verdict: a §6 Advisor 3-lens verdict with Binding:advisory — surfaced for human awareness but not engine-enforced (the gate is not relaxed by it); applies to all sensitivity classes other than mechanical.
+binding verdict: a §6 Advisor 3-lens verdict with Binding:yes — engine-enforced for risk:high + sensitivity:mechanical tasks (gates auto-completion via advisor-gate-relax); tasks carrying any other sensitivity class receive an advisory verdict instead.
 bounded self-heal: the verify-gate loop (heal-then-escalate) that gives a CONFIRMED cheat — mechanical tamper (the tripwire) or a reported earned-green failure (`add.py heal --reason`) — a chance to redo honestly before it stops: the engine returns the task to build, COUNTS the attempt, CAPS it at 3 (`HEAL_CAP`), and on the next confirmed cheat forces a HARD-STOP that escalates to the human. The counter is MONOTONIC — it never auto-resets (cmd_phase is unguarded, so a reset would be a zero-human cap bypass). The engine counts/caps/escalates; the AGENT does the honest re-build (never the engine). An honest build passes even at the cap (the cap bites a CONTINUED cheat, never a recovery); a gamed green is never auto-passed, never RISK-ACCEPTED-waived.
 onboarding: the install -> first-milestone path (formerly "on-ramp").
 primary flow: the solid forward path of the flow diagram — a phase starts only when its input exists (formerly "forward spine").

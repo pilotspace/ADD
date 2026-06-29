@@ -111,7 +111,8 @@ Scenario: pre-existing tasks are grandfathered (regression)
 ```
 TASK.md.tmpl §5 — ABOVE the existing lines (which stay byte-identical), add:
   Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-  Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced>
+  Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+
 FOLD the grammar into the existing §5 EXIT comment (v2 — the lean-pass guard pins
 the template's total `<!--` count under 12; the §4-comment carrier text, one open):
   <!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token

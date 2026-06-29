@@ -28,6 +28,8 @@ If any is false, stop and return to Build.
 - **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`). **But that check sees only what you wrote down:** it fires on a *marked* note that slipped through as an auto-gate PASS — a finding you never marked is **invisible** to the engine, escalated to no one. Honest disclosure, not false cover: under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
 - **Architecture** — respects layering/dependency rules in CONVENTIONS.md?
 
+Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record the result in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (the engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. `add.py audit` flags an unfilled block as `advisor_verdict_unrecorded` — a companion to `refute_unrecorded`.
+
 ## Part three — the deep check (do not skim)
 
 If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. The resolver judges which path; the engine never classifies.

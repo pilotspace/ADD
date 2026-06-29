@@ -38,6 +38,8 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _DEFAULT_WIDTH,
     _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
+    _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
+    _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
 )
 
 # --- terminal-render primitives (moved to add_engine/render.py) -------------
@@ -78,6 +80,7 @@ from add_engine.taskdoc import (
 # --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
 from add_engine.autonomy import (
     _autonomy_level, _effective_autonomy, _project_autonomy, _project_autonomy_token,
+    _project_streams,   # run-mode streams half (persist-run-mode) — read live from PROJECT.md
 )
 
 
@@ -390,6 +393,19 @@ def cmd_init(args: argparse.Namespace) -> None:
             continue
         _atomic_write(dest, rendered)
 
+    # --run-mode: apply the paired autonomy + streams posture into PROJECT.md.
+    # ONLY when the flag is explicitly set — absent flag leaves PROJECT.md byte-identical.
+    run_mode = getattr(args, "run_mode", None)
+    if run_mode is not None:
+        _level = run_mode                                           # "auto" | "conservative"
+        _posture = "parallel" if run_mode == "auto" else "sequential"
+        proj_md = root / "PROJECT.md"
+        if proj_md.exists():
+            _text = proj_md.read_text(encoding="utf-8")
+            _text = _autonomy_decl_line(_text, _level)
+            _text = _streams_decl_line(_text, _posture)
+            _atomic_write(proj_md, _text)
+
     state = {
         "project": proj_name,
         "stage": args.stage,
@@ -697,6 +713,15 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not _flag_well_formed(raw3):
         _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
              f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # the human declares the risk-CLASS at freeze (risk-sensitivity-taxonomy): a present-but-
+    # unknown sensitivity token is refused here (validate-then-write — nothing is written);
+    # an absent token is grandfathered (allowed), a valid member proceeds. The engine never
+    # classifies — it only validates the human's declaration.
+    _valid_sens = _project_sensitivity_values(root)        # base ∪ project GLOSSARY classes (sensitivity-glossary)
+    if _task_sensitivity(_task_header(root, slug), valid=_valid_sens) == "?":
+        _die(f"sensitivity_invalid: {slug} declares an unknown sensitivity — use one of "
+             f"{', '.join(_valid_sens)} (or add the class to GLOSSARY.md's '## Sensitivity classes', "
+             "or omit the line)")
     # --- write ---
     ver = _next_freeze_version(state, slug)
     who = args.by or identity._actor_stamp(state)["name"]
@@ -956,6 +981,71 @@ def cmd_advance(args: argparse.Namespace) -> None:
 # not be able to fool the guard either way).
 _RISK_HIGH_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*high\b", re.MULTILINE)
 
+# sensitivity taxonomy (risk-sensitivity-taxonomy): the risk-CLASS the human declares in the
+# TASK header at freeze — same anchored declaration grammar as risk:/autonomy: (line-start or
+# `·`, value stops at whitespace/`<`/`#`/`|`), so a title/prose substring is never a declaration.
+_SENSITIVITY_RE = re.compile(r"(?:^|·)[ \t]*sensitivity:[ \t]*([^\s<#|]+)", re.MULTILINE)
+
+def _task_sensitivity(hdr: str, valid=None):
+    """The declared sensitivity from a TASK.md header region (HTML comments already stripped by
+    _task_header). A member of `valid`, None when no `sensitivity:` line is present, or "?" when a
+    REAL token outside `valid` was written. `valid` defaults to _SENSITIVITY_VALUES (the universal
+    base — back-compat); callers that honor a project's GLOSSARY domain classes pass
+    valid=_project_sensitivity_values(root) (sensitivity-glossary). PURE — the engine validates a
+    human-declared token against the project's vocabulary, it never infers it (mirrors _autonomy_level)."""
+    if valid is None:
+        valid = _SENSITIVITY_VALUES
+    m = _SENSITIVITY_RE.search(hdr)
+    if not m:
+        return None
+    tok = m.group(1).strip().lower()
+    return tok if tok in valid else "?"
+
+
+# sensitivity-glossary: a project EXTENDS the universal base with domain risk-classes declared in
+# GLOSSARY.md's "## Sensitivity classes" section (the AI keeps it current per the skill guide). The
+# base four stay method-universal (advisor-gate-relax keys off `mechanical`) — a project never
+# REMOVES them. Read live like _project_autonomy/_project_streams (no state.json field). The first
+# GLOSSARY reader in the engine; degrade-safe by construction (design-for-failure).
+_SENS_CLASSES_HEADING_RE = re.compile(r"(?im)^##[ \t]+sensitivity[ \t]+classes\b.*$")
+# a domain line is "- <token>: …" or "- <token> — …"; the token must START with a letter, so a
+# placeholder ("- <token>: …") begins with "<" and never matches, and the ": "/"—" separator keeps
+# a prose bullet from being read as a class. HTML comments are stripped FIRST (mirrors _project_
+# autonomy/_project_streams) so a commented-out template example is never a declaration.
+_SENS_CLASS_LINE_RE = re.compile(r"(?m)^[ \t]*-[ \t]+([A-Za-z][\w-]*)[ \t]*(?::|—)")
+
+def _project_sensitivity_domain(root: Path) -> tuple:
+    """Domain sensitivity tokens declared in GLOSSARY.md's "## Sensitivity classes" section,
+    lowercased and deduped in document order. FAIL-SAFE: no GLOSSARY.md / no section / unreadable
+    -> () (the caller always unions the base in, so the vocabulary is never empty)."""
+    try:
+        text = (root / "GLOSSARY.md").read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)    # a commented example is never a declaration
+    m = _SENS_CLASSES_HEADING_RE.search(text)
+    if not m:
+        return ()
+    body = text[m.end():]
+    nxt = re.search(r"(?m)^##[ \t]", body)        # stop at the next section heading
+    if nxt:
+        body = body[:nxt.start()]
+    seen, out = set(), []
+    for tok in (t.strip().lower() for t in _SENS_CLASS_LINE_RE.findall(body)):
+        if tok and tok not in seen:
+            seen.add(tok)
+            out.append(tok)
+    return tuple(out)
+
+def _project_sensitivity_values(root: Path) -> tuple:
+    """The full sensitivity vocabulary for a project: the universal base _SENSITIVITY_VALUES
+    (always present, listed first) ∪ the project's GLOSSARY.md domain classes. Base-first, deduped."""
+    out = list(_SENSITIVITY_VALUES)
+    for tok in _project_sensitivity_domain(root):
+        if tok not in out:
+            out.append(tok)
+    return tuple(out)
+
 # the explicit 3-mode autonomy dial (task explicit-autonomy-dial): an ordered ladder
 # manual < conservative < auto, declared as a per-task `autonomy:` header token.
 # anchored to a DECLARATION position — line-start `autonomy:` OR the inline slug-line form
@@ -976,6 +1066,66 @@ def _autonomy_lowered(hdr: str) -> bool:
     """True iff the declared rung is high-risk-safe (manual or conservative). A
     high-risk scope must be lowered to one of these; `auto` and UNSET are not."""
     return _autonomy_level(hdr) in ("manual", "conservative")
+
+
+# advisor-gate-relax helpers: read the "### Advisor 3-lens verdict" SUB-SECTION
+# of body6, not the whole §6, so the refute-read's Verdict/Residue lines are
+# never mistaken for the advisor's fields.  Fail-safe: both return False when the
+# advisor block is absent → the guard fires (conservative by design).
+
+def _advisor_slice(body6: str) -> str:
+    """Return the '### Advisor 3-lens verdict' sub-section text from §6 body.
+    Returns '' when the block is absent (fail-safe)."""
+    m = re.search(r"(?m)^### Advisor 3-lens verdict\b", body6)
+    if not m:
+        return ""
+    nxt = re.search(r"(?m)^### ", body6[m.end():])
+    end = m.end() + nxt.start() if nxt else len(body6)
+    return body6[m.start():end]
+
+
+def _advisor_verdict_is_pass(body6: str) -> bool:
+    """True iff the Advisor 3-lens verdict sub-section declares Verdict: PASS…
+    Scoped to the advisor block only — the §6 Refute-read Verdict line is excluded.
+    Fail-safe: False when the advisor block is absent (guard fires)."""
+    slc = _advisor_slice(body6)
+    m = re.search(r"(?m)^Verdict:[ \t]*(\S+)", slc)
+    return bool(m) and m.group(1).upper().startswith("PASS")
+
+
+def _advisor_no_residue(body6: str) -> bool:
+    """True iff the Advisor 3-lens verdict sub-section declares Residue: none.
+    Fail-safe: False when the advisor block is absent (guard fires)."""
+    slc = _advisor_slice(body6)
+    m = re.search(r"(?m)^Residue:[ \t]*(\S+)", slc)
+    return bool(m) and m.group(1).strip().lower() == "none"
+
+
+# step-spawn-hint (advisor-gated-autonomy): the engine's pinned terse copy of each phase
+# guide's Advisor hook — one spawn idiom per phase. contract/done are ABSENT (no batch to
+# fan out: a freeze is one human decision; done is closed). Advisory ONLY — the engine never
+# spawns; the line just NAMES the agent shape a parallel run would use at this step.
+_SPAWN_HINTS = {
+    "ground": "broad sweep",
+    "specify": "domain researcher",
+    "scenarios": "wide scenario sweep",
+    "tests": "red-suite test-author",
+    "build": "independent well-scoped batch",
+    "verify": "earned-green refute-read",
+    "observe": "lessons-mining reviewer",
+}
+
+
+def _spawn_hint_line(task: dict, autonomy: str) -> str | None:
+    """PURE: the one-line per-step spawn hint for the ACTIVE task, or None. Suppressed when
+    the autonomy level is `manual` (the human drives every step) or the phase has no idiom
+    (contract/done). The tier reflects declared risk: a `risk: high` task earns `top`
+    (your strongest agent), everything else `mid`. Never spawns, never mutates state."""
+    phase = task.get("phase")
+    if autonomy == "manual" or phase not in _SPAWN_HINTS:
+        return None
+    tier = "top" if task.get("risk") == "high" else "mid"
+    return f"spawn hint: {phase} → {_SPAWN_HINTS[phase]} (tier: {tier})"
 
 
 def _driver_stop(root: Path, state: dict, slug: str, phase: str) -> bool:
@@ -1023,8 +1173,16 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # the mechanized high-risk guard: an unguarded high-risk header refuses
         # COMPLETION (PASS / RISK-ACCEPTED) until the dial is lowered and a human
         # owns the gate. HARD-STOP is never blocked — stopping is always allowed.
+        # advisor-gate-relax: a mechanical task whose Advisor 3-lens verdict shows
+        # PASS + Residue: none is the one exception — it may auto-complete even
+        # without a lowered dial. Only sensitivity:"mechanical" qualifies; security/
+        # data/architecture never relax; an absent advisor block is fail-safe False.
         hdr = _task_header(root, slug)
-        if _RISK_HIGH_RE.search(hdr) and not _autonomy_lowered(hdr):
+        body6 = _raw_phase_bodies(root, slug).get(6, "")
+        _relaxed = (_task_sensitivity(hdr) == "mechanical"
+                    and _advisor_verdict_is_pass(body6)
+                    and _advisor_no_residue(body6))
+        if _RISK_HIGH_RE.search(hdr) and not _autonomy_lowered(hdr) and not _relaxed:
             _die(f"unguarded_high_risk_auto: task '{slug}' declares risk: high "
                  "without a lowered autonomy level — run `add.py autonomy set conservative` "
                  "(or manual); a human must own a high-risk gate (run.md guard)")
@@ -1109,6 +1267,20 @@ def _autonomy_decl_line(text: str, level: str) -> str:
     return f"autonomy: {level}\n" + text
 
 
+def _streams_decl_line(text: str, posture: str) -> str:
+    """Rewrite the SINGLE `streams:` declaration line to `posture`, PRESERVING its trailing comment,
+    idempotently (replace in place, count=1 — never a second line). If absent, insert it after a
+    leading `#` heading (PROJECT.md), else prepend. PURE on the text; the caller does the atomic
+    write. Mirrors _autonomy_decl_line — streams is project-scoped, so there is no slug-line branch."""
+    pat = re.compile(r"(?m)^(streams:[ \t]*)[^\s<#|]+(.*)$")
+    if pat.search(text):
+        return pat.sub(lambda m: f"{m.group(1)}{posture}{m.group(2)}", text, count=1)
+    lines = text.splitlines(keepends=True)
+    if lines and lines[0].lstrip().startswith("#"):
+        return lines[0] + f"streams: {posture}\n" + "".join(lines[1:])
+    return f"streams: {posture}\n" + text
+
+
 def _guard_autonomy_raise(current: str, target: str, yes: bool) -> None:
     """RAISING the level toward `auto` is a human-owned trust escalation (run.md: the AI may LOWER
     freely — RECOMMEND-only — but RAISING needs a human). Refuse a raise unless --yes confirms it."""
@@ -1156,6 +1328,25 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
     _atomic_write(task_md, _autonomy_decl_line(task_md.read_text(encoding="utf-8"), level))
     print(f"task '{slug}' autonomy -> {level}")
     _print_autonomy(root, state, slug)
+
+
+def cmd_streams(args: argparse.Namespace) -> None:
+    """show / set the project STREAMS posture — the parallel-vs-sequential half of the run mode
+    (persist-run-mode). Project-scoped (parallelism is ACROSS tasks, so there is no per-task posture)
+    and unguarded by a raise (parallel drops no human gate — it only overlaps builds). The setter
+    mirrors cmd_autonomy's --project branch: a PURE _streams_decl_line + atomic write into PROJECT.md.
+    state.json is UNTOUCHED — the posture lives in PROJECT.md beside autonomy."""
+    root = _require_root()                                   # reused -> "no .add/ project found …"
+    if (getattr(args, "action", None) or "show") == "show":
+        print(f"streams: {_project_streams(root)}")
+        return
+    posture = args.posture
+    if posture not in _STREAMS_POSTURES:
+        _die("streams_posture_invalid: posture must be one of "
+             f"{', '.join(_STREAMS_POSTURES)} (got {posture!r})")
+    target = root / "PROJECT.md"
+    _atomic_write(target, _streams_decl_line(target.read_text(encoding="utf-8"), posture))
+    print(f"project streams -> {posture}")
 
 
 def cmd_todo(args: argparse.Namespace) -> None:
@@ -1475,6 +1666,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
     print(f"project autonomy: {_project_autonomy(root)}   (default — new tasks inherit)")
+    # run mode (persist-run-mode): the combined streams + autonomy posture, both read LIVE from
+    # PROJECT.md so the human sees the whole run-mode throttle every session. Advisory; engine never spawns.
+    print(f"run mode: {_project_streams(root)} + {_project_autonomy(root)}")
     # git-native actor (user-identity): who ADD sees you as this session — the identity every
     # human-owned stamp records. Always present (the resolver is TOTAL). Read-only, no write.
     _who = identity._whoami(state)
@@ -1495,6 +1689,9 @@ def cmd_status(args: argparse.Namespace) -> None:
         _gr_cited, _gr_total = _exit_criteria_cited(root, _active_ms)
         _gr_state = "auto-ready ✓" if _goal_auto_ready(root, _active_ms) else "NOT auto-ready"
         print(f"goal-ready: {_gr_state}   ({_gr_cited}/{_gr_total} exit criteria cite a verifier)")
+        # dag-plan snapshot freshness (persist-dag-plan): per-active-milestone, read-only —
+        # fresh ✓ / stale / none / unreadable vs the LIVE depends_on edges. Advisory; never writes.
+        print(_dag_plan_status_line(root, state, _active_ms))
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
         print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
@@ -1590,6 +1787,19 @@ def cmd_status(args: argparse.Namespace) -> None:
     # reads the throttle every session; "unset" when no explicit `autonomy:` line is present.
     if active and active in tasks:
         print(f"autonomy: {_autonomy_level(_task_header(root, active)) or 'unset'}")
+        # the human-declared risk-CLASS (risk-sensitivity-taxonomy): present-only when a valid
+        # sensitivity is declared; "unset" cue when absent; "?" surfaces a typo to fix at freeze.
+        _sens = _task_sensitivity(_task_header(root, active), valid=_project_sensitivity_values(root))
+        print(f"sensitivity: {('unset' if _sens is None else _sens)}")
+        # step-spawn-hint (advisor-gated-autonomy): one advisory line naming the agent shape a
+        # parallel run would fan out at THIS step. Present-only (None → no line): suppressed under
+        # the `manual` dial and at contract/done. The tier reflects declared `risk: high`.
+        _hint = _spawn_hint_line(
+            {"phase": tasks[active].get("phase"),
+             "risk": "high" if _RISK_HIGH_RE.search(_task_header(root, active)) else None},
+            _project_autonomy(root))
+        if _hint:
+            print(_hint)
         # owner/assignee of the active task (ownership-assignment) — present-only, never a
         # placeholder; an unassigned active task adds no line (additive-cue convention).
         _own = _fmt_ownership(tasks[active])
@@ -1749,6 +1959,14 @@ def cmd_guide(args: argparse.Namespace) -> None:
         print(f"guide  : {gp}")
     elif phase in _PHASE_GUIDE_FILES:
         print("guide  : (phase guides not installed — npx @pilotspace/add init)")
+    # step-spawn-hint (advisor-gated-autonomy): one advisory line naming the agent shape a parallel
+    # run would fan out at THIS step. Present-only: suppressed under `manual` and at contract/done.
+    _hint = _spawn_hint_line(
+        {"phase": phase,
+         "risk": "high" if _RISK_HIGH_RE.search(_task_header(root, slug)) else None},
+        _project_autonomy(root))
+    if _hint:
+        print(_hint)
     if phase == "verify":
         print("then   : add.py gate PASS | RISK-ACCEPTED | HARD-STOP")
     elif phase == "done":
@@ -2469,6 +2687,17 @@ def cmd_check(args: argparse.Namespace) -> None:
             warnings.append(("task_not_grounded",
                              f"task '{_at}' froze its contract without grounding — fill the "
                              "§0 GROUND anchors the contract cites (add.py guide)"))
+
+    # sensitivity-glossary: nudge a project to declare its DOMAIN sensitivity classes. WARN, NEVER
+    # red (measure-not-block, mirrors goal_not_auto_ready) — the base four always apply; this only
+    # invites the project's own risk-class vocabulary into GLOSSARY.md (the AI maintains it per the
+    # skill guide). Fires IFF the "## Sensitivity classes" section declares no domain class.
+    if not _project_sensitivity_domain(root):
+        warnings.append(("sensitivity_classes_unset",
+                         "no domain sensitivity classes declared — add the project's risk-class "
+                         "vocabulary to GLOSSARY.md's '## Sensitivity classes' section (the base "
+                         "security|data|architecture|mechanical always apply; the AI keeps the "
+                         "domain classes current — see the sensitivity skill guide)"))
 
     # wave-ledger fork-base (engine-merge-base-enforcement): the engine EXECUTES the
     # streams.md rule — every roster echo must match `base:`. A FILLED mismatch is red at
@@ -3215,6 +3444,88 @@ def cmd_waves(args: argparse.Namespace) -> None:
         print("\n".join(_wave_block_lines(state, t, s)))
 
 
+# --- persisted DAG-plan snapshot (persist-dag-plan) --------------------------------
+# `waves` recomputes the schedule live and is the authority; `dag-plan` MATERIALIZES that
+# computed schedule into a committed, auditable per-milestone snapshot + a freshness check
+# against the live edges. The snapshot is NEVER the authority — only a checkable projection.
+def _dag_plan_path(root: Path, mslug: str) -> Path:
+    return root / "milestones" / mslug / "dag-plan.json"
+
+
+def _edges_fingerprint(state: dict, mslug: str) -> str:
+    """md5 over the EDGE STRUCTURE: every member's (done OR open) sorted depends_on. PURE.
+    Invariant under a task COMPLETING (phase/gate change, not edges) — so completion is NOT
+    drift — and changes only when a dep is added/removed/redirected or a member added/removed."""
+    tasks = state.get("tasks") or {}
+    edges = {s: sorted(t.get("depends_on") or [])
+             for s, t in tasks.items() if t.get("milestone") == mslug}
+    return _md5_text(json.dumps(edges, sort_keys=True))
+
+
+def _dag_plan_freshness(root: Path, state: dict, mslug: str) -> tuple[str, dict | None]:
+    """Read the snapshot and compare its stored fingerprint to the live one. Fail-safe:
+    absent -> ("none", None) · unreadable/garbled -> ("unreadable", None) · match -> "fresh"
+    · mismatch -> "stale". Never raises on a missing/corrupt file (no traceback to the user)."""
+    sp = _dag_plan_path(root, mslug)
+    if not sp.exists():
+        return ("none", None)
+    try:
+        snap = json.loads(sp.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ("unreadable", None)
+    if not isinstance(snap, dict) or "edges_fingerprint" not in snap:
+        return ("unreadable", None)
+    live = _edges_fingerprint(state, mslug)
+    return (("fresh" if snap.get("edges_fingerprint") == live else "stale"), snap)
+
+
+def _dag_plan_status_line(root: Path, state: dict, mslug: str) -> str:
+    """The single `dag-plan:` line cmd_status prints for the active milestone."""
+    fresh, snap = _dag_plan_freshness(root, state, mslug)
+    if fresh == "fresh":
+        return "dag-plan: fresh ✓"
+    if fresh == "stale":
+        return f"dag-plan: stale (edges changed since {(snap or {}).get('generated', '?')})"
+    if fresh == "unreadable":
+        return "dag-plan: unreadable — run add.py dag-plan"
+    return "dag-plan: none — run add.py dag-plan"
+
+
+def cmd_dag_plan(args: argparse.Namespace) -> None:
+    """RECORD-ONLY: materialize the active (or --milestone) milestone's computed DAG schedule
+    into a committed snapshot + an edge fingerprint. Reuses cmd_waves' rejects; writes NOTHING
+    on any reject. Idempotent: an unchanged fingerprint leaves the file byte-identical."""
+    root = _require_root()
+    state = load_state(root)
+    mslug = getattr(args, "milestone", None) or _active_milestone(state)
+    if not mslug:
+        _die("no_active_milestone: no active milestone and no --milestone given")
+    if mslug not in (state.get("milestones") or {}):
+        _die(f"unknown_milestone: '{mslug}' is not a milestone in this project")
+    sched = _wave_schedule(state, mslug)
+    if "cycle" in sched:
+        _die(f"dependency_cycle: not-done deps form a cycle "
+             f"({' -> '.join(sched['cycle'])}) — no valid schedule")
+    live_fp = _edges_fingerprint(state, mslug)
+    sp = _dag_plan_path(root, mslug)
+    # idempotent: an unchanged fingerprint leaves the snapshot (and its `generated` date) untouched
+    if sp.exists():
+        try:
+            cur = json.loads(sp.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            cur = None
+        if isinstance(cur, dict) and cur.get("edges_fingerprint") == live_fp:
+            print(f"dag-plan: {mslug} already fresh ✓ (generated {cur.get('generated', '?')})")
+            return
+    snap = {"milestone": mslug, "generated": date.today().isoformat(),
+            "edges_fingerprint": live_fp, "schedule": sched}
+    sp.parent.mkdir(parents=True, exist_ok=True)
+    _atomic_write(sp, json.dumps(snap, indent=2, sort_keys=True) + "\n")
+    nwaves = len(sched.get("waves") or [])
+    ntasks = sum(len(w) for w in (sched.get("waves") or []))
+    print(f"dag-plan: wrote {mslug} — {nwaves} wave(s), {ntasks} task(s) (fresh ✓)")
+
+
 def cmd_milestone_done(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -3632,7 +3943,10 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
 # likewise NOT a source touch — counting one produced repeated false `scope_violation`s in
 # consuming projects (`.next/`, `coverage/`, `tsconfig.tsbuildinfo`, whose `incremental`
 # rewrite even races a clean re-snapshot), so they are pruned here too.
-_SCOPE_EXCLUDE_DIRS = (".git", ".add", "__pycache__", "node_modules", ".serena",
+# `.claude` is an agent-tool internal dir (config/skills/worktrees) like `.serena` — never a
+# task's declared source; without it, the walk descends into `.claude/worktrees/<wt>/` (linked
+# git worktrees: full branch checkouts) and their churn produces false `scope_violation`s.
+_SCOPE_EXCLUDE_DIRS = (".git", ".add", ".claude", "__pycache__", "node_modules", ".serena",
                        ".next", "coverage", "test-results")
 _SCOPE_EXCLUDE_FILES = (".DS_Store",)                  # plus *.pyc / *.tsbuildinfo by suffix
 _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")
@@ -5303,8 +5617,14 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
         # F7 unguarded_high_risk_auto (task high-risk-signal, v14): a declared
         # high-risk record must show a guarded dial AND a human at the gate —
         # catches post-gate header tampering and auto-resolved high-risk gates.
+        # advisor-gate-relax: a mechanical task whose Advisor 3-lens verdict shows
+        # PASS + Residue: none is exempt — the outer condition is False so both
+        # sub-branches are skipped.  Non-mechanical (security/data/architecture)
+        # never relax; an absent advisor block is fail-safe False → guard fires.
         hdr = _task_header(root, slug)
-        if _RISK_HIGH_RE.search(hdr):
+        if _RISK_HIGH_RE.search(hdr) and not (_task_sensitivity(hdr) == "mechanical"
+                and _advisor_verdict_is_pass(s6)
+                and _advisor_no_residue(s6)):
             if not _autonomy_lowered(hdr):
                 f(slug, "unguarded_high_risk_auto",
                   "risk: high declared but autonomy is not lowered (manual or conservative)")
@@ -5355,24 +5675,68 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
       shallow[]          = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an
                            ABSENT block grandfathers a legacy task — never retro-flagged);
       risk_unset[]       = the header carries NO `risk:` token (an undeclared risk level at verify);
+      sensitivity_unset[]= the header carries NO valid `sensitivity:` token (risk-sensitivity-taxonomy);
       refute_unrecorded[]= §6 '### Refute-read verdict' block present-but-unfilled (self-grading-
                            refute-record, M4) — the earned-green verdict the AI must record under
                            `auto`; ABSENT block grandfathers exactly like shallow. MEASURE-NOT-BLOCK:
                            never auto-blocks a gate, only surfaced here for review + a human spot-audit.
     Honest visibility for three verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
     TASK.md + state only, writes nothing."""
-    shallow, risk_unset, refute_unrecorded = [], [], []
+    shallow, risk_unset, refute_unrecorded, sensitivity_unset = [], [], [], []
+    advisor_verdict_unrecorded = []
+    advisor_reviewer_is_author = []
+    advisor_residue_on_mechanical_mis_tier = []
     for slug in sorted(state.get("tasks") or {}):
         if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
             continue
         body6 = _raw_phase_bodies(root, slug).get(6, "")
+        hdr = _task_header(root, slug)
         if _section_unfilled(body6, "### Deep checks"):
             shallow.append(slug)
         if _section_unfilled(body6, "### Refute-read verdict"):
             refute_unrecorded.append(slug)
-        if not _RISK_ANY_RE.search(_task_header(root, slug)):
+        if _section_unfilled(body6, "### Advisor 3-lens verdict"):
+            advisor_verdict_unrecorded.append(slug)
+        if not _RISK_ANY_RE.search(hdr):
             risk_unset.append(slug)
-    return {"shallow": shallow, "risk_unset": risk_unset, "refute_unrecorded": refute_unrecorded}
+        # sensitivity_unset (risk-sensitivity-taxonomy): a verify-reached task with no
+        # human-declared sensitivity — MEASURE-NOT-BLOCK, same class as risk_unset.
+        if _task_sensitivity(hdr) is None:
+            sensitivity_unset.append(slug)
+        # advisor_reviewer_is_author / advisor_residue_on_mechanical_mis_tier
+        # (advisor-verdict-audit): MEASURE-NOT-BLOCK lints on the filled advisor block.
+        # Both require the block to be PRESENT AND FILLED (not just unfilled).
+        # Extract ONLY the advisor sub-section to avoid false matches from
+        # the Refute-read verdict block (which also carries Verdict:/Residue: lines).
+        _advisor_body = ""
+        _adv_idx = body6.find("### Advisor 3-lens verdict")
+        if _adv_idx != -1:
+            _adv_rest = body6[_adv_idx + len("### Advisor 3-lens verdict"):]
+            _next_hdr = re.search(r"\n###", _adv_rest)
+            _advisor_body = _adv_rest[:_next_hdr.start()] if _next_hdr else _adv_rest
+        _advisor_filled = (_adv_idx != -1
+                           and not _section_unfilled(body6, "### Advisor 3-lens verdict"))
+        if _advisor_filled:
+            _ma = re.search(r"(?m)^Advisor:(.*)$", _advisor_body)
+            _advisor_name = _ma.group(1).strip() if _ma else ""
+            _gate_name = (state["tasks"][slug].get("gate_actor") or {}).get("name", "").strip()
+            if (_advisor_name and _gate_name
+                    and _advisor_name.lower() == _gate_name.lower()):
+                advisor_reviewer_is_author.append(slug)
+            _sens = _task_sensitivity(hdr)
+            if _sens == "mechanical":
+                _mr = re.search(r"(?m)^Residue:(.*)$", _advisor_body)
+                _mv = re.search(r"(?m)^Verdict:(.*)$", _advisor_body)
+                _residue = _mr.group(1).strip() if _mr else ""
+                _verdict = _mv.group(1).strip() if _mv else ""
+                if (_residue and _residue.lower() != "none"
+                        and _verdict.upper().startswith("PASS")):
+                    advisor_residue_on_mechanical_mis_tier.append(slug)
+    return {"shallow": shallow, "risk_unset": risk_unset, "refute_unrecorded": refute_unrecorded,
+            "sensitivity_unset": sensitivity_unset,
+            "advisor_verdict_unrecorded": advisor_verdict_unrecorded,
+            "advisor_reviewer_is_author": advisor_reviewer_is_author,
+            "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -5405,8 +5769,28 @@ def cmd_audit(args: argparse.Namespace) -> None:
             ru = glints["refute_unrecorded"]
             print(f"audit: refute_unrecorded — {len(ru)} task(s): {', '.join(ru)} "
                   f"— record the earned-green refute verdict (§6); a spot-audit is the backstop")
+        if glints["advisor_verdict_unrecorded"]:
+            av = glints["advisor_verdict_unrecorded"]
+            print(f"audit: advisor_verdict_unrecorded — {len(av)} task(s): {', '.join(av)} "
+                  f"— record the 3-lens advisor verdict (§6); a spot-audit is the backstop")
+        if glints["sensitivity_unset"]:
+            su = glints["sensitivity_unset"]
+            print(f"audit: sensitivity_unset — {len(su)} task(s) reached verify with no "
+                  f"sensitivity: declaration: {', '.join(su)}")
+        if glints["advisor_reviewer_is_author"]:
+            ar = glints["advisor_reviewer_is_author"]
+            print(f"audit: advisor_reviewer_is_author — {len(ar)} task(s): {', '.join(ar)} "
+                  f"— advisor and gate actor are the same identity")
+        if glints["advisor_residue_on_mechanical_mis_tier"]:
+            am = glints["advisor_residue_on_mechanical_mis_tier"]
+            print(f"audit: advisor_residue_on_mechanical_mis_tier — {len(am)} task(s): "
+                  f"{', '.join(am)} — mechanical tier with non-none residue and PASS verdict "
+                  f"is incoherent; consider re-tiering")
         if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
-                and not glints["refute_unrecorded"]:
+                and not glints["refute_unrecorded"] and not glints["advisor_verdict_unrecorded"] \
+                and not glints["sensitivity_unset"] \
+                and not glints["advisor_reviewer_is_author"] \
+                and not glints["advisor_residue_on_mechanical_mis_tier"]:
             print(f"audit: clean ({checked} tasks checked)")
     # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:
@@ -6000,6 +6384,10 @@ def build_parser() -> argparse.ArgumentParser:
     pi.add_argument("--rule-file", dest="rule_file", action="store_true",
                     help="write the ADD block to .claude/rules/add-workflows.md and reference it "
                          "from CLAUDE.md (auto-on for ccsk projects with a .ccsk/ dir)")
+    pi.add_argument("--run-mode", dest="run_mode", default=None,
+                    choices=["auto", "conservative"],
+                    help="seed autonomy+streams posture: auto→parallel, conservative→sequential "
+                         "(absent: PROJECT.md is byte-identical to a plain init)")
     pi.set_defaults(func=cmd_init)
 
     pl = sub.add_parser("lock",
@@ -6128,6 +6516,13 @@ def build_parser() -> argparse.ArgumentParser:
     pwa.add_argument("--json", action="store_true", help="machine-readable JSON output")
     pwa.set_defaults(func=cmd_waves)
 
+    pdp = sub.add_parser("dag-plan", help="record a committed snapshot of the milestone's computed "
+                                          "DAG schedule (waves + critical path + tiers) + a freshness "
+                                          "check vs the live depends_on edges")
+    pdp.add_argument("--milestone", default=None,
+                     help="milestone slug to snapshot (default: the active milestone)")
+    pdp.set_defaults(func=cmd_dag_plan)
+
     pmd = sub.add_parser("milestone-done", help="exit-gate a milestone (all tasks must PASS)")
     pmd.add_argument("slug")
     pmd.set_defaults(func=cmd_milestone_done)
@@ -6197,6 +6592,11 @@ def build_parser() -> argparse.ArgumentParser:
     pan.add_argument("--yes", action="store_true",
                      help="confirm a RAISE toward auto (a human-owned trust escalation)")
     pan.set_defaults(func=cmd_autonomy, _opt_positionals=("a1", "a2"))
+
+    pst = sub.add_parser("streams", help="show or set the project streams posture (parallel|sequential)")
+    pst.add_argument("action", nargs="?", choices=("show", "set"), default="show")
+    pst.add_argument("posture", nargs="?", default=None, help="set: <parallel|sequential>")
+    pst.set_defaults(func=cmd_streams, _opt_positionals=("posture",))
 
     pto = sub.add_parser("todo", help="capture / list / close a lightweight backlog todo (jot an idea)")
     pto.add_argument("text", nargs="?", default=None,

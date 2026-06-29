@@ -14,7 +14,7 @@ tests, iterate to green. Keep each batch small enough to review in full.
 §5 of TASK.md opens with two declarations, drafted WITH the specification bundle and frozen by the §3 approval — never invented mid-build:
 
 - **Scope (may touch)** — the allowlist of every file the build may write (backticked tokens). Needing a file outside the declared Scope is a **STOP → change request** back to Specify, never improvisation.
-- **Strategy (ordered batches)** — the planned build order. Guidance, not enforced.
+- - **Strategy (ordered batches)** — the planned build order. Guidance, not enforced. Solution strategies or methods to resolve/implement tasks.
 
 Enforced: a completing verify gate refuses an out-of-scope build (`scope_violation` → self-heal); `add.py check` surfaces it.
 

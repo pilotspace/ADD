@@ -65,6 +65,7 @@ LIFECYCLE = [
                                                # state, never docs/)
     ["new-task", "t", "--title", "Feature"],   # auto-linked to mvp
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
+    ["streams"],                               # read-only run-mode streams view (persist-run-mode): reads PROJECT.md, never docs/
     ["todo", "a captured idea"],               # backlog capture (todo-capture): appends state["todos"], never docs/
     ["whoami"],                                # read-only actor resolve (git config -> OS user; reads state, never docs/)
     ["assign", "t"],                            # ownership writer: set owner+assignee on t to self (reads/writes state, never docs/)
@@ -102,6 +103,9 @@ LIFECYCLE = [
     ["ready"],
     ["waves"],                                 # read-only DAG schedule of the active milestone
                                                # (reads state only, never docs/; mvp is active so exit 0)
+    ["dag-plan"],                              # record-only DAG-plan snapshot of the active milestone
+                                               # (persist-dag-plan): reads state, writes the dag-plan.json
+                                               # under the milestone dir, never docs/; mvp active -> exit 0
     ["guide", "t"],
     ["report"], ["report", "mvp"],             # read-only dashboard (reads MILESTONE/TASK, not docs/)
     ["deltas"],                                # read-only: open competency deltas report

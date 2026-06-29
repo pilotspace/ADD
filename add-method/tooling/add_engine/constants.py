@@ -219,3 +219,13 @@ _SPEC_DELTA_RE = re.compile(
 
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
+
+# --- streams posture (shared: streams resolvers + cmd_streams) — the parallel-vs-sequential
+#     half of the run mode (persist-run-mode); project-scoped, persisted in PROJECT.md beside autonomy ---
+_STREAMS_POSTURES = ("parallel", "sequential")
+
+# --- sensitivity taxonomy (shared: _task_sensitivity reader + cmd_freeze/status/audit) — the
+#     risk-CLASS the human declares in the TASK header at freeze (risk-sensitivity-taxonomy). The
+#     engine validates + surfaces a HUMAN-declared token; it NEVER classifies. A closed enum, sibling
+#     of _AUTONOMY_LEVELS/_STREAMS_POSTURES. Consumed downstream by advisor-gate-relax (mechanical). ---
+_SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
