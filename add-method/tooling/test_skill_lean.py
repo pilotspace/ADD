@@ -87,14 +87,27 @@ POOLS = [
     # advisor.md and streams.md, and advisor's intro clause softened to match — +295 B human-approved surface
     # (block 198→327 ×2 files = +258, advisor intro 151→188 = +37). RATIO 0.75 kept EXACTLY; baseline grows
     # by surface ÷ ratio (+⌈295/0.75⌉=394). The won compaction is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 53125,
+    # orchestration 53125 → 54363 @ docs-align (advisor-gated-autonomy, same "rebaseline for human-approved
+    # new surface" method): advisor.md gains the "3-lens sequential checklist at verify" section (+248 B) and
+    # run.md gains the Advisor-3-lens-verdict auto-gate bullet + the `advisor-gate-relax` pathway bullet (+680 B)
+    # — the milestone's autonomy feature documented at its homes. RATIO 0.75 kept EXACTLY; baseline grows by
+    # surface ÷ ratio (+⌈928/0.75⌉=1238). The won compaction is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 54363,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a
     # finding never marked is invisible to the engine, so a human spot-audit is the only backstop under
     # `auto` — +350 B human-approved surface (milestone flow-honesty, contract FROZEN @ v1). RATIO 0.80
     # kept EXACTLY; baseline grows by surface ÷ ratio (+⌈350/0.80⌉=438). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 39446,
+    # phases 39446 → 39523 @ build-strategy-enhance (commit c05a034, "enhance strategy section with
+    # solution methods for task implementation"): phases/5-build.md's §5 Strategy prompt gains solution-method
+    # guidance — +61 B human-authored surface (Tin-approved rebaseline). RATIO 0.80 kept EXACTLY; baseline
+    # grows by surface ÷ ratio (+⌈61/0.80⌉=77). The won ground is untouched.
+    # phases 39523 → 40065 @ docs-align (advisor-gated-autonomy, same method): phases/6-verify.md's Part-two
+    # 3-lens checklist gains the §6 `### Advisor 3-lens verdict` recording instruction (Verdict · Residue ·
+    # Binding + the `advisor_verdict_unrecorded` lint) — +433 B human-approved surface. RATIO 0.80 kept
+    # EXACTLY; baseline grows by surface ÷ ratio (+⌈433/0.80⌉=542). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40065,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
@@ -102,7 +115,11 @@ POOLS = [
     # a NEW load-on-demand guide (`sensitivity.md`, 2677 B — how the AI maintains the project's extensible
     # risk-class vocabulary) joins the reference pool. RATIO 0.68 kept EXACTLY; baseline grows by new-surface
     # ÷ ratio (+⌈2677/0.68⌉=3937). The won ground is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 70282,
+    # reference 70282 → 70359 @ docs-align (advisor-gated-autonomy, same method): sensitivity.md's mechanical
+    # class names the three §6 advisor-verdict fields (Verdict · Residue · Binding) the engine reads for
+    # `advisor-gate-relax` — +52 B human-approved surface. RATIO 0.68 kept EXACTLY; baseline grows by surface
+    # ÷ ratio (+⌈52/0.68⌉=77). The won ground is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 70359,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},

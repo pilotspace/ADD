@@ -11,7 +11,8 @@ surfaces the human's declaration; it **never classifies**. Read live by freeze/s
 - **data** — persistence, migrations, privacy of stored records, data loss.
 - **architecture** — module boundaries, contracts, cross-cutting structure.
 - **mechanical** — rote, low-impact change (rename, move, format, doc). The only class
-  a recorded advisor verdict can gate for auto-completion (`advisor-gate-relax`).
+  a recorded advisor verdict (three §6 fields: Verdict · Residue · Binding) can gate for
+  auto-completion (`advisor-gate-relax`).
 
 These four can't be removed — a project only EXTENDS them.
 

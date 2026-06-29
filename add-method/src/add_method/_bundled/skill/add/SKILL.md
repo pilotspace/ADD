@@ -147,7 +147,7 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
 - **Risk-class of a task** — declare `sensitivity:` in the TASK header (base `security|data|architecture|
   mechanical`, always valid). EXTEND it with your project's domain classes in `GLOSSARY.md`'s `## Sensitivity
   classes` section; freeze/status/check read base ∪ project. The AI keeps the domain vocabulary current —
-  `sensitivity.md`. Security is a human floor in every tier; only `mechanical` is advisor-gatable.
+  `sensitivity.md`. Security is a human floor in every tier; only `mechanical` is advisor-gatable — see `advisor-gate-relax` in `run.md` for the `risk: high` + `mechanical` auto-completion pathway.
 
 ## Non-negotiable rules (from the method)
 

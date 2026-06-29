@@ -8,17 +8,15 @@ engine never spawns; this is your judgment to make per step.
 
 ## When to spawn — and when not
 
-Spawn a subagent when the piece is **separable and worth the round-trip**:
+Spawn a subagent when the piece is **separable and worth the round-trip**: a broad sweep; an independent adversarial review (the `6-verify` earned-green refute-read — a fresh context, not graded by the author); a well-scoped batch with a clear return shape; or context-offload work that compresses to a small verdict.
 
-- **Broad / expensive sweep** — gather a wide map cheaply, return a compact result.
-- **Independent adversarial review** — a fresh context argues *against* your result (the
-  `6-verify` earned-green refute-read), so the check is not graded by the author.
-- **A well-scoped delegable batch** — a self-contained slice with a clear contract and return shape.
-- **Context offload** — work that would bloat your context but compresses to a small verdict.
+Do **not** spawn for narrow, cheap work (a small sweep, a two-file read, a quick edit). A spawn costs a round-trip; pay it only when the piece is big or independent enough. When in doubt, do it in-context.
 
-Do **not** spawn when the work is narrow and cheap enough to do in-context: a small sweep, a
-two-file read, a quick edit. A spawn costs a round-trip — pay it only when the piece is big or
-independent enough to earn it. When in doubt, do it in-context.
+## The 3-lens sequential checklist at verify
+
+At Verify, sweep security → concurrency → architecture in order. **Security HARD-STOP ends the checklist**; leave remaining lenses blank. Each lens returns one of: **CLEAR** · **HARD-STOP** (security only) · **RESIDUE** (concurrency or architecture).
+
+Record the result in §6 `### Advisor 3-lens verdict` using three fields: **Verdict** (PASS or HARD-STOP) · **Residue** (none or a brief summary) · **Binding** (`yes` for `sensitivity: mechanical`, so the engine can read it for `advisor-gate-relax`; `advisory` for all other sensitivity classes).
 
 ## The plan-following prompt template
 
@@ -68,13 +66,10 @@ scope still escalates.
 ## The hard rule — you delegate, you do not abdicate
 
 <constraints>
-The engine never spawns — spawning is the orchestrating agent's choice (tool-agnostic). And:
-- the subagent PROPOSES; the orchestrator RECORDS — a worker never runs add.py or writes shared
-  state (state.json, MILESTONE.md, a sibling's files): you read its verdict and record the outcome;
-- delegation never lowers a gate — a SECURITY finding still HARD-STOPs, and high-risk scope still
-  escalates to the human, whoever (or whatever tier) did the work;
-- the spawned subagent returns its confidence.md self-score; a low score is a signal to refine or
-  re-spawn, never a pass.
+The engine never spawns — spawning is the orchestrating agent's choice. And:
+- the subagent PROPOSES; the orchestrator RECORDS — a worker never runs add.py or writes shared state; you read its verdict and record the outcome;
+- delegation never lowers a gate — a SECURITY finding still HARD-STOPs, and high-risk scope still escalates to the human, whoever did the work;
+- the spawned subagent returns its confidence.md self-score; a low score signals refine or re-spawn, never a pass.
 </constraints>
 
 > Used per step: each phase guide's Advisor hook points here, so an agent spawns in the idiom of
