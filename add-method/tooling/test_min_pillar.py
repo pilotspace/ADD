@@ -103,6 +103,9 @@ LIFECYCLE = [
     ["ready"],
     ["waves"],                                 # read-only DAG schedule of the active milestone
                                                # (reads state only, never docs/; mvp is active so exit 0)
+    ["dag-plan"],                              # record-only DAG-plan snapshot of the active milestone
+                                               # (persist-dag-plan): reads state, writes the dag-plan.json
+                                               # under the milestone dir, never docs/; mvp active -> exit 0
     ["guide", "t"],
     ["report"], ["report", "mvp"],             # read-only dashboard (reads MILESTONE/TASK, not docs/)
     ["deltas"],                                # read-only: open competency deltas report

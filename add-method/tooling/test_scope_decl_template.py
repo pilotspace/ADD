@@ -66,8 +66,9 @@ EXISTING_LINES = (
 # the v16/v18 frozen tag census of TASK.md.tmpl — a NEW tag is an amendment, never a drive-by
 FROZEN_TAGS = ['action', 'after', 'alternative', 'assumptions', 'chosen', 'code',
                'cost', 'date', 'error_code', 'fields', 'link', 'must', 'name',
-               'path', 'reject', 'scenario', 'scenarios', 'test_plan',
-               'unchanged', 'why']
+               'path', 'reject', 'scenario', 'scenarios', 'sensitivity',
+               'test_plan', 'unchanged', 'why']  # +sensitivity: advisor-review-step §6
+               # Advisor 3-lens 'Binding: advisory — <sensitivity>' placeholder (frozen v1)
 
 
 def _md5(p: Path) -> str:

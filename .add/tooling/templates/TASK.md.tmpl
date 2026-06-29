@@ -108,6 +108,7 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
 Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
@@ -156,12 +157,25 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 Verdict: <EARNED | NOT-EARNED>
 By: <self | agent-id> · adversarially checked: <what was probed>
 
+### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
+> Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
+> order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
+> sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
+> The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
+Advisor: <agent-id | self>
+1. Security: <CLEAR | HARD-STOP: finding>
+2. Concurrency: <CLEAR | RESIDUE: finding>
+3. Architecture: <CLEAR | RESIDUE: finding>
+Verdict: <PASS | HARD-STOP>
+Residue: <none | summary>
+Binding: <yes — mechanical | advisory — <sensitivity>>
+
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
 Reviewed by: <name> · date: <date>
 
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. -->
+<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
 
 ---
 
