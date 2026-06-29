@@ -45,7 +45,9 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     """True iff the `header` section is PRESENT but UNFILLED — empty (no real bullet) or
     still a `<…>` template placeholder. ABSENT section -> False (grandfathered legacy);
     a filled section (>=1 real bullet, no `<…>`) -> False. Pure predicate — the shared
-    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build)."""
+    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build).
+    Angle brackets INSIDE a backtick code span are literal technical notation (`<persona>`,
+    `.add/personas/<slug>.md`), not a fill placeholder — only a BARE <…> counts as unfilled."""
     body, in_sec, present = [], False, False
     for ln in md_text.splitlines():
         if ln.startswith(header):
@@ -62,7 +64,8 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     text = "\n".join(body).strip()
     if not text:
         return True                         # present but empty
-    return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
+    no_code = re.sub(r"`[^`\n]*`", "", text)     # drop code spans — backtick <…> is content
+    return bool(re.search(r"<[^>\n]+>", no_code))  # a BARE <…> placeholder remains
 
 
 def _task_done(t: dict) -> bool:
