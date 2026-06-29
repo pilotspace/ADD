@@ -171,7 +171,8 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
 Scope (may touch): `add-method/docs/` `add-method/src/add_method/_bundled/docs/` `add-method/skill/add/` `add-method/src/add_method/_bundled/skill/add/` `.claude/skills/add/` `add-method/../appendix-d-worked-example.md` `add-method/../17-components.md` `add-method/../appendix-c-glossary.md`   <book = 4 trees (canon, bundle, repo-root mirror via the add-method/.. climb; .add/docs is engine-excluded) · skill = 3 trees (canon, .claude, bundle)>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced>
+Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 Strategy actually used: as planned, with one unplanned step the lean fence forced. Edited the 4 canonical files (Appendix D + ch.17 + glossary + skill beat) then propagated to mirrors. The skill-beat additions (verify-surfacing + 2 new codes) pushed the reference lean pool 418 B over its frozen floor → rather than rebaseline the budget, RECLAIMED the bytes from the same guide's prose (terser rewrite of components.md, 3013→2583 B) per the standing "reclaim, never weaken the budget" rule. Verified semantics against the engine (doc-truth), not just the strings.
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
