@@ -12,7 +12,7 @@ python3 .add/tooling/add.py init --name "<inferred from repo/dir>" --stage <prot
 ```
 
 - `--await-lock` seeds an *unlocked* setup — the engine refuses crossing into build or calling `gate` until you `lock`. A plain `init` is grandfathered-locked; its closing `lock` would error `already_locked`.
-- name + stage are **your judgment** (read from the dir name, README, manifests): throwaway → `prototype`, risky slice → `poc`, narrow-but-real → `mvp`, full rigor → `production`.
+- name + stage are **your judgment**: throwaway → `prototype`, risky slice → `poc`, narrow-but-real → `mvp`, full rigor → `production`.
 
 `init` prints one of two things — **that is your branch**:
 - `brownfield:` → existing code (go to **2a**);
@@ -69,7 +69,7 @@ Before the lock, surface the **run mode** — **autonomy** (`add.py autonomy`, r
 | **sequential · manual/conservative** | contract freeze **and** every Verify | one task at a time; safest, slowest |
 | **parallel · auto** *(proposed default)* | contract freeze **only** — Verify auto-PASSes on complete evidence | `add.py waves` schedules independent tasks; builds overlap behind frozen contracts |
 
-**Propose `parallel + auto`, ask the human to confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project`). Record the chosen mode in **`PROJECT.md` Key Decisions**.
+**Propose `parallel + auto`, ask the human to confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record the chosen mode in **`PROJECT.md` Key Decisions**.
 
 The irreducible floor: **one human approval per contract** fires no matter the mode.
 
