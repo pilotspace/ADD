@@ -156,7 +156,7 @@ def _render_template(name: str, **subs: str) -> str:
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
-    _task_done,
+    _task_done, _persona_missing, _persona_slug_valid,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -2649,6 +2649,27 @@ def cmd_check(args: argparse.Namespace) -> None:
                                      f"§5 Scope: {' · '.join(_out[:3])} "
                                      "(scope_violation pending) — the verify gate "
                                      "will refuse it"))
+
+    # persona-setup: validate each persona living doc (.add/personas/*.md) presence-based
+    # (measure-not-block) — a missing required key/section is a WARN naming the slug, never a
+    # hard failure; a conformant persona is an INFO affirmation. NO-EXEC: pure read + predicate.
+    personas_dir = root / "personas"
+    if personas_dir.is_dir():
+        for pf in sorted(personas_dir.glob("*.md")):
+            slug = pf.stem
+            if not _persona_slug_valid(slug):
+                warnings.append((f"persona '{slug}'",
+                                 "persona_slug_invalid — rename to alphanumeric with - or _ only"))
+                continue
+            try:
+                missing = _persona_missing(pf.read_text(encoding="utf-8"))
+            except OSError:
+                missing = ["(unreadable)"]
+            if missing:
+                warnings.append((f"persona '{slug}'",
+                                 "persona_schema_incomplete: missing " + ", ".join(missing)))
+            else:
+                infos.append((f"persona '{slug}'", "schema-conformant"))
 
     # drift: a done milestone must have no unfinished tasks
     for mslug, m in milestones.items():

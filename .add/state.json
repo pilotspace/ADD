@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "advisor-gate-relax",
+  "active_task": "persona-setup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2734,10 +2734,63 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-setup": {
+      "title": "Seed project requirements personas at setup",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T13:10:00+00:00",
+      "updated": "2026-06-29T15:12:05+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T14:34:00+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d9e08b09ea37a76de6fd1f86cbe20f88",
+        "tests": {
+          "add-method/tooling/test_persona_setup.py": "9769c97ba3cf11ec6eefd1520c94898a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/add_engine/predicates.py",
+          "add-method/tooling/add.py",
+          "add-method/tooling/templates/personas/_template.md.tmpl",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_persona_setup.py",
+          ".add/tooling/add_engine/constants.py",
+          ".add/tooling/add_engine/predicates.py",
+          ".add/tooling/add.py",
+          ".add/tooling/templates/personas/_template.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/predicates.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/templates/personas/_template.md.tmpl",
+          "add-method/skill/add/phases/0-setup.md",
+          ".claude/skills/add/phases/0-setup.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md"
+        ],
+        "snapshot_md5": "656496f53a91e389d2cbf649e0001758"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T11:37:12+00:00",
+  "updated": "2026-06-29T15:12:05+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2941,9 +2994,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-learning-loop": {
+      "title": "Persona learning loop",
+      "goal": "Let the ADD loop learn project-fit personas from the agency-agents library (a teacher, not a runtime dependency): the AI authors ADD-native personas best for this project, applies them to UDD/advisor/build, and grows them via the observe->fold self-improve loop, with the engine staying NO-EXEC and the build path reading only local persona files.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-29T12:57:33+00:00",
+      "updated": "2026-06-29T13:09:53+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-29T13:09:53+00:00",
+      "confirmed_by": "Tin Dang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "advisor-gated-autonomy",
+  "active_milestone": "persona-learning-loop",
   "archived": [
     {
       "slug": "v5",
@@ -3551,11 +3621,13 @@
     }
   ],
   "active_milestones": [
-    "advisor-gated-autonomy"
+    "advisor-gated-autonomy",
+    "persona-learning-loop"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "advisor-gated-autonomy": "advisor-gate-relax"
+    "advisor-gated-autonomy": "advisor-gate-relax",
+    "persona-learning-loop": "persona-setup"
   },
   "todos": [
     {

@@ -22,6 +22,8 @@ __all__ = [
     "PHASE_GUIDE",
     "PHASE_OWNER",
     "SETUP_FILES",
+    "PERSONA_FRONTMATTER_KEYS",
+    "PERSONA_REQUIRED_SECTIONS",
     "GUIDELINE_FILES",
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
@@ -88,7 +90,14 @@ PHASE_OWNER = {
     "specify": "human", "scenarios": "human", "contract": "seam",
     "tests": "ai", "build": "ai", "verify": "human", "observe": "ai", "done": "human",
 }
-SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md")
+SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
+
+# persona-setup: a PERSONA living doc (`.add/personas/<slug>.md`) is a frozen-schema file
+# distilled from a teacher source (agency-agents) to its critical-rules + default-requirement +
+# measurable success-metrics. The schema is presence-based (these keys/sections must exist);
+# content quality is the AI's authoring concern, not the engine gate. NO-EXEC: validation is pure.
+PERSONA_FRONTMATTER_KEYS = ("name", "vibe")
+PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Requirement", "## Success Metrics")
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts
 # never reach git. Bare-filename patterns match at any depth under .add/ (tasks/,

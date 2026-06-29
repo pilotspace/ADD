@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import re
 
-from add_engine.constants import PHASE_OWNER
+from add_engine.constants import (
+    PHASE_OWNER, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+)
 from add_engine.io_state import _die
 
 
@@ -66,6 +68,32 @@ def _section_unfilled(md_text: str, header: str) -> bool:
         return True                         # present but empty
     no_code = re.sub(r"`[^`\n]*`", "", text)     # drop code spans — backtick <…> is content
     return bool(re.search(r"<[^>\n]+>", no_code))  # a BARE <…> placeholder remains
+
+
+def _persona_missing(md_text: str) -> list[str]:
+    """The required frontmatter keys + section headers ABSENT from a persona file
+    (`.add/personas/<slug>.md`). `[]` == schema-conformant. Presence-based: a section
+    counts as present iff its `## <Title>` header line appears; a frontmatter key counts
+    iff a `^<key>:` line appears inside the leading `---`-fenced block. Content QUALITY is
+    the AI's authoring concern, not this gate (measure-not-block). PURE; NO-EXEC — no file IO,
+    no network, no process launch. The single source of truth is constants.PERSONA_* so the
+    schema and its validator never drift."""
+    missing: list[str] = []
+    fm = re.match(r"\s*---\s*\n(.*?)\n---\s*\n", md_text, re.S)
+    fm_body = fm.group(1) if fm else ""
+    for key in PERSONA_FRONTMATTER_KEYS:
+        if not re.search(rf"(?m)^\s*{re.escape(key)}\s*:", fm_body):
+            missing.append(key)
+    for section in PERSONA_REQUIRED_SECTIONS:
+        if not re.search(rf"(?m)^{re.escape(section)}\s*$", md_text):
+            missing.append(section)
+    return missing
+
+
+def _persona_slug_valid(slug: str) -> bool:
+    """A persona file slug is valid iff non-empty and alphanumeric with `-`/`_` only
+    (mirrors new-task's slug rule). PURE; NO-EXEC."""
+    return bool(slug) and slug.replace("-", "").replace("_", "").isalnum()
 
 
 def _task_done(t: dict) -> bool:
