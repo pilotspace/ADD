@@ -39,6 +39,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
     _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
+    _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
 )
 
 # --- terminal-render primitives (moved to add_engine/render.py) -------------
@@ -699,6 +700,13 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not _flag_well_formed(raw3):
         _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
              f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # the human declares the risk-CLASS at freeze (risk-sensitivity-taxonomy): a present-but-
+    # unknown sensitivity token is refused here (validate-then-write — nothing is written);
+    # an absent token is grandfathered (allowed), a valid member proceeds. The engine never
+    # classifies — it only validates the human's declaration.
+    if _task_sensitivity(_task_header(root, slug)) == "?":
+        _die(f"sensitivity_invalid: {slug} declares an unknown sensitivity — use one of "
+             f"{', '.join(_SENSITIVITY_VALUES)} (or omit the line)")
     # --- write ---
     ver = _next_freeze_version(state, slug)
     who = args.by or identity._actor_stamp(state)["name"]
@@ -957,6 +965,22 @@ def cmd_advance(args: argparse.Namespace) -> None:
 # "risk: high" / "autonomy: <x>" is never mistaken for a declaration (a title substring must
 # not be able to fool the guard either way).
 _RISK_HIGH_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*high\b", re.MULTILINE)
+
+# sensitivity taxonomy (risk-sensitivity-taxonomy): the risk-CLASS the human declares in the
+# TASK header at freeze — same anchored declaration grammar as risk:/autonomy: (line-start or
+# `·`, value stops at whitespace/`<`/`#`/`|`), so a title/prose substring is never a declaration.
+_SENSITIVITY_RE = re.compile(r"(?:^|·)[ \t]*sensitivity:[ \t]*([^\s<#|]+)", re.MULTILINE)
+
+def _task_sensitivity(hdr: str):
+    """The declared sensitivity from a TASK.md header region (HTML comments already stripped by
+    _task_header). A member of _SENSITIVITY_VALUES, None when no `sensitivity:` line is present,
+    or "?" when a REAL token outside the enum was written. PURE — the engine validates a
+    human-declared token, it never infers it (mirrors _autonomy_level)."""
+    m = _SENSITIVITY_RE.search(hdr)
+    if not m:
+        return None
+    tok = m.group(1).strip().lower()
+    return tok if tok in _SENSITIVITY_VALUES else "?"
 
 # the explicit 3-mode autonomy dial (task explicit-autonomy-dial): an ordered ladder
 # manual < conservative < auto, declared as a per-task `autonomy:` header token.
@@ -1628,6 +1652,10 @@ def cmd_status(args: argparse.Namespace) -> None:
     # reads the throttle every session; "unset" when no explicit `autonomy:` line is present.
     if active and active in tasks:
         print(f"autonomy: {_autonomy_level(_task_header(root, active)) or 'unset'}")
+        # the human-declared risk-CLASS (risk-sensitivity-taxonomy): present-only when a valid
+        # sensitivity is declared; "unset" cue when absent; "?" surfaces a typo to fix at freeze.
+        _sens = _task_sensitivity(_task_header(root, active))
+        print(f"sensitivity: {('unset' if _sens is None else _sens)}")
         # owner/assignee of the active task (ownership-assignment) — present-only, never a
         # placeholder; an unassigned active task adds no line (additive-cue convention).
         _own = _fmt_ownership(tasks[active])
@@ -5396,24 +5424,31 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
       shallow[]          = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an
                            ABSENT block grandfathers a legacy task — never retro-flagged);
       risk_unset[]       = the header carries NO `risk:` token (an undeclared risk level at verify);
+      sensitivity_unset[]= the header carries NO valid `sensitivity:` token (risk-sensitivity-taxonomy);
       refute_unrecorded[]= §6 '### Refute-read verdict' block present-but-unfilled (self-grading-
                            refute-record, M4) — the earned-green verdict the AI must record under
                            `auto`; ABSENT block grandfathers exactly like shallow. MEASURE-NOT-BLOCK:
                            never auto-blocks a gate, only surfaced here for review + a human spot-audit.
     Honest visibility for three verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
     TASK.md + state only, writes nothing."""
-    shallow, risk_unset, refute_unrecorded = [], [], []
+    shallow, risk_unset, refute_unrecorded, sensitivity_unset = [], [], [], []
     for slug in sorted(state.get("tasks") or {}):
         if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
             continue
         body6 = _raw_phase_bodies(root, slug).get(6, "")
+        hdr = _task_header(root, slug)
         if _section_unfilled(body6, "### Deep checks"):
             shallow.append(slug)
         if _section_unfilled(body6, "### Refute-read verdict"):
             refute_unrecorded.append(slug)
-        if not _RISK_ANY_RE.search(_task_header(root, slug)):
+        if not _RISK_ANY_RE.search(hdr):
             risk_unset.append(slug)
-    return {"shallow": shallow, "risk_unset": risk_unset, "refute_unrecorded": refute_unrecorded}
+        # sensitivity_unset (risk-sensitivity-taxonomy): a verify-reached task with no
+        # human-declared sensitivity — MEASURE-NOT-BLOCK, same class as risk_unset.
+        if _task_sensitivity(hdr) is None:
+            sensitivity_unset.append(slug)
+    return {"shallow": shallow, "risk_unset": risk_unset, "refute_unrecorded": refute_unrecorded,
+            "sensitivity_unset": sensitivity_unset}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -5446,8 +5481,12 @@ def cmd_audit(args: argparse.Namespace) -> None:
             ru = glints["refute_unrecorded"]
             print(f"audit: refute_unrecorded — {len(ru)} task(s): {', '.join(ru)} "
                   f"— record the earned-green refute verdict (§6); a spot-audit is the backstop")
+        if glints["sensitivity_unset"]:
+            su = glints["sensitivity_unset"]
+            print(f"audit: sensitivity_unset — {len(su)} task(s) reached verify with no "
+                  f"sensitivity: declaration: {', '.join(su)}")
         if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
-                and not glints["refute_unrecorded"]:
+                and not glints["refute_unrecorded"] and not glints["sensitivity_unset"]:
             print(f"audit: clean ({checked} tasks checked)")
     # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:

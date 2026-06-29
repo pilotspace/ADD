@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-exclude-claude",
+  "active_task": "risk-sensitivity-taxonomy",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2283,12 +2283,42 @@
     },
     "risk-sensitivity-taxonomy": {
       "title": "Risk sensitivity taxonomy in the TASK header",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "advisor-gated-autonomy",
       "depends_on": [],
       "created": "2026-06-29T03:04:46+00:00",
-      "updated": "2026-06-29T03:04:46+00:00"
+      "updated": "2026-06-29T04:24:56+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T04:10:03+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5005318bb9bb5cd281da8f2a86c6e465",
+        "tests": {
+          "add-method/tooling/test_sensitivity_taxonomy.py": "ea0553ee9a92bc5f04fc0271eafe8408"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "d126c00acd86a4e95b3c95d89c1761f3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "persist-dag-plan": {
       "title": "Persist a snapshot of the computed task DAG plan",
@@ -2352,7 +2382,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T04:02:19+00:00",
+  "updated": "2026-06-29T04:24:56+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3165,7 +3195,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "advisor-gated-autonomy": "scope-exclude-claude"
+    "advisor-gated-autonomy": "risk-sensitivity-taxonomy"
   },
   "todos": [
     {
