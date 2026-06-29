@@ -12,12 +12,11 @@ AI Workflow Methodology - AI Tool - MIT
 
 - ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent builds the rest.
 - 🔬 **Proof, not promises** — verify on observed behavior and pre-declared build-expectations, not code-reading.
-- 🔒 **Security never gets waved through** — any security finding is a HARD-STOP; release gates can't be `--force`d.
-- 🚀 **You decide how much rope** — a per-task autonomy dial; a `risk: high` task is fail-closed until trust is lowered.
+- 🔒 **Security never gets waved through** — any security finding is a HARD-STOP; **Human in-loop**
 - 🚀 **Prototype to production** — task → milestone → graduate (analytics-gated) → recorded release, one method.
 - 🚀 **Smarter as you go** — competency deltas fold into a living, compacting foundation carried across milestones.
 - 🚀 **See it before you build it** — a UDD wireframe + zero-dependency HTML mock, approved before any code.
-- 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves (`add.py waves`).
+- 👥 **Built for teams** — support git-native multi-user, N parallel milestones, DAG-scheduled waves.
 - 🧩 **One slice across many components** — Support monorepo or multi-repo in teams
 - 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
@@ -33,17 +32,16 @@ Anyone who builds software with AI in the loop: engineers, architects, testers, 
 
 [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
 
-![ADD Flow](add-flow.png)
 
 ---
 
-## 🌱 How the work grows
+## 🚀 How the ADD work grows
 
 **One task · eight steps · one file.** Every feature is a single **`TASK.md`** that fills in section by section as it moves around the loop — each step produces exactly one durable artifact. The contract freeze is the *one* human approval; the agent drives the rest. (The artifacts are what you keep — the code is disposable.)
 
 ![How one TASK.md grows — eight steps circle a single TASK.md file; each step writes its own section, from §0 grounding map through §3 frozen contract (the one approval) to §7 deltas; a red⇄green engine runs between Tests and Build, and Observe loops back to the next Specify](add-task-growth-wheel.png)
 
-**Tasks compound into milestones; milestones grow the project.** A milestone decomposes breadth-first into a task DAG; each task runs just-in-time and emits deltas; the milestone is **goal-gated** until its exit criteria are met. At close, lessons **fold** into a living foundation (`PROJECT.md` · `CONVENTIONS.md`) that grounds the next milestone — so the project compounds, loop after loop.
+**Tasks compound into milestones; milestones grow the project.**
 
 ![MILESTONE.md and TASK.md lifecycle — a milestone decomposes breadth-first into a task DAG of TASK.md files run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons into PROJECT.md and CONVENTIONS.md, which loop back to ground the next milestone](add-milestone-task-lifecycle.png)
 
@@ -128,43 +126,4 @@ Releases:
 
 ---
 
-## 📚 Deepdive
-
-**Part I — Foundations**
-- [00 · The shift: why AIDD exists](./00-introduction.md)
-- [01 · Core principles](./01-principles.md)
-- [02 · The flow, and what is disposable](./02-the-flow.md)
-
-**Part II — The method, step by step**
-- [03 · Step 1 — Specify](./03-step-1-specify.md)
-- [04 · Step 2 — Scenarios](./04-step-2-scenarios.md)
-- [05 · Step 3 — Contract](./05-step-3-contract.md)
-- [06 · Step 4 — Tests](./06-step-4-tests.md)
-- [07 · Step 5 — Build](./07-step-5-build.md)
-- [08 · Step 6 — Verify](./08-step-6-verify.md)
-- [09 · The loop — observe and learn](./09-the-loop.md)
-
-**Part III — Operating the method**
-- [10 · Project setup and stages](./10-setup-and-stages.md)
-- [11 · Governance](./11-governance.md)
-- [12 · Roles and responsibilities](./12-roles.md)
-- [13 · Adoption and onboarding](./13-adoption.md)
-- [14 · The foundation: project context across milestones](./14-foundation.md)
-
-**Lineage**
-- [15 · Foundations & Lineage](./15-foundations-and-lineage.md)
-
-**Releasing**
-- [16 · Releasing](./16-releasing.md)
-
-**Components**
-- [17 · Components — monorepo and multi-repo](./17-components.md)
-
-**Part IV — Reference**
-- [Appendix A · Templates](./appendix-a-templates.md)
-- [Appendix B · Prompt library](./appendix-b-prompts.md)
-- [Appendix C · Glossary](./appendix-c-glossary.md)
-- [Appendix D · The worked example, end to end](./appendix-d-worked-example.md)
-- [Appendix E · Checklists](./appendix-e-checklists.md)
-- [Appendix F · Document requirements matrix (Project → Milestone → Task)](./appendix-f-requirements-matrix.md)
-- [Appendix G · References & lineage](./appendix-g-references.md)
+## 📚 Deepdive into ADD Method - [https://pilotspace.github.io/ADD/](https://pilotspace.github.io/ADD/)
