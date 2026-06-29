@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "sensitivity-glossary",
+  "active_task": "advisor-gate-relax",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2322,23 +2322,83 @@
     },
     "persist-dag-plan": {
       "title": "Persist a snapshot of the computed task DAG plan",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "advisor-gated-autonomy",
       "depends_on": [],
       "created": "2026-06-29T03:12:55+00:00",
-      "updated": "2026-06-29T03:12:55+00:00"
+      "updated": "2026-06-29T06:48:49+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-29T06:10:19+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "70063c1b725988046db46c48f5eefba2",
+        "tests": {
+          "add-method/tooling/test_persist_dag_plan.py": "535e5acaf90e3ef8f0f2ad018aea97c9"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "50cfc2fdf3c3726c4c79f00da22b9541"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "setup-run-mode-prompt": {
       "title": "Setup phase asks the human to choose run mode",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "advisor-gated-autonomy",
       "depends_on": [
         "persist-run-mode"
       ],
       "created": "2026-06-29T03:12:56+00:00",
-      "updated": "2026-06-29T03:12:56+00:00"
+      "updated": "2026-06-29T07:20:58+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T06:04:28+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6a3459b034dc137b128bfbec308a7883",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/"
+        ],
+        "snapshot_md5": "f21a900d3cda06d61f4dd94aa10216c9"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "scope-exclude-claude": {
       "title": "Prune .claude from the scope walk",
@@ -2422,10 +2482,262 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "step-spawn-hint": {
+      "title": "Per-phase advisory subagent-spawn hint in status/guide",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "persist-run-mode",
+        "risk-sensitivity-taxonomy"
+      ],
+      "created": "2026-06-29T05:58:33+00:00",
+      "updated": "2026-06-29T07:01:22+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T06:02:28+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "940515922d9a1ba1cc3aa59cf90cb4b9",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "d9cfe4a357a907aa6336299c5cd96a82"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "mirror-resync": {
+      "title": "Propagate canonical skill/template to stale mirror trees (123258c fallout)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-29T06:28:08+00:00",
+      "updated": "2026-06-29T06:35:40+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T06:31:27+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "193740b9c191811daafdab322fda5010",
+        "tests": {
+          ".add/tasks/mirror-resync/tests/test_mirror_parity.py": "650a228b09d6485f6a68ca25a283a92d"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".claude/skills/",
+          ".add/tooling/templates/"
+        ],
+        "snapshot_md5": "cd28d6d4a29407465d27ae115fe3db6f"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "advisor-review-step": {
+      "title": "advisor-review-step",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "risk-sensitivity-taxonomy"
+      ],
+      "created": "2026-06-29T07:24:02+00:00",
+      "updated": "2026-06-29T08:47:41+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T08:07:12+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6cdacab6942d4950cd9e4b030a9a300e",
+        "tests": {
+          "add-method/tooling/test_advisor_review_step.py": "6700c1d9eb645ad566c74c09a84493d8"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "cf3ec2be4e3cbb4c47ca905c72fa5ee6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "advisor-verdict-audit": {
+      "title": "advisor-verdict-audit",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "advisor-review-step"
+      ],
+      "created": "2026-06-29T07:24:02+00:00",
+      "updated": "2026-06-29T09:23:52+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-29T09:23:19+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "94f190db69c85fb2cba0dca98acb5d1a",
+        "tests": {
+          "add-method/tooling/test_advisor_verdict_audit.py": "d84f7985b0992cdf9589c73776460460"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "d86365928b1bcc6e7853ce0fdffe963d"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "advisor-gate-relax": {
+      "title": "advisor-gate-relax",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "advisor-verdict-audit",
+        "risk-sensitivity-taxonomy"
+      ],
+      "created": "2026-06-29T07:24:02+00:00",
+      "updated": "2026-06-29T10:01:27+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T08:07:13+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7252598e1cba251a1386b1d126be6507",
+        "tests": {
+          "add-method/tooling/test_advisor_gate_relax.py": "970d88b2863c8447b20f96681e123f91"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "f00258a21588708c9208664e20679cb7"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "docs-align": {
+      "title": "docs-align",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "advisor-gated-autonomy",
+      "depends_on": [
+        "advisor-gate-relax",
+        "step-spawn-hint"
+      ],
+      "created": "2026-06-29T07:24:02+00:00",
+      "updated": "2026-06-29T11:31:48+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T08:08:10+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "320dbd3982e6ec803d9f8e3adc0354f6",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/6-verify.md",
+          "add-method/skill/add/advisor.md",
+          "add-method/skill/add/run.md",
+          "add-method/skill/add/sensitivity.md",
+          "add-method/skill/add/SKILL.md",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/GLOSSARY.md",
+          "add-method/tooling/templates/GLOSSARY.md.tmpl",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_docs_align.py",
+          "add-method/src/add_method/_bundled/skill/add/",
+          ".claude/skills/add/"
+        ],
+        "snapshot_md5": "b6a89d25ebdb2991334dea4d6731fd84"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T05:07:33+00:00",
+  "updated": "2026-06-29T11:37:12+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2612,14 +2924,19 @@
       "title": "Advisor-Gated Autonomy",
       "goal": "Make auto+parallel a first-class, persisted, advisor-guarded run mode so high-speed builds stay safe without a human on every step",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-06-29T03:00:09+00:00",
-      "updated": "2026-06-29T03:04:27+00:00",
+      "updated": "2026-06-29T11:37:12+00:00",
       "confirmed": true,
       "confirmed_at": "2026-06-29T03:04:27+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
@@ -3238,7 +3555,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "advisor-gated-autonomy": "sensitivity-glossary"
+    "advisor-gated-autonomy": "advisor-gate-relax"
   },
   "todos": [
     {

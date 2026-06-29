@@ -40,31 +40,41 @@ Out: perspective-diverse advisor PANEL (single advisor only this milestone) · t
 - [ ] docs-align                depends-on: advisor-gate-relax, step-spawn-hint      — glossary + book chapter on risk-tiered advisor-gated autonomy + the new `run_mode`/`sensitivity` header fields + a SKILL.md pointer.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `add.py status` shows the persisted run_mode (autonomy + streams posture), with the streams posture read from its persisted home (not prose-only)   (← persist-run-mode)
-- [ ] a task header declares `sensitivity:`; status/check surface it; an invalid value is rejected                  (← risk-sensitivity-taxonomy)
-- [ ] a persisted DAG-plan snapshot exists and `add.py` surfaces it; changing a `depends_on` edge marks the snapshot stale vs the live edges   (← persist-dag-plan)
-- [ ] the setup phase asks the human to choose run mode (auto+parallel vs conservative) and persists the answer; non-interactive setup stays byte-identical to today   (← setup-run-mode-prompt)
-- [ ] every auto-PASS records a single-advisor 3-lens verdict in §6; on mechanical-high-risk it gates, elsewhere it is advisory   (← advisor-review-step)
-- [ ] `add.py status`/`guide` prints a per-phase spawn hint (idiom + tier) for the active phase, and nothing where delegation doesn't fit (e.g. contract)   (← step-spawn-hint)
-- [ ] `add.py audit` flags a missing advisor verdict, an author-reviewed verdict, and a mechanical task with advisor-found residue — measure only, no block   (← advisor-verdict-audit)
-- [ ] a `risk:high` + `sensitivity:mechanical` task with a recorded advisor PASS + no residue auto-completes; a `sensitivity:security` task (or any residue) still refuses/escalates   (← advisor-gate-relax)
-- [ ] glossary + book + headers + SKILL.md document risk-tiered advisor-gated autonomy and the new header fields   (← docs-align)
+- [x] `add.py status` shows the persisted run_mode (autonomy + streams posture), with the streams posture read from its persisted home (not prose-only)   (← persist-run-mode)   (verify: `add.py status` prints `run mode: parallel + auto`)
+- [x] a task header declares `sensitivity:`; status/check surface it; an invalid value is rejected                  (← risk-sensitivity-taxonomy)   (verify: test_sensitivity_taxonomy)
+- [x] a persisted DAG-plan snapshot exists and `add.py` surfaces it; changing a `depends_on` edge marks the snapshot stale vs the live edges   (← persist-dag-plan)   (verify: test_persist_dag_plan)
+- [x] the setup phase asks the human to choose run mode (auto+parallel vs conservative) and persists the answer; non-interactive setup stays byte-identical to today   (← setup-run-mode-prompt)   (verify: test_setup_run_mode)
+- [x] every auto-PASS records a single-advisor 3-lens verdict in §6; on mechanical-high-risk it gates, elsewhere it is advisory   (← advisor-review-step)   (verify: test_advisor_review_step)
+- [x] `add.py status`/`guide` prints a per-phase spawn hint (idiom + tier) for the active phase, and nothing where delegation doesn't fit (e.g. contract)   (← step-spawn-hint)   (verify: test_step_spawn_hint)
+- [x] `add.py audit` flags a missing advisor verdict, an author-reviewed verdict, and a mechanical task with advisor-found residue — measure only, no block   (← advisor-verdict-audit)   (verify: test_advisor_verdict_audit)
+- [x] a `risk:high` + `sensitivity:mechanical` task with a recorded advisor PASS + no residue auto-completes; a `sensitivity:security` task (or any residue) still refuses/escalates   (← advisor-gate-relax)   (verify: test_advisor_gate_relax)
+- [x] glossary + book + headers + SKILL.md document risk-tiered advisor-gated autonomy and the new header fields   (← docs-align)   (verify: test_docs_align)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : add.py — `streams` cmd + `_project_streams` (run_mode persist) · `sensitivity:` enum + parser/validator + project-extensible `_project_sensitivity_values` · persisted DAG-plan snapshot + freshness check · `advisor_verdict_unrecorded` / `advisor_reviewer_is_author` / `advisor_residue_on_mechanical_mis_tier` audit glints (measure-not-block) · `advisor-gate-relax` predicate (`_advisor_slice`/`_advisor_verdict_is_pass`/`_advisor_no_residue`) relaxing `unguarded_high_risk_auto` ONLY for mechanical+PASS+no-residue (security/non-mechanical never). state.json: run_mode + dag-plan snapshot. templates: TASK.md.tmpl `### Advisor 3-lens verdict` §6 block + `sensitivity:` header; GLOSSARY.md.tmpl `## Sensitivity classes` + 4 advisor terms. ENGINE_MD5→d8ab19ea, ENGINE_PKG unchanged.
+- skill   : new guide `sensitivity.md` · 6-verify.md Advisor 3-lens recording · advisor.md "3-lens sequential checklist at verify" · run.md advisor-gate-relax pathway + advisor_verdict_unrecorded · SKILL.md pointers · setup run-mode prompt + step-spawn hint. All 3 trees byte-identical; lean rebaselined (ratios kept).
+- book    : `.add/GLOSSARY.md` + template gained the 4 advisor terms (advisor-gate-relax · advisor 3-lens verdict · binding verdict · advisory verdict); no new book chapter (folded into existing prose per the v1 least-sure flag — held).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- persist-run-mode          : gate=PASS · `add.py status` → `run mode: parallel + auto` · residue=none
+- risk-sensitivity-taxonomy : gate=PASS · test_sensitivity_taxonomy green · residue=none
+- sensitivity-glossary      : gate=PASS · test_sensitivity_glossary green · residue=none
+- persist-dag-plan          : gate=PASS · test_persist_dag_plan green · residue=none
+- setup-run-mode-prompt     : gate=PASS · test_setup_run_mode green · residue=none
+- advisor-review-step       : gate=PASS · test_advisor_review_step green · residue=none
+- step-spawn-hint           : gate=PASS · test_step_spawn_hint green · residue=none
+- advisor-verdict-audit     : gate=PASS · test_advisor_verdict_audit green · §3 re-frozen v2 · residue=none
+- advisor-gate-relax        : gate=PASS · test_advisor_gate_relax green · security refute-read EARNED · residue=none (dual-block advisory note in §6)
+- docs-align                : gate=PASS · test_docs_align (8) green + 8 restored prose-guards green · §3 re-frozen v2 · residue=none
+- WHOLE SUITE: 2415/0 green.
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — all 9 criteria checked, each citing a green verifier (test or `add.py status`)
+- goal: Make auto+parallel a first-class, persisted, advisor-guarded run mode so high-speed builds stay safe without a human on every step — PROVEN by advisor-gate-relax: a `risk:high`+`sensitivity:mechanical` task with a recorded advisor PASS + no residue now auto-completes, while security and every non-mechanical class still escalate to a human (test_advisor_gate_relax green; dogfooded — the whole milestone built conservative/human-gated).
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
