@@ -34,10 +34,12 @@ class ChapterTest(unittest.TestCase):
         self.assertRegex(body.lower(), r"(hold|held|ordered|downstream)")
 
     def test_chapter_registered_in_nav_and_toc(self):
+        # The published-site navigation (mkdocs.yml) is the authoritative book TOC — a chapter
+        # listed there is not orphaned. The repo-root README was redesigned into a marketing
+        # landing page (no longer a chapter index), so the no-orphan guard reads mkdocs nav, not
+        # that README. Cross-surface byte-identity of the book itself is guarded by test_book_parity.
         self.assertIn("17-components.md", MKDOCS.read_text(encoding="utf-8"),
-                      "mkdocs.yml nav must list the new chapter")
-        self.assertIn("17-components.md", README.read_text(encoding="utf-8"),
-                      "README ToC must link the new chapter")
+                      "mkdocs.yml nav must list the new chapter (orphan_chapter)")
 
 
 class GlossaryTest(unittest.TestCase):

@@ -161,11 +161,15 @@ class FoundationsChapterTest(unittest.TestCase):
 
     # 7 — wired into the book TOC (orphan_chapter)
     def test_chapter_in_toc(self):
+        # The book's own index (docs/README.md) is the chapter TOC, mirrored across the tracked
+        # book trees (canonical + bundle). The repo-root README is a marketing landing page, not a
+        # chapter index, so it is no longer a TOC surface here; the gitignored dogfood copy is
+        # checked opportunistically when present.
         toc_copies = {k: p for k, p in _copies_of(README).items()
-                      if k in ("root", "canonical", "dogfood")}
+                      if k in ("canonical", "bundle", "dogfood")}
         checked = 0
         for name, p in toc_copies.items():
-            if name in ("root", "canonical"):
+            if name in ("canonical", "bundle"):
                 self.assertTrue(p.exists(), f"TOC index missing: {p}")
             if not p.exists():
                 continue
