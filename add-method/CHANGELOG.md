@@ -6,6 +6,32 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+### Added (advisor-gated-autonomy — earn autonomy through instrumentation, not by removing the gate)
+- **A persisted, advisor-guarded `auto + parallel` run mode** so high-speed builds stay safe
+  without a human on every step. The whole milestone was dogfooded — every task built
+  `conservative` / human-gated, because you cannot auto-gate the feature that relaxes auto-gating.
+- **`sensitivity:` taxonomy.** A human-declared TASK-header risk-CLASS (base
+  `security · data · architecture · mechanical`, project-extensible via `GLOSSARY.md`) — ADD now
+  reasons about *what kind* of risk, not just *how much* (`risk:`). Validated at freeze; the engine
+  never classifies.
+- **Persisted run mode + setup choice.** The `auto + parallel` posture is persisted and chosen at
+  setup; `add.py status` shows `run mode: parallel + auto`. The non-interactive default stays
+  byte-identical.
+- **Persisted DAG-plan snapshot.** An auditable snapshot of the computed plan (waves · critical path ·
+  tiers) with a freshness check vs the live `depends_on` edges (edges stay the source of truth).
+- **Advisor 3-lens verdict.** The refute-read becomes a tier-aware single advisor running a sequential
+  security → concurrency → architecture sweep recorded in §6 (Verdict · Residue · Binding) — the
+  non-functional review is now structured and auditable; `advisor_verdict_unrecorded` measure-not-block lint.
+- **Advisor coverage audits (measure, never block).** `add.py audit` flags a missing advisor verdict,
+  a self-reviewed verdict (reviewer = author), and a mechanical task with advisor-found residue (mis-tier).
+- **`advisor-gate-relax` — the narrowest safe relaxation.** A `risk: high` + `sensitivity: mechanical`
+  task with a recorded `Verdict: PASS` + `Residue: none` auto-completes via `gate PASS` without a lowered
+  autonomy level. **Security and every non-mechanical class are never relaxed** — the human-in-the-loop
+  floor is untouched.
+- **Per-phase spawn hint.** `status`/`guide` print an advisory subagent-spawn hint (idiom + tier) for the
+  active phase; advisory only — the engine still never spawns.
+- Documentation, glossary (4 new terms), and headers aligned with the feature.
+
 ## [1.14.0] — 2026-06-29
 
 Two milestones round out lanes that shipped partially in earlier releases: the
