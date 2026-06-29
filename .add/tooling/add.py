@@ -38,6 +38,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _DEFAULT_WIDTH,
     _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
+    _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
 )
 
 # --- terminal-render primitives (moved to add_engine/render.py) -------------
@@ -78,6 +79,7 @@ from add_engine.taskdoc import (
 # --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
 from add_engine.autonomy import (
     _autonomy_level, _effective_autonomy, _project_autonomy, _project_autonomy_token,
+    _project_streams,   # run-mode streams half (persist-run-mode) — read live from PROJECT.md
 )
 
 
@@ -1109,6 +1111,20 @@ def _autonomy_decl_line(text: str, level: str) -> str:
     return f"autonomy: {level}\n" + text
 
 
+def _streams_decl_line(text: str, posture: str) -> str:
+    """Rewrite the SINGLE `streams:` declaration line to `posture`, PRESERVING its trailing comment,
+    idempotently (replace in place, count=1 — never a second line). If absent, insert it after a
+    leading `#` heading (PROJECT.md), else prepend. PURE on the text; the caller does the atomic
+    write. Mirrors _autonomy_decl_line — streams is project-scoped, so there is no slug-line branch."""
+    pat = re.compile(r"(?m)^(streams:[ \t]*)[^\s<#|]+(.*)$")
+    if pat.search(text):
+        return pat.sub(lambda m: f"{m.group(1)}{posture}{m.group(2)}", text, count=1)
+    lines = text.splitlines(keepends=True)
+    if lines and lines[0].lstrip().startswith("#"):
+        return lines[0] + f"streams: {posture}\n" + "".join(lines[1:])
+    return f"streams: {posture}\n" + text
+
+
 def _guard_autonomy_raise(current: str, target: str, yes: bool) -> None:
     """RAISING the level toward `auto` is a human-owned trust escalation (run.md: the AI may LOWER
     freely — RECOMMEND-only — but RAISING needs a human). Refuse a raise unless --yes confirms it."""
@@ -1156,6 +1172,25 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
     _atomic_write(task_md, _autonomy_decl_line(task_md.read_text(encoding="utf-8"), level))
     print(f"task '{slug}' autonomy -> {level}")
     _print_autonomy(root, state, slug)
+
+
+def cmd_streams(args: argparse.Namespace) -> None:
+    """show / set the project STREAMS posture — the parallel-vs-sequential half of the run mode
+    (persist-run-mode). Project-scoped (parallelism is ACROSS tasks, so there is no per-task posture)
+    and unguarded by a raise (parallel drops no human gate — it only overlaps builds). The setter
+    mirrors cmd_autonomy's --project branch: a PURE _streams_decl_line + atomic write into PROJECT.md.
+    state.json is UNTOUCHED — the posture lives in PROJECT.md beside autonomy."""
+    root = _require_root()                                   # reused -> "no .add/ project found …"
+    if (getattr(args, "action", None) or "show") == "show":
+        print(f"streams: {_project_streams(root)}")
+        return
+    posture = args.posture
+    if posture not in _STREAMS_POSTURES:
+        _die("streams_posture_invalid: posture must be one of "
+             f"{', '.join(_STREAMS_POSTURES)} (got {posture!r})")
+    target = root / "PROJECT.md"
+    _atomic_write(target, _streams_decl_line(target.read_text(encoding="utf-8"), posture))
+    print(f"project streams -> {posture}")
 
 
 def cmd_todo(args: argparse.Namespace) -> None:
@@ -1475,6 +1510,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
     print(f"project autonomy: {_project_autonomy(root)}   (default — new tasks inherit)")
+    # run mode (persist-run-mode): the combined streams + autonomy posture, both read LIVE from
+    # PROJECT.md so the human sees the whole run-mode throttle every session. Advisory; engine never spawns.
+    print(f"run mode: {_project_streams(root)} + {_project_autonomy(root)}")
     # git-native actor (user-identity): who ADD sees you as this session — the identity every
     # human-owned stamp records. Always present (the resolver is TOTAL). Read-only, no write.
     _who = identity._whoami(state)
@@ -6197,6 +6235,11 @@ def build_parser() -> argparse.ArgumentParser:
     pan.add_argument("--yes", action="store_true",
                      help="confirm a RAISE toward auto (a human-owned trust escalation)")
     pan.set_defaults(func=cmd_autonomy, _opt_positionals=("a1", "a2"))
+
+    pst = sub.add_parser("streams", help="show or set the project streams posture (parallel|sequential)")
+    pst.add_argument("action", nargs="?", choices=("show", "set"), default="show")
+    pst.add_argument("posture", nargs="?", default=None, help="set: <parallel|sequential>")
+    pst.set_defaults(func=cmd_streams, _opt_positionals=("posture",))
 
     pto = sub.add_parser("todo", help="capture / list / close a lightweight backlog todo (jot an idea)")
     pto.add_argument("text", nargs="?", default=None,

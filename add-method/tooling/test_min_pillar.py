@@ -65,6 +65,7 @@ LIFECYCLE = [
                                                # state, never docs/)
     ["new-task", "t", "--title", "Feature"],   # auto-linked to mvp
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
+    ["streams"],                               # read-only run-mode streams view (persist-run-mode): reads PROJECT.md, never docs/
     ["todo", "a captured idea"],               # backlog capture (todo-capture): appends state["todos"], never docs/
     ["whoami"],                                # read-only actor resolve (git config -> OS user; reads state, never docs/)
     ["assign", "t"],                            # ownership writer: set owner+assignee on t to self (reads/writes state, never docs/)

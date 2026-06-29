@@ -219,3 +219,7 @@ _SPEC_DELTA_RE = re.compile(
 
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
+
+# --- streams posture (shared: streams resolvers + cmd_streams) — the parallel-vs-sequential
+#     half of the run mode (persist-run-mode); project-scoped, persisted in PROJECT.md beside autonomy ---
+_STREAMS_POSTURES = ("parallel", "sequential")
