@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-setup",
+  "active_task": "udd-persona-loop",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2787,10 +2787,89 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "udd-persona-loop": {
+      "title": "UDD captured-screen confirm uses UI-Designer + UX-Researcher persona success-metrics as an evidence checklist",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T15:16:48+00:00",
+      "updated": "2026-06-29T15:53:33+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T15:41:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c1fae65ce8aa6b545a72cd582d6bf370",
+        "tests": {
+          "add-method/tooling/test_udd_persona_checklist.py": "d1cce03ad42982bcab0d98dc800955f8"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/design.md",
+          ".claude/skills/add/design.md",
+          "add-method/src/add_method/_bundled/skill/add/design.md",
+          "add-method/tooling/test_udd_persona_checklist.py",
+          ".add/GLOSSARY.md"
+        ],
+        "snapshot_md5": "0933a7847ae1e7bde2bb2c0bb21b10b4"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "persona-subagent-prompt": {
+      "title": "Seed a portable persona-aware worker PROMPT template + per-platform adapter stubs",
+      "phase": "contract",
+      "gate": "none",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T15:16:48+00:00",
+      "updated": "2026-06-29T15:22:42+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T15:41:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
+    },
+    "persona-self-improve": {
+      "title": "observe->delta->fold grows project personas from real usage without clobbering",
+      "phase": "contract",
+      "gate": "none",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T15:16:48+00:00",
+      "updated": "2026-06-29T15:25:56+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T15:41:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T15:12:05+00:00",
+  "updated": "2026-06-29T15:53:33+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3627,7 +3706,7 @@
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
-    "persona-learning-loop": "persona-setup"
+    "persona-learning-loop": "udd-persona-loop"
   },
   "todos": [
     {
