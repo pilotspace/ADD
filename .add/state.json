@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "udd-persona-loop",
+  "active_task": "persona-subagent-prompt",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2831,12 +2831,12 @@
     },
     "persona-subagent-prompt": {
       "title": "Seed a portable persona-aware worker PROMPT template + per-platform adapter stubs",
-      "phase": "contract",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "persona-learning-loop",
       "depends_on": [],
       "created": "2026-06-29T15:16:48+00:00",
-      "updated": "2026-06-29T15:22:42+00:00",
+      "updated": "2026-06-29T16:07:38+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-06-29T15:41:35+00:00",
@@ -2846,6 +2846,31 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "8b1f390debc32f17daff6b0910aff2b7",
+        "tests": {
+          "add-method/tooling/test_persona_subagent_prompt.py": "16951c3df2790da552740d03ebdb409d"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/streams.md",
+          ".claude/skills/add/streams.md",
+          "add-method/src/add_method/_bundled/skill/add/streams.md",
+          "add-method/tooling/templates/PROMPT.persona.md.tmpl",
+          ".add/tooling/templates/PROMPT.persona.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/PROMPT.persona.md.tmpl",
+          "add-method/tooling/test_persona_subagent_prompt.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "4fab9714f5fa39aa52fce17905aab5e5"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "persona-self-improve": {
@@ -2869,7 +2894,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T15:53:33+00:00",
+  "updated": "2026-06-29T16:07:38+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3706,7 +3731,7 @@
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
-    "persona-learning-loop": "udd-persona-loop"
+    "persona-learning-loop": "persona-subagent-prompt"
   },
   "todos": [
     {
