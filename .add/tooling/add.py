@@ -3670,7 +3670,10 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
 # likewise NOT a source touch — counting one produced repeated false `scope_violation`s in
 # consuming projects (`.next/`, `coverage/`, `tsconfig.tsbuildinfo`, whose `incremental`
 # rewrite even races a clean re-snapshot), so they are pruned here too.
-_SCOPE_EXCLUDE_DIRS = (".git", ".add", "__pycache__", "node_modules", ".serena",
+# `.claude` is an agent-tool internal dir (config/skills/worktrees) like `.serena` — never a
+# task's declared source; without it, the walk descends into `.claude/worktrees/<wt>/` (linked
+# git worktrees: full branch checkouts) and their churn produces false `scope_violation`s.
+_SCOPE_EXCLUDE_DIRS = (".git", ".add", ".claude", "__pycache__", "node_modules", ".serena",
                        ".next", "coverage", "test-results")
 _SCOPE_EXCLUDE_FILES = (".DS_Store",)                  # plus *.pyc / *.tsbuildinfo by suffix
 _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")

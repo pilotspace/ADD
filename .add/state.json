@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persist-run-mode",
+  "active_task": "scope-exclude-claude",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2309,10 +2309,50 @@
       ],
       "created": "2026-06-29T03:12:56+00:00",
       "updated": "2026-06-29T03:12:56+00:00"
+    },
+    "scope-exclude-claude": {
+      "title": "Prune .claude from the scope walk",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-06-29T03:56:00+00:00",
+      "updated": "2026-06-29T04:02:19+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T03:57:51+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9eb403f8127530b4a49cc311ec5bebbf",
+        "tests": {
+          "add-method/tooling/test_scope_exclude_claude.py": "962fff80f92a35e68ff1df48edcbf2fc"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "6d243299237ef44368c00388863d9eb6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T03:46:48+00:00",
+  "updated": "2026-06-29T04:02:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3125,7 +3165,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "advisor-gated-autonomy": "persist-run-mode"
+    "advisor-gated-autonomy": "scope-exclude-claude"
   },
   "todos": [
     {
