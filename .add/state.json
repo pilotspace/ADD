@@ -3538,7 +3538,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T15:26:08+00:00",
+  "updated": "2026-06-30T15:28:49+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3829,13 +3829,18 @@
       "title": "Drift-guard",
       "goal": "Kill \u00a70 reference rot: cite symbols not line numbers, stamp ground_sha, refresh at close, strip dead live-phase scaffolding at done \u2014 so a closed TASK.md stays true to the code.",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-06-30T11:47:47+00:00",
-      "updated": "2026-06-30T14:06:23+00:00",
+      "updated": "2026-06-30T15:28:49+00:00",
       "confirmed": true,
       "confirmed_at": "2026-06-30T14:06:23+00:00",
       "confirmed_by": "tindang",
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
