@@ -212,6 +212,38 @@ def _set_release_line(text: str, value: str) -> str:
         return text
     return text[:m.end()] + "\n" + line + text[m.end():]
 
+
+# --- §0 GROUND drift anchor (ground-anchor-sha) -----------------------------
+# §0 line numbers rot during BUILD while symbols survive (PR40 audit). The engine SEEDS a
+# `Ground SHA:` field (the AI fills it via git — NO-EXEC: add.py never shells out) and `check`
+# WARNs when a §0 cites bare line numbers without one, so drift is detectable not silent.
+_GROUND_SHA_RE = re.compile(r"(?m)^Ground SHA:[ \t]*(.*?)[ \t]*$")
+_LINE_REF_RE = re.compile(r"l\.\d+")
+
+
+def _ground_section(text: str) -> str:
+    """The §0 GROUND block of a TASK.md — from the `## 0` heading to the next `## ` heading."""
+    m = re.search(r"(?m)^## 0\b", text)
+    if not m:
+        return ""
+    rest = text[m.end():]
+    nxt = re.search(r"(?m)^## ", rest)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def _read_ground_sha(text: str):
+    """The §0 `Ground SHA:` value, or None if absent or still a `<…>` placeholder."""
+    m = _GROUND_SHA_RE.search(_ground_section(text))
+    if not m:
+        return None
+    val = m.group(1).strip()
+    return None if (not val or val.startswith("<")) else val
+
+
+def _ground_cites_line_ref(text: str) -> bool:
+    """True iff the §0 GROUND block cites a bare line number (the `l.NNN` idiom)."""
+    return bool(_LINE_REF_RE.search(_ground_section(text)))
+
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
@@ -2612,13 +2644,21 @@ def cmd_check(args: argparse.Namespace) -> None:
         # WARN (never red, warn-never-block) when a PRESENT line disagrees; an ABSENT line is a
         # grandfathered task — silent, never retro-red. Degrade-safe: an unreadable file skips here.
         try:
-            _bl = _read_milestone_line((root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8"))
+            _task_text = (root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
         except OSError:
-            _bl = None
+            _task_text = None
+        _bl = _read_milestone_line(_task_text) if _task_text is not None else None
         if _bl is not None and _bl != _milestone_backlink_value(ms):
             warnings.append((f"task '{slug}'", f"milestone backlink '{_bl}' disagrees with state "
                              f"'{_milestone_backlink_value(ms)}' — re-run `add.py set-milestone "
                              f"{slug} {ms or 'none'}` to re-sync"))
+        # §0 drift anchor (ground-anchor-sha): a §0 that cites bare line numbers (l.NNN) with no
+        # `Ground SHA:` has undetectable drift. WARN (never red, warn-never-block); a §0 with a SHA,
+        # with no line refs, or an unreadable file is silent. Reuses the read above (one read).
+        if _task_text is not None and _ground_cites_line_ref(_task_text) and \
+                _read_ground_sha(_task_text) is None:
+            warnings.append((f"task '{slug}'", "§0 cites line numbers (l.NNN) with no `Ground SHA:` — "
+                             "record `git rev-parse --short HEAD` so drift is detectable"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED

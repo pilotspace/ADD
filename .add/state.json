@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "milestone-release-backlink",
+  "active_task": "ground-anchor-sha",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3433,10 +3433,68 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-anchor-sha": {
+      "title": "\u00a70 GROUND carries a Ground SHA + check warns on line-refs without one",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "drift-guard",
+      "depends_on": [],
+      "created": "2026-06-30T14:06:23+00:00",
+      "updated": "2026-06-30T14:54:12+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T14:34:59+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "95ae82627b30a6dcb1c9b9e46cba23af",
+        "tests": {
+          "add-method/tooling/test_ground_anchor_sha.py": "e52eea6424620e2077212f61f3bbbe17"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/skill/add/phases/0-ground.md",
+          ".claude/skills/add/phases/0-ground.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-ground.md",
+          "add-method/tooling/test_ground_anchor_sha.py"
+        ],
+        "snapshot_md5": "fb93520a688f4ec6f2efa492276c679f"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-30T14:53:18+00:00",
+            "reason": "scope_violation: task 'ground-anchor-sha' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/skill/add/phases/0-ground.md (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T13:51:31+00:00",
+  "updated": "2026-06-30T14:54:12+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3727,9 +3785,17 @@
       "title": "Drift-guard",
       "goal": "Kill \u00a70 reference rot: cite symbols not line numbers, stamp ground_sha, refresh at close, strip dead live-phase scaffolding at done \u2014 so a closed TASK.md stays true to the code.",
       "stage": "mvp",
-      "status": "queued",
+      "status": "active",
       "created": "2026-06-30T11:47:47+00:00",
-      "updated": "2026-06-30T11:47:47+00:00"
+      "updated": "2026-06-30T14:06:23+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T14:06:23+00:00",
+      "confirmed_by": "tindang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "traceability-ids": {
       "title": "Traceability-ids",
@@ -3748,7 +3814,7 @@
       "updated": "2026-06-30T11:47:48+00:00"
     }
   },
-  "active_milestone": "artifact-graph",
+  "active_milestone": "drift-guard",
   "archived": [
     {
       "slug": "v5",
@@ -4360,7 +4426,8 @@
     "persona-learning-loop",
     "persona-teacher-bundle",
     "ground-trust",
-    "artifact-graph"
+    "artifact-graph",
+    "drift-guard"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -4368,7 +4435,8 @@
     "persona-learning-loop": "persona-method-docs",
     "persona-teacher-bundle": "debrand-teacher-prose",
     "ground-trust": "ground-related-intent",
-    "artifact-graph": "milestone-release-backlink"
+    "artifact-graph": "milestone-release-backlink",
+    "drift-guard": "ground-anchor-sha"
   },
   "todos": [
     {
