@@ -725,7 +725,13 @@ const MANAGED = [
   ["skill/add", [".claude", "skills", "add"], false],
   ["tooling", [".add", "tooling"], true],
   ["docs", [".add", "docs"], false],
+  ["personas-teacher", [".add", "personas-teacher"], false],
 ];
+// Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
+// package always ships these (guarded by test_packaging); a malformed/older package missing one
+// must NOT abort the install — the core lands and the optional tree is soft-skipped. Twin of
+// _installer.py:OPTIONAL. Design-for-failure.
+const OPTIONAL = new Set(["personas-teacher"]);
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 
@@ -786,7 +792,7 @@ function cleanReplaceTree(src, dest, stripTests) {
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs" };
+const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {
@@ -805,7 +811,9 @@ function managedStatus(target) {
 // a corrupt package leaves the target untouched).
 function reconcile(args, target, srcRoot) {
   srcRoot = srcRoot || PKG_ROOT;   // default: the package; the global home feeds propagation
-  const trees = MANAGED.filter(([sub]) => !(sub === "skill/add" && args.noSkill));
+  const trees = MANAGED
+    .filter(([sub]) => !(sub === "skill/add" && args.noSkill))
+    .filter(([sub]) => !(OPTIONAL.has(sub) && !fs.existsSync(path.join(srcRoot, sub))));  // soft-skip absent optional
   for (const [sub] of trees) {
     if (!fs.existsSync(path.join(srcRoot, sub))) {
       fail("missing packaged source: " + path.join(srcRoot, sub));
@@ -876,18 +884,20 @@ const GLOBAL_TREES = [
   ["skill/add", ["skill", "add"], false],
   ["tooling", ["tooling"], true],
   ["docs", ["docs"], false],
+  ["personas-teacher", ["personas-teacher"], false],
 ];
 
 // Clean-replace the bundled managed layer INTO <home> (canonical mirror), then DEPLOY the
 // skill to ~/.claude/skills/add. Throws if a dir can't be written (caller -> home_unwritable).
 // Prechecks ALL sources first (design-for-failure: a corrupt package leaves the home as-is).
 function reconcileGlobal(home, claudeDir, noSkill) {
-  for (const [sub] of GLOBAL_TREES) {
+  const trees = GLOBAL_TREES.filter(([sub]) => !(OPTIONAL.has(sub) && !fs.existsSync(path.join(PKG_ROOT, sub))));
+  for (const [sub] of trees) {
     if (!fs.existsSync(path.join(PKG_ROOT, sub))) {
       fail("missing packaged source: " + path.join(PKG_ROOT, sub));
     }
   }
-  for (const [sub, destParts, stripTests] of GLOBAL_TREES) {
+  for (const [sub, destParts, stripTests] of trees) {
     cleanReplaceTree(path.join(PKG_ROOT, sub), path.join(home, ...destParts), stripTests);
   }
   if (!noSkill) cleanReplaceTree(path.join(home, "skill", "add"), claudeDir, false);
@@ -1156,7 +1166,10 @@ function cmdUpdate(args) {
   // same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
   // even at the current version (heal-reconcile).
   const status = managedStatus(target);
-  const missing = MANAGED.some(([sub]) => status[sub] === "missing");
+  // An optional tree absent from BOTH the package and the project can't be healed, so it
+  // never counts as "missing" — otherwise a same-version update would never reach the no-op.
+  const missing = MANAGED.some(([sub]) => status[sub] === "missing"
+    && !(OPTIONAL.has(sub) && !fs.existsSync(path.join(PKG_ROOT, sub))));
   if (cur === version && !args.force && !missing) {
     log("ADD already at " + version + " — nothing to update (use --force to re-materialize).");
     return;

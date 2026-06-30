@@ -47,31 +47,32 @@ Ask only the live ones. Rank: `⚠ <assumption> — lowest confidence because <w
 
 Capture each surfaced decision as an **ADR** into `PROJECT.md` **Key Decisions** as it lands.
 
-**Under `autonomy: auto` with full context, auto-complete all four drives in one pass** — lowest-confidence-first, surfacing the top flag. This deepens **drafting**, never the gate: auto-complete NEVER skips the human baseline approval — the `lock` stays the one decision.
+**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate: it NEVER skips the human baseline approval — the `lock` stays the one decision.
 
 ## 3 · Draft to the lock (both paths)
 
-1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec/active milestone · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; design loop: `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
+1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
+   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). Author one per role from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches). Covered by the **baseline approval**; `add.py check` validates; never clobber.
 2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one outcome sentence), a **flow** (task order), and **scenarios** (concrete examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash
    python3 .add/tooling/add.py new-task <slug> --title "<first feature>"
    ```
-   Draft the full bundle **§1–§4** — incl. the **§4 red suite** (`phases/4-tests.md`); the lock approves it whole. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses crossing into build** until you `lock` (`setup_unlocked`). Sequence: **bundle (§1–§4, tests RED) → lock → build** — the red suite must FAIL **before build** (never start Build until §1–§4 exist and tests are red).
+   Draft the full bundle **§1–§4** incl. the **§4 red suite** (`phases/4-tests.md`); the lock approves it whole. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses build** until you `lock` (`setup_unlocked`). Sequence: **bundle (§1–§4, tests RED) → lock → build** — the red suite must FAIL before build.
 4. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
 
 ## Run mode — how the build will be driven (propose parallel + auto; confirm to keep)
 
-Before the lock, surface the **run mode** — **autonomy** (`add.py autonomy`, run.md) and **streams** (`add.py waves` + `streams.md`):
+Before the lock, surface the **run mode** — autonomy + streams (`run.md` · `streams.md`):
 
 | Run mode | Human gates | Concurrency |
 |----------|-------------|-------------|
-| **sequential · manual/conservative** | contract freeze **and** every Verify | one task at a time; safest, slowest |
-| **parallel · auto** *(proposed default)* | contract freeze **only** — Verify auto-PASSes on complete evidence | `add.py waves` schedules independent tasks; builds overlap behind frozen contracts |
+| **sequential · manual/conservative** | contract freeze **and** every Verify | one task; safest |
+| **parallel · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | `add.py waves` overlaps independent builds behind frozen contracts |
 
-**Propose `parallel + auto`, ask the human to confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record the chosen mode in **`PROJECT.md` Key Decisions**.
+**Propose `parallel + auto`; confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record it in **`PROJECT.md` Key Decisions**.
 
-The irreducible floor: **one human approval per contract** fires no matter the mode.
+Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 

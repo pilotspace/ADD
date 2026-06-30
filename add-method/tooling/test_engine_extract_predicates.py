@@ -62,6 +62,24 @@ class BehaviorTest(unittest.TestCase):
         self.assertTrue(add._section_unfilled(md_empty, "## 1 · SPECIFY"),
                         "an empty section must read as unfilled")
 
+    def test_section_unfilled_ignores_backtick_notation(self):
+        """A filled section may carry literal angle-bracket technical notation INSIDE
+        code spans (`<persona>`, `.add/personas/<slug>.md`). That is content, not an
+        unfilled `<…>` template placeholder — only a BARE <…> outside backticks counts."""
+        import add
+        hdr = "## Shared / risky contracts"
+        # real content whose ONLY angle brackets are inside backtick code spans -> FILLED
+        md_backtick = (hdr + "\n"
+                       "- the persona-injection point in the `streams.md` worker contract "
+                       "(`<persona>`/`<expertise>` load `.add/personas/<slug>.md`; cross-runner) "
+                       "-> owning task persona-subagent-prompt\n\n## Next\n")
+        self.assertFalse(add._section_unfilled(md_backtick, hdr),
+                         "backtick-wrapped <…> notation is content, not an unfilled placeholder")
+        # the scaffold default whose <…> are BARE (outside backticks) -> still UNFILLED
+        md_bare = hdr + "\n- <contract name> -> owning task <slug>\n\n## Next\n"
+        self.assertTrue(add._section_unfilled(md_bare, hdr),
+                        "a bare <…> placeholder must still read as unfilled")
+
 
 class PinTest(unittest.TestCase):
     def test_engine_md5_still_pins_add_py(self):

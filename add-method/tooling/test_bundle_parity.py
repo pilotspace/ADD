@@ -21,11 +21,12 @@ from pathlib import Path
 _TOOLING = Path(__file__).resolve().parent
 _ADD_METHOD = _TOOLING.parent
 
-# Canonical source locations (the three trees cli.js uses)
+# Canonical source locations (the trees cli.js ships)
 CANON_SKILL = _ADD_METHOD / "skill" / "add"
 CANON_TOOLING_PY = _ADD_METHOD / "tooling" / "add.py"
 CANON_TEMPLATES = _ADD_METHOD / "tooling" / "templates"
 CANON_DOCS = _ADD_METHOD / "docs"
+CANON_TEACHER = _ADD_METHOD / "personas-teacher"
 
 # Bundle locations inside the Python package source tree
 BUNDLE = _ADD_METHOD / "src" / "add_method" / "_bundled"
@@ -33,6 +34,7 @@ BUNDLE_SKILL = BUNDLE / "skill" / "add"
 BUNDLE_TOOLING_PY = BUNDLE / "tooling" / "add.py"
 BUNDLE_TEMPLATES = BUNDLE / "tooling" / "templates"
 BUNDLE_DOCS = BUNDLE / "docs"
+BUNDLE_TEACHER = BUNDLE / "personas-teacher"
 
 _JUNK = re.compile(r"(__pycache__|\.(pyc|pyo|DS_Store)$)")
 _TEST_SRC = re.compile(r"(^|/)test_.*\.py$")
@@ -116,6 +118,26 @@ class BundleParityTest(unittest.TestCase):
                          "docs file(s) differ between canonical and bundle: " +
                          ", ".join(mismatched))
 
+    # --- teacher tree is byte-identical to canonical -----------------------
+    def test_teacher_tree_byte_identical(self):
+        self.assertTrue(CANON_TEACHER.is_dir(), f"missing canonical: {CANON_TEACHER}")
+        self.assertTrue(BUNDLE_TEACHER.is_dir(),
+                        "_bundled/personas-teacher/ missing — run scripts/prepare_bundle.py")
+        canon = _rel_files(CANON_TEACHER)
+        bundle = _rel_files(BUNDLE_TEACHER)
+        self.assertEqual(
+            sorted(map(str, canon.keys())),
+            sorted(map(str, bundle.keys())),
+            "teacher file sets differ between canonical and bundle.",
+        )
+        mismatched = [
+            str(rel) for rel in sorted(canon, key=str)
+            if canon[rel] != bundle[rel]
+        ]
+        self.assertEqual(mismatched, [],
+                         "teacher file(s) differ between canonical and bundle: " +
+                         ", ".join(mismatched))
+
     # --- no junk in bundle -------------------------------------------------
     def test_no_bytecode_or_os_junk_in_bundle(self):
         junk = [
@@ -138,7 +160,7 @@ class BundleParityTest(unittest.TestCase):
 
     # --- required runtime paths are present --------------------------------
     def test_runtime_surface_complete(self):
-        required = [BUNDLE_SKILL, BUNDLE_TOOLING_PY, BUNDLE_TEMPLATES, BUNDLE_DOCS]
+        required = [BUNDLE_SKILL, BUNDLE_TOOLING_PY, BUNDLE_TEMPLATES, BUNDLE_DOCS, BUNDLE_TEACHER]
         missing = [str(p) for p in required if not p.exists()]
         self.assertEqual(missing, [],
                          "bundle is missing required paths: " + str(missing))

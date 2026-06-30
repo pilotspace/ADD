@@ -1,0 +1,71 @@
+# Scheduled teacher refresh: keep the vendored teacher corpus current WITHOUT a fetch in
+# the release build. This workflow re-runs the STANDALONE maintenance scripts (never the
+# ADD engine — the engine performs no fetch and no child-process launch) and opens a PULL
+# REQUEST so a human reviews the third-party diff before it lands.
+#
+# It is deliberately DECOUPLED from the release pipeline (publish.yml): there is no tag /
+# release trigger here, and publish.yml gains no refresh step — a release build reads only
+# the committed snapshot (zero-network). "Keep latest" is THIS PR, not a release-time fetch.
+#
+# Design-for-failure: a failed upstream clone aborts the job and changes nothing — the
+# committed snapshot remains the source of truth. The PR is best-effort.
+
+name: teacher-refresh
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC — re-fetch upstream and propose a refresh PR.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+# Least privilege: only what the PR-open step needs.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Refresh vendored teacher snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # update_teacher.py clones upstream at HEAD, trims to the agent-definition payload,
+      # replaces add-method/personas-teacher/, and rewrites the VENDOR.md pin (commit SHA).
+      - name: Refresh the pinned snapshot
+        run: python3 add-method/scripts/update_teacher.py
+
+      # Regenerate the committed _bundled/ (incl. personas-teacher + THIRD_PARTY_NOTICES.md)
+      # so the pip wheel + npm tarball ship the refreshed corpus.
+      - name: Regenerate the bundle
+        working-directory: add-method
+        run: python3 scripts/prepare_bundle.py
+
+      # Sanity: the snapshot + parity guards must stay green on the refreshed tree.
+      - name: Verify the refreshed snapshot
+        working-directory: add-method
+        run: python3 -m unittest tooling.test_teacher_snapshot tooling.test_bundle_parity -v
+
+      # Open (or update) a single refresh PR with the diff — never a direct push to main.
+      - name: Open the refresh pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/teacher-refresh
+          commit-message: "chore(teacher): refresh vendored snapshot + pin"
+          title: "chore(teacher): refresh vendored teacher snapshot"
+          body: |
+            Automated weekly refresh of the vendored teacher corpus under
+            `add-method/personas-teacher/` (raw, MIT-attributed) and its bundle copy.
+
+            - re-fetched upstream and re-pinned the commit (see `personas-teacher/VENDOR.md`)
+            - regenerated `src/add_method/_bundled/`
+            - `test_teacher_snapshot` + `test_bundle_parity` are green
+
+            Review the third-party diff before merging. The release build is unaffected —
+            it reads only the committed snapshot (zero-network).
+          labels: dependencies
+          delete-branch: true

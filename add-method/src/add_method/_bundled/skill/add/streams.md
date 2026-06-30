@@ -14,17 +14,17 @@ spawning one worker per ready task.
 ## The honest frame — this is pipelining, not N× speed
 
 With **one human reviewer** you cannot beat `review_time × N_tasks` (decision points are serial).
-The win is that the reviewer is **never blocked waiting on a build**: builds for B·C·D run behind
-*their* frozen contracts while the human reviews A. You hide build latency under human latency.
+The win: the reviewer is **never blocked waiting on a build** — builds for B·C·D run behind *their*
+frozen contracts while the human reviews A. Build latency hides under human latency.
 
 ## The two queues
 
-Compute both from one `python3 .add/tooling/add.py status` — no new state:
+Both from one `add.py status` — no new state:
 
 - **READY-QUEUE** — tasks where `phase ≠ done` **and** every `deps=` task shows `gate=PASS`.
-  A task with unmet deps stays queued; a task finishing PASS unblocks its dependents.
-- **REVIEW-QUEUE** — the irreducibly serial part: the **bundle approval** (contract freeze) and
-  any **Verify escalation**. One human, one queue. Present these one at a time, never in a batch.
+  Unmet deps stay queued; a PASS unblocks dependents.
+- **REVIEW-QUEUE** — the serial part: **bundle approval** (contract freeze) + any **Verify
+  escalation**. One human, one queue; present one at a time, never batched.
 
 ```
   add.py status ─► READY-QUEUE ──spawn workers──► builds run ──► REVIEW-QUEUE ──► done
@@ -88,21 +88,19 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
 
 ## Design for failure (required)
 
-- **Fresh worktree base (verify base == HEAD)** — create each worker's worktree from current
-  `HEAD` **after** committing the task's frozen specification bundle. Confirm `git -C <worktree>
-  rev-parse HEAD` equals the orchestrator's `HEAD`; if drifted, `git merge` the base first.
-  On a pool-based runner (e.g. Claude Code) the pre-spawn check **shifts** to the worker's
-  **step-0**: sync to base and re-echo `rev-parse HEAD`, which the orchestrator verifies at
-  **merge-time**. The engine executes this gate (`engine-merge-base-enforcement`): run
-  `python3 .add/tooling/add.py wave-verify` before the first merge-back — it refuses a
-  mismatched or pending echo (`unverified_fork_base`) and an off-template ledger
-  (`wave_ledger_malformed`, fail-closed); `add.py check` is the standing monitor.
-- **Lease + timeout** — record which worker holds which task (in the wave ledger); if a worker
-  dies, release the claim back to READY.
-- **Failure isolates** — a worker that hits a STOP-and-escalate blocks only its own task;
-  siblings keep running and the escalation joins the REVIEW-QUEUE.
-- **Circuit-breaker** — if N workers fail in a wave, stop fanning out and fall back to
-  sequential. Repeated failure means the scope was wrong, not the parallelism.
+- **Fresh worktree base (verify base == HEAD)** — cut each worktree from current `HEAD` **after**
+  committing the frozen bundle; confirm `git -C <worktree> rev-parse HEAD` equals the orchestrator's
+  `HEAD` (drifted → `git merge` first). On a pool runner (e.g. Claude Code) the check **shifts** to
+  the worker's **step-0** (sync + re-echo `rev-parse HEAD`), verified at **merge-time**. The engine
+  gates this (`engine-merge-base-enforcement`): `add.py wave-verify` before the first merge-back
+  refuses a mismatched/pending echo (`unverified_fork_base`) or off-template ledger
+  (`wave_ledger_malformed`); `add.py check` is the standing monitor.
+- **Lease + timeout** — record which worker holds which task (wave ledger); a dead worker releases
+  its claim back to READY.
+- **Failure isolates** — a worker's STOP-and-escalate blocks only its own task; siblings run on, the
+  escalation joins the REVIEW-QUEUE.
+- **Circuit-breaker** — if N workers fail in a wave, stop fanning out and fall back to sequential.
+  Repeated failure means the scope was wrong, not the parallelism.
 
 ## Wave ledger — the wave's resume point
 
@@ -167,6 +165,9 @@ decision points (bundle approval · escalated Verify) are NOT yours.
 </objective>
 
 <persona>
+Load `.add/personas/{{PERSONA_SLUG}}.md` (Identity→you · Critical Rules→constraints · Success
+Metrics→done-bar); no match → the generic default below. Portable body + per-runner spawn stubs:
+`templates/PROMPT.persona.md.tmpl` (one canonical body; Claude Code verified, the rest illustrative).
 You are a {{DOMAIN}} engineer with 15 years building {{DOMAIN_DETAIL}}.
 A wrong-but-plausible result here is expensive; correctness over speed.
 Work step by step:
@@ -240,8 +241,8 @@ always escalates** — no tier auto-passes it.
 
 ## The spawn adapter — one thin mapping per runner
 
-ADD needs six capabilities from any runner. **Isolation is the one ADD owns itself** (a git
-worktree), so streams stay portable even on a runner with no native sandbox.
+ADD needs six capabilities from any runner. **Isolation ADD owns itself** (a git worktree), so
+streams stay portable even without a native sandbox.
 
 | ADD needs | Abstract | Claude Code (verified reference) | Any CLI agent — Codex · opencode · pi-mono · … |
 |-----------|----------|----------------------------------|-----------------------------------------------|

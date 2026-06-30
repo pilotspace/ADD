@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import re
 
-from add_engine.constants import PHASE_OWNER
+from add_engine.constants import (
+    PHASE_OWNER, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+)
 from add_engine.io_state import _die
 
 
@@ -45,7 +47,9 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     """True iff the `header` section is PRESENT but UNFILLED — empty (no real bullet) or
     still a `<…>` template placeholder. ABSENT section -> False (grandfathered legacy);
     a filled section (>=1 real bullet, no `<…>`) -> False. Pure predicate — the shared
-    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build)."""
+    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build).
+    Angle brackets INSIDE a backtick code span are literal technical notation (`<persona>`,
+    `.add/personas/<slug>.md`), not a fill placeholder — only a BARE <…> counts as unfilled."""
     body, in_sec, present = [], False, False
     for ln in md_text.splitlines():
         if ln.startswith(header):
@@ -62,7 +66,34 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     text = "\n".join(body).strip()
     if not text:
         return True                         # present but empty
-    return bool(re.search(r"<[^>\n]+>", text))   # a <…> placeholder remains
+    no_code = re.sub(r"`[^`\n]*`", "", text)     # drop code spans — backtick <…> is content
+    return bool(re.search(r"<[^>\n]+>", no_code))  # a BARE <…> placeholder remains
+
+
+def _persona_missing(md_text: str) -> list[str]:
+    """The required frontmatter keys + section headers ABSENT from a persona file
+    (`.add/personas/<slug>.md`). `[]` == schema-conformant. Presence-based: a section
+    counts as present iff its `## <Title>` header line appears; a frontmatter key counts
+    iff a `^<key>:` line appears inside the leading `---`-fenced block. Content QUALITY is
+    the AI's authoring concern, not this gate (measure-not-block). PURE; NO-EXEC — no file IO,
+    no network, no process launch. The single source of truth is constants.PERSONA_* so the
+    schema and its validator never drift."""
+    missing: list[str] = []
+    fm = re.match(r"\s*---\s*\n(.*?)\n---\s*\n", md_text, re.S)
+    fm_body = fm.group(1) if fm else ""
+    for key in PERSONA_FRONTMATTER_KEYS:
+        if not re.search(rf"(?m)^\s*{re.escape(key)}\s*:", fm_body):
+            missing.append(key)
+    for section in PERSONA_REQUIRED_SECTIONS:
+        if not re.search(rf"(?m)^{re.escape(section)}\s*$", md_text):
+            missing.append(section)
+    return missing
+
+
+def _persona_slug_valid(slug: str) -> bool:
+    """A persona file slug is valid iff non-empty and alphanumeric with `-`/`_` only
+    (mirrors new-task's slug rule). PURE; NO-EXEC."""
+    return bool(slug) and slug.replace("-", "").replace("_", "").isalnum()
 
 
 def _task_done(t: dict) -> bool:

@@ -1,24 +1,24 @@
 # Consolidating lessons — how the foundation self-improves
 
-This **closes the loop**. `deltas.md` lets a task EMIT lessons (`open` lessons learned in OBSERVE); retrospective consolidation gathers the confirmed ones and writes them into a **versioned foundation**, so `DDD · SDD · UDD · TDD · ADD` sharpen across milestones.
+This **closes the loop**. `deltas.md` lets a task EMIT `open` lessons in OBSERVE; consolidation gathers the confirmed ones into a **versioned foundation**, so `DDD · SDD · UDD · TDD · ADD` sharpen across milestones.
 
-`add.py fold` is **judgment-free**: it only TRANSCRIBES each lesson's own captured text into its routed home and bumps the version. It NEVER composes or merges prose, and it **never self-approves** a consolidation — running the command records the human's confirmation. Deciding WHICH lessons to keep, and polishing raw transcribed bullets into lean one-screen prose, remain the human's work — the latter via the **compaction door** (`compact-foundation.md`).
+`add.py fold` is **judgment-free**: it only TRANSCRIBES each lesson's captured text into its routed home and bumps the version — it never composes prose and **never self-approves** (running the command records the human's confirmation). Choosing which lessons to keep, and polishing raw bullets into lean prose (the **compaction door**, `compact-foundation.md`), stay the human's work.
 
 ## When to consolidate
 
-At **milestone close** (the natural version bump), or **on demand** when open lessons pile up. One run of `add.py fold` = ONE consolidation session: bumps `foundation-version` exactly once and stamps every resolved lesson with that version.
+At **milestone close**, or **on demand** when open lessons pile up. One `add.py fold` = ONE session: one `foundation-version` bump, every resolved lesson stamped with it.
 
 ## The ritual
 
 1. **Gather** — `add.py deltas` reads every task's OBSERVE block for lessons still `open`.
-2. **Confirm** — decide which to keep; a lesson you do NOT want is marked `rejected` and left in place. Running `add.py fold` over the rest IS your confirmation.
+2. **Confirm** — mark any lesson you do NOT want `rejected` (left in place); running `add.py fold` over the rest IS your confirmation.
 3. **Write** — `add.py fold [--task <slug>] [--comp <TAG>]` performs the mechanical write atomically:
    - flips each selected `open` lesson to `folded` and stamps it `[folded foundation-version N]`;
-   - transcribes each lesson VERBATIM as one bullet at the TOP (newest-first) of its routed section;
-   - prepends one row to §Key Decisions (date · what · why · outcome);
+   - transcribes each VERBATIM as one bullet at the TOP (newest-first) of its routed section;
+   - prepends one §Key Decisions row (date · what · why · outcome);
    - bumps `foundation-version` by one.
    Validate-all-then-write: if any precondition fails the command writes NOTHING.
-4. **Propose & polish** — transcribed bullets are RAW; afterward consolidate/merge into lean prose (append-only, newest-first) via the compaction door.
+4. **Propose & polish** — raw bullets later merge into lean prose (append-only, newest-first) via the compaction door.
 
 ## Consolidation routing
 
@@ -29,15 +29,14 @@ At **milestone close** (the natural version bump), or **on demand** when open le
 | `UDD` | `PROJECT.md` §Users | transcribed bullet at the top |
 | `TDD` | `CONVENTIONS.md` §Method learnings | transcribed bullet |
 | `ADD` | `CONVENTIONS.md` §Method learnings | transcribed bullet |
+| `persona:<slug>` | `.add/personas/<slug>.md` §Critical Rules / §Success Metrics | dated bullet at top; schema stays conformant |
 
-Every consolidation ALSO prepends one row at the TOP of `PROJECT.md` §Key Decisions: date · decision · why · outcome.
+A `persona:<slug> · <hint>` lesson routes into that persona doc, not a foundation file; it is still flipped `folded` and still bumps the version once (`deltas.md`).
 
 ## Status transitions & version
 
-- **confirm**: `open` → `folded` (text transcribed at top of routed target, newest-first).
-- **decline**: `open` → `rejected`, left in place — "we considered and chose not to act" stays auditable.
-- Consolidation is **append-only (newest-first)**: PREPENDS new bullets/rows, never silently rewrites — EXCEPT via the recorded compaction door.
-- Each `add.py fold` run **bumps** `foundation-version:` in `PROJECT.md` by one (monotonic int).
+- **confirm** `open` → `folded`; **decline** `open` → `rejected` (left in place — auditable trail).
+- Consolidation is **append-only (newest-first)** — PREPENDS, never silently rewrites, EXCEPT via the recorded compaction door.
 
 ## Reject codes
 
@@ -45,17 +44,20 @@ Every consolidation ALSO prepends one row at the TOP of `PROJECT.md` §Key Decis
 - `no_open_deltas` — nothing is `open` in the selected scope. Version is NOT bumped.
 - `missing_route_section` — a lesson routes to a foundation section that does not exist. Add the section header, then re-run. Nothing is written.
 - `no_foundation_version` — `PROJECT.md` carries no parseable `foundation-version:` marker to bump.
+- `missing_persona_target` — a `persona:<slug>` lesson with no `.add/personas/<slug>.md`. Fail-closed: nothing written, no bump. Seed the persona first.
+- `persona_section_unroutable` — the section hint is not `critical-rule` or `success-metric`. Nothing is written.
+- `persona_clobber_forbidden` — INVARIANT: a persona consolidation prepends only; it never drops existing content or breaks the schema.
 </reject_codes>
 
-Convention-era codes `unconfirmed_fold` and `unroutable_delta` are **retired**: invoking `add.py fold` IS the confirmation; a missing destination surfaces as `missing_route_section`.
+Retired: `unconfirmed_fold` · `unroutable_delta` — running `add.py fold` IS the confirmation; a missing destination is `missing_route_section`.
 
 ## Worked example
 
 The `competency-deltas` task closed its OBSERVE with two lessons:
 
 ```
-- [ADD · open] dogfood .add/tooling template can silently diverge from canonical (evidence: md5 mismatch this build)
-- [TDD · open] structural tests guard canonical artifacts but not their dogfood twins (evidence: scope-loop note + this build)
+- [ADD · open] dogfood .add/tooling can silently diverge from canonical (evidence: md5 mismatch)
+- [TDD · open] structural tests guard canonical artifacts but not their dogfood twins (evidence: this build)
 ```
 
-The human keeps both and runs `add.py fold`. Routing transcribes each into `CONVENTIONS.md` §Method learnings, prepends a §Key Decisions row, flips them to `folded` with `[folded foundation-version N]`, and bumps `foundation-version` 1 → 2 — all in one atomic write.
+The human runs `add.py fold`: both transcribe into `CONVENTIONS.md` §Method learnings, a §Key Decisions row is prepended, both flip to `folded`, and `foundation-version` bumps 1 → 2 — one atomic write.
