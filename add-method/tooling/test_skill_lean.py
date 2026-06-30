@@ -98,6 +98,10 @@ POOLS = [
     # the agency-agents roster at its spawn-authority home. +597 B human-approved surface (direct batch on
     # feat/persona-distillation-depth, Tin-approved rebaseline). RATIO 0.75 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈597/0.75⌉=796). The won compaction on the orchestration guides is untouched.
+    # orchestration: phase-parallel-execution adds streams.md's "## Phase-parallel execution — prefer the
+    # roster" section but is ABSORBED by compaction (NOT a rebaseline) — streams.md's worker-contract prose,
+    # the design-for-failure bullets, and the spawn-adapter prose were tightened to fit the new section under
+    # the unchanged 55159 baseline. Leaner-net is the project goal: do not bump the budget for in-guide surface.
     {"name": "orchestration", "ratio": 0.75, "baseline": 55159,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
