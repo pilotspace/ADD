@@ -187,7 +187,8 @@ class ParityAndDocTest(unittest.TestCase):
     # scenario: the first-run authoring step is documented and baseline-approval-covered
     def test_setup_guide_documents_authoring(self):
         # Assert the AUTHORING STEP content, not a one-word mention: the AI authors personas
-        # from PROJECT.md + a teacher (agency-agents), covered by the baseline approval.
+        # from PROJECT.md + the LOCAL vendored teacher library (.add/personas-teacher/),
+        # covered by the baseline approval. (de-branded — the upstream is vendored locally.)
         for tree in SKILL_TREES:
             txt = (tree / "phases" / "0-setup.md").read_text(encoding="utf-8").lower()
             self.assertIn("persona", txt, f"0-setup.md in {tree} must document persona authoring")
@@ -195,8 +196,8 @@ class ParityAndDocTest(unittest.TestCase):
                           f"0-setup.md in {tree} must describe AUTHORING personas (not just mention them)")
             self.assertIn("teacher", txt,
                           f"0-setup.md in {tree} must name the teacher source for authoring")
-            self.assertIn("agency-agents", txt,
-                          f"0-setup.md in {tree} must cite the agency-agents teacher")
+            self.assertIn("personas-teacher", txt,
+                          f"0-setup.md in {tree} must point at the local teacher library (.add/personas-teacher)")
             self.assertIn("baseline approval", txt,
                           f"0-setup.md in {tree} must state the seeded set is baseline-approval-covered")
 

@@ -52,7 +52,7 @@ Capture each surfaced decision as an **ADR** into `PROJECT.md` **Key Decisions**
 ## 3 · Draft to the lock (both paths)
 
 1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
-   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the persona schema). Author one per role from PROJECT.md + a teacher (e.g. agency-agents), read off-build (engine never fetches; fail-safe). Covered by the **baseline approval**; `add.py check` validates; never clobber one.
+   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). Author one per role from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches). Covered by the **baseline approval**; `add.py check` validates; never clobber.
 2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one outcome sentence), a **flow** (task order), and **scenarios** (concrete examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash

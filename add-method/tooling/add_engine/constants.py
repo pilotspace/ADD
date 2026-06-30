@@ -93,7 +93,7 @@ PHASE_OWNER = {
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 
 # persona-setup: a PERSONA living doc (`.add/personas/<slug>.md`) is a frozen-schema file
-# distilled from a teacher source (agency-agents) to its critical-rules + default-requirement +
+# distilled from the vendored teacher library to its critical-rules + default-requirement +
 # measurable success-metrics. The schema is presence-based (these keys/sections must exist);
 # content quality is the AI's authoring concern, not the engine gate. NO-EXEC: validation is pure.
 PERSONA_FRONTMATTER_KEYS = ("name", "vibe")
@@ -217,9 +217,18 @@ _DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETR
 
 
 # --- shared delta-parsing regexes (used by taskdoc readers AND the deltas-web lint) ---
+# Groups stay (1) competency, (2) status, (3) text — every caller relies on that. A competency
+# lesson MAY carry an OPTIONAL persona target + section hint between status and `]`
+# (persona-self-improve): `[<comp> · <status> · persona:<slug> · <critical-rule|success-metric>] …`.
+# That clause is NON-capturing here (group numbering unchanged); _PERSONA_TAG_RE below pulls the
+# slug + hint out when a route needs them — permissively, so an unroutable hint still PARSES (and is
+# rejected by code) rather than silently failing to match.
 _DELTA_RE = re.compile(
-    r"\s*-\s*\[\s*(DDD|SDD|UDD|TDD|ADD)\s*·\s*(open|folded|rejected)\s*\]\s*(.+)$"
+    r"\s*-\s*\[\s*(DDD|SDD|UDD|TDD|ADD)\s*·\s*(open|folded|rejected)"
+    r"(?:\s*·\s*persona:[^\s·\]]+\s*·\s*[^·\]]+?)?\s*\]\s*(.+)$"
 )
+# Pull the OPTIONAL persona target + section hint out of a delta tag line (persona-self-improve).
+_PERSONA_TAG_RE = re.compile(r"persona:([^\s·\]]+)\s*·\s*([^·\]]+?)\s*\]")
 _EVIDENCE_RE = re.compile(r"^(.*?)\s*\(evidence:\s*(.*?)\)\s*$")
 _SPEC_DELTA_RE = re.compile(
     r"\s*-\s*\[\s*(SPEC)\s*·\s*(open|seeded|dropped|carried)\s*\]\s*(.+)$"

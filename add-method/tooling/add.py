@@ -36,7 +36,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _GITIGNORE_BODY, _GUIDE_BEGIN, _GUIDE_END,
     _RULE_REF_LINE, _FALLBACK_TASK, _FALLBACK_TASK_FAST,
     _DEFAULT_WIDTH,
-    _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
+    _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
     _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
     _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
@@ -5271,7 +5271,12 @@ def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
                 delta_text, evidence = em.group(1).strip(), em.group(2).strip()
             else:
                 delta_text, evidence = tail, ""
-            by_comp[comp].append({"task": slug, "text": delta_text, "evidence": evidence})
+            # OPTIONAL persona target + section hint (persona-self-improve) — None for a plain lesson.
+            pm = _PERSONA_TAG_RE.search(unit[0])
+            persona = pm.group(1).strip() if pm else None
+            hint = pm.group(2).strip() if pm else None
+            by_comp[comp].append({"task": slug, "text": delta_text, "evidence": evidence,
+                                  "persona": persona, "hint": hint})
     return by_comp
 
 
@@ -5397,7 +5402,11 @@ def _select_spec_delta(text: str, match: str | None = None,
 # literal, both exempt via MACHINE_CONSTANTS.
 _FOLD_VERB = "fold"        # the subcommand / decision-record verb
 _FOLDED = "folded"         # the resolved status value
-_COMP_OPEN_TOKEN_RE = re.compile(r"(\[\s*(?:DDD|SDD|UDD|TDD|ADD)\s*·\s*)open(\s*\])")
+# group(2) carries any OPTIONAL persona annotation (`· persona:<slug> · <hint>`) so flipping
+# open->folded preserves it byte-for-byte (persona-self-improve).
+_COMP_OPEN_TOKEN_RE = re.compile(
+    r"(\[\s*(?:DDD|SDD|UDD|TDD|ADD)\s*·\s*)open"
+    r"(\s*(?:·\s*persona:[^\s·\]]+\s*·\s*[^·\]]+?\s*)?\])")
 
 # competency -> (foundation file, section-heading PREFIX) — fold.md's routing table. DDD/SDD/UDD
 # land in PROJECT.md sections; TDD/ADD in CONVENTIONS.md (they ARE the engine). Total over the five.
@@ -5410,6 +5419,13 @@ _FOLD_ROUTES = {
 }
 _KEY_DECISIONS_HEADING = "## Key Decisions"   # the universal audit-trail section (every session adds one row)
 _TABLE_SEP_RE = re.compile(r"\s*\|[-\s|]+\|\s*$")
+
+# persona-self-improve: a `persona:<slug>` lesson routes into `.add/personas/<slug>.md` instead of a
+# foundation file. The section HINT picks the growable section; only these two are routable.
+_PERSONA_FOLD_SECTIONS = {
+    "critical-rule": "## Critical Rules",
+    "success-metric": "## Success Metrics",
+}
 
 
 def _fold_competency_delta(text: str, version: int, comps=None) -> str | None:
@@ -5505,11 +5521,16 @@ def cmd_fold(args: argparse.Namespace) -> None:
     prev_v = int(vm.group(1))
     new_v = prev_v + 1
 
-    # routing — every selected lesson's destination section (and the audit-trail section) must exist.
+    # A lesson with a `persona:<slug>` target routes to a persona living doc, NOT a foundation file
+    # (persona-self-improve). Partition first so the foundation-route checks skip persona lessons.
+    persona_sel = [it for it in selected if it.get("persona")]
+    found_sel = [it for it in selected if not it.get("persona")]
+
+    # routing — every FOUNDATION lesson's destination section (and the audit-trail section) must exist.
     conventions_md = root / "CONVENTIONS.md"
     conventions_text = conventions_md.read_text(encoding="utf-8") if conventions_md.exists() else ""
     file_text = {"PROJECT.md": project_text, "CONVENTIONS.md": conventions_text}
-    for it in selected:
+    for it in found_sel:
         fname, heading = _FOLD_ROUTES[it["comp"]]
         if not _section_present(file_text[fname], heading):
             _die(f"missing_route_section: {fname} has no '{heading}' section for a "
@@ -5517,6 +5538,21 @@ def cmd_fold(args: argparse.Namespace) -> None:
     if not _section_present(project_text, _KEY_DECISIONS_HEADING):
         _die(f"missing_route_section: PROJECT.md has no '{_KEY_DECISIONS_HEADING}' "
              "section for the audit-trail row — add the section header and re-run")
+
+    # persona routing — validate fail-closed BEFORE any write (design-for-failure): the section hint
+    # must be routable and the target persona file must exist. No network, no child launch — pure IO.
+    persona_paths: dict[str, Path] = {}
+    for it in persona_sel:
+        hint = (it.get("hint") or "").strip()
+        if hint not in _PERSONA_FOLD_SECTIONS:
+            _die(f"persona_section_unroutable: '{hint or '(none)'}' is not a growable persona "
+                 f"section — use one of {', '.join(_PERSONA_FOLD_SECTIONS)}")
+        slug = it["persona"]
+        ppath = root / "personas" / f"{slug}.md"
+        if not _persona_slug_valid(slug) or not ppath.is_file():
+            _die(f"missing_persona_target: no .add/personas/{slug}.md for a persona lesson — "
+                 "seed the persona first (setup) or fix the slug")
+        persona_paths[slug] = ppath
 
     # ── build EVERY edit in memory before writing anything ──────────────────────────────────────
     comps_filter = {want_comp} if want_comp else None
@@ -5533,14 +5569,39 @@ def cmd_fold(args: argparse.Namespace) -> None:
         return (f"- ({it['comp']}) {it['text']}{ev}  "
                 f"[{_FOLDED} foundation-version {new_v} · from {it['task']}]")
 
-    # transcribe verbatim (reverse so canonical-order first lands on top, newest-first).
+    def _persona_bullet(it):
+        ev = f" (evidence: {it['evidence']})" if it["evidence"] else ""
+        return (f"- {it['text']}{ev}  "
+                f"[{_FOLDED} {date.today().isoformat()} · from {it['task']}]")
+
+    # transcribe FOUNDATION lessons verbatim (reverse so canonical-order first lands on top, newest-first).
     proj_text, conv_text = project_text, conventions_text
-    for it in reversed(selected):
+    for it in reversed(found_sel):
         fname, heading = _FOLD_ROUTES[it["comp"]]
         if fname == "PROJECT.md":
             proj_text = _prepend_to_section(proj_text, heading, _bullet(it))
         else:
             conv_text = _prepend_to_section(conv_text, heading, _bullet(it))
+
+    # transcribe PERSONA lessons into their living docs — PREPEND newest-first under the hinted
+    # section, NEVER clobbering (every prior persona line survives; the schema stays conformant).
+    from collections import Counter
+    persona_new: dict[str, str] = {}
+    for it in reversed(persona_sel):
+        slug = it["persona"]
+        before = persona_new.get(slug) or persona_paths[slug].read_text(encoding="utf-8")
+        heading = _PERSONA_FOLD_SECTIONS[it["hint"].strip()]
+        if not _section_present(before, heading):           # defensive: a conformant persona has it
+            _die(f"persona_section_unroutable: .add/personas/{slug}.md has no '{heading}' section")
+        after = _prepend_to_section(before, heading, _persona_bullet(it))
+        # never-clobber INVARIANT: every pre-existing line must survive the merge.
+        if Counter(before.splitlines()) - Counter(after.splitlines()):
+            _die(f"persona_clobber_forbidden: consolidating into {slug}.md would drop existing content")
+        # post-merge INVARIANT: the four required persona sections survive.
+        if _persona_missing(after):
+            _die(f"persona_clobber_forbidden: consolidating into {slug}.md broke the persona schema "
+                 f"(missing {', '.join(_persona_missing(after))})")
+        persona_new[slug] = after
 
     counts = {c: sum(1 for it in selected if it["comp"] == c) for c in _COMPETENCY_ORDER}
     count_str = " · ".join(f"{c} {counts[c]}" for c in _COMPETENCY_ORDER if counts[c])
@@ -5564,6 +5625,10 @@ def cmd_fold(args: argparse.Namespace) -> None:
     for slug, body in task_new.items():
         writes.append((root / "tasks" / slug / "TASK.md", body))
     touched.append(f"{len(task_new)} TASK.md")
+    for slug, body in persona_new.items():
+        writes.append((persona_paths[slug], body))
+    if persona_new:
+        touched.append(f"{len(persona_new)} persona")
     _atomic_write_many(writes)
 
     print(f"{_FOLDED} {len(selected)} lessons -> foundation-version {new_v}")

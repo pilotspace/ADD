@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Doc-truth tests for orchestrator-build-persona (persona-learning-loop 7/7). CONTRACT frozen @ v1.
+
+While building, the orchestrating agent may adopt a project persona as a DOMAIN identity overlay
+LAYERED on SOUL.md — phases/5-build.md documents loading the active `.add/personas/<slug>.md`
+(SOUL = voice/trust · persona = domain stance), and the TASK template's §5 Strategy carries an
+OPTIONAL persona hook naming the persona the build embodies. SOUL.md stays human-owned (the overlay
+never rewrites it) and the persona is advisory (never lowers a gate). The engine never reads the
+persona on the build path, so this is doc/template-truth only (no engine change). Run:
+python3 -m unittest test_orchestrator_build_persona -v
+"""
+import hashlib
+import unittest
+from pathlib import Path
+
+TOOLING = Path(__file__).resolve().parent
+PKG_ROOT = TOOLING.parent
+REPO_ROOT = PKG_ROOT.parent
+
+SKILL_TREES = (
+    PKG_ROOT / "skill" / "add",
+    REPO_ROOT / ".claude" / "skills" / "add",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add",
+)
+TEMPLATE_TREES = (
+    PKG_ROOT / "tooling" / "templates" / "TASK.md.tmpl",
+    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+)
+CANON = SKILL_TREES[0]
+
+
+def _build_guide(tree: Path) -> str:
+    return (tree / "phases" / "5-build.md").read_text(encoding="utf-8")
+
+
+class OrchestratorBuildPersonaTest(unittest.TestCase):
+    def setUp(self):
+        self.text = _build_guide(CANON)
+        self.low = self.text.lower()
+
+    def test_build_guide_documents_overlay(self):
+        self.assertIn(".add/personas/", self.text,
+                      "5-build.md must tell the orchestrator to load the active .add/personas/<slug>.md")
+        self.assertIn("overlay", self.low, "5-build.md must frame the persona as a domain identity overlay")
+        self.assertIn("soul.md", self.low, "the overlay must be layered on SOUL.md")
+        self.assertIn("stance", self.low, "5-build.md must distinguish SOUL voice from the persona's domain stance")
+
+    def test_task_template_has_persona_hook(self):
+        body = TEMPLATE_TREES[0].read_text(encoding="utf-8")
+        section = body.split("## 5 · BUILD", 1)[1].split("## 6 ·", 1)[0]
+        self.assertIn(".add/personas/", section,
+                      "TASK.md.tmpl §5 must name an optional .add/personas/<slug>.md persona hook")
+        self.assertIn("persona", section.lower(), "§5 must mention the persona hook")
+
+    def test_overlay_never_rewrites_soul(self):
+        self.assertIn("human-owned", self.low.replace("human owned", "human-owned"),
+                      "5-build.md must state SOUL.md is human-owned")
+        self.assertIn("never rewrite", self.low.replace("never rewrites", "never rewrite"),
+                      "5-build.md must state the overlay never rewrites SOUL.md")
+        # SOUL.md carries none of this task's overlay additions (stays untouched by the overlay).
+        soul = (CANON / "SOUL.md").read_text(encoding="utf-8")
+        self.assertNotIn(".add/personas/", soul,
+                         "SOUL.md must not be rewritten with the persona overlay (human-owned)")
+
+    def test_persona_never_lowers_gate(self):
+        self.assertIn("never lower", self.low.replace("never lowers", "never lower"),
+                      "5-build.md must state the persona never lowers a gate")
+        self.assertIn("hard-stop", self.low, "a security finding must still HARD-STOP")
+
+    def test_5build_and_template_parity(self):
+        guides = {_build_guide(t) for t in SKILL_TREES}
+        self.assertEqual(len(guides), 1, "5-build.md must be byte-identical across the 3 skill trees")
+        templates = {t.read_text(encoding="utf-8") for t in TEMPLATE_TREES}
+        self.assertEqual(len(templates), 1, "TASK.md.tmpl must be byte-identical across the 3 engine trees")
+
+    def test_engine_unchanged(self):
+        import engine_pin
+        live = hashlib.md5((TOOLING / "add.py").read_bytes()).hexdigest()
+        self.assertEqual(live, engine_pin.ENGINE_MD5,
+                         "this task touches no engine code — ENGINE_MD5 must equal the pin")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

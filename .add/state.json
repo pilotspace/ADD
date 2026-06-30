@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-subagent-prompt",
+  "active_task": "debrand-teacher-prose",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2875,12 +2875,12 @@
     },
     "persona-self-improve": {
       "title": "observe->delta->fold grows project personas from real usage without clobbering",
-      "phase": "contract",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "persona-learning-loop",
       "depends_on": [],
       "created": "2026-06-29T15:16:48+00:00",
-      "updated": "2026-06-29T15:25:56+00:00",
+      "updated": "2026-06-29T16:49:04+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-06-29T15:41:35+00:00",
@@ -2890,11 +2890,360 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4bb75ec6d36c19026ac0069ddc5ea558",
+        "tests": {
+          "add-method/tooling/test_persona_self_improve.py": "20ffd3c9c14bcf0547529ebaab9ff6f9"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/add_engine/taskdoc.py",
+          "add-method/skill/add/fold.md",
+          "add-method/skill/add/deltas.md",
+          "add-method/tooling/test_persona_self_improve.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add.py",
+          ".add/tooling/add_engine/constants.py",
+          ".add/tooling/add_engine/taskdoc.py",
+          ".claude/skills/add/fold.md",
+          ".claude/skills/add/deltas.md",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/taskdoc.py",
+          "add-method/src/add_method/_bundled/skill/add/fold.md",
+          "add-method/src/add_method/_bundled/skill/add/deltas.md"
+        ],
+        "snapshot_md5": "a87c80a76d4bf6adb84e02e83650f280"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-29T16:47:47+00:00",
+            "reason": "scope_violation: task 'persona-self-improve' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/add_engine/constants.py \u00b7 add-method/tooling/add_engine/constants.py (2 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "advisor-persona-select": {
+      "title": "advisor/streams select a persona per delegated piece and record it in the verdict",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T16:50:01+00:00",
+      "updated": "2026-06-29T17:42:16+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T17:18:04+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6e17b3531a154b21878bf4f9c1a8c203",
+        "tests": {
+          "add-method/tooling/test_advisor_persona_select.py": "141436a2b318897b1f8edc5bc5338375"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/advisor.md",
+          ".claude/skills/add/advisor.md",
+          "add-method/src/add_method/_bundled/skill/add/advisor.md",
+          "add-method/tooling/test_advisor_persona_select.py"
+        ],
+        "snapshot_md5": "41e36fd364e720089a88af4a3f4e4355"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "orchestrator-build-persona": {
+      "title": "orchestrator identity overlay atop SOUL.md + \u00a75 build-strategy persona hook",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T16:50:01+00:00",
+      "updated": "2026-06-29T17:43:49+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T17:18:04+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "68c6defaf036a90d08bb633485f8c6d0",
+        "tests": {
+          "add-method/tooling/test_orchestrator_build_persona.py": "cc8496d01effd205118fbbc924667512"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/5-build.md",
+          ".claude/skills/add/phases/5-build.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/5-build.md",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/test_orchestrator_build_persona.py"
+        ],
+        "snapshot_md5": "e72d7147e615783bccb547ef129188db"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "persona-method-docs": {
+      "title": "book chapter + skill pointer + glossary describe the persona loop, in parity",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-learning-loop",
+      "depends_on": [],
+      "created": "2026-06-29T16:50:01+00:00",
+      "updated": "2026-06-29T17:58:29+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-29T17:18:04+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "3f5f9c4eb49b88c4aee41ef0abbd3149",
+        "tests": {
+          "add-method/tooling/test_persona_method_docs.py": "70af04e93a183e8724b7054372f35cce"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/18-personas.md",
+          "18-personas.md",
+          "add-method/src/add_method/_bundled/docs/18-personas.md",
+          "add-method/docs/appendix-c-glossary.md",
+          "appendix-c-glossary.md",
+          "add-method/src/add_method/_bundled/docs/appendix-c-glossary.md",
+          "mkdocs.yml",
+          "add-method/skill/add/SKILL.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          "add-method/tooling/test_persona_method_docs.py"
+        ],
+        "snapshot_md5": "c09080e87e6fef045ef5ced7f032b5b2"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-29T17:57:26+00:00",
+            "reason": "scope_violation: task 'persona-method-docs' touched outside its declared \u00a75 Scope \u2014 18-personas.md \u00b7 appendix-c-glossary.md \u00b7 mkdocs.yml (3 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "vendor-teacher-snapshot": {
+      "title": "Vendor a pinned raw teacher snapshot + MIT attribution",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-teacher-bundle",
+      "depends_on": [],
+      "created": "2026-06-30T04:45:31+00:00",
+      "updated": "2026-06-30T04:55:04+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T04:50:04+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b13c66a616864b79f4e153c70a7d187f",
+        "tests": {
+          "add-method/tooling/test_teacher_snapshot.py": "5774e1dc4929ad04a1e6de7ade72848f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/personas-teacher/",
+          "THIRD_PARTY_NOTICES.md",
+          "add-method/scripts/update_teacher.py",
+          "add-method/tooling/test_teacher_snapshot.py"
+        ],
+        "snapshot_md5": "9c68b7077815e91ecaf92f2c7fac882c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "bundle-teacher": {
+      "title": "Ship the vendored teacher snapshot in npm + pip; init/update materialize it",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-teacher-bundle",
+      "depends_on": [],
+      "created": "2026-06-30T04:58:28+00:00",
+      "updated": "2026-06-30T05:19:18+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T05:03:31+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a85b548f93c7e8a4bd0ec19d1f5dd023",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/package.json",
+          "add-method/bin/",
+          "add-method/src/",
+          "add-method/scripts/",
+          "add-method/tooling/",
+          "add-method/THIRD_PARTY_NOTICES.md"
+        ],
+        "snapshot_md5": "86de2e4366f0523cad2473c18bc93a4b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "teacher-refresh-ci": {
+      "title": "Scheduled CI that refreshes the teacher snapshot + pin and opens a PR",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-teacher-bundle",
+      "depends_on": [],
+      "created": "2026-06-30T05:19:51+00:00",
+      "updated": "2026-06-30T05:25:32+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T05:22:00+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "97d74d431891c2f06518e80fd7fba37f",
+        "tests": {
+          "add-method/tooling/test_teacher_refresh_ci.py": "542fd0de5b13974eb991f5e7ca381848"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".github/workflows/teacher-refresh.yml",
+          "add-method/tooling/test_teacher_refresh_ci.py"
+        ],
+        "snapshot_md5": "0a43dfbb5a399be1613d15eaff2bca4b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "debrand-teacher-prose": {
+      "title": "Strip the agency-agents brand from method prose + engine; repoint persona phase at the local teacher library",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-teacher-bundle",
+      "depends_on": [],
+      "created": "2026-06-30T05:32:14+00:00",
+      "updated": "2026-06-30T07:33:43+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T05:36:32+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d5c3c3db740c616edfade90cb8d54f3a",
+        "tests": {
+          "add-method/tooling/test_debrand_teacher_prose.py": "ea265b8630684953dd39e6d404f0f88d",
+          "add-method/tooling/test_persona_setup.py": "5f784e80f6ff5f44acb82c4c1e00c448",
+          "add-method/tooling/test_persona_method_docs.py": "43ff9f886bc23a602274380cb5d6df9d"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/",
+          "18-personas.md",
+          "appendix-c-glossary.md",
+          "add-method/skill/",
+          ".claude/",
+          "add-method/tooling/",
+          "add-method/src/",
+          ".add/docs/",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "2c73d385bc9b8da4c0c3b560fdd8474c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-29T16:07:38+00:00",
+  "updated": "2026-06-30T07:36:44+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3115,9 +3464,31 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-teacher-bundle": {
+      "title": "Persona teacher bundle",
+      "goal": "Vendor the agency-agents teacher corpus as a pinned MIT-attributed local library, bundled into the ADD release and read at the persona phase, de-branded from method prose and kept current by a scheduled refresh \u2014 engine NO-EXEC, release builds zero-network.",
+      "stage": "mvp",
+      "status": "done",
+      "created": "2026-06-30T04:44:24+00:00",
+      "updated": "2026-06-30T07:36:44+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T04:45:31+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "persona-learning-loop",
+  "active_milestone": "persona-teacher-bundle",
   "archived": [
     {
       "slug": "v5",
@@ -3726,12 +4097,14 @@
   ],
   "active_milestones": [
     "advisor-gated-autonomy",
-    "persona-learning-loop"
+    "persona-learning-loop",
+    "persona-teacher-bundle"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
-    "persona-learning-loop": "persona-subagent-prompt"
+    "persona-learning-loop": "persona-method-docs",
+    "persona-teacher-bundle": "debrand-teacher-prose"
   },
   "todos": [
     {

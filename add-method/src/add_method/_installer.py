@@ -30,7 +30,13 @@ MANAGED = (
     ("skill/add", ".claude/skills/add", False),
     ("tooling", ".add/tooling", True),
     ("docs", ".add/docs", False),
+    ("personas-teacher", ".add/personas-teacher", False),
 )
+# Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
+# The real package always ships these (guarded by test_packaging + test_bundle_parity);
+# but a malformed/older package missing one must NOT abort the whole install — the core
+# (skill/tooling/docs) still lands, and the optional tree is soft-skipped. Design-for-failure.
+OPTIONAL = frozenset({"personas-teacher"})
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,
@@ -660,6 +666,7 @@ _GLOBAL_TREES = (
     ("skill/add", "skill/add", False),
     ("tooling", "tooling", True),
     ("docs", "docs", False),
+    ("personas-teacher", "personas-teacher", False),
 )
 
 
@@ -669,6 +676,8 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
     dir can't be written — the caller turns that into a clean 'home_unwritable' fail. The caller
     verifies the bundled sources exist first (design-for-failure)."""
     for sub, dest_rel, strip in _GLOBAL_TREES:
+        if sub in OPTIONAL and not (bundled_root / sub).exists():
+            continue   # optional enhancement absent — never abort the global mirror over it
         _clean_replace(bundled_root / sub, home / dest_rel, strip_tests=strip)
     if not no_skill:
         _clean_replace(home / "skill" / "add", claude_dir)
@@ -932,6 +941,8 @@ def install(
 
     # design-for-failure: verify ALL sources exist BEFORE touching the target.
     for sub, _dest, _strip in MANAGED:
+        if sub in OPTIONAL and not (bundled_root / sub).exists():
+            continue   # optional enhancement absent — soft-skip, never abort the core install
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
 
@@ -1128,7 +1139,7 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
-_TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs"}
+_TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas"}
 
 
 def _managed_status(target_path: Path) -> dict:
@@ -1152,6 +1163,8 @@ def _reconcile(target_path: Path, bundled_root: Path) -> dict:
     status = _managed_status(target_path)
     restored = refreshed = 0
     for sub, dest_rel, strip in MANAGED:
+        if sub in OPTIONAL and not (bundled_root / sub).exists():
+            continue   # optional enhancement absent from this package — nothing to materialize
         roll = _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
         restored += roll["restored"]
         refreshed += roll["refreshed"]
@@ -1244,6 +1257,8 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
     except RuntimeError as exc:
         return _fail(str(exc))
     for sub, _dest, _strip in MANAGED:
+        if sub in OPTIONAL and not (bundled_root / sub).exists():
+            continue   # optional enhancement absent — soft-skip, never abort the core install
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
     try:
@@ -1329,13 +1344,18 @@ def update(
     except RuntimeError as exc:
         return _fail(str(exc))
     for sub, _dest, _strip in MANAGED:
+        if sub in OPTIONAL and not (bundled_root / sub).exists():
+            continue   # optional enhancement absent — soft-skip, never abort the core install
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
 
     new_version = version or _pkg_version()
     stamp = _read_stamp(add_dir)
     cur_version = stamp.get("version") if stamp else None
-    missing = [sub for sub, st in _managed_status(target_path).items() if st == "missing"]
+    # An optional tree absent from BOTH the package and the project can't be healed, so it
+    # never counts as "missing" — otherwise a same-version update would never reach the no-op.
+    missing = [sub for sub, st in _managed_status(target_path).items()
+               if st == "missing" and not (sub in OPTIONAL and not (bundled_root / sub).exists())]
     # same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
     # even at the current version (heal-reconcile).
     if cur_version == new_version and not force and not missing:

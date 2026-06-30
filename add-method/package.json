@@ -24,6 +24,8 @@
     "!**/*.pyc",
     "tooling/templates/",
     "docs/",
+    "personas-teacher/",
+    "THIRD_PARTY_NOTICES.md",
     "README.md",
     "GETTING-STARTED.md",
     "CHANGELOG.md",

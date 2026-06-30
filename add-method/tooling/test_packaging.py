@@ -77,6 +77,17 @@ class NpmTarballTest(unittest.TestCase):
             self.assertTrue(any(p.startswith(prefix) for p in self.paths),
                             f"no file under {prefix} shipped")
 
+    def test_teacher_corpus_and_notices_ship(self):
+        """The vendored teacher snapshot + its MIT attribution must ride in the tarball
+        (bundle-teacher). A missing personas-teacher/ here is the 1.11.0 files-allowlist
+        trap: the dir silently drops and a fresh install finds no teacher to materialize."""
+        self.assertTrue(any(p.startswith("personas-teacher/") for p in self.paths),
+                        "no file under personas-teacher/ shipped (teacher_absent_from_npm)")
+        self.assertIn("personas-teacher/LICENSE", self.paths,
+                      "the vendored MIT LICENSE must ship with the teacher (attribution_missing)")
+        self.assertIn("THIRD_PARTY_NOTICES.md", self.paths,
+                      "THIRD_PARTY_NOTICES.md must ship in the npm tarball (attribution_missing)")
+
     def test_add_engine_package_ships(self):
         """add.py imports `from add_engine.<module> import …` at load — the whole
         package MUST ship in the tarball or `bin/cli.js init` materializes an add.py
@@ -117,6 +128,7 @@ _BUNDLE_PREFIXES = (
     "add_method/_bundled/docs/",
     "add_method/_bundled/skill/add/",
     "add_method/_bundled/tooling/",
+    "add_method/_bundled/personas-teacher/",
 )
 _PKG_MODULES = (
     "add_method/__init__.py", "add_method/_cli.py", "add_method/_installer.py",
@@ -177,6 +189,8 @@ class PyWheelTest(unittest.TestCase):
             )
         self.assertTrue(any(n.endswith("_bundled/tooling/add.py") for n in self.names),
                         "the wheel must ship the add.py scaffolder")
+        self.assertTrue(any(n.endswith("_bundled/THIRD_PARTY_NOTICES.md") for n in self.names),
+                        "the wheel must ship THIRD_PARTY_NOTICES.md (attribution_missing)")
 
     def test_package_modules_ship(self):
         missing = [m for m in _PKG_MODULES if m not in self.names]
