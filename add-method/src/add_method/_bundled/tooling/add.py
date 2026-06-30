@@ -244,6 +244,39 @@ def _ground_cites_line_ref(text: str) -> bool:
     """True iff the §0 GROUND block cites a bare line number (the `l.NNN` idiom)."""
     return bool(_LINE_REF_RE.search(_ground_section(text)))
 
+
+# --- tidy a closed TASK.md (strip-scaffold-at-done) --------------------------
+# A live TASK.md carries `<!-- … -->` instruction comments that guide the active phase; once the
+# task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
+# Content-safe: fenced code blocks (```…```, incl. the frozen §3) pass through BYTE-EXACT — only
+# comments OUTSIDE a fence are removed; idempotent.
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_TRAILING_WS_RE = re.compile(r"(?m)[ \t]+$")
+_BLANK_RUN_RE = re.compile(r"\n{3,}")
+
+
+def _strip_live_scaffold(text: str) -> str:
+    """Remove `<!-- … -->` instruction comments from a TASK.md — fences untouched, idempotent.
+
+    Splits on fenced code blocks so a comment inside a ``` fence (e.g. the frozen §3) is never
+    touched; in the non-fence segments it drops comment spans, trims the trailing whitespace a
+    removal leaves on a line, and collapses 3+ consecutive newlines to one blank line."""
+    segs = re.split(r"(```.*?```)", text, flags=re.DOTALL)
+    for i in range(0, len(segs), 2):                     # even indices = OUTSIDE any fence
+        s = _HTML_COMMENT_RE.sub("", segs[i])
+        s = _TRAILING_WS_RE.sub("", s)
+        segs[i] = _BLANK_RUN_RE.sub("\n\n", s)
+    return "".join(segs)
+
+
+def _contract_fingerprint(raw3: str) -> str:
+    """md5 of the §3 CONTRACT CONTENT — comment-normalized + outer-whitespace-canonical (the
+    instruction comment is scaffolding, not contract). Used on BOTH tamper-guard sides
+    (_tripwire_snapshot + _tripwire_divergence) so the at-done strip — which removes the §3
+    comment and shifts the section's boundary whitespace — never reads as `contract_tampered`,
+    while a real fenced-shape edit still does."""
+    return _md5_text(_strip_live_scaffold(raw3).strip())
+
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
@@ -1322,6 +1355,15 @@ def cmd_gate(args: argparse.Namespace) -> None:
         _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     _stamp_adr_record(root, state, slug)                  # adr-at-observe: harvest §7 Decisions (ADR) — AFTER §6 is mirrored
+    if completing:                                         # strip-scaffold-at-done: tidy the now-closed
+        _tf = root / "tasks" / slug / "TASK.md"           # TASK.md LAST (after the stampers) — drop the
+        try:                                              # live-phase `<!-- -->` comments; fences untouched.
+            _tt = _tf.read_text(encoding="utf-8")
+            _st = _strip_live_scaffold(_tt)
+            if _st != _tt:
+                _atomic_write(_tf, _st)
+        except OSError:
+            pass                                          # degrade-safe — the verdict is already in state
     print(f"task '{slug}' gate -> {args.outcome}")
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
     if _gbar:
@@ -4059,7 +4101,10 @@ def _tripwire_snapshot(root: Path, slug: str, raw3: str) -> dict:
         except (ValueError, OSError):
             rel = str(f)
         tests[rel] = h
-    return {"contract_md5": _md5_text(raw3), "tests": tests}
+    # strip-scaffold-at-done: fingerprint the contract CONTENT (comment-normalized, see
+    # _contract_fingerprint) so the at-done comment strip is invisible to the tamper guard; a real
+    # fenced-shape edit still changes it. Mirrored byte-for-byte in _tripwire_divergence.
+    return {"contract_md5": _contract_fingerprint(raw3), "tests": tests}
 
 
 def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
@@ -4067,7 +4112,9 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
     path directly (never re-globs), so a weakened, deleted, or unreadable test file
     and an edited frozen §3 all surface. Fail-closed: an unreadable file -> diverged."""
     diffs: list[str] = []
-    if _md5_text(_raw_phase_bodies(root, slug).get(3, "")) != tw.get("contract_md5"):
+    # compare the contract CONTENT fingerprint (strip-scaffold-at-done) — same normalization as the
+    # snapshot, so the at-done comment strip never reads as tampering; a real shape edit still does.
+    if _contract_fingerprint(_raw_phase_bodies(root, slug).get(3, "")) != tw.get("contract_md5"):
         diffs.append("contract_tampered")
     rootp = root.parent.resolve()
     for rel, snap in (tw.get("tests") or {}).items():
