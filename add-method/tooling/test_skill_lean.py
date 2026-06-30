@@ -92,7 +92,13 @@ POOLS = [
     # run.md gains the Advisor-3-lens-verdict auto-gate bullet + the `advisor-gate-relax` pathway bullet (+680 B)
     # — the milestone's autonomy feature documented at its homes. RATIO 0.75 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈928/0.75⌉=1238). The won compaction is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 54363,
+    # orchestration 54363 → 55159 @ phase-agent-roster (same "rebaseline for human-approved new surface"
+    # method): advisor.md gains the "## The phase-specialist roster" section — the 9 registered phase-specialist
+    # subagents (`add-<phase>`) + the spawn convention (plugin `add:add-<phase>` / project bare) — documenting
+    # the agency-agents roster at its spawn-authority home. +597 B human-approved surface (direct batch on
+    # feat/persona-distillation-depth, Tin-approved rebaseline). RATIO 0.75 kept EXACTLY; baseline grows by
+    # surface ÷ ratio (+⌈597/0.75⌉=796). The won compaction on the orchestration guides is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 55159,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a

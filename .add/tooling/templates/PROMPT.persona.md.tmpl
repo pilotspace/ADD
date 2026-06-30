@@ -32,11 +32,12 @@ skill before relying on it.
 
 | Runner | Spawn the worker with the rendered prompt body |
 |--------|------------------------------------------------|
-| Claude Code (reference) | `Task(description=<label>, prompt=<rendered PROMPT.persona.md>, isolation="worktree")` |
+| Claude Code (reference) | `Task(subagent_type="add:add-{{PHASE}}", prompt=<rendered PROMPT.persona.md>, isolation="worktree")` — the registered phase-specialist (roster: `agents/add-<phase>.md`; advisor.md). Plain `Task(description=<label>, prompt=…)` still works when no roster is installed. |
 | Codex (illustrative) | `cd $WT && codex run --prompt-file PROMPT.persona.md` |
 | opencode (illustrative) | `cd $WT && opencode run --prompt-file PROMPT.persona.md` |
 | Cursor (illustrative) | `cursor agent --prompt-file PROMPT.persona.md` |
 | Windsurf (illustrative) | `windsurf run --prompt-file PROMPT.persona.md` |
+| Trae (illustrative) | `trae run --prompt-file PROMPT.persona.md` |
 | Copilot (illustrative) | `gh copilot suggest < PROMPT.persona.md` |
 | Cline (illustrative) | `cline task --file PROMPT.persona.md` |
 | Aider (illustrative) | `aider --message-file PROMPT.persona.md` |
