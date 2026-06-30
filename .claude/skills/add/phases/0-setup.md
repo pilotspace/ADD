@@ -1,18 +1,18 @@
 # Phase 0 — Setup (autonomous draft → one human baseline approval)
 
-Goal: point ADD at a repo and **you** draft the whole foundation — domain, first-milestone scope, and the first task's contract — then hand the human one decision: the **baseline approval**. Brownfield is silent; greenfield keeps a short interview. Either way, the human's only gate is `add.py lock`.
+Goal: point ADD at a repo and **you** draft the whole foundation — domain, first-milestone scope, first task's contract — then hand the human one decision: the **baseline approval**. Brownfield silent; greenfield keeps a short interview; either way the only gate is `add.py lock`.
 
 ## 1 · Zero-touch entry — you run init yourself
 
-When there is no `.add/state.json`, do **not** tell the human to initialise — run it yourself. Infer the
-project name and stage from the repo, and **arm the baseline-approval gate** with `--await-lock`:
+No `.add/state.json`? Don't tell the human to initialise — run it yourself. Infer name + stage
+from the repo and **arm the baseline-approval gate** with `--await-lock`:
 
 ```bash
 python3 .add/tooling/add.py init --name "<inferred from repo/dir>" --stage <prototype|poc|mvp|production> --await-lock
 ```
 
-- `--await-lock` seeds an *unlocked* setup — the engine refuses crossing into build or calling `gate` until you `lock`. A plain `init` is grandfathered-locked; its closing `lock` would error `already_locked`.
-- name + stage are **your judgment**: throwaway → `prototype`, risky slice → `poc`, narrow-but-real → `mvp`, full rigor → `production`.
+- `--await-lock` seeds an *unlocked* setup — the engine refuses build or `gate` until you `lock`. A plain `init` is grandfathered-locked (`already_locked` on a later `lock`).
+- name + stage are **your judgment**: throwaway → `prototype`, risky slice → `poc`, narrow → `mvp`, full rigor → `production`.
 
 `init` prints one of two things — **that is your branch**:
 - `brownfield:` → existing code (go to **2a**);
@@ -20,12 +20,12 @@ python3 .add/tooling/add.py init --name "<inferred from repo/dir>" --stage <prot
 
 ## 2a · Brownfield — map it silently
 
-The code answers the questions a greenfield interview would ask — **read it instead of asking**. Open `adopt.md` and follow it: fill each living-doc file from the code, never clobber an existing one, tag every decision `evidence-grounded` or `guessed`. Ask the human **nothing** at this step.
+The code answers what a greenfield interview would ask — **read it instead of asking**. Open `adopt.md`: fill each living-doc from code, never clobber, tag every decision `evidence-grounded` or `guessed`. Ask the human **nothing** here.
 
 ## 2b · Greenfield — the 4-lens interview (kept): co-specify at foundation level
 
-An empty repo has no code to read, so run the short interview. This is the **co-specify at foundation
-level** move — diverge → converge → validate, as a task's §1 uses (`phases/1-specify.md`), lifted to the foundation. Ask the one load-bearing question per lens, draft, then rank lowest-confidence-first and show the top flag:
+An empty repo has no code, so run the short interview — the **co-specify at foundation level** move
+(diverge → converge → validate, as §1 does in `phases/1-specify.md`), lifted to the foundation. Ask one load-bearing question per lens, draft, rank lowest-confidence-first, show the top flag:
 
 | Lens | The one question that unblocks the section |
 |------|--------------------------------------------|
@@ -45,15 +45,15 @@ Ask only the live ones. Rank: `⚠ <assumption> — lowest confidence because <w
 | **UDD** (users) | primary user → jobs, surface, the one flow that must feel right |
 | **TDD** (trust) | what "done & trusted" means: risks to prove, evidence that closes them |
 
-Capture each surfaced decision as an **ADR** into `PROJECT.md` **Key Decisions** as it lands.
+Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** as it lands.
 
-**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate: it NEVER skips the human baseline approval — the `lock` stays the one decision.
+**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate: it NEVER skips the human baseline approval — `lock` stays the one decision.
 
 ## 3 · Draft to the lock (both paths)
 
 1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
-   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). Author one per role from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches). Covered by the **baseline approval**; `add.py check` validates; never clobber.
-2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one outcome sentence), a **flow** (task order), and **scenarios** (concrete examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
+   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). Author one per role from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches), recording the teacher in `source:` and carrying its top `## Playbook` (both optional). Covered by the **baseline approval**; `add.py check` validates; never clobber.
+2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash
    python3 .add/tooling/add.py new-task <slug> --title "<first feature>"
@@ -70,23 +70,23 @@ Before the lock, surface the **run mode** — autonomy + streams (`run.md` · `s
 | **sequential · manual/conservative** | contract freeze **and** every Verify | one task; safest |
 | **parallel · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | `add.py waves` overlaps independent builds behind frozen contracts |
 
-**Propose `parallel + auto`; confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record it in **`PROJECT.md` Key Decisions**.
+**Propose `parallel + auto`; confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record in **`PROJECT.md` Key Decisions**.
 
 Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
-Open the report with the ARC per `report-template.md`, render the DECISION as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval itself; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
+Open the report with the ARC per `report-template.md`, render the DECISION as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
 
 ```bash
 python3 .add/tooling/add.py lock --by "<name>"
 ```
 
-Typing it themselves stays the **escape hatch** — the decision is always the human's; you just execute it. `lock` records the lock layers in one atomic write and opens the build.
+Typing it themselves stays the **escape hatch** — the decision is the human's; you execute. `lock` writes the lock layers atomically and opens the build.
 
 ## 5 · After the lock
 
-- The lock **is** the first task's contract approval — do **not** ask for a separate contract-freeze sign-off.
+- The lock **is** the first task's contract approval — don't ask for a separate contract-freeze sign-off.
 - Stamp the first task's §3 `Status: FROZEN @ v1`, then read `phases/5-build.md`.
 
 ## Exit gate

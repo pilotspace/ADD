@@ -1,13 +1,21 @@
 ---
 name: <persona name — e.g. Frontend Engineer, UX Researcher>
 vibe: <one-line essence — what this persona keeps true>
+source: <OPTIONAL — the teacher file this was distilled from, e.g. `.add/personas-teacher/engineering/engineering-software-architect.md` (provenance; omit if hand-authored)>
 ---
 <!-- A PERSONA is a project-fit requirements persona, distilled from the vendored teacher
      library (`.add/personas-teacher/`) to the parts ADD can act on: critical
      rules + a default requirement + MEASURABLE success metrics. The AI authors one file
      per persona this project needs (frontend, backend, reviewer, …) from PROJECT.md +
      the teacher; the engine only seeds + validates this schema (presence-based). This
-     `_template.md` is the schema reference — copy it to `<slug>.md` and fill it. -->
+     `_template.md` is the schema reference — copy it to `<slug>.md` and fill it.
+     REQUIRED: `name` + `vibe` frontmatter and the Identity / Critical Rules /
+     Default Requirement / Success Metrics sections.
+     OPTIONAL (recommended for a faithful distillation): a `source:` frontmatter key
+     recording the teacher file it came from, and a `## Playbook` section carrying the
+     highest-value EXECUTABLE scaffolding from that teacher (a checklist, a template, a
+     step sequence) so the persona is a doorway to the depth, not a lossy summary. The
+     engine never requires the optional parts; absence is conformant. -->
 
 ## Identity
 <who this persona is — role, domain depth, the perspective it brings to the work>
@@ -23,3 +31,10 @@ vibe: <one-line essence — what this persona keeps true>
 ## Success Metrics
 - <a MEASURABLE outcome that proves this persona's work is right — e.g. "4.5:1 contrast", "p95 < 100ms", ">= 80% adoption">
 - <another measurable metric>
+
+<!-- OPTIONAL below — delete this section if the persona needs no executable scaffolding. -->
+## Playbook
+<the highest-value executable know-how distilled from the `source:` teacher — a checklist,
+ a template, or a step sequence the build can actually follow (e.g. an ADR skeleton, a
+ STRIDE pass, a red→green loop). Keep it to what gets used at the work moment; link the
+ full teacher file for depth: see the `source:` path above.>
