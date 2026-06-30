@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "debrand-teacher-prose",
+  "active_task": "ground-issues",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3240,10 +3240,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-issues": {
+      "title": "\u00a70 Issues/Risks field that feeds SPECIFY",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ground-trust",
+      "depends_on": [],
+      "created": "2026-06-30T11:49:43+00:00",
+      "updated": "2026-06-30T12:06:32+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T11:56:14+00:00",
+        "approved_by": "Tin",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ab40572ae5416a98615e8a0080d956d9",
+        "tests": {
+          "add-method/tooling/test_ground_issues.py": "954023a3ad0d0bb070830fdfbf29c354"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/",
+          ".claude/skills/add/phases/",
+          "add-method/src/add_method/_bundled/skill/add/phases/",
+          "add-method/tooling/templates/",
+          ".add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/tooling/test_ground_issues.py"
+        ],
+        "snapshot_md5": "252fba686ef54d4cafd20ac4c67b94e3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T07:36:44+00:00",
+  "updated": "2026-06-30T12:06:32+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3486,9 +3529,58 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-trust": {
+      "title": "Ground-trust",
+      "goal": "GROUND surfaces the issues/risks it finds in the real code (feeding SPECIFY) and links each task's related intent to the foundation (PROJECT.md \u00b7 GLOSSARY.md \u00b7 conversation), so specs build on problems found, not assumed.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T11:49:43+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T11:49:43+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "artifact-graph": {
+      "title": "Artifact-graph",
+      "goal": "Every ADD artifact carries minimal backlink metadata (task\u2194milestone\u2194release\u2194deps\u2194delta, bidirectional) so the cross-artifact graph is traversable without re-deriving it.",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T11:47:47+00:00"
+    },
+    "drift-guard": {
+      "title": "Drift-guard",
+      "goal": "Kill \u00a70 reference rot: cite symbols not line numbers, stamp ground_sha, refresh at close, strip dead live-phase scaffolding at done \u2014 so a closed TASK.md stays true to the code.",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T11:47:47+00:00"
+    },
+    "traceability-ids": {
+      "title": "Traceability-ids",
+      "goal": "Give every \u00a71 rule a stable ID (M#/R#) that \u00a72 scenarios and \u00a74 tests reference, and lint coverage so no Must/Reject ships unscenarioed or untested.",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T11:47:47+00:00"
+    },
+    "seams": {
+      "title": "Seams",
+      "goal": "Promote symbols \u22652 tasks touch into a milestone-level SEAMS.md that \u00a70 references, so a shared contract has one home instead of being re-derived per task.",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-30T11:47:48+00:00",
+      "updated": "2026-06-30T11:47:48+00:00"
     }
   },
-  "active_milestone": "persona-teacher-bundle",
+  "active_milestone": "ground-trust",
   "archived": [
     {
       "slug": "v5",
@@ -4098,13 +4190,15 @@
   "active_milestones": [
     "advisor-gated-autonomy",
     "persona-learning-loop",
-    "persona-teacher-bundle"
+    "persona-teacher-bundle",
+    "ground-trust"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
     "persona-learning-loop": "persona-method-docs",
-    "persona-teacher-bundle": "debrand-teacher-prose"
+    "persona-teacher-bundle": "debrand-teacher-prose",
+    "ground-trust": "ground-issues"
   },
   "todos": [
     {
