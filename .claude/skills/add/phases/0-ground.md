@@ -10,13 +10,13 @@ gathering them IS the job.
 
 ## Gather (in TASK.md §0)
 
-- **Touches** — the real files · symbols · signatures the task will read or change,
-  named from the actual code (use code-navigation tools — grep / symbol search, never memory).
-  Each as `path:symbol — what it is / how it is keyed`.
-- **Context (working folder)** — NON-code artifacts the task touches: docs/textbase (README · `*.md` · design notes) · TODOs (`TODO.md` · `FIXME`/`TODO`/`HACK` comments) · config/manifests (configs · `.env.example` · `pyproject`/`package` · CI) · data/fixtures. Task-specific delta only — never index the whole repo.
-- **Honors** — the patterns and conventions the work must respect, cited from `PROJECT.md` / `CONVENTIONS.md`. Task-specific delta only — never re-derive the architecture.
+- **Touches** — the real files · symbols · signatures the task reads or changes, named from the
+  actual code (code-navigation tools — grep / symbol search, never memory). Each as `path:symbol — what it is / how keyed`.
+- **Context (working folder)** — NON-code artifacts touched: docs/textbase (README · `*.md`) · TODOs (`TODO.md` · `FIXME`/`TODO`/`HACK`) · config/manifests (`.env.example` · `pyproject`/`package` · CI) · data/fixtures. Task-delta only — never index the whole repo.
+- **Honors** — patterns/conventions the work must respect, cited from `PROJECT.md`/`CONVENTIONS.md`. Task-delta only — never re-derive the architecture.
 - **Anchors the contract cites** — the specific symbols §3 CONTRACT will name. The contract may cite only anchors that appear here.
 - **Issues/Risks (→ feed §1)** — concrete problems · traps · untestable risks you find in the real code while grounding; §1 SPECIFY builds on these, not on assumptions. Task-delta only.
+- **Related intent** — the WHY: `PROJECT.md §` · `GLOSSARY` term(s) · the originating request/milestone rationale (intent, not Honors' conventions). Task-delta.
 
 **How — gather efficiently:** for the BROAD sweep prefer a small-model subagent / fast index / skim
 (cheap context → compact map); then DEEPEN on what THIS task needs — never lock a shallow first pass.
@@ -50,6 +50,7 @@ Never: invent a file, symbol, or signature you have not opened.
 - [ ] **Honors** — the patterns/conventions to honor are cited (task-delta only; no architecture re-scan).
 - [ ] **Anchors** — the anchors §3 will cite are listed — §3 names only anchors that exist here.
 - [ ] **Issues/Risks** — the problems/risks found are recorded for §1 (or an honest none).
+- [ ] **Related intent** — the PROJECT/GLOSSARY/origin intent is linked (or an honest none).
 </exit_gate>
 
 **Grounding is complete when** all five fields are filled from real assets — a STRONG grounding cites

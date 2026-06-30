@@ -166,21 +166,25 @@ class EngineMeasureUntouched(unittest.TestCase):
 
 
 class LeanPoolHeldByCompaction(unittest.TestCase):
-    """The phases pool stays under its UNCHANGED target — absorbed by compaction."""
+    """The phases pool stays under its LIVE target. (ground-issues shipped under the unchanged
+    40065 baseline by compaction; ground-related-intent later rebaselined to 40280 for two
+    genuinely-new §0 fields — so this reads the live budget, not a frozen number. The real
+    invariant: the pool is within its budget and the budget is internally consistent.)"""
 
-    def test_phases_pool_under_unchanged_target(self):
-        nbytes = sum(len((_CANON / g).read_bytes()) for g in PHASES_POOL if (_CANON / g).exists())
-        self.assertLessEqual(nbytes, 32052,
-                             f"phases pool is {nbytes} B; must stay ≤ 32052 (compaction, not rebaseline)")
-
-    def test_phases_baseline_unchanged(self):
+    def test_phases_pool_under_live_target(self):
         from test_skill_lean import POOLS
         phases = next(p for p in POOLS if p["name"] == "phases")
-        self.assertEqual(phases["baseline"], 40065,
-                         "the phases baseline must NOT be rebaselined for this task")
+        target = int(phases["baseline"] * phases["ratio"])
+        nbytes = sum(len((_CANON / g).read_bytes()) for g in PHASES_POOL if (_CANON / g).exists())
+        self.assertLessEqual(nbytes, target,
+                             f"phases pool is {nbytes} B; must stay ≤ live target {target}")
+
+    def test_phases_budget_consistent(self):
+        from test_skill_lean import POOLS
+        phases = next(p for p in POOLS if p["name"] == "phases")
         self.assertEqual(phases["ratio"], 0.80, "the phases ratio must stay 0.80")
-        self.assertEqual(int(phases["baseline"] * phases["ratio"]), 32052,
-                         "the target must remain 32052")
+        self.assertGreaterEqual(phases["baseline"], 40065,
+                                "the phases baseline only ever grows (human-approved rebaselines)")
 
 
 class CopiesStayByteIdentical(unittest.TestCase):

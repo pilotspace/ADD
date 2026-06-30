@@ -107,7 +107,12 @@ POOLS = [
     # 3-lens checklist gains the §6 `### Advisor 3-lens verdict` recording instruction (Verdict · Residue ·
     # Binding + the `advisor_verdict_unrecorded` lint) — +433 B human-approved surface. RATIO 0.80 kept
     # EXACTLY; baseline grows by surface ÷ ratio (+⌈433/0.80⌉=542). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40065,
+    # phases 40065 → 40280 @ ground-trust (ground-issues + ground-related-intent, Tin-approved): §0 GROUND
+    # gains two genuinely-new gather fields — "Issues/Risks (→ feed §1)" (problems found in real code feed
+    # SPECIFY) and "Related intent" (links the task to PROJECT/GLOSSARY/origin) — across 0-ground.md +
+    # 1-specify.md, after compacting the reclaimable prose. +172 B residual human-approved surface. RATIO
+    # 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈172/0.80⌉=215). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40280,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
