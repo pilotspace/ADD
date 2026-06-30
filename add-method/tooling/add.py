@@ -189,6 +189,29 @@ def _read_milestone_line(text: str):
     m = _MILESTONE_LINE_RE.search(text)
     return m.group(0)[len("milestone:"):].strip() if m else None
 
+
+# --- MILESTONE.md release backlink (milestone-release-backlink) --------------
+# The milestone↔release link is mirrored into the MILESTONE.md header: the template seeds
+# `release: pending`; cmd_release STAMPS it to the cut version (the stamp rides the same
+# all-or-nothing batch as CHANGELOG + RELEASES). The mirror of _set_milestone_line, one
+# scope level up — keying on `^release:`, inserting after the `stage:` line if absent.
+_RELEASE_LINE_RE = re.compile(r"(?m)^release:[^\n]*$")
+_STAGE_LINE_RE = re.compile(r"(?m)^stage:[^\n]*$")
+
+
+def _set_release_line(text: str, value: str) -> str:
+    """Rewrite (or insert) the MILESTONE.md header `release:` backlink — idempotent.
+
+    A grandfathered file lacking the line gets it inserted right after the `stage:` line;
+    with no stage line either, the text is returned unchanged (degrade-safe)."""
+    line = f"release: {value}"
+    if _RELEASE_LINE_RE.search(text):
+        return _RELEASE_LINE_RE.sub(lambda _m: line, text, count=1)
+    m = _STAGE_LINE_RE.search(text)
+    if not m:
+        return text
+    return text[:m.end()] + "\n" + line + text[m.end():]
+
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
@@ -6335,8 +6358,23 @@ def cmd_release(args: argparse.Namespace) -> None:
                              _render_releases_row(args.version, day, bundle, waiver_slugs,
                                                   getattr(args, "evidence", None),
                                                   identity._render_actor_line(state), loose_bundle))
-    try:                                              # CHANGELOG + RELEASES as one all-or-nothing commit
-        _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)])
+    # milestone-release-backlink: STAMP each bundled milestone's MILESTONE.md `release:` line to
+    # the cut version. Built in memory NOW and appended to the SAME atomic batch as the ledgers,
+    # so the stamp commits all-or-nothing with them (a failed write rolls back everything). Only
+    # `bundle` (closed-and-unreleased) milestones are stamped; a missing/unreadable file is skipped
+    # (degrade-safe — the ledger attribution stays the source of truth).
+    stamp_writes: list[tuple[Path, str]] = []
+    for m in bundle:
+        mfile = root / "milestones" / m["slug"] / "MILESTONE.md"
+        try:
+            _mtxt = mfile.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        _stamped = _set_release_line(_mtxt, args.version)
+        if _stamped != _mtxt:
+            stamp_writes.append((mfile, _stamped))
+    try:                                              # CHANGELOG + RELEASES + milestone stamps: one all-or-nothing commit
+        _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)] + stamp_writes)
     except OSError as e:
         _die(f"release_write_failed: the ledger write failed ({e}); nothing was recorded — both "
              "files were rolled back to their prior content. Retry the release.")
