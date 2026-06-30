@@ -6,8 +6,9 @@ fetch in the release build: it re-runs the standalone update_teacher.py + prepar
 and opens a PULL REQUEST (human reviews the third-party diff before it lands). It is decoupled
 from the release/tag pipeline (publish.yml stays zero-network) and the engine stays hands-off.
 
-This guard parses the workflow YAML as text/structure — it does not execute Actions. PyYAML
-coerces the bare `on:` key to the boolean True, so trigger checks tolerate both.
+This guard parses the workflow YAML as text/structure — it does not execute Actions. It uses a
+tiny stdlib block reader (no PyYAML dependency, which the rest of the tooling suite does not pull
+in) to read the top-level `on:` and `permissions:` maps from the raw text.
 
 Run: python3 -m unittest test_teacher_refresh_ci -v
 """
@@ -23,16 +24,27 @@ REFRESH = WORKFLOWS / "teacher-refresh.yml"
 PUBLISH = WORKFLOWS / "publish.yml"
 
 
-def _yaml_load(path: Path):
-    import yaml  # PyYAML ships in the CI/test env
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
+def _block_children(text: str, top_key: str) -> dict:
+    """Return the direct (2-space-indented) child keys of a top-level `top_key:` block,
+    mapped to their inline scalar value (or None). A minimal, dependency-free YAML reader
+    sufficient for the flat `on:` / `permissions:` maps this workflow declares."""
+    children: dict = {}
+    inside = False
+    for ln in text.splitlines():
+        if not inside:
+            if re.match(rf"^{re.escape(top_key)}:\s*(#.*)?$", ln):
+                inside = True
+            continue
+        if ln and not ln[0].isspace():  # next top-level key ends the block
+            break
+        m = re.match(r"^  (\S[^:]*):\s*(.*?)\s*$", ln)  # direct child at exactly 2 spaces
+        if m:
+            children[m.group(1)] = m.group(2) or None
+    return children
 
 
 def _on_block(doc: dict):
-    # `on:` is coerced to the boolean key True by PyYAML — accept either spelling.
-    if "on" in doc:
-        return doc["on"]
-    return doc.get(True)
+    return doc.get("on")
 
 
 class TeacherRefreshWorkflowTest(unittest.TestCase):
@@ -40,7 +52,10 @@ class TeacherRefreshWorkflowTest(unittest.TestCase):
         self.assertTrue(REFRESH.is_file(),
                         ".github/workflows/teacher-refresh.yml must exist")
         self.text = REFRESH.read_text(encoding="utf-8")
-        self.doc = _yaml_load(REFRESH)
+        self.doc = {
+            "on": _block_children(self.text, "on"),
+            "permissions": _block_children(self.text, "permissions"),
+        }
 
     def test_workflow_exists_and_scheduled(self):
         on = _on_block(self.doc)

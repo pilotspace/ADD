@@ -58,10 +58,12 @@ class OrchestratorBuildPersonaTest(unittest.TestCase):
                       "5-build.md must state SOUL.md is human-owned")
         self.assertIn("never rewrite", self.low.replace("never rewrites", "never rewrite"),
                       "5-build.md must state the overlay never rewrites SOUL.md")
-        # SOUL.md carries none of this task's overlay additions (stays untouched by the overlay).
-        soul = (CANON / "SOUL.md").read_text(encoding="utf-8")
+        # The shipped SOUL seed carries none of this task's overlay additions (stays untouched
+        # by the overlay). A per-project SOUL.md is generated from this committed template; the
+        # template is the byte-stable artifact CI can read (the live skill SOUL.md is not shipped).
+        soul = (PKG_ROOT / "tooling" / "templates" / "SOUL.md.tmpl").read_text(encoding="utf-8")
         self.assertNotIn(".add/personas/", soul,
-                         "SOUL.md must not be rewritten with the persona overlay (human-owned)")
+                         "the SOUL seed must not be rewritten with the persona overlay (human-owned)")
 
     def test_persona_never_lowers_gate(self):
         self.assertIn("never lower", self.low.replace("never lowers", "never lower"),
