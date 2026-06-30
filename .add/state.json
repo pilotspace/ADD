@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "ground-related-intent",
+  "active_task": "task-milestone-backlink",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3338,10 +3338,60 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "task-milestone-backlink": {
+      "title": "TASK.md header carries an engine-written milestone: backlink",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "artifact-graph",
+      "depends_on": [],
+      "created": "2026-06-30T12:41:25+00:00",
+      "updated": "2026-06-30T13:15:09+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T12:52:43+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "058d2342dadbe4aba0ccad2c044940ec",
+        "tests": {
+          "add-method/tooling/test_milestone_backlink.py": "12dda96a41ea2f4666a5d5b7dc9a6386"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          ".add/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_milestone_backlink.py",
+          "add-method/tooling/test_fast_lane_template.py"
+        ],
+        "snapshot_md5": "0e9d78cc6a8c5ef8057ed3c9e7435cc6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T12:33:57+00:00",
+  "updated": "2026-06-30T13:15:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3611,9 +3661,17 @@
       "title": "Artifact-graph",
       "goal": "Every ADD artifact carries minimal backlink metadata (task\u2194milestone\u2194release\u2194deps\u2194delta, bidirectional) so the cross-artifact graph is traversable without re-deriving it.",
       "stage": "mvp",
-      "status": "queued",
+      "status": "active",
       "created": "2026-06-30T11:47:47+00:00",
-      "updated": "2026-06-30T11:47:47+00:00"
+      "updated": "2026-06-30T12:41:25+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T12:41:25+00:00",
+      "confirmed_by": "tindang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "drift-guard": {
       "title": "Drift-guard",
@@ -3640,7 +3698,7 @@
       "updated": "2026-06-30T11:47:48+00:00"
     }
   },
-  "active_milestone": "ground-trust",
+  "active_milestone": "artifact-graph",
   "archived": [
     {
       "slug": "v5",
@@ -4251,14 +4309,16 @@
     "advisor-gated-autonomy",
     "persona-learning-loop",
     "persona-teacher-bundle",
-    "ground-trust"
+    "ground-trust",
+    "artifact-graph"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
     "persona-learning-loop": "persona-method-docs",
     "persona-teacher-bundle": "debrand-teacher-prose",
-    "ground-trust": "ground-related-intent"
+    "ground-trust": "ground-related-intent",
+    "artifact-graph": "task-milestone-backlink"
   },
   "todos": [
     {

@@ -153,6 +153,42 @@ def _render_template(name: str, **subs: str) -> str:
         text = text.replace("{{" + key + "}}", val)
     return text
 
+
+# --- TASK.md milestone backlink (task-milestone-backlink) --------------------
+# The task↔milestone link is mirrored into the TASK.md header so the file names its
+# own parent. The engine WRITES it (new-task) and MAINTAINS it (set-milestone); a
+# milestone-free task reads the "(none)" sentinel, never blank. Keeping it engine-owned
+# is what makes it drift-proof — `check` flags a hand-edited line that disagrees.
+_MILESTONE_BACKLINK = "(none)"
+_MILESTONE_LINE_RE = re.compile(r"(?m)^milestone:[^\n]*$")
+_SLUG_LINE_RE = re.compile(r"(?m)^slug:[^\n]*$")
+
+
+def _milestone_backlink_value(milestone) -> str:
+    """The header value for a milestone slug (or the sentinel when milestone-free)."""
+    return milestone if milestone else _MILESTONE_BACKLINK
+
+
+def _set_milestone_line(text: str, value: str) -> str:
+    """Rewrite (or insert) the TASK.md header `milestone:` backlink — idempotent.
+
+    A grandfathered file lacking the line gets it inserted right after `slug:`; with no
+    slug line either, the text is returned unchanged (degrade-safe — never corrupts a doc).
+    """
+    line = f"milestone: {value}"
+    if _MILESTONE_LINE_RE.search(text):
+        return _MILESTONE_LINE_RE.sub(lambda _m: line, text, count=1)
+    m = _SLUG_LINE_RE.search(text)
+    if not m:
+        return text
+    return text[:m.end()] + "\n" + line + text[m.end():]
+
+
+def _read_milestone_line(text: str):
+    """The current `milestone:` backlink value in a TASK.md header, or None if absent."""
+    m = _MILESTONE_LINE_RE.search(text)
+    return m.group(0)[len("milestone:"):].strip() if m else None
+
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
@@ -512,7 +548,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     rendered = _render_template(
         "TASK.fast.md" if fast else "TASK.md",
         title=title, slug=slug, date=date.today().isoformat(),
-        stage=state["stage"], autonomy=autonomy)
+        stage=state["stage"], autonomy=autonomy,
+        milestone=_milestone_backlink_value(milestone))
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
                           lambda _m: f"Feature: {feature_override}", rendered, count=1)
@@ -2548,6 +2585,17 @@ def cmd_check(args: argparse.Namespace) -> None:
             # the intake flow — NOT a failure. Names structure, never the act of intake.
             warnings.append((f"task '{slug}'", "is outside a milestone — size it via the /add "
                                                "intake flow (or attach with --milestone)"))
+        # backlink-drift (task-milestone-backlink): the TASK.md `milestone:` header mirrors state.
+        # WARN (never red, warn-never-block) when a PRESENT line disagrees; an ABSENT line is a
+        # grandfathered task — silent, never retro-red. Degrade-safe: an unreadable file skips here.
+        try:
+            _bl = _read_milestone_line((root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8"))
+        except OSError:
+            _bl = None
+        if _bl is not None and _bl != _milestone_backlink_value(ms):
+            warnings.append((f"task '{slug}'", f"milestone backlink '{_bl}' disagrees with state "
+                             f"'{_milestone_backlink_value(ms)}' — re-run `add.py set-milestone "
+                             f"{slug} {ms or 'none'}` to re-sync"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED
@@ -3763,6 +3811,17 @@ def cmd_set_milestone(args: argparse.Namespace) -> None:
     state["tasks"][task]["milestone"] = new
     state["tasks"][task]["updated"] = _now()
     save_state(root, state)
+    # keep the TASK.md `milestone:` backlink in lockstep with state (task-milestone-backlink):
+    # rewrite the header line (insert it if a grandfathered file lacks it). Degrade-safe — a
+    # missing/unreadable TASK.md never blocks the move (state is already the source of truth).
+    task_md = root / "tasks" / task / "TASK.md"
+    try:
+        _txt = task_md.read_text(encoding="utf-8")
+        _new_txt = _set_milestone_line(_txt, _milestone_backlink_value(new))
+        if _new_txt != _txt:
+            _atomic_write(task_md, _new_txt)
+    except OSError:
+        pass
     print(f"task '{task}' -> milestone '{new}'" if new else f"task '{task}' -> milestone (none)")
     print(_next_footer(root, state))
 
