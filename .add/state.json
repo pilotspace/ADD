@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "nested-suite-skip-count-tolerance",
+  "active_task": "report-plan-approve",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -4003,10 +4003,39 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "report-plan-approve": {
+      "title": "Report template: PLAN/SHAPE + APPROVE banner",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T13:03:32+00:00",
+      "updated": "2026-07-01T13:23:38+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "090f98d93bfaa13053106acc9ee694e0",
+        "tests": {
+          "add-method/tooling/test_report_arc.py": "e5304c6b81237c8abc86c9fd910e55ca"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".claude/skills/add/report-template.md",
+          "add-method/skill/add/report-template.md"
+        ],
+        "snapshot_md5": "65a7a6457a91d827f0366af23d38bfae"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-01T09:21:51+00:00",
+  "updated": "2026-07-01T13:23:38+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -4955,7 +4984,7 @@
     "ground-trust": "ground-related-intent",
     "artifact-graph": "milestone-release-backlink",
     "drift-guard": "delta-task-backlink",
-    "traceability-ids": "nested-suite-skip-count-tolerance"
+    "traceability-ids": "report-plan-approve"
   },
   "todos": [
     {
