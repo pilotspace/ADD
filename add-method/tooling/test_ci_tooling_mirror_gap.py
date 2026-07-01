@@ -54,6 +54,15 @@ _REQUIRED_MATERIALIZE_LINES = [
     "cp -r add-method/tooling/templates .add/tooling/templates",
 ]
 
+# the nested clone's own full-suite run always self-skips exactly once — its own
+# recursion guard (FreshCheckoutSurvivesTestJob, rediscovered inside the clone)
+# hits `_ADD_CI_MIRROR_GAP_NESTED == "1"` and calls skipTest. A bare `^OK$` can
+# never match that real, structurally-guaranteed shape, so tolerate exactly
+# `OK (skipped=1)` too — anchored to the literal count, not `\(skipped=\d+\)`,
+# so an unrelated SECOND skip still fails loudly instead of being silently waved
+# through (task fresh-checkout-skip-tolerance).
+_NESTED_OK_SUMMARY_RE = re.compile(r"(?m)^OK(?: \(skipped=1\))?\s*$")
+
 
 def _job_block(text: str, job_name: str) -> str:
     """Extract a named top-level job's YAML block (2-space-indented key to the
@@ -193,8 +202,10 @@ class FreshCheckoutSurvivesTestJob(unittest.TestCase):
         # exact zero-failures/errors, not a loose substring check — "OK" alone would
         # also appear inside an "OK (skipped=N)" or a stray log line, and a run with
         # e.g. "FAILED (failures=1)" still contains "OK" earlier in some subprocess's
-        # own stdout noise, so pin the unittest summary line itself.
-        self.assertRegex(combined, r"(?m)^OK\s*$",
+        # own stdout noise, so pin the unittest summary line itself. Tolerates exactly
+        # the recursion guard's own expected self-skip (see _NESTED_OK_SUMMARY_RE) —
+        # any other skip count, failure, or error still fails this assertion.
+        self.assertRegex(combined, _NESTED_OK_SUMMARY_RE,
                           f"fresh-checkout suite must report a bare 'OK' summary line "
                           f"(0 failures, 0 errors):\n{tail}")
         ran_match = re.search(r"Ran (\d+) tests? in", combined)
@@ -205,6 +216,28 @@ class FreshCheckoutSurvivesTestJob(unittest.TestCase):
         # gross discovery failure (e.g. a cwd bug finding 3 tests instead of ~2500+).
         self.assertGreater(int(ran_match.group(1)), 2000,
                             f"fresh-checkout suite discovered suspiciously few tests:\n{tail}")
+
+
+class OkSummaryRegexTest(unittest.TestCase):
+    """Fast, pure-logic coverage for the nested-suite summary tolerance (task
+    fresh-checkout-skip-tolerance) — decoupled from the expensive git-clone +
+    npm-ci + full-suite integration test above, which exercises the SAME pattern
+    for real. The nested run's own recursion guard (this file's
+    FreshCheckoutSurvivesTestJob, rediscovered inside the clone) always self-skips
+    exactly once, so a bare '^OK$' can never match a real nested run — tolerate
+    that ONE structurally-guaranteed skip, nothing else."""
+
+    def test_accepts_bare_ok(self):
+        self.assertRegex("OK\n", _NESTED_OK_SUMMARY_RE)
+
+    def test_accepts_the_recursion_guards_own_expected_self_skip(self):
+        self.assertRegex("OK (skipped=1)\n", _NESTED_OK_SUMMARY_RE)
+
+    def test_rejects_a_failure_summary(self):
+        self.assertNotRegex("FAILED (failures=1)\n", _NESTED_OK_SUMMARY_RE)
+
+    def test_rejects_more_than_one_skip(self):
+        self.assertNotRegex("OK (skipped=2)\n", _NESTED_OK_SUMMARY_RE)
 
 
 if __name__ == "__main__":
