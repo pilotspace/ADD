@@ -3,11 +3,11 @@
 Goal: state what the feature MUST do and what it must REJECT, with zero ambiguity
 for the AI to resolve by guessing. Fill **§1 SPECIFY** in TASK.md.
 
-Specify is **co-specification**: brainstorm the shape WITH the user, draft it, then validate. If you cannot write the spec, you do not yet understand the feature — stop and ask.
+Specify is **co-specification**: brainstorm the shape WITH the user, draft, then validate. If you cannot write the spec, you don't yet understand the feature — stop and ask.
 
 ## Co-specify in three moves
 
-1. **Diverge** — surface the decision space: the 2–3 genuine framings of the feature + the open questions you would otherwise guess. Invite the user to add, kill, redirect. (Conversational — no new file. At prototype/poc this shortens to one sentence.)
+1. **Diverge** — surface the decision space: the 2–3 genuine framings + the open questions you'd otherwise guess. Invite the user to add, kill, redirect. (Conversational — no new file; at prototype/poc, one sentence.)
 2. **Converge** — draft §1, then RANK where your confidence is lowest (below).
 3. **Validate** — present the ranked uncertainty first; the user confirms, corrects, or sends back.
 
@@ -25,7 +25,7 @@ Specify is **co-specification**: brainstorm the shape WITH the user, draft it, t
 
 ## The lowest-confidence flag is bundle-wide
 
-The single human approval happens at the contract freeze, over the whole bundle. So your §1 ranking feeds a bundle-level flag the user reads at the decision point (`run.md`): *"of everything I'm asking you to freeze, these 1–2 are most likely wrong."*
+The single human approval happens at the contract freeze, over the whole bundle. So your §1 ranking feeds a bundle-level flag the user reads at the decision point (`run.md`): *"of all I ask you to freeze, these 1–2 are most likely wrong."*
 
 ## AI prompt
 
@@ -50,6 +50,7 @@ Never: resolve an ambiguity by guessing.
       "none material" that still names the single biggest risk (never a blank "none").
 </exit_gate>
 
+> **Persona** — load the fit `.add/personas/<slug>.md`; its `## Critical Rules` shape §1 (advisory; never lowers a gate).
 > **Advisor · Confidence** — for an unfamiliar domain, spawn a researcher (advisor.md); self-score the spec and let the lowest dimension aim your ⚠ flag (confidence.md).
 
 ## Next

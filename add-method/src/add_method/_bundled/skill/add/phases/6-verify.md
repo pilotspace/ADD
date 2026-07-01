@@ -11,7 +11,7 @@ sufficient. Fill **§6** in TASK.md including the GATE RECORD.
 
 ## Before you build — declare the build expectations
 
-Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes derived from §2 + §3. At this gate, confirm each against real evidence (the `confirmed by` column) — one with no evidence is not yet verified.
+Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes derived from §2 + §3. At this gate, confirm each against real evidence (the `confirmed by` column) — one with no evidence isn't yet verified.
 
 ## Part one — confirm the evidence
 
@@ -25,16 +25,16 @@ If any is false, stop and return to Build.
 ## Part two — check what tests miss
 
 - **Concurrency/timing** — correct when two run at once? (Tests run serially and miss races.)
-- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`). **But that check sees only what you wrote down:** it fires on a *marked* note that slipped through as an auto-gate PASS — a finding you never marked is **invisible** to the engine, escalated to no one. Honest disclosure, not false cover: under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
+- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`). **But that check sees only what you wrote down:** it fires on a *marked* note auto-gated to PASS — a finding you never marked is **invisible**, escalated to no one. Under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
 - **Architecture** — respects layering/dependency rules in CONVENTIONS.md?
 
-Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record the result in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (the engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. `add.py audit` flags an unfilled block as `advisor_verdict_unrecorded` — a companion to `refute_unrecorded`.
+Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. `add.py audit` flags an unfilled block `advisor_verdict_unrecorded`, a companion to `refute_unrecorded`.
 
 ## Part three — the deep check (do not skim)
 
 If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. The resolver judges which path; the engine never classifies.
 
-Record it in the §6 **Deep checks** block — an unfilled one is a **shallow verify**, not a PASS.
+Record in the §6 **Deep checks** block — an unfilled one is a **shallow verify**, not a PASS.
 
 ## Part four — was the green earned?
 
@@ -42,7 +42,7 @@ A green suite proves tests pass — not that the build EARNED them. Three judgme
 
 ## Record exactly one outcome (no silent pass)
 
-Present this gate via `report-template.md`'s ARC, render DECISION as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count first.
+Present this gate via `report-template.md`'s ARC, render DECISION as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count.
 
 | Outcome | When |
 |---------|------|
@@ -57,6 +57,7 @@ Present this gate via `report-template.md`'s ARC, render DECISION as a guided ch
   (under `autonomy: auto`, no residue) the run auto-resolved as accountable owner.
 </exit_gate>
 
+> **Persona** — run the refute-read under the fit persona / Code-Reviewer lens (advisory; security still HARD-STOPs).
 > **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (advisor.md); score it before recording the gate (confidence.md).
 
 ```bash

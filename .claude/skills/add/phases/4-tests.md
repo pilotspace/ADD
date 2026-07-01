@@ -19,16 +19,14 @@ before code exists is testing nothing and will wave bad code through later.
 
 ## Declaring where tests live
 
-§4's `Tests live in:` line is machine-read: when a task has no local `tests/`,
-`add.py report` counts test functions at the declared path(s) instead. The FIRST
-line matching `Tests live in:` is read; paths are its backticked tokens.
-Resolution: `./…` → this task's dir · a token containing `/` → the project root
-(the parent of `.add/`) · a bare name → a sibling of the previous token's
-directory (else the task dir). A directory token counts the `*.py` files directly
-inside it (non-recursive); a `.py` file token counts itself; anything else is
-ignored. Resolved files are deduped; reports mark declared counts with `†`.
-Paths are confined: anything resolving outside the project root counts 0 — `..` traversal, absolute paths, and
-symlink escapes are never read.
+§4's `Tests live in:` line is machine-read: with no local `tests/`, `add.py report`
+counts test functions at the declared backticked paths instead (FIRST `Tests live in:`
+line only). Resolution: `./…` → this task's dir · a token with `/` → the project root
+(parent of `.add/`) · a bare name → a sibling of the previous token's dir (else the
+task dir). A directory token counts the `*.py` files directly inside it (non-recursive); a `.py`
+file counts itself; else ignored. Resolved files dedupe; declared counts marked `†`. Paths
+are confined: anything resolving outside the project root counts 0 — `..` traversal, absolute
+paths, and symlink escapes are never read.
 
 ## AI prompt
 
@@ -52,6 +50,7 @@ Never: implement the feature, or assert on internals.
 - [ ] Coverage target recorded.
 </exit_gate>
 
+> **Persona** — let the fit persona's `## Success Metrics` shape the red suite (advisory).
 > **Advisor · Confidence** — spawn a test-author for a broad red suite (advisor.md); score Completeness — one test per scenario, every rejection covered (confidence.md).
 
 ## Next

@@ -1,25 +1,60 @@
 ---
 name: <persona name — e.g. Frontend Engineer, UX Researcher>
 vibe: <one-line essence — what this persona keeps true>
+source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/personas-teacher/engineering/engineering-software-architect.md` (provenance; omit if hand-authored)>
 ---
 <!-- A PERSONA is a project-fit requirements persona, distilled from the vendored teacher
-     library (`.add/personas-teacher/`) to the parts ADD can act on: critical
-     rules + a default requirement + MEASURABLE success metrics. The AI authors one file
+     library (`.add/personas-teacher/`) to the parts ADD can act on. The AI authors one file
      per persona this project needs (frontend, backend, reviewer, …) from PROJECT.md +
      the teacher; the engine only seeds + validates this schema (presence-based). This
-     `_template.md` is the schema reference — copy it to `<slug>.md` and fill it. -->
+     `_template.md` is the schema reference — copy it to `<slug>.md` and fill it.
+
+     REQUIRED: `name` + `vibe` frontmatter and the Identity / Critical Rules /
+     Default Requirement / Success Metrics sections.
+     OPTIONAL (recommended for a faithful distillation): `source:` frontmatter, and the
+     `## Anti-patterns` + `## Playbook` sections. The engine never requires the optional
+     parts; absence is conformant.
+
+     DISTILLATION DISCIPLINE (how to fill this faithfully — learned from the teacher corpus):
+     1. SCOPE = stance, not voice. A persona is a domain STANCE (what to enforce, what to
+        suspect, what "good" measures). TONE/voice belongs to SOUL.md — never duplicate it here.
+     2. KEEP the teacher's own rules. Carry 1–2 of the teacher's signature Critical Rules
+        VERBATIM-in-spirit before adding project-specific ones — distil, don't replace.
+     3. TAG provenance honestly. In `## Playbook`, mark each item teacher-derived vs
+        ADD-native. Never credit home-grown project scaffolding to the teacher.
+     4. METRICS are rules, not snapshots. Prefer an invariant ("suite matches the last
+        green run") over a volatile literal ("2491/0") that rots as the project grows. -->
 
 ## Identity
-<who this persona is — role, domain depth, the perspective it brings to the work>
+<who this persona is — role, domain depth, and the EARNED perspective it brings (what it has
+ seen succeed/fail that shapes its judgement). One short paragraph.>
 
 ## Critical Rules
-- <a non-negotiable rule this persona always enforces>
-- <another rule>
+<non-negotiables this persona ALWAYS enforces. Lead with 1–2 carried from the teacher (its
+ signature stance), then add project-specific ones.>
+- <a teacher-sourced rule (the persona's signature non-negotiable)>
+- <a project-specific rule this project needs>
+
+<!-- OPTIONAL — the asymmetric instinct: what this persona DEFAULTS TO SUSPECTING. Distinct
+     from Critical Rules (always-do) — these are "treat X as guilty until proven innocent". -->
+## Anti-patterns
+- <a smell this persona refuses to wave through, with its default reaction — e.g.
+  "'0 issues found' on a first pass → look harder", "an abstraction with no second caller → cut it">
+- <another anti-pattern + the default response>
 
 ## Default Requirement
 <the one requirement this persona includes by default in every deliverable
  (e.g. "WCAG AA accessibility in all designs", "tests-first for every change")>
 
 ## Success Metrics
-- <a MEASURABLE outcome that proves this persona's work is right — e.g. "4.5:1 contrast", "p95 < 100ms", ">= 80% adoption">
+<MEASURABLE outcomes that prove this persona's work is right. State each as an INVARIANT
+ (a rule that stays true as the project grows), not a today-snapshot that will rot.>
+- <a measurable outcome — e.g. "4.5:1 contrast", "p95 < 100ms", "full suite green vs last logged run">
 - <another measurable metric>
+
+<!-- OPTIONAL — delete if the persona needs no executable scaffolding. -->
+## Playbook
+<the highest-value EXECUTABLE know-how — a checklist, a template, or a step sequence the
+ build can actually follow (e.g. an ADR skeleton, a STRIDE pass, a red→green loop). Tag each
+ item `(teacher)` or `(ADD)` so provenance is honest. Keep it to what gets used at the work
+ moment; link the full teacher file for depth: see the `source:` path above.>
