@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "untrack-add-tooling",
+  "active_task": "installer-gitignore-mirrors",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3633,10 +3633,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "installer-gitignore-mirrors": {
+      "title": "Consumer .add/.gitignore ignores the 3 managed vendor trees",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T03:27:51+00:00",
+      "updated": "2026-07-01T04:18:35+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-01T04:10:01+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ebfec7c7af76f25a251cdb6e738ce15e",
+        "tests": {
+          "add-method/tooling/test_gitignore_bak_seed.py": "35efd280f0da3f9c065d4237efab7f99"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/gitignore.tmpl",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/templates/gitignore.tmpl",
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_gitignore_bak_seed.py"
+        ],
+        "snapshot_md5": "f832439a4f95c007aa46f2a4d9f9b174"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-01T03:23:17+00:00",
+  "updated": "2026-07-01T04:18:35+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -4585,7 +4627,7 @@
     "ground-trust": "ground-related-intent",
     "artifact-graph": "milestone-release-backlink",
     "drift-guard": "delta-task-backlink",
-    "traceability-ids": "untrack-add-tooling"
+    "traceability-ids": "installer-gitignore-mirrors"
   },
   "todos": [
     {

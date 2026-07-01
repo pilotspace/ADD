@@ -4,3 +4,11 @@ scope-snapshot.json
 pre-archive-state.bak.json
 pre-update-state.bak.json
 .update-cache.json
+
+# ADD-managed vendor trees: regenerable/vendored copies the installer drops in,
+# never project-authored — mirrors the .add/docs/ rationale above, generalized
+# to every consumer project (not just this repo). (one further managed tree is
+# NOT listed here — the engine's own _GITIGNORE_BODY constant must stay hands-
+# off of it by name; the installer twins seed that one pattern themselves.)
+.add/tooling/
+.add/docs/

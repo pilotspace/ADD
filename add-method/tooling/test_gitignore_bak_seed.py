@@ -16,6 +16,7 @@ Run: python3 -m unittest test_gitignore_bak_seed -v
 """
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -32,6 +33,16 @@ from add_method import _installer  # noqa: E402
 
 CLI_JS = _ADD_METHOD / "bin" / "cli.js"
 GITIGNORE_TMPL = _ADD_METHOD / "tooling" / "templates" / "gitignore.tmpl"
+BUNDLED_GITIGNORE_TMPL = (_ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" /
+                          "templates" / "gitignore.tmpl")
+
+# the 3 installer-managed vendor trees (task: installer-gitignore-mirrors) — regenerable/
+# vendored copies the installer drops in, never project-authored, so never committed.
+# Split by WHERE the pattern is allowed to live: .add/tooling/ and .add/docs/ are safe in
+# the shared engine template/constant; .add/personas-teacher/ must stay OUT of the engine
+# (test_engine_unchanged_and_handsoff) and is added by the installer twins only.
+ENGINE_MANAGED_TREE_PATTERNS = (".add/tooling/", ".add/docs/")
+ALL_MANAGED_TREE_PATTERNS = ENGINE_MANAGED_TREE_PATTERNS + (".add/personas-teacher/",)
 
 
 class EngineSeedBody(unittest.TestCase):
@@ -55,6 +66,39 @@ class EngineSeedBody(unittest.TestCase):
         self.assertTrue(GITIGNORE_TMPL.exists(), "tooling/templates/gitignore.tmpl must exist")
         self.assertEqual(GITIGNORE_TMPL.read_text(encoding="utf-8"), add._GITIGNORE_BODY,
                          "gitignore.tmpl must be byte-identical to _GITIGNORE_BODY (no drift)")
+
+    def test_init_gitignore_lists_managed_trees(self):     # M1, R:gitignore_source_drift
+        cwd = Path.cwd()
+        tmp = tempfile.mkdtemp(prefix="gi-managed-")
+        os.chdir(tmp)
+        try:
+            add.main(["init", "--name", "demo", "--stage", "mvp"])
+            body = (Path(tmp) / ".add" / ".gitignore").read_text(encoding="utf-8")
+            for pattern in ENGINE_MANAGED_TREE_PATTERNS:
+                self.assertIn(pattern, body,
+                              f"the init seed must ignore the managed vendor tree {pattern!r}")
+            # direct `add.py init` uses the engine's OWN _GITIGNORE_BODY fallback, which must
+            # stay hands-off of the teacher tree — that pattern is seeded only via the
+            # installer twins (cli.js / _installer.py), not this direct-engine path.
+            self.assertNotIn(".add/personas-teacher/", body,
+                              "direct add.py init must not seed the personas-teacher pattern "
+                              "(engine hands-off boundary — see the installer twins instead)")
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_engine_gitignore_body_excludes_personas_teacher(self):   # hands-off invariant
+        # belt-and-suspenders alongside test_bundle_teacher.py::test_engine_unchanged_and_
+        # handsoff: the engine's shared template/constant must never name the teacher tree.
+        self.assertNotIn("personas-teacher", GITIGNORE_TMPL.read_text(encoding="utf-8"))
+        self.assertNotIn("personas-teacher", add._GITIGNORE_BODY)
+
+    def test_bundled_template_matches_canonical(self):     # M3, R:gitignore_source_drift
+        self.assertTrue(BUNDLED_GITIGNORE_TMPL.exists(),
+                        "the bundled tooling/templates/gitignore.tmpl copy must exist")
+        self.assertEqual(GITIGNORE_TMPL.read_text(encoding="utf-8"),
+                         BUNDLED_GITIGNORE_TMPL.read_text(encoding="utf-8"),
+                         "the bundled template copy must be byte-identical to the canonical one")
 
 
 def _make_bundled(root: Path) -> Path:
@@ -113,6 +157,28 @@ class PipSeedGitignore(unittest.TestCase):
         except Exception as e:  # noqa: BLE001
             self.fail(f"_seed_gitignore must be fail-soft, raised {e!r}")
 
+    def test_seed_appends_managed_trees_preserves_custom_lines(self):   # M1/M2, R:gitignore_append_destructive
+        # against the REAL canonical template (not the synthetic fixture above) — proves
+        # production content, not just the generic append mechanism.
+        self._gi().write_text("scope-snapshot.json\nmy-secret.local\n", encoding="utf-8")
+        _installer._seed_gitignore(self.proj, _ADD_METHOD)
+        body = self._gi().read_text(encoding="utf-8")
+        for pattern in ALL_MANAGED_TREE_PATTERNS:
+            self.assertIn(pattern, body, f"managed tree pattern {pattern!r} must be appended")
+        self.assertIn("my-secret.local", body, "user-added line preserved")
+
+    def test_personas_teacher_entry_unconditional_even_when_absent(self):   # M1, R:gitignore_entry_conditional
+        # self.proj never has a .add/personas-teacher/ tree on disk in this fixture —
+        # the pattern must still be seeded/appended, with no error.
+        self.assertFalse((self.proj / ".add" / "personas-teacher").exists())
+        try:
+            _installer._seed_gitignore(self.proj, _ADD_METHOD)
+        except Exception as e:  # noqa: BLE001
+            self.fail(f"seeding must not require the tree to exist, raised {e!r}")
+        body = self._gi().read_text(encoding="utf-8")
+        self.assertIn(".add/personas-teacher/", body,
+                      "the personas-teacher pattern must be present even when the tree is absent")
+
 
 class NpmTwin(unittest.TestCase):
     def _src(self) -> str:
@@ -133,6 +199,24 @@ class NpmTwin(unittest.TestCase):
             self.assertIsNotNone(m, f"could not locate {fn}")
             self.assertIn("seedGitignore(", m.group(0),
                           f"{fn} must call seedGitignore( (npm<->pip parity)")
+
+    def test_cli_js_seed_lists_managed_trees_on_init(self):   # M1, M4
+        # a real node execution against the REAL PKG_ROOT (cli.js resolves it relative to
+        # its own __dirname, independent of cwd) — proves the npm twin against production
+        # content, not just a text-invariant regex.
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        tmp = tempfile.mkdtemp(prefix="gi-npm-")
+        try:
+            r = subprocess.run(["node", str(CLI_JS), "init", tmp, "--yes"],
+                               capture_output=True, text=True, timeout=30)
+            self.assertEqual(r.returncode, 0, f"npm init failed: {r.stdout}{r.stderr}")
+            body = (Path(tmp) / ".add" / ".gitignore").read_text(encoding="utf-8")
+            for pattern in ALL_MANAGED_TREE_PATTERNS:
+                self.assertIn(pattern, body,
+                              f"cli.js init must seed the managed tree pattern {pattern!r}")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":
