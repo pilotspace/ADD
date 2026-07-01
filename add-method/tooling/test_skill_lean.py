@@ -62,7 +62,11 @@ POOLS = [
     # `sensitivity.md` pointer (the project-extensible risk-class vocabulary) — +427 B human-approved
     # surface (milestone advisor-gated-autonomy, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline
     # grows by surface ÷ ratio (+⌈427/0.88⌉=486). The won compaction is untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 20490,
+    # core 20490 → 20506 @ report-plan-approve (same method): SKILL.md's report-template pipeline
+    # sentence gains "PLAN/SHAPE →" + "→ APPROVE" (the DECISION→APPROVE rename + reorder) — +14 B
+    # human-approved surface (fast task, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈14/0.88⌉=16). The won compaction is untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20506,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
@@ -140,7 +144,12 @@ POOLS = [
     # class names the three §6 advisor-verdict fields (Verdict · Residue · Binding) the engine reads for
     # `advisor-gate-relax` — +52 B human-approved surface. RATIO 0.68 kept EXACTLY; baseline grows by surface
     # ÷ ratio (+⌈52/0.68⌉=77). The won ground is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 70359,
+    # reference 70359 → 75224 @ report-plan-approve (same method): report-template.md gains the decision
+    # banner (PLAN · title · gate → APPROVE? + a 📄 path line), the PLAN/SHAPE block pair, and the
+    # DECISION→APPROVE rename+reorder — +3308 B human-approved surface (fast task, contract FROZEN @ v1).
+    # RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈3308/0.68⌉=4865). The won ground on
+    # every other reference guide is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 75224,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},

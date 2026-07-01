@@ -76,7 +76,7 @@ Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
-Open the report with the ARC per `report-template.md`, render the DECISION as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
+Open the report with the ARC per `report-template.md`, render APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
 
 ```bash
 python3 .add/tooling/add.py lock --by "<name>"

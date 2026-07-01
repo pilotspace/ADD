@@ -107,8 +107,8 @@ evidence (*auto-resolved* — an explicit PASS, not a skip). **Security always e
 so do concurrency / architecture residue and a lowered autonomy level (`conservative` / `manual`) — `run.md`.
 
 At every human decision point (intake · bundle approval · gate · milestone close) follow
-`report-template.md`: open with the ARC (goal · done · plan, engine-sourced), then SUMMARY → DECISION →
-FLAGS → DECIDED → EVIDENCE → NEXT; show-before-ask; never pre-stamp; the question is a summary, never the artifact.
+`report-template.md`: open with the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →
+FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT; show-before-ask; never pre-stamp; the question is a summary, never the artifact.
 
 In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve (write them `open`; the human consolidates into `PROJECT.md`) — grammar + lifecycle in

@@ -42,7 +42,7 @@ A green suite proves tests pass — not that the build EARNED them. Three judgme
 
 ## Record exactly one outcome (no silent pass)
 
-Present this gate via `report-template.md`'s ARC, render DECISION as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count.
+Present this gate via `report-template.md`'s ARC, render APPROVE as a guided choice, and reconcile FLAGS with `add.py report --decide`'s open-item count.
 
 | Outcome | When |
 |---------|------|
