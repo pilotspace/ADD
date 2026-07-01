@@ -1316,6 +1316,7 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
                     dropped += 1
                     continue                              # NEVER reconcile managed files into a non-project
                 _reconcile(Path(np), home)                # standard MANAGED map, sourced from the home mirror
+                _seed_gitignore(Path(np), home)            # keep .add/.gitignore current too (parity: cli.js)
                 if (home / "data" / data_key(np)).exists():
                     _persist_data(home, np)               # keep the opted-in project's snapshot current
                 kept.append(np)                           # store the NORMALIZED path (heals a bent legit entry)

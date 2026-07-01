@@ -1145,6 +1145,7 @@ function cmdUpdateGlobal(args) {
       log("  ⚠ registered path " + np + " is not an ADD project (no .add/) — dropping"); dropped++; continue;
     }
     reconcile(args, np, home);      // standard MANAGED map, sourced from the home mirror
+    seedGitignore(np);               // keep .add/.gitignore current too (parity: _installer.py)
     // re-persist an opted-in project (one that already has a snapshot); a vanished
     // project's snapshot is KEPT above (the backup outlives the dir).
     if (fs.existsSync(path.join(home, "data", dataKey(np)))) persistData(home, np);
