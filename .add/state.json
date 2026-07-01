@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "strip-scaffold-at-done",
+  "active_task": "delta-task-backlink",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3535,10 +3535,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "delta-task-backlink": {
+      "title": "Seeded task \u00a70 backlinks its originating delta; check warns on dangling lineage",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "traceability-ids",
+      "depends_on": [],
+      "created": "2026-06-30T15:39:43+00:00",
+      "updated": "2026-07-01T02:11:43+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T15:46:09+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a04489853885140072654d66a1633d25",
+        "tests": {
+          "add-method/tooling/test_delta_task_backlink.py": "01c446d72d1156736ddbca54ca684255"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/add_engine/constants.py",
+          ".add/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/test_delta_task_backlink.py"
+        ],
+        "snapshot_md5": "cc57363b2167a52494985baa7daa83ec"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T15:28:49+00:00",
+  "updated": "2026-07-01T02:11:43+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3850,7 +3895,7 @@
       "title": "Traceability-ids",
       "goal": "Give every \u00a71 rule a stable ID (M#/R#) that \u00a72 scenarios and \u00a74 tests reference, and lint coverage so no Must/Reject ships unscenarioed or untested.",
       "stage": "mvp",
-      "status": "queued",
+      "status": "active",
       "created": "2026-06-30T11:47:47+00:00",
       "updated": "2026-06-30T11:47:47+00:00"
     },
@@ -3863,7 +3908,7 @@
       "updated": "2026-06-30T11:47:48+00:00"
     }
   },
-  "active_milestone": "drift-guard",
+  "active_milestone": "traceability-ids",
   "archived": [
     {
       "slug": "v5",
@@ -4476,7 +4521,8 @@
     "persona-teacher-bundle",
     "ground-trust",
     "artifact-graph",
-    "drift-guard"
+    "drift-guard",
+    "traceability-ids"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -4485,7 +4531,8 @@
     "persona-teacher-bundle": "debrand-teacher-prose",
     "ground-trust": "ground-related-intent",
     "artifact-graph": "milestone-release-backlink",
-    "drift-guard": "strip-scaffold-at-done"
+    "drift-guard": "delta-task-backlink",
+    "traceability-ids": "delta-task-backlink"
   },
   "todos": [
     {

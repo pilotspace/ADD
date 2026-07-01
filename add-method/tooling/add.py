@@ -37,6 +37,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _RULE_REF_LINE, _FALLBACK_TASK, _FALLBACK_TASK_FAST,
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
+    _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
     _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
     _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
@@ -243,6 +244,23 @@ def _read_ground_sha(text: str):
 def _ground_cites_line_ref(text: str) -> bool:
     """True iff the §0 GROUND block cites a bare line number (the `l.NNN` idiom)."""
     return bool(_LINE_REF_RE.search(_ground_section(text)))
+
+
+def _seeded_delta_pointers(text: str) -> list[str]:
+    """The task slugs `[SPEC · seeded] … [→ <slug>]` lines point at (delta-task-backlink). PURE.
+
+    Walks the delta→task lineage backward: each seeded SPEC delta carries the slug it was seeded
+    into (the `[→ <slug>]` stamp `_resolve_spec_delta` appends). `check` flags a pointer that no
+    longer resolves to a live or archived task. Order-preserving; open/dropped deltas are ignored."""
+    out: list[str] = []
+    for ln in text.splitlines():
+        m = _SPEC_DELTA_RE.match(ln.rstrip("\n"))
+        if not m or m.group(2) != "seeded":
+            continue
+        p = _SEED_POINTER_RE.search(m.group(3))
+        if p:
+            out.append(p.group(1))
+    return out
 
 
 # --- tidy a closed TASK.md (strip-scaffold-at-done) --------------------------
@@ -641,6 +659,13 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
                           lambda _m: f"Feature: {feature_override}", rendered, count=1)
+    if from_delta:                                           # delta-task-backlink: §0 reverse link
+        # pre-fill the §0 Related-intent PLACEHOLDER only (the `<…>` line a fresh full template
+        # carries) — mirrors the §1 Feature pre-fill, gated by from_delta, count=1. The fast
+        # template has no §0 Related-intent line, so the sub is a silent no-op there.
+        _bl = f"Related intent: seeded from {prior} spec-delta — \"{delta_text}\" [← {prior}]"
+        rendered = re.sub(r"(?m)^Related intent:\s*<.*>\s*$",
+                          lambda _m: _bl, rendered, count=1)
     seed_writes: list[tuple[Path, str]] = [(task_md, rendered)]
     if flipped_prior is not None:                           # consume the source delta -> seeded
         seed_writes.append((prior_md, flipped_prior))
@@ -2701,6 +2726,16 @@ def cmd_check(args: argparse.Namespace) -> None:
                 _read_ground_sha(_task_text) is None:
             warnings.append((f"task '{slug}'", "§0 cites line numbers (l.NNN) with no `Ground SHA:` — "
                              "record `git rev-parse --short HEAD` so drift is detectable"))
+        # dangling lineage (delta-task-backlink): a `[SPEC · seeded] … [→ ptr]` whose pointer task
+        # is neither live nor archived. WARN (never red); reuses the read above. `_archived_task_slugs`
+        # is the same resolver `cmd_ready` trusts (archived ⇒ was PASS-done), so a healthy
+        # completed-then-archived seed stays silent.
+        if _task_text is not None:
+            _arch = _archived_task_slugs(state)
+            for _ptr in _seeded_delta_pointers(_task_text):
+                if _ptr not in tasks and _ptr not in _arch:
+                    warnings.append((f"task '{slug}'", f"seeded SPEC delta points at '{_ptr}' which no "
+                                     "longer exists (dangling lineage) — re-point or drop the delta"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED

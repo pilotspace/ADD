@@ -234,6 +234,10 @@ _SPEC_DELTA_RE = re.compile(
     r"\s*-\s*\[\s*(SPEC)\s*·\s*(open|seeded|dropped|carried)\s*\]\s*(.+)$"
 )
 
+# delta-task-backlink: reads the `[→ <slug>]` seed stamp `_resolve_spec_delta` appends, so the
+# delta→task lineage can be walked back (check WARNs when a seeded pointer no longer resolves).
+_SEED_POINTER_RE = re.compile(r"\[→\s*([A-Za-z0-9_-]+)\s*\]")
+
 
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
