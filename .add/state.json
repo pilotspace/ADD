@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-agents-lean",
+  "active_task": "template-structural-gaps",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3824,16 +3824,47 @@
     },
     "template-structural-gaps": {
       "title": "Fold 3 MUST-have TASK.md.tmpl gaps: glossary deltas, scenario IDs, live-verify evidence block",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "traceability-ids",
       "depends_on": [],
       "created": "2026-07-01T06:45:55+00:00",
-      "updated": "2026-07-01T06:45:55+00:00"
+      "updated": "2026-07-01T07:19:02+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T07:02:19+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "bc116faf13ea663c6b54ac39d5ab4b1f",
+        "tests": {
+          "add-method/tooling/test_template_structural_gaps.py": "d5a7e45eb3af23592b68cd24530923a1"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/test_template_structural_gaps.py"
+        ],
+        "snapshot_md5": "73a4801a296563f8e1f5e477f121a083"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-01T06:51:47+00:00",
+  "updated": "2026-07-01T07:19:02+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -4782,7 +4813,7 @@
     "ground-trust": "ground-related-intent",
     "artifact-graph": "milestone-release-backlink",
     "drift-guard": "delta-task-backlink",
-    "traceability-ids": "phase-agents-lean"
+    "traceability-ids": "template-structural-gaps"
   },
   "todos": [
     {

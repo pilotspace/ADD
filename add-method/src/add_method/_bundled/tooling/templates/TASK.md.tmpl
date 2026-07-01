@@ -57,7 +57,7 @@ Assumptions — lowest-confidence first:
 <scenarios>
 
 ```gherkin
-Scenario: <short name>
+Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
   Given <starting situation>
   When <action>
   Then <expected result>
@@ -79,14 +79,16 @@ Scenario: <short name>
 Schema: <tables/fields touched, and access pattern>
 ```
 
+Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
 Status: DRAFT
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
      points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
      with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
      too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
      contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY + the
-     bundle's lowest-confidence flag was surfaced at the freeze (or an honest "none material"). -->
+     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
+     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
+     the freeze (or an honest "none material"). -->
 
 ---
 
@@ -153,6 +155,14 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
 - [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
 - [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+
+### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
+> §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
+> build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
+> (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
+> line.
+- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
+- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
