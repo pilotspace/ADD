@@ -3,3 +3,7 @@
 scope-snapshot.json
 pre-archive-state.bak.json
 snapshot_before.json
+
+# ADD dogfood mirror: tooling/ is a regenerable copy of add-method/tooling/
+# (the canonical engine source) — not committed, mirrors the docs/ rationale above.
+tooling/
