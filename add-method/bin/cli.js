@@ -589,8 +589,10 @@ function seedSoulMd(target) {
 // _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
 // and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
 // already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
-// extra ignore line itself. Twin of _installer.py:_INSTALLER_MANAGED_IGNORE_EXTRA.
-const INSTALLER_MANAGED_IGNORE_EXTRA = [".add/personas-teacher/"];
+// extra ignore line itself. BARE (not repo-root style): .add/.gitignore lives INSIDE
+// .add/, so git resolves its patterns relative to .add/ itself. Twin of
+// _installer.py:_INSTALLER_MANAGED_IGNORE_EXTRA.
+const INSTALLER_MANAGED_IGNORE_EXTRA = ["personas-teacher/"];
 
 // Ensure .add/.gitignore lists the engine's transient artifacts + managed vendor trees.
 // Seed it from the bundled tooling/templates/gitignore.tmpl (plus
