@@ -65,7 +65,11 @@ class AdrHarvestTest(unittest.TestCase):
     def _adr_block(self, slug="t"):
         t = self._path(slug).read_text()
         m = re.search(r"### Decisions \(ADR\).*?(?=\n##\s|\n---|\Z)", t, re.S)
-        return m.group(0) if m else ""
+        blk = m.group(0) if m else ""
+        # strip-scaffold-at-done: a completing gate now removes the §7 `<!-- e.g. … -->` example
+        # comment (orthogonal to the harvest) — normalize it out so this still tests the harvested
+        # decision lines, not the template's instruction scaffolding.
+        return re.sub(r"<!--.*?-->", "", blk, flags=re.S)
 
     def _task_at_verify(self, slug="t"):
         """Scaffold a task and give the harvest real §1 framing + §5 strategy stamps."""

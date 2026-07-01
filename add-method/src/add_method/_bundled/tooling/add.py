@@ -37,6 +37,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _RULE_REF_LINE, _FALLBACK_TASK, _FALLBACK_TASK_FAST,
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
+    _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
     _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
     _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
@@ -152,6 +153,147 @@ def _render_template(name: str, **subs: str) -> str:
     for key, val in subs.items():
         text = text.replace("{{" + key + "}}", val)
     return text
+
+
+# --- TASK.md milestone backlink (task-milestone-backlink) --------------------
+# The task↔milestone link is mirrored into the TASK.md header so the file names its
+# own parent. The engine WRITES it (new-task) and MAINTAINS it (set-milestone); a
+# milestone-free task reads the "(none)" sentinel, never blank. Keeping it engine-owned
+# is what makes it drift-proof — `check` flags a hand-edited line that disagrees.
+_MILESTONE_BACKLINK = "(none)"
+_MILESTONE_LINE_RE = re.compile(r"(?m)^milestone:[^\n]*$")
+_SLUG_LINE_RE = re.compile(r"(?m)^slug:[^\n]*$")
+
+
+def _milestone_backlink_value(milestone) -> str:
+    """The header value for a milestone slug (or the sentinel when milestone-free)."""
+    return milestone if milestone else _MILESTONE_BACKLINK
+
+
+def _set_milestone_line(text: str, value: str) -> str:
+    """Rewrite (or insert) the TASK.md header `milestone:` backlink — idempotent.
+
+    A grandfathered file lacking the line gets it inserted right after `slug:`; with no
+    slug line either, the text is returned unchanged (degrade-safe — never corrupts a doc).
+    """
+    line = f"milestone: {value}"
+    if _MILESTONE_LINE_RE.search(text):
+        return _MILESTONE_LINE_RE.sub(lambda _m: line, text, count=1)
+    m = _SLUG_LINE_RE.search(text)
+    if not m:
+        return text
+    return text[:m.end()] + "\n" + line + text[m.end():]
+
+
+def _read_milestone_line(text: str):
+    """The current `milestone:` backlink value in a TASK.md header, or None if absent."""
+    m = _MILESTONE_LINE_RE.search(text)
+    return m.group(0)[len("milestone:"):].strip() if m else None
+
+
+# --- MILESTONE.md release backlink (milestone-release-backlink) --------------
+# The milestone↔release link is mirrored into the MILESTONE.md header: the template seeds
+# `release: pending`; cmd_release STAMPS it to the cut version (the stamp rides the same
+# all-or-nothing batch as CHANGELOG + RELEASES). The mirror of _set_milestone_line, one
+# scope level up — keying on `^release:`, inserting after the `stage:` line if absent.
+_RELEASE_LINE_RE = re.compile(r"(?m)^release:[^\n]*$")
+_STAGE_LINE_RE = re.compile(r"(?m)^stage:[^\n]*$")
+
+
+def _set_release_line(text: str, value: str) -> str:
+    """Rewrite (or insert) the MILESTONE.md header `release:` backlink — idempotent.
+
+    A grandfathered file lacking the line gets it inserted right after the `stage:` line;
+    with no stage line either, the text is returned unchanged (degrade-safe)."""
+    line = f"release: {value}"
+    if _RELEASE_LINE_RE.search(text):
+        return _RELEASE_LINE_RE.sub(lambda _m: line, text, count=1)
+    m = _STAGE_LINE_RE.search(text)
+    if not m:
+        return text
+    return text[:m.end()] + "\n" + line + text[m.end():]
+
+
+# --- §0 GROUND drift anchor (ground-anchor-sha) -----------------------------
+# §0 line numbers rot during BUILD while symbols survive (PR40 audit). The engine SEEDS a
+# `Ground SHA:` field (the AI fills it via git — NO-EXEC: add.py never shells out) and `check`
+# WARNs when a §0 cites bare line numbers without one, so drift is detectable not silent.
+_GROUND_SHA_RE = re.compile(r"(?m)^Ground SHA:[ \t]*(.*?)[ \t]*$")
+_LINE_REF_RE = re.compile(r"l\.\d+")
+
+
+def _ground_section(text: str) -> str:
+    """The §0 GROUND block of a TASK.md — from the `## 0` heading to the next `## ` heading."""
+    m = re.search(r"(?m)^## 0\b", text)
+    if not m:
+        return ""
+    rest = text[m.end():]
+    nxt = re.search(r"(?m)^## ", rest)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def _read_ground_sha(text: str):
+    """The §0 `Ground SHA:` value, or None if absent or still a `<…>` placeholder."""
+    m = _GROUND_SHA_RE.search(_ground_section(text))
+    if not m:
+        return None
+    val = m.group(1).strip()
+    return None if (not val or val.startswith("<")) else val
+
+
+def _ground_cites_line_ref(text: str) -> bool:
+    """True iff the §0 GROUND block cites a bare line number (the `l.NNN` idiom)."""
+    return bool(_LINE_REF_RE.search(_ground_section(text)))
+
+
+def _seeded_delta_pointers(text: str) -> list[str]:
+    """The task slugs `[SPEC · seeded] … [→ <slug>]` lines point at (delta-task-backlink). PURE.
+
+    Walks the delta→task lineage backward: each seeded SPEC delta carries the slug it was seeded
+    into (the `[→ <slug>]` stamp `_resolve_spec_delta` appends). `check` flags a pointer that no
+    longer resolves to a live or archived task. Order-preserving; open/dropped deltas are ignored."""
+    out: list[str] = []
+    for ln in text.splitlines():
+        m = _SPEC_DELTA_RE.match(ln.rstrip("\n"))
+        if not m or m.group(2) != "seeded":
+            continue
+        p = _SEED_POINTER_RE.search(m.group(3))
+        if p:
+            out.append(p.group(1))
+    return out
+
+
+# --- tidy a closed TASK.md (strip-scaffold-at-done) --------------------------
+# A live TASK.md carries `<!-- … -->` instruction comments that guide the active phase; once the
+# task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
+# Content-safe: fenced code blocks (```…```, incl. the frozen §3) pass through BYTE-EXACT — only
+# comments OUTSIDE a fence are removed; idempotent.
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_TRAILING_WS_RE = re.compile(r"(?m)[ \t]+$")
+_BLANK_RUN_RE = re.compile(r"\n{3,}")
+
+
+def _strip_live_scaffold(text: str) -> str:
+    """Remove `<!-- … -->` instruction comments from a TASK.md — fences untouched, idempotent.
+
+    Splits on fenced code blocks so a comment inside a ``` fence (e.g. the frozen §3) is never
+    touched; in the non-fence segments it drops comment spans, trims the trailing whitespace a
+    removal leaves on a line, and collapses 3+ consecutive newlines to one blank line."""
+    segs = re.split(r"(```.*?```)", text, flags=re.DOTALL)
+    for i in range(0, len(segs), 2):                     # even indices = OUTSIDE any fence
+        s = _HTML_COMMENT_RE.sub("", segs[i])
+        s = _TRAILING_WS_RE.sub("", s)
+        segs[i] = _BLANK_RUN_RE.sub("\n\n", s)
+    return "".join(segs)
+
+
+def _contract_fingerprint(raw3: str) -> str:
+    """md5 of the §3 CONTRACT CONTENT — comment-normalized + outer-whitespace-canonical (the
+    instruction comment is scaffolding, not contract). Used on BOTH tamper-guard sides
+    (_tripwire_snapshot + _tripwire_divergence) so the at-done strip — which removes the §3
+    comment and shifts the section's boundary whitespace — never reads as `contract_tampered`,
+    while a real fenced-shape edit still does."""
+    return _md5_text(_strip_live_scaffold(raw3).strip())
 
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
@@ -512,10 +654,18 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     rendered = _render_template(
         "TASK.fast.md" if fast else "TASK.md",
         title=title, slug=slug, date=date.today().isoformat(),
-        stage=state["stage"], autonomy=autonomy)
+        stage=state["stage"], autonomy=autonomy,
+        milestone=_milestone_backlink_value(milestone))
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
                           lambda _m: f"Feature: {feature_override}", rendered, count=1)
+    if from_delta:                                           # delta-task-backlink: §0 reverse link
+        # pre-fill the §0 Related-intent PLACEHOLDER only (the `<…>` line a fresh full template
+        # carries) — mirrors the §1 Feature pre-fill, gated by from_delta, count=1. The fast
+        # template has no §0 Related-intent line, so the sub is a silent no-op there.
+        _bl = f"Related intent: seeded from {prior} spec-delta — \"{delta_text}\" [← {prior}]"
+        rendered = re.sub(r"(?m)^Related intent:\s*<.*>\s*$",
+                          lambda _m: _bl, rendered, count=1)
     seed_writes: list[tuple[Path, str]] = [(task_md, rendered)]
     if flipped_prior is not None:                           # consume the source delta -> seeded
         seed_writes.append((prior_md, flipped_prior))
@@ -1230,6 +1380,15 @@ def cmd_gate(args: argparse.Namespace) -> None:
         _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     _stamp_adr_record(root, state, slug)                  # adr-at-observe: harvest §7 Decisions (ADR) — AFTER §6 is mirrored
+    if completing:                                         # strip-scaffold-at-done: tidy the now-closed
+        _tf = root / "tasks" / slug / "TASK.md"           # TASK.md LAST (after the stampers) — drop the
+        try:                                              # live-phase `<!-- -->` comments; fences untouched.
+            _tt = _tf.read_text(encoding="utf-8")
+            _st = _strip_live_scaffold(_tt)
+            if _st != _tt:
+                _atomic_write(_tf, _st)
+        except OSError:
+            pass                                          # degrade-safe — the verdict is already in state
     print(f"task '{slug}' gate -> {args.outcome}")
     _gbar = _task_green_bar(root, slug)                   # per-component-verify: surface the bound bar
     if _gbar:
@@ -2548,6 +2707,35 @@ def cmd_check(args: argparse.Namespace) -> None:
             # the intake flow — NOT a failure. Names structure, never the act of intake.
             warnings.append((f"task '{slug}'", "is outside a milestone — size it via the /add "
                                                "intake flow (or attach with --milestone)"))
+        # backlink-drift (task-milestone-backlink): the TASK.md `milestone:` header mirrors state.
+        # WARN (never red, warn-never-block) when a PRESENT line disagrees; an ABSENT line is a
+        # grandfathered task — silent, never retro-red. Degrade-safe: an unreadable file skips here.
+        try:
+            _task_text = (root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        except OSError:
+            _task_text = None
+        _bl = _read_milestone_line(_task_text) if _task_text is not None else None
+        if _bl is not None and _bl != _milestone_backlink_value(ms):
+            warnings.append((f"task '{slug}'", f"milestone backlink '{_bl}' disagrees with state "
+                             f"'{_milestone_backlink_value(ms)}' — re-run `add.py set-milestone "
+                             f"{slug} {ms or 'none'}` to re-sync"))
+        # §0 drift anchor (ground-anchor-sha): a §0 that cites bare line numbers (l.NNN) with no
+        # `Ground SHA:` has undetectable drift. WARN (never red, warn-never-block); a §0 with a SHA,
+        # with no line refs, or an unreadable file is silent. Reuses the read above (one read).
+        if _task_text is not None and _ground_cites_line_ref(_task_text) and \
+                _read_ground_sha(_task_text) is None:
+            warnings.append((f"task '{slug}'", "§0 cites line numbers (l.NNN) with no `Ground SHA:` — "
+                             "record `git rev-parse --short HEAD` so drift is detectable"))
+        # dangling lineage (delta-task-backlink): a `[SPEC · seeded] … [→ ptr]` whose pointer task
+        # is neither live nor archived. WARN (never red); reuses the read above. `_archived_task_slugs`
+        # is the same resolver `cmd_ready` trusts (archived ⇒ was PASS-done), so a healthy
+        # completed-then-archived seed stays silent.
+        if _task_text is not None:
+            _arch = _archived_task_slugs(state)
+            for _ptr in _seeded_delta_pointers(_task_text):
+                if _ptr not in tasks and _ptr not in _arch:
+                    warnings.append((f"task '{slug}'", f"seeded SPEC delta points at '{_ptr}' which no "
+                                     "longer exists (dangling lineage) — re-point or drop the delta"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED
@@ -3763,6 +3951,17 @@ def cmd_set_milestone(args: argparse.Namespace) -> None:
     state["tasks"][task]["milestone"] = new
     state["tasks"][task]["updated"] = _now()
     save_state(root, state)
+    # keep the TASK.md `milestone:` backlink in lockstep with state (task-milestone-backlink):
+    # rewrite the header line (insert it if a grandfathered file lacks it). Degrade-safe — a
+    # missing/unreadable TASK.md never blocks the move (state is already the source of truth).
+    task_md = root / "tasks" / task / "TASK.md"
+    try:
+        _txt = task_md.read_text(encoding="utf-8")
+        _new_txt = _set_milestone_line(_txt, _milestone_backlink_value(new))
+        if _new_txt != _txt:
+            _atomic_write(task_md, _new_txt)
+    except OSError:
+        pass
     print(f"task '{task}' -> milestone '{new}'" if new else f"task '{task}' -> milestone (none)")
     print(_next_footer(root, state))
 
@@ -3937,7 +4136,10 @@ def _tripwire_snapshot(root: Path, slug: str, raw3: str) -> dict:
         except (ValueError, OSError):
             rel = str(f)
         tests[rel] = h
-    return {"contract_md5": _md5_text(raw3), "tests": tests}
+    # strip-scaffold-at-done: fingerprint the contract CONTENT (comment-normalized, see
+    # _contract_fingerprint) so the at-done comment strip is invisible to the tamper guard; a real
+    # fenced-shape edit still changes it. Mirrored byte-for-byte in _tripwire_divergence.
+    return {"contract_md5": _contract_fingerprint(raw3), "tests": tests}
 
 
 def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
@@ -3945,7 +4147,9 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
     path directly (never re-globs), so a weakened, deleted, or unreadable test file
     and an edited frozen §3 all surface. Fail-closed: an unreadable file -> diverged."""
     diffs: list[str] = []
-    if _md5_text(_raw_phase_bodies(root, slug).get(3, "")) != tw.get("contract_md5"):
+    # compare the contract CONTENT fingerprint (strip-scaffold-at-done) — same normalization as the
+    # snapshot, so the at-done comment strip never reads as tampering; a real shape edit still does.
+    if _contract_fingerprint(_raw_phase_bodies(root, slug).get(3, "")) != tw.get("contract_md5"):
         diffs.append("contract_tampered")
     rootp = root.parent.resolve()
     for rel, snap in (tw.get("tests") or {}).items():
@@ -6276,8 +6480,23 @@ def cmd_release(args: argparse.Namespace) -> None:
                              _render_releases_row(args.version, day, bundle, waiver_slugs,
                                                   getattr(args, "evidence", None),
                                                   identity._render_actor_line(state), loose_bundle))
-    try:                                              # CHANGELOG + RELEASES as one all-or-nothing commit
-        _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)])
+    # milestone-release-backlink: STAMP each bundled milestone's MILESTONE.md `release:` line to
+    # the cut version. Built in memory NOW and appended to the SAME atomic batch as the ledgers,
+    # so the stamp commits all-or-nothing with them (a failed write rolls back everything). Only
+    # `bundle` (closed-and-unreleased) milestones are stamped; a missing/unreadable file is skipped
+    # (degrade-safe — the ledger attribution stays the source of truth).
+    stamp_writes: list[tuple[Path, str]] = []
+    for m in bundle:
+        mfile = root / "milestones" / m["slug"] / "MILESTONE.md"
+        try:
+            _mtxt = mfile.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        _stamped = _set_release_line(_mtxt, args.version)
+        if _stamped != _mtxt:
+            stamp_writes.append((mfile, _stamped))
+    try:                                              # CHANGELOG + RELEASES + milestone stamps: one all-or-nothing commit
+        _atomic_write_many([(changelog_path, new_cl), (releases_path, new_rel)] + stamp_writes)
     except OSError as e:
         _die(f"release_write_failed: the ledger write failed ({e}); nothing was recorded — both "
              "files were rolled back to their prior content. Retry the release.")

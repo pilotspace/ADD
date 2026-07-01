@@ -118,7 +118,7 @@ class HeaderAndRender(unittest.TestCase):
     def setUp(self):
         self.rendered = add._render_template(
             "TASK.fast.md", title="T", slug="s", date="2026-06-23",
-            stage="mvp", autonomy="auto")
+            stage="mvp", autonomy="auto", milestone="(none)")
 
     def test_fast_marker_line_present(self):
         self.assertRegex(self.rendered, r"(?m)^fast:\s*true")
@@ -171,7 +171,7 @@ class FallbackParity(unittest.TestCase):
             with mock.patch.object(add, "_templates_dir", return_value=empty):
                 out = add._render_template(
                     "TASK.fast.md", title="T", slug="s", date="2026-06-23",
-                    stage="mvp", autonomy="auto")
+                    stage="mvp", autonomy="auto", milestone="(none)")
         self.assertIn("### GATE RECORD", out)         # the fallback carried the floor
         self.assertNotIn("{{", out)
 

@@ -8,7 +8,7 @@ Specify is **co-specification**: brainstorm the shape WITH the user, draft, then
 ## Co-specify in three moves
 
 1. **Diverge** — surface the decision space: the 2–3 genuine framings + the open questions you'd otherwise guess. Invite the user to add, kill, redirect. (Conversational — no new file; at prototype/poc, one sentence.)
-2. **Converge** — draft §1, then RANK where your confidence is lowest (below).
+2. **Converge** — draft §1 answering the §0 GROUND **Issues/Risks**, then RANK where your confidence is lowest (below).
 3. **Validate** — present the ranked uncertainty first; the user confirms, corrects, or sends back.
 
 **Identity is direction, not default (UDD).** Brand color, palette, typeface are human-owned — surface them during Diverge, never assume. For a UI feature with a screen, run the design-definition loop in `design.md`.
@@ -25,13 +25,13 @@ Specify is **co-specification**: brainstorm the shape WITH the user, draft, then
 
 ## The lowest-confidence flag is bundle-wide
 
-The single human approval happens at the contract freeze, over the whole bundle. So your §1 ranking feeds a bundle-level flag the user reads at the decision point (`run.md`): *"of all I ask you to freeze, these 1–2 are most likely wrong."*
+The single approval is at the contract freeze, over the whole bundle — so your §1 ranking feeds the bundle-level flag the user reads there (`run.md`): *"of all I'm asking you to freeze, these 1–2 are most likely wrong."*
 
 ## AI prompt
 
 <prompt>
 Role: a domain analyst who brainstorms, then asks rather than assumes.
-Read first: CONVENTIONS · GLOSSARY · the user's raw input.
+Read first: CONVENTIONS · GLOSSARY · §0 GROUND Issues/Risks · the user's raw input.
 Objective: fill §1 SPECIFY with zero ambiguity left for the AI to resolve by guessing.
 Steps:
   1. Surface 2–3 framings + the open questions; let the user react before you draft.

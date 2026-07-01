@@ -45,6 +45,14 @@ jobs:
         working-directory: add-method
         run: npm ci
 
+      - name: Materialize the dogfood tooling mirror (untracked; installer does this for consumers)
+        run: |
+          mkdir -p .add/tooling
+          cp add-method/tooling/add.py .add/tooling/add.py
+          cp -r add-method/tooling/add_engine .add/tooling/add_engine
+          cp add-method/tooling/engine_pin.py .add/tooling/engine_pin.py
+          cp -r add-method/tooling/templates .add/tooling/templates
+
       - name: Run tooling test suite
         working-directory: add-method
         run: python3 -m unittest discover -s tooling -p 'test_*.py'
@@ -58,6 +66,14 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+
+      - name: Materialize the dogfood tooling mirror (untracked; installer does this for consumers)
+        run: |
+          mkdir -p .add/tooling
+          cp add-method/tooling/add.py .add/tooling/add.py
+          cp -r add-method/tooling/add_engine .add/tooling/add_engine
+          cp add-method/tooling/engine_pin.py .add/tooling/engine_pin.py
+          cp -r add-method/tooling/templates .add/tooling/templates
 
       - name: Audit the dogfood board (.add)
         run: python3 .add/tooling/add.py audit

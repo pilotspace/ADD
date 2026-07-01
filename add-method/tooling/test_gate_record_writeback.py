@@ -118,6 +118,11 @@ class GateRecordWritebackTest(unittest.TestCase):
         # them out so this still asserts the GATE-RECORD write-back fabricated nothing.
         def norm(s):
             s = re.sub(r"(?m)^phase:.*$", "phase:", s)
+            # strip-scaffold-at-done: a completing gate now ALSO removes the live-phase `<!-- -->`
+            # instruction comments (and collapses the blank runs they leave) — orthogonal to THIS
+            # write-back. Apply the engine's own normalizer to BOTH sides so this still asserts the
+            # GATE-RECORD write-back fabricated nothing.
+            s = add._strip_live_scaffold(s)
             return re.sub(r"### Decisions \(ADR\).*?(?=\n##\s|\n---|\Z)", "### Decisions (ADR)\n", s, flags=re.S)
         before = norm(p.read_text())
         self._quiet(["gate", "PASS"])            # must not raise

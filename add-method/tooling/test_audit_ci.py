@@ -47,13 +47,20 @@ def _jobs_keys() -> list[str]:
 
 
 def _seam_audit_run_line() -> str | None:
-    """The literal run: command under the seam-audit job (None if absent)."""
+    """The literal single-line run: command under the seam-audit job (None if absent).
+    The job may carry an earlier block-scalar step (`run: |` or `run: >`, e.g.
+    materializing the untracked .add/tooling mirror before the audit runs,
+    untrack-add-tooling) — skip any block-scalar `run:` and return the first
+    single-line command instead."""
     text = CI_YML.read_text(encoding="utf-8")
     block = re.search(r"(?ms)^  seam-audit:\n(.*?)(?=^  [A-Za-z]|\Z)", text)
     if not block:
         return None
-    run = re.search(r"^\s*run:\s*(.+?)\s*$", block.group(1), re.M)
-    return run.group(1) if run else None
+    for run in re.finditer(r"^\s*run:\s*(.+?)\s*$", block.group(1), re.M):
+        val = run.group(1)
+        if val not in ("|", ">") and not val.startswith(("|", ">")):
+            return val
+    return None
 
 
 class WiringShapeTest(unittest.TestCase):

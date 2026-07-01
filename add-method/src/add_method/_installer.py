@@ -842,12 +842,23 @@ def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
         _log(f"soul_seed_skipped: could not write .add/SOUL.md — {exc}")
 
 
+# kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
+# _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
+# and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
+# already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
+# extra ignore line itself. BARE (not repo-root style): .add/.gitignore lives INSIDE
+# .add/, so git resolves its patterns relative to .add/ itself. Twin of
+# bin/cli.js:INSTALLER_MANAGED_IGNORE_EXTRA.
+_INSTALLER_MANAGED_IGNORE_EXTRA = ("personas-teacher/",)
+
+
 def _seed_gitignore(target_path: Path, bundled_root: Path) -> None:
-    """Ensure .add/.gitignore lists the engine's transient artifacts. Seed it from the
-    bundled tooling/templates/gitignore.tmpl if absent; else APPEND-IF-ABSENT each pattern
-    line the template carries that the existing file lacks — additive only, never reorders
-    or removes user-added lines, idempotent. Comment/blank template lines are not appended
-    to an existing file. Fail-soft: any problem logs a warning and returns (rc unaffected).
+    """Ensure .add/.gitignore lists the engine's transient artifacts + managed vendor trees.
+    Seed it from the bundled tooling/templates/gitignore.tmpl (plus
+    _INSTALLER_MANAGED_IGNORE_EXTRA) if absent; else APPEND-IF-ABSENT each pattern line that
+    combined body carries that the existing file lacks — additive only, never reorders or
+    removes user-added lines, idempotent. Comment/blank template lines are not appended to
+    an existing file. Fail-soft: any problem logs a warning and returns (rc unaffected).
     Twin of bin/cli.js:seedGitignore."""
     source = bundled_root / "tooling" / "templates" / "gitignore.tmpl"
     if not source.exists():
@@ -856,6 +867,9 @@ def _seed_gitignore(target_path: Path, bundled_root: Path) -> None:
     dest = target_path / ".add" / ".gitignore"
     try:
         body = source.read_text(encoding="utf-8")
+        if not body.endswith("\n"):
+            body += "\n"
+        body += "\n".join(_INSTALLER_MANAGED_IGNORE_EXTRA) + "\n"
         if not dest.exists():
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(body, encoding="utf-8")            # seed-if-missing
@@ -1302,6 +1316,7 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
                     dropped += 1
                     continue                              # NEVER reconcile managed files into a non-project
                 _reconcile(Path(np), home)                # standard MANAGED map, sourced from the home mirror
+                _seed_gitignore(Path(np), home)            # keep .add/.gitignore current too (parity: cli.js)
                 if (home / "data" / data_key(np)).exists():
                     _persist_data(home, np)               # keep the opted-in project's snapshot current
                 kept.append(np)                           # store the NORMALIZED path (heals a bent legit entry)

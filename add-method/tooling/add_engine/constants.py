@@ -118,6 +118,18 @@ scope-snapshot.json
 pre-archive-state.bak.json
 pre-update-state.bak.json
 .update-cache.json
+
+# ADD-managed vendor trees: regenerable/vendored copies the installer drops in,
+# never project-authored — mirrors the .add/docs/ rationale above, generalized
+# to every consumer project (not just this repo). Patterns are BARE, not repo-
+# root style: this file lives INSIDE .add/, so git resolves its patterns
+# relative to .add/ itself — a ".add/"-prefixed pattern here would look for
+# the non-existent .add/.add/tooling/ and never match anything. (one further
+# managed tree is NOT listed here — the engine's own _GITIGNORE_BODY constant
+# must stay hands-off of it by name; the installer twins seed that pattern
+# themselves, also bare.)
+tooling/
+docs/
 """
 
 # Guideline-injection targets + version-stable markers. NEVER change these marker
@@ -233,6 +245,10 @@ _EVIDENCE_RE = re.compile(r"^(.*?)\s*\(evidence:\s*(.*?)\)\s*$")
 _SPEC_DELTA_RE = re.compile(
     r"\s*-\s*\[\s*(SPEC)\s*·\s*(open|seeded|dropped|carried)\s*\]\s*(.+)$"
 )
+
+# delta-task-backlink: reads the `[→ <slug>]` seed stamp `_resolve_spec_delta` appends, so the
+# delta→task lineage can be walked back (check WARNs when a seeded pointer no longer resolves).
+_SEED_POINTER_RE = re.compile(r"\[→\s*([A-Za-z0-9_-]+)\s*\]")
 
 
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---

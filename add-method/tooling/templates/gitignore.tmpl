@@ -4,3 +4,15 @@ scope-snapshot.json
 pre-archive-state.bak.json
 pre-update-state.bak.json
 .update-cache.json
+
+# ADD-managed vendor trees: regenerable/vendored copies the installer drops in,
+# never project-authored — mirrors the .add/docs/ rationale above, generalized
+# to every consumer project (not just this repo). Patterns are BARE, not repo-
+# root style: this file lives INSIDE .add/, so git resolves its patterns
+# relative to .add/ itself — a ".add/"-prefixed pattern here would look for
+# the non-existent .add/.add/tooling/ and never match anything. (one further
+# managed tree is NOT listed here — the engine's own _GITIGNORE_BODY constant
+# must stay hands-off of it by name; the installer twins seed that pattern
+# themselves, also bare.)
+tooling/
+docs/

@@ -585,11 +585,21 @@ function seedSoulMd(target) {
   }
 }
 
-// Ensure .add/.gitignore lists the engine's transient artifacts. Seed it from the bundled
-// tooling/templates/gitignore.tmpl if absent; else APPEND-IF-ABSENT each pattern line the
-// template carries that the file lacks — additive only, never reorders/removes user lines,
-// idempotent; comment/blank lines are not appended to an existing file. Fail-soft. Twin of
-// _installer.py:_seed_gitignore.
+// kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
+// _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
+// and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
+// already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
+// extra ignore line itself. BARE (not repo-root style): .add/.gitignore lives INSIDE
+// .add/, so git resolves its patterns relative to .add/ itself. Twin of
+// _installer.py:_INSTALLER_MANAGED_IGNORE_EXTRA.
+const INSTALLER_MANAGED_IGNORE_EXTRA = ["personas-teacher/"];
+
+// Ensure .add/.gitignore lists the engine's transient artifacts + managed vendor trees.
+// Seed it from the bundled tooling/templates/gitignore.tmpl (plus
+// INSTALLER_MANAGED_IGNORE_EXTRA) if absent; else APPEND-IF-ABSENT each pattern line that
+// combined body carries that the file lacks — additive only, never reorders/removes user
+// lines, idempotent; comment/blank lines are not appended to an existing file. Fail-soft.
+// Twin of _installer.py:_seed_gitignore.
 function seedGitignore(target) {
   const source = path.join(PKG_ROOT, "tooling", "templates", "gitignore.tmpl");
   if (!fs.existsSync(source)) {
@@ -598,7 +608,9 @@ function seedGitignore(target) {
   }
   const dest = path.join(target, ".add", ".gitignore");
   try {
-    const body = fs.readFileSync(source, "utf8");
+    let body = fs.readFileSync(source, "utf8");
+    if (!body.endsWith("\n")) body += "\n";
+    body += INSTALLER_MANAGED_IGNORE_EXTRA.join("\n") + "\n";
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.writeFileSync(dest, body);                       // seed-if-missing
@@ -1133,6 +1145,7 @@ function cmdUpdateGlobal(args) {
       log("  ⚠ registered path " + np + " is not an ADD project (no .add/) — dropping"); dropped++; continue;
     }
     reconcile(args, np, home);      // standard MANAGED map, sourced from the home mirror
+    seedGitignore(np);               // keep .add/.gitignore current too (parity: _installer.py)
     // re-persist an opted-in project (one that already has a snapshot); a vanished
     // project's snapshot is KEPT above (the backup outlives the dir).
     if (fs.existsSync(path.join(home, "data", dataKey(np)))) persistData(home, np);

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "debrand-teacher-prose",
+  "active_task": "nested-suite-skip-count-tolerance",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3240,10 +3240,773 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-issues": {
+      "title": "\u00a70 Issues/Risks field that feeds SPECIFY",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ground-trust",
+      "depends_on": [],
+      "created": "2026-06-30T11:49:43+00:00",
+      "updated": "2026-06-30T12:06:32+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T11:56:14+00:00",
+        "approved_by": "Tin",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ab40572ae5416a98615e8a0080d956d9",
+        "tests": {
+          "add-method/tooling/test_ground_issues.py": "954023a3ad0d0bb070830fdfbf29c354"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/",
+          ".claude/skills/add/phases/",
+          "add-method/src/add_method/_bundled/skill/add/phases/",
+          "add-method/tooling/templates/",
+          ".add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/tooling/test_ground_issues.py"
+        ],
+        "snapshot_md5": "252fba686ef54d4cafd20ac4c67b94e3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "ground-related-intent": {
+      "title": "\u00a70 Related-intent links to the foundation",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ground-trust",
+      "depends_on": [],
+      "created": "2026-06-30T12:07:40+00:00",
+      "updated": "2026-06-30T12:33:06+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T12:14:06+00:00",
+        "approved_by": "Tin",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fb33aaf854802bc69b05cf6636d11c99",
+        "tests": {
+          "add-method/tooling/test_ground_related_intent.py": "5fecec91999cee6af09e8ca174d6ad9f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/",
+          ".claude/skills/add/phases/",
+          "add-method/src/add_method/_bundled/skill/add/phases/",
+          "add-method/tooling/templates/",
+          ".add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/tooling/test_ground_related_intent.py",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_ground_issues.py"
+        ],
+        "snapshot_md5": "f7d2435a8005f224ab6cdd06fb2863a3"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-30T12:32:41+00:00",
+            "reason": "scope_violation: task 'ground-related-intent' touched outside its declared \u00a75 Scope \u2014 add-method/tooling/test_ground_issues.py (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "task-milestone-backlink": {
+      "title": "TASK.md header carries an engine-written milestone: backlink",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "artifact-graph",
+      "depends_on": [],
+      "created": "2026-06-30T12:41:25+00:00",
+      "updated": "2026-06-30T13:15:09+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T12:52:43+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "058d2342dadbe4aba0ccad2c044940ec",
+        "tests": {
+          "add-method/tooling/test_milestone_backlink.py": "12dda96a41ea2f4666a5d5b7dc9a6386"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          ".add/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_milestone_backlink.py",
+          "add-method/tooling/test_fast_lane_template.py"
+        ],
+        "snapshot_md5": "0e9d78cc6a8c5ef8057ed3c9e7435cc6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "milestone-release-backlink": {
+      "title": "MILESTONE.md header carries an engine-stamped release: backlink",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "artifact-graph",
+      "depends_on": [],
+      "created": "2026-06-30T13:15:47+00:00",
+      "updated": "2026-06-30T13:50:40+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T13:18:28+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fa3b67d4d12e59c3795384e5637c19f4",
+        "tests": {
+          "add-method/tooling/test_milestone_release_backlink.py": "845fb1aca2c9c4a88c81614fc3be7023"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/templates/MILESTONE.md.tmpl",
+          ".add/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/tooling/test_milestone_release_backlink.py"
+        ],
+        "snapshot_md5": "a2f1bdca4238812bea6d5da398339789"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "ground-anchor-sha": {
+      "title": "\u00a70 GROUND carries a Ground SHA + check warns on line-refs without one",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "drift-guard",
+      "depends_on": [],
+      "created": "2026-06-30T14:06:23+00:00",
+      "updated": "2026-06-30T14:54:12+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T14:34:59+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "95ae82627b30a6dcb1c9b9e46cba23af",
+        "tests": {
+          "add-method/tooling/test_ground_anchor_sha.py": "e52eea6424620e2077212f61f3bbbe17"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/skill/add/phases/0-ground.md",
+          ".claude/skills/add/phases/0-ground.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-ground.md",
+          "add-method/tooling/test_ground_anchor_sha.py"
+        ],
+        "snapshot_md5": "fb93520a688f4ec6f2efa492276c679f"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-06-30T14:53:18+00:00",
+            "reason": "scope_violation: task 'ground-anchor-sha' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/skill/add/phases/0-ground.md (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "strip-scaffold-at-done": {
+      "title": "At phase done, strip the live-phase instruction comments from TASK.md",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "drift-guard",
+      "depends_on": [],
+      "created": "2026-06-30T14:54:35+00:00",
+      "updated": "2026-06-30T15:26:08+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-06-30T15:16:03+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ff361ee152c71e575297977e2c9494d7",
+        "tests": {
+          "add-method/tooling/test_strip_scaffold_at_done.py": "d7ae70c10663c8573e13571d287f49f2"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/test_strip_scaffold_at_done.py",
+          "add-method/tooling/test_gate_record_writeback.py",
+          "add-method/tooling/test_adr_harvest.py"
+        ],
+        "snapshot_md5": "a27e1979352fa647de272cb547b9a66c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "delta-task-backlink": {
+      "title": "Seeded task \u00a70 backlinks its originating delta; check warns on dangling lineage",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "traceability-ids",
+      "depends_on": [],
+      "created": "2026-06-30T15:39:43+00:00",
+      "updated": "2026-07-01T02:11:43+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-06-30T15:46:09+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a04489853885140072654d66a1633d25",
+        "tests": {
+          "add-method/tooling/test_delta_task_backlink.py": "01c446d72d1156736ddbca54ca684255"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/add_engine/constants.py",
+          ".add/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/tooling/test_delta_task_backlink.py"
+        ],
+        "snapshot_md5": "cc57363b2167a52494985baa7daa83ec"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "untrack-add-tooling": {
+      "title": "Stop tracking .add/tooling \u2014 regenerable dogfood mirror of add-method/tooling",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T02:17:26+00:00",
+      "updated": "2026-07-01T03:23:17+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-01T02:56:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c65e35dc0955bb972606f50e971c205d",
+        "tests": {
+          "add-method/tooling/test_untrack_add_tooling.py": "784f3a8115f39aa0fa5e7f78df2706c8"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".add/tasks/untrack-add-tooling/.gitignore",
+          ".add/.gitignore",
+          ".github/workflows/ci.yml",
+          "add-method/tooling/test_argv_portability.py",
+          "add-method/tooling/test_merge_base_enforcement.py",
+          "add-method/tooling/test_untrack_add_tooling.py",
+          "add-method/tooling/test_audit_ci.py"
+        ],
+        "snapshot_md5": "cbc960c00ccc78ffbadd0cbc152c0b8c"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-01T03:20:23+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_untrack_add_tooling.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "installer-gitignore-mirrors": {
+      "title": "Consumer .add/.gitignore ignores the 3 managed vendor trees",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T03:27:51+00:00",
+      "updated": "2026-07-01T04:18:35+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-01T04:10:01+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ebfec7c7af76f25a251cdb6e738ce15e",
+        "tests": {
+          "add-method/tooling/test_gitignore_bak_seed.py": "35efd280f0da3f9c065d4237efab7f99"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/gitignore.tmpl",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/templates/gitignore.tmpl",
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_gitignore_bak_seed.py"
+        ],
+        "snapshot_md5": "f832439a4f95c007aa46f2a4d9f9b174"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "ci-tooling-mirror-gap": {
+      "title": "Materialize .add/tooling mirror in CI's test + publish guard jobs",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T04:22:54+00:00",
+      "updated": "2026-07-01T05:24:59+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T04:29:41+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "42b73b8608af6f855d0ac876ee5ad933",
+        "tests": {
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "81ad2d5359577cc60b4bde49b9586f3e"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/publish.yml",
+          "add-method/tooling/test_ci_tooling_mirror_gap.py"
+        ],
+        "snapshot_md5": "39f722af93a7b955214d80b07814ca6d"
+      },
+      "heal": {
+        "attempts": 3,
+        "history": [
+          {
+            "at": "2026-07-01T05:23:10+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-07-01T05:24:04+00:00",
+            "reason": "refute-read:Pass 1 refute-read (agent a534ad63566e26de0) found: (1) nothing was committed yet at Ground SHA fcdf0aa, so the regression was still fully present; (2) test_fresh_checkout_survives_test_job_sequence reused the hardcoded _REQUIRED_MATERIALIZE_LINES constant instead of parsing the real materialize lines out of ci.yml's own text; (3) the pass criterion only checked returncode==0 + a loose 'OK' substring instead of the exact zero-failures/errors the contract promised. Fixed (2) and (3) by adding _materialize_run_block() to extract the real run: body from the job's YAML and tightening the assertion to a bare ^OK$ summary-line regex + a discovered-test-count sanity floor. Re-ran the isolated test file and full suite after: still green (2574/0).",
+            "source": "refute-read"
+          },
+          {
+            "at": "2026-07-01T05:24:27+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "phase-agents-lean": {
+      "title": "Lean 3-agent phase roster + adaptive persona agent",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T05:32:44+00:00",
+      "updated": "2026-07-01T06:51:47+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T06:06:10+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "678da1182b9248f3005b3e00dd40dace",
+        "tests": {
+          "add-method/tooling/test_agent_roster.py": "e360c6f035ad8f6274e0ac8df9fad489"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          ".claude/agents/",
+          "add-method/tooling/test_agent_roster.py"
+        ],
+        "snapshot_md5": "7a6762a369f695399db28215c87bc607"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "fresh-checkout-skip-tolerance": {
+      "title": "Tolerate the expected recursion-guard self-skip in the fresh-checkout suite check",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "traceability-ids",
+      "depends_on": [],
+      "created": "2026-07-01T06:25:06+00:00",
+      "updated": "2026-07-01T06:36:21+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T06:29:16+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c540501c020a6163c092257a018ef5c6",
+        "tests": {
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "1a90a4bd03426e7ef7daebc486f65a6e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_ci_tooling_mirror_gap.py"
+        ],
+        "snapshot_md5": "7a6762a369f695399db28215c87bc607"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-01T06:35:55+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "template-structural-gaps": {
+      "title": "Fold 3 MUST-have TASK.md.tmpl gaps: glossary deltas, scenario IDs, live-verify evidence block",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "traceability-ids",
+      "depends_on": [],
+      "created": "2026-07-01T06:45:55+00:00",
+      "updated": "2026-07-01T07:19:02+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T07:02:19+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "bc116faf13ea663c6b54ac39d5ab4b1f",
+        "tests": {
+          "add-method/tooling/test_template_structural_gaps.py": "d5a7e45eb3af23592b68cd24530923a1"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/test_template_structural_gaps.py"
+        ],
+        "snapshot_md5": "73a4801a296563f8e1f5e477f121a083"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "gitignore-vendor-path-fix": {
+      "title": "Fix nested .add/.gitignore vendor-tree patterns to resolve relative to .add/, not repo root",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T07:48:13+00:00",
+      "updated": "2026-07-01T08:03:59+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T07:52:42+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "97db0f751f05b52e0b022453c6821e84",
+        "tests": {
+          "add-method/tooling/test_gitignore_bak_seed.py": "554122311f2d758363ff4911437cbad6"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/gitignore.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/gitignore.tmpl",
+          ".add/tooling/templates/gitignore.tmpl",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          ".add/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_gitignore_bak_seed.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "719143c62045f4ff8d7d7f8d5ba22406"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-01T08:03:23+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_gitignore_bak_seed.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "update-global-gitignore-seed": {
+      "title": "update --global propagation loop must re-seed .gitignore for each registered project",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T08:19:19+00:00",
+      "updated": "2026-07-01T08:30:45+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T08:23:09+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "2e6e30b6f58fb44e3cf66e215dd84ba5",
+        "tests": {
+          "add-method/tooling/test_update_global_gitignore_seed.py": "78567e2fac423aa3f2bdb0371dc74053"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_update_global_gitignore_seed.py"
+        ],
+        "snapshot_md5": "0b057faa91abe4e7754e8f602641f7b4"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "nested-suite-skip-count-tolerance": {
+      "title": "Fresh-checkout nested-suite OK regex tolerates all known environment-conditional skips, not just the recursion guard",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T09:05:55+00:00",
+      "updated": "2026-07-01T09:21:51+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T09:09:17+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cd163da85d5ee7f10805396ab1fa7975",
+        "tests": {
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "d35a62ce4207bb00069da2c7c43074cf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_ci_tooling_mirror_gap.py"
+        ],
+        "snapshot_md5": "17a0955bd6ac3b4a2998828cdd013ab6"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-01T09:21:29+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-06-30T07:36:44+00:00",
+  "updated": "2026-07-01T09:21:51+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3486,9 +4249,89 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ground-trust": {
+      "title": "Ground-trust",
+      "goal": "GROUND surfaces the issues/risks it finds in the real code (feeding SPECIFY) and links each task's related intent to the foundation (PROJECT.md \u00b7 GLOSSARY.md \u00b7 conversation), so specs build on problems found, not assumed.",
+      "stage": "mvp",
+      "status": "done",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T12:33:57+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T11:49:43+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "artifact-graph": {
+      "title": "Artifact-graph",
+      "goal": "Every ADD artifact carries minimal backlink metadata (task\u2194milestone\u2194release\u2194deps\u2194delta, bidirectional) so the cross-artifact graph is traversable without re-deriving it.",
+      "stage": "mvp",
+      "status": "done",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T13:51:31+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T12:41:25+00:00",
+      "confirmed_by": "tindang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "drift-guard": {
+      "title": "Drift-guard",
+      "goal": "Kill \u00a70 reference rot: cite symbols not line numbers, stamp ground_sha, refresh at close, strip dead live-phase scaffolding at done \u2014 so a closed TASK.md stays true to the code.",
+      "stage": "mvp",
+      "status": "done",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T15:28:49+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-06-30T14:06:23+00:00",
+      "confirmed_by": "tindang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "traceability-ids": {
+      "title": "Traceability-ids",
+      "goal": "Give every \u00a71 rule a stable ID (M#/R#) that \u00a72 scenarios and \u00a74 tests reference, and lint coverage so no Must/Reject ships unscenarioed or untested.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-06-30T11:47:47+00:00",
+      "updated": "2026-06-30T11:47:47+00:00"
+    },
+    "seams": {
+      "title": "Seams",
+      "goal": "Promote symbols \u22652 tasks touch into a milestone-level SEAMS.md that \u00a70 references, so a shared contract has one home instead of being re-derived per task.",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-06-30T11:47:48+00:00",
+      "updated": "2026-06-30T11:47:48+00:00"
     }
   },
-  "active_milestone": "persona-teacher-bundle",
+  "active_milestone": "traceability-ids",
   "archived": [
     {
       "slug": "v5",
@@ -4098,13 +4941,21 @@
   "active_milestones": [
     "advisor-gated-autonomy",
     "persona-learning-loop",
-    "persona-teacher-bundle"
+    "persona-teacher-bundle",
+    "ground-trust",
+    "artifact-graph",
+    "drift-guard",
+    "traceability-ids"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "advisor-gated-autonomy": "advisor-gate-relax",
     "persona-learning-loop": "persona-method-docs",
-    "persona-teacher-bundle": "debrand-teacher-prose"
+    "persona-teacher-bundle": "debrand-teacher-prose",
+    "ground-trust": "ground-related-intent",
+    "artifact-graph": "milestone-release-backlink",
+    "drift-guard": "delta-task-backlink",
+    "traceability-ids": "nested-suite-skip-count-tolerance"
   },
   "todos": [
     {
