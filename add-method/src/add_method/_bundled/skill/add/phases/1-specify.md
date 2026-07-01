@@ -3,7 +3,7 @@
 Goal: state what the feature MUST do and what it must REJECT, with zero ambiguity
 for the AI to resolve by guessing. Fill **§1 SPECIFY** in TASK.md.
 
-Specify is **co-specification**: brainstorm the shape WITH the user, draft it, then validate. If you cannot write the spec, you do not yet understand the feature — stop and ask.
+Specify is **co-specification**: brainstorm the shape WITH the user, draft, then validate. If you cannot write the spec, you don't yet understand the feature — stop and ask.
 
 ## Co-specify in three moves
 
@@ -50,6 +50,7 @@ Never: resolve an ambiguity by guessing.
       "none material" that still names the single biggest risk (never a blank "none").
 </exit_gate>
 
+> **Persona** — load the fit `.add/personas/<slug>.md`; its `## Critical Rules` shape §1 (advisory; never lowers a gate).
 > **Advisor · Confidence** — for an unfamiliar domain, spawn a researcher (advisor.md); self-score the spec and let the lowest dimension aim your ⚠ flag (confidence.md).
 
 ## Next

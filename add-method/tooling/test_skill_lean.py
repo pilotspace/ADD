@@ -92,6 +92,15 @@ POOLS = [
     # run.md gains the Advisor-3-lens-verdict auto-gate bullet + the `advisor-gate-relax` pathway bullet (+680 B)
     # — the milestone's autonomy feature documented at its homes. RATIO 0.75 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈928/0.75⌉=1238). The won compaction is untouched.
+    # orchestration stays @ 54363 (no rebaseline) — merge-reconciliation note (feat/artifact-trust ×
+    # PR #120 / feat/persona-distillation-depth, human decision): the foreign branch's advisor.md
+    # "## The phase-specialist roster" section (+597 B, would-be 54363→55159) and streams.md's
+    # "## Phase-parallel execution — prefer the roster" section both documented the foreign 9-agent
+    # one-per-phase roster. Per explicit human decision, that roster was replaced by this branch's OWN
+    # lean 4-agent roster (add-design/add-build/add-verify/add-persona — see test_agent_roster.py); the
+    # 7 phase-only agents and every roster-shaped reference to them (both sections above) were reverted
+    # back to this branch's pre-merge advisor.md/streams.md. No net new surface survives, so the baseline
+    # is unchanged from 54363. The won compaction on the orchestration guides is untouched.
     {"name": "orchestration", "ratio": 0.75, "baseline": 54363,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
@@ -112,7 +121,14 @@ POOLS = [
     # SPECIFY) and "Related intent" (links the task to PROJECT/GLOSSARY/origin) — across 0-ground.md +
     # 1-specify.md, after compacting the reclaimable prose. +172 B residual human-approved surface. RATIO
     # 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈172/0.80⌉=215). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40280,
+    # phases 40280 → 40339 @ merge-reconciliation (PR #120 / feat/persona-distillation-depth × this branch,
+    # human decision): keeping PR #120's genuinely-new persona-template-depth documentation — 0-setup.md's
+    # persona "source:"+"## Playbook" provenance line, and a "> **Persona**" advisory callout each added to
+    # 4-tests.md/6-verify.md/7-observe.md — while REVERTING every roster-specific reference (the 7 phase-only
+    # agents PR #120 also added were removed; see advisor.md/streams.md history above, unchanged at 54363).
+    # Net +47 B human-approved surface (measured post-reconciliation: 32250 B vs the prior 32203 B actual).
+    # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈47/0.80⌉=59). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40339,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},

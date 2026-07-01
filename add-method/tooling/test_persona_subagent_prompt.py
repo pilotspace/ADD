@@ -27,8 +27,8 @@ SKILL_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add",
 )
 TMPL_REL = "templates/PROMPT.persona.md.tmpl"
-# the 9 coding agents ADD already onboards
-PLATFORMS = ("Claude Code", "Codex", "opencode", "Cursor", "Windsurf",
+# the 10 coding agents ADD already onboards (parity with the installer + the supported-agents docs)
+PLATFORMS = ("Claude Code", "Codex", "opencode", "Cursor", "Windsurf", "Trae",
              "Copilot", "Cline", "Aider", "Gemini CLI")
 # the marker splitting the runner-token-free BODY from the per-runner ADAPTER STUBS section
 ADAPTER_MARKER = "## Adapter stubs"
