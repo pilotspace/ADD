@@ -26,6 +26,7 @@ Run: cd add-method/tooling && python3 -m unittest test_ci_tooling_mirror_gap -v
 """
 from __future__ import annotations
 
+import importlib.util
 import os
 import re
 import shutil
@@ -34,6 +35,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent          # add-method/tooling
 ADD_METHOD = HERE.parent                        # add-method
@@ -54,14 +56,47 @@ _REQUIRED_MATERIALIZE_LINES = [
     "cp -r add-method/tooling/templates .add/tooling/templates",
 ]
 
-# the nested clone's own full-suite run always self-skips exactly once — its own
-# recursion guard (FreshCheckoutSurvivesTestJob, rediscovered inside the clone)
-# hits `_ADD_CI_MIRROR_GAP_NESTED == "1"` and calls skipTest. A bare `^OK$` can
-# never match that real, structurally-guaranteed shape, so tolerate exactly
-# `OK (skipped=1)` too — anchored to the literal count, not `\(skipped=\d+\)`,
-# so an unrelated SECOND skip still fails loudly instead of being silently waved
-# through (task fresh-checkout-skip-tolerance).
-_NESTED_OK_SUMMARY_RE = re.compile(r"(?m)^OK(?: \(skipped=1\))?\s*$")
+
+def _tomllib_available() -> bool:
+    try:
+        import tomllib  # noqa: F401
+    except ModuleNotFoundError:
+        return False
+    return True
+
+
+def _setuptools_available() -> bool:
+    return importlib.util.find_spec("setuptools") is not None
+
+
+def _expected_skip_count() -> int:
+    """The nested clone's own full-suite run always self-skips exactly once — its
+    own recursion guard (FreshCheckoutSurvivesTestJob, rediscovered inside the
+    clone) hits `_ADD_CI_MIRROR_GAP_NESTED == "1"` and calls skipTest — PLUS
+    whatever environment-conditional skips the CURRENT interpreter is already
+    known to produce elsewhere in the suite: the 6 component-pillar test files
+    (test_component_registry / _components_validator / _cross_component_contract
+    / _cross_component_milestone / _multirepo_federation / _per_component_verify)
+    each self-skip as ONE module-level result when tomllib is unavailable (< 3.11);
+    test_packaging.py's 3 PyWheelTest checks self-skip per-method when setuptools
+    isn't importable. Computed instead of a fixed literal, so an unrelated THIRD
+    kind of skip still fails loudly instead of being silently waved through
+    (task fresh-checkout-skip-tolerance / nested-suite-skip-count-tolerance)."""
+    n = 1
+    if not _tomllib_available():
+        n += 6
+    if not _setuptools_available():
+        n += 3
+    return n
+
+
+def _nested_ok_regex(n: int) -> re.Pattern:
+    """A bare `^OK$` can never match a real nested run (see _expected_skip_count),
+    so require the EXACT expected count — not `\\(skipped=\\d+\\)` — so an
+    unrelated skip still fails loudly instead of being silently waved through."""
+    if n <= 0:
+        return re.compile(r"(?m)^OK\s*$")
+    return re.compile(rf"(?m)^OK \(skipped={n}\)\s*$")
 
 
 def _job_block(text: str, job_name: str) -> str:
@@ -203,11 +238,13 @@ class FreshCheckoutSurvivesTestJob(unittest.TestCase):
         # also appear inside an "OK (skipped=N)" or a stray log line, and a run with
         # e.g. "FAILED (failures=1)" still contains "OK" earlier in some subprocess's
         # own stdout noise, so pin the unittest summary line itself. Tolerates exactly
-        # the recursion guard's own expected self-skip (see _NESTED_OK_SUMMARY_RE) —
+        # this interpreter's computed expected skip count (see _expected_skip_count) —
         # any other skip count, failure, or error still fails this assertion.
-        self.assertRegex(combined, _NESTED_OK_SUMMARY_RE,
+        expected_skips = _expected_skip_count()
+        self.assertRegex(combined, _nested_ok_regex(expected_skips),
                           f"fresh-checkout suite must report a bare 'OK' summary line "
-                          f"(0 failures, 0 errors):\n{tail}")
+                          f"matching this interpreter's expected skip count "
+                          f"({expected_skips}):\n{tail}")
         ran_match = re.search(r"Ran (\d+) tests? in", combined)
         self.assertIsNotNone(ran_match, f"no 'Ran N tests' summary found:\n{tail}")
         # sanity floor, not an exact match to a sibling suite run (which would itself
@@ -219,25 +256,52 @@ class FreshCheckoutSurvivesTestJob(unittest.TestCase):
 
 
 class OkSummaryRegexTest(unittest.TestCase):
-    """Fast, pure-logic coverage for the nested-suite summary tolerance (task
-    fresh-checkout-skip-tolerance) — decoupled from the expensive git-clone +
-    npm-ci + full-suite integration test above, which exercises the SAME pattern
-    for real. The nested run's own recursion guard (this file's
-    FreshCheckoutSurvivesTestJob, rediscovered inside the clone) always self-skips
-    exactly once, so a bare '^OK$' can never match a real nested run — tolerate
-    that ONE structurally-guaranteed skip, nothing else."""
+    """Fast, pure-logic coverage for the nested-suite summary tolerance (tasks
+    fresh-checkout-skip-tolerance / nested-suite-skip-count-tolerance) — decoupled
+    from the expensive git-clone + npm-ci + full-suite integration test above,
+    which exercises the SAME pattern for real. The nested run's own recursion
+    guard (this file's FreshCheckoutSurvivesTestJob, rediscovered inside the
+    clone) always self-skips exactly once, PLUS whatever environment-conditional
+    skips the CURRENT interpreter already produces elsewhere in the suite
+    (component-pillar tests self-skip as one unit per file when tomllib is
+    unavailable < 3.11; test_packaging's wheel checks skip per-method when
+    setuptools isn't importable) — compute the exact expected count instead of a
+    fixed literal, so an unrelated THIRD kind of skip still fails loudly."""
 
-    def test_accepts_bare_ok(self):
-        self.assertRegex("OK\n", _NESTED_OK_SUMMARY_RE)
+    def test_both_deps_present_computes_one(self):
+        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=True), \
+             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
+            self.assertEqual(_expected_skip_count(), 1)
 
-    def test_accepts_the_recursion_guards_own_expected_self_skip(self):
-        self.assertRegex("OK (skipped=1)\n", _NESTED_OK_SUMMARY_RE)
+    def test_tomllib_missing_adds_six(self):
+        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=False), \
+             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
+            self.assertEqual(_expected_skip_count(), 7)
+
+    def test_setuptools_missing_adds_three(self):
+        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=True), \
+             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
+            self.assertEqual(_expected_skip_count(), 4)
+
+    def test_both_missing_sums_both(self):
+        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=False), \
+             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
+            self.assertEqual(_expected_skip_count(), 10)
+
+    def test_regex_matches_its_own_exact_count(self):
+        rx = _nested_ok_regex(7)
+        self.assertRegex("OK (skipped=7)\n", rx)
+        self.assertNotRegex("OK (skipped=6)\n", rx)
+        self.assertNotRegex("OK (skipped=8)\n", rx)
+
+    def test_regex_zero_accepts_bare_ok(self):
+        self.assertRegex("OK\n", _nested_ok_regex(0))
 
     def test_rejects_a_failure_summary(self):
-        self.assertNotRegex("FAILED (failures=1)\n", _NESTED_OK_SUMMARY_RE)
+        self.assertNotRegex("FAILED (failures=1)\n", _nested_ok_regex(1))
 
-    def test_rejects_more_than_one_skip(self):
-        self.assertNotRegex("OK (skipped=2)\n", _NESTED_OK_SUMMARY_RE)
+    def test_unexpected_extra_skip_still_fails(self):
+        self.assertNotRegex("OK (skipped=8)\n", _nested_ok_regex(7))
 
 
 if __name__ == "__main__":
