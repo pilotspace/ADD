@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "installer-gitignore-mirrors",
+  "active_task": "ci-tooling-mirror-gap",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3675,10 +3675,69 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ci-tooling-mirror-gap": {
+      "title": "Materialize .add/tooling mirror in CI's test + publish guard jobs",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-01T04:22:54+00:00",
+      "updated": "2026-07-01T05:24:59+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-01T04:29:41+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "42b73b8608af6f855d0ac876ee5ad933",
+        "tests": {
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "81ad2d5359577cc60b4bde49b9586f3e"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/publish.yml",
+          "add-method/tooling/test_ci_tooling_mirror_gap.py"
+        ],
+        "snapshot_md5": "39f722af93a7b955214d80b07814ca6d"
+      },
+      "heal": {
+        "attempts": 3,
+        "history": [
+          {
+            "at": "2026-07-01T05:23:10+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-07-01T05:24:04+00:00",
+            "reason": "refute-read:Pass 1 refute-read (agent a534ad63566e26de0) found: (1) nothing was committed yet at Ground SHA fcdf0aa, so the regression was still fully present; (2) test_fresh_checkout_survives_test_job_sequence reused the hardcoded _REQUIRED_MATERIALIZE_LINES constant instead of parsing the real materialize lines out of ci.yml's own text; (3) the pass criterion only checked returncode==0 + a loose 'OK' substring instead of the exact zero-failures/errors the contract promised. Fixed (2) and (3) by adding _materialize_run_block() to extract the real run: body from the job's YAML and tightening the assertion to a bare ^OK$ summary-line regex + a discovered-test-count sanity floor. Re-ran the isolated test file and full suite after: still green (2574/0).",
+            "source": "refute-read"
+          },
+          {
+            "at": "2026-07-01T05:24:27+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_ci_tooling_mirror_gap.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-01T04:18:35+00:00",
+  "updated": "2026-07-01T05:24:59+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -4627,7 +4686,7 @@
     "ground-trust": "ground-related-intent",
     "artifact-graph": "milestone-release-backlink",
     "drift-guard": "delta-task-backlink",
-    "traceability-ids": "installer-gitignore-mirrors"
+    "traceability-ids": "ci-tooling-mirror-gap"
   },
   "todos": [
     {
