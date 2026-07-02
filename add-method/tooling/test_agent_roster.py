@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Red/green tests for phase-agents-lean — a LEAN 4-agent roster (add-design, add-build,
-add-verify, add-persona), NOT a mirror of the foreign, unmerged `feat/persona-distillation-depth`
+"""Red/green tests for the LEAN 5-agent roster (add-design, add-build, add-verify,
+add-persona, add-advisor), NOT a mirror of the foreign, unmerged `feat/persona-distillation-depth`
 branch's 9-agent one-per-phase roster. Each of add-design/add-build/add-verify spans MULTIPLE ADD
 phases (grouped 3-way: design = setup..contract, build = tests+build, verify = verify+observe);
-add-persona is a 4th, cross-cutting SERVICE agent that owns no ADD phase — it selects or drafts
-the best-fit `.add/personas/<slug>.md` for the other 3 agents (or the orchestrator) on request.
+add-persona and add-advisor are cross-cutting SERVICE agents that own no ADD phase. add-persona
+selects or drafts the best-fit `.add/personas/<slug>.md` for the other agents (or the orchestrator)
+on request; add-advisor (add-advisor task, extends the roster 4->5) is a consultative, frontier
+(`model: opus`) service that returns advice on a medium-hard decision — a recommendation, tradeoffs,
+and a confidence self-score — and advises, never decides / records / edits / lowers a gate.
 
-All 4 ship in the plugin (`add-method/agents/`, auto-discovered — no `plugin.json` edit) and are
+All 5 ship in the plugin (`add-method/agents/`, auto-discovered — no `plugin.json` edit) and are
 mirrored byte-identical into `.claude/agents/` for this repo's own dogfooding.
 
 Run: cd add-method/tooling && python3 -m unittest test_agent_roster -v
@@ -21,15 +24,17 @@ TOOLING = Path(__file__).resolve().parent
 PKG_ROOT = TOOLING.parent              # add-method/  (plugin root — `.claude-plugin/plugin.json`)
 REPO_ROOT = PKG_ROOT.parent            # AIDD-Book/   (the working repo)
 
-AGENTS = ("design", "build", "verify", "persona")
+AGENTS = ("design", "build", "verify", "persona", "advisor")
 
-# ADD phases each agent names in its own body. add-persona owns no ADD phase (cross-cutting
-# service) — its empty tuple exempts it from SharedContractTest.test_each_agent_names_its_phases.
+# ADD phases each agent names in its own body. add-persona and add-advisor own no ADD phase
+# (cross-cutting services) — their empty tuples exempt them from
+# SharedContractTest.test_each_agent_names_its_phases.
 AGENT_PHASES = {
     "design": ("setup", "ground", "specify", "scenarios", "contract"),
     "build": ("tests", "build"),
     "verify": ("verify", "observe"),
     "persona": (),
+    "advisor": (),
 }
 
 # the roster lives in TWO trees, byte-identical:
@@ -131,6 +136,19 @@ class BoundaryTest(unittest.TestCase):
             low, r"never\s+overwrit\w*\s+an?\s+existing",
             "persona_agent_clobbers: add-persona must state it never overwrites an existing "
             "persona file")
+
+    def test_add_advisor_advises_never_decides(self):               # R: advisor_decides
+        low = _agent_path(AGENT_TREES[0], "advisor").read_text(encoding="utf-8").lower()
+        # add-advisor is consultative: it advises but never DECIDES / records / edits, and never
+        # lowers a gate. Pin that distinguishing boundary (the sibling of design's never-self-approve
+        # and persona's never-clobber) — advice is never a decision.
+        self.assertRegex(
+            low, r"advis\w+.{0,80}never\s+decid\w*",
+            "advisor_decides: add-advisor must state it advises but never decides")
+        self.assertRegex(
+            low, r"never\s+(?:run\w*\s+add\.py|writ\w*\s+shared\s+state|record)",
+            "advisor_decides: add-advisor must state it never runs add.py / writes shared state "
+            "(it proposes advice; the caller records)")
 
 
 class ParityTest(unittest.TestCase):

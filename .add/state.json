@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "skill-tree-compaction-audit",
+  "active_task": "add-advisor",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2493,10 +2493,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "add-advisor": {
+      "title": "add-advisor consultative frontier-model agent (5th roster agent)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-02T07:38:27+00:00",
+      "updated": "2026-07-02T08:23:18+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-02T07:50:14+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ab94f6e76d3a02aad3432f5b04b00d00",
+        "tests": {
+          "add-method/tooling/test_agent_roster.py": "383964949492a6a02314599d8cdce6bb"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          ".claude/agents/",
+          "add-method/tooling/test_agent_roster.py"
+        ],
+        "snapshot_md5": "60d7e10f9010768987701b2a80a4ff2e"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T06:00:10+00:00",
+  "updated": "2026-07-02T08:23:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
