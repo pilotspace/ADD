@@ -3,6 +3,7 @@
 goal: GROUND surfaces the issues/risks it finds in the real code (feeding SPECIFY) and links each task's related intent to the foundation (PROJECT.md · GLOSSARY.md · conversation), so specs build on problems found, not assumed.
 rationale: new-major roadmap (artifact-trust line), milestone 1 of 5. A new theme no active milestone covers — making TASK artifacts ground-aware. Confirmed via intake interview 2026-06-30 (Core M1+M2+M3+M4+M5 selected; minimal-backlink graph).
 stage: mvp · status: active · created: 2026-06-30T11:47:47+00:00
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

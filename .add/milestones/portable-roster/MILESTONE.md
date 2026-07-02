@@ -3,7 +3,7 @@
 goal: non-Claude coding tools receive the ADD phase-roster's roles and boundaries through the AGENTS.md the installer already drops
 rationale: new-milestone — a slice of the standing "any agent drives the CLI loop" goal. The installer already onboards ~10 tools via AGENTS.md + Claude's `.claude/rules/`, but the `add-method/agents/` phase-roster (design·build·verify·persona·advisor) is materialized ONLY for Claude Code (plugin auto-discovery); every other tool is blind to the 5 phase-roles and their boundaries. EXTENDS the multi-agent-installer line · DEPENDS-ON the canonical `agents/*.md` roster + `add_engine/guidelines.py` guideline block · OVERLAPS none live. Altitude A (universal via AGENTS.md), all tools — confirmed by Tin Dang 2026-07-02.
 stage: mvp · status: active · created: 2026-07-02T08:58:18+00:00
-release: pending
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

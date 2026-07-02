@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.15.0 — 2026-07-02
+
+- Seams — 3 carried · 0 key decision(s)
+- Context search — 4 carried · 0 key decision(s)
+- Drift-guard — 0 carried · 0 key decision(s)
+- Artifact-graph — 0 carried · 0 key decision(s)
+- Ground-trust — 0 carried · 0 key decision(s)
+- Traceability-ids — 5 carried · 0 key decision(s)
+- Persona teacher bundle — 0 carried · 0 key decision(s)
+- Persona learning loop — 0 carried · 0 key decision(s)
+- Advisor-Gated Autonomy — 0 carried · 0 key decision(s)
+- Portable phase-roster for other coding agent tools — 3 carried · 0 key decision(s)
+
 ## 1.14.0 — 2026-06-29
 
 - component-polish — close the component-pillar gaps and harden the cross-repo edges — 14 carried · 0 key decision(s)

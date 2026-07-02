@@ -10,7 +10,7 @@ rationale: new-major (intake 2026-07-01) — no active milestone's goal covers c
   is a flat keyword/full-text index over document prose, a different mechanism from graph
   traversal over the backlink edges.
 stage: mvp · status: active · created: 2026-07-01T16:07:33+00:00
-release: pending
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

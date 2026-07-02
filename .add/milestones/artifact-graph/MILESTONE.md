@@ -3,6 +3,7 @@
 goal: Every ADD artifact carries minimal backlink metadata (task↔milestone↔release↔deps↔delta, bidirectional) so the cross-artifact graph is traversable without re-deriving it.
 rationale: new-major roadmap "artifact-trust" milestone 2 of 5 (Tin-confirmed all 5). The PR40 audit showed TASK.md files are strong execution contracts but weak reference docs — knowledge is siloed per file ("one file = one task"), so a reader re-derives the task↔milestone relationship instead of reading it. MINIMAL backlinks (Tin chose this over a rich node+edge graph) make the graph traversable from the artifacts themselves.
 stage: mvp · status: active · created: 2026-06-30T11:47:47+00:00
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

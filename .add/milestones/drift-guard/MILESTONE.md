@@ -3,7 +3,7 @@
 goal: Kill §0 reference rot: cite symbols not line numbers, stamp ground_sha, refresh at close, strip dead live-phase scaffolding at done — so a closed TASK.md stays true to the code.
 rationale: sub-milestone of the artifact-trust roadmap (M3) — the PR40 audit's top recurring defect: §0 line-number references rot during BUILD while symbols survive, and closed TASK.md files keep their live-phase `<!-- -->` scaffolding as dead weight. Make a closed task stay true to the code.
 stage: mvp · status: active · created: 2026-06-30T11:47:47+00:00
-release: pending
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

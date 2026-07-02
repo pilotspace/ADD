@@ -1,5 +1,12 @@
 # Releases
 
+## 1.15.0 — 2026-07-02
+milestones: seams, context-search, drift-guard, artifact-graph, ground-trust, traceability-ids, persona-teacher-bundle, persona-learning-loop, advisor-gated-autonomy, portable-roster
+loose tasks: scope-exclude-claude, mirror-resync, untrack-add-tooling, installer-gitignore-mirrors, ci-tooling-mirror-gap, phase-agents-lean, gitignore-vendor-path-fix, update-global-gitignore-seed, nested-suite-skip-count-tolerance, report-plan-approve, status-pagination, skill-tree-compaction-audit, add-advisor
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: 10 milestones (seams + context-search + drift-guard + artifact-graph + ground-trust + traceability-ids + persona-teacher-bundle + persona-learning-loop + advisor-gated-autonomy + portable-roster) + 13 loose tasks since 1.14.0; CI green @ c11ee865; check 489/0 (57 warn); foundation-version 61; 7 open SPEC deltas ridden forward unresolved (disclosed, non-security, --force: grep-binary-agnostic test fix, advisor.md naming collision, engine_pin.py comment bloat, skip-count hand-maintained constant, prepare_bundle.py tooling-dir gap, 2 known env-only grep-alias test fails, ADR _framing() multi-line capture)
+
 ## 1.14.0 — 2026-06-29
 milestones: component-polish, installer-polish
 loose tasks: none

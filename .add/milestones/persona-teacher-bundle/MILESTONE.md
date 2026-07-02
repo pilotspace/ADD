@@ -3,6 +3,7 @@
 goal: Vendor the agency-agents teacher corpus as a pinned MIT-attributed local library, bundled into the ADD release and read at the persona phase, de-branded from method prose and kept current by a scheduled refresh — engine NO-EXEC, release builds zero-network.
 rationale: sub-milestone of the persona major — the persona-learning-loop MILESTONE explicitly put "vendoring the full library / raw-file fetch / cache / refresh / SHA-pin machinery" OUT of scope; this milestone delivers exactly that deferred lane. Human-directed change: the teacher corpus moves from an externally-cited URL to a pinned, MIT-attributed local library shipped in the release and read at the persona phase, with the upstream name/URL removed from method prose (LICENSE + NOTICES retained per MIT).
 stage: mvp · status: active · created: 2026-06-30T04:44:24+00:00
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

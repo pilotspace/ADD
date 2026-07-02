@@ -3,6 +3,7 @@
 goal: Make auto+parallel a first-class, persisted, advisor-guarded run mode so high-speed builds stay safe without a human on every step
 rationale: sub-milestone (intake) — extends the v6 dynamic-run/autonomy-dial + v7 auto-default + the team-collaboration streams/waves work, and UPGRADES (not duplicates) the existing refute-read seam; depends-on nothing new. No existing or archived milestone delivers advisor-gating or run-mode persistence, so not a duplicate_goal.
 stage: mvp · status: active · created: 2026-06-29T03:00:09+00:00
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

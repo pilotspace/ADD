@@ -4,7 +4,48 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [Unreleased]
+## [1.15.0] — 2026-07-02
+
+Ten milestones — the largest bundle yet — round out ADD's self-knowledge
+(**context-search**, **seams**, **artifact-graph**, **traceability-ids**,
+**ground-trust**, **drift-guard**), extend it past static rules
+(**persona-teacher-bundle**, **persona-learning-loop**, **advisor-gated-autonomy**),
+and past Claude Code itself (**portable-roster**). All additive; nothing removed
+or renamed on the CLI surface.
+
+### Added (context-search — find prior work before you drift into it)
+- **`add.py search <keyword...>`** — case-insensitive substring search over the
+  milestone/task corpus (active + archived), title/goal/rationale lines only, never
+  the full body. Surfaced at new-scope drafting and inside the specify/scenarios
+  phase guides, so related prior work is found before drafting — not after a
+  conflicting design ships.
+
+### Added (seams — one home for a shared contract)
+- **`SEAMS.md`.** Symbols that ≥2 tasks touch get promoted into a milestone-level
+  doc that §0 references, so a shared contract has one home instead of being
+  re-derived — and drifting — per task.
+
+### Added (artifact-graph — a traversable cross-artifact graph)
+- **Bidirectional backlinks.** Every ADD artifact now carries minimal backlink
+  metadata (task↔milestone↔release↔deps↔delta) so the cross-artifact graph is
+  traversable without re-deriving it by hand.
+
+### Added (traceability-ids — every rule earns a stable ID)
+- **`M#` / `R#` rule IDs.** Every §1 Must/Reject rule gets a stable ID that §2
+  scenarios and §4 tests reference via a `covers:` line, plus lint coverage so no
+  rule ships unscenarioed or untested.
+
+### Added (persona-teacher-bundle — a vendored, pinned teacher corpus)
+- **agency-agents, vendored.** The agency-agents teacher corpus ships as a pinned,
+  MIT-attributed local library (`.add/personas-teacher/`), bundled into both the
+  npm and PyPI distributions, de-branded from method prose, and refreshed on a
+  schedule. The engine stays NO-EXEC; the release build is zero-network.
+
+### Added (persona-learning-loop — personas that learn your project)
+- **Project-fit personas.** The AI seeds requirements personas at setup (a living
+  doc the project uses live), grows them through the observe→fold self-improve
+  loop, applies them at UDD/advisor/build, and exposes a cross-runner
+  (Claude Code · Codex · …) persona-aware subagent prompt.
 
 ### Added (advisor-gated-autonomy — earn autonomy through instrumentation, not by removing the gate)
 - **A persisted, advisor-guarded `auto + parallel` run mode** so high-speed builds stay safe
@@ -31,6 +72,69 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 - **Per-phase spawn hint.** `status`/`guide` print an advisory subagent-spawn hint (idiom + tier) for the
   active phase; advisory only — the engine still never spawns.
 - Documentation, glossary (4 new terms), and headers aligned with the feature.
+
+### Added (portable-roster — the phase-roster for every coding tool, not just Claude)
+- **`AGENTS.md` / `.clinerules` carry the roster.** Non-Claude coding tools (Cursor,
+  Copilot, Codex, Cline, …) now receive the ADD phase-roster's 5 roles and
+  boundaries through the `AGENTS.md` the installer already drops, not just
+  Claude Code's native subagents.
+- **`add-advisor` — the 5th roster agent.** A consultative, frontier-model agent
+  (`model: opus`) any phase can spawn on a medium-hard decision — an ambiguous
+  read, a risky shape, a change of approach. It recommends and weighs tradeoffs;
+  it never decides.
+
+### Changed (ground-trust — GROUND surfaces problems, not just structure)
+- **GROUND now surfaces the issues/risks** it finds in the real code (feeding
+  SPECIFY) and links each task's related intent back to the foundation
+  (`PROJECT.md` · `GLOSSARY.md` · conversation) — specs build on problems found,
+  not assumed.
+
+### Changed (drift-guard — kill §0 reference rot)
+- **§0 cites symbols, not line numbers**, stamps `ground_sha`, refreshes at close,
+  and strips dead live-phase scaffolding at done — a closed TASK.md stays true to
+  the code instead of rotting the moment a line shifts.
+
+### Added / Changed (loose tasks since 1.14.0)
+- **Report template PLAN/SHAPE + APPROVE banner** (`report-plan-approve`) — the
+  chat-report decision point renders a clearer guided-choice banner.
+- **`status` pagination** (`status-pagination`) — milestones/tasks sort by
+  updated-descending and cap to the top 10, with a `--all` escape hatch, so a
+  long-lived project's `status` stays scannable.
+- **Lean 3-agent phase roster + adaptive persona agent** (`phase-agents-lean`).
+- **Skill-tree compaction** (`skill-tree-compaction-audit`) — audited and
+  compacted the ADD skill tree for genuine prose redundancy under the pinned
+  lean-fence budget.
+- **Vendor-tree `.gitignore` fixes** — nested `.add/.gitignore` vendor-tree
+  patterns now resolve relative to `.add/`, not repo root
+  (`gitignore-vendor-path-fix`); the installer's own `.gitignore` seed covers all
+  3 managed vendor trees (`installer-gitignore-mirrors`); `update --global`
+  re-seeds `.gitignore` for every registered project, not just fresh installs
+  (`update-global-gitignore-seed`).
+- **CI tooling-mirror gap closed** (`ci-tooling-mirror-gap`) — the `.add/tooling`
+  dogfood mirror is materialized in CI's test + publish-guard jobs, not just
+  locally.
+- **Fresh-checkout skip-count tolerance widened**
+  (`nested-suite-skip-count-tolerance`) — the nested-suite OK-regex now tolerates
+  every known environment-conditional skip, not just the recursion guard.
+- **Scope-walk hygiene** — `.claude` pruned from the scope walk
+  (`scope-exclude-claude`); stale mirror trees re-synced to canonical
+  (`mirror-resync`); `.add/tooling` untracked as a regenerable dogfood mirror
+  (`untrack-add-tooling`).
+
+### Changed
+- Five version sources bump in lockstep to **1.15.0** (`package.json`,
+  `package-lock.json` ×2, `pyproject.toml`, `.claude-plugin/plugin.json`,
+  `add_method.__version__`).
+
+This release bundles **10 closed milestones** (`seams`, `context-search`,
+`drift-guard`, `artifact-graph`, `ground-trust`, `traceability-ids`,
+`persona-teacher-bundle`, `persona-learning-loop`, `advisor-gated-autonomy`,
+`portable-roster`) and 13 loose tasks since 1.14.0. Every milestone was built
+end-to-end through ADD's own spec→tests→build→verify flow. 7 open SPEC deltas
+(non-security backlog — a grep-binary-agnostic test fix, an `advisor.md` naming
+collision, an oversized pin-history comment, a hand-maintained skip-count
+constant, a bundling gap in `prepare_bundle.py`, and an ADR-harvester multi-line
+capture) ride forward unresolved into the next cycle.
 
 ## [1.14.0] — 2026-06-29
 
