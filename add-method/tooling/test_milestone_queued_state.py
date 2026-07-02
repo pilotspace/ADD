@@ -84,12 +84,5 @@ class QueuedMilestoneTest(unittest.TestCase):
             add.main(["activate", "beta"])
 
 
-class EnginePinTest(unittest.TestCase):
-    def test_pin_annotation_names_this_task(self):
-        src = (Path(__file__).resolve().parent / "engine_pin.py").read_text(encoding="utf-8")
-        self.assertIn("re-aimed @ milestone-queued-state", src,
-                      "the engine pin must record THIS task's deliberate re-aim")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

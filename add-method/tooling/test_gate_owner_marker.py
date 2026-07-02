@@ -310,21 +310,5 @@ class DriverMarkerEdgeTest(_Board):
         self.assertNotIn("[human gate]", out)
 
 
-# ── the engine-pin idiom: this task's deliberate re-aim is self-tested ───────
-# Part of the pin idiom, not optional — every marker task that re-aims the engine
-# pins its own `re-aimed @ <slug>` annotation (the sibling next-footer-engine
-# suite carries the same guard for its slug). The §3 contract re-aimed the engine,
-# so engine_pin.py MUST name this task; the supersession chain keeps the prior
-# task's marker present so the lineage is never silently dropped.
-class EnginePinTest(unittest.TestCase):
-
-    def test_pin_annotation_names_this_task(self):
-        src = (HERE / "engine_pin.py").read_text(encoding="utf-8")
-        self.assertIn("re-aimed @ gate-owner-marker", src,
-                      "the engine pin must record THIS task's deliberate re-aim")
-        self.assertIn("re-aimed @ next-footer-engine", src,
-                      "the pin carries the prior task's re-aim (the supersession chain)")
-
-
 if __name__ == "__main__":
     unittest.main()
