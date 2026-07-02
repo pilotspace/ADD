@@ -57,4 +57,5 @@ Never: resolve an ambiguity by guessing.
 
 `python3 .add/tooling/add.py advance` → read `phases/2-scenarios.md`.
 Book: `docs/03-step-1-specify.md`. (UI feature? also sketch flows + every screen
-state: loading/empty/error/success.)
+state: loading/empty/error/success; name it in the parent MILESTONE.md's Scope-hint
+vocabulary, not generic prose.)
