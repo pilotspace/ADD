@@ -9,8 +9,8 @@
 
 ## engine-md5-repin
 Name: ENGINE_MD5 / ENGINE_PKG_MD5 re-pin checklist
-Anchor: `add-method/tooling/engine_pin.py:13` (`ENGINE_MD5`) ·
-  `add-method/tooling/engine_pin.py:14` (`ENGINE_PKG_MD5`) ·
+Anchor: `add-method/tooling/engine_pin.py:20` (`ENGINE_MD5`) ·
+  `add-method/tooling/engine_pin.py:21` (`ENGINE_PKG_MD5`) ·
   `add-method/tooling/test_engine_repin_parity.py:54` (`test_three_engines_byte_identical_and_current`)
 Contract: Any change to `add-method/tooling/add.py` re-aims ENGINE_MD5; any change under
   `add_engine/` re-aims ENGINE_PKG_MD5 — both hard-coded literals (never runtime-computed,
@@ -27,7 +27,9 @@ Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`
   resolves at `:54`, not the `:57` cited when this entry was drafted; disclosed here rather
   than shipped stale. `ENGINE_PKG_MD5` anchor re-corrected a second time (`:15` -> `:14`)
   after `fix-flag-fence-aware`'s own engine_pin.py re-pin shifted it — the exact class of
-  drift this entry itself documents. Revises the milestone's seed estimate (~130 files/291
+  drift this entry itself documents. Both anchors re-corrected a third time (`:13`/`:14` ->
+  `:20`/`:21`) after engine_pin.py's docstring grew a "Trim policy" paragraph — same drift
+  class, disclosed rather than shipped stale. Revises the milestone's seed estimate (~130 files/291
   mentions) — a substring count sweeps in every Scope-line mention, not only checklist runs;
   treat as an upper-bound signal. e.g. `rule-id-coverage`, `extract-predicates`, `gate-record-writeback`
 
