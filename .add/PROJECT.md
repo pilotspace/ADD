@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 59
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 60
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -269,6 +269,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-07-02 | fold all → foundation-version 60 (TDD 7 · ADD 11) | consolidate captured OBSERVE lessons into the versioned foundation | 18 lessons open→folded; +18 routed bullets; 59→60 |
 | 2026-06-28 | fold all → foundation-version 59 (TDD 4 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 7 lessons open→folded; +7 routed bullets; 58→59 |
 | 2026-06-28 | fold all → foundation-version 58 (SDD 2 · TDD 4 · ADD 8) | consolidate captured OBSERVE lessons into the versioned foundation | 14 lessons open→folded; +14 routed bullets; 57→58 |
 | 2026-06-28 | fold all → foundation-version 57 (TDD 1 · ADD 3) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 56→57 |

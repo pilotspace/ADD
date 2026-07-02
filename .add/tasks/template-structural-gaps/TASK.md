@@ -378,13 +378,13 @@ Watch (reuse scenarios as monitors): future tasks scaffolded from this template 
   `` comment" instead of "carries exactly 1 `<!--...-->` comment" after gating).
 
 ### Competency deltas
-- [TDD · open] a test that scans a template for placeholder tags must reuse the EXISTING frozen
+- [TDD · folded] a test that scans a template for placeholder tags must reuse the EXISTING frozen [folded foundation-version 60]
   tag-census logic (`test_scope_decl_template.py`'s bare `[a-z_]+` word census), not invent a new
   placeholder word ad hoc — a bare `<how>` collided with that unrelated pre-existing invariant and
   was only caught by running the FULL suite, not the new test file alone (evidence:
   `test_scope_decl_template.py::test_mirrors_and_engine_untouched` failure, fixed to `<how / where>`
   matching the sibling Build-expectations block's existing style).
-- [ADD · open] a §5 Scope declaration split across multiple physical lines is silently truncated
+- [ADD · folded] a §5 Scope declaration split across multiple physical lines is silently truncated [folded foundation-version 60]
   to just its first line by the engine's snapshot parser — reaffirms the fv29-era "declare §5
   Scope on ONE physical line" convention, hit twice in one session across two different tasks
   (evidence: both `phase-agents-lean` and this task needed a `phase tests <slug>` reopen to

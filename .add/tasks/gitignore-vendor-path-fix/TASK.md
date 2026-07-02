@@ -334,7 +334,7 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a string-presence assertion (`pattern in body`) can stay green even when the
+- [TDD · folded] a string-presence assertion (`pattern in body`) can stay green even when the [folded foundation-version 60]
   underlying mechanism is broken — a bare-form substring like `"tooling/"` is trivially present
   inside the buggy full-path line `".add/tooling/"` too, so widening the constant alone would
   not have gone red. Whenever a test's correctness claim depends on an external tool's semantics
@@ -342,7 +342,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   check exit codes), not a string the tool merely happens to also contain (evidence: this task's
   pre-existing `test_gitignore_bak_seed.py` tests all stayed green through the entire life of the
   bug).
-- [ADD · open] the tests→build tamper-tripwire recovery (`add.py phase tests <slug>` → `advance`
+- [ADD · folded] the tests→build tamper-tripwire recovery (`add.py phase tests <slug>` → `advance` [folded foundation-version 60]
   ×2 to re-anchor) applies even when the "tampered" test file is one authored in THIS build and
   then legitimately corrected a bug in, not only a pre-existing test — extending that same lesson
   to self-authored tests too (evidence: `_assert_managed_trees_really_ignored` needed an
