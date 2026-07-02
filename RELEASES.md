@@ -1,11 +1,11 @@
 # Releases
 
-## 1.15.0 — 2026-07-02
-milestones: seams, context-search, drift-guard, artifact-graph, ground-trust, traceability-ids, persona-teacher-bundle, persona-learning-loop, advisor-gated-autonomy, portable-roster
+## 1.15.0 — 2026-07-03
+milestones: seams, context-search, drift-guard, artifact-graph, ground-trust, traceability-ids, persona-teacher-bundle, persona-learning-loop, advisor-gated-autonomy, portable-roster, loop-readability
 loose tasks: scope-exclude-claude, mirror-resync, untrack-add-tooling, installer-gitignore-mirrors, ci-tooling-mirror-gap, phase-agents-lean, gitignore-vendor-path-fix, update-global-gitignore-seed, nested-suite-skip-count-tolerance, report-plan-approve, status-pagination, skill-tree-compaction-audit, add-advisor
 waivers: none
 actor: Tin Dang <tindang.ht97@gmail.com> (git)
-evidence: 10 milestones (seams + context-search + drift-guard + artifact-graph + ground-trust + traceability-ids + persona-teacher-bundle + persona-learning-loop + advisor-gated-autonomy + portable-roster) + 13 loose tasks since 1.14.0; CI green @ c11ee865; check 489/0 (57 warn); foundation-version 61; 7 open SPEC deltas ridden forward unresolved (disclosed, non-security, --force: grep-binary-agnostic test fix, advisor.md naming collision, engine_pin.py comment bloat, skip-count hand-maintained constant, prepare_bundle.py tooling-dir gap, 2 known env-only grep-alias test fails, ADR _framing() multi-line capture)
+evidence: 11 milestones (seams + context-search + drift-guard + artifact-graph + ground-trust + traceability-ids + persona-teacher-bundle + persona-learning-loop + advisor-gated-autonomy + portable-roster + loop-readability) + 13 loose tasks since 1.14.0; targeted suites green (report-shape-scan-audit 7/7, skill-banner-cue 5/5, uiux-hint-adoption 17/17, release-1.15.0 forward-pin 11/11); check 506/0 (58 warn); foundation-version 62; 7 open SPEC delta(s) ridden forward unresolved --force (unchanged carry from the original 1.15.0 cut, all from permanently-live loose tasks: add-advisor x2, gitignore-vendor-path-fix, nested-suite-skip-count-tolerance, skill-tree-compaction-audit x2, update-global-gitignore-seed; 18 further deltas exist project-wide but belong to the still-active install-update-hardening milestone, not this bundle — see add.py deltas)
 
 ## 1.14.0 — 2026-06-29
 milestones: component-polish, installer-polish

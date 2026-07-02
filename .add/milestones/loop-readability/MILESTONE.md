@@ -11,7 +11,7 @@ rationale: new-major (intake, unconfirmed) — no active milestone's goal covers
   what the AI tells/asks the human (chat reports), NOT add.py's own printed CLI text —
   that first framing was wrong and is fully replaced below, not layered on top
 stage: mvp · status: active · created: 2026-07-02T15:52:13+00:00
-release: pending
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

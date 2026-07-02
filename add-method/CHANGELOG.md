@@ -94,6 +94,24 @@ or renamed on the CLI surface.
   and strips dead live-phase scaffolding at done — a closed TASK.md stays true to
   the code instead of rotting the moment a line shifts.
 
+### Changed (loop-readability — human-scannable output across every phase)
+- **Report shape, audited and tightened.** `report-template.md`'s ARC + 6-block
+  shape was checked against its own stated rules (summary-first, one decision,
+  guided-choice) across all 8 phase guides' gate-reporting cues; 2 guides
+  (`0-setup.md`'s baseline-lock sentence, `3-contract.md`'s freeze-gate
+  sentence) had drifted and were tightened to name SHAPE ahead of the APPROVE
+  guided choice.
+- **SKILL.md's compact pipeline sentence now names the decision banner**
+  ("rendered first, above everything") ahead of the ARC, matching
+  `report-template.md`'s actual render order — closing a gap the shape audit
+  surfaced.
+- **`MILESTONE.md.tmpl` gains a UI/UX Scope hint** — the axes to name
+  precisely for a UI feature (information architecture, interaction pattern,
+  visual hierarchy, design tokens, component states, accessibility floor,
+  responsive breakpoints, user journey), pointing at `design.md` — with
+  adoption pointers wired into `1-specify.md` and `scope.md` so drafters
+  actually reach it. The seed this milestone was created to dogfood.
+
 ### Added / Changed (loose tasks since 1.14.0)
 - **Report template PLAN/SHAPE + APPROVE banner** (`report-plan-approve`) — the
   chat-report decision point renders a clearer guided-choice banner.
@@ -126,15 +144,15 @@ or renamed on the CLI surface.
   `package-lock.json` ×2, `pyproject.toml`, `.claude-plugin/plugin.json`,
   `add_method.__version__`).
 
-This release bundles **10 closed milestones** (`seams`, `context-search`,
+This release bundles **11 closed milestones** (`seams`, `context-search`,
 `drift-guard`, `artifact-graph`, `ground-trust`, `traceability-ids`,
 `persona-teacher-bundle`, `persona-learning-loop`, `advisor-gated-autonomy`,
-`portable-roster`) and 13 loose tasks since 1.14.0. Every milestone was built
-end-to-end through ADD's own spec→tests→build→verify flow. 7 open SPEC deltas
-(non-security backlog — a grep-binary-agnostic test fix, an `advisor.md` naming
-collision, an oversized pin-history comment, a hand-maintained skip-count
-constant, a bundling gap in `prepare_bundle.py`, and an ADR-harvester multi-line
-capture) ride forward unresolved into the next cycle.
+`portable-roster`, `loop-readability`) and 13 loose tasks since 1.14.0. Every
+milestone was built end-to-end through ADD's own spec→tests→build→verify flow.
+25 open SPEC deltas (non-security backlog spanning the newly-grounded
+install-update-hardening tasks, report-shape-scan-audit/skill-banner-cue
+follow-ups, and pre-existing items — full list: `add.py deltas`) ride forward
+unresolved into the next cycle.
 
 ## [1.14.0] — 2026-06-29
 

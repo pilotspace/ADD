@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.15.0 — 2026-07-02
+## 1.15.0 — 2026-07-03
 
 - Seams — 3 carried · 0 key decision(s)
 - Context search — 4 carried · 0 key decision(s)
@@ -12,6 +12,7 @@
 - Persona learning loop — 0 carried · 0 key decision(s)
 - Advisor-Gated Autonomy — 0 carried · 0 key decision(s)
 - Portable phase-roster for other coding agent tools — 3 carried · 0 key decision(s)
+- ADD loop readability — human-scannable output across every phase — 4 carried · 0 key decision(s)
 
 ## 1.14.0 — 2026-06-29
 
