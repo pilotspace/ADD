@@ -17,6 +17,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -122,6 +123,18 @@ class PointerTest(unittest.TestCase):
                          "sync-guidelines must replace the pointer in place — no duplicate block")
         self.assertIn("## ADD — how to work in this repo", text,
                       "the full guideline block must supersede the minimal pointer")
+
+    def test_init_supersedes_cline_pointer(self):                 # M1, R:clinerules_rule_file_leak
+        cline = _installer._detect_agent(NEW_AGENTS["cline"][0])
+        _installer._write_agent_pointer(self.tmp, cline)
+        # the actual onboarding sequence: install drops a lite pointer into .clinerules,
+        # then sync-guidelines (add.py init) must supersede it in place, not duplicate it
+        add_engine._inject_block(self.tmp / ".clinerules")
+        text = (self.tmp / ".clinerules").read_text(encoding="utf-8")
+        self.assertEqual(text.count(add_engine._GUIDE_BEGIN), 1,
+                         "sync-guidelines must replace cline's pointer in place — no duplicate block")
+        self.assertIn("## ADD — how to work in this repo", text,
+                      "the full guideline block must supersede the minimal cline pointer")
 
     def test_undecodable_integration_left_untouched(self):        # Reject integration_unreadable
         raw = "ADD:BEGIN".encode("utf-16")                        # not valid UTF-8
@@ -298,6 +311,19 @@ class NpmAgentTest(unittest.TestCase):
                             "an unknown agent must get the generic AGENTS.md")
 
 
+# --- drift-guard: every registered integration_file lands in GUIDELINE_FILES -
+
+_INTEGRATION_FILE_RE = re.compile(r'integration_file"?\s*:\s*"([^"]+)"')
+
+
+def _drifted_integration_files(source_text, guideline_files):
+    """`integration_file` values in `source_text` that are NOT in `guideline_files`.
+
+    PURE text-scan (no exec/import of the JS twin) — matches this suite's existing
+    string-search parity style; ugrep/BSD `grep -cl` gotcha never applies here."""
+    return [f for f in _INTEGRATION_FILE_RE.findall(source_text) if f not in guideline_files]
+
+
 # --- parity: same registry in both twins ------------------------------------
 
 class ParityTest(unittest.TestCase):
@@ -307,6 +333,25 @@ class ParityTest(unittest.TestCase):
         for token in ("claude", "codex", "opencode", "generic", "CLAUDECODE", "AGENTS.md", "CLAUDE.md"):
             self.assertIn(token, js, f"cli.js profile registry must mention '{token}'")
             self.assertIn(token, py, f"_installer.py profile registry must mention '{token}'")
+
+    def test_registry_covers_guideline_files_today(self):         # M4
+        js = CLI_JS.read_text(encoding="utf-8")
+        py = (_SRC / "add_method" / "_installer.py").read_text(encoding="utf-8")
+        guideline_files = add_engine.GUIDELINE_FILES
+        js_drift = _drifted_integration_files(js, guideline_files)
+        py_drift = _drifted_integration_files(py, guideline_files)
+        self.assertEqual(js_drift, [],
+                         f"cli.js has profile(s) whose integration_file is outside "
+                         f"GUIDELINE_FILES: {js_drift} (R:registry_guideline_drift)")
+        self.assertEqual(py_drift, [],
+                         f"_installer.py has profile(s) whose integration_file is outside "
+                         f"GUIDELINE_FILES: {py_drift} (R:registry_guideline_drift)")
+
+    def test_synthetic_drift_detected(self):                      # R:registry_guideline_drift
+        source = 'AGENT_PROFILES = ({"id": "x", "integration_file": ".mytoolrc"},)'
+        drifted = _drifted_integration_files(source, ("AGENTS.md", "CLAUDE.md"))
+        self.assertEqual(drifted, [".mytoolrc"],
+                         "a profile outside GUIDELINE_FILES must be flagged")
 
     def test_parity_six_new_profiles(self):                       # multi-agent-installer
         js = CLI_JS.read_text(encoding="utf-8")

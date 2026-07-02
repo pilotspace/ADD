@@ -21,6 +21,14 @@ def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def _block_body(text: str) -> str:
+    """The marker-delimited ADD block only, so two files' surrounding content
+    (which may legitimately differ) doesn't affect a block-content comparison."""
+    start = text.index(add._GUIDE_BEGIN)
+    end = text.index(add._GUIDE_END) + len(add._GUIDE_END)
+    return text[start:end]
+
+
 class GuidelineInjectTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
@@ -165,6 +173,18 @@ class GuidelineInjectTest(unittest.TestCase):
         self.assertIn(add._GUIDE_BEGIN, _read(d / "CLAUDE.md"),
                       "a non-UTF-8 target must not stop the other from syncing")
         self.assertIn("skipped", buf.getvalue(), "the skip must be reported on stderr")
+
+    def test_clinerules_receives_full_block(self):
+        d = self._fresh_project()
+        self._sync()
+        clinerules = d / ".clinerules"
+        self.assertTrue(clinerules.exists(), "sync must create .clinerules")
+        text = _read(clinerules)
+        self.assertIn(add._GUIDE_BEGIN, text, ".clinerules missing begin marker")
+        self.assertIn(add._GUIDE_END, text, ".clinerules missing end marker")
+        agents = _read(d / "AGENTS.md")
+        self.assertEqual(_block_body(text), _block_body(agents),
+                         ".clinerules block must be byte-identical to AGENTS.md's")
 
     def test_begin_without_end_warns_and_recovers(self):
         # A hand-typed BEGIN with no END is corrupt input: warn, append a fresh

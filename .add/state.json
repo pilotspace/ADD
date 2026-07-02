@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "roster-portable-shape",
+  "active_task": "roster-onboarding-wiring",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2572,10 +2572,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "roster-onboarding-wiring": {
+      "title": "Wire the portable roster into installer / sync-guidelines onboarding",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "portable-roster",
+      "depends_on": [],
+      "created": "2026-07-02T10:22:42+00:00",
+      "updated": "2026-07-02T12:34:57+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cda747c1244506478c2d101b4ea2336c",
+        "tests": {
+          "add-method/tooling/test_guidelines.py": "3f0c38558bda897e72eaffb61e8ff3c8",
+          "add-method/tooling/test_brownfield_scan.py": "aab2fab3a0939bdc38294c9f351cdf2a",
+          "add-method/tooling/test_agent_detect.py": "1a9e5b87809193494d4794f87ffeeeba",
+          "add-method/tooling/test_rule_file_mode.py": "fe72eab208ac8b217b86a8c96a81a9cc"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/add_engine/guidelines.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_guidelines.py",
+          "add-method/tooling/test_brownfield_scan.py",
+          "add-method/tooling/test_agent_detect.py",
+          "add-method/tooling/test_rule_file_mode.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/_bundled",
+          ".add/tooling/"
+        ],
+        "snapshot_md5": "916033a5e1d5e51714e222bf65dde179"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T10:15:28+00:00",
+  "updated": "2026-07-02T12:40:08+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2762,14 +2803,19 @@
       "title": "Portable phase-roster for other coding agent tools",
       "goal": "non-Claude coding tools receive the ADD phase-roster's roles and boundaries through the AGENTS.md the installer already drops",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-02T08:58:18+00:00",
-      "updated": "2026-07-02T09:00:11+00:00",
+      "updated": "2026-07-02T12:40:08+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-02T09:00:11+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
@@ -3498,7 +3544,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "portable-roster": "roster-portable-shape"
+    "portable-roster": "roster-onboarding-wiring"
   },
   "todos": [
     {

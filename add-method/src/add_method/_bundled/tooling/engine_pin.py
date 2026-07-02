@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "a8ab76ae6ec1b7f525d2df1967242ee6"  # re-aimed @ status-pagination (cmd_status's milestones:/tasks[] lists now sort by `updated` desc + cap to 10 by default; new --all flag + JSON milestones_total/tasks_total fields). prior: ff7d9971… @ status-task-filter
-ENGINE_PKG_MD5 = "82297e497e409d55c85301c532258071"  # re-aimed @ roster-portable-shape (guidelines.py _guideline_block() gained the compact phase-roster, absorbed under the ≤22 lean-pointer budget by trimming prose; no other add_engine/*.py changed). prior: de43f6f8… @ search-index
+ENGINE_PKG_MD5 = "a66975e2b5ed53b5858c3bd43dde7828"  # re-aimed @ roster-onboarding-wiring (constants.py GUIDELINE_FILES + guidelines.py _INIT_EXCLUDE/docstring gained .clinerules; no other add_engine/*.py changed). prior: 82297e49… @ roster-portable-shape

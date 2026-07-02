@@ -135,7 +135,7 @@ docs/
 # Guideline-injection targets + version-stable markers. NEVER change these marker
 # strings: a re-run finds the old block by exact match, so changing them would
 # orphan every block written by a prior version (see TASK guideline-inject).
-GUIDELINE_FILES = ("AGENTS.md", "CLAUDE.md")
+GUIDELINE_FILES = ("AGENTS.md", "CLAUDE.md", ".clinerules")
 _GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->"
 _GUIDE_END = "<!-- ADD:END -->"
 

@@ -1,10 +1,11 @@
 """add_engine.guidelines — the guidelines / CLAUDE.md-injection subsystem (engine-modularization 8/N).
 
-Inject one stable, marker-delimited ADD block into the project root's AGENTS.md and
-CLAUDE.md. DYNAMIC-BY-REFERENCE: the block tells the agent to run `add.py status` and
-read PROJECT.md — it never embeds live state. A closed, self-contained cluster (8 fns +
-the cluster-private _INIT_EXCLUDE); transitive-closure AST scan: ZERO outbound calls to
-non-cluster add fns. Deps: constants + _atomic_write (io_state) + stdlib. None patched.
+Inject one stable, marker-delimited ADD block into every GUIDELINE_FILES target under the
+project root (AGENTS.md, CLAUDE.md, .clinerules). DYNAMIC-BY-REFERENCE: the block tells the
+agent to run `add.py status` and read PROJECT.md — it never embeds live state. A closed,
+self-contained cluster (8 fns + the cluster-private _INIT_EXCLUDE); transitive-closure AST
+scan: ZERO outbound calls to non-cluster add fns. Deps: constants + _atomic_write (io_state)
++ stdlib. None patched.
 """
 from __future__ import annotations
 
@@ -236,7 +237,7 @@ def _inject_guidelines(project_root: Path, rule_file: bool = False) -> list[tupl
 # --- commands ----------------------------------------------------------------
 
 _INIT_EXCLUDE = {
-    ".add", "AGENTS.md", "CLAUDE.md", ".git",
+    ".add", "AGENTS.md", "CLAUDE.md", ".clinerules", ".git",
     ".gitignore", ".gitattributes", ".github", ".editorconfig",  # VCS/CI/editor scaffolding — no domain signal
     "LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING",            # legal boilerplate — no domain signal
 }  # README/docs/source are NOT excluded: they carry domain content adopt.md maps -> brownfield
