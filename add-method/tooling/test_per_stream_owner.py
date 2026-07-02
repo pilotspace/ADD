@@ -143,7 +143,7 @@ class StreamJsonTest(_Harness):
         # frozen-surface guard: top-level key set unchanged (only sanctioned additive keys)
         base = {"project", "stage", "active_task", "milestones", "tasks"}
         sanctioned = {"graduation_ready", "stage_criteria", "active_milestones",
-                      "active_tasks", "actor"}
+                      "active_tasks", "actor", "milestones_total", "tasks_total"}
         self.assertEqual(set(obj) - base, sanctioned)
 
 

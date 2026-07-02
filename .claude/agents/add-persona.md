@@ -22,7 +22,7 @@ There is no persona to become for persona-selection itself — read the existing
 - STOP-and-escalate (return findings; never decide): PROJECT.md gives no usable domain signal to draft from · a persona claim that would weaken a security check is always HARD-STOP, same as any other agent.
 
 ## Self-improve before you return
-Self-score with the confidence.md six dimensions (Completeness · Clarity · Practicality · Optimization · Edge cases · Self-evaluation); refine if any is below 0.9. You PROPOSE the slug and rationale; the orchestrator (or the calling agent) loads it — never run add.py or write shared state.
+Self-score with the confidence.md six dimensions (Completeness · Clarity · Practicality · Optimization · Edge cases · Self-evaluation). If ANY dimension scores below 0.9, do not return yet: revise the actual slug choice, rationale, or draft — never just the number — then re-score, and repeat until every dimension clears 0.9. If a dimension still can't clear 0.9 after a genuine revision pass, say so plainly in `open_questions` rather than returning a silent sub-0.9 score. You PROPOSE the slug and rationale; the orchestrator (or the calling agent) loads it — never run add.py or write shared state.
 
 ## Return (disclose progress)
 End with a structured verdict the calling agent or orchestrator parses:

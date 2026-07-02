@@ -101,10 +101,13 @@ class WaveStatusHintTest(unittest.TestCase):
         # consumers keep working (additive = backward-safe, cf. v8-1 check --json). Ratified
         # additive keys: the v22 stage-graduation pair, plus the state-model-reshape multi-active
         # pair (parallel-status-view, 2026-06-22) exposing the active SET + per-milestone task map,
-        # plus the user-identity actor object (identity-in-status, 2026-06-22) = _whoami(state).
+        # plus the user-identity actor object (identity-in-status, 2026-06-22) = _whoami(state),
+        # plus the milestones_total/tasks_total pair (status-pagination, 2026-07-02) — the true
+        # corpus size, present so a consumer can detect the new default top-10 cap on
+        # milestones[]/tasks[] (lifted with --all).
         base = {"project", "stage", "active_task", "milestones", "tasks"}
         sanctioned = {"graduation_ready", "stage_criteria", "active_milestones", "active_tasks",
-                      "actor"}
+                      "actor", "milestones_total", "tasks_total"}
         keys = set(obj.keys())
         self.assertTrue(base <= keys,
                         "frozen_json_surface_touched: a base machine-state key was moved/removed")

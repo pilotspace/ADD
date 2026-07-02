@@ -50,6 +50,10 @@ def test_not_my_account():
 
 Run this now, with no implementation: all three fail. That is the correct, honest starting point for the build.
 
+### Declaring which rule a test covers (optional — opt-in by usage)
+
+If §1's Musts and Rejects carry stable IDs, add a trailing `covers: M1, R:amount_invalid` to a test-plan line to declare which ID(s) that test satisfies. Once any test in a task declares a `covers:` line (or any §2 scenario carries a tag), `add.py check` confirms every §1 ID is covered by a tag or a `covers:` line somewhere — a task that never uses either is left alone. See the template's own inline example for the exact grammar.
+
 ## The AI's role here
 
 The AI generates the test suite from the scenarios and contract. Your job is to confirm two things it cannot judge for itself: that each test asserts *behavior* rather than internal detail, and that none of them pass by accident before code exists. See `playbook/4_tests.md` in [Appendix B](./appendix-b-prompts.md).

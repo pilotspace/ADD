@@ -250,6 +250,15 @@ _SPEC_DELTA_RE = re.compile(
 # delta→task lineage can be walked back (check WARNs when a seeded pointer no longer resolves).
 _SEED_POINTER_RE = re.compile(r"\[→\s*([A-Za-z0-9_-]+)\s*\]")
 
+# rule-id-coverage: §1 Must-ID / Reject-code lines, plus the §2 scenario tag and §4 `covers:`
+# back-reference a task uses to claim coverage of a rule. A Reject's ID is its literal error_code
+# string (from `-> "<error_code>"`), never a positional R1/R2 sequence number.
+_MUST_ID_RE = re.compile(r"^\s*-\s*(M\d+)\s*:", re.MULTILINE)
+_REJECT_CODE_RE = re.compile(r'^\s*-\s.*->\s*"([^"]+)"\s*$', re.MULTILINE)
+_SCENARIO_TAG_RE = re.compile(r"^\s*Scenario:.*#\s*(.+?)\s*$", re.MULTILINE)
+_COVERS_LINE_RE = re.compile(r"covers:\s*(.+?)\s*$", re.MULTILINE)
+_TAG_TOKEN_RE = re.compile(r"(M\d+|R:[A-Za-z0-9_]+)")
+
 
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")

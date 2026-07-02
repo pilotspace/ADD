@@ -71,6 +71,13 @@ class MachineStateTest(unittest.TestCase):
         self.assertIsInstance(obj, dict)
         return obj
 
+    def _set_updated(self, kind: str, slug: str, ts: str):
+        """Directly stamp `updated` on a milestone/task record (kind: 'milestones'|'tasks')."""
+        sp = Path(self.tmp) / ".add" / "state.json"
+        state = json.loads(sp.read_text(encoding="utf-8"))
+        state[kind][slug]["updated"] = ts
+        sp.write_text(json.dumps(state), encoding="utf-8")
+
     # --- scenarios -----------------------------------------------------------
     def test_guide_json_active_task_carries_owner_stop(self):
         self._task_at("build")
@@ -109,6 +116,87 @@ class MachineStateTest(unittest.TestCase):
             self.assertIn(k, d)
         self.assertTrue(all({"slug", "status", "done", "total"} <= set(m) for m in d["milestones"]))
         self.assertTrue(all({"slug", "phase", "gate", "milestone"} <= set(t) for t in d["tasks"]))
+
+    def test_status_json_task_filter_returns_one_object(self):
+        add.main(["new-milestone", "m", "--goal", "g"])
+        add.main(["new-task", "t", "--title", "Feature"])
+        code, out, _ = _run(["status", "--json", "--task", "t"])
+        self.assertEqual(code, 0)
+        d = self._json_only(out)
+        self.assertEqual(d, {"slug": "t", "phase": "ground", "gate": "none",
+                              "milestone": "m", "owner": None, "assignee": None})
+
+    def test_status_json_task_filter_unknown_slug_dies_unknown_task(self):
+        code, out, err = _run(["status", "--json", "--task", "does-not-exist"])
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("unknown_task", err)
+
+    def test_status_json_milestones_sorted_by_updated_desc(self):
+        for slug in ("m-old", "m-mid", "m-new"):
+            add.main(["new-milestone", slug, "--goal", "g"])
+        self._set_updated("milestones", "m-old", "2026-01-01T00:00:00+00:00")
+        self._set_updated("milestones", "m-mid", "2026-06-01T00:00:00+00:00")
+        self._set_updated("milestones", "m-new", "2026-07-01T00:00:00+00:00")
+        code, out, _ = _run(["status", "--json"])
+        self.assertEqual(code, 0)
+        d = self._json_only(out)
+        self.assertEqual([m["slug"] for m in d["milestones"]], ["m-new", "m-mid", "m-old"])
+
+    def test_status_json_tasks_sorted_by_updated_desc(self):
+        for slug in ("t-old", "t-mid", "t-new"):
+            add.main(["new-task", slug, "--title", "Feature"])
+        self._set_updated("tasks", "t-old", "2026-01-01T00:00:00+00:00")
+        self._set_updated("tasks", "t-mid", "2026-06-01T00:00:00+00:00")
+        self._set_updated("tasks", "t-new", "2026-07-01T00:00:00+00:00")
+        code, out, _ = _run(["status", "--json"])
+        self.assertEqual(code, 0)
+        d = self._json_only(out)
+        self.assertEqual([t["slug"] for t in d["tasks"]], ["t-new", "t-mid", "t-old"])
+
+    def test_status_json_caps_to_10_with_total_fields(self):
+        for i in range(12):
+            slug = f"t{i:02d}"
+            add.main(["new-task", slug, "--title", "Feature"])
+            self._set_updated("tasks", slug, f"2026-01-{i+1:02d}T00:00:00+00:00")
+        code, out, _ = _run(["status", "--json"])
+        self.assertEqual(code, 0)
+        d = self._json_only(out)
+        self.assertEqual(len(d["tasks"]), 10)
+        self.assertEqual(d["tasks_total"], 12)
+        self.assertEqual([t["slug"] for t in d["tasks"]],
+                          ["t11", "t10", "t09", "t08", "t07", "t06", "t05", "t04", "t03", "t02"])
+
+    def test_status_json_all_flag_returns_uncapped(self):
+        for i in range(12):
+            slug = f"t{i:02d}"
+            add.main(["new-task", slug, "--title", "Feature"])
+            self._set_updated("tasks", slug, f"2026-01-{i+1:02d}T00:00:00+00:00")
+        code, out, _ = _run(["status", "--json", "--all"])
+        self.assertEqual(code, 0)
+        d = self._json_only(out)
+        self.assertEqual(len(d["tasks"]), 12)
+        self.assertEqual(d["tasks_total"], 12)
+        self.assertEqual(d["tasks"][0]["slug"], "t11")
+        self.assertEqual(d["tasks"][-1]["slug"], "t00")
+
+    def test_status_text_mode_shows_truncation_note(self):
+        for i in range(12):
+            slug = f"t{i:02d}"
+            add.main(["new-task", slug, "--title", "Feature"])
+            self._set_updated("tasks", slug, f"2026-01-{i+1:02d}T00:00:00+00:00")
+        _, out, _ = _run(["status"])
+        self.assertIn("2 more (see status --all)", out)
+
+    def test_status_text_mode_all_flag_shows_everything(self):
+        for i in range(12):
+            slug = f"t{i:02d}"
+            add.main(["new-task", slug, "--title", "Feature"])
+            self._set_updated("tasks", slug, f"2026-01-{i+1:02d}T00:00:00+00:00")
+        _, out, _ = _run(["status", "--all"])
+        self.assertNotIn("more (see status --all)", out)
+        for i in range(12):
+            self.assertIn(f"t{i:02d}", out)
 
     def test_check_json_reports_result(self):
         code, out, _ = _run(["check", "--json"])

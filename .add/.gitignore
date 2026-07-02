@@ -7,3 +7,9 @@ snapshot_before.json
 # ADD dogfood mirror: tooling/ is a regenerable copy of add-method/tooling/
 # (the canonical engine source) — not committed, mirrors the docs/ rationale above.
 tooling/
+
+# ADD dogfood mirror: personas-teacher/ is a regenerable copy of add-method/personas-teacher/
+# (the canonical vendored teacher snapshot add-persona reads) — OPTIONAL managed tree the
+# installer materializes for consumer projects; this repo's own copy is opportunistic/local-
+# only, same rationale as tooling/ above.
+personas-teacher/
