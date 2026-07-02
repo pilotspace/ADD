@@ -12,7 +12,6 @@ description: >-
   coding. Also use it to resume work across sessions (it reads `.add/state.json`
   so you never re-read the whole repo).
 user-invocable: true
-when_to_use: "Invoke in any repo with a `.add/` directory, or when the user wants spec/tests-first feature work, resumes ADD work, or asks to start/advance a task."
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, scenarios, verify, milestone, task-orchestration]
 argument-hint: "status | init | continue | --todo <text> | [describe new short goals or expectation]"
