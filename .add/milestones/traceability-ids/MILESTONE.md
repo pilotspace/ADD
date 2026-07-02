@@ -3,6 +3,7 @@
 goal: Give every §1 rule a stable ID (M#/R#) that §2 scenarios and §4 tests reference, and lint coverage so no Must/Reject ships unscenarioed or untested.
 rationale: sub-milestone of the artifact-trust roadmap (M4) — the PR40 audit found a rule restated 5× downstream (§1/§2/§3/§5/§6) with NO machine link between them: a Must can silently ship unscenarioed or untested, and a SPEC delta turned into a task has only a one-way pointer. Make the rule→scenario→test chain (and the delta→task lineage) machine-checkable, so coverage gaps surface as a WARN instead of being invisible.
 stage: mvp · status: active · created: 2026-06-30T11:47:47+00:00
+release: 1.15.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

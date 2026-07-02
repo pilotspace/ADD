@@ -40,7 +40,7 @@ Rank assumptions lowest-confidence first; top 1–2 get the flag: `⚠ <assumpti
 
 - **goal** — ONE outcome sentence (no "and" — that is two milestones).
 - **rationale** — intake bucket + WHY, AND the milestone relationship from "Position the goal". Never in state.json.
-- **Scope In/Out** — explicit anti-creep deferral list. An empty Out list means scope is not yet thought through.
+- **Scope In/Out** — explicit anti-creep deferral list. An empty Out list means scope is not yet thought through. UI/UX scope? use the template's Scope hint vocabulary, not generic prose.
 - **Shared decisions & glossary deltas** — cross-cutting rules every task must honor. New terms get a glossary entry.
 - **Shared / risky contracts to freeze first** — decision points between tasks; name the owning task.
 - **Tasks (breadth-first)** — `slug · depends-on · one line` each. Decompose by deliverable; keep each task one-file-sized.

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "roster-onboarding-wiring",
+  "active_task": "project-scope-atomic-reconcile",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2533,90 +2533,47 @@
         "source": "git"
       }
     },
-    "roster-portable-shape": {
-      "title": "Portable roster representation for non-Claude tools",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "portable-roster",
+    "global-lock-followups": {
+      "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
       "depends_on": [],
-      "created": "2026-07-02T09:00:11+00:00",
-      "updated": "2026-07-02T10:15:28+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-02T09:17:23+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "078fc5c6cfdf8c50cb46e2889b0092cd",
-        "tests": {
-          "add-method/tooling/test_roster_portable.py": "55e29383ddb7df09de958335f40b3088"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add_engine/guidelines.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py"
-        ],
-        "snapshot_md5": "fbaa63c2ee46d762de7307cc0d2bda03"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
     },
-    "roster-onboarding-wiring": {
-      "title": "Wire the portable roster into installer / sync-guidelines onboarding",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "portable-roster",
+    "global-data-restore-harden": {
+      "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
       "depends_on": [],
-      "created": "2026-07-02T10:22:42+00:00",
-      "updated": "2026-07-02T12:34:57+00:00",
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "cda747c1244506478c2d101b4ea2336c",
-        "tests": {
-          "add-method/tooling/test_guidelines.py": "3f0c38558bda897e72eaffb61e8ff3c8",
-          "add-method/tooling/test_brownfield_scan.py": "aab2fab3a0939bdc38294c9f351cdf2a",
-          "add-method/tooling/test_agent_detect.py": "1a9e5b87809193494d4794f87ffeeeba",
-          "add-method/tooling/test_rule_file_mode.py": "fe72eab208ac8b217b86a8c96a81a9cc"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/add_engine/guidelines.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_guidelines.py",
-          "add-method/tooling/test_brownfield_scan.py",
-          "add-method/tooling/test_agent_detect.py",
-          "add-method/tooling/test_rule_file_mode.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/_bundled",
-          ".add/tooling/"
-        ],
-        "snapshot_md5": "916033a5e1d5e51714e222bf65dde179"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
+    },
+    "project-scope-atomic-reconcile": {
+      "title": "Stage-then-commit _clean_replace/cleanReplaceTree so a crash mid-copy never half-wipes a managed tree",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
+    },
+    "project-scope-install-lock": {
+      "title": "Project-scoped lock around install()/update() reconcile, both twins",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [
+        "project-scope-atomic-reconcile"
+      ],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T12:40:08+00:00",
+  "updated": "2026-07-02T18:13:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2799,30 +2756,16 @@
         "source": "git"
       }
     },
-    "portable-roster": {
-      "title": "Portable phase-roster for other coding agent tools",
-      "goal": "non-Claude coding tools receive the ADD phase-roster's roles and boundaries through the AGENTS.md the installer already drops",
+    "install-update-hardening": {
+      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
+      "goal": "add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock",
       "stage": "mvp",
-      "status": "done",
-      "created": "2026-07-02T08:58:18+00:00",
-      "updated": "2026-07-02T12:40:08+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-07-02T09:00:11+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "done_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
+      "status": "active",
+      "created": "2026-07-02T14:46:06+00:00",
+      "updated": "2026-07-02T14:46:06+00:00"
     }
   },
-  "active_milestone": "portable-roster",
+  "active_milestone": "install-update-hardening",
   "archived": [
     {
       "slug": "v5",
@@ -3537,14 +3480,34 @@
         "docs-align"
       ],
       "archived": "2026-07-02"
+    },
+    {
+      "slug": "portable-roster",
+      "title": "Portable phase-roster for other coding agent tools",
+      "tasks": 2,
+      "task_slugs": [
+        "roster-portable-shape",
+        "roster-onboarding-wiring"
+      ],
+      "archived": "2026-07-02"
+    },
+    {
+      "slug": "loop-readability",
+      "title": "ADD loop readability \u2014 human-scannable output across every phase",
+      "tasks": 2,
+      "task_slugs": [
+        "report-shape-scan-audit",
+        "skill-banner-cue"
+      ],
+      "archived": "2026-07-03"
     }
   ],
   "active_milestones": [
-    "portable-roster"
+    "install-update-hardening"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "portable-roster": "roster-onboarding-wiring"
+    "install-update-hardening": "project-scope-atomic-reconcile"
   },
   "todos": [
     {

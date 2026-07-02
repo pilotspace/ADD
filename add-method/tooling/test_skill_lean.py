@@ -139,7 +139,13 @@ POOLS = [
     # agents PR #120 also added were removed; see advisor.md/streams.md history above, unchanged at 54363).
     # Net +47 B human-approved surface (measured post-reconciliation: 32250 B vs the prior 32203 B actual).
     # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈47/0.80⌉=59). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40339,
+    # phases 40339 → 40438 @ uiux-hint-adoption (direct chat-directed edit, no formal task/frozen contract —
+    # human present live, small+precedented enough to apply without one): 1-specify.md's existing "(UI
+    # feature? ...)" aside gains a clause pointing task-level Feature/Must drafting at the parent
+    # MILESTONE.md's new Scope-hint vocabulary (TASK.md.tmpl itself has zero `<!--` comment headroom to
+    # carry the hint directly — test_template_form_tags.py's <12 ceiling). +79 B human-directed surface.
+    # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈79/0.80⌉=99). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40438,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
@@ -163,7 +169,14 @@ POOLS = [
     # naming `add.py search <keyword> [<keyword> ...]` as the first action — +61 B human-approved surface
     # (contract FROZEN @ v1). RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈61/0.68⌉=90).
     # The won ground on every other reference guide is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 75314,
+    # reference 75314 → 75423 @ uiux-hint-adoption (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, small+precedented enough to apply without one, same file as the
+    # phase-search-wiring case above): scope.md's "Scope In/Out" drafting bullet gains a clause pointing
+    # milestone-level Scope drafting at MILESTONE.md.tmpl's new UI/UX Scope hint (proven necessary live —
+    # this project's own first loop-readability milestone draft missed the hint until a human caught it).
+    # +74 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
+    # (+⌈74/0.68⌉=109). The won ground on every other reference guide is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 75423,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},

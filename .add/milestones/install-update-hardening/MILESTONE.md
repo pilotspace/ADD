@@ -1,8 +1,8 @@
-# MILESTONE: {{title}}
+# MILESTONE: Install/update hardening — atomic + concurrency-safe writes
 
-goal: {{goal}}
+goal: add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock
 rationale: <why this scope — the confirmed intake classification (bucket + reason)>
-stage: {{stage}} · status: active · created: {{date}}
+stage: mvp · status: active · created: 2026-07-02T14:46:06+00:00
 release: pending
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
@@ -12,14 +12,6 @@ release: pending
 ## Scope
 In:  <what this milestone delivers>
 Out: <explicitly deferred — the anti-scope-creep list>
-
-> UI/UX in scope? Name it precisely, not "make it nice" — information architecture ·
-> interaction pattern · visual hierarchy · design tokens · component states ·
-> accessibility floor (WCAG AA) · responsive breakpoints · user journey
-> (`.add/personas-teacher/design/`). Precise ≠ distinctive: skip generic AI-design
-> defaults (cream+serif+terracotta · near-black+neon · broadsheet-hairline) and name ONE
-> deliberate signature element instead (Claude Code's `frontend-design` skill). A UI
-> feature also triggers DESIGN.md via the `add` skill's design.md.
 
 ## Shared decisions & glossary deltas   (living — every task must honor these)
 - <cross-cutting rule, named from GLOSSARY.md>

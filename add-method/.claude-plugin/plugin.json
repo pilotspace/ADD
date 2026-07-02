@@ -1,7 +1,7 @@
 {
   "name": "add",
   "displayName": "ADD — AI-Driven Development",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "description": "ADD (AI-Driven Development). One skill. Eight steps. Five disciplines. Every feature ships through the loop — a minimal, state-tracked Claude Code skill that ships the AIDD book as its trust layer.",
   "author": {
     "name": "Tin Dang",
