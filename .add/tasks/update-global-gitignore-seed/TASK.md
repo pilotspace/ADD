@@ -406,13 +406,13 @@ nonzero rate not explained by transient disk/permission errors signals a templat
   §7 Decisions line read `chose <unrecorded>` until hand-corrected above)
 
 ### Competency deltas
-- [ADD · open] the first-physical-line-only parser limitation previously known for §5 Scope also
+- [ADD · folded] the first-physical-line-only parser limitation previously known for §5 Scope also [folded foundation-version 60]
   hits §1's "Framings weighed:" field — any task author wrapping that field across lines for
   readability silently loses the ADR harvest's "(chosen ...)" detail even though the source-of-truth
   §1 prose stays fully correct (evidence: `grep -n "^Framings weighed:"` showed only the first
   physical line, `chose <unrecorded>` appeared in the harvested §7 Decisions block, and hand-editing
   §7 was needed since the harvest happens once at the tests→build/done transition, not on demand)
-- [TDD · open] a byte-identical idempotency test (`test_already_current_project_is_noop`) reads as
+- [TDD · folded] a byte-identical idempotency test (`test_already_current_project_is_noop`) reads as [folded foundation-version 60]
   vacuous in isolation — it only proves something paired with a sibling test that actually mutates
   the same file; document that pairing requirement so future reviewers don't mistake it for a
   standalone regression guard (evidence: called out explicitly as a disclosed weak point in this

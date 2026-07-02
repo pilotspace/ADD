@@ -24,33 +24,39 @@ Out: auto-FIXING coverage (engine never writes scenarios/tests) · rule IDs that
 - the seeded-task §0 delta backlink shape + the dangling-lineage WARN -> owning task delta-task-backlink
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] rule-id-coverage     depends-on: none   — §1 Musts carry `M#`, scenarios/tests reference rule IDs; `check` WARNs on a Must/Reject with no scenario tag and no covering test
-- [ ] delta-task-backlink  depends-on: none   — seeded task §0 cites its originating delta; `check` WARNs on a `seeded` delta whose pointer task is missing (dangling lineage)
+- [x] rule-id-coverage     depends-on: none   — §1 Musts carry `M#`, scenarios/tests reference rule IDs; `check` WARNs on a Must/Reject with no scenario tag and no covering test
+- [x] delta-task-backlink  depends-on: none   — seeded task §0 cites its originating delta; `check` WARNs on a `seeded` delta whose pointer task is missing (dangling lineage)
+- [x] template-structural-gaps       depends-on: none   — picked up via the loop: 3 TASK.md.tmpl gaps (glossary deltas, scenario IDs, live-verify evidence) that the coverage/backlink convention exposed
+- [x] fresh-checkout-skip-tolerance  depends-on: none   — picked up via the loop: fresh-checkout CI regex now tolerates the recursion guard's own expected self-skip
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] A §1 Must or Reject with no §2 scenario tag and no §4 test covering its ID makes `add.py check` print a coverage WARN (exit 0)        (← rule-id-coverage)
-- [ ] A task seeded via `--from-delta` carries a §0 backlink to its originating delta, and `check` WARNs when a `seeded` delta's pointer task is gone   (← delta-task-backlink)
-- [ ] every add.py copy stays byte-identical == the re-pinned engine_pin.ENGINE_MD5; templates parity holds; full suite green   (← both)
+- [x] A §1 Must or Reject with no §2 scenario tag and no §4 test covering its ID makes `add.py check` print a coverage WARN (exit 0)        (← rule-id-coverage)
+- [x] A task seeded via `--from-delta` carries a §0 backlink to its originating delta, and `check` WARNs when a `seeded` delta's pointer task is gone   (← delta-task-backlink)
+- [x] every add.py copy stays byte-identical == the re-pinned engine_pin.ENGINE_MD5; templates parity holds; full suite green   (← both)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `rule-id-coverage` adds `add_engine/predicates._rule_coverage_gaps` + 5 new regexes in `add_engine/constants.py` (`_MUST_ID_RE`, `_REJECT_CODE_RE`, `_SCENARIO_TAG_RE`, `_COVERS_LINE_RE`, `_TAG_TOKEN_RE`), wires a WARN into `add.py:cmd_check`, adds a `covers:` field to `templates/TASK.md.tmpl` §4 — ENGINE_MD5 re-pinned. `delta-task-backlink` adds `cmd_new_task`'s §0 backlink pre-fill, `_seeded_delta_pointers` dangling-lineage WARN, new `_SEED_POINTER_RE` — ENGINE_MD5→`e23cd35e`, ENGINE_PKG_MD5→`d66bd8da` re-pinned. `template-structural-gaps` (TASK.md.tmpl only) and `fresh-checkout-skip-tolerance` (test file only) touched no engine code — pins untouched.
+- skill   : untouched by all 4 tasks — `rule-id-coverage`'s TASK.md explicitly protects the phase-guide lean-pool byte budget.
+- book    : `rule-id-coverage` adds a short M#/R:code convention paragraph to `03-step-1-specify.md`, `04-step-2-scenarios.md`, `06-step-4-tests.md` (+ repo-root twins). Other 3 tasks: untouched.
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- rule-id-coverage : gate=PASS · tests=2635 green (0 failed, incl. 13 new `test_rule_id_coverage.py`) · residue=2 open SPEC deltas (older `M4/R2` positional-tag dialect not recognized; untracked byte-identical `_bundled/tooling/engine_pin.py` flagged for reconciliation)
+- template-structural-gaps : gate=PASS · tests=2595 green (+9 from pre-build 2586) · residue=1 open spec delta (TASK.md's own literal `<!--...-->` prose gets garbled by the engine's closed-doc comment-stripper)
+- fresh-checkout-skip-tolerance : gate=PASS · tests=2586 green (+4 from pre-build 2582) · residue=none (fast-lane task; §7 Observe absent by design)
+- delta-task-backlink : gate=PASS · tests=2559 green (exit 0) · residue=none
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which): EC1 ("coverage WARN") ← rule-id-coverage's `_rule_coverage_gaps` + `cmd_check` wiring, verified live against real gaps while `check` still exits 0. EC2 ("--from-delta backlink + dangling WARN") ← delta-task-backlink's `cmd_new_task` pre-fill + `_seeded_delta_pointers` WARN (`test_seed_prefills_section0_backlink` + 3 dangling-WARN tests). EC3 ("byte-identical pins + templates parity + full suite green") ← rule-id-coverage (ENGINE_MD5 re-pinned, 2635/0) + delta-task-backlink (ENGINE_MD5→`e23cd35e`, ENGINE_PKG_MD5→`d66bd8da`, 2559/0), with template-structural-gaps (2595/0) and fresh-checkout-skip-tolerance (2586/0) holding parity/green without touching the pin.
+- goal: every §1 rule now carries a stable `M#`/`R:code` ID that §2/§4 reference, `check` WARNs (never blocks) on an unscenarioed/untested rule, and the delta→task lineage is a two-way, WARN-checked link — proven by 2635/0 (rule-id-coverage) and 2559/0 (delta-task-backlink), both engine pins re-anchored.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] all 4 tasks' commits are already on `main` (139bd8c, e4d287d, ba09498, 1fa91ca) — no PR needed
+- [ ] `add.py fold` to consolidate this milestone's open lessons into the foundation
+- [ ] `add.py archive-milestone traceability-ids` once folded
+- [ ] bundle into the next release cut (`add.py release`) — human-run, per release.md

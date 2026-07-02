@@ -527,14 +527,14 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a new regex-based convention that scans §2/§4 prose must be tested against the
+- [TDD · folded] a new regex-based convention that scans §2/§4 prose must be tested against the [folded foundation-version 60]
   template's own UNFILLED placeholder default, not just filled examples — this task's `covers:
   <M#, R:code — optional>` placeholder contained the literal substring `R:code`, false-matching
   the tag regex and defeating the grandfather gate for every freshly-scaffolded task, until a
   regression test (`test_zero_tags_grandfathers_the_task`) caught it before build closed (evidence:
   the fix — stripping bracketed `<...>` placeholder spans before tag extraction — was driven
   entirely by that one regression, confirmed load-bearing by add-verify's mutation test).
-- [ADD · open] the §5 "Scope (may touch):" parser reads ONLY its first physical line, and a BARE
+- [ADD · folded] the §5 "Scope (may touch):" parser reads ONLY its first physical line, and a BARE [folded foundation-version 60]
   repo-root filename token resolves as a sibling of the PREVIOUS token's directory, not project
   root (use the `add-method/../<name>` climb form) — this is the THIRD task in this project's
   history to independently hit the multi-line-Scope truncation (after `phase-agents-lean` and
@@ -542,7 +542,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   recovery; worth a future task making the parser read the whole declaration, not just line one
   (evidence: this task's own §5 Scope needed that exact recovery twice — once for the line-wrap
   truncation, once for the bare-token repo-root resolution).
-- [ADD · open] an orchestrator doing unrelated parallel work (this session: editing `add-verify.md`
+- [ADD · folded] an orchestrator doing unrelated parallel work (this session: editing `add-verify.md` [folded foundation-version 60]
   to fix a persona-loading gap) inside the SAME repo while a task's build-scope snapshot is active
   gets caught by the scope-lock tripwire as an out-of-scope touch on that OTHER task, even though
   it shares no code with it — the recovery (re-cross tests→build to refresh the baseline) is

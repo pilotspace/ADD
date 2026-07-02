@@ -299,7 +299,7 @@ somewhere in the suite that `_expected_skip_count()` doesn't yet account for.
   the Least-sure flag surfaced at this task's own freeze named exactly this risk)
 
 ### Competency deltas
-- [TDD · open] a mock-patched test can be vacuous in its OWN environment if the real (unmocked) value
+- [TDD · folded] a mock-patched test can be vacuous in its OWN environment if the real (unmocked) value [folded foundation-version 60]
   already matches the mocked expectation — always pair at least one "mock changes the outcome away from
   the real baseline" case among a group of mock-based tests, so the group as a whole proves the
   patching mechanism actually took effect rather than merely restating the ambient environment
@@ -307,7 +307,7 @@ somewhere in the suite that `_expected_skip_count()` doesn't yet account for.
   `mock.patch` target string in THIS dev environment, since the real unmocked `_expected_skip_count()`
   already returns 1 here — validated only because 3 sibling tests in the same class produce results
   (7, 4, 10) impossible without the mock genuinely working, recorded in this task's own refute-read)
-- [ADD · open] a CI failure should be checked against run history (`gh run list`) before assuming it
+- [ADD · folded] a CI failure should be checked against run history (`gh run list`) before assuming it [folded foundation-version 60]
   was caused by the commit under review — this task exists because a red check on PR #121 was traced
   to a PRE-EXISTING failure already present 2 commits earlier, not a regression from this session's
   own 2 fixes; skipping that history check would have wasted effort "fixing" the wrong commit or,
