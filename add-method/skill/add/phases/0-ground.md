@@ -56,7 +56,7 @@ Never: invent a file, symbol, or signature you have not opened.
 **Grounding is complete when** every field is filled from real assets (a `<…>` placeholder = weak;
 all non-optional). Skipping **Context** (beyond code) is the usual silent gap. §3 cites only anchors here.
 
-> **Advisor · Confidence** — a broad sweep is the canonical spawn case (advisor.md); self-score before you specify (confidence.md).
+> **Advisor · Confidence** — a broad sweep is the canonical spawn (advisor.md); self-score before you specify (confidence.md).
 
 ## Next
 

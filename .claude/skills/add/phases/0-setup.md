@@ -86,7 +86,7 @@ Typing it themselves stays the **escape hatch** — the decision is the human's;
 
 ## 5 · After the lock
 
-- The lock **is** the first task's contract approval — don't ask for a separate contract-freeze sign-off.
+- The lock **is** the first task's contract approval — no separate contract-freeze sign-off.
 - Stamp the first task's §3 `Status: FROZEN @ v1`, then read `phases/5-build.md`.
 
 ## Exit gate

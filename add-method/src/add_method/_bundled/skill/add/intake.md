@@ -62,7 +62,7 @@ goal/body, the new TASK.md, or a note in the affected TASK.md — never in state
 Some requests decompose into **N>1 milestones of the same line** — a roadmap, not one milestone.
 Don't create only the first and lose the rest. Instead:
 
-1. **Propose** the roadmap — the ordered milestone list, each with a one-line goal. (AI proposes.)
+1. **Propose** the roadmap — the ordered milestone list, each with a one-line goal.
 2. **Confirm** — the human confirms the roadmap before anything is created. Never auto-create N
    milestones unprompted — the intake floor (`ask_human`) still holds.
 3. **Create** all N on confirm — the first with `add.py new-milestone <slug>` (active), the rest

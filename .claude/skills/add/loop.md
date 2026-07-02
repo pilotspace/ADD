@@ -57,8 +57,7 @@ When every task is done but the goal is not, `add.py status` shows
 
 When a deepened verify finds a criterion unmet on a task already marked done,
 `add.py reopen <task> --to <phase> --reason "..."` returns it to the flow with a recorded
-reason and a reset gate. Deciding WHEN to fire it — because a goal criterion is unmet — is this
-loop's job.
+reason and a reset gate — fired by this loop's judgment, not the engine's.
 
 ## The reactivation residual (deferred)
 
