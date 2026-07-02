@@ -3,7 +3,7 @@
 
 CONTRACT (frozen @ v1):
   - `_is_brownfield(base)` is True iff base holds a child whose name is NOT in
-    _INIT_EXCLUDE = {.add, AGENTS.md, CLAUDE.md, .git} (False on empty/missing base).
+    _INIT_EXCLUDE = {.add, AGENTS.md, CLAUDE.md, .clinerules, .git} (False on empty/missing base).
   - cmd_init, after scaffolding, prints a STABLE "brownfield:"-prefixed signal on a brownfield
     base and the existing greenfield closing (byte-for-byte) otherwise. init never refuses.
   - The engine only DETECTS + SIGNALS; reading code / filling survivors is the AI's job (adopt.md).
@@ -115,6 +115,20 @@ class BrownfieldScanTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn(_BROWNFIELD_MARK, out, "license + CI/editor scaffolding alone is not brownfield")
         self.assertIn(_GREENFIELD_MARK, out, "boilerplate-only base keeps the greenfield closing")
+
+    def test_clinerules_alone_not_brownfield(self):
+        """.clinerules is installer-written scaffolding (like AGENTS.md/CLAUDE.md) once
+        it's a GUIDELINE_FILES member — it must not itself read as domain content."""
+        base = Path(self.tmp)
+        (base / ".add").mkdir()
+        (base / "AGENTS.md").write_text("x", encoding="utf-8")
+        (base / "CLAUDE.md").write_text("x", encoding="utf-8")
+        (base / ".clinerules").write_text("x", encoding="utf-8")
+        self.assertFalse(add._is_brownfield(base),
+                         "only installer scaffolding incl. .clinerules -> greenfield")
+        (base / "main.py").write_text("print('hi')\n", encoding="utf-8")
+        self.assertTrue(add._is_brownfield(base),
+                        "one non-scaffolding file alongside .clinerules -> still brownfield")
 
     def test_readme_still_triggers_brownfield(self):
         """A README carries domain content (adopt.md reads it for PROJECT.md) ->

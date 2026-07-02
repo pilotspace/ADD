@@ -91,6 +91,21 @@ class RuleFileModeTest(unittest.TestCase):
         # AGENTS.md stays inline
         agents = _read(d / "AGENTS.md")
         self.assertIn(add._GUIDE_BEGIN, agents, "AGENTS.md must keep the inline block")
+        # .clinerules is CLAUDE-only relocation's one exception too — stays inline like AGENTS.md
+        clinerules = _read(d / ".clinerules")
+        self.assertIn(add._GUIDE_BEGIN, clinerules,
+                      ".clinerules must keep the inline block, not be relocated")
+
+    def test_clinerules_preserved_under_rule_file_mode(self):
+        d = self._fresh_project()
+        (d / ".clinerules").write_text(
+            f"# my cline rules\n\nlocal user edits\n\n{add._GUIDE_BEGIN}\nOLD\n{add._GUIDE_END}\n",
+            encoding="utf-8")
+        self._sync("--rule-file")
+        out = _read(d / ".clinerules")
+        self.assertIn("local user edits", out, "user content outside markers must survive")
+        self.assertIn(add._GUIDE_BEGIN, out, ".clinerules must still hold the inline block")
+        self.assertNotIn("OLD", out, "stale block body must be refreshed, not preserved verbatim")
 
     def test_ccsk_autodetect_at_sync(self):
         d = self._fresh_project()

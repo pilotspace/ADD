@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "a8ab76ae6ec1b7f525d2df1967242ee6"  # re-aimed @ status-pagination (cmd_status's milestones:/tasks[] lists now sort by `updated` desc + cap to 10 by default; new --all flag + JSON milestones_total/tasks_total fields). prior: ff7d9971… @ status-task-filter
-ENGINE_PKG_MD5 = "de43f6f87be140724558e8b596f27c0f"  # re-aimed @ search-index (new add_engine/search.py module joins the add_engine/ package manifest digest — predicates.py/taskdoc.py/milestones.py/io_state.py untouched). prior: d79ea568… @ rule-id-coverage
+ENGINE_PKG_MD5 = "a66975e2b5ed53b5858c3bd43dde7828"  # re-aimed @ roster-onboarding-wiring (constants.py GUIDELINE_FILES + guidelines.py _INIT_EXCLUDE/docstring gained .clinerules; no other add_engine/*.py changed). prior: 82297e49… @ roster-portable-shape
