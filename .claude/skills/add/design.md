@@ -60,8 +60,8 @@ feature's `TASK.md`** — so the approved screen is traceable from the task. The
 **Persona evidence checklist.** Before design-confirm, match the screen to the seeded UI personas
 (`.add/personas/*` covering visual design and UX research) and render their `## Success Metrics`
 as a confirmable **checklist** beside the captured image — **both dimensions**: **UI-Designer**
-(visual + WCAG-AA **accessibility** — is the screen right?) and **UX-Researcher** (methodology-first,
-**validated by user evidence, not assumed** — the right screen?). Each item traces to a success-metric
+(visual + WCAG-AA **accessibility**) and **UX-Researcher** (methodology-first,
+**validated by user evidence, not assumed**). Each item traces to a success-metric
 the human confirms; it is **evidence, never an auto-pass** — a persona **never lowers a gate**
 (ADD principle 2). **No UI personas**? A **generic design-confirm**, never blocked; UI-less skips it.
 

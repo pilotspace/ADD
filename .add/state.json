@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "skill-tree-compaction-audit",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2453,10 +2453,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "skill-tree-compaction-audit": {
+      "title": "Audit + compact the ADD skill tree for genuine prose redundancy under the pinned lean-fence budget",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-02T05:13:05+00:00",
+      "updated": "2026-07-02T06:00:10+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "13ed27d581392dc3ae44792f59c2428a",
+        "tests": {
+          ".add/tasks/skill-tree-compaction-audit/tests/test_compaction_reduces_bytes.py": "ad54e8a8ff6b2d2b075b522ed8ef0c9b"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".add/tasks/skill-tree-compaction-audit/tests/",
+          "add-method/skill/add/",
+          ".claude/skills/add/",
+          "add-method/src/add_method/_bundled/skill/add/"
+        ],
+        "snapshot_md5": "791c17f9f6a4990e11c2831a4d0bf210"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-02T05:55:47+00:00",
+            "reason": "scope_violation: task 'skill-tree-compaction-audit' touched outside its declared \u00a75 Scope \u2014 add-method/skill/add/advisor.md \u00b7 add-method/skill/add/confidence.md \u00b7 add-method/skill/add/design.md \u00b7 add-method/skill/add/intake.md \u00b7 add-method/skill/add/loop.md (16 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T05:01:40+00:00",
+  "updated": "2026-07-02T06:00:10+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

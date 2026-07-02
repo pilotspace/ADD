@@ -124,9 +124,8 @@ autonomy: manual | conservative | auto
 - **conservative** — the deliberate *lowering*: the run converges but STOPS at the verify gate.
 - **manual** — the strict floor: the human owns the verify gate; the engine never auto-resolves.
 
-> **v7 reversal (recorded).** Earlier the default was `conservative`; v7 flips it — `auto` is the
-> default, `conservative` is the deliberate lowering. The level is still **per-scope** and is
-> lowered wherever risk demands.
+> **v7 reversal (recorded).** Earlier the default was `conservative`; v7 flips it to `auto` as
+> the default. The level is still **per-scope** and is lowered wherever risk demands.
 
 **The high-risk guard.** On a **high-risk or method-defining scope** `auto` must be lowered to
 `conservative` or `manual`; leaving it at `auto` is the reject code **`unguarded_high_risk_auto`**.

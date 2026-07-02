@@ -18,7 +18,7 @@ If **any** dimension scores **< 0.9**, refine the artifact before presenting, th
 ## Where it plugs in
 
 - It **feeds the lowest-confidence flag** (run.md · 1-specify.md): the lowest-scoring dimension is what you surface ⚠-first at the contract freeze.
-- A persistently low score on a risky scope is a signal to **recommend** lowering the autonomy level (auto → conservative / manual; run.md). Recommend it — the autonomy level stays the human's call.
+- A persistently low score on a risky scope is a signal to **recommend** lowering the autonomy level (auto → conservative / manual; run.md) — the level stays the human's call.
 
 ## The hard rule — advisory, never a gate
 

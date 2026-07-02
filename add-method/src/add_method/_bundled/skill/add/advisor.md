@@ -2,8 +2,8 @@
 
 The **advisor** strategy: spawn a *single* subagent to execute one piece of your plan, then merge
 its verdict back. It is the single-subagent companion to `streams.md` (which pipelines *many* tasks
-in parallel worktrees) — you delegate *one* well-scoped piece (a sweep, a review, a batch) and stay
-in the loop. The engine never spawns; this is your call per step.
+in parallel worktrees) — you delegate *one* well-scoped piece and stay in the loop. The engine never
+spawns; this is your call per step.
 
 ## When to spawn — and when not
 
