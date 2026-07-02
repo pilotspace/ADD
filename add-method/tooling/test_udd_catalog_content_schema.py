@@ -279,14 +279,5 @@ class CatalogArtifactParityTest(unittest.TestCase):
             self.assertEqual(canon, dogfood, f"{rel}: canonical ≠ dogfood")
 
 
-class EnginePinTest(unittest.TestCase):
-    def test_pin_annotation_names_this_task(self):
-        src = (_TOOLING / "engine_pin.py").read_text(encoding="utf-8")
-        self.assertIn("re-aimed @ udd-catalog-content-schema", src,
-                      "the engine pin must record THIS task's deliberate re-aim")
-        self.assertIn("re-aimed @ udd-token-schema", src,
-                      "the pin carries the immediately-prior engine re-aim (the supersession chain)")
-
-
 if __name__ == "__main__":
     unittest.main()

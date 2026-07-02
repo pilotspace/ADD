@@ -58,6 +58,10 @@ Scenario: not my account
 
 The `And no balance changes` line is doing real work: it specifies that a rejected transfer must leave the world untouched — a property the AI could easily violate by deducting before checking.
 
+### Tagging back to a rule ID (optional — opt-in by usage)
+
+If §1's Musts and Rejects carry stable IDs (`M1:`, and a Reject's own error code as `R:<error_code>`), tag each `Scenario:` line with the ID(s) it covers, e.g. `# M1, R:amount_invalid`. Once a task tags even one scenario this way, `add.py check` starts confirming every §1 ID is covered by a tag here or a `covers:` line in §4 TESTS — a task that never tags anything is left alone. See the template's own inline example for the exact grammar.
+
 ## Cover the edge cases
 
 The transfer above is one domain; the same gaps recur in every domain — an HR leave request, a marketing campaign send, a checkout. Beyond the spec's "Reject" rules, sweep the recurring gaps and add a scenario for each that applies (or rule it out on purpose): boundary, duplicate/idempotent, ownership, stale/out-of-order, partial failure, concurrency, malformed input, limits/volume.

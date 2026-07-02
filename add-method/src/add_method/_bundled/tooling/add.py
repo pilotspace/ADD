@@ -84,6 +84,9 @@ from add_engine.autonomy import (
     _project_streams,   # run-mode streams half (persist-run-mode) — read live from PROJECT.md
 )
 
+# --- keyword/substring corpus search (NEW — add_engine/search.py) -----------
+from add_engine.search import _search_corpus
+
 
 def _phase_index(name: str) -> int:
     """Ordinal of a phase in PHASES; used to enforce forward-skip rules."""
@@ -298,7 +301,7 @@ def _contract_fingerprint(raw3: str) -> str:
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
-    _task_done, _persona_missing, _persona_slug_valid,
+    _task_done, _persona_missing, _persona_slug_valid, _rule_coverage_gaps,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -1787,18 +1790,41 @@ def _done_resume(root: Path, state: dict, slug: str) -> tuple[str, str, str]:
     return PLAIN
 
 
+_STATUS_PAGE_SIZE = 10  # status-pagination: default cap on milestones:/tasks: lists; --all lifts it
+
+
+def _sorted_by_updated(items: dict) -> list:
+    """Return `items.items()` sorted by each record's `updated` timestamp, newest first.
+    Read/serialization-time only — never mutates the caller's dict or state.json order."""
+    return sorted(items.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)
+
+
 def cmd_status(args: argparse.Namespace) -> None:
+    show_all = getattr(args, "all", False)
     if getattr(args, "json", False):
         root, state = _load_state_for_json()
         tasks = state.get("tasks") or {}
+        task_slug = getattr(args, "task", None)
+        if task_slug:
+            t = tasks.get(task_slug)
+            if t is None:
+                _die("unknown_task")
+            print(json.dumps({"slug": task_slug, "phase": t.get("phase"), "gate": t.get("gate"),
+                               "milestone": t.get("milestone"),
+                               "owner": t.get("owner"), "assignee": t.get("assignee")}))
+            return
         milestones = state.get("milestones") or {}
+        sorted_ms = _sorted_by_updated(milestones)
+        page_ms = sorted_ms if show_all else sorted_ms[:_STATUS_PAGE_SIZE]
         ms_list = []
-        for mslug, m in milestones.items():
+        for mslug, m in page_ms:
             members = [t for t in tasks.values() if t.get("milestone") == mslug]
             ms_list.append({"slug": mslug, "status": m.get("status", "active"),
                             "done": sum(1 for t in members if _task_done(t)),
                             "total": len(members),
                             "owner": m.get("owner"), "assignee": m.get("assignee")})
+        sorted_tasks = _sorted_by_updated(tasks)
+        page_tasks = sorted_tasks if show_all else sorted_tasks[:_STATUS_PAGE_SIZE]
         grad_ready, grad_met, grad_total = _graduation_ready(root, state)
         print(json.dumps({
             "project": state.get("project"), "stage": state.get("stage"),
@@ -1807,10 +1833,12 @@ def cmd_status(args: argparse.Namespace) -> None:
             "active_milestones": list(state.get("active_milestones") or []),
             "active_tasks": dict(state.get("active_tasks") or {}),
             "milestones": ms_list,
+            "milestones_total": len(milestones),
             "tasks": [{"slug": s, "phase": t.get("phase"), "gate": t.get("gate"),
                        "milestone": t.get("milestone"),
                        "owner": t.get("owner"), "assignee": t.get("assignee")}
-                      for s, t in tasks.items()],
+                      for s, t in page_tasks],
+            "tasks_total": len(tasks),
             "graduation_ready": grad_ready,
             "stage_criteria": {"met": grad_met, "total": grad_total}}))
         return
@@ -1872,12 +1900,16 @@ def cmd_status(args: argparse.Namespace) -> None:
     active_ms = _active_milestone(state)
     if milestones:
         print("milestones:")
-        for mslug, m in milestones.items():
+        _sorted_ms = _sorted_by_updated(milestones)
+        _page_ms = _sorted_ms if show_all else _sorted_ms[:_STATUS_PAGE_SIZE]
+        for mslug, m in _page_ms:
             members = [t for t in tasks.values() if t.get("milestone") == mslug]
             done = sum(1 for t in members if _task_done(t))
             mark = "*" if mslug in (state.get("active_milestones") or []) else " "
             print(f"  {mark} {mslug:<20} {done}/{len(members)} tasks done"
                   f"   status={m.get('status', 'active')}")
+        if not show_all and len(_sorted_ms) > _STATUS_PAGE_SIZE:
+            print(f"  … {len(_sorted_ms) - _STATUS_PAGE_SIZE} more (see status --all)")
         # graduation cue (v22): project-global + read-only. Fires only when every milestone
         # is done AND the human's PROJECT.md stage-goal-criteria are all checked — additive
         # (a new line solely when ready; the non-ready output is byte-identical to before).
@@ -1988,12 +2020,16 @@ def cmd_status(args: argparse.Namespace) -> None:
             print('          build with you. Escape hatch: add.py new-task <slug> --title "..."')
         return
     print("tasks   :")
-    for slug, t in tasks.items():
+    _sorted_tasks = _sorted_by_updated(tasks)
+    _page_tasks = _sorted_tasks if show_all else _sorted_tasks[:_STATUS_PAGE_SIZE]
+    for slug, t in _page_tasks:
         mark = "*" if slug == active else " "
         deps = t.get("depends_on") or []
         dep_s = f"  deps={','.join(deps)}" if deps else ""
         ms_s = f"  [{t['milestone']}]" if t.get("milestone") else ""
         print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}")
+    if not show_all and len(_sorted_tasks) > _STATUS_PAGE_SIZE:
+        print(f"  … {len(_sorted_tasks) - _STATUS_PAGE_SIZE} more (see status --all)")
     # fold-pressure nudge: surface unfolded competency deltas so emission can't
     # silently outrun the human fold (read-only; v11). Silent when none are open.
     open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
@@ -2664,6 +2700,31 @@ def cmd_components(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
 
+def cmd_search(args: argparse.Namespace) -> None:
+    """Read-only keyword/substring search over the milestone/task corpus (active
+    + archived) — title/goal/rationale (milestone) or title/Feature (task) lines
+    only, never full body, never graph traversal (context-search, search-index).
+    Fresh per-call scan via add_engine.search._search_corpus — no persisted
+    index/cache. Exit 0 always, including zero matches; --json mirrors
+    check/ready's own machine-readable convention."""
+    root = find_root()
+    if root is None:
+        _die("no_project")
+    hits = _search_corpus(root, args.keywords)
+    if getattr(args, "json", False):
+        print(json.dumps([{k: h[k] for k in ("slug", "kind", "status", "snippet")}
+                          for h in hits], ensure_ascii=False, indent=2))
+        return
+    query = " ".join(args.keywords)
+    if not hits:
+        print(f"no matches for: {query}")
+        return
+    print(f"{len(hits)} match(es) for: {query}")
+    for h in hits:
+        print(f"{h['slug']}  [{h['kind']}, {h['status']}]  ({h['count']} match(es))")
+        print(f"    {h['snippet']}")
+
+
 def cmd_check(args: argparse.Namespace) -> None:
     """Read-only integrity check of the .add project. Exit 1 if anything fails."""
     as_json = getattr(args, "json", False)
@@ -2736,6 +2797,17 @@ def cmd_check(args: argparse.Namespace) -> None:
                 if _ptr not in tasks and _ptr not in _arch:
                     warnings.append((f"task '{slug}'", f"seeded SPEC delta points at '{_ptr}' which no "
                                      "longer exists (dangling lineage) — re-point or drop the delta"))
+        # rule-id-coverage: a §1 Must/Reject ID with no §2 scenario tag and no §4 `covers:`
+        # reference is a coverage gap. WARN only, runs in ANY phase (a gap in already-shipped
+        # work must still surface — the whole point of the check); opt-in per task via
+        # `_rule_coverage_gaps`'s own tag-presence gate, so a task that never adopted the M#/
+        # R:code convention is silently grandfathered — never retro-flagged.
+        if _task_text is not None:
+            _spans = _phase_spans(_task_text)
+            for _rid, _kind in _rule_coverage_gaps(_spans.get(1, ""), _spans.get(2, ""), _spans.get(4, "")):
+                warnings.append((f"task '{slug}'", f"rule '{_rid}' ({_kind}) has no §2 scenario tag "
+                                 "and no §4 test covering it (coverage gap) — add a scenario tag "
+                                 "or a covers: line"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED
@@ -5048,8 +5120,15 @@ def _flag_well_formed(raw3: str) -> bool:
     refused unless it takes the honest escape 'none material — biggest risk: X'.
     why/cost stay a human-read convention, never machine keywords (evidence: the
     lived flags use em-dash/prose, never literal because/if-wrong). HTML comments
-    (template hints) never count. PURE — fail-closed on a missing label."""
-    body = re.sub(r"<!--.*?-->", "", raw3, flags=re.S)
+    (template hints) never count. Fence-aware (mirrors _strip_live_scaffold): a
+    frozen §3 may legitimately quote a bare `<!--` inside its own fenced code
+    block (documenting an HTML-comment invariant) — that must never merge with
+    an unrelated `-->` found later in the raw text. PURE — fail-closed on a
+    missing label."""
+    segs = re.split(r"(```.*?```)", raw3, flags=re.DOTALL)
+    for i in range(0, len(segs), 2):      # even indices = OUTSIDE any fence
+        segs[i] = re.sub(r"<!--.*?-->", "", segs[i], flags=re.S)
+    body = "".join(segs)
     m = _FLAG_LABEL_RE.search(body)
     if not m:
         return False
@@ -6933,6 +7012,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     pst = sub.add_parser("status", help="print where the project is (resume point)")
     pst.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    pst.add_argument("--task", metavar="SLUG", help="with --json, filter to one task's "
+                      "{slug, phase, gate, milestone, owner, assignee} object")
+    pst.add_argument("--all", action="store_true", help="show every milestone/task "
+                      "(default: top 10 by most-recently-updated)")
     pst.set_defaults(func=cmd_status)
 
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")
@@ -6943,6 +7026,14 @@ def build_parser() -> argparse.ArgumentParser:
                            help="read-only: print + validate the component registry "
                                 "(.add/components.toml) — RED integrity errors + schema-lint typo warnings")
     pcomp.set_defaults(func=cmd_components)
+
+    psrch = sub.add_parser("search", help="keyword/substring search over the "
+                            "milestone/task corpus (active + archived) — "
+                            "title/goal/rationale lines only, never the full body")
+    psrch.add_argument("keywords", nargs="+", metavar="KEYWORD",
+                       help="one or more keywords (case-insensitive substring, OR-combined)")
+    psrch.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    psrch.set_defaults(func=cmd_search)
 
     pfed = sub.add_parser("federate", help="multi-repo: pull a producer repo's published, immutable "
                                            "contract snapshot into this repo (fail-loud)")

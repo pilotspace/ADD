@@ -35,6 +35,10 @@ Four parts, kept short:
 
 Naming the errors matters. "Reject bad amounts" is an instruction to guess; `amount <= 0 -> "amount_invalid"` is a rule that produces a testable scenario and a defined contract response.
 
+### Rule IDs (optional — opt-in by usage)
+
+Give each Must a stable `M<n>:` ID; a Reject's own error code already IS its ID (referenced later as `R:<error_code>`). Once a task uses a tag anywhere in §2 SCENARIOS or §4 TESTS, `add.py check` starts asking that every Must/Reject be covered by a scenario tag or a test's `covers:` line — a task that never tags anything is never retro-flagged. See the template's own inline example for the exact grammar.
+
 ## Template
 
 ```

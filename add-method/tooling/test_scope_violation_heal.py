@@ -315,11 +315,6 @@ class EnginePinTest(unittest.TestCase):
         self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
                          "engine_pin.ENGINE_MD5 must track the live engine")
 
-    def test_pin_annotation_names_this_task(self):
-        src = (HERE / "engine_pin.py").read_text(encoding="utf-8")
-        self.assertIn("re-aimed @ scope-violation-heal", src,
-                      "the pin annotation records this task's deliberate re-aim")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -34,7 +34,11 @@ TERMS = [
          old_keep="one-approval front", idiom="one-approval front", keep="specification bundle", token=None),
     # (?!-audit): `seam-audit` is a Group C machine token — CI job/workflow name,
     # pinned by test_audit_ci + test_release_1_4_0 (contract machine-layer rule).
-    dict(slug="seam", ban=r"\bseams?\b(?!-audit)",
+    # (?!\.md\b): "SEAMS.md" is the shipped cross-cutting-convention-citation file
+    # (unrelated new concept, task seams-doc/milestone seams). (?!\s+consulted\b):
+    # "Seams consulted:" is that file's citation field label (TASK.md.tmpl, task
+    # seams-template-wiring). Neither is the retired "seam = decision point" idiom.
+    dict(slug="seam", ban=r"\bseams?\b(?!-audit)(?!\.md\b)(?!\s+consulted\b)",
          old_keep="seam", idiom="seam", keep="decision point", token=None),
     dict(slug="fold", ban=r"\bfold(s|ed|ing)?\b",
          old_keep="fold", idiom="fold", keep="retrospective consolidation", token="add.py deltas"),

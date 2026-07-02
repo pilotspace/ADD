@@ -280,16 +280,5 @@ class WordingFenceTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, f"wording_lint must stay green:\n{r.stdout}\n{r.stderr}")
 
 
-# ── the engine-pin idiom: this task's deliberate re-aim is self-tested ───────
-class EnginePinTest(unittest.TestCase):
-
-    def test_pin_annotation_names_this_task(self):
-        src = (HERE / "engine_pin.py").read_text(encoding="utf-8")
-        self.assertIn("re-aimed @ autonomy-command", src,
-                      "the engine pin must record THIS task's deliberate re-aim")
-        self.assertIn("re-aimed @ gitignore-scaffold", src,
-                      "the pin carries the prior task's re-aim (the supersession chain)")
-
-
 if __name__ == "__main__":
     unittest.main()

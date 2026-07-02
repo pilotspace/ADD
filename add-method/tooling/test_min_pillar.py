@@ -130,6 +130,11 @@ LIFECYCLE = [
     ["components"],                             # registry reader/validator: this board has no
                                                # components.toml -> friendly single-component no-op,
                                                # exit 0 (reads components.toml, never docs/)
+    ["search", "mvp"],                          # read-only keyword/substring corpus scan
+                                               # (context-search, search-index): scans
+                                               # MILESTONE.md/TASK.md title/goal/rationale
+                                               # or title/Feature lines only, never docs/;
+                                               # always exit 0 (matches or "no matches for:")
     ["graduation-report"], ["graduation-report", "--json"],  # read-only harvest (reads TASK/RETRO/state, never docs/)
     ["release-report"], ["release-report", "--json"],  # read-only release inventory (reads state/RELEASES.md/TASK, never docs/)
     ["release", "0.0.0"],                      # guarded record-only cut: no milestone is closed yet

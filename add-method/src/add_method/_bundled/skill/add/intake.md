@@ -6,8 +6,9 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 
 ## Interview before you size
 
-When the request arrives as a question, or its intent is not sharp enough to place in one bucket:
-explore it WITH the user before classifying. Reflect the intent you heard, name what seems in and
+Run `add.py search <keyword> [<keyword> ...]` first — it surfaces overlapping/prior work in one
+command instead of a full manual re-read. When the request arrives as a question, or its intent is
+not sharp enough to place in one bucket: explore it WITH the user before classifying. Reflect the intent you heard, name what seems in and
 out of scope, and offer 2–3 sized options with your own recommendation. Only then emit
 `{ bucket, rationale, command }`. `ask_human` stays the floor: when interviewing cannot sharpen the
 request, reject — never guess a bucket.

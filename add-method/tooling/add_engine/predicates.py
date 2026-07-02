@@ -11,6 +11,7 @@ import re
 
 from add_engine.constants import (
     PHASE_OWNER, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+    _MUST_ID_RE, _REJECT_CODE_RE, _SCENARIO_TAG_RE, _COVERS_LINE_RE, _TAG_TOKEN_RE,
 )
 from add_engine.io_state import _die
 
@@ -94,6 +95,27 @@ def _persona_slug_valid(slug: str) -> bool:
     """A persona file slug is valid iff non-empty and alphanumeric with `-`/`_` only
     (mirrors new-task's slug rule). PURE; NO-EXEC."""
     return bool(slug) and slug.replace("-", "").replace("_", "").isalnum()
+
+
+def _rule_coverage_gaps(sec1: str, sec2: str, sec4: str) -> list[tuple[str, str]]:
+    """§1 Must/Reject IDs with no §2 scenario tag and no §4 `covers:` reference — a coverage
+    gap (rule-id-coverage). A task that carries NO tag anywhere in §2/§4 is grandfathered
+    (never adopted the convention) -> []. A bare `<…>` template placeholder (e.g. the
+    unfilled `covers: <M#, R:code — optional>` scaffold) is stripped before scanning — it
+    is not authored content, mirrors `_section_unfilled`'s own placeholder convention.
+    De-dupes a repeated/typo'd ID. PURE; NO-EXEC."""
+    strip_placeholders = lambda text: re.sub(r"<[^>\n]+>", "", text or "")
+    tag_ids: set[str] = set()
+    for m in _SCENARIO_TAG_RE.finditer(strip_placeholders(sec2)):
+        tag_ids.update(_TAG_TOKEN_RE.findall(m.group(1)))
+    for m in _COVERS_LINE_RE.finditer(strip_placeholders(sec4)):
+        tag_ids.update(_TAG_TOKEN_RE.findall(m.group(1)))
+    if not tag_ids:
+        return []                                          # grandfathered — never opted in
+    musts = [(mid, "Must") for mid in _MUST_ID_RE.findall(sec1 or "")]
+    rejects = [(f"R:{code}", "Reject") for code in _REJECT_CODE_RE.findall(sec1 or "")]
+    gaps = [(rid, kind) for rid, kind in musts + rejects if rid not in tag_ids]
+    return list(dict.fromkeys(gaps))                        # de-dup a repeated ID
 
 
 def _task_done(t: dict) -> bool:

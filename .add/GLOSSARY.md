@@ -19,7 +19,11 @@ advisory verdict: a §6 Advisor 3-lens verdict with Binding:advisory — surface
 binding verdict: a §6 Advisor 3-lens verdict with Binding:yes — engine-enforced for risk:high + sensitivity:mechanical tasks (gates auto-completion via advisor-gate-relax); tasks carrying any other sensitivity class receive an advisory verdict instead.
 bounded self-heal: the verify-gate loop (heal-then-escalate) that gives a CONFIRMED cheat — mechanical tamper (the tripwire) or a reported earned-green failure (`add.py heal --reason`) — a chance to redo honestly before it stops: the engine returns the task to build, COUNTS the attempt, CAPS it at 3 (`HEAL_CAP`), and on the next confirmed cheat forces a HARD-STOP that escalates to the human. The counter is MONOTONIC — it never auto-resets (cmd_phase is unguarded, so a reset would be a zero-human cap bypass). The engine counts/caps/escalates; the AGENT does the honest re-build (never the engine). An honest build passes even at the cap (the cap bites a CONTINUED cheat, never a recovery); a gamed green is never auto-passed, never RISK-ACCEPTED-waived.
 Contract: the frozen external shape (interfaces, data, names, errors); changing it is a change request.
-Survivor layer: documents kept for the whole project (CONVENTIONS, GLOSSARY, MODEL_REGISTRY, allowlist).
+Seam: a symbol/convention cited or re-derived by tasks in ≥2 DIFFERENT milestones (a
+  same-milestone repeat is ordinary cohesion, not a seam); promoted into `.add/SEAMS.md`
+  as a Name/Anchor/Contract/Citations entry so a task's §0 GROUND can cite it
+  (`Seams consulted: .add/SEAMS.md#<id>`) instead of re-deriving the fact inline.
+Survivor layer: documents kept for the whole project (CONVENTIONS, GLOSSARY, MODEL_REGISTRY, allowlist, SEAMS).
 State: `.add/state.json` — the single source of truth for where the project is (the resume point).
 Heavy archive / compact: step two of the archive lifecycle — `add.py compact <slug>` moves a light-archived milestone's files into the recovery bundle (step one, `archive-milestone`, only removes it from state).
 Recovery bundle: `.add/archive/<slug>/` — the moved MILESTONE.md + siblings + task dirs; recovery = reverse the move, state needs no edit.

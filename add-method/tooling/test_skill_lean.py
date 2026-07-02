@@ -66,7 +66,14 @@ POOLS = [
     # sentence gains "PLAN/SHAPE →" + "→ APPROVE" (the DECISION→APPROVE rename + reorder) — +14 B
     # human-approved surface (fast task, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows
     # by surface ÷ ratio (+⌈14/0.88⌉=16). The won compaction is untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 20506,
+    # core 20506 → 20666 @ phase-search-wiring (same "rebaseline for human-approved new surface" method,
+    # per CONVENTIONS.md's folded rebaseline-precedent line — a deliberate, contract-approved content
+    # addition that busts a lean-fence pool is absorbed by rebaselining, never by token-golfing unrelated
+    # prose thinner): intake.md's "## Interview before you size" section gains an opening sentence naming
+    # `add.py search <keyword> [<keyword> ...]` as the first action — +140 B human-approved surface
+    # (contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈140/0.88⌉=160).
+    # The won compaction is untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20666,
      "guides": ["SKILL.md", "intake.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
@@ -149,7 +156,14 @@ POOLS = [
     # DECISION→APPROVE rename+reorder — +3308 B human-approved surface (fast task, contract FROZEN @ v1).
     # RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈3308/0.68⌉=4865). The won ground on
     # every other reference guide is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 75224,
+    # reference 75224 → 75314 @ phase-search-wiring (same "rebaseline for human-approved new surface"
+    # method, per CONVENTIONS.md's folded rebaseline-precedent line — a deliberate, contract-approved
+    # content addition that busts a lean-fence pool is absorbed by rebaselining, never by token-golfing
+    # unrelated prose thinner): scope.md's step 2 "Relate to the milestone map" gains a leading clause
+    # naming `add.py search <keyword> [<keyword> ...]` as the first action — +61 B human-approved surface
+    # (contract FROZEN @ v1). RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈61/0.68⌉=90).
+    # The won ground on every other reference guide is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 75314,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},
