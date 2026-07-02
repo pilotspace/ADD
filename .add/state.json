@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "project-scope-atomic-reconcile",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2532,10 +2532,48 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "global-lock-followups": {
+      "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
+    },
+    "global-data-restore-harden": {
+      "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
+    },
+    "project-scope-atomic-reconcile": {
+      "title": "Stage-then-commit _clean_replace/cleanReplaceTree so a crash mid-copy never half-wipes a managed tree",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
+    },
+    "project-scope-install-lock": {
+      "title": "Project-scoped lock around install()/update() reconcile, both twins",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "install-update-hardening",
+      "depends_on": [
+        "project-scope-atomic-reconcile"
+      ],
+      "created": "2026-07-02T14:46:49+00:00",
+      "updated": "2026-07-02T14:46:49+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T14:10:21+00:00",
+  "updated": "2026-07-02T18:13:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2717,9 +2755,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "install-update-hardening": {
+      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
+      "goal": "add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-02T14:46:06+00:00",
+      "updated": "2026-07-02T14:46:06+00:00"
     }
   },
-  "active_milestone": null,
+  "active_milestone": "install-update-hardening",
   "archived": [
     {
       "slug": "v5",
@@ -3444,11 +3490,24 @@
         "roster-onboarding-wiring"
       ],
       "archived": "2026-07-02"
+    },
+    {
+      "slug": "loop-readability",
+      "title": "ADD loop readability \u2014 human-scannable output across every phase",
+      "tasks": 2,
+      "task_slugs": [
+        "report-shape-scan-audit",
+        "skill-banner-cue"
+      ],
+      "archived": "2026-07-03"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "install-update-hardening"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "install-update-hardening": "project-scope-atomic-reconcile"
   },
   "todos": [
     {
