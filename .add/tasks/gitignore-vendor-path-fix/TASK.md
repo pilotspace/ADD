@@ -324,7 +324,7 @@ consumer-project installs for an unexpectedly high untracked-file count as the f
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] `engine_pin.py`'s `ENGINE_MD5` re-aim comment has grown into a single ~79KB
+- [SPEC · dropped] `engine_pin.py`'s `ENGINE_MD5` re-aim comment has grown into a single ~79KB
   physical line (one "prior: X @ Y" clause appended per re-aim, never trimmed) — noticed while
   locating the pin for this task's `ENGINE_PKG_MD5` re-aim; unrelated to this fix (`ENGINE_MD5`
   itself untouched) but worth a future task to cap/relocate the history before a read tool's

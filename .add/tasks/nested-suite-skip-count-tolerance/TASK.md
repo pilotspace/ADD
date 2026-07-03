@@ -291,7 +291,7 @@ somewhere in the suite that `_expected_skip_count()` doesn't yet account for.
 - [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
-- [SPEC · open] if `test_packaging.py`'s `PyWheelTest` ever gains or loses a setuptools-gated test
+- [SPEC · carried] if `test_packaging.py`'s `PyWheelTest` ever gains or loses a setuptools-gated test [carried: only matters if the gated test count ever changes; no known plan to change it]
   method (currently exactly 3), or a 7th component-pillar test file is ever added, this task's `+3`/
   `+6` literals inside `_expected_skip_count()` silently desync until someone re-derives them by hand
   — consider a follow-up that counts these programmatically (e.g. by importing the gated modules and

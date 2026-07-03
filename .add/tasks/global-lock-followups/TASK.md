@@ -859,19 +859,19 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] `_update_global`'s `home.mkdir()` can raise the same uncaught
+- [SPEC · carried] `_update_global`'s `home.mkdir()` can raise the same uncaught [carried: dormant today — no currently-exercised path hits it; narrow hardening for later]
   `FileExistsError`/`OSError` this task fixed in `install()` if `home` exists as a
   non-directory — dormant today only because `_update_global`'s own `no_global_home`
   pre-check short-circuits first in every currently-exercised path; mirror the same
   `except OSError` widening there, or harden `_update_lock` itself to translate a
   home-mkdir failure into its own distinct signal (evidence: OBSERVE-NOTES.md build-phase
   finding #2; confirmed by reading `_update_global`'s pre-check ordering, not assumed)
-- [SPEC · open] a malformed `--lock-timeout <non-numeric>` value degrades silently to
+- [SPEC · carried] a malformed `--lock-timeout <non-numeric>` value degrades silently to [carried: minor cross-twin inconsistency on an out-of-contract misuse case, not a safety issue]
   `NaN` → falsy → no-wait in `cli.js`, while Python's `argparse(type=float)` errors loudly
   on the identical input — a minor cross-twin inconsistency for an out-of-contract misuse
   case, not a safety issue, but worth closing (evidence: independent add-verify pass,
   Advisor Architecture lens, §6)
-- [SPEC · open] no genuine cross-twin CLI-to-CLI multi-process smoke exists yet (a real
+- [SPEC · carried] no genuine cross-twin CLI-to-CLI multi-process smoke exists yet (a real [carried: primitive- and full-function-level multi-process evidence already gathered at the Python layer; cheap but not urgent]
   `pip`-driven CLI process racing a real `node cli.js` process at the OS level) — cheap to
   add; not required to close this task's own gate given the primitive-level and
   full-function-level multi-process evidence already gathered at the Python layer, but a

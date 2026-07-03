@@ -507,7 +507,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the contract's step-0 self-heal names what to do when a stale backup is found
+- [SPEC · carried] the contract's step-0 self-heal names what to do when a stale backup is found [carried: today's fail-loud propagation is a defensible default; narrow edge case]
   while dest is absent — rename it onto dest — but not what happens if THAT recovery rename
   itself fails (e.g. a permission error on the parent dir); today this propagates uncaught
   (fail-loud, a defensible default, but never a named scenario or Reject code) (evidence:

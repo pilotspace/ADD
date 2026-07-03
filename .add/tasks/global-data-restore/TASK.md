@@ -361,9 +361,9 @@ Watch (reuse scenarios as monitors): restore_failed / no_global_home reject-rate
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] commit a test for `--force` restore on a DIRECTORY entry (tasks/ → tasks.bak/) — code path verified manually at the gate but has no committed test (evidence: refute-read Hole 2).
-- [SPEC · open] harden `_restore_data`/`restoreData` mid-write atomicity (stage-then-commit) so a disk-full on the Nth entry leaves no partial restore — today it's fail-closed only for an unwritable dest (evidence: refute-read Hole 1).
-- [SPEC · open] add an npm BEHAVIORAL test (subprocess) for restore + prune to replace the structural-only `ParityRestoreTest` — the cli.js path is proven by a manual smoke, not a committed test (evidence: refute-read Hole 3).
+- [SPEC · dropped] commit a test for `--force` restore on a DIRECTORY entry (tasks/ → tasks.bak/) — code path verified manually at the gate but has no committed test (evidence: refute-read Hole 2).
+- [SPEC · dropped] harden `_restore_data`/`restoreData` mid-write atomicity (stage-then-commit) so a disk-full on the Nth entry leaves no partial restore — today it's fail-closed only for an unwritable dest (evidence: refute-read Hole 1).
+- [SPEC · dropped] add an npm BEHAVIORAL test (subprocess) for restore + prune to replace the structural-only `ParityRestoreTest` — the cli.js path is proven by a manual smoke, not a committed test (evidence: refute-read Hole 3).
 - [SPEC · open] a home file-lock to serialize concurrent `prune-data` / `update --global` (two `prune-data --force` could race on rmtree) — belongs to the sibling task `global-update-harden` (evidence: §6 concurrency note).
 
 ### Competency deltas

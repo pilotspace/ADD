@@ -367,7 +367,7 @@ Forward changes for the next loop — each re-enters at Specify as the next task
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
 - [SPEC · open] make `test_seams_template_wiring.test_milestone_exit_grep_lists_all_3` grep-binary-agnostic — assert on the set of matched filenames independent of `grep -cl` output format, or pin the grep binary in the subprocess call (evidence: full add-method suite red on this task's verify run — BSD `/usr/bin/grep -cl` on multiple files emits extra `filename:1` lines vs GNU grep on CI; the 3 `TASK.md.tmpl` files it greps are git-clean and untouched by add-advisor)
-- [SPEC · open] resolve the `advisor.md` naming collision — `.claude/skills/add/advisor.md` (executor-subagent guide) vs. the consultative `add-advisor` agent: rename or cross-reference so the two concepts are unambiguous to a reader (evidence: add-advisor §0 Context + §1 Framings flagged it; the advisor.md touch was deferred to avoid re-opening the `test_skill_lean` byte budget)
+- [SPEC · carried] resolve the `advisor.md` naming collision — `.claude/skills/add/advisor.md` (executor-subagent guide) vs. the consultative `add-advisor` agent: rename or cross-reference so the two concepts are unambiguous to a reader (evidence: add-advisor §0 Context + §1 Framings flagged it; the advisor.md touch was deferred to avoid re-opening the `test_skill_lean` byte budget) [carried: cosmetic doc-clarity fix, no functional urgency; revisit when next touching advisor docs]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

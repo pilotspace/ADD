@@ -604,26 +604,26 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] promote a real node-subprocess behavioral test for `persistData`'s own
+- [SPEC · carried] promote a real node-subprocess behavioral test for `persistData`'s own [carried: deliberate M15/§2 scope cut at design time, still valid; not urgent enough to seed standalone]
   happy-path + refresh/2-rename-commit path to a Must next loop — today it's exercised only
   via Python-side unit tests + a structural JS call-site check, never a real `node`
   subprocess in the committed suite (a deliberate M15/§2 scope choice at design time, not a
   build-time cut) (evidence: OBSERVE-NOTES.md's own TDD finding; independent add-verify
   pass's Advisor Architecture lens; a throwaway, uncommitted manual smoke closed this gap
   for build-time confidence only, never committed)
-- [SPEC · open] decide + document whether `home/data/<key>`'s new directory-mode tightening
+- [SPEC · carried] decide + document whether `home/data/<key>`'s new directory-mode tightening [carried: needs a human intent call (normalize vs keep 0700), not a code fix; carry until decided]
   (~0755 → 0700, a side effect of the `mkdtemp`-based staging with no `copystat`-equivalent
   restore of the top-level dir's mode) is intended, or should be normalized back to match
   pre-task permissions — independently discovered, safe-direction (more restrictive), not
   previously disclosed by the build (evidence: independent add-verify pass's Advisor
   Security lens, empirically confirmed via a before/after permission-bit check)
-- [SPEC · open] sharpen the pre-existing JS `persistData`-vs-`restoreData` symlink
+- [SPEC · carried] sharpen the pre-existing JS `persistData`-vs-`restoreData` symlink [carried: narrow cross-twin gap, no known failure currently triggering it; low urgency]
   dereference asymmetry as CROSS-TWIN, not merely cross-function as first framed — Python's
   `_persist_data` already dereferences via `copytree`/`copyfile` defaults; only JS's
   `persistData` carries no `dereference` option (evidence: OBSERVE-NOTES.md's own SDD
   finding; independent add-verify pass confirmed via `git log -S"dereference"` that this
   traces to a prior task, `bbc8562`, not this one)
-- [SPEC · open] `_persist_data` does not call `.resolve()` on `project_abspath` internally
+- [SPEC · carried] `_persist_data` does not call `.resolve()` on `project_abspath` internally [carried: latent trap only for a future direct caller that skips resolving first; no current caller affected]
   (unlike `_restore_data`, which resolves at its own top) — safe today only because its one
   production caller, `install()`, always resolves `target_path` before calling either; a
   latent trap for any FUTURE direct caller that doesn't resolve first (evidence:

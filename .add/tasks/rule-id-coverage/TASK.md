@@ -518,7 +518,7 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
   (`M4/R2`, `M6/R1/R3`) this convention deliberately does not recognize — decide whether a future
   backfill task migrates it to `M#`/`R:<code>` or leaves it grandfathered (evidence: add-verify's
   refute-read spot-check, 3 correctly-fired gap WARNs against that task's real §1/§2/§4).
-- [SPEC · open] an untracked, byte-identical `add-method/src/add_method/_bundled/tooling/
+- [SPEC · dropped] an untracked, byte-identical `add-method/src/add_method/_bundled/tooling/
   engine_pin.py` sits in the working tree, traced via this task's own scope sidecar to a
   pre-existing file from an earlier, uncommitted task — not this task's residue, but worth
   reconciling with `git status` before the next commit so it isn't lost or double-committed
