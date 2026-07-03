@@ -1,0 +1,29 @@
+{
+  "edges_fingerprint": "2aa85a1904f3a367e7434bbc6291944d",
+  "generated": "2026-07-03",
+  "milestone": "install-update-hardening",
+  "schedule": {
+    "blocked": {},
+    "critical_path": [
+      "project-scope-atomic-reconcile",
+      "project-scope-install-lock"
+    ],
+    "critical_path_len": 2,
+    "tiers": {
+      "global-data-restore-harden": "mid",
+      "global-lock-followups": "mid",
+      "project-scope-atomic-reconcile": "top",
+      "project-scope-install-lock": "top"
+    },
+    "waves": [
+      [
+        "global-data-restore-harden",
+        "global-lock-followups",
+        "project-scope-atomic-reconcile"
+      ],
+      [
+        "project-scope-install-lock"
+      ]
+    ]
+  }
+}
