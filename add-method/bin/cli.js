@@ -928,28 +928,98 @@ function dataKey(projectAbspath) {
   return base + "-" + digest;
 }
 
-// A top-level .add/ entry is user-data unless it is a managed tree or a transient artifact.
+// A top-level .add/ entry is user-data unless it is a managed tree, a transient artifact, or a
+// scratch-staging sibling left by an interrupted persist/restore/clean-replace call (the shared
+// .add-tmp-/.add-bak- infix convention — crash-safe-persist-restore v1 §3 M11).
 function isUserData(name) {
   if (DATA_EXCLUDE.includes(name)) return false;
   if (name.startsWith("scope-snapshot")) return false;
   if (name.includes("pre-archive-bak")) return false;
   if (name.endsWith(".bak.json")) return false;
+  if (name.includes(".add-tmp-") || name.includes(".add-bak-")) return false;
   return true;
 }
 
-// Clean-replace a project's USER-DATA into <home>/data/<key>. true=persisted, false=skipped
-// (no .add or no user-data — an honest skip). Throws if the data dir can't be written.
+// Best-effort removal of a scratch sibling (staging dir/file, or a whole-tree backup dir);
+// tolerates it already being gone. A sweep failure here is hygiene, not a correctness gap —
+// self-heal simply retries it on the next call touching this target.
+function sweepScratch(p) {
+  try { fs.rmSync(p, { recursive: true, force: true }); } catch (_e) { /* best-effort */ }
+}
+
+// Crash-safe clean-replace of a project's USER-DATA into <home>/data/<key>: self-heal any
+// scratch sibling left by an earlier interrupted call, then a WHOLE-TREE stage-then-commit
+// (mirrors cleanReplaceTree's own pattern) — dest is never opened for writing or deletion until
+// its replacement has FULLY landed. true=persisted, false=skipped (no .add or no user-data — an
+// honest skip, dest — including any EXISTING stale snapshot — left completely untouched).
+// Throws if the data dir can't be written.
 function persistData(home, projectAbspath) {
+  const key = dataKey(projectAbspath);
+  const dataRoot = path.join(home, "data");
+  const dest = path.join(dataRoot, key);
+
+  // step 0 -- self-heal: a stale backup found while dest is currently ABSENT means a PRIOR call
+  // crashed between its two commit renames -- restore it first (the newest wins a >1 tie-break,
+  // a defensive case, not an expected path). Then sweep every remaining scratch sibling for this
+  // key unconditionally (never merged/reused).
+  if (fs.existsSync(dataRoot)) {
+    const siblings = fs.readdirSync(dataRoot);
+    const tmpStale = siblings.filter((n) => n.startsWith(key + ".add-tmp-"));
+    let bakStale = siblings.filter((n) => n.startsWith(key + ".add-bak-"));
+    if (!fs.existsSync(dest) && bakStale.length > 0) {
+      let newest = bakStale[0];
+      let newestMtime = fs.statSync(path.join(dataRoot, newest)).mtimeMs;
+      for (const n of bakStale.slice(1)) {
+        const t = fs.statSync(path.join(dataRoot, n)).mtimeMs;
+        if (t > newestMtime) { newest = n; newestMtime = t; }
+      }
+      fs.renameSync(path.join(dataRoot, newest), dest);
+      bakStale = bakStale.filter((n) => n !== newest);
+    }
+    for (const n of bakStale) sweepScratch(path.join(dataRoot, n));
+    for (const n of tmpStale) sweepScratch(path.join(dataRoot, n));
+  }
+
   const addDir = path.join(projectAbspath, ".add");
   if (!fs.existsSync(addDir)) return false;
   const entries = fs.readdirSync(addDir).filter(isUserData);
-  if (entries.length === 0) return false;
-  const dest = path.join(home, "data", dataKey(projectAbspath));
-  if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
-  fs.mkdirSync(dest, { recursive: true });
-  for (const e of entries) {
-    fs.cpSync(path.join(addDir, e), path.join(dest, e), { recursive: true });
+  if (entries.length === 0) return false;        // UNCHANGED: an existing stale snapshot is left as-is
+
+  // step 1 -- stage: copy every filtered entry into a fresh, uniquely-named sibling of dest, IN
+  // home/data/. dest itself is never opened for writing during this step.
+  fs.mkdirSync(dataRoot, { recursive: true });
+  const staged = fs.mkdtempSync(path.join(dataRoot, key + ".add-tmp-"));
+  try {
+    for (const e of entries) {
+      fs.cpSync(path.join(addDir, e), path.join(staged, e), { recursive: true });
+    }
+  } catch (e) {
+    sweepScratch(staged);
+    throw e;
   }
+
+  // step 2 -- commit: two same-parent renames, neither ever targets an already-existing name.
+  const backup = path.join(dataRoot, key + ".add-bak-" + crypto.randomBytes(6).toString("hex"));
+  let asideLanded = false;
+  if (fs.existsSync(dest)) {
+    try {
+      fs.renameSync(dest, backup);
+      asideLanded = true;
+    } catch (e) {
+      sweepScratch(staged);
+      throw e;
+    }
+  }
+  try {
+    fs.renameSync(staged, dest);
+  } catch (e) {
+    if (asideLanded) fs.renameSync(backup, dest);   // roll back: dest ends where it started
+    sweepScratch(staged);
+    throw e;
+  }
+
+  // step 3 -- sweep: the old backup is removed only now that the new dest has landed.
+  if (asideLanded) sweepScratch(backup);
   return true;
 }
 
@@ -974,27 +1044,71 @@ function isSymlink(p) {
 }
 
 // Restore USER-DATA from <home>/data/<key> into <project>/.add — the NON-DESTRUCTIVE inverse of
-// persistData. FILL-GAPS by default (write only ABSENT entries); force overwrites a present entry,
-// writing a <name>.bak FIRST. Copies only isUserData entries; DEREFERENCES symlinks to content
-// (cpSync dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable
-// dest -> restore_failed. Mirror of _installer.py:_restore_data (identical key + fill-gaps rule).
+// persistData, crash-safe via a PER-ENTRY stage-then-commit (.add/ is a SHARED directory most of
+// which this function must leave alone, so — unlike persistData's self-owned whole-tree dest —
+// only ONE entry stages/commits at a time). FILL-GAPS by default (write only ABSENT entries);
+// force overwrites a present entry, writing a <name>.bak sidecar of the original FIRST (the SAME
+// permanent, already-contracted sidecar name as before this task — never the new transient
+// staging marker). Copies only isUserData entries; DEREFERENCES symlinks to content (cpSync
+// dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable dest
+// -> restore_failed. Mirror of _installer.py:_restore_data.
 function restoreData(home, projectAbspath, force) {
+  const addDir = path.join(projectAbspath, ".add");
   const src = path.join(home, "data", dataKey(projectAbspath));
+
+  // step 0 -- self-heal: sweep any stale per-entry staging sibling left by an earlier
+  // INTERRUPTED call, unconditionally (never merged/reused/completed) -- the untouched snapshot
+  // at src lets THIS call's own ordinary fill-gaps-or-force logic re-derive the correct end
+  // state; no backup-recovery step is needed here (unlike persistData's step 0).
+  if (fs.existsSync(addDir)) {
+    for (const n of fs.readdirSync(addDir)) {
+      if (n.includes(".add-tmp-")) sweepScratch(path.join(addDir, n));
+    }
+  }
+
   if (!fs.existsSync(src)) return false;
   const entries = fs.readdirSync(src).filter(isUserData).sort();
   if (entries.length === 0) return false;
-  const addDir = path.join(projectAbspath, ".add");
   fs.mkdirSync(addDir, { recursive: true });
   let restored = false;
   for (const e of entries) {
     const dest = path.join(addDir, e);
-    if (fs.existsSync(dest) || isSymlink(dest)) {
-      if (!force) continue;                                 // fill-gaps: never clobber a present entry
-      const bak = dest + ".bak";
-      if (fs.existsSync(bak) || isSymlink(bak)) fs.rmSync(bak, { recursive: true, force: true });
-      fs.renameSync(dest, bak);                             // back up the original BEFORE replacing
+    const existed = fs.existsSync(dest) || isSymlink(dest);
+    if (existed && !force) continue;                        // fill-gaps: never clobber; no staging begins
+
+    // step 1b -- stage: copy this ONE entry into a fresh, uniquely-named sibling of dest, IN
+    // .add/ -- dest's own name is not opened for writing during this step. A reserved unique
+    // name is claimed via mkdtempSync, then either kept as a dir (cpSync merges into the empty
+    // dir) or freed via rmdirSync for a plain-file copy.
+    const staged = fs.mkdtempSync(path.join(addDir, e + ".add-tmp-"));
+    try {
+      const srcEntry = path.join(src, e);
+      if (fs.statSync(srcEntry).isDirectory()) {
+        fs.cpSync(srcEntry, staged, { recursive: true, dereference: true });
+      } else {
+        fs.rmdirSync(staged);
+        fs.cpSync(srcEntry, staged, { dereference: true });   // deref a symlink source
+      }
+    } catch (err) {
+      sweepScratch(staged);
+      throw err;
     }
-    fs.cpSync(path.join(src, e), dest, { recursive: true, dereference: true });   // deref symlinks
+
+    // step 1c -- commit:
+    if (existed) {
+      const bak = dest + ".bak";
+      if (fs.existsSync(bak) || isSymlink(bak)) sweepScratch(bak);   // a stale .bak: replace, don't merge
+      fs.renameSync(dest, bak);                               // back up the original BEFORE replacing
+      try {
+        fs.renameSync(staged, dest);
+      } catch (err) {
+        fs.renameSync(bak, dest);                             // roll back: this entry ends where it started
+        sweepScratch(staged);
+        throw err;
+      }
+    } else {
+      fs.renameSync(staged, dest);                            // fill-gaps: single rename, no backup needed
+    }
     restored = true;
   }
   return restored;
