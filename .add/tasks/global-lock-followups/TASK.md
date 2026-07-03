@@ -330,13 +330,32 @@ Status: FROZEN @ v1 — approved by Tin Dang
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: every Must + every Reject + the deliberate ruling-out scenario (18 tests touched:
+  17 new + 1 strengthened-not-weakened, hermetic via injected env; 14 scenarios in §2, several
+  covered by more than one test where a scenario has multiple assertable facets)
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_stale_lock_self_heals: arrange a backdated-mtime (stale) lock at home / act run update --global / assert exit 0 + lock reclaimed + run completes, no manual deletion · covers: M1
+  - test_live_lock_not_reclaimed_fails_fast: arrange a fresh (age 0) held lock / act run update --global, no --lock-timeout / assert non-zero + "update_in_progress" + lock left untouched (regression: already true pre-build, must stay true) · covers: M1, Reject
+  - test_concurrent_stale_reclaim_exactly_one_wins: arrange a stale lock + 6 racer threads (Barrier-synced) calling _update_lock directly / act release all racers concurrently / assert exactly one "acquired", zero unexpected exceptions, no leaked lock file after · covers: M1 (TOCTOU safety)
+  - test_future_mtime_lock_never_stale: arrange a lock with mtime set AHEAD of now (clock-skew sim) / act run update --global / assert NOT reclaimed (treated as live) + fails fast "update_in_progress" (regression: already true pre-build by having no reclaim logic; must stay true for the RIGHT reason post-build — sign-aware age check) · covers: M1 (edge case)
+  - test_empty_stale_lock_self_heals: arrange a 0-byte stale lock (simulates a crash before the stamp write) / act run update --global / assert reclaimed exactly like a stamped one, no error reading absent content · covers: M2 (edge case)
+  - test_successful_acquire_stamps_pid_and_timestamp: arrange no lock held / act acquire directly via _update_lock / assert lock content matches `^\d+ \S+\n?$` (PID + ISO-8601 UTC timestamp) · covers: M2
+  - test_garbage_lock_content_never_errors_or_affects_staleness: arrange a stale lock with unparseable garbage content / act run update --global / assert reclaimed without error — staleness decided by mtime alone, content never consulted · covers: M2
+  - test_install_global_blocked_by_a_held_lock: arrange update --global holds a live (non-stale) lock / act run install --global against a fresh target / assert fails fast "update_in_progress" + nothing written to home mirror/registry.json + the target's per-project managed-layer drop does NOT occur · covers: M3, Reject
+  - test_two_concurrent_install_global_no_interleave: arrange no lock held / act two install --global runs overlap / assert exactly one wins and completes its write, the other fails fast with nothing written, registry.json never reflects a partial interleave · covers: M3
+  - test_fresh_install_global_unaffected: arrange no lock held, home unstamped (first-ever) / act run install --global / assert completes exactly as before (stamped + registered + per-project drop ran) + lock file gone by return (regression guard — must stay true, the common uncontended path) · covers: M3 (regression)
+  - test_lock_timeout_waits_out_a_holder_that_releases_in_time: arrange update --global holds the lock, releases ~0.2s later (a Timer) / act run update --global --lock-timeout N / assert the waiting run acquires once freed and exits 0, never raised "update_in_progress" · covers: M4
+  - test_lock_timeout_expires_still_fails: arrange a holder that outlives the wait budget / act run update --global --lock-timeout 2 / assert fails "update_in_progress" after roughly the budget elapses (not instantly, not indefinitely) · covers: M4, Reject
+  - test_lock_timeout_unset_or_zero_is_immediate: arrange a live, non-stale lock held / act run update --global with no flag, then separately --lock-timeout 0 / assert both fail immediately — no observable wait either way (back-compat regression guard) · covers: M4 (regression)
+  - test_lock_timeout_flag_parity: arrange none (static source read) / act read _cli.py + cli.js source / assert --lock-timeout is registered on both init/update subparsers (Python) and parsed in cli.js, threaded as lock_timeout=args.lock_timeout / lockTimeout, and ADD_LOCK_STALE_SECONDS is referenced in cli.js · covers: M5
+  - test_npm_stale_lock_self_heals: arrange a stale (backdated-mtime, empty) lock + ADD_LOCK_STALE_SECONDS=1 env / act run `node cli.js update --global` as a subprocess / assert exit 0, self-healed · covers: M5
+  - test_npm_live_lock_still_fails_fast: arrange a real O_EXCL-held ("wx") lock / act run `node cli.js update --global` as a subprocess / assert non-zero + "update_in_progress" text (regression: already true pre-build, must stay true) · covers: M5 (regression)
+  - test_prune_data_deliberately_unlocked: arrange none (static source read) / act inspect.getsource on _prune_data + prune_data (Python) and slice the pruneData..cmdPruneData span (JS) / assert neither references _update_lock/acquireUpdateLock — proves the conscious OUT-of-scope deferral stays true · covers: deliberate ruling-out (§3 OUT-of-scope)
+  - test_parity_surface (PRE-EXISTING, FROZEN @ v2 — STRENGTHENED not weakened for this task's new call-site shape): arrange none (static source read) / act read _installer.py + cli.js source / assert the fuller call-site text `with _update_lock(home, timeout=lock_timeout, env=env_map):` / `acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env)` each appear exactly twice (proving BOTH _update_global AND install's as_global block share the identical call site; BOTH cmdUpdateGlobal AND installGlobal share theirs) · covers: M3, M5
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
+Tests live in: `add-method/tooling/test_global_update_harden.py` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
      a token with "/" = project root · a bare name = sibling of the previous
      token's dir · a directory counts its *.py files (non-recursive); reports
