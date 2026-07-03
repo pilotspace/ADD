@@ -1345,7 +1345,54 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
     try { st = fs.statSync(lockPath); }
     catch (_e) { continue; }   // vanished between the failed open and the stat — retry the create
     if (Date.now() - st.mtimeMs > staleAfterMs) {
-      try { fs.unlinkSync(lockPath); } catch (_e) {}   // a losing race may already have removed it
+      // Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let a
+      // second racer delete a FIRST racer's already-recreated, live lock). A NAIVE "rename to a
+      // quarantine name" does NOT fix this — a rename is JUST as identity-blind as an unlink: it
+      // operates on whatever currently sits at `lockPath`, so a delayed racer's rename can just
+      // as easily steal a WINNER's brand-new fresh file (empirically reproduced while building
+      // this fix; that attempt made the race MEASURABLY WORSE, not better, by adding an extra
+      // syscall to the vulnerable window). The actual fix: gate entry to the reclaim itself
+      // behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's
+      // own inode number (`st.ino` — stable for this file's lifetime, and a FRESH replacement
+      // file always gets a NEW inode). Two racers that observe the SAME stale file compute the
+      // IDENTICAL ticket name and race an exclusive create on IT — only one wins; every loser
+      // backs off WITHOUT ever touching `lockPath` itself, so nobody can ever unlink/steal a
+      // generation they didn't win the ticket for.
+      const ticketPath = lockPath + ".reclaim-" + st.ino;
+      let ticketFd;
+      try {
+        ticketFd = fs.openSync(ticketPath, "wx");
+      } catch (_e) {
+        // LOST the per-generation reclaim ticket — someone else already owns reclaiming THIS
+        // specific stale file; never touch lockPath ourselves. Fall back to the top of the loop
+        // and let the ordinary open/EEXIST/age/deadline logic re-evaluate reality fresh (by the
+        // time we retry, the ticket-winner will typically have already finished its own brief
+        // reclaim).
+        continue;
+      }
+      try {
+        fs.closeSync(ticketFd);
+        // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
+        // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
+        // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act on
+        // it," and in that gap this SAME path can already have cycled through a full, unrelated
+        // reclaim by someone else (that old inode gone, a fresh one created and now actively
+        // held — empirically observed while building this fix: a late-scheduled racer's ticket
+        // for a long-superseded inode still "won" trivially, since nothing else was contesting
+        // that specific stale ticket name any more, and its UNCONDITIONAL unlink then blindly
+        // destroyed the CURRENT live holder's fresh file). Re-stat immediately before mutating
+        // and compare inodes: only remove the file if it is STILL, right now, the exact
+        // generation we ticketed for; otherwise our ticket is moot — leave the (unrelated,
+        // currently live) file completely alone and let the loop's own open/EEXIST/age logic
+        // re-evaluate reality fresh on the next iteration.
+        let currentIno = null;
+        try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
+        if (currentIno === st.ino) {
+          try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+        }
+      } finally {
+        try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+      }
       continue;                                          // retry the create immediately (self-heal)
     }
     if (deadline !== null && Date.now() < deadline) {
@@ -1406,15 +1453,71 @@ function acquireProjectLock(addDir, env = process.env) {
     if (!e || e.code !== "EEXIST") throw e;
     let st = null;
     try { st = fs.statSync(lockPath); } catch (_e) { /* vanished — treat as reclaimable now */ }
-    const age = st ? (Date.now() - st.mtimeMs) : Infinity;
-    if (age > staleAfterMs) {
-      try { fs.unlinkSync(lockPath); } catch (_e) {}   // best-effort — a losing race may already have removed it
+    if (st === null) {
+      // vanished between the failed open and the stat — nothing to quarantine; retry a plain
+      // create directly (safe unconditionally: O_EXCL is still the sole arbiter — this can
+      // never clobber a legitimate concurrent holder's fresh file, it can only succeed if the
+      // path is genuinely vacant right now).
       try {
         fd = fs.openSync(lockPath, "wx");
       } catch (e2) {
         if (!e2 || e2.code !== "EEXIST") throw e2;
-        // the retry ALSO hit already-exists (another racer won the reclaim) -> fail-fast,
-        // exactly once — never a second reclaim attempt, never a poll/wait (M7).
+      }
+    } else if (Date.now() - st.mtimeMs > staleAfterMs) {
+      // Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let a
+      // second racer delete a FIRST racer's already-recreated, live lock). A NAIVE "rename to a
+      // quarantine name" does NOT fix this — a rename is JUST as identity-blind as an unlink: it
+      // operates on whatever currently sits at `lockPath`, so a delayed racer's rename can just
+      // as easily steal a WINNER's brand-new fresh file (empirically reproduced while building
+      // this fix; that attempt made the race MEASURABLY WORSE, not better, by adding an extra
+      // syscall to the vulnerable window). The actual fix: gate entry to the reclaim itself
+      // behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's
+      // own inode number (`st.ino` — stable for this file's lifetime, and a FRESH replacement
+      // file always gets a NEW inode). Two racers that observe the SAME stale file compute the
+      // IDENTICAL ticket name and race an exclusive create on IT — only one wins; every loser
+      // backs off WITHOUT ever touching `lockPath` itself, so nobody can ever unlink/steal a
+      // generation they didn't win the ticket for.
+      const ticketPath = lockPath + ".reclaim-" + st.ino;
+      let ticketFd = null;
+      try {
+        ticketFd = fs.openSync(ticketPath, "wx");
+      } catch (_e) {
+        // LOST the per-generation reclaim ticket -- fail-fast below (fd stays null); never a
+        // second reclaim attempt, never a poll (M7).
+      }
+      if (ticketFd !== null) {
+        try {
+          fs.closeSync(ticketFd);
+          // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
+          // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
+          // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act
+          // on it," and in that gap this SAME path can already have cycled through a full,
+          // unrelated reclaim by someone else (that old inode gone, a fresh one created and now
+          // actively held — empirically observed while building this fix: a late-scheduled
+          // racer's ticket for a long-superseded inode still "won" trivially, since nothing else
+          // was contesting that specific stale ticket name any more, and its UNCONDITIONAL
+          // unlink then blindly destroyed the CURRENT live holder's fresh file). Re-stat
+          // immediately before mutating and compare inodes: only remove the file if it is
+          // STILL, right now, the exact generation we ticketed for; otherwise our ticket is
+          // moot — leave the (unrelated, currently live) file completely alone and let the
+          // single retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this lock
+          // never polls a live holder).
+          let currentIno = null;
+          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
+          if (currentIno === st.ino) {
+            try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+          }
+        } finally {
+          try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+        }
+        try {
+          fd = fs.openSync(lockPath, "wx");
+        } catch (e2) {
+          if (!e2 || e2.code !== "EEXIST") throw e2;
+          // someone else created a fresh file at the just-vacated path before we did (e.g. a
+          // brand-new, never-raced contender's own first attempt landed in the gap) -> fail-fast,
+          // exactly once — never a second reclaim attempt, never a poll/wait (M7).
+        }
       }
     }
     if (fd === null) {

@@ -503,6 +503,64 @@ Strategy actually used: AS PLANNED, in the same 8-step batch order (constants ->
   `install()`/`update()` wraps -> `cmdInit`/`cmdUpdate` wiring -> own-suite GREEN (26/26) -> the
   broader sweep surfaced the 2 regressions above -> the empty-dir cleanup fix (both twins) -> full
   re-sweep GREEN (231/231, own suite included) -> this fill.
+  Second build attempt (2026-07-03, reopened to `build` via `add.py heal` after an independent
+  verify pass found a LIVE TOCTOU race in this lock's stale-reclaim path — §6's own Advisor 3-lens
+  HARD-STOP finding, left as-is below for the next verify pass): the reclaim's
+  `os.unlink(lock_path)` was unconditional and identity-blind — it removed whatever currently sat
+  at the path with no check that it was still the SAME stale file just inspected, letting 2+
+  racers hold "the lock" simultaneously. Reproduced pre-fix at 7/30 (23.3%) against my own
+  strengthened test below (same family as the original verify pass's own larger-sample 66/250,
+  26.4%). TDD followed exactly: the test change landed FIRST, alone, confirmed red against the
+  untouched buggy code (7/30) before any implementation line changed.
+    Fix shape deviated from this reopening's own suggested pattern TWICE, each time for a concrete,
+  empirically-proven reason (re-derived from the actual code, not the paraphrase): (1) "rename to a
+  per-attempt quarantine name" (mirroring this codebase's own `_persist_data` idiom) was tried
+  FIRST and made the race MEASURABLY WORSE — 16/30 (53%), up from the 7/30 baseline. Root cause,
+  proved via an instrumented standalone reproduction: a rename is JUST as identity-blind as an
+  unlink — it operates on whatever currently sits at the shared path, so a delayed racer's rename
+  steals an already-recreated WINNER's fresh file exactly as easily as the original unlink could,
+  and the extra syscall widens the vulnerable window rather than closing it. Abandoned; not present
+  in the final code. (2) Redesigned to a "ticket-gated reclaim": an EXCLUSIVE, per-generation
+  ticket file keyed to the stale file's own inode number (`st_ino` — confirmed empirically
+  non-reused immediately after unlink+recreate on this filesystem) gates entry to the reclaim
+  itself; a losing racer never touches `lock_path` at all. This improved the rate to 1/30 (3.3%)
+  but did not fully close it — direct instrumentation of the real function (temporary
+  `_DIAG_TRACE`-gated trace prints, since fully removed: `grep -rn "_DIAG_TRACE" add-method/` is
+  zero hits) caught the residual live: winning the ticket proves exclusive rights to reclaim ONE
+  specific generation, but not that `lock_path` is STILL that generation by the time the code acts
+  on it — a scheduling gap can let the SAME path fully cycle through an entire, unrelated reclaim
+  in the interim, and the ticket-winner's unconditional unlink then blindly destroys that
+  unrelated, currently-live holder's file. Final fix (delivered): after winning the ticket, re-stat
+  `lock_path` IMMEDIATELY before unlinking and compare its CURRENT inode against the ticket's
+  inode; unlink ONLY on a match, otherwise treat the ticket as moot and leave the (unrelated, live)
+  file alone — one extra syscall that shrinks the window from an arbitrary scheduling delay down to
+  the gap between two adjacent syscalls (a residual now bounded by needing TWO independent,
+  unrelated parties to both act inside that sub-microsecond gap — judged acceptable and disclosed,
+  not further reducible with only cross-platform stdlib/builtin primitives). Applied independently
+  in `_project_lock` and its own JS twin `acquireProjectLock` — no shared helper introduced between
+  them or with `_update_lock`/`acquireUpdateLock` (the frozen contract's own INV honored); the
+  sibling task `global-lock-followups` carries the identical fix shape for its own pair,
+  independently applied and independently proven (its own §5).
+    Test strengthening (this reopening's other half): the test's OWN assertion was part of the
+  gap — a cumulative `results.count("acquired") == 1` cannot distinguish "at most one holder at
+  any INSTANT" (the real invariant) from racers legitimately, sequentially re-acquiring one after
+  another (normal, correct behavior). Replaced with a temporal proof: an `active` counter
+  incremented the instant a racer is inside the critical section and decremented the instant
+  before it leaves, `peak = max(peak, active)` latched under the same lock guarding the shared
+  `results` list — `peak` can only exceed 1 on a genuine simultaneous-holder bug. Note for the
+  record (a scope observation, not a decision): `test_project_scope_lock.py` is not named on this
+  section's own "Scope (may touch)" line above, even though it IS the §4-declared suite for this
+  same, already-named `test_concurrent_stale_reclaim_exactly_one_wins` scenario ("bonus… M4/M5
+  TOCTOU safety") — this build only strengthened that existing test's assertion rigor, added no
+  new test, and did so on this reopening's own explicit instruction.
+    Stress evidence: the strengthened test run repeatedly after the final fix — 0/30, then 0/60
+  more (0/90 total, 0 failures). The full sibling regression sweep (`test_global_install` +
+  `test_global_update_harden` + `test_global_restore` + `test_global_data` + `test_reconcile_rollup`
+  + `test_project_scope_lock`, 145 tests, run together from `add-method/tooling/`) was run 4 times
+  after the final fix — 145/145 every time; the dedicated `test_project_scope_lock.py` suite is
+  26/26 standalone. All temporary diagnostic tracing has been removed from the delivered code (none
+  was added to this task's own function during this build; the sibling task's function is the one
+  that briefly carried it during diagnosis, also since removed).
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.

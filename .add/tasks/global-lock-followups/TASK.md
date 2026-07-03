@@ -378,6 +378,69 @@ Strategy actually used: AS PLANNED, in the same 5-batch order, with 3 refinement
   followed the planned batch order 1(_update_lock)->2(install's as_global wrap)->3(_cli.py flag)->
   4(cli.js mirror), landing GREEN (32/32) on the first full run after batch 4, before the 2
   refinements above were separately discovered via the broader regression sweep and fixed.
+  Second build attempt (2026-07-03, reopened to `build` via `add.py reopen --to build` after an
+  independent verify pass found a LIVE TOCTOU race in this lock's stale-reclaim path — this task's
+  own §6 below still shows the EARLIER, now-superseded PASSED gate from before this finding;
+  left untouched, the next verify pass's job to redo): `_update_lock`'s reclaim used an
+  unconditional, identity-blind `os.unlink(lock_path)` — it removed whatever currently sat at the
+  path with no check that it was still the SAME stale file just inspected, letting 2+ racers hold
+  "the lock" simultaneously. Reproduced pre-fix at 4/30 (13.3%) against my own strengthened test
+  below (same family as the original verify pass's own larger-sample 55/150, 36.7%). TDD followed
+  exactly: the test change landed FIRST, alone, confirmed red against the untouched buggy code
+  (4/30) before any implementation line changed.
+    Fix shape deviated from this reopening's own suggested pattern TWICE, each time for a concrete,
+  empirically-proven reason (re-derived from the actual code, not the paraphrase) — full mechanism
+  detail in the sibling task `project-scope-install-lock`'s own §5 (identical root causes, this
+  lock's own independent code and own independent measurements): (1) "rename to a per-attempt
+  quarantine name" was tried first; proved identity-blind in exactly the same way as the unlink it
+  was meant to replace (a rename also just operates on whatever currently sits at the shared path)
+  — abandoned before a full 30-run measurement against this specific function, since the
+  mechanism-level disproof (an instrumented standalone reproduction) already generalized: this
+  lock's reclaim branch is structurally the same "stat -> act on a shared path" shape. (2)
+  Redesigned to a "ticket-gated reclaim" keyed to the stale file's own inode number (`st_ino`) —
+  improved but did NOT fully close the race: 9/30 (30%), WORSE than the 4/30 pre-fix baseline (this
+  loop-based function retries far more densely than `_project_lock`'s single-retry shape, exposing
+  the residual far more often). Root cause, caught via direct instrumentation of the real function
+  (temporary `_DIAG_TRACE`-gated trace prints, since fully removed — `grep -rn "_DIAG_TRACE"
+  add-method/` is zero hits): winning the ticket proves exclusive rights to reclaim ONE specific
+  generation, but not that `lock_path` is STILL that generation by the time the code acts on it — a
+  scheduling gap let the SAME path fully cycle through an entire, unrelated reclaim in the interim,
+  and the ticket-winner's unconditional unlink then blindly destroyed that unrelated, currently-live
+  holder's file (full captured trace: a 6th, very-late-scheduled racer's stat read the ORIGINAL
+  stale inode 10s earlier; by the time it acted, the lock had already cycled through a full
+  intervening reclaim by a different racer; its "won" ticket for the now-defunct inode still
+  succeeded trivially, and its unlink destroyed the CURRENT live holder's fresh file instead).
+  Final fix (delivered): after winning the ticket, re-stat `lock_path` IMMEDIATELY before unlinking
+  and compare its CURRENT inode against the ticket's inode; unlink ONLY on a match, otherwise treat
+  the ticket as moot and `continue` the loop, letting the ordinary open/EEXIST/age logic
+  re-evaluate reality fresh — one extra syscall that shrinks the window from an arbitrary
+  scheduling delay down to the gap between two adjacent syscalls (a residual now bounded by needing
+  TWO independent, unrelated parties to both act inside that sub-microsecond gap — judged
+  acceptable and disclosed, not further reducible with only cross-platform stdlib/builtin
+  primitives, consistent with this task's own existing PID-liveness and clock-skew disclosures
+  above). Applied independently in `_update_lock` and its own JS twin `acquireUpdateLock` — no
+  shared helper introduced between them or with `_project_lock`/`acquireProjectLock` (this task's
+  own §1 Framings, re-affirmed).
+    Test strengthening: the test's OWN assertion was part of the gap — a cumulative
+  `results.count("acquired") == 1` cannot distinguish "at most one holder at any INSTANT" (the real
+  invariant) from racers legitimately, sequentially re-acquiring one after another (normal, correct
+  behavior). Replaced with a temporal proof: an `active` counter incremented the instant a racer is
+  inside the critical section and decremented the instant before it leaves, `peak = max(peak,
+  active)` latched under the same lock guarding the shared `results` list — `peak` can only exceed
+  1 on a genuine simultaneous-holder bug. `test_global_update_harden.py` is already named on this
+  section's own "Scope (may touch)" line above, so this test edit needed no scope-gap note (unlike
+  the sibling task) — it strengthens this existing, already-named `test_concurrent_stale_reclaim_
+  exactly_one_wins` scenario's assertion rigor only, adds no new test.
+    Stress evidence: the strengthened test run repeatedly after the final fix — 0/30, then 0/60
+  more (0/90 total, 0 failures). The full sibling regression sweep (`test_global_install` +
+  `test_global_update_harden` + `test_global_restore` + `test_global_data` + `test_reconcile_rollup`
+  + `test_project_scope_lock`, 145 tests, run together from `add-method/tooling/`) was run 4 times
+  after the final fix — 145/145 every time; the dedicated `test_global_update_harden.py` suite is
+  32/32 standalone. All temporary diagnostic tracing has been removed from the delivered code
+  (this task's own `_update_lock` is the one that briefly carried it during diagnosis).
+    This task's `risk: high` / `autonomy: conservative` posture is unchanged by this reopening — it
+  governs the NEXT verify pass's own gate (human-reviewed regardless of evidence quality), not this
+  build's own self-driven red->green obligation.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim and `--lock-timeout` only ever decide whether/when to retry that create, never grant the lock by any other means.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`time` · Node builtin `fs`/`path` only); ask if unclear.

@@ -1454,14 +1454,66 @@ def _update_lock(home: Path, *, timeout: float | None = None, env=None):
         except FileExistsError:
             pass                              # held — decide below: self-heal / poll / fail-fast
         try:
-            age = time.time() - lock_path.stat().st_mtime   # NEGATIVE age (future mtime) => never stale
+            st = lock_path.stat()
+            age = time.time() - st.st_mtime   # NEGATIVE age (future mtime) => never stale
         except OSError:
             continue                          # vanished between the failed open and the stat — retry
         if age > stale_after:
+            # Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let
+            # a second racer delete a FIRST racer's already-recreated, live lock). A NAIVE
+            # "rename to a quarantine name" does NOT fix this — a rename is JUST as
+            # identity-blind as an unlink: it operates on whatever currently sits at
+            # `lock_path`, so a delayed racer's rename can just as easily steal a WINNER's
+            # brand-new fresh file (empirically reproduced while building this fix: that attempt
+            # made the race MEASURABLY WORSE, not better, by adding an extra syscall to the
+            # vulnerable window). The actual fix: gate entry to the reclaim itself behind a
+            # SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's own
+            # inode number (`st_ino` — stable for this file's lifetime, and a FRESH replacement
+            # file always gets a NEW inode via O_CREAT). Two racers that observe the SAME stale
+            # file compute the IDENTICAL ticket name and race an O_EXCL create on IT — only one
+            # wins; every loser backs off WITHOUT ever touching `lock_path` itself, so nobody can
+            # ever unlink/steal a generation they didn't win the ticket for.
+            ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{st.st_ino}")
             try:
-                os.unlink(str(lock_path))      # best-effort — a losing race may already have removed it
-            except OSError:
-                pass
+                ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                # LOST the per-generation reclaim ticket — someone else already owns reclaiming
+                # THIS specific stale file; never touch lock_path ourselves. Fall back to the top
+                # of the loop and let the ordinary open/EEXIST/age/deadline logic re-evaluate
+                # reality fresh (by the time we retry, the ticket-winner will typically have
+                # already finished its own brief reclaim).
+                continue
+            try:
+                os.close(ticket_fd)
+                # Winning the ticket proves we are the SOLE reclaimer for the generation we
+                # observed (`st.st_ino`) — it does NOT prove `lock_path` is STILL that
+                # generation right now. An arbitrarily long scheduling gap can separate "we
+                # judged st.st_ino stale" from "we act on it," and in that gap this SAME path
+                # can already have cycled through a full, unrelated reclaim by someone else
+                # (that old inode gone, a fresh one created and now actively held —
+                # empirically observed while building this fix: a late-scheduled racer's
+                # ticket for a long-superseded inode still "won" trivially, since nothing
+                # else was contesting that specific stale ticket name any more, and its
+                # UNCONDITIONAL unlink then blindly destroyed the CURRENT live holder's fresh
+                # file). Re-stat immediately before mutating and compare inodes: only remove
+                # the file if it is STILL, right now, the exact generation we ticketed for;
+                # otherwise our ticket is moot — leave the (unrelated, currently live) file
+                # completely alone and let the loop's own open/EEXIST/age logic re-evaluate
+                # reality fresh on the next iteration.
+                try:
+                    current_ino = lock_path.stat().st_ino
+                except OSError:
+                    current_ino = None    # already gone — nothing to unlink
+                if current_ino == st.st_ino:
+                    try:
+                        os.unlink(str(lock_path))
+                    except OSError:
+                        pass                # already gone — harmless
+            finally:
+                try:
+                    os.unlink(str(ticket_path))  # best-effort cleanup of our own ticket
+                except OSError:
+                    pass
             continue                          # retry the create immediately (self-heal)
         if deadline is not None and time.time() < deadline:
             time.sleep(_LOCK_POLL_INTERVAL)
@@ -1544,19 +1596,83 @@ def _project_lock(add_dir: Path, *, env=None):
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             try:
-                age = time.time() - lock_path.stat().st_mtime   # NEGATIVE age (future mtime) => never stale
+                st = lock_path.stat()
+                age = time.time() - st.st_mtime   # NEGATIVE age (future mtime) => never stale
+                vanished = False
             except OSError:
-                age = float("inf")   # vanished between the failed open and the stat — treat as reclaimable
-            if age > stale_after:
-                try:
-                    os.unlink(str(lock_path))    # best-effort — a losing race's ENOENT is swallowed
-                except OSError:
-                    pass
+                vanished = True   # vanished between the failed open and the stat — nothing to
+                                  # reclaim; retry a plain create directly below (safe
+                                  # unconditionally: O_EXCL is still the sole arbiter — this can
+                                  # never clobber a legitimate concurrent holder's fresh file, it
+                                  # can only succeed if the path is genuinely vacant right now).
+            if vanished:
                 try:
                     fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
                 except FileExistsError:
-                    # the retry ALSO hit already-exists (another racer won the reclaim) -> fail-fast,
-                    # exactly once — never a second reclaim attempt, never a poll/wait (M7).
+                    raise BlockingIOError(f"{lock_path} is held") from None
+            elif age > stale_after:
+                # Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path
+                # let a second racer delete a FIRST racer's already-recreated, live lock). A
+                # NAIVE "rename to a quarantine name" does NOT fix this — a rename is JUST as
+                # identity-blind as an unlink: it operates on whatever currently sits at
+                # `lock_path`, so a delayed racer's rename can just as easily steal a WINNER's
+                # brand-new fresh file (empirically reproduced while building this fix: that
+                # attempt made the race MEASURABLY WORSE, not better, by adding an extra syscall
+                # to the vulnerable window). The actual fix: gate entry to the reclaim itself
+                # behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale
+                # file's own inode number (`st_ino` — stable for this file's lifetime, and a
+                # FRESH replacement file always gets a NEW inode via O_CREAT). Two racers that
+                # observe the SAME stale file compute the IDENTICAL ticket name and race an
+                # O_EXCL create on IT — only one wins; every loser backs off WITHOUT ever
+                # touching `lock_path` itself, so nobody can ever unlink/steal a generation they
+                # didn't win the ticket for.
+                ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{st.st_ino}")
+                try:
+                    ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    # LOST the per-generation reclaim ticket — someone else already owns
+                    # reclaiming THIS specific stale file; never a second reclaim attempt, never
+                    # a poll (M7) — fail-fast immediately.
+                    raise BlockingIOError(f"{lock_path} is held") from None
+                try:
+                    os.close(ticket_fd)
+                    # Winning the ticket proves we are the SOLE reclaimer for the generation
+                    # we observed (`st.st_ino`) — it does NOT prove `lock_path` is STILL that
+                    # generation right now. An arbitrarily long scheduling gap can separate
+                    # "we judged st.st_ino stale" from "we act on it," and in that gap this
+                    # SAME path can already have cycled through a full, unrelated reclaim by
+                    # someone else (that old inode gone, a fresh one created and now actively
+                    # held — empirically observed while building this fix: a late-scheduled
+                    # racer's ticket for a long-superseded inode still "won" trivially, since
+                    # nothing else was contesting that specific stale ticket name any more,
+                    # and its UNCONDITIONAL unlink then blindly destroyed the CURRENT live
+                    # holder's fresh file). Re-stat immediately before mutating and compare
+                    # inodes: only remove the file if it is STILL, right now, the exact
+                    # generation we ticketed for; otherwise our ticket is moot — leave the
+                    # (unrelated, currently live) file completely alone and let the single
+                    # retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this
+                    # lock never polls a live holder).
+                    try:
+                        current_ino = lock_path.stat().st_ino
+                    except OSError:
+                        current_ino = None    # already gone — nothing to unlink
+                    if current_ino == st.st_ino:
+                        try:
+                            os.unlink(str(lock_path))
+                        except OSError:
+                            pass                # already gone — harmless
+                finally:
+                    try:
+                        os.unlink(str(ticket_path))  # best-effort cleanup of our own ticket
+                    except OSError:
+                        pass
+                try:
+                    fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    # someone else created a fresh file at the just-vacated path before we did
+                    # (e.g. a brand-new, never-raced contender's own first attempt landed in the
+                    # gap) -> fail-fast, exactly once — never a second reclaim attempt, never a
+                    # poll/wait (M7).
                     raise BlockingIOError(f"{lock_path} is held") from None
             else:
                 # held, not stale, and this lock never waits/polls (M7) -> the caller's existing
