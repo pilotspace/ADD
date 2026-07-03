@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "worktree-isolated-spawn-default",
+  "active_task": "fold-glossary-deltas",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2595,10 +2595,19 @@
       "depends_on": [],
       "created": "2026-07-03T13:21:23+00:00",
       "updated": "2026-07-03T13:21:23+00:00"
+    },
+    "fold-glossary-deltas": {
+      "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:39:18+00:00",
+      "updated": "2026-07-03T13:39:18+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T13:21:23+00:00",
+  "updated": "2026-07-03T13:39:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
