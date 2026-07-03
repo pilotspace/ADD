@@ -66,15 +66,16 @@ Out: cross-process locking of paths not named above (e.g. `prune-data`'s own con
 - [x] project-scope-atomic-reconcile   depends-on: none     — crash-safe stage-then-commit for
       the managed-tree reconcile copy (`_clean_replace`/`cleanReplaceTree`); gate: PASS (independent
       add-verify pass — 27 new + 47 sibling tests green, advisor 3-lens CLEAR/CLEAR/CLEAR)
-- [ ] global-lock-followups   depends-on: none     — stale `.update.lock` self-heal +
-      `install --global` lock coverage + an opt-in `--lock-timeout` CI mode; REOPENED this session
-      (its original 2026-07-03 PASS below is superseded, not current): an independent verify pass
-      on the sibling task found a real TOCTOU race in the shared stale-reclaim pattern this task's
-      own `_update_lock` also carried — fixed across 3 rounds (the race itself; a leaked-ticket
-      unbounded livelock the first fix introduced; a final pass confirming the "ticket-for-a-ticket"
-      recursion is structurally closed, backed by 1167+ adversarial attempts, 0 anomalies). Fresh
-      independent verify recommends PASS (EARNED / CLEAR×3 / Residue: none); risk:high +
-      autonomy:conservative mandate a fresh human gate regardless of evidence quality — PENDING.
+- [x] global-lock-followups   depends-on: none     — stale `.update.lock` self-heal +
+      `install --global` lock coverage + an opt-in `--lock-timeout` CI mode; gate: PASS
+      (risk:high + autonomy:conservative — human-reviewed, Tin Dang, 2026-07-03). REOPENED
+      mid-milestone: an independent verify pass on the sibling task found a real TOCTOU race in
+      the shared stale-reclaim pattern this task's own `_update_lock` also carried — fixed across
+      3 rounds (the race itself; a leaked-ticket unbounded livelock the first fix introduced; a
+      final pass confirming the "ticket-for-a-ticket" recursion is structurally closed, backed by
+      1167+ adversarial attempts, 0 anomalies). Fresh independent verify: EARNED / CLEAR×3 /
+      Residue: none — 35/35 own tests green, 152/152 sibling sweep. Supersedes the original
+      2026-07-03 PASS, which predated this discovery.
 - [x] global-data-restore-harden   depends-on: none     — crash-safe stage-then-commit for the
       user-data persist/restore path (`_persist_data`/`_restore_data`) + 2 committed test gaps;
       gate: PASS (independent add-verify pass — 75/75 green, RED independently reproduced,
@@ -90,7 +91,7 @@ Out: cross-process locking of paths not named above (e.g. `prune-data`'s own con
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] A simulated mid-copy failure during `add.py init`/`update` never leaves `.add/tooling`, `.add/docs`, `.add/personas-teacher`, or `.claude/skills/add` half-copied — self-heals next run (verify: project-scope-atomic-reconcile §4 mid-copy-failure + self-heal scenarios)   (← project-scope-atomic-reconcile)
 - [x] A simulated mid-write failure during `update --global`'s re-persist, or `init --from-global-data`/`--force` restore, never leaves a snapshot/restored entry half-written — self-heals next call (verify: global-data-restore-harden §4 mid-write-failure + self-heal scenarios)   (← global-data-restore-harden)
-- [ ] A SIGKILL'd `update --global`/`install --global` never wedges a future global op — the stale lock self-heals, `install --global` is now lock-serialized, an opt-in `--lock-timeout` lets CI wait (verify: global-lock-followups §4 stale-lock + install-global-locked + timeout scenarios); RE-VERIFIED this session after a real leaked-ticket livelock was found and fixed — evidence clean, PENDING the fresh human gate (see Tasks above)   (← global-lock-followups)
+- [x] A SIGKILL'd `update --global`/`install --global` never wedges a future global op — the stale lock self-heals, `install --global` is now lock-serialized, an opt-in `--lock-timeout` lets CI wait (verify: global-lock-followups §4 stale-lock + install-global-locked + timeout scenarios); RE-VERIFIED this session after a real leaked-ticket livelock was found and fixed — evidence clean, gate: PASS (human-reviewed, Tin Dang, 2026-07-03)   (← global-lock-followups)
 - [x] Two concurrent `install`/`update` runs against the SAME project-scope destination cannot interleave writes — one waits or fails cleanly (verify: project-scope-install-lock §4 concurrent-run scenarios) — gated PASS   (← project-scope-install-lock)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
@@ -98,20 +99,44 @@ Out: cross-process locking of paths not named above (e.g. `prune-data`'s own con
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `add_method/_installer.py` + `bin/cli.js` (both pip+npm twins) — 4 crash/concurrency-safe
+  paths: (1) `_clean_replace`/`cleanReplaceTree` stage-then-commit managed-tree reconcile copy,
+  (2) `_persist_data`/`_restore_data` stage-then-commit user-data persist/restore, (3)
+  `_update_lock`/`acquireUpdateLock` — TOCTOU-race-fixed + ticket-leak-livelock-fixed stale
+  reclaim, `install --global` lock coverage, opt-in `--lock-timeout`, (4) NEW
+  `_project_lock`/`acquireProjectLock` — a per-project lock serializing concurrent project-scope
+  `install`/`update` runs, same TOCTOU-race + ticket-leak-wedge fix pattern as (3). Shared:
+  `_is_user_data`/`isUserData` extended twice (`.add-tmp-`/`.add-bak-` scratch markers, then a
+  `.reclaim-` ticket-file marker). No new dependency (stdlib/builtin only, per plan).
+- skill   : untouched
+- book    : untouched
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- project-scope-atomic-reconcile : gate=PASS · tests=27 new + 47 sibling green · residue=none
+- global-data-restore-harden : gate=PASS · tests=75/75 green · residue=Concurrency+Architecture
+  RESIDUE (both judged bounded/non-blocking; human-reviewed, Tin Dang, 2026-07-03)
+- project-scope-install-lock : gate=PASS · tests=30/30 own + 152/152 sibling sweep · residue=none
+  (741 adversarial multi-process/thread attempts against this task's own lock, 0 anomalies)
+- global-lock-followups : gate=PASS · tests=35/35 own + 152/152 sibling sweep · residue=none (680
+  adversarial attempts against this task's own lock — 1167+ combined across both lock tasks, 0
+  anomalies); risk:high/autonomy:conservative — human-reviewed, Tin Dang, 2026-07-03
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row (all 4 rows: gate=PASS,
+  green suites, residue none or bounded/human-reviewed)
+- goal: add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a
+  concurrent run without leaving a half-written .add/ tree or a wedged lock — met: the
+  stage-then-commit idiom (atomic-reconcile + data-restore-harden rows) proves crash-safety for
+  both the managed-tree copy and the user-data persist/restore path; the TOCTOU-race-fixed +
+  ticket-leak-fixed lock pattern (install-lock + lock-followups rows, 1167+ combined adversarial
+  attempts, 0 anomalies) proves concurrency-safety for both the new project-scope lock and the
+  existing global lock — across both pip+npm twins, both global and project scope.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] run `add.py milestone-done` to record the goal-met close (this Close section is the evidence)
+- [ ] open a PR bundling all 4 tasks' commits since `release/1.15.0` branched; human reviews + merges
+- [ ] fold this milestone's OBSERVE deltas (2 Spec + 3 Competency per lock task, 4 total tasks) into
+  `PROJECT.md` at the next `add.py fold` pass — not required to close, but don't let them go stale
+- [ ] tag / publish per `release.md` when this milestone is bundled into a release (human-run)
