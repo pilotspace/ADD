@@ -31,6 +31,7 @@ from pathlib import Path
 # (bundled subpath, dest relative to target, strip dev-only test_*.py after copy)
 MANAGED = (
     ("skill/add", ".claude/skills/add", False),
+    ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
     ("docs", ".add/docs", False),
     ("personas-teacher", ".add/personas-teacher", False),
@@ -39,7 +40,10 @@ MANAGED = (
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
 # but a malformed/older package missing one must NOT abort the whole install — the core
 # (skill/tooling/docs) still lands, and the optional tree is soft-skipped. Design-for-failure.
-OPTIONAL = frozenset({"personas-teacher"})
+# `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
+# enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
+# predating this fix must still install its core cleanly.
+OPTIONAL = frozenset({"personas-teacher", "agents"})
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,
@@ -1351,7 +1355,8 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
-_TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas"}
+_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs",
+               "personas-teacher": "personas"}
 
 
 def _managed_status(target_path: Path) -> dict:

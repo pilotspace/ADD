@@ -77,6 +77,16 @@ class NpmTarballTest(unittest.TestCase):
             self.assertTrue(any(p.startswith(prefix) for p in self.paths),
                             f"no file under {prefix} shipped")
 
+    def test_agent_roster_ships(self):
+        """roster-install-drift: a missing agents/ here is the SAME files-allowlist trap
+        test_teacher_corpus_and_notices_ship guards for personas-teacher/ — the dir silently
+        drops from the tarball and every consumer project's guideline block cites a roster
+        that can never resolve (the apple-container transcript finding)."""
+        self.assertTrue(any(p.startswith("agents/") for p in self.paths),
+                        "no file under agents/ shipped (roster_absent_from_npm)")
+        self.assertIn("agents/add-build.md", self.paths,
+                      "add-build.md must ship in the npm tarball (roster_absent_from_npm)")
+
     def test_teacher_corpus_and_notices_ship(self):
         """The vendored teacher snapshot + its MIT attribution must ride in the tarball
         (bundle-teacher). A missing personas-teacher/ here is the 1.11.0 files-allowlist
@@ -127,6 +137,7 @@ def _setuptools_backend():
 _BUNDLE_PREFIXES = (
     "add_method/_bundled/docs/",
     "add_method/_bundled/skill/add/",
+    "add_method/_bundled/agents/",
     "add_method/_bundled/tooling/",
     "add_method/_bundled/personas-teacher/",
 )

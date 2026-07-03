@@ -751,6 +751,7 @@ async function cmdInit(args) {
 // tasks, or archive (user data). Pure file-copy (npm <-> pip parity with _installer.py).
 const MANAGED = [
   ["skill/add", [".claude", "skills", "add"], false],
+  ["agents", [".claude", "agents"], false],
   ["tooling", [".add", "tooling"], true],
   ["docs", [".add", "docs"], false],
   ["personas-teacher", [".add", "personas-teacher"], false],
@@ -758,8 +759,9 @@ const MANAGED = [
 // Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
 // package always ships these (guarded by test_packaging); a malformed/older package missing one
 // must NOT abort the install — the core lands and the optional tree is soft-skipped. Twin of
-// _installer.py:OPTIONAL. Design-for-failure.
-const OPTIONAL = new Set(["personas-teacher"]);
+// _installer.py:OPTIONAL. Design-for-failure. `agents` joins here (roster-install-drift): the
+// phase-agent roster is a spawn-acceleration enhancement, not core runtime.
+const OPTIONAL = new Set(["personas-teacher", "agents"]);
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
@@ -915,7 +917,7 @@ function cleanReplaceTree(src, dest, stripTests) {
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
+const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {

@@ -125,4 +125,5 @@ APPROVE  <the question>
 - **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + flag count — pointing at the report above.
 - **NEXT is not a second gate.** The single decision stays in APPROVE; NEXT is ranked recommendations only.
 - **DECIDED never holds a gate-class call.** Security / residue / lowered-autonomy calls escalate in APPROVE.
+- **Recorded, not just performed.** Rendering this template at a gate is recorded, not assumed — TASK.md's `Reported: yes` (§3/§6) is the mechanical trace; `add.py audit` surfaces an unrecorded one (`contract_report_unrecorded` / `verify_report_unrecorded`), a spot-audit the backstop.
 </constraints>
