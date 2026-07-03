@@ -764,10 +764,28 @@ const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
 const LOCK_POLL_INTERVAL_MS = 50;   // ms between polls while waiting out a --lock-timeout
+const LOCK_TICKET_STALE_SECONDS = 5;   // a leaked per-generation reclaim ticket (its own holder
+                                        // crashed between winning it and its own best-effort
+                                        // cleanup) self-heals after this long — deliberately far
+                                        // shorter than LOCK_STALE_DEFAULT's own 600s: a ticket's
+                                        // own critical section is a small, fixed handful of
+                                        // syscalls (close/stat/unlink), microseconds under normal
+                                        // operation, so a multi-second margin is generous, not
+                                        // tight (global-lock-followups' own leaked-ticket-livelock
+                                        // fix — independent of, not shared with, acquireProjectLock's
+                                        // own PROJECT_LOCK_TICKET_STALE_SECONDS below).
 const PROJECT_LOCK_FILE = ".install.lock";   // the project-scope init()/update() lock (never user-data)
 const PROJECT_LOCK_STALE_DEFAULT = 120;      // seconds (2 min); ADD_PROJECT_LOCK_STALE_SECONDS env-overridable —
                                               // deliberately SHORTER than LOCK_STALE_DEFAULT's own 600s (see
                                               // _installer.py's _PROJECT_LOCK_STALE_DEFAULT for the reasoning)
+const PROJECT_LOCK_TICKET_STALE_SECONDS = 5;   // a leaked per-generation reclaim ticket self-heals
+                                                // after this long — independent of, but numerically
+                                                // identical to, acquireUpdateLock's own
+                                                // LOCK_TICKET_STALE_SECONDS: a ticket's own critical
+                                                // section is the same small, fixed handful of
+                                                // syscalls regardless of which lock it guards
+                                                // (project-scope-install-lock's own
+                                                // leaked-ticket-wedge fix)
 
 // A synchronous sleep via Atomics.wait on a throwaway SharedArrayBuffer — builtin, no new
 // dependency; Node's MAIN thread (unlike a browser's) is allowed to block on Atomics.wait.
@@ -1021,15 +1039,19 @@ function dataKey(projectAbspath) {
   return base + "-" + digest;
 }
 
-// A top-level .add/ entry is user-data unless it is a managed tree, a transient artifact, or a
+// A top-level .add/ entry is user-data unless it is a managed tree, a transient artifact, a
 // scratch-staging sibling left by an interrupted persist/restore/clean-replace call (the shared
-// .add-tmp-/.add-bak- infix convention — crash-safe-persist-restore v1 §3 M11).
+// .add-tmp-/.add-bak- infix convention — crash-safe-persist-restore v1 §3 M11), or a
+// per-generation reclaim-ticket sibling a lock's own stale-reclaim mechanism may transiently (or,
+// if leaked by a crash, semi-persistently) leave next to it (the .reclaim-<inode> infix
+// convention — project-scope-install-lock / global-lock-followups' leaked-ticket self-heal fix).
 function isUserData(name) {
   if (DATA_EXCLUDE.includes(name)) return false;
   if (name.startsWith("scope-snapshot")) return false;
   if (name.includes("pre-archive-bak")) return false;
   if (name.endsWith(".bak.json")) return false;
   if (name.includes(".add-tmp-") || name.includes(".add-bak-")) return false;
+  if (name.includes(".reclaim-")) return false;
   return true;
 }
 
@@ -1344,6 +1366,7 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
     let st;
     try { st = fs.statSync(lockPath); }
     catch (_e) { continue; }   // vanished between the failed open and the stat — retry the create
+    let reclaimed = false;
     if (Date.now() - st.mtimeMs > staleAfterMs) {
       // Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let a
       // second racer delete a FIRST racer's already-recreated, live lock). A NAIVE "rename to a
@@ -1359,45 +1382,88 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
       // backs off WITHOUT ever touching `lockPath` itself, so nobody can ever unlink/steal a
       // generation they didn't win the ticket for.
       const ticketPath = lockPath + ".reclaim-" + st.ino;
-      let ticketFd;
+      let ticketFd = null;
       try {
         ticketFd = fs.openSync(ticketPath, "wx");
-      } catch (_e) {
-        // LOST the per-generation reclaim ticket — someone else already owns reclaiming THIS
-        // specific stale file; never touch lockPath ourselves. Fall back to the top of the loop
-        // and let the ordinary open/EEXIST/age/deadline logic re-evaluate reality fresh (by the
-        // time we retry, the ticket-winner will typically have already finished its own brief
-        // reclaim).
-        continue;
-      }
-      try {
-        fs.closeSync(ticketFd);
-        // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
-        // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
-        // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act on
-        // it," and in that gap this SAME path can already have cycled through a full, unrelated
-        // reclaim by someone else (that old inode gone, a fresh one created and now actively
-        // held — empirically observed while building this fix: a late-scheduled racer's ticket
-        // for a long-superseded inode still "won" trivially, since nothing else was contesting
-        // that specific stale ticket name any more, and its UNCONDITIONAL unlink then blindly
-        // destroyed the CURRENT live holder's fresh file). Re-stat immediately before mutating
-        // and compare inodes: only remove the file if it is STILL, right now, the exact
-        // generation we ticketed for; otherwise our ticket is moot — leave the (unrelated,
-        // currently live) file completely alone and let the loop's own open/EEXIST/age logic
-        // re-evaluate reality fresh on the next iteration.
-        let currentIno = null;
-        try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
-        if (currentIno === st.ino) {
-          try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+      } catch (_e) { /* LOST the ticket outright — checked below before giving up on it */ }
+      if (ticketFd === null) {
+        // LOST the per-generation reclaim ticket outright. Before treating this as "someone
+        // else legitimately owns reclaiming THIS stale file right now," check whether THAT
+        // ticket is itself orphaned — leaked by a process that crashed between winning it and
+        // its own best-effort cleanup below. Left unchecked, a leaked ticket wedges this
+        // generation's reclaim FOREVER: the ticket's name is deterministically keyed to
+        // `lockPath`'s own (unchanging) inode, so every future contender recomputes the
+        // IDENTICAL ticket path, loses the identical EEXIST race, and — pre-fix — `continue`d
+        // straight back to the top of this loop without ever reaching the `deadline` check
+        // below: an unbounded livelock no `--lock-timeout` could ever interrupt (found by a
+        // fresh adversarial verify pass; independently reproduced here against the unmodified
+        // code via both a direct call and a real `node cli.js` subprocess, both still spinning
+        // well past their own declared timeout budget).
+        let tst = null;
+        try { tst = fs.statSync(ticketPath); } catch (_e) { /* vanished — retry the create below */ }
+        if (tst === null) {
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}
+        } else if (Date.now() - tst.mtimeMs > LOCK_TICKET_STALE_SECONDS * 1000) {
+          // The ticket ITSELF is orphaned — reclaim it with the IDENTICAL identity-verified
+          // discipline already used for the main lock just above, one level down: re-stat
+          // immediately before unlinking and compare inode, so a ticket some THIRD, still-
+          // legitimately-in-flight reclaimer freshly (re)created in the gap between our stat
+          // and our unlink is never destroyed. A plain unconditional unlink-by-path here would
+          // reopen the IDENTICAL TOCTOU hole this whole ticket mechanism exists to close, one
+          // level down (e.g. a naive "just unlink if old" would let racer A destroy racer C's
+          // brand-new, not-yet-stale ticket for the SAME generation, so A and C would BOTH
+          // believe they are the sole reclaimer — the exact double-hold bug this ticket
+          // mechanism was built to prevent, reintroduced one level down).
+          let currentTino = null;
+          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
+          if (currentTino === tst.ino) {
+            try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
+          }
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
         }
-      } finally {
-        try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+        // else: the ticket is live and fresh — a genuine, currently-in-flight reclaimer;
+        // ticketFd stays null and falls through to the shared deadline check below (previously
+        // an unconditional `continue` back to the top of this same branch — now routed the same
+        // as any other non-progress iteration, never a special case that could spin unboundedly
+        // on its own).
       }
+      if (ticketFd !== null) {
+        try {
+          fs.closeSync(ticketFd);
+          // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
+          // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
+          // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act on
+          // it," and in that gap this SAME path can already have cycled through a full, unrelated
+          // reclaim by someone else (that old inode gone, a fresh one created and now actively
+          // held — empirically observed while building this fix: a late-scheduled racer's ticket
+          // for a long-superseded inode still "won" trivially, since nothing else was contesting
+          // that specific stale ticket name any more, and its UNCONDITIONAL unlink then blindly
+          // destroyed the CURRENT live holder's fresh file). Re-stat immediately before mutating
+          // and compare inodes: only remove the file if it is STILL, right now, the exact
+          // generation we ticketed for; otherwise our ticket is moot — leave the (unrelated,
+          // currently live) file completely alone and let the loop's own open/EEXIST/age logic
+          // re-evaluate reality fresh on the next iteration.
+          let currentIno = null;
+          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
+          if (currentIno === st.ino) {
+            try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+          }
+        } finally {
+          try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+        }
+        reclaimed = true;
+      }
+    }
+    if (reclaimed) {
       continue;                                          // retry the create immediately (self-heal)
     }
     if (deadline !== null && Date.now() < deadline) {
       sleepSync(LOCK_POLL_INTERVAL_MS);
-      continue;                                          // keep polling a LIVE holder until the deadline
+      continue;   // keep polling a LIVE holder — or a still-contested ticket — until the deadline.
+                  // This check is now ALWAYS reachable on every non-reclaiming iteration (the
+                  // fix's other half): a wedged/leaked ticket can no longer bypass it by looping
+                  // back to the top of the `while` unconditionally, so an explicit --lock-timeout
+                  // is honored even while a stale ticket is being self-healed above.
     }
     timedOut = true;
     break;
@@ -1482,8 +1548,43 @@ function acquireProjectLock(addDir, env = process.env) {
       try {
         ticketFd = fs.openSync(ticketPath, "wx");
       } catch (_e) {
-        // LOST the per-generation reclaim ticket -- fail-fast below (fd stays null); never a
-        // second reclaim attempt, never a poll (M7).
+        // LOST the per-generation reclaim ticket outright -- checked below before treating this
+        // as "someone else legitimately owns reclaiming THIS stale file right now."
+      }
+      if (ticketFd === null) {
+        // LOST the ticket outright. A leaked ticket -- its own holder crashed between winning
+        // it and its own best-effort cleanup below -- would otherwise wedge this generation's
+        // reclaim PERMANENTLY: the ticket's name is deterministically keyed to `lockPath`'s own
+        // (unchanging) inode, so every future contender recomputes the IDENTICAL ticket path and
+        // loses the identical EEXIST race forever (found by a fresh adversarial verify pass;
+        // independently reproduced here against the unmodified code).
+        let tst = null;
+        try { tst = fs.statSync(ticketPath); } catch (_e) { /* vanished — retry the create below */ }
+        if (tst === null) {
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}
+        } else if (Date.now() - tst.mtimeMs > PROJECT_LOCK_TICKET_STALE_SECONDS * 1000) {
+          // The ticket ITSELF is orphaned — reclaim it with the IDENTICAL identity-verified
+          // discipline already used for the main lock just above, one level down: re-stat
+          // immediately before unlinking and compare inode, so a ticket some THIRD, still-
+          // legitimately-in-flight reclaimer freshly (re)created in the gap between our stat and
+          // our unlink is never destroyed. A plain unconditional unlink-by-path here would
+          // reopen the IDENTICAL TOCTOU hole this whole ticket mechanism exists to close, one
+          // level down (e.g. a naive "just unlink if old" would let racer A destroy racer C's
+          // brand-new, not-yet-stale ticket for the SAME generation, so A and C would BOTH
+          // believe they are the sole reclaimer — the exact double-hold bug this ticket
+          // mechanism was built to prevent, reintroduced one level down). Exactly one extra
+          // self-heal attempt — never a second, matching M7's own "no poll, ever" discipline
+          // already governing the main lock's own reclaim above.
+          let currentTino = null;
+          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
+          if (currentTino === tst.ino) {
+            try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
+          }
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
+        }
+        // else: the ticket is live and fresh — a genuine, currently-in-flight reclaimer;
+        // ticketFd stays null, falls through to the SAME fail-fast below (M7 — this lock never
+        // polls a live holder, whether it is the main lock or a contested ticket).
       }
       if (ticketFd !== null) {
         try {
