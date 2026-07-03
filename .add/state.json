@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "project-scope-install-lock",
+  "active_task": "global-lock-followups",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2535,12 +2535,12 @@
     },
     "global-lock-followups": {
       "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:10:05+00:00",
+      "updated": "2026-07-03T11:55:08+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2579,7 +2579,17 @@
           "add-method/bin/cli.js",
           "add-method/tooling/test_global_update_harden.py"
         ],
-        "snapshot_md5": "3c218d64254c9436f0698ed978d59a58"
+        "snapshot_md5": "b6ca8b57008a4b7f66afe683bc8f2d8e"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-03T11:54:45+00:00",
+            "reason": "scope_violation: task 'global-lock-followups' touched outside its declared \u00a75 Scope \u2014 tmp/milestone-board-post-lock-saga.txt \u00b7 tmp/observe-fill-install-lock.txt \u00b7 tmp/reconcile-lock-followups-checkboxes.txt (3 total)",
+            "source": "scope"
+          }
+        ]
       }
     },
     "global-data-restore-harden": {
@@ -2632,14 +2642,14 @@
     },
     "project-scope-install-lock": {
       "title": "Project-scoped lock around install()/update() reconcile, both twins",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "install-update-hardening",
       "depends_on": [
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:10:05+00:00",
+      "updated": "2026-07-03T11:10:15+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2679,11 +2689,16 @@
             "source": "scope"
           }
         ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T11:10:05+00:00",
+  "updated": "2026-07-03T11:55:08+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3617,7 +3632,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "install-update-hardening": "project-scope-install-lock"
+    "install-update-hardening": "global-lock-followups"
   },
   "todos": [
     {

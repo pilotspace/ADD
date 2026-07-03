@@ -3,7 +3,7 @@
 slug: global-lock-followups · created: 2026-07-02 · stage: mvp · risk: high
 milestone: install-update-hardening
 autonomy: conservative
-phase: verify
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -877,6 +877,16 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
   full-function-level multi-process evidence already gathered at the Python layer, but a
   natural next-loop hardening (evidence: independent add-verify pass, Advisor Concurrency
   lens, §6)
+- [SPEC · open] sweep aged orphan `.reclaim-*` ticket files left under the global home by a
+  crashed holder — currently permanent, harmless litter (never mistaken for user-data since
+  the `_is_user_data`/`isUserData` fix, but never cleaned either); a natural fit for a
+  periodic maintenance pass (evidence: the reopen-round ticket-leak fix added
+  self-heal-on-next-contention only, no sweep)
+- [SPEC · open] independently stress-test the ticket's identity-verified reclaim
+  (inode-match-before-unlink) on Linux and Windows — this session's 1167+ adversarial
+  attempts (426 against this task's own `_update_lock`) all ran on macOS/APFS; inode reuse
+  timing and semantics differ by filesystem (evidence: the reopen round's recursion-closure
+  investigation was explicitly scoped to the session's actual dev platform, not cross-platform)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
@@ -909,4 +919,26 @@ What did this loop teach the foundation? One line each, tagged by competency
   discovery (evidence: the independent add-verify pass authored 2 new tests — 8 trials × 6
   processes on the raw lock primitive, 6 trials × 8 processes on the full `install()` path —
   after judging the builder's own thread-based evidence insufficient for a risk:high gate)
+- [TDD · open] `test_concurrent_stale_reclaim_exactly_one_wins`'s own
+  `assertGreaterEqual(results.count("acquired"), 1, ...)` stayed green through the entire
+  TOCTOU race's lifetime — true even with 2+ processes simultaneously believing they held
+  the lock. A liveness assertion ("someone eventually got in") is not an exclusivity
+  assertion ("never more than one at a time"); the gap surfaced only via an independent
+  verify pass on a sibling task, not this task's own suite (evidence: reopen-round §6,
+  `test_global_update_harden.py` shared the identical weak-assertion shape as
+  `test_project_scope_lock.py`)
+- [ADD · open] a bounded `--lock-timeout` retry loop can be silently defeated by an early
+  `continue` sitting on a codepath that never reaches its own deadline check — both the
+  "won the ticket" and "lost the ticket" branches unconditionally `continue`d past the
+  `if deadline...`/`raise BlockingIOError` check, so once a reclaim ticket leaked,
+  `--lock-timeout` stopped being enforceable. The loop still eventually self-healed, so this
+  reads as merely "slow" rather than "hung" on casual observation — worth a dedicated "does
+  every loop branch reach its own exit check" review for future bounded-wait designs
+  (evidence: reopen round 3 build, the `reclaimed`-flag restructuring in `_update_lock`)
+- [SDD · open] §6 summary checkboxes drifted stale relative to fresh Refute-read/Advisor
+  verdict prose across this task's own multiple reopen-round rebuilds — for a
+  `risk: high`/`autonomy: conservative` task, that gap directly misrepresents resolved work
+  to the one human whose sign-off is mandatory, not merely a cosmetic lag (evidence:
+  `add.py report --decide` surfaced 2 stale unchecked items this session before manual
+  reconciliation)
 
