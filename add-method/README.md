@@ -39,7 +39,7 @@ pip install pilotspace-add && pilotspace-add init
 
 Then, in your coding agent, say what you want to build:
 
-> `/add` — *"I want to let users transfer money between their own accounts."*
+> `/add` — *"Let users log in with email + password / SSO, and keep them signed in for 30 days unless they explicitly log out."*
 
 The agent sizes it into a milestone (you confirm the shape), drafts the spec →
 scenarios → contract → tests as one bundle (you approve once, at the frozen
@@ -182,7 +182,7 @@ exactly what that means, so there are no surprises:
 ADD is AI-first: you talk to the agent; it drives the method. In Claude Code, run
 **`/add`** and say what you want to build:
 
-> `/add` — *"I want to let users transfer money between their own accounts."*
+> `/add` — *"Let users log in with email + password / SSO, and keep them signed in for 30 days unless they explicitly log out."*
 
 **Works with your agent.** The installer detects which coding agent you're in and
 drops the context file it reads — so ADD drives through the CLI under **Claude Code,
