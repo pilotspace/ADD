@@ -3,7 +3,7 @@
 goal: add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock
 rationale: <why this scope — the confirmed intake classification (bucket + reason)>
 stage: mvp · status: active · created: 2026-07-02T14:46:06+00:00
-release: pending
+release: 1.16.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

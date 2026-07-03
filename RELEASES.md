@@ -1,5 +1,12 @@
 # Releases
 
+## 1.16.0 — 2026-07-03
+milestones: install-update-hardening
+loose tasks: none
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: 1 milestone (install-update-hardening — 4/4 tasks gate=PASS, 1167+ combined adversarial concurrency attempts / 0 anomalies, independent verify + advisor 3-lens on every task, human-reviewed for the risk:high task); PR #129 merged 2eeb008 (66 commits); CI 9/9 green; check 513/0 (65 warn, routine); zero HARD-STOP / RISK-ACCEPTED across 116 tasks
+
 ## 1.15.0 — 2026-07-03
 milestones: seams, context-search, drift-guard, artifact-graph, ground-trust, traceability-ids, persona-teacher-bundle, persona-learning-loop, advisor-gated-autonomy, portable-roster, loop-readability
 loose tasks: scope-exclude-claude, mirror-resync, untrack-add-tooling, installer-gitignore-mirrors, ci-tooling-mirror-gap, phase-agents-lean, gitignore-vendor-path-fix, update-global-gitignore-seed, nested-suite-skip-count-tolerance, report-plan-approve, status-pagination, skill-tree-compaction-audit, add-advisor
