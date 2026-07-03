@@ -4,6 +4,52 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [1.16.0] — 2026-07-03
+
+Closes the **install-update-hardening** milestone: `add.py init`/`update` (both
+`--global` and project-scope, pip + npm twins) now survive a crash or a
+concurrent run without leaving a half-written `.add/` tree or a wedged lock.
+Backward-compatible; nothing removed or renamed on the CLI surface.
+
+### Added (a lock where none existed)
+- **Project-scope install/update lock.** Two concurrent `install`/`update` runs
+  against the same project-scope destination can no longer interleave writes —
+  one waits or fails cleanly (`install_in_progress`). Independent of the
+  existing global lock — separate file, separate default threshold, no shared
+  code — but the same identity-verified reclaim discipline (below).
+- **`--lock-timeout <seconds>`, opt-in** (`init` and `update`, both twins).
+  Unset keeps today's behavior — fail immediately if the lock is held; set it
+  to poll instead, so CI can wait out a held lock. The staleness threshold
+  itself (when a held lock counts as abandoned, not merely held) stays an
+  env-var (`ADD_LOCK_STALE_SECONDS`), not a routine flag.
+
+### Fixed (crash-safety, both twins)
+- **Managed-tree reconcile** (`_clean_replace` / `cleanReplaceTree`) and the
+  **user-data persist/restore path** (`_persist_data` / `_restore_data`) both
+  move to a stage-then-commit idiom — self-heal a leftover scratch sibling,
+  stage into a fresh uniquely-named one, commit via same-parent rename, sweep
+  the old backup. A killed process mid-copy or mid-write no longer leaves a
+  half-written tree; the next run heals it automatically.
+- **Global and project-scope lock reclaim, made identity-verified.** A stale
+  lock used to be reclaimed by unlinking it by *path* — an independent verify
+  pass found this let two racers both believe they held it at once. Reclaim
+  now re-stats the lock immediately before unlinking and proceeds only on an
+  inode match; a per-generation ticket file gates entry to the reclaim itself,
+  so a losing racer never touches the real lock file at all. Confirmed
+  against 1167+ combined adversarial concurrent attempts, 0 anomalies, across
+  both locks.
+
+### Known limitation
+- The reclaim fix's identity check compares inode numbers — sound only if the
+  filesystem never reuses one inside the brief re-stat-to-unlink window.
+  Confirmed on macOS/APFS this cycle; Linux/Windows were not independently
+  re-verified. Disclosed, not blocking — flagged for the next verify pass.
+
+### Changed
+- Five version sources bump in lockstep to **1.16.0** (`package.json`,
+  `package-lock.json` ×2, `pyproject.toml`, `.claude-plugin/plugin.json`,
+  `add_method.__version__`).
+
 ## [1.15.0] — 2026-07-02
 
 Ten milestones — the largest bundle yet — round out ADD's self-knowledge

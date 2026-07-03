@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.15.0 release readiness.
+"""Red/green tests for the 1.16.0 release readiness.
 
-Bundles ten milestones — seams (SEAMS.md shared-contract doc) + context-search
-(keyword-searchable milestone/task index) + drift-guard (symbol-cited §0,
-ground_sha) + artifact-graph (task<->milestone<->release backlinks) +
-ground-trust (GROUND surfaces issues/risks + related-intent links) +
-traceability-ids (M#/R# rule IDs + scenario/test coverage lint) +
-persona-teacher-bundle (vendored agency-agents teacher corpus) +
-persona-learning-loop (project-fit persona learn/apply loop) +
-advisor-gated-autonomy (persisted advisor-guarded auto+parallel run mode) +
-portable-roster (non-Claude tools get the phase-roster via AGENTS.md) — plus
-13 loose tasks. All additive; nothing removed or renamed on the CLI surface.
-ENGINE_MD5/ENGINE_PKG_MD5 both moved this cycle (53 tasks touched code) —
+Bundles one milestone — install-update-hardening (add.py init/update, both
+--global and project-scope, pip+npm twins, survive a crash or a concurrent run
+without leaving a half-written .add/ tree or a wedged lock): a new project-scope
+install/update lock + opt-in --lock-timeout, plus crash-safe stage-then-commit
+for the managed-tree reconcile copy and the user-data persist/restore path, plus
+a TOCTOU race + ticket-leak livelock fix in the existing global lock. No loose
+tasks attributed this cut. Installer-only — the ADD engine (add.py) is
+byte-identical (ENGINE_MD5 unchanged) since this milestone's own ship-by-domain
+review named tooling (_installer.py + cli.js) as the only surface touched;
 parity across the 3 mirror trees is what this suite pins, not a fixed hash.
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 1.15.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 1.16.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
 Run:
-    python3 -m unittest test_release_1_15_0 -v
+    python3 -m unittest test_release_1_16_0 -v
 """
 import hashlib
 import json
@@ -34,19 +32,19 @@ CHANGELOG = PKG / "CHANGELOG.md"
 CI_YML = REPO / ".github" / "workflows" / "ci.yml"
 PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
-VERSION = "1.15.0"
-PRIOR_VERSIONS = ("1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0", "1.8.0",
+VERSION = "1.16.0"
+PRIOR_VERSIONS = ("1.15.0", "1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0", "1.8.0",
                   "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0",
                   "1.2.0", "1.1.0", "1.0.0")
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline milestones the 1.15.0 notes must name (add-method/CHANGELOG.md is the
-# hand-authored Keep-a-Changelog; slugs appear verbatim in each "### Added (<slug> — ...)")
-FEATURE_ANCHORS = ("traceability-ids", "persona-learning-loop", "portable-roster")
+# the headline milestone the 1.16.0 notes must name (add-method/CHANGELOG.md is the
+# hand-authored Keep-a-Changelog; the slug appears verbatim in the entry's intro)
+FEATURE_ANCHORS = ("install-update-hardening",)
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_1_15_0_entry(self):
+    def test_changelog_has_1_16_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -55,7 +53,7 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"1.15.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"1.16.0 entry must name: {anchor}")
 
     def test_changelog_ships_in_both_channels(self):
         files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
@@ -94,10 +92,25 @@ class WorkflowHygieneTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    # NOTE: the version-equality asserts (package.json / pyproject / plugin / __version__
-    # all == "1.15.0") migrated FORWARD to test_release_1_16_0.py when the version bumped
-    # off 1.15.0 — the live version is pinned by exactly one release test at a time. The
-    # 1.15.0 changelog-lineage + workflow-hygiene + ship-channel guards below stay valid.
+    def test_versions_agree_at_1_16_0(self):
+        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
+        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+        self.assertEqual((pkg, py), (VERSION, VERSION),
+                         "publish.yml's guard would fail this release closed")
+
+    def test_plugin_version_agrees(self):
+        plugin = json.loads(
+            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.assertEqual(plugin, VERSION,
+                         "the Claude Code plugin manifest must match the shipped version")
+
+    def test_runtime_version_agrees(self):
+        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
+        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
+        self.assertEqual(runtime, VERSION,
+                         "add_method.__version__ must match the shipped version")
 
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
