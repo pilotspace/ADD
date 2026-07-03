@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="add-banner.jpg" alt="ADD — AI-Driven Development" width="100%">
+</p>
+
 # (ADD) AI-Driven Development - LOOP SKILL AGENT
 AI Workflow Methodology - AI Tool - MIT
 > 1 LOOP skill ⟳ 5 Specs ⟳ 8 Growth-Steps
