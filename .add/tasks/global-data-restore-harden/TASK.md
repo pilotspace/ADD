@@ -524,21 +524,94 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: independent reviewer (add-verify subagent, TDD-Verifier persona) · adversarially checked:
+  (1) RED reproduced independently, not trusted on the builder's word: swapped bdbc373's
+  pre-implementation `_installer.py`/`cli.js` into the worktree and re-ran the full 36-test
+  suite — got `FAILED (failures=11, errors=1)` = 12 failures, NAME-FOR-NAME identical to
+  bdbc373's own commit-message list; restored via `git checkout HEAD --` immediately after,
+  re-confirmed 36/36 green again. Proves the new tests genuinely discriminate old vs. new
+  behavior — not vacuous, not overfit to fixtures.
+  (2) Read (not skimmed) the 3 highest-risk test bodies directly against their claims: the
+  interleaved-calls test's `racing_copyfile` hook + its weak "one caller's full content, never
+  a mix / no scratch survives" asserts; the mid-stage-failure test's write-garbage-then-raise
+  mock (the exact fix OBSERVE-NOTES' own competency delta names, confirmed present in the
+  committed test, not just described); the full `ParityRestoreTest` class (confirmed
+  `test_npm_restore_and_prune_behavioral_smoke` genuinely subprocesses `node`, scoped to
+  restore+prune only — no persist happy-path coverage, see Advisor Architecture lens below).
+  (3) Confirmed via a PLAIN (non-git) diff of full pre/post file content — not the commit's own
+  stat — that the build touches exactly 3 hunks in `_installer.py` (imports ·
+  `_is_user_data`+`_sweep_scratch` · `_persist_data`/`_restore_data`) and 2 in `cli.js`
+  (`isUserData`+`sweepScratch`+`persistData` · `restoreData`); `install()`/`_update_global()`
+  and their JS callers are BYTE-IDENTICAL, not merely claimed so.
+  No vacuous asserts, no stubbed-away logic found; every assertion checks real filesystem
+  post-state (content, absence, exact leftover sets), not internal call-counts alone.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: independent reviewer (add-verify subagent, TDD-Verifier persona; STRIDE lens borrowed
+  from security-gatekeeper for lens 1)
+1. Security: CLEAR — STRIDE pass found no hit: no new auth/identity surface; frozen §1-§3 and
+  every existing test proven untouched since freeze (commit stats + plain diff, not just
+  claimed); 0 new dependencies beyond stdlib `tempfile`/`uuid` + Node builtin `fs`/`path`/
+  `crypto` (already imported), confirmed via diff; both twins stage via `tempfile.mkdtemp`/
+  `fs.mkdtempSync` (collision/TOCTOU-safe by construction) INSIDE the same privileged parent as
+  the final target, never a shared/world-writable tmp location; no eval/dynamic-exec, no
+  secrets, no network IO added.
+  One independently-discovered 💭 note (not a finding, not previously disclosed by the builder):
+  `_persist_data`'s stage-via-mkdtemp mechanism changes `home/data/<key>`'s OWN top-level
+  directory mode from the old mkdir-default (e.g. 0755, umask-dependent) to a fixed 0700
+  (owner-only) — empirically verified (old `mkdir` -> `drwxr-xr-x` vs new `mkdtemp`+rename ->
+  `drwx------`), because no `copystat`-equivalent step ever restores the top-level dir's mode
+  after staging. Confirmed this is SPECIFIC to persist's whole-tree case: `_restore_data`'s
+  directory-entry path is unaffected (empirically verified — `shutil.copytree(...,
+  dirs_exist_ok=True)` still fixes the mode via its own internal `copystat` call, landing at the
+  source's original mode either way). Strictly MORE restrictive, not less — a safe-direction side
+  effect, not a vulnerability; worth a Spec-delta line so it becomes a conscious choice.
+2. Concurrency: RESIDUE — the self-heal-vs-interleaved-caller interaction (OBSERVE-NOTES finding
+  1) is real; independently re-derived by hand-tracing every commit-window interleaving (not
+  trusted from the builder's account) AND by reading the committed
+  `test_persist_two_interleaved_calls_land_one_full_valid_snapshot` directly: the weak guarantee
+  provably holds under adversarial interleaving — dest always ends up ONE caller's full valid
+  content, never a mix; a losing/interleaved caller always raises (including a "second-order"
+  raise on its own rollback attempt, when the interleaver's self-heal already consumed the
+  rollback's target), never silently misreports success. The "already-accepted, out-of-scope"
+  framing IS honest: this is a specific instance of the pre-declared "two lock-less callers
+  racing on the same target" carve-out (§3 Reject), and its stated guarantee holds under my own
+  independent trace, not just the builder's word — not a new failure mode the carve-out fails to
+  cover. `_restore_data`'s simpler (sweep-only) self-heal is actually SAFER by construction than
+  persist's — its `.add-tmp-*` glob target structurally cannot match the permanent, non-token
+  `.bak` sidecar, so a concurrent self-heal can never consume a force-restore's in-flight backup
+  the way persist's can consume its own in-flight backup. Residual debuggability rough edge (a
+  confusing second-order exception rather than the root cause reaching the caller) noted for the
+  next loop; not a correctness or data-loss defect. Non-blocking.
+3. Architecture: RESIDUE — (a) `persistData`'s own happy/refresh path has NO committed real-
+  node-subprocess test (confirmed directly: `test_npm_restore_and_prune_behavioral_smoke` drives
+  only restore+prune; `test_parity_surface`/`test_parity_call_site_shape` are pure string/
+  substring checks, never a subprocess) — a real but frozen-AT-DESIGN-TIME (M15's own scope
+  named only restore+prune), not build-time-corner-cut, gap; acceptable non-blocking given the
+  Python reference implementation is exhaustively tested for this exact logic and a structural
+  parity check at least confirms the JS mirror's call-site shape. Recommend the next loop's Spec
+  delta promote this to a Must.
+  (b) The pre-existing JS `persistData`-vs-`restoreData` symlink-dereference asymmetry is
+  confirmed via `git log -S"dereference"` to predate this task (introduced by `bbc8562`, a prior
+  task) and is correctly left untouched (frozen scope's byte-identical-content invariant) —
+  sharper framing than OBSERVE-NOTES' own: it is not just cross-function but also CROSS-TWIN
+  (Python's `_persist_data` already dereferences via `copytree`/`copyfile` defaults; only JS's
+  `persistData` is the odd one out). Worth tightening the Spec-delta wording, not a blocker.
+Verdict: PASS
+Residue: non-security only — (1) self-heal-vs-interleaved-caller: bounded/fail-loud, matches the
+  pre-declared concurrency carve-out, confirmed by independent trace + test read, not merely
+  asserted; (2) `persistData`'s real-subprocess test coverage thinner than `restoreData`'s, a
+  frozen-at-design-time scope choice, not a build-time cut; (3) pre-existing (not this task's) JS
+  cross-twin symlink-dereference asymmetry, correctly left alone; (4) NEW, independently-found,
+  safe-direction (more restrictive) permission-bit change on `home/data/<key>`'s own directory
+  mode. None are security findings; none indicate a gamed green.
+Binding: advisory — architecture (this task hardens core installer data-safety mechanisms, not a
+  purely mechanical change; feeds the human's own GATE RECORD decision, does not self-resolve it)
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
