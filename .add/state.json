@@ -2540,7 +2540,7 @@
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:08:19+00:00",
+      "updated": "2026-07-03T11:10:05+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2579,7 +2579,7 @@
           "add-method/bin/cli.js",
           "add-method/tooling/test_global_update_harden.py"
         ],
-        "snapshot_md5": "655fdf54ef0a50245c464c35691ccab7"
+        "snapshot_md5": "3c218d64254c9436f0698ed978d59a58"
       }
     },
     "global-data-restore-harden": {
@@ -2639,7 +2639,7 @@
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:08:19+00:00",
+      "updated": "2026-07-03T11:10:05+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2663,22 +2663,27 @@
           "add-method/bin/cli.js",
           "add-method/tooling/test_project_scope_lock.py"
         ],
-        "snapshot_md5": "655fdf54ef0a50245c464c35691ccab7"
+        "snapshot_md5": "3c218d64254c9436f0698ed978d59a58"
       },
       "heal": {
-        "attempts": 1,
+        "attempts": 2,
         "history": [
           {
             "at": "2026-07-03T08:07:35+00:00",
             "reason": "refute-read:Independent verify found a reproducible TOCTOU race in the stale-lock reclaim path (unlink-by-path with no identity check lets 2+ racers hold the lock simultaneously; test_concurrent_stale_reclaim_exactly_one_wins asserted >=1 instead of ==1). Looping back to build for a rename-to-quarantine fix + strengthened test.",
             "source": "refute-read"
+          },
+          {
+            "at": "2026-07-03T11:08:47+00:00",
+            "reason": "scope_violation: task 'project-scope-install-lock' touched outside its declared \u00a75 Scope \u2014 tmp/recross-tripwire-round4.txt (1 total)",
+            "source": "scope"
           }
         ]
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T11:08:19+00:00",
+  "updated": "2026-07-03T11:10:05+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
