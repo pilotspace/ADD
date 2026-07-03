@@ -2,11 +2,8 @@
 
 slug: project-scope-install-lock · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
-autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -99,8 +96,6 @@ Assumptions — lowest-confidence first:
   - [ ] A4: no bounded-wait CLI flag (Framings weighed) — a deliberate, disclosed choice, not an oversight; if the human wants CI-friendly waiting for the project-scope case too (symmetry with `global-lock-followups`'s own `--lock-timeout`), it is a small, additive follow-up (the same polling-loop shape, a new flag on `init`/`update`), not a redesign of anything M1-M11 already establish.
   - [x] A5 (RESOLVED, orchestrator re-check post-draft): M11's lock-ordering invariant was drafted as vacuous/forward-looking; `global-lock-followups` has since merged FIRST (`7396456`), so its own `install(as_global=True)` `_update_lock` wrap now exists in the current tree. Checked (not assumed): it sits inside the `as_global` sub-block, which M1's whole-function project-lock wrap will correctly nest OUTSIDE of — the invariant holds by the shape of the design, confirmed against the real merged code. No longer an open assumption; promoted to an explicit §4 TESTS item instead (a real `install(as_global=True)` call exercising both locks together).
 </assumptions>
-
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
 
 ---
 
@@ -206,8 +201,6 @@ Scenario: every other touched function's behavior is byte-identical to before th
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
@@ -390,14 +383,6 @@ Least-sure flag surfaced at freeze:
     constant) if wrong.
 
 Status: FROZEN @ v1 — approved by Tin Dang
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
 
 ---
 
@@ -439,12 +424,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/test_project_scope_lock.py` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -646,15 +625,6 @@ Strategy actually used: AS PLANNED, in the same 8-step batch order (constants ->
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -1013,11 +983,9 @@ Recommended GATE RECORD (not stamped — human/orchestrator decides): PASS. `aut
   decision.
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Reviewed by: Tin Dang · date: 2026-07-03
 
 ---
 
@@ -1026,14 +994,52 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose a NEW, independent lock primitive — own function, own lock file (`<target>/.add/.install.lock`), own env-overridable staleness default — that MIRRORS the proven O_EXCL/`"wx"` + mtime-age-self-heal PATTERN already established in this codebase, without calling into or extending either the current or the eventual `_update_lock`/`acquireUpdateLock`; rejected generalize/extend `_update_lock`/`acquireUpdateLock` itself to accept ANY root (home OR a project's `.add/` dir), calling it from both `_update_global` (existing) and `install`/`update` (new) (rejected: at draft time, `global-lock-followups`'s own hardening of that function was FROZEN but not yet merged — that specific coupling concern is now moot, since it merged (`7396456`) shortly after this draft was written; the choice still stands on its OWN, merge-order-independent merits — the two locks guard genuinely different-shaped resources — one shared, machine-wide, potentially-many-registered-projects propagation (tolerating a long ~600s staleness window and motivating an opt-in CI wait) versus one per-target, typically-few-seconds reconcile (wanting a much shorter default and no wait mode) — forcing one shared knob would be an awkward compromise between the two (this reasoning holds regardless of merge order, which is now moot: both tasks merged, `global-lock-followups` first) · no lock at all, relying solely on `_clean_replace`'s already-shipped per-call atomicity and accepting an unpredictable last-writer-wins outcome (rejected: the milestone's own 4th exit criterion explicitly demands "cannot interleave writes — one waits or fails cleanly," a strictly stronger guarantee than "each writer's OWN copy is internally atomic," which already exists today without any new work) · an OS-level advisory file lock (`fcntl.flock`/Windows `msvcrt.locking`) instead of an O_EXCL sentinel file (rejected: the identical, already-learned CONVENTIONS.md fv59 lesson — an OS-level advisory lock is not observable/compatible cross-twin, since Node has no `flock` equivalent without a native dependency, which the "no new dependency anywhere in this milestone" constraint rules out) · an opt-in `--lock-timeout`-style bounded-wait CLI flag, mirroring `global-lock-followups`'s own M4 (considered and DECLINED, not silently omitted: that flag's motivating use case — a CI job waiting out a potentially-long multi-project global propagation — does not transfer cleanly to a per-project lock whose expected hold duration is a handful of `_clean_replace` calls; immediate fail-fast is simpler, needs no new CLI surface, matching this milestone's own "no new flag surface for routine tuning" spirit, and the exit criterion itself offers "waits OR fails cleanly" as two equally acceptable options, not a mandate for waiting).
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: AS PLANNED, in the same 8-step batch order (constants -> Python `_project_lock` -> JS `acquireProjectLock` -> `install()` wrap -> `update()` wrap -> `cmdInit` wire -> `cmdUpdate` wire -> grep-confirm the 5 named untouched call sites stayed byte-identical), with the §4 RED suite (26 tests) written and committed FIRST as its own commit (`4682b00`), confirmed 16/26 failing for the traced right reason (an AttributeError on the not-yet-existing `_project_lock`/`PROJECT_LOCK_FILE` symbols, or the OLD lock-less `install()`/`update()` correctly not noticing a pre-existing/held lock file it doesn't check for yet) before any implementation line — the same TDD discipline both sibling tasks in this milestone followed.
+- [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+- [SPEC · open] sweep aged orphan `.reclaim-<inode>` ticket files (both `_project_lock`/
+  `_update_lock` and their JS twins) — a ticket leaked by a crash between winning it and its own
+  cleanup is currently permanent, harmless disk litter with nothing to clean it up (evidence:
+  round-4 independent verify's own repo-wide grep for any unlink/rmtree/sweep/gc/prune reference
+  to "reclaim" returned zero hits; a fresh, uncontended acquire/release cycle never touches an
+  orphaned ticket sitting in the same directory).
+- [SPEC · open] independently stress-test the ticket/lock identity check's inode-reuse assumption
+  on Linux and Windows, not just macOS/APFS (evidence: rounds 2 through 4 each disclosed the same
+  gap — every empirical concurrency repro this session, 1167+ adversarial attempts total, ran on
+  macOS/APFS only; the assumption "the filesystem never reuses an inode number for an unrelated
+  file inside the tiny re-stat-to-unlink window" rests on documented API contract, not
+  cross-platform measurement).
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [TDD · open] a concurrency test can look like it proves exclusivity while actually proving only
+  liveness — `assertGreaterEqual(results.count("acquired"), 1, ...)` is silently compatible with
+  MULTIPLE simultaneous winners, the exact violation it was named to catch (evidence: this
+  session's own `test_concurrent_stale_reclaim_exactly_one_wins`, in both this task and its
+  sibling, passed green through round 1's real double-acquisition bug; only an adversarial verify
+  pass building its own repro — not re-reading the test — surfaced the gap; the fix was a
+  temporal peak-concurrent-holders check, not a stronger count).
+- [ADD · open] a self-heal mechanism whose own bookkeeping can itself leak (a lock reclaimed via a
+  ticket file; the ticket itself un-swept) needs an explicit "does this recursion terminate"
+  check at verify — a build round can correctly fix the REPORTED symptom while leaving the same
+  bug CLASS one level deeper, and "no further bug found" is a different, weaker claim than "this
+  bug class cannot recur here, structurally" (evidence: this session's own 3-round arc — a TOCTOU
+  race, fixed by a ticket; the ticket itself leaked, fixed by a nested self-heal; only a 4th,
+  explicitly-scoped verify pass asked whether THAT fix could leak too, and answered with a
+  structural argument — the ticket is a contention filter above the one real exclusivity
+  primitive, not a second instance of it — backed by 1167+ adversarial attempts, not simply
+  another clean test run).
+- [SDD · open] a task's own §6 summary checkboxes can silently drift stale relative to its
+  Refute-read/Advisor verdict prose across multiple build-fix rounds, misrepresenting genuinely
+  resolved work as an open judgment call to a `report --decide` reader (evidence: this exact
+  session, 2 separate tasks — `global-data-restore-harden` earlier, `global-lock-followups` this
+  arc — each needed a manual checkbox-to-verdict reconciliation pass before their gate report
+  was accurate).
+
