@@ -14,7 +14,7 @@ Then mark `Status: FROZEN @ v1`. Generate a mock + contract tests so dependent
 work can start before the real code exists.
 </output_format>
 
-**The freeze is the one approval.** Present the bundle **lowest-confidence first**: the 1–2 points most likely wrong (`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Open with the ARC per `report-template.md`, rendering SHAPE then the freeze APPROVE as a guided choice (recommended pick + described alternatives). See `run.md`. The approval also freezes the §5 **Scope (may touch)** allowlist + Strategy declarations.
+**The freeze is the one approval.** Present the bundle **lowest-confidence first**: the 1–2 points most likely wrong (`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Open with the ARC per `report-template.md`, rendering SHAPE then the freeze APPROVE as a guided choice (recommended pick + alternatives) — **render before `FROZEN`, then record `Reported: yes` in §3; never on a timeout.** See `run.md`. The approval also freezes §5 **Scope (may touch)** + Strategy.
 
 ## The freeze review checklist
 

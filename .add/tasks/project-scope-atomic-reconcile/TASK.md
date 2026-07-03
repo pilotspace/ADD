@@ -2,11 +2,8 @@
 
 slug: project-scope-atomic-reconcile · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
-autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -108,8 +105,6 @@ Assumptions — lowest-confidence first:
   - [ ] A4: `os.replace`/`fs.renameSync` renaming a directory onto a FRESH (not-yet-existing) sibling name is a single atomic syscall on every platform this project supports — confirmed for POSIX `rename(2)`; extends this codebase's own existing "atomic on POSIX + Windows (same filesystem)" claim (`_write_registry`/`writeRegistry`) from the file case to a directory-rename-to-a-fresh-name, which shares the same primitive and avoids the non-portable "replace a non-empty directory" restriction (the target name doesn't yet exist). Residual risk: Windows antivirus/indexer transient file-locking — a known general flakiness this task doesn't specially handle, matching this codebase's existing posture (no retry-on-rename anywhere else either).
 </assumptions>
 
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
-
 ---
 
 ## 2 · SCENARIOS — pass/fail cases ▸ docs/04-step-2-scenarios.md
@@ -198,8 +193,6 @@ Scenario: two concurrent, lock-less runs racing on the same dest — ruled out o
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
@@ -290,33 +283,31 @@ Least-sure flag surfaced at freeze:
     function) — flagging so the richer behavior is a conscious freeze decision, not an
     AI-assumed one.
 
-Status: DRAFT
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
+Status: FROZEN @ v1 — approved by Tin Dang
 
 ---
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: 95% of the new self-heal/stage/commit/sweep logic in both twins
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_scn1_missing_dest_materialized_no_scratch_survives: absent dest -> materialized + no scratch sibling · covers: M1, M3, M4, M8
+  - test_scn2_present_dest_refreshed_never_half_mixed: present dest -> new generation lands whole, orphan swept · covers: M1, M3, M4, M8
+  - test_scn3_strip_tests_applied_before_commit_not_after: strip runs on the STAGED copy, spied via the real copytree · covers: M2
+  - test_scn4_mid_copy_failure_present_dest_byte_for_byte_untouched: injected mid-copy raise -> present dest unchanged · covers: M5, R:stage_failure_dest_present_untouched
+  - test_scn5_mid_copy_failure_absent_dest_stays_absent: injected mid-copy raise -> absent dest stays absent · covers: M5, R:stage_failure_dest_absent_untouched
+  - test_scn6_commit_land_failure_after_aside_rolls_back: 2nd rename fails after 1st lands -> backup renamed back · covers: M6, R:commit_land_failure_rolls_back
+  - test_scn7_stale_staging_leftover_swept_before_new_stage: a pre-existing .add-tmp-* sibling is swept, call succeeds · covers: M7, R:stale_stage_swept_next_call
+  - test_scn8_stale_backup_self_heals_absent_dest: a pre-existing .add-bak-* sibling self-heals then updates to fresh · covers: M7, R:stale_backup_self_heals_next_call
+  - test_scn8b_stale_backup_restore_confirmed_not_mere_sweep: bonus — a subsequent stage failure proves RESTORE not sweep · covers: M7, A2 (reinforces scn8)
+  - test_scn9_return_contract_and_orphan_sweep_unchanged: 2 restored + 3 refreshed + 1 orphan swept, same shape as today · covers: M8
+  - test_scn11_dest_parent_not_yet_created: a 2-levels-missing parent chain is created, no error · covers: boundary, feeds M1
+  - test_scn10_python_twin_staging_failure_dest_untouched / _node_twin_ / _structural_parity_of_staged_commit_shape: same observable behavior + self-heal->stage->commit->sweep source-order parity, both twins · covers: M9
+  - test_scn12_concurrent_racing_writers_never_leave_a_blend: two lock-less threads race one dest -> never a blend (best-effort) · covers: R:concurrent runs (disclosed non-goal)
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
+Tests live in: `add-method/tooling/test_reconcile_rollup.py` · MUST run red (missing implementation) before Build.
 
 ---
 
@@ -327,80 +318,178 @@ Strategy (ordered batches): 1. `_clean_replace` (Python) → add the step-0 self
 
 Persona (optional): methodology-engine-dev
 Known-problem fixes: the self-heal glob must match ONLY the reserved `.add-tmp-`/`.add-bak-` prefixed siblings of THIS dest, never an unrelated same-parent entry → `dest.parent.glob(dest.name + ".add-tmp-*")` / an equivalent `fs.readdirSync` + prefix filter, not a bare wildcard · `shutil.copytree`'s target must be an EMPTY pre-existing dir for `dirs_exist_ok=True` to be safe — `tempfile.mkdtemp` already guarantees that, don't reuse a non-empty path · staging MUST be created inside `dest.parent` (never the system tmp dir) or the commit renames become cross-filesystem and silently fall back to a slow non-atomic copy+delete, defeating the design · `cli.js:fail()` calls `process.exit(1)` directly and skips pending `finally` blocks — every internal error in the new stage/commit region must `throw` a real `Error`, reserving `fail()` for the pre-existing top-level precondition checks only · a caller-visible exception TYPE must stay whatever `shutil.copytree`/`os.replace` (or the JS equivalents) already raise today — do not wrap/swallow into a new custom exception, or an upstream `except OSError` (e.g. `install()`'s `cannot write global home` handler) could stop catching it.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: followed the 5 ordered batches as planned, with two disclosed deviations.
+  (1) Used `os.rename`/`fs.renameSync` for BOTH commit renames instead of the suggested
+  `Path.rename()` — `os.rename` fails loudly on Windows if the target already exists (never
+  silently overwrites, reinforcing the "neither rename targets an already-existing name"
+  invariant as a safety net) and lets tests patch it module-qualified
+  (`mock.patch.object(_installer.os, "rename", ...)`), matching this codebase's own
+  `test_multi_file_commit.py` precedent; `Path.rename()` has no equivalent module-level patch
+  point. Same observable behavior either way — a testability/platform-safety upgrade, not a
+  contract change.
+  (2) Batch 4 (mirror in cli.js) surfaced 3 latent bugs in my OWN just-written tests (not the
+  implementation) during the first post-build run, fixed as part of convergence, all in
+  test_reconcile_rollup.py: scn3's copytree spy fired its "pre-strip files exist" assertion on
+  shutil.copytree's own internal recursive re-invocation of the same (patched) symbol for the
+  __pycache__ subdirectory, not just the intended top-level call — scoped the assertion to
+  `Path(s) == src`. scn6's injected rename-failure predicate matched both the intended landing
+  rename AND the code's own later rollback rename (both target `dest`) — added a "fail only the
+  first matching call" flag so the rollback can succeed for real. scn7 asserted the wrong
+  expected roll-up value ({"restored": 0, "refreshed": 1}); cross-checked against the frozen,
+  unchanged test_orphan_swept_not_counted and corrected to {"restored": 1, "refreshed": 0} — a
+  filename swapped in where a different filename existed before is `restored`, not `refreshed`,
+  per the pre-existing counting convention. All three are test-instrumentation corrections
+  (assertions kept equally strict, only re-scoped/re-labeled to match already-stated intent);
+  no implementation code changed in response to any of the three. Verified via a real (non-
+  mocked) SIGKILL-mid-copytree probe in addition to the unit suite — see §6 Live-verify evidence.
 Safety rule (feature-specific): `dest` is never opened for writing or deletion until the staged copy (including any strip step) has FULLY succeeded — the existing wipe-then-copy ordering is inverted to copy-then-swap-then-sweep-old.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — 74/74: `test_reconcile_rollup.py` 27/27 (12 pre-existing: 4 `CleanReplaceUnitTest` + 4 `ReconcileRollupTest` + 1 `UpdateHeadlineTest` + 3 `ParityRollupTest`; 15 new: 11 `StageCommitUnitTest` + 1 `ConcurrencyDisclosureTest` + 3 `CrossTwinStagedCommitTest`) + all 4 M8-named sibling files (`test_heal_reconcile.py`/`test_update.py`/`test_global_update_harden.py`/`test_global_data.py`) 47/47 unchanged. Commands: `python3 -m unittest test_reconcile_rollup test_heal_reconcile test_update test_global_update_harden test_global_data` → `Ran 74 tests ... OK`.
+- [x] coverage did not decrease — net +15 test methods (0 removed, 0 skipped-without-reason); the 12 pre-existing tests in `test_reconcile_rollup.py` are byte-unchanged, as are all 47 sibling tests.
+- [ ] no test or contract was altered during build — PARTIAL, disclosed: §3 CONTRACT untouched, and zero pre-existing/frozen test was touched. But 3 of MY OWN tests authored in the tests-phase-of-this-task (`test_scn3_strip_tests_applied_before_commit_not_after`, `test_scn6_commit_land_failure_after_aside_rolls_back`, `test_scn7_stale_staging_leftover_swept_before_new_stage`, all in `test_reconcile_rollup.py`) were edited AFTER the tests-red commit, during build convergence — see "Strategy actually used" (§5) for the exact bug in each. Applying this repo's own folded discriminator (CONVENTIONS.md: "an engine change that legitimately invalidates an existing assertion is an EVOLUTION, not a weakening — iff the real invariant stays guarded, coverage holds-or-rises, and the reason is documented"): all 3 keep their assertion equally strict (scn3/scn6 re-scoped WHEN the check fires, scn7 corrected WHAT value it expects against the frozen, unchanged `test_orphan_swept_not_counted` precedent), coverage held (same 3 tests, not fewer), reason documented inline + in §5. Left unchecked for the independent reviewer to weigh, not pre-decided here.
+- [ ] the green was EARNED, not gamed — deferred to the Refute-read verdict block below (not pre-judged here).
+- [ ] concurrency / timing of the risky operation is safe — PARTIAL, disclosed: single-writer crash/interruption timing IS addressed and tested (scn4/5/6 mocked + a real, non-mocked SIGKILL-mid-copytree probe, see Live-verify evidence below). Cross-process CONCURRENT writers racing the same dest is an explicit, named OUT-of-scope item (owned by sibling task `project-scope-install-lock`, `depends_on` this task) — `ConcurrencyDisclosureTest.test_scn12` only proves no BLEND is ever observed (best-effort), not that both racers succeed or that the operation is serialized. Left unchecked because "is safe" unqualified would overstate the disclosed non-goal.
+- [x] no exposed secrets, injection openings, or unexpected dependencies — no new dependency (stdlib `tempfile`/`os`/`shutil` only; Node builtins `fs`/`path` only — matches §3's "no new dependency" line and CONVENTIONS.md's "standard library only" / "built-in modules only" rules); all 6 call sites (3 Python + 3 JS, re-confirmed below) pass fixed literal path components only, never adversarial/user-supplied input.
+- [x] layering & dependencies follow CONVENTIONS.md — confirmed stdlib/builtin-only (CONVENTIONS.md lines 4-5) and the fv59 "freeze the OBSERVABLE behavior, not the mechanism" precedent (each twin uses its own native primitive: `tempfile.mkdtemp`/`os.rename` vs `fs.mkdtempSync`/`fs.renameSync`).
+- [ ] a person reviewed and approved the change — human/independent-reviewer gate; not mine to check.
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
 > + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
 > row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a PRESENT dest survives a mid-copy crash byte-for-byte untouched (never a partial/blended mix at dest's path) — confirmed by `test_scn4` (mocked mid-copy raise) AND a real, non-mocked SIGKILL sent to a live subprocess mid-`shutil.copytree` (scratchpad `live_crash_probe.py`): `old_current.py`'s content was read back byte-identical after the kill.
+- [x] a crash-interrupted prior call's scratch leftover (`.add-tmp-*`/`.add-bak-*`) is discovered and healed by the very NEXT call, landing the full new generation with zero scratch residue afterward — confirmed by `test_scn7`/`test_scn8`/`test_scn8b` (mocked) AND the same live SIGKILL probe's second half: the next call reported `{"restored": 4000, "refreshed": 0}` and left only `dest`/`src`/`worker.py` (no `.add-tmp-`/`.add-bak-` name) as siblings.
+- [x] both twins share the identical self-heal → stage → commit → sweep marker order and reserved `.add-tmp-`/`.add-bak-` naming tokens — confirmed by `test_scn10_structural_parity_of_staged_commit_shape` (asserts the 4 markers appear in that exact order in both `_installer.py` and `cli.js`, `js_body.count("fail(") == 1`, `"throw" in js_body`) plus a manual side-by-side read of both diffs.
+- [x] the public return contract (`{"restored","refreshed"}`) and every existing caller's observable behavior are byte-identical to before this task — confirmed by the pre-existing `CleanReplaceUnitTest` (4/4, unchanged) + all 4 M8-named sibling suites (47/47, unchanged) passing, plus `git diff` showing zero call-site lines touched in either file (only the two function bodies changed).
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — no NEW top-level symbol was introduced (only the `tempfile` import is new; it is used at the one `tempfile.mkdtemp(...)` call site). The change is entirely internal to the two pre-existing function bodies (`_clean_replace`, `cleanReplaceTree`); their signatures, and every one of the 6 real call sites (3 Python: `_installer.py:680,682,1181`; 3 JS: `cli.js:901,977,979`), are byte-unchanged — re-confirmed via `mcp__serena__find_referencing_symbols` (Python) and a direct read of each JS call site.
+- [x] DEAD-CODE (code) — no unused/orphaned local: every new local (`tmp_stales`/`bak_stales`/`staged`/`token`/`bak` in Python; `destParent`/`destName`/`siblings`/`tmpStales`/`bakStales`/`remainingBaks`/`staged`/`token`/`bak` in JS) is read at least once; `node --check cli.js` and `python3 -c "import ast; ast.parse(...)"` both confirm no syntax-level dead branch.
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
 > build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
 > (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
 > line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed via `mcp__serena__find_symbol`/`find_referencing_symbols` (Python) + direct Read (JS, serena's active language is Python-only in this project so the JS twin was hand-verified): `_clean_replace` (now `_installer.py:1131`, signature unchanged) called from `_reconcile_global` (`672-682`, 2 call sites) and `_reconcile` (`1181`); `_reconcile`/`_reconcile_global` called from `install` (`888-1078`), `update` (call at `1384`), `_update_global` (`1252-1331`, calls at `1298`/`1317`). `cleanReplaceTree` (now `cli.js:798`) called from `reconcile` (`901`) and `reconcileGlobal` (`977`,`979`); `reconcile`/`reconcileGlobal` called from the init path (`638`/`725`), `cmdUpdate` (`1259`), and the global-update handler (`1130`,`1199`,`1211`). All 5 caller-pairs named in §3 (`_reconcile/reconcile` · `_reconcile_global/reconcileGlobal` · `install()/cmdInit` · `update()/cmdUpdate` · `_update_global()/cmdUpdateGlobal`) resolve cleanly.
+- [x] any anchor that moved/renamed since Ground SHA is named here, not left silent — no symbol renamed or reordered. §0's own citations already use `~`-approximate line numbers anticipating drift; the only real shift is mechanical (`_clean_replace`'s body grew from 24 to ~73 lines, so everything textually AFTER it in `_installer.py` — e.g. `_update_global` — sits a few dozen lines lower than the Ground-SHA snapshot; nothing BEFORE it, e.g. `_reconcile_global`/`install`, moved at all). Exact current line numbers are recorded above so a future reader doesn't need to re-derive them.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: add-verify (independent reviewer — a separate agent instance from the build, per the
+  orchestrator's explicit ask; nothing below was pre-accepted from the builder's own framing)
+Adversarially checked:
+  - **The 3 disputed test edits, re-derived from the raw diffs and current code, not the
+    builder's narrative.** scn3: CPython's `shutil.copytree` recurses into subdirectories
+    THROUGH the same patched `shutil.copytree` module attribute (confirmed by mechanism, not
+    assumed) — so the pre-fix assertion (fired on every recursive call) deterministically
+    fails whenever `src` has a subdirectory, which it always does here (`__pycache__`). The
+    `if Path(s) == src:` guard isolates the one real call; a stray-pass risk is ruled out
+    because `captured["staged"]` is unconditionally dereferenced right after the `with` block
+    (a `KeyError` fires if the guard never matched once). scn6: read against the actual
+    rollback line (`_installer.py:1194`, `os.rename(str(bak), str(dest))`) — the ORIGINAL
+    unconditional intercept (`if str(dst_p)==str(dest): raise`) would ALSO have caught the
+    code's own required rollback rename, leaving `dest` renamed-away-and-never-restored, so
+    the test's own next line (`dest.iterdir()`) would raise `FileNotFoundError` OUTSIDE the
+    `assertRaises` block. The pre-fix test could not have passed against ANY implementation
+    that performs a real M6 rollback — the "fire-once" flag is what makes the scenario
+    exercisable, not a loosening of it. scn7: independently recomputed
+    `{"restored":1,"refreshed":0}` from the frozen §3 formula (`restored=|after\before|`,
+    `refreshed=|after∩before|`) against the fixture (dest holds `current.py`, src holds
+    `fresh.py` — disjoint names) and cross-checked against the untouched, frozen
+    `test_orphan_swept_not_counted` (lines 111-121: `a.py` absent-before counts `restored`,
+    `b.py` present-before counts `refreshed`) — the identical convention, independently
+    confirming the fix and contradicting the original `{0,1}`. All 3 edits leave the real
+    invariant (the substantive assertions in each test) unchanged in strength — only
+    misfiring/mislabeled instrumentation was corrected — matching CONVENTIONS.md line 475's
+    evolution-not-weakening bar (invariant stays guarded, coverage holds, reason documented).
+  - **Reproduced the builder's cited command cold**, in this worktree, myself:
+    `python3 -m unittest test_reconcile_rollup test_heal_reconcile test_update
+    test_global_update_harden test_global_data` -> `Ran 74 tests ... OK` (exact match).
+  - **Confirmed the M8 "5-files-only" scope claim is complete, not self-reported**: grepped
+    every `test_*.py` under `add-method/tooling/` for `_clean_replace(`/`cleanReplaceTree(` —
+    only `test_reconcile_rollup.py` references either.
+  - **Re-diffed `_installer.py`/`cli.js` across ALL 3 commits** (not just the build commit) —
+    zero lines touched outside the 2 function bodies + 1 new `tempfile` import; every caller
+    (`_reconcile`/`_reconcile_global`, `install`/`update`/`_update_global` and JS twins) is
+    byte-unchanged.
+  - **Ran the full `add-method/tooling` suite beyond the builder's claimed scope**
+    (`unittest discover`, 3342 tests): found 133 failures/errors. Traced root cause via actual
+    tracebacks (not the summary line) for a representative sample across different files
+    (`test_shared_engine_pin`, `test_engine_extract_md5`, `test_active_accessors`,
+    `test_debrand_teacher_prose`) — every one traces to the SAME single cause: this worktree's
+    `.add/tooling` was never materialized (confirmed absent before I read any diff — this
+    worktree was checked out without an install/reconcile step), so every 3-tree/pinned-digest
+    test either hits `FileNotFoundError` reading `.add/tooling/add.py` or hashes empty bytes
+    (`d41d8cd98f00b204e9800998ecf8427e` = `md5(b"")`) against `ENGINE_PKG_MD5`. A pre-existing
+    worktree-fixture gap, unrelated to and not caused by this task's 2-file diff — this task's
+    own regression surface (the 5 files named in M8) is 74/74 green, independently reproduced.
+  - **Read `ConcurrencyDisclosureTest`/`test_scn12`** and the cross-twin parity test
+    (`test_scn10_*`) in full: the parity check is backed by 2 REAL behavioral smokes (a
+    chmod-blocked real staging failure in Python, and a real `node` subprocess run against a
+    chmod-blocked `.add/`) in addition to the structural marker-order check — not a vacuous
+    token-presence check alone.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: add-verify (independent reviewer)
+1. Security: CLEAR — no new dependency (stdlib `tempfile`/`os`/`shutil` + Node builtin
+   `fs`/`path` only, confirmed reading both diffs in full); `src`/`dest` are always fixed,
+   hardcoded managed-tree paths from `MANAGED`/`_GLOBAL_TREES` (never user/network input, and
+   this task adds no new caller of the function); no subprocess/shell invocation added; no
+   secret or credential surface touched. `shutil.rmtree`'s own refusal to follow a top-level
+   symlink argument (stdlib behavior, unchanged by this task) still guards the self-heal
+   sweep against a planted-symlink race the same way the old code's `rmtree(dest)` was guarded.
+2. Concurrency: CLEAR — the in-scope guarantee (a single writer's `dest` is never observed
+   half-composed, including a hard crash) is proven by mocked tests (scn4-scn8b) plus a real,
+   non-mocked SIGKILL-mid-copytree probe (cited in this file's Build-expectations evidence)
+   whose logic is consistent with the code as read: `dest` is never opened for writing until
+   staging fully succeeds, and both commit renames are same-parent/same-filesystem, so a
+   genuine OS-level atomic move. Cross-process racing writers is a disclosed, NOT
+   silently-dropped non-goal: `add.py status` independently corroborates
+   `project-scope-install-lock` as a real, tracked sibling task with
+   `deps=project-scope-atomic-reconcile` — a properly owned, dependency-tracked follow-up, not
+   an invented excuse.
+3. Architecture: CLEAR — zero caller edits (re-diffed across all 3 commits, not just the
+   build commit); both twins share one state machine (self-heal -> stage -> commit -> sweep,
+   confirmed present in that source order in both files); no dead code (every new local is
+   read, per this file's own Deep-checks); no new top-level symbol besides the one used
+   `tempfile` import.
+Verdict: PASS
+Residue: none blocking. Two process-level notes for the orchestrator, neither a code defect:
+  (a) this worktree's `.add/state.json`/`add.py status` reports this task at `phase=ground`,
+  and this file's own header (line 6) still reads `phase: contract` — the git-committed
+  content is actually at Verify with Build done. None of the 3 build commits touch
+  `.add/state.json`; the phase stamp was synced once (ground->contract, matching an upstream
+  freeze-only commit, per OBSERVE-NOTES.md's own ADD delta) but never advanced again through
+  tests/build/verify. Likely needs an explicit `add.py phase` re-cross before a gate command
+  will recognize this task as verify-ready (the established `build_tampered`-style re-cross
+  pattern, not a new bug). (b) the broader `add-method/tooling` suite (3342 tests, run beyond
+  this task's own named scope) shows 133 failures, ALL traced via real tracebacks to this
+  worktree's `.add/tooling` never being materialized (confirmed absent before any diff was
+  read) — a pre-existing worktree-fixture gap, unrelated to this task's 2-file diff; this
+  task's own regression surface (the 5 files named in M8) is 74/74 green, independently
+  reproduced.
+Binding: advisory — unset (per `add.py status`; this file declares no explicit `sensitivity:`
+  or `risk: high` line)
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Reviewed by: Tin Dang · date: 2026-07-03
 
 ---
 
@@ -409,14 +498,48 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose stage-then-swap — copy into a fresh sibling temp dir, commit via two same-parent renames, self-heal stale siblings on the next call; rejected copy-into-place with a trailing orphan-sweep pass, never wipe first (rejected: a crash mid-copy leaves an even MORE ambiguous mixed state — some files overwritten, some not, no "which generation" marker — backwards from the goal) · two-generation directory + a stable symlink pointer (rejected: introduces a new on-disk shape every reader of `dest` would need to tolerate, is not portable the same way on Windows, and solves a multi-generation problem this task doesn't have)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: followed the 5 ordered batches as planned, with two disclosed deviations.
+- [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+- [SPEC · carried] the contract's step-0 self-heal names what to do when a stale backup is found [carried: today's fail-loud propagation is a defensible default; narrow edge case]
+  while dest is absent — rename it onto dest — but not what happens if THAT recovery rename
+  itself fails (e.g. a permission error on the parent dir); today this propagates uncaught
+  (fail-loud, a defensible default, but never a named scenario or Reject code) (evidence:
+  adversarial completeness pass during build convergence — no §2 scenario exercises this path)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [TDD · folded] `mock.patch.object(shutil, "copytree")` intercepts `shutil.copytree`'s OWN [folded foundation-version 63]
+  internal recursive re-invocation for each subdirectory it walks, not just the top-level
+  call — an assertion assuming "fires once" silently asserts against a nested call instead;
+  gate on `Path(source) == the original src argument` (evidence:
+  test_scn3_strip_tests_applied_before_commit_not_after's traceback showed the assertion
+  firing from inside shutil's own `_copytree` recursion)
+- [TDD · folded] an argument-keyed fault-injection mock (e.g. "raise when the rename target [folded foundation-version 63]
+  equals dest") can accidentally also block a LATER, legitimate call sharing the same
+  arguments — such as a rollback step that (by design) retries the same destination; needs a
+  "fire once, then pass through" flag, not a pure argument predicate (evidence:
+  test_scn6_commit_land_failure_after_aside_rolls_back — the rollback rename targeted the same
+  `dest` the intentionally-failed landing rename used, so one predicate blocked both)
+- [TDD · folded] when a freshly-drafted test's expected value is ambiguous, cross-check it [folded foundation-version 63]
+  against an established FROZEN sibling test in the same file before assuming the
+  implementation is wrong (evidence: test_scn7_stale_staging_leftover_swept_before_new_stage's
+  initial `{"restored": 0, "refreshed": 1}` expectation was corrected to `{"restored": 1,
+  "refreshed": 0}` after cross-checking the pre-existing, untouched test_orphan_swept_not_counted)
+- [ADD · folded] a per-task git worktree branched ONE commit before an upstream freeze-stamp-only [folded foundation-version 63]
+  commit lands on the integration branch produces a start-gate that LOOKS unfrozen (phase/status
+  read DRAFT) when the human approval already happened upstream — before escalating, check
+  whether it's linear-history staleness (`git merge-base --is-ancestor` + a diff restricted to
+  the stamp lines) rather than guessing or hard-escalating on a technically-true-but-unhelpful
+  reading (evidence: this task's own worktree showed `phase: ground`/`Status: DRAFT` at spawn;
+  commit `6daad53` on `release/1.15.0`, one commit ahead of the branch point, was a pure stamp
+  sync to `phase: contract`/`FROZEN @ v1` with an otherwise-empty diff) — see the fuller,
+  cross-task diagnosis of this SAME root cause in `global-lock-followups`'s own §7/OBSERVE-NOTES.md
+

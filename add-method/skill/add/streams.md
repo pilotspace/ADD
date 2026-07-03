@@ -55,6 +55,9 @@ tier hint: top → dag-scheduler, setup-run-mode; mid → the rest
 - **Spend your strongest model on the critical path.** Critical-path tasks gate the most
   downstream work; off-path tasks take **mid**. The tier hint is advisory — override when you
   know a task is harder than its position suggests.
+- **Prefer the named roster per worker** — `add-build` for a tests/build-phase worker, `add-design`
+  for design-phase, `add-verify` for verify-phase (full roster + when-to-spawn in advisor.md) — over
+  a generic ad-hoc spawn.
 - **`--json`** (`{ milestone, waves, critical_path, critical_path_len, tiers, blocked }`) feeds
   a runner that spawns programmatically. `blocked` lists tasks whose dep cannot be satisfied
   within this milestone; a `dependency_cycle` is refused with the offending members named.
@@ -95,6 +98,10 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
   gates this (`engine-merge-base-enforcement`): `add.py wave-verify` before the first merge-back
   refuses a mismatched/pending echo (`unverified_fork_base`) or off-template ledger
   (`wave_ledger_malformed`); `add.py check` is the standing monitor.
+- **Materialize gitignored engine content** — `git worktree add` checks out TRACKED files only;
+  `.add/tooling` (engine) and `.add/docs` (book) are gitignored and will be ABSENT even when the
+  worktree's HEAD matches — copy them in before the worker's first `add.py` call, or its
+  `phase`/`advance` commands have no engine to run at all (confirmed 3-for-3 this session).
 - **Lease + timeout** — record which worker holds which task (wave ledger); a dead worker releases
   its claim back to READY.
 - **Failure isolates** — a worker's STOP-and-escalate blocks only its own task; siblings run on, the

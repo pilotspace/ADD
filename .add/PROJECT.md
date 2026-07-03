@@ -5,7 +5,7 @@
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 62
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 63
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -37,6 +37,8 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
   not (v22 · DDD; same archive seam as graduation-analytics' traversal-basis convention).
 
 ## Spec / Living Document (SDD) — what we are building, now
+- (SDD) §6 summary checkboxes drifted stale relative to fresh Refute-read/Advisor verdict prose across this task's own multiple reopen-round rebuilds — for a `risk: high`/`autonomy: conservative` task, that gap directly misrepresents resolved work to the one human whose sign-off is mandatory, not merely a cosmetic lag (evidence: `add.py report --decide` surfaced 2 stale unchecked items this session before manual reconciliation)  [folded foundation-version 63 · from global-lock-followups]
+- (SDD) a task's own §6 summary checkboxes can silently drift stale relative to its Refute-read/Advisor verdict prose across multiple build-fix rounds, misrepresenting genuinely resolved work as an open judgment call to a `report --decide` reader (evidence: this exact session, 2 separate tasks — `global-data-restore-harden` earlier, `global-lock-followups` this arc — each needed a manual checkbox-to-verdict reconciliation pass before their gate report was accurate).  [folded foundation-version 63 · from project-scope-install-lock]
 - (SDD) the guideline block has TWO lean guards, not one — `test_guidelines` pins NO byte budget but `test_v8_onramp::test_block_stays_a_pointer` caps the WHOLE block at ≤22 non-blank lines (markers included); a freeze that measures only the first mis-sizes an inline addition (evidence: this bundle froze inline-compact against `test_guidelines` and missed the ≤22 line budget, surfacing only at build as `30 not ≤ 22`)  [folded foundation-version 61 · from roster-portable-shape]
 - (SDD) the skill lean fence is a hard floor: genuinely-new doc-truth on a guide is reclaimed from the same guide's prose, not a budget rebaseline, absent an explicit human bump (evidence: reference pool +418 B → terser components.md, ratio 0.68 kept)  [folded foundation-version 58 · from component-worked-example]
 - (SDD) a new CLI subcommand ripples into test_min_pillar LIFECYCLE + _NONZERO_OK classification + the tri-tree ENGINE_MD5 pin — pre-listing those traps in §5 Known-problem fixes made the build trap-free (evidence: 0 surprises; the 2202-test suite went green on the first re-run after the re-pin)  [folded foundation-version 58 · from components-validator]
@@ -270,6 +272,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-07-03 | fold all → foundation-version 63 (SDD 2 · TDD 8 · ADD 6) | consolidate captured OBSERVE lessons into the versioned foundation | 16 lessons open→folded; +16 routed bullets; 62→63 |
 | 2026-07-03 | fold all → foundation-version 62 (ADD 4) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 61→62 |
 | 2026-07-02 | fold all → foundation-version 61 (SDD 1 · TDD 2 · ADD 5) | consolidate captured OBSERVE lessons into the versioned foundation | 8 lessons open→folded; +8 routed bullets; 60→61 |
 | 2026-07-02 | fold all → foundation-version 60 (TDD 7 · ADD 11) | consolidate captured OBSERVE lessons into the versioned foundation | 18 lessons open→folded; +18 routed bullets; 59→60 |

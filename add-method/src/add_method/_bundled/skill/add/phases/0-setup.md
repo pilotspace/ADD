@@ -47,12 +47,12 @@ Ask only the live ones. Rank: `⚠ <assumption> — lowest confidence because <w
 
 Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** as it lands.
 
-**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate: it NEVER skips the human baseline approval — `lock` stays the one decision.
+**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate — `lock` stays the one decision.
 
 ## 3 · Draft to the lock (both paths)
 
 1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
-   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). Author one per role from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches), recording the teacher in `source:` and carrying its top `## Playbook` (both optional). Covered by the **baseline approval**; `add.py check` validates; never clobber.
+   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). **Author one per role** from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches) — citing the teacher in `source:` and carrying its top `## Playbook` are the two optional parts, not the authoring. Covered by the **baseline approval**; `add.py check` validates; never clobber.
 2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash
@@ -76,7 +76,7 @@ Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
-Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
+Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes; ambient agreement is not a confirmation. **Never self-stamp a timeout — hold, or re-ask.** On that recorded confirmation, you run the lock:
 
 ```bash
 python3 .add/tooling/add.py lock --by "<name>"

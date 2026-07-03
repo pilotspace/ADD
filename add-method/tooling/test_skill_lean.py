@@ -112,7 +112,32 @@ POOLS = [
     # 7 phase-only agents and every roster-shaped reference to them (both sections above) were reverted
     # back to this branch's pre-merge advisor.md/streams.md. No net new surface survives, so the baseline
     # is unchanged from 54363. The won compaction on the orchestration guides is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 54363,
+    # orchestration 54363 → 55161 @ roster-spawn-hint (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as uiux-hint-adoption): UNLIKE the reverted foreign
+    # roster section above, this names the branch's OWN lean 5-agent roster (add-design/add-build/
+    # add-verify/add-persona/add-advisor — test_agent_roster.py), not the foreign 9-agent shape. Neither
+    # advisor.md nor streams.md named any of the 5 anywhere before this. advisor.md gains a "Prefer the
+    # named roster" paragraph (+367 B) and streams.md's DAG-strategy bullets gain a matching
+    # roster-preference bullet (+231 B). +598 B human-directed surface. RATIO 0.75 kept EXACTLY;
+    # baseline grows by surface ÷ ratio (+⌈598/0.75⌉=798). The won compaction on every other
+    # orchestration guide is untouched.
+    # orchestration 55161 → 55665 @ worktree-materialize-hint (direct chat-directed edit, no formal
+    # task/frozen contract — human present live, same class as roster-spawn-hint/uiux-hint-adoption):
+    # streams.md's "Design for failure" list gains a bullet naming that a fresh `git worktree add`
+    # never materializes gitignored engine content (`.add/tooling`/`.add/docs`) even when HEAD
+    # matches — a DISTINCT gap from the adjacent "Fresh worktree base" bullet (which only covers
+    # TRACKED-file freshness), confirmed 3-for-3 across every install-update-hardening build
+    # worktree this session. +378 B human-directed surface. RATIO 0.75 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈378/0.75⌉=504). The won compaction on every other orchestration guide is
+    # untouched.
+    # orchestration 55665 → 56040 @ report-rendered-trace (direct chat-directed edit, no formal task/
+    # frozen contract — human present live, same class as worktree-materialize-hint above): run.md's
+    # automated-quality-gate list gains a bullet disclosing the new mechanical report-rendered trace
+    # (`contract_report_unrecorded` / `verify_report_unrecorded`, mirroring the existing recorded-
+    # refute-read / Advisor-3-lens-verdict bullets immediately above it) — +281 B human-directed
+    # surface. RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈281/0.75⌉=375). The won
+    # compaction on every other orchestration guide is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 56040,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a
@@ -145,7 +170,23 @@ POOLS = [
     # MILESTONE.md's new Scope-hint vocabulary (TASK.md.tmpl itself has zero `<!--` comment headroom to
     # carry the hint directly — test_template_form_tags.py's <12 ceiling). +79 B human-directed surface.
     # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈79/0.80⌉=99). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40438,
+    # phases 40438 → 40801 @ verify-traceability-doc (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as uiux-hint-adoption above): 6-verify.md's Part one
+    # gains two bullets — §1 rules must still trace to §2/§4 (the new `rule_coverage_gap` audit glint)
+    # and every §3-cited symbol must still resolve in the CURRENT tree (naming the pre-existing,
+    # previously-undocumented Live-verify evidence block) — +290 B human-directed surface. RATIO 0.80
+    # kept EXACTLY; baseline grows by surface ÷ ratio (+⌈290/0.80⌉=363). The won ground is untouched.
+    # phases 40801 → 40931 @ report-rendered-trace (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as verify-traceability-doc above): a forensic audit of
+    # a separate ADD project's session transcript found report-template.md cited-but-never-rendered at
+    # every human gate; this task adds a mechanical, `add.py audit`-checkable trace alongside the prose
+    # imperative from the prior report-gate-imperative task. 0-setup.md's persona-seeding line is also
+    # reworded here (the same audit found "(both optional)" misread as covering the whole authoring
+    # step, not just its two citation details) — +104 B human-directed surface across the 3 touched
+    # guides (0-setup.md persona clarity + 3-contract.md/6-verify.md `Reported:` recording instructions).
+    # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈104/0.80⌉=130). The won ground on
+    # every other phase guide is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40931,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
@@ -176,7 +217,16 @@ POOLS = [
     # this project's own first loop-readability milestone draft missed the hint until a human caught it).
     # +74 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈74/0.68⌉=109). The won ground on every other reference guide is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 75423,
+    # reference 75423 → 75850 @ report-template-recorded-loop (direct chat-directed edit, no formal
+    # task/frozen contract — human present live, same class as uiux-hint-adoption above): a forensic
+    # transcript audit found report-template.md cited-but-never-rendered at every human gate in a
+    # separate ADD project; the SAME session's report-rendered-trace task built a mechanical trace
+    # (TASK.md §3/§6 `Reported: yes`, surfaced by `add.py audit`) — this closes the loop by having
+    # report-template.md's own <constraints> name that trace as a new "Recorded, not just performed"
+    # bullet, so the template that must be rendered also states how its rendering gets recorded.
+    # +290 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
+    # (+⌈290/0.68⌉=427). The won ground on every other reference guide is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 75850,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},

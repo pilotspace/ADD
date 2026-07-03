@@ -21,6 +21,9 @@ import os
 import re
 import shutil
 import sys
+import tempfile
+import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,6 +31,7 @@ from pathlib import Path
 # (bundled subpath, dest relative to target, strip dev-only test_*.py after copy)
 MANAGED = (
     ("skill/add", ".claude/skills/add", False),
+    ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
     ("docs", ".add/docs", False),
     ("personas-teacher", ".add/personas-teacher", False),
@@ -36,7 +40,10 @@ MANAGED = (
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
 # but a malformed/older package missing one must NOT abort the whole install — the core
 # (skill/tooling/docs) still lands, and the optional tree is soft-skipped. Design-for-failure.
-OPTIONAL = frozenset({"personas-teacher"})
+# `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
+# enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
+# predating this fix must still install its core cleanly.
+OPTIONAL = frozenset({"personas-teacher", "agents"})
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,
@@ -688,7 +695,8 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # The snapshot copies ONLY user-data (the managed trees + transient/managed-meta are excluded),
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
 LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE}   # managed trees + managed-meta + the lock
+PROJECT_LOCK_FILE = ".install.lock"                                # the project-scope install()/update() lock (never user-data)
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks
 
 
 def data_key(project_abspath) -> str:
@@ -702,7 +710,13 @@ def data_key(project_abspath) -> str:
 
 
 def _is_user_data(name: str) -> bool:
-    """A top-level `.add/` entry is user-data unless it is a managed tree or a transient artifact."""
+    """A top-level `.add/` entry is user-data unless it is a managed tree, a transient
+    artifact, a scratch-staging sibling left by an interrupted persist/restore/
+    clean-replace call (the shared `.add-tmp-`/`.add-bak-`-infix convention — crash-safe-
+    persist-restore v1 §3 M11), or a per-generation reclaim-ticket sibling a lock's own
+    stale-reclaim mechanism may transiently (or, if leaked by a crash, semi-persistently)
+    leave next to it (the `.reclaim-<inode>`-infix convention — project-scope-install-lock /
+    global-lock-followups' leaked-ticket self-heal fix)."""
     if name in _DATA_EXCLUDE:
         return False
     if name.startswith("scope-snapshot"):
@@ -711,68 +725,172 @@ def _is_user_data(name: str) -> bool:
         return False
     if name.endswith(".bak.json"):
         return False
+    if ".add-tmp-" in name or ".add-bak-" in name:
+        return False
+    if ".reclaim-" in name:
+        return False
     return True
 
 
+def _sweep_scratch(path: Path) -> None:
+    """Best-effort removal of a scratch sibling (a staging dir/file, or a whole-tree backup
+    dir); tolerates the path already being gone. A sweep failure here is hygiene, not a
+    correctness gap — self-heal simply retries it on the next call touching this target."""
+    try:
+        if path.is_symlink():
+            path.unlink()
+        elif path.is_dir():
+            shutil.rmtree(str(path))
+        else:
+            path.unlink()
+    except OSError:
+        pass
+
+
 def _persist_data(home: Path, project_abspath) -> bool:
-    """Clean-replace a project's USER-DATA into <home>/data/<key>. Returns True if persisted,
-    False if there is nothing to persist (no .add/ or no user-data — an honest skip, not an
-    error). Raises OSError if the data dir can't be written — the caller fails 'data_unwritable'."""
+    """Crash-safe clean-replace of a project's USER-DATA into <home>/data/<key>: self-heal any
+    scratch sibling left by an earlier interrupted call, then a WHOLE-TREE stage-then-commit
+    (mirrors _clean_replace's own pattern) — home/data/<key> is never opened for writing or
+    deletion until its replacement has FULLY landed. Returns True if persisted, False if there
+    is nothing to persist (no .add/ or no user-data — an honest skip, not an error, and
+    home/data/<key> — including any EXISTING stale snapshot — is left completely untouched).
+    Raises OSError if the data dir can't be written — the caller fails 'data_unwritable'."""
+    key = data_key(str(project_abspath))
+    data_root = home / "data"
+    dest = data_root / key
+
+    # step 0 -- self-heal: a stale backup found while dest is currently ABSENT means a PRIOR
+    # call crashed between its two commit renames -- restore it first (recovering the last
+    # known-good snapshot; >1 candidate is a defensive tie-break, the newest wins). Then sweep
+    # every remaining scratch sibling for this key unconditionally (never merged/reused).
+    if data_root.exists():
+        tmp_stale = sorted(data_root.glob(f"{key}.add-tmp-*"))
+        bak_stale = sorted(data_root.glob(f"{key}.add-bak-*"))
+        if not dest.exists() and bak_stale:
+            newest = max(bak_stale, key=lambda p: p.stat().st_mtime)
+            os.replace(str(newest), str(dest))
+            bak_stale.remove(newest)
+        for p in bak_stale:
+            _sweep_scratch(p)
+        for p in tmp_stale:
+            _sweep_scratch(p)
+
     add_dir = Path(project_abspath) / ".add"
     if not add_dir.exists():
         return False
     entries = [e for e in sorted(add_dir.iterdir()) if _is_user_data(e.name)]
     if not entries:
-        return False
-    dest = home / "data" / data_key(str(project_abspath))
+        return False                    # UNCHANGED: an existing stale snapshot is left as-is
+
+    # step 1 -- stage: copy every filtered entry into a fresh, uniquely-named sibling of dest,
+    # IN home/data/. dest itself is never opened for writing during this step.
+    data_root.mkdir(parents=True, exist_ok=True)
+    staged = Path(tempfile.mkdtemp(dir=str(data_root), prefix=f"{key}.add-tmp-"))
+    try:
+        for e in entries:
+            target = staged / e.name
+            if e.is_dir():
+                shutil.copytree(str(e), str(target))
+            else:
+                shutil.copyfile(str(e), str(target))
+    except Exception:
+        _sweep_scratch(staged)
+        raise
+
+    # step 2 -- commit: two same-parent renames, neither ever targets an already-existing name.
+    backup = data_root / f"{key}.add-bak-{uuid.uuid4().hex[:12]}"
+    aside_landed = False
     if dest.exists():
-        shutil.rmtree(dest)                 # clean-replace: a locally-deleted file leaves no orphan
-    dest.mkdir(parents=True, exist_ok=True)
-    for e in entries:
-        target = dest / e.name
-        if e.is_dir():
-            shutil.copytree(str(e), str(target))
-        else:
-            shutil.copyfile(str(e), str(target))
+        try:
+            os.replace(str(dest), str(backup))
+            aside_landed = True
+        except Exception:
+            _sweep_scratch(staged)
+            raise
+    try:
+        os.replace(str(staged), str(dest))
+    except Exception:
+        if aside_landed:
+            os.replace(str(backup), str(dest))      # roll back: dest ends where it started
+        _sweep_scratch(staged)
+        raise
+
+    # step 3 -- sweep: the old backup is removed only now that the new dest has landed.
+    if aside_landed:
+        _sweep_scratch(backup)
     return True
 
 
 def _restore_data(home: Path, project_abspath, *, force: bool = False) -> bool:
     """Restore a project's USER-DATA from <home>/data/<key> into <project>/.add — the
-    NON-DESTRUCTIVE inverse of _persist_data. FILL-GAPS by default: write only entries ABSENT
-    in the dest; a present entry is left untouched (no clobber). force=True overwrites a present
-    entry, writing a `<name>.bak` sidecar of the original FIRST. Copies only _is_user_data
-    entries (a polluted snapshot can't drop managed files); DEREFERENCES symlinks to content (a
-    link lands as a regular file/tree — byte parity with the JS twin). Returns True if >=1 entry
-    was restored, False if there is nothing to restore (snapshot dir absent or holds no user-data
-    — an honest skip, not an error). Raises OSError on an unwritable dest — the caller fails
-    'restore_failed'. Mirrored by behaviour in cli.js."""
+    NON-DESTRUCTIVE inverse of _persist_data, crash-safe via a PER-ENTRY stage-then-commit
+    (.add/ is a SHARED directory most of which this function must leave alone, so — unlike
+    persist's self-owned whole-tree dest — only ONE entry stages/commits at a time). FILL-GAPS
+    by default: write only entries ABSENT in the dest; a present entry is left untouched (no
+    clobber). force=True overwrites a present entry, writing a `<name>.bak` sidecar of the
+    original FIRST (the SAME permanent, already-contracted sidecar name as before this task —
+    never the new transient staging marker). Copies only _is_user_data entries (a polluted
+    snapshot can't drop managed files, nor can a stray scratch sibling be mistaken for real
+    data); DEREFERENCES symlinks to content (a link lands as a regular file/tree — byte parity
+    with the JS twin). Returns True if >=1 entry was restored, False if there is nothing to
+    restore (snapshot dir absent or holds no user-data — an honest skip, not an error). Raises
+    OSError on an unwritable dest — the caller fails 'restore_failed'. Mirrored by behaviour in
+    cli.js."""
     proj = Path(project_abspath).resolve()              # snapshots are ALWAYS keyed by the
-    src = home / "data" / data_key(str(proj))           # resolved abspath (install resolves first)
+    add_dir = proj / ".add"                             # resolved abspath (install resolves first)
+    src = home / "data" / data_key(str(proj))
+
+    # step 0 -- self-heal: sweep any stale per-entry staging sibling left by an earlier
+    # INTERRUPTED call, unconditionally (never merged/reused/completed) -- the untouched
+    # snapshot at src lets THIS call's own ordinary fill-gaps-or-force logic below re-derive
+    # the correct end state; no backup-recovery step is needed here (unlike persist's step 0).
+    if add_dir.exists():
+        for p in list(add_dir.glob("*.add-tmp-*")):
+            _sweep_scratch(p)
+
     if not src.exists():
         return False
     entries = [e for e in sorted(src.iterdir()) if _is_user_data(e.name)]
     if not entries:
         return False
-    add_dir = proj / ".add"
     add_dir.mkdir(parents=True, exist_ok=True)
     restored = False
     for e in entries:
         dest = add_dir / e.name
-        if dest.exists() or dest.is_symlink():
-            if not force:
-                continue                            # fill-gaps: never clobber a present entry
+        existed = dest.exists() or dest.is_symlink()
+        if existed and not force:
+            continue                                # fill-gaps: never clobber; no staging begins
+
+        # step 1b -- stage: copy this ONE entry into a fresh, uniquely-named sibling of dest,
+        # IN .add/ -- dest's own name is not opened for writing during this step. A reserved
+        # unique name is claimed via mkdtemp, then either kept as a dir (copytree merges into
+        # the empty dir) or freed via rmdir for a plain-file copy.
+        staged = Path(tempfile.mkdtemp(dir=str(add_dir), prefix=f"{e.name}.add-tmp-"))
+        try:
+            if e.is_dir():
+                shutil.copytree(str(e), str(staged), dirs_exist_ok=True, symlinks=False)
+            else:
+                staged.rmdir()
+                shutil.copyfile(str(e), str(staged))       # copyfile follows a symlink source
+        except Exception:
+            if staged.exists():
+                _sweep_scratch(staged)
+            raise
+
+        # step 1c -- commit:
+        if existed:
             bak = dest.with_name(dest.name + ".bak")
-            if bak.exists() or bak.is_symlink():    # a stale .bak: replace it, don't merge
-                if bak.is_dir() and not bak.is_symlink():
-                    shutil.rmtree(bak)
-                else:
-                    bak.unlink()
-            os.replace(str(dest), str(bak))         # back up the original BEFORE replacing
-        if e.is_dir():
-            shutil.copytree(str(e), str(dest), symlinks=False)   # symlinks=False -> deref to content
+            if bak.exists() or bak.is_symlink():           # a stale .bak: replace it, don't merge
+                _sweep_scratch(bak)
+            os.replace(str(dest), str(bak))                # back up the original BEFORE replacing
+            try:
+                os.replace(str(staged), str(dest))
+            except Exception:
+                os.replace(str(bak), str(dest))            # roll back: this entry ends where it started
+                _sweep_scratch(staged)
+                raise
         else:
-            shutil.copyfile(str(e), str(dest))                   # copyfile follows a symlink source
+            os.replace(str(staged), str(dest))             # fill-gaps: single rename, no backup needed
         restored = True
     return restored
 
@@ -899,18 +1017,29 @@ def install(
     as_global_data: bool = False,
     as_global_data_restore: bool = False,
     rule_file: bool = False,
+    lock_timeout: float | None = None,
 ) -> int:
     """Install ADD into `target` directory — RECONCILES the managed layer (restore
     missing trees + refresh present ones, sweeping orphans), never touching user data.
 
     `bundled` injects a synthetic source root (test hook; parity with update()). `env`
     injects the home/skill base for hermetic global tests. `as_global` ALSO installs the
-    managed layer to the shared home + registers the project (the per-project drop still runs).
+    managed layer to the shared home + registers the project (the per-project drop still runs),
+    serialized under the SAME home lock `update --global` uses (`lock_timeout`: None/0 = today's
+    immediate fail-fast on a LIVE contended lock; N>0 opts into a bounded wait — see
+    `_update_lock`; a STALE lock self-heals immediately regardless).
     `as_global_data` IMPLIES `as_global` and ALSO persists the project's user-data to
     <home>/data/<key> (opt-in; one-way snapshot). `as_global_data_restore` is the INVERSE
     (--from-global-data): it rehydrates user-data from <home>/data/<key> into this clone
     (non-destructive fill-gaps; --force overwrites with a .bak). Independent of as_global —
     CONSUME-only: no register, no persist. A missing home is no_global_home (fails fast).
+
+    The ENTIRE call — from bundled-source resolution through the final return — runs under a
+    NEW, project-scope lock (`_project_lock`, keyed on this FINAL, post-interactive-prompt
+    `target_path`) that serializes concurrent install()/update() runs against the SAME target;
+    a live contention fails fast with `install_in_progress` (see `_project_lock`). Independent
+    of, and acquired BEFORE, the home-scoped `_update_lock` the `as_global` sub-block below
+    nests inside.
     Returns 0 on success, 1 on error, 130 on a user cancel (nothing written).
     """
     if as_global_data:
@@ -947,136 +1076,160 @@ def install(
 
     _log(f"Installing ADD into {target_path}")
 
-    # Locate bundled data (synthetic `bundled` for tests; the wheel's _bundled/ otherwise).
+    # Project-scope lock (project-scope-install-lock): keyed on target_path's FINAL value (after
+    # any interactive redirect above) — acquired BEFORE bundled-root resolution, held through the
+    # final `return 0` (including the as_global sub-block and the opt-in persist/restore below).
+    add_dir = _add_dir(target_path)
+    env_map = os.environ if env is None else env
     try:
-        bundled_root = Path(bundled) if bundled else _bundled_root()
-    except RuntimeError as exc:
-        return _fail(str(exc))
+        with _project_lock(add_dir, env=env_map):
+            # Locate bundled data (synthetic `bundled` for tests; the wheel's _bundled/ otherwise).
+            try:
+                bundled_root = Path(bundled) if bundled else _bundled_root()
+            except RuntimeError as exc:
+                return _fail(str(exc))
 
-    # design-for-failure: verify ALL sources exist BEFORE touching the target.
-    for sub, _dest, _strip in MANAGED:
-        if sub in OPTIONAL and not (bundled_root / sub).exists():
-            continue   # optional enhancement absent — soft-skip, never abort the core install
-        if not (bundled_root / sub).exists():
-            return _fail(f"missing bundled source: {bundled_root / sub}")
+            # design-for-failure: verify ALL sources exist BEFORE touching the target.
+            for sub, _dest, _strip in MANAGED:
+                if sub in OPTIONAL and not (bundled_root / sub).exists():
+                    continue   # optional enhancement absent — soft-skip, never abort the core install
+                if not (bundled_root / sub).exists():
+                    return _fail(f"missing bundled source: {bundled_root / sub}")
 
-    # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
-    # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
-    # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
-    if as_global_data_restore:
-        restore_home = resolve_global_home(os.environ if env is None else env)
-        if not _stamp_path(restore_home).exists():
-            return _fail(
-                f"no global ADD install at {restore_home} (.add-version not found) — nothing "
-                "to restore from; run `init --global-data` on a source checkout first"
-            )
+            # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
+            # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
+            # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
+            if as_global_data_restore:
+                restore_home = resolve_global_home(os.environ if env is None else env)
+                if not _stamp_path(restore_home).exists():
+                    return _fail(
+                        f"no global ADD install at {restore_home} (.add-version not found) — nothing "
+                        "to restore from; run `init --global-data` on a source checkout first"
+                    )
 
-    # OPT-IN global home: install the managed layer ONCE to a shared home + register this
-    # project, THEN fall through to the NORMAL per-project drop below (the self-contained
-    # default is untouched — global is strictly additive). Fail-closed: an unwritable home or
-    # a corrupt registry aborts BEFORE the per-project drop, leaving the package + default usable.
-    if as_global:
-        env_map = os.environ if env is None else env
-        home = resolve_global_home(env_map)
-        claude_dir = _claude_skills_dir(env_map)
-        try:
-            _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
-        except OSError as exc:
-            return _fail(f"cannot write global home {home} — {exc}")
-        _write_stamp(home, _pkg_version(), channel="global")
-        try:
-            reg = _read_registry(home)                                      # registry_corrupt
-        except ValueError:
-            return _fail(
-                f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
-            )
-        reg.append(str(target_path))
-        try:
-            _write_registry(home, reg)                                      # atomic + dedup
-        except OSError as exc:
-            return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
-        _log(f"  ✓ global home ready at {home}")
-        _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
+            # OPT-IN global home: install the managed layer ONCE to a shared home + register this
+            # project, THEN fall through to the NORMAL per-project drop below (the self-contained
+            # default is untouched — global is strictly additive). Fail-closed: an unwritable home or
+            # a corrupt registry aborts BEFORE the per-project drop, leaving the package + default usable.
+            if as_global:
+                env_map = os.environ if env is None else env
+                home = resolve_global_home(env_map)
+                claude_dir = _claude_skills_dir(env_map)
+                try:
+                    with _update_lock(home, timeout=lock_timeout, env=env_map):
+                        try:
+                            _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
+                        except OSError as exc:
+                            return _fail(f"cannot write global home {home} — {exc}")
+                        _write_stamp(home, _pkg_version(), channel="global")
+                        try:
+                            reg = _read_registry(home)                                      # registry_corrupt
+                        except ValueError:
+                            return _fail(
+                                f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
+                            )
+                        reg.append(str(target_path))
+                        try:
+                            _write_registry(home, reg)                                      # atomic + dedup
+                        except OSError as exc:
+                            return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
+                        _log(f"  ✓ global home ready at {home}")
+                        _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
+                except BlockingIOError:
+                    return _fail(
+                        f"update_in_progress: another global install/update is already running — retry "
+                        f"shortly (remove {home / LOCK_FILE} if it is stale)"
+                    )
+                except OSError as exc:
+                    # _update_lock's own home.mkdir()/lock-file open (e.g. `home` exists as a plain file,
+                    # not a directory) can fail BEFORE the inner _reconcile_global try/except ever runs —
+                    # same "cannot write global home" classification as that inner catch already uses.
+                    return _fail(f"cannot write global home {home} — {exc}")
 
-    # RECONCILE: restore missing trees + refresh present ones (sweep orphans). Touches
-    # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
-    _reconcile(target_path, bundled_root)
+            # RECONCILE: restore missing trees + refresh present ones (sweep orphans). Touches
+            # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
+            _reconcile(target_path, bundled_root)
 
-    _seed_soul_md(target_path, bundled_root)
-    _seed_gitignore(target_path, bundled_root)
+            _seed_soul_md(target_path, bundled_root)
+            _seed_gitignore(target_path, bundled_root)
 
-    # Agent detection: write THE detected agent's integration file (a marker-delimited
-    # pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
-    # Best-effort + fail-soft — never aborts the successful drop above.
-    # The INTERACTIVE path uses the enriched detector (env > CLAUDE.md > installed CLI), already
-    # disclosed in the pre-flight line and overridable by cancel+rerun. The NON-interactive path
-    # stays env-only (the byte-identical boundary + test_agent_detect pin).
-    if _interactive(yes, non_interactive):
-        profile = _detect_agent_enriched(env, target_path)
-    else:
-        profile = _detect_agent(env)
-    # Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
-    # .claude/rules/add-workflows.md + a reference bullet — CLAUDE-only; other agents stay inline.
-    if profile["integration_file"] == "CLAUDE.md" and _rule_file_mode(target_path, rule_file):
-        if (target_path / ".ccsk").is_dir():
-            _log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md")
-        _write_rule_file_pointer(target_path, profile)
-    else:
-        _write_agent_pointer(target_path, profile)
+            # Agent detection: write THE detected agent's integration file (a marker-delimited
+            # pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
+            # Best-effort + fail-soft — never aborts the successful drop above.
+            # The INTERACTIVE path uses the enriched detector (env > CLAUDE.md > installed CLI), already
+            # disclosed in the pre-flight line and overridable by cancel+rerun. The NON-interactive path
+            # stays env-only (the byte-identical boundary + test_agent_detect pin).
+            if _interactive(yes, non_interactive):
+                profile = _detect_agent_enriched(env, target_path)
+            else:
+                profile = _detect_agent(env)
+            # Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
+            # .claude/rules/add-workflows.md + a reference bullet — CLAUDE-only; other agents stay inline.
+            if profile["integration_file"] == "CLAUDE.md" and _rule_file_mode(target_path, rule_file):
+                if (target_path / ".ccsk").is_dir():
+                    _log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md")
+                _write_rule_file_pointer(target_path, profile)
+            else:
+                _write_agent_pointer(target_path, profile)
 
-    # Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
-    # .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.
-    if profile["id"] == "gemini":
-        _write_gemini_settings(target_path)
+            # Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
+            # .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.
+            if profile["id"] == "gemini":
+                _write_gemini_settings(target_path)
 
-    # Optional build-intent NOTE for `/add` to read — a NOTE only (no init, no state.json).
-    # "" on the non-interactive path or a skipped prompt -> no file written.
-    _write_intent_note(target_path, intent)
+            # Optional build-intent NOTE for `/add` to read — a NOTE only (no init, no state.json).
+            # "" on the non-interactive path or a skipped prompt -> no file written.
+            _write_intent_note(target_path, intent)
 
-    # NO step 4: the installer DROPS FILES ONLY (npm ↔ pip parity with bin/cli.js).
-    # Initialisation is deferred to the AI (via `/add`) or a CLI user — a pre-run plain
-    # `add.py init` would grandfather-lock the v12 lock-down gate before `/add` runs (see
-    # the module header). So we do NOT exec add.py here.
-    _log("\nDone. The `add` skill + tooling are installed (no project state yet — that's intentional).")
-    if profile["id"] == "generic":
-        # the generic onramp line — kept literal so the conversational-only handoff is stable
-        _log("Next:  open your AI Agent CLI (like Claude Code, Codex, etc.), then run `/add`, and say what you want to build — the agent")
-        _log("       sets up the foundation, sizes it into a milestone, and drives the build with you;")
-        _log("       you sign off once, at the lock-down.")
-    else:
-        _log(f"Detected {profile['label']}.")
-        _log(f"Next:  {profile['next_step']}")
+            # NO step 4: the installer DROPS FILES ONLY (npm ↔ pip parity with bin/cli.js).
+            # Initialisation is deferred to the AI (via `/add`) or a CLI user — a pre-run plain
+            # `add.py init` would grandfather-lock the v12 lock-down gate before `/add` runs (see
+            # the module header). So we do NOT exec add.py here.
+            _log("\nDone. The `add` skill + tooling are installed (no project state yet — that's intentional).")
+            if profile["id"] == "generic":
+                # the generic onramp line — kept literal so the conversational-only handoff is stable
+                _log("Next:  open your AI Agent CLI (like Claude Code, Codex, etc.), then run `/add`, and say what you want to build — the agent")
+                _log("       sets up the foundation, sizes it into a milestone, and drives the build with you;")
+                _log("       you sign off once, at the lock-down.")
+            else:
+                _log(f"Detected {profile['label']}.")
+                _log(f"Next:  {profile['next_step']}")
 
-    # OPT-IN data persist: snapshot this project's USER-DATA under <home>/data/<key> (one-way).
-    # A fresh drop has no user-data yet -> honest skip (exit 0). Unwritable -> data_unwritable.
-    if as_global_data:
-        env_map = os.environ if env is None else env
-        home = resolve_global_home(env_map)
-        try:
-            persisted = _persist_data(home, target_path)
-        except OSError as exc:
-            return _fail(f"cannot write global data {home / 'data' / data_key(str(target_path))} — {exc}")
-        if persisted:
-            _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
-        else:
-            _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
+            # OPT-IN data persist: snapshot this project's USER-DATA under <home>/data/<key> (one-way).
+            # A fresh drop has no user-data yet -> honest skip (exit 0). Unwritable -> data_unwritable.
+            if as_global_data:
+                env_map = os.environ if env is None else env
+                home = resolve_global_home(env_map)
+                try:
+                    persisted = _persist_data(home, target_path)
+                except OSError as exc:
+                    return _fail(f"cannot write global data {home / 'data' / data_key(str(target_path))} — {exc}")
+                if persisted:
+                    _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
+                else:
+                    _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
 
-    # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
-    # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
-    # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
-    if as_global_data_restore:
-        home = resolve_global_home(os.environ if env is None else env)
-        snap = home / "data" / data_key(str(target_path))
-        try:
-            restored = _restore_data(home, target_path, force=force)
-        except OSError as exc:
-            return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
-        if restored:
-            _log(f"  ✓ restored data <- {snap}")
-        else:
-            _log(f"  (no snapshot for this project at {snap} — nothing restored)")
-    _log("")
-    return 0
+            # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
+            # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
+            # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
+            if as_global_data_restore:
+                home = resolve_global_home(os.environ if env is None else env)
+                snap = home / "data" / data_key(str(target_path))
+                try:
+                    restored = _restore_data(home, target_path, force=force)
+                except OSError as exc:
+                    return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
+                if restored:
+                    _log(f"  ✓ restored data <- {snap}")
+                else:
+                    _log(f"  (no snapshot for this project at {snap} — nothing restored)")
+            _log("")
+            return 0
+    except BlockingIOError:
+        return _fail(
+            f"install_in_progress: another install/update is already running against "
+            f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)"
+        )
 
 
 # --- update: re-materialize the managed layer without a re-install -----------
@@ -1128,32 +1281,82 @@ def _tree_files(root: Path) -> set:
 
 
 def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
-    """Wipe dest, then copy src -> dest — so a file REMOVED upstream leaves no orphan
-    behind (the bug a merge-copy `init --force` had). The managed trees hold no user
-    data, so wipe-and-copy is safe.
+    """Crash-safe stage-then-swap: project-scope-atomic-reconcile (TASK.md v1).
+
+    Replaces the old wipe-then-copy (shutil.rmtree(dest) then shutil.copytree onto dest
+    directly) with a stage-into-a-sibling + two-rename commit, so dest is NEVER observed
+    half-old/half-new (a random partial mix) — the achievable guarantee is "never observed
+    half-composed", not "never observed absent for an instant" (a single-syscall atomic
+    replace of an EXISTING non-empty directory is not portable; the sub-instant window
+    between the two commit renames is closed by the NEXT call's own self-heal, not this one).
 
     Returns a file-level roll-up of the heal: {"restored": N, "refreshed": M} where
-    `restored` = a file in the FINAL tree whose relative path was ABSENT before the wipe
+    `restored` = a file in the FINAL tree whose relative path was ABSENT before the call
     (a fresh or partially-gutted tree heals these), and `refreshed` = a final file that
     was PRESENT before (re-materialized). Orphans (present before, gone after) are swept
     and counted as neither. The counts are pure observation — copy semantics are unchanged."""
-    before = _tree_files(dest)                       # snapshot BEFORE the wipe, or it's always ∅
     dest.parent.mkdir(parents=True, exist_ok=True)
+
+    # -- self-heal -- (before this call's own work): recover/discard whatever a PRIOR,
+    # interrupted call left behind. A stale backup found while dest is absent is the last
+    # known-good tree — restore it first (a cheap rename), minimizing how long dest stays
+    # broken; any other stale sibling (a stage, or a backup found while dest is present) is
+    # discarded outright — its content is never merged or reused.
+    tmp_stales = list(dest.parent.glob(f"{dest.name}.add-tmp-*"))
+    bak_stales = sorted(dest.parent.glob(f"{dest.name}.add-bak-*"), key=lambda p: p.stat().st_mtime)
+    if not dest.exists() and bak_stales:
+        os.rename(str(bak_stales[-1]), str(dest))     # most-recently-modified is authoritative
+        bak_stales = bak_stales[:-1]
+    for stale in tmp_stales + bak_stales:
+        shutil.rmtree(stale, ignore_errors=True)
+
+    before = _tree_files(dest)                         # snapshot BEFORE this call's own work
+
+    # -- stage -- : copy src into a fresh, uniquely-named sibling of dest, in dest's own
+    # parent (same filesystem, so the commit renames below are a genuine atomic move). dest
+    # itself is never opened for writing or deletion during this step.
+    staged = Path(tempfile.mkdtemp(dir=str(dest.parent), prefix=f"{dest.name}.add-tmp-"))
+    try:
+        shutil.copytree(str(src), str(staged), dirs_exist_ok=True)
+        if strip_tests:
+            pyc = staged / "__pycache__"
+            if pyc.exists():
+                shutil.rmtree(pyc)
+            for child in staged.iterdir():
+                if child.name.startswith("test_") and child.name.endswith(".py"):
+                    child.unlink()
+    except BaseException:
+        shutil.rmtree(staged, ignore_errors=True)      # dest untouched — it was never opened
+        raise
+
+    # -- commit -- : two same-parent renames, NEITHER targets an already-existing name.
+    token = staged.name[len(f"{dest.name}.add-tmp-"):]  # reuse mkdtemp's own unique suffix
+    bak = None
     if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(str(src), str(dest))
-    if strip_tests:
-        pyc = dest / "__pycache__"
-        if pyc.exists():
-            shutil.rmtree(pyc)
-        for child in dest.iterdir():
-            if child.name.startswith("test_") and child.name.endswith(".py"):
-                child.unlink()
-    after = _tree_files(dest)                         # the FINAL tree (post-strip)
+        bak = dest.parent / f"{dest.name}.add-bak-{token}"
+        try:
+            os.rename(str(dest), str(bak))              # (a) vacate dest, aside
+        except OSError:
+            shutil.rmtree(staged, ignore_errors=True)   # dest untouched — the rename never happened
+            raise
+    try:
+        os.rename(str(staged), str(dest))               # (b) land the new generation
+    except OSError:
+        if bak is not None:
+            os.rename(str(bak), str(dest))              # roll back: restore the original
+        shutil.rmtree(staged, ignore_errors=True)
+        raise
+
+    # -- sweep -- : remove the backup sibling — ONLY after (b) has landed the new dest.
+    if bak is not None:
+        shutil.rmtree(bak, ignore_errors=True)
+
+    after = _tree_files(dest)                            # the FINAL tree (post-strip)
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
-_TREE_LABEL = {"skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas"}
+_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs",
+               "personas-teacher": "personas"}
 
 
 def _managed_status(target_path: Path) -> dict:
@@ -1216,22 +1419,197 @@ def _add_dir(target_path: Path) -> Path:
     return target_path / ".add"
 
 
+_LOCK_STALE_DEFAULT = 600          # seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
+_LOCK_POLL_INTERVAL = 0.05         # seconds between polls while waiting out a --lock-timeout
+_LOCK_TICKET_STALE_SECONDS = 5     # a leaked per-generation reclaim ticket (its own holder crashed
+                                   # between winning it and its own best-effort cleanup) self-heals
+                                   # after this long — deliberately far shorter than
+                                   # _LOCK_STALE_DEFAULT's own 600s: a ticket's own critical section
+                                   # is a small, fixed handful of syscalls (close/stat/unlink),
+                                   # microseconds under normal operation, so a multi-second margin
+                                   # is generous, not tight (global-lock-followups' own
+                                   # leaked-ticket-livelock fix — independent of, not shared with,
+                                   # _project_lock's own _PROJECT_LOCK_TICKET_STALE_SECONDS below).
+
+
 @contextlib.contextmanager
-def _update_lock(home: Path):
-    """Serialize `update --global` with an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock —
-    the SAME mechanism as the npm twin (cli.js `fs.openSync(.., "wx")`), so a pip-held lock
-    blocks an npm run and vice-versa (a `fcntl.flock` would NOT serialize cross-twin: npm holds
-    only the file, never the kernel flock). Already present -> raises BlockingIOError (the caller
-    maps it to "update_in_progress"). The file is unlinked on exit for success OR exception, so a
-    normal/handled exit never outlives the process. A hard crash / SIGKILL may leave a stale
-    lockfile -> the update_in_progress message hints to remove it (symmetric with the npm twin)."""
+def _update_lock(home: Path, *, timeout: float | None = None, env=None):
+    """Serialize `update --global` (and, since global-lock-followups, `install --global`) with
+    an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock — the SAME mechanism as the npm twin
+    (cli.js `fs.openSync(.., "wx")`), so a pip-held lock blocks an npm run and vice-versa (a
+    `fcntl.flock` would NOT serialize cross-twin: npm holds only the file, never the kernel flock).
+
+    Held AND fresh (age <= ADD_LOCK_STALE_SECONDS, env-overridable, default 600s) -> today's
+    byte-identical behavior: `timeout` unset/0 raises BlockingIOError immediately (the caller maps
+    it to "update_in_progress"); `timeout=N>0` polls up to N seconds before raising.
+
+    Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+    create. The O_EXCL create remains the SOLE mutual-exclusion primitive — staleness only ever
+    decides whether to retry, never bypasses exclusivity (at most one racing create succeeds at
+    any instant, even when two processes independently judge the SAME lock stale and both attempt
+    to reclaim it — a clock-skewed FUTURE mtime is a negative age, so it is NEVER treated as stale).
+
+    A successful acquire (fresh or reclaimed) stamps the file `"<PID> <UTC ISO ts>\\n"` —
+    informational ONLY, never read to decide staleness (mtime is the sole staleness signal); a
+    stamp-write failure is swallowed (best-effort diagnostics must never break the lock).
+
+    The file is unlinked on exit for success OR exception, so a normal/handled exit never
+    outlives the process. A hard crash / SIGKILL may leave a stale lockfile -> the NEXT acquire
+    self-heals it automatically (no manual deletion required)."""
+    env = os.environ if env is None else env
+    try:
+        stale_after = float(env.get("ADD_LOCK_STALE_SECONDS", _LOCK_STALE_DEFAULT))
+    except (TypeError, ValueError):
+        stale_after = _LOCK_STALE_DEFAULT
     home.mkdir(parents=True, exist_ok=True)
     lock_path = home / LOCK_FILE
+    deadline = (time.time() + timeout) if timeout else None   # None/0 = today's byte-identical fail-fast
+
+    fd = None
+    while fd is None:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            break
+        except FileExistsError:
+            pass                              # held — decide below: self-heal / poll / fail-fast
+        try:
+            st = lock_path.stat()
+            age = time.time() - st.st_mtime   # NEGATIVE age (future mtime) => never stale
+        except OSError:
+            continue                          # vanished between the failed open and the stat — retry
+        reclaimed = False
+        if age > stale_after:
+            # Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let
+            # a second racer delete a FIRST racer's already-recreated, live lock). A NAIVE
+            # "rename to a quarantine name" does NOT fix this — a rename is JUST as
+            # identity-blind as an unlink: it operates on whatever currently sits at
+            # `lock_path`, so a delayed racer's rename can just as easily steal a WINNER's
+            # brand-new fresh file (empirically reproduced while building this fix: that attempt
+            # made the race MEASURABLY WORSE, not better, by adding an extra syscall to the
+            # vulnerable window). The actual fix: gate entry to the reclaim itself behind a
+            # SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's own
+            # inode number (`st_ino` — stable for this file's lifetime, and a FRESH replacement
+            # file always gets a NEW inode via O_CREAT). Two racers that observe the SAME stale
+            # file compute the IDENTICAL ticket name and race an O_EXCL create on IT — only one
+            # wins; every loser backs off WITHOUT ever touching `lock_path` itself, so nobody can
+            # ever unlink/steal a generation they didn't win the ticket for.
+            ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{st.st_ino}")
+            try:
+                ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                ticket_fd = None
+            if ticket_fd is None:
+                # LOST the per-generation reclaim ticket outright. Before treating this as
+                # "someone else legitimately owns reclaiming THIS stale file right now," check
+                # whether THAT ticket is itself orphaned — leaked by a process that crashed
+                # between winning it and its own best-effort cleanup below. Left unchecked, a
+                # leaked ticket wedges this generation's reclaim FOREVER: the ticket's name is
+                # deterministically keyed to `lock_path`'s own (unchanging) inode, so every
+                # future contender recomputes the IDENTICAL ticket path, loses the identical
+                # EEXIST race, and — pre-fix — `continue`d straight back to the top of this
+                # loop without ever reaching the `deadline` check below: an unbounded livelock
+                # no `--lock-timeout` could ever interrupt (found by a fresh adversarial verify
+                # pass; independently reproduced here against the unmodified code via a direct
+                # call and a real `node cli.js` subprocess, both still spinning well past their
+                # own declared timeout budget).
+                try:
+                    tst = ticket_path.stat()
+                    tage = time.time() - tst.st_mtime   # NEGATIVE age (future mtime) => never stale
+                    t_vanished = False
+                except OSError:
+                    t_vanished = True   # vanished between our failed open and our stat — retry
+                                        # the create directly below (safe unconditionally: O_EXCL
+                                        # is still the sole arbiter)
+                if t_vanished:
+                    try:
+                        ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                    except FileExistsError:
+                        ticket_fd = None
+                elif tage > _LOCK_TICKET_STALE_SECONDS:
+                    # The ticket ITSELF is orphaned — reclaim it with the IDENTICAL
+                    # identity-verified discipline already used for the main lock just above,
+                    # one level down: re-stat immediately before unlinking and compare inode, so
+                    # a ticket some THIRD, still-legitimately-in-flight reclaimer freshly
+                    # (re)created in the gap between our stat and our unlink is never destroyed.
+                    # A plain unconditional unlink-by-path here would reopen the IDENTICAL TOCTOU
+                    # hole this whole ticket mechanism exists to close, one level down (e.g. a
+                    # naive "just unlink if old" would let racer A destroy racer C's brand-new,
+                    # not-yet-stale ticket for the SAME generation, so A and C would BOTH believe
+                    # they are the sole reclaimer — the exact double-hold bug this ticket
+                    # mechanism was built to prevent, reintroduced one level down).
+                    try:
+                        current_tino = ticket_path.stat().st_ino
+                    except OSError:
+                        current_tino = None    # already gone — nothing to unlink
+                    if current_tino == tst.st_ino:
+                        try:
+                            os.unlink(str(ticket_path))
+                        except OSError:
+                            pass                # already gone — harmless
+                    try:
+                        ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                    except FileExistsError:
+                        ticket_fd = None        # someone else won the freshly-vacated ticket
+                # else: the ticket is live and fresh — a genuine, currently-in-flight reclaimer;
+                # ticket_fd stays None and falls through to the shared deadline check below
+                # (previously an unconditional `continue` back to the top of this same branch —
+                # now routed the same as any other non-progress iteration, never a special case
+                # that could spin unboundedly on its own).
+            if ticket_fd is not None:
+                try:
+                    os.close(ticket_fd)
+                    # Winning the ticket proves we are the SOLE reclaimer for the generation we
+                    # observed (`st.st_ino`) — it does NOT prove `lock_path` is STILL that
+                    # generation right now. An arbitrarily long scheduling gap can separate "we
+                    # judged st.st_ino stale" from "we act on it," and in that gap this SAME path
+                    # can already have cycled through a full, unrelated reclaim by someone else
+                    # (that old inode gone, a fresh one created and now actively held —
+                    # empirically observed while building this fix: a late-scheduled racer's
+                    # ticket for a long-superseded inode still "won" trivially, since nothing
+                    # else was contesting that specific stale ticket name any more, and its
+                    # UNCONDITIONAL unlink then blindly destroyed the CURRENT live holder's fresh
+                    # file). Re-stat immediately before mutating and compare inodes: only remove
+                    # the file if it is STILL, right now, the exact generation we ticketed for;
+                    # otherwise our ticket is moot — leave the (unrelated, currently live) file
+                    # completely alone and let the loop's own open/EEXIST/age logic re-evaluate
+                    # reality fresh on the next iteration.
+                    try:
+                        current_ino = lock_path.stat().st_ino
+                    except OSError:
+                        current_ino = None    # already gone — nothing to unlink
+                    if current_ino == st.st_ino:
+                        try:
+                            os.unlink(str(lock_path))
+                        except OSError:
+                            pass                # already gone — harmless
+                finally:
+                    try:
+                        os.unlink(str(ticket_path))  # best-effort cleanup of our own ticket
+                    except OSError:
+                        pass
+                reclaimed = True
+        if reclaimed:
+            continue                          # retry the create immediately (self-heal)
+        if deadline is not None and time.time() < deadline:
+            time.sleep(_LOCK_POLL_INTERVAL)
+            continue                          # keep polling a LIVE holder — or a still-contested
+                                               # ticket — until the deadline. This check is now
+                                               # ALWAYS reachable on every non-reclaiming iteration
+                                               # (the fix's other half): a wedged/leaked ticket can
+                                               # no longer bypass it by looping back to the top of
+                                               # the `while` unconditionally, so an explicit
+                                               # --lock-timeout is honored even while a stale
+                                               # ticket is being self-healed above.
+        # held, not stale, and (no --lock-timeout OR the wait budget is exhausted) -> the caller's
+        # existing `except BlockingIOError` maps this to "update_in_progress" (unchanged trigger).
+        raise BlockingIOError(f"{lock_path} is held")
+
     try:
-        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    except FileExistsError as exc:            # held -> caught upstream -> update_in_progress
-        raise BlockingIOError(f"{lock_path} is held") from exc
-    try:
+        try:
+            stamp = f"{os.getpid()} {datetime.now(timezone.utc).isoformat()}\n"
+            os.write(fd, stamp.encode("utf-8"))
+        except OSError:
+            pass                               # diagnostics are best-effort — never fail an acquired lock
         yield
     finally:
         os.close(fd)
@@ -1239,6 +1617,232 @@ def _update_lock(home: Path):
             os.unlink(str(lock_path))
         except OSError:                       # pragma: no cover — already gone
             pass
+
+
+_PROJECT_LOCK_STALE_DEFAULT = 120   # seconds (2 min); ADD_PROJECT_LOCK_STALE_SECONDS env-overridable —
+                                    # deliberately SHORTER than _update_lock's own 600s: a project-scope
+                                    # reconcile is a handful of _clean_replace calls, not a machine-wide,
+                                    # many-registered-projects propagation (project-scope-install-lock
+                                    # TASK.md §1 Assumption A1).
+_PROJECT_LOCK_TICKET_STALE_SECONDS = 5   # a leaked per-generation reclaim ticket (its own holder
+                                         # crashed between winning it and its own best-effort
+                                         # cleanup) self-heals after this long — independent of,
+                                         # but numerically identical to, _update_lock's own
+                                         # _LOCK_TICKET_STALE_SECONDS: a ticket's own critical
+                                         # section is the same small, fixed handful of syscalls
+                                         # regardless of which lock it guards, so the same generous
+                                         # multi-second margin applies (project-scope-install-lock's
+                                         # own leaked-ticket-wedge fix).
+
+
+@contextlib.contextmanager
+def _project_lock(add_dir: Path, *, env=None):
+    """Serialize `install()`/`cmdInit` and `update()`/`cmdUpdate` (non-`--global` path) against
+    the SAME target's own `.add/` tree with an EXCLUSIVE O_EXCL lockfile at
+    `<add_dir>/.install.lock` — a NEW, INDEPENDENT primitive that mirrors (but never calls into
+    or shares code with) `_update_lock`'s own proven shape: different function, different file,
+    different default threshold, zero shared code (project-scope-install-lock TASK.md §1 Framings
+    weighed — the two locks guard genuinely different-shaped resources: one shared, machine-wide,
+    long-tolerance resource with an opt-in CI wait vs. one per-target, typically-brief reconcile
+    with none).
+
+    Held AND fresh (age <= ADD_PROJECT_LOCK_STALE_SECONDS, env-overridable, default 120s) -> fails
+    IMMEDIATELY: raises BlockingIOError (the caller maps it to "install_in_progress"). UNLIKE
+    `_update_lock`, there is NO bounded-wait/poll mode (a deliberate, disclosed omission — a live
+    contention never waits, never polls; M7).
+
+    Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+    create EXACTLY once before falling through to fail-fast. The O_EXCL create remains the SOLE
+    mutual-exclusion primitive — staleness only ever decides whether to retry, never bypasses
+    exclusivity (at most one racing create succeeds at any instant, even when two processes
+    independently judge the SAME lock stale and both attempt to reclaim it — a clock-skewed
+    FUTURE mtime is a negative age, so it is NEVER treated as stale).
+
+    A successful acquire (fresh or reclaimed) stamps the file `"<PID> <UTC ISO ts>\\n"` —
+    informational ONLY, never read to decide staleness; a stamp-write failure is swallowed
+    (best-effort diagnostics must never break the lock).
+
+    The file is unlinked on exit for success OR exception, so a normal/handled exit never
+    outlives the process. A hard crash / SIGKILL may leave a stale lockfile -> the NEXT acquire
+    self-heals it automatically (no manual deletion required).
+
+    If `add_dir` did not exist yet (a virgin target — the lock file needs somewhere to live), it
+    is created here; on release, an add_dir THIS call created is removed again iff it is still
+    completely empty (the lock file was its only occupant) — e.g. an as_global failure that
+    aborts before the per-project drop leaves NOTHING behind, exactly as before this lock existed.
+    A non-empty add_dir (the real drop landed, or it pre-existed) is never touched.
+    """
+    env_map = os.environ if env is None else env
+    try:
+        stale_after = float(env_map.get("ADD_PROJECT_LOCK_STALE_SECONDS", _PROJECT_LOCK_STALE_DEFAULT))
+    except (TypeError, ValueError):
+        stale_after = _PROJECT_LOCK_STALE_DEFAULT
+    created_dir = not add_dir.exists()
+    add_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = add_dir / PROJECT_LOCK_FILE
+
+    fd = None
+    try:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            try:
+                st = lock_path.stat()
+                age = time.time() - st.st_mtime   # NEGATIVE age (future mtime) => never stale
+                vanished = False
+            except OSError:
+                vanished = True   # vanished between the failed open and the stat — nothing to
+                                  # reclaim; retry a plain create directly below (safe
+                                  # unconditionally: O_EXCL is still the sole arbiter — this can
+                                  # never clobber a legitimate concurrent holder's fresh file, it
+                                  # can only succeed if the path is genuinely vacant right now).
+            if vanished:
+                try:
+                    fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    raise BlockingIOError(f"{lock_path} is held") from None
+            elif age > stale_after:
+                # Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path
+                # let a second racer delete a FIRST racer's already-recreated, live lock). A
+                # NAIVE "rename to a quarantine name" does NOT fix this — a rename is JUST as
+                # identity-blind as an unlink: it operates on whatever currently sits at
+                # `lock_path`, so a delayed racer's rename can just as easily steal a WINNER's
+                # brand-new fresh file (empirically reproduced while building this fix: that
+                # attempt made the race MEASURABLY WORSE, not better, by adding an extra syscall
+                # to the vulnerable window). The actual fix: gate entry to the reclaim itself
+                # behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale
+                # file's own inode number (`st_ino` — stable for this file's lifetime, and a
+                # FRESH replacement file always gets a NEW inode via O_CREAT). Two racers that
+                # observe the SAME stale file compute the IDENTICAL ticket name and race an
+                # O_EXCL create on IT — only one wins; every loser backs off WITHOUT ever
+                # touching `lock_path` itself, so nobody can ever unlink/steal a generation they
+                # didn't win the ticket for.
+                ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{st.st_ino}")
+                try:
+                    ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    ticket_fd = None
+                if ticket_fd is None:
+                    # LOST the per-generation reclaim ticket outright. Before treating this as
+                    # "someone else legitimately owns reclaiming THIS stale file right now,"
+                    # check whether THAT ticket is itself orphaned — leaked by a process that
+                    # crashed between winning it and its own best-effort cleanup below. Left
+                    # unchecked, a leaked ticket wedges this generation's reclaim PERMANENTLY:
+                    # the ticket's name is deterministically keyed to `lock_path`'s own
+                    # (unchanging) inode, so every future contender recomputes the IDENTICAL
+                    # ticket path and loses the identical EEXIST race forever (found by a fresh
+                    # adversarial verify pass; independently reproduced here against the
+                    # unmodified code).
+                    try:
+                        tst = ticket_path.stat()
+                        tage = time.time() - tst.st_mtime   # NEGATIVE age (future mtime) => never stale
+                        t_vanished = False
+                    except OSError:
+                        t_vanished = True   # vanished between our failed open and our stat —
+                                            # retry the create directly below (safe
+                                            # unconditionally: O_EXCL is still the sole arbiter)
+                    if t_vanished:
+                        try:
+                            ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                        except FileExistsError:
+                            ticket_fd = None
+                    elif tage > _PROJECT_LOCK_TICKET_STALE_SECONDS:
+                        # The ticket ITSELF is orphaned — reclaim it with the IDENTICAL
+                        # identity-verified discipline already used for the main lock just
+                        # above, one level down: re-stat immediately before unlinking and
+                        # compare inode, so a ticket some THIRD, still-legitimately-in-flight
+                        # reclaimer freshly (re)created in the gap between our stat and our
+                        # unlink is never destroyed. A plain unconditional unlink-by-path here
+                        # would reopen the IDENTICAL TOCTOU hole this whole ticket mechanism
+                        # exists to close, one level down (e.g. a naive "just unlink if old"
+                        # would let racer A destroy racer C's brand-new, not-yet-stale ticket
+                        # for the SAME generation, so A and C would BOTH believe they are the
+                        # sole reclaimer — the exact double-hold bug this ticket mechanism was
+                        # built to prevent, reintroduced one level down). Exactly one extra
+                        # self-heal attempt — never a second, matching M7's own "no poll, ever"
+                        # discipline already governing the main lock's own reclaim above.
+                        try:
+                            current_tino = ticket_path.stat().st_ino
+                        except OSError:
+                            current_tino = None    # already gone — nothing to unlink
+                        if current_tino == tst.st_ino:
+                            try:
+                                os.unlink(str(ticket_path))
+                            except OSError:
+                                pass                # already gone — harmless
+                        try:
+                            ticket_fd = os.open(str(ticket_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                        except FileExistsError:
+                            ticket_fd = None        # someone else won the freshly-vacated ticket
+                    # else: the ticket is live and fresh — a genuine, currently-in-flight
+                    # reclaimer; ticket_fd stays None, falls through to the SAME fail-fast below
+                    # (M7 — this lock never polls a live holder, whether it is the main lock or
+                    # a contested ticket).
+                    if ticket_fd is None:
+                        raise BlockingIOError(f"{lock_path} is held") from None
+                try:
+                    os.close(ticket_fd)
+                    # Winning the ticket proves we are the SOLE reclaimer for the generation
+                    # we observed (`st.st_ino`) — it does NOT prove `lock_path` is STILL that
+                    # generation right now. An arbitrarily long scheduling gap can separate
+                    # "we judged st.st_ino stale" from "we act on it," and in that gap this
+                    # SAME path can already have cycled through a full, unrelated reclaim by
+                    # someone else (that old inode gone, a fresh one created and now actively
+                    # held — empirically observed while building this fix: a late-scheduled
+                    # racer's ticket for a long-superseded inode still "won" trivially, since
+                    # nothing else was contesting that specific stale ticket name any more,
+                    # and its UNCONDITIONAL unlink then blindly destroyed the CURRENT live
+                    # holder's fresh file). Re-stat immediately before mutating and compare
+                    # inodes: only remove the file if it is STILL, right now, the exact
+                    # generation we ticketed for; otherwise our ticket is moot — leave the
+                    # (unrelated, currently live) file completely alone and let the single
+                    # retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this
+                    # lock never polls a live holder).
+                    try:
+                        current_ino = lock_path.stat().st_ino
+                    except OSError:
+                        current_ino = None    # already gone — nothing to unlink
+                    if current_ino == st.st_ino:
+                        try:
+                            os.unlink(str(lock_path))
+                        except OSError:
+                            pass                # already gone — harmless
+                finally:
+                    try:
+                        os.unlink(str(ticket_path))  # best-effort cleanup of our own ticket
+                    except OSError:
+                        pass
+                try:
+                    fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    # someone else created a fresh file at the just-vacated path before we did
+                    # (e.g. a brand-new, never-raced contender's own first attempt landed in the
+                    # gap) -> fail-fast, exactly once — never a second reclaim attempt, never a
+                    # poll/wait (M7).
+                    raise BlockingIOError(f"{lock_path} is held") from None
+            else:
+                # held, not stale, and this lock never waits/polls (M7) -> the caller's existing
+                # `except BlockingIOError` maps this to "install_in_progress".
+                raise BlockingIOError(f"{lock_path} is held")
+
+        try:
+            stamp = f"{os.getpid()} {datetime.now(timezone.utc).isoformat()}\n"
+            os.write(fd, stamp.encode("utf-8"))
+        except OSError:
+            pass                               # diagnostics are best-effort — never fail an acquired lock
+        yield
+    finally:
+        if fd is not None:
+            os.close(fd)
+            try:
+                os.unlink(str(lock_path))
+            except OSError:                   # pragma: no cover — already gone
+                pass
+        if created_dir:
+            try:
+                add_dir.rmdir()               # only succeeds if EMPTY — never removes real content
+            except OSError:
+                pass                           # non-empty (the real drop landed) or already gone
 
 
 def _valid_registry_path(p) -> bool:
@@ -1250,14 +1854,17 @@ def _valid_registry_path(p) -> bool:
     return os.path.isdir(np) and os.path.isdir(os.path.join(np, ".add"))
 
 
-def _update_global(target, *, force=False, bundled=None, version=None, env=None) -> int:
+def _update_global(target, *, force=False, bundled=None, version=None, env=None,
+                    lock_timeout=None) -> int:
     """`update --global`: under a home lock, refresh the shared home (mirror + skill, re-stamp)
     then propagate to every registered+VALID project via `reconcile(p, source=<home>)`; prune
     vanished projects, DROP existing non-ADD-project entries (warn), and rewrite the registry
     atomically with the surviving NORMALIZED paths. Fail-closed: no home install -> no_global_home;
     a concurrent run -> update_in_progress; a corrupt registry -> registry_corrupt (LEFT INTACT);
     a NON-ABSOLUTE registry entry (the traversal vector) -> unsafe_registry_path (zero mutations,
-    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD."""
+    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD.
+    `lock_timeout` (None/0 = today's immediate fail-fast) opts into a bounded wait for a LIVE
+    (non-stale) lock; a STALE lock self-heals immediately regardless (see `_update_lock`)."""
     env_map = os.environ if env is None else env
     home = resolve_global_home(env_map)
     claude_dir = _claude_skills_dir(env_map)
@@ -1276,7 +1883,7 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
     try:
-        with _update_lock(home):
+        with _update_lock(home, timeout=lock_timeout, env=env_map):
             # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with
             # ZERO writes (never a silent empty-list no-op), leaving the file for the user to fix.
             try:
@@ -1340,61 +1947,80 @@ def update(
     channel: str = "pip",
     env=None,
     as_global: bool = False,
+    lock_timeout: float | None = None,
 ) -> int:
     """Re-materialize the managed layer (skill · tooling · docs) from the installed
     package into an EXISTING .add/ project, preserving ALL user data. Idempotent;
     clean-replaces so no orphan files survive a version bump. 0 on success/no-op, 1 on error.
 
     `as_global` instead refreshes the shared global home + propagates to every registered
-    project (see `_update_global`); `env` injects the home/skill base for hermetic tests."""
+    project (see `_update_global`); `env` injects the home/skill base for hermetic tests.
+    `lock_timeout` (as_global only; None/0 = today's immediate fail-fast) opts into a bounded
+    wait for a LIVE (non-stale) home lock — see `_update_lock`.
+
+    The non-`as_global` path runs under the SAME project-scope lock `install()` uses
+    (`_project_lock`, keyed on `add_dir`) from right after the "no ADD project here"
+    precondition through the final return — INCLUDING the same-version no-op check, so a
+    second waiter re-evaluates it fresh once it acquires. A live contention fails fast with
+    `install_in_progress` (see `_project_lock`).
+    """
     if as_global:
-        return _update_global(target, force=force, bundled=bundled, version=version, env=env)
+        return _update_global(target, force=force, bundled=bundled, version=version, env=env,
+                              lock_timeout=lock_timeout)
     target_path = Path(target).resolve()
     add_dir = _add_dir(target_path)
     if not (add_dir / "tooling").exists() and not (add_dir / "state.json").exists():
         return _fail(f"no ADD project at {target_path} (.add/ not found) — run `init` first")
 
+    env_map = os.environ if env is None else env
     try:
-        bundled_root = Path(bundled) if bundled else _bundled_root()
-    except RuntimeError as exc:
-        return _fail(str(exc))
-    for sub, _dest, _strip in MANAGED:
-        if sub in OPTIONAL and not (bundled_root / sub).exists():
-            continue   # optional enhancement absent — soft-skip, never abort the core install
-        if not (bundled_root / sub).exists():
-            return _fail(f"missing bundled source: {bundled_root / sub}")
+        with _project_lock(add_dir, env=env_map):
+            try:
+                bundled_root = Path(bundled) if bundled else _bundled_root()
+            except RuntimeError as exc:
+                return _fail(str(exc))
+            for sub, _dest, _strip in MANAGED:
+                if sub in OPTIONAL and not (bundled_root / sub).exists():
+                    continue   # optional enhancement absent — soft-skip, never abort the core install
+                if not (bundled_root / sub).exists():
+                    return _fail(f"missing bundled source: {bundled_root / sub}")
 
-    new_version = version or _pkg_version()
-    stamp = _read_stamp(add_dir)
-    cur_version = stamp.get("version") if stamp else None
-    # An optional tree absent from BOTH the package and the project can't be healed, so it
-    # never counts as "missing" — otherwise a same-version update would never reach the no-op.
-    missing = [sub for sub, st in _managed_status(target_path).items()
-               if st == "missing" and not (sub in OPTIONAL and not (bundled_root / sub).exists())]
-    # same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
-    # even at the current version (heal-reconcile).
-    if cur_version == new_version and not force and not missing:
-        _log(f"ADD already at {new_version} — nothing to update (use --force to re-materialize).")
-        return 0
+            new_version = version or _pkg_version()
+            stamp = _read_stamp(add_dir)
+            cur_version = stamp.get("version") if stamp else None
+            # An optional tree absent from BOTH the package and the project can't be healed, so it
+            # never counts as "missing" — otherwise a same-version update would never reach the no-op.
+            missing = [sub for sub, st in _managed_status(target_path).items()
+                       if st == "missing" and not (sub in OPTIONAL and not (bundled_root / sub).exists())]
+            # same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
+            # even at the current version (heal-reconcile).
+            if cur_version == new_version and not force and not missing:
+                _log(f"ADD already at {new_version} — nothing to update (use --force to re-materialize).")
+                return 0
 
-    # design-for-failure: back up state BEFORE touching anything.
-    state_file = add_dir / "state.json"
-    if state_file.exists():
-        shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
+            # design-for-failure: back up state BEFORE touching anything.
+            state_file = add_dir / "state.json"
+            if state_file.exists():
+                shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
 
-    roll = _reconcile(target_path, bundled_root)
-    _run_migrations(state_file, cur_version, new_version)
-    _write_stamp(add_dir, new_version, channel=channel)
-    _seed_soul_md(target_path, bundled_root)
-    _seed_gitignore(target_path, bundled_root)
+            roll = _reconcile(target_path, bundled_root)
+            _run_migrations(state_file, cur_version, new_version)
+            _write_stamp(add_dir, new_version, channel=channel)
+            _seed_soul_md(target_path, bundled_root)
+            _seed_gitignore(target_path, bundled_root)
 
-    _log(
-        f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-        f"skill · tooling · docs refreshed "
-        f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
-        "your project state untouched."
-    )
-    return 0
+            _log(
+                f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
+                f"skill · tooling · docs refreshed "
+                f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
+                "your project state untouched."
+            )
+            return 0
+    except BlockingIOError:
+        return _fail(
+            f"install_in_progress: another install/update is already running against "
+            f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)"
+        )
 
 
 def update_check(target: str = ".", version: str | None = None) -> int:

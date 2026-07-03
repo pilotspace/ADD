@@ -72,6 +72,12 @@ class _Harness(unittest.TestCase):
         self._silent("phase", "verify", slug)
         return self._task_md(slug)
 
+    def _fill_reported(self, slug):
+        """Record both Reported: yes lines (§3 + §6) — report-rendered-trace's new fields."""
+        p = self._task_md(slug)
+        t = re.sub(r"(?m)^Reported:.*$", "Reported: yes", p.read_text(encoding="utf-8"))
+        p.write_text(t, encoding="utf-8")
+
     def _fill_advisor(self, slug, *, advisor="self", security="CLEAR", concurrency="CLEAR",
                       architecture="CLEAR", verdict="PASS", residue="none",
                       binding="advisory — low"):
@@ -427,6 +433,7 @@ class CleanLineGuardTest(_Harness):
         self._also_fill_refute("t")
         # Fill advisor with a real name; no gate_actor → reviewer_is_author won't fire.
         self._fill_advisor("t", advisor="alice")
+        self._fill_reported("t")
         # No _gate_task → task remains verify/gate=none → _audit_findings skips → exit 0.
         code, out = self._run("audit")
         self.assertEqual(code, 0)

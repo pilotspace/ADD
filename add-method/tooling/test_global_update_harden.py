@@ -34,6 +34,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -75,10 +77,14 @@ class _Base(unittest.TestCase):
     def _env(self):
         return {"ADD_HOME": str(self.home), "HOME": str(self.userhome)}
 
-    def _install_global(self, target, **kw):
-        """A real --global install: stamps the home AND makes <target> a registered ADD project."""
+    def _install_global(self, target, *, env_extra=None, **kw):
+        """A real --global install: stamps the home AND makes <target> a registered ADD project.
+        `env_extra` (additive, e.g. ADD_LOCK_STALE_SECONDS) merges over the hermetic base env."""
+        env = self._env()
+        if env_extra:
+            env.update(env_extra)
         return _installer.install(target=str(target), bundled=str(self.bundled),
-                                  non_interactive=True, env=self._env(), as_global=True, **kw)
+                                  non_interactive=True, env=env, as_global=True, **kw)
 
     def _valid_home(self):
         self.assertEqual(self._install_global(self.other), 0, "setup: --global stamps the home")
@@ -96,12 +102,16 @@ class _Base(unittest.TestCase):
     def _registry(self):
         return json.loads((self.home / "registry.json").read_text())
 
-    def _update(self, **kw):
-        """Invoke `update --global`, capturing stderr; returns (code, stderr_text)."""
+    def _update(self, *, env_extra=None, **kw):
+        """Invoke `update --global`, capturing stderr; returns (code, stderr_text).
+        `env_extra` (additive, e.g. ADD_LOCK_STALE_SECONDS) merges over the hermetic base env."""
+        env = self._env()
+        if env_extra:
+            env.update(env_extra)
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
             code = _installer.update(target=str(self.proj), bundled=str(self.bundled),
-                                     version="9.9.9", env=self._env(), as_global=True, **kw)
+                                     version="9.9.9", env=env, as_global=True, **kw)
         return code, buf.getvalue()
 
     def _stamp_text(self):
@@ -283,6 +293,11 @@ class PreservedTest(_Base):
         self.assertEqual(leaks, [], "the home lockfile never lands inside a reconciled project")
         self.assertFalse(_installer._is_user_data(LOCK_NAME),
                          "the lockfile name is not classified as user-data (never snapshotted)")
+        self.assertFalse(_installer._is_user_data(LOCK_NAME + ".reclaim-123456"),
+                         "a leaked home-lock reclaim-ticket sibling is not classified as "
+                         "user-data either — inert here (the home is never scanned by "
+                         "_persist_data), kept for documentation-consistency with the exact "
+                         "same LOCK_FILE precedent this function already carries")
 
 
 # --- npm / pip parity -------------------------------------------------------
@@ -293,12 +308,25 @@ class ParityHardenTest(_Base):
         py = (_SRC / "add_method" / "_installer.py").read_text(encoding="utf-8")
         self.assertIn("def _update_lock(", py, "_installer.py must define the lock helper")
         self.assertIn("def _valid_registry_path(", py, "_installer.py must define the path validator")
-        self.assertIn("with _update_lock(home):", py, "_update_global must run UNDER the lock (call-site, not just a def)")
+        # v1 (global-lock-followups): _update_lock now threads timeout/env (self-heal + --lock-timeout),
+        # so BOTH _update_global and install()'s as_global block share the identical, fuller call site
+        # (a bare "with _update_lock(home):" no longer exists anywhere — superseded, not just present).
+        self.assertIn("with _update_lock(home, timeout=lock_timeout, env=env_map):", py,
+                      "_update_global AND install's as_global block must both run UNDER the lock, "
+                      "threading lock_timeout (call-site, not just a def)")
+        self.assertEqual(py.count("with _update_lock(home, timeout=lock_timeout, env=env_map):"), 2,
+                         "both _update_global and install's as_global block share the identical call site")
         self.assertIn("O_EXCL", py, "the pip lock must be the O_EXCL lockfile (cross-twin compatible)")
         for token in ("update_in_progress", "unsafe_registry_path"):
             self.assertIn(token, py)
         # npm twin: the lock is actually ACQUIRED in cmdUpdateGlobal (not merely defined), via O_EXCL ("wx").
-        self.assertIn("acquireUpdateLock(home)", js, "cmdUpdateGlobal must acquire the lock (call-site)")
+        # v1: acquireUpdateLock now threads { timeout } + env (self-heal + --lock-timeout), so BOTH
+        # cmdUpdateGlobal and installGlobal share the identical, fuller call site.
+        self.assertIn("acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env)", js,
+                      "cmdUpdateGlobal AND installGlobal must both acquire the lock, threading "
+                      "lockTimeout (call-site, not just a def)")
+        self.assertEqual(js.count("acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env)"), 2,
+                         "both cmdUpdateGlobal and installGlobal share the identical call site")
         self.assertIn('openSync(lockPath, "wx")', js, "the npm lock must be the O_EXCL lockfile (wx flag)")
         for token in ("update.lock", "update_in_progress", "unsafe_registry_path", "validRegistryPath(np)"):
             self.assertIn(token, js, f"cli.js must carry the {token} surface")
@@ -315,6 +343,480 @@ class ParityHardenTest(_Base):
                            capture_output=True, text=True, env=env)
         self.assertNotEqual(r.returncode, 0, "cli.js must reject a relative registry path")
         self.assertIn("unsafe_registry_path", (r.stdout + r.stderr))
+
+    def test_lock_timeout_flag_parity(self):                         # M5 (structural) — global-lock-followups Scenario 13
+        js = CLI_JS.read_text(encoding="utf-8")
+        py_cli = (_SRC / "add_method" / "_cli.py").read_text(encoding="utf-8")
+        py_installer = (_SRC / "add_method" / "_installer.py").read_text(encoding="utf-8")
+        # --lock-timeout parses with the SAME "requires a value" idiom as --stage/--name (JS).
+        self.assertIn('a === "--lock-timeout"', js, "cli.js must parse --lock-timeout")
+        # both twins thread the flag through to lock_timeout / lockTimeout.
+        self.assertEqual(py_cli.count("--lock-timeout"), 2,
+                         "_cli.py must register --lock-timeout on BOTH the init and update subparsers")
+        self.assertIn("lock_timeout=args.lock_timeout", py_cli)
+        self.assertIn("lockTimeout", js)
+        # both twins support the SAME env-overridable staleness threshold.
+        self.assertIn("ADD_LOCK_STALE_SECONDS", js)
+        self.assertIn("ADD_LOCK_STALE_SECONDS", py_installer)
+
+    def test_npm_stale_lock_self_heals(self):                        # M5 (behavioral smoke) — Scenario 13
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self.home / LOCK_NAME
+        lock_path.write_text("")
+        now = time.time()
+        os.utime(str(lock_path), (now - 10, now - 10))       # 10s old
+        env = dict(os.environ); env.update(self._env())
+        env["ADD_LOCK_STALE_SECONDS"] = "1"                   # threshold well under the 10s age
+        r = subprocess.run(["node", str(CLI_JS), "update", "--global"],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 0, "cli.js must self-heal a stale lock (mtime older than the threshold)")
+        self.assertNotIn("update_in_progress", r.stdout + r.stderr)
+
+    def test_npm_live_lock_still_fails_fast(self):                   # M5 (behavioral smoke) — Scenario 13
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        fd = os.open(str(self.home / LOCK_NAME), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        try:
+            env = dict(os.environ); env.update(self._env())
+            r = subprocess.run(["node", str(CLI_JS), "update", "--global"],
+                               capture_output=True, text=True, env=env)
+            self.assertNotEqual(r.returncode, 0, "a live (fresh) lock still fails fast — unchanged by default")
+            self.assertIn("update_in_progress", r.stdout + r.stderr)
+        finally:
+            os.close(fd)
+            try:
+                os.unlink(str(self.home / LOCK_NAME))
+            except OSError:
+                pass
+
+
+# --- stale-lock self-heal (global-lock-followups M1) ------------------------
+
+class StaleLockSelfHealTest(_Base):
+    """M1: a wedged .update.lock self-heals via mtime-AGE (never PID-liveness — see TASK.md §0
+    Honors on the Windows os.kill(pid,0) hazard); a live lock's fail-fast stays unchanged."""
+
+    def _write_lock(self, *, age_seconds, content=""):
+        """Create the lockfile directly (bypassing the real acquire path), backdating (or, for
+        a negative age, FUTURE-dating) its mtime — the sole staleness signal."""
+        self.home.mkdir(parents=True, exist_ok=True)
+        lock_path = self.home / LOCK_NAME
+        lock_path.write_text(content)
+        ts = time.time() - age_seconds
+        os.utime(str(lock_path), (ts, ts))
+        return lock_path
+
+    def test_stale_lock_self_heals(self):                            # M1 · Scenario 1
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self._write_lock(age_seconds=10)                 # 10s old, threshold 1s below -> stale
+        code, err = self._update(env_extra={"ADD_LOCK_STALE_SECONDS": "1"})
+        self.assertEqual(code, 0, "a stale lock self-heals and the run completes")
+        self.assertNotIn("update_in_progress", err)
+        self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
+
+    def test_live_lock_not_reclaimed_fails_fast(self):                # M1 regression + Reject · Scenario 2
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self._write_lock(age_seconds=0)                   # fresh -> well within the threshold
+        code, err = self._update(env_extra={"ADD_LOCK_STALE_SECONDS": "600"})
+        self.assertNotEqual(code, 0, "a live (non-stale) lock still fails fast with no --lock-timeout")
+        self.assertIn("update_in_progress", err)
+        self.assertTrue(lock_path.exists(), "the held lock is left untouched (not reclaimed)")
+
+    def test_future_mtime_lock_never_stale(self):                     # M1 edge (clock skew) · Scenario 4
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self._write_lock(age_seconds=-3600)                # an hour in the FUTURE
+        code, err = self._update(env_extra={"ADD_LOCK_STALE_SECONDS": "1"})   # a tiny threshold
+        self.assertNotEqual(code, 0, "a bogus future mtime is never treated as stale")
+        self.assertIn("update_in_progress", err)
+        self.assertTrue(lock_path.exists(), "a future-mtime lock is left untouched (not reclaimed)")
+
+    def test_empty_stale_lock_self_heals(self):                       # M2 edge · Scenario 5
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        self._write_lock(age_seconds=10, content="")                  # empty + stale (crash before the stamp)
+        code, err = self._update(env_extra={"ADD_LOCK_STALE_SECONDS": "1"})
+        self.assertEqual(code, 0, "an empty stale lock self-heals exactly like a stamped one")
+        self.assertNotIn("update_in_progress", err)
+
+    def test_concurrent_stale_reclaim_exactly_one_wins(self):         # M1 TOCTOU · Scenario 3
+        self._write_lock(age_seconds=10)                              # a stale lock every racer observes
+        env = self._env()
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        results = []
+        results_lock = threading.Lock()
+        barrier = threading.Barrier(6)
+        # TEMPORAL (not cumulative) proof of "at most one racing create succeeds at any
+        # instant" (§3 CONTRACT INV / §1 M1): `active` is incremented the instant a racer is
+        # INSIDE the critical section and decremented the instant before it leaves; `peak`
+        # latches the highest value `active` ever reached, across every racer, under the SAME
+        # lock protecting `results`. A late-scheduled racer legitimately acquiring AFTER an
+        # earlier one released is normal sequential mutual exclusion — it never bumps `peak`
+        # above 1 because the earlier holder already decremented before releasing. Only a
+        # genuine overlap (two racers simultaneously "inside") can push `peak` to 2+. This is
+        # the real, non-flaky proof; a bare `results.count("acquired") == 1` would falsely fail
+        # on correct code whenever scheduling staggers racers across the release boundary.
+        active = 0
+        peak = 0
+
+        def racer():
+            nonlocal active, peak
+            barrier.wait()                    # start every racer as simultaneously as possible
+            try:
+                with _installer._update_lock(self.home, env=env):
+                    with results_lock:
+                        results.append("acquired")
+                        active += 1
+                        peak = max(peak, active)
+                    time.sleep(0.05)           # hold briefly so an overlap would be observable
+                    with results_lock:
+                        active -= 1
+            except BlockingIOError:
+                with results_lock:
+                    results.append("blocked")
+            except Exception as exc:          # pragma: no cover - would fail the assertions below
+                with results_lock:
+                    results.append(f"error:{exc!r}")
+
+        threads = [threading.Thread(target=racer) for _ in range(6)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5)
+        errors = [r for r in results if r.startswith("error:")]
+        self.assertEqual(errors, [], f"no racer hit an unexpected exception: {errors}")
+        self.assertEqual(len(results), 6, "every racer reported an outcome (none hung)")
+        self.assertGreaterEqual(results.count("acquired"), 1,
+                                "at least one racer reclaims the stale lock and proceeds")
+        self.assertLessEqual(peak, 1,
+                             f"at most one racer may be INSIDE the critical section at any "
+                             f"given instant (observed peak concurrent holders: {peak}) — a "
+                             f"higher peak proves 2+ racers held the reclaimed lock "
+                             f"simultaneously, violating mutual exclusion (TOCTOU on the "
+                             f"stale-reclaim path)")
+        self.assertFalse((self.home / LOCK_NAME).exists(),
+                         "every acquirer released the lock again — none leaked")
+
+
+# --- leaked reclaim-ticket self-heal (post-freeze redo: a fresh adversarial verify pass found ---
+# that a ticket file leaked by a crash mid-reclaim — created by a process that won it, then died
+# before its own best-effort cleanup a few lines later — would cause an UNBOUNDED LIVELOCK here
+# (worse than the sibling project-lock's clean fail-fast wedge): _update_lock LOOPS (it supports
+# --lock-timeout), and BOTH the "lost the ticket" and "won the ticket" branches `continue`d
+# straight back to the top of the `while fd is None:` loop — pre-fix — WITHOUT ever reaching the
+# `if deadline is not None...` / `raise BlockingIOError` code beneath the `if age > stale_after:`
+# block, so even an explicit --lock-timeout could never fire once a ticket was orphaned. Fix:
+# apply the SAME age-based staleness check already governing the main lock to the ticket file
+# too (identity-verified, same as the main lock's own reclaim — never a plain unconditional
+# unlink, which would reopen the identical TOCTOU hole one level down), AND restructure the loop
+# so the deadline check is reached on every non-reclaiming iteration, never bypassed by a
+# ticket-loss branch that used to always `continue` unconditionally (see _installer.py:
+# _update_lock for the full reasoning). Independent of, not shared with, this fix's own
+# project-lock/JS-twin tests.
+
+class LeakedTicketLivelockTest(_Base):
+    def _leak_ticket(self, lock_path: Path, *, ticket_age_seconds):
+        """Simulate a crash that WON the per-generation reclaim ticket but never cleaned it up
+        (died between the ticket-open and its own `finally: unlink` a few lines later): an
+        orphaned ticket file at the EXACT deterministic path a real reclaimer would compute
+        (keyed to `lock_path`'s own current inode), with no corresponding live process."""
+        ino = lock_path.stat().st_ino
+        ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{ino}")
+        ticket_path.write_text("")
+        ts = time.time() - ticket_age_seconds
+        os.utime(str(ticket_path), (ts, ts))
+        return ticket_path
+
+    def _write_lock(self, *, age_seconds, content=""):
+        self.home.mkdir(parents=True, exist_ok=True)
+        lock_path = self.home / LOCK_NAME
+        lock_path.write_text(content)
+        ts = time.time() - age_seconds
+        os.utime(str(lock_path), (ts, ts))
+        return lock_path
+
+    def _run_bounded(self, *, timeout, join_timeout=10.0):
+        """Run _update_lock(home, timeout=timeout, ...) on a daemon thread and join with a
+        GENEROUS but FINITE bound — proves "self-heals promptly" / "--lock-timeout is honored"
+        without ever risking hanging the test suite itself if a future regression reintroduces
+        an unbounded spin: the assertion is on thread liveness after the join, not on the call
+        ever returning on its own within this test process's lifetime."""
+        env = self._env()
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        result = {}
+
+        def _acquire():
+            try:
+                with _installer._update_lock(self.home, timeout=timeout, env=env):
+                    result["outcome"] = "acquired"
+            except BlockingIOError:
+                result["outcome"] = "blocked"
+            except Exception as exc:                # pragma: no cover - would fail the assertions below
+                result["outcome"] = f"error:{exc!r}"
+
+        start = time.monotonic()
+        t = threading.Thread(target=_acquire, daemon=True)
+        t.start()
+        t.join(timeout=join_timeout)
+        elapsed = time.monotonic() - start
+        return t, result, elapsed
+
+    def test_leaked_ticket_self_heals_instead_of_unbounded_livelock(self):
+        lock_path = self._write_lock(age_seconds=1000)                       # very stale
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)  # leaked long ago too
+        t, result, elapsed = self._run_bounded(timeout=3.0)
+        self.assertFalse(t.is_alive(),
+                         f"a leaked ticket must self-heal PROMPTLY, not livelock unboundedly "
+                         f"(still spinning after {elapsed:.1f}s against a 3.0s --lock-timeout "
+                         f"budget it should never even need)")
+        self.assertEqual(result.get("outcome"), "acquired",
+                         f"the lock must be successfully self-healed and acquired, not blocked "
+                         f"or errored: {result}")
+        self.assertLess(elapsed, 5.0, f"self-heal must be prompt, nowhere near the 3.0s "
+                         f"--lock-timeout budget (observed {elapsed:.2f}s) — proves it healed "
+                         f"on its own, not merely by waiting out the deadline")
+        self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
+        self.assertFalse(ticket_path.exists(), "the leaked ticket itself is cleaned up too")
+
+    def test_lock_timeout_deadline_honored_even_when_a_ticket_cannot_yet_resolve(self):
+        # The sharper claim: even in the WORST case — a ticket that never crosses its OWN (short)
+        # staleness threshold during this test's own --lock-timeout budget, so neither the main
+        # lock's reclaim NOR the ticket's own reclaim can make progress — the deadline must still
+        # fire close to its declared budget. This is the exact defect: pre-fix, the deadline check
+        # was structurally UNREACHABLE while a ticket stayed contested, regardless of how it got
+        # that way.
+        lock_path = self._write_lock(age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=0)   # "just created" — fresh
+        t, result, elapsed = self._run_bounded(timeout=1.0)
+        self.assertFalse(t.is_alive(),
+                         f"--lock-timeout=1.0 must be honored, not bypassed by a contested "
+                         f"ticket (still spinning after {elapsed:.1f}s)")
+        self.assertEqual(result.get("outcome"), "blocked",
+                         f"expected a clean BlockingIOError once the deadline elapsed: {result}")
+        self.assertGreaterEqual(elapsed, 0.9, "the deadline must actually be waited out, not "
+                         "short-circuited immediately")
+        self.assertLess(elapsed, 3.0, f"--lock-timeout=1.0 must fire close to its own budget "
+                         f"(observed {elapsed:.2f}s), never run away past it")
+        self.assertTrue(ticket_path.exists(), "a fresh, still-in-flight-looking ticket is left "
+                         "completely untouched — no over-eager reclaim")
+
+    def test_npm_leaked_ticket_self_heals_instead_of_livelock(self):
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self._write_lock(age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)
+        env = dict(os.environ); env.update(self._env())
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        start = time.monotonic()
+        r = subprocess.run(["node", str(CLI_JS), "update", "--global", "--lock-timeout", "3"],
+                           capture_output=True, text=True, env=env, timeout=15)
+        elapsed = time.monotonic() - start
+        self.assertEqual(r.returncode, 0, f"a leaked ticket must self-heal, not livelock: {r.stderr}")
+        self.assertNotIn("update_in_progress", r.stdout + r.stderr)
+        self.assertLess(elapsed, 5.0, f"self-heal must be prompt (observed {elapsed:.2f}s), "
+                         f"nowhere near the 3s --lock-timeout budget")
+        self.assertFalse(lock_path.exists())
+        self.assertFalse(ticket_path.exists())
+
+
+# --- diagnostic stamp (global-lock-followups M2) ----------------------------
+
+class DiagnosticStampTest(_Base):
+    """M2: a successful acquire stamps '<PID> <UTC ISO ts>' — informational ONLY, never
+    consulted to decide staleness (mtime alone decides — see StaleLockSelfHealTest)."""
+
+    def test_successful_acquire_stamps_pid_and_timestamp(self):      # M2 · Scenario 6
+        env = self._env()
+        with _installer._update_lock(self.home, env=env):
+            content = (self.home / LOCK_NAME).read_text(encoding="utf-8")
+        self.assertRegex(content, r"^\d+ \S+\n?$",
+                         "the lock's content is '<PID> <timestamp>' on a successful acquire")
+
+    def test_garbage_lock_content_never_errors_or_affects_staleness(self):   # M2 · Scenario 6
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        self.home.mkdir(parents=True, exist_ok=True)
+        lock_path = self.home / LOCK_NAME
+        lock_path.write_text("totally-not-a-pid-or-a-timestamp")
+        now = time.time()
+        os.utime(str(lock_path), (now - 10, now - 10))                # stale by mtime alone
+        code, err = self._update(env_extra={"ADD_LOCK_STALE_SECONDS": "1"})
+        self.assertEqual(code, 0, "staleness is decided by mtime alone — garbage content never errors")
+        self.assertNotIn("update_in_progress", err)
+
+
+# --- install --global under the same lock (global-lock-followups M3) -------
+
+class InstallGlobalLockTest(_Base):
+    """M3: install --global shares the SAME home lock as update --global — a lock failure
+    aborts install() entirely (no partial home write, no per-project drop)."""
+
+    def _hold_lock(self):
+        return os.open(str(self.home / LOCK_NAME), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+
+    def _release(self, fd):
+        os.close(fd)
+        try:
+            os.unlink(str(self.home / LOCK_NAME))
+        except OSError:
+            pass
+
+    def test_install_global_blocked_by_a_held_lock(self):            # M3 · Scenario 7
+        self._valid_home()                                            # stamps the home once, uncontended
+        fresh_target = self.tmp / "fresh"; fresh_target.mkdir()
+        fd = self._hold_lock()
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stderr(buf):
+                code = _installer.install(target=str(fresh_target), bundled=str(self.bundled),
+                                          non_interactive=True, env=self._env(), as_global=True)
+            err = buf.getvalue()
+        finally:
+            self._release(fd)
+        self.assertNotEqual(code, 0, "install --global fails fast while the lock is held")
+        self.assertIn("update_in_progress", err)
+        reg = self._registry()
+        self.assertNotIn(str(fresh_target.resolve()), reg, "nothing was registered while blocked")
+        self.assertFalse((fresh_target / ".add").exists(),
+                         "the per-project managed-layer drop did NOT occur")
+
+    def test_two_concurrent_install_global_no_interleave(self):      # M3 · Scenario 8
+        self.home.mkdir(parents=True, exist_ok=True)
+        t1 = self.tmp / "race1"; t1.mkdir()
+        t2 = self.tmp / "race2"; t2.mkdir()
+        fd = self._hold_lock()                                        # simulate the first racer already inside
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stderr(buf):
+                code1 = _installer.install(target=str(t1), bundled=str(self.bundled),
+                                           non_interactive=True, env=self._env(), as_global=True)
+        finally:
+            self._release(fd)                                         # the first racer finishes / releases
+        code2 = _installer.install(target=str(t2), bundled=str(self.bundled),
+                                   non_interactive=True, env=self._env(), as_global=True)
+        self.assertNotEqual(code1, 0, "the second-to-arrive racer fails fast while the first holds the lock")
+        self.assertEqual(code2, 0, "once free, the next racer acquires cleanly")
+        reg = self._registry()
+        self.assertNotIn(str(t1.resolve()), reg, "the blocked racer never registered — no interleaved write")
+        self.assertIn(str(t2.resolve()), reg, "the racer that acquired the free lock did register")
+
+    def test_fresh_install_global_unaffected(self):                  # M3 regression · Scenario 9
+        target = self.tmp / "solo"; target.mkdir()
+        code = self._install_global(target)
+        self.assertEqual(code, 0)
+        self.assertTrue((target / ".add" / "tooling").exists(), "the per-project drop ran")
+        reg = self._registry()
+        self.assertIn(str(target.resolve()), reg)
+        self.assertFalse((self.home / LOCK_NAME).exists(), "the lock is released by the time the run returns")
+
+
+# --- opt-in bounded wait, --lock-timeout (global-lock-followups M4) --------
+
+class LockTimeoutTest(_Base):
+    """M4: --lock-timeout is an OPT-IN bounded wait for a LIVE lock; unset/0 stays
+    byte-identical to today's immediate fail-fast (M1's self-heal fires regardless)."""
+
+    def _hold_lock(self):
+        return os.open(str(self.home / LOCK_NAME), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+
+    def _release(self, fd):
+        os.close(fd)
+        try:
+            os.unlink(str(self.home / LOCK_NAME))
+        except OSError:
+            pass
+
+    def test_lock_timeout_waits_out_a_holder_that_releases_in_time(self):   # M4 · Scenario 10
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        fd = self._hold_lock()
+        timer = threading.Timer(0.2, self._release, args=(fd,))
+        timer.start()
+        try:
+            start = time.monotonic()
+            code, err = self._update(lock_timeout=2.0)
+            elapsed = time.monotonic() - start
+        finally:
+            timer.cancel()
+        self.assertEqual(code, 0, "the waiting run acquires the lock once it is freed")
+        self.assertNotIn("update_in_progress", err)
+        self.assertGreaterEqual(elapsed, 0.15, "the run actually waited for the release, not an instant fail")
+
+    def test_lock_timeout_expires_still_fails(self):                        # M4 + Reject · Scenario 11
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        fd = self._hold_lock()
+        try:
+            start = time.monotonic()
+            code, err = self._update(lock_timeout=0.3)
+            elapsed = time.monotonic() - start
+        finally:
+            self._release(fd)
+        self.assertNotEqual(code, 0, "the wait budget expires and the run still fails")
+        self.assertIn("update_in_progress", err)
+        self.assertGreaterEqual(elapsed, 0.25, "the run waited roughly the full budget, not instantly")
+
+    def test_lock_timeout_unset_or_zero_is_immediate(self):                 # M4 regression · Scenario 12
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        fd = self._hold_lock()
+        try:
+            start = time.monotonic()
+            code_unset, err_unset = self._update()
+            elapsed_unset = time.monotonic() - start
+            start2 = time.monotonic()
+            code_zero, err_zero = self._update(lock_timeout=0)
+            elapsed_zero = time.monotonic() - start2
+        finally:
+            self._release(fd)
+        for code, err, elapsed, label in (
+            (code_unset, err_unset, elapsed_unset, "unset"),
+            (code_zero, err_zero, elapsed_zero, "zero"),
+        ):
+            self.assertNotEqual(code, 0, f"--lock-timeout {label} fails immediately")
+            self.assertIn("update_in_progress", err)
+            self.assertLess(elapsed, 1.0, f"--lock-timeout {label} does not wait")
+
+
+# --- deliberate scope carve-out (global-lock-followups §3 OUT-of-scope) -----
+
+class PruneDataScopeTest(_Base):
+    """prune-data's OWN concurrency is a conscious, disclosed deferral (TASK.md §1 Framings
+    weighed / §3 OUT-of-scope) — this task makes NO new guarantee about it; named, not
+    silently dropped. Scenario 14 is a negative assertion: prune-data stays UNLOCKED."""
+
+    def test_prune_data_deliberately_unlocked(self):                    # deliberate ruling-out · Scenario 14
+        import inspect
+        py_src = inspect.getsource(_installer._prune_data) + inspect.getsource(_installer.prune_data)
+        self.assertNotIn("_update_lock", py_src,
+                        "prune-data's own concurrency is a conscious, disclosed deferral — "
+                        "not silently wrapped in this task's lock")
+        js = CLI_JS.read_text(encoding="utf-8")
+        prune_start = js.index("function pruneData(")
+        prune_end = js.index("function cmdPruneData(")
+        prune_fn = js[prune_start:prune_end]
+        self.assertNotIn("acquireUpdateLock", prune_fn,
+                        "cli.js's pruneData mirrors the same conscious deferral")
 
 
 if __name__ == "__main__":

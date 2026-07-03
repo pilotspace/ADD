@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "project-scope-atomic-reconcile",
+  "active_task": "fold-glossary-deltas",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2533,47 +2533,81 @@
         "source": "git"
       }
     },
-    "global-lock-followups": {
-      "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
+    "grep-binary-agnostic-milestone-test": {
+      "title": "Grep-Binary-Agnostic Milestone-Exit Test",
       "phase": "ground",
       "gate": "none",
-      "milestone": "install-update-hardening",
+      "milestone": null,
       "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-02T14:46:49+00:00"
+      "created": "2026-07-03T13:16:28+00:00",
+      "updated": "2026-07-03T13:16:28+00:00"
     },
-    "global-data-restore-harden": {
-      "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
+    "prune-data-update-lock": {
+      "title": "Prune-Data / Update-Global Lock Race",
       "phase": "ground",
       "gate": "none",
-      "milestone": "install-update-hardening",
+      "milestone": null,
       "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-02T14:46:49+00:00"
+      "created": "2026-07-03T13:16:28+00:00",
+      "updated": "2026-07-03T13:16:28+00:00"
     },
-    "project-scope-atomic-reconcile": {
-      "title": "Stage-then-commit _clean_replace/cleanReplaceTree so a crash mid-copy never half-wipes a managed tree",
+    "sweep-orphan-reclaim-tickets": {
+      "title": "Sweep Orphaned Reclaim Ticket Files",
       "phase": "ground",
       "gate": "none",
-      "milestone": "install-update-hardening",
+      "milestone": null,
       "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-02T14:46:49+00:00"
+      "created": "2026-07-03T13:16:28+00:00",
+      "updated": "2026-07-03T13:16:28+00:00"
     },
-    "project-scope-install-lock": {
-      "title": "Project-scoped lock around install()/update() reconcile, both twins",
+    "cross-platform-inode-reuse-stress": {
+      "title": "Cross-Platform Inode-Reuse Stress Test",
       "phase": "ground",
       "gate": "none",
-      "milestone": "install-update-hardening",
-      "depends_on": [
-        "project-scope-atomic-reconcile"
-      ],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-02T14:46:49+00:00"
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:16:28+00:00",
+      "updated": "2026-07-03T13:16:28+00:00"
+    },
+    "adr-harvester-multiline-fields": {
+      "title": "ADR Harvester Multi-Line Field Capture",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:16:28+00:00",
+      "updated": "2026-07-03T13:16:28+00:00"
+    },
+    "strip-scaffold-backtick-comment-fix": {
+      "title": "Strip-Scaffold Backtick-Comment Over-Strip Fix",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:16:29+00:00",
+      "updated": "2026-07-03T13:16:29+00:00"
+    },
+    "worktree-isolated-spawn-default": {
+      "title": "Prefer Worktree-Isolated Agent Spawning Per Task",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:21:23+00:00",
+      "updated": "2026-07-03T13:21:23+00:00"
+    },
+    "fold-glossary-deltas": {
+      "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-03T13:39:18+00:00",
+      "updated": "2026-07-03T13:39:18+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-02T18:13:22+00:00",
+  "updated": "2026-07-03T13:39:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2755,17 +2789,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "install-update-hardening": {
-      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
-      "goal": "add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-07-02T14:46:06+00:00",
-      "updated": "2026-07-02T14:46:06+00:00"
     }
   },
-  "active_milestone": "install-update-hardening",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -3500,14 +3526,23 @@
         "skill-banner-cue"
       ],
       "archived": "2026-07-03"
+    },
+    {
+      "slug": "install-update-hardening",
+      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
+      "tasks": 4,
+      "task_slugs": [
+        "global-lock-followups",
+        "global-data-restore-harden",
+        "project-scope-atomic-reconcile",
+        "project-scope-install-lock"
+      ],
+      "archived": "2026-07-03"
     }
   ],
-  "active_milestones": [
-    "install-update-hardening"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "install-update-hardening": "project-scope-atomic-reconcile"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {

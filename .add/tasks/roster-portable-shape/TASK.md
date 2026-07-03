@@ -283,7 +283,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] the guideline block now sits at EXACTLY its ≤22 lean-pointer budget — the next inline addition to `_guideline_block()` must compress existing prose OR the human signs a budget bump; consider a `test_guidelines` byte/line budget assertion so the constraint is discoverable at freeze, not build (evidence: this task's roster forced a whole-block compression to net ≤22, zero headroom remains)
+- [SPEC · carried] the guideline block now sits at EXACTLY its ≤22 lean-pointer budget — the next inline addition to `_guideline_block()` must compress existing prose OR the human signs a budget bump; consider a `test_guidelines` byte/line budget assertion so the constraint is discoverable at freeze, not build (evidence: this task's roster forced a whole-block compression to net ≤22, zero headroom remains) [carried: a standing caution for whoever next touches _guideline_block(), not an action in itself]
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency

@@ -368,12 +368,12 @@ Watch (reuse scenarios as monitors): N/A — prose-only doc edit, no runtime sig
 - [AI] verify — gate PASS (reviewed by Tin Dang (auto-resolved under autonomy: auto, per "yes, auto mode"))
 
 ### Spec delta
-- [SPEC · open] SKILL.md:108-110's compact pipeline sentence omits the banner citation (report-
+- [SPEC · dropped] SKILL.md:108-110's compact pipeline sentence omits the banner citation (report-
   template.md's own "rendered first, above everything") — a genuine drift, deliberately left out of
   this task's frozen scope because SKILL.md is not literally one of "the 8 phase guides" the
   milestone names, only escalated as a flag (evidence: §3 flag 1; ~20 B cost against a 187 B
   core-pool headroom if picked up as its own small follow-up).
-- [SPEC · open] a §3 Status line hand-edited to `FROZEN @ vN` (bypassing `add.py freeze`) passes
+- [SPEC · carried] a §3 Status line hand-edited to `FROZEN @ vN` (bypassing `add.py freeze`) passes [carried: a real engine-hardening idea but a bigger design question (mirroring refute_unrecorded's pattern) than a quick fix; needs its own design pass]
   `_contract_frozen()` and reads as approved in TASK.md, but silently skips both the engine's
   `_flag_well_formed` pre-check and the structured `state.json` freeze audit record — consider an
   integrity check mirroring the existing `refute_unrecorded`/`advisor_verdict_unrecorded` pattern

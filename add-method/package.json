@@ -18,6 +18,7 @@
   "files": [
     "bin/",
     "skill/",
+    "agents/",
     "tooling/add.py",
     "tooling/add_engine/",
     "!tooling/add_engine/__pycache__",

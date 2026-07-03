@@ -40,7 +40,7 @@ function parseArgs(argv) {
   // hint only echoes flags the user actually chose (shortest true command).
   const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
                  yes: false, nonInteractive: false, global: false, globalData: false,
-                 fromGlobalData: false, ruleFile: false };
+                 fromGlobalData: false, ruleFile: false, lockTimeout: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
@@ -71,6 +71,14 @@ function parseArgs(argv) {
       // the user tried to pass (parity with the pip twin's argparse error)
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
       if (a === "--stage") args.stage = v; else args.name = v;
+    }
+    // --lock-timeout <seconds>: (--global only) opt into a bounded wait for a LIVE contended
+    // home lock before failing "update_in_progress" (default null = today's immediate fail-fast;
+    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --stage/--name.
+    else if (a === "--lock-timeout") {
+      const v = argv[++i];
+      if (v == null || v.startsWith("--")) fail(a + " requires a value");
+      args.lockTimeout = Number(v);
     }
     else if (a.startsWith("--")) warn("ignoring unknown flag " + a);
     else args._.push(a);
@@ -719,6 +727,14 @@ async function cmdInit(args) {
            "from; run `init --global-data` on a source checkout first");
     }
   }
+  // Project-scope lock (project-scope-install-lock): keyed on chosenTarget's FINAL value (after
+  // any interactive redirect above) — acquired BEFORE the as_global sub-block, held through the
+  // function's end. Independent of, and acquired BEFORE, the home-scoped acquireUpdateLock that
+  // installGlobal() below nests inside (M11 — never the reverse nesting).
+  const addDir = path.join(chosenTarget, ".add");
+  acquireProjectLock(addDir);   // registers its own process.on("exit", release) — no explicit
+                                 // release()/finally needed at the call site (mirrors
+                                 // acquireUpdateLock's own usage at cmdUpdateGlobal)
   // OPT-IN global home, BEFORE the per-project drop (fail-closed if the home is unwritable
   // or its registry is corrupt — the package + the self-contained default stay usable).
   if (args.global) installGlobal(args, chosenTarget);
@@ -735,6 +751,7 @@ async function cmdInit(args) {
 // tasks, or archive (user data). Pure file-copy (npm <-> pip parity with _installer.py).
 const MANAGED = [
   ["skill/add", [".claude", "skills", "add"], false],
+  ["agents", [".claude", "agents"], false],
   ["tooling", [".add", "tooling"], true],
   ["docs", [".add", "docs"], false],
   ["personas-teacher", [".add", "personas-teacher"], false],
@@ -742,10 +759,42 @@ const MANAGED = [
 // Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
 // package always ships these (guarded by test_packaging); a malformed/older package missing one
 // must NOT abort the install — the core lands and the optional tree is soft-skipped. Twin of
-// _installer.py:OPTIONAL. Design-for-failure.
-const OPTIONAL = new Set(["personas-teacher"]);
+// _installer.py:OPTIONAL. Design-for-failure. `agents` joins here (roster-install-drift): the
+// phase-agent roster is a spawn-acceleration enhancement, not core runtime.
+const OPTIONAL = new Set(["personas-teacher", "agents"]);
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
+const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
+const LOCK_POLL_INTERVAL_MS = 50;   // ms between polls while waiting out a --lock-timeout
+const LOCK_TICKET_STALE_SECONDS = 5;   // a leaked per-generation reclaim ticket (its own holder
+                                        // crashed between winning it and its own best-effort
+                                        // cleanup) self-heals after this long — deliberately far
+                                        // shorter than LOCK_STALE_DEFAULT's own 600s: a ticket's
+                                        // own critical section is a small, fixed handful of
+                                        // syscalls (close/stat/unlink), microseconds under normal
+                                        // operation, so a multi-second margin is generous, not
+                                        // tight (global-lock-followups' own leaked-ticket-livelock
+                                        // fix — independent of, not shared with, acquireProjectLock's
+                                        // own PROJECT_LOCK_TICKET_STALE_SECONDS below).
+const PROJECT_LOCK_FILE = ".install.lock";   // the project-scope init()/update() lock (never user-data)
+const PROJECT_LOCK_STALE_DEFAULT = 120;      // seconds (2 min); ADD_PROJECT_LOCK_STALE_SECONDS env-overridable —
+                                              // deliberately SHORTER than LOCK_STALE_DEFAULT's own 600s (see
+                                              // _installer.py's _PROJECT_LOCK_STALE_DEFAULT for the reasoning)
+const PROJECT_LOCK_TICKET_STALE_SECONDS = 5;   // a leaked per-generation reclaim ticket self-heals
+                                                // after this long — independent of, but numerically
+                                                // identical to, acquireUpdateLock's own
+                                                // LOCK_TICKET_STALE_SECONDS: a ticket's own critical
+                                                // section is the same small, fixed handful of
+                                                // syscalls regardless of which lock it guards
+                                                // (project-scope-install-lock's own
+                                                // leaked-ticket-wedge fix)
+
+// A synchronous sleep via Atomics.wait on a throwaway SharedArrayBuffer — builtin, no new
+// dependency; Node's MAIN thread (unlike a browser's) is allowed to block on Atomics.wait.
+function sleepSync(ms) {
+  const ia = new Int32Array(new SharedArrayBuffer(4));
+  Atomics.wait(ia, 0, 0, ms);
+}
 
 function pkgVersion() {
   try { return require(path.join(PKG_ROOT, "package.json")).version; }
@@ -782,29 +831,93 @@ function treeFiles(root) {
   return out;
 }
 
+// Crash-safe stage-then-swap: project-scope-atomic-reconcile (TASK.md v1). Replaces the
+// old wipe-then-copy (rmSync(dest) then cpSync onto dest directly) with a stage-into-a-
+// sibling + two-rename commit, so dest is NEVER observed half-old/half-new (a random
+// partial mix) — the achievable guarantee is "never observed half-composed", not "never
+// observed absent for an instant" (a single-syscall atomic replace of an EXISTING
+// non-empty directory is not portable; the sub-instant window between the two commit
+// renames is closed by the NEXT call's own self-heal, not this one).
+//
 // Returns a file-level roll-up of the heal: { restored, refreshed } where `restored` = a
-// file in the FINAL tree whose relative path was ABSENT before the wipe (fresh or
+// file in the FINAL tree whose relative path was ABSENT before the call (fresh or
 // partially-gutted trees heal these), `refreshed` = a final file that was PRESENT before
 // (re-materialized). Orphans (present before, gone after) are swept, counted as neither.
 // Pure observation — copy semantics unchanged. Mirror of _installer.py:_clean_replace.
 function cleanReplaceTree(src, dest, stripTests) {
   if (!fs.existsSync(src)) fail("missing packaged source: " + src);
-  const before = treeFiles(dest);                 // snapshot BEFORE the wipe, or it's always ∅
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
-  fs.cpSync(src, dest, { recursive: true });
-  if (stripTests) {
-    fs.rmSync(path.join(dest, "__pycache__"), { recursive: true, force: true });
-    for (const entry of fs.readdirSync(dest)) {
-      if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(dest, entry), { force: true });
+  const destParent = path.dirname(dest);
+  const destName = path.basename(dest);
+  fs.mkdirSync(destParent, { recursive: true });
+
+  // -- self-heal -- (before this call's own work): recover/discard whatever a PRIOR,
+  // interrupted call left behind. A stale backup found while dest is absent is the last
+  // known-good tree — restore it first (a cheap rename), minimizing how long dest stays
+  // broken; any other stale sibling (a stage, or a backup found while dest is present) is
+  // discarded outright — its content is never merged or reused.
+  const siblings = fs.readdirSync(destParent);
+  const tmpStales = siblings.filter((n) => n.startsWith(destName + ".add-tmp-"));
+  const bakStales = siblings.filter((n) => n.startsWith(destName + ".add-bak-"))
+    .map((n) => path.join(destParent, n))
+    .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+  let remainingBaks = bakStales;
+  if (!fs.existsSync(dest) && bakStales.length > 0) {
+    const winner = bakStales[bakStales.length - 1];      // most-recently-modified is authoritative
+    fs.renameSync(winner, dest);
+    remainingBaks = bakStales.slice(0, -1);
+  }
+  for (const stale of tmpStales.map((n) => path.join(destParent, n)).concat(remainingBaks)) {
+    fs.rmSync(stale, { recursive: true, force: true });
+  }
+
+  const before = treeFiles(dest);                        // snapshot BEFORE this call's own work
+
+  // -- stage -- : copy src into a fresh, uniquely-named sibling of dest, in dest's own
+  // parent (same filesystem, so the commit renames below are a genuine atomic move). dest
+  // itself is never opened for writing or deletion during this step.
+  const staged = fs.mkdtempSync(path.join(destParent, destName + ".add-tmp-"));
+  try {
+    fs.cpSync(src, staged, { recursive: true });
+    if (stripTests) {
+      fs.rmSync(path.join(staged, "__pycache__"), { recursive: true, force: true });
+      for (const entry of fs.readdirSync(staged)) {
+        if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(staged, entry), { force: true });
+      }
+    }
+  } catch (e) {
+    fs.rmSync(staged, { recursive: true, force: true });   // dest untouched — it was never opened
+    throw e;
+  }
+
+  // -- commit -- : two same-parent renames, NEITHER targets an already-existing name.
+  const token = path.basename(staged).slice((destName + ".add-tmp-").length);
+  let bak = null;
+  if (fs.existsSync(dest)) {
+    bak = path.join(destParent, destName + ".add-bak-" + token);
+    try {
+      fs.renameSync(dest, bak);                            // (a) vacate dest, aside
+    } catch (e) {
+      fs.rmSync(staged, { recursive: true, force: true });  // dest untouched — the rename never happened
+      throw e;
     }
   }
+  try {
+    fs.renameSync(staged, dest);                           // (b) land the new generation
+  } catch (e) {
+    if (bak !== null) fs.renameSync(bak, dest);             // roll back: restore the original
+    fs.rmSync(staged, { recursive: true, force: true });
+    throw e;
+  }
+
+  // -- sweep -- : remove the backup sibling — ONLY after (b) has landed the new dest.
+  if (bak !== null) fs.rmSync(bak, { recursive: true, force: true });
+
   let restored = 0, refreshed = 0;
   for (const f of treeFiles(dest)) (before.has(f) ? refreshed++ : restored++);
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
+const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {
@@ -918,7 +1031,7 @@ function reconcileGlobal(home, claudeDir, noSkill) {
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------
 // Strictly additive; copies ONLY user-data (managed trees + transient excluded), clean-replaced,
 // one-way (project->home). Mirror of _installer.py (identical key + include/exclude rule).
-const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE];   // managed trees + meta + lock
+const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE];   // managed trees + meta + both locks
 
 // data_key twin: <sanitized-basename>-<sha1(abspath_utf8)[:12]>. Pure · total · separator-free.
 function dataKey(projectAbspath) {
@@ -928,28 +1041,102 @@ function dataKey(projectAbspath) {
   return base + "-" + digest;
 }
 
-// A top-level .add/ entry is user-data unless it is a managed tree or a transient artifact.
+// A top-level .add/ entry is user-data unless it is a managed tree, a transient artifact, a
+// scratch-staging sibling left by an interrupted persist/restore/clean-replace call (the shared
+// .add-tmp-/.add-bak- infix convention — crash-safe-persist-restore v1 §3 M11), or a
+// per-generation reclaim-ticket sibling a lock's own stale-reclaim mechanism may transiently (or,
+// if leaked by a crash, semi-persistently) leave next to it (the .reclaim-<inode> infix
+// convention — project-scope-install-lock / global-lock-followups' leaked-ticket self-heal fix).
 function isUserData(name) {
   if (DATA_EXCLUDE.includes(name)) return false;
   if (name.startsWith("scope-snapshot")) return false;
   if (name.includes("pre-archive-bak")) return false;
   if (name.endsWith(".bak.json")) return false;
+  if (name.includes(".add-tmp-") || name.includes(".add-bak-")) return false;
+  if (name.includes(".reclaim-")) return false;
   return true;
 }
 
-// Clean-replace a project's USER-DATA into <home>/data/<key>. true=persisted, false=skipped
-// (no .add or no user-data — an honest skip). Throws if the data dir can't be written.
+// Best-effort removal of a scratch sibling (staging dir/file, or a whole-tree backup dir);
+// tolerates it already being gone. A sweep failure here is hygiene, not a correctness gap —
+// self-heal simply retries it on the next call touching this target.
+function sweepScratch(p) {
+  try { fs.rmSync(p, { recursive: true, force: true }); } catch (_e) { /* best-effort */ }
+}
+
+// Crash-safe clean-replace of a project's USER-DATA into <home>/data/<key>: self-heal any
+// scratch sibling left by an earlier interrupted call, then a WHOLE-TREE stage-then-commit
+// (mirrors cleanReplaceTree's own pattern) — dest is never opened for writing or deletion until
+// its replacement has FULLY landed. true=persisted, false=skipped (no .add or no user-data — an
+// honest skip, dest — including any EXISTING stale snapshot — left completely untouched).
+// Throws if the data dir can't be written.
 function persistData(home, projectAbspath) {
+  const key = dataKey(projectAbspath);
+  const dataRoot = path.join(home, "data");
+  const dest = path.join(dataRoot, key);
+
+  // step 0 -- self-heal: a stale backup found while dest is currently ABSENT means a PRIOR call
+  // crashed between its two commit renames -- restore it first (the newest wins a >1 tie-break,
+  // a defensive case, not an expected path). Then sweep every remaining scratch sibling for this
+  // key unconditionally (never merged/reused).
+  if (fs.existsSync(dataRoot)) {
+    const siblings = fs.readdirSync(dataRoot);
+    const tmpStale = siblings.filter((n) => n.startsWith(key + ".add-tmp-"));
+    let bakStale = siblings.filter((n) => n.startsWith(key + ".add-bak-"));
+    if (!fs.existsSync(dest) && bakStale.length > 0) {
+      let newest = bakStale[0];
+      let newestMtime = fs.statSync(path.join(dataRoot, newest)).mtimeMs;
+      for (const n of bakStale.slice(1)) {
+        const t = fs.statSync(path.join(dataRoot, n)).mtimeMs;
+        if (t > newestMtime) { newest = n; newestMtime = t; }
+      }
+      fs.renameSync(path.join(dataRoot, newest), dest);
+      bakStale = bakStale.filter((n) => n !== newest);
+    }
+    for (const n of bakStale) sweepScratch(path.join(dataRoot, n));
+    for (const n of tmpStale) sweepScratch(path.join(dataRoot, n));
+  }
+
   const addDir = path.join(projectAbspath, ".add");
   if (!fs.existsSync(addDir)) return false;
   const entries = fs.readdirSync(addDir).filter(isUserData);
-  if (entries.length === 0) return false;
-  const dest = path.join(home, "data", dataKey(projectAbspath));
-  if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
-  fs.mkdirSync(dest, { recursive: true });
-  for (const e of entries) {
-    fs.cpSync(path.join(addDir, e), path.join(dest, e), { recursive: true });
+  if (entries.length === 0) return false;        // UNCHANGED: an existing stale snapshot is left as-is
+
+  // step 1 -- stage: copy every filtered entry into a fresh, uniquely-named sibling of dest, IN
+  // home/data/. dest itself is never opened for writing during this step.
+  fs.mkdirSync(dataRoot, { recursive: true });
+  const staged = fs.mkdtempSync(path.join(dataRoot, key + ".add-tmp-"));
+  try {
+    for (const e of entries) {
+      fs.cpSync(path.join(addDir, e), path.join(staged, e), { recursive: true });
+    }
+  } catch (e) {
+    sweepScratch(staged);
+    throw e;
   }
+
+  // step 2 -- commit: two same-parent renames, neither ever targets an already-existing name.
+  const backup = path.join(dataRoot, key + ".add-bak-" + crypto.randomBytes(6).toString("hex"));
+  let asideLanded = false;
+  if (fs.existsSync(dest)) {
+    try {
+      fs.renameSync(dest, backup);
+      asideLanded = true;
+    } catch (e) {
+      sweepScratch(staged);
+      throw e;
+    }
+  }
+  try {
+    fs.renameSync(staged, dest);
+  } catch (e) {
+    if (asideLanded) fs.renameSync(backup, dest);   // roll back: dest ends where it started
+    sweepScratch(staged);
+    throw e;
+  }
+
+  // step 3 -- sweep: the old backup is removed only now that the new dest has landed.
+  if (asideLanded) sweepScratch(backup);
   return true;
 }
 
@@ -974,27 +1161,71 @@ function isSymlink(p) {
 }
 
 // Restore USER-DATA from <home>/data/<key> into <project>/.add — the NON-DESTRUCTIVE inverse of
-// persistData. FILL-GAPS by default (write only ABSENT entries); force overwrites a present entry,
-// writing a <name>.bak FIRST. Copies only isUserData entries; DEREFERENCES symlinks to content
-// (cpSync dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable
-// dest -> restore_failed. Mirror of _installer.py:_restore_data (identical key + fill-gaps rule).
+// persistData, crash-safe via a PER-ENTRY stage-then-commit (.add/ is a SHARED directory most of
+// which this function must leave alone, so — unlike persistData's self-owned whole-tree dest —
+// only ONE entry stages/commits at a time). FILL-GAPS by default (write only ABSENT entries);
+// force overwrites a present entry, writing a <name>.bak sidecar of the original FIRST (the SAME
+// permanent, already-contracted sidecar name as before this task — never the new transient
+// staging marker). Copies only isUserData entries; DEREFERENCES symlinks to content (cpSync
+// dereference). true if >=1 restored, false if nothing to restore. Throws on an unwritable dest
+// -> restore_failed. Mirror of _installer.py:_restore_data.
 function restoreData(home, projectAbspath, force) {
+  const addDir = path.join(projectAbspath, ".add");
   const src = path.join(home, "data", dataKey(projectAbspath));
+
+  // step 0 -- self-heal: sweep any stale per-entry staging sibling left by an earlier
+  // INTERRUPTED call, unconditionally (never merged/reused/completed) -- the untouched snapshot
+  // at src lets THIS call's own ordinary fill-gaps-or-force logic re-derive the correct end
+  // state; no backup-recovery step is needed here (unlike persistData's step 0).
+  if (fs.existsSync(addDir)) {
+    for (const n of fs.readdirSync(addDir)) {
+      if (n.includes(".add-tmp-")) sweepScratch(path.join(addDir, n));
+    }
+  }
+
   if (!fs.existsSync(src)) return false;
   const entries = fs.readdirSync(src).filter(isUserData).sort();
   if (entries.length === 0) return false;
-  const addDir = path.join(projectAbspath, ".add");
   fs.mkdirSync(addDir, { recursive: true });
   let restored = false;
   for (const e of entries) {
     const dest = path.join(addDir, e);
-    if (fs.existsSync(dest) || isSymlink(dest)) {
-      if (!force) continue;                                 // fill-gaps: never clobber a present entry
-      const bak = dest + ".bak";
-      if (fs.existsSync(bak) || isSymlink(bak)) fs.rmSync(bak, { recursive: true, force: true });
-      fs.renameSync(dest, bak);                             // back up the original BEFORE replacing
+    const existed = fs.existsSync(dest) || isSymlink(dest);
+    if (existed && !force) continue;                        // fill-gaps: never clobber; no staging begins
+
+    // step 1b -- stage: copy this ONE entry into a fresh, uniquely-named sibling of dest, IN
+    // .add/ -- dest's own name is not opened for writing during this step. A reserved unique
+    // name is claimed via mkdtempSync, then either kept as a dir (cpSync merges into the empty
+    // dir) or freed via rmdirSync for a plain-file copy.
+    const staged = fs.mkdtempSync(path.join(addDir, e + ".add-tmp-"));
+    try {
+      const srcEntry = path.join(src, e);
+      if (fs.statSync(srcEntry).isDirectory()) {
+        fs.cpSync(srcEntry, staged, { recursive: true, dereference: true });
+      } else {
+        fs.rmdirSync(staged);
+        fs.cpSync(srcEntry, staged, { dereference: true });   // deref a symlink source
+      }
+    } catch (err) {
+      sweepScratch(staged);
+      throw err;
     }
-    fs.cpSync(path.join(src, e), dest, { recursive: true, dereference: true });   // deref symlinks
+
+    // step 1c -- commit:
+    if (existed) {
+      const bak = dest + ".bak";
+      if (fs.existsSync(bak) || isSymlink(bak)) sweepScratch(bak);   // a stale .bak: replace, don't merge
+      fs.renameSync(dest, bak);                               // back up the original BEFORE replacing
+      try {
+        fs.renameSync(staged, dest);
+      } catch (err) {
+        fs.renameSync(bak, dest);                             // roll back: this entry ends where it started
+        sweepScratch(staged);
+        throw err;
+      }
+    } else {
+      fs.renameSync(staged, dest);                            // fill-gaps: single rename, no backup needed
+    }
     restored = true;
   }
   return restored;
@@ -1060,9 +1291,14 @@ function cmdPruneData(args) {
 
 // init --global: install the managed layer ONCE to the shared home + register this project,
 // fail-closed BEFORE the per-project drop. Returns the resolved target for the normal drop.
+// Serialized under the SAME home lock update --global uses (global-lock-followups M3) — a lock
+// failure aborts BEFORE any home/registry write and BEFORE the per-project drop (dropFiles,
+// called by cmdInit right after this returns), matching the all-or-nothing precedent every
+// other as_global-path failure already has.
 function installGlobal(args, chosenTarget) {
   const home = resolveGlobalHome(process.env);
   const claudeDir = claudeSkillsDir(process.env);
+  acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env);
   try { reconcileGlobal(home, claudeDir, args.noSkill); }                 // home_unwritable
   catch (e) { fail("cannot write global home " + home + " — " + (e && e.message ? e.message : e)); }
   writeStamp(home, pkgVersion(), "global");
@@ -1090,25 +1326,318 @@ function validRegistryPath(p) {
   catch (_e) { return false; }
 }
 
-// Serialize `update --global` with an EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag).
-// Already held -> update_in_progress (fail-fast). Released on process exit (normal completion OR
-// fail()'s process.exit), so it never outlives the run; a hard crash may leave a stale lock to
-// remove by hand. pip twin: _installer.py:_update_lock (the SAME O_EXCL lockfile, cross-compatible).
-function acquireUpdateLock(home) {
+// Serialize `update --global` (and, since global-lock-followups, `init --global`) with an
+// EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag) — the SAME mechanism as the pip twin
+// (_installer.py:_update_lock's os.open(O_EXCL)), so a pip-held lock blocks an npm run and
+// vice-versa.
+//
+// Held AND fresh (age <= ADD_LOCK_STALE_SECONDS, env-overridable, default 600s) -> today's
+// byte-identical behavior: `timeout` null/0 fails "update_in_progress" immediately; timeout=N>0
+// polls up to N seconds before failing.
+//
+// Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+// create. The "wx" create remains the SOLE mutual-exclusion primitive — staleness only ever
+// decides whether to retry, never bypasses exclusivity. A clock-skewed FUTURE mtime is a
+// negative age, so it is NEVER treated as stale.
+//
+// A successful acquire (fresh or reclaimed) stamps the file "<PID> <ISO ts>\n" — informational
+// ONLY, never read to decide staleness; a stamp-write failure is swallowed.
+//
+// KNOWN PROBLEM this shape works around: fail() calls process.exit(1) DIRECTLY (skips any
+// pending finally/loop state) — so this retry/self-heal loop uses `continue`/`break` for its
+// OWN internal control flow and calls fail() **at most once**, only AFTER the loop has
+// genuinely exhausted every retry/self-heal/wait attempt — never from inside the loop body.
+//
+// Released on process exit (normal completion OR fail()'s process.exit), so it never outlives
+// the run; a hard crash may leave a stale lock — the NEXT acquire self-heals it automatically.
+function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
   fs.mkdirSync(home, { recursive: true });
   const lockPath = path.join(home, LOCK_FILE);
-  let fd;
-  try { fd = fs.openSync(lockPath, "wx"); }
-  catch (e) {
-    if (e && e.code === "EEXIST") {
-      fail("update_in_progress: another `update --global` is already running — retry shortly " +
-           "(remove " + lockPath + " if it is stale)");
+  const staleAfterMs = Number(env.ADD_LOCK_STALE_SECONDS || LOCK_STALE_DEFAULT) * 1000;
+  const deadline = timeout ? (Date.now() + timeout * 1000) : null;   // null/0 = byte-identical fail-fast
+
+  let fd = null;
+  let timedOut = false;
+  while (fd === null) {
+    try {
+      fd = fs.openSync(lockPath, "wx");
+      break;
+    } catch (e) {
+      if (!e || e.code !== "EEXIST") throw e;
     }
-    throw e;
+    let st;
+    try { st = fs.statSync(lockPath); }
+    catch (_e) { continue; }   // vanished between the failed open and the stat — retry the create
+    let reclaimed = false;
+    if (Date.now() - st.mtimeMs > staleAfterMs) {
+      // Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let a
+      // second racer delete a FIRST racer's already-recreated, live lock). A NAIVE "rename to a
+      // quarantine name" does NOT fix this — a rename is JUST as identity-blind as an unlink: it
+      // operates on whatever currently sits at `lockPath`, so a delayed racer's rename can just
+      // as easily steal a WINNER's brand-new fresh file (empirically reproduced while building
+      // this fix; that attempt made the race MEASURABLY WORSE, not better, by adding an extra
+      // syscall to the vulnerable window). The actual fix: gate entry to the reclaim itself
+      // behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's
+      // own inode number (`st.ino` — stable for this file's lifetime, and a FRESH replacement
+      // file always gets a NEW inode). Two racers that observe the SAME stale file compute the
+      // IDENTICAL ticket name and race an exclusive create on IT — only one wins; every loser
+      // backs off WITHOUT ever touching `lockPath` itself, so nobody can ever unlink/steal a
+      // generation they didn't win the ticket for.
+      const ticketPath = lockPath + ".reclaim-" + st.ino;
+      let ticketFd = null;
+      try {
+        ticketFd = fs.openSync(ticketPath, "wx");
+      } catch (_e) { /* LOST the ticket outright — checked below before giving up on it */ }
+      if (ticketFd === null) {
+        // LOST the per-generation reclaim ticket outright. Before treating this as "someone
+        // else legitimately owns reclaiming THIS stale file right now," check whether THAT
+        // ticket is itself orphaned — leaked by a process that crashed between winning it and
+        // its own best-effort cleanup below. Left unchecked, a leaked ticket wedges this
+        // generation's reclaim FOREVER: the ticket's name is deterministically keyed to
+        // `lockPath`'s own (unchanging) inode, so every future contender recomputes the
+        // IDENTICAL ticket path, loses the identical EEXIST race, and — pre-fix — `continue`d
+        // straight back to the top of this loop without ever reaching the `deadline` check
+        // below: an unbounded livelock no `--lock-timeout` could ever interrupt (found by a
+        // fresh adversarial verify pass; independently reproduced here against the unmodified
+        // code via both a direct call and a real `node cli.js` subprocess, both still spinning
+        // well past their own declared timeout budget).
+        let tst = null;
+        try { tst = fs.statSync(ticketPath); } catch (_e) { /* vanished — retry the create below */ }
+        if (tst === null) {
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}
+        } else if (Date.now() - tst.mtimeMs > LOCK_TICKET_STALE_SECONDS * 1000) {
+          // The ticket ITSELF is orphaned — reclaim it with the IDENTICAL identity-verified
+          // discipline already used for the main lock just above, one level down: re-stat
+          // immediately before unlinking and compare inode, so a ticket some THIRD, still-
+          // legitimately-in-flight reclaimer freshly (re)created in the gap between our stat
+          // and our unlink is never destroyed. A plain unconditional unlink-by-path here would
+          // reopen the IDENTICAL TOCTOU hole this whole ticket mechanism exists to close, one
+          // level down (e.g. a naive "just unlink if old" would let racer A destroy racer C's
+          // brand-new, not-yet-stale ticket for the SAME generation, so A and C would BOTH
+          // believe they are the sole reclaimer — the exact double-hold bug this ticket
+          // mechanism was built to prevent, reintroduced one level down).
+          let currentTino = null;
+          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
+          if (currentTino === tst.ino) {
+            try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
+          }
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
+        }
+        // else: the ticket is live and fresh — a genuine, currently-in-flight reclaimer;
+        // ticketFd stays null and falls through to the shared deadline check below (previously
+        // an unconditional `continue` back to the top of this same branch — now routed the same
+        // as any other non-progress iteration, never a special case that could spin unboundedly
+        // on its own).
+      }
+      if (ticketFd !== null) {
+        try {
+          fs.closeSync(ticketFd);
+          // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
+          // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
+          // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act on
+          // it," and in that gap this SAME path can already have cycled through a full, unrelated
+          // reclaim by someone else (that old inode gone, a fresh one created and now actively
+          // held — empirically observed while building this fix: a late-scheduled racer's ticket
+          // for a long-superseded inode still "won" trivially, since nothing else was contesting
+          // that specific stale ticket name any more, and its UNCONDITIONAL unlink then blindly
+          // destroyed the CURRENT live holder's fresh file). Re-stat immediately before mutating
+          // and compare inodes: only remove the file if it is STILL, right now, the exact
+          // generation we ticketed for; otherwise our ticket is moot — leave the (unrelated,
+          // currently live) file completely alone and let the loop's own open/EEXIST/age logic
+          // re-evaluate reality fresh on the next iteration.
+          let currentIno = null;
+          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
+          if (currentIno === st.ino) {
+            try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+          }
+        } finally {
+          try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+        }
+        reclaimed = true;
+      }
+    }
+    if (reclaimed) {
+      continue;                                          // retry the create immediately (self-heal)
+    }
+    if (deadline !== null && Date.now() < deadline) {
+      sleepSync(LOCK_POLL_INTERVAL_MS);
+      continue;   // keep polling a LIVE holder — or a still-contested ticket — until the deadline.
+                  // This check is now ALWAYS reachable on every non-reclaiming iteration (the
+                  // fix's other half): a wedged/leaked ticket can no longer bypass it by looping
+                  // back to the top of the `while` unconditionally, so an explicit --lock-timeout
+                  // is honored even while a stale ticket is being self-healed above.
+    }
+    timedOut = true;
+    break;
   }
+  if (timedOut) {
+    fail("update_in_progress: another `update --global` is already running — retry shortly " +
+         "(remove " + lockPath + " if it is stale)");
+    return () => {};   // unreachable once fail() exits — keeps the function's return shape honest
+  }
+  try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
+  catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
   const release = () => {
     try { fs.closeSync(fd); } catch (_e) {}
     try { fs.unlinkSync(lockPath); } catch (_e) {}
+  };
+  process.on("exit", release);   // covers normal completion AND fail()'s process.exit
+  return release;
+}
+
+// project-scope lock (project-scope-install-lock) — serializes cmdInit()/cmdUpdate() (non-
+// `--global` path) against the SAME target's own .add/ tree. A NEW, INDEPENDENT primitive that
+// mirrors (but never calls into or shares code with) acquireUpdateLock's own proven shape:
+// different function, different file, different default threshold, zero shared code (the two
+// locks guard genuinely different-shaped resources — see _installer.py:_project_lock).
+//
+// Held AND fresh -> fails IMMEDIATELY with "install_in_progress". UNLIKE acquireUpdateLock,
+// there is NO bounded-wait/poll mode (a live contention never waits, never polls — M7).
+//
+// Held AND stale (age > ADD_PROJECT_LOCK_STALE_SECONDS, default 120s) -> self-heals: unlinks
+// the stale lockfile and retries the create EXACTLY once before falling through to fail-fast.
+// A clock-skewed FUTURE mtime is NEVER treated as stale.
+//
+// KNOWN PROBLEM this shape works around: fail() calls process.exit(1) DIRECTLY (skips any
+// pending finally) — release is wired via process.on("exit", release), never a plain
+// try/finally at the call site (mirrors acquireUpdateLock's own already-solved precedent).
+//
+// If addDir did not exist yet (a virgin target — the lock file needs somewhere to live), it is
+// created here; on release, an addDir THIS call created is removed again iff it is still
+// completely empty (the lock file was its only occupant) — e.g. an --global failure (a held
+// home lock, an unwritable home) that aborts before the per-project drop leaves NOTHING behind,
+// exactly as before this lock existed. A non-empty addDir (the real drop landed, or it
+// pre-existed) is never touched.
+function acquireProjectLock(addDir, env = process.env) {
+  const createdDir = !fs.existsSync(addDir);
+  fs.mkdirSync(addDir, { recursive: true });
+  const lockPath = path.join(addDir, PROJECT_LOCK_FILE);
+  const staleAfterMs = Number(env.ADD_PROJECT_LOCK_STALE_SECONDS || PROJECT_LOCK_STALE_DEFAULT) * 1000;
+
+  let fd = null;
+  try {
+    fd = fs.openSync(lockPath, "wx");
+  } catch (e) {
+    if (!e || e.code !== "EEXIST") throw e;
+    let st = null;
+    try { st = fs.statSync(lockPath); } catch (_e) { /* vanished — treat as reclaimable now */ }
+    if (st === null) {
+      // vanished between the failed open and the stat — nothing to quarantine; retry a plain
+      // create directly (safe unconditionally: O_EXCL is still the sole arbiter — this can
+      // never clobber a legitimate concurrent holder's fresh file, it can only succeed if the
+      // path is genuinely vacant right now).
+      try {
+        fd = fs.openSync(lockPath, "wx");
+      } catch (e2) {
+        if (!e2 || e2.code !== "EEXIST") throw e2;
+      }
+    } else if (Date.now() - st.mtimeMs > staleAfterMs) {
+      // Identity-verified reclaim (fixes a TOCTOU race: an unconditional unlink-by-path let a
+      // second racer delete a FIRST racer's already-recreated, live lock). A NAIVE "rename to a
+      // quarantine name" does NOT fix this — a rename is JUST as identity-blind as an unlink: it
+      // operates on whatever currently sits at `lockPath`, so a delayed racer's rename can just
+      // as easily steal a WINNER's brand-new fresh file (empirically reproduced while building
+      // this fix; that attempt made the race MEASURABLY WORSE, not better, by adding an extra
+      // syscall to the vulnerable window). The actual fix: gate entry to the reclaim itself
+      // behind a SEPARATE, per-GENERATION exclusive ticket, keyed to the CURRENT stale file's
+      // own inode number (`st.ino` — stable for this file's lifetime, and a FRESH replacement
+      // file always gets a NEW inode). Two racers that observe the SAME stale file compute the
+      // IDENTICAL ticket name and race an exclusive create on IT — only one wins; every loser
+      // backs off WITHOUT ever touching `lockPath` itself, so nobody can ever unlink/steal a
+      // generation they didn't win the ticket for.
+      const ticketPath = lockPath + ".reclaim-" + st.ino;
+      let ticketFd = null;
+      try {
+        ticketFd = fs.openSync(ticketPath, "wx");
+      } catch (_e) {
+        // LOST the per-generation reclaim ticket outright -- checked below before treating this
+        // as "someone else legitimately owns reclaiming THIS stale file right now."
+      }
+      if (ticketFd === null) {
+        // LOST the ticket outright. A leaked ticket -- its own holder crashed between winning
+        // it and its own best-effort cleanup below -- would otherwise wedge this generation's
+        // reclaim PERMANENTLY: the ticket's name is deterministically keyed to `lockPath`'s own
+        // (unchanging) inode, so every future contender recomputes the IDENTICAL ticket path and
+        // loses the identical EEXIST race forever (found by a fresh adversarial verify pass;
+        // independently reproduced here against the unmodified code).
+        let tst = null;
+        try { tst = fs.statSync(ticketPath); } catch (_e) { /* vanished — retry the create below */ }
+        if (tst === null) {
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}
+        } else if (Date.now() - tst.mtimeMs > PROJECT_LOCK_TICKET_STALE_SECONDS * 1000) {
+          // The ticket ITSELF is orphaned — reclaim it with the IDENTICAL identity-verified
+          // discipline already used for the main lock just above, one level down: re-stat
+          // immediately before unlinking and compare inode, so a ticket some THIRD, still-
+          // legitimately-in-flight reclaimer freshly (re)created in the gap between our stat and
+          // our unlink is never destroyed. A plain unconditional unlink-by-path here would
+          // reopen the IDENTICAL TOCTOU hole this whole ticket mechanism exists to close, one
+          // level down (e.g. a naive "just unlink if old" would let racer A destroy racer C's
+          // brand-new, not-yet-stale ticket for the SAME generation, so A and C would BOTH
+          // believe they are the sole reclaimer — the exact double-hold bug this ticket
+          // mechanism was built to prevent, reintroduced one level down). Exactly one extra
+          // self-heal attempt — never a second, matching M7's own "no poll, ever" discipline
+          // already governing the main lock's own reclaim above.
+          let currentTino = null;
+          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
+          if (currentTino === tst.ino) {
+            try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
+          }
+          try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
+        }
+        // else: the ticket is live and fresh — a genuine, currently-in-flight reclaimer;
+        // ticketFd stays null, falls through to the SAME fail-fast below (M7 — this lock never
+        // polls a live holder, whether it is the main lock or a contested ticket).
+      }
+      if (ticketFd !== null) {
+        try {
+          fs.closeSync(ticketFd);
+          // Winning the ticket proves we are the SOLE reclaimer for the generation we observed
+          // (`st.ino`) — it does NOT prove `lockPath` is STILL that generation right now. An
+          // arbitrarily long scheduling gap can separate "we judged st.ino stale" from "we act
+          // on it," and in that gap this SAME path can already have cycled through a full,
+          // unrelated reclaim by someone else (that old inode gone, a fresh one created and now
+          // actively held — empirically observed while building this fix: a late-scheduled
+          // racer's ticket for a long-superseded inode still "won" trivially, since nothing else
+          // was contesting that specific stale ticket name any more, and its UNCONDITIONAL
+          // unlink then blindly destroyed the CURRENT live holder's fresh file). Re-stat
+          // immediately before mutating and compare inodes: only remove the file if it is
+          // STILL, right now, the exact generation we ticketed for; otherwise our ticket is
+          // moot — leave the (unrelated, currently live) file completely alone and let the
+          // single retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this lock
+          // never polls a live holder).
+          let currentIno = null;
+          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
+          if (currentIno === st.ino) {
+            try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
+          }
+        } finally {
+          try { fs.unlinkSync(ticketPath); } catch (_e) {}   // best-effort cleanup of our own ticket
+        }
+        try {
+          fd = fs.openSync(lockPath, "wx");
+        } catch (e2) {
+          if (!e2 || e2.code !== "EEXIST") throw e2;
+          // someone else created a fresh file at the just-vacated path before we did (e.g. a
+          // brand-new, never-raced contender's own first attempt landed in the gap) -> fail-fast,
+          // exactly once — never a second reclaim attempt, never a poll/wait (M7).
+        }
+      }
+    }
+    if (fd === null) {
+      fail("install_in_progress: another install/update is already running against " +
+           path.dirname(addDir) + " — retry shortly (remove " + lockPath + " if stale)");
+      return () => {};   // unreachable once fail() exits — keeps the function's return shape honest
+    }
+  }
+  try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
+  catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
+  const release = () => {
+    try { fs.closeSync(fd); } catch (_e) {}
+    try { fs.unlinkSync(lockPath); } catch (_e) {}
+    if (createdDir) {
+      try { if (fs.readdirSync(addDir).length === 0) fs.rmdirSync(addDir); } catch (_e) {}
+      // non-empty (the real drop landed) or already gone — leave it alone either way
+    }
   };
   process.on("exit", release);   // covers normal completion AND fail()'s process.exit
   return release;
@@ -1120,7 +1649,9 @@ function cmdUpdateGlobal(args) {
   if (!fs.existsSync(path.join(home, STAMP_FILE))) {
     fail("no_global_home: no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
   }
-  acquireUpdateLock(home);   // exclusive; EEXIST -> update_in_progress; released on process exit
+  // exclusive; self-heals a stale lock; a LIVE lock -> update_in_progress (immediate, or after
+  // waiting up to --lock-timeout seconds); released on process exit
+  acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env);
   // Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
   // writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
   let reg;
@@ -1176,6 +1707,10 @@ function cmdUpdate(args) {
     else log("ADD update available: project on " + cur + ", package is " + version + ". Run `update`.");
     return;
   }
+  // Project-scope lock (project-scope-install-lock): acquired AFTER the read-only --check
+  // report (a JS-only carve-out — see TASK.md §0/M3), held from here through the function's
+  // end — INCLUDING the same-version no-op check below, so a retried call re-evaluates it fresh.
+  acquireProjectLock(addDir);
   // same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
   // even at the current version (heal-reconcile).
   const status = managedStatus(target);

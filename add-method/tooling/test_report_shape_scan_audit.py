@@ -77,12 +77,17 @@ class SetupGateCitesShape(unittest.TestCase):
 
 
 class ReportTemplateUnchanged(unittest.TestCase):
-    """R1/R2: report-template.md itself carries 0 B delta — the guarded bullet and the
-    considered-but-redundant fix both stay untouched."""
+    """R1/R2: report-shape-scan-audit itself left report-template.md at 0 B delta (9298 B) — the
+    guarded bullet and the considered-but-redundant fix both stayed untouched BY THAT TASK. A later,
+    separate direct chat-directed edit (report-template-recorded-loop) deliberately appended one new
+    <constraints> bullet (+290 B) closing the loop with the report-rendered-trace `Reported:` field —
+    the byte count migrates forward here (same convention as a release test's version bump) so this
+    class keeps proving no OTHER, unrecorded drift occurs."""
 
     def test_report_template_byte_count_unchanged(self):
-        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9298,
-                         "report-template.md must be untouched by this task (0 B delta)")
+        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9588,
+                         "report-template.md drifted beyond its recorded, deliberate additions "
+                         "(9298 @ report-shape-scan-audit + 290 B @ report-template-recorded-loop)")
 
     def test_guarded_bullet_untouched(self):
         text = REPORT_TMPL.read_text(encoding="utf-8")

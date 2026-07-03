@@ -1,10 +1,18 @@
+<p align="center">
+  <a href="https://www.npmjs.com/package/@pilotspace/add"><img alt="npm version" src="https://img.shields.io/npm/v/@pilotspace/add.svg"></a>
+  <a href="https://pypi.org/project/pilotspace-add/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/pilotspace-add.svg"></a>
+  <a href="https://github.com/pilotspace/ADD/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://github.com/pilotspace/ADD/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pilotspace/ADD.svg"></a>
+</p>
+
 # ADD — AI-Driven Development
 
 **One skill. Eight steps. Five disciplines. Every feature ships through the loop.**
 
-> A minimal, state-tracked Claude Code skill for building software when the AI
-> writes the code and **you** own the two things it cannot do alone: decide *what*
-> to build, and *verify* it is correct.
+> A minimal, state-tracked skill for building software when the AI writes the code
+> and **you** own the two things it cannot do alone: decide *what* to build, and
+> *verify* it is correct. Native on Claude Code; every other CLI coding agent
+> follows the same loop through the phase guides.
 
 ADD is the **orchestration engine** of the AIDD method. It sits on top of a
 context foundation (DDD → SDD → UDD) and runs as a red/green TDD ↔ AI-build loop.
@@ -16,6 +24,27 @@ The full reasoning — *why* every rule exists — is the AIDD book bundled in
   Engine (this skill):   TDD  ⇄  ADD
   Flow per feature:  Specify → Scenarios → Contract → Tests → Build → Verify → Observe ↻
 ```
+
+## Quick Start
+
+```bash
+# Node / npm
+npx @pilotspace/add init
+```
+
+```bash
+# Python / pip
+pip install pilotspace-add && pilotspace-add init
+```
+
+Then, in your coding agent, say what you want to build:
+
+> `/add` — *"I want to let users transfer money between their own accounts."*
+
+The agent sizes it into a milestone (you confirm the shape), drafts the spec →
+scenarios → contract → tests as one bundle (you approve once, at the frozen
+contract), then builds and verifies to green. Full detail below — **Install**,
+**Use it**, and the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Why ADD (and why it is minimal)
 
@@ -29,6 +58,44 @@ across sessions (context rot). ADD fixes both:
   re-reading the repo.
 - **Progressive disclosure.** The skill loads only the guide for the phase you are
   in — the context window stays lean.
+
+## Where ADD fits vs. skill libraries (e.g. agency-agents)
+
+ADD is an **orchestration method** — the gated loop (spec → scenarios → contract → tests → build →
+verify → observe) that decides when work is trusted. It is not a catalog of ready-made expert
+personas. Skill libraries like [agency-agents](https://github.com/msitarzewski/agency-agents), or
+role-specific subagents (a backend expert, a security reviewer, a senior Java engineer), sit at a
+different layer: they answer **who does the work** — a domain stance, vocabulary, and craft rules
+for one kind of task. ADD answers **how you trust what gets built**, no matter who or what wrote it.
+
+The two layers compose; they don't compete. ADD's persona loop **distills** a lean, project-fit
+persona from a teacher corpus like agency-agents — vendored at
+[`personas-teacher/`](./personas-teacher/), read **off-build** by the AI while drafting a persona,
+never a runtime dependency — down to the three parts a project actually needs: **Identity** (the
+stance), **Critical Rules** (the non-negotiables), and **Success Metrics** (the done-bar). The
+project then owns that persona outright.
+
+A distilled persona is applied as an **advisory overlay** during design, build, or verify — it
+shapes *how* a step gets done, never whether it happens: it can't skip a gate, edit a frozen
+contract, or wave through a security finding. That gated loop is what ADD contributes underneath
+any persona, distilled or not.
+
+## Best setup: ADD alongside other agent libraries
+
+1. **Install ADD** (below) — it drives the loop: which phase you're in, what needs your approval,
+   whether something is proven.
+2. **Keep whatever subagent libraries you already use.** ADD's own five phase specialists
+   (`add-design`, `add-build`, `add-verify`, `add-persona`, `add-advisor`) live in the same
+   `.claude/agents/` mechanism as any other Claude Code subagent — a distilled persona, an
+   agency-agents-derived specialist, a built-in one (a backend expert, a security reviewer). They
+   coexist with zero conflict; nothing is replaced.
+3. **Prefer ADD's named roster first for anything phase-shaped** — spawning `add-verify` for the
+   independent adversarial refute-read, `add-build` for a red→green batch — before an ad-hoc spawn.
+   Reach for another specialist when a piece needs deep domain expertise a generic phase agent
+   doesn't carry (a Java-specific review, a payments-domain lens).
+4. **The gates hold no matter who did the work.** A delegated subagent proposes; the orchestrating
+   agent records. A security finding is always a `HARD-STOP`, and a low self-reported confidence
+   means refine or re-spawn — never a pass — whichever subagent produced it.
 
 ## Install
 

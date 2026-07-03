@@ -371,7 +371,7 @@ Watch (reuse scenarios as monitors): future tasks scaffolded from this template 
 - [AI] verify — gate PASS (reviewed by Tin Dang (auto-resolved under `autonomy: auto` — no residue: no security/concurrency/)
 
 ### Spec delta
-- [SPEC · open] the engine's "strip live-phase instruction comments from a closed TASK.md" feature
+- [SPEC · seeded] the engine's "strip live-phase instruction comments from a closed TASK.md" feature [→ strip-scaffold-backtick-comment-fix]
   also strips legitimate prose that quotes literal `<!--...-->` syntax inside backticks (not just
   the template's own instructional comments), garbling completed tasks' §0/§1 text that documents
   HTML-comment syntax (evidence: this very task's own closed TASK.md now reads "carries exactly 1

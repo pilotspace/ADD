@@ -3055,6 +3055,30 @@ def cmd_check(args: argparse.Namespace) -> None:
                          f".add/design/captures/{_pname}.<png|svg|…> — render + confirm it "
                          "before build (design.md beat 4)"))
 
+    # roster-uninstalled (roster-install-drift): the ADD-managed guideline block cites the agent
+    # roster ("agents/*.md" tail — matches both the shipped `add-method/agents/*.md` attribution
+    # citation and any older phrasing) but the project may have no roster installed at all — never
+    # shipped in the package, synced before this fix, or from a build that regressed the agents/
+    # tree — a dead reference with no signal anywhere. WARN, never red (measure-not-block);
+    # presence-gated on the citation itself — a project whose guideline files don't cite a roster
+    # at all is silently exempt, never retro-flagged.
+    _project_root = root.parent
+    _cites_roster = False
+    for _gname in GUIDELINE_FILES:
+        try:
+            if "agents/*.md" in (_project_root / _gname).read_text(encoding="utf-8"):
+                _cites_roster = True
+                break
+        except OSError:
+            pass
+    if _cites_roster:
+        _agents_dir = _project_root / ".claude" / "agents"
+        if not (_agents_dir.is_dir() and any(_agents_dir.glob("add-*.md"))):
+            warnings.append(("roster_uninstalled",
+                             "guideline file(s) cite the agent roster but no `.claude/agents/"
+                             "add-*.md` files are installed — run `add.py update` (or re-run the "
+                             "CLI installer) to materialize them"))
+
     passed = sum(1 for ok, _, _ in checks if ok)
     failed = len(checks) - passed
     if as_json:
@@ -6037,6 +6061,21 @@ def _freeze_skip_notices(state: dict) -> list[dict]:
 # region only (mirrors _RISK_HIGH_RE's anchoring so a title substring can never look like one).
 _RISK_ANY_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*\S", re.MULTILINE)
 
+# A single `Reported:` line (report-rendered-trace) — scoped to ONE phase body at a time by the
+# caller (bodies.get(3, "")/bodies.get(6, "")), so §3 and §6 never cross-contaminate each other.
+_REPORTED_LINE_RE = re.compile(r"(?m)^Reported:[ \t]*(.*)$")
+
+
+def _reported_unrecorded(body_text: str) -> bool:
+    """True iff a 'Reported:' line is PRESENT but still an unfilled `<...>` placeholder or blank.
+    ABSENT line -> False (grandfathered — a pre-existing task's TASK.md predates this template
+    field), mirroring _section_unfilled's absent-block convention."""
+    m = _REPORTED_LINE_RE.search(body_text)
+    if m is None:
+        return False
+    val = m.group(1).strip()
+    return (not val) or bool(re.fullmatch(r"<[^>\n]*>", val))
+
 
 def _guarantee_lint_notices(root: Path, state: dict) -> dict:
     """PRESENCE-ONLY, MEASURE-NOT-BLOCK lints SURFACED (never failed-on) by `add.py audit`
@@ -6049,16 +6088,31 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
                            refute-record, M4) — the earned-green verdict the AI must record under
                            `auto`; ABSENT block grandfathers exactly like shallow. MEASURE-NOT-BLOCK:
                            never auto-blocks a gate, only surfaced here for review + a human spot-audit.
-    Honest visibility for three verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
+      rule_coverage_gap[]= this task's OWN §1 Must/Reject IDs have >=1 rule with no §2 scenario tag
+                           and no §4 `covers:` line (_rule_coverage_gaps — same opt-in-by-tag-presence
+                           grandfather as `add.py check`'s whole-project sweep) — surfaced the moment
+                           THIS task reaches verify, not only via a separate `check` invocation someone
+                           has to remember to run; `check` still owns the per-rule detail.
+      contract_report_unrecorded[] = §3's `Reported:` line present-but-unfilled (report-rendered-
+                           trace) — the freeze report (banner/ARC/SHAPE) was cited by the guide but
+                           never recorded as rendered; ABSENT line grandfathers a pre-field task.
+      verify_report_unrecorded[]   = §6's `Reported:` line present-but-unfilled — the gate report
+                           (banner/ARC) was never recorded as rendered; same grandfather rule.
+    Honest visibility for six verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
     TASK.md + state only, writes nothing."""
     shallow, risk_unset, refute_unrecorded, sensitivity_unset = [], [], [], []
     advisor_verdict_unrecorded = []
     advisor_reviewer_is_author = []
     advisor_residue_on_mechanical_mis_tier = []
+    rule_coverage_gap = []
+    contract_report_unrecorded = []
+    verify_report_unrecorded = []
     for slug in sorted(state.get("tasks") or {}):
         if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
             continue
-        body6 = _raw_phase_bodies(root, slug).get(6, "")
+        bodies = _raw_phase_bodies(root, slug)
+        body3 = bodies.get(3, "")
+        body6 = bodies.get(6, "")
         hdr = _task_header(root, slug)
         if _section_unfilled(body6, "### Deep checks"):
             shallow.append(slug)
@@ -6066,12 +6120,21 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
             refute_unrecorded.append(slug)
         if _section_unfilled(body6, "### Advisor 3-lens verdict"):
             advisor_verdict_unrecorded.append(slug)
+        if _reported_unrecorded(body3):
+            contract_report_unrecorded.append(slug)
+        if _reported_unrecorded(body6):
+            verify_report_unrecorded.append(slug)
         if not _RISK_ANY_RE.search(hdr):
             risk_unset.append(slug)
         # sensitivity_unset (risk-sensitivity-taxonomy): a verify-reached task with no
         # human-declared sensitivity — MEASURE-NOT-BLOCK, same class as risk_unset.
         if _task_sensitivity(hdr) is None:
             sensitivity_unset.append(slug)
+        # rule_coverage_gap (verify-traceability-glint): this task's own §1 Must/Reject vs
+        # §2/§4 tags — the SAME predicate `check` uses project-wide, scoped to just this task
+        # and surfaced right at verify, not only via a separate whole-project sweep.
+        if _rule_coverage_gaps(bodies.get(1, ""), bodies.get(2, ""), bodies.get(4, "")):
+            rule_coverage_gap.append(slug)
         # advisor_reviewer_is_author / advisor_residue_on_mechanical_mis_tier
         # (advisor-verdict-audit): MEASURE-NOT-BLOCK lints on the filled advisor block.
         # Both require the block to be PRESENT AND FILLED (not just unfilled).
@@ -6105,7 +6168,10 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
             "sensitivity_unset": sensitivity_unset,
             "advisor_verdict_unrecorded": advisor_verdict_unrecorded,
             "advisor_reviewer_is_author": advisor_reviewer_is_author,
-            "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier}
+            "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier,
+            "rule_coverage_gap": rule_coverage_gap,
+            "contract_report_unrecorded": contract_report_unrecorded,
+            "verify_report_unrecorded": verify_report_unrecorded}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -6142,6 +6208,11 @@ def cmd_audit(args: argparse.Namespace) -> None:
             av = glints["advisor_verdict_unrecorded"]
             print(f"audit: advisor_verdict_unrecorded — {len(av)} task(s): {', '.join(av)} "
                   f"— record the 3-lens advisor verdict (§6); a spot-audit is the backstop")
+        if glints["rule_coverage_gap"]:
+            rc = glints["rule_coverage_gap"]
+            print(f"audit: rule_coverage_gap — {len(rc)} task(s): {', '.join(rc)} "
+                  f"— a §1 Must/Reject has no §2 scenario tag or §4 covers: line "
+                  f"(run `add.py check` for the per-rule detail)")
         if glints["sensitivity_unset"]:
             su = glints["sensitivity_unset"]
             print(f"audit: sensitivity_unset — {len(su)} task(s) reached verify with no "
@@ -6155,11 +6226,22 @@ def cmd_audit(args: argparse.Namespace) -> None:
             print(f"audit: advisor_residue_on_mechanical_mis_tier — {len(am)} task(s): "
                   f"{', '.join(am)} — mechanical tier with non-none residue and PASS verdict "
                   f"is incoherent; consider re-tiering")
+        if glints["contract_report_unrecorded"]:
+            cr = glints["contract_report_unrecorded"]
+            print(f"audit: contract_report_unrecorded — {len(cr)} task(s): {', '.join(cr)} "
+                  f"— record the rendered freeze report (§3 `Reported: yes`); a spot-audit is the backstop")
+        if glints["verify_report_unrecorded"]:
+            vr = glints["verify_report_unrecorded"]
+            print(f"audit: verify_report_unrecorded — {len(vr)} task(s): {', '.join(vr)} "
+                  f"— record the rendered gate report (§6 `Reported: yes`); a spot-audit is the backstop")
         if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
                 and not glints["refute_unrecorded"] and not glints["advisor_verdict_unrecorded"] \
                 and not glints["sensitivity_unset"] \
                 and not glints["advisor_reviewer_is_author"] \
-                and not glints["advisor_residue_on_mechanical_mis_tier"]:
+                and not glints["advisor_residue_on_mechanical_mis_tier"] \
+                and not glints["rule_coverage_gap"] \
+                and not glints["contract_report_unrecorded"] \
+                and not glints["verify_report_unrecorded"]:
             print(f"audit: clean ({checked} tasks checked)")
     # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:
