@@ -19,6 +19,8 @@ Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes deri
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during build.
 - [ ] Every §6 Build expectation is confirmed by real evidence (not just a green test).
+- [ ] §1 rules trace to §2/§4 — an untraced rule is a coverage gap (`add.py audit`'s `rule_coverage_gap`; `check` has detail).
+- [ ] every §3-cited symbol still resolves in the CURRENT tree, not just Ground SHA (§6 Live-verify evidence catches a stale/moved anchor here, not later).
 
 If any is false, stop and return to Build.
 

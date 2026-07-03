@@ -31,8 +31,14 @@ Before the build, the task pre-declares its **build expectations** — the obser
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during the build.
 - [ ] Every pre-declared build expectation is confirmed by real evidence (not merely a green test).
+- [ ] Every §1 Must/Reject rule still traces to a §2 scenario tag or a §4 `covers:` line.
+- [ ] Every symbol §3's contract cites still resolves in the *current* tree, not just at Ground SHA.
 
 If any of these is false, stop here and return to the build; there is nothing to verify yet.
+
+A green suite proves the tests you wrote pass — it says nothing about a rule you never wired a scenario or test to at all. That is a different failure than the ones Part four covers: not a cheated pass, but a rule with no trace of ever being checked. `add.py check` scans every task project-wide for exactly this — a §1 Must or Reject with no §2 scenario tag and no §4 `covers:` line — but that sweep is easy to forget to run. `add.py audit`'s `rule_coverage_gap` notice surfaces the SAME check for the task actually at this gate, the moment it reaches Verify (a task that never adopted the tag convention at all is silently grandfathered, never retro-flagged). Neither blocks the gate; both make an already-real gap impossible to miss.
+
+The second check guards against a quieter kind of drift. §0's Ground SHA anchors the symbols §3's contract cites to the commit they were read at — but code moves *during* the build that follows. Before this gate, re-resolve every one of those symbols against the tree as it stands now, not the Ground SHA snapshot, and record it in §6's **Live-verify evidence** block. A moved or renamed anchor caught here is a one-line note; the same drift left silent is a future reader chasing a line number that no longer means what it did at Ground.
 
 ## Part two — check what tests miss
 
@@ -77,6 +83,7 @@ A security finding is always a `HARD-STOP`; it is never waved through with a wai
 
 - [ ] All tests pass (the evidence).
 - [ ] Every pre-declared build expectation is confirmed by observable evidence.
+- [ ] Every §1 rule traces to §2/§4; every §3-cited symbol still resolves in the current tree.
 - [ ] Concurrency/timing of the risky operation is safe.
 - [ ] No exposed secrets, injection openings, or unexpected dependencies.
 - [ ] Layering and dependencies follow `CONVENTIONS.md`.

@@ -11,6 +11,8 @@ Spawn when the piece is **separable and worth the round-trip**: a broad sweep; a
 
 Do **not** spawn for narrow, cheap work — pay the round-trip only when the piece is big or independent enough. When in doubt, do it in-context.
 
+**Prefer the named roster.** Check first whether the piece fits one of ADD's five phase specialists — `add-design` (setup–contract) · `add-build` (tests·build) · `add-verify` (verify·observe) · `add-persona` (fit-persona selection) · `add-advisor` (a consultative second opinion) — before an ad-hoc spawn; each already carries the worker contract below.
+
 ## The 3-lens sequential checklist at verify
 
 At Verify, sweep security → concurrency → architecture in order. **Security HARD-STOP ends the checklist** (leave the rest blank). Each lens returns: **CLEAR** · **HARD-STOP** (security only) · **RESIDUE** (concurrency/architecture).

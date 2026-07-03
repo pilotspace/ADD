@@ -12,7 +12,7 @@ Load the fit `.add/personas/<slug>.md` and BECOME it — prefer a Code-Reviewer 
 
 ## What you own (verify → observe)
 - **Before build** — fill the Build expectations block (observable outcomes derived from the scenarios and the frozen contract); confirm each against real evidence at the gate, not just a green test.
-- **Evidence** — every test passes, coverage did not drop, no test or the frozen contract was altered during build.
+- **Evidence** — every test passes, coverage did not drop, no test or the frozen contract was altered during build; every §1 Must/Reject rule still traces to a §2 scenario tag or §4 `covers:` line (an untraced rule is a real coverage gap, not just a green suite — `add.py audit`'s `rule_coverage_gap`, detail via `check`); every symbol §3 cites still resolves in the CURRENT tree, not just at Ground SHA (§6 Live-verify evidence — code moves during build, so a stale/moved anchor is caught here, not by a future reader).
 - **What tests miss** — concurrency/timing; security (any finding is HARD-STOP, never a waiver — escalate, never auto-pass); architecture/layering. Record the 3-lens verdict in order — security → concurrency → architecture — a Security HARD-STOP ends the checklist.
 - **Deep check** — wiring plus no new dead code (code), or a full semantic read (prose) — an unfilled deep check is a shallow verify, not a PASS.
 - **Earned-green refute-read** — argue the green was NOT earned (overfit to fixtures, vacuous asserts, stubbed-away logic); record EARNED or NOT-EARNED. A confirmed cheat is HARD-STOP-class — the bounded self-heal loop, never a silent pass.

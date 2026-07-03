@@ -112,7 +112,16 @@ POOLS = [
     # 7 phase-only agents and every roster-shaped reference to them (both sections above) were reverted
     # back to this branch's pre-merge advisor.md/streams.md. No net new surface survives, so the baseline
     # is unchanged from 54363. The won compaction on the orchestration guides is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 54363,
+    # orchestration 54363 → 55161 @ roster-spawn-hint (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as uiux-hint-adoption): UNLIKE the reverted foreign
+    # roster section above, this names the branch's OWN lean 5-agent roster (add-design/add-build/
+    # add-verify/add-persona/add-advisor — test_agent_roster.py), not the foreign 9-agent shape. Neither
+    # advisor.md nor streams.md named any of the 5 anywhere before this. advisor.md gains a "Prefer the
+    # named roster" paragraph (+367 B) and streams.md's DAG-strategy bullets gain a matching
+    # roster-preference bullet (+231 B). +598 B human-directed surface. RATIO 0.75 kept EXACTLY;
+    # baseline grows by surface ÷ ratio (+⌈598/0.75⌉=798). The won compaction on every other
+    # orchestration guide is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 55161,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a
@@ -145,7 +154,13 @@ POOLS = [
     # MILESTONE.md's new Scope-hint vocabulary (TASK.md.tmpl itself has zero `<!--` comment headroom to
     # carry the hint directly — test_template_form_tags.py's <12 ceiling). +79 B human-directed surface.
     # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈79/0.80⌉=99). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40438,
+    # phases 40438 → 40801 @ verify-traceability-doc (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as uiux-hint-adoption above): 6-verify.md's Part one
+    # gains two bullets — §1 rules must still trace to §2/§4 (the new `rule_coverage_gap` audit glint)
+    # and every §3-cited symbol must still resolve in the CURRENT tree (naming the pre-existing,
+    # previously-undocumented Live-verify evidence block) — +290 B human-directed surface. RATIO 0.80
+    # kept EXACTLY; baseline grows by surface ÷ ratio (+⌈290/0.80⌉=363). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40801,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},

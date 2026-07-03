@@ -120,8 +120,9 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
 
 - **§3 CONTRACT FROZEN** → build→verify is a dynamic, auto-gated run (`autonomy: auto` default; lower to
   `conservative`/`manual` for a human gate) — `run.md`. Pipeline ready tasks behind frozen
-  contracts — `streams.md`. Delegate one piece of your plan to a subagent (when to spawn, the prompt
-  template, the tier) — `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9)
+  contracts — `streams.md`. Delegate one piece of your plan to a subagent — prefer the named roster
+  (`add-design`/`add-build`/`add-verify`/`add-persona`/`add-advisor`) over an ad-hoc spawn; when to
+  spawn, the prompt template, the tier — `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9)
   — `confidence.md`. Both advisory; the engine never spawns.
 - **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
   `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
