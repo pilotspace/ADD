@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "project-scope-atomic-reconcile",
+  "active_task": "global-data-restore-harden",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2608,7 +2608,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T04:03:56+00:00",
+  "updated": "2026-07-03T04:39:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3542,7 +3542,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "install-update-hardening": "project-scope-atomic-reconcile"
+    "install-update-hardening": "global-data-restore-harden"
   },
   "todos": [
     {
