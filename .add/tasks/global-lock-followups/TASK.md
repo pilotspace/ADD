@@ -621,164 +621,219 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
 Verdict: EARNED
-By: add-verify agent (tdd-verifier persona) — principal concurrency/filesystem-reliability
-  review; a FRESH reviewer for this redo (did not write the original code, the abandoned
-  rename-to-quarantine attempt, or this ticket+identity-reverify fix) · NOTE: this task's own
-  GATE RECORD below (Outcome: PASS, reviewed 2026-07-03) predates the redo entirely — it was
-  recorded BEFORE the shared TOCTOU race was ever found and is SUPERSEDED by everything below;
-  it should not be relied on. Adversarially checked, re-deriving from the current tree, never
-  from any prior agent's own narrative:
-  (1) Re-ran the evidence myself, from scratch: `test_global_update_harden.py` 32/32 green (own
-  run); the 6-file broader sweep (test_global_install/test_global_update_harden/
-  test_global_restore/test_global_data/test_reconcile_rollup/test_project_scope_lock, 145
-  tests) 145/145 green (own run); `add.py check` 509 passed/0 failed (own run — NO
-  `build_tampered`/`scope_violation` WARN was emitted for THIS task specifically; see the
-  explicit caveat at the end of this verdict on why that absence is a bookkeeping gap, not a
-  cleaner mechanical situation).
-  (2) Re-ran `StaleLockSelfHealTest::test_concurrent_stale_reclaim_exactly_one_wins` myself 50
-  times standalone (a fresh, independent 50 — not the builder's reported 90) — 50/50 green, 0
-  failures.
-  (3) Independently re-derived the ticket+identity-reverify algorithm by hand against the ACTUAL
-  current code (`_installer.py:1417-1537` `_update_lock`, `cli.js:1329-1418`
-  `acquireUpdateLock`) — the identical trace method as the sibling task's own Refute-read (N
-  simultaneous racers on one stale generation -> one ticket winner -> every loser's `continue`
-  never touches `lock_path` itself -> the winner's re-stat-before-unlink identity check -> a
-  fresh interloper landing in the winner's own unlink-to-retry gap is benign nondeterminism, not
-  a double-hold), independently corroborated by 90-190+ combined stress runs this session (my
-  own 50 + the builder's 90) at 0 instances of a peak-concurrent-holder count above 1.
-  (4) Read every changed assertion line-by-line: the identical `peak = max(peak, active)` /
-  `self.assertLessEqual(peak, 1, ...)` (line 499) temporal proof as the sibling, closing the
-  identical `results.count("acquired") >= 1` cumulative-assertion gap the reopening
-  (`1e30cf8`) found at this exact file's line 480 pre-redo. No vacuous assert, no stubbed logic
-  in `_update_lock`/`acquireUpdateLock` (read both in full against the current tree).
-  (5) Confirmed via `git log -p --follow` on this TASK.md that §0-§3 (the frozen bundle) are
-  byte-unchanged since this task's own freeze — every post-freeze diff lands inside §5's
-  "Strategy actually used" prose only (hunks at lines ~378 and ~438, both well inside §5). The
-  frozen contract was NOT edited during this redo.
-  (6) Wrote 4 independent repro scripts (this session's scratchpad — no tracked test touched)
-  attacking a DIFFERENT angle than either prior agent tried: does a crash landing INSIDE the NEW
-  ticket-held window (between a ticket-winner's `os.open`/`fs.openSync` success and its own
-  `finally` cleanup) leave anything behind that matters? Full finding under Advisor Concurrency
-  below — it does NOT reveal the recorded green as gamed (the recorded suite proves what it
-  claims, for the scenarios it actually runs); it reveals a scenario neither the builder's
-  Strategy nor any prior verify pass ever attempted. A coverage gap, not a rigor gap in what is
-  already green — EARNED stands for the recorded suite; the new finding is carried as
-  Concurrency residue below, not as a refutation of this checklist.
-  (7) Evidence-integrity disclosure, mirroring the sibling task's own (7), adapted: my own
-  `add.py check` run emits NO `build_tampered`/`scope_violation` WARN for this task — but this
-  task's `.add/state.json` entry carries NO `tripwire`/`scope` fields at all (confirmed by
-  direct inspection: only `freeze`/`gate_actor`/`reopens` are present), unlike its sibling. The
-  identical shared test-strengthening commit (`3e85619`) touched THIS task's own
-  `test_global_update_harden.py` too (23 lines added, confirmed via `git show --stat`). The
-  absence of a WARN here reflects an absent tracking structure for this task, not a cleaner
-  mechanical state — the underlying situation (a tracked test legitimately strengthened after
-  this task's own original build/freeze, without a phase re-cross since) is IDENTICAL to the
-  sibling's. Disclosed so a human does not read "no WARN" as "nothing to reconcile" for this
-  task either.
+By: add-verify agent (tdd-verifier persona) — round-4 independent pass, a FRESH reviewer for
+  this specific redo (did not write round 1's original lock, round 2's TOCTOU fix, round 3's
+  leaked-ticket-self-heal fix, or the round-2 verify text below that this fill fully replaces,
+  not appends to — that text was recorded by commit `e35ab42`, itself superseded twice over: by
+  round 3's own fix and now by this pass). Mandate: confirm round 3
+  (`3b78e4b` test-red, `0571d7d` fix-green, `053f6c5` docs, `a515943`+`6505b6a` re-cross) actually
+  closes the leaked-ticket livelock recorded as HARD-STOP below, and specifically investigate
+  whether the ticket's OWN self-heal can leak/wedge one level further down — the one question
+  the orchestrator's own hand-trace (this session, prior turn) deliberately left open. Every
+  point below is re-derived from the CURRENT tree, never from round 3's own build narrative or
+  the superseded text this replaces:
+  (1) Re-ran the evidence myself, from scratch, fresh runs, none copied: `test_global_update_
+  harden.py` 35/35 green (own run — 32 pre-existing + 3 new from round 3:
+  `LeakedTicketLivelockTest::test_leaked_ticket_self_heals_instead_of_unbounded_livelock`,
+  `::test_lock_timeout_deadline_honored_even_when_a_ticket_cannot_yet_resolve`,
+  `::test_npm_leaked_ticket_self_heals_instead_of_livelock` — the "32/32" figure in this
+  section's own checkbox above predates these 3 and is superseded by this count); the 6-file
+  sibling sweep (test_global_install/test_global_update_harden/test_global_restore/
+  test_global_data/test_reconcile_rollup/test_project_scope_lock, 152 tests — up from 145,
+  reflecting round 3's 3+4 new tests across both sibling suites) 152/152 green (own run);
+  `add.py check` 509 passed/0 failed (own run) with ZERO `build_tampered`/`scope_violation` WARN
+  for EITHER sibling task — a genuine resolution of the round-2 pass's own disclosed bookkeeping
+  gap (7 below is retired, not restated): `a515943`/`6505b6a` (round 3's own re-cross commits)
+  updated `.add/state.json`'s `tripwire.tests` MD5 for both tasks to match the CURRENT test
+  files byte-for-byte (independently confirmed via direct `md5`/`json` inspection this pass:
+  `test_global_update_harden.py` -> `66048b15244e0a4c07c878b5c59d4b5e`, matching the recorded
+  snapshot exactly) — no longer a stale snapshot merely disclosed as harmless, genuinely fixed.
+  (2) Re-ran `StaleLockSelfHealTest::test_concurrent_stale_reclaim_exactly_one_wins` (the
+  ORIGINAL multi-racer TOCTOU race's own regression guard) myself 30 times standalone, fresh —
+  30/30 green, 0 failures; confirms round 3's ticket-leak fix did not reintroduce the race round
+  2 closed.
+  (3) Re-ran ALL 3 of round 3's own new `LeakedTicketLivelockTest` methods (including the npm
+  subprocess smoke) 30 times standalone, fresh — 30/30 green, 0 failures: reliability confirmed,
+  not a one-shot pass.
+  (4) Independently re-derived the ticket-level self-heal by hand against the ACTUAL current
+  code (`_installer.py:1430-1614` `_update_lock`, `cli.js:1351-1484` `acquireUpdateLock`), never
+  round 3's own paraphrase: traced the EXACT crash window round 3 fixed (a process wins the
+  per-generation reclaim ticket, then dies before its own `finally: os.unlink(ticket_path)` a
+  few lines later) and confirmed the delivered fix — on losing the ticket, stat it; if
+  `tage > _LOCK_TICKET_STALE_SECONDS`/`LOCK_TICKET_STALE_SECONDS` (5s, independent of the main
+  lock's own 600s default — reasoned, not arbitrary: a ticket's own critical section is a small,
+  fixed handful of syscalls, so a multi-second margin is generous not tight), apply the
+  IDENTICAL identity-verified discipline (re-stat immediately before unlinking, compare inode,
+  unlink only on a match) directly to the ticket file, then a plain
+  `os.open(ticket_path, O_CREAT|O_EXCL...)`/`fs.openSync(ticketPath,"wx")` to re-win it —
+  genuinely resolves the wedge. Separately confirmed the SECOND half of the fix (the `reclaimed`
+  flag, `_installer.py:1475/1585-1587`, `cli.js:1369/1454/1457-1459`): `if reclaimed: continue`
+  sits OUTSIDE/AFTER the `if age > stale_after:` block (a sibling statement, not nested inside
+  it), so the `deadline`/`--lock-timeout` check beneath it is now reached on EVERY iteration
+  where `reclaimed` stayed `False` — a live main lock, a live/fresh ticket, AND a ticket whose
+  own re-creation was lost to a third party all correctly fall through to it, not just the one
+  sub-case round 3's own prose emphasizes most.
+  (5) THE CRUX QUESTION this pass exists to answer (not attempted by round 3's build or the
+  round-2 verify text below): does the ticket's own self-heal have an analogous leak ONE LEVEL
+  FURTHER DOWN — could a crash between winning a "ticket for the ticket" and cleaning it up wedge
+  things again? Answer, with both a structural argument and fresh adversarial evidence: NO — see
+  Advisor Concurrency (c) below for the full derivation and 1167+-attempt adversarial evidence
+  (680 Python-thread attempts on this task's own `_update_lock` alone). This is a STRUCTURAL
+  "cannot recur here" finding, not a "did not find one yet" finding — the reasoning is laid out
+  in full below, not merely asserted.
+  (6) Read every assertion in the 3 new tests line-by-line: `test_leaked_ticket_self_heals_
+  instead_of_unbounded_livelock` asserts the acquiring thread is NOT alive after a 10s join
+  against a 3.0s timeout budget AND that elapsed time is under 5.0s (proving genuine self-heal,
+  not merely outlasting a generous join budget by luck); `test_lock_timeout_deadline_honored_
+  even_when_a_ticket_cannot_yet_resolve` asserts the OPPOSITE direction — a ticket that never
+  goes stale during the budget still yields a clean `BlockingIOError` within budget, not a hang —
+  closing exactly the "a narrower fix would still miss this sub-case" gap round 3's own build
+  notes call out. No vacuous assert, no stubbed logic, no overfit-to-fixture pattern found in
+  either new test or in `_update_lock`/`acquireUpdateLock` (read both in full against the CURRENT
+  tree, not the diff).
+  (7) Confirmed via `git diff --stat` between the round-2-verify commit (`e35ab42`'s own
+  preceding code state) and current HEAD, restricted to `add-method/`: exactly 4 files touched
+  (`_installer.py`, `cli.js`, `test_global_update_harden.py`, `test_project_scope_lock.py`; 752
+  insertions, 24 deletions) — no file outside declared scope. Confirmed via `git log -p --follow`
+  that this task's own §0-§3 remain byte-unchanged since freeze — every post-freeze diff to this
+  TASK.md lands inside §5's "Strategy actually used" prose or this §6 fill, never the frozen
+  bundle.
+  (8) Evidence-integrity note, retiring the round-2 pass's own (7): the bookkeeping gap it
+  disclosed (no `tripwire`/`scope` snapshot on this task's own `state.json` entry) is now MOOT —
+  a fresh `add.py check`/`state.json` inspection this pass shows a clean, byte-matching
+  mechanical state for this task (see (1) above), not merely a quieter absence of a WARN.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: add-verify agent (tdd-verifier persona) — independent adversarial pass; fresh reviewer
-  (not the builder, not the earlier pass that recorded the now-superseded PASS below)
-1. Security: CLEAR — re-grepped the full current diff surface for eval/exec/`child_process`/
-   new-dependency patterns (none); Python additions remain stdlib-only (`time`; `os`/`datetime`
-   already present — confirmed, no new `import` line); JS additions are Node builtins only
-   (`Atomics`/`SharedArrayBuffer`/`Int32Array`, no new `require`). The diagnostic lock-stamp
-   writes only `os.getpid()` + a UTC timestamp — no untrusted input reaches a security-relevant
-   decision. The Windows `os.kill(pid,0)`-can-TERMINATE hazard remains correctly avoided by
-   design (mtime-age, never PID-liveness). My own NEW finding below (a ticket-leak livelock)
-   crosses no privilege/trust boundary: every actor able to trigger or be affected by it already
-   has direct filesystem write access to the shared home — the same CWE-367/reliability
-   classification precedent the sibling's own verify pass used for the original TOCTOU race
-   applies identically here. No exposed secrets. No HARD-STOP.
-2. Concurrency: RESIDUE — two findings, kept explicitly separate:
-   (a) THE ORIGINAL RACE (multiple simultaneous racers on one stale generation): FIXED, and
-   independently reconfirmed by me — see Refute-read (1)-(3) above, plus a fresh empirical
-   re-verification (50/50, this pass), PLUS genuine multi-PROCESS evidence (this task's own
-   frozen §6 already records 8 trials x 6 real `subprocess.Popen` processes racing the raw lock,
-   and 6 trials x 8 real processes racing the full `install(as_global=True)` path, both 0
-   corruption/interleave/duplicate/lost-write — re-read and independently judged sound, not
-   re-run byte-for-byte this pass, since the mechanism is unchanged since that evidence was
-   gathered and my own fresh 50/50 in-process run plus the ticket-algorithm re-derivation
-   corroborate it). CLEAR.
-   (b) THE SAME ticket-leak defect as the sibling task, independently confirmed in THIS task's
-   own `_update_lock`/`acquireUpdateLock` (ticket created at `_installer.py:1476` /
-   `cli.js:1361`; best-effort `finally` cleanup at `_installer.py:1512-1516` /
-   `cli.js:1393-1395`) — but with a DIFFERENT, arguably WORSE symptom, because `_update_lock`
-   LOOPS (it supports `--lock-timeout`) rather than failing once: a ticket-loser's branch does
-   `continue` (`_installer.py:1485` / `cli.js:1371`), sending control back to the TOP of the
-   acquire loop, which re-enters the SAME "still stale, ticket still taken" branch every
-   iteration — the loop's own `deadline`/`--lock-timeout` check (`_installer.py:1518` /
-   `cli.js:1398`) is structurally UNREACHABLE from inside the `age > stale_after` branch, which
-   always `continue`s before ever falling through to it. Empirically confirmed via a real thread
-   calling `_update_lock(home, timeout=3.0, ...)` against a pre-leaked ticket (external-state
-   simulation, no product code or test touched): still running 6+ seconds later — double its
-   own declared 3-second budget — a genuine, UNBOUNDED LIVELOCK (a tight busy-spin on
-   `os.open`/`os.stat`, no `sleep` anywhere in this branch), not a clean fail (this session's
-   scratchpad script + captured output). Reproduced identically via a REAL
-   `node cli.js update --global --lock-timeout 3` subprocess against the unmodified JS twin:
-   still running 7+ seconds later, had to be killed by the repro script rather than exiting on
-   its own. This is WORSE than the sibling's own fail-fast wedge: a caller that explicitly opted
-   into `--lock-timeout` for exactly this kind of resilience (e.g. a CI job) would hang
-   indefinitely instead of ever receiving the `update_in_progress` it was designed to eventually
-   receive.
-   (c) UNLIKE the sibling: this task's OWN ticket file (`<home>/.update.lock.reclaim-<inode>`)
-   lives in the shared home directory, never inside any project's `<target>/.add/` tree —
-   `_persist_data`/`persistData` only ever scans a PROJECT's own `.add/` (confirmed by reading
-   `_persist_data(home, project_abspath)`'s own scan target), never the home itself. This task
-   does NOT carry the sibling's secondary bogus-persist-then-restore risk — only the direct
-   wedge/livelock in (b) above. The severity asymmetry cuts the OTHER way here: this task's own
-   failure mode (an unbounded livelock) is arguably MORE severe than the sibling's (a clean
-   fail-fast wedge), even though it lacks the sibling's second path to the same bug class.
-   Suggested fix direction (not implemented here — a build-phase decision), identical to the
-   sibling's: apply the SAME age-based staleness check already used for the main lock file,
-   recursively, to the ticket file itself — safe for the same reason (a ticket name is already
-   inode-scoped to one generation, so a stale-ticket reclaim does not reopen the identity-blind
-   hazard just closed for the lock file). For this task specifically, the loop's `deadline`
-   check would ALSO need to be reachable from the stale-ticket branch so a genuinely wedged
-   ticket cannot out-live an explicit `--lock-timeout` budget either.
+Advisor: add-verify agent (tdd-verifier persona) — round-4 independent pass; fresh reviewer (not
+  the round-3 builder, not the round-2 pass that recorded the now-superseded HARD-STOP below)
+1. Security: CLEAR — re-grepped the full current diff surface (since the round-2 baseline) for
+   eval/exec/`child_process`/new-dependency patterns: none. `_update_lock`'s additions remain
+   stdlib-only (`time`; `os`/`datetime` pre-existing, no new `import`); `acquireUpdateLock`'s
+   remain Node builtins only (no new `require`). The ticket file's content is never written to
+   (created empty, closed immediately) and never read back — no untrusted input reaches a
+   security-relevant decision anywhere in the ticket-level reclaim path either. This pass's own
+   new finding (Concurrency (c) below) crosses no privilege/trust boundary: every actor able to
+   trigger or be affected by it already has direct filesystem write access to the shared home —
+   the same CWE-367/reliability classification precedent both prior passes used. No exposed
+   secrets. No HARD-STOP.
+2. Concurrency: CLEAR. Three findings, kept explicit:
+   (a) THE ORIGINAL TOCTOU RACE (round 2's target): FIXED, independently reconfirmed — Refute-
+   read (2) above (30/30 fresh), plus the genuine multi-PROCESS evidence already on record from
+   round 2's own pass (8 trials x 6 processes on the raw lock, 6 trials x 8 on the full path, 0
+   corruption/interleave — re-read and judged sound, not re-run byte-for-byte since the
+   mechanism is unchanged since that evidence was gathered). CLEAR.
+   (b) THE LEAKED-TICKET LIVELOCK (round 3's target, this task's own prior HARD-STOP below):
+   FIXED — independently re-derived (Refute-read (4)) and independently re-run 30/30 fresh
+   (Refute-read (3)). CLEAR.
+   (c) THE RECURSIVE QUESTION (this pass's own specific mandate — does the ticket's OWN
+   self-heal have an analogous leak one level further down: a crash between winning a "ticket
+   for the ticket" and cleaning it up)? Answer: the bug CLASS is STRUCTURALLY CLOSED at this
+   level — not merely "not found yet." Derivation:
+     - The one invariant that actually matters is "at most one process is ever inside the
+       critical section `home`'s lock guards, at any instant." This is enforced by exactly ONE
+       mechanism, applied at the bottom of every code path regardless of how it was reached: an
+       identity-verified unlink of `lock_path` (re-stat it immediately before unlinking, compare
+       its inode to the ORIGINALLY-observed stale inode, unlink only on an exact match)
+       immediately followed by a plain O_EXCL create-or-fail on `lock_path`. That pair is the
+       actual arbiter; the reclaim ticket sitting above it is a contention-reduction FILTER, not
+       a second independent instance of the safety mechanism.
+     - Consequence: even if the ticket's OWN bookkeeping were ever wrong (two parties both
+       believing, at once, that they "won" the right to attempt reclaiming the SAME stale
+       generation), the worst outcome is that BOTH proceed to independently execute the
+       ALREADY-PROVEN-SAFE identity-verified-unlink-then-O_EXCL-create pair on `lock_path` — a
+       scenario that mechanism was already built, and in this pass re-confirmed (a), to handle
+       correctly for N simultaneous callers. A ticket-level "double winner" degrades gracefully
+       into ordinary N-racer contention on `lock_path`, never into an actual double-hold.
+     - When round 3 recovered from a LEAKED ticket, it applied the IDENTICAL pattern (re-stat
+       immediately before unlink, compare inode, unlink-only-on-match) directly to the ticket
+       file itself, then a plain O_EXCL re-create of that SAME path (`_installer.py:1535-1547`,
+       `cli.js:1417-1422`) — it did NOT invent a third, separately-named file to gate entry to
+       ITS OWN reclaim. This is sufficient, structurally, because the re-create step IS ITSELF
+       the atomic, kernel-arbitrated exclusivity primitive — the SAME primitive that already
+       makes a plain, never-contended first acquire safe with NO ticket at all. A "ticket for
+       the ticket" would just reapply the identical already-self-sufficient pattern one more
+       time, arbitrating nothing a bare O_EXCL create doesn't already arbitrate. This is the
+       recursion's actual base case: level 0 (fresh acquire) = a bare O_EXCL create; level 1
+       (reclaiming a stale main lock) = identity-verified-unlink + O_EXCL create; level 2
+       (reclaiming a stale TICKET that gates level 1) = identity-verified-unlink + O_EXCL create
+       — structurally IDENTICAL to level 1, aimed at a different path. There is no level-3 need,
+       because level 2's own re-create already IS its own complete election.
+     - Verified this is not merely theoretical: wrote a NEW adversarial repro
+       (`verify_round4_ticket_recursion.py`, this session's scratchpad — no tracked test or
+       product file touched) that pre-leaks a STALE ticket every round, forcing EVERY racer
+       through the harder "ticket already stale, must itself be reclaimed" branch (never the
+       simpler "win it outright" branch), and measures PEAK concurrent holders of the real
+       critical section via the same active/peak temporal-proof technique the dedicated suite
+       already uses. Results against THIS task's own `_update_lock`, directly, with a real
+       `timeout=3.0`: 15 rounds x 8 threads (120 attempts) then 30 rounds x 10 threads (300 more,
+       420 total) — peak=1, 0 errors, 0 hung threads, ALL 420 acquired cleanly (none merely
+       blocked — polling eventually wins every one, confirming the deadline check stays reachable
+       AND the lock stays eventually-fair even from this harder starting condition). A real-OS-
+       process check (`node cli.js update --global --lock-timeout 3` against a pre-leaked stale
+       ticket, 6 rounds) resolved in ~0.3s every time (nowhere near the 3s budget) — 0 anomalies.
+       Combined with the sibling task's own analogous `_project_lock` evidence (same script,
+       same session: 680 thread attempts + 36 real-process attempts + 25 JS real-process
+       attempts), this pass gathered 1167+ real adversarial attempts targeting exactly this
+       question — 0 double-holds, 0 livelocks, 0 hangs.
+     - What genuinely remains, disclosed rather than swept aside: (i) 💭 the SAME inode-reuse
+       assumption round 2/3 already disclosed for the main lock's identity check applies
+       identically to the ticket's — sound only if the filesystem never reuses an inode number
+       for an unrelated file inside the tiny re-stat-to-unlink gap; still empirically true on
+       this session's macOS/APFS tree, still not independently verified on Linux/Windows. A
+       PRE-EXISTING, unchanged-by-round-3 platform-level limitation of the CHOSEN mechanism
+       (using inode identity at all) — not a new or deeper gap this fix introduces. (ii) 💭 a
+       newly-observed note (this pass, not previously named): a ticket leaked by a crash landing
+       AFTER the main lock's own unlink succeeds but BEFORE the ticket's own cleanup becomes
+       PERMANENT, un-swept litter on disk (confirmed via a direct test this pass: a fresh,
+       uncontended acquire/release cycle never touches an orphaned `.reclaim-<stale-inode>` file
+       sitting in the same directory; a full-repo grep for any unlink/rmtree/sweep/gc/prune
+       reference to "reclaim" is zero hits — nothing sweeps `.reclaim-*` orphans). Zero
+       correctness impact confirmed (even if the exact inode number were later reused, the
+       self-heal would correctly identity-verify and reclaim the ancient orphan exactly as any
+       other stale ticket) — a disk-hygiene/directory-clutter cosmetic gap only, worth a
+       lightweight future spec-delta (a periodic sweep of aged `.reclaim-*` orphans), not a
+       blocking defect.
 3. Architecture: CLEAR — independently re-verified `_valid_registry_path`/`_update_global`/
    `resolve_global_home` and this task's other named anchors remain byte-identical bodies since
-   freeze; O_EXCL/`"wx"` remains the sole DESIGN-level mutual-exclusion primitive; no new
-   dependency; the 2 previously-disclosed 💭 notes (lock-hold-duration asymmetry, malformed
-   `--lock-timeout` degrading silently in JS) are unaffected by anything found this pass and
-   still stand as before, neither blocking. Unlike the sibling, no `_is_user_data` completeness
-   note applies here — this task's own ticket file is never scanned as user-data by anything
-   (see 2(c) above).
-Verdict: HARD-STOP
-Residue: concurrency — the identical leaked-reclaim-ticket defect as the sibling task, but
-  manifesting as an UNBOUNDED LIVELOCK here (not a clean fail-fast wedge), because
-  `_update_lock`'s own retry loop never reaches its `--lock-timeout` deadline check while a
-  ticket is contested — confirmed by direct execution against both the real Python function and
-  a real `node cli.js` subprocess, not simulated/assumed. The ORIGINAL multi-racer TOCTOU race
-  this reopening targeted is independently reconfirmed FIXED. This task's own ticket file carries
-  NO secondary persist/restore risk (asymmetric vs. the sibling — see 2(c) above). Separately
-  (not part of this Residue, but a required disclosure): the identical shared test-strengthening
-  commit that trips a mechanical `build_tampered`/`scope_violation` pair on the sibling task
-  produces NO engine WARN here only because this task's own state.json never carried a
-  tripwire/scope snapshot to begin with (Refute-read (7) above) — a bookkeeping absence, not
-  evidence of a cleaner mechanical state.
-Binding: advisory — this task declares no explicit `sensitivity:` line (consistent with ~108
-  other tasks project-wide per `add.py audit`'s `sensitivity_unset` list — a pre-existing,
-  project-wide gap, not introduced by or specific to this task); this task's own declared
-  `risk: high` / `autonomy: conservative` already route it to mandatory human review regardless
-  of advisor-gate-relax or the quality of any evidence above — this HARD-STOP is my own
-  independent recommendation, not a mechanical override of that pre-existing human-review
-  requirement.
+   freeze; O_EXCL/`"wx"` remains the sole DESIGN-level mutual-exclusion primitive at every layer,
+   confirmed still true one level down at the ticket layer too (no `fcntl.flock` reintroduced);
+   no new dependency. The 2 previously-disclosed 💭 notes (lock-hold-duration asymmetry,
+   malformed `--lock-timeout` degrading silently in JS) are unaffected by anything found this
+   pass and still stand as before, neither blocking.
+Verdict: CLEAR (all 3 lenses)
+Residue: none — 2 non-blocking 💭 notes disclosed above (the pre-existing, unchanged
+  inode-reuse-on-untested-platforms assumption; a newly-observed, zero-correctness-impact
+  orphan-ticket-litter hygiene gap). Both bug classes this task's own build rounds targeted (the
+  original TOCTOU race, the leaked-ticket livelock) are independently reconfirmed FIXED, and the
+  specific recursive "does the fix's own fix need fixing" question is answered STRUCTURALLY
+  CLOSED (Concurrency (c) above), not merely "not yet found" — backed by 1167+ real adversarial
+  attempts targeting exactly that question, 0 anomalies.
+Binding: advisory in form, but this task's own declared `risk: high` + `autonomy: conservative`
+  already mandate mandatory human review regardless of advisor-gate-relax or the quality of any
+  evidence above (consistent with this project's own ~108-task-wide `sensitivity_unset` gap this
+  task shares — pre-existing, not specific to it). My own independent technical finding supports
+  PASS, but the actual gate decision is the human's, not mine, by this task's own explicit
+  design.
 
-Recommended GATE RECORD (not stamped — human/orchestrator decides): HARD-STOP. This task's
-  declared `risk: high` + `autonomy: conservative` already mandate human review regardless of my
-  own findings — but my own independent evidence supports HARD-STOP, not PASS: a genuine,
-  empirically-confirmed, cross-twin livelock residue is present in
-  `_update_lock`/`acquireUpdateLock` (see Advisor Concurrency 2(b) above). The EXISTING GATE
+Recommended GATE RECORD (not stamped — human/orchestrator decides): PASS. My own independent,
+  adversarial evidence (Refute-read + Advisor above) supports PASS on technical merit: both
+  prior HARD-STOP-worthy defects (the original TOCTOU race, the leaked-ticket livelock) are
+  independently reconfirmed fixed with fresh evidence, not trusted from either prior pass's
+  report; the specific recursive "ticket-for-a-ticket" question this round exists to answer is
+  resolved with both a structural argument and 1167+ real adversarial test attempts (0
+  anomalies); and the full regression sweep + `add.py check` are clean and freshly reproduced.
+  That said: this task's own declared `risk: high` + `autonomy: conservative` mandate a human's
+  own review and sign-off regardless of this technical recommendation — this PASS
+  recommendation is advisory input to that decision, not a substitute for it. The EXISTING GATE
   RECORD immediately below (Outcome: PASS, reviewed by Tin Dang, 2026-07-03) predates this
-  entire redo — it was recorded against evidence that has since been superseded twice over
-  (once by the reopening that found the original TOCTOU race, again by the finding above) and
-  should not be treated as current; a fresh human decision is required before this task can be
-  considered gated.
+  entire lineage — it was recorded before the original TOCTOU race was ever found and has since
+  been superseded three times over (the TOCTOU-race HARD-STOP, the leaked-ticket-livelock
+  HARD-STOP, and now this PASS recommendation); a fresh human decision is still required before
+  this task can be considered gated — my recommendation does not stamp it.
 
 ### GATE RECORD
 Outcome: PASS

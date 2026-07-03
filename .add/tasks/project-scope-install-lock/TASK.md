@@ -788,183 +788,229 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
 Verdict: EARNED
-By: add-verify agent (tdd-verifier persona) — principal concurrency/filesystem-reliability
-  review; a FRESH reviewer for this redo (did not write the original code, the abandoned
-  rename-to-quarantine attempt, or this ticket+identity-reverify fix) · adversarially checked,
-  re-deriving from the current tree, never from either agent's own narrative:
-  (1) Re-ran the evidence myself, from scratch: `test_project_scope_lock.py` 26/26 green (own
-  run); the 6-file broader sweep (test_global_install/test_global_update_harden/
-  test_global_restore/test_global_data/test_reconcile_rollup/test_project_scope_lock, 145
-  tests) 145/145 green (own run); `add.py check` 509 passed/0 failed (own run — plus 2
-  mechanical WARNs on this task specifically, investigated in (7) below, neither a code defect).
-  All reproduce the builder's/prior pass's claimed counts; none copied.
+By: add-verify agent (tdd-verifier persona) — round-4 independent pass, a FRESH reviewer for
+  this specific redo (did not write round 1's original lock, round 2's TOCTOU fix, round 3's
+  leaked-ticket-self-heal fix, or the round-2 verify text below that this fill fully replaces,
+  not appends to — that text was recorded by commit `e35ab42`, itself superseded twice over: by
+  round 3's own fix and now by this pass). Mandate: confirm round 3
+  (`3b78e4b` test-red, `0571d7d` fix-green, `053f6c5` docs, `a515943`+`6505b6a` re-cross) actually
+  closes BOTH the permanent wedge AND the secondary persist-then-restore risk recorded as
+  HARD-STOP below, and specifically investigate whether the ticket's OWN self-heal can
+  leak/wedge one level further down — the one question the orchestrator's own hand-trace (this
+  session, prior turn) deliberately left open. Every point below is re-derived from the CURRENT
+  tree, never from round 3's own build narrative or the superseded text this replaces:
+  (1) Re-ran the evidence myself, from scratch, fresh runs, none copied: `test_project_scope_
+  lock.py` 30/30 green (own run — 26 pre-existing + 4 new from round 3: `LeakedTicketWedgeTest`'s
+  `test_leaked_ticket_self_heals_instead_of_permanent_wedge`,
+  `test_project_lock_direct_leaked_ticket_self_heals`,
+  `test_fresh_ticket_is_never_reclaimed_no_new_hole_introduced`,
+  `test_npm_leaked_ticket_self_heals_instead_of_permanent_wedge` — the "26/26" figure in this
+  section's own checkbox above predates these 4 and is superseded by this count); the 6-file
+  sibling sweep (test_global_install/test_global_update_harden/test_global_restore/
+  test_global_data/test_reconcile_rollup/test_project_scope_lock, 152 tests — up from 145,
+  reflecting round 3's 3+4 new tests across both sibling suites) 152/152 green (own run);
+  `add.py check` 509 passed/0 failed (own run) with ZERO `build_tampered`/`scope_violation` WARN
+  for THIS task — the 2 mechanical WARNs the round-2 pass disclosed in its own (7) are GONE, not
+  merely re-disclosed: `a515943`/`6505b6a` (round 3's own re-cross commits) updated
+  `.add/state.json`'s `tripwire.tests` MD5 to match the CURRENT `test_project_scope_lock.py`
+  byte-for-byte (independently confirmed via direct `md5`/`json` inspection this pass:
+  `2c6f286c08cf985204b7c1473c4179e2`, matching the recorded snapshot exactly), and the declared
+  `scope.declared` list now includes both test files actually touched — genuinely fixed, not a
+  bookkeeping absence.
   (2) Re-ran `ProjectLockConcurrencySafetyTest::test_concurrent_stale_reclaim_exactly_one_wins`
-  myself 50 times standalone (a fresh, independent 50 — not the 90 either prior agent reported)
-  — 50/50 green, 0 failures.
-  (3) Independently re-derived the ticket+identity-reverify algorithm by hand against the ACTUAL
-  current code (`_installer.py:1548-1699` `_project_lock`, `cli.js:1443-1541`
-  `acquireProjectLock`), never the §5 paraphrase: traced N racers simultaneously observing the
-  SAME stale generation (inode I1) — all lose the ordinary O_EXCL race on `lock_path`, all
-  compute the IDENTICAL ticket name `.install.lock.reclaim-<I1>`, exactly one wins the ticket's
-  own O_EXCL race, and every LOSER's own path (`raise BlockingIOError(...) from None` at
-  `_installer.py:1636` / `fail(...)` reached via `cli.js:1523-1527`) never touches `lock_path`
-  itself — confirmed by direct reading, not assumed. Traced the ticket-winner's re-stat-before-
-  unlink identity check (`current_ino == st.st_ino`) through the case where an UNRELATED fresh
-  caller's own ordinary create lands in the gap between the winner's unlink and its own
-  retry-create: the winner's retry then correctly observes EEXIST (a fresh file now exists) and
-  fails/loops exactly like ordinary contention — benign nondeterminism in WHO wins, never a
-  double-hold. Independently corroborated, not merely reasoned: 90-190+ combined stress runs
-  this session (my own 50 + the builder's disclosed 90, all against the real unmodified code)
-  show 0 instances of a peak-concurrent-holder count above 1.
-  (4) Read every new/changed assertion line-by-line: `peak = max(peak, active)` latched under
-  `results_lock`, `self.assertLessEqual(peak, 1, ...)` (line 593) — a genuine TEMPORAL proof,
-  not the cumulative `results.count("acquired") >= 1` the earlier (superseded) HARD-STOP found
-  vacuous. This closes that exact gap. No vacuous assert, no overfit-to-fixture, no
-  stubbed-away logic found in `_project_lock`/`acquireProjectLock` (read both in full against
-  the CURRENT tree, not the diff).
-  (5) Confirmed via `git log -p --follow` on this TASK.md that §0-§3 (the frozen bundle) are
-  byte-unchanged since the `73c2627` freeze commit — every post-freeze diff to this file lands
-  inside §5's own "Strategy actually used" prose (hunks at lines ~503 and ~561 only, both well
-  inside §5). The frozen contract was NOT edited during this redo.
-  (6) Wrote 4 independent repro scripts (this session's scratchpad — no tracked test touched)
-  attacking a DIFFERENT angle than either prior agent tried: does a crash landing INSIDE the
-  NEW ticket-held window (between a ticket-winner's `os.open`/`fs.openSync` success and its own
-  `finally` cleanup) leave anything behind that matters? Full finding under Advisor Concurrency
-  below — it does NOT reveal the recorded green as gamed (the recorded suite proves what it
-  claims, for the scenarios it actually runs); it reveals a scenario neither the builder's
-  Strategy nor the prior verify pass's own refute-read ever attempted. A coverage gap, not a
-  rigor gap in what is already green — EARNED stands for the recorded suite; the new finding is
-  carried as Concurrency residue below, not as a refutation of this checklist.
-  (7) Evidence-integrity disclosure, NOT a code-correctness finding: my own `add.py check` run
-  emits `build_tampered` (a tracked test changed since this task's own tests->build snapshot,
-  `a25cfce670bcb87b66eb07d2a7e7fc60`) and `scope_violation pending` (touched
-  `test_global_update_harden.py` · `test_project_scope_lock.py` · `tmp/heal-reopen-lock-toctou.txt`
-  — none in the declared 2-file §5 Scope). Root-caused via `.add/state.json` + `git show
-  3e85619 --stat`, not merely noted: this task's `tripwire`/`scope` snapshot dates to its FIRST
-  build (`4682b00`/`1f6d5b7`) and was never refreshed after the `add.py heal` reopening; the
-  redo's shared test-strengthening commit (`3e85619`) legitimately touched BOTH sibling tasks'
-  test files together (confirmed: exactly those 2 files, 23 lines added each, 0 deletions),
-  which this task's own per-task scope detector attributes wholesale; `tmp/heal-reopen-lock-
-  toctou.txt` is an untracked, gitignored (`.gitignore:34`) commit-message-draft scratch file,
-  confirmed via `git log`/`git check-ignore` to have never been part of any commit. Matches this
-  project's own established, non-bug precedent ("a post-freeze test add trips build_tampered ->
-  re-cross via phase build/phase verify"), and is confirmed a STRENGTHENING (cumulative `>=1` ->
-  temporal `peak<=1`), never a weakening — but it is a real, mechanical precondition: the WARN
-  text states the engine's own gate will refuse/HARD-STOP on these two flags until the
-  orchestrator re-crosses the phase snapshot (a heal/phase action outside my own boundary to
-  perform). Disclosed here as required evidence-integrity reporting, distinct from the
-  adversarial code verdict below.
+  (the ORIGINAL multi-racer TOCTOU race's own regression guard) myself 30 times standalone,
+  fresh — 30/30 green, 0 failures; confirms round 3's ticket-leak fix did not reintroduce the
+  race round 2 closed.
+  (3) Re-ran ALL 4 of round 3's own new `LeakedTicketWedgeTest` methods (including the npm
+  subprocess smoke) 30 times standalone, fresh — 30/30 green, 0 failures: reliability confirmed,
+  not a one-shot pass.
+  (4) Independently re-derived the ticket-level self-heal by hand against the ACTUAL current
+  code (`_installer.py:1633-1840` `_project_lock`, `cli.js:1509-1642` `acquireProjectLock`),
+  never round 3's own paraphrase: traced the EXACT crash window round 3 fixed (a process wins
+  the per-generation reclaim ticket, then dies before its own `finally: os.unlink(ticket_path)`
+  a few lines later) and confirmed the delivered fix — on losing the ticket, stat it; if
+  `tage > _PROJECT_LOCK_TICKET_STALE_SECONDS`/`PROJECT_LOCK_TICKET_STALE_SECONDS` (5s,
+  independent of the main lock's own 120s default), apply the IDENTICAL identity-verified
+  discipline (re-stat immediately before unlinking, compare inode, unlink only on a match)
+  directly to the ticket file, then a plain
+  `os.open(ticket_path, O_CREAT|O_EXCL...)`/`fs.openSync(ticketPath,"wx")` to re-win it exactly
+  once (M7's own "no poll, ever" ethos, correctly preserved at this level too — this lock never
+  loops, so unlike its sibling it never had a livelock risk, only the clean permanent-wedge
+  shape the sibling's own §6 also names) — genuinely resolves the wedge.
+  (5) THE CRUX QUESTION this pass exists to answer (not attempted by round 3's build or the
+  round-2 verify text below): does the ticket's own self-heal have an analogous leak ONE LEVEL
+  FURTHER DOWN — could a crash between winning a "ticket for the ticket" and cleaning it up wedge
+  things again? Answer, with both a structural argument and fresh adversarial evidence: NO — see
+  Advisor Concurrency (c) below for the full derivation and 1167+-attempt adversarial evidence
+  (741 attempts on this task's own `_project_lock`/`acquireProjectLock` alone: 680 Python
+  threads + 36 real Python multi-process + 25 real `node` subprocess attempts). This is a
+  STRUCTURAL "cannot recur here" finding, not a "did not find one yet" finding — the reasoning
+  is laid out in full below, not merely asserted.
+  (6) Re-ran the round-2 pass's OWN secondary finding (2(c) below, now closed): confirmed
+  `_is_user_data(".install.lock.reclaim-123456")` now returns `False` (was `True` pre-fix), and
+  a direct `_persist_data` repro (a leaked ticket sitting alongside real `PROJECT.md` in a
+  scanned `.add/`) now snapshots ONLY `PROJECT.md`, never the ticket — round 3's own `.reclaim-`
+  infix addition to `_is_user_data`/`isUserData` (`_installer.py:726`, `cli.js:1054`) genuinely
+  closes the secondary bogus-persist-then-restore path the round-2 pass flagged as unique to
+  this task, not merely disclosed as a residual.
+  (7) Read every assertion in the 4 new tests line-by-line:
+  `test_leaked_ticket_self_heals_instead_of_permanent_wedge` asserts exit 0, no
+  `install_in_progress`, the reconcile actually completing (a deleted `docs` sentinel restored),
+  AND both the lock and the ticket gone afterward (no residue left to re-wedge a future call);
+  `test_fresh_ticket_is_never_reclaimed_no_new_hole_introduced` asserts the OPPOSITE direction —
+  a ticket that is NOT yet stale is left completely untouched and the call still fails fast,
+  proving the fix does not become a new over-eager-reclaim hole itself. No vacuous assert, no
+  stubbed logic, no overfit-to-fixture pattern found in either new test or in
+  `_project_lock`/`acquireProjectLock` (read both in full against the CURRENT tree, not the
+  diff).
+  (8) Confirmed via `git diff --stat` between the round-2-verify commit (`e35ab42`'s own
+  preceding code state) and current HEAD, restricted to `add-method/`: exactly 4 files touched
+  (`_installer.py`, `cli.js`, `test_global_update_harden.py`, `test_project_scope_lock.py`; 752
+  insertions, 24 deletions) — no file outside declared scope. Confirmed via `git log -p --follow`
+  that this task's own §0-§3 remain byte-unchanged since the `73c2627` freeze commit — every
+  post-freeze diff to this TASK.md lands inside §5's "Strategy actually used" prose or this §6
+  fill, never the frozen bundle.
+  (9) Evidence-integrity note, retiring the round-2 pass's own (7): the `build_tampered`/
+  `scope_violation pending` pair it disclosed (root-caused there to a stale tests->build
+  snapshot after the `add.py heal` reopening) is now MOOT — a fresh `add.py check`/`state.json`
+  inspection this pass shows a clean, byte-matching mechanical state for this task (see (1)
+  above), not a mere absence of a WARN masking an unresolved precondition.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: add-verify agent (tdd-verifier persona) — independent adversarial pass; fresh reviewer
-  (not the builder, not the prior verify pass that found the original TOCTOU race)
-1. Security: CLEAR — re-grepped the full current diff surface for eval/exec/`child_process`/
-   new-dependency patterns (none); Python additions remain stdlib-only (`os`/`time`/
-   `contextlib`, all pre-existing imports — confirmed via `git diff` since Ground, no new
-   `import` line); JS additions are Node builtins only (`fs`/`path`, no new `require`). The
-   ticket file's own content is never written to (created empty, closed immediately) and never
-   read back — no untrusted input reaches a security-relevant decision anywhere in the reclaim
-   path. My own NEW finding below (a ticket-leak wedge) crosses no privilege/trust boundary:
-   every actor able to trigger or be affected by it already has direct filesystem write access
-   to the same `.add/` tree — the same CWE-367/reliability classification precedent the prior
-   verify pass used for the original TOCTOU race applies identically here. No HARD-STOP.
-2. Concurrency: RESIDUE — two findings, kept explicitly separate:
-   (a) THE ORIGINAL RACE (multiple simultaneous racers on one stale generation): FIXED, and
-   independently reconfirmed by me — see Refute-read (1)-(3) above, plus a fresh empirical
-   re-verification (50/50, this pass). CLEAR.
-   (b) A NEW defect in the redo's own mechanism, found via my own adversarial angle — NOT
-   covered by the builder's Strategy nor by the prior verify pass's refute-read: the reclaim's
-   own per-generation ticket file (`<lockpath>.reclaim-<inode>`, created at `_installer.py:1629`
-   / `cli.js:1480`) is created, closed, then (only within the SAME critical section) unlinked in
-   a best-effort `finally` (`_installer.py:1664-1668` / `cli.js:1510-1512`). A hard crash
-   (SIGKILL, OOM-kill, container eviction) landing between the ticket's successful create and
-   that cleanup — a realistic, in-scope event for a milestone whose own stated goal is "survive
-   a crash... without leaving... a wedged lock" — leaks the ticket file permanently; nothing
-   anywhere in this codebase sweeps a `.reclaim-*` orphan (confirmed via
-   `grep -rn "reclaim" add-method/src add-method/bin add-method/tooling`: every hit is either
-   this mechanism's own create/reference, or unrelated English usage of "reclaim" in
-   `_prune_data`'s docstring / `test_global_restore.py` / `test_skill_lean.py` prose).
-   Empirically reproduced against the REAL, unmodified `_project_lock` (external-state
-   simulation only, no product code or test touched — pre-creating the exact ticket name a real
-   crashed reclaimer would have left behind, then calling the shipped function): a leaked
-   ticket for the CURRENT stale generation's own inode causes `_project_lock` to fail
-   `install_in_progress` on EVERY subsequent attempt — 3 consecutive calls, 3 consecutive
-   failures, no self-heal (this session's scratchpad script + captured output). This is the SAME
-   class of failure this whole milestone/redo exists to eliminate — a wedged lock needing a
-   human to manually delete a file — just moved one file over (now an obscurely-named one,
-   `.install.lock.reclaim-<N>`, that no error message even mentions), not removed. Reproduced
-   identically via a REAL `node cli.js update` subprocess against the unmodified JS twin
-   (`acquireProjectLock`): same `install_in_progress`, same permanent wedge across repeated
-   attempts. Confirmed narrowly and precisely scoped, not a general regression: an UNRELATED
-   orphan ticket (a non-matching inode, e.g. litter from a past incident) does NOT interfere
-   with a fresh, uncontended acquire (own repro, confirmed) — the defect fires only when a
-   leaked ticket's embedded inode matches the CURRENTLY stale lock's own inode.
-   (c) A second, lower-probability path to the SAME bug class, unique to THIS task among the two
-   siblings: `_is_user_data`/`isUserData` (`_installer.py:708` / `cli.js:1027`) exclude only
-   exact names (`_DATA_EXCLUDE`/`DATA_EXCLUDE`, which DOES include `PROJECT_LOCK_FILE` itself)
-   plus 4 other named prefix/substring/suffix shapes (`scope-snapshot*`, `*pre-archive-bak*`,
-   `*.bak.json`, `.add-tmp-`/`.add-bak-`) — NONE catch a `.install.lock.reclaim-<inode>`-shaped
-   name; confirmed directly (`_is_user_data(".install.lock.reclaim-123456")` -> `True`, own
-   repro). Because THIS task's ticket file lives inside a PROJECT's scanned `<target>/.add/`
-   (unlike the sibling's, which lives in the never-scanned shared home — see that task's own
-   §6), a leaked ticket sitting there when `install(as_global_data=True)`/`_persist_data` runs
-   gets bogusly snapshotted as real user-data — confirmed empirically (own repro: a leaked
-   `.install.lock.reclaim-999999` alongside real `PROJECT.md` both land in the
-   `<home>/data/<key>` snapshot). If later restored (`--from-global-data`) into a fresh clone,
-   this is usually inert litter (the clone's own future lock would need to coincidentally
-   receive the SAME inode number the stray ticket's name encodes to matter) — but on that
-   coincidence it silently reproduces the identical permanent-wedge malfunction in a clone that
-   never itself crashed. Narrow, but a genuine, asymmetric amplifier unique to this task (see
-   Architecture note below).
-   Suggested fix direction (not implemented here — a build-phase decision): apply the SAME
-   age-based staleness check already used for the main lock file, recursively, to the ticket
-   file itself — a losing racer that observes an EXISTING ticket whose own mtime is older than a
-   short bound (a legitimate ticket-hold is a handful of syscalls, sub-millisecond) can safely
-   treat it as abandoned and reclaim it; this does not reopen the identity-blind hazard this
-   redo just closed, because a ticket's name is already inode-scoped to one specific generation.
-   A smaller, additive change to the same functions, not a redesign.
-3. Architecture: CLEAR, with one contributing note tied to 2(c) above — the new ticket-file
-   artifact type was never added to the `_is_user_data`/`_DATA_EXCLUDE` registry that is
-   supposed to enumerate every transient-file shape this codebase creates (it lists 5 other
-   shapes by name); a completeness gap in that registry, not a layering violation.
-   Independently re-verified via direct reading (not the builder's claim) that `_reconcile`/
-   `_clean_replace`/`_update_lock`/`_update_global`/`_add_dir`/`_fail` remain byte-identical
-   bodies since the freeze commit (`73c2627`); the new-independent-primitive-vs-extend-
-   `_update_lock` fork (§1 A2) is a reasoned, disclosed, legitimate design choice, not a layering
-   violation. No new dependency. O_EXCL/`"wx"` remains the sole DESIGN-level mutual-exclusion
-   primitive (the Concurrency finding above is an implementation gap in the reclaim mechanism's
-   own crash-recovery path, not an architecture/layering issue).
-Verdict: HARD-STOP
-Residue: concurrency — a leaked per-generation reclaim ticket (a crash landing between the
-  ticket's own create and its cleanup) permanently wedges `_project_lock`/`acquireProjectLock`
-  for that stale generation, confirmed by direct execution against both the real Python
-  function and a real `node cli.js` subprocess, not simulated/assumed; a secondary,
-  lower-probability path (a leaked ticket bogusly persisted via `--global-data` and later
-  restored into a fresh clone) is unique to this task among the two siblings, tied to a
-  completeness gap in `_is_user_data`/`_DATA_EXCLUDE` (Architecture note above). The ORIGINAL
-  multi-racer TOCTOU race that triggered this redo is independently reconfirmed FIXED.
-  Separately (not part of this Residue, but a required disclosure): a mechanical
-  `build_tampered`/`scope_violation pending` pair from `add.py check`, root-caused in
-  Refute-read (7) above to a stale phase snapshot after the `add.py heal` reopening, not to a
-  test weakening.
-Binding: advisory — this task does not declare `risk: high` (autonomy: auto); moot in any case
-  since Residue is not `none`, which advisor-gate-relax also requires (per GLOSSARY.md's
-  binding-verdict definition).
+Advisor: add-verify agent (tdd-verifier persona) — round-4 independent pass; fresh reviewer (not
+  the round-3 builder, not the round-2 pass that recorded the now-superseded HARD-STOP below)
+1. Security: CLEAR — re-grepped the full current diff surface (since the round-2 baseline) for
+   eval/exec/`child_process`/new-dependency patterns: none. `_project_lock`'s additions remain
+   stdlib-only (`os`/`time`/`contextlib`, all pre-existing, no new `import`); `acquireProjectLock`'s
+   remain Node builtins only (`fs`/`path`, no new `require`). The ticket file's content is never
+   written to (created empty, closed immediately) and never read back — no untrusted input
+   reaches a security-relevant decision anywhere in the reclaim path either. This pass's own new
+   finding (Concurrency (c) below) crosses no privilege/trust boundary: every actor able to
+   trigger or be affected by it already has direct filesystem write access to the same `.add/`
+   tree — the same CWE-367/reliability classification precedent both prior passes used. No
+   exposed secrets. No HARD-STOP.
+2. Concurrency: CLEAR. Three findings, kept explicit:
+   (a) THE ORIGINAL TOCTOU RACE (round 2's target): FIXED, independently reconfirmed — Refute-
+   read (2) above (30/30 fresh). CLEAR.
+   (b) THE LEAKED-TICKET PERMANENT WEDGE (round 3's target, this task's own prior HARD-STOP
+   below) — FIXED, independently re-derived (Refute-read (4)) and independently re-run 30/30
+   fresh (Refute-read (3)). The secondary, lower-probability bogus-persist-then-restore path
+   unique to this task (round 2's own 2(c)) is ALSO independently reconfirmed CLOSED (Refute-
+   read (6): `_is_user_data` now correctly excludes the `.reclaim-` infix; a direct
+   `_persist_data` repro snapshots only real user-data, never a leaked ticket). CLEAR.
+   (c) THE RECURSIVE QUESTION (this pass's own specific mandate — does the ticket's OWN
+   self-heal have an analogous leak one level further down: a crash between winning a "ticket
+   for the ticket" and cleaning it up)? Answer: the bug CLASS is STRUCTURALLY CLOSED at this
+   level — not merely "not found yet." Derivation:
+     - The one invariant that actually matters is "at most one process is ever inside the
+       critical section `lock_path` guards, at any instant." This is enforced by exactly ONE
+       mechanism, applied at the bottom of every code path regardless of how it was reached: an
+       identity-verified unlink of `lock_path` (re-stat it immediately before unlinking, compare
+       its inode to the ORIGINALLY-observed stale inode, unlink only on an exact match)
+       immediately followed by a plain O_EXCL create-or-fail on `lock_path`. That pair is the
+       actual arbiter; the reclaim ticket sitting above it is a contention-reduction FILTER, not
+       a second independent instance of the safety mechanism.
+     - Consequence: even if the ticket's OWN bookkeeping were ever wrong (two parties both
+       believing, at once, that they "won" the right to attempt reclaiming the SAME stale
+       generation), the worst outcome is that BOTH proceed to independently execute the
+       ALREADY-PROVEN-SAFE identity-verified-unlink-then-O_EXCL-create pair on `lock_path` — a
+       scenario that mechanism was already built, and in this pass re-confirmed (a), to handle
+       correctly for N simultaneous callers. A ticket-level "double winner" degrades gracefully
+       into ordinary N-racer contention on `lock_path`, never into an actual double-hold.
+     - When round 3 recovered from a LEAKED ticket, it applied the IDENTICAL pattern (re-stat
+       immediately before unlink, compare inode, unlink-only-on-match) directly to the ticket
+       file itself, then a plain O_EXCL re-create of that SAME path (`_installer.py:1759-1771`,
+       `cli.js:1561-1583`) — it did NOT invent a third, separately-named file to gate entry to
+       ITS OWN reclaim. This is sufficient, structurally, because the re-create step IS ITSELF
+       the atomic, kernel-arbitrated exclusivity primitive — the SAME primitive that already
+       makes a plain, never-contended first acquire safe with NO ticket at all. A "ticket for
+       the ticket" would just reapply the identical already-self-sufficient pattern one more
+       time, arbitrating nothing a bare O_EXCL create doesn't already arbitrate. This is the
+       recursion's actual base case: level 0 (fresh acquire) = a bare O_EXCL create; level 1
+       (reclaiming a stale main lock) = identity-verified-unlink + O_EXCL create; level 2
+       (reclaiming a stale TICKET that gates level 1) = identity-verified-unlink + O_EXCL create
+       — structurally IDENTICAL to level 1, aimed at a different path. There is no level-3 need,
+       because level 2's own re-create already IS its own complete election. This lock's own
+       M7 ("no poll, ever") shape makes the argument even tighter than its looping sibling's: a
+       ticket-level double-winner here degrades into, at most, ONE extra `install_in_progress`
+       fail-fast for the loser — never a hang, since nothing in this function ever loops.
+     - Verified this is not merely theoretical: wrote a NEW adversarial repro
+       (`verify_round4_ticket_recursion.py`, this session's scratchpad — no tracked test or
+       product file touched) that pre-leaks a STALE ticket every round, forcing EVERY racer
+       through the harder "ticket already stale, must itself be reclaimed" branch (never the
+       simpler "win it outright" branch), and measures PEAK concurrent holders of the real
+       critical section via the same active/peak temporal-proof technique the dedicated suite
+       already uses. Results against THIS task's own `_project_lock`, directly: 20 rounds x 10
+       threads (200 attempts) then 40 rounds x 12 threads (480 more, 680 total) — peak=1, 0
+       errors, every time (20/200 acquired, the rest correctly fail-fast per M7 — this lock
+       never polls, so most racers in a single round correctly lose, unlike the looping
+       sibling). A REAL multi-PROCESS check (6 rounds x 6 genuine OS processes racing a
+       pre-leaked stale ticket, checking for ANY overlapping [enter,exit] critical-section
+       interval, not just an in-process thread count) — 36 attempts, 0 overlaps, 0 errors: the
+       strongest form of "no double-hold" evidence gathered this pass, since real OS processes
+       have genuine parallelism beyond Python's GIL. A REAL `node cli.js init --yes` 5-rounds-
+       x-5-concurrent-subprocess check against the JS twin — 25 attempts, 0 anomalies. Combined
+       with the sibling task's own analogous `_update_lock` evidence (same script, same
+       session): 1167+ real adversarial attempts targeting exactly this question across both
+       tasks — 0 double-holds, 0 livelocks, 0 hangs, 0 errors.
+     - What genuinely remains, disclosed rather than swept aside: (i) 💭 the SAME inode-reuse
+       assumption round 2/3 already disclosed for the main lock's identity check applies
+       identically to the ticket's — sound only if the filesystem never reuses an inode number
+       for an unrelated file inside the tiny re-stat-to-unlink gap; still empirically true on
+       this session's macOS/APFS tree, still not independently verified on Linux/Windows. A
+       PRE-EXISTING, unchanged-by-round-3 platform-level limitation of the CHOSEN mechanism
+       (using inode identity at all) — not a new or deeper gap this fix introduces. (ii) 💭 a
+       newly-observed note (this pass, not previously named): a ticket leaked by a crash landing
+       AFTER the main lock's own unlink succeeds but BEFORE the ticket's own cleanup becomes
+       PERMANENT, un-swept litter on disk (confirmed via a direct test this pass: a fresh,
+       uncontended acquire/release cycle never touches an orphaned `.reclaim-<stale-inode>` file
+       sitting in the same `.add/`; a full-repo grep for any unlink/rmtree/sweep/gc/prune
+       reference to "reclaim" is zero hits — nothing sweeps `.reclaim-*` orphans). Zero
+       correctness impact confirmed (even if the exact inode number were later reused, the
+       self-heal would correctly identity-verify and reclaim the ancient orphan exactly as any
+       other stale ticket, AND it is now correctly excluded from a persist-data snapshot either
+       way per (b) above) — a disk-hygiene/directory-clutter cosmetic gap only, worth a
+       lightweight future spec-delta (a periodic sweep of aged `.reclaim-*` orphans), not a
+       blocking defect.
+3. Architecture: CLEAR — the completeness gap the round-2 pass flagged (the new ticket-file
+   artifact type missing from the `_is_user_data`/`_DATA_EXCLUDE` registry) is CLOSED by round
+   3's own `.reclaim-` infix addition (Refute-read (6)), independently re-verified, not merely
+   trusted. `_reconcile`/`_clean_replace`/`_update_lock`/`_update_global`/`_add_dir`/`_fail`
+   remain byte-identical bodies since the freeze commit (`73c2627`), independently re-confirmed;
+   the new-independent-primitive-vs-extend-`_update_lock` fork (§1 A2) remains a reasoned,
+   disclosed, legitimate design choice, not a layering violation. No new dependency. O_EXCL/
+   `"wx"` remains the sole DESIGN-level mutual-exclusion primitive at every layer, confirmed
+   still true one level down at the ticket layer too.
+Verdict: CLEAR (all 3 lenses)
+Residue: none — 2 non-blocking 💭 notes disclosed above (the pre-existing, unchanged
+  inode-reuse-on-untested-platforms assumption; a newly-observed, zero-correctness-impact
+  orphan-ticket-litter hygiene gap). All 3 bug classes this task's own build rounds targeted (the
+  original TOCTOU race, the leaked-ticket permanent wedge, the secondary bogus-persist path) are
+  independently reconfirmed FIXED, and the specific recursive "does the fix's own fix need
+  fixing" question is answered STRUCTURALLY CLOSED (Concurrency (c) above), not merely "not yet
+  found" — backed by 1167+ real adversarial attempts targeting exactly that question (741 of
+  them against this task's own lock specifically), 0 anomalies.
+Binding: advisory — this task does not declare `risk: high` (autonomy: auto); with Residue now
+  `none` and complete, freshly-reproduced evidence (not trusted from either prior pass), this is
+  a genuinely clean finding — the condition under which this task's own autonomy level permits a
+  legitimate auto-PASS, not merely an advisory recommendation deferred to a human.
 
-Recommended GATE RECORD (not stamped — human/orchestrator decides): HARD-STOP. Despite
-  `autonomy: auto` + no declared `risk: high` (which would otherwise permit a legitimate
-  auto-PASS on complete evidence with NO residue), a genuine, empirically-confirmed, cross-twin
-  concurrency residue is present — an auto-PASS is not available whenever residue exists,
-  regardless of autonomy level. Two independent actions are needed before a clean GATE RECORD
-  can be recorded: (i) a build-phase decision on the ticket-leak fix (see suggested direction
-  above) — a human/build-phase call, not mine to make; (ii) an orchestrator-level phase
-  re-cross/heal to resolve the `build_tampered`/`scope_violation pending` mechanical flags
-  (unrelated to code correctness, root-caused above) before the engine's own tooling will accept
-  a recorded outcome at all.
+Recommended GATE RECORD (not stamped — human/orchestrator decides): PASS. `autonomy: auto` + no
+  declared `risk: high` + complete, freshly-reproduced evidence + NO residue (both prior
+  HARD-STOP-worthy defects — the original TOCTOU race and the leaked-ticket permanent wedge,
+  including its unique secondary persist-then-restore path — are independently reconfirmed
+  fixed; the specific recursive "ticket-for-a-ticket" question this round exists to answer is
+  resolved with both a structural argument and 741 real adversarial test attempts against this
+  task's own lock, 0 anomalies) together make this the case this task's own design anticipates
+  for a legitimate auto-PASS, not a rubber stamp. The EXISTING GATE RECORD at the bottom of this
+  section (Outcome: <unset>, still templated) has never been stamped for this task at all; this
+  is the first complete recommendation offered for it, superseding the round-2 pass's own
+  HARD-STOP (recorded before round 3's fix existed) rather than reversing a prior human
+  decision.
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
