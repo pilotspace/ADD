@@ -450,7 +450,7 @@ Tests live in: `add-method/tooling/test_project_scope_lock.py` · MUST run red (
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `add-method/src/add_method/_installer.py` `add-method/bin/cli.js`
+Scope (may touch): `add-method/src/add_method/_installer.py` `add-method/bin/cli.js` `add-method/tooling/test_project_scope_lock.py`
 Strategy (ordered batches): 1. Add `PROJECT_LOCK_FILE = ".install.lock"` (both twins, near `LOCK_FILE`/`STAMP_FILE`); add it as a new exact-name member of `_DATA_EXCLUDE`/`DATA_EXCLUDE`. 2. Python: `import time` (new stdlib import); write `_project_lock(add_dir: Path, *, env: Mapping | None = None)` as a NEW `@contextlib.contextmanager`, placed near `_update_lock` for discoverability (not shared code) — self-heal-check (stat + sign-aware age compare) -> `os.open(O_CREAT|O_EXCL|O_WRONLY)` (retry once after an unlink on a confirmed-stale contention) -> best-effort diagnostic stamp write -> `yield` -> `finally: close + unlink best-effort`. 3. JS: write `acquireProjectLock(addDir, env = process.env)` as a NEW function near `acquireUpdateLock` — identical self-heal-check -> `fs.openSync(path,"wx")` (retry once) -> best-effort stamp write -> register `process.on("exit", release)` -> return `release`; on a live contention, call `fail("install_in_progress: ...")` directly (mirrors `acquireUpdateLock`'s own precedent). 4. Python `install()`: compute `add_dir`/`env_map` right after the interactive block resolves `target_path`'s FINAL value; wrap everything from `bundled_root` resolution through the final `return 0` in `with _project_lock(add_dir, env=env_map):`, `except BlockingIOError: return _fail("install_in_progress: ...")` immediately outside it (mirrors `_update_global`'s own try/with/except shape) — re-indentation only, no line inside the wrap changes. 5. Python `update()`: after the existing "no ADD project" precondition, wrap the same way (including the same-version no-op branch). 6. JS `cmdInit`: after `chosenTarget` is final, call `acquireProjectLock(addDir)` before `if (args.global) installGlobal(...)` — no re-indentation needed (exit-hook release, not scope-based). 7. JS `cmdUpdate`: call `acquireProjectLock(addDir)` AFTER the existing `if (args.check) {...; return;}` early return, before the same-version no-op check — ordering matters (see Known-problem fixes). 8. Grep both files afterward to confirm `_reconcile`/`reconcile`, `_clean_replace`/`cleanReplaceTree`, `_update_lock`/`acquireUpdateLock`, `_update_global`/`cmdUpdateGlobal` remain byte-unchanged and no other call site was touched.
 
 Persona (optional): methodology-engine-dev (same persona both sibling tasks in this milestone used — nominally scoped to `add.py`/`add_engine/*`, adapted-fit for the installer; see §0 Honors)
@@ -571,6 +571,78 @@ Strategy actually used: AS PLANNED, in the same 8-step batch order (constants ->
   Linux/Windows behavior is assumed-correct by the documented API contract, not independently
   re-verified in this session. Same disclosed-not-hidden category as the sub-syscall race noted
   above, not a known live bug — flagged for the next verify pass to weigh, not decided here.
+  Third build attempt (2026-07-03, reopened for this same still-`build`-phase task after a fresh
+  adversarial verify pass — building external-state repro scripts against the real, unmodified
+  code rather than trusting the ticket mechanism's own comments — found and empirically confirmed
+  a LEAKED-TICKET WEDGE: `_project_lock`'s own per-generation reclaim ticket
+  (`<add_dir>/.install.lock.reclaim-<inode>`) can itself be leaked by a crash landing between a
+  winner's ticket-open and its own `finally: os.unlink(ticket_path)` a few lines later. Because
+  the ticket's name is deterministically keyed to the STALE MAIN LOCK's own (unchanging) inode,
+  and this lock's own reclaim never mutates that inode unless it actually wins the ticket, a
+  leaked ticket makes EVERY future contender recompute the IDENTICAL ticket path, lose the
+  identical EEXIST race, and — pre-fix — immediately `raise BlockingIOError(...) from None` (this
+  lock never polls, M7) — "install_in_progress" forever, with no manual recourse short of deleting
+  both files by hand. Independently re-derived by tracing the actual current code (not accepting
+  the finding's own paraphrase): confirmed via a direct `_project_lock()` call against a
+  synthetically-leaked ticket (a stale main lock + an orphaned `.reclaim-<inode>` sibling with no
+  corresponding live process) — reproduced as an uncaught `BlockingIOError` against the untouched
+  pre-fix code, every single call, no matter how many times retried.
+    Fix: apply the SAME age-based staleness check already governing the main lock to the ticket
+  file too — before treating a lost ticket-open as "someone else legitimately owns this reclaim,"
+  first stat the EXISTING ticket; if its own age exceeds a threshold, self-heal it and retry the
+  ticket-open exactly once (mirroring this lock's own existing "one extra attempt, never a
+  second, never a poll" ethos, M7). Chose a SEPARATE, independently-defined, much SHORTER
+  threshold for the ticket (`_PROJECT_LOCK_TICKET_STALE_SECONDS`/`PROJECT_LOCK_TICKET_STALE_SECONDS`
+  = 5s, own module-level constant per twin, not env-overridable) rather than reusing
+  `stale_after`/`ADD_PROJECT_LOCK_STALE_SECONDS` (120s default) outright — reasoned explicitly, not
+  assumed: a ticket's own critical section is a small, FIXED handful of syscalls
+  (close/stat/maybe-unlink/unlink), microseconds under normal operation regardless of which lock
+  it guards, so a multi-second margin is already generous; reusing the main lock's own much longer
+  threshold would still be SAFE (never a false-positive reclaim of a genuinely in-flight ticket)
+  but would needlessly delay recovery from a real crash by up to 120s for no benefit. Considered,
+  and explicitly REJECTED, a simpler "unconditional unlink-by-path if the ticket looks old, then
+  retry the create" shortcut at the ticket level: worked through it by hand and found it REOPENS
+  THE IDENTICAL TOCTOU HOLE ONE LEVEL DOWN — if a THIRD racer's legitimately fresh ticket (for the
+  SAME generation) is created in the gap between our stat-check and our unlink, an unconditional
+  unlink would destroy it, letting BOTH racers believe they are the sole reclaimer of the same
+  stale main-lock generation, exactly the double-hold bug this whole ticket mechanism exists to
+  prevent. Applied the IDENTICAL identity-verified discipline instead (re-stat the ticket
+  IMMEDIATELY before unlinking it and compare its inode to the one just observed stale; unlink
+  only on a match) — the same shape as the main lock's own already-proven fix, recursed one level,
+  never a shortcut.
+    A second, independent defect surfaced while tracing this lock's own sibling
+  (`_update_lock`/`acquireUpdateLock`, owned by `global-lock-followups`, not this task's own
+  Scope): because that lock LOOPS (it supports `--lock-timeout`), the identical leaked-ticket
+  condition manifests there as an UNBOUNDED LIVELOCK, not a clean fail-fast wedge — both the
+  "lost the ticket" and "won the ticket" branches unconditionally `continue`d back to the top of
+  its `while fd is None:` loop, pre-fix, without ever reaching the `deadline`/`--lock-timeout`
+  check beneath the `if age > stale_after:` block. That task's own TASK.md carries the matching
+  fix and evidence for its own function; noted here only because both locks share the SAME root
+  cause (independently discovered, independently fixed, zero shared code between them — this
+  task's own §1/§3 "zero shared code" invariant, re-affirmed, not violated by fixing both in the
+  same session).
+    Also extended `_is_user_data`/`isUserData` (both twins) with a new `.reclaim-` infix
+  exclusion — mirrors the EXISTING `.add-tmp-`/`.add-bak-` infix convention already in the same
+  function — so a leaked (or merely transiently-live, mid-reclaim) ticket sibling inside a
+  scanned `<target>/.add/` tree is never bogusly snapshotted by `_persist_data`/`persistData` as
+  user-data, closing the exact class of gap `_DATA_EXCLUDE`'s own exact-name `PROJECT_LOCK_FILE`
+  membership (M8, already shipped) exists to prevent for the main lock file itself.
+    TDD followed exactly: both new regression tests (the direct-mechanism leaked-ticket test and
+  the full `install()`/`update()`-level test) were written FIRST and confirmed RED against the
+  UNTOUCHED pre-fix code via a scoped `git stash push -- _installer.py cli.js` (stashing ONLY the
+  2 source files, keeping the new tests) — the direct-mechanism test errored with an uncaught
+  `BlockingIOError` (the exact wedge symptom) and the full-call test asserted `install_in_progress`
+  instead of exit 0, both for the traced reason, not a broken harness; the `node cli.js` twin
+  reproduced the identical wedge as a real subprocess. `git stash pop` restored the fix; the SAME
+  4 new tests (2 above + a fresh-ticket-is-never-reclaimed regression guard + the npm parity
+  smoke) then ran GREEN (7/7 including the sibling task's own 3, in 1.7s — versus needing the
+  full bounded timeout budgets to even finish failing, pre-fix).
+    Stress evidence (this redo): the EXISTING `test_concurrent_stale_reclaim_exactly_one_wins`
+  (proving the ORIGINAL multi-racer TOCTOU race stays fixed) was re-run, in fresh subprocesses,
+  30 times then 60 more (90/90 total, 0 failures) — confirms this ticket-level self-heal addition
+  did not reintroduce that already-fixed race. The dedicated suite is 30/30 (26 prior + 4 new);
+  the 6-file sibling sweep (`test_global_install`/`test_global_update_harden`/`test_global_restore`
+  /`test_global_data`/`test_reconcile_rollup`/`test_project_scope_lock`, 152 tests) is 152/152.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.

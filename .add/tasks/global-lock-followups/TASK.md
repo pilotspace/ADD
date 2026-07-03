@@ -452,6 +452,71 @@ Strategy actually used: AS PLANNED, in the same 5-batch order, with 3 refinement
     This task's `risk: high` / `autonomy: conservative` posture is unchanged by this reopening — it
   governs the NEXT verify pass's own gate (human-reviewed regardless of evidence quality), not this
   build's own self-driven red->green obligation.
+    Third build attempt (2026-07-03, reopened for this same still-`build`-phase task after a fresh
+  adversarial verify pass — building external-state repro scripts against the real, unmodified
+  code rather than trusting the ticket mechanism's own comments — found and empirically confirmed
+  an UNBOUNDED LIVELOCK, worse than the sibling task's clean fail-fast wedge because this lock
+  LOOPS (it supports `--lock-timeout`): `_update_lock`'s own per-generation reclaim ticket
+  (`<home>/.update.lock.reclaim-<inode>`) can itself be leaked by a crash landing between a
+  winner's ticket-open and its own `finally: os.unlink(ticket_path)` a few lines later. Because the
+  ticket's name is deterministically keyed to the STALE MAIN LOCK's own (unchanging) inode, a
+  leaked ticket makes EVERY loop iteration re-lose the identical EEXIST race — and, pre-fix, BOTH
+  the "lost the ticket" branch (`except FileExistsError: continue`) and the "won the ticket" branch
+  (its own trailing `continue` after the `finally` block) looped back to the TOP of the
+  `while fd is None:` loop WITHOUT EVER reaching the `if deadline is not None...`/
+  `raise BlockingIOError` code beneath the `if age > stale_after:` block — that block's own only
+  exits are both `continue`, so once `age > stale_after` goes true it NEVER goes false again for a
+  leaked ticket, and the deadline check below is structurally unreachable. Independently re-derived
+  by tracing the actual current code, control-flow branch by branch (not accepting the finding's
+  own paraphrase) — confirmed via a direct `_update_lock(home, timeout=3.0, ...)` call on a
+  background thread against a synthetically-leaked ticket (a stale main lock + an orphaned
+  `.reclaim-<inode>` sibling, no corresponding live process): still alive after a 10-second
+  `join()` — more than 3x its own declared 3-second budget — proving the spin genuinely never
+  reaches the deadline check, not merely runs slightly over. Independently reproduced against the
+  unmodified JS twin too: a real `node cli.js update --global --lock-timeout 3` subprocess did not
+  terminate within a 15-second hard bound (5x its own budget), raising `subprocess.TimeoutExpired`
+  rather than exiting on its own.
+    Fix: apply the SAME age-based staleness check already governing the main lock to the ticket
+  file too, exactly as the sibling task's own identical redo does for `_project_lock` (their own
+  TASK.md carries the full reasoning for the ticket-threshold choice and the rejected
+  unconditional-unlink shortcut — re-affirmed here for this lock's own independent code, not
+  copied as shared logic). For THIS lock specifically, staleness-checking the ticket was only HALF
+  the fix — the other half was restructuring the loop body so the `deadline`/`--lock-timeout`
+  check is reached on EVERY iteration that did not just successfully reclaim the main lock,
+  whether that non-progress came from a live main lock, a live (not-yet-stale) ticket, or a
+  contested-but-since-resolved stale ticket. Introduced a single `reclaimed` flag, set True only
+  on an actual successful main-lock reclaim; `if reclaimed: continue` (self-heal, unchanged path)
+  falls through to the SAME `if deadline...: poll / raise BlockingIOError` for every other case —
+  closing the exact structural gap (two `continue`s that never reached the code below) rather than
+  special-casing just the "ticket looks stale" sub-branch, which would have left the "ticket looks
+  merely fresh/contested" sub-branch still capable of bypassing `--lock-timeout` (verified this
+  distinction matters by hand: a ticket that never crosses ITS OWN short staleness threshold
+  during a short `--lock-timeout` budget is exactly the scenario a narrower fix would still miss).
+    TDD followed exactly: 2 new regression tests (a direct `_update_lock` livelock reproduction
+  bounded by a thread + `join(timeout=10)` — so a still-buggy run FAILS an assertion rather than
+  hanging the suite — and a matching `--lock-timeout`-honored-despite-a-contested-ticket test) plus
+  an npm subprocess smoke were written FIRST and confirmed RED against the UNTOUCHED pre-fix code
+  via a scoped `git stash push -- _installer.py cli.js` (stashing ONLY the 2 source files, keeping
+  the new tests): both direct tests failed with "still spinning after 10.0s" against 3.0s/1.0s
+  budgets, and the npm smoke raised `subprocess.TimeoutExpired` after 15s against a 3s budget — a
+  clean, unambiguous, adversarially-confirmed reproduction, not a flaky or ambiguous failure.
+  `git stash pop` restored the fix; the SAME 3 new tests then ran GREEN in a fraction of a second
+  (part of the sibling task's own combined 7/7 new-test run, 1.7s total).
+    Also extended `_is_user_data`/`isUserData` (both twins) with the SAME new `.reclaim-` infix
+  exclusion the sibling task adds — for THIS lock's own ticket shape
+  (`<home>/.update.lock.reclaim-<inode>`) the exclusion is INERT (the home directory is never
+  scanned by `_persist_data`/`persistData`, which only ever scans a project's own `<target>/.add/`
+  tree) but kept anyway for documentation-consistency/future-proofing, mirroring the EXISTING
+  precedent this same function already carries: `LOCK_FILE`/`.update.lock` itself is already an
+  exact-name `_DATA_EXCLUDE` member despite living only in the never-scanned home — the identical
+  "inert but consistent" membership class, re-applied to its own ticket sibling.
+    Stress evidence (this redo): the EXISTING `test_concurrent_stale_reclaim_exactly_one_wins`
+  (proving the ORIGINAL multi-racer TOCTOU race stays fixed) was re-run, in fresh subprocesses,
+  30 times then 60 more (90/90 total, 0 failures) — confirms this ticket-level self-heal addition
+  plus the loop restructuring did not reintroduce that already-fixed race. The dedicated suite is
+  35/35 (32 prior + 3 new); the 6-file sibling sweep (`test_global_install`/
+  `test_global_update_harden`/`test_global_restore`/`test_global_data`/`test_reconcile_rollup`/
+  `test_project_scope_lock`, 152 tests) is 152/152.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim and `--lock-timeout` only ever decide whether/when to retry that create, never grant the lock by any other means.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`time` · Node builtin `fs`/`path` only); ask if unclear.
