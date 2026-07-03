@@ -52,7 +52,7 @@ jobs:
 
       # Open (or update) a single refresh PR with the diff — never a direct push to main.
       - name: Open the refresh pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: chore/teacher-refresh
           commit-message: "chore(teacher): refresh vendored snapshot + pin"
