@@ -727,6 +727,14 @@ async function cmdInit(args) {
            "from; run `init --global-data` on a source checkout first");
     }
   }
+  // Project-scope lock (project-scope-install-lock): keyed on chosenTarget's FINAL value (after
+  // any interactive redirect above) — acquired BEFORE the as_global sub-block, held through the
+  // function's end. Independent of, and acquired BEFORE, the home-scoped acquireUpdateLock that
+  // installGlobal() below nests inside (M11 — never the reverse nesting).
+  const addDir = path.join(chosenTarget, ".add");
+  acquireProjectLock(addDir);   // registers its own process.on("exit", release) — no explicit
+                                 // release()/finally needed at the call site (mirrors
+                                 // acquireUpdateLock's own usage at cmdUpdateGlobal)
   // OPT-IN global home, BEFORE the per-project drop (fail-closed if the home is unwritable
   // or its registry is corrupt — the package + the self-contained default stay usable).
   if (args.global) installGlobal(args, chosenTarget);
@@ -756,6 +764,10 @@ const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
 const LOCK_POLL_INTERVAL_MS = 50;   // ms between polls while waiting out a --lock-timeout
+const PROJECT_LOCK_FILE = ".install.lock";   // the project-scope init()/update() lock (never user-data)
+const PROJECT_LOCK_STALE_DEFAULT = 120;      // seconds (2 min); ADD_PROJECT_LOCK_STALE_SECONDS env-overridable —
+                                              // deliberately SHORTER than LOCK_STALE_DEFAULT's own 600s (see
+                                              // _installer.py's _PROJECT_LOCK_STALE_DEFAULT for the reasoning)
 
 // A synchronous sleep via Atomics.wait on a throwaway SharedArrayBuffer — builtin, no new
 // dependency; Node's MAIN thread (unlike a browser's) is allowed to block on Atomics.wait.
@@ -999,7 +1011,7 @@ function reconcileGlobal(home, claudeDir, noSkill) {
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------
 // Strictly additive; copies ONLY user-data (managed trees + transient excluded), clean-replaced,
 // one-way (project->home). Mirror of _installer.py (identical key + include/exclude rule).
-const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE];   // managed trees + meta + lock
+const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE];   // managed trees + meta + both locks
 
 // data_key twin: <sanitized-basename>-<sha1(abspath_utf8)[:12]>. Pure · total · separator-free.
 function dataKey(projectAbspath) {
@@ -1358,6 +1370,73 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
   return release;
 }
 
+// project-scope lock (project-scope-install-lock) — serializes cmdInit()/cmdUpdate() (non-
+// `--global` path) against the SAME target's own .add/ tree. A NEW, INDEPENDENT primitive that
+// mirrors (but never calls into or shares code with) acquireUpdateLock's own proven shape:
+// different function, different file, different default threshold, zero shared code (the two
+// locks guard genuinely different-shaped resources — see _installer.py:_project_lock).
+//
+// Held AND fresh -> fails IMMEDIATELY with "install_in_progress". UNLIKE acquireUpdateLock,
+// there is NO bounded-wait/poll mode (a live contention never waits, never polls — M7).
+//
+// Held AND stale (age > ADD_PROJECT_LOCK_STALE_SECONDS, default 120s) -> self-heals: unlinks
+// the stale lockfile and retries the create EXACTLY once before falling through to fail-fast.
+// A clock-skewed FUTURE mtime is NEVER treated as stale.
+//
+// KNOWN PROBLEM this shape works around: fail() calls process.exit(1) DIRECTLY (skips any
+// pending finally) — release is wired via process.on("exit", release), never a plain
+// try/finally at the call site (mirrors acquireUpdateLock's own already-solved precedent).
+//
+// If addDir did not exist yet (a virgin target — the lock file needs somewhere to live), it is
+// created here; on release, an addDir THIS call created is removed again iff it is still
+// completely empty (the lock file was its only occupant) — e.g. an --global failure (a held
+// home lock, an unwritable home) that aborts before the per-project drop leaves NOTHING behind,
+// exactly as before this lock existed. A non-empty addDir (the real drop landed, or it
+// pre-existed) is never touched.
+function acquireProjectLock(addDir, env = process.env) {
+  const createdDir = !fs.existsSync(addDir);
+  fs.mkdirSync(addDir, { recursive: true });
+  const lockPath = path.join(addDir, PROJECT_LOCK_FILE);
+  const staleAfterMs = Number(env.ADD_PROJECT_LOCK_STALE_SECONDS || PROJECT_LOCK_STALE_DEFAULT) * 1000;
+
+  let fd = null;
+  try {
+    fd = fs.openSync(lockPath, "wx");
+  } catch (e) {
+    if (!e || e.code !== "EEXIST") throw e;
+    let st = null;
+    try { st = fs.statSync(lockPath); } catch (_e) { /* vanished — treat as reclaimable now */ }
+    const age = st ? (Date.now() - st.mtimeMs) : Infinity;
+    if (age > staleAfterMs) {
+      try { fs.unlinkSync(lockPath); } catch (_e) {}   // best-effort — a losing race may already have removed it
+      try {
+        fd = fs.openSync(lockPath, "wx");
+      } catch (e2) {
+        if (!e2 || e2.code !== "EEXIST") throw e2;
+        // the retry ALSO hit already-exists (another racer won the reclaim) -> fail-fast,
+        // exactly once — never a second reclaim attempt, never a poll/wait (M7).
+      }
+    }
+    if (fd === null) {
+      fail("install_in_progress: another install/update is already running against " +
+           path.dirname(addDir) + " — retry shortly (remove " + lockPath + " if stale)");
+      return () => {};   // unreachable once fail() exits — keeps the function's return shape honest
+    }
+  }
+  try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
+  catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
+  const release = () => {
+    try { fs.closeSync(fd); } catch (_e) {}
+    try { fs.unlinkSync(lockPath); } catch (_e) {}
+    if (createdDir) {
+      try { if (fs.readdirSync(addDir).length === 0) fs.rmdirSync(addDir); } catch (_e) {}
+      // non-empty (the real drop landed) or already gone — leave it alone either way
+    }
+  };
+  process.on("exit", release);   // covers normal completion AND fail()'s process.exit
+  return release;
+}
+
 function cmdUpdateGlobal(args) {
   const home = resolveGlobalHome(process.env);
   const claudeDir = claudeSkillsDir(process.env);
@@ -1422,6 +1501,10 @@ function cmdUpdate(args) {
     else log("ADD update available: project on " + cur + ", package is " + version + ". Run `update`.");
     return;
   }
+  // Project-scope lock (project-scope-install-lock): acquired AFTER the read-only --check
+  // report (a JS-only carve-out — see TASK.md §0/M3), held from here through the function's
+  // end — INCLUDING the same-version no-op check below, so a retried call re-evaluates it fresh.
+  acquireProjectLock(addDir);
   // same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
   // even at the current version (heal-reconcile).
   const status = managedStatus(target);

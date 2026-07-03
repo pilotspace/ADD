@@ -691,7 +691,8 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # The snapshot copies ONLY user-data (the managed trees + transient/managed-meta are excluded),
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
 LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE}   # managed trees + managed-meta + the lock
+PROJECT_LOCK_FILE = ".install.lock"                                # the project-scope install()/update() lock (never user-data)
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks
 
 
 def data_key(project_abspath) -> str:
@@ -1023,6 +1024,13 @@ def install(
     (--from-global-data): it rehydrates user-data from <home>/data/<key> into this clone
     (non-destructive fill-gaps; --force overwrites with a .bak). Independent of as_global —
     CONSUME-only: no register, no persist. A missing home is no_global_home (fails fast).
+
+    The ENTIRE call — from bundled-source resolution through the final return — runs under a
+    NEW, project-scope lock (`_project_lock`, keyed on this FINAL, post-interactive-prompt
+    `target_path`) that serializes concurrent install()/update() runs against the SAME target;
+    a live contention fails fast with `install_in_progress` (see `_project_lock`). Independent
+    of, and acquired BEFORE, the home-scoped `_update_lock` the `as_global` sub-block below
+    nests inside.
     Returns 0 on success, 1 on error, 130 on a user cancel (nothing written).
     """
     if as_global_data:
@@ -1059,148 +1067,160 @@ def install(
 
     _log(f"Installing ADD into {target_path}")
 
-    # Locate bundled data (synthetic `bundled` for tests; the wheel's _bundled/ otherwise).
+    # Project-scope lock (project-scope-install-lock): keyed on target_path's FINAL value (after
+    # any interactive redirect above) — acquired BEFORE bundled-root resolution, held through the
+    # final `return 0` (including the as_global sub-block and the opt-in persist/restore below).
+    add_dir = _add_dir(target_path)
+    env_map = os.environ if env is None else env
     try:
-        bundled_root = Path(bundled) if bundled else _bundled_root()
-    except RuntimeError as exc:
-        return _fail(str(exc))
+        with _project_lock(add_dir, env=env_map):
+            # Locate bundled data (synthetic `bundled` for tests; the wheel's _bundled/ otherwise).
+            try:
+                bundled_root = Path(bundled) if bundled else _bundled_root()
+            except RuntimeError as exc:
+                return _fail(str(exc))
 
-    # design-for-failure: verify ALL sources exist BEFORE touching the target.
-    for sub, _dest, _strip in MANAGED:
-        if sub in OPTIONAL and not (bundled_root / sub).exists():
-            continue   # optional enhancement absent — soft-skip, never abort the core install
-        if not (bundled_root / sub).exists():
-            return _fail(f"missing bundled source: {bundled_root / sub}")
+            # design-for-failure: verify ALL sources exist BEFORE touching the target.
+            for sub, _dest, _strip in MANAGED:
+                if sub in OPTIONAL and not (bundled_root / sub).exists():
+                    continue   # optional enhancement absent — soft-skip, never abort the core install
+                if not (bundled_root / sub).exists():
+                    return _fail(f"missing bundled source: {bundled_root / sub}")
 
-    # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
-    # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
-    # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
-    if as_global_data_restore:
-        restore_home = resolve_global_home(os.environ if env is None else env)
-        if not _stamp_path(restore_home).exists():
-            return _fail(
-                f"no global ADD install at {restore_home} (.add-version not found) — nothing "
-                "to restore from; run `init --global-data` on a source checkout first"
-            )
-
-    # OPT-IN global home: install the managed layer ONCE to a shared home + register this
-    # project, THEN fall through to the NORMAL per-project drop below (the self-contained
-    # default is untouched — global is strictly additive). Fail-closed: an unwritable home or
-    # a corrupt registry aborts BEFORE the per-project drop, leaving the package + default usable.
-    if as_global:
-        env_map = os.environ if env is None else env
-        home = resolve_global_home(env_map)
-        claude_dir = _claude_skills_dir(env_map)
-        try:
-            with _update_lock(home, timeout=lock_timeout, env=env_map):
-                try:
-                    _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
-                except OSError as exc:
-                    return _fail(f"cannot write global home {home} — {exc}")
-                _write_stamp(home, _pkg_version(), channel="global")
-                try:
-                    reg = _read_registry(home)                                      # registry_corrupt
-                except ValueError:
+            # OPT-IN restore (--from-global-data): the home MUST already exist — no_global_home is a
+            # HARD fail, checked FAST here so nothing is written to the target on a missing home. The
+            # restore itself runs AFTER the managed drop (below); consume-only, no register/persist.
+            if as_global_data_restore:
+                restore_home = resolve_global_home(os.environ if env is None else env)
+                if not _stamp_path(restore_home).exists():
                     return _fail(
-                        f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
+                        f"no global ADD install at {restore_home} (.add-version not found) — nothing "
+                        "to restore from; run `init --global-data` on a source checkout first"
                     )
-                reg.append(str(target_path))
+
+            # OPT-IN global home: install the managed layer ONCE to a shared home + register this
+            # project, THEN fall through to the NORMAL per-project drop below (the self-contained
+            # default is untouched — global is strictly additive). Fail-closed: an unwritable home or
+            # a corrupt registry aborts BEFORE the per-project drop, leaving the package + default usable.
+            if as_global:
+                env_map = os.environ if env is None else env
+                home = resolve_global_home(env_map)
+                claude_dir = _claude_skills_dir(env_map)
                 try:
-                    _write_registry(home, reg)                                      # atomic + dedup
+                    with _update_lock(home, timeout=lock_timeout, env=env_map):
+                        try:
+                            _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
+                        except OSError as exc:
+                            return _fail(f"cannot write global home {home} — {exc}")
+                        _write_stamp(home, _pkg_version(), channel="global")
+                        try:
+                            reg = _read_registry(home)                                      # registry_corrupt
+                        except ValueError:
+                            return _fail(
+                                f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
+                            )
+                        reg.append(str(target_path))
+                        try:
+                            _write_registry(home, reg)                                      # atomic + dedup
+                        except OSError as exc:
+                            return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
+                        _log(f"  ✓ global home ready at {home}")
+                        _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
+                except BlockingIOError:
+                    return _fail(
+                        f"update_in_progress: another global install/update is already running — retry "
+                        f"shortly (remove {home / LOCK_FILE} if it is stale)"
+                    )
                 except OSError as exc:
-                    return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
-                _log(f"  ✓ global home ready at {home}")
-                _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
-        except BlockingIOError:
-            return _fail(
-                f"update_in_progress: another global install/update is already running — retry "
-                f"shortly (remove {home / LOCK_FILE} if it is stale)"
-            )
-        except OSError as exc:
-            # _update_lock's own home.mkdir()/lock-file open (e.g. `home` exists as a plain file,
-            # not a directory) can fail BEFORE the inner _reconcile_global try/except ever runs —
-            # same "cannot write global home" classification as that inner catch already uses.
-            return _fail(f"cannot write global home {home} — {exc}")
+                    # _update_lock's own home.mkdir()/lock-file open (e.g. `home` exists as a plain file,
+                    # not a directory) can fail BEFORE the inner _reconcile_global try/except ever runs —
+                    # same "cannot write global home" classification as that inner catch already uses.
+                    return _fail(f"cannot write global home {home} — {exc}")
 
-    # RECONCILE: restore missing trees + refresh present ones (sweep orphans). Touches
-    # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
-    _reconcile(target_path, bundled_root)
+            # RECONCILE: restore missing trees + refresh present ones (sweep orphans). Touches
+            # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
+            _reconcile(target_path, bundled_root)
 
-    _seed_soul_md(target_path, bundled_root)
-    _seed_gitignore(target_path, bundled_root)
+            _seed_soul_md(target_path, bundled_root)
+            _seed_gitignore(target_path, bundled_root)
 
-    # Agent detection: write THE detected agent's integration file (a marker-delimited
-    # pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
-    # Best-effort + fail-soft — never aborts the successful drop above.
-    # The INTERACTIVE path uses the enriched detector (env > CLAUDE.md > installed CLI), already
-    # disclosed in the pre-flight line and overridable by cancel+rerun. The NON-interactive path
-    # stays env-only (the byte-identical boundary + test_agent_detect pin).
-    if _interactive(yes, non_interactive):
-        profile = _detect_agent_enriched(env, target_path)
-    else:
-        profile = _detect_agent(env)
-    # Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
-    # .claude/rules/add-workflows.md + a reference bullet — CLAUDE-only; other agents stay inline.
-    if profile["integration_file"] == "CLAUDE.md" and _rule_file_mode(target_path, rule_file):
-        if (target_path / ".ccsk").is_dir():
-            _log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md")
-        _write_rule_file_pointer(target_path, profile)
-    else:
-        _write_agent_pointer(target_path, profile)
+            # Agent detection: write THE detected agent's integration file (a marker-delimited
+            # pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
+            # Best-effort + fail-soft — never aborts the successful drop above.
+            # The INTERACTIVE path uses the enriched detector (env > CLAUDE.md > installed CLI), already
+            # disclosed in the pre-flight line and overridable by cancel+rerun. The NON-interactive path
+            # stays env-only (the byte-identical boundary + test_agent_detect pin).
+            if _interactive(yes, non_interactive):
+                profile = _detect_agent_enriched(env, target_path)
+            else:
+                profile = _detect_agent(env)
+            # Rule-file mode (ccsk projects / --rule-file) relocates the CLAUDE.md pointer to
+            # .claude/rules/add-workflows.md + a reference bullet — CLAUDE-only; other agents stay inline.
+            if profile["integration_file"] == "CLAUDE.md" and _rule_file_mode(target_path, rule_file):
+                if (target_path / ".ccsk").is_dir():
+                    _log("  ccsk detected — ADD rules go to .claude/rules/add-workflows.md")
+                _write_rule_file_pointer(target_path, profile)
+            else:
+                _write_agent_pointer(target_path, profile)
 
-    # Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
-    # .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.
-    if profile["id"] == "gemini":
-        _write_gemini_settings(target_path)
+            # Gemini CLI auto-loads GEMINI.md, not AGENTS.md — so for the gemini profile we ALSO merge
+            # .gemini/settings.json (context.fileName) to load the AGENTS.md pointer. Fail-soft + idempotent.
+            if profile["id"] == "gemini":
+                _write_gemini_settings(target_path)
 
-    # Optional build-intent NOTE for `/add` to read — a NOTE only (no init, no state.json).
-    # "" on the non-interactive path or a skipped prompt -> no file written.
-    _write_intent_note(target_path, intent)
+            # Optional build-intent NOTE for `/add` to read — a NOTE only (no init, no state.json).
+            # "" on the non-interactive path or a skipped prompt -> no file written.
+            _write_intent_note(target_path, intent)
 
-    # NO step 4: the installer DROPS FILES ONLY (npm ↔ pip parity with bin/cli.js).
-    # Initialisation is deferred to the AI (via `/add`) or a CLI user — a pre-run plain
-    # `add.py init` would grandfather-lock the v12 lock-down gate before `/add` runs (see
-    # the module header). So we do NOT exec add.py here.
-    _log("\nDone. The `add` skill + tooling are installed (no project state yet — that's intentional).")
-    if profile["id"] == "generic":
-        # the generic onramp line — kept literal so the conversational-only handoff is stable
-        _log("Next:  open your AI Agent CLI (like Claude Code, Codex, etc.), then run `/add`, and say what you want to build — the agent")
-        _log("       sets up the foundation, sizes it into a milestone, and drives the build with you;")
-        _log("       you sign off once, at the lock-down.")
-    else:
-        _log(f"Detected {profile['label']}.")
-        _log(f"Next:  {profile['next_step']}")
+            # NO step 4: the installer DROPS FILES ONLY (npm ↔ pip parity with bin/cli.js).
+            # Initialisation is deferred to the AI (via `/add`) or a CLI user — a pre-run plain
+            # `add.py init` would grandfather-lock the v12 lock-down gate before `/add` runs (see
+            # the module header). So we do NOT exec add.py here.
+            _log("\nDone. The `add` skill + tooling are installed (no project state yet — that's intentional).")
+            if profile["id"] == "generic":
+                # the generic onramp line — kept literal so the conversational-only handoff is stable
+                _log("Next:  open your AI Agent CLI (like Claude Code, Codex, etc.), then run `/add`, and say what you want to build — the agent")
+                _log("       sets up the foundation, sizes it into a milestone, and drives the build with you;")
+                _log("       you sign off once, at the lock-down.")
+            else:
+                _log(f"Detected {profile['label']}.")
+                _log(f"Next:  {profile['next_step']}")
 
-    # OPT-IN data persist: snapshot this project's USER-DATA under <home>/data/<key> (one-way).
-    # A fresh drop has no user-data yet -> honest skip (exit 0). Unwritable -> data_unwritable.
-    if as_global_data:
-        env_map = os.environ if env is None else env
-        home = resolve_global_home(env_map)
-        try:
-            persisted = _persist_data(home, target_path)
-        except OSError as exc:
-            return _fail(f"cannot write global data {home / 'data' / data_key(str(target_path))} — {exc}")
-        if persisted:
-            _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
-        else:
-            _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
+            # OPT-IN data persist: snapshot this project's USER-DATA under <home>/data/<key> (one-way).
+            # A fresh drop has no user-data yet -> honest skip (exit 0). Unwritable -> data_unwritable.
+            if as_global_data:
+                env_map = os.environ if env is None else env
+                home = resolve_global_home(env_map)
+                try:
+                    persisted = _persist_data(home, target_path)
+                except OSError as exc:
+                    return _fail(f"cannot write global data {home / 'data' / data_key(str(target_path))} — {exc}")
+                if persisted:
+                    _log(f"  ✓ persisted data -> {home / 'data' / data_key(str(target_path))}")
+                else:
+                    _log("  (no project data to persist yet — run /add to create one, then re-run --global-data)")
 
-    # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
-    # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
-    # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
-    if as_global_data_restore:
-        home = resolve_global_home(os.environ if env is None else env)
-        snap = home / "data" / data_key(str(target_path))
-        try:
-            restored = _restore_data(home, target_path, force=force)
-        except OSError as exc:
-            return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
-        if restored:
-            _log(f"  ✓ restored data <- {snap}")
-        else:
-            _log(f"  (no snapshot for this project at {snap} — nothing restored)")
-    _log("")
-    return 0
+            # OPT-IN restore (consume): rehydrate user-data from <home>/data/<key> into this fresh clone.
+            # The home was verified above (no_global_home fails fast). FILL-GAPS unless --force; a missing
+            # snapshot is an HONEST skip (exit 0). An unwritable dest -> restore_failed (fail-closed).
+            if as_global_data_restore:
+                home = resolve_global_home(os.environ if env is None else env)
+                snap = home / "data" / data_key(str(target_path))
+                try:
+                    restored = _restore_data(home, target_path, force=force)
+                except OSError as exc:
+                    return _fail(f"restore_failed: cannot write restored data into {target_path / '.add'} — {exc}")
+                if restored:
+                    _log(f"  ✓ restored data <- {snap}")
+                else:
+                    _log(f"  (no snapshot for this project at {snap} — nothing restored)")
+            _log("")
+            return 0
+    except BlockingIOError:
+        return _fail(
+            f"install_in_progress: another install/update is already running against "
+            f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)"
+        )
 
 
 # --- update: re-materialize the managed layer without a re-install -----------
@@ -1465,6 +1485,104 @@ def _update_lock(home: Path, *, timeout: float | None = None, env=None):
             pass
 
 
+_PROJECT_LOCK_STALE_DEFAULT = 120   # seconds (2 min); ADD_PROJECT_LOCK_STALE_SECONDS env-overridable —
+                                    # deliberately SHORTER than _update_lock's own 600s: a project-scope
+                                    # reconcile is a handful of _clean_replace calls, not a machine-wide,
+                                    # many-registered-projects propagation (project-scope-install-lock
+                                    # TASK.md §1 Assumption A1).
+
+
+@contextlib.contextmanager
+def _project_lock(add_dir: Path, *, env=None):
+    """Serialize `install()`/`cmdInit` and `update()`/`cmdUpdate` (non-`--global` path) against
+    the SAME target's own `.add/` tree with an EXCLUSIVE O_EXCL lockfile at
+    `<add_dir>/.install.lock` — a NEW, INDEPENDENT primitive that mirrors (but never calls into
+    or shares code with) `_update_lock`'s own proven shape: different function, different file,
+    different default threshold, zero shared code (project-scope-install-lock TASK.md §1 Framings
+    weighed — the two locks guard genuinely different-shaped resources: one shared, machine-wide,
+    long-tolerance resource with an opt-in CI wait vs. one per-target, typically-brief reconcile
+    with none).
+
+    Held AND fresh (age <= ADD_PROJECT_LOCK_STALE_SECONDS, env-overridable, default 120s) -> fails
+    IMMEDIATELY: raises BlockingIOError (the caller maps it to "install_in_progress"). UNLIKE
+    `_update_lock`, there is NO bounded-wait/poll mode (a deliberate, disclosed omission — a live
+    contention never waits, never polls; M7).
+
+    Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+    create EXACTLY once before falling through to fail-fast. The O_EXCL create remains the SOLE
+    mutual-exclusion primitive — staleness only ever decides whether to retry, never bypasses
+    exclusivity (at most one racing create succeeds at any instant, even when two processes
+    independently judge the SAME lock stale and both attempt to reclaim it — a clock-skewed
+    FUTURE mtime is a negative age, so it is NEVER treated as stale).
+
+    A successful acquire (fresh or reclaimed) stamps the file `"<PID> <UTC ISO ts>\\n"` —
+    informational ONLY, never read to decide staleness; a stamp-write failure is swallowed
+    (best-effort diagnostics must never break the lock).
+
+    The file is unlinked on exit for success OR exception, so a normal/handled exit never
+    outlives the process. A hard crash / SIGKILL may leave a stale lockfile -> the NEXT acquire
+    self-heals it automatically (no manual deletion required).
+
+    If `add_dir` did not exist yet (a virgin target — the lock file needs somewhere to live), it
+    is created here; on release, an add_dir THIS call created is removed again iff it is still
+    completely empty (the lock file was its only occupant) — e.g. an as_global failure that
+    aborts before the per-project drop leaves NOTHING behind, exactly as before this lock existed.
+    A non-empty add_dir (the real drop landed, or it pre-existed) is never touched.
+    """
+    env_map = os.environ if env is None else env
+    try:
+        stale_after = float(env_map.get("ADD_PROJECT_LOCK_STALE_SECONDS", _PROJECT_LOCK_STALE_DEFAULT))
+    except (TypeError, ValueError):
+        stale_after = _PROJECT_LOCK_STALE_DEFAULT
+    created_dir = not add_dir.exists()
+    add_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = add_dir / PROJECT_LOCK_FILE
+
+    fd = None
+    try:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            try:
+                age = time.time() - lock_path.stat().st_mtime   # NEGATIVE age (future mtime) => never stale
+            except OSError:
+                age = float("inf")   # vanished between the failed open and the stat — treat as reclaimable
+            if age > stale_after:
+                try:
+                    os.unlink(str(lock_path))    # best-effort — a losing race's ENOENT is swallowed
+                except OSError:
+                    pass
+                try:
+                    fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                except FileExistsError:
+                    # the retry ALSO hit already-exists (another racer won the reclaim) -> fail-fast,
+                    # exactly once — never a second reclaim attempt, never a poll/wait (M7).
+                    raise BlockingIOError(f"{lock_path} is held") from None
+            else:
+                # held, not stale, and this lock never waits/polls (M7) -> the caller's existing
+                # `except BlockingIOError` maps this to "install_in_progress".
+                raise BlockingIOError(f"{lock_path} is held")
+
+        try:
+            stamp = f"{os.getpid()} {datetime.now(timezone.utc).isoformat()}\n"
+            os.write(fd, stamp.encode("utf-8"))
+        except OSError:
+            pass                               # diagnostics are best-effort — never fail an acquired lock
+        yield
+    finally:
+        if fd is not None:
+            os.close(fd)
+            try:
+                os.unlink(str(lock_path))
+            except OSError:                   # pragma: no cover — already gone
+                pass
+        if created_dir:
+            try:
+                add_dir.rmdir()               # only succeeds if EMPTY — never removes real content
+            except OSError:
+                pass                           # non-empty (the real drop landed) or already gone
+
+
 def _valid_registry_path(p) -> bool:
     """True iff `os.path.normpath(p)` is an EXISTING ADD project — a dir that contains `.add/`.
     Decides reconcile-vs-drop for an absolute registry entry; absoluteness is the SEPARATE LOUD
@@ -1576,7 +1694,14 @@ def update(
     `as_global` instead refreshes the shared global home + propagates to every registered
     project (see `_update_global`); `env` injects the home/skill base for hermetic tests.
     `lock_timeout` (as_global only; None/0 = today's immediate fail-fast) opts into a bounded
-    wait for a LIVE (non-stale) home lock — see `_update_lock`."""
+    wait for a LIVE (non-stale) home lock — see `_update_lock`.
+
+    The non-`as_global` path runs under the SAME project-scope lock `install()` uses
+    (`_project_lock`, keyed on `add_dir`) from right after the "no ADD project here"
+    precondition through the final return — INCLUDING the same-version no-op check, so a
+    second waiter re-evaluates it fresh once it acquires. A live contention fails fast with
+    `install_in_progress` (see `_project_lock`).
+    """
     if as_global:
         return _update_global(target, force=force, bundled=bundled, version=version, env=env,
                               lock_timeout=lock_timeout)
@@ -1585,47 +1710,55 @@ def update(
     if not (add_dir / "tooling").exists() and not (add_dir / "state.json").exists():
         return _fail(f"no ADD project at {target_path} (.add/ not found) — run `init` first")
 
+    env_map = os.environ if env is None else env
     try:
-        bundled_root = Path(bundled) if bundled else _bundled_root()
-    except RuntimeError as exc:
-        return _fail(str(exc))
-    for sub, _dest, _strip in MANAGED:
-        if sub in OPTIONAL and not (bundled_root / sub).exists():
-            continue   # optional enhancement absent — soft-skip, never abort the core install
-        if not (bundled_root / sub).exists():
-            return _fail(f"missing bundled source: {bundled_root / sub}")
+        with _project_lock(add_dir, env=env_map):
+            try:
+                bundled_root = Path(bundled) if bundled else _bundled_root()
+            except RuntimeError as exc:
+                return _fail(str(exc))
+            for sub, _dest, _strip in MANAGED:
+                if sub in OPTIONAL and not (bundled_root / sub).exists():
+                    continue   # optional enhancement absent — soft-skip, never abort the core install
+                if not (bundled_root / sub).exists():
+                    return _fail(f"missing bundled source: {bundled_root / sub}")
 
-    new_version = version or _pkg_version()
-    stamp = _read_stamp(add_dir)
-    cur_version = stamp.get("version") if stamp else None
-    # An optional tree absent from BOTH the package and the project can't be healed, so it
-    # never counts as "missing" — otherwise a same-version update would never reach the no-op.
-    missing = [sub for sub, st in _managed_status(target_path).items()
-               if st == "missing" and not (sub in OPTIONAL and not (bundled_root / sub).exists())]
-    # same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
-    # even at the current version (heal-reconcile).
-    if cur_version == new_version and not force and not missing:
-        _log(f"ADD already at {new_version} — nothing to update (use --force to re-materialize).")
-        return 0
+            new_version = version or _pkg_version()
+            stamp = _read_stamp(add_dir)
+            cur_version = stamp.get("version") if stamp else None
+            # An optional tree absent from BOTH the package and the project can't be healed, so it
+            # never counts as "missing" — otherwise a same-version update would never reach the no-op.
+            missing = [sub for sub, st in _managed_status(target_path).items()
+                       if st == "missing" and not (sub in OPTIONAL and not (bundled_root / sub).exists())]
+            # same-version no-op ONLY when nothing is missing — a missing managed tree HEALS
+            # even at the current version (heal-reconcile).
+            if cur_version == new_version and not force and not missing:
+                _log(f"ADD already at {new_version} — nothing to update (use --force to re-materialize).")
+                return 0
 
-    # design-for-failure: back up state BEFORE touching anything.
-    state_file = add_dir / "state.json"
-    if state_file.exists():
-        shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
+            # design-for-failure: back up state BEFORE touching anything.
+            state_file = add_dir / "state.json"
+            if state_file.exists():
+                shutil.copyfile(str(state_file), str(add_dir / "pre-update-state.bak.json"))
 
-    roll = _reconcile(target_path, bundled_root)
-    _run_migrations(state_file, cur_version, new_version)
-    _write_stamp(add_dir, new_version, channel=channel)
-    _seed_soul_md(target_path, bundled_root)
-    _seed_gitignore(target_path, bundled_root)
+            roll = _reconcile(target_path, bundled_root)
+            _run_migrations(state_file, cur_version, new_version)
+            _write_stamp(add_dir, new_version, channel=channel)
+            _seed_soul_md(target_path, bundled_root)
+            _seed_gitignore(target_path, bundled_root)
 
-    _log(
-        f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-        f"skill · tooling · docs refreshed "
-        f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
-        "your project state untouched."
-    )
-    return 0
+            _log(
+                f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
+                f"skill · tooling · docs refreshed "
+                f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
+                "your project state untouched."
+            )
+            return 0
+    except BlockingIOError:
+        return _fail(
+            f"install_in_progress: another install/update is already running against "
+            f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)"
+        )
 
 
 def update_check(target: str = ".", version: str | None = None) -> int:

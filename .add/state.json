@@ -2607,14 +2607,14 @@
     },
     "project-scope-install-lock": {
       "title": "Project-scoped lock around install()/update() reconcile, both twins",
-      "phase": "tests",
+      "phase": "build",
       "gate": "none",
       "milestone": "install-update-hardening",
       "depends_on": [
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T06:42:27+00:00",
+      "updated": "2026-07-03T07:04:56+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2624,11 +2624,25 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "3b0183b088a0ff997ce45852fc930198",
+        "tests": {
+          "add-method/tooling/test_project_scope_lock.py": "a25cfce670bcb87b66eb07d2a7e7fc60"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "b5787722b83abe08bd6498ac519722b9"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T06:42:27+00:00",
+  "updated": "2026-07-03T07:04:56+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

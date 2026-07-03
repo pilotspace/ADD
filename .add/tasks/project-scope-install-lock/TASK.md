@@ -3,7 +3,7 @@
 slug: project-scope-install-lock · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
 autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -455,7 +455,54 @@ Strategy (ordered batches): 1. Add `PROJECT_LOCK_FILE = ".install.lock"` (both t
 
 Persona (optional): methodology-engine-dev (same persona both sibling tasks in this milestone used — nominally scoped to `add.py`/`add_engine/*`, adapted-fit for the installer; see §0 Honors)
 Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly, skipping any pending `finally` -> `acquireProjectLock`'s release MUST be wired via `process.on("exit", release)`, never a plain try/finally at the call site (mirrors `acquireUpdateLock`'s own already-solved precedent) — a plain try/finally would silently fail to release the lock whenever a nested call (`installGlobal`, `cleanReplaceTree`, etc.) invokes `fail()` · JS's `cmdUpdate` inlines its `--check` early return WITHIN the function my lock wraps — the lock acquisition line must be placed AFTER that early return, never before it, or a purely read-only `--check` invocation would needlessly contend for (and potentially fail on) a lock it has no reason to touch; Python's `update()` has no equivalent hazard (its `--check` is the fully separate, never-locking `update_check()`) · a portable PID-liveness check does not exist (Windows `os.kill(pid,0)` can terminate rather than merely probe — the same hazard `global-lock-followups` already found) -> mtime-age is the only staleness signal, never PID · clock skew making a live lock look stale -> only reclaim when `age > threshold` (a future/bogus mtime never counts as stale) · `install()`'s interactive flow can reassign `target_path` -> the lock's `add_dir` must be computed AFTER that reassignment settles, never before it · the new `_DATA_EXCLUDE`/`DATA_EXCLUDE` member must be the lock file's own literal exact name (`.install.lock`), not a `.add-tmp-`/`.add-bak-`-style prefix pattern (that convention belongs to a different, not-yet-built sibling mechanism and doesn't apply to this fixed-name file).
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: AS PLANNED, in the same 8-step batch order (constants -> Python `_project_lock` -> JS `acquireProjectLock` -> `install()` wrap -> `update()` wrap -> `cmdInit` wire -> `cmdUpdate` wire -> grep-confirm the 5 named untouched call sites stayed byte-identical), with the §4 RED suite (26 tests) written and committed FIRST as its own commit (`4682b00`), confirmed 16/26 failing for the traced right reason (an AttributeError on the not-yet-existing `_project_lock`/`PROJECT_LOCK_FILE` symbols, or the OLD lock-less `install()`/`update()` correctly not noticing a pre-existing/held lock file it doesn't check for yet) before any implementation line — the same TDD discipline both sibling tasks in this milestone followed.
+  One refinement, found via the BROADER regression sweep (my own new suite was green start-to-finish once each batch landed — this was never one of the 16 red tests; it only surfaced once I swept siblings beyond this task's own declared Scope): 2 PRE-EXISTING regression-guard tests — `test_global_install.py::GlobalInstallTest::test_home_unwritable_fails` and
+  `test_global_update_harden.py::InstallGlobalLockTest::test_install_global_blocked_by_a_held_lock`
+  — regressed. Both assert `.add/` does not exist AT ALL after an `as_global` failure that aborts
+  BEFORE the per-project drop (an unwritable home; a held home lock). Root cause: `_project_lock`/
+  `acquireProjectLock` must `mkdir` `add_dir` (`.add/`) so its own O_EXCL/`"wx"` sentinel file has
+  somewhere to live, and M11 requires the project lock to wrap `install()`'s ENTIRE call —
+  including the `as_global` sub-block — so on a virgin target that `mkdir` now runs BEFORE the
+  `as_global` sub-block's own failure point, leaving a new, empty `.add/` behind where nothing
+  used to be written. Neither test was in this task's declared Scope, and weakening either was
+  never considered — both are exactly the class of pre-existing regression-guard the broader
+  sweep exists to protect (an almost identical `test_home_unwritable_fails` interaction is
+  independently documented in this milestone's OWN sibling task `global-lock-followups`'s own §5,
+  a different code path, the same test, the same root class of "an as_global sub-block failure
+  must leave the target exactly as untouched as before").
+  Fixed entirely in my own new lock code, in NEITHER test: `_project_lock`/`acquireProjectLock`
+  now track whether THIS call is the one that froze `add_dir` into existence (`created_dir` in
+  Python / `createdDir` in JS — an existence check taken immediately before the `mkdir`); on
+  release (every exit path: success, an internal raise/throw, or an early return/`fail()` from the
+  caller's own guarded span), if `created_dir` is true AND `add_dir` is now completely empty (the
+  lock file was its only occupant — nothing else ever landed before the failure), the directory is
+  removed again. A non-empty `add_dir` (the real managed-layer drop landed, or the directory
+  pre-existed for any unrelated reason) is NEVER touched: `Path.rmdir()`/`fs.rmdirSync()` only
+  ever succeed on a genuinely empty directory, so the fix is safe by construction, not by trying to
+  distinguish success from failure at the call site (which a `@contextlib.contextmanager` generator
+  cannot actually do for a plain `return` inside the caller's `with`-block — the fix does not
+  attempt to; the empty-directory check is correct regardless of why the call ended early).
+  Verified in 3 layers: (1) both previously-failing tests pass standalone, same test identity,
+  before(red)/after(green); (2) the full 26-test `test_project_scope_lock.py` suite plus all 14
+  OTHER sibling installer/lock/restore tooling test files (231 tests total, run from within
+  `add-method/tooling/`) all green — 3 of those 15 files (`test_setup_lock.py`,
+  `test_installer_prompts.py`, `test_status_lock_hint.py`) import a bare `add`/`engine_pin` and
+  only resolve from that cwd, a PRE-EXISTING, unrelated-to-this-task invocation convention
+  independently confirmed via a `git stash`-based baseline diff (the identical 3-file ImportError
+  reproduces byte-for-byte with my 2 changed files stashed out); (3) `add.py check`'s own tripwire
+  (509 passed, 0 failed — unchanged) confirms neither the frozen contract nor
+  `test_project_scope_lock.py` (MD5-verified byte-identical to the tests->build tripwire snapshot,
+  `a25cfce670bcb87b66eb07d2a7e7fc60`) was touched to arrive at this fix — the change is 100%
+  confined to `_project_lock`/`acquireProjectLock`'s own bodies, both already within the declared
+  Scope. `git diff`'s own hunk CONTENT (not just its nearest-function header, which git anchors to
+  the closest PRECEDING signature even for a pure insertion) independently confirms `_update_lock`/
+  `acquireUpdateLock`/`_update_global`/`cmdUpdateGlobal`/`_reconcile`/`reconcile` stayed
+  byte-identical — the constants-block and new-function hunks are ADDITIVE-ONLY next to those
+  names, never a line inside them (M10).
+  Order: RED committed first (`4682b00`) -> constants + `_project_lock` + `acquireProjectLock` ->
+  `install()`/`update()` wraps -> `cmdInit`/`cmdUpdate` wiring -> own-suite GREEN (26/26) -> the
+  broader sweep surfaced the 2 regressions above -> the empty-dir cleanup fix (both twins) -> full
+  re-sweep GREEN (231/231, own suite included) -> this fill.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.
@@ -473,34 +520,127 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — `test_project_scope_lock.py`: 26/26 green. Broader targeted regression
+      sweep (all 14 OTHER sibling installer/lock/restore tooling files, run from within
+      `add-method/tooling/` per their own native cwd convention — see Strategy actually used):
+      231/231 green (this task's own 26 included). NOT run: the full ~2500-test repo suite (per
+      this repo's own standing lesson: too long for a synchronous foreground run; this targeted
+      sweep is the evidence offered here, full-suite confirmation defers to CI-on-push).
+- [x] coverage did not decrease — 26 new test methods added in a brand-new file (nothing
+      pre-existing to weaken); all 14 sibling files' pre-existing tests pass unmodified (0
+      removed, 0 weakened — confirmed via `git diff`: no test file appears in the build-phase
+      diff, only `_installer.py`/`cli.js`); all 16 §2 scenarios + M11 + 1 bonus TOCTOU test
+      covered (§4 test_plan maps each by name).
+- [x] no test or contract was altered during build — `git diff` since the RED commit (`4682b00`)
+      touches only `add-method/src/add_method/_installer.py` + `add-method/bin/cli.js` (plus the
+      engine-managed `.add/state.json` phase marker+tripwire and this file's own phase-marker
+      line — both expected, neither a content edit to §0-§3); `test_project_scope_lock.py`'s MD5
+      (`a25cfce670bcb87b66eb07d2a7e7fc60`) is byte-identical to the tests->build tripwire
+      snapshot recorded in state.json; §0-§3 remain byte-identical to the FROZEN @ v1 bundle
+      (only §4/§5/§6 were ever filled, never frozen).
+- [ ] the green was EARNED, not gamed — LEFT for independent verify (not self-graded; see the
+      Refute-read verdict section below, deliberately left blank — build-phase, not mine to fill).
+- [ ] concurrency / timing of the risky operation is safe — LEFT for independent verify by design
+      (this task's own STOP-and-escalate criteria names concurrency/timing judgment as an
+      escalation, not a self-certification). Evidence offered, not a verdict:
+      `ProjectLockConcurrencySafetyTest::test_concurrent_stale_reclaim_exactly_one_wins` (a
+      6-thread Barrier-synced race directly against `_project_lock` — exactly one "acquired",
+      zero unexpected exceptions, no leaked lock file) plus `LockOrderingInvariantTest`'s 3 tests
+      exercising `install(as_global=True)` with BOTH locks live via REAL execution (not a static
+      source read) for M11. Same disclosed scope limit as `global-lock-followups`'s own
+      precedent: in-process multi-threading against real OS syscalls, not genuine multi-process
+      races — named here, not silently assumed equivalent.
+- [x] no exposed secrets, injection openings, or unexpected dependencies — no credential/secret
+      strings introduced (grepped my own diff); zero new package.json/pyproject.toml dependency
+      entries; the Python addition uses only already-imported stdlib (`os`/`time`/`contextlib`,
+      confirmed all 3 pre-date this task — no new `import` line added); the JS addition uses only
+      already-imported Node builtins (`fs`/`path`, no new `require`).
+- [x] layering & dependencies follow CONVENTIONS.md — O_EXCL/`"wx"` remains the SOLE
+      mutual-exclusion primitive at every layer (no `fcntl.flock`; no PID-liveness check —
+      mtime-age only, per the non-portable-PID hazard both this task's own §0 Honors and
+      `global-lock-followups` already named); the empty-dir cleanup fix added during build uses
+      only `Path.rmdir()`/`fs.rmdirSync()`, both already-used stdlib/builtin primitives elsewhere
+      in the same 2 files.
+- [ ] a person reviewed and approved the change — NOT YET; pending human review (this task's
+      autonomy: auto still routes the final GATE RECORD to a human per the template's own design).
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
 > + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
 > row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a live-held project lock makes a SECOND concurrent `install()`/`update()` call against the
+      SAME target fail immediately with `install_in_progress` and write NOTHING (no managed-layer
+      drop, no lock-file residue) — confirmed by `ConcurrentInstallTest`/`ConcurrentUpdateTest`
+      (exit code + explicit filesystem-absence assertions, not just the reject string) and
+      `LockOrderingInvariantTest::test_project_lock_blocks_before_the_home_lock_is_ever_touched`
+- [x] a stale project lock (age > threshold, default 120s) self-heals transparently — the very
+      next call reclaims it and completes normally, no manual deletion — confirmed by
+      `StaleProjectLockSelfHealTest` (Python) and a REAL `node cli.js` subprocess in
+      `TwinParityTest::test_npm_stale_project_lock_self_heals`
+- [x] M11: the project lock is ALWAYS acquired before, never nested inside, the home-scoped lock
+      for the same call — confirmed by REAL execution (not a static source read) via
+      `LockOrderingInvariantTest`'s 3 tests, exercising `install(as_global=True)` with both locks
+      live independently (project-held/home-free, home-held/project-free, both-free-no-deadlock)
+- [x] cross-twin observable parity (Python O_EXCL vs. Node `"wx"`, same fail-fast/self-heal/
+      exclusion behavior) — confirmed by `TwinParityTest`'s structural call-site check plus 3
+      REAL `node cli.js` subprocess smokes (fresh / contended / stale)
+- [x] (arising DURING build, not originally pre-declared here — see Strategy actually used) a
+      failure before the per-project drop leaves `.add/` exactly as absent as it was before this
+      lock existed — no orphan empty-directory residue — confirmed by the 2 previously-regressed,
+      now-fixed sibling tests (`test_home_unwritable_fails`,
+      `test_install_global_blocked_by_a_held_lock`)
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — every new symbol is referenced. `PROJECT_LOCK_FILE` used by
+      `_project_lock`/`acquireProjectLock` (the lock's own path) and by `_DATA_EXCLUDE`/
+      `DATA_EXCLUDE` (both twins); `_PROJECT_LOCK_STALE_DEFAULT`/`PROJECT_LOCK_STALE_DEFAULT` used
+      inside `_project_lock`/`acquireProjectLock`'s own staleness compare; `_project_lock` called
+      from `install()` (_installer.py:1076, `with _project_lock(add_dir, env=env_map):`) and
+      `update()` (_installer.py:1715, same shape); `acquireProjectLock` called from `cmdInit`
+      (cli.js:735) and `cmdUpdate` (cli.js:1507) — confirmed via direct read-through of both files
+      post-edit, not grep-only.
+- [x] DEAD-CODE (code) — no new unused/orphaned symbol. Caught and removed one myself during
+      self-review before running the suite: an intermediate `reclaimed` local in
+      `acquireProjectLock`'s self-heal branch was write-only with no consuming read — deleted;
+      confirmed via a final grep pass (no definition without a matching use-site) that nothing
+      else new is unreferenced.
+- [x] SEMANTIC (prose / non-code) — N/A as a build deliverable (this task's Scope is code-only);
+      the only prose touched is this TASK.md's own §4/§5/§6 fills (never frozen); §0-§3's frozen
+      prose was re-read in full (not skimmed) before this fill, re-verifying the M1-M11 clauses
+      against the actual committed code, not the milestone doc's forward-looking description.
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
 > build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
 > (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
 > line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by direct
+      grep/read against the post-build tree: `_installer.py` — `LOCK_FILE` 693, `PROJECT_LOCK_FILE`
+      694 (NEW), `_DATA_EXCLUDE` 695, `install` 998, `_add_dir` 1408 (untouched), `_LOCK_STALE_DEFAULT`
+      1412, `_update_lock` 1417 (untouched, cited as precedent only), `_PROJECT_LOCK_STALE_DEFAULT`
+      1488 (NEW), `_project_lock` 1496 (NEW), `_reconcile` 1362 (untouched), `_update_global` 1595
+      (untouched), `update` 1680, `_fail` 55 (untouched); `cli.js` — `fail` 35 (untouched),
+      `cmdInit` 688, `dropFiles` 643 (untouched), `LOCK_FILE` 764, `PROJECT_LOCK_FILE` 767 (NEW),
+      `PROJECT_LOCK_STALE_DEFAULT` 768 (NEW), `DATA_EXCLUDE` 1014, `reconcile` 917 (untouched),
+      `isUserData` 1027 (untouched), `installGlobal` 1274 (untouched), `acquireUpdateLock` 1329
+      (untouched, cited as precedent only), `acquireProjectLock` 1396 (NEW), `cmdUpdate` 1487.
+- [x] any anchor that moved/renamed since Ground SHA (`1cc4065`) is named here, not left silent —
+      NONE renamed (all names identical to Ground, per M10). Every cited anchor MOVED (line-shifted
+      only): most of the drift predates THIS task's own edits — 2 sibling tasks
+      (`global-lock-followups` @ `7396456`, `global-data-restore-harden` @ `52aafdf`) both merged
+      onto this branch between Ground and this task's own TESTS/BUILD phases (already disclosed in
+      §0's own "UPDATE (re-confirmed post-draft)" notes). This task's OWN edits additionally shifted
+      `install` (Ground 889 -> 998, the lock-wrap's +4-space re-indent + 2 new doc paragraphs),
+      `update` (Ground 1384 -> 1680, cumulative shift from `_project_lock`'s own insertion earlier
+      in the file plus its own lock-wrap), `cmdInit` (Ground 680 -> 688, pre-existing drift only —
+      this task's own edit lands at the END of the body, not before the signature), and `cmdUpdate`
+      (Ground 1226 -> 1487, cumulative shift from `acquireProjectLock`'s own insertion earlier in
+      the file). Independently re-verified via `git diff`'s own hunk CONTENT (not just its
+      nearest-function header, which git anchors to the closest PRECEDING signature even for a
+      pure insertion) that `_update_lock`/`acquireUpdateLock`/`_update_global`/`cmdUpdateGlobal`/
+      `_reconcile`/`reconcile`/`_add_dir`/`resolve_global_home` stayed byte-identical — every hunk
+      landing near one of those names is ADDITIVE-ONLY immediately adjacent to it, never a line
+      inside its own body (M10).
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
