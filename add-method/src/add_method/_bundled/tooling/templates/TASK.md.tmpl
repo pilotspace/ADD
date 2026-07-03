@@ -117,6 +117,7 @@ Scope (may touch): `./src/`   <fill before the §3 freeze — every file the bui
 Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
 
 Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
+Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn, not only explicit parallel mode; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
