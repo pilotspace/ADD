@@ -3,7 +3,7 @@
 slug: project-scope-install-lock · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
 autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -647,21 +647,110 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: NOT-EARNED
+By: self (independent verify, fresh from the builder — did not write this code) ·
+  adversarially checked: re-ran the evidence first — `test_project_scope_lock.py` 26/26 green,
+  the 6-file targeted regression sweep (test_global_install/test_global_update_harden/
+  test_global_restore/test_global_data/test_reconcile_rollup/test_project_scope_lock) 145/145
+  green, `add.py check` 509 passed/0 failed — all reproduced, matching the builder's claims. Then
+  adversarially probed the one test built to PROVE the stale-lock reclaim's exclusivity,
+  `ProjectLockConcurrencySafetyTest::test_concurrent_stale_reclaim_exactly_one_wins`: its own name
+  and comment claim "exactly one wins" / "at most one racing create succeeds at any instant"
+  (mirroring §3 INV and §1 M5 verbatim), but its actual assertion —
+  `self.assertGreaterEqual(results.count("acquired"), 1, ...)` (line 574) — only checks "at least
+  one," never an upper bound, silently compatible with MULTIPLE simultaneous winners. Reproduced
+  against the REAL, unmodified `_project_lock` (no mocks): (1) 250 natural (un-forced) re-runs of
+  the identical 6-thread Barrier scenario showed >1 simultaneous "acquired" in 66/250 runs
+  (26.4%; distribution {1: 184, 2: 59, 3: 7}); (2) a scoped, non-invasive timing probe (delays
+  only the lock's own `unlink()` calls on the exact path under test, restored immediately after —
+  no product code or test touched) forced 2-4 simultaneous "acquired" outcomes on demand in 2/5
+  runs where the delay outlasted the winner's held-window. Root cause: the stale-reclaim sequence
+  (stat -> decide-stale -> `unlink(path)` -> retry `os.open(O_EXCL)`) removes the file BY PATH
+  with no identity check against the copy just inspected — a second racer's unlink can delete a
+  first racer's already-fresh, live, non-stale lock file while it is still held, letting both
+  proceed into the guarded critical section concurrently: the exact "interleaved writes" outcome
+  this whole milestone exists to prevent. This falsifies §3 CONTRACT's own INV and §1 M5's
+  identical claim as a live, observed violation, not a hypothetical. Scoped precisely: this
+  affects ONLY the stale-reclaim path (M5); the base O_EXCL-create exclusivity for a FRESH
+  (non-stale) contention — what the other 25 tests actually exercise — is genuinely proven; those
+  25 are EARNED. Cross-checked for context: the identical vacuous-assertion shape and the
+  identical unlink-by-path TOCTOU shape pre-exist in the sibling, already-shipped `_update_lock`
+  (`test_global_update_harden.py:480`) — reproduced there too (55/150 natural runs, 36.7%, showed
+  2 simultaneous acquires) — an inherited, pattern-level gap faithfully mirrored from a precedent
+  that itself does not hold under adversarial pressure, not carelessness unique to this build.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self (independent verify pass)
+1. Security: CLEAR — no secrets/credentials introduced (diff grepped); no new dependency (stdlib
+   `os`/`time`/`contextlib` · Node `fs`/`path` only, all pre-existing imports, confirmed); no
+   untrusted-input handling changed. The Concurrency finding below crosses no privilege/trust
+   boundary — both racers are equally-trusted local invocations of the same tool (or CI jobs), not
+   an attacker gaining access they lack today: anyone who could exploit the race already has
+   direct filesystem write access to the same target. The bug shape is CWE-367 (TOCTOU), which is
+   classified here as a mutual-exclusion/reliability defect (Concurrency lens), not a security
+   vulnerability, since no confidentiality/integrity boundary between distinct trust levels is
+   crossed — named explicitly so a human reviewer can override this classification if they weigh
+   it differently.
+2. Concurrency: RESIDUE — the stale-lock reclaim path (`_project_lock`'s EEXIST branch,
+   `_installer.py:1494-1582`; mirrored faithfully in `acquireProjectLock`, `cli.js:1396-1438`) has
+   a genuine, empirically-reproduced TOCTOU race: an unconditional `unlink(path)` with no identity
+   check against the file just stat'd lets a second (or third+) racer delete a first racer's
+   already-recreated, live, non-stale lock and recreate its own — 2+ callers can hold "the lock"
+   simultaneously. Reproduced against the real, unmodified `_project_lock`: 66/250 (26.4%) natural
+   (un-forced) runs of the shipped 6-thread test scenario showed >1 simultaneous acquire; a
+   non-invasive timing probe forced 2-4-way simultaneous acquisition on demand. This directly
+   falsifies §3 CONTRACT's own INV ("at most one racing create succeeds at any instant... the
+   identical TOCTOU-safety invariant _update_lock's own design already relies on") and §1 M5's
+   identical claim. The DISCLOSED in-process-threads-vs-real-processes test gap (§6 evidence) is,
+   on inspection, IMMATERIAL to this specific defect: the vulnerable sequence is a non-atomic,
+   multi-syscall TOCTOU gap at the filesystem/VFS level, which manifests identically whether
+   racers are threads of one process or separate OS processes — the kernel does not distinguish
+   caller identity for `os.open`/`stat`/`unlink`; testing via threads is a faithful, not a
+   weakened, proxy for THIS bug (the disclosed gap matters for other properties, e.g. exit-hook
+   cleanup under a real SIGKILL, just not this one). Separately, but directly relevant context:
+   the identical shape (unlink-by-path, no identity check) and the identical weaker-than-claimed
+   test assertion pre-exist in the sibling, already-shipped `_update_lock`
+   (`test_global_update_harden.py:480`) — reproduced there too (55/150, 36.7%). This is a material
+   gap in the milestone's own 4th exit criterion ("cannot interleave writes — one waits or fails
+   cleanly"), not a cosmetic or theoretical one.
+3. Architecture: CLEAR — independently re-verified via an AST-level diff (immune to
+   re-indentation noise), not a re-read of the builder's own narrative: `_reconcile`,
+   `_clean_replace`, `_is_user_data`, `_update_lock`, `_update_global`, `_add_dir`, `_fail` are
+   BYTE-IDENTICAL bodies between the freeze commit (`73c2627`) and HEAD; the JS twin's diff (5
+   hunks) is purely additive except the one disclosed `DATA_EXCLUDE` line (M8); `install()`/
+   `update()`'s only content changes are the new lock-wrap plus pure re-indentation of
+   pre-existing lines. Call sites resolve exactly where §3 CONTRACT specifies (`_installer.py`
+   :1076 `install`, :1715 `update`; `cli.js` `acquireProjectLock` defined :1396, called from
+   `cmdInit`:735 and `cmdUpdate`:1507 — re-resolved by direct grep against the current tree, not
+   copied from this TASK.md's own earlier citations, though they agree). The
+   new-independent-primitive-vs-extend-`_update_lock`
+   architectural choice (§1 A2) is reasoned and disclosed, a legitimate design fork, not a
+   layering violation; no new dependency; O_EXCL/`"wx"` remains the sole primitive at the DESIGN
+   level (the Concurrency finding above is an implementation defect in that primitive's reclaim
+   branch, not a layering/architecture issue).
+Verdict: HARD-STOP
+Residue: concurrency — a reproducible TOCTOU race in the stale-lock reclaim path lets 2+ callers
+  simultaneously hold `_project_lock`/`acquireProjectLock`, falsifying §3 CONTRACT's own INV and
+  §1 M5's "at most one racing create succeeds at any instant" claim; the one test meant to prove
+  this (`test_concurrent_stale_reclaim_exactly_one_wins`) asserts only `>= 1`, never `== 1`, and
+  does not catch it (see Refute-read verdict above for the full reproduction). Suggested fix
+  direction (not implemented here — a human/build-phase decision): replace the unconditional
+  `unlink(path)` reclaim with an identity-verified claim, e.g. `rename()` the stale file to a
+  per-attempt-unique quarantine name as the exclusive "claim" step (rename on a shared source path
+  is atomic — only one racer's rename can succeed), then only that winner unlinks the quarantined
+  copy and attempts a fresh O_EXCL create; a losing renamer falls through to fail-fast instead of
+  blindly unlinking whatever currently sits at the live path. Affects both twins (JS confirmed by
+  code-parity reasoning — identical unlink-by-path shape read side-by-side — not independently
+  re-proven via a live multi-process Node repro; a disclosed evidentiary boundary, not an
+  oversight).
+Binding: advisory — mechanical (this task does not declare `risk: high`, so the binding/
+  advisor-gate-relax pathway does not apply regardless of sensitivity, per GLOSSARY.md's
+  binding-verdict definition; moot in any case since Residue is not `none`, which
+  advisor-gate-relax also requires).
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
