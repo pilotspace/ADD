@@ -427,13 +427,33 @@ Status: FROZEN @ v1 — approved by Tin Dang
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: 100% of the 21 §2 scenarios + every M1-M15 + every named Reject-code exercised by a passing test (19 new methods + 4 reused pre-existing, confirmed non-vacuous by tracing each against the OLD implementation).
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_persist_fresh_snapshot_stage_then_commit: fresh snapshot fully materialized · covers: M1,M2,M12
+  - test_persist_refresh_never_wiped_in_place: existing snapshot refreshed, dest never rmtree'd in place · covers: M1,M2,M12
+  - test_persist_zero_entries_leaves_existing_snapshot_untouched: 0 entries -> False, byte-unchanged · covers: M5
+  - test_persist_mid_stage_failure_leaves_snapshot_untouched: mid-stage copyfile raises -> dest untouched · covers: M4, R:persist_stage_failure_untouched
+  - test_persist_commit_aside_failure_leaves_snapshot_unchanged: rename(dest,backup) raises -> dest unchanged · covers: M4, R:persist_commit_aside_failure_unchanged
+  - test_persist_commit_land_failure_rolls_back: rename(staged,dest) raises after aside landed -> rollback · covers: M4, R:persist_commit_land_failure_rolls_back
+  - test_persist_stale_backup_self_heals_next_call: stale `.add-bak-*` + absent dest -> self-heal recovers then updates · covers: M3, R:persist_stale_backup_self_heals_next_call
+  - test_persist_stale_staging_swept_before_new_staging: stale `.add-tmp-*` swept, fresh content lands · covers: M3
+  - fill-gaps restores one absent entry (EXISTING test_restore_rehydrates_fresh_clone + test_fill_gaps_never_clobbers_present, re-confirmed green post-hardening) · covers: M6,M7,M12
+  - --force restores one present entry with .bak (EXISTING test_force_overwrites_with_bak, file-only, re-confirmed green) · covers: M6,M8,M12
+  - test_restore_force_directory_entry_backed_up_and_replaced: --force on a DIRECTORY entry -> tasks.bak/ · covers: M6,M8,M14
+  - test_restore_mid_stage_failure_earlier_committed_entries_survive: entry B staging fails (PARTIAL-GARBAGE-then-raise mock) -> A stays committed, B absent not corrupted · covers: M9, R:restore_entry_stage_failure_untouched
+  - test_restore_commit_land_failure_on_force_entry_rolls_back_bak: 2nd os.replace raises -> .bak rolled back onto entry · covers: M9, R:restore_entry_commit_land_failure_rolls_back
+  - test_restore_stale_per_entry_staging_swept_next_call_rederives: stale `<name>.add-tmp-*` swept, ordinary fill-gaps re-derives · covers: M10, R:restore_entry_stale_stage_swept_next_call
+  - symlink still dereferenced to content (EXISTING test_symlinks_dereferenced, re-confirmed green through the new staging step) · covers: M6 edge case, M12
+  - test_restore_fresh_force_replaces_stale_bak_never_merges: stale .bak REPLACED by a fresh backup of current content, not merged · covers: edge case, M8
+  - test_is_user_data_excludes_scratch_markers_directly + test_scratch_sibling_excluded_from_persist_and_restore_scans: `.add-tmp-`/`.add-bak-` excluded in both directions · covers: M11, R:scratch_sibling_excluded_from_user_data
+  - test_parity_call_site_shape: both twins carry the same self-heal->stage->commit->sweep call-site shape (mkdtemp(dir=.../mkdtempSync(path.join(, os.replace(str(staged).../fs.renameSync(staged, scratch-marker tokens) · covers: M13
+  - test_restore_zero_qualifying_entries_is_honest_noop (+ EXISTING test_nothing_to_restore_returns_false): 0 qualifying entries -> False, .add/ never even created · covers: edge case, existing After/no_snapshot behavior
+  - test_npm_restore_and_prune_behavioral_smoke: real `node cli.js init --from-global-data` + `prune-data`/`prune-data --force` subprocess, real stdout/exit-code/filesystem asserted · covers: M15
+  - test_persist_two_interleaved_calls_land_one_full_valid_snapshot: a nested full 2nd call inside the 1st's staging window -> outer may itself raise (tolerated), final content is ONE caller's full content never a mix, no scratch survives · covers: Reject concurrent runs (disclosed non-goal)
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
+Tests live in: `add-method/tooling/test_global_restore.py` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
      a token with "/" = project root · a bare name = sibling of the previous
      token's dir · a directory counts its *.py files (non-recursive); reports
@@ -450,7 +470,7 @@ Strategy (ordered batches): 1. `_persist_data` (Python): add the step-0 self-hea
 
 Persona (optional): methodology-engine-dev
 Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly (skips `finally`) → new stage/commit code in `persistData`/`restoreData` must `throw`, never call `fail()` · `shutil.copytree`'s target must be an EMPTY pre-existing dir for `dirs_exist_ok=True` — `tempfile.mkdtemp` already guarantees that · staging MUST live inside the same parent as its target (`home/data/` or `.add/`) or the commit rename becomes cross-filesystem and silently degrades to a slow, non-atomic copy+delete.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: Largely as planned, with 2 deliberate deviations. (1) §4 TESTS was written and committed as its OWN standalone, confirmed-RED commit BEFORE any implementation batch began (`bdbc373`) — the listed strategy names 5 build-oriented batches without saying whether tests land before or interleaved with them; TDD discipline put the full red suite first, verified 12/36 new tests failing for the traced right reason (missing self-heal/stage/commit/rollback/exclusion logic) and 0 regressions in the other 24 (17 pre-existing + 3 happy-path/preserved-behavior + 1 disclosed-non-goal case, each traced against the OLD implementation to confirm non-vacuity) before touching `_installer.py`. (2) Batches 1-3 (`_persist_data`, `_restore_data`, `_is_user_data`) were implemented together in ONE pass in `_installer.py` (plus a new shared `_sweep_scratch` helper) rather than as 3 separate sequential edits, since all three share that helper and the self-heal/stage/commit shape; batch 4 (cli.js mirror) followed as a second pass once the Python side was green. Suite went RED (12/36) -> GREEN (36/36 + 39/39 siblings) in one implementation pass per language, committed as a single green commit (`a3b832f`) separate from the red commit, so git history shows genuine red-then-green, not a squash. Additionally ran a throwaway, uncommitted manual smoke (real `node cli.js init --global-data` against a real project, twice — fresh commit then refresh/2-rename commit) to close a self-identified gap: no existing or new COMMITTED test exercises persistData's own happy path via a real node subprocess (the frozen M15 scope names only restore+prune for the real-subprocess treatment); did not add this as new committed test scope since the contract's own M15/scenario deliberately named only restore+prune — flagged as a §7 Spec delta candidate instead of unilaterally expanding frozen test scope.
 Safety rule (feature-specific): `home/data/<key>` (persist) and each restored `.add/` entry (restore) are never opened for writing or deletion until their staged copy has FULLY succeeded — copy-then-swap-then-sweep-old, never wipe-then-copy.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
@@ -468,55 +488,130 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — 75/75 green: test_global_restore.py 36/36 (19 new + 17 pre-existing), test_global_data.py/test_global_update_harden.py/test_global_install.py 39/39 unchanged
+- [x] coverage did not decrease — 19 new test methods added, 0 removed/weakened; every pre-existing test method name and assertion is byte-unchanged (diffed against the tests-red commit)
+- [x] no test or contract was altered during build — the build commit (`a3b832f`) touches only `_installer.py`+`cli.js`; TASK.md §1-§3 unchanged since freeze; `test_global_restore.py` unchanged since the tests-red commit (`bdbc373`)
+- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP) — left for the independent reviewer's refute-read (see below); builder's own adversarial pass traced each of the 12 RED failures to its exact missing-logic cause and each of the 9 non-discriminating new/happy-path tests against the OLD implementation to rule out vacuity (documented in OBSERVE-NOTES.md)
+- [ ] concurrency / timing of the risky operation is safe — left for the Advisor's concurrency lens; builder traced the self-heal-vs-interleaved-caller interaction by hand (test_persist_two_interleaved_calls_land_one_full_valid_snapshot) and confirms the disclosed weak guarantee holds, not a full concurrency clearance
+- [ ] no exposed secrets, injection openings, or unexpected dependencies — left for the Advisor's security lens (builder does not self-certify security); mechanically: 0 new dependencies beyond stdlib `tempfile`/`uuid` and Node builtin `fs`/`path`/`crypto` (already imported), 0 secrets/credentials touched
+- [x] layering & dependencies follow CONVENTIONS.md — stdlib/builtin-only imports, matches §5's declared "no new dependency" constraint exactly
+- [ ] a person reviewed and approved the change — pending human review
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
 > + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
 > row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a crash mid-persist-stage or mid-commit leaves home/data/<key> byte-for-byte unchanged (never wiped, never a partial mix) — confirmed by test_persist_mid_stage_failure_leaves_snapshot_untouched / test_persist_commit_aside_failure_leaves_snapshot_unchanged / test_persist_commit_land_failure_rolls_back all green, each traced to its exact contract step (§3 persist steps 2/3a/3b)
+- [x] a stale `.add-bak-*`/`.add-tmp-*` scratch sibling from an earlier interrupted call is gone after the very next call touching that target, and correct content lands — confirmed by test_persist_stale_backup_self_heals_next_call / test_persist_stale_staging_swept_before_new_staging / test_restore_stale_per_entry_staging_swept_next_call_rederives all green
+- [x] `--force` restore on a DIRECTORY entry backs the original up to `<name>.bak/` and lands the snapshot's content — confirmed by test_restore_force_directory_entry_backed_up_and_replaced (M14, previously only manually verified, now a committed passing test)
+- [x] the real `node cli.js init --from-global-data` + `prune-data`/`prune-data --force` subprocess actually mutates the filesystem and reports real stdout/exit codes (not string-presence) — confirmed by test_npm_restore_and_prune_behavioral_smoke green; additionally, persistData's OWN happy-path + refresh/2-rename-commit path (not required by the frozen M15 scope, which names only restore+prune) was confirmed via a throwaway manual `node` subprocess smoke — both rounds passed (fresh commit, then refresh with an existing dest)
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — `_sweep_scratch`/`sweepScratch` (new private helpers) are each referenced from 5 call sites in their own file (persist's stage-failure/commit-aside-failure/commit-land-failure/final-sweep + restore's self-heal/stage-failure/commit-land-rollback); the `.add-tmp-`/`.add-bak-` literals are referenced in `_is_user_data`/`isUserData` (exclusion), `_persist_data`/`persistData` and `_restore_data`/`restoreData` (naming), and asserted present by test_parity_call_site_shape — confirmed by direct read-through of both files post-edit (not grep-only)
+- [x] DEAD-CODE (code) — no orphaned symbol: `_sweep_scratch`/`sweepScratch` are both used (see WIRING above); the only new imports (`tempfile`, `uuid` in Python) are both used; JS's `crypto` module was already imported pre-task, this task adds one new call site (`crypto.randomBytes`) to an existing import, not a new unused one
+- [x] SEMANTIC (prose / non-code) — N/A as a deliverable (this task's scope is code + tests only); TASK.md's own §0-§3 frozen prose was read in FULL (not skimmed) before writing a single test or line of implementation, and re-read again during this adversarial pass to re-verify every M1-M15 clause against the actual committed code
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
 > build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
 > (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
 > line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by direct grep/read against the post-build tree: `_installer.py` — `data_key` 696-705, `_is_user_data` 706-723, `_sweep_scratch` 724-738 (NEW), `_persist_data` 739-812, `_restore_data` 813-886, `_prune_data` 887-1521 (untouched), `install` 996 (untouched, calls `_persist_data` at 1163 and `_restore_data` at 1178), `_clean_replace` 1237 (untouched, sibling task's own scope), `_update_global` 1360 (untouched, calls `_persist_data` at 1428); `cli.js` — `dataKey` 924-933, `isUserData` 934-945, `sweepScratch` 946-955 (NEW), `persistData` 956-1027, `installGlobalData` 1028-1041 (untouched, calls `persistData` at 1033), `isSymlink` 1042-1054, `restoreData` 1055-1119, `installGlobalDataRestore` 1120-1139 (untouched, calls `restoreData` at 1126), `pruneData` 1140+ (untouched); `cmdUpdateGlobal`'s own `persistData` call site at 1265 (untouched)
+- [x] any anchor that moved/renamed since Ground SHA is named here, not left silent — NONE renamed (all names identical to Ground, per M12); ALL 6 target-function anchors MOVED (line-shifted only, pushed down by the new code inserted above/within them): Python `_persist_data` Ground 717-736 -> now 739-812, `_restore_data` Ground 740-776 -> now 813-886, `_is_user_data` Ground 704-713 -> now 706-723; JS `persistData` Ground 942-954 -> now 956-1027, `restoreData` Ground 981-1001 -> now 1055-1119, `isUserData` Ground 932-938 -> now 934-945. Every OTHER cited anchor (`install`, `_update_global`, `_prune_data`, `_clean_replace`, and their JS callers) kept its Ground content byte-identical, only shifting position for the same reason.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: independent reviewer (add-verify subagent, TDD-Verifier persona) · adversarially checked:
+  (1) RED reproduced independently, not trusted on the builder's word: swapped bdbc373's
+  pre-implementation `_installer.py`/`cli.js` into the worktree and re-ran the full 36-test
+  suite — got `FAILED (failures=11, errors=1)` = 12 failures, NAME-FOR-NAME identical to
+  bdbc373's own commit-message list; restored via `git checkout HEAD --` immediately after,
+  re-confirmed 36/36 green again. Proves the new tests genuinely discriminate old vs. new
+  behavior — not vacuous, not overfit to fixtures.
+  (2) Read (not skimmed) the 3 highest-risk test bodies directly against their claims: the
+  interleaved-calls test's `racing_copyfile` hook + its weak "one caller's full content, never
+  a mix / no scratch survives" asserts; the mid-stage-failure test's write-garbage-then-raise
+  mock (the exact fix OBSERVE-NOTES' own competency delta names, confirmed present in the
+  committed test, not just described); the full `ParityRestoreTest` class (confirmed
+  `test_npm_restore_and_prune_behavioral_smoke` genuinely subprocesses `node`, scoped to
+  restore+prune only — no persist happy-path coverage, see Advisor Architecture lens below).
+  (3) Confirmed via a PLAIN (non-git) diff of full pre/post file content — not the commit's own
+  stat — that the build touches exactly 3 hunks in `_installer.py` (imports ·
+  `_is_user_data`+`_sweep_scratch` · `_persist_data`/`_restore_data`) and 2 in `cli.js`
+  (`isUserData`+`sweepScratch`+`persistData` · `restoreData`); `install()`/`_update_global()`
+  and their JS callers are BYTE-IDENTICAL, not merely claimed so.
+  No vacuous asserts, no stubbed-away logic found; every assertion checks real filesystem
+  post-state (content, absence, exact leftover sets), not internal call-counts alone.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: independent reviewer (add-verify subagent, TDD-Verifier persona; STRIDE lens borrowed
+  from security-gatekeeper for lens 1)
+1. Security: CLEAR — STRIDE pass found no hit: no new auth/identity surface; frozen §1-§3 and
+  every existing test proven untouched since freeze (commit stats + plain diff, not just
+  claimed); 0 new dependencies beyond stdlib `tempfile`/`uuid` + Node builtin `fs`/`path`/
+  `crypto` (already imported), confirmed via diff; both twins stage via `tempfile.mkdtemp`/
+  `fs.mkdtempSync` (collision/TOCTOU-safe by construction) INSIDE the same privileged parent as
+  the final target, never a shared/world-writable tmp location; no eval/dynamic-exec, no
+  secrets, no network IO added.
+  One independently-discovered 💭 note (not a finding, not previously disclosed by the builder):
+  `_persist_data`'s stage-via-mkdtemp mechanism changes `home/data/<key>`'s OWN top-level
+  directory mode from the old mkdir-default (e.g. 0755, umask-dependent) to a fixed 0700
+  (owner-only) — empirically verified (old `mkdir` -> `drwxr-xr-x` vs new `mkdtemp`+rename ->
+  `drwx------`), because no `copystat`-equivalent step ever restores the top-level dir's mode
+  after staging. Confirmed this is SPECIFIC to persist's whole-tree case: `_restore_data`'s
+  directory-entry path is unaffected (empirically verified — `shutil.copytree(...,
+  dirs_exist_ok=True)` still fixes the mode via its own internal `copystat` call, landing at the
+  source's original mode either way). Strictly MORE restrictive, not less — a safe-direction side
+  effect, not a vulnerability; worth a Spec-delta line so it becomes a conscious choice.
+2. Concurrency: RESIDUE — the self-heal-vs-interleaved-caller interaction (OBSERVE-NOTES finding
+  1) is real; independently re-derived by hand-tracing every commit-window interleaving (not
+  trusted from the builder's account) AND by reading the committed
+  `test_persist_two_interleaved_calls_land_one_full_valid_snapshot` directly: the weak guarantee
+  provably holds under adversarial interleaving — dest always ends up ONE caller's full valid
+  content, never a mix; a losing/interleaved caller always raises (including a "second-order"
+  raise on its own rollback attempt, when the interleaver's self-heal already consumed the
+  rollback's target), never silently misreports success. The "already-accepted, out-of-scope"
+  framing IS honest: this is a specific instance of the pre-declared "two lock-less callers
+  racing on the same target" carve-out (§3 Reject), and its stated guarantee holds under my own
+  independent trace, not just the builder's word — not a new failure mode the carve-out fails to
+  cover. `_restore_data`'s simpler (sweep-only) self-heal is actually SAFER by construction than
+  persist's — its `.add-tmp-*` glob target structurally cannot match the permanent, non-token
+  `.bak` sidecar, so a concurrent self-heal can never consume a force-restore's in-flight backup
+  the way persist's can consume its own in-flight backup. Residual debuggability rough edge (a
+  confusing second-order exception rather than the root cause reaching the caller) noted for the
+  next loop; not a correctness or data-loss defect. Non-blocking.
+3. Architecture: RESIDUE — (a) `persistData`'s own happy/refresh path has NO committed real-
+  node-subprocess test (confirmed directly: `test_npm_restore_and_prune_behavioral_smoke` drives
+  only restore+prune; `test_parity_surface`/`test_parity_call_site_shape` are pure string/
+  substring checks, never a subprocess) — a real but frozen-AT-DESIGN-TIME (M15's own scope
+  named only restore+prune), not build-time-corner-cut, gap; acceptable non-blocking given the
+  Python reference implementation is exhaustively tested for this exact logic and a structural
+  parity check at least confirms the JS mirror's call-site shape. Recommend the next loop's Spec
+  delta promote this to a Must.
+  (b) The pre-existing JS `persistData`-vs-`restoreData` symlink-dereference asymmetry is
+  confirmed via `git log -S"dereference"` to predate this task (introduced by `bbc8562`, a prior
+  task) and is correctly left untouched (frozen scope's byte-identical-content invariant) —
+  sharper framing than OBSERVE-NOTES' own: it is not just cross-function but also CROSS-TWIN
+  (Python's `_persist_data` already dereferences via `copytree`/`copyfile` defaults; only JS's
+  `persistData` is the odd one out). Worth tightening the Spec-delta wording, not a blocker.
+Verdict: PASS
+Residue: non-security only — (1) self-heal-vs-interleaved-caller: bounded/fail-loud, matches the
+  pre-declared concurrency carve-out, confirmed by independent trace + test read, not merely
+  asserted; (2) `persistData`'s real-subprocess test coverage thinner than `restoreData`'s, a
+  frozen-at-design-time scope choice, not a build-time cut; (3) pre-existing (not this task's) JS
+  cross-twin symlink-dereference asymmetry, correctly left alone; (4) NEW, independently-found,
+  safe-direction (more restrictive) permission-bit change on `home/data/<key>`'s own directory
+  mode. None are security findings; none indicate a gamed green.
+Binding: advisory — architecture (this task hardens core installer data-safety mechanisms, not a
+  purely mechanical change; feeds the human's own GATE RECORD decision, does not self-resolve it)
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>

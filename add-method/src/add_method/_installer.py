@@ -22,6 +22,7 @@ import re
 import shutil
 import sys
 import tempfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -703,7 +704,10 @@ def data_key(project_abspath) -> str:
 
 
 def _is_user_data(name: str) -> bool:
-    """A top-level `.add/` entry is user-data unless it is a managed tree or a transient artifact."""
+    """A top-level `.add/` entry is user-data unless it is a managed tree, a transient
+    artifact, or a scratch-staging sibling left by an interrupted persist/restore/
+    clean-replace call (the shared `.add-tmp-`/`.add-bak-`-infix convention — crash-safe-
+    persist-restore v1 §3 M11)."""
     if name in _DATA_EXCLUDE:
         return False
     if name.startswith("scope-snapshot"):
@@ -712,68 +716,170 @@ def _is_user_data(name: str) -> bool:
         return False
     if name.endswith(".bak.json"):
         return False
+    if ".add-tmp-" in name or ".add-bak-" in name:
+        return False
     return True
 
 
+def _sweep_scratch(path: Path) -> None:
+    """Best-effort removal of a scratch sibling (a staging dir/file, or a whole-tree backup
+    dir); tolerates the path already being gone. A sweep failure here is hygiene, not a
+    correctness gap — self-heal simply retries it on the next call touching this target."""
+    try:
+        if path.is_symlink():
+            path.unlink()
+        elif path.is_dir():
+            shutil.rmtree(str(path))
+        else:
+            path.unlink()
+    except OSError:
+        pass
+
+
 def _persist_data(home: Path, project_abspath) -> bool:
-    """Clean-replace a project's USER-DATA into <home>/data/<key>. Returns True if persisted,
-    False if there is nothing to persist (no .add/ or no user-data — an honest skip, not an
-    error). Raises OSError if the data dir can't be written — the caller fails 'data_unwritable'."""
+    """Crash-safe clean-replace of a project's USER-DATA into <home>/data/<key>: self-heal any
+    scratch sibling left by an earlier interrupted call, then a WHOLE-TREE stage-then-commit
+    (mirrors _clean_replace's own pattern) — home/data/<key> is never opened for writing or
+    deletion until its replacement has FULLY landed. Returns True if persisted, False if there
+    is nothing to persist (no .add/ or no user-data — an honest skip, not an error, and
+    home/data/<key> — including any EXISTING stale snapshot — is left completely untouched).
+    Raises OSError if the data dir can't be written — the caller fails 'data_unwritable'."""
+    key = data_key(str(project_abspath))
+    data_root = home / "data"
+    dest = data_root / key
+
+    # step 0 -- self-heal: a stale backup found while dest is currently ABSENT means a PRIOR
+    # call crashed between its two commit renames -- restore it first (recovering the last
+    # known-good snapshot; >1 candidate is a defensive tie-break, the newest wins). Then sweep
+    # every remaining scratch sibling for this key unconditionally (never merged/reused).
+    if data_root.exists():
+        tmp_stale = sorted(data_root.glob(f"{key}.add-tmp-*"))
+        bak_stale = sorted(data_root.glob(f"{key}.add-bak-*"))
+        if not dest.exists() and bak_stale:
+            newest = max(bak_stale, key=lambda p: p.stat().st_mtime)
+            os.replace(str(newest), str(dest))
+            bak_stale.remove(newest)
+        for p in bak_stale:
+            _sweep_scratch(p)
+        for p in tmp_stale:
+            _sweep_scratch(p)
+
     add_dir = Path(project_abspath) / ".add"
     if not add_dir.exists():
         return False
     entries = [e for e in sorted(add_dir.iterdir()) if _is_user_data(e.name)]
     if not entries:
-        return False
-    dest = home / "data" / data_key(str(project_abspath))
+        return False                    # UNCHANGED: an existing stale snapshot is left as-is
+
+    # step 1 -- stage: copy every filtered entry into a fresh, uniquely-named sibling of dest,
+    # IN home/data/. dest itself is never opened for writing during this step.
+    data_root.mkdir(parents=True, exist_ok=True)
+    staged = Path(tempfile.mkdtemp(dir=str(data_root), prefix=f"{key}.add-tmp-"))
+    try:
+        for e in entries:
+            target = staged / e.name
+            if e.is_dir():
+                shutil.copytree(str(e), str(target))
+            else:
+                shutil.copyfile(str(e), str(target))
+    except Exception:
+        _sweep_scratch(staged)
+        raise
+
+    # step 2 -- commit: two same-parent renames, neither ever targets an already-existing name.
+    backup = data_root / f"{key}.add-bak-{uuid.uuid4().hex[:12]}"
+    aside_landed = False
     if dest.exists():
-        shutil.rmtree(dest)                 # clean-replace: a locally-deleted file leaves no orphan
-    dest.mkdir(parents=True, exist_ok=True)
-    for e in entries:
-        target = dest / e.name
-        if e.is_dir():
-            shutil.copytree(str(e), str(target))
-        else:
-            shutil.copyfile(str(e), str(target))
+        try:
+            os.replace(str(dest), str(backup))
+            aside_landed = True
+        except Exception:
+            _sweep_scratch(staged)
+            raise
+    try:
+        os.replace(str(staged), str(dest))
+    except Exception:
+        if aside_landed:
+            os.replace(str(backup), str(dest))      # roll back: dest ends where it started
+        _sweep_scratch(staged)
+        raise
+
+    # step 3 -- sweep: the old backup is removed only now that the new dest has landed.
+    if aside_landed:
+        _sweep_scratch(backup)
     return True
 
 
 def _restore_data(home: Path, project_abspath, *, force: bool = False) -> bool:
     """Restore a project's USER-DATA from <home>/data/<key> into <project>/.add — the
-    NON-DESTRUCTIVE inverse of _persist_data. FILL-GAPS by default: write only entries ABSENT
-    in the dest; a present entry is left untouched (no clobber). force=True overwrites a present
-    entry, writing a `<name>.bak` sidecar of the original FIRST. Copies only _is_user_data
-    entries (a polluted snapshot can't drop managed files); DEREFERENCES symlinks to content (a
-    link lands as a regular file/tree — byte parity with the JS twin). Returns True if >=1 entry
-    was restored, False if there is nothing to restore (snapshot dir absent or holds no user-data
-    — an honest skip, not an error). Raises OSError on an unwritable dest — the caller fails
-    'restore_failed'. Mirrored by behaviour in cli.js."""
+    NON-DESTRUCTIVE inverse of _persist_data, crash-safe via a PER-ENTRY stage-then-commit
+    (.add/ is a SHARED directory most of which this function must leave alone, so — unlike
+    persist's self-owned whole-tree dest — only ONE entry stages/commits at a time). FILL-GAPS
+    by default: write only entries ABSENT in the dest; a present entry is left untouched (no
+    clobber). force=True overwrites a present entry, writing a `<name>.bak` sidecar of the
+    original FIRST (the SAME permanent, already-contracted sidecar name as before this task —
+    never the new transient staging marker). Copies only _is_user_data entries (a polluted
+    snapshot can't drop managed files, nor can a stray scratch sibling be mistaken for real
+    data); DEREFERENCES symlinks to content (a link lands as a regular file/tree — byte parity
+    with the JS twin). Returns True if >=1 entry was restored, False if there is nothing to
+    restore (snapshot dir absent or holds no user-data — an honest skip, not an error). Raises
+    OSError on an unwritable dest — the caller fails 'restore_failed'. Mirrored by behaviour in
+    cli.js."""
     proj = Path(project_abspath).resolve()              # snapshots are ALWAYS keyed by the
-    src = home / "data" / data_key(str(proj))           # resolved abspath (install resolves first)
+    add_dir = proj / ".add"                             # resolved abspath (install resolves first)
+    src = home / "data" / data_key(str(proj))
+
+    # step 0 -- self-heal: sweep any stale per-entry staging sibling left by an earlier
+    # INTERRUPTED call, unconditionally (never merged/reused/completed) -- the untouched
+    # snapshot at src lets THIS call's own ordinary fill-gaps-or-force logic below re-derive
+    # the correct end state; no backup-recovery step is needed here (unlike persist's step 0).
+    if add_dir.exists():
+        for p in list(add_dir.glob("*.add-tmp-*")):
+            _sweep_scratch(p)
+
     if not src.exists():
         return False
     entries = [e for e in sorted(src.iterdir()) if _is_user_data(e.name)]
     if not entries:
         return False
-    add_dir = proj / ".add"
     add_dir.mkdir(parents=True, exist_ok=True)
     restored = False
     for e in entries:
         dest = add_dir / e.name
-        if dest.exists() or dest.is_symlink():
-            if not force:
-                continue                            # fill-gaps: never clobber a present entry
+        existed = dest.exists() or dest.is_symlink()
+        if existed and not force:
+            continue                                # fill-gaps: never clobber; no staging begins
+
+        # step 1b -- stage: copy this ONE entry into a fresh, uniquely-named sibling of dest,
+        # IN .add/ -- dest's own name is not opened for writing during this step. A reserved
+        # unique name is claimed via mkdtemp, then either kept as a dir (copytree merges into
+        # the empty dir) or freed via rmdir for a plain-file copy.
+        staged = Path(tempfile.mkdtemp(dir=str(add_dir), prefix=f"{e.name}.add-tmp-"))
+        try:
+            if e.is_dir():
+                shutil.copytree(str(e), str(staged), dirs_exist_ok=True, symlinks=False)
+            else:
+                staged.rmdir()
+                shutil.copyfile(str(e), str(staged))       # copyfile follows a symlink source
+        except Exception:
+            if staged.exists():
+                _sweep_scratch(staged)
+            raise
+
+        # step 1c -- commit:
+        if existed:
             bak = dest.with_name(dest.name + ".bak")
-            if bak.exists() or bak.is_symlink():    # a stale .bak: replace it, don't merge
-                if bak.is_dir() and not bak.is_symlink():
-                    shutil.rmtree(bak)
-                else:
-                    bak.unlink()
-            os.replace(str(dest), str(bak))         # back up the original BEFORE replacing
-        if e.is_dir():
-            shutil.copytree(str(e), str(dest), symlinks=False)   # symlinks=False -> deref to content
+            if bak.exists() or bak.is_symlink():           # a stale .bak: replace it, don't merge
+                _sweep_scratch(bak)
+            os.replace(str(dest), str(bak))                # back up the original BEFORE replacing
+            try:
+                os.replace(str(staged), str(dest))
+            except Exception:
+                os.replace(str(bak), str(dest))            # roll back: this entry ends where it started
+                _sweep_scratch(staged)
+                raise
         else:
-            shutil.copyfile(str(e), str(dest))                   # copyfile follows a symlink source
+            os.replace(str(staged), str(dest))             # fill-gaps: single rename, no backup needed
         restored = True
     return restored
 
