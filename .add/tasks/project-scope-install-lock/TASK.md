@@ -715,110 +715,184 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: NOT-EARNED
-By: self (independent verify, fresh from the builder — did not write this code) ·
-  adversarially checked: re-ran the evidence first — `test_project_scope_lock.py` 26/26 green,
-  the 6-file targeted regression sweep (test_global_install/test_global_update_harden/
-  test_global_restore/test_global_data/test_reconcile_rollup/test_project_scope_lock) 145/145
-  green, `add.py check` 509 passed/0 failed — all reproduced, matching the builder's claims. Then
-  adversarially probed the one test built to PROVE the stale-lock reclaim's exclusivity,
-  `ProjectLockConcurrencySafetyTest::test_concurrent_stale_reclaim_exactly_one_wins`: its own name
-  and comment claim "exactly one wins" / "at most one racing create succeeds at any instant"
-  (mirroring §3 INV and §1 M5 verbatim), but its actual assertion —
-  `self.assertGreaterEqual(results.count("acquired"), 1, ...)` (line 574) — only checks "at least
-  one," never an upper bound, silently compatible with MULTIPLE simultaneous winners. Reproduced
-  against the REAL, unmodified `_project_lock` (no mocks): (1) 250 natural (un-forced) re-runs of
-  the identical 6-thread Barrier scenario showed >1 simultaneous "acquired" in 66/250 runs
-  (26.4%; distribution {1: 184, 2: 59, 3: 7}); (2) a scoped, non-invasive timing probe (delays
-  only the lock's own `unlink()` calls on the exact path under test, restored immediately after —
-  no product code or test touched) forced 2-4 simultaneous "acquired" outcomes on demand in 2/5
-  runs where the delay outlasted the winner's held-window. Root cause: the stale-reclaim sequence
-  (stat -> decide-stale -> `unlink(path)` -> retry `os.open(O_EXCL)`) removes the file BY PATH
-  with no identity check against the copy just inspected — a second racer's unlink can delete a
-  first racer's already-fresh, live, non-stale lock file while it is still held, letting both
-  proceed into the guarded critical section concurrently: the exact "interleaved writes" outcome
-  this whole milestone exists to prevent. This falsifies §3 CONTRACT's own INV and §1 M5's
-  identical claim as a live, observed violation, not a hypothetical. Scoped precisely: this
-  affects ONLY the stale-reclaim path (M5); the base O_EXCL-create exclusivity for a FRESH
-  (non-stale) contention — what the other 25 tests actually exercise — is genuinely proven; those
-  25 are EARNED. Cross-checked for context: the identical vacuous-assertion shape and the
-  identical unlink-by-path TOCTOU shape pre-exist in the sibling, already-shipped `_update_lock`
-  (`test_global_update_harden.py:480`) — reproduced there too (55/150 natural runs, 36.7%, showed
-  2 simultaneous acquires) — an inherited, pattern-level gap faithfully mirrored from a precedent
-  that itself does not hold under adversarial pressure, not carelessness unique to this build.
+Verdict: EARNED
+By: add-verify agent (tdd-verifier persona) — principal concurrency/filesystem-reliability
+  review; a FRESH reviewer for this redo (did not write the original code, the abandoned
+  rename-to-quarantine attempt, or this ticket+identity-reverify fix) · adversarially checked,
+  re-deriving from the current tree, never from either agent's own narrative:
+  (1) Re-ran the evidence myself, from scratch: `test_project_scope_lock.py` 26/26 green (own
+  run); the 6-file broader sweep (test_global_install/test_global_update_harden/
+  test_global_restore/test_global_data/test_reconcile_rollup/test_project_scope_lock, 145
+  tests) 145/145 green (own run); `add.py check` 509 passed/0 failed (own run — plus 2
+  mechanical WARNs on this task specifically, investigated in (7) below, neither a code defect).
+  All reproduce the builder's/prior pass's claimed counts; none copied.
+  (2) Re-ran `ProjectLockConcurrencySafetyTest::test_concurrent_stale_reclaim_exactly_one_wins`
+  myself 50 times standalone (a fresh, independent 50 — not the 90 either prior agent reported)
+  — 50/50 green, 0 failures.
+  (3) Independently re-derived the ticket+identity-reverify algorithm by hand against the ACTUAL
+  current code (`_installer.py:1548-1699` `_project_lock`, `cli.js:1443-1541`
+  `acquireProjectLock`), never the §5 paraphrase: traced N racers simultaneously observing the
+  SAME stale generation (inode I1) — all lose the ordinary O_EXCL race on `lock_path`, all
+  compute the IDENTICAL ticket name `.install.lock.reclaim-<I1>`, exactly one wins the ticket's
+  own O_EXCL race, and every LOSER's own path (`raise BlockingIOError(...) from None` at
+  `_installer.py:1636` / `fail(...)` reached via `cli.js:1523-1527`) never touches `lock_path`
+  itself — confirmed by direct reading, not assumed. Traced the ticket-winner's re-stat-before-
+  unlink identity check (`current_ino == st.st_ino`) through the case where an UNRELATED fresh
+  caller's own ordinary create lands in the gap between the winner's unlink and its own
+  retry-create: the winner's retry then correctly observes EEXIST (a fresh file now exists) and
+  fails/loops exactly like ordinary contention — benign nondeterminism in WHO wins, never a
+  double-hold. Independently corroborated, not merely reasoned: 90-190+ combined stress runs
+  this session (my own 50 + the builder's disclosed 90, all against the real unmodified code)
+  show 0 instances of a peak-concurrent-holder count above 1.
+  (4) Read every new/changed assertion line-by-line: `peak = max(peak, active)` latched under
+  `results_lock`, `self.assertLessEqual(peak, 1, ...)` (line 593) — a genuine TEMPORAL proof,
+  not the cumulative `results.count("acquired") >= 1` the earlier (superseded) HARD-STOP found
+  vacuous. This closes that exact gap. No vacuous assert, no overfit-to-fixture, no
+  stubbed-away logic found in `_project_lock`/`acquireProjectLock` (read both in full against
+  the CURRENT tree, not the diff).
+  (5) Confirmed via `git log -p --follow` on this TASK.md that §0-§3 (the frozen bundle) are
+  byte-unchanged since the `73c2627` freeze commit — every post-freeze diff to this file lands
+  inside §5's own "Strategy actually used" prose (hunks at lines ~503 and ~561 only, both well
+  inside §5). The frozen contract was NOT edited during this redo.
+  (6) Wrote 4 independent repro scripts (this session's scratchpad — no tracked test touched)
+  attacking a DIFFERENT angle than either prior agent tried: does a crash landing INSIDE the
+  NEW ticket-held window (between a ticket-winner's `os.open`/`fs.openSync` success and its own
+  `finally` cleanup) leave anything behind that matters? Full finding under Advisor Concurrency
+  below — it does NOT reveal the recorded green as gamed (the recorded suite proves what it
+  claims, for the scenarios it actually runs); it reveals a scenario neither the builder's
+  Strategy nor the prior verify pass's own refute-read ever attempted. A coverage gap, not a
+  rigor gap in what is already green — EARNED stands for the recorded suite; the new finding is
+  carried as Concurrency residue below, not as a refutation of this checklist.
+  (7) Evidence-integrity disclosure, NOT a code-correctness finding: my own `add.py check` run
+  emits `build_tampered` (a tracked test changed since this task's own tests->build snapshot,
+  `a25cfce670bcb87b66eb07d2a7e7fc60`) and `scope_violation pending` (touched
+  `test_global_update_harden.py` · `test_project_scope_lock.py` · `tmp/heal-reopen-lock-toctou.txt`
+  — none in the declared 2-file §5 Scope). Root-caused via `.add/state.json` + `git show
+  3e85619 --stat`, not merely noted: this task's `tripwire`/`scope` snapshot dates to its FIRST
+  build (`4682b00`/`1f6d5b7`) and was never refreshed after the `add.py heal` reopening; the
+  redo's shared test-strengthening commit (`3e85619`) legitimately touched BOTH sibling tasks'
+  test files together (confirmed: exactly those 2 files, 23 lines added each, 0 deletions),
+  which this task's own per-task scope detector attributes wholesale; `tmp/heal-reopen-lock-
+  toctou.txt` is an untracked, gitignored (`.gitignore:34`) commit-message-draft scratch file,
+  confirmed via `git log`/`git check-ignore` to have never been part of any commit. Matches this
+  project's own established, non-bug precedent ("a post-freeze test add trips build_tampered ->
+  re-cross via phase build/phase verify"), and is confirmed a STRENGTHENING (cumulative `>=1` ->
+  temporal `peak<=1`), never a weakening — but it is a real, mechanical precondition: the WARN
+  text states the engine's own gate will refuse/HARD-STOP on these two flags until the
+  orchestrator re-crosses the phase snapshot (a heal/phase action outside my own boundary to
+  perform). Disclosed here as required evidence-integrity reporting, distinct from the
+  adversarial code verdict below.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: self (independent verify pass)
-1. Security: CLEAR — no secrets/credentials introduced (diff grepped); no new dependency (stdlib
-   `os`/`time`/`contextlib` · Node `fs`/`path` only, all pre-existing imports, confirmed); no
-   untrusted-input handling changed. The Concurrency finding below crosses no privilege/trust
-   boundary — both racers are equally-trusted local invocations of the same tool (or CI jobs), not
-   an attacker gaining access they lack today: anyone who could exploit the race already has
-   direct filesystem write access to the same target. The bug shape is CWE-367 (TOCTOU), which is
-   classified here as a mutual-exclusion/reliability defect (Concurrency lens), not a security
-   vulnerability, since no confidentiality/integrity boundary between distinct trust levels is
-   crossed — named explicitly so a human reviewer can override this classification if they weigh
-   it differently.
-2. Concurrency: RESIDUE — the stale-lock reclaim path (`_project_lock`'s EEXIST branch,
-   `_installer.py:1494-1582`; mirrored faithfully in `acquireProjectLock`, `cli.js:1396-1438`) has
-   a genuine, empirically-reproduced TOCTOU race: an unconditional `unlink(path)` with no identity
-   check against the file just stat'd lets a second (or third+) racer delete a first racer's
-   already-recreated, live, non-stale lock and recreate its own — 2+ callers can hold "the lock"
-   simultaneously. Reproduced against the real, unmodified `_project_lock`: 66/250 (26.4%) natural
-   (un-forced) runs of the shipped 6-thread test scenario showed >1 simultaneous acquire; a
-   non-invasive timing probe forced 2-4-way simultaneous acquisition on demand. This directly
-   falsifies §3 CONTRACT's own INV ("at most one racing create succeeds at any instant... the
-   identical TOCTOU-safety invariant _update_lock's own design already relies on") and §1 M5's
-   identical claim. The DISCLOSED in-process-threads-vs-real-processes test gap (§6 evidence) is,
-   on inspection, IMMATERIAL to this specific defect: the vulnerable sequence is a non-atomic,
-   multi-syscall TOCTOU gap at the filesystem/VFS level, which manifests identically whether
-   racers are threads of one process or separate OS processes — the kernel does not distinguish
-   caller identity for `os.open`/`stat`/`unlink`; testing via threads is a faithful, not a
-   weakened, proxy for THIS bug (the disclosed gap matters for other properties, e.g. exit-hook
-   cleanup under a real SIGKILL, just not this one). Separately, but directly relevant context:
-   the identical shape (unlink-by-path, no identity check) and the identical weaker-than-claimed
-   test assertion pre-exist in the sibling, already-shipped `_update_lock`
-   (`test_global_update_harden.py:480`) — reproduced there too (55/150, 36.7%). This is a material
-   gap in the milestone's own 4th exit criterion ("cannot interleave writes — one waits or fails
-   cleanly"), not a cosmetic or theoretical one.
-3. Architecture: CLEAR — independently re-verified via an AST-level diff (immune to
-   re-indentation noise), not a re-read of the builder's own narrative: `_reconcile`,
-   `_clean_replace`, `_is_user_data`, `_update_lock`, `_update_global`, `_add_dir`, `_fail` are
-   BYTE-IDENTICAL bodies between the freeze commit (`73c2627`) and HEAD; the JS twin's diff (5
-   hunks) is purely additive except the one disclosed `DATA_EXCLUDE` line (M8); `install()`/
-   `update()`'s only content changes are the new lock-wrap plus pure re-indentation of
-   pre-existing lines. Call sites resolve exactly where §3 CONTRACT specifies (`_installer.py`
-   :1076 `install`, :1715 `update`; `cli.js` `acquireProjectLock` defined :1396, called from
-   `cmdInit`:735 and `cmdUpdate`:1507 — re-resolved by direct grep against the current tree, not
-   copied from this TASK.md's own earlier citations, though they agree). The
-   new-independent-primitive-vs-extend-`_update_lock`
-   architectural choice (§1 A2) is reasoned and disclosed, a legitimate design fork, not a
-   layering violation; no new dependency; O_EXCL/`"wx"` remains the sole primitive at the DESIGN
-   level (the Concurrency finding above is an implementation defect in that primitive's reclaim
-   branch, not a layering/architecture issue).
+Advisor: add-verify agent (tdd-verifier persona) — independent adversarial pass; fresh reviewer
+  (not the builder, not the prior verify pass that found the original TOCTOU race)
+1. Security: CLEAR — re-grepped the full current diff surface for eval/exec/`child_process`/
+   new-dependency patterns (none); Python additions remain stdlib-only (`os`/`time`/
+   `contextlib`, all pre-existing imports — confirmed via `git diff` since Ground, no new
+   `import` line); JS additions are Node builtins only (`fs`/`path`, no new `require`). The
+   ticket file's own content is never written to (created empty, closed immediately) and never
+   read back — no untrusted input reaches a security-relevant decision anywhere in the reclaim
+   path. My own NEW finding below (a ticket-leak wedge) crosses no privilege/trust boundary:
+   every actor able to trigger or be affected by it already has direct filesystem write access
+   to the same `.add/` tree — the same CWE-367/reliability classification precedent the prior
+   verify pass used for the original TOCTOU race applies identically here. No HARD-STOP.
+2. Concurrency: RESIDUE — two findings, kept explicitly separate:
+   (a) THE ORIGINAL RACE (multiple simultaneous racers on one stale generation): FIXED, and
+   independently reconfirmed by me — see Refute-read (1)-(3) above, plus a fresh empirical
+   re-verification (50/50, this pass). CLEAR.
+   (b) A NEW defect in the redo's own mechanism, found via my own adversarial angle — NOT
+   covered by the builder's Strategy nor by the prior verify pass's refute-read: the reclaim's
+   own per-generation ticket file (`<lockpath>.reclaim-<inode>`, created at `_installer.py:1629`
+   / `cli.js:1480`) is created, closed, then (only within the SAME critical section) unlinked in
+   a best-effort `finally` (`_installer.py:1664-1668` / `cli.js:1510-1512`). A hard crash
+   (SIGKILL, OOM-kill, container eviction) landing between the ticket's successful create and
+   that cleanup — a realistic, in-scope event for a milestone whose own stated goal is "survive
+   a crash... without leaving... a wedged lock" — leaks the ticket file permanently; nothing
+   anywhere in this codebase sweeps a `.reclaim-*` orphan (confirmed via
+   `grep -rn "reclaim" add-method/src add-method/bin add-method/tooling`: every hit is either
+   this mechanism's own create/reference, or unrelated English usage of "reclaim" in
+   `_prune_data`'s docstring / `test_global_restore.py` / `test_skill_lean.py` prose).
+   Empirically reproduced against the REAL, unmodified `_project_lock` (external-state
+   simulation only, no product code or test touched — pre-creating the exact ticket name a real
+   crashed reclaimer would have left behind, then calling the shipped function): a leaked
+   ticket for the CURRENT stale generation's own inode causes `_project_lock` to fail
+   `install_in_progress` on EVERY subsequent attempt — 3 consecutive calls, 3 consecutive
+   failures, no self-heal (this session's scratchpad script + captured output). This is the SAME
+   class of failure this whole milestone/redo exists to eliminate — a wedged lock needing a
+   human to manually delete a file — just moved one file over (now an obscurely-named one,
+   `.install.lock.reclaim-<N>`, that no error message even mentions), not removed. Reproduced
+   identically via a REAL `node cli.js update` subprocess against the unmodified JS twin
+   (`acquireProjectLock`): same `install_in_progress`, same permanent wedge across repeated
+   attempts. Confirmed narrowly and precisely scoped, not a general regression: an UNRELATED
+   orphan ticket (a non-matching inode, e.g. litter from a past incident) does NOT interfere
+   with a fresh, uncontended acquire (own repro, confirmed) — the defect fires only when a
+   leaked ticket's embedded inode matches the CURRENTLY stale lock's own inode.
+   (c) A second, lower-probability path to the SAME bug class, unique to THIS task among the two
+   siblings: `_is_user_data`/`isUserData` (`_installer.py:708` / `cli.js:1027`) exclude only
+   exact names (`_DATA_EXCLUDE`/`DATA_EXCLUDE`, which DOES include `PROJECT_LOCK_FILE` itself)
+   plus 4 other named prefix/substring/suffix shapes (`scope-snapshot*`, `*pre-archive-bak*`,
+   `*.bak.json`, `.add-tmp-`/`.add-bak-`) — NONE catch a `.install.lock.reclaim-<inode>`-shaped
+   name; confirmed directly (`_is_user_data(".install.lock.reclaim-123456")` -> `True`, own
+   repro). Because THIS task's ticket file lives inside a PROJECT's scanned `<target>/.add/`
+   (unlike the sibling's, which lives in the never-scanned shared home — see that task's own
+   §6), a leaked ticket sitting there when `install(as_global_data=True)`/`_persist_data` runs
+   gets bogusly snapshotted as real user-data — confirmed empirically (own repro: a leaked
+   `.install.lock.reclaim-999999` alongside real `PROJECT.md` both land in the
+   `<home>/data/<key>` snapshot). If later restored (`--from-global-data`) into a fresh clone,
+   this is usually inert litter (the clone's own future lock would need to coincidentally
+   receive the SAME inode number the stray ticket's name encodes to matter) — but on that
+   coincidence it silently reproduces the identical permanent-wedge malfunction in a clone that
+   never itself crashed. Narrow, but a genuine, asymmetric amplifier unique to this task (see
+   Architecture note below).
+   Suggested fix direction (not implemented here — a build-phase decision): apply the SAME
+   age-based staleness check already used for the main lock file, recursively, to the ticket
+   file itself — a losing racer that observes an EXISTING ticket whose own mtime is older than a
+   short bound (a legitimate ticket-hold is a handful of syscalls, sub-millisecond) can safely
+   treat it as abandoned and reclaim it; this does not reopen the identity-blind hazard this
+   redo just closed, because a ticket's name is already inode-scoped to one specific generation.
+   A smaller, additive change to the same functions, not a redesign.
+3. Architecture: CLEAR, with one contributing note tied to 2(c) above — the new ticket-file
+   artifact type was never added to the `_is_user_data`/`_DATA_EXCLUDE` registry that is
+   supposed to enumerate every transient-file shape this codebase creates (it lists 5 other
+   shapes by name); a completeness gap in that registry, not a layering violation.
+   Independently re-verified via direct reading (not the builder's claim) that `_reconcile`/
+   `_clean_replace`/`_update_lock`/`_update_global`/`_add_dir`/`_fail` remain byte-identical
+   bodies since the freeze commit (`73c2627`); the new-independent-primitive-vs-extend-
+   `_update_lock` fork (§1 A2) is a reasoned, disclosed, legitimate design choice, not a layering
+   violation. No new dependency. O_EXCL/`"wx"` remains the sole DESIGN-level mutual-exclusion
+   primitive (the Concurrency finding above is an implementation gap in the reclaim mechanism's
+   own crash-recovery path, not an architecture/layering issue).
 Verdict: HARD-STOP
-Residue: concurrency — a reproducible TOCTOU race in the stale-lock reclaim path lets 2+ callers
-  simultaneously hold `_project_lock`/`acquireProjectLock`, falsifying §3 CONTRACT's own INV and
-  §1 M5's "at most one racing create succeeds at any instant" claim; the one test meant to prove
-  this (`test_concurrent_stale_reclaim_exactly_one_wins`) asserts only `>= 1`, never `== 1`, and
-  does not catch it (see Refute-read verdict above for the full reproduction). Suggested fix
-  direction (not implemented here — a human/build-phase decision): replace the unconditional
-  `unlink(path)` reclaim with an identity-verified claim, e.g. `rename()` the stale file to a
-  per-attempt-unique quarantine name as the exclusive "claim" step (rename on a shared source path
-  is atomic — only one racer's rename can succeed), then only that winner unlinks the quarantined
-  copy and attempts a fresh O_EXCL create; a losing renamer falls through to fail-fast instead of
-  blindly unlinking whatever currently sits at the live path. Affects both twins (JS confirmed by
-  code-parity reasoning — identical unlink-by-path shape read side-by-side — not independently
-  re-proven via a live multi-process Node repro; a disclosed evidentiary boundary, not an
-  oversight).
-Binding: advisory — mechanical (this task does not declare `risk: high`, so the binding/
-  advisor-gate-relax pathway does not apply regardless of sensitivity, per GLOSSARY.md's
-  binding-verdict definition; moot in any case since Residue is not `none`, which
-  advisor-gate-relax also requires).
+Residue: concurrency — a leaked per-generation reclaim ticket (a crash landing between the
+  ticket's own create and its cleanup) permanently wedges `_project_lock`/`acquireProjectLock`
+  for that stale generation, confirmed by direct execution against both the real Python
+  function and a real `node cli.js` subprocess, not simulated/assumed; a secondary,
+  lower-probability path (a leaked ticket bogusly persisted via `--global-data` and later
+  restored into a fresh clone) is unique to this task among the two siblings, tied to a
+  completeness gap in `_is_user_data`/`_DATA_EXCLUDE` (Architecture note above). The ORIGINAL
+  multi-racer TOCTOU race that triggered this redo is independently reconfirmed FIXED.
+  Separately (not part of this Residue, but a required disclosure): a mechanical
+  `build_tampered`/`scope_violation pending` pair from `add.py check`, root-caused in
+  Refute-read (7) above to a stale phase snapshot after the `add.py heal` reopening, not to a
+  test weakening.
+Binding: advisory — this task does not declare `risk: high` (autonomy: auto); moot in any case
+  since Residue is not `none`, which advisor-gate-relax also requires (per GLOSSARY.md's
+  binding-verdict definition).
+
+Recommended GATE RECORD (not stamped — human/orchestrator decides): HARD-STOP. Despite
+  `autonomy: auto` + no declared `risk: high` (which would otherwise permit a legitimate
+  auto-PASS on complete evidence with NO residue), a genuine, empirically-confirmed, cross-twin
+  concurrency residue is present — an auto-PASS is not available whenever residue exists,
+  regardless of autonomy level. Two independent actions are needed before a clean GATE RECORD
+  can be recorded: (i) a build-phase decision on the ticket-leak fix (see suggested direction
+  above) — a human/build-phase call, not mine to make; (ii) an orchestrator-level phase
+  re-cross/heal to resolve the `build_tampered`/`scope_violation pending` mechanical flags
+  (unrelated to code correctness, root-caused above) before the engine's own tooling will accept
+  a recorded outcome at all.
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
