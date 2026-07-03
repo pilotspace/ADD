@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "global-data-restore-harden",
+  "active_task": "project-scope-install-lock",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2607,18 +2607,28 @@
     },
     "project-scope-install-lock": {
       "title": "Project-scoped lock around install()/update() reconcile, both twins",
-      "phase": "ground",
+      "phase": "contract",
       "gate": "none",
       "milestone": "install-update-hardening",
       "depends_on": [
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-02T14:46:49+00:00"
+      "updated": "2026-07-03T06:40:50+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-03T06:41:50+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T06:01:33+00:00",
+  "updated": "2026-07-03T06:41:50+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3552,7 +3562,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "install-update-hardening": "global-data-restore-harden"
+    "install-update-hardening": "project-scope-install-lock"
   },
   "todos": [
     {
