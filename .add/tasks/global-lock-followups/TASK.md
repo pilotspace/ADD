@@ -438,6 +438,17 @@ Strategy actually used: AS PLANNED, in the same 5-batch order, with 3 refinement
   after the final fix — 145/145 every time; the dedicated `test_global_update_harden.py` suite is
   32/32 standalone. All temporary diagnostic tracing has been removed from the delivered code
   (this task's own `_update_lock` is the one that briefly carried it during diagnosis).
+    Disclosed residual (found during my own self-review, not by a failing test): the final fix's
+  identity check compares inode NUMBERS (`st_ino`), which is sound only as long as the filesystem
+  does not reuse an inode number for an unrelated new file inside the tiny re-stat-to-unlink window.
+  Empirically ruled out on THIS session's test filesystem (macOS/APFS — a tight create/unlink loop
+  showed strictly sequential, never-reused inode allocation), and `st_ino` is meaningful (not always
+  0) on Linux and on modern Windows/NTFS (Python's `os.stat`/Node's `fs.Stat` both surface the real
+  NTFS File ID there) — but this build's 90-per-lock stress validation ran on macOS/APFS ONLY;
+  Linux/Windows behavior is assumed-correct by the documented API contract, not independently
+  re-verified in this session. Same disclosed-not-hidden category as the sub-syscall race noted
+  above (given this task's own `risk: high` posture, worth the next verify pass's explicit
+  attention), not a known live bug — flagged for that pass to weigh, not decided here.
     This task's `risk: high` / `autonomy: conservative` posture is unchanged by this reopening — it
   governs the NEXT verify pass's own gate (human-reviewed regardless of evidence quality), not this
   build's own self-driven red->green obligation.

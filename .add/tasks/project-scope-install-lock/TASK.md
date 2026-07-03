@@ -561,6 +561,16 @@ Strategy actually used: AS PLANNED, in the same 8-step batch order (constants ->
   26/26 standalone. All temporary diagnostic tracing has been removed from the delivered code (none
   was added to this task's own function during this build; the sibling task's function is the one
   that briefly carried it during diagnosis, also since removed).
+    Disclosed residual (found during my own self-review, not by a failing test): the final fix's
+  identity check compares inode NUMBERS (`st_ino`), which is sound only as long as the filesystem
+  does not reuse an inode number for an unrelated new file inside the tiny re-stat-to-unlink window.
+  Empirically ruled out on THIS session's test filesystem (macOS/APFS — a tight create/unlink loop
+  showed strictly sequential, never-reused inode allocation), and `st_ino` is meaningful (not always
+  0) on Linux and on modern Windows/NTFS (Python's `os.stat`/Node's `fs.Stat` both surface the real
+  NTFS File ID there) — but this build's 90-per-lock stress validation ran on macOS/APFS ONLY;
+  Linux/Windows behavior is assumed-correct by the documented API contract, not independently
+  re-verified in this session. Same disclosed-not-hidden category as the sub-syscall race noted
+  above, not a known live bug — flagged for the next verify pass to weigh, not decided here.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.
