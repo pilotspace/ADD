@@ -2,11 +2,8 @@
 
 slug: project-scope-atomic-reconcile · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
-autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -108,8 +105,6 @@ Assumptions — lowest-confidence first:
   - [ ] A4: `os.replace`/`fs.renameSync` renaming a directory onto a FRESH (not-yet-existing) sibling name is a single atomic syscall on every platform this project supports — confirmed for POSIX `rename(2)`; extends this codebase's own existing "atomic on POSIX + Windows (same filesystem)" claim (`_write_registry`/`writeRegistry`) from the file case to a directory-rename-to-a-fresh-name, which shares the same primitive and avoids the non-portable "replace a non-empty directory" restriction (the target name doesn't yet exist). Residual risk: Windows antivirus/indexer transient file-locking — a known general flakiness this task doesn't specially handle, matching this codebase's existing posture (no retry-on-rename anywhere else either).
 </assumptions>
 
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
-
 ---
 
 ## 2 · SCENARIOS — pass/fail cases ▸ docs/04-step-2-scenarios.md
@@ -198,8 +193,6 @@ Scenario: two concurrent, lock-less runs racing on the same dest — ruled out o
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
@@ -291,14 +284,6 @@ Least-sure flag surfaced at freeze:
     AI-assumed one.
 
 Status: FROZEN @ v1 — approved by Tin Dang
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
 
 ---
 
@@ -323,12 +308,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/test_reconcile_rollup.py` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -366,15 +345,6 @@ Strategy actually used: followed the 5 ordered batches as planned, with two disc
 Safety rule (feature-specific): `dest` is never opened for writing or deletion until the staged copy (including any strip step) has FULLY succeeded — the existing wipe-then-copy ordering is inverted to copy-then-swap-then-sweep-old.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -517,11 +487,9 @@ Binding: advisory — unset (per `add.py status`; this file declares no explicit
   or `risk: high` line)
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Reviewed by: Tin Dang · date: 2026-07-03
 
 ---
 
@@ -530,7 +498,10 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose stage-then-swap — copy into a fresh sibling temp dir, commit via two same-parent renames, self-heal stale siblings on the next call; rejected copy-into-place with a trailing orphan-sweep pass, never wipe first (rejected: a crash mid-copy leaves an even MORE ambiguous mixed state — some files overwritten, some not, no "which generation" marker — backwards from the goal) · two-generation directory + a stable symlink pointer (rejected: introduces a new on-disk shape every reader of `dest` would need to tolerate, is not portable the same way on Windows, and solves a multi-generation problem this task doesn't have)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: followed the 5 ordered batches as planned, with two disclosed deviations.
+- [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
@@ -540,4 +511,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
