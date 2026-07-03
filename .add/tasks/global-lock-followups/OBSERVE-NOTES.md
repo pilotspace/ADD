@@ -78,3 +78,77 @@ agent. This is a recommendation for the orchestrator/human to weigh, not an acti
   `release/1.15.0`@`cda1a16` which drafted+froze all 3 `install-update-hardening` contracts;
   `git merge-base --is-ancestor eb631bc cda1a16` = NO; both worktrees show zero commits of their
   own; the divergence is 100% confined to `.add/` tracking docs, zero source/test drift).
+
+---
+
+## BUILD phase (post-repair) — findings
+
+> The coordinator repaired this worktree (`git merge cda1a16`, 6 files, no conflicts). Independently
+> re-verified before resuming: `TASK.md` MD5 `20c6ceb5…` byte-identical to `cda1a16`'s copy;
+> `phase: contract`, `risk: high`, `autonomy: conservative`, `Status: FROZEN @ v1 — approved by Tin
+> Dang` all confirmed present. Proceeded with tests (commit `8d11de8`, RED confirmed: 9
+> AssertionError + 4 TypeError on the not-yet-built surface; 5 new tests + 14 pre-existing already
+> green as legitimate regression guards) then build (this section's findings, commit follows).
+
+1. [ADD · open] **A regression this run introduced, then fixed within its own new code** —
+   `install(as_global=True)`'s new lock-wrap (M3) initially caught only `except BlockingIOError:`
+   around `with _update_lock(...)`. `_update_lock`'s own (pre-existing, unchanged) first line —
+   `home.mkdir(parents=True, exist_ok=True)` — raises a plain `FileExistsError` when `home` exists
+   as a non-directory (a plain file), which is NOT a `BlockingIOError` and was propagating
+   uncaught. Caught by the PRE-EXISTING `test_global_install.py::GlobalInstallTest
+   ::test_home_unwritable_fails` (outside this task's declared 4-file touch scope — the test was
+   never at risk of being edited; the fix landed in my own new `install()` code: an added
+   `except OSError as exc: return _fail(f"cannot write global home {home} — {exc}")` clause AFTER
+   the `except BlockingIOError:` one). Verified via a `git stash`-based baseline diff (my 3 changed
+   implementation files stashed out, the same 9 initially-observed failures re-run): 8 of 9
+   reproduced identically without any of my code (proving them pre-existing/environmental — see
+   #2 below); only `test_home_unwritable_fails` was absent from the baseline run, confirming it
+   as the one genuine regression, now fixed and re-verified green (evidence: 5 consecutive full
+   runs of `test_global_update_harden.py` all 32/32 green; the 27-file targeted regression sweep,
+   305 tests, now 297/305 green with the remaining 8 proven pre-existing).
+
+2. [ADD · open] **A related-but-distinct discovered contract gap, deliberately NOT fixed here** —
+   `_update_global` (the `update --global` path) contains the SAME latent shape (`_update_lock`'s
+   `home.mkdir()` can raise an uncaught `FileExistsError`/`OSError` if `home` is a plain file), but
+   it is dormant there today: `_update_global`'s own `no_global_home` pre-check
+   (`if not _stamp_path(home).exists(): return _fail(...)`) short-circuits BEFORE `_update_lock` is
+   ever reached in every currently-exercised path (`Path(...).exists()` returns `False` cleanly for
+   a non-directory `home`, never raising). This task's touch-boundary explicitly forbids touching
+   `_update_global`'s existing lock-usage body "beyond threading `lock_timeout`" — so this residual
+   was surfaced, not silently patched beyond scope. A natural, cheap follow-up (mirror the same
+   `except OSError` widening there too, or harden `_update_lock` itself to translate a home-mkdir
+   failure into its own distinct signal) — named for Specify to pick up next, not decided here.
+
+3. [ADD · open] **Pre-existing, proven-unrelated environmental gaps found while regression-sweeping**
+   (none caused by this build; none in this task's touch scope to fix) —
+   (a) `.add/tooling/add.py` does not exist in this worktree (`git log` shows it was deliberately
+   untracked as a "regenerable dogfood mirror" at commit `16afe85`, prior to this task) — breaks
+   `test_installer_handoff.py`/`test_installer_prompts.py::EnginePinTest::test_engine_untouched`
+   and `test_onboarding_brand.py::BrandSeamsHeldTest::test_engine_untouched_by_the_render`, all of
+   which compare this repo's OWN `.add/tooling/add.py` against `ENGINE_MD5`. A `git worktree add`
+   checkout does not materialize an untracked/gitignored tree that a prior commit stopped tracking —
+   likely the SAME class of worktree-setup gap as the stale-TASK.md issue above, applied to a
+   different untracked path. (b) 5 PTY/interactive-driver tests
+   (`test_installer_prompts.py::UserCancelledNpmTest::test_user_cancelled_writes_nothing_npm`,
+   `test_pty_clack.py::{ClackTimeoutTest::test_child_timeout_raises,
+   ClackAgentOverrideTest::test_agent_override_writes_codex, ClackCancelTest::test_cancel_writes_nothing,
+   ClackHappyPathTest::test_happy_path_drops_brain}`) fail/error identically with or without this
+   build's code — root cause NOT diagnosed by this run (out of declared scope to investigate
+   further); the pattern (a `prompt_timeout` marker instead of an expected one, a cancel returning
+   0 instead of 130) is consistent with either a genuine pre-existing PTY-driver defect or a
+   sandboxed-environment PTY-timing mismatch (this session's own tool environment is known to
+   intercept/alter some standard process behavior — see this task's earlier `rtk`-wrapper finding).
+   All 8 confirmed via a `git stash` baseline comparison (identical failure set with this build's 3
+   changed files removed) — evidence, not a fix, offered for the independent verifier / a future
+   loop to triage.
+
+4. [ADD · open] **Disclosed test-design scope limit on concurrency evidence** — the TOCTOU/race
+   coverage this build added (`test_concurrent_stale_reclaim_exactly_one_wins`,
+   `test_two_concurrent_install_global_no_interleave`) exercises IN-PROCESS multi-threading
+   (6 real `threading.Thread`s hitting real `os.open`/`os.unlink` syscalls, and a
+   hold-lock-then-release-then-second-call simulation, respectively) — genuine OS-level exclusivity
+   IS exercised (the syscalls are real), but neither test spawns truly simultaneous SEPARATE
+   processes/CLI invocations racing each other. Named here as a disclosed evidence-scope limit for
+   the human/independent-verify concurrency judgment (§6's "concurrency / timing... is safe"
+   checkbox is deliberately left unchecked in TASK.md for this same reason), not silently assumed
+   equivalent to full cross-process proof.

@@ -40,7 +40,7 @@ function parseArgs(argv) {
   // hint only echoes flags the user actually chose (shortest true command).
   const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
                  yes: false, nonInteractive: false, global: false, globalData: false,
-                 fromGlobalData: false, ruleFile: false };
+                 fromGlobalData: false, ruleFile: false, lockTimeout: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
@@ -71,6 +71,14 @@ function parseArgs(argv) {
       // the user tried to pass (parity with the pip twin's argparse error)
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
       if (a === "--stage") args.stage = v; else args.name = v;
+    }
+    // --lock-timeout <seconds>: (--global only) opt into a bounded wait for a LIVE contended
+    // home lock before failing "update_in_progress" (default null = today's immediate fail-fast;
+    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --stage/--name.
+    else if (a === "--lock-timeout") {
+      const v = argv[++i];
+      if (v == null || v.startsWith("--")) fail(a + " requires a value");
+      args.lockTimeout = Number(v);
     }
     else if (a.startsWith("--")) warn("ignoring unknown flag " + a);
     else args._.push(a);
@@ -746,6 +754,15 @@ const MANAGED = [
 const OPTIONAL = new Set(["personas-teacher"]);
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
+const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
+const LOCK_POLL_INTERVAL_MS = 50;   // ms between polls while waiting out a --lock-timeout
+
+// A synchronous sleep via Atomics.wait on a throwaway SharedArrayBuffer — builtin, no new
+// dependency; Node's MAIN thread (unlike a browser's) is allowed to block on Atomics.wait.
+function sleepSync(ms) {
+  const ia = new Int32Array(new SharedArrayBuffer(4));
+  Atomics.wait(ia, 0, 0, ms);
+}
 
 function pkgVersion() {
   try { return require(path.join(PKG_ROOT, "package.json")).version; }
@@ -1060,9 +1077,14 @@ function cmdPruneData(args) {
 
 // init --global: install the managed layer ONCE to the shared home + register this project,
 // fail-closed BEFORE the per-project drop. Returns the resolved target for the normal drop.
+// Serialized under the SAME home lock update --global uses (global-lock-followups M3) — a lock
+// failure aborts BEFORE any home/registry write and BEFORE the per-project drop (dropFiles,
+// called by cmdInit right after this returns), matching the all-or-nothing precedent every
+// other as_global-path failure already has.
 function installGlobal(args, chosenTarget) {
   const home = resolveGlobalHome(process.env);
   const claudeDir = claudeSkillsDir(process.env);
+  acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env);
   try { reconcileGlobal(home, claudeDir, args.noSkill); }                 // home_unwritable
   catch (e) { fail("cannot write global home " + home + " — " + (e && e.message ? e.message : e)); }
   writeStamp(home, pkgVersion(), "global");
@@ -1090,22 +1112,66 @@ function validRegistryPath(p) {
   catch (_e) { return false; }
 }
 
-// Serialize `update --global` with an EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag).
-// Already held -> update_in_progress (fail-fast). Released on process exit (normal completion OR
-// fail()'s process.exit), so it never outlives the run; a hard crash may leave a stale lock to
-// remove by hand. pip twin: _installer.py:_update_lock (the SAME O_EXCL lockfile, cross-compatible).
-function acquireUpdateLock(home) {
+// Serialize `update --global` (and, since global-lock-followups, `init --global`) with an
+// EXCLUSIVE lockfile (O_CREAT|O_EXCL via the "wx" flag) — the SAME mechanism as the pip twin
+// (_installer.py:_update_lock's os.open(O_EXCL)), so a pip-held lock blocks an npm run and
+// vice-versa.
+//
+// Held AND fresh (age <= ADD_LOCK_STALE_SECONDS, env-overridable, default 600s) -> today's
+// byte-identical behavior: `timeout` null/0 fails "update_in_progress" immediately; timeout=N>0
+// polls up to N seconds before failing.
+//
+// Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+// create. The "wx" create remains the SOLE mutual-exclusion primitive — staleness only ever
+// decides whether to retry, never bypasses exclusivity. A clock-skewed FUTURE mtime is a
+// negative age, so it is NEVER treated as stale.
+//
+// A successful acquire (fresh or reclaimed) stamps the file "<PID> <ISO ts>\n" — informational
+// ONLY, never read to decide staleness; a stamp-write failure is swallowed.
+//
+// KNOWN PROBLEM this shape works around: fail() calls process.exit(1) DIRECTLY (skips any
+// pending finally/loop state) — so this retry/self-heal loop uses `continue`/`break` for its
+// OWN internal control flow and calls fail() **at most once**, only AFTER the loop has
+// genuinely exhausted every retry/self-heal/wait attempt — never from inside the loop body.
+//
+// Released on process exit (normal completion OR fail()'s process.exit), so it never outlives
+// the run; a hard crash may leave a stale lock — the NEXT acquire self-heals it automatically.
+function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
   fs.mkdirSync(home, { recursive: true });
   const lockPath = path.join(home, LOCK_FILE);
-  let fd;
-  try { fd = fs.openSync(lockPath, "wx"); }
-  catch (e) {
-    if (e && e.code === "EEXIST") {
-      fail("update_in_progress: another `update --global` is already running — retry shortly " +
-           "(remove " + lockPath + " if it is stale)");
+  const staleAfterMs = Number(env.ADD_LOCK_STALE_SECONDS || LOCK_STALE_DEFAULT) * 1000;
+  const deadline = timeout ? (Date.now() + timeout * 1000) : null;   // null/0 = byte-identical fail-fast
+
+  let fd = null;
+  let timedOut = false;
+  while (fd === null) {
+    try {
+      fd = fs.openSync(lockPath, "wx");
+      break;
+    } catch (e) {
+      if (!e || e.code !== "EEXIST") throw e;
     }
-    throw e;
+    let st;
+    try { st = fs.statSync(lockPath); }
+    catch (_e) { continue; }   // vanished between the failed open and the stat — retry the create
+    if (Date.now() - st.mtimeMs > staleAfterMs) {
+      try { fs.unlinkSync(lockPath); } catch (_e) {}   // a losing race may already have removed it
+      continue;                                          // retry the create immediately (self-heal)
+    }
+    if (deadline !== null && Date.now() < deadline) {
+      sleepSync(LOCK_POLL_INTERVAL_MS);
+      continue;                                          // keep polling a LIVE holder until the deadline
+    }
+    timedOut = true;
+    break;
   }
+  if (timedOut) {
+    fail("update_in_progress: another `update --global` is already running — retry shortly " +
+         "(remove " + lockPath + " if it is stale)");
+    return () => {};   // unreachable once fail() exits — keeps the function's return shape honest
+  }
+  try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
+  catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
   const release = () => {
     try { fs.closeSync(fd); } catch (_e) {}
     try { fs.unlinkSync(lockPath); } catch (_e) {}
@@ -1120,7 +1186,9 @@ function cmdUpdateGlobal(args) {
   if (!fs.existsSync(path.join(home, STAMP_FILE))) {
     fail("no_global_home: no global ADD install at " + home + " (.add-version not found) — run `init --global` first");
   }
-  acquireUpdateLock(home);   // exclusive; EEXIST -> update_in_progress; released on process exit
+  // exclusive; self-heals a stale lock; a LIVE lock -> update_in_progress (immediate, or after
+  // waiting up to --lock-timeout seconds); released on process exit
+  acquireUpdateLock(home, { timeout: args.lockTimeout }, process.env);
   // Read the registry BEFORE refreshing the home — a corrupt registry fails closed with ZERO
   // writes (never a silent empty-list no-op), leaving the file for the user to fix or delete.
   let reg;

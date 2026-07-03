@@ -21,6 +21,7 @@ import os
 import re
 import shutil
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -899,13 +900,17 @@ def install(
     as_global_data: bool = False,
     as_global_data_restore: bool = False,
     rule_file: bool = False,
+    lock_timeout: float | None = None,
 ) -> int:
     """Install ADD into `target` directory — RECONCILES the managed layer (restore
     missing trees + refresh present ones, sweeping orphans), never touching user data.
 
     `bundled` injects a synthetic source root (test hook; parity with update()). `env`
     injects the home/skill base for hermetic global tests. `as_global` ALSO installs the
-    managed layer to the shared home + registers the project (the per-project drop still runs).
+    managed layer to the shared home + registers the project (the per-project drop still runs),
+    serialized under the SAME home lock `update --global` uses (`lock_timeout`: None/0 = today's
+    immediate fail-fast on a LIVE contended lock; N>0 opts into a bounded wait — see
+    `_update_lock`; a STALE lock self-heals immediately regardless).
     `as_global_data` IMPLIES `as_global` and ALSO persists the project's user-data to
     <home>/data/<key> (opt-in; one-way snapshot). `as_global_data_restore` is the INVERSE
     (--from-global-data): it rehydrates user-data from <home>/data/<key> into this clone
@@ -980,23 +985,35 @@ def install(
         home = resolve_global_home(env_map)
         claude_dir = _claude_skills_dir(env_map)
         try:
-            _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
-        except OSError as exc:
-            return _fail(f"cannot write global home {home} — {exc}")
-        _write_stamp(home, _pkg_version(), channel="global")
-        try:
-            reg = _read_registry(home)                                      # registry_corrupt
-        except ValueError:
+            with _update_lock(home, timeout=lock_timeout, env=env_map):
+                try:
+                    _reconcile_global(home, claude_dir, bundled_root)               # home_unwritable
+                except OSError as exc:
+                    return _fail(f"cannot write global home {home} — {exc}")
+                _write_stamp(home, _pkg_version(), channel="global")
+                try:
+                    reg = _read_registry(home)                                      # registry_corrupt
+                except ValueError:
+                    return _fail(
+                        f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
+                    )
+                reg.append(str(target_path))
+                try:
+                    _write_registry(home, reg)                                      # atomic + dedup
+                except OSError as exc:
+                    return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
+                _log(f"  ✓ global home ready at {home}")
+                _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
+        except BlockingIOError:
             return _fail(
-                f"global registry {_registry_path(home)} is corrupt — fix or delete it; not registering"
+                f"update_in_progress: another global install/update is already running — retry "
+                f"shortly (remove {home / LOCK_FILE} if it is stale)"
             )
-        reg.append(str(target_path))
-        try:
-            _write_registry(home, reg)                                      # atomic + dedup
         except OSError as exc:
-            return _fail(f"cannot write global registry {_registry_path(home)} — {exc}")
-        _log(f"  ✓ global home ready at {home}")
-        _log(f"  ✓ registered {target_path} (registry: {len(_read_registry(home))})")
+            # _update_lock's own home.mkdir()/lock-file open (e.g. `home` exists as a plain file,
+            # not a directory) can fail BEFORE the inner _reconcile_global try/except ever runs —
+            # same "cannot write global home" classification as that inner catch already uses.
+            return _fail(f"cannot write global home {home} — {exc}")
 
     # RECONCILE: restore missing trees + refresh present ones (sweep orphans). Touches
     # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
@@ -1216,22 +1233,73 @@ def _add_dir(target_path: Path) -> Path:
     return target_path / ".add"
 
 
+_LOCK_STALE_DEFAULT = 600          # seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
+_LOCK_POLL_INTERVAL = 0.05         # seconds between polls while waiting out a --lock-timeout
+
+
 @contextlib.contextmanager
-def _update_lock(home: Path):
-    """Serialize `update --global` with an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock —
-    the SAME mechanism as the npm twin (cli.js `fs.openSync(.., "wx")`), so a pip-held lock
-    blocks an npm run and vice-versa (a `fcntl.flock` would NOT serialize cross-twin: npm holds
-    only the file, never the kernel flock). Already present -> raises BlockingIOError (the caller
-    maps it to "update_in_progress"). The file is unlinked on exit for success OR exception, so a
-    normal/handled exit never outlives the process. A hard crash / SIGKILL may leave a stale
-    lockfile -> the update_in_progress message hints to remove it (symmetric with the npm twin)."""
+def _update_lock(home: Path, *, timeout: float | None = None, env=None):
+    """Serialize `update --global` (and, since global-lock-followups, `install --global`) with
+    an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock — the SAME mechanism as the npm twin
+    (cli.js `fs.openSync(.., "wx")`), so a pip-held lock blocks an npm run and vice-versa (a
+    `fcntl.flock` would NOT serialize cross-twin: npm holds only the file, never the kernel flock).
+
+    Held AND fresh (age <= ADD_LOCK_STALE_SECONDS, env-overridable, default 600s) -> today's
+    byte-identical behavior: `timeout` unset/0 raises BlockingIOError immediately (the caller maps
+    it to "update_in_progress"); `timeout=N>0` polls up to N seconds before raising.
+
+    Held AND stale (age > threshold) -> self-heals: unlinks the stale lockfile and retries the
+    create. The O_EXCL create remains the SOLE mutual-exclusion primitive — staleness only ever
+    decides whether to retry, never bypasses exclusivity (at most one racing create succeeds at
+    any instant, even when two processes independently judge the SAME lock stale and both attempt
+    to reclaim it — a clock-skewed FUTURE mtime is a negative age, so it is NEVER treated as stale).
+
+    A successful acquire (fresh or reclaimed) stamps the file `"<PID> <UTC ISO ts>\\n"` —
+    informational ONLY, never read to decide staleness (mtime is the sole staleness signal); a
+    stamp-write failure is swallowed (best-effort diagnostics must never break the lock).
+
+    The file is unlinked on exit for success OR exception, so a normal/handled exit never
+    outlives the process. A hard crash / SIGKILL may leave a stale lockfile -> the NEXT acquire
+    self-heals it automatically (no manual deletion required)."""
+    env = os.environ if env is None else env
+    try:
+        stale_after = float(env.get("ADD_LOCK_STALE_SECONDS", _LOCK_STALE_DEFAULT))
+    except (TypeError, ValueError):
+        stale_after = _LOCK_STALE_DEFAULT
     home.mkdir(parents=True, exist_ok=True)
     lock_path = home / LOCK_FILE
+    deadline = (time.time() + timeout) if timeout else None   # None/0 = today's byte-identical fail-fast
+
+    fd = None
+    while fd is None:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            break
+        except FileExistsError:
+            pass                              # held — decide below: self-heal / poll / fail-fast
+        try:
+            age = time.time() - lock_path.stat().st_mtime   # NEGATIVE age (future mtime) => never stale
+        except OSError:
+            continue                          # vanished between the failed open and the stat — retry
+        if age > stale_after:
+            try:
+                os.unlink(str(lock_path))      # best-effort — a losing race may already have removed it
+            except OSError:
+                pass
+            continue                          # retry the create immediately (self-heal)
+        if deadline is not None and time.time() < deadline:
+            time.sleep(_LOCK_POLL_INTERVAL)
+            continue                          # keep polling a LIVE holder until the deadline
+        # held, not stale, and (no --lock-timeout OR the wait budget is exhausted) -> the caller's
+        # existing `except BlockingIOError` maps this to "update_in_progress" (unchanged trigger).
+        raise BlockingIOError(f"{lock_path} is held")
+
     try:
-        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    except FileExistsError as exc:            # held -> caught upstream -> update_in_progress
-        raise BlockingIOError(f"{lock_path} is held") from exc
-    try:
+        try:
+            stamp = f"{os.getpid()} {datetime.now(timezone.utc).isoformat()}\n"
+            os.write(fd, stamp.encode("utf-8"))
+        except OSError:
+            pass                               # diagnostics are best-effort — never fail an acquired lock
         yield
     finally:
         os.close(fd)
@@ -1250,14 +1318,17 @@ def _valid_registry_path(p) -> bool:
     return os.path.isdir(np) and os.path.isdir(os.path.join(np, ".add"))
 
 
-def _update_global(target, *, force=False, bundled=None, version=None, env=None) -> int:
+def _update_global(target, *, force=False, bundled=None, version=None, env=None,
+                    lock_timeout=None) -> int:
     """`update --global`: under a home lock, refresh the shared home (mirror + skill, re-stamp)
     then propagate to every registered+VALID project via `reconcile(p, source=<home>)`; prune
     vanished projects, DROP existing non-ADD-project entries (warn), and rewrite the registry
     atomically with the surviving NORMALIZED paths. Fail-closed: no home install -> no_global_home;
     a concurrent run -> update_in_progress; a corrupt registry -> registry_corrupt (LEFT INTACT);
     a NON-ABSOLUTE registry entry (the traversal vector) -> unsafe_registry_path (zero mutations,
-    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD."""
+    read BEFORE any home write). Absolute non-normalized entries are normalized + healed, never LOUD.
+    `lock_timeout` (None/0 = today's immediate fail-fast) opts into a bounded wait for a LIVE
+    (non-stale) lock; a STALE lock self-heals immediately regardless (see `_update_lock`)."""
     env_map = os.environ if env is None else env
     home = resolve_global_home(env_map)
     claude_dir = _claude_skills_dir(env_map)
@@ -1276,7 +1347,7 @@ def _update_global(target, *, force=False, bundled=None, version=None, env=None)
         if not (bundled_root / sub).exists():
             return _fail(f"missing bundled source: {bundled_root / sub}")
     try:
-        with _update_lock(home):
+        with _update_lock(home, timeout=lock_timeout, env=env_map):
             # Read the registry BEFORE refreshing the home — a corrupt registry fails closed with
             # ZERO writes (never a silent empty-list no-op), leaving the file for the user to fix.
             try:
@@ -1340,15 +1411,19 @@ def update(
     channel: str = "pip",
     env=None,
     as_global: bool = False,
+    lock_timeout: float | None = None,
 ) -> int:
     """Re-materialize the managed layer (skill · tooling · docs) from the installed
     package into an EXISTING .add/ project, preserving ALL user data. Idempotent;
     clean-replaces so no orphan files survive a version bump. 0 on success/no-op, 1 on error.
 
     `as_global` instead refreshes the shared global home + propagates to every registered
-    project (see `_update_global`); `env` injects the home/skill base for hermetic tests."""
+    project (see `_update_global`); `env` injects the home/skill base for hermetic tests.
+    `lock_timeout` (as_global only; None/0 = today's immediate fail-fast) opts into a bounded
+    wait for a LIVE (non-stale) home lock — see `_update_lock`."""
     if as_global:
-        return _update_global(target, force=force, bundled=bundled, version=version, env=env)
+        return _update_global(target, force=force, bundled=bundled, version=version, env=env,
+                              lock_timeout=lock_timeout)
     target_path = Path(target).resolve()
     add_dir = _add_dir(target_path)
     if not (add_dir / "tooling").exists() and not (add_dir / "state.json").exists():

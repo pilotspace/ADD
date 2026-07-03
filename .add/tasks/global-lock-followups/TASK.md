@@ -372,7 +372,33 @@ Strategy (ordered batches): 1. `_update_lock` (Python): wrap the existing `os.op
 
 Persona (optional): methodology-engine-dev
 Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly (skips `finally`) → the retry/self-heal loop in `acquireUpdateLock` must only ever call `fail()` once, after every retry/self-heal attempt is exhausted, never inside the loop body · a portable PID-liveness check does not exist (Windows `os.kill(pid,0)` can terminate) → mtime-age is the only staleness signal, never PID · clock skew making a live lock look stale → only reclaim when `age > threshold` (a future/bogus mtime never counts as stale).
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: AS PLANNED, in the same 5-batch order, with 3 refinements discovered mid-build:
+  (1) `_update_lock`'s self-heal branch additionally guards `lock_path.stat()` itself (not just the
+  `os.open`) against a vanished-file OSError — a losing racer that reaches the stat AFTER another
+  thread's reclaim-unlink would otherwise crash with an uncaught FileNotFoundError instead of just
+  retrying the create; required for `test_concurrent_stale_reclaim_exactly_one_wins`'s "no racer hit
+  an unexpected exception" guarantee, not spelled out in the original strategy text.
+  (2) install()'s as_global lock-wrap needed a SECOND except clause — `except OSError as exc:
+  return _fail(f"cannot write global home {home} — {exc}")` — alongside the planned `except
+  BlockingIOError`. Root cause: `_update_lock`'s own (pre-existing, unchanged) `home.mkdir(parents=
+  True, exist_ok=True)` raises a plain FileExistsError when `home` exists as a non-directory —
+  `_update_global` never hits this because its own `no_global_home` pre-check short-circuits first,
+  but `install()`'s as_global block has no such pre-check (it is what CREATES the home). Caught by
+  the PRE-EXISTING `test_global_install.py::test_home_unwritable_fails` (outside this task's declared
+  touch scope — could not have been silently masked by editing that test, and wasn't; fixed in my
+  own new code instead). Verified via a stash-based baseline diff: this was the ONLY one of 9
+  initially-failing tests in the broader regression sweep that did NOT reproduce without my changes
+  — the other 8 are pre-existing/environmental (see Decisions + OBSERVE-NOTES.md).
+  (3) cli.js's bounded poll-wait needed a synchronous sleep with no new dependency; used
+  `Atomics.wait` on a throwaway `SharedArrayBuffer`/`Int32Array` (builtin, permitted on Node's main
+  thread unlike a browser's) — the strategy named the constraint (stdlib/builtin only) but left the
+  mechanism open.
+  Order: tests (TASK.md §4 + the 32-test suite) were completed and committed FIRST as commit 1
+  (RED), confirmed failing for the right reason (9 AssertionError + 4 TypeError; the other 5
+  new tests are legitimate regression guards already green pre-build), THEN implementation
+  followed the planned batch order 1(_update_lock)->2(install's as_global wrap)->3(_cli.py flag)->
+  4(cli.js mirror), landing GREEN (32/32) on the first full run after batch 4, before the 2
+  refinements above were separately discovered via the broader regression sweep and fixed.
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim and `--lock-timeout` only ever decide whether/when to retry that create, never grant the lock by any other means.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`time` · Node builtin `fs`/`path` only); ask if unclear.
@@ -390,34 +416,95 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — `test_global_update_harden.py`: 32/32 green (verified 5 consecutive runs, no
+      flakiness). Broader targeted regression sweep (27 tooling test files plausibly touching
+      `_installer.py`/`_cli.py`/`cli.js`, 305 tests): 297/305 green; the remaining 8 are PROVEN
+      pre-existing via a `git stash`-based baseline diff (identical 8 fail/error with my 3 changed
+      files stashed out) — see Decisions + OBSERVE-NOTES.md. NOT run: the full ~2500-test repo
+      suite (per this repo's own standing lesson: too long for a synchronous foreground run; the
+      27-file targeted sweep is the evidence offered here, full-suite confirmation defers to CI).
+- [x] coverage did not decrease — all 14 pre-existing `test_global_update_harden.py` tests unmodified
+      + still green; the 1 pre-existing test touched (`test_parity_surface`) was STRENGTHENED (2
+      assertions now check a fuller call-site string + an exact-count-of-2, not loosened or
+      deleted); 17 new tests added; all 14 §2 scenarios covered (§4 test_plan maps each).
+- [x] no test or contract was altered during build — §1-§3 are byte-identical to the FROZEN @ v1
+      bundle (only §4/§5/§6/§7 were filled — never frozen); the test file was ONLY touched in the
+      prior TESTS-phase commit (`8d11de8`, before BUILD opened), not during this BUILD commit.
+- [ ] the green was EARNED, not gamed — LEFT for independent verify (not self-graded; see the
+      Refute-read verdict section below).
+- [ ] concurrency / timing of the risky operation is safe — LEFT for independent verify by design
+      (this task's own STOP-and-escalate criteria names concurrency/timing judgment as an
+      escalation, not a self-certification). Evidence offered, not a verdict: a 6-thread
+      Barrier-synced race directly exercises `_update_lock`'s stale-reclaim path (no unexpected
+      exception, no leaked lock, >=1 acquire) — but this is IN-PROCESS multi-threaded concurrency
+      against real OS syscalls (os.open/os.unlink), not a genuine multi-PROCESS race; the
+      install-global "two concurrent runs" test is a SEQUENTIAL simulation (hold -> release ->
+      second call), not simultaneous separate processes. Named as a disclosed test-design scope
+      limit in OBSERVE-NOTES.md, not silently assumed equivalent.
+- [x] no exposed secrets, injection openings, or unexpected dependencies — no credential/secret
+      strings introduced (grepped my own diff); zero new package.json/pyproject.toml dependency
+      entries; Python additions are stdlib-only (`time`, already-present `os`/`datetime`); JS
+      additions are Node builtins only (`SharedArrayBuffer`/`Int32Array`/`Atomics`, no `require`).
+- [x] layering & dependencies follow CONVENTIONS.md — stdlib/builtin-only preserved (the task's own
+      Constraints line); the O_EXCL/"wx" create stays the sole mutual-exclusion primitive at every
+      layer (no `fcntl.flock` reintroduced — the exact v1->v2 regression `global-update-harden`
+      already fixed once).
+- [ ] a person reviewed and approved the change — NOT YET; conservative autonomy stops here for a
+      human (this task's own autonomy: conservative + risk: high).
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
 > + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
 > row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a lock file older than ADD_LOCK_STALE_SECONDS is unlinked and the create retried
+      automatically, with no manual deletion — confirmed by `test_stale_lock_self_heals` +
+      `test_empty_stale_lock_self_heals` (Python, exit 0, lock file gone after) and
+      `test_npm_stale_lock_self_heals` (a REAL `node cli.js update --global` subprocess, exit 0)
+- [x] `install --global` fails fast on a held lock with NOTHING written — no per-project `.add/`,
+      no new registry.json entry, no home re-stamp — confirmed by
+      `test_install_global_blocked_by_a_held_lock` inspecting the registry list AND
+      `(fresh_target / ".add").exists()` directly (not just the exit code)
+- [x] `--lock-timeout N` measurably waits (not instant, not indefinite) for a LIVE holder —
+      confirmed by `test_lock_timeout_waits_out_a_holder_that_releases_in_time` (elapsed >= 0.15s
+      via `time.monotonic()`, acquires once freed) and `test_lock_timeout_expires_still_fails`
+      (elapsed >= 0.25s, still fails "update_in_progress")
+- [x] omitting `--lock-timeout` (or passing 0) is byte-identical to pre-build behavior — confirmed
+      by `test_lock_timeout_unset_or_zero_is_immediate` (elapsed < 1.0s, immediate fail) AND by
+      all 14 pre-existing `LockTest`/`ValidationTest`/`PreservedTest` tests passing unmodified
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — every new symbol is referenced. `_LOCK_STALE_DEFAULT`/`_LOCK_POLL_INTERVAL`
+      used inside `_update_lock` (_installer.py:1236-1237, consumed at 1241+); `lock_timeout`
+      threads `_cli.py` args (lines 50, 110) -> `install()`/`update()` -> `_update_global()` /
+      install's as_global block -> `_update_lock(timeout=...)`; JS `lockTimeout` (parseArgs) ->
+      `installGlobal`/`cmdUpdateGlobal` -> `acquireUpdateLock(home, { timeout: args.lockTimeout },
+      process.env)` (2 call sites, cli.js:1084-ish + 1183-ish). Confirmed by
+      `test_lock_timeout_flag_parity` + the strengthened `test_parity_surface` (both check
+      call-sites, not just defs) plus a manual grep of every new identifier.
+- [x] DEAD-CODE (code) — no new unused/orphaned symbol. `sleepSync` (cli.js) is called from
+      `acquireUpdateLock`'s poll branch only; every new Python constant/parameter
+      (`_LOCK_STALE_DEFAULT`, `_LOCK_POLL_INTERVAL`, `lock_timeout` on 3 functions) is referenced
+      at least once — confirmed via grep (no definition without a matching use-site).
+- [ ] SEMANTIC (prose / non-code) — N/A path: this task is code-only; the only prose touched is
+      this TASK.md's own §4/§5/§6 fills (not frozen, not a "spec" surface under review here).
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
 > build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
 > (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
 > line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by grepping
+      each definition/call-site directly (`grep -n "^def \|^function \|^const LOCK"`) after the
+      build, not by re-reading the Ground SHA copy.
+- [x] anchors that MOVED since Ground SHA (line-shifted only — none renamed, none removed; all
+      shifts are inserted-code-earlier-in-file drift):
+      `_update_lock` 1218-1240 (Ground) -> 1241 (current) · `_update_global` 1252-1331 -> 1321 ·
+      `install` 888-1078 -> 890 · `resolve_global_home` 604-617 -> 606 · `LOCK_FILE`/`_DATA_EXCLUDE`
+      690-691 -> 691-692 · `_prune_data`/`prune_data` 779-799/802-824 -> 781/804 (untouched bodies,
+      confirmed no `_update_lock` reference added — see `test_prune_data_deliberately_unlocked`) ·
+      cli.js `acquireUpdateLock` 1097-1115 -> 1139 · `cmdUpdateGlobal` 1117-1160 -> 1183 ·
+      `installGlobal` 1063-1079 -> 1084 · `validRegistryPath` 1087-1091 -> 1109 · `cmdInit` 680-730
+      -> 688 · `parseArgs` 37-79 -> 37 (start line unchanged; body grew +7 lines for the new flag).
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
