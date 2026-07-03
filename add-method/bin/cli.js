@@ -782,23 +782,87 @@ function treeFiles(root) {
   return out;
 }
 
+// Crash-safe stage-then-swap: project-scope-atomic-reconcile (TASK.md v1). Replaces the
+// old wipe-then-copy (rmSync(dest) then cpSync onto dest directly) with a stage-into-a-
+// sibling + two-rename commit, so dest is NEVER observed half-old/half-new (a random
+// partial mix) — the achievable guarantee is "never observed half-composed", not "never
+// observed absent for an instant" (a single-syscall atomic replace of an EXISTING
+// non-empty directory is not portable; the sub-instant window between the two commit
+// renames is closed by the NEXT call's own self-heal, not this one).
+//
 // Returns a file-level roll-up of the heal: { restored, refreshed } where `restored` = a
-// file in the FINAL tree whose relative path was ABSENT before the wipe (fresh or
+// file in the FINAL tree whose relative path was ABSENT before the call (fresh or
 // partially-gutted trees heal these), `refreshed` = a final file that was PRESENT before
 // (re-materialized). Orphans (present before, gone after) are swept, counted as neither.
 // Pure observation — copy semantics unchanged. Mirror of _installer.py:_clean_replace.
 function cleanReplaceTree(src, dest, stripTests) {
   if (!fs.existsSync(src)) fail("missing packaged source: " + src);
-  const before = treeFiles(dest);                 // snapshot BEFORE the wipe, or it's always ∅
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
-  fs.cpSync(src, dest, { recursive: true });
-  if (stripTests) {
-    fs.rmSync(path.join(dest, "__pycache__"), { recursive: true, force: true });
-    for (const entry of fs.readdirSync(dest)) {
-      if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(dest, entry), { force: true });
+  const destParent = path.dirname(dest);
+  const destName = path.basename(dest);
+  fs.mkdirSync(destParent, { recursive: true });
+
+  // -- self-heal -- (before this call's own work): recover/discard whatever a PRIOR,
+  // interrupted call left behind. A stale backup found while dest is absent is the last
+  // known-good tree — restore it first (a cheap rename), minimizing how long dest stays
+  // broken; any other stale sibling (a stage, or a backup found while dest is present) is
+  // discarded outright — its content is never merged or reused.
+  const siblings = fs.readdirSync(destParent);
+  const tmpStales = siblings.filter((n) => n.startsWith(destName + ".add-tmp-"));
+  const bakStales = siblings.filter((n) => n.startsWith(destName + ".add-bak-"))
+    .map((n) => path.join(destParent, n))
+    .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+  let remainingBaks = bakStales;
+  if (!fs.existsSync(dest) && bakStales.length > 0) {
+    const winner = bakStales[bakStales.length - 1];      // most-recently-modified is authoritative
+    fs.renameSync(winner, dest);
+    remainingBaks = bakStales.slice(0, -1);
+  }
+  for (const stale of tmpStales.map((n) => path.join(destParent, n)).concat(remainingBaks)) {
+    fs.rmSync(stale, { recursive: true, force: true });
+  }
+
+  const before = treeFiles(dest);                        // snapshot BEFORE this call's own work
+
+  // -- stage -- : copy src into a fresh, uniquely-named sibling of dest, in dest's own
+  // parent (same filesystem, so the commit renames below are a genuine atomic move). dest
+  // itself is never opened for writing or deletion during this step.
+  const staged = fs.mkdtempSync(path.join(destParent, destName + ".add-tmp-"));
+  try {
+    fs.cpSync(src, staged, { recursive: true });
+    if (stripTests) {
+      fs.rmSync(path.join(staged, "__pycache__"), { recursive: true, force: true });
+      for (const entry of fs.readdirSync(staged)) {
+        if (/^test_.*\.py$/.test(entry)) fs.rmSync(path.join(staged, entry), { force: true });
+      }
+    }
+  } catch (e) {
+    fs.rmSync(staged, { recursive: true, force: true });   // dest untouched — it was never opened
+    throw e;
+  }
+
+  // -- commit -- : two same-parent renames, NEITHER targets an already-existing name.
+  const token = path.basename(staged).slice((destName + ".add-tmp-").length);
+  let bak = null;
+  if (fs.existsSync(dest)) {
+    bak = path.join(destParent, destName + ".add-bak-" + token);
+    try {
+      fs.renameSync(dest, bak);                            // (a) vacate dest, aside
+    } catch (e) {
+      fs.rmSync(staged, { recursive: true, force: true });  // dest untouched — the rename never happened
+      throw e;
     }
   }
+  try {
+    fs.renameSync(staged, dest);                           // (b) land the new generation
+  } catch (e) {
+    if (bak !== null) fs.renameSync(bak, dest);             // roll back: restore the original
+    fs.rmSync(staged, { recursive: true, force: true });
+    throw e;
+  }
+
+  // -- sweep -- : remove the backup sibling — ONLY after (b) has landed the new dest.
+  if (bak !== null) fs.rmSync(bak, { recursive: true, force: true });
+
   let restored = 0, refreshed = 0;
   for (const f of treeFiles(dest)) (before.has(f) ? refreshed++ : restored++);
   return { restored: restored, refreshed: refreshed };

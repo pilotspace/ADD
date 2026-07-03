@@ -327,11 +327,18 @@ class StageCommitUnitTest(unittest.TestCase):
 
         def _spy(s, d, *a, **kw):
             result = real_copytree(s, d, *a, **kw)
-            # immediately after the raw copy (before strip runs), the STAGED dir must still
-            # hold the unstripped files -- proving strip happens AFTER copy, on the staged dir
-            self.assertTrue((Path(d) / "test_foo.py").exists(), "copy landed test_foo.py pre-strip")
-            self.assertTrue((Path(d) / "__pycache__").exists(), "copy landed __pycache__ pre-strip")
-            captured["staged"] = Path(d)
+            # shutil.copytree's own _copytree helper recurses into subdirectories (here:
+            # __pycache__) via this SAME public, patched symbol -- so only the OUTERMOST
+            # call (source == the real src argument) is the one event under test; a nested
+            # recursive call's `d` is a subdirectory of the staged dir, not the staged dir
+            # itself, and must not be asserted against.
+            if Path(s) == src:
+                # immediately after the raw copy (before strip runs), the STAGED dir must
+                # still hold the unstripped files -- proving strip happens AFTER copy, on
+                # the staged dir
+                self.assertTrue((Path(d) / "test_foo.py").exists(), "copy landed test_foo.py pre-strip")
+                self.assertTrue((Path(d) / "__pycache__").exists(), "copy landed __pycache__ pre-strip")
+                captured["staged"] = Path(d)
             return result
 
         with mock.patch.object(_installer.shutil, "copytree", side_effect=_spy):
@@ -385,10 +392,19 @@ class StageCommitUnitTest(unittest.TestCase):
         (dest / "old.py").write_text("ORIGINAL")
         before = {p.name: p.read_bytes() for p in dest.iterdir()}
         real_rename = os.rename
+        failed_once = {"done": False}
 
         def _fail_landing_rename(src_p, dst_p, *a, **kw):
-            if str(dst_p) == str(dest):    # the SECOND rename (staged -> dest); let the FIRST
-                raise OSError("injected commit-land failure")   # (dest -> bak) succeed for real
+            # the FIRST rename targeting dest is the SECOND commit rename (staged -> dest);
+            # let the aside (dest -> bak) succeed for real, fail only that one landing
+            # attempt, then let the code's OWN rollback rename (bak -> dest, which also
+            # targets dest) succeed for real too -- a blanket intercept on every future
+            # rename to dest would make rollback impossible by construction, which is not
+            # the scenario under test (one transient landing failure, not a permanently
+            # blocked target).
+            if str(dst_p) == str(dest) and not failed_once["done"]:
+                failed_once["done"] = True
+                raise OSError("injected commit-land failure")
             return real_rename(src_p, dst_p, *a, **kw)
 
         with mock.patch.object(_installer.os, "rename", side_effect=_fail_landing_rename):
@@ -413,7 +429,11 @@ class StageCommitUnitTest(unittest.TestCase):
         self.assertFalse(stale.exists(), "the stale staging leftover is gone, never merged in")
         self.assertEqual(sorted(p.name for p in dest.iterdir()), ["fresh.py"],
                          "dest ends up holding exactly src's fresh content, same as a normal call")
-        self.assertEqual(r, {"restored": 0, "refreshed": 1})
+        # fresh.py's relative path was ABSENT from dest before this call (current.py, not
+        # fresh.py, was there) -- same counting convention as the pre-existing, unchanged
+        # test_orphan_swept_not_counted: a swapped-in new filename is `restored`, not
+        # `refreshed`; only a REPEATED filename counts as refreshed.
+        self.assertEqual(r, {"restored": 1, "refreshed": 0})
         self.assertEqual(self._siblings_of(dest), set())
 
     # --- scenario 8: a stale BACKUP leftover self-heals an absent dest ------

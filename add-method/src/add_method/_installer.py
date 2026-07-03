@@ -21,6 +21,7 @@ import os
 import re
 import shutil
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -1128,28 +1129,77 @@ def _tree_files(root: Path) -> set:
 
 
 def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
-    """Wipe dest, then copy src -> dest — so a file REMOVED upstream leaves no orphan
-    behind (the bug a merge-copy `init --force` had). The managed trees hold no user
-    data, so wipe-and-copy is safe.
+    """Crash-safe stage-then-swap: project-scope-atomic-reconcile (TASK.md v1).
+
+    Replaces the old wipe-then-copy (shutil.rmtree(dest) then shutil.copytree onto dest
+    directly) with a stage-into-a-sibling + two-rename commit, so dest is NEVER observed
+    half-old/half-new (a random partial mix) — the achievable guarantee is "never observed
+    half-composed", not "never observed absent for an instant" (a single-syscall atomic
+    replace of an EXISTING non-empty directory is not portable; the sub-instant window
+    between the two commit renames is closed by the NEXT call's own self-heal, not this one).
 
     Returns a file-level roll-up of the heal: {"restored": N, "refreshed": M} where
-    `restored` = a file in the FINAL tree whose relative path was ABSENT before the wipe
+    `restored` = a file in the FINAL tree whose relative path was ABSENT before the call
     (a fresh or partially-gutted tree heals these), and `refreshed` = a final file that
     was PRESENT before (re-materialized). Orphans (present before, gone after) are swept
     and counted as neither. The counts are pure observation — copy semantics are unchanged."""
-    before = _tree_files(dest)                       # snapshot BEFORE the wipe, or it's always ∅
     dest.parent.mkdir(parents=True, exist_ok=True)
+
+    # -- self-heal -- (before this call's own work): recover/discard whatever a PRIOR,
+    # interrupted call left behind. A stale backup found while dest is absent is the last
+    # known-good tree — restore it first (a cheap rename), minimizing how long dest stays
+    # broken; any other stale sibling (a stage, or a backup found while dest is present) is
+    # discarded outright — its content is never merged or reused.
+    tmp_stales = list(dest.parent.glob(f"{dest.name}.add-tmp-*"))
+    bak_stales = sorted(dest.parent.glob(f"{dest.name}.add-bak-*"), key=lambda p: p.stat().st_mtime)
+    if not dest.exists() and bak_stales:
+        os.rename(str(bak_stales[-1]), str(dest))     # most-recently-modified is authoritative
+        bak_stales = bak_stales[:-1]
+    for stale in tmp_stales + bak_stales:
+        shutil.rmtree(stale, ignore_errors=True)
+
+    before = _tree_files(dest)                         # snapshot BEFORE this call's own work
+
+    # -- stage -- : copy src into a fresh, uniquely-named sibling of dest, in dest's own
+    # parent (same filesystem, so the commit renames below are a genuine atomic move). dest
+    # itself is never opened for writing or deletion during this step.
+    staged = Path(tempfile.mkdtemp(dir=str(dest.parent), prefix=f"{dest.name}.add-tmp-"))
+    try:
+        shutil.copytree(str(src), str(staged), dirs_exist_ok=True)
+        if strip_tests:
+            pyc = staged / "__pycache__"
+            if pyc.exists():
+                shutil.rmtree(pyc)
+            for child in staged.iterdir():
+                if child.name.startswith("test_") and child.name.endswith(".py"):
+                    child.unlink()
+    except BaseException:
+        shutil.rmtree(staged, ignore_errors=True)      # dest untouched — it was never opened
+        raise
+
+    # -- commit -- : two same-parent renames, NEITHER targets an already-existing name.
+    token = staged.name[len(f"{dest.name}.add-tmp-"):]  # reuse mkdtemp's own unique suffix
+    bak = None
     if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(str(src), str(dest))
-    if strip_tests:
-        pyc = dest / "__pycache__"
-        if pyc.exists():
-            shutil.rmtree(pyc)
-        for child in dest.iterdir():
-            if child.name.startswith("test_") and child.name.endswith(".py"):
-                child.unlink()
-    after = _tree_files(dest)                         # the FINAL tree (post-strip)
+        bak = dest.parent / f"{dest.name}.add-bak-{token}"
+        try:
+            os.rename(str(dest), str(bak))              # (a) vacate dest, aside
+        except OSError:
+            shutil.rmtree(staged, ignore_errors=True)   # dest untouched — the rename never happened
+            raise
+    try:
+        os.rename(str(staged), str(dest))               # (b) land the new generation
+    except OSError:
+        if bak is not None:
+            os.rename(str(bak), str(dest))              # roll back: restore the original
+        shutil.rmtree(staged, ignore_errors=True)
+        raise
+
+    # -- sweep -- : remove the backup sibling — ONLY after (b) has landed the new dest.
+    if bak is not None:
+        shutil.rmtree(bak, ignore_errors=True)
+
+    after = _tree_files(dest)                            # the FINAL tree (post-strip)
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
