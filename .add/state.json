@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "global-lock-followups",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2532,173 +2532,10 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "global-lock-followups": {
-      "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "install-update-hardening",
-      "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:55:08+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-03T02:21:22+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "reopens": [
-        {
-          "from": "done",
-          "to": "build",
-          "reason": "Shares the identical TOCTOU race just found in project-scope-install-lock's sibling _project_lock: _update_lock's stale-reclaim path unlinks by path with no identity check, letting 2+ racers hold the lock simultaneously (reproduced 55/150 runs, 36.7%); test_stale_lock_self_heals_after_a_crash-style assertion at test_global_update_harden.py:480 only checks >=1, not ==1. Fixing both together with the same rename-to-quarantine pattern before either ships (neither is in the released v1.15.0 tag).",
-          "at": "2026-07-03T08:07:55+00:00",
-          "prior_gate": "PASS"
-        }
-      ],
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "17ba6f9eab0df5ca168f317817ee9342",
-        "tests": {
-          "add-method/tooling/test_global_update_harden.py": "66048b15244e0a4c07c878b5c59d4b5e"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/src/add_method/_installer.py",
-          "add-method/src/add_method/_cli.py",
-          "add-method/bin/cli.js",
-          "add-method/tooling/test_global_update_harden.py"
-        ],
-        "snapshot_md5": "b6ca8b57008a4b7f66afe683bc8f2d8e"
-      },
-      "heal": {
-        "attempts": 1,
-        "history": [
-          {
-            "at": "2026-07-03T11:54:45+00:00",
-            "reason": "scope_violation: task 'global-lock-followups' touched outside its declared \u00a75 Scope \u2014 tmp/milestone-board-post-lock-saga.txt \u00b7 tmp/observe-fill-install-lock.txt \u00b7 tmp/reconcile-lock-followups-checkboxes.txt (3 total)",
-            "source": "scope"
-          }
-        ]
-      }
-    },
-    "global-data-restore-harden": {
-      "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "install-update-hardening",
-      "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T06:01:33+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-03T02:23:56+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "project-scope-atomic-reconcile": {
-      "title": "Stage-then-commit _clean_replace/cleanReplaceTree so a crash mid-copy never half-wipes a managed tree",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "install-update-hardening",
-      "depends_on": [],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T04:03:56+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-03T02:21:11+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "project-scope-install-lock": {
-      "title": "Project-scoped lock around install()/update() reconcile, both twins",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "install-update-hardening",
-      "depends_on": [
-        "project-scope-atomic-reconcile"
-      ],
-      "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T11:10:15+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-03T06:41:50+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "3b0183b088a0ff997ce45852fc930198",
-        "tests": {
-          "add-method/tooling/test_project_scope_lock.py": "2c6f286c08cf985204b7c1473c4179e2"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/src/add_method/_installer.py",
-          "add-method/bin/cli.js",
-          "add-method/tooling/test_project_scope_lock.py"
-        ],
-        "snapshot_md5": "3c218d64254c9436f0698ed978d59a58"
-      },
-      "heal": {
-        "attempts": 2,
-        "history": [
-          {
-            "at": "2026-07-03T08:07:35+00:00",
-            "reason": "refute-read:Independent verify found a reproducible TOCTOU race in the stale-lock reclaim path (unlink-by-path with no identity check lets 2+ racers hold the lock simultaneously; test_concurrent_stale_reclaim_exactly_one_wins asserted >=1 instead of ==1). Looping back to build for a rename-to-quarantine fix + strengthened test.",
-            "source": "refute-read"
-          },
-          {
-            "at": "2026-07-03T11:08:47+00:00",
-            "reason": "scope_violation: task 'project-scope-install-lock' touched outside its declared \u00a75 Scope \u2014 tmp/recross-tripwire-round4.txt (1 total)",
-            "source": "scope"
-          }
-        ]
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T11:55:08+00:00",
+  "updated": "2026-07-03T12:03:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -2880,17 +2717,9 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
-    },
-    "install-update-hardening": {
-      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
-      "goal": "add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-07-02T14:46:06+00:00",
-      "updated": "2026-07-02T14:46:06+00:00"
     }
   },
-  "active_milestone": "install-update-hardening",
+  "active_milestone": null,
   "archived": [
     {
       "slug": "v5",
@@ -3625,14 +3454,23 @@
         "skill-banner-cue"
       ],
       "archived": "2026-07-03"
+    },
+    {
+      "slug": "install-update-hardening",
+      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
+      "tasks": 4,
+      "task_slugs": [
+        "global-lock-followups",
+        "global-data-restore-harden",
+        "project-scope-atomic-reconcile",
+        "project-scope-install-lock"
+      ],
+      "archived": "2026-07-03"
     }
   ],
-  "active_milestones": [
-    "install-update-hardening"
-  ],
+  "active_milestones": [],
   "active_tasks": {
-    "flow-simplification": "phase-review",
-    "install-update-hardening": "global-lock-followups"
+    "flow-simplification": "phase-review"
   },
   "todos": [
     {

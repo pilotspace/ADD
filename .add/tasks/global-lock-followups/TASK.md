@@ -891,7 +891,7 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] a parallel-build worktree can be branched before the orchestrator finishes
+- [ADD · folded] a parallel-build worktree can be branched before the orchestrator finishes [folded foundation-version 63]
   that same milestone's Specify→Contract→Freeze work, leaving the worker's own
   `TASK.md`/`state.json` at the blank template while the real frozen contract exists only on
   the integration branch — the worker has no way to detect this except by re-reading its own
@@ -902,7 +902,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   behind `release/1.15.0`@`cda1a16` which drafted+froze all 3 contracts; `git merge-base
   --is-ancestor eb631bc cda1a16` = NO; both worktrees showed zero commits of their own; the
   divergence was 100% confined to `.add/` tracking docs, zero source/test drift)
-- [ADD · open] the SAME class of gap recurs one layer deeper and is NOT limited to the
+- [ADD · folded] the SAME class of gap recurs one layer deeper and is NOT limited to the [folded foundation-version 63]
   frozen-contract case above: a fresh `git worktree add` never materializes gitignored /
   untracked content (`.add/tooling/add.py`, `.add/docs`) even when the base commit's
   TRACKED files are otherwise current — every worktree spawned this session needed a
@@ -911,7 +911,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   spawn prompt should include an explicit step-0 check (evidence: found independently in
   `project-scope-atomic-reconcile`'s, this task's, AND `global-data-restore-harden`'s
   worktrees this session — 3 for 3, not a one-off)
-- [TDD · open] the disclosed in-process-thread-only concurrency evidence for a `risk: high`
+- [TDD · folded] the disclosed in-process-thread-only concurrency evidence for a `risk: high` [folded foundation-version 63]
   task was judged insufficient for sign-off by an independent verify pass — closing that
   gap required authoring genuinely NEW multi-process tests (real `subprocess.Popen` races),
   not merely re-running the existing suite. A `risk: high` task's own §4 test plan should
@@ -919,7 +919,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   discovery (evidence: the independent add-verify pass authored 2 new tests — 8 trials × 6
   processes on the raw lock primitive, 6 trials × 8 processes on the full `install()` path —
   after judging the builder's own thread-based evidence insufficient for a risk:high gate)
-- [TDD · open] `test_concurrent_stale_reclaim_exactly_one_wins`'s own
+- [TDD · folded] `test_concurrent_stale_reclaim_exactly_one_wins`'s own [folded foundation-version 63]
   `assertGreaterEqual(results.count("acquired"), 1, ...)` stayed green through the entire
   TOCTOU race's lifetime — true even with 2+ processes simultaneously believing they held
   the lock. A liveness assertion ("someone eventually got in") is not an exclusivity
@@ -927,7 +927,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   verify pass on a sibling task, not this task's own suite (evidence: reopen-round §6,
   `test_global_update_harden.py` shared the identical weak-assertion shape as
   `test_project_scope_lock.py`)
-- [ADD · open] a bounded `--lock-timeout` retry loop can be silently defeated by an early
+- [ADD · folded] a bounded `--lock-timeout` retry loop can be silently defeated by an early [folded foundation-version 63]
   `continue` sitting on a codepath that never reaches its own deadline check — both the
   "won the ticket" and "lost the ticket" branches unconditionally `continue`d past the
   `if deadline...`/`raise BlockingIOError` check, so once a reclaim ticket leaked,
@@ -935,7 +935,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   reads as merely "slow" rather than "hung" on casual observation — worth a dedicated "does
   every loop branch reach its own exit check" review for future bounded-wait designs
   (evidence: reopen round 3 build, the `reclaimed`-flag restructuring in `_update_lock`)
-- [SDD · open] §6 summary checkboxes drifted stale relative to fresh Refute-read/Advisor
+- [SDD · folded] §6 summary checkboxes drifted stale relative to fresh Refute-read/Advisor [folded foundation-version 63]
   verdict prose across this task's own multiple reopen-round rebuilds — for a
   `risk: high`/`autonomy: conservative` task, that gap directly misrepresents resolved work
   to the one human whose sign-off is mandatory, not merely a cosmetic lag (evidence:

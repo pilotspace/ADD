@@ -633,7 +633,7 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a self-heal mechanism cannot distinguish "stale from a crash" from "live from
+- [TDD · folded] a self-heal mechanism cannot distinguish "stale from a crash" from "live from [folded foundation-version 63]
   a concurrent, in-flight sibling call" — a nested/interleaved second call's OWN step-0
   self-heal can delete the FIRST call's still-in-progress staging directory, causing the
   first (outer) call to raise rather than silently corrupt (a strictly better failure mode
@@ -641,7 +641,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   a PID-stamped lock) for a future concurrency-focused task (evidence:
   test_persist_two_interleaved_calls_land_one_full_valid_snapshot, independently re-traced
   by hand by the add-verify pass, not merely trusted from the builder's account)
-- [TDD · open] a fault-injection mock that raises IMMEDIATELY (before writing anything) can
+- [TDD · folded] a fault-injection mock that raises IMMEDIATELY (before writing anything) can [folded foundation-version 63]
   fail to discriminate "wrote straight to the final name" from "wrote to an isolated staged
   copy" — both old and new code leave the same "nothing at the final name" outcome.
   Strengthen it to write partial/garbage content THEN raise, exposing old code's real
@@ -649,7 +649,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   test_restore_mid_stage_failure_earlier_committed_entries_survive's mock was strengthened
   from a bare `raise OSError` to a write-then-raise specifically because the immediate-raise
   version passed on both old and new code)
-- [ADD · open] the SAME parallel-build-worktree-vs-frozen-contract gap diagnosed fully in
+- [ADD · folded] the SAME parallel-build-worktree-vs-frozen-contract gap diagnosed fully in [folded foundation-version 63]
   `global-lock-followups`'s own §7/OBSERVE-NOTES.md recurred here too — this task's own
   `TASK.md` needed a manual `git checkout cda1a16 --` sync (commit `735343a`) before Ground
   could even be read, after confirming zero source-code drift in the 2 upstream commits

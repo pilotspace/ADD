@@ -1019,14 +1019,14 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [TDD · open] a concurrency test can look like it proves exclusivity while actually proving only
+- [TDD · folded] a concurrency test can look like it proves exclusivity while actually proving only [folded foundation-version 63]
   liveness — `assertGreaterEqual(results.count("acquired"), 1, ...)` is silently compatible with
   MULTIPLE simultaneous winners, the exact violation it was named to catch (evidence: this
   session's own `test_concurrent_stale_reclaim_exactly_one_wins`, in both this task and its
   sibling, passed green through round 1's real double-acquisition bug; only an adversarial verify
   pass building its own repro — not re-reading the test — surfaced the gap; the fix was a
   temporal peak-concurrent-holders check, not a stronger count).
-- [ADD · open] a self-heal mechanism whose own bookkeeping can itself leak (a lock reclaimed via a
+- [ADD · folded] a self-heal mechanism whose own bookkeeping can itself leak (a lock reclaimed via a [folded foundation-version 63]
   ticket file; the ticket itself un-swept) needs an explicit "does this recursion terminate"
   check at verify — a build round can correctly fix the REPORTED symptom while leaving the same
   bug CLASS one level deeper, and "no further bug found" is a different, weaker claim than "this
@@ -1036,7 +1036,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   structural argument — the ticket is a contention filter above the one real exclusivity
   primitive, not a second instance of it — backed by 1167+ adversarial attempts, not simply
   another clean test run).
-- [SDD · open] a task's own §6 summary checkboxes can silently drift stale relative to its
+- [SDD · folded] a task's own §6 summary checkboxes can silently drift stale relative to its [folded foundation-version 63]
   Refute-read/Advisor verdict prose across multiple build-fix rounds, misrepresenting genuinely
   resolved work as an open judgment call to a `report --decide` reader (evidence: this exact
   session, 2 separate tasks — `global-data-restore-harden` earlier, `global-lock-followups` this
