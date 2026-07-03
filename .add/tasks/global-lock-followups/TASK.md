@@ -3,7 +3,7 @@
 slug: global-lock-followups · created: 2026-07-02 · stage: mvp · risk: high
 milestone: install-update-hardening
 autonomy: conservative
-phase: build
+phase: verify
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -539,17 +539,20 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 - [x] no test or contract was altered during build — §1-§3 are byte-identical to the FROZEN @ v1
       bundle (only §4/§5/§6/§7 were filled — never frozen); the test file was ONLY touched in the
       prior TESTS-phase commit (`8d11de8`, before BUILD opened), not during this BUILD commit.
-- [ ] the green was EARNED, not gamed — LEFT for independent verify (not self-graded; see the
-      Refute-read verdict section below).
-- [ ] concurrency / timing of the risky operation is safe — LEFT for independent verify by design
-      (this task's own STOP-and-escalate criteria names concurrency/timing judgment as an
-      escalation, not a self-certification). Evidence offered, not a verdict: a 6-thread
-      Barrier-synced race directly exercises `_update_lock`'s stale-reclaim path (no unexpected
-      exception, no leaked lock, >=1 acquire) — but this is IN-PROCESS multi-threaded concurrency
-      against real OS syscalls (os.open/os.unlink), not a genuine multi-PROCESS race; the
-      install-global "two concurrent runs" test is a SEQUENTIAL simulation (hold -> release ->
-      second call), not simultaneous separate processes. Named as a disclosed test-design scope
-      limit in OBSERVE-NOTES.md, not silently assumed equivalent.
+- [x] the green was EARNED, not gamed — RESOLVED by the round-4 independent verify pass (a FRESH
+      reviewer, not the round-3 builder): Refute-read verdict below records EARNED, with 3 fresh
+      30/30 stress reruns + a fresh 152/152 sibling sweep + a fresh `add.py check` (509/0, zero
+      WARN), all independently reproduced, not trusted from any prior round's report.
+- [x] concurrency / timing of the risky operation is safe — RESOLVED by the round-4 independent
+      verify pass: Advisor 3-lens Concurrency verdict below is CLEAR across all 3 tracked
+      findings (the original TOCTOU race, the round-3 leaked-ticket livelock, and this round's
+      own "ticket-for-a-ticket" recursion question) — the recursion question is answered
+      STRUCTURALLY CLOSED (not merely "not yet found"), backed by 1167+ real adversarial attempts
+      (thread-based + real multi-process, both twins) at 0 anomalies. The original in-process-
+      threads-vs-real-processes disclosure this checkbox used to carry is superseded: round 2's
+      own pass already gathered genuine multi-PROCESS evidence for the original race (8×6 + 6×8
+      trials, 0 corruption), independently re-judged sound by round 4, not re-run byte-for-byte
+      since the mechanism has not changed since that evidence was gathered.
 - [x] no exposed secrets, injection openings, or unexpected dependencies — no credential/secret
       strings introduced (grepped my own diff); zero new package.json/pyproject.toml dependency
       entries; Python additions are stdlib-only (`time`, already-present `os`/`datetime`); JS
