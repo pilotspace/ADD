@@ -3,7 +3,7 @@
 slug: global-data-restore-harden · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
 autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -491,9 +491,9 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 - [x] all tests pass — 75/75 green: test_global_restore.py 36/36 (19 new + 17 pre-existing), test_global_data.py/test_global_update_harden.py/test_global_install.py 39/39 unchanged
 - [x] coverage did not decrease — 19 new test methods added, 0 removed/weakened; every pre-existing test method name and assertion is byte-unchanged (diffed against the tests-red commit)
 - [x] no test or contract was altered during build — the build commit (`a3b832f`) touches only `_installer.py`+`cli.js`; TASK.md §1-§3 unchanged since freeze; `test_global_restore.py` unchanged since the tests-red commit (`bdbc373`)
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP) — left for the independent reviewer's refute-read (see below); builder's own adversarial pass traced each of the 12 RED failures to its exact missing-logic cause and each of the 9 non-discriminating new/happy-path tests against the OLD implementation to rule out vacuity (documented in OBSERVE-NOTES.md)
-- [ ] concurrency / timing of the risky operation is safe — left for the Advisor's concurrency lens; builder traced the self-heal-vs-interleaved-caller interaction by hand (test_persist_two_interleaved_calls_land_one_full_valid_snapshot) and confirms the disclosed weak guarantee holds, not a full concurrency clearance
-- [ ] no exposed secrets, injection openings, or unexpected dependencies — left for the Advisor's security lens (builder does not self-certify security); mechanically: 0 new dependencies beyond stdlib `tempfile`/`uuid` and Node builtin `fs`/`path`/`crypto` (already imported), 0 secrets/credentials touched
+- [x] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP) — RESOLVED: independent reviewer's Refute-read verdict below records EARNED (RED independently reproduced, not trusted on the builder's word)
+- [x] concurrency / timing of the risky operation is safe — RESOLVED: independent Advisor concurrency lens below records RESIDUE (bounded, matches the pre-declared carve-out, independently traced) — not a full clearance, but a judged, recorded verdict, not an open item
+- [x] no exposed secrets, injection openings, or unexpected dependencies — RESOLVED: independent Advisor security lens below records CLEAR (full STRIDE pass) + one informational, safe-direction note (a directory permission tightening)
 - [x] layering & dependencies follow CONVENTIONS.md — stdlib/builtin-only imports, matches §5's declared "no new dependency" constraint exactly
 - [ ] a person reviewed and approved the change — pending human review
 
