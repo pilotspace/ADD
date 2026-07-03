@@ -324,9 +324,9 @@ Watch (reuse scenarios as monitors): rate of update_in_progress (lock contention
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] stale-lock recovery: detect a dead-holder / age out the `.update.lock` so a SIGKILL'd `update --global` doesn't wedge future runs (evidence: refute-read residual — O_EXCL is not auto-released on crash, unlike flock).
-- [SPEC · open] serialize `install --global` under the same lock in both twins (evidence: refute-read Finding 2 + the §3 schema names installGlobal; v2 scoped the lock to `update --global` only — the multi-project critical section).
-- [SPEC · open] optional block-with-timeout lock mode for CI flows that prefer a short wait over fail-fast (evidence: fail-fast was the chosen default; a pipeline may want to queue).
+- [SPEC · dropped] stale-lock recovery: detect a dead-holder / age out the `.update.lock` so a SIGKILL'd `update --global` doesn't wedge future runs (evidence: refute-read residual — O_EXCL is not auto-released on crash, unlike flock).
+- [SPEC · dropped] serialize `install --global` under the same lock in both twins (evidence: refute-read Finding 2 + the §3 schema names installGlobal; v2 scoped the lock to `update --global` only — the multi-project critical section).
+- [SPEC · dropped] optional block-with-timeout lock mode for CI flows that prefer a short wait over fail-fast (evidence: fail-fast was the chosen default; a pipeline may want to queue).
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
