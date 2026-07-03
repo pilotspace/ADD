@@ -16,37 +16,88 @@ phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> buil
 
 ## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md
 
-Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
-Context (working folder): <docs · todos · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
-Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
-Anchors the contract cites: <the symbols §3 will name>
-Issues/Risks (→ feed §1): <problems · traps · untestable risks found in the real code — task-delta; §1 builds on these>
-Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
-Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
+Touches (files · symbols · signatures):
+  - `add-method/src/add_method/_installer.py:install(target, force, stage, name, yes, non_interactive, bundled, env, as_global, as_global_data, as_global_data_restore, rule_file) -> int` (889-1079) — CONFIRMED (read in full): the project-scope entry point. Validates `target_path.exists()`, then (interactive only) may run `_prompt_target`, which can REASSIGN `target_path` to a DIFFERENT directory than the one first passed — a lock must key on the FINAL, post-prompt value, not the initial argument. After the interactive block, `_log(f"Installing ADD into {target_path}")` runs, then `bundled_root` resolution, the `as_global` sub-block (home/registry writes — a DIFFERENT target, see below), `_reconcile(target_path, bundled_root)`, `_seed_soul_md`, `_seed_gitignore`, agent-pointer write, Gemini settings, intent note, and (opt-in) `_persist_data`/`_restore_data` — ALL of it currently runs with ZERO mutual exclusion against a second concurrent call on the SAME target.
+  - `add-method/src/add_method/_installer.py:update(target, force, bundled, version, channel, env, as_global) -> int` (1384-1446) — CONFIRMED: `as_global=True` short-circuits entirely to `_update_global(...)` (a DIFFERENT target — the shared home — already covered, eventually, by `_update_lock`; UNCHANGED and out of my scope). The non-`as_global` branch resolves `add_dir = _add_dir(target_path)`, checks the "no ADD project here" precondition (lock-free), then bundled-root validation, a same-version no-op early `return 0` (no writes), state-file backup, `_reconcile`, migrations, stamp write, soul/gitignore seed — ZERO mutual exclusion today.
+  - `add-method/bin/cli.js:cmdInit(args)` (680-730) / `dropFiles(args, target, profile, intent)` (635-678) — JS mirror of `install()`. CONFIRMED: `chosenTarget` (initialized to `target`) can be REASSIGNED by the interactive clack flow (`chosenTarget = path.resolve(outcome.target)`) before `if (args.global) installGlobal(args, chosenTarget)` and `dropFiles(args, chosenTarget, ...)` run — the same "lock the FINAL target, not the initial argument" requirement as the Python side.
+  - `add-method/bin/cli.js:cmdUpdate(args)` (1226-1266) — JS mirror of `update()`. CONFIRMED: `if (args.global) return cmdUpdateGlobal(args);` (unchanged, out of scope) else resolves `target`/`addDir`, the same precondition check, THEN an INLINED `if (args.check) { ...; return; }` read-only report (lines 1237-1242) — a genuine, PRE-EXISTING cross-twin asymmetry: Python's `--check` is dispatched to a fully separate function `update_check()` BEFORE `update()` is ever invoked (confirmed via `_cli.py:52-53`: `if args.check: return update_check(target=args.target)`), so Python's `update()` body never sees a check request at all, while JS inlines it inside the SAME function my lock wraps. My JS-side lock acquisition must sit AFTER this early return; Python needs no equivalent carve-out.
+  - `add-method/src/add_method/_installer.py:_update_lock(home: Path)` (1268-1290, `@contextlib.contextmanager`) / `cli.js:acquireUpdateLock(home)` (1161-1179) — CONFIRMED CURRENT (pre-`global-lock-followups`) shape: a plain O_EXCL (`os.open(..., os.O_CREAT|os.O_EXCL|os.O_WRONLY)`) / `"wx"` (`fs.openSync(lockPath,"wx")`) sentinel-file create at `<home>/.update.lock`; `FileExistsError`/`EEXIST` -> `update_in_progress`; cleanup is unconditional (Python: `finally: os.close(fd); os.unlink(...)`; JS: `process.on("exit", release)`, registered BECAUSE `cli.js:fail()` (line 35) calls `process.exit(1)` DIRECTLY — Node does NOT unwind the stack or run a pending `finally` on `process.exit()`, so a plain `try/finally` would silently skip releasing the lock if anything nested inside the guarded region calls `fail()`; `acquireUpdateLock`'s `process.on("exit", release)` hook is how the ALREADY-SHIPPED code correctly handles this). UPDATE (re-confirmed post-draft, orchestrator note): `global-lock-followups`'s own hardening (which adds exactly those three things — stale self-heal, timeout, diagnostic stamp) merged into `release/1.15.0` at commit `7396456`, shortly after this grounding was written against `1cc4065`. The shape described above is now the CURRENT merged `_update_lock`/`acquireUpdateLock`, not a future one. Still cited here as PROVEN-PATTERN precedent to mirror, never as code this task calls into or extends (see §1 Framings weighed — the reuse-vs-new-primitive reasoning stands on the resource-shape difference, independent of merge timing).
+  - `add-method/src/add_method/_installer.py:_update_global(target, *, force, bundled, version, env) -> int` (1302-1381) — demonstrates the established HIGH-LEVEL idiom I mirror: a cheap, lock-free existence precondition (`no_global_home`) is checked first; `with _update_lock(home): ...` then wraps the mutating span through to `return 0`; `BlockingIOError` is caught OUTSIDE that `with`/an enclosing `try`, mapped to `_fail("update_in_progress: ...")`. NOTE (precise, not overclaimed): `_update_global` ALSO keeps its own bundled-root/MANAGED-sources validation lock-free (before the `with`) — a finer-grained optimization that matters at the global case's scale (a broken package shouldn't need to contend for a lock that may be serializing propagation to many registered projects). My own `install()`/`update()` design (§3) makes a DELIBERATE, disclosed simplification: it holds the lock across bundled-root validation too (one single acquire point, not two), since that validation is a handful of cheap `Path.exists()` calls — negligible extra hold time at this smaller, per-target scale. I mirror the high-level pattern (cheap precondition free, then acquire-and-hold for the rest), not this one finer-grained sub-optimization.
+  - `add-method/src/add_method/_installer.py:_clean_replace(src, dest, *, strip_tests=False) -> dict` (1130-1202) / `cli.js:cleanReplaceTree(src, dest, stripTests)` (798-869) — CONFIRMED ALREADY HARDENED: this task's OWN dependency, `project-scope-atomic-reconcile`, merged at `d6c7e91` (merge commit `c703495`, verified via `git log`/`git show --stat c703495`: `Merge: 3d69f4e ec03de1`, tip commit `d6c7e91 feat(installer): stage-then-swap clean-replace, crash-safe on both twins`, landed on `release/1.15.0`). Self-heal (`.add-tmp-*`/`.add-bak-*` glob) -> stage into a fresh same-parent tempdir -> two-rename commit (aside, then land) -> sweep. Its own INV is explicit that this guarantee is PER-CALLER ("never observed half-composed FROM ITS OWN COPY") — silent on TWO CALLERS racing the SAME `dest`, by design: its own Reject scenario names this exact gap as OUT of scope, owned by THIS task. My task does not touch this function at all; it adds a DIFFERENT, layered guarantee (cross-call mutual exclusion) on top of the SAME call sites this function already makes single-call-crash-safe.
+  - `add-method/src/add_method/_installer.py:_reconcile(target_path, bundled_root) -> dict` (1218-1239) / `cli.js:reconcile(args, target, srcRoot)` (888-913) — loops over `MANAGED` (4 trees), one `_clean_replace`/`cleanReplaceTree` call per tree. The CORE work my new lock serializes; UNCHANGED by this task.
+  - `add-method/src/add_method/_installer.py:_is_user_data(name) -> bool` (704-714) / `cli.js:isUserData(name)` (996-1002) — CONFIRMED (read the actual current body, not inferred from the milestone doc): excludes the exact-name `_DATA_EXCLUDE`/`DATA_EXCLUDE` set, a `scope-snapshot` prefix, a `pre-archive-bak` substring, and a `.bak.json` suffix. Does **NOT** yet exclude any `.add-tmp-`/`.add-bak-` scratch marker — that extension is `global-data-restore-harden`'s own M11, and that task's own phase marker still reads `phase: contract` (not yet built/merged); `project-scope-atomic-reconcile` deliberately declined to touch this function too (its own Issue/Risk #4 relies on same-invocation call-order instead). This matters directly for my own design (see Issues/Risks below) — I ground against the REAL current body, not the milestone doc's forward-looking description of a not-yet-shipped state.
+  - `add-method/src/add_method/_installer.py:_DATA_EXCLUDE` (692) / `cli.js:DATA_EXCLUDE` (985) — CONFIRMED: `{"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE}` (Python set) / `["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE]` (JS array). `LOCK_FILE`'s value (`.update.lock`) is ALREADY an exact-name member of this set — the established precedent that "a lock file's name is excluded from the user-data scan," even though `.update.lock` itself lives at `<home>/.update.lock` (never inside a project's own `.add/`, so this particular membership is a documentation/consistency inclusion more than an exercised one). My own new lock file WILL live inside a scanned `<project>/.add/` (see below), making the identical exact-name treatment functionally load-bearing this time, not just decorative.
+  - `add-method/src/add_method/_installer.py:_persist_data(home, project_abspath) -> bool` (717-737) — CONFIRMED: scans `Path(project_abspath) / ".add"`'s top-level entries (`add_dir.iterdir()`), filtered by `_is_user_data`, snapshotting into `<home>/data/<key>`. Ground description was the OLD, non-atomic wipe-then-copy shape; `global-data-restore-harden`'s own hardening of this function has SINCE merged too (commit `52aafdf`, stage-then-commit) — irrelevant either way to my task's OWN correctness (I don't touch this function's body regardless of which shape it's in), but its SCAN DIRECTORY is exactly where my new lock file would live, which is why it matters here.
+  - `add-method/src/add_method/_installer.py:_add_dir(target_path) -> Path` (1264-1265) — `return target_path / ".add"`. Trivial, already-shared helper; the natural "project root" analog to `resolve_global_home`'s `<home>` — I reuse it (unchanged) to resolve where my new lock's own directory lives.
+  - `add-method/src/add_method/_installer.py:resolve_global_home(env=None) -> Path` (605-618) — cited ONLY as the ALREADY-MERGED precedent for "env-injectable for hermetic tests" (`ADD_HOME` -> `XDG_DATA_HOME/add` -> `<HOME>/.add`, reading from an injected `env` mapping, never `os.environ` directly) — the pattern my own new lock's `env` parameter mirrors, so a test can inject `ADD_PROJECT_LOCK_STALE_SECONDS` without a real wait. (`global-lock-followups`'s OWN env-injection for `_update_lock` has since merged too, per the note at Ground line 24 above — this precedent choice was grounded against the pre-merge shape but holds identically against the current one.)
+  - `add-method/src/add_method/_cli.py` (~24-53) — CONFIRMED: pip's `update --check` dispatches to a standalone `update_check(target=...)` function BEFORE `update()` is ever invoked (`if args.check: return update_check(target=args.target)`, line 52-53) — confirms the cross-twin asymmetry noted above from the OTHER side.
+  - `add-method/src/add_method/_installer.py` imports (confirmed via `grep "^import\|^from"`): `contextlib, hashlib, importlib.resources, json, os, re, shutil, sys, tempfile`, `from datetime import datetime, timezone`, `from pathlib import Path`. **No `time` module yet.** My mtime-staleness check needs `time.time()` (or an equivalent); `import time` is a plain stdlib addition, not a new dependency — `global-lock-followups`'s own (now-merged, commit `7396456`) implementation already established this exact same addition for the identical purpose, an independently-confirming precedent.
+  - `add-method/src/add_method/_installer.py:_fail(msg) -> int` (53-56) — CONFIRMED: `sys.stderr.write(...); sys.stderr.flush(); return 1` — an ORDINARY function returning `1`, never `sys.exit()`/an exception. Every `return _fail(...)` inside a `with _project_lock(...):` block therefore unwinds and releases the lock completely normally — Python needs NO exit-hook trick (unlike JS's `fail()`/`process.exit(1)` above); this asymmetry is real and pre-existing, not introduced by this task.
+Context (working folder):
+  - `.add/milestones/install-update-hardening/MILESTONE.md` — read in full; this task is the 4th and last of the milestone, `depends_on: project-scope-atomic-reconcile` (DONE, merged). The milestone's own Tasks checklist still shows this task as "not yet drafted (waits on its dependency's evidence)" — that dependency is now satisfied.
+  - No other project-scope lock, timeout, or staleness mechanism exists anywhere in `_installer.py`/`cli.js` today (confirmed by a full-file search for "lock" on `_installer.py`: every hit is either the DOCSTRING-only phrase "lock-down gate" (an unrelated ADD-methodology concept — the v12 gate `/add`'s own `init --await-lock` arms — NOT a file lock), or `_update_lock`/`LOCK_FILE`/`_DATA_EXCLUDE` themselves). This task's mechanism is genuinely new, not a rename/extension of anything already present.
+Honors (patterns / conventions):
+  - `.add/personas/methodology-engine-dev.md:14` (CONFIRMED exact text): "Design for failure. Every IO touch has a fail-closed path (timeout, missing file, corrupt registry → loud error, never silent half-write). Atomic writes only; no partial state." — the SAME persona both sibling tasks in this milestone used; nominally scoped to `add.py`/`add_engine/*` (this task touches neither — no `ENGINE_MD5`/`ENGINE_PKG_MD5` re-pin is needed), but its rules apply directly here too, the same adapted-fit caveat both siblings made.
+  - `.add/CONVENTIONS.md:63` (CONFIRMED exact text, "folded foundation-version 59, from global-update-harden"): "a frozen contract that pins a per-twin IMPLEMENTATION mechanism... can fail its own INTENT... — freeze the OBSERVABLE behavior... not the mechanism." — governs how §3 states this task's guarantee (both twins guarantee the same observable exclusivity/self-heal behavior, via each platform's own native primitive).
+  - The user's own global CRITICAL RULE ("MUST design for failure: timeouts, retries, circuit breakers, rollback strategy in IO request") explicitly names "timeouts"/"retries" — addressed by the stale-lock self-heal's bounded, exactly-once retry (§1 M5), with the ABSENCE of a bounded-wait CLI flag being a considered, disclosed choice rather than an oversight (§1 Framings weighed).
+  - `project-scope-atomic-reconcile`'s own frozen Reject scenario (verbatim): "two concurrent, lock-less `install`/`update` processes both invoke `_clean_replace`/`cleanReplaceTree` for the SAME `dest`... this task makes NO guarantee about which writer's content wins the race... Serializing concurrent runs is `project-scope-install-lock`'s job." — the literal origin of this task.
+  - `global-lock-followups`'s own frozen OUT-of-scope text (verbatim, confirming the boundary from the OTHER direction): "Serializing two concurrent install/update runs against the SAME per-PROJECT target dir (a DIFFERENT, per-project lock) — owned by the sibling task `project-scope-install-lock`... this task's lock is scoped to the shared HOME + registry.json only, never a project directory." Its own hardening design (self-heal by mtime-age, O_EXCL/`"wx"` as the sole exclusion primitive, no PID-liveness check because it is not portable on Windows, an opt-in `--lock-timeout`, a diagnostic-only PID+timestamp stamp) is read here as PATTERN PRECEDENT, independently mirrored where it fits my own, smaller-blast-radius threat model (self-heal, primitive, diagnostic stamp) and deliberately DIVERGED from where it doesn't (no bounded-wait flag, a shorter/independent staleness default, no shared code) — see §1 Framings weighed for the reasoned split.
+Seams consulted: none apply (`.add/SEAMS.md`'s 5 entries — engine-md5-repin, three-tree-parity, scope-token-grammar, phase-body-extraction, section-unfilled-truth-table — cover ADD's own engine/template/scope-parsing conventions, not installer concurrency primitives; matches both sibling tasks' own conclusion).
+Anchors the contract cites: NEW `_project_lock`/`acquireProjectLock` · NEW `PROJECT_LOCK_FILE` constant (both twins) · `install`/`cmdInit` (new lock-wrap span) · `update`/`cmdUpdate` (new lock-wrap span, non-`--global` path only) · `_DATA_EXCLUDE`/`DATA_EXCLUDE` (one new exact-name member) · `_add_dir` (cited, unchanged, reused to resolve the lock's own directory) · the EXISTING `_update_lock`/`acquireUpdateLock` (cited as pattern precedent and for the lock-ordering invariant, NEVER called into, NEVER modified by this task).
+Issues/Risks (→ feed §1):
+  1. **Core gap**: project-scope `install()`/`update()` have ZERO mutual exclusion today. Each individual `_clean_replace`/`cleanReplaceTree` call is now internally crash-safe (the merged dependency), but nothing stops TWO SEPARATE, concurrently-racing calls to it (one per racing process) on the SAME `dest` — exactly the gap `project-scope-atomic-reconcile`'s own Reject scenario named and deferred to this task.
+  2. `install()`'s (and `cmdInit`'s) interactive flow can REASSIGN the target directory (via `_prompt_target`/the clack preamble) AFTER the function starts but BEFORE any real work begins — the lock must key on the FINAL, post-prompt target, never the initial CLI argument, or two concurrent interactive installs could contend on the wrong directory (or fail to contend on the right one).
+  3. Pre-existing, NOT-introduced-by-me cross-twin structural asymmetry: JS's `cmdUpdate` inlines its `--check` read-only report as an early return WITHIN the same function my lock wraps; Python's `--check` is a fully separate function (`update_check()`) that never calls `update()` at all. My JS-side lock acquisition must sit after that early return; Python needs no equivalent carve-out. Left unaddressed, an over-hasty "just wrap the whole function" edit on the JS side would make a purely-informational `--check` invocation needlessly contend for (and, if held, fail on) a lock it has no reason to touch.
+  4. If my new lock file lives inside `<target>/.add/` (the natural choice, mirroring `<home>/.update.lock`'s own placement at the analogous root) and is NOT excluded from `_is_user_data`/`isUserData`, a `--global-data` persist call — itself invoked from WITHIN the SAME locked `install()` span, after `_reconcile` completes but before the function returns — would scan `<target>/.add` and snapshot the CURRENTLY-HELD lock file as if it were user-data, later restorable into a fresh clone as a bogus pre-existing lock artifact. Closed by a one-line exact-name addition to `_DATA_EXCLUDE`/`DATA_EXCLUDE`, mirroring `LOCK_FILE`'s own existing membership — independent of, and not waiting on, `global-data-restore-harden`'s separate (not-yet-built) `.add-tmp-`/`.add-bak-` pattern-exclusion, since my lock file is a FIXED exact name, not a token-suffixed scratch sibling.
+  5. Lock-ordering / deadlock consideration — UPGRADED from forward-looking to LIVE (orchestrator re-check, post-draft): `global-lock-followups` merged (`7396456`) after this grounding was written. `install()`'s `as_global` sub-block NOW holds `with _update_lock(home, timeout=lock_timeout, env=env_map):` today (confirmed by reading the current merged body, `_installer.py` ~1090-1099) — so the nested-lock scenario is no longer hypothetical. Verified the ordering is still SAFE by construction: M1 (§1) wraps the project-scope lock around install()'s ENTIRE call, acquired before any write begins — which means, once built, the project lock will sit OUTSIDE the function call and the already-merged home lock will sit INSIDE it (nested only within the as_global sub-span), matching INV (§3, "a project-scope lock is ALWAYS acquired before, never nested inside, any home-scoped lock") by the shape of the wrap itself, not by a coincidence of merge order. This is now a concretely testable invariant for THIS task's own §4 TESTS phase (a real `install(as_global=True)` call exercising both locks simultaneously), not a note deferred to "whichever task lands second."
+  6. Same non-portable-PID-liveness ceiling `global-lock-followups` already independently discovered (Windows `os.kill(pid, 0)` can actually TERMINATE the held process rather than merely probe it) applies identically here — mtime-age, never PID, is the only viable staleness signal for ANY stdlib-only lock in this codebase, project-scope or global.
+  7. Same non-portable-atomic-directory-swap ceiling underlies why a SEPARATE lock is needed alongside (never instead of) `_clean_replace`'s own crash-safety: that function's own INV is explicit that its guarantee is PER-CALLER, not cross-caller — this task supplies the cross-caller half.
+Related intent:
+  - Milestone `install-update-hardening` goal (verbatim): "add.py init/update (both --global and project-scope, pip+npm twins) survive a crash or a concurrent run without leaving a half-written .add/ tree or a wedged lock" — this task delivers the "concurrent run" AND "wedged lock" halves for the PROJECT-scope case, the LAST of the milestone's 4 exit criteria.
+  - Milestone's own named exit criterion (verbatim, cited per this task's own brief): "Two concurrent install/update runs against the SAME project-scope destination cannot interleave writes — one waits or fails cleanly (verify: project-scope-install-lock §4 concurrent-run scenarios, once drafted)."
+  - `project-scope-atomic-reconcile`'s and `global-lock-followups`'s own frozen texts (both quoted verbatim above under Honors) jointly and precisely bound this task's scope from BOTH directions: not the copy mechanism (that task's job), not the shared home (that task's job) — exactly and only the project-scope mutual-exclusion gap.
+  - GLOSSARY.md: no existing "lock" domain term — stays internal code vocabulary + a new machine-readable reject code, matching both sibling tasks' own "none" precedent for a hardening/mechanism-only task.
+Ground SHA: 1cc4065
 
 ---
 
 ## 1 · SPECIFY — the rules ▸ docs/03-step-1-specify.md
 
-Feature: <name>
-Framings weighed: <chosen> (chosen) · <alternative> · <alternative>
+Feature: a NEW per-project-scope lock (`_project_lock`/`acquireProjectLock`) serializing concurrent `install()`/`cmdInit` and `update()`/`cmdUpdate`'s non-`--global` path against the SAME target directory's own `.add/` tree — a peer to, but mechanically and architecturally INDEPENDENT from, the existing/eventual global-home lock (`_update_lock`/`acquireUpdateLock`).
+Framings weighed: a NEW, independent lock primitive — own function, own lock file (`<target>/.add/.install.lock`), own env-overridable staleness default — that MIRRORS the proven O_EXCL/`"wx"` + mtime-age-self-heal PATTERN already established in this codebase, without calling into or extending either the current or the eventual `_update_lock`/`acquireUpdateLock` (chosen) · generalize/extend `_update_lock`/`acquireUpdateLock` itself to accept ANY root (home OR a project's `.add/` dir), calling it from both `_update_global` (existing) and `install`/`update` (new) (rejected: at draft time, `global-lock-followups`'s own hardening of that function was FROZEN but not yet merged — that specific coupling concern is now moot, since it merged (`7396456`) shortly after this draft was written; the choice still stands on its OWN, merge-order-independent merits — the two locks guard genuinely different-shaped resources — one shared, machine-wide, potentially-many-registered-projects propagation (tolerating a long ~600s staleness window and motivating an opt-in CI wait) versus one per-target, typically-few-seconds reconcile (wanting a much shorter default and no wait mode) — forcing one shared knob would be an awkward compromise between the two (this reasoning holds regardless of merge order, which is now moot: both tasks merged, `global-lock-followups` first) · no lock at all, relying solely on `_clean_replace`'s already-shipped per-call atomicity and accepting an unpredictable last-writer-wins outcome (rejected: the milestone's own 4th exit criterion explicitly demands "cannot interleave writes — one waits or fails cleanly," a strictly stronger guarantee than "each writer's OWN copy is internally atomic," which already exists today without any new work) · an OS-level advisory file lock (`fcntl.flock`/Windows `msvcrt.locking`) instead of an O_EXCL sentinel file (rejected: the identical, already-learned CONVENTIONS.md fv59 lesson — an OS-level advisory lock is not observable/compatible cross-twin, since Node has no `flock` equivalent without a native dependency, which the "no new dependency anywhere in this milestone" constraint rules out) · an opt-in `--lock-timeout`-style bounded-wait CLI flag, mirroring `global-lock-followups`'s own M4 (considered and DECLINED, not silently omitted: that flag's motivating use case — a CI job waiting out a potentially-long multi-project global propagation — does not transfer cleanly to a per-project lock whose expected hold duration is a handful of `_clean_replace` calls; immediate fail-fast is simpler, needs no new CLI surface, matching this milestone's own "no new flag surface for routine tuning" spirit, and the exit criterion itself offers "waits OR fails cleanly" as two equally acceptable options, not a mandate for waiting).
 Must:
 <must>
-  - <required behavior>
+  - M1: `install()` (Python) and `cmdInit` (JS) acquire the new project-scope lock keyed to the FINAL, post-interactive-prompt target directory's own `.add/` tree, BEFORE any write begins (bundled-root resolution onward) and hold it for the entire remainder of the call — the `as_global` sub-block, `_reconcile`, soul/gitignore seed, agent-pointer write, intent note, and (if opted in) persist/restore — releasing on EVERY exit path (every early `_fail()`/`fail()` return AND the final success return), regardless of whether `--global`/`--global-data`/`--from-global-data` is ALSO passed (the per-project drop always runs, so the lock always applies).
+  - M2: `update()` (Python, non-`--global` branch only) and `cmdUpdate` (JS, non-`--global` branch only) acquire the SAME kind of project-scope lock, keyed to the target's `.add/` tree, immediately after the existing "no ADD project here" precondition check, and hold it for the entire remainder of the call — INCLUDING the same-version no-op check, so a second waiter re-evaluates it FRESH once it acquires (avoiding both a stale-read race and a redundant re-reconcile) — through to every exit (the no-op early return AND the final success return). `update(as_global=True)`/`cmdUpdateGlobal`'s wholesale delegation elsewhere is UNCHANGED and untouched (a DIFFERENT target, already covered by the existing/future global lock).
+  - M3 (JS-only carve-out, a pre-existing cross-twin asymmetry, not a divergence this task introduces): `cmdUpdate`'s existing inlined `--check` early return (a pure, read-only report, no writes) stays OUTSIDE/BEFORE the lock acquisition. Python's `update()` never sees a `--check` request at all (dispatched separately by `_cli.py` to `update_check()`), so no equivalent carve-out exists or is needed on the Python side.
+  - M4: the lock's sole mutual-exclusion primitive is an O_EXCL (Python `os.open(path, os.O_CREAT|os.O_EXCL|os.O_WRONLY)`) / `"wx"` (JS `fs.openSync(path,"wx")`) sentinel-file create at `<target>/.add/.install.lock` — the SAME cross-twin-safe primitive class `_update_lock`/`acquireUpdateLock` already established; never an OS-level advisory lock.
+  - M5 (stale-lock self-heal — independently re-derived and independently defaulted for this task's own, shorter-duration threat model, mirroring the SAME proven shape `global-lock-followups`'s own frozen design uses for a different resource): on contention (`EEXIST`), stat the existing lock file; if `now − mtime > ADD_PROJECT_LOCK_STALE_SECONDS` (env-overridable; default proposed in Assumptions), unlink it and retry the create EXACTLY once before falling through to fail-fast. A future/bogus mtime (clock skew) is NEVER treated as stale (sign-aware age check). The create remains the SOLE exclusivity decision — staleness only ever decides whether to retry, never bypasses exclusivity: at most one racing process's create can succeed at any instant, even when two processes independently judge the same lock stale and both attempt to reclaim it.
+  - M6 (diagnostic stamp, cheap and optional-in-spirit but included for parity with the sibling's own design): on a successful acquire (fresh or reclaimed), the lock file's content is stamped `"<PID> <ISO-8601 UTC timestamp>\n"` — informational ONLY, never read to decide staleness. A crash between create and this stamp write leaves the file EMPTY; staleness (mtime-keyed) is unaffected, and a later contention message degrades to "holder unknown" instead of erroring on unparseable content.
+  - M7 (no bounded-wait flag — a deliberate, disclosed absence, not an oversight, see Framings weighed): this task introduces NO new CLI flag. A LIVE (non-stale) contended lock fails IMMEDIATELY with a new, distinct reject code (see Reject) — never waits, never polls.
+  - M8 (`_DATA_EXCLUDE`/`DATA_EXCLUDE` extension): the lock's exact filename (`.install.lock`, held in a new `PROJECT_LOCK_FILE` constant) is added as a ONE-LINE, exact-name member of `_DATA_EXCLUDE`/`DATA_EXCLUDE` — mirroring `LOCK_FILE`'s own existing membership — so `_persist_data`/`persistData`'s scan of `<target>/.add`'s top-level entries never snapshots a currently-held (or stale-but-not-yet-swept) lock file as user-data.
+  - M9 (both twins / parity): `_project_lock` (Python, `@contextlib.contextmanager`) and `acquireProjectLock` (JS, returning a `release()` closure per the SAME idiom `acquireUpdateLock` already uses, and registered via `process.on("exit", release)` for the IDENTICAL reason `acquireUpdateLock` already needs it — `cli.js:fail()` calls `process.exit(1)` directly, skipping any pending `finally`, so a plain `try/finally` would silently fail to release the lock if anything nested inside the guarded region calls `fail()`) guarantee the SAME observable behavior — exclusivity, self-heal, diagnostic stamp, immediate fail-fast — each via its own native primitive. Internal JS failures inside the lock's own acquire/release logic `throw` real `Error`s, never call `fail()` directly.
+  - M10 (unchanged elsewhere): `_reconcile`/`reconcile`, `_clean_replace`/`cleanReplaceTree`, `_is_user_data`/`isUserData` (beyond the one new exact-name member in M8), `_update_lock`/`acquireUpdateLock`, `_update_global`/`cmdUpdateGlobal` are ALL byte-identical to before this task — this task adds a new, independent lock and its two call-site wraps, nothing else.
+  - M11 (lock-ordering invariant — LIVE, not forward-looking: `global-lock-followups` merged first, `7396456`): a project-scope lock is ALWAYS acquired before, never nested inside, any home-scoped lock (`_update_lock`/`acquireUpdateLock`) acquisition for the same call. `install`'s `as_global` sub-block's home-lock acquisition already exists in the current tree, nested inside the function body — this task's own project-lock wrap (M1, whole-function span) MUST land OUTSIDE it, never the reverse. Verified safe by construction at draft time (the nesting direction M1 already specifies satisfies this); a real test exercising `install(as_global=True)` with both locks live is the concrete proof required at this task's own BUILD/VERIFY, not merely re-reading this note.
 </must>
 Reject:
 <reject>
-  - <bad input / situation> -> "<error_code>"
+  - a live (non-stale) project lock is held, contended by a second `install()`/`update()` call against the SAME target -> "install_in_progress" (nothing written, the held lock untouched; distinct from the EXISTING `update_in_progress`, which guards a DIFFERENT resource — the shared home, never a project directory)
 </reject>
 After:
 <after>
-  - <state that is true once it succeeds>
+  - two concurrent `install()`/`update()` (project-scope) calls against the SAME target never interleave writes to that target's managed trees or seeded files — exactly one proceeds at a time; the other fails immediately with `install_in_progress`, having written nothing.
+  - a crashed (SIGKILL'd) `install()`/`update()` never wedges a future call against the SAME target — the stale lock self-heals on the very next attempt, no manual deletion required.
+  - the lock file is never mistaken for user-data by `_persist_data`/`persistData`'s snapshot scan, nor (consequently) ever restored into a fresh clone as a bogus pre-existing artifact.
+  - `_clean_replace`/`cleanReplaceTree`'s own per-call crash-safety (the merged dependency) is unchanged and composes with, never duplicates, this task's cross-call mutual exclusion.
+  - the existing global-home lock (`_update_lock`/`acquireUpdateLock`, current OR its own eventual hardened shape) is completely unchanged and untouched by this task.
 </after>
 Assumptions — lowest-confidence first:
 <assumptions>
-  ⚠ <the one assumption most likely to be wrong> — lowest confidence because <why>; if wrong: <cost>
-  - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
+  ⚠ A1 (lowest confidence): `ADD_PROJECT_LOCK_STALE_SECONDS`'s proposed default, 120 seconds — deliberately SHORTER than the global lock's own 600s, reasoned from a project-scope reconcile typically being a handful of `_clean_replace` calls over 4 small-to-medium managed trees (sub-second to low-single-digit seconds even on a slow disk), so a genuinely wedged (crashed) holder should self-heal much sooner than the global case's own, propagation-driven tolerance. There is NO production timing data in this repo for a realistic worst-case (e.g., a large `personas-teacher` tree on a slow CI runner or network-mounted volume) to calibrate against — the identical calibration gap `global-lock-followups` itself already disclosed for its own threshold. If wrong (too short): a false-positive reclaim of a still-alive-but-slow holder, briefly defeating mutual exclusion for that one contended run. If wrong (too long): only delays self-heal of a genuinely wedged lock — inconvenient, not unsafe. Cheap to change either way (one constant).
+  ⚠ A2: the reuse-vs-new-primitive architectural fork itself (Framings weighed) — building an INDEPENDENT primitive rather than extending `_update_lock`/`acquireUpdateLock`. `global-lock-followups` has SINCE merged (`7396456`), so the "avoids coupling to an unmerged sibling" half of the original reasoning no longer applies — but the "different threat models warrant different defaults" half (600s machine-wide tolerance + opt-in CI wait vs. a short per-target default with no wait mode) stands on its own regardless. This remains a genuine, either-way-defensible fork a human may weigh differently — e.g., preferring ONE unified lock implementation for future maintainability even at the cost of forcing a compromise default. If the human prefers the reuse path instead: the redesign is moderate, not a rewrite — the OBSERVABLE guarantees (M1-M9) stay the same, only the internal call-site/shared-vs-separate-function question changes.
+  - [ ] A3: the lock file's exact name/location (`<target>/.add/.install.lock`) — a low-stakes bikeshed; any other exact, fixed, `.add/`-relative name works identically once added to `_DATA_EXCLUDE`/`DATA_EXCLUDE` (M8). If the human prefers a different name (or a location OUTSIDE `.add/`, sidestepping the `_DATA_EXCLUDE` addition entirely), this is a trivial rename with zero ripple into the rest of the design.
+  - [ ] A4: no bounded-wait CLI flag (Framings weighed) — a deliberate, disclosed choice, not an oversight; if the human wants CI-friendly waiting for the project-scope case too (symmetry with `global-lock-followups`'s own `--lock-timeout`), it is a small, additive follow-up (the same polling-loop shape, a new flag on `init`/`update`), not a redesign of anything M1-M11 already establish.
+  - [x] A5 (RESOLVED, orchestrator re-check post-draft): M11's lock-ordering invariant was drafted as vacuous/forward-looking; `global-lock-followups` has since merged FIRST (`7396456`), so its own `install(as_global=True)` `_update_lock` wrap now exists in the current tree. Checked (not assumed): it sits inside the `as_global` sub-block, which M1's whole-function project-lock wrap will correctly nest OUTSIDE of — the invariant holds by the shape of the design, confirmed against the real merged code. No longer an open assumption; promoted to an explicit §4 TESTS item instead (a real `install(as_global=True)` call exercising both locks together).
 </assumptions>
 
 <!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
@@ -58,11 +109,100 @@ Assumptions — lowest-confidence first:
 <scenarios>
 
 ```gherkin
-Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
-  Given <starting situation>
-  When <action>
-  Then <expected result>
-  And <what must remain unchanged>   # required for every rejection
+Scenario: a fresh, uncontended install acquires and releases the lock transparently   # M1 (baseline)
+  Given a target directory with no ADD project yet, and no lock held
+  When I run install() / cmdInit against it
+  Then the install completes exactly as before this task (exit 0, all managed trees materialized)
+  And .add/.install.lock does not exist once the call returns
+
+Scenario: two concurrent install() calls racing on the SAME new target — one proceeds, one fails cleanly   # M1, M4, Reject install_in_progress (the core exit criterion)
+  Given a target directory with no ADD project yet
+  When two install() calls start against it at overlapping times
+  Then exactly one acquires the lock and completes its full managed-tree drop
+  And the other fails immediately with "install_in_progress", having written nothing to the target
+  And the target's managed trees are never observed as an interleaved mix of the two runs' content
+
+Scenario: two concurrent update() calls racing on the SAME existing target — one proceeds, one fails cleanly   # M2, M4, Reject install_in_progress
+  Given a target directory with an existing ADD project (.add/tooling present) at an older version
+  When two update() calls start against it at overlapping times
+  Then exactly one acquires the lock, reconciles, and writes the new stamp
+  And the other fails immediately with "install_in_progress", having written nothing
+
+Scenario: the lock keys on the FINAL, post-prompt target, not the initial argument   # M1 edge case
+  Given an interactive install() call whose target-selection prompt redirects from directory X to directory Y
+  When the call proceeds past the prompt
+  Then the lock is acquired against Y's .add/ tree, never X's
+  And a second, concurrent install() call against Y (not X) correctly contends with the first
+
+Scenario: install --global still serializes the per-project drop under the same new lock   # M1
+  Given a target directory with no ADD project yet, and --global (or --global-data) requested
+  When install() runs
+  Then the project-scope lock is held across BOTH the as_global sub-block AND the per-project _reconcile call
+  And a second concurrent install --global call against the SAME target still fails "install_in_progress", not merely racing on the home
+
+Scenario: update()'s same-version no-op path is also serialized, and a second waiter re-checks freshly   # M2
+  Given a target already at the same version as the installed package, no lock held
+  And a second update() call that starts only after the first one already landed a NEWER package version's reconcile while holding the lock
+  When the second call finally acquires the lock (after the first releases)
+  Then the second call's own same-version check runs FRESH under the lock and correctly finds "already at the new version" (or correctly finds still-missing trees), never acting on a stale pre-lock read
+
+Scenario: update --global and update --check are both unaffected by the new lock   # M2 boundary, M3 JS-only carve-out
+  Given a project-scope lock is currently HELD by another process against a target
+  When I run update(as_global=True) / cmdUpdateGlobal against the shared home, and separately `cmdUpdate --check` against the SAME locked target
+  Then update(as_global=True)/cmdUpdateGlobal proceeds unaffected (a different resource, the shared home, never checks the project lock)
+  And `--check`'s read-only report also proceeds unaffected (JS's inlined check stays before lock acquisition; Python's update() never sees --check at all)
+
+Scenario: a stale lock (crashed holder) self-heals on the very next call   # M5
+  Given <target>/.add/.install.lock exists and its mtime is older than ADD_PROJECT_LOCK_STALE_SECONDS (simulating a SIGKILL'd holder)
+  When I run install() / update() against that target
+  Then the stale lockfile is reclaimed (unlinked and re-created) and the run proceeds to completion (exit 0)
+  And no manual deletion of the lockfile was needed
+
+Scenario: a live, non-stale lock is NOT reclaimed — fail-fast is exact   # M5 (regression guard) + Reject install_in_progress
+  Given <target>/.add/.install.lock exists and its mtime is WITHIN ADD_PROJECT_LOCK_STALE_SECONDS (a genuinely in-flight holder)
+  When I run install() / update() against that target
+  Then the run fails immediately with "install_in_progress" and nothing is reconciled
+  And the held lockfile is left untouched (not reclaimed)
+
+Scenario: a lock whose mtime is bogusly in the future is never treated as stale   # M5 edge case (clock-skew safe direction)
+  Given <target>/.add/.install.lock exists with an mtime set AHEAD of the current clock (simulating clock skew)
+  When I run install() / update() against that target
+  Then the lock is NOT reclaimed (treated as live) and the run fails fast with "install_in_progress"
+
+Scenario: a crash between lock-create and the diagnostic stamp leaves a self-healable empty lock   # M6 edge case
+  Given <target>/.add/.install.lock exists, is EMPTY (0 bytes — simulating a crash before the PID/timestamp write), and its mtime is older than the staleness threshold
+  When I run install() / update() against that target
+  Then the empty stale lock is reclaimed exactly like a stamped one (mtime alone decides staleness)
+  And no error is raised while attempting to read the (absent) diagnostic content
+
+Scenario: the lock file is excluded from a --global-data persist snapshot   # M8
+  Given install(as_global_data=True) is running and currently holds its own project-scope lock at <target>/.add/.install.lock
+  When _persist_data/persistData scans <target>/.add for user-data entries to snapshot (a step that runs later in this SAME call)
+  Then .install.lock is excluded from the entries list, never copied into <home>/data/<key>
+  And a later --from-global-data restore into a fresh clone never plants a bogus pre-existing lock file
+
+Scenario: both twins guarantee the same observable behavior under a simulated contention   # M9
+  Given the same simulated live-lock contention applied once to the Python install()/update() call and once to the Node cmdInit/cmdUpdate call (via `node bin/cli.js`)
+  When each twin's acquire attempt is contended
+  Then both twins fail with the same "install_in_progress" text, having written nothing
+  And a structural parity check confirms both source files carry the same acquire shape (self-heal check -> create -> stamp -> release), not just matching function names
+
+Scenario: this task's cross-call exclusivity composes with, never duplicates, _clean_replace's own per-call crash-safety   # edge case tying the dependency relationship
+  Given a single install() call holding the new project-scope lock, and a simulated crash mid-copy inside one of its _clean_replace calls
+  When the call is interrupted
+  Then _clean_replace's OWN self-heal (already shipped, unmodified by this task) recovers that ONE managed tree on the next call, exactly as project-scope-atomic-reconcile already guarantees
+  And this task's lock is what ensures no SECOND, concurrent caller was ever racing that same _clean_replace call in the first place — the two guarantees are independent and additive, never overlapping
+
+Scenario: no CLI flag exists for a bounded wait — contention always fails immediately, never polls   # M7
+  Given a live, non-stale project-scope lock is held on a target
+  When I run install() / update() against that target, with no new flag available to request a wait
+  Then the call fails "install_in_progress" immediately (sub-second), never polling or blocking for any measurable duration
+
+Scenario: every other touched function's behavior is byte-identical to before this task   # M10
+  Given the full pre-task test suites for _reconcile/reconcile, _clean_replace/cleanReplaceTree, _is_user_data/isUserData, _update_lock/acquireUpdateLock, and _update_global/cmdUpdateGlobal
+  When this task's new lock and its two call-site wraps are added
+  Then every one of those pre-existing suites still passes unmodified
+  And a source diff shows zero lines changed in any of those 5 functions' own bodies (only install()/update()/cmdInit/cmdUpdate gain the new lock-wrap, plus the one new _DATA_EXCLUDE/DATA_EXCLUDE member)
 ```
 
 </scenarios>
@@ -74,14 +214,182 @@ Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
 
 ```
-<METHOD> <path>   body: { <fields> }
-  200 -> { <success fields> }
-  4xx -> { error: "<code>" | "<code>" }
-Schema: <tables/fields touched, and access pattern>
+project-scope lock  [internal helper, no new CLI surface]
+  _project_lock(add_dir: Path, *, env: Mapping | None = None) -> context manager    # Python, NEW
+  acquireProjectLock(addDir, env = process.env) -> release()                        # JS twin, NEW
+
+  ACQUIRE (mirrors the proven _update_lock/acquireUpdateLock PATTERN — a NEW, independent
+  primitive; never calls into or extends either):
+    env_map = os.environ if env is None else env                     # / env (JS default: process.env)
+    stale_after = float(env_map.get("ADD_PROJECT_LOCK_STALE_SECONDS", 120))   # env-overridable;
+                  own default, deliberately shorter than the global lock's 600s (least-sure flag A1)
+    lock_path = add_dir / PROJECT_LOCK_FILE                          # PROJECT_LOCK_FILE = ".install.lock"
+    add_dir.mkdir(parents=True, exist_ok=True)                       # safe/idempotent — mirrors
+                                                                       # _update_lock's own home.mkdir
+    try: fd = os.open(str(lock_path), O_CREAT|O_EXCL|O_WRONLY, 0o600)   # / fs.openSync(lockPath,"wx")
+    except already-exists:
+      age = now() - stat(lock_path).mtime          # negative age (future mtime) => never stale (sign-safe)
+      if age > stale_after:
+        unlink(lock_path)      # best-effort — a losing race's ENOENT/vanished-file is swallowed, not an error
+        retry the create EXACTLY once
+        if the retry ALSO hits already-exists: raise BlockingIOError    # -> caller maps to install_in_progress
+      else:
+        raise BlockingIOError    # -> "install_in_progress" — NO wait, NO poll (this task adds no
+                                   #    bounded-wait mode; JS: acquireProjectLock calls
+                                   #    fail("install_in_progress: ...") directly on this path)
+    # acquired (fresh or reclaimed) — best-effort diagnostic stamp, NEVER read to decide staleness
+    write(fd, f"{pid} {utc_iso_now()}\n")    # write errors here are swallowed — informational only
+    -> on the SAME exit paths as _update_lock (success or exception): close(fd); unlink(lock_path)
+       best-effort (Python: `finally` inside the contextmanager). JS: release is registered via
+       process.on("exit", release) — NOT a plain try/finally — because cli.js:fail() calls
+       process.exit(1) directly and would skip a finally if called from anywhere nested inside
+       the guarded region (the identical, already-solved hazard acquireUpdateLock's own design
+       addresses this same way).
+
+  UNCHANGED-BY-DESIGN: the O_EXCL/"wx" create is the ONLY mutual-exclusion primitive; staleness-
+  reclaim only ever decides whether to RETRY, never substitutes for it — at most one racing
+  create succeeds at any instant (the identical TOCTOU-safety invariant _update_lock's own design
+  already relies on).
+
+install(target=".", ..., as_global=False, ..., env=None) -> int      # signature UNCHANGED (env
+                                                                       # already existed; reused,
+                                                                       # not a new parameter)
+  -> AFTER the interactive block resolves target_path to its FINAL value (unchanged control flow
+     up to that point), BEFORE bundled_root resolution:
+     [simplification, disclosed in §0: unlike _update_global (which keeps its own bundled-root
+      validation lock-free, a finer-grained optimization that matters at the global-propagation
+      scale), this wrap includes bundled-root validation INSIDE the lock too — one single acquire
+      point, negligible extra hold time (a few Path.exists() calls) at this smaller, per-target scale]
+       add_dir = _add_dir(target_path)
+       env_map = os.environ if env is None else env
+       try:
+         with _project_lock(add_dir, env=env_map):
+           <every existing statement from bundled_root resolution through the final `return 0`,
+            UNCHANGED — including the as_global sub-block, _reconcile, seed_soul_md,
+            seed_gitignore, agent-pointer write, intent note, persist, restore>
+       except BlockingIOError:
+         return _fail(f"install_in_progress: another install/update is already running against "
+                       f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)")
+
+cmdInit(args)                                                          # signature UNCHANGED
+  -> AFTER chosenTarget is resolved to its FINAL value (unchanged control flow up to that point),
+     BEFORE `if (args.global) installGlobal(...)`:
+       const addDir = path.join(chosenTarget, ".add");
+       acquireProjectLock(addDir);    # registers its own process.on("exit", release) — no
+                                        # explicit release()/finally needed at the call site,
+                                        # mirrors acquireUpdateLock's own usage at cmdUpdateGlobal
+       <every existing statement from `if (args.global) installGlobal(...)` through the
+        function's end, UNCHANGED>
+
+update(target=".", ..., as_global=False, ..., env=None) -> int        # signature UNCHANGED
+  if as_global: return _update_global(...)    # UNCHANGED — a DIFFERENT target, DIFFERENT lock
+  target_path = Path(target).resolve()
+  add_dir = _add_dir(target_path)
+  if not (add_dir / "tooling").exists() and not (add_dir / "state.json").exists():
+    return _fail(...)     # UNCHANGED precondition, still lock-free
+  env_map = os.environ if env is None else env
+  try:
+    with _project_lock(add_dir, env=env_map):
+      <every existing statement from bundled_root resolution through the final `return 0`,
+       UNCHANGED — including the same-version no-op early return, which a second waiter now
+       re-evaluates FRESH once it acquires>
+  except BlockingIOError:
+    return _fail(f"install_in_progress: another install/update is already running against "
+                  f"{target_path} — retry shortly (remove {add_dir / PROJECT_LOCK_FILE} if stale)")
+
+cmdUpdate(args)
+  if (args.global) return cmdUpdateGlobal(args);    # UNCHANGED
+  const target = ...; const addDir = ...;
+  if (!fs.existsSync(...)) fail(...);                 # UNCHANGED precondition, still lock-free
+  if (args.check) { <UNCHANGED check-only report>; return; }   # UNCHANGED, stays BEFORE the lock
+                                                                  # (JS-only carve-out — see §0/M3)
+  acquireProjectLock(addDir);
+  <every existing statement from the same-version no-op check through the function's end,
+   UNCHANGED>
+
+# ── new constant, both twins ──
+PROJECT_LOCK_FILE = ".install.lock"     # add_dir / PROJECT_LOCK_FILE — NEVER user-data (see below)
+
+# ── _DATA_EXCLUDE / DATA_EXCLUDE — ONE new exact-name member ──
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}
+DATA_EXCLUDE  = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE]
+  # mirrors LOCK_FILE's own existing membership — _persist_data/persistData's scan of
+  # <target>/.add's top-level entries never snapshots a currently-held or stale lock file.
+
+# ── Reject code (ONE new code) ──
+install_in_progress   fires from: install()/cmdInit AND update()/cmdUpdate's non-global path, on
+                      a LIVE (non-stale) contended project lock — no wait, no poll, nothing
+                      written. Distinct from the EXISTING update_in_progress (a different
+                      resource: this project's own .add/ tree, never the shared home).
+
+Schema / files touched:
+  <target>/.add/.install.lock   NEW transient file. Content: empty momentarily after create, then
+                                 "<PID> <UTC ISO ts>\n" once the diagnostic stamp lands — purely
+                                 informational, mtime is the ONLY staleness signal. Excluded from
+                                 _is_user_data/isUserData scans via the ONE new _DATA_EXCLUDE/
+                                 DATA_EXCLUDE member above. Never present as steady state — exists
+                                 only for the duration of one held install()/update() call, or
+                                 between an abnormal termination and the next call's self-heal.
+  No new dependency (stdlib os/time/tempfile · Node builtin fs/path only). No new CLI flag.
+
+INV: the O_EXCL ("wx") create is the SOLE mutual-exclusion primitive for this NEW lock, exactly as
+     for _update_lock/acquireUpdateLock — staleness-reclaim only ever decides WHETHER to retry
+     that create, never grants the lock by any other means.
+INV: this lock is entirely INDEPENDENT of _update_lock/acquireUpdateLock — different function,
+     different file, different default threshold, zero shared code — by DELIBERATE design (§1
+     Framings weighed), not an oversight. A future decision to unify them is a new contract, not a
+     natural evolution of this one.
+INV: a project-scope lock is ALWAYS acquired before, never nested inside, any home-scoped lock
+     acquisition for the SAME call — global-lock-followups's own install(as_global=True) home-lock
+     wrap has SINCE merged (commit 7396456; §0 Issue/Risk #5 upgraded from forward-looking to a
+     live, checked invariant) — confirmed to sit inside the as_global sub-block, which this task's
+     M1 whole-function wrap will correctly nest OUTSIDE of. Verify at build time with a real test,
+     not by re-reading this note.
+INV: `_reconcile`/`reconcile`, `_clean_replace`/`cleanReplaceTree`, `_is_user_data`/`isUserData`
+     (beyond the one new exact-name member), `_update_lock`/`acquireUpdateLock`,
+     `_update_global`/`cmdUpdateGlobal` are BYTE-IDENTICAL to before this task.
+INV: both twins guarantee the SAME state machine (self-heal-check -> create -> stamp -> release)
+     via each platform's own primitives (os.open/os.stat/os.unlink vs fs.openSync/fs.statSync/
+     fs.unlinkSync) — the OBSERVABLE guarantee is frozen, not the literal syscalls (mirrors the
+     _update_lock/acquireUpdateLock and _clean_replace/cleanReplaceTree precedent, CONVENTIONS.md
+     fv59, "folded foundation-version 59").
+
+OUT of scope (named, not silently dropped):
+  - A bounded-wait / CI-timeout mode for the project-scope lock (symmetry with
+    global-lock-followups's own --lock-timeout) — considered and DECLINED (§1 Framings weighed,
+    Assumption A4), a disclosed non-goal, not an oversight; a cheap additive follow-up if wanted.
+  - Unifying this lock with _update_lock/acquireUpdateLock into one shared primitive — considered
+    and DECLINED (§1 Framings weighed, Assumption A2); a legitimate future redesign, not something
+    this task's shape blocks.
+  - prune_data's own concurrency, _persist_data/_restore_data's own crash-safety hardening,
+    _clean_replace/cleanReplaceTree's own crash-safety — all owned by sibling tasks (named in
+    their own contracts), untouched here.
+  - PID-liveness dead-holder detection — not portable (the same Windows os.kill(pid,0) hazard
+    global-lock-followups already found); mtime-age is the only staleness signal, exactly as there.
 ```
 
-Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
-Status: DRAFT
+Glossary deltas: none (this task introduces a new internal mechanism and one machine-readable
+  reject code — "project lock" / "install_in_progress" stay internal code vocabulary, not
+  GLOSSARY.md domain terms; matches both sibling tasks' own "none" precedent for a hardening/
+  mechanism-only task).
+
+Least-sure flag surfaced at freeze:
+  ⚠ [spec] A2 — the reuse-vs-new-primitive architectural fork (an independent lock vs. extending
+    `_update_lock`/`acquireUpdateLock`) is a genuine, either-way-defensible choice. This draft
+    chooses independence to avoid coupling to `global-lock-followups`'s still-unmerged shape and
+    to fit a different threat model (shorter expected hold duration, no wait-mode need), but a
+    human who values ONE unified lock implementation over independent mergeability could
+    reasonably choose the other path. Cost if wrong: a moderate (not full) redesign — the
+    OBSERVABLE guarantees (M1-M9) stay the same, only the internal call-site/shared-vs-separate-
+    function question changes, and it would introduce the merge-order dependency this draft
+    currently avoids.
+  Second flag: [spec] A1 — `ADD_PROJECT_LOCK_STALE_SECONDS`'s proposed default (120s, deliberately
+    shorter than the global lock's own 600s, reasoned from project-scope's typically-brief
+    reconcile duration) has no production timing data behind it — the same calibration gap
+    `global-lock-followups` itself already disclosed for its own threshold. Cheap to change (one
+    constant) if wrong.
+
+Status: DRAFT — awaiting approval
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
      points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
      with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
@@ -113,15 +421,15 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+Scope (may touch): `add-method/src/add_method/_installer.py` `add-method/bin/cli.js`
+Strategy (ordered batches): 1. Add `PROJECT_LOCK_FILE = ".install.lock"` (both twins, near `LOCK_FILE`/`STAMP_FILE`); add it as a new exact-name member of `_DATA_EXCLUDE`/`DATA_EXCLUDE`. 2. Python: `import time` (new stdlib import); write `_project_lock(add_dir: Path, *, env: Mapping | None = None)` as a NEW `@contextlib.contextmanager`, placed near `_update_lock` for discoverability (not shared code) — self-heal-check (stat + sign-aware age compare) -> `os.open(O_CREAT|O_EXCL|O_WRONLY)` (retry once after an unlink on a confirmed-stale contention) -> best-effort diagnostic stamp write -> `yield` -> `finally: close + unlink best-effort`. 3. JS: write `acquireProjectLock(addDir, env = process.env)` as a NEW function near `acquireUpdateLock` — identical self-heal-check -> `fs.openSync(path,"wx")` (retry once) -> best-effort stamp write -> register `process.on("exit", release)` -> return `release`; on a live contention, call `fail("install_in_progress: ...")` directly (mirrors `acquireUpdateLock`'s own precedent). 4. Python `install()`: compute `add_dir`/`env_map` right after the interactive block resolves `target_path`'s FINAL value; wrap everything from `bundled_root` resolution through the final `return 0` in `with _project_lock(add_dir, env=env_map):`, `except BlockingIOError: return _fail("install_in_progress: ...")` immediately outside it (mirrors `_update_global`'s own try/with/except shape) — re-indentation only, no line inside the wrap changes. 5. Python `update()`: after the existing "no ADD project" precondition, wrap the same way (including the same-version no-op branch). 6. JS `cmdInit`: after `chosenTarget` is final, call `acquireProjectLock(addDir)` before `if (args.global) installGlobal(...)` — no re-indentation needed (exit-hook release, not scope-based). 7. JS `cmdUpdate`: call `acquireProjectLock(addDir)` AFTER the existing `if (args.check) {...; return;}` early return, before the same-version no-op check — ordering matters (see Known-problem fixes). 8. Grep both files afterward to confirm `_reconcile`/`reconcile`, `_clean_replace`/`cleanReplaceTree`, `_update_lock`/`acquireUpdateLock`, `_update_global`/`cmdUpdateGlobal` remain byte-unchanged and no other call site was touched.
 
-Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+Persona (optional): methodology-engine-dev (same persona both sibling tasks in this milestone used — nominally scoped to `add.py`/`add_engine/*`, adapted-fit for the installer; see §0 Honors)
+Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly, skipping any pending `finally` -> `acquireProjectLock`'s release MUST be wired via `process.on("exit", release)`, never a plain try/finally at the call site (mirrors `acquireUpdateLock`'s own already-solved precedent) — a plain try/finally would silently fail to release the lock whenever a nested call (`installGlobal`, `cleanReplaceTree`, etc.) invokes `fail()` · JS's `cmdUpdate` inlines its `--check` early return WITHIN the function my lock wraps — the lock acquisition line must be placed AFTER that early return, never before it, or a purely read-only `--check` invocation would needlessly contend for (and potentially fail on) a lock it has no reason to touch; Python's `update()` has no equivalent hazard (its `--check` is the fully separate, never-locking `update_check()`) · a portable PID-liveness check does not exist (Windows `os.kill(pid,0)` can terminate rather than merely probe — the same hazard `global-lock-followups` already found) -> mtime-age is the only staleness signal, never PID · clock skew making a live lock look stale -> only reclaim when `age > threshold` (a future/bogus mtime never counts as stale) · `install()`'s interactive flow can reassign `target_path` -> the lock's `add_dir` must be computed AFTER that reassignment settles, never before it · the new `_DATA_EXCLUDE`/`DATA_EXCLUDE` member must be the lock file's own literal exact name (`.install.lock`), not a `.add-tmp-`/`.add-bak-`-style prefix pattern (that convention belongs to a different, not-yet-built sibling mechanism and doesn't apply to this fixed-name file).
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
-Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
+Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim only ever decides whether/when to retry that create, never grants the lock by any other means (identical in spirit to `_update_lock`'s own safety rule, independently restated for this new, separate primitive).
+Code lives in: `add-method/` (the package — NOT this task's `./src/`).
+Constraints: do NOT change any test or the contract; no new dependency (stdlib `os`/`time`/`tempfile` · Node builtin `fs`/`path` only); ask if unclear.
 
 <!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
      with "/" = project root · a bare name = sibling of the previous token's dir ·
