@@ -3,7 +3,7 @@
 slug: project-scope-install-lock · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
 autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -403,13 +403,42 @@ Status: FROZEN @ v1 — approved by Tin Dang
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: 100% of the 16 §2 scenarios + the M11 lock-ordering invariant (an explicit ask
+  in §0/§3, not one of the 16 gherkin scenarios) + 1 bonus TOCTOU concurrency test — 26 test
+  methods total. Confirmed RED: 16 fail for a genuine missing-implementation reason (an
+  AttributeError on the new `_project_lock`/`PROJECT_LOCK_FILE` symbols, or the OLD, lock-less
+  `install()`/`update()` correctly ignoring a pre-existing/held lock file it doesn't check for
+  yet). The other 10 are honest baseline/regression guards (the uncontended happy path, the
+  disclosed --global/--check unaffectedness, the empty-lock read-safety edge case, the
+  reconcile-crash composition, 2 of the 3 M11 tests) — already true pre-build by construction
+  and must STAY true post-build; mirrors `global-lock-followups`' own precedent of disclosing
+  "N legitimate regression guards already green pre-build" rather than forcing an artificial
+  failure into a test whose scenario is inherently a not-yet-affected boundary.
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_fresh_uncontended_install_releases_lock_transparently: arrange a target with no project yet, no lock held / act install() / assert exit 0 + tooling materialized + .install.lock absent after · covers: M1 (baseline; green pre-build)
+  - test_two_concurrent_installs_one_proceeds_one_fails_cleanly: arrange a fresh target, hold the project lock directly / act install() while held, then again once released / assert the first fails "install_in_progress" with nothing written, the second succeeds · covers: M1, M4, Reject
+  - test_two_concurrent_updates_one_proceeds_one_fails_cleanly: arrange an existing project with docs deleted (sentinel), hold the lock / act update() while held, then again once released / assert the first fails with nothing reconciled, the second reconciles · covers: M2, M4, Reject
+  - test_lock_keys_on_final_post_prompt_target_not_initial_arg: arrange a forced-interactive install() whose mocked _prompt_target redirects X->Y / act install(target=X) / assert installed into Y not X, a 2nd call redirected to Y contends when Y (not X) is locked, and locking X never blocks a call keyed on Y · covers: M1 edge case
+  - test_install_global_still_locks_the_per_project_drop: arrange a fresh target / act install(as_global=True) once (uncontended), then again with the project lock held / assert the per-project drop still ran, and the 2nd call contends on the PROJECT lock (registry touched exactly once) · covers: M1
+  - test_update_same_version_noop_is_locked_and_rechecked_fresh: arrange an existing same-version project, hold the lock / act update() while held, then again once released / assert the first fails, the second's no-op re-check runs fresh and releases the lock · covers: M2
+  - test_update_global_unaffected_by_a_held_project_lock + test_npm_check_unaffected_by_a_held_project_lock: arrange a held project lock on a registered project / act update(as_global=True) [pip] and `cmdUpdate --check` [node] / assert both proceed unaffected (a different resource / a carve-out that stays before the lock) · covers: M2 boundary, M3 JS-only carve-out (both green pre-build; disclosed)
+  - test_stale_project_lock_self_heals: arrange a backdated (stale) lock + a deleted docs sentinel / act update() with a tiny stale threshold / assert self-healed, run completes, lock gone after · covers: M5
+  - test_live_project_lock_not_reclaimed_fails_fast: arrange a fresh (age 0) lock / act update() / assert fails fast, lock left untouched · covers: M5 regression, Reject
+  - test_future_mtime_project_lock_never_stale: arrange a lock with mtime an hour in the future / act update() with a tiny threshold / assert NOT reclaimed, fails fast · covers: M5 edge case
+  - test_crash_before_stamp_leaves_self_healable_empty_lock: arrange a 0-byte stale lock / act update() / assert reclaimed exactly like a stamped one, no error · covers: M6 edge case (green pre-build; disclosed)
+  - test_is_user_data_excludes_the_project_lock_by_name + test_lock_file_excluded_from_a_global_data_persist_snapshot: arrange real user-data + a live project lock during install(as_global_data=True) / act persist / assert the lock file is never snapshotted · covers: M8
+  - test_parity_surface + test_npm_fresh_install_unaffected + test_npm_contended_install_fails_fast + test_npm_stale_project_lock_self_heals: arrange source reads + real `node cli.js` subprocess runs (fresh / contended / stale) / assert both twins define the same call-site shape and observably behave the same · covers: M9
+  - test_lock_release_is_independent_of_a_reconcile_crash: arrange a mocked _reconcile that raises mid-call / act install() / assert the exception propagates, the lock still releases, and a subsequent call is not wedged · covers: edge case tying the _clean_replace-crash-safety composition (green pre-build; disclosed)
+  - test_contention_always_fails_immediately_never_polls: arrange a held lock / act update(), timed / assert fails in well under a second — no poll, no wait · covers: M7
+  - test_untouched_lock_and_reconcile_call_sites_are_unchanged + test_is_user_data_baseline_and_new_exclusion: arrange a source read + direct _is_user_data calls / assert the 5 named unchanged functions/call-sites are untouched and ordinary user-data classification is unaffected · covers: M10
+  - test_project_lock_blocks_before_the_home_lock_is_ever_touched: arrange the PROJECT lock held (home free) / act install(as_global=True) / assert fails "install_in_progress" (not update_in_progress), the home lock/stamp were never created · covers: M11 (own required test, not a named §2 scenario)
+  - test_home_lock_contention_surfaces_independently_when_project_lock_is_free: arrange the HOME lock held (project free) / act install(as_global=True) on a 2nd target / assert fails "update_in_progress" (not install_in_progress), and the outer project lock still released cleanly despite the inner failure · covers: M11 (green pre-build — the pre-existing home lock's own contention is unaffected either way)
+  - test_fresh_install_global_releases_both_locks_no_deadlock: arrange no locks held / act install(as_global=True), timed / assert success, both lock files absent after, no deadlock · covers: M11 (green pre-build — only one lock exists today)
+  - test_concurrent_stale_reclaim_exactly_one_wins: arrange a stale lock + 6 Barrier-synced threads calling _project_lock directly / act release all racers concurrently / assert exactly one "acquired", zero unexpected exceptions, no leaked lock file · covers: M4/M5 TOCTOU safety (bonus, beyond the 16 named scenarios)
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
+Tests live in: `add-method/tooling/test_project_scope_lock.py` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
      a token with "/" = project root · a bare name = sibling of the previous
      token's dir · a directory counts its *.py files (non-recursive); reports
