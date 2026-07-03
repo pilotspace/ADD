@@ -339,7 +339,30 @@ Strategy (ordered batches): 1. `_clean_replace` (Python) → add the step-0 self
 
 Persona (optional): methodology-engine-dev
 Known-problem fixes: the self-heal glob must match ONLY the reserved `.add-tmp-`/`.add-bak-` prefixed siblings of THIS dest, never an unrelated same-parent entry → `dest.parent.glob(dest.name + ".add-tmp-*")` / an equivalent `fs.readdirSync` + prefix filter, not a bare wildcard · `shutil.copytree`'s target must be an EMPTY pre-existing dir for `dirs_exist_ok=True` to be safe — `tempfile.mkdtemp` already guarantees that, don't reuse a non-empty path · staging MUST be created inside `dest.parent` (never the system tmp dir) or the commit renames become cross-filesystem and silently fall back to a slow non-atomic copy+delete, defeating the design · `cli.js:fail()` calls `process.exit(1)` directly and skips pending `finally` blocks — every internal error in the new stage/commit region must `throw` a real `Error`, reserving `fail()` for the pre-existing top-level precondition checks only · a caller-visible exception TYPE must stay whatever `shutil.copytree`/`os.replace` (or the JS equivalents) already raise today — do not wrap/swallow into a new custom exception, or an upstream `except OSError` (e.g. `install()`'s `cannot write global home` handler) could stop catching it.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: followed the 5 ordered batches as planned, with two disclosed deviations.
+  (1) Used `os.rename`/`fs.renameSync` for BOTH commit renames instead of the suggested
+  `Path.rename()` — `os.rename` fails loudly on Windows if the target already exists (never
+  silently overwrites, reinforcing the "neither rename targets an already-existing name"
+  invariant as a safety net) and lets tests patch it module-qualified
+  (`mock.patch.object(_installer.os, "rename", ...)`), matching this codebase's own
+  `test_multi_file_commit.py` precedent; `Path.rename()` has no equivalent module-level patch
+  point. Same observable behavior either way — a testability/platform-safety upgrade, not a
+  contract change.
+  (2) Batch 4 (mirror in cli.js) surfaced 3 latent bugs in my OWN just-written tests (not the
+  implementation) during the first post-build run, fixed as part of convergence, all in
+  test_reconcile_rollup.py: scn3's copytree spy fired its "pre-strip files exist" assertion on
+  shutil.copytree's own internal recursive re-invocation of the same (patched) symbol for the
+  __pycache__ subdirectory, not just the intended top-level call — scoped the assertion to
+  `Path(s) == src`. scn6's injected rename-failure predicate matched both the intended landing
+  rename AND the code's own later rollback rename (both target `dest`) — added a "fail only the
+  first matching call" flag so the rollback can succeed for real. scn7 asserted the wrong
+  expected roll-up value ({"restored": 0, "refreshed": 1}); cross-checked against the frozen,
+  unchanged test_orphan_swept_not_counted and corrected to {"restored": 1, "refreshed": 0} — a
+  filename swapped in where a different filename existed before is `restored`, not `refreshed`,
+  per the pre-existing counting convention. All three are test-instrumentation corrections
+  (assertions kept equally strict, only re-scoped/re-labeled to match already-stated intent);
+  no implementation code changed in response to any of the three. Verified via a real (non-
+  mocked) SIGKILL-mid-copytree probe in addition to the unit suite — see §6 Live-verify evidence.
 Safety rule (feature-specific): `dest` is never opened for writing or deletion until the staged copy (including any strip step) has FULLY succeeded — the existing wipe-then-copy ordering is inverted to copy-then-swap-then-sweep-old.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
@@ -357,34 +380,35 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — 74/74: `test_reconcile_rollup.py` 27/27 (12 pre-existing: 4 `CleanReplaceUnitTest` + 4 `ReconcileRollupTest` + 1 `UpdateHeadlineTest` + 3 `ParityRollupTest`; 15 new: 11 `StageCommitUnitTest` + 1 `ConcurrencyDisclosureTest` + 3 `CrossTwinStagedCommitTest`) + all 4 M8-named sibling files (`test_heal_reconcile.py`/`test_update.py`/`test_global_update_harden.py`/`test_global_data.py`) 47/47 unchanged. Commands: `python3 -m unittest test_reconcile_rollup test_heal_reconcile test_update test_global_update_harden test_global_data` → `Ran 74 tests ... OK`.
+- [x] coverage did not decrease — net +15 test methods (0 removed, 0 skipped-without-reason); the 12 pre-existing tests in `test_reconcile_rollup.py` are byte-unchanged, as are all 47 sibling tests.
+- [ ] no test or contract was altered during build — PARTIAL, disclosed: §3 CONTRACT untouched, and zero pre-existing/frozen test was touched. But 3 of MY OWN tests authored in the tests-phase-of-this-task (`test_scn3_strip_tests_applied_before_commit_not_after`, `test_scn6_commit_land_failure_after_aside_rolls_back`, `test_scn7_stale_staging_leftover_swept_before_new_stage`, all in `test_reconcile_rollup.py`) were edited AFTER the tests-red commit, during build convergence — see "Strategy actually used" (§5) for the exact bug in each. Applying this repo's own folded discriminator (CONVENTIONS.md: "an engine change that legitimately invalidates an existing assertion is an EVOLUTION, not a weakening — iff the real invariant stays guarded, coverage holds-or-rises, and the reason is documented"): all 3 keep their assertion equally strict (scn3/scn6 re-scoped WHEN the check fires, scn7 corrected WHAT value it expects against the frozen, unchanged `test_orphan_swept_not_counted` precedent), coverage held (same 3 tests, not fewer), reason documented inline + in §5. Left unchecked for the independent reviewer to weigh, not pre-decided here.
+- [ ] the green was EARNED, not gamed — deferred to the Refute-read verdict block below (not pre-judged here).
+- [ ] concurrency / timing of the risky operation is safe — PARTIAL, disclosed: single-writer crash/interruption timing IS addressed and tested (scn4/5/6 mocked + a real, non-mocked SIGKILL-mid-copytree probe, see Live-verify evidence below). Cross-process CONCURRENT writers racing the same dest is an explicit, named OUT-of-scope item (owned by sibling task `project-scope-install-lock`, `depends_on` this task) — `ConcurrencyDisclosureTest.test_scn12` only proves no BLEND is ever observed (best-effort), not that both racers succeed or that the operation is serialized. Left unchecked because "is safe" unqualified would overstate the disclosed non-goal.
+- [x] no exposed secrets, injection openings, or unexpected dependencies — no new dependency (stdlib `tempfile`/`os`/`shutil` only; Node builtins `fs`/`path` only — matches §3's "no new dependency" line and CONVENTIONS.md's "standard library only" / "built-in modules only" rules); all 6 call sites (3 Python + 3 JS, re-confirmed below) pass fixed literal path components only, never adversarial/user-supplied input.
+- [x] layering & dependencies follow CONVENTIONS.md — confirmed stdlib/builtin-only (CONVENTIONS.md lines 4-5) and the fv59 "freeze the OBSERVABLE behavior, not the mechanism" precedent (each twin uses its own native primitive: `tempfile.mkdtemp`/`os.rename` vs `fs.mkdtempSync`/`fs.renameSync`).
+- [ ] a person reviewed and approved the change — human/independent-reviewer gate; not mine to check.
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
 > + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
 > row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a PRESENT dest survives a mid-copy crash byte-for-byte untouched (never a partial/blended mix at dest's path) — confirmed by `test_scn4` (mocked mid-copy raise) AND a real, non-mocked SIGKILL sent to a live subprocess mid-`shutil.copytree` (scratchpad `live_crash_probe.py`): `old_current.py`'s content was read back byte-identical after the kill.
+- [x] a crash-interrupted prior call's scratch leftover (`.add-tmp-*`/`.add-bak-*`) is discovered and healed by the very NEXT call, landing the full new generation with zero scratch residue afterward — confirmed by `test_scn7`/`test_scn8`/`test_scn8b` (mocked) AND the same live SIGKILL probe's second half: the next call reported `{"restored": 4000, "refreshed": 0}` and left only `dest`/`src`/`worker.py` (no `.add-tmp-`/`.add-bak-` name) as siblings.
+- [x] both twins share the identical self-heal → stage → commit → sweep marker order and reserved `.add-tmp-`/`.add-bak-` naming tokens — confirmed by `test_scn10_structural_parity_of_staged_commit_shape` (asserts the 4 markers appear in that exact order in both `_installer.py` and `cli.js`, `js_body.count("fail(") == 1`, `"throw" in js_body`) plus a manual side-by-side read of both diffs.
+- [x] the public return contract (`{"restored","refreshed"}`) and every existing caller's observable behavior are byte-identical to before this task — confirmed by the pre-existing `CleanReplaceUnitTest` (4/4, unchanged) + all 4 M8-named sibling suites (47/47, unchanged) passing, plus `git diff` showing zero call-site lines touched in either file (only the two function bodies changed).
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — no NEW top-level symbol was introduced (only the `tempfile` import is new; it is used at the one `tempfile.mkdtemp(...)` call site). The change is entirely internal to the two pre-existing function bodies (`_clean_replace`, `cleanReplaceTree`); their signatures, and every one of the 6 real call sites (3 Python: `_installer.py:680,682,1181`; 3 JS: `cli.js:901,977,979`), are byte-unchanged — re-confirmed via `mcp__serena__find_referencing_symbols` (Python) and a direct read of each JS call site.
+- [x] DEAD-CODE (code) — no unused/orphaned local: every new local (`tmp_stales`/`bak_stales`/`staged`/`token`/`bak` in Python; `destParent`/`destName`/`siblings`/`tmpStales`/`bakStales`/`remainingBaks`/`staged`/`token`/`bak` in JS) is read at least once; `node --check cli.js` and `python3 -c "import ast; ast.parse(...)"` both confirm no syntax-level dead branch.
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
 > build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
 > (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
 > line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed via `mcp__serena__find_symbol`/`find_referencing_symbols` (Python) + direct Read (JS, serena's active language is Python-only in this project so the JS twin was hand-verified): `_clean_replace` (now `_installer.py:1131`, signature unchanged) called from `_reconcile_global` (`672-682`, 2 call sites) and `_reconcile` (`1181`); `_reconcile`/`_reconcile_global` called from `install` (`888-1078`), `update` (call at `1384`), `_update_global` (`1252-1331`, calls at `1298`/`1317`). `cleanReplaceTree` (now `cli.js:798`) called from `reconcile` (`901`) and `reconcileGlobal` (`977`,`979`); `reconcile`/`reconcileGlobal` called from the init path (`638`/`725`), `cmdUpdate` (`1259`), and the global-update handler (`1130`,`1199`,`1211`). All 5 caller-pairs named in §3 (`_reconcile/reconcile` · `_reconcile_global/reconcileGlobal` · `install()/cmdInit` · `update()/cmdUpdate` · `_update_global()/cmdUpdateGlobal`) resolve cleanly.
+- [x] any anchor that moved/renamed since Ground SHA is named here, not left silent — no symbol renamed or reordered. §0's own citations already use `~`-approximate line numbers anticipating drift; the only real shift is mechanical (`_clean_replace`'s body grew from 24 to ~73 lines, so everything textually AFTER it in `_installer.py` — e.g. `_update_global` — sits a few dozen lines lower than the Ground-SHA snapshot; nothing BEFORE it, e.g. `_reconcile_global`/`install`, moved at all). Exact current line numbers are recorded above so a future reader doesn't need to re-derive them.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
