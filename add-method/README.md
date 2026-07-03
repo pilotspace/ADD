@@ -1,10 +1,18 @@
+<p align="center">
+  <a href="https://www.npmjs.com/package/@pilotspace/add"><img alt="npm version" src="https://img.shields.io/npm/v/@pilotspace/add.svg"></a>
+  <a href="https://pypi.org/project/pilotspace-add/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/pilotspace-add.svg"></a>
+  <a href="https://github.com/pilotspace/ADD/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://github.com/pilotspace/ADD/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pilotspace/ADD.svg"></a>
+</p>
+
 # ADD — AI-Driven Development
 
 **One skill. Eight steps. Five disciplines. Every feature ships through the loop.**
 
-> A minimal, state-tracked Claude Code skill for building software when the AI
-> writes the code and **you** own the two things it cannot do alone: decide *what*
-> to build, and *verify* it is correct.
+> A minimal, state-tracked skill for building software when the AI writes the code
+> and **you** own the two things it cannot do alone: decide *what* to build, and
+> *verify* it is correct. Native on Claude Code; every other CLI coding agent
+> follows the same loop through the phase guides.
 
 ADD is the **orchestration engine** of the AIDD method. It sits on top of a
 context foundation (DDD → SDD → UDD) and runs as a red/green TDD ↔ AI-build loop.
@@ -16,6 +24,27 @@ The full reasoning — *why* every rule exists — is the AIDD book bundled in
   Engine (this skill):   TDD  ⇄  ADD
   Flow per feature:  Specify → Scenarios → Contract → Tests → Build → Verify → Observe ↻
 ```
+
+## Quick Start
+
+```bash
+# Node / npm
+npx @pilotspace/add init
+```
+
+```bash
+# Python / pip
+pip install pilotspace-add && pilotspace-add init
+```
+
+Then, in your coding agent, say what you want to build:
+
+> `/add` — *"I want to let users transfer money between their own accounts."*
+
+The agent sizes it into a milestone (you confirm the shape), drafts the spec →
+scenarios → contract → tests as one bundle (you approve once, at the frozen
+contract), then builds and verifies to green. Full detail below — **Install**,
+**Use it**, and the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Why ADD (and why it is minimal)
 
@@ -29,6 +58,24 @@ across sessions (context rot). ADD fixes both:
   re-reading the repo.
 - **Progressive disclosure.** The skill loads only the guide for the phase you are
   in — the context window stays lean.
+
+## How ADD distills skill libraries (e.g. agency-agents)
+
+ADD doesn't ship as a catalog of ready-made expert personas — it **distills** one from any skill
+library you point it at. [agency-agents](https://github.com/msitarzewski/agency-agents) is vendored
+as exactly that kind of source: a teacher corpus at [`personas-teacher/`](./personas-teacher/), read
+**off-build** by the AI while drafting a persona — never a runtime dependency.
+
+A role-specific subagent (a backend expert, a security reviewer, a senior Java engineer) carries a
+whole domain's vocabulary and craft rules. ADD's persona loop condenses that down to the three parts
+a project actually needs — **Identity** (the stance), **Critical Rules** (the non-negotiables), and
+**Success Metrics** (the done-bar) — commits the result to `.add/personas/<slug>.md`, and the
+project owns it outright from there.
+
+A distilled persona is then applied as an **advisory overlay** during design, build, or verify — it
+shapes *how* a step gets done, never whether it happens: it can't skip a gate, edit a frozen
+contract, or wave through a security finding. That loop underneath every persona — freeze the
+direction, one human approval, verify against evidence — is what ADD contributes.
 
 ## Install
 
