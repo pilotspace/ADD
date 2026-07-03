@@ -47,7 +47,7 @@ Ask only the live ones. Rank: `⚠ <assumption> — lowest confidence because <w
 
 Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** as it lands.
 
-**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate: it NEVER skips the human baseline approval — `lock` stays the one decision.
+**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate — `lock` stays the one decision.
 
 ## 3 · Draft to the lock (both paths)
 
@@ -76,7 +76,7 @@ Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
-Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes to the baseline approval; ambient mid-stream agreement is not a confirmation. On that recorded confirmation, you run the lock:
+Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes; ambient agreement is not a confirmation. **Never self-stamp a timeout — hold, or re-ask.** On that recorded confirmation, you run the lock:
 
 ```bash
 python3 .add/tooling/add.py lock --by "<name>"
