@@ -398,7 +398,7 @@ nonzero rate not explained by transient disk/permission errors signals a templat
 - [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
-- [SPEC · open] harden `_framing()` (and any other `^Label:[ \t]*(.+)$` single-line extractor
+- [SPEC · seeded] harden `_framing()` (and any other `^Label:[ \t]*(.+)$` single-line extractor [→ adr-harvester-multiline-fields]
   in `add.py`'s ADR harvester) to capture through the field's full wrapped paragraph instead of
   stopping at the first physical line, so a multi-line "Framings weighed:" harvests its
   `(chosen — ...)` marker correctly instead of degrading to `<unrecorded>` (evidence: this task's

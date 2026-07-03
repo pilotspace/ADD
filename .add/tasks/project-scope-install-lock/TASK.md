@@ -1003,13 +1003,13 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] sweep aged orphan `.reclaim-<inode>` ticket files (both `_project_lock`/
+- [SPEC · seeded] sweep aged orphan `.reclaim-<inode>` ticket files (both `_project_lock`/ [→ sweep-orphan-reclaim-tickets]
   `_update_lock` and their JS twins) — a ticket leaked by a crash between winning it and its own
   cleanup is currently permanent, harmless disk litter with nothing to clean it up (evidence:
   round-4 independent verify's own repo-wide grep for any unlink/rmtree/sweep/gc/prune reference
   to "reclaim" returned zero hits; a fresh, uncontended acquire/release cycle never touches an
   orphaned ticket sitting in the same directory).
-- [SPEC · open] independently stress-test the ticket/lock identity check's inode-reuse assumption
+- [SPEC · seeded] independently stress-test the ticket/lock identity check's inode-reuse assumption [→ cross-platform-inode-reuse-stress]
   on Linux and Windows, not just macOS/APFS (evidence: rounds 2 through 4 each disclosed the same
   gap — every empirical concurrency repro this session, 1167+ adversarial attempts total, ran on
   macOS/APFS only; the assumption "the filesystem never reuses an inode number for an unrelated

@@ -877,12 +877,12 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
   full-function-level multi-process evidence already gathered at the Python layer, but a
   natural next-loop hardening (evidence: independent add-verify pass, Advisor Concurrency
   lens, §6)
-- [SPEC · open] sweep aged orphan `.reclaim-*` ticket files left under the global home by a
+- [SPEC · seeded] sweep aged orphan `.reclaim-*` ticket files left under the global home by a [→ sweep-orphan-reclaim-tickets]
   crashed holder — currently permanent, harmless litter (never mistaken for user-data since
   the `_is_user_data`/`isUserData` fix, but never cleaned either); a natural fit for a
   periodic maintenance pass (evidence: the reopen-round ticket-leak fix added
   self-heal-on-next-contention only, no sweep)
-- [SPEC · open] independently stress-test the ticket's identity-verified reclaim
+- [SPEC · seeded] independently stress-test the ticket's identity-verified reclaim [→ cross-platform-inode-reuse-stress]
   (inode-match-before-unlink) on Linux and Windows — this session's 1167+ adversarial
   attempts (426 against this task's own `_update_lock`) all ran on macOS/APFS; inode reuse
   timing and semantics differ by filesystem (evidence: the reopen round's recursion-closure
