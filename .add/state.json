@@ -2540,7 +2540,7 @@
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T10:19:27+00:00",
+      "updated": "2026-07-03T10:23:27+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2579,7 +2579,7 @@
           "add-method/bin/cli.js",
           "add-method/tooling/test_global_update_harden.py"
         ],
-        "snapshot_md5": "9b5fbc6dffe9f2cc7229180a0df03d81"
+        "snapshot_md5": "45eba3ca6a9f5d0de04403d775209d9e"
       }
     },
     "global-data-restore-harden": {
@@ -2639,7 +2639,7 @@
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T10:19:13+00:00",
+      "updated": "2026-07-03T10:23:26+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2663,7 +2663,7 @@
           "add-method/bin/cli.js",
           "add-method/tooling/test_project_scope_lock.py"
         ],
-        "snapshot_md5": "9b5fbc6dffe9f2cc7229180a0df03d81"
+        "snapshot_md5": "45eba3ca6a9f5d0de04403d775209d9e"
       },
       "heal": {
         "attempts": 1,
@@ -2678,7 +2678,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T10:19:27+00:00",
+  "updated": "2026-07-03T10:23:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
