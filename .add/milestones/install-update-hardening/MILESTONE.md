@@ -63,8 +63,9 @@ Out: cross-process locking of paths not named above (e.g. `prune-data`'s own con
   `_is_user_data`/`isUserData` with the SAME exclusion rule)
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] project-scope-atomic-reconcile   depends-on: none     — crash-safe stage-then-commit for
-      the managed-tree reconcile copy (`_clean_replace`/`cleanReplaceTree`); CONTRACT drafted
+- [x] project-scope-atomic-reconcile   depends-on: none     — crash-safe stage-then-commit for
+      the managed-tree reconcile copy (`_clean_replace`/`cleanReplaceTree`); gate: PASS (independent
+      add-verify pass — 27 new + 47 sibling tests green, advisor 3-lens CLEAR/CLEAR/CLEAR)
 - [ ] global-lock-followups   depends-on: none     — stale `.update.lock` self-heal +
       `install --global` lock coverage + an opt-in `--lock-timeout` CI mode; CONTRACT drafted
 - [ ] global-data-restore-harden   depends-on: none     — crash-safe stage-then-commit for the
