@@ -3,7 +3,7 @@
 slug: global-lock-followups · created: 2026-07-02 · stage: mvp · risk: high
 milestone: install-update-hardening
 autonomy: conservative   <!-- lowered from the inherited `auto` default (PROJECT.md) — this task extends the SAME cross-twin home lock (`_update_lock`/`acquireUpdateLock`) that `global-update-harden` shipped at risk:high/conservative; a wedged lock or a lost concurrent write breaks every downstream user's install/update (CONVENTIONS.md: discriminate autonomy by change-TYPE — a mechanism-defining task runs conservative). Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -511,21 +511,102 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: add-verify agent (tdd-verifier persona) — independent adversarial pass, NOT the builder ·
+  adversarially checked:
+  (1) re-ran the full 32-test suite 5 consecutive times independently (all green, corroborates
+  the builder's own claim rather than trusting it) + stress-ran the highest-risk single test
+  (`test_concurrent_stale_reclaim_exactly_one_wins`, the in-process TOCTOU race) 20x in isolation
+  — all green, no flakiness found beyond what the builder reported.
+  (2) Read every new assertion line-by-line — none vacuous: exact exit codes, file
+  existence/absence (`.add` dir, lock file), exact registry-list contents, elapsed-time floors
+  via `time.monotonic()` (not sleep-and-hope), lock-content regex on the diagnostic stamp. No
+  stubbed-away logic found in `_update_lock`/`acquireUpdateLock` (read both in full against the
+  actual current tree, not just the diff).
+  (3) Wrote and ran 2 NEW tests the builder never authored, using a DIFFERENT mechanism than the
+  suite's own in-process threading — genuine multi-PROCESS races (real separate `subprocess.Popen`
+  OS processes, not `threading.Thread`s in one interpreter): (a) 8 trials x 6 real processes
+  racing a pre-seeded stale lock directly via `_update_lock` — 1 winner/5 blocked/0 errors/0
+  leaked lock files, every trial; (b) 6 trials x 8 real processes racing an UNCONTENDED lock via
+  the full `install(as_global=True)` path — `registry.json` exactly equalled the set of processes
+  that actually completed (verified via each target's `.add/tooling` presence), 0
+  corruption/interleave/duplicate/lost-write, every trial. An independently-authored,
+  differently-mechanized test corroborating the same claim is the strongest practical
+  refute-read available for a concurrency claim.
+  (4) Confirmed via my OWN git-checkout-based baseline (reverted the 3 changed impl files to
+  pre-task `cda1a16`, re-ran the 5 named PTY/npm-interactive tests, restored to HEAD) that all 5
+  fail byte-for-byte identically with or without this build's code — genuinely pre-existing, not
+  masked-in by this change.
+  (5) Confirmed `test_global_update_harden.py` was touched ONLY in the prior RED commit
+  (`8d11de8`) — `git show 86038de --stat` lists no test file in the BUILD commit; §1-§3 of
+  TASK.md remain byte-identical to FROZEN @ v1 (no frozen-contract edits during build).
+  (6) Traced the regression fix's new `except OSError` clause against every other exception path
+  in the same `with _update_lock(...)` block (`_reconcile_global`, `_write_stamp`,
+  `_read_registry`, `_write_registry`) — appropriately scoped, mirrors the codebase's OWN
+  pre-existing "cannot write global home" idiom one line above it, does not silently swallow a
+  security- or correctness-relevant class of error (still fails loud with the real exception text).
+  Empirically confirmed (ran a throwaway script) that `home.mkdir(parents=True, exist_ok=True)`
+  really does raise `FileExistsError` when `home` is a plain file, and that `_update_global`'s
+  `no_global_home` pre-check (`Path(...).exists()`) really does swallow `ENOTDIR` and return
+  `False` rather than raising — both load-bearing claims in the builder's own narrative,
+  verified against the actual Python stdlib behavior in this environment (3.14.5), not assumed.
+  No cheat found: overfit-to-fixture, vacuous-assert, and stubbed-logic hypotheses were each
+  actively probed and each came back negative.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: add-verify agent (tdd-verifier persona) — independent pass
+1. Security: CLEAR — grepped the full diff for eval/exec/child_process/new-dependency patterns
+   (none found); Python additions are stdlib-only (`time`; `os`/`datetime` already present), JS
+   additions are Node builtins only (`Atomics`/`SharedArrayBuffer`/`Int32Array`, no new `require`).
+   The diagnostic lock-stamp writes only `os.getpid()` + a UTC timestamp — no untrusted input is
+   ever written to or read from the lock file to make a security-relevant decision. The Windows
+   `os.kill(pid,0)`-can-TERMINATE hazard named in §0 Honors was correctly AVOIDED BY DESIGN
+   (mtime-age chosen over PID-liveness) — this is the security-conscious choice already made,
+   not a residual gap. No exposed secrets. No HARD-STOP.
+2. Concurrency: CLEAR. Independently re-verified BEYOND the builder's own disclosed limit
+   (in-process-threads-only / sequential-hold-then-release-only, per TASK.md's own unchecked §6
+   box and OBSERVE-NOTES.md #4). I authored and ran genuine multi-PROCESS races — real separate
+   OS processes via `subprocess.Popen`, not threads — for both the raw `_update_lock` primitive
+   (8 trials x 6 processes racing a stale lock: 1 winner/5 blocked/0 errors/0 leaks, every trial)
+   and the full `install(as_global=True)` path (6 trials x 8 processes racing an uncontended
+   lock: registry.json exactly matched the real winner set every trial — 0 corruption, 0
+   interleaving, 0 duplicates, 0 lost writes). This closes the specific evidence gap the builder
+   named, with fresh data rather than re-trusting the disclosure. The O_EXCL create is confirmed,
+   empirically and not just architecturally, to remain the sole mutual-exclusion primitive under
+   real cross-process concurrency. RESIDUE (non-blocking, named for observe): no genuine
+   cross-twin CLI-to-CLI multi-process smoke exists yet (e.g. a real `pip`-driven CLI process
+   racing a real `node cli.js` process at the OS level) — cheap to add, not required to close
+   this gate given the primitive-level and full-function-level multi-process evidence already
+   gathered at the Python layer plus the existing structural cross-twin parity tests.
+3. Architecture: CLEAR. stdlib/builtin-only preserved; O_EXCL/"wx" remains the sole
+   mutual-exclusion primitive at every layer (no `fcntl.flock` reintroduced — the exact v1->v2
+   regression this codebase already fixed once). No new dead code: `sleepSync` (cli.js) has
+   exactly one call site inside `acquireUpdateLock`'s poll branch; `_LOCK_STALE_DEFAULT`/
+   `LOCK_STALE_DEFAULT` each have confirmed use-sites in both twins. Traced `cmdInit`'s full call
+   graph (`installGlobal` -> `dropFiles` -> `installGlobalData`) to rule out a same-process
+   lock-reentrancy deadlock: `installGlobalData` never calls `acquireUpdateLock`, so no
+   self-contention risk from holding the lock across `dropFiles`. Two disclosed 💭 notes, neither
+   blocking: (i) the Python/JS lock-hold DURATION asymmetry (Python's `with _update_lock(...)`
+   releases immediately after the home+registry span; JS's `acquireUpdateLock` holds via
+   `process.on("exit", release)` through the per-project drop too) is EXPLICITLY sanctioned by
+   the frozen §3 CONTRACT's own text ("release fires via `acquireUpdateLock`'s own
+   `process.on(\"exit\", release)` — unchanged mechanism") — a disclosed "freeze observable
+   behavior, not mechanism" choice, not an oversight; (ii) a malformed `--lock-timeout <non-numeric>`
+   value degrades silently to `NaN` -> falsy -> no-wait in cli.js, whereas Python's
+   `argparse(type=float)` would error loudly on the same input — a minor cross-twin inconsistency
+   for an out-of-contract misuse case (not one of the 14 frozen scenarios), not a safety issue.
+Verdict: PASS
+Residue: none blocking · 1 named non-blocking follow-up (a genuine cross-twin CLI-level
+  multi-process smoke) · 2 named 💭 architecture notes (one already contract-sanctioned, one
+  cosmetic cross-twin parity gap on malformed input)
+Binding: advisory — this task declares no explicit `sensitivity:` line (consistent with ~108
+  other tasks project-wide per `add.py audit`'s `sensitivity_unset` list — a pre-existing,
+  project-wide gap, not introduced by or specific to this task); risk: high / autonomy:
+  conservative already routes this to a human decision regardless of advisor-gate-relax.
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
