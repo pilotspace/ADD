@@ -6049,16 +6049,23 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
                            refute-record, M4) — the earned-green verdict the AI must record under
                            `auto`; ABSENT block grandfathers exactly like shallow. MEASURE-NOT-BLOCK:
                            never auto-blocks a gate, only surfaced here for review + a human spot-audit.
-    Honest visibility for three verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
+      rule_coverage_gap[]= this task's OWN §1 Must/Reject IDs have >=1 rule with no §2 scenario tag
+                           and no §4 `covers:` line (_rule_coverage_gaps — same opt-in-by-tag-presence
+                           grandfather as `add.py check`'s whole-project sweep) — surfaced the moment
+                           THIS task reaches verify, not only via a separate `check` invocation someone
+                           has to remember to run; `check` still owns the per-rule detail.
+    Honest visibility for four verify guarantees; NEVER a finding (audit stays exit 0). PURE — reads
     TASK.md + state only, writes nothing."""
     shallow, risk_unset, refute_unrecorded, sensitivity_unset = [], [], [], []
     advisor_verdict_unrecorded = []
     advisor_reviewer_is_author = []
     advisor_residue_on_mechanical_mis_tier = []
+    rule_coverage_gap = []
     for slug in sorted(state.get("tasks") or {}):
         if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
             continue
-        body6 = _raw_phase_bodies(root, slug).get(6, "")
+        bodies = _raw_phase_bodies(root, slug)
+        body6 = bodies.get(6, "")
         hdr = _task_header(root, slug)
         if _section_unfilled(body6, "### Deep checks"):
             shallow.append(slug)
@@ -6072,6 +6079,11 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
         # human-declared sensitivity — MEASURE-NOT-BLOCK, same class as risk_unset.
         if _task_sensitivity(hdr) is None:
             sensitivity_unset.append(slug)
+        # rule_coverage_gap (verify-traceability-glint): this task's own §1 Must/Reject vs
+        # §2/§4 tags — the SAME predicate `check` uses project-wide, scoped to just this task
+        # and surfaced right at verify, not only via a separate whole-project sweep.
+        if _rule_coverage_gaps(bodies.get(1, ""), bodies.get(2, ""), bodies.get(4, "")):
+            rule_coverage_gap.append(slug)
         # advisor_reviewer_is_author / advisor_residue_on_mechanical_mis_tier
         # (advisor-verdict-audit): MEASURE-NOT-BLOCK lints on the filled advisor block.
         # Both require the block to be PRESENT AND FILLED (not just unfilled).
@@ -6105,7 +6117,8 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
             "sensitivity_unset": sensitivity_unset,
             "advisor_verdict_unrecorded": advisor_verdict_unrecorded,
             "advisor_reviewer_is_author": advisor_reviewer_is_author,
-            "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier}
+            "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier,
+            "rule_coverage_gap": rule_coverage_gap}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -6142,6 +6155,11 @@ def cmd_audit(args: argparse.Namespace) -> None:
             av = glints["advisor_verdict_unrecorded"]
             print(f"audit: advisor_verdict_unrecorded — {len(av)} task(s): {', '.join(av)} "
                   f"— record the 3-lens advisor verdict (§6); a spot-audit is the backstop")
+        if glints["rule_coverage_gap"]:
+            rc = glints["rule_coverage_gap"]
+            print(f"audit: rule_coverage_gap — {len(rc)} task(s): {', '.join(rc)} "
+                  f"— a §1 Must/Reject has no §2 scenario tag or §4 covers: line "
+                  f"(run `add.py check` for the per-rule detail)")
         if glints["sensitivity_unset"]:
             su = glints["sensitivity_unset"]
             print(f"audit: sensitivity_unset — {len(su)} task(s) reached verify with no "
@@ -6159,7 +6177,8 @@ def cmd_audit(args: argparse.Namespace) -> None:
                 and not glints["refute_unrecorded"] and not glints["advisor_verdict_unrecorded"] \
                 and not glints["sensitivity_unset"] \
                 and not glints["advisor_reviewer_is_author"] \
-                and not glints["advisor_residue_on_mechanical_mis_tier"]:
+                and not glints["advisor_residue_on_mechanical_mis_tier"] \
+                and not glints["rule_coverage_gap"]:
             print(f"audit: clean ({checked} tasks checked)")
     # MEASURE-NOT-BLOCK: only real findings raise the exit code; notices never do.
     if findings:

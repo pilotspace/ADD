@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a8ab76ae6ec1b7f525d2df1967242ee6"  # re-aimed @ status-pagination (cmd_status's milestones:/tasks[] lists now sort by `updated` desc + cap to 10 by default; new --all flag + JSON milestones_total/tasks_total fields). prior: ff7d9971… @ status-task-filter
+ENGINE_MD5 = "4230eb2ef4f27fb9f480781fee92e5a5"  # re-aimed @ verify-traceability-glint (_guarantee_lint_notices/cmd_audit gain rule_coverage_gap — this task's own §1 Must/Reject-vs-§2/§4 tag gap, surfaced at verify via `add.py audit`, not only a separate `check` sweep). prior: a8ab76ae… @ status-pagination
 ENGINE_PKG_MD5 = "a66975e2b5ed53b5858c3bd43dde7828"  # re-aimed @ roster-onboarding-wiring (constants.py GUIDELINE_FILES + guidelines.py _INIT_EXCLUDE/docstring gained .clinerules; no other add_engine/*.py changed). prior: 82297e49… @ roster-portable-shape

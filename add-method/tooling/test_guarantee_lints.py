@@ -85,6 +85,17 @@ class _Harness(unittest.TestCase):
         t = p.read_text(encoding="utf-8").replace("· stage: mvp", "· stage: mvp · risk: high", 1)
         p.write_text(t, encoding="utf-8")
 
+    def _set_section_body(self, slug, n, body):
+        """Replace the RAW body of `## n ·` (mirrors _phase_spans' own heading/boundary scan:
+        stops at the next line-start `## ` or bare `---`), so a fixture can plant real §1/§2/§4
+        content without going through the full specify->scenarios->tests phase dance."""
+        p = self._task_md(slug)
+        t = p.read_text(encoding="utf-8")
+        pat = re.compile(rf"(^##\s*{n}\s*·[^\n]*\n)(.*?)(?=^##\s|^---\s*$)", re.MULTILINE | re.DOTALL)
+        t2, count = pat.subn(lambda m: m.group(1) + body + "\n", t, count=1)
+        assert count == 1, f"section {n} heading not found in {slug}'s TASK.md"
+        p.write_text(t2, encoding="utf-8")
+
 
 class ShallowDeepCheckTest(_Harness):
     def test_shallow_surfaces_unfilled_block(self):          # Must (scenario 1)
@@ -135,6 +146,44 @@ class RiskUnsetTest(_Harness):
         self.assertIsNotNone(m)
         self.assertIn("lo", m.group(0))
         self.assertNotIn("hi", m.group(0), "a risk:-declared task is excluded")
+
+
+class RuleCoverageGapTest(_Harness):
+    def test_gap_surfaces_uncovered_must(self):               # Must — real gap, tag convention opted in
+        self._verify_task("t")
+        self._set_section_body("t", 1, "Must:\n  - M1: first rule\n  - M2: second rule\n")
+        self._set_section_body("t", 2, "Scenario: covers first   # M1\n")
+        code, out = self._run("audit")
+        self.assertIn("rule_coverage_gap", out)
+        self.assertIn("t", out)
+        self.assertEqual(code, 0, "a notice, not a finding")
+
+    def test_fully_covered_task_not_flagged(self):            # Reject — every rule tagged
+        self._verify_task("t")
+        self._set_section_body("t", 1, "Must:\n  - M1: first rule\n")
+        self._set_section_body("t", 2, "Scenario: covers first   # M1\n")
+        _, out = self._run("audit")
+        self.assertNotIn("rule_coverage_gap", out)
+
+    def test_untagged_task_grandfathered(self):               # Reject — zero tags anywhere = silent
+        self._verify_task("t")                                # unmodified scaffold: placeholders only
+        _, out = self._run("audit")
+        self.assertNotIn("rule_coverage_gap", out)
+
+    def test_not_at_verify_is_silent(self):                   # Reject — phase < verify
+        self._silent("new-task", "g", "--title", "X")         # stays at ground
+        self._set_section_body("g", 1, "Must:\n  - M1: first\n  - M2: second\n")
+        self._set_section_body("g", 2, "Scenario: covers first   # M1\n")
+        _, out = self._run("audit")
+        self.assertNotIn("rule_coverage_gap", out)
+
+    def test_json_carries_rule_coverage_gap(self):            # Must — --json
+        self._verify_task("t")
+        self._set_section_body("t", 1, "Must:\n  - M1: first\n  - M2: second\n")
+        self._set_section_body("t", 2, "Scenario: covers first   # M1\n")
+        _, out = self._run("audit", "--json")
+        data = json.loads(out)
+        self.assertIn("t", data["guarantee_lints"]["rule_coverage_gap"])
 
 
 class ExitCodeAndJsonTest(_Harness):
