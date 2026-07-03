@@ -348,15 +348,15 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+Scope (may touch): `add-method/src/add_method/_installer.py` `add-method/src/add_method/_cli.py` `add-method/bin/cli.js` `add-method/tooling/test_global_update_harden.py`
+Strategy (ordered batches): 1. `_update_lock` (Python): wrap the existing `os.open(O_EXCL)` in a self-heal + retry loop — on `FileExistsError`, stat the lockfile; if stale (mtime age > `ADD_LOCK_STALE_SECONDS`), unlink + retry once; else if a `timeout` was given, poll until the deadline; else raise `BlockingIOError` as today. Stamp `f"{pid} {utc_iso}\n"` into the fd right after a successful open (best-effort, swallow write errors). 2. `install()`'s `as_global` block: wrap the existing `_reconcile_global → _write_stamp → _read_registry → append → _write_registry` span in `with _update_lock(home, timeout=lock_timeout, env=env_map):` / `except BlockingIOError: return _fail("update_in_progress: ...")`. 3. `_cli.py`: add a `--lock-timeout` argparse flag (type=float, default=None) to the `init`/`update` subparsers; thread through to `install(..., lock_timeout=...)` / `update(..., lock_timeout=...)` / `_update_global(..., lock_timeout=...)`. 4. `cli.js` mirror: `acquireUpdateLock` gets the identical stale-check/self-heal/timeout loop (never call `fail()` inside the retry region — only `throw`); `installGlobal` wrapped in `acquireUpdateLock`; `parseArgs` gets `--lock-timeout` via the existing `argv[++i]` + "requires a value" idiom; `cmdInit`/`cmdUpdateGlobal` thread `lockTimeout` through. 5. Extend `test_global_update_harden.py` with the stale-self-heal, install-global-locked, and `--lock-timeout` scenarios, reusing its existing hermetic `_hold_lock`/`_release`/`_env()` fixtures + cross-twin subprocess smokes — do not weaken or remove any of its existing v2-frozen assertions.
 
-Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+Persona (optional): methodology-engine-dev
+Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly (skips `finally`) → the retry/self-heal loop in `acquireUpdateLock` must only ever call `fail()` once, after every retry/self-heal attempt is exhausted, never inside the loop body · a portable PID-liveness check does not exist (Windows `os.kill(pid,0)` can terminate) → mtime-age is the only staleness signal, never PID · clock skew making a live lock look stale → only reclaim when `age > threshold` (a future/bogus mtime never counts as stale).
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
-Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
+Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim and `--lock-timeout` only ever decide whether/when to retry that create, never grant the lock by any other means.
+Code lives in: `add-method/` (the package — NOT this task's `./src/`).
+Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`time` · Node builtin `fs`/`path` only); ask if unclear.
 
 <!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
      with "/" = project root · a bare name = sibling of the previous token's dir ·

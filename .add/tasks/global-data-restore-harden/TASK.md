@@ -445,15 +445,15 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+Scope (may touch): `add-method/src/add_method/_installer.py` `add-method/bin/cli.js` `add-method/tooling/test_global_restore.py`
+Strategy (ordered batches): 1. `_persist_data` (Python): add the step-0 self-heal (sweep/restore `<key>.add-tmp-*`/`<key>.add-bak-*` siblings under `home/data/`), then replace the direct `rmtree`+rebuild with: stage filtered entries into `tempfile.mkdtemp(dir=str(home/"data"), prefix=key+".add-tmp-")`, commit via same-parent renames (dest-aside to `.add-bak-<token>` if it exists, then staged-in), sweep the backup only after the land succeeds. Preserve the "zero entries → return False, untouched" early-return exactly as today. 2. `_restore_data`: add its own step-0 self-heal (sweep any stale `<entry>.add-tmp-*` sibling inside `.add/`), then change the per-entry write so it stages into a fresh `<entry-name>.add-tmp-<token>` sibling first — fill-gaps path commits via one rename onto the (absent) final name; force path keeps the existing `dest → <name>.bak` rename, then rename staged → dest, rolling `.bak` back onto dest if the second rename fails. 3. `_is_user_data`: add one more exclusion for names containing `.add-tmp-`/`.add-bak-`. 4. Mirror all 3 in `cli.js` (`persistData`/`restoreData`/`isUserData`) via `fs.mkdtempSync`/`fs.renameSync`/`fs.rmSync` — internal failures `throw` real `Error`s, never call `fail()`. 5. Extend `test_global_restore.py`: mid-stage/mid-commit failure + self-heal scenarios for both functions, the missing directory-`--force` test (M14), and a `shutil.which("node")`-gated behavioral subprocess smoke for restore+prune replacing/extending `ParityRestoreTest`'s string-only checks (M15) — do not weaken or remove any existing v1-frozen assertion.
 
-Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+Persona (optional): methodology-engine-dev
+Known-problem fixes: `cli.js:fail()` calls `process.exit(1)` directly (skips `finally`) → new stage/commit code in `persistData`/`restoreData` must `throw`, never call `fail()` · `shutil.copytree`'s target must be an EMPTY pre-existing dir for `dirs_exist_ok=True` — `tempfile.mkdtemp` already guarantees that · staging MUST live inside the same parent as its target (`home/data/` or `.add/`) or the commit rename becomes cross-filesystem and silently degrades to a slow, non-atomic copy+delete.
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
-Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
+Safety rule (feature-specific): `home/data/<key>` (persist) and each restored `.add/` entry (restore) are never opened for writing or deletion until their staged copy has FULLY succeeded — copy-then-swap-then-sweep-old, never wipe-then-copy.
+Code lives in: `add-method/` (the package — NOT this task's `./src/`).
+Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
 
 <!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
      with "/" = project root · a bare name = sibling of the previous token's dir ·
