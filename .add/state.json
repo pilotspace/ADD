@@ -2535,12 +2535,12 @@
     },
     "global-lock-followups": {
       "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
-      "phase": "contract",
+      "phase": "verify",
       "gate": "none",
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T02:21:18+00:00",
+      "updated": "2026-07-03T04:26:24+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",

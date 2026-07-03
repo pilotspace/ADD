@@ -47,12 +47,16 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument("--global", dest="as_global", action="store_true",
                             help="refresh the shared global home + propagate to every "
                                  "registered project")
+        parser.add_argument("--lock-timeout", dest="lock_timeout", type=float, default=None,
+                            help="(--global only) seconds to wait for a LIVE contended home "
+                                 "lock before failing 'update_in_progress' (default: fail "
+                                 "immediately, unchanged; a STALE lock always self-heals)")
         args = parser.parse_args(rest)
         from add_method._installer import update, update_check
         if args.check:
             return update_check(target=args.target)
         return update(target=args.target, force=args.force, channel="pip",
-                      as_global=args.as_global)
+                      as_global=args.as_global, lock_timeout=args.lock_timeout)
 
     if cmd == "prune-data":
         parser = argparse.ArgumentParser(prog="pilotspace-add prune-data")
@@ -103,6 +107,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rule-file", dest="rule_file", action="store_true",
                         help="write the ADD block to .claude/rules/add-workflows.md and "
                              "reference it from CLAUDE.md (auto-on when a .ccsk/ dir is present)")
+    parser.add_argument("--lock-timeout", dest="lock_timeout", type=float, default=None,
+                        help="(--global only) seconds to wait for a LIVE contended home "
+                             "lock before failing 'update_in_progress' (default: fail "
+                             "immediately, unchanged; a STALE lock always self-heals)")
 
     args = parser.parse_args(rest)
 
@@ -118,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         as_global_data=args.as_global_data,
         as_global_data_restore=args.from_global_data,
         rule_file=args.rule_file,
+        lock_timeout=args.lock_timeout,
     )
 
 
