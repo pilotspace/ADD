@@ -293,6 +293,11 @@ class PreservedTest(_Base):
         self.assertEqual(leaks, [], "the home lockfile never lands inside a reconciled project")
         self.assertFalse(_installer._is_user_data(LOCK_NAME),
                          "the lockfile name is not classified as user-data (never snapshotted)")
+        self.assertFalse(_installer._is_user_data(LOCK_NAME + ".reclaim-123456"),
+                         "a leaked home-lock reclaim-ticket sibling is not classified as "
+                         "user-data either — inert here (the home is never scanned by "
+                         "_persist_data), kept for documentation-consistency with the exact "
+                         "same LOCK_FILE precedent this function already carries")
 
 
 # --- npm / pip parity -------------------------------------------------------
@@ -504,6 +509,130 @@ class StaleLockSelfHealTest(_Base):
                              f"stale-reclaim path)")
         self.assertFalse((self.home / LOCK_NAME).exists(),
                          "every acquirer released the lock again — none leaked")
+
+
+# --- leaked reclaim-ticket self-heal (post-freeze redo: a fresh adversarial verify pass found ---
+# that a ticket file leaked by a crash mid-reclaim — created by a process that won it, then died
+# before its own best-effort cleanup a few lines later — would cause an UNBOUNDED LIVELOCK here
+# (worse than the sibling project-lock's clean fail-fast wedge): _update_lock LOOPS (it supports
+# --lock-timeout), and BOTH the "lost the ticket" and "won the ticket" branches `continue`d
+# straight back to the top of the `while fd is None:` loop — pre-fix — WITHOUT ever reaching the
+# `if deadline is not None...` / `raise BlockingIOError` code beneath the `if age > stale_after:`
+# block, so even an explicit --lock-timeout could never fire once a ticket was orphaned. Fix:
+# apply the SAME age-based staleness check already governing the main lock to the ticket file
+# too (identity-verified, same as the main lock's own reclaim — never a plain unconditional
+# unlink, which would reopen the identical TOCTOU hole one level down), AND restructure the loop
+# so the deadline check is reached on every non-reclaiming iteration, never bypassed by a
+# ticket-loss branch that used to always `continue` unconditionally (see _installer.py:
+# _update_lock for the full reasoning). Independent of, not shared with, this fix's own
+# project-lock/JS-twin tests.
+
+class LeakedTicketLivelockTest(_Base):
+    def _leak_ticket(self, lock_path: Path, *, ticket_age_seconds):
+        """Simulate a crash that WON the per-generation reclaim ticket but never cleaned it up
+        (died between the ticket-open and its own `finally: unlink` a few lines later): an
+        orphaned ticket file at the EXACT deterministic path a real reclaimer would compute
+        (keyed to `lock_path`'s own current inode), with no corresponding live process."""
+        ino = lock_path.stat().st_ino
+        ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{ino}")
+        ticket_path.write_text("")
+        ts = time.time() - ticket_age_seconds
+        os.utime(str(ticket_path), (ts, ts))
+        return ticket_path
+
+    def _write_lock(self, *, age_seconds, content=""):
+        self.home.mkdir(parents=True, exist_ok=True)
+        lock_path = self.home / LOCK_NAME
+        lock_path.write_text(content)
+        ts = time.time() - age_seconds
+        os.utime(str(lock_path), (ts, ts))
+        return lock_path
+
+    def _run_bounded(self, *, timeout, join_timeout=10.0):
+        """Run _update_lock(home, timeout=timeout, ...) on a daemon thread and join with a
+        GENEROUS but FINITE bound — proves "self-heals promptly" / "--lock-timeout is honored"
+        without ever risking hanging the test suite itself if a future regression reintroduces
+        an unbounded spin: the assertion is on thread liveness after the join, not on the call
+        ever returning on its own within this test process's lifetime."""
+        env = self._env()
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        result = {}
+
+        def _acquire():
+            try:
+                with _installer._update_lock(self.home, timeout=timeout, env=env):
+                    result["outcome"] = "acquired"
+            except BlockingIOError:
+                result["outcome"] = "blocked"
+            except Exception as exc:                # pragma: no cover - would fail the assertions below
+                result["outcome"] = f"error:{exc!r}"
+
+        start = time.monotonic()
+        t = threading.Thread(target=_acquire, daemon=True)
+        t.start()
+        t.join(timeout=join_timeout)
+        elapsed = time.monotonic() - start
+        return t, result, elapsed
+
+    def test_leaked_ticket_self_heals_instead_of_unbounded_livelock(self):
+        lock_path = self._write_lock(age_seconds=1000)                       # very stale
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)  # leaked long ago too
+        t, result, elapsed = self._run_bounded(timeout=3.0)
+        self.assertFalse(t.is_alive(),
+                         f"a leaked ticket must self-heal PROMPTLY, not livelock unboundedly "
+                         f"(still spinning after {elapsed:.1f}s against a 3.0s --lock-timeout "
+                         f"budget it should never even need)")
+        self.assertEqual(result.get("outcome"), "acquired",
+                         f"the lock must be successfully self-healed and acquired, not blocked "
+                         f"or errored: {result}")
+        self.assertLess(elapsed, 5.0, f"self-heal must be prompt, nowhere near the 3.0s "
+                         f"--lock-timeout budget (observed {elapsed:.2f}s) — proves it healed "
+                         f"on its own, not merely by waiting out the deadline")
+        self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
+        self.assertFalse(ticket_path.exists(), "the leaked ticket itself is cleaned up too")
+
+    def test_lock_timeout_deadline_honored_even_when_a_ticket_cannot_yet_resolve(self):
+        # The sharper claim: even in the WORST case — a ticket that never crosses its OWN (short)
+        # staleness threshold during this test's own --lock-timeout budget, so neither the main
+        # lock's reclaim NOR the ticket's own reclaim can make progress — the deadline must still
+        # fire close to its declared budget. This is the exact defect: pre-fix, the deadline check
+        # was structurally UNREACHABLE while a ticket stayed contested, regardless of how it got
+        # that way.
+        lock_path = self._write_lock(age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=0)   # "just created" — fresh
+        t, result, elapsed = self._run_bounded(timeout=1.0)
+        self.assertFalse(t.is_alive(),
+                         f"--lock-timeout=1.0 must be honored, not bypassed by a contested "
+                         f"ticket (still spinning after {elapsed:.1f}s)")
+        self.assertEqual(result.get("outcome"), "blocked",
+                         f"expected a clean BlockingIOError once the deadline elapsed: {result}")
+        self.assertGreaterEqual(elapsed, 0.9, "the deadline must actually be waited out, not "
+                         "short-circuited immediately")
+        self.assertLess(elapsed, 3.0, f"--lock-timeout=1.0 must fire close to its own budget "
+                         f"(observed {elapsed:.2f}s), never run away past it")
+        self.assertTrue(ticket_path.exists(), "a fresh, still-in-flight-looking ticket is left "
+                         "completely untouched — no over-eager reclaim")
+
+    def test_npm_leaked_ticket_self_heals_instead_of_livelock(self):
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        self._valid_home()
+        self._make_project(self.proj)
+        self._set_registry(self.proj.resolve())
+        lock_path = self._write_lock(age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)
+        env = dict(os.environ); env.update(self._env())
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        start = time.monotonic()
+        r = subprocess.run(["node", str(CLI_JS), "update", "--global", "--lock-timeout", "3"],
+                           capture_output=True, text=True, env=env, timeout=15)
+        elapsed = time.monotonic() - start
+        self.assertEqual(r.returncode, 0, f"a leaked ticket must self-heal, not livelock: {r.stderr}")
+        self.assertNotIn("update_in_progress", r.stdout + r.stderr)
+        self.assertLess(elapsed, 5.0, f"self-heal must be prompt (observed {elapsed:.2f}s), "
+                         f"nowhere near the 3s --lock-timeout budget")
+        self.assertFalse(lock_path.exists())
+        self.assertFalse(ticket_path.exists())
 
 
 # --- diagnostic stamp (global-lock-followups M2) ----------------------------

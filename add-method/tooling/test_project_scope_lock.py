@@ -357,6 +357,95 @@ class EmptyStaleProjectLockTest(_Base):
         self.assertNotIn("install_in_progress", err)
 
 
+# --- leaked reclaim-ticket self-heal (post-freeze redo: a fresh adversarial verify pass found ---
+# that a ticket file leaked by a crash mid-reclaim — created by a process that won it, then died
+# before its own best-effort cleanup a few lines later — would PERMANENTLY wedge this lock: the
+# ticket's name is deterministically keyed to the stale main lock's own (unchanging) inode, so
+# EVERY future contender recomputes the IDENTICAL ticket path, loses the identical EEXIST race,
+# and (this lock never polls/waits — M7) fails "install_in_progress" forever, with no
+# --lock-timeout escape hatch to even ask for. Fix: apply the SAME age-based staleness check
+# already governing the main lock to the ticket file too, with the SAME identity-verified
+# (re-stat-immediately-before-unlink) discipline — never a plain unconditional unlink, which would
+# reopen the identical TOCTOU hole one level down (see _installer.py:_project_lock for the full
+# reasoning). Independent of, not shared with, this file's own JS/`_update_lock` twins' tests.
+
+class LeakedTicketWedgeTest(_Base):
+    def _leak_ticket(self, lock_path: Path, *, ticket_age_seconds):
+        """Simulate a crash that WON the per-generation reclaim ticket but never cleaned it up
+        (died between the ticket-open and its own `finally: unlink` a few lines later): an
+        orphaned ticket file at the EXACT deterministic path a real reclaimer would compute
+        (keyed to `lock_path`'s own current inode), with no corresponding live process."""
+        ino = lock_path.stat().st_ino
+        ticket_path = lock_path.with_name(lock_path.name + f".reclaim-{ino}")
+        ticket_path.write_text("")
+        ts = time.time() - ticket_age_seconds
+        os.utime(str(ticket_path), (ts, ts))
+        return ticket_path
+
+    def test_leaked_ticket_self_heals_instead_of_permanent_wedge(self):
+        self._make_project(self.proj)
+        shutil.rmtree(self.proj / ".add" / "docs")            # sentinel: reconcile would restore it
+        lock_path = self._write_project_lock(self.proj, age_seconds=1000)      # very stale
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)    # leaked long ago too
+        code, err = self._update(self.proj, env_extra={"ADD_PROJECT_LOCK_STALE_SECONDS": "1"})
+        self.assertEqual(code, 0, f"a leaked ticket must self-heal, not wedge permanently: {err}")
+        self.assertNotIn("install_in_progress", err)
+        self.assertTrue((self.proj / ".add" / "docs").exists(), "the run proceeded to completion")
+        self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
+        self.assertFalse(ticket_path.exists(), "the leaked ticket itself is cleaned up too — "
+                         "no residue left to re-wedge a future call")
+
+    def test_project_lock_direct_leaked_ticket_self_heals(self):
+        # mechanism-level proof, bypassing install()/update() entirely: a bare _project_lock()
+        # call against a leaked-ticket state must acquire cleanly (no BlockingIOError), not
+        # reproduce "install_in_progress" — the exact call shape a fresh adversarial verify pass
+        # used to find and confirm this defect against the unmodified code.
+        add_dir = self._add_dir(self.proj)
+        add_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = add_dir / PROJECT_LOCK_NAME
+        lock_path.write_text("")
+        ts = time.time() - 1000
+        os.utime(str(lock_path), (ts, ts))
+        self._leak_ticket(lock_path, ticket_age_seconds=1000)
+        env = self._env()
+        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "1"
+        with _installer._project_lock(add_dir, env=env):
+            pass   # must not raise BlockingIOError
+        self.assertFalse(lock_path.exists(), "released cleanly after a successful self-heal")
+
+    def test_fresh_ticket_is_never_reclaimed_no_new_hole_introduced(self):
+        # A ticket that is NOT yet stale (a genuine, still-in-flight reclaimer) must still be
+        # treated as live — fail fast, no reclaim attempt — so THIS fix does not itself become a
+        # NEW TOCTOU hole one level down (a too-eager ticket reclaim could let a second party
+        # destroy a legitimate in-flight reclaimer's fresh ticket, reintroducing the exact
+        # double-hold bug the ticket mechanism was built to prevent — see _installer.py's own
+        # reasoning). Regression guard for the identity-verified discipline, not just the fix.
+        self._make_project(self.proj)
+        lock_path = self._write_project_lock(self.proj, age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=0)   # "just created" — fresh
+        code, err = self._update(self.proj, env_extra={"ADD_PROJECT_LOCK_STALE_SECONDS": "1"})
+        self.assertNotEqual(code, 0, "a fresh (not-yet-stale) ticket is treated as a live, "
+                             "legitimate in-flight reclaimer — fail fast, never reclaimed")
+        self.assertIn("install_in_progress", err)
+        self.assertTrue(ticket_path.exists(), "a fresh ticket is left completely untouched")
+        self.assertTrue(lock_path.exists(), "the main (stale) lock is untouched too — the ticket "
+                         "contention was never won, so the main lock's own reclaim never even ran")
+
+    def test_npm_leaked_ticket_self_heals_instead_of_permanent_wedge(self):
+        if not shutil.which("node"):
+            self.skipTest("node not available")
+        lock_path = self._write_project_lock(self.proj, age_seconds=1000)
+        ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)
+        env = dict(os.environ); env.update(self._env())
+        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "1"
+        r = subprocess.run(["node", str(CLI_JS), "init", str(self.proj), "--yes"],
+                           capture_output=True, text=True, env=env, timeout=60)
+        self.assertEqual(r.returncode, 0, f"a leaked ticket must self-heal, not wedge: {r.stderr}")
+        self.assertNotIn("install_in_progress", r.stdout + r.stderr)
+        self.assertFalse(lock_path.exists())
+        self.assertFalse(ticket_path.exists())
+
+
 # --- the lock file is excluded from a --global-data persist snapshot --------
 
 class DataExcludeLockFileTest(_Base):
@@ -486,6 +575,9 @@ class ByteIdenticalRegressionTest(_Base):
         self.assertTrue(_installer._is_user_data("PROJECT.md"), "ordinary user-data unaffected")
         self.assertFalse(_installer._is_user_data(".update.lock"), "the EXISTING exclusion unaffected")
         self.assertFalse(_installer._is_user_data(".install.lock"), "the NEW exclusion this task adds")
+        self.assertFalse(_installer._is_user_data(".install.lock.reclaim-123456"),
+                         "a leaked project-lock reclaim-ticket sibling is never bogusly "
+                         "snapshotted as user-data (leaked-ticket wedge fix)")
 
 
 # --- M11: a project-scope lock is ALWAYS acquired BEFORE, never nested ------
