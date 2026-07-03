@@ -2540,7 +2540,7 @@
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T08:07:55+00:00",
+      "updated": "2026-07-03T10:19:27+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2564,7 +2564,23 @@
           "at": "2026-07-03T08:07:55+00:00",
           "prior_gate": "PASS"
         }
-      ]
+      ],
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "17ba6f9eab0df5ca168f317817ee9342",
+        "tests": {
+          "add-method/tooling/test_global_update_harden.py": "66048b15244e0a4c07c878b5c59d4b5e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/src/add_method/_cli.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_global_update_harden.py"
+        ],
+        "snapshot_md5": "9b5fbc6dffe9f2cc7229180a0df03d81"
+      }
     },
     "global-data-restore-harden": {
       "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
@@ -2623,7 +2639,7 @@
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T08:07:35+00:00",
+      "updated": "2026-07-03T10:19:13+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2638,15 +2654,16 @@
       "tripwire": {
         "contract_md5": "3b0183b088a0ff997ce45852fc930198",
         "tests": {
-          "add-method/tooling/test_project_scope_lock.py": "a25cfce670bcb87b66eb07d2a7e7fc60"
+          "add-method/tooling/test_project_scope_lock.py": "2c6f286c08cf985204b7c1473c4179e2"
         }
       },
       "scope": {
         "declared": [
           "add-method/src/add_method/_installer.py",
-          "add-method/bin/cli.js"
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_project_scope_lock.py"
         ],
-        "snapshot_md5": "b5787722b83abe08bd6498ac519722b9"
+        "snapshot_md5": "9b5fbc6dffe9f2cc7229180a0df03d81"
       },
       "heal": {
         "attempts": 1,
@@ -2661,7 +2678,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T08:07:55+00:00",
+  "updated": "2026-07-03T10:19:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
