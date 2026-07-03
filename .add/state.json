@@ -2535,12 +2535,12 @@
     },
     "global-lock-followups": {
       "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
-      "phase": "done",
-      "gate": "PASS",
+      "phase": "build",
+      "gate": "none",
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T06:01:29+00:00",
+      "updated": "2026-07-03T08:07:55+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2555,7 +2555,16 @@
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
-      }
+      },
+      "reopens": [
+        {
+          "from": "done",
+          "to": "build",
+          "reason": "Shares the identical TOCTOU race just found in project-scope-install-lock's sibling _project_lock: _update_lock's stale-reclaim path unlinks by path with no identity check, letting 2+ racers hold the lock simultaneously (reproduced 55/150 runs, 36.7%); test_stale_lock_self_heals_after_a_crash-style assertion at test_global_update_harden.py:480 only checks >=1, not ==1. Fixing both together with the same rename-to-quarantine pattern before either ships (neither is in the released v1.15.0 tag).",
+          "at": "2026-07-03T08:07:55+00:00",
+          "prior_gate": "PASS"
+        }
+      ]
     },
     "global-data-restore-harden": {
       "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
@@ -2607,14 +2616,14 @@
     },
     "project-scope-install-lock": {
       "title": "Project-scoped lock around install()/update() reconcile, both twins",
-      "phase": "verify",
+      "phase": "build",
       "gate": "none",
       "milestone": "install-update-hardening",
       "depends_on": [
         "project-scope-atomic-reconcile"
       ],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T07:31:05+00:00",
+      "updated": "2026-07-03T08:07:35+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T06:41:50+00:00",
@@ -2638,11 +2647,21 @@
           "add-method/bin/cli.js"
         ],
         "snapshot_md5": "b5787722b83abe08bd6498ac519722b9"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-03T08:07:35+00:00",
+            "reason": "refute-read:Independent verify found a reproducible TOCTOU race in the stale-lock reclaim path (unlink-by-path with no identity check lets 2+ racers hold the lock simultaneously; test_concurrent_stale_reclaim_exactly_one_wins asserted >=1 instead of ==1). Looping back to build for a rename-to-quarantine fix + strengthened test.",
+            "source": "refute-read"
+          }
+        ]
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T07:31:05+00:00",
+  "updated": "2026-07-03T08:07:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
