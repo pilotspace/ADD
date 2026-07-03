@@ -59,23 +59,43 @@ across sessions (context rot). ADD fixes both:
 - **Progressive disclosure.** The skill loads only the guide for the phase you are
   in — the context window stays lean.
 
-## How ADD distills skill libraries (e.g. agency-agents)
+## Where ADD fits vs. skill libraries (e.g. agency-agents)
 
-ADD doesn't ship as a catalog of ready-made expert personas — it **distills** one from any skill
-library you point it at. [agency-agents](https://github.com/msitarzewski/agency-agents) is vendored
-as exactly that kind of source: a teacher corpus at [`personas-teacher/`](./personas-teacher/), read
-**off-build** by the AI while drafting a persona — never a runtime dependency.
+ADD is an **orchestration method** — the gated loop (spec → scenarios → contract → tests → build →
+verify → observe) that decides when work is trusted. It is not a catalog of ready-made expert
+personas. Skill libraries like [agency-agents](https://github.com/msitarzewski/agency-agents), or
+role-specific subagents (a backend expert, a security reviewer, a senior Java engineer), sit at a
+different layer: they answer **who does the work** — a domain stance, vocabulary, and craft rules
+for one kind of task. ADD answers **how you trust what gets built**, no matter who or what wrote it.
 
-A role-specific subagent (a backend expert, a security reviewer, a senior Java engineer) carries a
-whole domain's vocabulary and craft rules. ADD's persona loop condenses that down to the three parts
-a project actually needs — **Identity** (the stance), **Critical Rules** (the non-negotiables), and
-**Success Metrics** (the done-bar) — commits the result to `.add/personas/<slug>.md`, and the
-project owns it outright from there.
+The two layers compose; they don't compete. ADD's persona loop **distills** a lean, project-fit
+persona from a teacher corpus like agency-agents — vendored at
+[`personas-teacher/`](./personas-teacher/), read **off-build** by the AI while drafting a persona,
+never a runtime dependency — down to the three parts a project actually needs: **Identity** (the
+stance), **Critical Rules** (the non-negotiables), and **Success Metrics** (the done-bar). The
+project then owns that persona outright.
 
-A distilled persona is then applied as an **advisory overlay** during design, build, or verify — it
+A distilled persona is applied as an **advisory overlay** during design, build, or verify — it
 shapes *how* a step gets done, never whether it happens: it can't skip a gate, edit a frozen
-contract, or wave through a security finding. That loop underneath every persona — freeze the
-direction, one human approval, verify against evidence — is what ADD contributes.
+contract, or wave through a security finding. That gated loop is what ADD contributes underneath
+any persona, distilled or not.
+
+## Best setup: ADD alongside other agent libraries
+
+1. **Install ADD** (below) — it drives the loop: which phase you're in, what needs your approval,
+   whether something is proven.
+2. **Keep whatever subagent libraries you already use.** ADD's own five phase specialists
+   (`add-design`, `add-build`, `add-verify`, `add-persona`, `add-advisor`) live in the same
+   `.claude/agents/` mechanism as any other Claude Code subagent — a distilled persona, an
+   agency-agents-derived specialist, a built-in one (a backend expert, a security reviewer). They
+   coexist with zero conflict; nothing is replaced.
+3. **Prefer ADD's named roster first for anything phase-shaped** — spawning `add-verify` for the
+   independent adversarial refute-read, `add-build` for a red→green batch — before an ad-hoc spawn.
+   Reach for another specialist when a piece needs deep domain expertise a generic phase agent
+   doesn't carry (a Java-specific review, a payments-domain lens).
+4. **The gates hold no matter who did the work.** A delegated subagent proposes; the orchestrating
+   agent records. A security finding is always a `HARD-STOP`, and a low self-reported confidence
+   means refine or re-spawn — never a pass — whichever subagent produced it.
 
 ## Install
 

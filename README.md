@@ -52,7 +52,7 @@ Here's the whole path, from nothing to your first running feature.
 From your project root (an empty folder or an existing repo), pick one ecosystem:
 
 ```bash
-# Node / npm
+# Node / npm in project folder
 npx @pilotspace/add init
 npx @pilotspace/add update    # later, to update
 ```
@@ -60,7 +60,7 @@ npx @pilotspace/add update    # later, to update
 or
 
 ```bash
-# Python / pip
+# Python / pip in project folder
 pip install pilotspace-add && pilotspace-add init
 pilotspace-add update         # later, to update
 ```
@@ -78,24 +78,29 @@ or, on **Claude Code**, install the skill straight from the marketplace — no n
 
 In Claude Code, run **`/add`** and say what you want to build:
 
-> `/add 'Describe your goal'`
+```bash
+# in claude code -> spawn ADD skill
+> /add 'Describe your goal'
+```
 
-*Example: `/add simple JWT auth`*
+*Example*: 
+
+```bash
+/add 'Let users log in with email + password / SSO, and keep them signed in for 30 days unless they explicitly log out.'
+```
 
 From there the agent runs the on-ramp for you:
 
 1. 🧭 **Orients** from `add.py status` (the resume point) — never re-reading your whole repo.
-2. 📐 **Sizes** your request into a **milestone** (goal · scope · breadth-first tasks ·
-   exit criteria) — *you confirm the shape.*
-3. ✍️ **Drafts** each feature's **one-approval front** — Spec + Scenarios + Contract + Tests
-   as one bundle — *you give one approval, at the frozen contract.*
+2. 📐 **Sizes** your request into a **milestone** (goal · scope · breadth-first tasks · exit criteria) — **you confirm the shape.**
+3. ✍️ **Drafts** each feature's **one-approval front** — Spec + Scenarios + Contract + Tests as one bundle — *you give one approval, at the frozen contract.*
 4. ✅ **Runs** build → verify to green; a security finding always stops back to you.
-
-So your first feature is: **describe it → confirm the milestone → approve the contract → review the result.** Everything in between is the agent.
 
 ### 3 · Resume anytime
 
-> `/add status` or `/add continue`
+```markdown
+/add status | continue
+```
 
 State lives on disk, not in the chat — the agent reports exactly where the project stands. Close your laptop, come back tomorrow, and pick up exactly where you left off. No context rot.
 
