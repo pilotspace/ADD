@@ -121,7 +121,16 @@ POOLS = [
     # roster-preference bullet (+231 B). +598 B human-directed surface. RATIO 0.75 kept EXACTLY;
     # baseline grows by surface ÷ ratio (+⌈598/0.75⌉=798). The won compaction on every other
     # orchestration guide is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 55161,
+    # orchestration 55161 → 55665 @ worktree-materialize-hint (direct chat-directed edit, no formal
+    # task/frozen contract — human present live, same class as roster-spawn-hint/uiux-hint-adoption):
+    # streams.md's "Design for failure" list gains a bullet naming that a fresh `git worktree add`
+    # never materializes gitignored engine content (`.add/tooling`/`.add/docs`) even when HEAD
+    # matches — a DISTINCT gap from the adjacent "Fresh worktree base" bullet (which only covers
+    # TRACKED-file freshness), confirmed 3-for-3 across every install-update-hardening build
+    # worktree this session. +378 B human-directed surface. RATIO 0.75 kept EXACTLY; baseline grows
+    # by surface ÷ ratio (+⌈378/0.75⌉=504). The won compaction on every other orchestration guide is
+    # untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 55665,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a

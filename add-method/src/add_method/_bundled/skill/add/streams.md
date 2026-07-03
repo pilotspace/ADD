@@ -98,6 +98,10 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
   gates this (`engine-merge-base-enforcement`): `add.py wave-verify` before the first merge-back
   refuses a mismatched/pending echo (`unverified_fork_base`) or off-template ledger
   (`wave_ledger_malformed`); `add.py check` is the standing monitor.
+- **Materialize gitignored engine content** — `git worktree add` checks out TRACKED files only;
+  `.add/tooling` (engine) and `.add/docs` (book) are gitignored and will be ABSENT even when the
+  worktree's HEAD matches — copy them in before the worker's first `add.py` call, or its
+  `phase`/`advance` commands have no engine to run at all (confirmed 3-for-3 this session).
 - **Lease + timeout** — record which worker holds which task (wave ledger); a dead worker releases
   its claim back to READY.
 - **Failure isolates** — a worker's STOP-and-escalate blocks only its own task; siblings run on, the
