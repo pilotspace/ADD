@@ -415,21 +415,106 @@ Constraints: do NOT change any test or the contract; no new dependency (stdlib `
 > recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
 > MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
 > is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: add-verify (independent reviewer — a separate agent instance from the build, per the
+  orchestrator's explicit ask; nothing below was pre-accepted from the builder's own framing)
+Adversarially checked:
+  - **The 3 disputed test edits, re-derived from the raw diffs and current code, not the
+    builder's narrative.** scn3: CPython's `shutil.copytree` recurses into subdirectories
+    THROUGH the same patched `shutil.copytree` module attribute (confirmed by mechanism, not
+    assumed) — so the pre-fix assertion (fired on every recursive call) deterministically
+    fails whenever `src` has a subdirectory, which it always does here (`__pycache__`). The
+    `if Path(s) == src:` guard isolates the one real call; a stray-pass risk is ruled out
+    because `captured["staged"]` is unconditionally dereferenced right after the `with` block
+    (a `KeyError` fires if the guard never matched once). scn6: read against the actual
+    rollback line (`_installer.py:1194`, `os.rename(str(bak), str(dest))`) — the ORIGINAL
+    unconditional intercept (`if str(dst_p)==str(dest): raise`) would ALSO have caught the
+    code's own required rollback rename, leaving `dest` renamed-away-and-never-restored, so
+    the test's own next line (`dest.iterdir()`) would raise `FileNotFoundError` OUTSIDE the
+    `assertRaises` block. The pre-fix test could not have passed against ANY implementation
+    that performs a real M6 rollback — the "fire-once" flag is what makes the scenario
+    exercisable, not a loosening of it. scn7: independently recomputed
+    `{"restored":1,"refreshed":0}` from the frozen §3 formula (`restored=|after\before|`,
+    `refreshed=|after∩before|`) against the fixture (dest holds `current.py`, src holds
+    `fresh.py` — disjoint names) and cross-checked against the untouched, frozen
+    `test_orphan_swept_not_counted` (lines 111-121: `a.py` absent-before counts `restored`,
+    `b.py` present-before counts `refreshed`) — the identical convention, independently
+    confirming the fix and contradicting the original `{0,1}`. All 3 edits leave the real
+    invariant (the substantive assertions in each test) unchanged in strength — only
+    misfiring/mislabeled instrumentation was corrected — matching CONVENTIONS.md line 475's
+    evolution-not-weakening bar (invariant stays guarded, coverage holds, reason documented).
+  - **Reproduced the builder's cited command cold**, in this worktree, myself:
+    `python3 -m unittest test_reconcile_rollup test_heal_reconcile test_update
+    test_global_update_harden test_global_data` -> `Ran 74 tests ... OK` (exact match).
+  - **Confirmed the M8 "5-files-only" scope claim is complete, not self-reported**: grepped
+    every `test_*.py` under `add-method/tooling/` for `_clean_replace(`/`cleanReplaceTree(` —
+    only `test_reconcile_rollup.py` references either.
+  - **Re-diffed `_installer.py`/`cli.js` across ALL 3 commits** (not just the build commit) —
+    zero lines touched outside the 2 function bodies + 1 new `tempfile` import; every caller
+    (`_reconcile`/`_reconcile_global`, `install`/`update`/`_update_global` and JS twins) is
+    byte-unchanged.
+  - **Ran the full `add-method/tooling` suite beyond the builder's claimed scope**
+    (`unittest discover`, 3342 tests): found 133 failures/errors. Traced root cause via actual
+    tracebacks (not the summary line) for a representative sample across different files
+    (`test_shared_engine_pin`, `test_engine_extract_md5`, `test_active_accessors`,
+    `test_debrand_teacher_prose`) — every one traces to the SAME single cause: this worktree's
+    `.add/tooling` was never materialized (confirmed absent before I read any diff — this
+    worktree was checked out without an install/reconcile step), so every 3-tree/pinned-digest
+    test either hits `FileNotFoundError` reading `.add/tooling/add.py` or hashes empty bytes
+    (`d41d8cd98f00b204e9800998ecf8427e` = `md5(b"")`) against `ENGINE_PKG_MD5`. A pre-existing
+    worktree-fixture gap, unrelated to and not caused by this task's 2-file diff — this task's
+    own regression surface (the 5 files named in M8) is 74/74 green, independently reproduced.
+  - **Read `ConcurrencyDisclosureTest`/`test_scn12`** and the cross-twin parity test
+    (`test_scn10_*`) in full: the parity check is backed by 2 REAL behavioral smokes (a
+    chmod-blocked real staging failure in Python, and a real `node` subprocess run against a
+    chmod-blocked `.add/`) in addition to the structural marker-order check — not a vacuous
+    token-presence check alone.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
 > order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
 > sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
 > The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: add-verify (independent reviewer)
+1. Security: CLEAR — no new dependency (stdlib `tempfile`/`os`/`shutil` + Node builtin
+   `fs`/`path` only, confirmed reading both diffs in full); `src`/`dest` are always fixed,
+   hardcoded managed-tree paths from `MANAGED`/`_GLOBAL_TREES` (never user/network input, and
+   this task adds no new caller of the function); no subprocess/shell invocation added; no
+   secret or credential surface touched. `shutil.rmtree`'s own refusal to follow a top-level
+   symlink argument (stdlib behavior, unchanged by this task) still guards the self-heal
+   sweep against a planted-symlink race the same way the old code's `rmtree(dest)` was guarded.
+2. Concurrency: CLEAR — the in-scope guarantee (a single writer's `dest` is never observed
+   half-composed, including a hard crash) is proven by mocked tests (scn4-scn8b) plus a real,
+   non-mocked SIGKILL-mid-copytree probe (cited in this file's Build-expectations evidence)
+   whose logic is consistent with the code as read: `dest` is never opened for writing until
+   staging fully succeeds, and both commit renames are same-parent/same-filesystem, so a
+   genuine OS-level atomic move. Cross-process racing writers is a disclosed, NOT
+   silently-dropped non-goal: `add.py status` independently corroborates
+   `project-scope-install-lock` as a real, tracked sibling task with
+   `deps=project-scope-atomic-reconcile` — a properly owned, dependency-tracked follow-up, not
+   an invented excuse.
+3. Architecture: CLEAR — zero caller edits (re-diffed across all 3 commits, not just the
+   build commit); both twins share one state machine (self-heal -> stage -> commit -> sweep,
+   confirmed present in that source order in both files); no dead code (every new local is
+   read, per this file's own Deep-checks); no new top-level symbol besides the one used
+   `tempfile` import.
+Verdict: PASS
+Residue: none blocking. Two process-level notes for the orchestrator, neither a code defect:
+  (a) this worktree's `.add/state.json`/`add.py status` reports this task at `phase=ground`,
+  and this file's own header (line 6) still reads `phase: contract` — the git-committed
+  content is actually at Verify with Build done. None of the 3 build commits touch
+  `.add/state.json`; the phase stamp was synced once (ground->contract, matching an upstream
+  freeze-only commit, per OBSERVE-NOTES.md's own ADD delta) but never advanced again through
+  tests/build/verify. Likely needs an explicit `add.py phase` re-cross before a gate command
+  will recognize this task as verify-ready (the established `build_tampered`-style re-cross
+  pattern, not a new bug). (b) the broader `add-method/tooling` suite (3342 tests, run beyond
+  this task's own named scope) shows 133 failures, ALL traced via real tracebacks to this
+  worktree's `.add/tooling` never being materialized (confirmed absent before any diff was
+  read) — a pre-existing worktree-fixture gap, unrelated to this task's 2-file diff; this
+  task's own regression surface (the 5 files named in M8) is 74/74 green, independently
+  reproduced.
+Binding: advisory — unset (per `add.py status`; this file declares no explicit `sensitivity:`
+  or `risk: high` line)
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
