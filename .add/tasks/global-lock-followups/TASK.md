@@ -599,8 +599,54 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+- [SPEC · open] `_update_global`'s `home.mkdir()` can raise the same uncaught
+  `FileExistsError`/`OSError` this task fixed in `install()` if `home` exists as a
+  non-directory — dormant today only because `_update_global`'s own `no_global_home`
+  pre-check short-circuits first in every currently-exercised path; mirror the same
+  `except OSError` widening there, or harden `_update_lock` itself to translate a
+  home-mkdir failure into its own distinct signal (evidence: OBSERVE-NOTES.md build-phase
+  finding #2; confirmed by reading `_update_global`'s pre-check ordering, not assumed)
+- [SPEC · open] a malformed `--lock-timeout <non-numeric>` value degrades silently to
+  `NaN` → falsy → no-wait in `cli.js`, while Python's `argparse(type=float)` errors loudly
+  on the identical input — a minor cross-twin inconsistency for an out-of-contract misuse
+  case, not a safety issue, but worth closing (evidence: independent add-verify pass,
+  Advisor Architecture lens, §6)
+- [SPEC · open] no genuine cross-twin CLI-to-CLI multi-process smoke exists yet (a real
+  `pip`-driven CLI process racing a real `node cli.js` process at the OS level) — cheap to
+  add; not required to close this task's own gate given the primitive-level and
+  full-function-level multi-process evidence already gathered at the Python layer, but a
+  natural next-loop hardening (evidence: independent add-verify pass, Advisor Concurrency
+  lens, §6)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
+- [ADD · open] a parallel-build worktree can be branched before the orchestrator finishes
+  that same milestone's Specify→Contract→Freeze work, leaving the worker's own
+  `TASK.md`/`state.json` at the blank template while the real frozen contract exists only on
+  the integration branch — the worker has no way to detect this except by re-reading its own
+  `TASK.md` at the start gate. Recommend either freezing all of a milestone's task contracts
+  BEFORE cutting worker worktrees, or re-pointing each worker worktree onto the integration
+  branch immediately before resuming its build agent (evidence: this session — 2 of 3
+  sibling `install-update-hardening` worktrees branched at `eb631bc`, confirmed 2 commits
+  behind `release/1.15.0`@`cda1a16` which drafted+froze all 3 contracts; `git merge-base
+  --is-ancestor eb631bc cda1a16` = NO; both worktrees showed zero commits of their own; the
+  divergence was 100% confined to `.add/` tracking docs, zero source/test drift)
+- [ADD · open] the SAME class of gap recurs one layer deeper and is NOT limited to the
+  frozen-contract case above: a fresh `git worktree add` never materializes gitignored /
+  untracked content (`.add/tooling/add.py`, `.add/docs`) even when the base commit's
+  TRACKED files are otherwise current — every worktree spawned this session needed a
+  manual copy-in before its own engine commands (`add.py phase`/`advance`) would work at
+  all. A worktree-spawn step should either materialize these trees automatically, or the
+  spawn prompt should include an explicit step-0 check (evidence: found independently in
+  `project-scope-atomic-reconcile`'s, this task's, AND `global-data-restore-harden`'s
+  worktrees this session — 3 for 3, not a one-off)
+- [TDD · open] the disclosed in-process-thread-only concurrency evidence for a `risk: high`
+  task was judged insufficient for sign-off by an independent verify pass — closing that
+  gap required authoring genuinely NEW multi-process tests (real `subprocess.Popen` races),
+  not merely re-running the existing suite. A `risk: high` task's own §4 test plan should
+  budget for real multi-process coverage up front rather than leaving it to a verify-time
+  discovery (evidence: the independent add-verify pass authored 2 new tests — 8 trials × 6
+  processes on the raw lock primitive, 6 trials × 8 processes on the full `install()` path —
+  after judging the builder's own thread-based evidence insufficient for a risk:high gate)
 

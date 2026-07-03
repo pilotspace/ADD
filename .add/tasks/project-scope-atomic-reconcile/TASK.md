@@ -507,8 +507,39 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+- [SPEC · open] the contract's step-0 self-heal names what to do when a stale backup is found
+  while dest is absent — rename it onto dest — but not what happens if THAT recovery rename
+  itself fails (e.g. a permission error on the parent dir); today this propagates uncaught
+  (fail-loud, a defensible default, but never a named scenario or Reject code) (evidence:
+  adversarial completeness pass during build convergence — no §2 scenario exercises this path)
 
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
+- [TDD · open] `mock.patch.object(shutil, "copytree")` intercepts `shutil.copytree`'s OWN
+  internal recursive re-invocation for each subdirectory it walks, not just the top-level
+  call — an assertion assuming "fires once" silently asserts against a nested call instead;
+  gate on `Path(source) == the original src argument` (evidence:
+  test_scn3_strip_tests_applied_before_commit_not_after's traceback showed the assertion
+  firing from inside shutil's own `_copytree` recursion)
+- [TDD · open] an argument-keyed fault-injection mock (e.g. "raise when the rename target
+  equals dest") can accidentally also block a LATER, legitimate call sharing the same
+  arguments — such as a rollback step that (by design) retries the same destination; needs a
+  "fire once, then pass through" flag, not a pure argument predicate (evidence:
+  test_scn6_commit_land_failure_after_aside_rolls_back — the rollback rename targeted the same
+  `dest` the intentionally-failed landing rename used, so one predicate blocked both)
+- [TDD · open] when a freshly-drafted test's expected value is ambiguous, cross-check it
+  against an established FROZEN sibling test in the same file before assuming the
+  implementation is wrong (evidence: test_scn7_stale_staging_leftover_swept_before_new_stage's
+  initial `{"restored": 0, "refreshed": 1}` expectation was corrected to `{"restored": 1,
+  "refreshed": 0}` after cross-checking the pre-existing, untouched test_orphan_swept_not_counted)
+- [ADD · open] a per-task git worktree branched ONE commit before an upstream freeze-stamp-only
+  commit lands on the integration branch produces a start-gate that LOOKS unfrozen (phase/status
+  read DRAFT) when the human approval already happened upstream — before escalating, check
+  whether it's linear-history staleness (`git merge-base --is-ancestor` + a diff restricted to
+  the stamp lines) rather than guessing or hard-escalating on a technically-true-but-unhelpful
+  reading (evidence: this task's own worktree showed `phase: ground`/`Status: DRAFT` at spawn;
+  commit `6daad53` on `release/1.15.0`, one commit ahead of the branch point, was a pure stamp
+  sync to `phase: contract`/`FROZEN @ v1` with an otherwise-empty diff) — see the fuller,
+  cross-task diagnosis of this SAME root cause in `global-lock-followups`'s own §7/OBSERVE-NOTES.md
 
