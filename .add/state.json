@@ -2535,12 +2535,12 @@
     },
     "global-lock-followups": {
       "title": "global-update-harden follow-ups: stale-lock recovery, install --global coverage, CI timeout mode",
-      "phase": "verify",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T04:26:24+00:00",
+      "updated": "2026-07-03T06:01:29+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:21:22+00:00",
@@ -2550,16 +2550,21 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "global-data-restore-harden": {
       "title": "global-data-restore follow-ups: mid-write atomicity, directory-restore test, npm behavioral test",
-      "phase": "verify",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "install-update-hardening",
       "depends_on": [],
       "created": "2026-07-02T14:46:49+00:00",
-      "updated": "2026-07-03T04:41:57+00:00",
+      "updated": "2026-07-03T06:01:33+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-03T02:23:56+00:00",
@@ -2569,6 +2574,11 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "project-scope-atomic-reconcile": {
@@ -2608,7 +2618,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T04:41:57+00:00",
+  "updated": "2026-07-03T06:01:33+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

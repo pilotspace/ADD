@@ -2,11 +2,8 @@
 
 slug: global-lock-followups · created: 2026-07-02 · stage: mvp · risk: high
 milestone: install-update-hardening
-autonomy: conservative   <!-- lowered from the inherited `auto` default (PROJECT.md) — this task extends the SAME cross-twin home lock (`_update_lock`/`acquireUpdateLock`) that `global-update-harden` shipped at risk:high/conservative; a wedged lock or a lost concurrent write breaks every downstream user's install/update (CONVENTIONS.md: discriminate autonomy by change-TYPE — a mechanism-defining task runs conservative). Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+autonomy: conservative
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -101,8 +98,6 @@ Assumptions — lowest-confidence first:
   - [ ] `prune_data` staying OUT of this task's Must list (see Framings weighed) is a scope call, not a technical constraint — folding it in later is a small, mechanical change request (same primitive, ~1 line), not a re-design.
 </assumptions>
 
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
-
 ---
 
 ## 2 · SCENARIOS — pass/fail cases ▸ docs/04-step-2-scenarios.md
@@ -194,8 +189,6 @@ Scenario: prune-data concurrency is explicitly ruled out of this task's scope   
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
@@ -317,14 +310,6 @@ Least-sure flag surfaced at freeze:
     (a single constant) if wrong.
 
 Status: FROZEN @ v1 — approved by Tin Dang
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
 
 ---
 
@@ -356,12 +341,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/test_global_update_harden.py` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -402,15 +381,6 @@ Strategy actually used: AS PLANNED, in the same 5-batch order, with 3 refinement
 Safety rule (feature-specific): the O_EXCL/`"wx"` create stays the SOLE mutual-exclusion primitive at every layer — staleness-reclaim and `--lock-timeout` only ever decide whether/when to retry that create, never grant the lock by any other means.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`time` · Node builtin `fs`/`path` only); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -609,11 +579,9 @@ Binding: advisory — this task declares no explicit `sensitivity:` line (consis
   conservative already routes this to a human decision regardless of advisor-gate-relax.
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Reviewed by: Tin Dang · date: 2026-07-03
 
 ---
 
@@ -622,7 +590,10 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose mtime age-out as the DECISIONAL staleness signal + an informational PID/UTC-timestamp stamp (diagnostic-only, never read to decide staleness) + an opt-in `--lock-timeout` bounded wait + `install --global` sharing the SAME `_update_lock`, scoped to only its existing home-touching span; rejected PID-liveness dead-holder detection via `os.kill(pid,0)`/Windows `OpenProcess` (rejected: not safely portable — on Windows, `os.kill(pid,0)` opens the process and calls `TerminateProcess(handle,0)`, i.e. it can KILL the holder rather than merely probe it; PID reuse after a reboot is a second, independent false-positive) · re-adding an advisory `fcntl.flock` alongside or instead of O_EXCL (rejected: reopens the exact cross-twin incompatibility `global-update-harden`'s own v1→v2 refute-read found and fixed — Node has no flock equivalent without a native dependency, breaking the stdlib/builtin-only constraint) · making a bounded wait the new DEFAULT with no flag (rejected: silently changes the observed behavior of every existing caller that relies on today's immediate fail-fast; an opt-in flag preserves it byte-for-byte) · a user-facing CLI flag for the staleness threshold itself (rejected: adds surface for a knob nobody should routinely tune; an env-var override plus a generous constant default is enough, mirroring how `ADD_HOME` is already an env-only knob, never a flag) · folding `prune_data` into this task's Must list (considered; DECIDED OUT — named in §3 OUT-of-scope, not silently dropped: same mechanism, cheap, but keeps this task's blast radius to the 3 named follow-ups rather than opportunistically growing it).
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: AS PLANNED, in the same 5-batch order, with 3 refinements discovered mid-build:
+- [human] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
@@ -632,4 +603,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+

@@ -2,11 +2,8 @@
 
 slug: global-data-restore-harden · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
-autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -112,8 +109,6 @@ Assumptions — lowest-confidence first:
   - [ ] A3: restore's SIMPLER (sweep-only, no-recovery) self-heal (M10) is the right choice, diverging from the sibling's richer restore-the-backup self-heal — justified by "the untouched snapshot lets the next call re-derive," a genuinely different situation from `_clean_replace`'s `add.py`-availability concern; if wrong (the human wants restore's self-heal to also proactively recover an interrupted commit for consistency), the change is small and additive (mirror persist's M3 recovery step at the per-entry level).
   - [ ] A4: extending `_is_user_data`/`isUserData` (M11) is accepted as in-scope even though `_is_user_data` is not one of the two functions named in this task's own title — justified because it's a direct, small, necessary consequence of M6's own new staging siblings living inside `.add/`, and `_is_user_data` was already a cited Ground anchor; if wrong (the human wants this deferred/flagged instead), the fallback is the sibling's own weaker "relies on call order" posture, disclosed as residual risk rather than closed.
 </assumptions>
-
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
 
 ---
 
@@ -265,8 +260,6 @@ Scenario: two concurrent, lock-less callers racing on the same target — ruled 
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -414,14 +407,6 @@ Least-sure flag surfaced at freeze:
     level) — flagging so the simpler choice is a conscious freeze decision, not an assumed one.
 
 Status: FROZEN @ v1 — approved by Tin Dang
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
 
 ---
 
@@ -454,12 +439,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/test_global_restore.py` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -474,15 +453,6 @@ Strategy actually used: Largely as planned, with 2 deliberate deviations. (1) §
 Safety rule (feature-specific): `home/data/<key>` (persist) and each restored `.add/` entry (restore) are never opened for writing or deletion until their staged copy has FULLY succeeded — copy-then-swap-then-sweep-old, never wipe-then-copy.
 Code lives in: `add-method/` (the package — NOT this task's `./src/`).
 Constraints: do NOT change any test or the contract; no new dependency (stdlib `tempfile`/`os`/`shutil` · Node builtin `fs`/`path` only); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -614,11 +584,9 @@ Binding: advisory — architecture (this task hardens core installer data-safety
   purely mechanical change; feeds the human's own GATE RECORD decision, does not self-resolve it)
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Reviewed by: Tin Dang · date: 2026-07-03
 
 ---
 
@@ -627,7 +595,10 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose per-function-shaped stage-then-commit — WHOLE-TREE staging for `_persist_data` (mirrors `_clean_replace` exactly, its dest `home/data/<key>` is self-owned) + PER-ENTRY staging for `_restore_data` (dest `.add/` is a SHARED directory most of which this function must leave alone); rejected one uniform whole-tree stage for BOTH, via a full `.add/` copy (rejected — every restore call would swap the ENTIRE `.add/`, including `tooling/add.py` itself, just to fill in a few entries; a far larger blast radius and crash window than today) · one uniform per-entry stage for BOTH (rejected for persist — its self-owned dest gains nothing from per-entry granularity over the simpler, already-designed whole-tree sibling pattern)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: Largely as planned, with 2 deliberate deviations. (1) §4 TESTS was written and committed as its OWN standalone, confirmed-RED commit BEFORE any implementation batch began (`bdbc373`) — the listed strategy names 5 build-oriented batches without saying whether tests land before or interleaved with them; TDD discipline put the full red suite first, verified 12/36 new tests failing for the traced right reason (missing self-heal/stage/commit/rollback/exclusion logic) and 0 regressions in the other 24 (17 pre-existing + 3 happy-path/preserved-behavior + 1 disclosed-non-goal case, each traced against the OLD implementation to confirm non-vacuity) before touching `_installer.py`. (2) Batches 1-3 (`_persist_data`, `_restore_data`, `_is_user_data`) were implemented together in ONE pass in `_installer.py` (plus a new shared `_sweep_scratch` helper) rather than as 3 separate sequential edits, since all three share that helper and the self-heal/stage/commit shape; batch 4 (cli.js mirror) followed as a second pass once the Python side was green. Suite went RED (12/36) -> GREEN (36/36 + 39/39 siblings) in one implementation pass per language, committed as a single green commit (`a3b832f`) separate from the red commit, so git history shows genuine red-then-green, not a squash. Additionally ran a throwaway, uncommitted manual smoke (real `node cli.js init --global-data` against a real project, twice — fresh commit then refresh/2-rename commit) to close a self-identified gap: no existing or new COMMITTED test exercises persistData's own happy path via a real node subprocess (the frozen M15 scope names only restore+prune for the real-subprocess treatment); did not add this as new committed test scope since the contract's own M15/scenario deliberately named only restore+prune — flagged as a §7 Spec delta candidate instead of unilaterally expanding frozen test scope.
+- [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
@@ -637,4 +608,4 @@ the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
