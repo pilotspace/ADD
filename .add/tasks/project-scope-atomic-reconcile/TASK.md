@@ -3,7 +3,7 @@
 slug: project-scope-atomic-reconcile · created: 2026-07-02 · stage: mvp
 milestone: install-update-hardening
 autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
      autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
      (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
@@ -290,7 +290,7 @@ Least-sure flag surfaced at freeze:
     function) — flagging so the richer behavior is a conscious freeze decision, not an
     AI-assumed one.
 
-Status: DRAFT
+Status: FROZEN @ v1 — approved by Tin Dang
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
      points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
      with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
@@ -304,13 +304,25 @@ Status: DRAFT
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: 95% of the new self-heal/stage/commit/sweep logic in both twins
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_scn1_missing_dest_materialized_no_scratch_survives: absent dest -> materialized + no scratch sibling · covers: M1, M3, M4, M8
+  - test_scn2_present_dest_refreshed_never_half_mixed: present dest -> new generation lands whole, orphan swept · covers: M1, M3, M4, M8
+  - test_scn3_strip_tests_applied_before_commit_not_after: strip runs on the STAGED copy, spied via the real copytree · covers: M2
+  - test_scn4_mid_copy_failure_present_dest_byte_for_byte_untouched: injected mid-copy raise -> present dest unchanged · covers: M5, R:stage_failure_dest_present_untouched
+  - test_scn5_mid_copy_failure_absent_dest_stays_absent: injected mid-copy raise -> absent dest stays absent · covers: M5, R:stage_failure_dest_absent_untouched
+  - test_scn6_commit_land_failure_after_aside_rolls_back: 2nd rename fails after 1st lands -> backup renamed back · covers: M6, R:commit_land_failure_rolls_back
+  - test_scn7_stale_staging_leftover_swept_before_new_stage: a pre-existing .add-tmp-* sibling is swept, call succeeds · covers: M7, R:stale_stage_swept_next_call
+  - test_scn8_stale_backup_self_heals_absent_dest: a pre-existing .add-bak-* sibling self-heals then updates to fresh · covers: M7, R:stale_backup_self_heals_next_call
+  - test_scn8b_stale_backup_restore_confirmed_not_mere_sweep: bonus — a subsequent stage failure proves RESTORE not sweep · covers: M7, A2 (reinforces scn8)
+  - test_scn9_return_contract_and_orphan_sweep_unchanged: 2 restored + 3 refreshed + 1 orphan swept, same shape as today · covers: M8
+  - test_scn11_dest_parent_not_yet_created: a 2-levels-missing parent chain is created, no error · covers: boundary, feeds M1
+  - test_scn10_python_twin_staging_failure_dest_untouched / _node_twin_ / _structural_parity_of_staged_commit_shape: same observable behavior + self-heal->stage->commit->sweep source-order parity, both twins · covers: M9
+  - test_scn12_concurrent_racing_writers_never_leave_a_blend: two lock-less threads race one dest -> never a blend (best-effort) · covers: R:concurrent runs (disclosed non-goal)
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
+Tests live in: `add-method/tooling/test_reconcile_rollup.py` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
      a token with "/" = project root · a bare name = sibling of the previous
      token's dir · a directory counts its *.py files (non-recursive); reports
