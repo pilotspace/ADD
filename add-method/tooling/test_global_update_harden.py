@@ -454,14 +454,31 @@ class StaleLockSelfHealTest(_Base):
         results = []
         results_lock = threading.Lock()
         barrier = threading.Barrier(6)
+        # TEMPORAL (not cumulative) proof of "at most one racing create succeeds at any
+        # instant" (§3 CONTRACT INV / §1 M1): `active` is incremented the instant a racer is
+        # INSIDE the critical section and decremented the instant before it leaves; `peak`
+        # latches the highest value `active` ever reached, across every racer, under the SAME
+        # lock protecting `results`. A late-scheduled racer legitimately acquiring AFTER an
+        # earlier one released is normal sequential mutual exclusion — it never bumps `peak`
+        # above 1 because the earlier holder already decremented before releasing. Only a
+        # genuine overlap (two racers simultaneously "inside") can push `peak` to 2+. This is
+        # the real, non-flaky proof; a bare `results.count("acquired") == 1` would falsely fail
+        # on correct code whenever scheduling staggers racers across the release boundary.
+        active = 0
+        peak = 0
 
         def racer():
+            nonlocal active, peak
             barrier.wait()                    # start every racer as simultaneously as possible
             try:
                 with _installer._update_lock(self.home, env=env):
                     with results_lock:
                         results.append("acquired")
+                        active += 1
+                        peak = max(peak, active)
                     time.sleep(0.05)           # hold briefly so an overlap would be observable
+                    with results_lock:
+                        active -= 1
             except BlockingIOError:
                 with results_lock:
                     results.append("blocked")
@@ -479,6 +496,12 @@ class StaleLockSelfHealTest(_Base):
         self.assertEqual(len(results), 6, "every racer reported an outcome (none hung)")
         self.assertGreaterEqual(results.count("acquired"), 1,
                                 "at least one racer reclaims the stale lock and proceeds")
+        self.assertLessEqual(peak, 1,
+                             f"at most one racer may be INSIDE the critical section at any "
+                             f"given instant (observed peak concurrent holders: {peak}) — a "
+                             f"higher peak proves 2+ racers held the reclaimed lock "
+                             f"simultaneously, violating mutual exclusion (TOCTOU on the "
+                             f"stale-reclaim path)")
         self.assertFalse((self.home / LOCK_NAME).exists(),
                          "every acquirer released the lock again — none leaked")
 
