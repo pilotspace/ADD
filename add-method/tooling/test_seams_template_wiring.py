@@ -227,13 +227,19 @@ class ThreeTreeParityTest(unittest.TestCase):
 
     def test_milestone_exit_grep_lists_all_3(self):
         # exact invocation the milestone's own exit criterion names (one grep -cl call, all
-        # 3 paths as args) — with multiple files, grep -cl lists one matching filename per line.
+        # 3 paths as args). GNU grep (Linux CI) prints one bare matching filename per line for
+        # -cl; BSD grep (macOS's default /usr/bin/grep) instead prints BOTH a "path:1" count
+        # line AND a separate bare "path" line per match — an implementation quirk, not a
+        # matching failure (confirmed directly against /usr/bin/grep, not a shell alias/wrapper).
+        # Strip any trailing ":<digits>" count suffix before comparing so this test asserts the
+        # actual invariant (all 3 tree paths matched) regardless of which grep flavor runs it.
         out = subprocess.run(
             ["grep", "-cl", LABEL, *[str(p) for p in TMPL_COPIES]],
             capture_output=True, text=True)
-        matched = set(out.stdout.strip().splitlines())
+        raw_lines = out.stdout.strip().splitlines()
+        matched = {re.sub(r":\d+$", "", line) for line in raw_lines}
         self.assertEqual(matched, {str(p) for p in TMPL_COPIES},
-                          "grep -cl must list all 3 tree paths as matches")
+                          f"grep -cl must list all 3 tree paths as matches (raw output: {raw_lines!r})")
 
 
 class FastTemplateUntouchedTest(unittest.TestCase):
