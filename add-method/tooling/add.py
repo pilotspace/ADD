@@ -280,10 +280,14 @@ _BLANK_RUN_RE = re.compile(r"\n{3,}")
 def _strip_live_scaffold(text: str) -> str:
     """Remove `<!-- … -->` instruction comments from a TASK.md — fences untouched, idempotent.
 
-    Splits on fenced code blocks so a comment inside a ``` fence (e.g. the frozen §3) is never
-    touched; in the non-fence segments it drops comment spans, trims the trailing whitespace a
-    removal leaves on a line, and collapses 3+ consecutive newlines to one blank line."""
-    segs = re.split(r"(```.*?```)", text, flags=re.DOTALL)
+    Splits on fenced code blocks AND an inline single-backtick span that IS itself a whole
+    `` `<!--...-->` `` (literal comment syntax quoted as an example in prose) so neither is
+    touched; a live comment that merely CONTAINS unrelated backtick-quoted code (e.g. this very
+    template's own `` `add.py autonomy set` ``-style asides) is untouched by this exception and
+    still stripped whole, exactly as before. In the remaining segments it drops comment spans,
+    trims the trailing whitespace a removal leaves on a line, and collapses 3+ consecutive
+    newlines to one blank line."""
+    segs = re.split(r"(```.*?```|`<!--.*?-->`)", text, flags=re.DOTALL)
     for i in range(0, len(segs), 2):                     # even indices = OUTSIDE any fence
         s = _HTML_COMMENT_RE.sub("", segs[i])
         s = _TRAILING_WS_RE.sub("", s)

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "grep-binary-agnostic-milestone-test",
+  "active_task": "strip-scaffold-backtick-comment-fix",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2590,30 +2590,52 @@
     },
     "adr-harvester-multiline-fields": {
       "title": "ADR Harvester Multi-Line Field Capture",
-      "phase": "ground",
+      "phase": "tests",
       "gate": "none",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-04T17:35:51+00:00"
     },
     "strip-scaffold-backtick-comment-fix": {
       "title": "Strip-Scaffold Backtick-Comment Over-Strip Fix",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:29+00:00",
-      "updated": "2026-07-03T13:16:29+00:00"
+      "updated": "2026-07-04T17:42:39+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4d6c7af7595cc004ce8d99263fce0c9f",
+        "tests": {
+          "add-method/tooling/test_strip_scaffold_at_done.py": "863555ef0e7e9c9ee9ff3ab9cd839da2"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_strip_scaffold_at_done.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "af24522d30916969ce8049cb0fe314ba"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "worktree-isolated-spawn-default": {
       "title": "Prefer Worktree-Isolated Agent Spawning Per Task",
-      "phase": "ground",
+      "phase": "tests",
       "gate": "none",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:21:23+00:00",
-      "updated": "2026-07-03T13:21:23+00:00"
+      "updated": "2026-07-04T17:35:52+00:00"
     },
     "fold-glossary-deltas": {
       "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
@@ -2701,10 +2723,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "js-reclaim-lock-heartbeat": {
+      "title": "JS/npm reclaim-lock heartbeat twin fix",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-04T16:24:29+00:00",
+      "updated": "2026-07-04T17:26:38+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T16:23:12+00:00",
+  "updated": "2026-07-04T17:42:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

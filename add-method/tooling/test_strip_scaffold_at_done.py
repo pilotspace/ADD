@@ -151,6 +151,31 @@ class StripHelperProperties(unittest.TestCase):
         self.assertNotIn("   \n", once, "trailing whitespace from a removal must be trimmed")
         self.assertEqual(strip(once), once, "strip must be idempotent")
 
+    def test_inline_backtick_comment_survives(self):              # M1
+        strip = add._strip_live_scaffold
+        live = ("# T\nescape a literal `<!--...-->` in your text\n\n"
+                "<!-- a real live comment -->\n\nkept line\n")
+        out = strip(live)
+        self.assertIn("`<!--...-->`", out, "an inline backtick-quoted comment must survive")
+        self.assertNotIn("<!-- a real live comment", out,
+                          "a genuine (non-backtick) comment must still be stripped")
+        self.assertIn("kept line", out)
+
+    def test_real_comment_still_stripped(self):                   # M2
+        strip = add._strip_live_scaffold
+        live = "# T\n<!-- EXIT: ground rules -->\n\nkept line\n"
+        out = strip(live)
+        self.assertNotIn("<!-- EXIT", out, "a genuine live comment is stripped exactly as before")
+        self.assertIn("kept line", out)
+
+    def test_stray_backtick_does_not_swallow_content(self):       # R1
+        strip = add._strip_live_scaffold
+        live = "# T\na stray ` backtick with no close on this line\n<!-- real comment -->\nkept line\n"
+        out = strip(live)
+        self.assertNotIn("<!-- real comment", out,
+                          "a real comment after a stray backtick must still be stripped")
+        self.assertIn("kept line", out)
+
 
 class EnginePinnedAndPoolUntouched(unittest.TestCase):
     def test_engine_byte_identical_to_pin(self):                 # M4, R:engine_pin_drift
