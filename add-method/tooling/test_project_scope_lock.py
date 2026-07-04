@@ -690,6 +690,80 @@ class ProjectLockConcurrencySafetyTest(_Base):
                              f"stale-reclaim path)")
         self.assertFalse((add_dir / PROJECT_LOCK_NAME).exists(), "every acquirer released again — none leaked")
 
+    def test_project_lock_concurrent_reclaim_survives_scheduling_delay(self):   # M4 (reclaim-ticket-race)
+        """Mirrors global-lock-followups' own scheduling-delay repro (test_global_update_harden's
+        test_concurrent_stale_reclaim_survives_scheduling_delay) against `_project_lock`, whose
+        ticket-orphan branch shares the byte-for-byte identical create-once, never-refreshed
+        shape. `_project_lock` itself has NO --lock-timeout/poll mode (Held+fresh -> immediate
+        BlockingIOError, always) — so unlike the home lock, the retry that lets a sibling racer's
+        stat land AFTER the delayed holder's age crosses stale_after has to live at the CALLER,
+        exactly as a real retry-on-`install_in_progress` script would: this test's racers loop
+        their own acquire attempts until they succeed or a generous deadline elapses, rather than
+        a single one-shot call each."""
+        self._write_project_lock(self.proj, age_seconds=10)
+        add_dir = self._add_dir(self.proj)
+        env = self._env()
+        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "1"
+
+        first_holder = threading.Event()
+        hold_seconds = 1.5     # > ADD_PROJECT_LOCK_STALE_SECONDS — a live, merely-delayed holder
+        retry_deadline = hold_seconds + 2
+        results = []
+        results_lock = threading.Lock()
+        barrier = threading.Barrier(6)
+        active = 0
+        peak = 0
+
+        def racer():
+            nonlocal active, peak
+            barrier.wait()
+            start = time.monotonic()
+            while True:
+                try:
+                    with _installer._project_lock(add_dir, env=env):
+                        with results_lock:
+                            results.append("acquired")
+                            active += 1
+                            peak = max(peak, active)
+                        if not first_holder.is_set():
+                            first_holder.set()
+                            time.sleep(hold_seconds)
+                        else:
+                            time.sleep(0.05)
+                        with results_lock:
+                            active -= 1
+                    return
+                except BlockingIOError:
+                    if time.monotonic() - start >= retry_deadline:
+                        with results_lock:
+                            results.append("blocked")
+                        return
+                    time.sleep(0.05)
+                except Exception as exc:            # pragma: no cover - would fail the assertions below
+                    with results_lock:
+                        results.append(f"error:{exc!r}")
+                    return
+
+        threads = [threading.Thread(target=racer) for _ in range(6)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=retry_deadline + 5)
+
+        errors = [r for r in results if r.startswith("error:")]
+        self.assertEqual(errors, [], f"no racer hit an unexpected exception: {errors}")
+        self.assertEqual(len(results), 6, "every racer reported an outcome (none hung)")
+        self.assertGreaterEqual(results.count("acquired"), 1,
+                                "at least one racer reclaims the stale lock and proceeds")
+        self.assertLessEqual(peak, 1,
+                             f"at most one racer may be INSIDE the critical section at any given "
+                             f"instant even when the current holder is merely scheduler-delayed, "
+                             f"not crashed (observed peak concurrent holders: {peak}) — a higher "
+                             f"peak proves a sibling racer reclaimed a lock whose holder was still "
+                             f"legitimately working, not dead")
+        self.assertFalse((add_dir / PROJECT_LOCK_NAME).exists(),
+                         "every acquirer released the lock again — none leaked")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

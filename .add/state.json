@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-seed-nudge",
+  "active_task": "reclaim-ticket-race",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2647,10 +2647,45 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "reclaim-ticket-race": {
+      "title": "Fix CI-observed reclaim-ticket race in _update_lock",
+      "phase": "done",
+      "gate": "RISK-ACCEPTED",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-04T12:55:02+00:00",
+      "updated": "2026-07-04T14:03:25+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7b19e11d2278c5813496c4acd96d6bc6",
+        "tests": {
+          "add-method/tooling/test_global_update_harden.py": "91569347413352f227674f5d848fc13c",
+          "add-method/tooling/test_project_scope_lock.py": "6dcd2ab7420d472db587170f13039348"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/tooling/test_global_update_harden.py",
+          "add-method/tooling/test_project_scope_lock.py"
+        ],
+        "snapshot_md5": "f2b1c5e6cc2028d8c245cb9c4fecec58"
+      },
+      "waiver": {
+        "owner": "Tin Dang",
+        "ticket": ".add/tasks/reclaim-ticket-race/TASK.md",
+        "expires": "2026-08-04"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T08:52:59+00:00",
+  "updated": "2026-07-04T14:03:25+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

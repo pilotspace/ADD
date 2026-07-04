@@ -22,6 +22,7 @@ import re
 import shutil
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -1433,6 +1434,42 @@ _LOCK_TICKET_STALE_SECONDS = 5     # a leaked per-generation reclaim ticket (its
 
 
 @contextlib.contextmanager
+def _lock_heartbeat(lock_path: Path, stale_after: float):
+    """reclaim-ticket-race fix: refreshes `lock_path`'s own mtime on a background daemon thread
+    for as long as this context is held, so a live holder is never misjudged stale by a sibling
+    racer merely because wall-clock age crosses `stale_after` while it is still legitimately
+    working. The reclaim-ticket mechanism (see the callers below) only arbitrates WHICH challenger
+    wins a reclaim already judged necessary — it never protects the holder from being judged stale
+    in the first place; THIS is what does. A daemon thread means a hard crash simply stops
+    heartbeating -> the file still ages out and self-heals normally (no regression to the
+    leaked-lock self-heal path this mechanism must preserve).
+
+    This is a probabilistic mitigation, not a mathematical guarantee: if the heartbeat thread
+    itself is starved past `stale_after`, the window reopens — accepted given prod defaults
+    (_LOCK_STALE_DEFAULT=600s / _PROJECT_LOCK_STALE_DEFAULT=120s) make a live holder actually
+    exceeding either near-impossible in practice; the only mathematical fix (kernel-enforced
+    auto-release, e.g. flock, on process death) was already rejected elsewhere for breaking
+    cross-twin (npm/pip) serialization (see `_update_lock`'s own docstring)."""
+    interval = max(0.05, min(stale_after / 4, 5.0)) if stale_after > 0 else 0.05
+    stop = threading.Event()
+
+    def _beat():
+        while not stop.wait(interval):
+            try:
+                os.utime(str(lock_path), None)
+            except OSError:
+                pass    # lock_path already gone (released/reclaimed elsewhere) — nothing to heartbeat
+
+    thread = threading.Thread(target=_beat, daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        thread.join(timeout=interval + 1.0)
+
+
+@contextlib.contextmanager
 def _update_lock(home: Path, *, timeout: float | None = None, env=None):
     """Serialize `update --global` (and, since global-lock-followups, `install --global`) with
     an EXCLUSIVE O_EXCL lockfile at <home>/.update.lock — the SAME mechanism as the npm twin
@@ -1610,7 +1647,8 @@ def _update_lock(home: Path, *, timeout: float | None = None, env=None):
             os.write(fd, stamp.encode("utf-8"))
         except OSError:
             pass                               # diagnostics are best-effort — never fail an acquired lock
-        yield
+        with _lock_heartbeat(lock_path, stale_after):
+            yield
     finally:
         os.close(fd)
         try:
@@ -1830,7 +1868,8 @@ def _project_lock(add_dir: Path, *, env=None):
             os.write(fd, stamp.encode("utf-8"))
         except OSError:
             pass                               # diagnostics are best-effort — never fail an acquired lock
-        yield
+        with _lock_heartbeat(lock_path, stale_after):
+            yield
     finally:
         if fd is not None:
             os.close(fd)

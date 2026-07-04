@@ -510,6 +510,82 @@ class StaleLockSelfHealTest(_Base):
         self.assertFalse((self.home / LOCK_NAME).exists(),
                          "every acquirer released the lock again — none leaked")
 
+    def test_concurrent_stale_reclaim_survives_scheduling_delay(self):   # M1 (new) — CI-observed race
+        """reclaim-ticket-race: a CURRENT holder merely delayed by scheduling (not crashed) must
+        never have its still-live lock stolen by a sibling racer just because wall-clock age
+        exceeds the stale threshold. `age > stale_after` is the ONLY signal `_update_lock` has —
+        it cannot distinguish "the holder crashed" from "the holder is still working but slow,"
+        because nothing refreshes the lock file's mtime while it is legitimately held. This is
+        what GitHub Actions' heavier thread-scheduling reproduced twice against the sibling test
+        above (its 0.05s hold is negligible on a fast dev box but can exceed a 1s stale_after
+        under real CI contention) — reproduced here deterministically via an injected hold delay,
+        not CI-timing luck. The fix is a heartbeat (the holder refreshes its OWN lock file's mtime
+        while it holds it), not a bigger `stale_after` (see TASK.md §1 Reject R1 — shrinks the
+        window, does not close it)."""
+        self._write_lock(age_seconds=10)
+        env = self._env()
+        env["ADD_LOCK_STALE_SECONDS"] = "1"
+
+        first_holder = threading.Event()
+        hold_seconds = 1.5     # > ADD_LOCK_STALE_SECONDS — simulates a scheduler stall on the
+                               # CURRENT holder, not a crash: it is still alive, just descheduled.
+        results = []
+        results_lock = threading.Lock()
+        barrier = threading.Barrier(6)
+        active = 0
+        peak = 0
+
+        def racer():
+            nonlocal active, peak
+            barrier.wait()
+            try:
+                # a real second process doesn't give up after one glance — it polls
+                # (`--lock-timeout`) for a while before deciding the holder is unreachable. Without
+                # a timeout every racer would check staleness exactly ONCE, almost immediately after
+                # the barrier (age ~= 0s, nowhere near stale_after) and just fail-fast — never
+                # observing the moment the delayed holder's age crosses stale_after. Polling well
+                # past `hold_seconds` is what lets a sibling racer's stat land inside that window.
+                with _installer._update_lock(self.home, timeout=hold_seconds + 2, env=env):
+                    with results_lock:
+                        results.append("acquired")
+                        active += 1
+                        peak = max(peak, active)
+                    # only the FIRST racer to actually acquire simulates the scheduler stall —
+                    # every later (legitimately sequential) holder just does the normal brief hold.
+                    if not first_holder.is_set():
+                        first_holder.set()
+                        time.sleep(hold_seconds)
+                    else:
+                        time.sleep(0.05)
+                    with results_lock:
+                        active -= 1
+            except BlockingIOError:
+                with results_lock:
+                    results.append("blocked")
+            except Exception as exc:            # pragma: no cover - would fail the assertions below
+                with results_lock:
+                    results.append(f"error:{exc!r}")
+
+        threads = [threading.Thread(target=racer) for _ in range(6)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5)
+
+        errors = [r for r in results if r.startswith("error:")]
+        self.assertEqual(errors, [], f"no racer hit an unexpected exception: {errors}")
+        self.assertEqual(len(results), 6, "every racer reported an outcome (none hung)")
+        self.assertGreaterEqual(results.count("acquired"), 1,
+                                "at least one racer reclaims the stale lock and proceeds")
+        self.assertLessEqual(peak, 1,
+                             f"at most one racer may be INSIDE the critical section at any given "
+                             f"instant even when the current holder is merely scheduler-delayed, "
+                             f"not crashed (observed peak concurrent holders: {peak}) — a higher "
+                             f"peak proves a sibling racer reclaimed a lock whose holder was still "
+                             f"legitimately working, not dead")
+        self.assertFalse((self.home / LOCK_NAME).exists(),
+                         "every acquirer released the lock again — none leaked")
+
 
 # --- leaked reclaim-ticket self-heal (post-freeze redo: a fresh adversarial verify pass found ---
 # that a ticket file leaked by a crash mid-reclaim — created by a process that won it, then died
