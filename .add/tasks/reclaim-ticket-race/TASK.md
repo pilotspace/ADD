@@ -408,6 +408,59 @@ and this reopens as a P0 change request (whole-process-starvation hypothesis wou
 confirmed, not just suspected)
 Reviewed by: Tin Dang · date: 2026-07-04
 
+### WAIVER VOIDED — 2026-07-04, same day
+GitHub Actions run 28708887360 (publish.yml, re-triggered by force-moving `v1.16.1` to the fix
+commit `678cd7b`) ran `test_concurrent_stale_reclaim_exactly_one_wins` for real on CI and it
+FAILED again, identically: `AssertionError: 2 not less than or equal to 1 ... observed peak
+concurrent holders: 2`. Per this waiver's own stated terms, this is VOID — the fix does not hold
+under real CI conditions. Per §1's `After` criterion ("the next tagged release's publish
+workflow passes this test on the first attempt"), that criterion is NOT met.
+
+This is not a new failure mode — it CONFIRMS, empirically rather than hypothetically, the exact
+residue the independent add-verify refute-read flagged before the gate: the holder-side heartbeat
+only defends a single stalled THREAD; it cannot defend against whole-PROCESS scheduling
+starvation, because the heartbeat thread itself needs to run to have any effect, and a stalled
+process stalls every thread in it together, heartbeat included. The existing test's own numbers
+now prove this is real, not speculative: `test_concurrent_stale_reclaim_exactly_one_wins` holds
+the lock for only 0.05s of CPU-scheduled work against `ADD_LOCK_STALE_SECONDS=1` — for a sibling
+racer to observe `age > 1s` while that holder is still "inside" its 0.05s critical section, the
+ACTUAL wall-clock gap between that racer's stat and the holder's os.open must have blown up past
+1 real second under GitHub Actions' scheduling load — a >20x inflation the local dev machine
+never reproduces (0 failures observed locally across every run this session).
+
+Reopened as a P0 change request, back to SPECIFY. Nothing published under v1.16.1 (publish jobs
+correctly skipped both times) — no user-facing regression, no rollback needed. `git status` /
+`.add/tasks/reclaim-ticket-race/` remain the tracking artifact; phase is being reset from `done`
+back to an active phase to re-run Specify → Contract → Build → Verify for whichever v3 approach
+is chosen next.
+
+### v3 CHANGE REQUEST — widen the test's own stale-threshold override (2026-07-04)
+Human decision (offered 3 options: widen test threshold / investigate CI scheduling first /
+accept as CI-only artifact and ship): **widen the test's own threshold override**. Rationale: the
+`peak <= 1` assertion (the actual correctness guarantee) is untouched; only the test-only
+`ADD_LOCK_STALE_SECONDS`/`ADD_PROJECT_LOCK_STALE_SECONDS` env overrides move, from `"1"` (chosen
+purely for test speed, with no relationship to anything in prod) to `"8"` — giving ~160x margin
+over the 0.05s hold in the plain `test_concurrent_stale_reclaim_exactly_one_wins` twins, instead
+of the ~20x margin that GitHub Actions blew past twice. Prod defaults (`_LOCK_STALE_DEFAULT`=600s,
+`_PROJECT_LOCK_STALE_DEFAULT`=120s) are completely untouched — this is a test-realism fix, not a
+production behavior change, and does NOT fall under Reject R1 (R1 rejected raising the constant
+INSTEAD OF the heartbeat, as a substitute fix; this is IN ADDITION to the already-shipped
+heartbeat, addressing the test's own fragility against real CI scheduling noise, which the
+heartbeat structurally cannot address by itself — see WAIVER VOIDED above).
+
+For the 2 new scheduling-delay tests (which deliberately hold PAST the stale threshold to exercise
+the heartbeat), `hold_seconds` was raised in lockstep from `1.5` to `10` (must still meaningfully
+exceed the new `8`s threshold) — and the home-lock twin's previously-hardcoded
+`t.join(timeout=5)` was fixed to scale with `hold_seconds` (`hold_seconds + 10`) since a fixed
+5s budget would have silently truncated the join before a 10s-holding racer even finished (the
+project-lock twin's own `join(timeout=retry_deadline + 5)` already scaled correctly, no change
+needed there).
+
+Verified locally: all 4 affected tests green (single run + 3x repeat on the two
+`exactly_one_wins` twins); full `test_global_update_harden.py` + `test_project_scope_lock.py`
+suites green (67/67). Re-pushed by re-tagging `v1.16.1` a second time to confirm on real CI — see
+outcome recorded below before this task closes again.
+
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md

@@ -455,7 +455,12 @@ class StaleLockSelfHealTest(_Base):
     def test_concurrent_stale_reclaim_exactly_one_wins(self):         # M1 TOCTOU · Scenario 3
         self._write_lock(age_seconds=10)                              # a stale lock every racer observes
         env = self._env()
-        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        env["ADD_LOCK_STALE_SECONDS"] = "8"    # reclaim-ticket-race: widened from "1" — GitHub
+        # Actions failed this test twice with a genuine >20x real-time blowup of the 0.05s hold
+        # below under CI scheduling load (confirmed via a real CI run, not inferred); "8" keeps
+        # the SAME test-only-override intent (well under the 10s backdated age, so still
+        # unambiguously stale) while giving ~160x margin instead of ~20x — a test-realism fix,
+        # not a prod change (prod's own default is 600s) and NOT a weakening of `peak <= 1`.
         results = []
         results_lock = threading.Lock()
         barrier = threading.Barrier(6)
@@ -516,18 +521,22 @@ class StaleLockSelfHealTest(_Base):
         exceeds the stale threshold. `age > stale_after` is the ONLY signal `_update_lock` has —
         it cannot distinguish "the holder crashed" from "the holder is still working but slow,"
         because nothing refreshes the lock file's mtime while it is legitimately held. This is
-        what GitHub Actions' heavier thread-scheduling reproduced twice against the sibling test
-        above (its 0.05s hold is negligible on a fast dev box but can exceed a 1s stale_after
-        under real CI contention) — reproduced here deterministically via an injected hold delay,
-        not CI-timing luck. The fix is a heartbeat (the holder refreshes its OWN lock file's mtime
-        while it holds it), not a bigger `stale_after` (see TASK.md §1 Reject R1 — shrinks the
-        window, does not close it)."""
+        what GitHub Actions' heavier thread-scheduling reproduced (confirmed via 2 real CI runs,
+        not inferred) against the sibling test above: its 0.05s hold blew up past a "1s"
+        stale_after under CI contention (a >20x inflation, never seen locally) — the holder-side
+        heartbeat below fixes the STRUCTURAL race (a live holder is never mistaken for a crashed
+        one), but a heartbeat thread cannot survive whole-PROCESS scheduling starvation any more
+        than the holder it protects can, so the test's own stale_after override is ALSO widened
+        (test-only, prod default is 600s) to keep realistic margin against CI noise — belt AND
+        suspenders, not an either/or (see TASK.md §1 Reject R1 for why a bigger constant ALONE,
+        without the heartbeat, was already rejected as a non-fix)."""
         self._write_lock(age_seconds=10)
         env = self._env()
-        env["ADD_LOCK_STALE_SECONDS"] = "1"
+        env["ADD_LOCK_STALE_SECONDS"] = "8"    # widened from "1" — see docstring + the sibling
+                                                # test's own comment for the CI-observed rationale
 
         first_holder = threading.Event()
-        hold_seconds = 1.5     # > ADD_LOCK_STALE_SECONDS — simulates a scheduler stall on the
+        hold_seconds = 10      # > ADD_LOCK_STALE_SECONDS (8) — simulates a scheduler stall on the
                                # CURRENT holder, not a crash: it is still alive, just descheduled.
         results = []
         results_lock = threading.Lock()
@@ -570,7 +579,9 @@ class StaleLockSelfHealTest(_Base):
         for t in threads:
             t.start()
         for t in threads:
-            t.join(timeout=5)
+            t.join(timeout=hold_seconds + 10)   # scales with hold_seconds — a fixed 5s budget
+                                                 # from the old 1.5s-hold version would truncate
+                                                 # the join before a slower racer even finishes
 
         errors = [r for r in results if r.startswith("error:")]
         self.assertEqual(errors, [], f"no racer hit an unexpected exception: {errors}")

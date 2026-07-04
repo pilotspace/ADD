@@ -636,7 +636,11 @@ class ProjectLockConcurrencySafetyTest(_Base):
         self._write_project_lock(self.proj, age_seconds=10)
         add_dir = self._add_dir(self.proj)
         env = self._env()
-        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "1"
+        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "8"    # reclaim-ticket-race: widened from "1" —
+        # mirrors the home-lock twin's own widening; GitHub Actions failed the home-lock version
+        # of this exact test twice via a real >20x scheduling blowup of a 0.05s hold under CI
+        # load. "8" keeps the same test-only-override intent (well under the 10s backdated age)
+        # while giving ~160x margin — test-realism fix, not a prod change (prod default: 120s).
         results = []
         results_lock = threading.Lock()
         barrier = threading.Barrier(6)
@@ -703,10 +707,11 @@ class ProjectLockConcurrencySafetyTest(_Base):
         self._write_project_lock(self.proj, age_seconds=10)
         add_dir = self._add_dir(self.proj)
         env = self._env()
-        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "1"
+        env["ADD_PROJECT_LOCK_STALE_SECONDS"] = "8"    # widened from "1" — see the sibling test's
+                                                        # own comment for the CI-observed rationale
 
         first_holder = threading.Event()
-        hold_seconds = 1.5     # > ADD_PROJECT_LOCK_STALE_SECONDS — a live, merely-delayed holder
+        hold_seconds = 10      # > ADD_PROJECT_LOCK_STALE_SECONDS (8) — a live, merely-delayed holder
         retry_deadline = hold_seconds + 2
         results = []
         results_lock = threading.Lock()
