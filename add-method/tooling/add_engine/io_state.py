@@ -199,3 +199,17 @@ def _md5_file(p: Path) -> str | None:
         return hashlib.md5(p.read_bytes()).hexdigest()
     except OSError:
         return None
+
+
+def _personas_unseeded(root: Path) -> bool:
+    """True when `.add/personas/` has no REAL (non-template) authored persona: the
+    directory is absent, empty, or holds only the seeded `_template.md` scaffold
+    (persona-seed-nudge). Fail-soft: an unreadable directory counts as unseeded
+    rather than raising — this feeds a `note:`/INFO hint, never a gate."""
+    d = root / "personas"
+    if not d.is_dir():
+        return True
+    try:
+        return not any(p.stem != "_template" for p in d.glob("*.md"))
+    except OSError:
+        return True

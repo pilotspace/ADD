@@ -24,6 +24,7 @@ __all__ = [
     "SETUP_FILES",
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
+    "PERSONA_HINT",
     "GUIDELINE_FILES",
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
@@ -98,6 +99,14 @@ SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md
 # content quality is the AI's authoring concern, not the engine gate. NO-EXEC: validation is pure.
 PERSONA_FRONTMATTER_KEYS = ("name", "vibe")
 PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Requirement", "## Success Metrics")
+
+# persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
+# THIS constant (not their own copy) so the wording can never drift across the three surfaces.
+# Project-scoped (not "this milestone's domain") per the confirmed v2 amendment: the AI should
+# catch up ALL of a project's missing personas, not draft a single milestone-fit one.
+PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add-persona "
+                "agent (or read docs/18-personas.md) to seed the project's persona(s) from "
+                "PROJECT.md's domain")
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts
 # never reach git. Bare-filename patterns match at any depth under .add/ (tasks/,
