@@ -80,6 +80,13 @@ class SeedTest(unittest.TestCase):
         self.assertEqual(add._persona_missing(text), [],
                          "the seeded template must be schema-conformant (no missing parts)")
 
+    # scenario: the template recommends stating each persona's flow + abilities, so the
+    # design/build/advisor surfaces can actually pick a persona up and use it (not engine-checked)
+    def test_template_recommends_flow_and_abilities(self):
+        text = (self._personas() / "_template.md").read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?m)^flow:", "template frontmatter must carry 'flow'")
+        self.assertIn("## Abilities", text, "template must carry the '## Abilities' section")
+
     # scenario: re-init never clobbers an authored persona (survivor)
     def test_reinit_never_clobbers_authored_persona(self):
         f = self._personas() / "frontend.md"

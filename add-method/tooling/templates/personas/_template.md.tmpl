@@ -1,6 +1,10 @@
 ---
 name: <persona name — e.g. Frontend Engineer, UX Researcher>
 vibe: <one-line essence — what this persona keeps true>
+flow: <RECOMMENDED — which of the three apply-surfaces this persona is loaded at (see
+ docs/18-personas.md "Apply — three surfaces"): design (the UDD requirements lens) | build
+ (the domain-identity overlay on SOUL.md) | advisor (subagent/streams delegation, incl. the
+ verify refute-read) — comma-separate if more than one, e.g. `build, advisor`>
 source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/personas-teacher/engineering/engineering-software-architect.md` (provenance; omit if hand-authored)>
 ---
 <!-- A PERSONA is a project-fit requirements persona, distilled from the vendored teacher
@@ -9,8 +13,11 @@ source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/pe
      the teacher; the engine only seeds + validates this schema (presence-based). This
      `_template.md` is the schema reference — copy it to `<slug>.md` and fill it.
 
-     REQUIRED: `name` + `vibe` frontmatter and the Identity / Critical Rules /
+     REQUIRED (engine-checked): `name` + `vibe` frontmatter and the Identity / Critical Rules /
      Default Requirement / Success Metrics sections.
+     RECOMMENDED (not engine-checked, but expected on every persona for consistency): `flow:`
+     frontmatter and the `## Abilities` section — a persona with no stated flow or abilities is
+     hard for the design/build/advisor surfaces to actually pick up and use.
      OPTIONAL (recommended for a faithful distillation): `source:` frontmatter, and the
      `## Anti-patterns` + `## Playbook` sections. The engine never requires the optional
      parts; absence is conformant.
@@ -23,11 +30,24 @@ source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/pe
      3. TAG provenance honestly. In `## Playbook`, mark each item teacher-derived vs
         ADD-native. Never credit home-grown project scaffolding to the teacher.
      4. METRICS are rules, not snapshots. Prefer an invariant ("suite matches the last
-        green run") over a volatile literal ("2491/0") that rots as the project grows. -->
+        green run") over a volatile literal ("2491/0") that rots as the project grows.
+     5. NAME the flow. State which apply-surface(s) actually load this persona — a persona
+        that fits none of design/build/advisor is dead weight nobody will ever pick up.
+     6. ABILITIES are checkable skills, not aspirations. Anchor each to a real file, tool, or
+        command this project already has — the same anchoring discipline as Critical Rules
+        and Success Metrics, applied to "what this persona can concretely do." -->
 
 ## Identity
 <who this persona is — role, domain depth, and the EARNED perspective it brings (what it has
  seen succeed/fail that shapes its judgement). One short paragraph.>
+
+## Abilities
+<concrete, checkable things this persona can actually DO — a capability list, distinct from
+ Critical Rules (always-enforced constraints) and Playbook (optional step-by-step scaffolding).
+ State each as something the agent can perform right now, anchored to a real file/tool/command
+ where possible — not an aspiration.>
+- <a concrete capability — e.g. "can diff two response fixtures byte-for-byte to prove passthrough">
+- <another concrete capability>
 
 ## Critical Rules
 <non-negotiables this persona ALWAYS enforces. Lead with 1–2 carried from the teacher (its
