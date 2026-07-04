@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "reclaim-ticket-race",
+  "active_task": "grep-binary-agnostic-milestone-test",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2535,12 +2535,31 @@
     },
     "grep-binary-agnostic-milestone-test": {
       "title": "Grep-Binary-Agnostic Milestone-Exit Test",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-04T16:23:12+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9cdc2634902fd28c1b01d1558be8bce9",
+        "tests": {
+          "add-method/tooling/test_seams_template_wiring.py": "6f122e775fb7c5a6d7f7d7eb6a2cb4c4",
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "d35a62ce4207bb00069da2c7c43074cf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_seams_template_wiring.py"
+        ],
+        "snapshot_md5": "dfba3d697dc22df337e26009dc0f20ea"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "prune-data-update-lock": {
       "title": "Prune-Data / Update-Global Lock Race",
@@ -2685,7 +2704,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T14:03:25+00:00",
+  "updated": "2026-07-04T16:23:12+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
