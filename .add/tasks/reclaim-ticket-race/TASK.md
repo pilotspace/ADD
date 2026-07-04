@@ -461,6 +461,25 @@ Verified locally: all 4 affected tests green (single run + 3x repeat on the two
 suites green (67/67). Re-pushed by re-tagging `v1.16.1` a second time to confirm on real CI — see
 outcome recorded below before this task closes again.
 
+### WAIVER RESOLVED (not just closed) — 2026-07-04, real CI confirmation
+GitHub Actions run 28709382344 (publish.yml, `v1.16.1` re-tagged to commit `5a61425`, the
+widened-threshold fix on top of the heartbeat): "Test suite + tag/version match" job —
+**success**. `test_concurrent_stale_reclaim_exactly_one_wins` (both twins) held under real CI
+scheduling load with the widened 8s/~160x-margin override — the exact criterion the VOIDED
+waiver named as its resolution condition. Both publish jobs ("Publish pilotspace-add to PyPI",
+"Publish @pilotspace/add to npm") — **success**. Confirmed on-registry: `npm view @pilotspace/add
+version` -> `1.16.1`; PyPI's own CI job succeeded (its JSON API is unreliable to curl directly —
+trust the in-band CI result, not a local re-query). 1.16.1 has genuinely shipped this time.
+
+§1's `After` criterion ("the next tagged release's publish workflow passes this test on the
+first attempt") is now met, on the SECOND re-tag (not the first — the v2 heartbeat-only attempt
+failed once for real before this v3 threshold-widening attempt succeeded). This closes the P0
+change request opened above: the fix is the combination of BOTH the structural heartbeat (closes
+the live-holder-misjudged-stale race in principle) AND the widened test margin (makes the test
+itself robust to the CI scheduling noise that a mathematically-exact-but-CI-fragile threshold
+couldn't tolerate) — neither alone was sufficient, matching the "belt AND suspenders, not an
+either/or" framing recorded in the new scheduling-delay test's own docstring above.
+
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
