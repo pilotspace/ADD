@@ -4,6 +4,24 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [1.16.1] — 2026-07-04
+
+Patch: two loose, additive persona-loop improvements found while dogfooding
+ADD in a real consumer project. No engine validation changed; no CLI
+behavior changed; nothing removed or renamed.
+
+### Changed
+- **Persona seed nudge is project-scoped.** The setup/status/check/new-milestone
+  hint to draft a project's missing personas now names the project by scope
+  instead of a generic reminder, so it fires once per genuinely-uncovered
+  project rather than repeating a one-size-fits-all message.
+- **Persona schema template recommends `flow:` + `## Abilities`.** A seeded
+  persona can now state which ADD apply-surface (design/build/advisor) loads
+  it and what it can concretely do, distinct from `## Critical Rules`
+  (always-enforced constraints) and the optional `## Playbook`. Recommended,
+  not engine-checked — existing personas anywhere stay schema-conformant
+  with no forced re-seed.
+
 ## [1.16.0] — 2026-07-03
 
 Closes the **install-update-hardening** milestone: `add.py init`/`update` (both
