@@ -1,5 +1,12 @@
 # Releases
 
+## 1.16.1 — 2026-07-04
+milestones: none
+loose tasks: persona-seed-nudge
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: ADD 1.16.1 — persona-loop hotfix (project-scoped seed nudge PR #132 + flow/abilities persona-schema template PR #133); no engine-validation change; full suite green; 1 open SPEC delta rides unresolved (rule-id-coverage's grandfathered-dialect question, owned by an archived milestone task carry-delta can't reach — unrelated to this patch's scope); tag v1.16.1 triggers npm/PyPI publish
+
 ## 1.16.0 — 2026-07-03
 milestones: install-update-hardening
 loose tasks: none

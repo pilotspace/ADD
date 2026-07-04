@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.16.1 — 2026-07-04
+
+- (no milestone bundled)
+
 ## 1.16.0 — 2026-07-03
 
 - Install/update hardening — atomic + concurrency-safe writes — 16 carried · 0 key decision(s)
