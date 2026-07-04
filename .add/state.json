@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "adr-harvester-multiline-fields",
+  "active_task": "worktree-isolated-spawn-default",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2652,12 +2652,37 @@
     },
     "worktree-isolated-spawn-default": {
       "title": "Prefer Worktree-Isolated Agent Spawning Per Task",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:21:23+00:00",
-      "updated": "2026-07-04T17:35:52+00:00"
+      "updated": "2026-07-04T18:37:41+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1a1ffc876d939fe4d0287569df081a5f",
+        "tests": {
+          "add-method/tooling/test_skill_lean.py": "078cdbc86cf4ab740dc0dd42539d0df1",
+          "add-method/tooling/test_worktree_default_wording.py": "ff99e7be489a881b3688411b7467718f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/streams.md",
+          ".claude/skills/add/streams.md",
+          "add-method/src/add_method/_bundled/skill/add/streams.md",
+          "add-method/docs/10-setup-and-stages.md",
+          "add-method/src/add_method/_bundled/docs/10-setup-and-stages.md",
+          ".add/docs/10-setup-and-stages.md",
+          "add-method/tooling/test_worktree_default_wording.py"
+        ],
+        "snapshot_md5": "d4202f3adb92184fac58933a71376243"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "fold-glossary-deltas": {
       "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
@@ -2757,7 +2782,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T18:23:45+00:00",
+  "updated": "2026-07-04T18:37:41+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

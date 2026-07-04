@@ -2,11 +2,9 @@
 
 slug: worktree-isolated-spawn-default · created: 2026-07-03 · stage: mvp
 milestone: (none)
-autonomy: auto   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
-phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+sensitivity: mechanical
+autonomy: auto
+phase: done
 
 > One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
 > When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
@@ -16,40 +14,40 @@ phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> buil
 
 ## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md
 
-Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
-Context (working folder): <docs · todos · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
-Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
-Anchors the contract cites: <the symbols §3 will name>
-Issues/Risks (→ feed §1): <problems · traps · untestable risks found in the real code — task-delta; §1 builds on these>
+Touches (files · symbols · signatures): `.claude/skills/add/streams.md:52` ("wave is spawnable at once (`isolation="worktree"`)"), `:88` ("Isolation: spawn each worker with `isolation="worktree"`"), `:258` (spawn-adapter table row: `isolate | worktree | isolation="worktree" | ...`) — all 3 currently frame worktree isolation as tied to an explicitly-PARALLEL multi-task wave, never a single sequential subagent delegation; `add-method/docs/10-setup-and-stages.md:116` ("isolated in a git worktree, so concurrent builds cannot collide" — same parallel-wave framing). No file in `.claude/agents/*.md` or `add-method/agents/*.md` mentions isolation/worktree at all today (confirmed via grep) — the phase-agent roster prompts are silent on this.
+Context (working folder): docs/skill prose only — no code, no test, no engine pin touched
+Honors (patterns / conventions): none re-derived — this is a documentation-only convention change
+Seams consulted: none cited
+Anchors the contract cites: the 4 mention sites above
+Issues/Risks (→ feed §1): a REAL, already-flagged tension exists between this task's resolved direction and the user's own separate, standing personal preference (recorded in the user's global CLAUDE.md, Rule 5's spawn-template comment): "isolation=\"worktree\", # worktree only for parallels mode. Sequential Mode are skip this option" — i.e. Tin Dang's own general cross-project habit is worktree-for-parallel-only, while THIS backlog task (resolved 2026-07-03, specific to ADD-the-methodology's own shipped guidance) says the opposite: worktree should be ADD's stated DEFAULT even for a single sequential phase-delegated spawn. These are different scopes (Tin Dang's personal Task-tool habit vs. what ADD-the-product tells its OWN users/agents to do) and can coexist without contradiction, but a future reader must not conflate them — this task changes ADD's shipped guidance, NOT the user's own global CLAUDE.md.
 Related intent: seeded from phase-search-wiring spec-delta — this is the second documented incident of an in-place (non-worktree) concurrent agent-pair collision on shared engine-adjacent scope; Tin Dang confirmed this session that worktree isolation should become the default going forward, not merely a documented anti-pattern [← phase-search-wiring]
-Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
+Ground SHA: `ba42053` (`git rev-parse --short HEAD`) — all cited line numbers current as of this commit
 
 ---
 
 ## 1 · SPECIFY — the rules ▸ docs/03-step-1-specify.md
 
 Feature: ADD's own guidance for spawning a phase-delegated subagent (build/verify, and the orchestrator's XML spawn-prompt convention) should PREFER worktree isolation (`isolation: "worktree"`) as the DEFAULT for a task's agent-spawned steps, not merely a documented anti-pattern or an opt-in reserved for explicitly-parallel multi-task runs (from phase-search-wiring spec-delta; resolved in favor of DEFAULT by Tin Dang, 2026-07-03)
-Framings weighed: <chosen> (chosen) · <alternative> · <alternative>
+Framings weighed: reword the 4 existing mention sites (streams.md ×3, docs/10-setup-and-stages.md ×1) to state worktree isolation as the default for ANY agent-spawned step, with "shared-tree needs a stated reason" as the opt-out condition, mirroring the exact wording pattern already used in this session's own TASK.md drafts' "Spawn isolation (default):" line (chosen — smallest change, reuses wording already proven this session) · add a NEW top-level "## Isolation" section to streams.md instead of editing the 4 inline mentions — rejected, creates a second source of truth that could drift from the inline mentions instead of updating them in place · leave the wording as-is and rely on task authors reading between the lines — rejected, this is exactly the "documented anti-pattern, not a stated default" gap the spec-delta named
 Must:
 <must>
-  - <required behavior>
+  - each of the 4 existing mention sites states worktree isolation as the DEFAULT for any agent-spawned step (single sequential delegation OR a parallel wave), not only for explicitly-parallel multi-task runs
+  - a shared-tree (non-worktree) spawn is still possible but requires a stated reason in the task's own TASK.md (mirrors this session's own "Spawn isolation (default):" line already added to newer TASK.md drafts)
+  - the change is prose-only — no code, test, or engine pin is touched
 </must>
 Reject:
 <reject>
-  - <bad input / situation> -> "<error_code>"
+  - the new wording could be read as contradicting the user's own separate global CLAUDE.md preference (worktree only for parallel mode, sequential skips it) -> the doc change must explicitly scope itself to ADD-the-product's own shipped guidance for ITS users/agents, not overwrite or reference the user's personal cross-project habit
 </reject>
 After:
 <after>
-  - <state that is true once it succeeds>
+  - any reader of streams.md or docs/10-setup-and-stages.md sees worktree isolation presented as ADD's stated default for agent-spawned work, with the opt-out condition (a stated reason) made explicit rather than implicit
 </after>
 Assumptions — lowest-confidence first:
 <assumptions>
-  ⚠ <the one assumption most likely to be wrong> — lowest confidence because <why>; if wrong: <cost>
-  - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
+  ⚠ this task's resolved direction (worktree-as-default for ADD's own shipped guidance) does not conflict with, override, or need to reference the user's own separate global CLAUDE.md Task-tool habit (worktree only for parallel mode) — lowest confidence because these are genuinely different scopes (product guidance vs. personal habit) but a careless wording choice in the doc edit COULD blur that line for a future reader; if wrong: a future session might misread ADD's own docs as instructing IT to ignore the user's stated global preference, when the two were never meant to conflict
+  - [x] no code path enforces or reads isolation mode today — confirmed via Ground: `isolation="worktree"` appears only in prose/examples, never as a config value the engine parses; this is purely a documentation/convention change with zero runtime effect
 </assumptions>
-
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
 
 ---
 
@@ -58,140 +56,118 @@ Assumptions — lowest-confidence first:
 <scenarios>
 
 ```gherkin
-Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
-  Given <starting situation>
-  When <action>
-  Then <expected result>
-  And <what must remain unchanged>   # required for every rejection
+Scenario: streams.md states worktree as default   # M1
+  Given a reader opens .claude/skills/add/streams.md
+  When they read the wave-spawn and worker-isolation sections (lines ~52, ~88, ~258)
+  Then each states worktree isolation as the default for any agent-spawned step
+  And a shared-tree spawn is presented as requiring a stated reason, not as an equal alternative
+
+Scenario: docs/10-setup-and-stages.md states worktree as default   # M2
+  Given a reader opens add-method/docs/10-setup-and-stages.md's hard-boundary section
+  When they read the isolation sentence (line ~116)
+  Then it states worktree isolation as the default, consistent with streams.md's wording
+
+Scenario: no code or test is touched   # M3
+  Given the full existing tooling test suite
+  When it is run after this doc change
+  Then every test still passes unmodified — this is a prose-only change
+
+Scenario: the doc change does not reference or override the user's personal global preference   # R1
+  Given the new wording in streams.md/docs/10-setup-and-stages.md
+  When read in isolation from any user-specific config
+  Then it scopes itself to ADD's own shipped guidance only, with no mention of or edit to any file outside this repo
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
 
 ```
-<METHOD> <path>   body: { <fields> }
-  200 -> { <success fields> }
-  4xx -> { error: "<code>" | "<code>" }
-Schema: <tables/fields touched, and access pattern>
+DOC .claude/skills/add/streams.md   body: { 3 mention sites: L52, L88, L258 }
+  each -> reworded to state isolation="worktree" as the DEFAULT for any agent-spawned step
+    (single sequential OR parallel wave), shared-tree opt-out requires a stated reason
+
+DOC add-method/docs/10-setup-and-stages.md   body: { 1 mention site: L116 }
+  reworded consistently with streams.md's new wording
+
+Schema: no data/code schema touched — pure prose edit, 4 sites across 2 files
 ```
 
-Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
-Status: DRAFT
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
+Glossary deltas: none
+Status: FROZEN @ v1 — approved by Tin Dang, 2026-07-05 ("freeze as drafted, start with the trivial mechanical fixes first")
+Least-sure flag surfaced at freeze: [spec] whether this doc change could be misread as touching or overriding the user's own separate global CLAUDE.md preference (worktree only for parallel mode) — these are different scopes (ADD's shipped guidance vs. a personal cross-project habit) and the wording will explicitly avoid referencing the user's global config, but a future reader conflating the two is the residual risk; cost if wrong: confusion in a future session about which preference governs a given spawn decision.
 
 ---
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: n/a — content-assertion tests on prose, not code coverage
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_streams_md_states_worktree_default: arrange read streams.md / act scan the 3 mention sites / assert wording states "default" (not merely an example tied to "wave"/parallel context) near each `isolation="worktree"` mention · covers: M1
+  - test_setup_stages_states_worktree_default: same shape for docs/10-setup-and-stages.md's L116 · covers: M2
+  - test_full_suite_unaffected: act run the full tooling suite after the doc edit / assert all existing tests still pass · covers: M3
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
+Tests live in: `add-method/tooling/test_skill_lean.py` (extend — this file already scans streams.md content/budget) or a new small `add-method/tooling/test_worktree_default_wording.py` (decide at Build time) · MUST run red (missing implementation) before Build.
 
 ---
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+Scope (may touch): `add-method/skill/add/streams.md`, `.claude/skills/add/streams.md`, `add-method/src/add_method/_bundled/skill/add/streams.md` (3 tracked mirrors), `add-method/docs/10-setup-and-stages.md`, `10-setup-and-stages.md` (repo root), `add-method/src/add_method/_bundled/docs/10-setup-and-stages.md` (3 tracked mirrors), `.add/docs/10-setup-and-stages.md` (untracked dogfood copy), `add-method/tooling/test_worktree_default_wording.py` (new test file, per this task's own §4 "decide at Build time" option)
+Strategy (ordered batches): 1. draft the reworded sentences for all 4 mention sites, minimizing byte delta · 2. check the net byte change against streams.md's current pinned budget (orchestration pool, baseline 56040 @ ratio 0.75, per `test_skill_lean.py`) · 3a. if the wording fits within budget via an equivalent compression elsewhere in streams.md, no rebaseline needed · 3b. if it doesn't, follow this file's own established rebaseline convention (cite exact delta bytes, add a new dated comment entry, bump the baseline — same pattern as every prior entry in `test_skill_lean.py`'s comment trail) · 4. write the RED content-assertion tests · 5. apply the doc edits · 6. confirm green + `add.py check`
 
-Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
+Persona (optional): book-technical-writer — prose clarity + this project's own documented budget-discipline conventions
+Known-problem fixes: growing streams.md's byte count without either compressing elsewhere or an explicit, cited rebaseline would silently break `test_skill_lean.py`'s pinned budget assertion → planned fix: measure the exact delta before committing to wording, per [[feedback_lean_over_budget_bump]] (COMPRESS to absorb under budget is the default; a rebaseline is the human-approved exception, not the default move)
+Strategy actually used: as planned — drafted terse wording for all 4 sites (+115 B total), measured the exact orchestration-pool byte delta before committing to wording (41887 -> 42002 vs target 42030, 28 B to spare), so no rebaseline was needed; wrote the content-assertion tests in a new dedicated file (`test_worktree_default_wording.py`) rather than extending `test_skill_lean.py`, keeping budget concerns and content concerns in separate files; discovered mid-build that streams.md and 10-setup-and-stages.md each have 3 (not the originally-cited 1) tracked mirror copies and propagated to all of them, correcting this task's own §5 Scope line accordingly
+Safety rule (feature-specific): the doc wording must not reference or attempt to override the user's own separate global CLAUDE.md preference — scope the language to ADD's own shipped guidance only
+Code lives in: n/a — docs only
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — `test_worktree_default_wording.py` 3/3, `test_skill_lean.py` 7/7, full tooling suite 2929/2929 (OK, exit 0)
+- [x] coverage did not decrease — 3 new tests added, 0 removed
+- [x] no test or contract was altered during build — §3 CONTRACT text unchanged
+- [x] the green was EARNED, not gamed — add-verify agent refute-read confirmed the wording reads naturally (not test-magic-word stuffing), the paragraph-anchor regexes in the new test are unique substrings with no false-positive/negative extraction risk, and every §1 Must/Reject traces to a §2 scenario
+- [x] concurrency / timing of the risky operation is safe — n/a, doc-only change (Advisor: CLEAR)
+- [x] no exposed secrets, injection openings, or unexpected dependencies — pure prose (Advisor: CLEAR)
+- [x] layering & dependencies follow CONVENTIONS.md — change stays inside doc/skill prose, no new coupling (Advisor: CLEAR)
+- [x] a person reviewed and approved the change — Tin Dang via explicit freeze + sequencing instruction; auto-gated at Verify per `autonomy: auto` + `sensitivity: mechanical`
 
-### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
-> Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
-> + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
-> row is evidence you can SEE, not a restatement of a test name.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+### Build expectations — what "correct" looks like
+- [x] each of streams.md's 3 mention sites reads "worktree is the default for any spawn/agent-spawned step, not just a wave" — confirmed by `test_streams_md_states_worktree_default` + add-verify's direct read of all 3 paragraphs in full context
+- [x] docs/10-setup-and-stages.md's hard-boundary sentence states the same default, consistent wording — confirmed by `test_setup_stages_states_worktree_default`
+- [x] neither file references or overrides the user's separate personal global CLAUDE.md preference — confirmed by `test_no_reference_to_user_global_config` AND an add-verify adversarial reread grepping for paraphrased leaks (`personal|preference|~/.claude|habit|cross-project|override`) — zero hits
 
-### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+### Deep checks
+- [x] SEMANTIC (prose) — add-verify read all 4 edited paragraphs in full surrounding context (not just diff hunks); confirmed natural, unambiguous wording, not keyword-stuffed to pass tests
 
-### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
-> §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
-> build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
-> (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
-> line.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+### Live-verify evidence — confirm the §0 GROUND anchors still resolve
+- [x] all 4 mention sites (streams.md ×3, 10-setup-and-stages.md ×1) confirmed present and edited in the current tree; re-grepped for the correct current line numbers post-edit
+- [x] anchor correction disclosed: this task's own §5 Scope line originally cited only 1 mirror each for streams.md/10-setup-and-stages.md; Build discovered 3 tracked mirrors each and corrected the Scope line before gating (see §5 Strategy actually used)
 
-### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
-> recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
-> MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
-> is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+### Refute-read verdict — the earned-green check
+Verdict: EARNED
+By: add-verify agent · adversarially checked: paragraph-anchor regex uniqueness (no false-positive/negative extraction), natural-reading test of the wording vs. keyword-stuffing, a grep-based adversarial reread for paraphrased leaks toward the user's personal global CLAUDE.md preference (beyond the test's crude "CLAUDE.md"/"global" string check), independently re-summed the orchestration-pool byte total via its own `wc -c`, independently reran `test_fresh_checkout_survives_test_job_sequence` end-to-end (101.7s) to confirm it genuinely passes and traced why (commit `731755f`'s anchor fix, unrelated to this task's diff)
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
-> order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
-> sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
-> The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: add-verify agent
+1. Security: CLEAR — pure prose, no code/config/engine surface touched
+2. Concurrency: CLEAR — n/a, doc-only
+3. Architecture: CLEAR — one non-blocking 💭 note: stating the default in 4 separate prose spots (vs. one canonical definition) is a mild duplication smell, but matches streams.md's existing convention of restating isolation multiple times, and is exactly what the frozen contract scoped; §0 GROUND already discloses this is a documentation/convention change with zero runtime effect, so it's an honest limit, not a false expectation
+Verdict: PASS
+Residue: none blocking. Disclosed: stating "worktree is the default" in 4 prose locations rather than one canonical cross-referenced definition is a minor duplication; no code enforces or reads isolation mode today (unchanged from Ground), so this is pure guidance, not an operational claim readers could be misled by.
+Binding: yes — mechanical
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+Outcome: PASS
+Reviewed by: Tin Dang (auto-gated per `autonomy: auto` + `sensitivity: mechanical`, per the project's advisor-gate-relax rule; the add-verify agent's refute-read + 3-lens check recorded above as the evidence trail) · date: 2026-07-05
 
 ---
 
@@ -200,14 +176,13 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose reword the 4 existing mention sites (streams.md ×3, docs/10-setup-and-stages.md ×1) to state worktree isolation as the default for ANY agent-spawned step, with "shared-tree needs a stated reason" as the opt-out condition, mirroring the exact wording pattern already used in this session's own TASK.md drafts' "Spawn isolation (default):" line; rejected add a NEW top-level "## Isolation" section to streams.md instead of editing the 4 inline mentions — rejected, creates a second source of truth that could drift from the inline mentions instead of updating them in place · leave the wording as-is and rely on task authors reading between the lines — rejected, this is exactly the "documented anti-pattern, not a stated default" gap the spec-delta named
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang, 2026-07-05 ("freeze as drafted, start with the trivial mechanical fixes first"))
+- [AI] build — strategy used: as planned — drafted terse wording for all 4 sites (+115 B total), measured the exact orchestration-pool byte delta before committing to wording (41887 -> 42002 vs target 42030, 28 B to spare), so no rebaseline was needed; wrote the content-assertion tests in a new dedicated file (`test_worktree_default_wording.py`) rather than extending `test_skill_lean.py`, keeping budget concerns and content concerns in separate files; discovered mid-build that streams.md and 10-setup-and-stages.md each have 3 (not the originally-cited 1) tracked mirror copies and propagated to all of them, correcting this task's own §5 Scope line accordingly
+- [AI] verify — gate PASS (reviewed by Tin Dang (auto-gated per `autonomy: auto` + `sensitivity: mechanical`, per the project's advisor-gate-relax rule; the add-verify agent's refute-read + 3-lens check recorded above as the evidence trail))
 
 ### Spec delta
-Forward changes for the next loop — each re-enters at Specify as the next task. One line
-each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
-the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+- [SPEC · dropped] a canonical single-definition-with-cross-references restructure of the "worktree is the default" statement (vs. today's 4 separately-worded prose spots) — dropped: Advisor flagged this as only a mild, non-blocking duplication smell that matches streams.md's existing convention of restating isolation multiple times; not worth a follow-up task on its own (evidence: add-verify Architecture lens, PASS with disclosed non-blocking residue)
 
 ### Competency deltas
-What did this loop teach the foundation? One line each, tagged by competency
-(`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [ADD · open] a task's own declared §5 Scope line can undercount real mirror-tree fan-out (this task's Ground/Build initially assumed 1 tracked copy each for streams.md/10-setup-and-stages.md; Build discovered 3 tracked copies each) — worth a lighter-weight Ground-phase habit of grepping `find . -name "<file>" | xargs git ls-files` before declaring Scope on any doc/skill file, not just engine-tree files (evidence: this task's own §5 Scope correction, same class of miss as the earlier `3 pinned engine-tree mirrors` imprecision noted in strip-scaffold-backtick-comment-fix/adr-harvester-multiline-fields)
