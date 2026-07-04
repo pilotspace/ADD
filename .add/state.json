@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "strip-scaffold-backtick-comment-fix",
+  "active_task": "adr-harvester-multiline-fields",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2590,12 +2590,34 @@
     },
     "adr-harvester-multiline-fields": {
       "title": "ADR Harvester Multi-Line Field Capture",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-04T17:35:51+00:00"
+      "updated": "2026-07-04T18:23:45+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "e22adfaa5deaba605b86afa37d3fda90",
+        "tests": {
+          "add-method/tooling/test_adr_harvest.py": "d0e9182b85ee03ccf37bec38bfb5f2ba"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_adr_harvest.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "637e36940d3d3b53aff8c17e1e8b31be"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "strip-scaffold-backtick-comment-fix": {
       "title": "Strip-Scaffold Backtick-Comment Over-Strip Fix",
@@ -2735,7 +2757,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T17:42:39+00:00",
+  "updated": "2026-07-04T18:23:45+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

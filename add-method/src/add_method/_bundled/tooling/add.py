@@ -399,6 +399,28 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
         _atomic_write(f, new)
 
 
+def _capture_wrapped(label: str, body: str):
+    """Capture a `<label>: value` field that may WRAP onto continuation lines (a human writing
+    prose in a TASK.md field routinely wraps past one line). Matches the label's first line, then
+    consumes subsequent physical lines while each is non-blank AND does not itself start a new
+    field label — `Word Word:` or `Word Word (parenthetical):` (the real template places labels
+    like `Safety rule (feature-specific):`/`Persona (optional):` immediately after a wrapped field
+    with no blank line; a parenthetical-blind boundary would silently swallow them) — so a wrapped
+    value is captured in full without ever bleeding into the next field or past a blank-line
+    paragraph break. Returns None if the label is absent, matching the single-line behavior it
+    replaces."""
+    m = re.search(rf"(?m)^{re.escape(label)}:[ \t]*(.+)$", body)
+    if not m:
+        return None
+    lines = [m.group(1).strip()]
+    rest = body[m.end():].split("\n")[1:]
+    for line in rest:
+        if not line.strip() or re.match(r"^[A-Z][A-Za-z ]*(\([^)]*\))?[ \t]*:", line):
+            break
+        lines.append(line.strip())
+    return " ".join(lines)
+
+
 def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
     """Write-back (adr-at-observe): HARVEST a §7 `### Decisions (ADR)` block from the actor-stamps
     ALREADY in the task — §1 framing (AI) · §3 freeze (human) · §5 strategy-actually-used (AI) · §6
@@ -431,11 +453,11 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
     def _framing():                              # §1 -> [AI]: chosen + rejected
         try:
-            m = re.search(r"(?m)^Framings weighed:[ \t]*(.+)$", bodies.get(1, ""))
-            if not m:
+            val = _capture_wrapped("Framings weighed", bodies.get(1, ""))
+            if val is None:
                 return UN, ""
             chosen, rejected = UN, []
-            for p in (s.strip() for s in m.group(1).split("·") if s.strip()):
+            for p in (s.strip() for s in val.split("·") if s.strip()):
                 cm = re.match(r"(.*?)\s*\(chosen\b.*\)\s*$", p)  # "(chosen)" OR "(chosen — rationale)"
                 if cm:
                     chosen = cm.group(1).strip() or UN
@@ -463,12 +485,11 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
     def _strategy():                             # §5 -> [AI]: the value, default "as planned"
         try:
-            m = re.search(r"(?m)^Strategy actually used:[ \t]*(.+)$", bodies.get(5, ""))
-            if m:
+            val = _capture_wrapped("Strategy actually used", bodies.get(5, ""))
+            if val:
                 # UNFILLED is the "<fill at …>" template token; a real value may legitimately
                 # contain "<" (quoting `<tag>`, "x < y") and must NOT degrade to the default
-                val = m.group(1).strip()
-                if val and not val.startswith("<fill"):
+                if not val.startswith("<fill"):
                     return val
         except Exception:
             pass

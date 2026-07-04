@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "cd5a00c16b88e8723758b26210063370"  # re-aimed @ strip-scaffold-backtick-comment-fix (_strip_live_scaffold's fence-split regex gains a narrow `` `<!--...-->` `` alternative, protecting an inline backtick-quoted literal comment example in prose without fragmenting a real live comment that merely contains unrelated backtick-quoted code). prior: 976d6568… @ persona-seed-nudge v2
+ENGINE_MD5 = "19bc21fd2dc2ae0d991c30242da03c5b"  # re-aimed @ adr-harvester-multiline-fields (adds shared `_capture_wrapped(label, body)` helper, incl. a refute-read-caught fix so the label-boundary regex also stops at parenthetical labels like `Safety rule (feature-specific):`; `_framing()`/`_strategy()` now capture a wrapped multi-line field value instead of truncating at the first physical line). prior: cd5a00c1… @ strip-scaffold-backtick-comment-fix
 ENGINE_PKG_MD5 = "f38b20063c8ce9300821b2c9c51ed104"  # re-aimed @ persona-seed-nudge v2 (add_engine/constants.py gains the single-sourced PERSONA_HINT constant referenced by all three call sites). prior: d35035d4… @ persona-seed-nudge v1

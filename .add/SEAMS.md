@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:4535` (`_declared_scope`)
+Anchor: `add-method/tooling/add.py:4560` (`_declared_scope`)
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,
