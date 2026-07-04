@@ -100,6 +100,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _CONFLICT_MARKER_RE,                                            # conflict-marker re
     _load_state_for_json,                                          # --json state loader
     _md5_text, _md5_file,                                          # md5 hashing helpers
+    _personas_unseeded,                                            # persona-seed-nudge predicate
 )
 
 
@@ -1886,6 +1887,11 @@ def cmd_status(args: argparse.Namespace) -> None:
     # Existence-only: no open/parse, so the pointer adds no IO failure path (a non-file is no voice).
     if (root / "SOUL.md").exists():
         print("voice   : .add/SOUL.md  (how I sound & what keeps your trust — read each session)")
+    # persona pointer (persona-seed-nudge v2): project-wide, read every session like context/voice
+    # above — fires until >=1 REAL persona is seeded, self-clears once one lands. Advisory only;
+    # never gates, never touches the --json branch (human-readable orientation surface only).
+    if _personas_unseeded(root):
+        print(f"persona : {PERSONA_HINT}")
     # wave resume hint — a live ledger outranks memory (streams.md "Wave ledger").
     # Existence-only: no open/read/parse, so the hint adds no IO failure path; a
     # non-file at the path is not a ledger. One line PER live ledger — more than
@@ -2930,6 +2936,11 @@ def cmd_check(args: argparse.Namespace) -> None:
                                  "persona_schema_incomplete: missing " + ", ".join(missing)))
             else:
                 infos.append((f"persona '{slug}'", "schema-conformant"))
+    # persona-seed-nudge: surface the SAME "no real persona" gap `new-milestone` nudges on, so
+    # it is also visible on a plain `check`/`status` sweep — an INFO affirmation-of-absence,
+    # never a WARN (measure-not-block; a project with no personas behaves exactly as before).
+    if _personas_unseeded(root):
+        infos.append(("personas", f"unseeded — {PERSONA_HINT}"))
 
     # drift: a done milestone must have no unfinished tasks
     for mslug, m in milestones.items():
@@ -3431,6 +3442,12 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     else:
         print("active milestone set." + ("" if not await_confirm else
               "  (unconfirmed — show the MILESTONE.md, then: add.py milestone-confirm " + slug + ")"))
+        # persona-seed-nudge: a non-blocking hint (never a gate) when this project has no
+        # REAL project-fit persona yet — points at the cross-cutting selection/drafting
+        # service rather than inventing a second mechanism. Fires only on the ACTIVE arm
+        # (a queued milestone isn't yet in flight, so the nudge would be premature there).
+        if _personas_unseeded(root):
+            print(f"note: {PERSONA_HINT}")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 

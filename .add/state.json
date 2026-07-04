@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fold-glossary-deltas",
+  "active_task": "persona-seed-nudge",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2604,10 +2604,53 @@
       "depends_on": [],
       "created": "2026-07-03T13:39:18+00:00",
       "updated": "2026-07-03T13:39:18+00:00"
+    },
+    "persona-seed-nudge": {
+      "title": "Persona seed nudge at new-milestone",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-04T06:55:40+00:00",
+      "updated": "2026-07-04T08:52:59+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c5e0256f13ffd045a1b61377f745735f",
+        "tests": {
+          "add-method/tooling/test_persona_milestone_nudge.py": "3b340681f3cb093242cbb9488013792e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/skill/add/phases/0-setup.md",
+          ".claude/skills/add/phases/0-setup.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
+          ".add/SEAMS.md"
+        ],
+        "snapshot_md5": "21f030b17cc66835afd06a45cc59a779"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-04T08:52:14+00:00",
+            "reason": "tamper_detected:contract_tampered,build_tampered:add-method/tooling/test_persona_milestone_nudge.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-03T13:39:18+00:00",
+  "updated": "2026-07-04T08:52:59+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

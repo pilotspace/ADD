@@ -186,7 +186,15 @@ POOLS = [
     # guides (0-setup.md persona clarity + 3-contract.md/6-verify.md `Reported:` recording instructions).
     # RATIO 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈104/0.80⌉=130). The won ground on
     # every other phase guide is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 40931,
+    # phases 40931 → 41101 @ persona-seed-nudge v2 (change request against a FROZEN v1 contract,
+    # human-directed: "add hint in setup.md step then draft all"): 0-setup.md's persona-seeding
+    # bullet gains a closing sentence routing the engine's status/check/new-milestone unseeded-hint
+    # BACK to this step — "draft every missing project persona, not just one" — so a project that
+    # skipped setup-time seeding (the ai-proxy gap this milestone closes) is told to catch up ALL
+    # roles, not just one milestone-fit persona. +136 B human-directed surface. RATIO 0.80 kept
+    # EXACTLY; baseline grows by surface ÷ ratio (+⌈136/0.80⌉=170). The won ground on every other
+    # phase guide is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 41101,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
