@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fold-glossary-deltas",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2868,7 +2868,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-05T03:15:18+00:00",
+  "updated": "2026-07-05T04:04:48+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3799,6 +3799,15 @@
         "project-scope-install-lock"
       ],
       "archived": "2026-07-03"
+    },
+    {
+      "slug": "persona-domain-fit",
+      "title": "Persona domain-fit nudge",
+      "tasks": 1,
+      "task_slugs": [
+        "persona-fit-nudge"
+      ],
+      "archived": "2026-07-05"
     }
   ],
   "active_milestones": [],

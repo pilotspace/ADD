@@ -213,3 +213,16 @@ def _personas_unseeded(root: Path) -> bool:
         return not any(p.stem != "_template" for p in d.glob("*.md"))
     except OSError:
         return True
+
+
+def _real_persona_slugs(root: Path) -> list[str]:
+    """Sorted slugs of REAL (non-template) personas under `.add/personas/` — the existence-only
+    listing persona-fit-nudge names in its hint. Fail-soft: an unreadable/absent dir is empty,
+    mirroring `_personas_unseeded`'s own fail-soft convention."""
+    d = root / "personas"
+    if not d.is_dir():
+        return []
+    try:
+        return sorted(p.stem for p in d.glob("*.md") if p.stem != "_template")
+    except OSError:
+        return []

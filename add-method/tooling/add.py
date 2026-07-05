@@ -101,6 +101,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _load_state_for_json,                                          # --json state loader
     _md5_text, _md5_file,                                          # md5 hashing helpers
     _personas_unseeded,                                            # persona-seed-nudge predicate
+    _real_persona_slugs,                                           # persona-fit-nudge slug listing
 )
 
 
@@ -3473,6 +3474,13 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         # (a queued milestone isn't yet in flight, so the nudge would be premature there).
         if _personas_unseeded(root):
             print(f"note: {PERSONA_HINT}")
+        else:
+            # persona-fit-nudge: the opposite branch — ≥1 real persona already exists, so nudge
+            # the AI to confirm domain fit (or draft a new one) rather than silently assuming an
+            # existing persona covers this brand-new milestone. Existence-only, mutually
+            # exclusive with the note above (same predicate, opposite branch — never both).
+            slugs = ", ".join(_real_persona_slugs(root))
+            print(f"persona-fit: {PERSONA_FIT_HINT_TEMPLATE.format(slugs=slugs)}")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 

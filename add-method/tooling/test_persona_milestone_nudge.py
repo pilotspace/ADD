@@ -98,15 +98,16 @@ class NewMilestoneNudgeTest(_Board):
         self.assertEqual(code, 0)
         self.assertTrue(any(m in out for m in NOTE_MARKERS), out)
 
-    # scenario: no nudge once a real persona exists (M3)
+    # scenario: the unseeded nudge stays silent once a real persona exists (M3) — superseded by
+    # persona-fit-nudge, which adds the MUTUALLY EXCLUSIVE opposite-branch `persona-fit:` hint
+    # for this exact case (see test_persona_fit_nudge.py) rather than staying fully silent.
     def test_new_milestone_silent_when_real_persona_exists(self):
         self._run("init", "--name", "demo")
         (self._personas() / "frontend.md").write_text(_CONFORMANT_PERSONA, encoding="utf-8")
         out, _err, code = self._run("new-milestone", "mvp", "--goal", "g", "--stage", "mvp")
         self.assertEqual(code, 0)
-        self.assertNotIn("no project-fit persona", out)
-        for m in NOTE_MARKERS:
-            self.assertNotIn(m, out)
+        self.assertNotIn("no project-fit persona", out)   # the UNSEEDED hint specifically never fires
+        self.assertNotIn("note:", out)                    # ...and neither does its `note:` line
 
     # scenario: unreadable persona file degrades fail-soft (R1)
     def test_new_milestone_unreadable_persona_dir_fails_soft(self):

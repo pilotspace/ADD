@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "1f04d22460462c165bf3c72260ef4e85"  # re-aimed @ fold-glossary-deltas verify (widened `_TASK_ATTR_LINE_RE`'s character class to include `-`/`'`/digits: the real corpus routinely follows `Glossary deltas:` with a hyphenated freeze-time label — e.g. "Least-sure flag surfaced at freeze:" — which the narrower class failed to recognize as a continuation stop, silently over-joining that unrelated field into the glossary candidate; confirmed against the live task corpus, not just synthetic fixtures). prior: 89f9eeed… @ fold-glossary-deltas (build)
-ENGINE_PKG_MD5 = "f38b20063c8ce9300821b2c9c51ed104"  # re-aimed @ persona-seed-nudge v2 (add_engine/constants.py gains the single-sourced PERSONA_HINT constant referenced by all three call sites). prior: d35035d4… @ persona-seed-nudge v1
+ENGINE_MD5 = "cf97f937921a7f37054353555ce74f4f"  # re-aimed @ persona-fit-nudge (cmd_new_milestone gains the mutually-exclusive opposite-branch `persona-fit:` hint, importing `_real_persona_slugs`). prior: 1f04d224… @ fold-glossary-deltas (verify)
+ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2
