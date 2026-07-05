@@ -885,25 +885,31 @@ class LockTimeoutTest(_Base):
             self.assertLess(elapsed, 1.0, f"--lock-timeout {label} does not wait")
 
 
-# --- deliberate scope carve-out (global-lock-followups §3 OUT-of-scope) -----
+# --- prune-data's OWN concurrency (CLOSED by prune-data-update-lock) --------
 
 class PruneDataScopeTest(_Base):
-    """prune-data's OWN concurrency is a conscious, disclosed deferral (TASK.md §1 Framings
-    weighed / §3 OUT-of-scope) — this task makes NO new guarantee about it; named, not
-    silently dropped. Scenario 14 is a negative assertion: prune-data stays UNLOCKED."""
+    """global-lock-followups' own "deliberate ruling-out" (Scenario 14: prune-data stays
+    UNLOCKED) was a CONSCIOUS, disclosed deferral, not a permanent ruling — the sibling task
+    prune-data-update-lock (frozen @ v1, 2026-07-05) closes exactly this gap: prune-data now
+    acquires the SAME existing home lock update --global already holds. This test's premise is
+    inverted accordingly; superseding it here (not silently) is this task's own disclosed §4/§7
+    note."""
 
-    def test_prune_data_deliberately_unlocked(self):                    # deliberate ruling-out · Scenario 14
+    def test_prune_data_now_shares_the_home_lock(self):                # prune-data-update-lock
         import inspect
         py_src = inspect.getsource(_installer._prune_data) + inspect.getsource(_installer.prune_data)
-        self.assertNotIn("_update_lock", py_src,
-                        "prune-data's own concurrency is a conscious, disclosed deferral — "
-                        "not silently wrapped in this task's lock")
+        self.assertIn("_update_lock", py_src,
+                     "prune-data now acquires the EXISTING _update_lock — the sibling task's "
+                     "own fix, not a new primitive")
         js = CLI_JS.read_text(encoding="utf-8")
         prune_start = js.index("function pruneData(")
         prune_end = js.index("function cmdPruneData(")
         prune_fn = js[prune_start:prune_end]
-        self.assertNotIn("acquireUpdateLock", prune_fn,
-                        "cli.js's pruneData mirrors the same conscious deferral")
+        cmd_start = prune_end
+        cmd_end = js.index("\n}\n", cmd_start)
+        cmd_fn = js[cmd_start:cmd_end]
+        self.assertIn("acquireUpdateLock", cmd_fn,
+                     "cli.js's cmdPruneData mirrors the same fix")
 
 
 if __name__ == "__main__":

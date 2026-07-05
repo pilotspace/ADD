@@ -1280,17 +1280,44 @@ function installGlobalDataRestore(chosenTarget, force) {
   else log("  (no snapshot for this project at " + snap + " — nothing restored)");
 }
 
+// Every "<lockFileName>.reclaim-*" directly under dir aged past staleAfterSeconds — a LEAKED
+// per-generation reclaim ticket (its own holder crashed between winning it and its own
+// best-effort cleanup; a live, currently-in-flight ticket is never this old). Returns full
+// paths, sorted; [] if dir does not exist. Mirror of _installer.py:_aged_reclaim_tickets.
+function agedReclaimTickets(dir, lockFileName, staleAfterSeconds, nowMs) {
+  if (!fs.existsSync(dir)) return [];
+  const prefix = lockFileName + ".reclaim-";
+  return fs.readdirSync(dir).filter((name) => name.startsWith(prefix)).map((name) => path.join(dir, name))
+    .filter((p) => {
+      try { return (nowMs - fs.statSync(p).mtimeMs) / 1000 > staleAfterSeconds; }
+      catch (_e) { return false; }               // vanished mid-sweep — nothing to report
+    }).sort();
+}
+
 // prune-data: reclaim ORPHANED snapshots under <home>/data. An orphan is a <home>/data/<key>
 // whose key is owned by NO LIVE registry entry (LIVE = a registered path that still EXISTS on
 // disk) — so unregistered AND registered-but-vanished are BOTH orphans (the explicit reclaim;
 // DIVERGES from update --global's keep-vanished). Reads the registry FIRST (corrupt throws,
-// before any removal). Returns {orphans, removed}. Mirror of _installer.py:_prune_data.
+// before any removal).
+//
+// sweep-orphan-reclaim-tickets: ALSO sweeps LEAKED per-generation reclaim tickets — a
+// "<LOCK_FILE>.reclaim-*" under home (home-scope) and a "<PROJECT_LOCK_FILE>.reclaim-*" under
+// every LIVE registered project's own .add/ (project-scope) — each aged past its OWN kind's
+// existing staleness constant (LOCK_TICKET_STALE_SECONDS / PROJECT_LOCK_TICKET_STALE_SECONDS,
+// reused verbatim; no new threshold). Reuses the registry already read for the data-orphan
+// sweep — no new read.
+//
+// Returns {orphans, removed, ticketOrphans, ticketsRemoved} — extends the prior {orphans,
+// removed} object non-breakingly (existing dot-access callers are unaffected). ticketOrphans/
+// ticketsRemoved are full paths; ticketsRemoved == [] on a dry-run, == ticketOrphans under
+// force (each unlinked best-effort, matching the existing reclaim code's own swallow-errors
+// convention). Mirror of _installer.py:_prune_data.
 function pruneData(home, force) {
   const reg = readRegistry(home);                           // corrupt -> throw (LOUD, zero removal)
-  const live = new Set(reg.filter((p) => fs.existsSync(p)).map(dataKey));
+  const livePaths = reg.filter((p) => fs.existsSync(p));
+  const live = new Set(livePaths.map(dataKey));
   const dataDir = path.join(home, "data");
-  if (!fs.existsSync(dataDir)) return { orphans: [], removed: [] };
-  const orphans = fs.readdirSync(dataDir).filter((name) => {
+  const orphans = !fs.existsSync(dataDir) ? [] : fs.readdirSync(dataDir).filter((name) => {
     try { return fs.statSync(path.join(dataDir, name)).isDirectory() && !live.has(name); }
     catch (_e) { return false; }
   }).sort();
@@ -1301,23 +1328,67 @@ function pruneData(home, force) {
       removed.push(key);
     }
   }
-  return { orphans: orphans, removed: removed };
+
+  const now = Date.now();
+  let ticketCandidates = agedReclaimTickets(home, LOCK_FILE, LOCK_TICKET_STALE_SECONDS, now)
+    .map((p) => ({ path: p, staleAfter: LOCK_TICKET_STALE_SECONDS }));
+  for (const project of livePaths) {
+    ticketCandidates = ticketCandidates.concat(
+      agedReclaimTickets(path.join(project, ".add"), PROJECT_LOCK_FILE, PROJECT_LOCK_TICKET_STALE_SECONDS, now)
+        .map((p) => ({ path: p, staleAfter: PROJECT_LOCK_TICKET_STALE_SECONDS }))
+    );
+  }
+  const ticketOrphans = ticketCandidates.map((c) => c.path);
+  const ticketsRemoved = [];
+  if (force) {
+    for (const { path: ticket, staleAfter } of ticketCandidates) {
+      try {
+        if ((Date.now() - fs.statSync(ticket).mtimeMs) / 1000 <= staleAfter) continue;  // no longer stale at unlink time — §5 safety rule
+        fs.unlinkSync(ticket);
+        ticketsRemoved.push(ticket);
+      } catch (_e) { /* already gone — harmless, matches reclaim's own convention */ }
+    }
+  }
+
+  return { orphans: orphans, removed: removed, ticketOrphans: ticketOrphans, ticketsRemoved: ticketsRemoved };
 }
 
 // prune-data command: dry-run lists orphans (removes nothing); --force deletes. no_global_home /
 // registry_corrupt = fail-closed (LOUD, nothing removed). Mirror of pip _installer.prune_data.
+//
+// prune-data-update-lock: the registry-read + orphan-computation + removal critical section now
+// holds the SAME home lock (acquireUpdateLock) `update --global` already holds during its own
+// reconcile (which refreshes an existing project's <home>/data/<key> snapshot) — so the two can
+// never interleave. Reuses the existing, proven primitive verbatim (fail-fast, no poll — the
+// primitive's own fail() call handles a contended lock, no extra catch needed here).
+//
+// sweep-orphan-reclaim-tickets: ALSO reports (and, with --force, removes) leaked reclaim
+// tickets found by pruneData — see its own comment; a separate, additive count from the
+// data-orphan sweep above.
 function cmdPruneData(args) {
   const home = resolveGlobalHome(process.env);
   if (!fs.existsSync(path.join(home, STAMP_FILE))) {
     fail("no global ADD install at " + home + " (.add-version not found) — nothing to prune");
   }
+  acquireUpdateLock(home, { timeout: null }, process.env);
   let result;
   try { result = pruneData(home, args.force); }
   catch (_e) { fail("global registry " + registryPath(home) + " is corrupt — fix or delete it; not pruning"); }
-  if (result.orphans.length === 0) { log("  no orphaned snapshots — nothing to prune"); return; }
-  if (args.force) { log("  ✓ " + result.removed.length + " removed"); return; }
+  if (result.orphans.length === 0 && result.ticketOrphans.length === 0) {
+    log("  no orphaned snapshots — nothing to prune");
+    return;
+  }
+  if (args.force) {
+    if (result.orphans.length > 0) log("  ✓ " + result.removed.length + " removed");
+    if (result.ticketOrphans.length > 0) log("  ✓ " + result.ticketsRemoved.length + " reclaim ticket(s) removed");
+    return;
+  }
   for (const key of result.orphans) log("  orphan: " + key);
-  log("  " + result.orphans.length + " orphan(s); re-run with --force to remove");
+  if (result.orphans.length > 0) log("  " + result.orphans.length + " orphan(s); re-run with --force to remove");
+  for (const ticket of result.ticketOrphans) log("  ticket orphan: " + ticket);
+  if (result.ticketOrphans.length > 0) {
+    log("  " + result.ticketOrphans.length + " reclaim ticket orphan(s); re-run with --force to remove");
+  }
 }
 
 // init --global: install the managed layer ONCE to the shared home + register this project,

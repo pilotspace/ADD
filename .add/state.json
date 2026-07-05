@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "js-reclaim-lock-heartbeat",
+  "active_task": "sweep-orphan-reclaim-tickets",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2563,21 +2563,63 @@
     },
     "prune-data-update-lock": {
       "title": "Prune-Data / Update-Global Lock Race",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-05T02:12:31+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "8429fd8e917a6ecc1e2a02103d9179b1",
+        "tests": {
+          "add-method/tooling/test_prune_data_lock.py": "58f8cb43874e6d6ca23005cdb8048ec5",
+          "add-method/tooling/test_global_update_harden.py": "a048480296f12f36292032afd734b2b4"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "f7946d1966f350abb37f605c3eee9faf"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "sweep-orphan-reclaim-tickets": {
       "title": "Sweep Orphaned Reclaim Ticket Files",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-05T02:28:32+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d61e4b8997d140c75dfb7a7e547bab3d",
+        "tests": {
+          "add-method/tooling/test_sweep_orphan_tickets.py": "f2f43b6754bd5fd3c01dadd8a1d74c08",
+          "add-method/tooling/test_global_restore.py": "84eaf1cde2051bf987a50324fbf70ace"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_sweep_orphan_tickets.py",
+          "add-method/tooling/test_global_restore.py"
+        ],
+        "snapshot_md5": "393b436525ef9f3a235823f4b0676fd8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "cross-platform-inode-reuse-stress": {
       "title": "Cross-Platform Inode-Reuse Stress Test",
@@ -2686,12 +2728,12 @@
     },
     "fold-glossary-deltas": {
       "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
-      "phase": "ground",
+      "phase": "contract",
       "gate": "none",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:39:18+00:00",
-      "updated": "2026-07-03T13:39:18+00:00"
+      "updated": "2026-07-05T01:39:17+00:00"
     },
     "persona-seed-nudge": {
       "title": "Persona seed nudge at new-milestone",
@@ -2806,7 +2848,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-05T00:54:32+00:00",
+  "updated": "2026-07-05T02:28:32+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
