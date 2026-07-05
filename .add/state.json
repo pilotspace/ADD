@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "sweep-orphan-reclaim-tickets",
+  "active_task": "fold-glossary-deltas",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2728,12 +2728,32 @@
     },
     "fold-glossary-deltas": {
       "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
-      "phase": "contract",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:39:18+00:00",
-      "updated": "2026-07-05T01:39:17+00:00"
+      "updated": "2026-07-05T03:15:18+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5a0f8fc5aed40da45c07963baa92217f",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_fold_glossary.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "44d029ba3cac7018b43b04e532de3e6a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "persona-seed-nudge": {
       "title": "Persona seed nudge at new-milestone",
@@ -2848,7 +2868,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-05T02:28:32+00:00",
+  "updated": "2026-07-05T03:15:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3928,6 +3948,18 @@
       "id": 24,
       "text": "pty-test-helper (deferred from installer-polish): extract a reusable PTY test helper so the installer's interactive-prompt + agent-detect happy-paths run under a committed CI test (today they only run interactively). Standalone fast task \u2014 milestone-free.",
       "created": "2026-06-28T16:47:03+00:00",
+      "status": "open"
+    },
+    {
+      "id": 25,
+      "text": "engine bug: _declared_scope regex only reads the FIRST physical line of \u00a75 'Scope (may touch):' \u2014 a wrapped scope line silently truncates the declared-scope anchor, causing false build_tampered/scope_violation on any task whose \u00a75 wraps to 2+ lines (found while gating sweep-orphan-reclaim-tickets, 2026-07-05)",
+      "created": "2026-07-05T02:32:14+00:00",
+      "status": "open"
+    },
+    {
+      "id": 26,
+      "text": "architecture residue: sweep-orphan-reclaim-tickets' new ticket sweep re-verifies age only at unlink time; the existing inline _project_lock reclaim path re-verifies age+inode identity. Minor precedent inconsistency, non-blocking, candidate follow-up spec delta (flagged at sweep-orphan-reclaim-tickets verify, 2026-07-05)",
+      "created": "2026-07-05T02:32:14+00:00",
       "status": "open"
     }
   ]
