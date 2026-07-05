@@ -796,6 +796,37 @@ function sleepSync(ms) {
   Atomics.wait(ia, 0, 0, ms);
 }
 
+// An async, event-loop-YIELDING sleep (unlike sleepSync's Atomics.wait, which blocks the very
+// thread a setInterval-based heartbeat needs to fire on) — js-reclaim-lock-heartbeat.
+function sleepAsync(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// js-reclaim-lock-heartbeat: the JS analog of the Python `_lock_heartbeat` fix
+// (reclaim-ticket-race) — refreshes a held lock file's own mtime on a `.unref()`'d
+// `setInterval` for as long as it is held, so a live-but-slow holder is never misjudged
+// stale by a sibling racer purely because wall-clock age crosses `staleAfterMs`. `.unref()`
+// means the timer never keeps the process alive on its own; `stop()` clears it explicitly on
+// release (belt AND suspenders, mirrors the interval's own `max(50ms, min(staleAfterMs/4,
+// 5000ms))` formula the frozen contract cites). A crash simply stops the interval firing — the
+// file still ages out and self-heals via the existing reclaim-ticket mechanism, unchanged.
+//
+// This is a probabilistic mitigation, not a mathematical guarantee: a callback fires only
+// between synchronous JS turns, so whole-event-loop starvation (a long synchronous operation
+// blocking the process) can defeat it exactly as whole-process scheduling starvation once
+// defeated the Python fix's own real OS thread on real CI (see TASK.md's least-sure flag) —
+// accepted given production defaults (600s/120s) make that starvation window vanishingly
+// unlikely in practice.
+function startLockHeartbeat(lockPath, staleAfterMs) {
+  const intervalMs = Math.max(50, Math.min(staleAfterMs / 4, 5000));
+  const timer = setInterval(() => {
+    const now = new Date();
+    try { fs.utimesSync(lockPath, now, now); } catch (_e) {}   // released/reclaimed — best-effort
+  }, intervalMs);
+  timer.unref();
+  return { stop: () => clearInterval(timer) };
+}
+
 function pkgVersion() {
   try { return require(path.join(PKG_ROOT, "package.json")).version; }
   catch (_e) { return "0.0.0"; }
@@ -1477,7 +1508,9 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
   }
   try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
   catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
+  const heartbeat = startLockHeartbeat(lockPath, staleAfterMs);   // js-reclaim-lock-heartbeat
   const release = () => {
+    heartbeat.stop();   // cleared FIRST — never outlives the fd/lockPath it refreshes
     try { fs.closeSync(fd); } catch (_e) {}
     try { fs.unlinkSync(lockPath); } catch (_e) {}
   };
@@ -1631,7 +1664,9 @@ function acquireProjectLock(addDir, env = process.env) {
   }
   try { fs.writeSync(fd, process.pid + " " + new Date().toISOString() + "\n"); }
   catch (_e) {}   // diagnostics are best-effort — never fail an acquired lock over this
+  const heartbeat = startLockHeartbeat(lockPath, staleAfterMs);   // js-reclaim-lock-heartbeat
   const release = () => {
+    heartbeat.stop();   // cleared FIRST — never outlives the fd/lockPath it refreshes
     try { fs.closeSync(fd); } catch (_e) {}
     try { fs.unlinkSync(lockPath); } catch (_e) {}
     if (createdDir) {
@@ -1736,8 +1771,37 @@ function cmdUpdate(args) {
       " refreshed) · your project state untouched.");
 }
 
+// js-reclaim-lock-heartbeat: a test-only entrypoint so the Python subprocess suite can drive
+// real multi-process contention against acquireUpdateLock/acquireProjectLock without duplicating
+// their acquire/release logic in the test itself. Intercepted BEFORE the `cmd`/switch dispatch
+// below, guarded behind an undocumented flag — never listed in --help, never reachable via any
+// documented public command, so it carries zero surface on the real CLI path.
+async function cmdInternalAcquireLock(argv) {
+  const kind = argv[0];
+  const targetPath = argv[1];
+  const holdMs = Number(argv[2]);
+  let release;
+  if (kind === "update") {
+    release = acquireUpdateLock(targetPath, { timeout: null }, process.env);
+  } else if (kind === "project") {
+    release = acquireProjectLock(targetPath, process.env);
+  } else {
+    fail("internal_acquire_lock_bad_kind: expected 'update' or 'project', got '" + kind + "'");
+    return;
+  }
+  log("HELD " + Date.now());
+  await sleepAsync(holdMs);   // event-loop-yielding — lets the heartbeat's setInterval fire
+  log("RELEASED " + Date.now());
+  release();
+  process.exit(0);
+}
+
 async function main() {
   const argv = process.argv.slice(2);
+  if (argv[0] === "--internal-acquire-lock") {
+    await cmdInternalAcquireLock(argv.slice(1));
+    return;
+  }
   const cmd = argv[0] && !argv[0].startsWith("--") ? argv.shift() : "init";
   const args = parseArgs(argv);
   switch (cmd) {

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "worktree-isolated-spawn-default",
+  "active_task": "js-reclaim-lock-heartbeat",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2773,16 +2773,40 @@
     },
     "js-reclaim-lock-heartbeat": {
       "title": "JS/npm reclaim-lock heartbeat twin fix",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "RISK-ACCEPTED",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-04T16:24:29+00:00",
-      "updated": "2026-07-04T17:26:38+00:00"
+      "updated": "2026-07-05T00:54:32+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "58d0f135c1257c216d1c7f5b1be87c84",
+        "tests": {
+          "add-method/tooling/test_js_reclaim_lock_heartbeat.py": "b9eec7563e3f8d4d1789b868010f4692"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_js_reclaim_lock_heartbeat.py"
+        ],
+        "snapshot_md5": "a6b41baca6a9502a2f5b293895d7acf2"
+      },
+      "waiver": {
+        "owner": "Tin Dang",
+        "ticket": ".add/tasks/js-reclaim-lock-heartbeat/TASK.md",
+        "expires": "next v*.*.* tag CI run"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T18:37:41+00:00",
+  "updated": "2026-07-05T00:54:32+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
