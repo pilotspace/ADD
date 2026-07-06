@@ -189,5 +189,28 @@ class ScopeLoopTest(unittest.TestCase):
                          "the two SKILL.md copies are not byte-identical")
 
 
+class ComponentsConsiderationPromptTest(unittest.TestCase):
+    """scope-components-check: step 1 ("Ground in current assets") must prompt considering the
+    components pillar once a milestone's Touches spans >1 app root — closing a real gap found in
+    a downstream project where 30+ tasks spanned two app roots with the pillar never declared."""
+
+    def test_components_prompt_present_and_mirrored(self):
+        text = CANONICAL_SCOPE.read_text(encoding="utf-8")
+        self.assertIn(".add/components.toml", text,
+                      "scope.md step 1 must name .add/components.toml")
+        self.assertIn("components.md", text,
+                      "scope.md must point at components.md for the full pillar")
+        for tree in (DOGFOOD_SCOPE, BUNDLE_SCOPE):
+            self.assertEqual(_md5(CANONICAL_SCOPE), _md5(tree),
+                             f"{tree} is not byte-identical to the canonical scope.md")
+
+    def test_components_prompt_lives_in_ground_step(self):
+        # the prompt must sit inside step 1 ("Ground in current assets"), not floated elsewhere
+        text = CANONICAL_SCOPE.read_text(encoding="utf-8")
+        step1 = text.split("**Ground in current assets.**", 1)[1].split("\n2.", 1)[0]
+        self.assertIn(".add/components.toml", step1,
+                      "the components-pillar prompt must live inside step 1, not elsewhere")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

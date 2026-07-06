@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "scope-components-check",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2865,10 +2865,58 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "scope-components-check": {
+      "title": "Scope-drafting prompts the components pillar",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-06T07:14:46+00:00",
+      "updated": "2026-07-06T07:32:28+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "2aa5e9d324b060125ffad84eba2a3753",
+        "tests": {
+          "add-method/tooling/test_scope_loop.py": "6c144d59ed7741fd7e77b9fe94aafb2d",
+          "add-method/tooling/test_skill_lean.py": "95d5466ca81c87ffa00ca9f964a94662"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/scope.md",
+          ".claude/skills/add/scope.md",
+          "add-method/src/add_method/_bundled/skill/add/scope.md",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_scope_loop.py"
+        ],
+        "snapshot_md5": "8f7d1185471dfae306d9312a0d0de9ba"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-06T07:30:09+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_scope_loop.py,build_tampered:add-method/tooling/test_skill_lean.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-07-06T07:31:20+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_scope_loop.py,build_tampered:add-method/tooling/test_skill_lean.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-05T04:04:48+00:00",
+  "updated": "2026-07-06T07:32:28+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
