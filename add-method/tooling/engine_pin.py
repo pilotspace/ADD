@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "27cbc59759eb94385dada8f43bea3b85"  # re-aimed @ worktree-prep (new cmd_worktree_prep: cut a worker worktree at HEAD, materialize gitignored .add/tooling+.add/docs, echo the fork base; workspace-only, no state write). prior: 1c647fed… @ archived-delta-verbs
+ENGINE_MD5 = "8e351062313fc78be61f572e6dc44f2f"  # re-aimed @ waiver-field-case (the RISK-ACCEPTED waiver field census matches owner/ticket/expires case-insensitively — the signed records write them capitalized). prior: 27cbc597… @ worktree-prep
 ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge

@@ -6427,7 +6427,9 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
             if marked:
                 f(slug, "risk_accepted_security",
                   "a waiver on a marked security item is never allowed")
-            if not all(re.search(rf"{k}:\s*(?!<)\S", s6)
+            # case-insensitive: human-signed records write Owner:/Ticket:/Expires: —
+            # the seam is the field EXISTING, casing is presentation (waiver-field-case)
+            if not all(re.search(rf"{k}:\s*(?!<)\S", s6, re.IGNORECASE)
                        for k in ("owner", "ticket", "expires")):
                 f(slug, "waiver_incomplete",
                   "RISK-ACCEPTED needs owner · ticket · expires")
