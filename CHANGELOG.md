@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.17.0 — 2026-07-06
+
+- Persona domain-fit nudge — 2 carried · 0 key decision(s)
+- Method ergonomics — 0 carried · 0 key decision(s)
+
 ## 1.16.1 — 2026-07-04
 
 - (no milestone bundled)

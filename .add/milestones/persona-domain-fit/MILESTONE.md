@@ -19,7 +19,7 @@ rationale: sub-milestone of the long-running persona system (persona-setup seeds
   disclosure) — the real distillation target, if any, would be the phase guides themselves, a
   materially bigger and separately-sized ask.
 stage: mvp · status: active · created: 2026-07-05T03:21:03+00:00
-release: pending
+release: 1.17.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

@@ -3,7 +3,7 @@
 goal: every recurring rule an agent must recall at a gate becomes a form the engine presents at that moment, cutting per-task ceremony across all execution paths without moving the safety floor
 rationale: sub-milestone — a slice of the live lean/method-quality theme (extends lean-pass + flow-simplification; depends-on the advisor-gated-autonomy gate model; overlaps delta-drain's carried archived-delta-verbs delta, reopened here). Source: the 2026-07-06 whole-methodology review — 11 optimization items across the 8 steps × 5 competencies × 5 execution paths.
 stage: mvp · status: active · created: 2026-07-06T14:10:45+00:00
-release: pending
+release: 1.17.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

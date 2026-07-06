@@ -1,5 +1,12 @@
 # Releases
 
+## 1.17.0 — 2026-07-06
+milestones: persona-domain-fit, method-ergonomics
+loose tasks: grep-binary-agnostic-milestone-test, prune-data-update-lock, sweep-orphan-reclaim-tickets, adr-harvester-multiline-fields, strip-scaffold-backtick-comment-fix, worktree-isolated-spawn-default, fold-glossary-deltas, reclaim-ticket-race, js-reclaim-lock-heartbeat, scope-components-check, fastlane-intake-nudge, persona-required-domain-hint
+waivers: reclaim-ticket-race, js-reclaim-lock-heartbeat
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: recorded by add.py release
+
 ## 1.16.1 — 2026-07-04
 milestones: none
 loose tasks: persona-seed-nudge
