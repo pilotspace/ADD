@@ -1083,6 +1083,35 @@ def cmd_phase(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def cmd_recross(args: argparse.Namespace) -> None:
+    """The RECORDED post-freeze re-cross (bundle-advance): a HUMAN-APPROVED test change after
+    the tests->build crossing (e.g. a test added at review) re-arms the tamper tripwire + §5
+    scope snapshot by re-running the IDENTICAL _build_entry gate stack — never a freeze bypass
+    (a DRAFT §3 still refuses contract_not_frozen). The approver is recorded in state
+    (tasks[slug]["recross"] = {by, at, from_phase}) so an audit can tell a signed re-cross
+    from silent tampering. Replaces the undocumented `phase tests` + `advance` dance."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)
+    cur = state["tasks"][slug]["phase"]
+    if cur not in ("build", "verify"):
+        _die(f"recross_wrong_phase: re-cross re-arms the tests->build snapshots — only a "
+             f"task at build or verify can re-cross (task '{slug}' is at {cur})")
+    if not (getattr(args, "by", "") or "").strip():
+        _die("recross_unsigned: a post-freeze test change is human-approved — record the "
+             "approver with --by <name>")
+    _build_entry(root, state, slug)          # full gate stack; validate-then-write
+    state["tasks"][slug]["recross"] = {"by": args.by.strip(), "at": _now(),
+                                       "from_phase": cur}
+    state["tasks"][slug]["phase"] = "build"
+    state["tasks"][slug]["updated"] = _now()
+    save_state(root, state)                  # durable state FIRST (source of truth)
+    _sync_task_marker(root, slug, "build")   # then mirror into TASK.md — no split-brain
+    print(f"task '{slug}' re-crossed tests->build — tripwire + scope re-snapshotted "
+          f"(approved by {args.by.strip()})")
+    print(_next_footer(root, state))
+
+
 def cmd_advance(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -1091,6 +1120,18 @@ def cmd_advance(args: argparse.Namespace) -> None:
     idx = PHASES.index(cur)
     if idx >= len(PHASES) - 1:
         _die(f"task '{slug}' already at final phase ({cur})")
+    # bundle fast-forward (bundle-advance): --to repeats the SINGLE-STEP advance — every
+    # crossing guard below runs per step — and stops hard at `tests`: the tests->build
+    # crossing carries the gate stack (_build_entry) and is never fast-forwarded.
+    _to = getattr(args, "to", None)
+    if _to is not None:
+        if _to not in PHASES:
+            _die(f"advance_to_invalid: --to must be one of: {', '.join(PHASES)}")
+        if PHASES.index(_to) > PHASES.index("tests"):
+            _die("advance_to_stops_at_tests: --to fast-forwards the bundle bookkeeping only — "
+                 "the tests->build crossing carries the gate stack; cross it with a plain advance")
+        if PHASES.index(_to) <= idx:
+            _die(f"advance_to_not_forward: task '{slug}' is already at {cur}")
     nxt = PHASES[idx + 1]
     # build-boundary gate: pre-lock the front (specify..tests) is allowed, but crossing
     # into build/verify/observe/done is refused until `add.py lock`.
@@ -1170,6 +1211,11 @@ def cmd_advance(args: argparse.Namespace) -> None:
         print("  note: record the lessons this loop taught the foundation in §7 "
               "OBSERVE, then update PROJECT.md when ready:")
         print(f"    add.py {_FOLD_VERB} --task {slug}   (review first: add.py deltas)")
+    # bundle fast-forward: keep stepping (each pass re-loads state and re-runs every
+    # crossing guard) until the validated --to target is reached.
+    if _to is not None and PHASES.index(nxt) < PHASES.index(_to):
+        cmd_advance(args)
+        return
     print(_next_footer(root, state))
 
 
@@ -7298,7 +7344,17 @@ def build_parser() -> argparse.ArgumentParser:
     pa.add_argument("--skip-freeze", action="store_true",
                     help="cross tests->build on a DRAFT §3, recording an auditable freeze_skipped "
                          "marker (the universal freeze gate's only bypass; never auto-freezes §3)")
+    pa.add_argument("--to", default=None,
+                    help="fast-forward the bundle bookkeeping to this phase (at most `tests`); "
+                         "every crossing guard still runs per step")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
+
+    prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
+                                          "HUMAN-APPROVED post-freeze test change")
+    prx.add_argument("slug", nargs="?", default=None)
+    prx.add_argument("--by", default="",
+                     help="the human approver (required — a post-freeze test change is human-approved)")
+    prx.set_defaults(func=cmd_recross, _opt_positionals=("slug",))
 
     pg = sub.add_parser("gate", help="record a verify gate outcome")
     pg.add_argument("outcome", choices=GATES)

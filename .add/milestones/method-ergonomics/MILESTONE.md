@@ -31,6 +31,7 @@ Out: any change to the safety floor (frozen-contract immutability · security HA
 - [ ] worktree-prep             depends-on: none                    — `add.py worktree-prep <slug>` cuts the worktree, materializes gitignored engine/book, echoes the fork base into the WAVE.md row
 - [ ] fastlane-ground-lite      depends-on: none                    — fast-lane §0 minimal form: Touches + Anchors + Ground SHA required, the rest optional-with-default
 - [ ] archived-delta-verbs      depends-on: none                    — carry/drop/reopen-delta operate on archived on-disk TASK.md when slug ∉ state.tasks (reopens delta-drain's carried delta)
+- [ ] task-md-optimize          depends-on: none                    — leaner TASK.md.tmpl: trim instructional comment bloat, machine-parsed markers untouched (user-added 2026-07-06)
 - [ ] intake-freeze-batch       depends-on: none                    — task-bucket intake proposal may merge into the freeze presentation: one report, one answer (prose: intake.md · report-template.md)
 - [ ] domain-test-mapping       depends-on: none                    — 4-tests.md names a "test = any machine-checkable assertion" mapping with per-domain forms (metric threshold · reconciliation query · plan-diff)
 - [ ] skill-dedup               depends-on: fastlane-ground-lite, intake-freeze-batch, domain-test-mapping — SKILL.md keeps one line + pointer per item duplicated in run.md; reconciles the whole milestone's lean-budget ledger last
@@ -43,6 +44,7 @@ Out: any change to the safety floor (frozen-contract immutability · security HA
 - [ ] `add.py worktree-prep <slug>` yields a worktree whose engine runs and whose fork-base row is filled with the pasted echo (verify: engine test)        (← worktree-prep)
 - [ ] A --fast task's §0 passes check with the minimal form (verify: engine test)        (← fastlane-ground-lite)
 - [ ] `carry-delta`/`drop-delta`/`reopen-delta` succeed against an archived task slug (verify: engine test)        (← archived-delta-verbs)
+- [ ] TASK.md.tmpl is measurably smaller with every parser/census test green (verify: test suite + byte diff)        (← task-md-optimize)
 - [ ] intake.md + report-template.md document the merged task-bucket intake+freeze presentation (verify: guide test)        (← intake-freeze-batch)
 - [ ] 4-tests.md carries the per-domain test-form mapping (verify: guide test)        (← domain-test-mapping)
 - [ ] test_skill_lean passes with the pool at or below its pre-milestone floor (verify: test_skill_lean)        (← skill-dedup)

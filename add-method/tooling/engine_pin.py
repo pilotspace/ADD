@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "94c4b5b7fa5496acb67ded4f7af6f315"  # re-aimed @ verify-record-scaffold (_guarantee_lint_notices gains the DERIVED `verify_record_incomplete` rollup; cmd_audit prints its one grouped line after the per-code details). prior: 5948731a… @ fastlane-intake-nudge
+ENGINE_MD5 = "c760ad744fce531ee3e2a628f3d4bfb4"  # re-aimed @ bundle-advance (cmd_advance gains the --to bundle fast-forward; new cmd_recross records a human-approved post-freeze re-cross). prior: 94c4b5b7… @ verify-record-scaffold
 ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2
