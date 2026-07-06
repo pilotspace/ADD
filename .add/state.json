@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fastlane-ground-lite",
+  "active_task": "task-md-optimize",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -3090,10 +3090,40 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "task-md-optimize": {
+      "title": "leaner TASK.md template",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "method-ergonomics",
+      "depends_on": [],
+      "created": "2026-07-06T15:04:11+00:00",
+      "updated": "2026-07-06T15:04:14+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "62998416c8a14dfb2fa6bfca465950fa",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/test_taskmd_lean.py",
+          ".add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/.add/tooling/templates/"
+        ],
+        "snapshot_md5": "7849ea3f249771c1b71f4714ef69c815"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-06T14:51:22+00:00",
+  "updated": "2026-07-06T15:04:14+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -4057,7 +4087,7 @@
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
-    "method-ergonomics": "fastlane-ground-lite"
+    "method-ergonomics": "task-md-optimize"
   },
   "todos": [
     {
