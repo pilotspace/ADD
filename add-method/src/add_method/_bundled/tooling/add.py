@@ -772,6 +772,23 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
 
 
+def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
+    """Resolve a delta verb's target to its on-disk TASK.md — ACTIVE (state-tracked) or
+    light-ARCHIVED (state entry dropped at archive-milestone, file kept). The SPEC-delta
+    lifecycle lives in the FILE and `deltas` already lists archived ones, so the write verbs
+    reach them too (delta-drain reach-back) — previously that needed a hand edit. An archived
+    target must be named EXPLICITLY: the no-slug active-task fallback never resolves to one.
+    A slug neither in state nor on disk still dies `unknown task` (a compacted bundle under
+    .add/archive/ stays out of reach — recover it first). Returns (slug, task_md, archived)."""
+    if raw_slug and raw_slug not in state.get("tasks", {}):
+        task_md = root / "tasks" / raw_slug / "TASK.md"
+        if task_md.exists():
+            return raw_slug, task_md, True
+        _die(f"unknown task '{raw_slug}'")
+    slug = _resolve_task(state, raw_slug)                   # active path, unchanged semantics
+    return slug, root / "tasks" / slug / "TASK.md", False
+
+
 def cmd_drop_delta(args: argparse.Namespace) -> None:
     """DISMISS a task's first open SPEC delta — `[SPEC · open]` -> `[SPEC · dropped]`.
 
@@ -780,8 +797,7 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
     text + `(evidence: …)` are byte-preserved by the pure `_resolve_spec_delta`."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
-    task_md = root / "tasks" / slug / "TASK.md"
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
     text = task_md.read_text(encoding="utf-8")
     match = getattr(args, "match", None)
     status, idx, _disp = _select_spec_delta(text, match)
@@ -794,7 +810,8 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
              f"'{slug}' — narrow it")
     new_text = _resolve_spec_delta(text, "dropped", line_index=idx)
     _atomic_write(task_md, new_text)
-    print(f"dropped the {'matched' if match else 'first'} open SPEC delta in '{slug}' -> [SPEC · dropped]")
+    print(f"dropped the {'matched' if match else 'first'} open SPEC delta in "
+          f"'{slug}'{' (archived — on-disk record)' if _arch else ''} -> [SPEC · dropped]")
     print(_next_footer(root, state))
 
 
@@ -814,12 +831,12 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
     every open delta in the task; `--match` targets the unique one. Validate-then-write."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
+    _arch_note = " (archived — on-disk record)" if _arch else ""
     reason = (getattr(args, "reason", None) or "").strip()
     if not reason:
         _die("carry_reason_required: carry-delta needs a --reason — a deferral must say why "
              "(it is the breadcrumb a future loop reads)")
-    task_md = root / "tasks" / slug / "TASK.md"
     text = task_md.read_text(encoding="utf-8")
     stamp = f"[carried: {reason}]"
     if getattr(args, "all", False):
@@ -829,7 +846,7 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
         for idx in idxs:                                   # indices stay valid (flip is in-place)
             text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
         _atomic_write(task_md, text)
-        print(f"carried {len(idxs)} open SPEC delta(s) in '{slug}' -> [SPEC · carried]  ({reason})")
+        print(f"carried {len(idxs)} open SPEC delta(s) in '{slug}'{_arch_note} -> [SPEC · carried]  ({reason})")
         print(_next_footer(root, state))
         return
     match = getattr(args, "match", None)
@@ -843,7 +860,7 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
              f"'{slug}' — narrow it, or use --all")
     new_text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
     _atomic_write(task_md, new_text)
-    print(f"carried the {'matched' if match else 'first'} open SPEC delta in '{slug}' -> "
+    print(f"carried the {'matched' if match else 'first'} open SPEC delta in '{slug}'{_arch_note} -> "
           f"[SPEC · carried]  ({reason})")
     print(_next_footer(root, state))
 
@@ -855,8 +872,7 @@ def cmd_reopen_delta(args: argparse.Namespace) -> None:
     targets the unique carried delta. Validate-then-write; refuse `no_carried_spec_delta`."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)
-    task_md = root / "tasks" / slug / "TASK.md"
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
     text = task_md.read_text(encoding="utf-8")
     match = getattr(args, "match", None)
     status, idx, _disp = _select_spec_delta(text, match, status="carried")
@@ -871,7 +887,8 @@ def cmd_reopen_delta(args: argparse.Namespace) -> None:
     eol = lines[idx][len(lines[idx].rstrip("\n")):]
     lines[idx] = re.sub(r"\s*\[carried:[^\]]*\]\s*$", "", lines[idx].rstrip("\n")) + eol
     _atomic_write(task_md, "".join(lines))
-    print(f"reopened the {'matched' if match else 'first'} carried SPEC delta in '{slug}' -> [SPEC · open]")
+    print(f"reopened the {'matched' if match else 'first'} carried SPEC delta in "
+          f"'{slug}'{' (archived — on-disk record)' if _arch else ''} -> [SPEC · open]")
     print(_next_footer(root, state))
 
 
