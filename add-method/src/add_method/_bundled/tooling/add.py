@@ -5952,10 +5952,13 @@ _KEY_DECISIONS_HEADING = "## Key Decisions"   # the universal audit-trail sectio
 _TABLE_SEP_RE = re.compile(r"\s*\|[-\s|]+\|\s*$")
 
 # persona-self-improve: a `persona:<slug>` lesson routes into `.add/personas/<slug>.md` instead of a
-# foundation file. The section HINT picks the growable section; only these two are routable.
+# foundation file. The section HINT picks the growable section; only these four are routable
+# (fold-persona-sections widened the pair to the 1.16.1 schema's behavioral sections).
 _PERSONA_FOLD_SECTIONS = {
     "critical-rule": "## Critical Rules",
     "success-metric": "## Success Metrics",
+    "anti-pattern": "## Anti-patterns",
+    "ability": "## Abilities",
 }
 
 # fold-glossary-deltas: a 6th pseudo-competency, `GLOSSARY`, folding a DONE task's own §3

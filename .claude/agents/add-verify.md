@@ -31,4 +31,6 @@ Treat any Strategy the builder used as their PREFERRED path, not a hard rule you
 End with a structured verdict the orchestrator parses:
 `{ phase: verify|observe, persona, result, evidence, residue, outcome, deltas, confidence: {per-dimension 0–1}, open_questions }`.
 
+When observe surfaces a lesson about HOW an agent should behave (a suspect instinct, a checkable skill), recommend tagging it `· persona:<slug> · anti-pattern|ability` so `add.py fold` grows that persona instead of the shared conventions pile.
+
 Method depth: the AIDD book in `.add/docs/` — `08-step-6-verify.md` · `09-the-loop.md`.

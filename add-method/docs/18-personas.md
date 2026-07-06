@@ -35,11 +35,11 @@ task actually applies one.
 
 Personas are **living documents**: they improve through the same loop the foundation uses. In a
 task's **observe** phase the AI emits a **persona delta** — a one-line, tagged proposal to add or
-sharpen a critical-rule or success-metric, written `open` with evidence (just like a lesson learned).
+sharpen a critical-rule, success-metric, anti-pattern, or ability, written `open` with evidence (just like a lesson learned).
 At a retrospective the human **consolidates** confirmed deltas into the persona file (the same
 `fold` step the foundation uses), bumping it forward. The consolidation is judgment-free
 transcription: the engine routes a confirmed delta into the named
-persona's `## Critical Rules` or `## Success Metrics` section and **never clobbers** existing content.
+persona's `## Critical Rules`, `## Success Metrics`, `## Anti-patterns`, or `## Abilities` section and **never clobbers** existing content.
 So a persona gets *more* accurate every milestone instead of drifting.
 
 ## Apply — three surfaces

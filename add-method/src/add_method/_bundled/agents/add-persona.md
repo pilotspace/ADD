@@ -28,4 +28,6 @@ Self-score with the confidence.md six dimensions (Completeness · Clarity · Pra
 End with a structured verdict the calling agent or orchestrator parses:
 `{ phase: persona, slug, flow, drafted: true|false, rationale, confidence: {per-dimension 0–1}, open_questions }`.
 
+Personas GROW after drafting: recommend the calling agent tag behavioral lessons `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability>` at observe — `add.py fold` routes each into that section, never clobbering.
+
 Method depth: the AIDD book in `.add/docs/` — `0-setup.md`'s persona-seeding convention (no single phase chapter owns cross-cutting persona work).
