@@ -63,12 +63,19 @@ class RunModeStep(unittest.TestCase):
         self.assertTrue("gate" in low, "table must name the human gates")
         self.assertTrue("concurren" in low or "flow" in low, "table must name concurrency/flow")
 
-    def test_proposes_parallel_auto_default(self):
+    def test_proposes_sequential_auto_default(self):
+        # sequential-auto-default (direct chat-directed edit, real usage showed parallel/multi-agent
+        # spawning is rarely used in practice): the DEFAULT is now `sequential + auto`; `parallel`
+        # stays a named, explicit opt-in for a milestone with genuinely independent tasks.
         low = self.section.lower()
         self.assertIn("default", low, "the step must name a default")
-        self.assertIn("parallel", low)
+        self.assertIn("sequential", low)
         self.assertIn("auto", low)
         self.assertIn("confirm", low, "the default must be confirm-to-keep, not a silent flip")
+        default_idx = low.index("*(default)*") if "*(default)*" in low else low.index("default")
+        self.assertIn("sequential", low[max(0, default_idx - 60):default_idx],
+                      "`sequential` must be the mode actually tagged *(default)*, not just present")
+        self.assertIn("parallel", low, "parallel must still be named, as the opt-in path")
 
     def test_cites_waves_and_autonomy(self):
         self.assertIn("add.py waves", self.section, "must cite the scheduler")
@@ -80,10 +87,17 @@ class RunModeStep(unittest.TestCase):
         self.assertIn("Key Decisions", self.section, "the choice must be recorded in PROJECT.md Key Decisions")
 
     def test_streams_names_new_default(self):
+        # sequential-auto-default: streams.md must now name `sequential + auto` as the project
+        # default and reframe parallel streaming as an explicit opt-in (was: parallel+auto
+        # default/opt-out) — real usage showed parallel/multi-agent spawning is rarely used.
         streams = _read(CANONICAL, STREAMS).lower()
         self.assertIn("default", streams)
+        self.assertIn("sequential", streams)
         self.assertTrue("parallel" in streams and "auto" in streams)
-        self.assertIn("opt-out", streams, "streams.md must name parallel+auto as the project default (opt-out)")
+        self.assertIn("opt-in", streams,
+                      "streams.md must name parallel streaming as opt-in, not the default")
+        self.assertNotIn("opt-out", streams,
+                         "the stale opt-out framing must not survive the default flip")
 
     def test_three_trees_byte_identical(self):
         for rel in (SETUP, STREAMS):

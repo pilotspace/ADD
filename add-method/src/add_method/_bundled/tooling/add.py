@@ -620,6 +620,26 @@ def cmd_sync_guidelines(args: argparse.Namespace) -> None:
         print(f"{action:>9}  {name}")
 
 
+# fastlane-intake-nudge: a frozen, blunt lexical heuristic — substring match only, no semantic
+# read. Advisory-only (see _fastlane_nudge); never blocks, never selects the lane itself.
+RISK_KEYWORDS = frozenset({
+    "milestone", "release", "security", "auth", "architecture", "migration",
+    "schema", "protocol", "engine", "breaking", "concurrency", "compliance", "payment",
+})
+
+
+def _fastlane_nudge(title: str, slug: str) -> str | None:
+    """PURE. None if any RISK_KEYWORDS token appears in title.lower() or slug.lower();
+    else the one-line advisory recommending the fast lane or a direct edit."""
+    haystack = f"{title} {slug}".lower()
+    if any(word in haystack for word in RISK_KEYWORDS):
+        return None
+    return ("heuristic: this looks like a fast-lane or direct-edit candidate (no --fast, "
+            "no risk keyword in title/slug) — consider `add.py new-task <slug> --fast`, or "
+            "just edit directly for a single-file change. Recommendation only — the lane "
+            "is yours to pick.")
+
+
 def cmd_new_task(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -744,6 +764,10 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if from_delta:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
+    if not fast:
+        note = _fastlane_nudge(title, slug)
+        if note:
+            print(note)
     print("active task set. phase: ground. Gather the real codebase (section 0 GROUND).")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
 

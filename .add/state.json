@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-components-check",
+  "active_task": "fastlane-intake-nudge",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2913,10 +2913,58 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fastlane-intake-nudge": {
+      "title": "Fast-lane intake nudge",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-06T09:13:18+00:00",
+      "updated": "2026-07-06T09:38:49+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "91dc5ebda6281f73fea70c4879519863",
+        "tests": {
+          "add-method/tooling/test_fastlane_intake_nudge.py": "52ffd8b4d70dd0f042138f602d52b2d3"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_fastlane_intake_nudge.py",
+          "add-method/skill/add/phases/fast-lane.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/fast-lane.md",
+          ".claude/skills/add/phases/fast-lane.md",
+          "add-method/tooling/test_skill_lean.py"
+        ],
+        "snapshot_md5": "66519b7fadd7e5bdd0ee69bd2ab4b093"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-06T09:33:54+00:00",
+            "reason": "scope_violation: task 'fastlane-intake-nudge' touched outside its declared \u00a75 Scope \u2014 add-method/skill/add/phases/fast-lane.md \u00b7 add-method/src/add_method/_bundled/skill/add/phases/fast-lane.md \u00b7 add-method/src/add_method/_bundled/tooling/add.py \u00b7 add-method/src/add_method/_bundled/tooling/engine_pin.py \u00b7 add-method/tooling/engine_pin.py (7 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-06T07:32:28+00:00",
+  "updated": "2026-07-06T09:38:49+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

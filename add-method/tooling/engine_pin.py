@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "cf97f937921a7f37054353555ce74f4f"  # re-aimed @ persona-fit-nudge (cmd_new_milestone gains the mutually-exclusive opposite-branch `persona-fit:` hint, importing `_real_persona_slugs`). prior: 1f04d224… @ fold-glossary-deltas (verify)
+ENGINE_MD5 = "5948731aa3c961bb374e5624599395d1"  # re-aimed @ fastlane-intake-nudge (cmd_new_task gains the advisory `_fastlane_nudge` print, non-fast path only). prior: cf97f937… @ persona-fit-nudge
 ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2

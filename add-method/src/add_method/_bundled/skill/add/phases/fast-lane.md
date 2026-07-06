@@ -20,6 +20,9 @@ cross-cutting, or anything you are not yet sure is small. In doubt, run the full
 3. Write a **red** test (§4), run it failing for the right reason.
 4. Build (§5) to green, then record the **verify gate** (§6).
 
+Both human gates (freeze, verify) render `report-template.md` too — the fast lane collapses
+sections, never the report.
+
 ## Floor kept, only collapsed
 
 Three things never move, on either lane: a **frozen** §3 before build · a **red** test before build ·

@@ -1,11 +1,11 @@
 # Parallel streams — pipelining independent tasks
 
 Load this when a milestone has more than one task and you want to run them concurrently.
-**Default:** when a project confirms `parallel + auto` as its run mode at setup
-(`phases/0-setup.md` "Run mode"), parallel streaming is the project default — an **opt-out**, not
-the opt-in it once was; downgrade in one step (`add.py autonomy set conservative --project`, or
-just run tasks one at a time). A project that kept the conservative run mode still treats this
-rubric as the opt-in escape hatch.
+**Default:** `sequential + auto` is the project default at setup (`phases/0-setup.md` "Run
+mode") — one task at a time, but Verify still auto-PASSes on evidence. Parallel streaming is an
+**opt-in** for a milestone with genuinely independent tasks: `add.py streams set parallel
+--project`, then read on. A project that raised its gate to `conservative`/`manual` still treats
+this rubric as the same opt-in escape hatch.
 
 It changes **no `add.py` code and no phase semantics**. It is a way *you, the orchestrator*,
 drive several tasks at once by reading the dependency DAG `add.py status` already prints and

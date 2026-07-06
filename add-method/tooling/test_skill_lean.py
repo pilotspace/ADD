@@ -142,7 +142,15 @@ POOLS = [
     # refute-read / Advisor-3-lens-verdict bullets immediately above it) — +281 B human-directed
     # surface. RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈281/0.75⌉=375). The won
     # compaction on every other orchestration guide is untouched.
-    {"name": "orchestration", "ratio": 0.75, "baseline": 56040,
+    # orchestration 56040 → 56060 @ sequential-auto-default (direct chat-directed edit, no formal
+    # task/frozen contract — human present live, same class as report-template-recorded-loop /
+    # fastlane-report-hint above): real usage across the user's projects showed parallel/multi-agent
+    # spawning is rarely used in practice, so streams.md's opening "Default:" paragraph now names
+    # `sequential + auto` as the project default and reframes parallel streaming as an opt-in for a
+    # milestone with genuinely independent tasks (was: parallel+auto default, opt-out). +15 B
+    # human-directed surface. RATIO 0.75 kept EXACTLY; baseline grows by surface ÷ ratio
+    # (+⌈15/0.75⌉=20). The won ground on every other orchestration guide is untouched.
+    {"name": "orchestration", "ratio": 0.75, "baseline": 56060,
      "guides": ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]},
     # phases 39008 → 39446 @ security-escalation-disclosure (same method): phases/6-verify.md's Security
     # residue bullet gains the disclosure that `unescalated_security_note` sees only a MARKED note — a
@@ -199,7 +207,14 @@ POOLS = [
     # roles, not just one milestone-fit persona. +136 B human-directed surface. RATIO 0.80 kept
     # EXACTLY; baseline grows by surface ÷ ratio (+⌈136/0.80⌉=170). The won ground on every other
     # phase guide is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 41101,
+    # phases 41101 → 41190 @ sequential-auto-default (direct chat-directed edit, no formal task/
+    # frozen contract — human present live, same class as the orchestration entry immediately
+    # above): 0-setup.md's "## Run mode" step now proposes `sequential + auto` as the default
+    # (was: `parallel + auto`) — real usage showed parallel/multi-agent spawning is rarely used;
+    # parallel streaming is still available as a named, explicit opt-in for a milestone with
+    # independent tasks. +71 B human-directed surface. RATIO 0.80 kept EXACTLY; baseline grows by
+    # surface ÷ ratio (+⌈71/0.80⌉=89). The won ground on every other phase guide is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 41190,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
@@ -239,7 +254,14 @@ POOLS = [
     # bullet, so the template that must be rendered also states how its rendering gets recorded.
     # +290 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈290/0.68⌉=427). The won ground on every other reference guide is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 76121,
+    # reference 76121 → 76302 @ fastlane-report-hint (direct chat-directed edit, no formal task/frozen
+    # contract — human present live, same class as report-template-recorded-loop above): a live fast-lane
+    # task's own verify gate was reported with a raw ask instead of report-template.md — the human caught
+    # it and traced the root cause to phases/fast-lane.md itself: unlike the main flow table, it never
+    # named report-template.md at its freeze/verify steps. Fixed with one trailing sentence naming both
+    # gates. +123 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
+    # (+⌈123/0.68⌉=181). The won ground on every other reference guide is untouched.
+    {"name": "reference",     "ratio": 0.68, "baseline": 76302,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},
