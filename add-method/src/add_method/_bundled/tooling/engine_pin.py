@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a190bed51fec7a96855b01499a11329e"  # re-aimed @ fold-persona-sections (allowlist +anti-pattern/+ability). prior: 8e351062… @ waiver-field-case  # re-aimed @ waiver-field-case (the RISK-ACCEPTED waiver field census matches owner/ticket/expires case-insensitively — the signed records write them capitalized). prior: 27cbc597… @ worktree-prep
+ENGINE_MD5 = "c7675a7a0d61a8bacf1ae023b979d9f0"  # re-aimed @ loop-surfacing-nudges (carried+compaction cues). prior: a190bed5… @ fold-persona-sections
 ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge

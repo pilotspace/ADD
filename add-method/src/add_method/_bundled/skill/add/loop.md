@@ -1,9 +1,8 @@
 # The dynamic loop — open deltas and extras become the next tasks
 
-A milestone is not done when its tasks are done — it is done when its **GOAL** is met.
-This guide drives a milestone toward that goal: turn what each task leaves behind (open lessons,
-and work discovered but out of scope) into the next tasks, and keep going until the exit criteria
-are all met.
+A milestone is done when its **GOAL** is met, not when its tasks are.
+This guide drives toward that goal: turn what each task leaves behind (open lessons, and
+work discovered but out of scope) into the next tasks until the exit criteria are all met.
 
 You **gather and propose**; the **human confirms**; the existing `add.py new-task`
 creates each one. The engine never decides what the next task is — that is judgment.
@@ -24,15 +23,15 @@ both refuse a milestone that is not done. The one gate is enough — there is no
 
 ## The loop
 
-When every task is done but the goal is not, `add.py status` shows
+Every task done but not the goal? `add.py status` shows
 `goal not met (m/n exit criteria)`. That is the cue:
 
 1. **Gather** the carried inventory:
-   - open lessons — `add.py deltas` (the §7 OBSERVE deltas still `open`);
+   - open lessons — `add.py deltas` (§7 deltas still `open`) + the deferred pile — `add.py deltas --carried`;
    - the planned-but-unscaffolded tasks — the plan-vs-state line in `add.py status`;
    - any reopened task — one a deepened verify returned to the flow (see below).
 2. **Propose** the next tasks: for each carried item worth doing now, draft a one-line task
-   (slug + title + why) and show the human. Group the trivial ones; do not propose noise.
+   (slug + title + why) and show the human. Group trivial ones; no noise.
 3. **Confirm** — the human accepts, edits, or declines each. No task is created without this.
 4. **Create** each accepted task — `add.py new-task <slug> --title "..."` — and run it through
    the normal flow (specify → … → verify).
