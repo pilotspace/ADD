@@ -69,6 +69,26 @@ def _md5(p: Path) -> str:
     return hashlib.md5(p.read_bytes()).hexdigest()
 
 
+def _parse_grep_cl_matches(raw_lines):
+    """Grep-flavor-agnostic parse of `grep -cl` stdout lines into the set of matched paths.
+
+    GNU grep's -cl prints one bare matching filename per line. BSD grep's -cl instead prints
+    a "path:N" count line for every input file (N == 0 for a non-match) PLUS a separate bare
+    "path" line for each actual match. A trailing ":<digits>" is only a BSD count line when
+    it parses as an int; treat it as a match only when that count is > 0, so a BSD "path:0"
+    line for a genuine non-match is excluded rather than misread as a match.
+    """
+    matched = set()
+    for line in raw_lines:
+        head, sep, tail = line.rpartition(":")
+        if sep and tail.isdigit():
+            if int(tail) > 0:
+                matched.add(head)
+        else:
+            matched.add(line)
+    return matched
+
+
 def _section0(text: str) -> str:
     m = re.search(r"## 0 .*?GROUND.*?(?=\n## 1 )", text, flags=re.S)
     return m.group(0) if m else ""
@@ -227,13 +247,41 @@ class ThreeTreeParityTest(unittest.TestCase):
 
     def test_milestone_exit_grep_lists_all_3(self):
         # exact invocation the milestone's own exit criterion names (one grep -cl call, all
-        # 3 paths as args) — with multiple files, grep -cl lists one matching filename per line.
+        # 3 paths as args). GNU grep (Linux CI) prints one bare matching filename per line for
+        # -cl; BSD grep (macOS's default /usr/bin/grep) instead prints BOTH a "path:N" count
+        # line (N == 0 for a non-match) AND a separate bare "path" line per actual match — an
+        # implementation quirk, not a matching failure (confirmed directly against
+        # /usr/bin/grep, not a shell alias/wrapper). _parse_grep_cl_matches only counts a
+        # ":N" line as a match when N > 0, so this asserts the real invariant (all 3 tree
+        # paths matched) regardless of which grep flavor runs it — see
+        # test_parse_grep_cl_matches_excludes_bsd_zero_count for the regression this guards.
         out = subprocess.run(
             ["grep", "-cl", LABEL, *[str(p) for p in TMPL_COPIES]],
             capture_output=True, text=True)
-        matched = set(out.stdout.strip().splitlines())
+        raw_lines = out.stdout.strip().splitlines()
+        matched = _parse_grep_cl_matches(raw_lines)
         self.assertEqual(matched, {str(p) for p in TMPL_COPIES},
-                          "grep -cl must list all 3 tree paths as matches")
+                          f"grep -cl must list all 3 tree paths as matches (raw output: {raw_lines!r})")
+
+
+class GrepClParsingTest(unittest.TestCase):
+    """Unit-level coverage for _parse_grep_cl_matches, independent of the real grep binary."""
+
+    def test_gnu_bare_filenames_all_match(self):
+        raw = ["a.txt", "b.txt", "c.txt"]
+        self.assertEqual(_parse_grep_cl_matches(raw), {"a.txt", "b.txt", "c.txt"})
+
+    def test_bsd_count_and_bare_lines_all_match(self):
+        raw = ["a.txt:1", "a.txt", "b.txt:1", "b.txt"]
+        self.assertEqual(_parse_grep_cl_matches(raw), {"a.txt", "b.txt"})
+
+    def test_parse_grep_cl_matches_excludes_bsd_zero_count(self):
+        # the regression the earlier `re.sub(r":\d+$", "", line)` fix (commit 5d0ce30) missed:
+        # BSD grep -cl prints "path:0" for a genuine non-match, which a bare suffix-strip
+        # cannot distinguish from a real match line — this must NOT be counted as matched.
+        raw = ["a.txt:1", "a.txt", "nomatch.txt:0", "b.txt:1", "b.txt"]
+        self.assertEqual(_parse_grep_cl_matches(raw), {"a.txt", "b.txt"})
+        self.assertNotIn("nomatch.txt", _parse_grep_cl_matches(raw))
 
 
 class FastTemplateUntouchedTest(unittest.TestCase):

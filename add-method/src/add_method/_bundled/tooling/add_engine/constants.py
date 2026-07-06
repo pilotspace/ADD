@@ -25,6 +25,7 @@ __all__ = [
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
     "PERSONA_HINT",
+    "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
@@ -107,6 +108,16 @@ PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Req
 PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add-persona "
                 "agent (or read docs/18-personas.md) to seed the project's persona(s) from "
                 "PROJECT.md's domain")
+
+# persona-fit-nudge: the OPPOSITE-branch, mutually-exclusive sibling of PERSONA_HINT — fires only
+# when ≥1 real persona ALREADY exists, so a brand-new milestone doesn't silently assume one of
+# them fits its domain. Existence-only (names the persona slugs already seeded); the AI still
+# owns the actual fit judgment via add-persona — the engine never scores content similarity.
+# {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
+PERSONA_FIT_HINT_TEMPLATE = (
+    "existing persona(s) seeded — {slugs} — confirm one fits this milestone's domain, or spawn "
+    "the add-persona agent (or read docs/18-personas.md) to draft a better-fit one"
+)
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts
 # never reach git. Bare-filename patterns match at any depth under .add/ (tasks/,

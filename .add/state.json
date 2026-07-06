@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "reclaim-ticket-race",
+  "active_task": "scope-components-check",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2535,30 +2535,91 @@
     },
     "grep-binary-agnostic-milestone-test": {
       "title": "Grep-Binary-Agnostic Milestone-Exit Test",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-04T16:23:12+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9cdc2634902fd28c1b01d1558be8bce9",
+        "tests": {
+          "add-method/tooling/test_seams_template_wiring.py": "6f122e775fb7c5a6d7f7d7eb6a2cb4c4",
+          "add-method/tooling/test_ci_tooling_mirror_gap.py": "d35a62ce4207bb00069da2c7c43074cf"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_seams_template_wiring.py"
+        ],
+        "snapshot_md5": "dfba3d697dc22df337e26009dc0f20ea"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "prune-data-update-lock": {
       "title": "Prune-Data / Update-Global Lock Race",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-05T02:12:31+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "8429fd8e917a6ecc1e2a02103d9179b1",
+        "tests": {
+          "add-method/tooling/test_prune_data_lock.py": "58f8cb43874e6d6ca23005cdb8048ec5",
+          "add-method/tooling/test_global_update_harden.py": "a048480296f12f36292032afd734b2b4"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js"
+        ],
+        "snapshot_md5": "f7946d1966f350abb37f605c3eee9faf"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "sweep-orphan-reclaim-tickets": {
       "title": "Sweep Orphaned Reclaim Ticket Files",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-05T02:28:32+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d61e4b8997d140c75dfb7a7e547bab3d",
+        "tests": {
+          "add-method/tooling/test_sweep_orphan_tickets.py": "f2f43b6754bd5fd3c01dadd8a1d74c08",
+          "add-method/tooling/test_global_restore.py": "84eaf1cde2051bf987a50324fbf70ace"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_sweep_orphan_tickets.py",
+          "add-method/tooling/test_global_restore.py"
+        ],
+        "snapshot_md5": "393b436525ef9f3a235823f4b0676fd8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "cross-platform-inode-reuse-stress": {
       "title": "Cross-Platform Inode-Reuse Stress Test",
@@ -2571,39 +2632,128 @@
     },
     "adr-harvester-multiline-fields": {
       "title": "ADR Harvester Multi-Line Field Capture",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:28+00:00",
-      "updated": "2026-07-03T13:16:28+00:00"
+      "updated": "2026-07-04T18:23:45+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "e22adfaa5deaba605b86afa37d3fda90",
+        "tests": {
+          "add-method/tooling/test_adr_harvest.py": "d0e9182b85ee03ccf37bec38bfb5f2ba"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_adr_harvest.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "637e36940d3d3b53aff8c17e1e8b31be"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "strip-scaffold-backtick-comment-fix": {
       "title": "Strip-Scaffold Backtick-Comment Over-Strip Fix",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:16:29+00:00",
-      "updated": "2026-07-03T13:16:29+00:00"
+      "updated": "2026-07-04T17:42:39+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4d6c7af7595cc004ce8d99263fce0c9f",
+        "tests": {
+          "add-method/tooling/test_strip_scaffold_at_done.py": "863555ef0e7e9c9ee9ff3ab9cd839da2"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_strip_scaffold_at_done.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "af24522d30916969ce8049cb0fe314ba"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "worktree-isolated-spawn-default": {
       "title": "Prefer Worktree-Isolated Agent Spawning Per Task",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:21:23+00:00",
-      "updated": "2026-07-03T13:21:23+00:00"
+      "updated": "2026-07-04T18:37:41+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1a1ffc876d939fe4d0287569df081a5f",
+        "tests": {
+          "add-method/tooling/test_skill_lean.py": "078cdbc86cf4ab740dc0dd42539d0df1",
+          "add-method/tooling/test_worktree_default_wording.py": "ff99e7be489a881b3688411b7467718f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/streams.md",
+          ".claude/skills/add/streams.md",
+          "add-method/src/add_method/_bundled/skill/add/streams.md",
+          "add-method/docs/10-setup-and-stages.md",
+          "add-method/src/add_method/_bundled/docs/10-setup-and-stages.md",
+          ".add/docs/10-setup-and-stages.md",
+          "add-method/tooling/test_worktree_default_wording.py"
+        ],
+        "snapshot_md5": "d4202f3adb92184fac58933a71376243"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "fold-glossary-deltas": {
       "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": null,
       "depends_on": [],
       "created": "2026-07-03T13:39:18+00:00",
-      "updated": "2026-07-03T13:39:18+00:00"
+      "updated": "2026-07-05T03:15:18+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5a0f8fc5aed40da45c07963baa92217f",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/test_fold_glossary.py",
+          "add-method/tooling/engine_pin.py"
+        ],
+        "snapshot_md5": "44d029ba3cac7018b43b04e532de3e6a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "persona-seed-nudge": {
       "title": "Persona seed nudge at new-milestone",
@@ -2682,10 +2832,91 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "js-reclaim-lock-heartbeat": {
+      "title": "JS/npm reclaim-lock heartbeat twin fix",
+      "phase": "done",
+      "gate": "RISK-ACCEPTED",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-04T16:24:29+00:00",
+      "updated": "2026-07-05T00:54:32+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "58d0f135c1257c216d1c7f5b1be87c84",
+        "tests": {
+          "add-method/tooling/test_js_reclaim_lock_heartbeat.py": "b9eec7563e3f8d4d1789b868010f4692"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/bin/cli.js",
+          "add-method/tooling/test_js_reclaim_lock_heartbeat.py"
+        ],
+        "snapshot_md5": "a6b41baca6a9502a2f5b293895d7acf2"
+      },
+      "waiver": {
+        "owner": "Tin Dang",
+        "ticket": ".add/tasks/js-reclaim-lock-heartbeat/TASK.md",
+        "expires": "2026-08-04"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "scope-components-check": {
+      "title": "Scope-drafting prompts the components pillar",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-06T07:14:46+00:00",
+      "updated": "2026-07-06T07:32:28+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "2aa5e9d324b060125ffad84eba2a3753",
+        "tests": {
+          "add-method/tooling/test_scope_loop.py": "6c144d59ed7741fd7e77b9fe94aafb2d",
+          "add-method/tooling/test_skill_lean.py": "95d5466ca81c87ffa00ca9f964a94662"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/scope.md",
+          ".claude/skills/add/scope.md",
+          "add-method/src/add_method/_bundled/skill/add/scope.md",
+          "add-method/tooling/test_skill_lean.py",
+          "add-method/tooling/test_scope_loop.py"
+        ],
+        "snapshot_md5": "8f7d1185471dfae306d9312a0d0de9ba"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-06T07:30:09+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_scope_loop.py,build_tampered:add-method/tooling/test_skill_lean.py",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-07-06T07:31:20+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/test_scope_loop.py,build_tampered:add-method/tooling/test_skill_lean.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-04T14:03:25+00:00",
+  "updated": "2026-07-06T07:32:28+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3616,6 +3847,15 @@
         "project-scope-install-lock"
       ],
       "archived": "2026-07-03"
+    },
+    {
+      "slug": "persona-domain-fit",
+      "title": "Persona domain-fit nudge",
+      "tasks": 1,
+      "task_slugs": [
+        "persona-fit-nudge"
+      ],
+      "archived": "2026-07-05"
     }
   ],
   "active_milestones": [],
@@ -3765,6 +4005,18 @@
       "id": 24,
       "text": "pty-test-helper (deferred from installer-polish): extract a reusable PTY test helper so the installer's interactive-prompt + agent-detect happy-paths run under a committed CI test (today they only run interactively). Standalone fast task \u2014 milestone-free.",
       "created": "2026-06-28T16:47:03+00:00",
+      "status": "open"
+    },
+    {
+      "id": 25,
+      "text": "engine bug: _declared_scope regex only reads the FIRST physical line of \u00a75 'Scope (may touch):' \u2014 a wrapped scope line silently truncates the declared-scope anchor, causing false build_tampered/scope_violation on any task whose \u00a75 wraps to 2+ lines (found while gating sweep-orphan-reclaim-tickets, 2026-07-05)",
+      "created": "2026-07-05T02:32:14+00:00",
+      "status": "open"
+    },
+    {
+      "id": 26,
+      "text": "architecture residue: sweep-orphan-reclaim-tickets' new ticket sweep re-verifies age only at unlink time; the existing inline _project_lock reclaim path re-verifies age+inode identity. Minor precedent inconsistency, non-blocking, candidate follow-up spec delta (flagged at sweep-orphan-reclaim-tickets verify, 2026-07-05)",
+      "created": "2026-07-05T02:32:14+00:00",
       "status": "open"
     }
   ]

@@ -49,8 +49,8 @@ tier hint: top → dag-scheduler, setup-run-mode; mid → the rest
 ```
 
 - **Wave = a fan-out batch.** Every task in a wave has all in-milestone deps PASS, so the whole
-  wave is spawnable at once (`isolation="worktree"`). Finish a wave, gate tasks PASS, then
-  `add.py waves` again — the next wave is unblocked.
+  wave is spawnable at once — worktree isolation is the default for any spawn, not just a wave.
+  Finish a wave, gate tasks PASS, then `add.py waves` again — the next wave is unblocked.
 - **Run the widest wave first** to hide the most build latency under human review latency.
 - **Spend your strongest model on the critical path.** Critical-path tasks gate the most
   downstream work; off-path tasks take **mid**. The tier hint is advisory — override when you
@@ -85,8 +85,9 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
 - **A worker** owns only its own `.add/tasks/<slug>/` — it builds `src/`, drives tests green,
   gathers evidence, and writes `SUMMARY.md` + OBSERVE deltas. It touches **no sibling stream and
   no shared file** — never write shared state (state.json, MILESTONE.md, a sibling's files).
-- **Isolation**: spawn each worker with `isolation="worktree"` so concurrent builds cannot
-  collide. The worktree is discarded on failure; the task resets to its last-good phase.
+- **Isolation**: `isolation="worktree"` is the default for any agent-spawned step, not only a
+  wave — a shared-tree spawn needs a stated reason. The worktree is discarded on failure; the task
+  resets to its last-good phase.
 </constraints>
 
 ## Design for failure (required)
@@ -248,8 +249,8 @@ always escalates** — no tier auto-passes it.
 
 ## The spawn adapter — one thin mapping per runner
 
-ADD needs six capabilities from any runner. **Isolation ADD owns itself** (a git worktree), so
-streams stay portable even without a native sandbox.
+ADD needs six capabilities from any runner. **Isolation ADD owns itself** (a git worktree,
+default for any spawn), so streams stay portable even without a native sandbox.
 
 | ADD needs | Abstract | Claude Code (verified reference) | Any CLI agent — Codex · opencode · pi-mono · … |
 |-----------|----------|----------------------------------|-----------------------------------------------|

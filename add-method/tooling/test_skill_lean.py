@@ -48,6 +48,11 @@ _CANON = Path(__file__).resolve().parent.parent / "skill" / "add"
 # reference 65756 → 66345 @ ground-phase-harden (same method): scope.md's "Position the goal — ground in
 # assets" step gained the SAME four-field rubric at milestone altitude (a milestone grounds as rigorously as
 # a task §0); +400 B human-approved surface, ratio 0.68 kept (+⌈400/0.68⌉=589). The won ground is untouched.
+# reference 75850 → 76121 @ scope-components-check (same method): scope.md's step 1 "Ground in current
+# assets" gains one trailing sentence prompting the components pillar when a milestone's Touches spans
+# >1 app root (BE+FE) — closing a real gap found in a downstream project where 30+ tasks spanned two app
+# roots with `.add/components.toml` never declared; +184 B human-approved surface (explicit "rebaseline"),
+# ratio 0.68 kept EXACTLY (+⌈184/0.68⌉=271). The won ground is untouched.
 POOLS = [
     # core 18465 → 19675 @ roadmap-intake-guide (same "rebaseline for human-approved new surface" method):
     # intake.md gains a NEW "## Roadmap" section (decompose an N-milestone request → 1 active + N−1
@@ -234,7 +239,7 @@ POOLS = [
     # bullet, so the template that must be rendered also states how its rendering gets recorded.
     # +290 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈290/0.68⌉=427). The won ground on every other reference guide is untouched.
-    {"name": "reference",     "ratio": 0.68, "baseline": 75850,
+    {"name": "reference",     "ratio": 0.68, "baseline": 76121,
      "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},

@@ -896,51 +896,130 @@ def _restore_data(home: Path, project_abspath, *, force: bool = False) -> bool:
     return restored
 
 
+def _aged_reclaim_tickets(glob_dir: Path, lock_file_name: str, stale_after: float, now: float) -> list:
+    """Every `<lock_file_name>.reclaim-*` under `glob_dir` aged past `stale_after` — a LEAKED
+    per-generation reclaim ticket (its own holder crashed between winning it and its own
+    best-effort cleanup; a live, currently-in-flight ticket is never this old). Returns Path
+    objects, oldest-name-sorted; empty if `glob_dir` does not exist."""
+    if not glob_dir.exists():
+        return []
+    aged = []
+    for p in sorted(glob_dir.glob(lock_file_name + ".reclaim-*")):
+        try:
+            age = now - p.stat().st_mtime
+        except OSError:
+            continue                                     # vanished mid-sweep — nothing to report
+        if age > stale_after:
+            aged.append(p)
+    return aged
+
+
 def _prune_data(home: Path, *, force: bool = False):
     """Find (and, with force, remove) ORPHANED per-project snapshots under <home>/data. An
     orphan is a <home>/data/<key> dir whose key is owned by NO LIVE registry entry — LIVE = a
     registered project path that still EXISTS on disk. So an UNregistered key AND a registered-
     but-vanished-on-disk key are BOTH orphans (the explicit reclaim — INTENTIONALLY DIVERGES
     from `update --global`, which keeps vanished). Reads the registry FIRST: a
-    ValueError('registry_corrupt') propagates (LOUD, before any removal). Returns
-    (orphans, removed) as sorted key-name lists; removed == [] on a dry-run, == orphans under
-    force (each orphan dir shutil.rmtree'd). Mirrored by behaviour in cli.js."""
+    ValueError('registry_corrupt') propagates (LOUD, before any removal).
+
+    sweep-orphan-reclaim-tickets: ALSO sweeps LEAKED per-generation reclaim tickets — a
+    `<LOCK_FILE>.reclaim-*` under `home` (home-scope) and a `<PROJECT_LOCK_FILE>.reclaim-*`
+    under every LIVE registered project's own `.add/` (project-scope) — each aged past its
+    OWN kind's existing staleness constant (_LOCK_TICKET_STALE_SECONDS /
+    _PROJECT_LOCK_TICKET_STALE_SECONDS, reused verbatim; no new threshold). Reuses the registry
+    already read for the data-orphan sweep — no new read.
+
+    Returns (orphans, removed, ticket_orphans, tickets_removed): the first pair as sorted
+    key-name lists (unchanged from before this extension); the second pair as Path lists.
+    removed == [] / tickets_removed == [] on a dry-run; == orphans / ticket_orphans under force
+    (each orphan dir shutil.rmtree'd; each ticket unlinked best-effort, matching the existing
+    reclaim code's own swallow-errors convention). Existing positional callers of the prior
+    2-tuple must extended-unpack (`orphans, removed, *_ = ...`). Mirrored by behaviour in cli.js."""
     reg = _read_registry(home)                          # corrupt -> ValueError (LOUD, zero removal)
-    live = {data_key(p) for p in reg if Path(p).exists()}
+    live_paths = [Path(p) for p in reg if Path(p).exists()]
+    live = {data_key(str(p)) for p in live_paths}
     data_dir = home / "data"
-    if not data_dir.exists():
-        return [], []
-    orphans = sorted(d.name for d in data_dir.iterdir() if d.is_dir() and d.name not in live)
+    orphans = [] if not data_dir.exists() else sorted(
+        d.name for d in data_dir.iterdir() if d.is_dir() and d.name not in live
+    )
     removed: list = []
     if force:
         for key in orphans:
             shutil.rmtree(data_dir / key)
             removed.append(key)
-    return orphans, removed
+
+    now = time.time()
+    ticket_candidates = [
+        (t, _LOCK_TICKET_STALE_SECONDS)
+        for t in _aged_reclaim_tickets(home, LOCK_FILE, _LOCK_TICKET_STALE_SECONDS, now)
+    ]
+    for project in live_paths:
+        ticket_candidates += [
+            (t, _PROJECT_LOCK_TICKET_STALE_SECONDS)
+            for t in _aged_reclaim_tickets(_add_dir(project), PROJECT_LOCK_FILE, _PROJECT_LOCK_TICKET_STALE_SECONDS, now)
+        ]
+    ticket_orphans = [t for t, _ in ticket_candidates]
+    tickets_removed: list = []
+    if force:
+        for ticket, stale_after in ticket_candidates:
+            try:
+                if time.time() - ticket.stat().st_mtime <= stale_after:
+                    continue                            # no longer stale at unlink time — §5 safety rule
+                ticket.unlink()
+                tickets_removed.append(ticket)
+            except OSError:
+                pass                                     # already gone — harmless, matches reclaim's own convention
+
+    return orphans, removed, ticket_orphans, tickets_removed
 
 
 def prune_data(*, force: bool = False, env=None) -> int:
     """`prune-data` command: reclaim ORPHANED per-project snapshots from the shared home.
     Dry-run by default (lists orphans, removes nothing); --force deletes. Resolves the home from
     env; a missing home is no_global_home (fail-closed). A corrupt registry is a LOUD fail with
-    nothing removed. Returns 0 on success, 1 on a fail-closed reject. Mirrored by cli.js."""
+    nothing removed. Returns 0 on success, 1 on a fail-closed reject. Mirrored by cli.js.
+
+    prune-data-update-lock: the registry-read + orphan-computation + removal critical section
+    now holds the SAME home lock (`_update_lock`) `update --global` already holds during its own
+    reconcile (which refreshes an existing project's `<home>/data/<key>` snapshot) — so the two
+    can never interleave. Reuses the existing, proven primitive verbatim: no new lock file, no
+    new threshold, no poll mode (fail-fast only, mirrors `_project_lock`'s own no-poll
+    philosophy for admin-class commands).
+
+    sweep-orphan-reclaim-tickets: ALSO reports (and, with --force, removes) leaked reclaim
+    tickets found by `_prune_data` — see its own docstring; a separate, additive count from the
+    data-orphan sweep above."""
     env_map = os.environ if env is None else env
     home = resolve_global_home(env_map)
     if not _stamp_path(home).exists():
         return _fail(f"no global ADD install at {home} (.add-version not found) — nothing to prune")
     try:
-        orphans, removed = _prune_data(home, force=force)
+        with _update_lock(home, env=env_map):
+            orphans, removed, ticket_orphans, tickets_removed = _prune_data(home, force=force)
+    except BlockingIOError:
+        return _fail(
+            f"update_in_progress: another `update --global` is already running — retry shortly "
+            f"(remove {home / LOCK_FILE} if it is stale)"
+        )
     except ValueError as exc:
         return _fail(f"global registry {_registry_path(home)} is corrupt — fix or delete it; {exc}")
-    if not orphans:
+    if not orphans and not ticket_orphans:
         _log("  no orphaned snapshots — nothing to prune")
         return 0
     if force:
-        _log(f"  ✓ {len(removed)} removed")
+        if orphans:
+            _log(f"  ✓ {len(removed)} removed")
+        if ticket_orphans:
+            _log(f"  ✓ {len(tickets_removed)} reclaim ticket(s) removed")
     else:
         for key in orphans:
             _log(f"  orphan: {key}")
-        _log(f"  {len(orphans)} orphan(s); re-run with --force to remove")
+        if orphans:
+            _log(f"  {len(orphans)} orphan(s); re-run with --force to remove")
+        for ticket in ticket_orphans:
+            _log(f"  ticket orphan: {ticket}")
+        if ticket_orphans:
+            _log(f"  {len(ticket_orphans)} reclaim ticket orphan(s); re-run with --force to remove")
     return 0
 
 

@@ -160,6 +160,95 @@ class AdrHarvestTest(unittest.TestCase):
         self.assertIn("rewrote the `<harvested>` parser", block, "a filled §5 with '<' is not 'unfilled'")
         self.assertNotIn("strategy used: as planned", block, "the real strategy must not degrade to the default")
 
+    # ── wrapped fields: a multi-line "Framings weighed:" is captured in full ─────────────
+    def test_framing_captures_wrapped_field(self):
+        self._quiet(["new-task", "h"])
+        p = self._path("h")
+        txt = p.read_text().replace(
+            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: WriteBack (chosen — reuses the proven\n"
+            "  mechanics) · CommandX · StateOnly")
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "h"])
+        self._quiet(["gate", "PASS", "h"])
+        block = self._adr_block("h")
+        self.assertRegex(block, r"\[AI\][^\n]*chose WriteBack",
+                          "a wrapped Framings weighed value must still harvest the chosen framing")
+        self.assertNotIn("chose <unrecorded>", block, "a wrapped field must not degrade to <unrecorded>")
+
+    def test_strategy_captures_wrapped_field(self):
+        self._quiet(["new-task", "i"])
+        p = self._path("i")
+        txt = re.sub(r"(?m)^Strategy actually used:.*$",
+                      "Strategy actually used: rewrote the parser across\n"
+                      "  two batches and re-ran the suite", p.read_text())
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "i"])
+        self._quiet(["gate", "PASS", "i"])
+        block = self._adr_block("i")
+        self.assertIn("rewrote the parser across two batches and re-ran the suite", block,
+                      "a wrapped Strategy actually used value must be captured in full")
+
+    def test_wrapped_field_stops_at_next_label(self):
+        self._quiet(["new-task", "j"])
+        p = self._path("j")
+        txt = p.read_text().replace(
+            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>\nMust:",
+            "Framings weighed: WriteBack (chosen — a two-line\n  value)\nMust:")
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "j"])
+        self._quiet(["gate", "PASS", "j"])
+        block = self._adr_block("j")
+        self.assertRegex(block, r"\[AI\][^\n]*chose WriteBack")
+        self.assertNotIn("Must", block, "the capture must stop before the next label, never absorb it")
+
+    def test_wrapped_field_stops_at_blank_line(self):
+        self._quiet(["new-task", "k"])
+        p = self._path("k")
+        txt = p.read_text().replace(
+            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>\nMust:",
+            "Framings weighed: WriteBack (chosen — a two-line\n  value)\n\nMust:")
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "k"])
+        self._quiet(["gate", "PASS", "k"])
+        block = self._adr_block("k")
+        self.assertRegex(block, r"\[AI\][^\n]*chose WriteBack")
+        self.assertNotIn("Must", block, "the capture must stop at the blank line, never absorb past it")
+
+    def test_single_line_fields_unchanged(self):
+        self._quiet(["new-task", "l"])
+        p = self._path("l")
+        txt = p.read_text().replace(
+            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: WriteBack (chosen) · CommandX · StateOnly")
+        txt = re.sub(r"(?m)^Strategy actually used:.*$",
+                      "Strategy actually used: rewrote the parser in one pass", txt)
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "l"])
+        self._quiet(["gate", "PASS", "l"])
+        block = self._adr_block("l")
+        self.assertRegex(block, r"\[AI\][^\n]*chose WriteBack",
+                          "a single-line Framings weighed value must harvest exactly as before")
+        self.assertIn("rewrote the parser in one pass", block,
+                      "a single-line Strategy actually used value must harvest exactly as before")
+
+    def test_wrapped_field_stops_at_parenthetical_label(self):
+        # the REAL template places "Safety rule (feature-specific):" immediately after
+        # "Strategy actually used:" with no blank line — a boundary blind to "(...)" labels
+        # would silently swallow it into the harvested strategy text.
+        self._quiet(["new-task", "m"])
+        p = self._path("m")
+        txt = re.sub(r"(?m)^Strategy actually used:.*$",
+                      "Strategy actually used: rewrote the parser across\n"
+                      "  two batches and re-ran the suite", p.read_text())
+        p.write_text(txt, encoding="utf-8")
+        self._quiet(["phase", "verify", "m"])
+        self._quiet(["gate", "PASS", "m"])
+        block = self._adr_block("m")
+        self.assertIn("rewrote the parser across two batches and re-ran the suite", block)
+        self.assertNotIn("Safety rule", block,
+                         "a parenthetical-suffixed label must still stop the capture")
+
     # ── grandfather: a resolved (hand-edited) block is byte-untouched ─────────────────────
     def test_grandfather_resolved_block_untouched(self):
         self._task_at_verify()

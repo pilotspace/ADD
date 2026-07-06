@@ -545,7 +545,7 @@ class PruneTest(_Base):
         snap_a = self._write_snapshot(self.proj, {"state.json": "{}"})
         snap_b = self.home / "data" / "orphan-bbbbbbbbbbbb"; snap_b.mkdir(parents=True)
         (snap_b / "state.json").write_text("{}")
-        orphans, removed = _installer._prune_data(self.home, force=False)
+        orphans, removed, *_ = _installer._prune_data(self.home, force=False)
         self.assertIn("orphan-bbbbbbbbbbbb", orphans, "an unowned snapshot is an orphan")
         self.assertNotIn(_installer.data_key(str(self.proj.resolve())), orphans, "a live owner is not an orphan")
         self.assertEqual(removed, [], "dry-run removes nothing")
@@ -557,7 +557,7 @@ class PruneTest(_Base):
         snap_a = self._write_snapshot(self.proj, {"state.json": "{}"})
         snap_b = self.home / "data" / "orphan-bbbbbbbbbbbb"; snap_b.mkdir(parents=True)
         (snap_b / "state.json").write_text("{}")
-        orphans, removed = _installer._prune_data(self.home, force=True)
+        orphans, removed, *_ = _installer._prune_data(self.home, force=True)
         self.assertIn("orphan-bbbbbbbbbbbb", removed, "the unowned orphan is removed under --force")
         self.assertFalse(snap_b.exists(), "orphan dir deleted")
         self.assertTrue(snap_a.exists(), "the live (registry-path-exists) snapshot is kept")
@@ -568,7 +568,7 @@ class PruneTest(_Base):
         snap_v = self._write_snapshot(vanished, {"state.json": "{}"})  # keyed on the vanished path
         snap_a = self._write_snapshot(self.proj, {"state.json": "{}"})
         self._register(vanished, self.proj)                            # both registered; only proj exists
-        orphans, removed = _installer._prune_data(self.home, force=True)
+        orphans, removed, *_ = _installer._prune_data(self.home, force=True)
         self.assertFalse(snap_v.exists(), "a registered-but-vanished snapshot is reclaimed (no LIVE owner)")
         self.assertTrue(snap_a.exists(), "a live owner is kept")
 

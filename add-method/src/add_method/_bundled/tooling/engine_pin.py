@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "4230eb2ef4f27fb9f480781fee92e5a5"  # re-aimed @ verify-traceability-glint (_guarantee_lint_notices/cmd_audit gain rule_coverage_gap — this task's own §1 Must/Reject-vs-§2/§4 tag gap, surfaced at verify via `add.py audit`, not only a separate `check` sweep). prior: a8ab76ae… @ status-pagination
-ENGINE_PKG_MD5 = "a66975e2b5ed53b5858c3bd43dde7828"  # re-aimed @ roster-onboarding-wiring (constants.py GUIDELINE_FILES + guidelines.py _INIT_EXCLUDE/docstring gained .clinerules; no other add_engine/*.py changed). prior: 82297e49… @ roster-portable-shape
+ENGINE_MD5 = "cf97f937921a7f37054353555ce74f4f"  # re-aimed @ persona-fit-nudge (cmd_new_milestone gains the mutually-exclusive opposite-branch `persona-fit:` hint, importing `_real_persona_slugs`). prior: 1f04d224… @ fold-glossary-deltas (verify)
+ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2

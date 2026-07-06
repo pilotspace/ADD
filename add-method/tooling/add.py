@@ -101,6 +101,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _load_state_for_json,                                          # --json state loader
     _md5_text, _md5_file,                                          # md5 hashing helpers
     _personas_unseeded,                                            # persona-seed-nudge predicate
+    _real_persona_slugs,                                           # persona-fit-nudge slug listing
 )
 
 
@@ -280,10 +281,14 @@ _BLANK_RUN_RE = re.compile(r"\n{3,}")
 def _strip_live_scaffold(text: str) -> str:
     """Remove `<!-- … -->` instruction comments from a TASK.md — fences untouched, idempotent.
 
-    Splits on fenced code blocks so a comment inside a ``` fence (e.g. the frozen §3) is never
-    touched; in the non-fence segments it drops comment spans, trims the trailing whitespace a
-    removal leaves on a line, and collapses 3+ consecutive newlines to one blank line."""
-    segs = re.split(r"(```.*?```)", text, flags=re.DOTALL)
+    Splits on fenced code blocks AND an inline single-backtick span that IS itself a whole
+    `` `<!--...-->` `` (literal comment syntax quoted as an example in prose) so neither is
+    touched; a live comment that merely CONTAINS unrelated backtick-quoted code (e.g. this very
+    template's own `` `add.py autonomy set` ``-style asides) is untouched by this exception and
+    still stripped whole, exactly as before. In the remaining segments it drops comment spans,
+    trims the trailing whitespace a removal leaves on a line, and collapses 3+ consecutive
+    newlines to one blank line."""
+    segs = re.split(r"(```.*?```|`<!--.*?-->`)", text, flags=re.DOTALL)
     for i in range(0, len(segs), 2):                     # even indices = OUTSIDE any fence
         s = _HTML_COMMENT_RE.sub("", segs[i])
         s = _TRAILING_WS_RE.sub("", s)
@@ -395,6 +400,28 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
         _atomic_write(f, new)
 
 
+def _capture_wrapped(label: str, body: str):
+    """Capture a `<label>: value` field that may WRAP onto continuation lines (a human writing
+    prose in a TASK.md field routinely wraps past one line). Matches the label's first line, then
+    consumes subsequent physical lines while each is non-blank AND does not itself start a new
+    field label — `Word Word:` or `Word Word (parenthetical):` (the real template places labels
+    like `Safety rule (feature-specific):`/`Persona (optional):` immediately after a wrapped field
+    with no blank line; a parenthetical-blind boundary would silently swallow them) — so a wrapped
+    value is captured in full without ever bleeding into the next field or past a blank-line
+    paragraph break. Returns None if the label is absent, matching the single-line behavior it
+    replaces."""
+    m = re.search(rf"(?m)^{re.escape(label)}:[ \t]*(.+)$", body)
+    if not m:
+        return None
+    lines = [m.group(1).strip()]
+    rest = body[m.end():].split("\n")[1:]
+    for line in rest:
+        if not line.strip() or re.match(r"^[A-Z][A-Za-z ]*(\([^)]*\))?[ \t]*:", line):
+            break
+        lines.append(line.strip())
+    return " ".join(lines)
+
+
 def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
     """Write-back (adr-at-observe): HARVEST a §7 `### Decisions (ADR)` block from the actor-stamps
     ALREADY in the task — §1 framing (AI) · §3 freeze (human) · §5 strategy-actually-used (AI) · §6
@@ -427,11 +454,11 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
     def _framing():                              # §1 -> [AI]: chosen + rejected
         try:
-            m = re.search(r"(?m)^Framings weighed:[ \t]*(.+)$", bodies.get(1, ""))
-            if not m:
+            val = _capture_wrapped("Framings weighed", bodies.get(1, ""))
+            if val is None:
                 return UN, ""
             chosen, rejected = UN, []
-            for p in (s.strip() for s in m.group(1).split("·") if s.strip()):
+            for p in (s.strip() for s in val.split("·") if s.strip()):
                 cm = re.match(r"(.*?)\s*\(chosen\b.*\)\s*$", p)  # "(chosen)" OR "(chosen — rationale)"
                 if cm:
                     chosen = cm.group(1).strip() or UN
@@ -459,12 +486,11 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
     def _strategy():                             # §5 -> [AI]: the value, default "as planned"
         try:
-            m = re.search(r"(?m)^Strategy actually used:[ \t]*(.+)$", bodies.get(5, ""))
-            if m:
+            val = _capture_wrapped("Strategy actually used", bodies.get(5, ""))
+            if val:
                 # UNFILLED is the "<fill at …>" template token; a real value may legitimately
                 # contain "<" (quoting `<tag>`, "x < y") and must NOT degrade to the default
-                val = m.group(1).strip()
-                if val and not val.startswith("<fill"):
+                if not val.startswith("<fill"):
                     return val
         except Exception:
             pass
@@ -3448,6 +3474,13 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         # (a queued milestone isn't yet in flight, so the nudge would be premature there).
         if _personas_unseeded(root):
             print(f"note: {PERSONA_HINT}")
+        else:
+            # persona-fit-nudge: the opposite branch — ≥1 real persona already exists, so nudge
+            # the AI to confirm domain fit (or draft a new one) rather than silently assuming an
+            # existing persona covers this brand-new milestone. Existence-only, mutually
+            # exclusive with the note above (same predicate, opposite branch — never both).
+            slugs = ", ".join(_real_persona_slugs(root))
+            print(f"persona-fit: {PERSONA_FIT_HINT_TEMPLATE.format(slugs=slugs)}")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
@@ -5751,6 +5784,127 @@ _PERSONA_FOLD_SECTIONS = {
     "success-metric": "## Success Metrics",
 }
 
+# fold-glossary-deltas: a 6th pseudo-competency, `GLOSSARY`, folding a DONE task's own §3
+# `Glossary deltas: <term>: <definition>` line into `.add/GLOSSARY.md` — unstamped, matching
+# that file's own existing convention (provenance lives in the task's OWN stamped line instead).
+_GLOSSARY_LINE_RE = re.compile(r"^Glossary deltas:\s*(.*)$")
+_GLOSSARY_STAMP_RE = re.compile(r"\[" + re.escape(_FOLDED) + r" foundation-version \d+\]\s*$")
+_GLOSSARY_EMBEDDED_TERM_RE = re.compile(r"`[^`\n]{1,80}`\s*:")     # a 2nd `term`: span -> multi-term, reject
+_TASK_ATTR_LINE_RE = re.compile(r"^[A-Z][A-Za-z0-9 /()'-]*:\s")     # a new top-level "Key: value" line ends a wrap
+# (real corpus has hyphenated/apostrophe'd labels too, e.g. "Least-sure flag surfaced at freeze:",
+# "BIND-DON'T-BREAK:" — a narrower class silently over-joins the NEXT field into a Glossary delta)
+
+
+def _parse_glossary_delta(full_text: str) -> tuple[str, str] | None:
+    """Parse a joined Glossary-deltas value into (term, definition), PURE, or None when it does
+    NOT cleanly parse as a single `<term>: <definition>` pair — "none", already resolved (the
+    `[<resolved> foundation-version N]` stamp), no top-level colon, an unmatched backtick before
+    the split (the `roster-portable-shape`-shaped hazard), or a second embedded `` `term`: ``
+    span further in the definition (the `search-index`-shaped two-terms-in-one-line hazard) all
+    reject."""
+    text = full_text.strip()
+    if not text or text.lower().startswith("none"):
+        return None
+    if _GLOSSARY_STAMP_RE.search(text):
+        return None
+    colon = text.find(":")
+    if colon == -1:
+        return None
+    term_candidate, definition = text[:colon], text[colon + 1:].strip()
+    if not definition or term_candidate.count("`") % 2 != 0:
+        return None
+    term = term_candidate.strip()
+    if term.startswith("`") and term.endswith("`") and len(term) >= 2:
+        term = term[1:-1].strip()
+    if not term or _GLOSSARY_EMBEDDED_TERM_RE.search(definition):
+        return None
+    return term, definition
+
+
+def _fold_glossary_delta(text: str, version: int) -> str | None:
+    """Append the resolved-stamp (` [<resolved> foundation-version N]`) to the LAST physical line
+    of the FIRST clean, not-yet-resolved `Glossary deltas:` entry in `text` (joining any wrapped
+    continuation lines the same way `_collect_open_deltas` groups a multi-line delta). PURE — no
+    IO. Returns None when there is no clean, not-yet-resolved candidate (the caller then refuses
+    — validate-all-then-write)."""
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, ln in enumerate(lines) if _GLOSSARY_LINE_RE.match(ln.rstrip("\n"))), None)
+    if start is None:
+        return None
+    end = start
+    unit = [_GLOSSARY_LINE_RE.match(lines[start].rstrip("\n")).group(1).strip()]
+    for j in range(start + 1, len(lines)):
+        stripped = lines[j].strip()
+        if not stripped or _TASK_ATTR_LINE_RE.match(stripped) or stripped.startswith("<!--"):
+            break
+        unit.append(stripped)
+        end = j
+    if _parse_glossary_delta(" ".join(unit)) is None:
+        return None
+    last = lines[end]
+    eol = last[len(last.rstrip("\n")):]
+    lines[end] = last.rstrip("\n") + f" [{_FOLDED} foundation-version {version}]" + eol
+    return "".join(lines)
+
+
+def _collect_glossary_deltas(root: Path) -> tuple[list[dict], int]:
+    """Scan every DONE task's own `Glossary deltas:` line for a clean, not-yet-resolved
+    consolidation candidate.
+
+    Returns (candidates, skipped_count): candidates are {task, term, definition} dicts, READ-ONLY.
+    skipped_count tallies DONE tasks whose line is non-"none", not already resolved-stamped, but
+    does NOT cleanly parse — measured and reported (never silently invisible), per this
+    mechanism's own freeze decision: "count and report skipped/unparseable lines"."""
+    candidates: list[dict] = []
+    skipped = 0
+    tasks_dir = root / "tasks"
+    if not tasks_dir.is_dir():
+        return candidates, skipped
+    for task_md in sorted(tasks_dir.glob("*/TASK.md")):
+        slug = task_md.parent.name
+        if _read_task_phase(root, slug) != "done":
+            continue
+        try:
+            text = task_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        lines = text.splitlines()
+        collected = None
+        for i, line in enumerate(lines):
+            m = _GLOSSARY_LINE_RE.match(line)
+            if not m:
+                continue
+            unit = [m.group(1).strip()]
+            for cont in lines[i + 1:]:
+                stripped = cont.strip()
+                if not stripped or _TASK_ATTR_LINE_RE.match(stripped) or stripped.startswith("<!--"):
+                    break
+                unit.append(stripped)
+            collected = " ".join(unit).strip()
+            break
+        if collected is None:
+            continue
+        if not collected or collected.lower().startswith("none") or _GLOSSARY_STAMP_RE.search(collected):
+            continue                                       # not a candidate — already handled or none
+        parsed = _parse_glossary_delta(collected)
+        if parsed is None:
+            skipped += 1
+            continue
+        term, definition = parsed
+        candidates.append({"task": slug, "term": term, "definition": definition})
+    return candidates, skipped
+
+
+def _glossary_has_term(glossary_text: str, term: str) -> bool:
+    """Case-insensitive match of `term` against the text before GLOSSARY.md's own first ': '
+    on each line — the existing-term dup check (`_FOLD_ROUTES`-style, GLOSSARY.md-specific)."""
+    needle = term.strip().lower()
+    for line in glossary_text.splitlines():
+        idx = line.find(": ")
+        if idx != -1 and line[:idx].strip().lower() == needle:
+            return True
+    return False
+
 
 def _fold_competency_delta(text: str, version: int, comps=None) -> str | None:
     """Flip EVERY open competency lesson in `text` to resolved + append ` [<resolved> foundation-version N]`.
@@ -5831,7 +5985,16 @@ def cmd_fold(args: argparse.Namespace) -> None:
             if want_task and it["task"] != want_task:
                 continue
             selected.append({**it, "comp": comp})
-    if not selected:
+
+    # fold-glossary-deltas: --comp GLOSSARY | (no --comp) ALSO folds glossary terms; a specific
+    # competency (--comp DDD etc.) narrows AWAY from glossary, matching the frozen contract.
+    glossary_selected: list[dict] = []
+    glossary_skipped = 0
+    if want_comp is None or want_comp == "GLOSSARY":
+        glossary_candidates, glossary_skipped = _collect_glossary_deltas(root)
+        glossary_selected = [it for it in glossary_candidates if not want_task or it["task"] == want_task]
+
+    if not selected and not glossary_selected:
         scope = (f"task '{want_task}'" if want_task else "the project") + \
                 (f", competency {want_comp}" if want_comp else "")
         _die(f"no_open_deltas: no open lesson to consolidate in {scope} (see `add.py deltas`)")
@@ -5878,15 +6041,45 @@ def cmd_fold(args: argparse.Namespace) -> None:
                  "seed the persona first (setup) or fix the slug")
         persona_paths[slug] = ppath
 
+    # glossary routing — GLOSSARY.md must exist to fold into (this mechanism never creates it).
+    glossary_path = root / "GLOSSARY.md"
+    if glossary_selected and not glossary_path.exists():
+        _die("missing_glossary_file: no .add/GLOSSARY.md to consolidate a glossary term into — "
+             "create it first (or narrow away from --comp GLOSSARY) and re-run")
+
     # ── build EVERY edit in memory before writing anything ──────────────────────────────────────
     comps_filter = {want_comp} if want_comp else None
+    comp_task_set = {it["task"] for it in selected}
+    glossary_task_set = {it["task"] for it in glossary_selected}
     task_new: dict[str, str] = {}
-    for slug in dict.fromkeys(it["task"] for it in selected):
+    for slug in list(dict.fromkeys(it["task"] for it in selected)) + [
+            s for s in dict.fromkeys(it["task"] for it in glossary_selected) if s not in comp_task_set]:
         tmd = root / "tasks" / slug / "TASK.md"
-        flipped = _fold_competency_delta(tmd.read_text(encoding="utf-8"), new_v, comps_filter)
-        if flipped is None:                                   # defensive: selected ⇒ ≥1 open here
-            _die(f"no_open_deltas: task '{slug}' lost its open lesson mid-session")
-        task_new[slug] = flipped
+        body = tmd.read_text(encoding="utf-8")
+        if slug in comp_task_set:
+            flipped = _fold_competency_delta(body, new_v, comps_filter)
+            if flipped is None:                               # defensive: selected ⇒ ≥1 open here
+                _die(f"no_open_deltas: task '{slug}' lost its open lesson mid-session")
+            body = flipped
+        if slug in glossary_task_set:
+            gflipped = _fold_glossary_delta(body, new_v)
+            if gflipped is None:                              # defensive: selected ⇒ ≥1 clean candidate here
+                _die(f"no_open_deltas: task '{slug}' lost its glossary delta mid-session")
+            body = gflipped
+        task_new[slug] = body
+
+    # glossary transcription — append clean, UNSTAMPED "Term: definition" lines (GLOSSARY.md's own
+    # existing convention); a case-insensitive-existing term is skipped, never duplicated.
+    glossary_text = glossary_path.read_text(encoding="utf-8") if glossary_selected else ""
+    glossary_new_lines: list[str] = []
+    for it in glossary_selected:
+        if _glossary_has_term(glossary_text, it["term"]):
+            continue
+        line = f"{it['term']}: {it['definition']}"
+        if glossary_text and not glossary_text.endswith("\n"):
+            glossary_text += "\n"
+        glossary_text += line + "\n"
+        glossary_new_lines.append(line)
 
     def _bullet(it):
         ev = f" (evidence: {it['evidence']})" if it["evidence"] else ""
@@ -5928,13 +6121,17 @@ def cmd_fold(args: argparse.Namespace) -> None:
         persona_new[slug] = after
 
     counts = {c: sum(1 for it in selected if it["comp"] == c) for c in _COMPETENCY_ORDER}
-    count_str = " · ".join(f"{c} {counts[c]}" for c in _COMPETENCY_ORDER if counts[c])
+    count_parts = [f"{c} {counts[c]}" for c in _COMPETENCY_ORDER if counts[c]]
+    if glossary_selected:
+        count_parts.append(f"GLOSSARY {len(glossary_selected)}")
+    count_str = " · ".join(count_parts)
     scope = "all" if not (want_task or want_comp) else " ".join(
         filter(None, [f"--task {want_task}" if want_task else "",
                       f"--comp {want_comp}" if want_comp else ""]))
+    glossary_row_note = f"; {len(glossary_new_lines)} glossary term(s) added" if glossary_selected else ""
     row = (f"| {date.today().isoformat()} | {_FOLD_VERB} {scope} → foundation-version {new_v} "
            f"({count_str}) | consolidate captured OBSERVE lessons into the versioned foundation "
-           f"| {len(selected)} lessons open→{_FOLDED}; +{len(selected)} routed bullets; {prev_v}→{new_v} |")
+           f"| {len(selected)} lessons open→{_FOLDED}; +{len(selected)} routed bullets{glossary_row_note}; {prev_v}→{new_v} |")
     proj_text = _prepend_key_decision_row(proj_text, row)
     proj_text = re.sub(r"foundation-version:\s*\d+", f"foundation-version: {new_v}", proj_text, count=1)
 
@@ -5953,11 +6150,22 @@ def cmd_fold(args: argparse.Namespace) -> None:
         writes.append((persona_paths[slug], body))
     if persona_new:
         touched.append(f"{len(persona_new)} persona")
+    if glossary_selected and glossary_new_lines:
+        writes.append((glossary_path, glossary_text))
+        touched.append("GLOSSARY.md")
     _atomic_write_many(writes)
 
-    print(f"{_FOLDED} {len(selected)} lessons -> foundation-version {new_v}")
-    print(f"  {count_str}")
+    print(f"{_FOLDED} {len(selected)} lesson(s) -> foundation-version {new_v}")
+    if count_str:
+        print(f"  {count_str}")
     print(f"  bumped PROJECT.md  {prev_v} -> {new_v}")
+    if glossary_selected:
+        added = len(glossary_new_lines)
+        dup = len(glossary_selected) - added
+        dup_note = f"; {dup} duplicate term(s) skipped" if dup else ""
+        print(f"  glossary: {added} term(s) added{dup_note}")
+    if glossary_skipped:
+        print(f"  glossary: {glossary_skipped} line(s) unparseable, skipped")
     print(f"  files: {', '.join(touched)}")
     print(_next_footer(root, state))
 
@@ -7208,7 +7416,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="record one retrospective consolidation of open lessons into the "
                               "versioned foundation (stamp + route + version-bump, atomic)")
     pfo.add_argument("--task", help="narrow to one task's open lessons")
-    pfo.add_argument("--comp", choices=_COMPETENCY_ORDER, help="narrow to one competency's open lessons")
+    pfo.add_argument("--comp", choices=[*_COMPETENCY_ORDER, "GLOSSARY"],
+                     help="narrow to one competency's open lessons, or GLOSSARY for glossary-only")
     pfo.set_defaults(func=cmd_fold)
 
     pgr = sub.add_parser("graduation-report",
