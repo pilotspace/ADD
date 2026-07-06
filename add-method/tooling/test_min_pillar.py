@@ -121,6 +121,12 @@ LIFECYCLE = [
     ["freeze", "t"],                           # §3 contract-freeze write-seam: task t's §3 is still
                                                # the unfilled template here -> refuses contract_not_drafted
                                                # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
+    ["re-cross", "t", "--by", "Tester"],       # post-freeze re-cross verb: t is done at this slot,
+                                               # not build/verify -> refuses recross_wrong_phase
+                                               # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
+    ["worktree-prep", "t"],                    # spawn-isolation prep: this board is not a git repo
+                                               # -> refuses worktree_prep_no_git (expected nonzero,
+                                               # tolerated; reads state + runs git only, never docs/)
     ["fold"],                                  # consolidation verb: this board has no open competency
                                                # lesson -> refuses no_open_deltas (expected nonzero,
                                                # tolerated; reads TASK/PROJECT/CONVENTIONS, never docs/)
@@ -168,7 +174,7 @@ _EXERCISED_IN_SETUP = {"init"}
 # freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
 # refuses (contract_not_drafted) — exercised under the read-spy (reads TASK.md/state, never docs/).
 _NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "carry-delta", "reopen-delta",
-               "fold", "federate", "freeze"}
+               "fold", "federate", "freeze", "re-cross", "worktree-prep"}
 
 
 class MinimalPillarTest(unittest.TestCase):
