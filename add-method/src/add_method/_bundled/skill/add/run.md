@@ -7,23 +7,13 @@ Scenarios · Contract) still owns *direction*. The engine stays judgment-free: t
 
 ## The specification bundle (v7)
 
-v7 compresses the old three-approval flow to **one**. The AI **drafts the whole specification
-bundle in one pass** — Spec, Scenarios, Contract, and failing Tests — and presents it together.
-The human gives **one approval, at the frozen contract** (the decision point).
-
-Why one and not zero: the decision point **stays human**. The AI *drafts* the contract but never
-*freezes its own* — a person approves the frozen shape before any auto-run touches code: that the
-Spec captures real intent, the Scenarios cover the cases that matter, and the Contract shape is the
-one to freeze. Reject any part → back to draft (backward-correction, principle 4, not failure). The
-decision-point guide (`phases/3-contract.md`) carries the **freeze review checklist** — seven lines,
-⚠-first.
-
-**The lowest-confidence flag.** The AI presents the bundle **lowest-confidence first**: the
-**1–2 points most likely to be wrong**, tagged by part
-(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`) — `because` names the §1
-assumption behind the doubt, `if wrong` its cost. If nothing is materially uncertain, the AI still
-names the single biggest risk — never a blank "none". This flag is honor-system: the lint cannot
-force engagement — closing that gap is a CI checker's job, not prose.
+v7 compresses the old three-approval flow to **one**: the AI drafts Spec · Scenarios ·
+Contract · failing Tests in one pass; the human gives **one approval, at the frozen
+contract** — the decision point stays human (the AI never freezes its own shape; a
+rejected part goes back to draft, backward-correction not failure). The freeze
+presentation — the bundle led **lowest-confidence first** by its ⚠ flag, the
+freeze review checklist (seven lines, ⚠-first) — lives in `phases/3-contract.md`,
+its one home; this rubric owns what happens AFTER the freeze.
 
 ## When the run begins — the scope-lock trigger
 
