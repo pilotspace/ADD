@@ -4,6 +4,65 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [1.17.0] — 2026-07-06
+
+Minor: two milestones — **method-ergonomics** (every recurring gate rule becomes
+a form the engine presents at that moment, cutting per-task ceremony without
+moving the safety floor) and **persona-domain-fit** (a new milestone or task
+whose domain no existing persona covers gets a concrete draft-one nudge) — plus
+twelve loose tasks. New engine verbs are additive; no gate weakened, nothing
+removed or renamed.
+
+### Added
+- **`add.py gate --explain [slug]`** — a read-only dry-run of the verify gate:
+  prints phase · autonomy · risk · sensitivity · advisor lines and one
+  `path: AUTO | HUMAN | RELAX | REFUSED (reason)` verdict, always ending with
+  the security floor (a security finding is always HARD-STOP). Writes nothing.
+- **`add.py advance --to <phase>`** — fast-forwards a drafted bundle's
+  bookkeeping crossings in one call, stopping hard at `tests` (the freeze gate,
+  tamper tripwire and scope snapshot are never skipped).
+- **`add.py re-cross`** — records a human-approved post-freeze re-cross
+  (`--by` required): re-runs the full tests→build gate stack to legally
+  re-snapshot after an approved test addition, never bypassing the freeze.
+- **`add.py worktree-prep <slug>`** — mechanizes the spawn-isolation recipe:
+  cuts a git worktree at HEAD, materializes the gitignored `.add/tooling` +
+  `.add/docs` a tracked-only checkout lacks, and echoes the fork base for the
+  WAVE.md ledger. Workspace-only; state.json is never written.
+- **Verify-record rollup** — `add.py audit` folds its four §6 shape lints into
+  one `verify_record_incomplete` line per task.
+- **Delta verbs reach archived tasks** — `drop-delta` / `carry-delta` /
+  `reopen-delta` now operate on a light-archived task's on-disk TASK.md
+  (explicit slug only, `(archived — on-disk record)` marker, state untouched).
+- **Batched intake + batched gates** — intake.md and report-template.md
+  document one report + one confirm for N same-gate items (per-item
+  lowest-confidence flags; any item holdable by name). Presentation only.
+- **Domain test forms** — 4-tests.md states that a test is any
+  machine-checkable assertion (metric threshold · reconciliation query ·
+  plan-diff · rendered-screen diff), red-first holding for each.
+- **Persona domain-fit nudge** — a milestone/task whose domain no existing
+  persona covers is nudged toward drafting a fitting one; TASK templates now
+  require a named persona and carry a domain-strategy hint.
+- **Fast-lane ground anchor** — the `--fast` template's §0 gains the
+  `Ground SHA:` drift anchor, so a fast task can clear the stale-line-ref WARN.
+
+### Changed
+- **Sequential+auto is the default run mode** — parallel streams stay a
+  deliberate, persisted opt-in.
+- **Leaner TASK.md template** — instructional comment bloat trimmed 16%
+  (comments −27%); every machine-parsed marker untouched.
+- **Leaner guides** — run.md's specification-bundle section is a pointer at
+  its one home (`phases/3-contract.md`); the ⚠ flag grammar now lives in
+  exactly one guide.
+- **Waiver field census is case-insensitive** — `audit` recognizes
+  `Owner:/Ticket:/Expires:` as written by the signed records; the
+  missing-field refusal is unchanged.
+
+### Fixed
+- The CI-observed reclaim-ticket race in `_update_lock` (+ its JS/npm
+  heartbeat twin), orphaned reclaim-ticket sweep, the prune-data/update-global
+  lock race, the ADR harvester's multi-line field capture, and the
+  strip-scaffold backtick-comment over-strip.
+
 ## [1.16.1] — 2026-07-04
 
 Patch: two loose, additive persona-loop improvements found while dogfooding
