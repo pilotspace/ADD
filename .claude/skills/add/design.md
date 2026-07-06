@@ -58,8 +58,7 @@ feature's `TASK.md`** — so the approved screen is traceable from the task. The
 *visible evidence*; the json-render tree is the *machine-checkable* record.
 
 **Persona evidence checklist.** Before design-confirm, load the `flow: design` personas
-(`.add/personas/*` frontmatter routing; no flow: fields → match visual-design/UX-research
-descriptions) and render their `## Success Metrics`
+(`.add/personas/*` frontmatter, else description-match) and render their `## Success Metrics`
 as a confirmable **checklist** beside the captured image — **both dimensions**: **UI-Designer**
 (visual + WCAG-AA **accessibility**) and **UX-Researcher** (methodology-first,
 **validated by user evidence, not assumed**). Each item traces to a success-metric
