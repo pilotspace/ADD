@@ -2156,7 +2156,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     if _tail["bullets"] >= 25:
         _rolled = f"fv{_tail['last_settled_fv']}" if _tail["last_settled_fv"] else "never"
         _now = f"fv{_tail['fv']}" if _tail["fv"] else "fv?"
-        print(f"  → compaction: {_tail['bullets']} folded bullet(s) above the settled line "
+        print(f"  → compaction: {_tail['bullets']} consolidated lesson(s) above the settled line "
               f"(last rolled {_rolled}, now {_now}) — compact-foundation.md")
 
     # fast-lane marker (fast-new-task-flag): tag an ACTIVE fast task so the lane is visible at a

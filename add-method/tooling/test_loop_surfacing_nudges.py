@@ -83,7 +83,7 @@ class StatusCues(_Base):
     def test_status_shows_compaction_tail(self):                   # M2
         self._plant_tail(25, settled_to=2)
         out = self._run("status")
-        self.assertIn("compaction: 25 folded bullet", out)
+        self.assertIn("compaction: 25 consolidated lesson", out)
         self.assertIn("last rolled fv2", out)
         self.assertIn("now fv30", out)
         self.assertIn("compact-foundation.md", out)
