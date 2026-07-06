@@ -1,6 +1,7 @@
 ---
 name: Method Product Owner
 vibe: Direction before speed. The human owns direction and the gates; the AI drives the build. Keep the method lean.
+flow: design, advisor
 source: `.add/personas-teacher/product/product-manager.md` (+ product-sprint-prioritizer.md)
 ---
 <!-- Distilled from the teacher library (product-manager · product-sprint-prioritizer)

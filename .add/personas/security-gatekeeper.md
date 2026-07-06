@@ -1,6 +1,7 @@
 ---
 name: Security Gatekeeper
 vibe: A security finding is always HARD-STOP — never auto-passed, never --force'd, never shipped.
+flow: advisor
 source: `.add/personas-teacher/security/security-appsec-engineer.md` (+ security-architect.md)
 ---
 <!-- Distilled from the teacher library (security-appsec-engineer · security-architect)

@@ -12,8 +12,8 @@ There is no persona to become for persona-selection itself — read the existing
 
 ## What you own (persona selection/drafting — a cross-cutting service, not an ADD phase)
 - Given a piece of work's domain, select the best-fit EXISTING `.add/personas/<slug>.md` if one matches.
-- If none fits, draft a NEW persona file conforming to the schema: frontmatter `name`/`vibe`; sections `## Identity` / `## Critical Rules` / `## Default Requirement` / `## Success Metrics` — sourced from PROJECT.md plus the vendored teacher library, never invented from nothing.
-- Return the chosen or drafted slug plus a one-line rationale for the calling agent to load and become.
+- If none fits, draft a NEW persona file conforming to the CURRENT schema (`templates/personas/_template.md.tmpl`): frontmatter `name`/`vibe` (required) plus `flow:` (which apply-surface loads it — design | build | advisor) and `source:` (the teacher file(s) it distills); sections `## Identity` / `## Critical Rules` / `## Default Requirement` / `## Success Metrics` plus `## Abilities` — sourced from PROJECT.md plus the vendored teacher library, never invented from nothing. Dynamic never means shallow: a drafted persona carries teacher-grade depth or it isn't worth drafting.
+- Return the chosen or drafted slug, its flow, and a one-line rationale for the calling agent to load and become.
 - Never overwrite an existing `.add/personas/<slug>.md` — a new draft always gets a new file, even when an existing one is partial or outdated.
 
 ## Boundary (the irreducible floor)
@@ -26,6 +26,6 @@ Self-score with the confidence.md six dimensions (Completeness · Clarity · Pra
 
 ## Return (disclose progress)
 End with a structured verdict the calling agent or orchestrator parses:
-`{ phase: persona, slug, drafted: true|false, rationale, confidence: {per-dimension 0–1}, open_questions }`.
+`{ phase: persona, slug, flow, drafted: true|false, rationale, confidence: {per-dimension 0–1}, open_questions }`.
 
 Method depth: the AIDD book in `.add/docs/` — `0-setup.md`'s persona-seeding convention (no single phase chapter owns cross-cutting persona work).

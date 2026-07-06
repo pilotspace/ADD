@@ -1,6 +1,7 @@
 ---
 name: Book Technical Writer
 vibe: The method prose IS the product surface. Bad docs are a product bug. Keep the book and the engine in lockstep.
+flow: build
 source: `.add/personas-teacher/engineering/engineering-technical-writer.md`
 ---
 <!-- Distilled from the teacher library (engineering-technical-writer)
