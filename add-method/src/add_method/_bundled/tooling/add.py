@@ -1399,9 +1399,47 @@ def _driver_marker(stop: bool) -> str:
     return " [human gate]" if stop else " [you drive]"
 
 
+def _gate_explain(root: Path, state: dict, slug: str) -> None:
+    """gate-explain (method-ergonomics): compose the gate decision from the SAME predicates
+    cmd_gate enforces, as a READ-ONLY answer — the agent asks instead of recalling run.md.
+    PURE: prints, writes nothing."""
+    hdr = _task_header(root, slug)
+    body6 = _raw_phase_bodies(root, slug).get(6, "")
+    from add_engine.autonomy import _autonomy_level
+    level = _autonomy_level(hdr) or "auto"
+    high = bool(_RISK_HIGH_RE.search(hdr))
+    sens = _task_sensitivity(hdr, valid=_project_sensitivity_values(root)) or "unset"
+    adv_pass = _advisor_verdict_is_pass(body6)
+    adv_clean = adv_pass and _advisor_no_residue(body6)
+    relaxed = sens == "mechanical" and adv_clean
+    print(f"gate-explain {slug}")
+    print(f"  phase: {state['tasks'][slug].get('phase', '?')}")
+    print(f"  autonomy: {level} · risk: {'high' if high else 'unset/low'} · sensitivity: {sens}")
+    print(f"  advisor 3-lens: {'PASS, residue none' if adv_clean else ('PASS with residue' if adv_pass else 'unrecorded or non-PASS')}")
+    print(f"  advisor-gate-relax: {'applies (mechanical + clean advisor verdict)' if relaxed else 'not applicable'}")
+    if _autonomy_lowered(hdr):
+        print("  path: HUMAN — the lowered autonomy level puts a person at this verify gate")
+    elif high and not relaxed:
+        print("  path: REFUSED at completion (unguarded_high_risk_auto) — lower the autonomy "
+              "level (`add.py autonomy set conservative`), or for a mechanical task record a "
+              "clean Advisor 3-lens verdict")
+    elif relaxed:
+        print("  path: RELAX — mechanical sensitivity + advisor PASS/none may complete "
+              "without a lowered level (advisor-gate-relax)")
+    else:
+        print("  path: AUTO — may auto-PASS on complete evidence (tests green · no tamper · "
+              "loops dry · deep check + refute-read + 3-lens recorded) with no residue")
+    print("  floor: a security finding is always HARD-STOP — never auto-passed, on every path")
+
+
 def cmd_gate(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
+    if getattr(args, "explain", False):
+        # slug may have landed in the outcome slot (`gate --explain <slug>`)
+        cand = args.slug or (args.outcome if args.outcome not in GATES else None)
+        _gate_explain(root, state, _resolve_task(state, cand))
+        return
     slug = _resolve_task(state, args.slug)
     # build-boundary gate: no verdict may be recorded before the setup is locked.
     if not _setup_locked(state):
@@ -7357,8 +7395,11 @@ def build_parser() -> argparse.ArgumentParser:
     prx.set_defaults(func=cmd_recross, _opt_positionals=("slug",))
 
     pg = sub.add_parser("gate", help="record a verify gate outcome")
-    pg.add_argument("outcome", choices=GATES)
-    pg.add_argument("slug", nargs="?", default=None)
+    pg.add_argument("outcome", nargs="?", default=None)   # validated in cmd_gate (gate-explain
+    pg.add_argument("slug", nargs="?", default=None)      # made it optional under --explain)
+    pg.add_argument("--explain", action="store_true",
+                    help="READ-ONLY: print the composed auto-pass/escalation path for the task "
+                         "(autonomy · risk · sensitivity · advisor verdict), then exit")
     pg.add_argument("--owner", help="RISK-ACCEPTED waiver: accountable owner")
     pg.add_argument("--ticket", help="RISK-ACCEPTED waiver: tracking ticket/link")
     pg.add_argument("--expires", help="RISK-ACCEPTED waiver: expiry date")

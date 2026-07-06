@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c760ad744fce531ee3e2a628f3d4bfb4"  # re-aimed @ bundle-advance (cmd_advance gains the --to bundle fast-forward; new cmd_recross records a human-approved post-freeze re-cross). prior: 94c4b5b7… @ verify-record-scaffold
+ENGINE_MD5 = "1c81ca611e23b4f63a57a5538124b3d0"  # re-aimed @ gate-explain (cmd_gate gains --explain: a read-only dry-run naming the gate path AUTO|HUMAN|RELAX|REFUSED + the security floor; outcome arg validated in-body). prior: c760ad74… @ bundle-advance
 ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge
