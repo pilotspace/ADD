@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "c760ad744fce531ee3e2a628f3d4bfb4"  # re-aimed @ bundle-advance (cmd_advance gains the --to bundle fast-forward; new cmd_recross records a human-approved post-freeze re-cross). prior: 94c4b5b7… @ verify-record-scaffold
-ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2
+ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge

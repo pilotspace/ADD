@@ -219,6 +219,7 @@ fast: true
 ## 0 · GROUND
 Touches (files · symbols):
 Anchors the contract cites:
+Ground SHA:
 
 ## 1 · SPECIFY
 Feature:
