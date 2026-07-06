@@ -24,30 +24,30 @@ Out: any change to the safety floor (frozen-contract immutability · security HA
 - `gate --explain` output contract (line format CI/agents can parse) -> owning task gate-explain
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] verify-record-scaffold    depends-on: none                    — engine stamps the §6 skeleton (expectations · 3-lens · deep-check · refute-read · Reported) at tests→build; audit collapses 4 lints to `verify_record_incomplete`; move the declare-before-build instruction to 4-tests.md
-- [ ] gate-explain              depends-on: none                    — `add.py gate --explain <slug>` prints the composed auto-pass/escalation answer from autonomy · risk · sensitivity · residue
-- [ ] bundle-advance            depends-on: none                    — `advance --to tests` collapses the bundle's bookkeeping crossings; `add.py re-cross` legally re-snapshots after a human-approved post-freeze test addition
-- [ ] worker-contract-sync      depends-on: none                    — one canonical boundary/return stanza template stamped into roster agents + streams/advisor blocks at sync time, with a parity test
-- [ ] worktree-prep             depends-on: none                    — `add.py worktree-prep <slug>` cuts the worktree, materializes gitignored engine/book, echoes the fork base into the WAVE.md row
-- [ ] fastlane-ground-lite      depends-on: none                    — fast-lane §0 minimal form: Touches + Anchors + Ground SHA required, the rest optional-with-default
-- [ ] archived-delta-verbs      depends-on: none                    — carry/drop/reopen-delta operate on archived on-disk TASK.md when slug ∉ state.tasks (reopens delta-drain's carried delta)
-- [ ] task-md-optimize          depends-on: none                    — leaner TASK.md.tmpl: trim instructional comment bloat, machine-parsed markers untouched (user-added 2026-07-06)
-- [ ] intake-freeze-batch       depends-on: none                    — task-bucket intake proposal may merge into the freeze presentation: one report, one answer (prose: intake.md · report-template.md)
-- [ ] domain-test-mapping       depends-on: none                    — 4-tests.md names a "test = any machine-checkable assertion" mapping with per-domain forms (metric threshold · reconciliation query · plan-diff)
-- [ ] skill-dedup               depends-on: fastlane-ground-lite, intake-freeze-batch, domain-test-mapping — SKILL.md keeps one line + pointer per item duplicated in run.md; reconciles the whole milestone's lean-budget ledger last
+- [x] verify-record-scaffold    depends-on: none                    — engine stamps the §6 skeleton (expectations · 3-lens · deep-check · refute-read · Reported) at tests→build; audit collapses 4 lints to `verify_record_incomplete`; move the declare-before-build instruction to 4-tests.md
+- [x] gate-explain              depends-on: none                    — `add.py gate --explain <slug>` prints the composed auto-pass/escalation answer from autonomy · risk · sensitivity · residue
+- [x] bundle-advance            depends-on: none                    — `advance --to tests` collapses the bundle's bookkeeping crossings; `add.py re-cross` legally re-snapshots after a human-approved post-freeze test addition
+- [x] worker-contract-sync      depends-on: none                    — one canonical boundary/return stanza template stamped into roster agents + streams/advisor blocks at sync time, with a parity test
+- [x] worktree-prep             depends-on: none                    — `add.py worktree-prep <slug>` cuts the worktree, materializes gitignored engine/book, echoes the fork base into the WAVE.md row
+- [x] fastlane-ground-lite      depends-on: none                    — fast-lane §0 minimal form: Touches + Anchors + Ground SHA required, the rest optional-with-default
+- [x] archived-delta-verbs      depends-on: none                    — carry/drop/reopen-delta operate on archived on-disk TASK.md when slug ∉ state.tasks (reopens delta-drain's carried delta)
+- [x] task-md-optimize          depends-on: none                    — leaner TASK.md.tmpl: trim instructional comment bloat, machine-parsed markers untouched (user-added 2026-07-06)
+- [x] intake-freeze-batch       depends-on: none                    — task-bucket intake proposal may merge into the freeze presentation: one report, one answer (prose: intake.md · report-template.md)
+- [x] domain-test-mapping       depends-on: none                    — 4-tests.md names a "test = any machine-checkable assertion" mapping with per-domain forms (metric threshold · reconciliation query · plan-diff)
+- [x] skill-dedup               depends-on: fastlane-ground-lite, intake-freeze-batch, domain-test-mapping — SKILL.md keeps one line + pointer per item duplicated in run.md; reconciles the whole milestone's lean-budget ledger last
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] At tests→build the engine writes an empty §6 VERIFY RECORD skeleton into TASK.md, and `audit` reports one `verify_record_incomplete` where it reported the 4 shape lints (verify: engine test)        (← verify-record-scaffold)
-- [ ] `add.py gate --explain <slug>` prints the composed gate path for any live task, matching the run.md rules (verify: engine test)        (← gate-explain)
-- [ ] A drafted bundle advances ground→tests in one call, and a post-freeze human-approved test addition re-crosses without tripping build_tampered (verify: engine test)        (← bundle-advance)
-- [ ] The boundary/return stanzas in the 5 roster agents + streams.md + advisor.md are generated from one template and a parity test proves byte-identity (verify: test)        (← worker-contract-sync)
-- [ ] `add.py worktree-prep <slug>` yields a worktree whose engine runs and whose fork-base row is filled with the pasted echo (verify: engine test)        (← worktree-prep)
-- [ ] A --fast task's §0 passes check with the minimal form (verify: engine test)        (← fastlane-ground-lite)
-- [ ] `carry-delta`/`drop-delta`/`reopen-delta` succeed against an archived task slug (verify: engine test)        (← archived-delta-verbs)
-- [ ] TASK.md.tmpl is measurably smaller with every parser/census test green (verify: test suite + byte diff)        (← task-md-optimize)
-- [ ] intake.md + report-template.md document the merged task-bucket intake+freeze presentation (verify: guide test)        (← intake-freeze-batch)
-- [ ] 4-tests.md carries the per-domain test-form mapping (verify: guide test)        (← domain-test-mapping)
-- [ ] test_skill_lean passes with the pool at or below its pre-milestone floor (verify: test_skill_lean)        (← skill-dedup)
+- [x] At tests→build the engine writes an empty §6 VERIFY RECORD skeleton into TASK.md, and `audit` reports one `verify_record_incomplete` where it reported the 4 shape lints (verify: engine test)        (← verify-record-scaffold)
+- [x] `add.py gate --explain <slug>` prints the composed gate path for any live task, matching the run.md rules (verify: engine test)        (← gate-explain)
+- [x] A drafted bundle advances ground→tests in one call, and a post-freeze human-approved test addition re-crosses without tripping build_tampered (verify: engine test)        (← bundle-advance)
+- [x] The boundary/return stanzas in the 5 roster agents hold one worker-contract floor, proven by a parity + floor-census guard (generation was the task's other half; DECLINED per the self-contained-prompt invariant — recorded in the task's §3) (verify: test_worker_contract_sync)        (← worker-contract-sync)
+- [x] `add.py worktree-prep <slug>` yields a worktree whose engine runs and whose fork-base row is filled with the pasted echo (verify: engine test)        (← worktree-prep)
+- [x] A --fast task's §0 passes check with the minimal form (verify: engine test)        (← fastlane-ground-lite)
+- [x] `carry-delta`/`drop-delta`/`reopen-delta` succeed against an archived task slug (verify: engine test)        (← archived-delta-verbs)
+- [x] TASK.md.tmpl is measurably smaller with every parser/census test green (verify: test suite + byte diff)        (← task-md-optimize)
+- [x] intake.md + report-template.md document the merged task-bucket intake+freeze presentation (verify: guide test)        (← intake-freeze-batch)
+- [x] 4-tests.md carries the per-domain test-form mapping (verify: guide test)        (← domain-test-mapping)
+- [x] test_skill_lean passes with the pool at or below its pre-milestone floor (verify: test_skill_lean)        (← skill-dedup)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine

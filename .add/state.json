@@ -5572,7 +5572,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-06T15:53:51+00:00",
+  "updated": "2026-07-06T15:55:00+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -5759,14 +5759,19 @@
       "title": "Method ergonomics",
       "goal": "every recurring rule an agent must recall at a gate becomes a form the engine presents at that moment, cutting per-task ceremony across all execution paths without moving the safety floor",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-06T14:10:45+00:00",
-      "updated": "2026-07-06T14:12:20+00:00",
+      "updated": "2026-07-06T15:55:00+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-06T14:12:20+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
