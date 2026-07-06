@@ -57,8 +57,8 @@ partial per catalog component), with realistic **mock** data.
 feature's `TASK.md`** — so the approved screen is traceable from the task. The HTML mock is the
 *visible evidence*; the json-render tree is the *machine-checkable* record.
 
-**Persona evidence checklist.** Before design-confirm, match the screen to the seeded UI personas
-(`.add/personas/*` covering visual design and UX research) and render their `## Success Metrics`
+**Persona evidence checklist.** Before design-confirm, load the `flow: design` personas
+(`.add/personas/*` frontmatter, else description-match) and render their `## Success Metrics`
 as a confirmable **checklist** beside the captured image — **both dimensions**: **UI-Designer**
 (visual + WCAG-AA **accessibility**) and **UX-Researcher** (methodology-first,
 **validated by user evidence, not assumed**). Each item traces to a success-metric

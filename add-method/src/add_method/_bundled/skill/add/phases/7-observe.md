@@ -4,10 +4,10 @@ Goal: release deliberately, watch reality, turn what you learn into the next spe
 
 ## Do
 
-1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout.
+1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout
 2. **Reuse scenarios as monitors** — the §2 scenarios that defined "correct" now
    define what you alert on: overall error rate, each rejection's rate (a spike is a
-   signal), latency of the risky op under load.
+   signal), latency of the risky op.
 3. **Draft the next spec delta** — every defect, surprise, or new need becomes a
    change that re-enters the flow at Specify (a new task).
 4. **Propose a voice delta** — note where your voice diverged from the human's (wordings +
@@ -22,11 +22,8 @@ Goal: release deliberately, watch reality, turn what you learn into the next spe
 <prompt>
 Role: a reliability analyst feeding the next cycle.
 Read first: telemetry · objectives · incidents.
-Objective: turn what production shows into the next SPEC delta.
-Steps:
-  1. Report error-budget burn.
-  2. Cluster errors and surface the top real-world failures.
-  3. Draft a SPEC delta with evidence links.
+Steps: 1. report error-budget burn · 2. cluster errors, surface the top real failures ·
+  3. draft a SPEC delta with evidence links.
 Never: auto-roll-back — recommend; a human owns the production decision.
 </prompt>
 
@@ -38,10 +35,11 @@ Never: auto-roll-back — recommend; a human owns the production decision.
 - [ ] A reviewed spec delta captured (becomes the next `new-task`).
 </exit_gate>
 
-> **Persona** — tag a lesson `· persona:<slug> ·` so `add.py fold` grows the persona.
+> **Persona** — tag `· persona:<slug> · critical-rule|success-metric|anti-pattern|ability`;
+> `fold` grows that section — a HOW-an-agent-behaves lesson belongs in a persona, not the shared pile.
 > **Advisor · Confidence** — spawn a reviewer to mine the run for lessons (advisor.md); score Self-evaluation — did this loop teach the foundation? (confidence.md).
 
 ## Next
 
-Loop. The artifacts you built are living docs the next cycle refines.
-Book: `docs/09-the-loop.md`.
+Loop — the artifacts are living docs the next cycle refines.
+Map: `self-improve.md` · book: `docs/09-the-loop.md`

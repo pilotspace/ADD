@@ -2145,6 +2145,20 @@ def cmd_status(args: argparse.Namespace) -> None:
     if _loose:
         print(f"  → releasable: {len(_loose)} loose task(s) since last release")
 
+    # loop-surfacing-nudges: two ADDITIVE cues so the observe loop surfaces its own accumulation
+    # (cues COUNT, never judge; a clean project's output is byte-identical). carried = the deferred
+    # spec-delta backlog (write-only memory otherwise); compaction = the folded tail the
+    # compact-foundation.md ritual exists to roll (threshold 25 keeps young projects quiet).
+    _carried_n = len(_collect_carried_spec_deltas(root))
+    if _carried_n:
+        print(f"  → carried: {_carried_n} deferred spec delta(s) — add.py deltas --carried")
+    _tail = _foundation_tail(root)
+    if _tail["bullets"] >= 25:
+        _rolled = f"fv{_tail['last_settled_fv']}" if _tail["last_settled_fv"] else "never"
+        _now = f"fv{_tail['fv']}" if _tail["fv"] else "fv?"
+        print(f"  → compaction: {_tail['bullets']} consolidated lesson(s) above the settled line "
+              f"(last rolled {_rolled}, now {_now}) — compact-foundation.md")
+
     # fast-lane marker (fast-new-task-flag): tag an ACTIVE fast task so the lane is visible at a
     # glance. Presentation-only, existence-gated — a plain/absent active task is byte-unchanged.
     _fast_mark = " · fast" if active and tasks.get(active, {}).get("fast") is True else ""
@@ -5847,6 +5861,32 @@ def _collect_open_spec_deltas(root: Path) -> list[dict]:
     return _collect_spec_deltas(root, "open")
 
 
+def _foundation_tail(root: Path) -> dict:
+    """Count the un-compacted foundation tail — READ-ONLY facts for the status compaction cue.
+
+    Returns {bullets, last_settled_fv, fv}: live `[folded foundation-version N]` stamps across
+    PROJECT.md + CONVENTIONS.md, the highest fv a `settled …fvK–fvM` rolled line reaches (None
+    when never rolled), and the current header fv (None when unparseable). Judges nothing."""
+    bullets, settled, fv = 0, None, None
+    for name in ("PROJECT.md", "CONVENTIONS.md"):
+        f = root / name
+        if not f.is_file():
+            continue
+        try:
+            s = f.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        bullets += s.count("[folded foundation-version")
+        for m in re.finditer(r"settled[^\n]*?fv\d+[–-]fv(\d+)", s):
+            n = int(m.group(1))
+            settled = n if settled is None else max(settled, n)
+        if fv is None:
+            hm = re.search(r"foundation-version:\s*(\d+)", s)
+            if hm:
+                fv = int(hm.group(1))
+    return {"bullets": bullets, "last_settled_fv": settled, "fv": fv}
+
+
 def _collect_carried_spec_deltas(root: Path) -> list[dict]:
     """Carried (deferred, non-lossy) SPEC deltas — the `deltas --carried` retrieval surface."""
     return _collect_spec_deltas(root, "carried")
@@ -5952,10 +5992,13 @@ _KEY_DECISIONS_HEADING = "## Key Decisions"   # the universal audit-trail sectio
 _TABLE_SEP_RE = re.compile(r"\s*\|[-\s|]+\|\s*$")
 
 # persona-self-improve: a `persona:<slug>` lesson routes into `.add/personas/<slug>.md` instead of a
-# foundation file. The section HINT picks the growable section; only these two are routable.
+# foundation file. The section HINT picks the growable section; only these four are routable
+# (fold-persona-sections widened the pair to the 1.16.1 schema's behavioral sections).
 _PERSONA_FOLD_SECTIONS = {
     "critical-rule": "## Critical Rules",
     "success-metric": "## Success Metrics",
+    "anti-pattern": "## Anti-patterns",
+    "ability": "## Abilities",
 }
 
 # fold-glossary-deltas: a 6th pseudo-competency, `GLOSSARY`, folding a DONE task's own §3
@@ -6973,6 +7016,13 @@ def cmd_release_report(args: argparse.Namespace) -> None:
     for c in d["changed"]:
         L.append(f"  - {c['milestone']}: {c['retro'] or '(no RETRO record)'} "
                  f"({c['carried_deltas']} carried · {len(c['key_decisions'])} key decision(s))")
+    L.append("")
+    _carried = _collect_carried_spec_deltas(root)
+    L.append(f"Carried ({len(_carried)}) — deferred spec deltas riding across releases (re-triage each cut):")
+    for cd in _carried[:10]:
+        L.append(f"  - [{cd['task']}] {cd['text'][:100]}")
+    if len(_carried) > 10:
+        L.append(f"  … and {len(_carried) - 10} more — add.py deltas --carried")
     L.append("")
     L.append(f"Waivers ({s['waivers']}) — open RISK-ACCEPTED riding into the cut, soonest expiry first:")
     for w in d["waivers"]:

@@ -6,7 +6,7 @@ This **closes the loop**. `deltas.md` lets a task EMIT `open` lessons in OBSERVE
 
 ## When to consolidate
 
-At **milestone close**, or **on demand** when open lessons pile up. One `add.py fold` = ONE session: one `foundation-version` bump, every resolved lesson stamped with it.
+At **milestone close**, or on demand when opens pile up. One `add.py fold` = ONE session: one `foundation-version` bump, every resolved lesson stamped with it.
 
 ## The ritual
 
@@ -25,11 +25,11 @@ At **milestone close**, or **on demand** when open lessons pile up. One `add.py 
 | competency | consolidates into | how |
 |------------|-----------|-----|
 | `DDD` | `PROJECT.md` §Domain | transcribed bullet at the top (newest-first) |
-| `SDD` | `PROJECT.md` §Spec | transcribed bullet at the top |
-| `UDD` | `PROJECT.md` §Users | transcribed bullet at the top |
-| `TDD` | `CONVENTIONS.md` §Method learnings | transcribed bullet |
-| `ADD` | `CONVENTIONS.md` §Method learnings | transcribed bullet |
-| `persona:<slug>` | `.add/personas/<slug>.md` §Critical Rules / §Success Metrics | dated bullet at top; schema stays conformant |
+| `SDD` | `PROJECT.md` §Spec | same |
+| `UDD` | `PROJECT.md` §Users | same |
+| `TDD` | `CONVENTIONS.md` §Method learnings | same |
+| `ADD` | `CONVENTIONS.md` §Method learnings | same |
+| `persona:<slug>` | `.add/personas/<slug>.md` §Critical Rules / §Success Metrics / §Anti-patterns / §Abilities | dated bullet at top; schema stays conformant |
 
 A `persona:<slug> · <hint>` lesson routes into that persona doc, not a foundation file; it is still flipped `folded` and still bumps the version once (`deltas.md`).
 
@@ -45,7 +45,7 @@ A `persona:<slug> · <hint>` lesson routes into that persona doc, not a foundati
 - `missing_route_section` — a lesson routes to a foundation section that does not exist. Add the section header, then re-run. Nothing is written.
 - `no_foundation_version` — `PROJECT.md` carries no parseable `foundation-version:` marker to bump.
 - `missing_persona_target` — a `persona:<slug>` lesson with no `.add/personas/<slug>.md`. Fail-closed: nothing written, no bump. Seed the persona first.
-- `persona_section_unroutable` — the section hint is not `critical-rule` or `success-metric`. Nothing is written.
+- `persona_section_unroutable` — the section hint is not one of `critical-rule | success-metric | anti-pattern | ability`. Nothing is written.
 - `persona_clobber_forbidden` — INVARIANT: a persona consolidation prepends only; it never drops existing content or breaks the schema.
 </reject_codes>
 

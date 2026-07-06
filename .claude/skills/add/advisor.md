@@ -34,7 +34,8 @@ surrounding decisions. Return a verdict; do not record state.
 </objective>
 
 <persona>
-SELECT the best-fit project persona for this piece and load `.add/personas/{{PERSONA_SLUG}}.md` —
+SELECT the persona by frontmatter — flow: match first, then domain; read ONE body —
+and load `.add/personas/{{PERSONA_SLUG}}.md` —
 Identity→your stance · Critical Rules→constraints · Success Metrics→done-bar (streams.md's worker
 contract). No match → a {{DOMAIN}} engineer, correctness over speed; never blocks.
 Work step by step, following the plan:

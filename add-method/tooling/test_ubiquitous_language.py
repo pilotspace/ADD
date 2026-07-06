@@ -198,6 +198,7 @@ class AddPyProseTest(unittest.TestCase):
         "(open|folded|rejected)",               # the delta-status grammar in _DELTA_RE
         "folded/rejected",                      # docstring reference to the status pair
         "Least-sure flag surfaced at freeze",   # the §3 lowest-confidence-flag label (_FLAG_LABEL_RE)
+        "[folded foundation-version",           # the fold stamp grammar (_foundation_tail counts it)
     )
 
     def test_sync_guidelines_domain_clean(self):
