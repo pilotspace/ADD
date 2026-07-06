@@ -2858,7 +2858,7 @@
       "waiver": {
         "owner": "Tin Dang",
         "ticket": ".add/tasks/js-reclaim-lock-heartbeat/TASK.md",
-        "expires": "next v*.*.* tag CI run"
+        "expires": "2026-08-04"
       },
       "gate_actor": {
         "name": "Tin Dang",

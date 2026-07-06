@@ -112,7 +112,7 @@ Schema: GLOSSARY.md gains plain, unstamped "Term: definition" lines (its existin
   unchanged); no new file, no new constant
 ```
 
-Glossary deltas: `Glossary delta (fold semantics)`: a task's §3 `Glossary deltas:` line, once the task is `done`, is a fold candidate when it cleanly parses as `<term>: <definition>` and is not already `[folded foundation-version N]`-stamped — consolidated into `.add/GLOSSARY.md` (unstamped, matching that file's own convention) the same way a competency lesson consolidates into PROJECT.md/CONVENTIONS.md, sharing the same atomic write + version bump.
+Glossary deltas: `Glossary delta (fold semantics)`: a task's §3 `Glossary deltas:` line, once the task is `done`, is a fold candidate when it cleanly parses as `<term>: <definition>` and is not already `[folded foundation-version N]`-stamped — consolidated into `.add/GLOSSARY.md` (unstamped, matching that file's own convention) the same way a competency lesson consolidates into PROJECT.md/CONVENTIONS.md, sharing the same atomic write + version bump. [folded foundation-version 64]
 Status: FROZEN @ v1 — approved by Tin Dang, 2026-07-05 (explicit "implement all" instruction;
   AskUserQuestion freeze-confirmation timed out twice with no response, proceeded per project-lead
   autonomy on a well-reasoned, low-risk, reuse-only design — disclosed here for review/reversal)
@@ -234,7 +234,7 @@ the §1 freeze, not an open forward action.
 ### Competency deltas
 What did this loop teach the foundation? One line each, tagged by competency
 (`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
-- [ADD · open] `add.py`'s scope-anchor snapshot is taken ONCE at the tests→build crossing and is
+- [ADD · folded] `add.py`'s scope-anchor snapshot is taken ONCE at the tests→build crossing and is [folded foundation-version 64]
   never retroactively refreshed if §5 Scope text is amended mid-build (a legitimate, disclosed
   addition here: `engine_pin.py`, needed to re-aim `ENGINE_MD5` after the diff) — the fix is to
   `add.py phase build <slug>` then `phase verify <slug>` to force a re-anchor, but nothing warns
@@ -242,7 +242,7 @@ What did this loop teach the foundation? One line each, tagged by competency
   pending` (evidence: this task needed the re-cross twice across its own build + its sibling
   `sweep-orphan-reclaim-tickets`'s independent Scope-line-wrap bug — same underlying engine gap,
   two different triggers).
-- [TDD · open] an existing, unrelated frozen lint (`test_ubiquitous_language.py`'s domain-clean
+- [TDD · folded] an existing, unrelated frozen lint (`test_ubiquitous_language.py`'s domain-clean [folded foundation-version 64]
   scan) caught literal banned slang ("folded"/"fold") the AI itself introduced across 5 new
   docstrings/messages during THIS build — the established, silently-easy-to-violate convention is
   to interpolate the `_FOLDED`/`_FOLD_VERB` constants rather than spell the literal word in prose;

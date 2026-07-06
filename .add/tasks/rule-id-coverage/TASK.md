@@ -308,7 +308,7 @@ Invariants: add.py ×3 byte-identical == re-pinned engine_pin.ENGINE_MD5; templa
 ```
 
 Glossary deltas: Coverage gap: a §1 Must/Reject ID with no §2 scenario tag and no §4 `covers:`
-  reference, surfaced by `add.py check` as a WARN (never a blocking failure).
+  reference, surfaced by `add.py check` as a WARN (never a blocking failure). [folded foundation-version 64]
 Least-sure flag surfaced at freeze: [spec] opt-in gating on §2/§4 tag presence rather than §1
   `M<n>:`-prefix presence — unverified against the real task corpus. Risk: a live task whose §1
   already uses `M<n>:`-prefixed Musts but whose §2/§4 remain fully untagged would go unflagged if
@@ -514,7 +514,7 @@ Watch (reuse scenarios as monitors): the coverage-gap WARN count in `add.py chec
 Forward changes for the next loop — each re-enters at Specify as the next task. One line
 each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
 the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
-- [SPEC · open] `nested-suite-skip-count-tolerance` uses a third, older POSITIONAL tag dialect
+- [SPEC · carried] `nested-suite-skip-count-tolerance` uses a third, older POSITIONAL tag dialect [carried: grandfathering nested-suite-skip-count-tolerance's older positional M#/R# dialect is explicitly allowed by this convention; migrating it is a real but non-urgent backfill — no functional gap, just dialect inconsistency]
   (`M4/R2`, `M6/R1/R3`) this convention deliberately does not recognize — decide whether a future
   backfill task migrates it to `M#`/`R:<code>` or leaves it grandfathered (evidence: add-verify's
   refute-read spot-check, 3 correctly-fired gap WARNs against that task's real §1/§2/§4).

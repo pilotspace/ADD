@@ -130,7 +130,7 @@ Schema: no data schema touched — pure process-lifecycle/timer behavior over 2 
   ticket siblings (unchanged)
 ```
 
-Glossary deltas: `Heartbeat (JS)`: a `setInterval`-driven periodic `fs.utimesSync` refresh of a held lock file's own mtime, the JS analog of the Python `_lock_heartbeat` context manager — refreshes liveness, never arbitrates reclaim ordering (that remains the ticket mechanism's job)
+Glossary deltas: `Heartbeat (JS)`: a `setInterval`-driven periodic `fs.utimesSync` refresh of a held lock file's own mtime, the JS analog of the Python `_lock_heartbeat` context manager — refreshes liveness, never arbitrates reclaim ordering (that remains the ticket mechanism's job) [folded foundation-version 64]
 Status: FROZEN @ v1 — approved by Tin Dang, 2026-07-05 ("freeze as drafted")
 Reported: yes — the framing above + the AskUserQuestion test-strategy decision were shown before this draft
 Least-sure flag surfaced at freeze: [spec] a `setInterval` heartbeat's survival under whole-event-loop starvation is UNPROVEN — the Python daemon-thread heartbeat (a strictly stronger primitive) still failed once on real CI under whole-process scheduling starvation, requiring a widened-threshold follow-up; this JS port could ship with the same false sense of safety until/unless it is caught the same way. Cost if wrong: a repeat of the Python task's 2-round CI-failure cycle, this time on the JS side.
@@ -331,10 +331,17 @@ choice) was rendered in-chat before this outcome was recorded
 Outcome: RISK-ACCEPTED
 Owner: Tin Dang · Ticket: this file (`.add/tasks/js-reclaim-lock-heartbeat/TASK.md`) — mirrors the
 pip twin (reclaim-ticket-race)'s own choice to carry the disclosed residue forward as this task's
-own §7 Spec delta rather than a separate GitHub issue · Expires: on the next `v*.*.*` tag's
-publish-workflow CI run — if the JS concurrency tests hold up there, the risk is resolved and this
-waiver can be closed; if a real whole-event-loop-starvation failure is observed (mirroring the pip
-twin's own CI-observed voiding), the waiver is VOID and this reopens as a P0 change request
+own §7 Spec delta rather than a separate GitHub issue · Expires: 2026-08-04 (a concrete ISO-date
+backstop, mirroring the pip twin's own window — the underlying condition is still "the next
+`v*.*.*` tag's publish-workflow CI run": if the JS concurrency tests hold up there, the risk is
+resolved and this waiver can be closed early; if a real whole-event-loop-starvation failure is
+observed first, mirroring the pip twin's own CI-observed voiding, the waiver is VOID and this
+reopens as a P0 change request. CORRECTION 2026-07-06: the original free-text expiry
+("next v*.*.* tag CI run") failed `add.py check`'s fail-closed waiver-expiry parse
+(`waiver_expired (unparseable expires=...)`) — the engine's `--expires` field is a hard ISO date,
+never a semantic condition (the pip twin used a plain date from the start); corrected to match.
+As of this correction, `1ef7132` (this task's own JS-twin fix commit) is NOT yet in any published
+tag — v1.16.1 predates it — so the underlying condition genuinely has not resolved either way.
 Reviewed by: Tin Dang · date: 2026-07-05
 
 ---
@@ -350,7 +357,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 - [human] verify — gate RISK-ACCEPTED (reviewed by Tin Dang)
 
 ### Spec delta
-- [SPEC · open] if the RISK-ACCEPTED waiver above voids (a real whole-event-loop-starvation
+- [SPEC · carried] if the RISK-ACCEPTED waiver above voids (a real whole-event-loop-starvation [carried: contingent on a future CI observation, not actionable today; the RISK-ACCEPTED waiver (now expires 2026-08-04) is the standing watch mechanism — this delta re-activates in spirit if/when the waiver voids]
   failure observed on a future publish-workflow CI run), reopen as a P0 change request for a
   widened-threshold JS companion fix — mirrors the Python task's own v2→v3 progression (evidence:
   `reclaim-ticket-race`'s own CI-voided precedent, `.add/tasks/reclaim-ticket-race/TASK.md`)
@@ -359,13 +366,13 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
   (evidence: Security lens, non-blocking)
 
 ### Competency deltas
-- [TDD · open] a surgical mutation of the fix (neuter only the causal line — here,
+- [TDD · folded] a surgical mutation of the fix (neuter only the causal line — here, [folded foundation-version 64]
   `fs.utimesSync` — leaving the rest of the wiring intact) is a stronger earned-green refute-read
   than static review or a plain revert-and-rerun: it isolates whether the SPECIFIC mechanism is
   what the test suite is actually detecting, not just whether the suite is sensitive to unrelated
   code churn (evidence: this task's refute-read regressed exactly the 3 contention tests, leaving
   the unrelated exit-boundedness test green, proving test-level specificity)
-- [ADD · open] the adr-harvester-multiline-fields fix (this session, commit `731755f`) correctly
+- [ADD · folded] the adr-harvester-multiline-fields fix (this session, commit `731755f`) correctly [folded foundation-version 64]
   harvested this task's own multi-paragraph "Strategy actually used" field into the §7 ADR block
   above without truncation or bleed into the next field — a real in-production confirmation of
   that fix, not just its own fixture tests (evidence: §7 Decisions (ADR) `[AI] build` line above)

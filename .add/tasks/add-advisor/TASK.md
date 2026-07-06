@@ -251,7 +251,7 @@ to a phase, the whole task is mis-shaped and re-enters Specify. Second flag: [co
 as the literal frontier declaration (vs. `model: inherit` + a "Recommended tier — top" note like
 add-design) — low cost if wrong (a one-word frontmatter edit).
 
-Glossary deltas: advisor (agent): a consultative, frontier-model ADD roster agent that returns advice on a medium-hard decision — a recommendation, tradeoffs, and a confidence self-score — and never decides, records, edits, or lowers a gate. Distinct from `advisor.md` (the skill guide for spawning a subagent to EXECUTE a plan piece).
+Glossary deltas: advisor (agent): a consultative, frontier-model ADD roster agent that returns advice on a medium-hard decision — a recommendation, tradeoffs, and a confidence self-score — and never decides, records, edits, or lowers a gate. Distinct from `advisor.md` (the skill guide for spawning a subagent to EXECUTE a plan piece). [folded foundation-version 64]
 Status: FROZEN @ v1 — approved by Tin Dang
 
 ---

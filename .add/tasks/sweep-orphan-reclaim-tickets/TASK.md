@@ -106,7 +106,7 @@ Schema: no new file/constant — reuses LOCK_FILE/PROJECT_LOCK_FILE/LOCK_TICKET_
   sweep) is the ONLY new read needed to enumerate project-scope ticket sweep targets
 ```
 
-Glossary deltas: `orphan reclaim ticket`: a `.reclaim-<ino>` per-generation reclaim-arbitration file (home-scope or project-scope) whose corresponding lock generation has since moved on (or whose winning process crashed before its own cleanup) — permanently unreachable via normal contention once aged past its own kind's existing staleness constant; swept by `prune-data --force` alongside orphaned data snapshots.
+Glossary deltas: `orphan reclaim ticket`: a `.reclaim-<ino>` per-generation reclaim-arbitration file (home-scope or project-scope) whose corresponding lock generation has since moved on (or whose winning process crashed before its own cleanup) — permanently unreachable via normal contention once aged past its own kind's existing staleness constant; swept by `prune-data --force` alongside orphaned data snapshots. [folded foundation-version 64]
 Status: FROZEN @ v1 — approved by Tin Dang, 2026-07-05 (explicit "implement all" instruction;
   AskUserQuestion freeze-confirmation timed out twice with no response, proceeded per project-lead
   autonomy on a well-reasoned, low-risk, reuse-only design — disclosed here for review/reversal)

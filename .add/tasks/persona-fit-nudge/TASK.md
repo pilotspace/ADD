@@ -150,7 +150,7 @@ Schema: no new file, no new persona schema field; `add-method/tooling/add_engine
 Glossary deltas: `persona-fit hint`: the `new-milestone` line printed when ≥1 real persona already
   exists, listing the project's existing persona slugs and pointing at `add-persona` — distinct from
   `PERSONA_HINT` (which fires only when ZERO real personas exist); the two are mutually exclusive,
-  driven by the same `_personas_unseeded` predicate.
+  driven by the same `_personas_unseeded` predicate. [folded foundation-version 64]
 Status: FROZEN @ v1 — approved by Tin Dang, 2026-07-05 (AskUserQuestion freeze-confirmation timed
   out with no response, proceeded per project-lead autonomy on the recommended, well-reasoned,
   low-risk option — disclosed here for review/reversal)
@@ -320,13 +320,13 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 - [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
-- [SPEC · open] should `check`/`status` also print the `persona-fit:` hint (matching
+- [SPEC · carried] should `check`/`status` also print the `persona-fit:` hint (matching [carried: deliberately deferred to a possible v2, mirroring persona-seed-nudge own staged rollout; revisit only if the new-milestone-only nudge proves insufficient in practice — no evidence of that yet]
   persona-seed-nudge's own staged v1→v2 rollout) — deliberately deferred in this task's §1 Reject;
   revisit if the `new-milestone`-only nudge proves insufficient in practice (evidence: none yet —
   a forward-looking option, not a known gap)
 
 ### Competency deltas
-- [ADD · open] a §5 Scope amendment made mid-build now has THREE known trigger shapes this
+- [ADD · folded] a §5 Scope amendment made mid-build now has THREE known trigger shapes this [folded foundation-version 64]
   session (a wrapped multi-line declaration, a Scope addition after tests→build crossed, and — new
   this task — an OUT-OF-DECLARED-SCOPE doc file, `.add/SEAMS.md`, whose pinned `path:line` anchor
   silently drifted from an EARLIER, in-scope edit elsewhere in the same file it anchors into,
@@ -334,7 +334,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
   elsewhere in the docs," so the drift was caught only by a full-suite run, not by `add.py check`
   at build time (evidence: `test_seams_doc.py::test_every_anchor_resolves` only failed once the
   full 2967-test suite ran, well after the targeted slice had already gone green)
-- [TDD · open] a broad substring-ban static-inspection test (banning "overlap" anywhere in
+- [TDD · folded] a broad substring-ban static-inspection test (banning "overlap" anywhere in [folded foundation-version 64]
   add.py) produced a false positive against unrelated, pre-existing prose ("...only overlaps
   builds...") — narrowed to scan just the new function's body instead of the whole file; a
   static-inspection test should always scope its search to the code it's actually asserting about,
