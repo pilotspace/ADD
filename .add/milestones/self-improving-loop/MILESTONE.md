@@ -32,9 +32,9 @@ Out: auto-compaction (write stays human) · delta dedup tooling · per-competenc
 - [ ] <slug>   depends-on: <slug>   — <one line>
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] A `· persona:<slug> · anti-pattern|ability` lesson folds into that section        (← fold-persona-sections)
-- [ ] `status` shows the foundation tail + carried backlog; `release-report` lists carried        (← loop-surfacing-nudges)
-- [ ] The self-improving loop is documented as one navigable surface        (← self-improving-guide)
+- [x] A `· persona:<slug> · anti-pattern|ability` lesson folds into that section — test_fold_persona_sections 7/7        (← fold-persona-sections)
+- [x] `status` shows the foundation tail + carried backlog (live: carried 88 · compaction 221, fv20→fv64); `release-report` lists carried        (← loop-surfacing-nudges)
+- [x] The self-improving loop is one navigable surface — skill/add/self-improve.md (1.4KB map, pointed from 7-observe)        (← self-improving-guide)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine

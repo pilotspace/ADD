@@ -4,10 +4,10 @@ Goal: release deliberately, watch reality, turn what you learn into the next spe
 
 ## Do
 
-1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout.
+1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout
 2. **Reuse scenarios as monitors** — the §2 scenarios that defined "correct" now
    define what you alert on: overall error rate, each rejection's rate (a spike is a
-   signal), latency of the risky op under load.
+   signal), latency of the risky op.
 3. **Draft the next spec delta** — every defect, surprise, or new need becomes a
    change that re-enters the flow at Specify (a new task).
 4. **Propose a voice delta** — note where your voice diverged from the human's (wordings +
@@ -41,5 +41,5 @@ Never: auto-roll-back — recommend; a human owns the production decision.
 
 ## Next
 
-Loop. The artifacts you built are living docs the next cycle refines.
-Book: `docs/09-the-loop.md`.
+Loop — the artifacts are living docs the next cycle refines.
+Map: `self-improve.md` · book: `docs/09-the-loop.md`
