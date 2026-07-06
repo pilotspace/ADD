@@ -1644,6 +1644,55 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
     _print_autonomy(root, state, slug)
 
 
+def cmd_worktree_prep(args: argparse.Namespace) -> None:
+    """Mechanize streams.md's manual worktree recipe (worktree-prep): cut an isolated git
+    worktree at HEAD for a spawned worker, materialize the gitignored engine content a
+    tracked-only checkout lacks (.add/tooling · .add/docs — confirmed absent 3-for-3 when
+    done by hand), and echo the fork base for the WAVE.md ledger. Workspace-only: never
+    writes state.json (prep is not a state transition). validate-then-act — every refusal
+    precedes the first filesystem write; a dirty tree WARNS (streams.md: cut AFTER the
+    bundle commit) but proceeds. Runs git only (identity.py precedent) — the NO-EXEC floor
+    (never run a verify suite) is untouched."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
+    project = root.parent
+    try:
+        r = subprocess.run(["git", "-C", str(project), "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        r = None
+    if r is None or r.returncode != 0:
+        _die("worktree_prep_no_git: the project root is not a git repository with a commit — "
+             "worktree isolation needs git (commit the frozen bundle first)")
+    base = r.stdout.strip()
+    dest = (Path(args.dir).expanduser().resolve() if getattr(args, "dir", None)
+            else project.parent / f"{project.name}-wt-{slug}")
+    if dest.exists():
+        _die(f"worktree_prep_exists: {dest} already exists — remove it or pass --dir <path>")
+    dirty = subprocess.run(["git", "-C", str(project), "status", "--porcelain"],
+                           capture_output=True, text=True, timeout=30).stdout.strip()
+    if dirty:
+        print("warning: worktree_prep_dirty_tree — uncommitted changes will NOT ride into the "
+              "worktree; streams.md cuts AFTER committing the frozen bundle", file=sys.stderr)
+    r = subprocess.run(["git", "-C", str(project), "worktree", "add", str(dest), "HEAD"],
+                       capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        _die(f"worktree_prep_git_failed: git worktree add refused — {r.stderr.strip()[:300]}")
+    copied = []                                             # tracked-only checkout lacks these
+    for name in ("tooling", "docs"):
+        src = root / name
+        if src.is_dir():
+            shutil.copytree(src, dest / ".add" / name, dirs_exist_ok=True)
+            copied.append(f".add/{name}")
+    print(f"worktree ready: {dest}")
+    print(f"fork base: {base}  (record it in the WAVE.md ledger; the worker's step-0 "
+          "re-echoes `git rev-parse HEAD` and wave-verify checks the match)")
+    print(f"materialized (gitignored, absent from a bare checkout): "
+          f"{', '.join(copied) if copied else 'none found'}")
+    print(f"cleanup when merged: git -C {project} worktree remove {dest}")
+
+
 def cmd_streams(args: argparse.Namespace) -> None:
     """show / set the project STREAMS posture — the parallel-vs-sequential half of the run mode
     (persist-run-mode). Project-scoped (parallelism is ACROSS tasks, so there is no per-task posture)
@@ -7436,6 +7485,13 @@ def build_parser() -> argparse.ArgumentParser:
     pst.add_argument("action", nargs="?", choices=("show", "set"), default="show")
     pst.add_argument("posture", nargs="?", default=None, help="set: <parallel|sequential>")
     pst.set_defaults(func=cmd_streams, _opt_positionals=("posture",))
+
+    pwt = sub.add_parser("worktree-prep",
+                         help="cut a worker worktree at HEAD + materialize gitignored "
+                              ".add/tooling + .add/docs + echo the fork base (streams.md recipe)")
+    pwt.add_argument("slug", nargs="?", default=None, help="task the worktree is for (default: active)")
+    pwt.add_argument("--dir", default=None, help="worktree path (default: ../<project>-wt-<slug>)")
+    pwt.set_defaults(func=cmd_worktree_prep)
 
     pto = sub.add_parser("todo", help="capture / list / close a lightweight backlog todo (jot an idea)")
     pto.add_argument("text", nargs="?", default=None,
