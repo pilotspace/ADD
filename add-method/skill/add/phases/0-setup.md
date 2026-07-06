@@ -61,16 +61,16 @@ Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** a
    Draft the full bundle **§1–§4** incl. the **§4 red suite** (`phases/4-tests.md`); the lock approves it whole. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses build** until you `lock` (`setup_unlocked`). Sequence: **bundle (§1–§4, tests RED) → lock → build** — the red suite must FAIL before build.
 4. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
 
-## Run mode — how the build will be driven (propose parallel + auto; confirm to keep)
+## Run mode — how the build will be driven (propose sequential + auto; confirm to keep)
 
 Before the lock, surface the **run mode** — autonomy + streams (`run.md` · `streams.md`):
 
 | Run mode | Human gates | Concurrency |
 |----------|-------------|-------------|
+| **sequential · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | one task at a time |
 | **sequential · manual/conservative** | contract freeze **and** every Verify | one task; safest |
-| **parallel · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | `add.py waves` overlaps independent builds behind frozen contracts |
 
-**Propose `parallel + auto`; confirm-to-keep** (or downgrade: `add.py autonomy set conservative --project` + `add.py streams set sequential --project`). Record in **`PROJECT.md` Key Decisions**.
+**Propose `sequential + auto`; confirm-to-keep** (raise the gate: `add.py autonomy set conservative --project`; opt into parallel streaming for a milestone with independent tasks — `add.py streams set parallel --project`, then `add.py waves` schedules the fan-out). Record in **`PROJECT.md` Key Decisions**.
 
 Floor: **one human approval per contract**.
 

@@ -39,8 +39,8 @@ Its facts are engine-sourced (goal = `m-goal` · done = exit-criteria + tasks do
 
 ### Per-gate examples
 
-- **verify** — `goal:` ship the decision arc · `done:` report-arc tests 6/6 green · `plan:` PASS → wire the arc into every gate → goal.
-- **contract-freeze** — `goal:` … · `done:` bundle drafted, lowest-confidence flag surfaced · `plan:` freeze §3 → build → goal.
+- **verify** — `goal:` ship the arc · `done:` tests 6/6 green · `plan:` PASS → every gate → goal.
+- **contract-freeze** — `done:` bundle drafted, flag surfaced · `plan:` freeze §3 → build → goal.
 
 ## PLAN / SHAPE — when there's more than one step, or a shape to freeze
 
@@ -62,10 +62,10 @@ SHAPE   <task title, bold> — v<N>  (DRAFT — not yet frozen)
   <error case / reject token>  <what triggers it>
 ```
 
-- **Collapse done to a count.** Never enumerate finished tasks by name — the human already trusts what's shipped; re-listing it is noise.
-- **Cap live items at ~5–7**, in dependency order; footer `+N more queued` rather than listing everything.
+- **Collapse done to a count.** Never enumerate finished tasks by name.
+- **Cap live items at ~5–7**, dependency-ordered; footer `+N more queued`.
 - **One line per item** — slug + what it does or blocks on; never restate the whole TASK.md.
-- **Glyphs are fixed** — ✅ done · 🔄 active/in-progress · ⬜ pending · ⚠ blocked or flagged. Do not invent new glyphs.
+- **Glyphs are fixed** — ✅ done · 🔄 active · ⬜ pending · ⚠ blocked/flagged; never invent new ones.
 - **Sourced from the engine, summarized by you** — pull from `add.py status`'s `tasks:`/`streams:` output; never paste it verbatim into chat.
 - **SHAPE is freeze-only** — the concrete thing being locked, so the human reviews the actual shape, not just commentary about it.
 
@@ -105,7 +105,7 @@ APPROVE  <the question>
 ```
 
 - **Exactly one** option carries `▶ … (recommended)`. `confidence.md` self-score informs which; the human overrides freely.
-- **1–3 real alternatives** only — no strawmen; if there is genuinely one path, show one — never invent filler to reach three.
+- **1–3 real alternatives** only — no strawmen, no filler; one genuine path → show one.
 - **Every option is described** — pick and each alternative carry a one-line description.
 - **Human gates only** — render at `[human gate]` points; not at `[you drive]` steps.
 
@@ -121,6 +121,7 @@ APPROVE  <the question>
 - **Never pre-stamp a human decision point.** Freeze / gate / lock fields stay DRAFT or blank until the answer returns: show → ask → stamp → advance.
 - **Never dump raw engine output as the plan.** Summarize `add.py status`/`report` through PLAN/SHAPE (or prose) — the engine's full verbosity is for `add.py` itself, not the chat message wrapped around it.
 - **One report per decision point.** After an approval, point at the frozen artifact — do not re-render the bundle.
+- **Batch, don't serialize.** N same-gate decisions ready together (intake items · ready-to-freeze contracts) render as ONE report: PLAN lists each item with its own lowest-confidence flag; APPROVE covers the batch in one ask, and any item can be held back by name.
 - **Honest scope.** "Done" means the request, not the last task: report "task 2/3", never "done" while approved scope remains.
 - **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + flag count — pointing at the report above.
 - **NEXT is not a second gate.** The single decision stays in APPROVE; NEXT is ranked recommendations only.

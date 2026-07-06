@@ -230,6 +230,16 @@ class GateAuditTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("waiver_incomplete", self._codes(out))
 
+    def test_waiver_capitalized_fields_ok(self):
+        # human-signed records write Owner:/Ticket:/Expires: (both live waivers do) —
+        # the field census is case-insensitive: the field EXISTING is the seam, casing
+        # is presentation (waiver-field-case)
+        rec = ("### GATE RECORD\nOutcome: RISK-ACCEPTED\n"
+               "Owner: Tin · Ticket: T-1 · Expires: 2026-08-04\nReviewed by: Tin")
+        self._mk_done("alpha", sec6=SEC_CLEAN + "\n\n" + rec, gate="RISK-ACCEPTED")
+        out, _, code = self._run("--json")
+        self.assertNotIn("waiver_incomplete", self._codes(out))
+
     # ---- scope + purity --------------------------------------------------------
     def test_open_task_skipped(self):
         buf, err = io.StringIO(), io.StringIO()

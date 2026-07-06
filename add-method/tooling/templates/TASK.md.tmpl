@@ -2,15 +2,11 @@
 
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
-autonomy: {{autonomy}}   <!-- inherited from the project default (PROJECT.md); explicit level: manual < conservative < auto (visible · overridable) — lower below if a high-risk task needs it, or run `add.py autonomy set`. Multi-component repo (monorepo/multi-repo)? add a `component: <name>` line (declared in `.add/components.toml`) to ADD that component's root to your §5 Scope; omit for single-component projects (byte-identical default). -->
+autonomy: {{autonomy}}   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
 phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining scope? declare `risk: high` on the slug line above and lower the
-     autonomy level to `manual` or `conservative` — the engine refuses an unguarded completion
-     (`unguarded_high_risk_auto`, run.md guard). A comment is never a declaration. -->
+<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
-> One file = one task. Fill sections top-to-bottom; the `add` skill drives each phase.
-> When a phase is unclear, read its book chapter in `.add/docs/` (linked per section).
-> The phase marker above is the single source of truth — keep it in sync via `add.py phase`.
+> One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
 ---
 
@@ -49,7 +45,7 @@ Assumptions — lowest-confidence first:
   - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
 </assumptions>
 
-<!-- EXIT: every rule stated, every rejection named; assumptions ranked lowest-confidence first, the top one or two ⚠-flagged with why + cost (or, for trivial scope, an honest "none material" that still names the single biggest risk). -->
+<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -83,14 +79,7 @@ Schema: <tables/fields touched, and access pattern>
 Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
 Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag: the 1–2
-     points most likely wrong across the whole bundle, tagged [spec|scenario|contract|test], each
-     with why + cost (the §1 ⚠ assumptions feed it; a flag may point at a scenario or the contract
-     too — see run.md). Approved -> Status: FROZEN @ vN — approved by <name>. Changing a frozen
-     contract = change request back to SPECIFY.
-     EXIT: frozen + every spec rejection has a contracted response + names match GLOSSARY (new
-     terms declared as a Glossary delta) + the bundle's lowest-confidence flag was surfaced at
-     the freeze (or an honest "none material"). -->
+<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -103,10 +92,7 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir ·
-     a token with "/" = project root · a bare name = sibling of the previous
-     token's dir · a directory counts its *.py files (non-recursive); reports
-     mark declared counts with † · anything resolving outside the project root counts 0 -->
+<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
 
 <!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
@@ -115,9 +101,9 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
 Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features>
+Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
 
-Persona (optional): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; absent = generic>
+Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
 Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn, not only explicit parallel mode; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
@@ -125,14 +111,7 @@ Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token
-     with "/" = project root · a bare name = sibling of the previous token's dir ·
-     outside-root resolutions are dropped fail-closed · a DIRECTORY token covers its
-     whole subtree (containment — diverges from §4's non-recursive counting) ·
-     absent line = UNDECLARED (pre-existing tasks grandfathered, never retro-red) ·
-     engine enforcement (touched ⊆ declared) is live: a completing verify gate refuses an
-     out-of-scope build (scope_violation → self-heal) and add.py check surfaces it.
-     EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
+<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -148,9 +127,7 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] a person reviewed and approved the change
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
-> Pre-declare the OBSERVABLE outcomes a correct build must produce — derived from §2 SCENARIOS
-> + §3 CONTRACT — so this gate checks the build is RIGHT, not merely that tests are green. Each
-> row is evidence you can SEE, not a restatement of a test name.
+> OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
 - [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
 - [ ] <another observable outcome> — confirmed by <evidence seen>
 
@@ -160,26 +137,17 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
-> §0's Ground SHA anchors the symbols cited at ground time to that commit — code moves during
-> build. Before the gate, re-resolve every symbol §3 CONTRACT cites against the CURRENT tree
-> (not the Ground SHA) so a stale anchor is caught here, not by a future reader chasing a moved
-> line.
+> Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
 - [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
 - [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under autonomy: auto the AI auto-resolves Verify, so the earned-green refute-read MUST be
-> recorded here (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). The engine
-> MEASURES it is filled (`audit: refute_unrecorded`); it never auto-blocks — a human spot-audit
-> is the backstop. A human-gated (conservative/manual) task may leave it for the human's judgment.
+> Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
 Verdict: <EARNED | NOT-EARNED>
 By: <self | agent-id> · adversarially checked: <what was probed>
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Under autonomy: auto run the 3-lens checklist and record the verdict here. Lenses run in
-> order; a Security HARD-STOP ends the checklist (leave remaining lenses blank). Binding for
-> sensitivity: mechanical (advisor-gate-relax reads it); advisory for all other sensitivities.
-> The engine MEASURES this block is filled (audit: advisor_verdict_unrecorded); it never blocks.
+> Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
 Advisor: <agent-id | self>
 1. Security: <CLEAR | HARD-STOP: finding>
 2. Concurrency: <CLEAR | RESIDUE: finding>
@@ -194,7 +162,7 @@ Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
 Reviewed by: <name> · date: <date>
 
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass. The Advisor 3-lens verdict and the Refute-read verdict are both measured by `add.py audit` (`advisor_verdict_unrecorded` · `refute_unrecorded`) — neither is engine-blocked; a human spot-audit is the backstop for any finding the AI did not surface or record. -->
+<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
 
 ---
 
@@ -206,11 +174,8 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 <harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
 
 ### Spec delta
-Forward changes for the next loop — each re-enters at Specify as the next task. One line
-each, tagged `[SPEC · open|seeded|dropped]`, with evidence (e.g. `[SPEC · open] rate-limit
-the retry path (evidence: prod herd spikes)`). See the `add` skill's `deltas.md`.
+One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
-What did this loop teach the foundation? One line each, tagged by competency
-(`DDD · SDD · UDD · TDD · ADD`), status `open`, with evidence. See the `add` skill's `deltas.md`.
+One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
 <!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->

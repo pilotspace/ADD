@@ -1,12 +1,17 @@
 # Phase 4 — Tests (failing-first suite)
 
-Goal: turn scenarios + contract into automated tests and confirm they FAIL before any code exists — red now, green only after Build. Fill **§4 TESTS** and write the suite into `.add/tasks/<slug>/tests/`.
+Goal: tests from scenarios + contract that FAIL before any code exists. Fill **§4 TESTS**; the suite lives in `.add/tasks/<slug>/tests/`.
 
 ## The must-fail principle
 
-Run the suite now, with no implementation — it must be **red for the right
-reason** (missing implementation, not a broken harness). A test that passes
-before code exists is testing nothing and will wave bad code through later.
+Run the suite now, with no implementation — **red for the right reason**
+(missing implementation, not a broken harness). A test green before code
+exists is testing nothing.
+
+**A test is any machine-checkable assertion**, not only xUnit code —
+a metric threshold (ML/data), a reconciliation query (data integrity),
+a plan-diff (infra/IaC), a rendered-screen diff (UI). Red-first holds
+for each: the assertion must FAIL before the change exists.
 
 ## Produce
 
@@ -15,29 +20,26 @@ before code exists is testing nothing and will wave bad code through later.
 - Contract-conformance tests (shapes + error responses from §3).
 - Side-effect assertions on rejection paths (`assert balance unchanged`).
 - A recorded coverage target in §4.
+- §6 **Build expectations** filled now, BEFORE build — observable outcomes from §2 + §3.
 </output_format>
 
 ## Declaring where tests live
 
 §4's `Tests live in:` line is machine-read: with no local `tests/`, `add.py report`
-counts test functions at the declared backticked paths instead (FIRST `Tests live in:`
-line only). Resolution: `./…` → this task's dir · a token with `/` → the project root
-(parent of `.add/`) · a bare name → a sibling of the previous token's dir (else the
-task dir). A directory token counts the `*.py` files directly inside it (non-recursive); a `.py`
-file counts itself; else ignored. Resolved files dedupe; declared counts marked `†`. Paths
-are confined: anything resolving outside the project root counts 0 — `..` traversal, absolute
-paths, and symlink escapes are never read.
+counts test functions at the declared backticked paths (FIRST such line only).
+`./…` → this task dir · a token with `/` → the project root · a bare name → a
+sibling of the previous token's dir. A directory counts its `*.py` files
+(non-recursive); a `.py` file counts itself. Resolved files dedupe; declared counts
+marked `†`. Paths are confined: outside the project root counts 0 — `..` traversal,
+absolute paths, and symlink escapes are never read.
 
 ## AI prompt
 
 <prompt>
 Role: a test author who writes tests before code.
 Read first: §2 · §3.
-Objective: a red suite that fails for the right reason — behavior, not internals.
-Steps:
-  1. Turn each scenario into an executable test.
-  2. Add contract-conformance and edge-case tests.
-  3. Run the suite and confirm it fails for the right reason; record a coverage target.
+Steps: turn each scenario into an executable test; add contract-conformance and
+edge cases; run the suite red for the right reason; record a coverage target.
 Never: implement the feature, or assert on internals.
 </prompt>
 
@@ -51,7 +53,7 @@ Never: implement the feature, or assert on internals.
 </exit_gate>
 
 > **Persona** — let the fit persona's `## Success Metrics` shape the red suite (advisory).
-> **Advisor · Confidence** — spawn a test-author for a broad red suite (advisor.md); score Completeness — one test per scenario, every rejection covered (confidence.md).
+> **Advisor · Confidence** — spawn a test-author for a broad red suite (advisor.md); score Completeness honestly (confidence.md).
 
 ## Next
 

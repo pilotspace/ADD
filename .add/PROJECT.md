@@ -1,4 +1,5 @@
 # PROJECT — survivor layer (cross-milestone context)
+streams: sequential
 
 > The durable foundation that outlives every milestone and feeds context into each
 > TDD⇄ADD loop. Read this FIRST in any session. Keep it lean — one screen, not a
@@ -272,6 +273,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-07-06 | streams: parallel → sequential (`add.py streams set sequential`) | this project predates the setup-run-mode step (v13-onboarding-polish) and had been silently riding the code fallback default ("parallel", never an actual confirm-to-keep) — real usage across this and other real projects (e.g. ai-proxy) rarely spawns multi-agent/parallel work | `run mode` now reads `sequential + auto`; no engine/gate change (streams is display+advisory only, per streams.md) |
 | 2026-07-06 | fold all → foundation-version 64 (TDD 7 · ADD 6 · GLOSSARY 6) | consolidate captured OBSERVE lessons into the versioned foundation | 13 lessons open→folded; +13 routed bullets; 6 glossary term(s) added; 63→64 |
 | 2026-07-03 | fold all → foundation-version 63 (SDD 2 · TDD 8 · ADD 6) | consolidate captured OBSERVE lessons into the versioned foundation | 16 lessons open→folded; +16 routed bullets; 62→63 |
 | 2026-07-03 | fold all → foundation-version 62 (ADD 4) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 61→62 |

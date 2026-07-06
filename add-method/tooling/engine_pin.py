@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "cf97f937921a7f37054353555ce74f4f"  # re-aimed @ persona-fit-nudge (cmd_new_milestone gains the mutually-exclusive opposite-branch `persona-fit:` hint, importing `_real_persona_slugs`). prior: 1f04d224… @ fold-glossary-deltas (verify)
-ENGINE_PKG_MD5 = "e14b7d383587bf27a61087d423ba0c89"  # re-aimed @ persona-fit-nudge (constants.py gains PERSONA_FIT_HINT_TEMPLATE; io_state.py gains _real_persona_slugs). prior: f38b2006… @ persona-seed-nudge v2
+ENGINE_MD5 = "8e351062313fc78be61f572e6dc44f2f"  # re-aimed @ waiver-field-case (the RISK-ACCEPTED waiver field census matches owner/ticket/expires case-insensitively — the signed records write them capitalized). prior: 27cbc597… @ worktree-prep
+ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge

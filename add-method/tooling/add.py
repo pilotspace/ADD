@@ -620,6 +620,26 @@ def cmd_sync_guidelines(args: argparse.Namespace) -> None:
         print(f"{action:>9}  {name}")
 
 
+# fastlane-intake-nudge: a frozen, blunt lexical heuristic — substring match only, no semantic
+# read. Advisory-only (see _fastlane_nudge); never blocks, never selects the lane itself.
+RISK_KEYWORDS = frozenset({
+    "milestone", "release", "security", "auth", "architecture", "migration",
+    "schema", "protocol", "engine", "breaking", "concurrency", "compliance", "payment",
+})
+
+
+def _fastlane_nudge(title: str, slug: str) -> str | None:
+    """PURE. None if any RISK_KEYWORDS token appears in title.lower() or slug.lower();
+    else the one-line advisory recommending the fast lane or a direct edit."""
+    haystack = f"{title} {slug}".lower()
+    if any(word in haystack for word in RISK_KEYWORDS):
+        return None
+    return ("heuristic: this looks like a fast-lane or direct-edit candidate (no --fast, "
+            "no risk keyword in title/slug) — consider `add.py new-task <slug> --fast`, or "
+            "just edit directly for a single-file change. Recommendation only — the lane "
+            "is yours to pick.")
+
+
 def cmd_new_task(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -744,8 +764,29 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if from_delta:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
+    if not fast:
+        note = _fastlane_nudge(title, slug)
+        if note:
+            print(note)
     print("active task set. phase: ground. Gather the real codebase (section 0 GROUND).")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
+
+
+def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
+    """Resolve a delta verb's target to its on-disk TASK.md — ACTIVE (state-tracked) or
+    light-ARCHIVED (state entry dropped at archive-milestone, file kept). The SPEC-delta
+    lifecycle lives in the FILE and `deltas` already lists archived ones, so the write verbs
+    reach them too (delta-drain reach-back) — previously that needed a hand edit. An archived
+    target must be named EXPLICITLY: the no-slug active-task fallback never resolves to one.
+    A slug neither in state nor on disk still dies `unknown task` (a compacted bundle under
+    .add/archive/ stays out of reach — recover it first). Returns (slug, task_md, archived)."""
+    if raw_slug and raw_slug not in state.get("tasks", {}):
+        task_md = root / "tasks" / raw_slug / "TASK.md"
+        if task_md.exists():
+            return raw_slug, task_md, True
+        _die(f"unknown task '{raw_slug}'")
+    slug = _resolve_task(state, raw_slug)                   # active path, unchanged semantics
+    return slug, root / "tasks" / slug / "TASK.md", False
 
 
 def cmd_drop_delta(args: argparse.Namespace) -> None:
@@ -756,8 +797,7 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
     text + `(evidence: …)` are byte-preserved by the pure `_resolve_spec_delta`."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
-    task_md = root / "tasks" / slug / "TASK.md"
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
     text = task_md.read_text(encoding="utf-8")
     match = getattr(args, "match", None)
     status, idx, _disp = _select_spec_delta(text, match)
@@ -770,7 +810,8 @@ def cmd_drop_delta(args: argparse.Namespace) -> None:
              f"'{slug}' — narrow it")
     new_text = _resolve_spec_delta(text, "dropped", line_index=idx)
     _atomic_write(task_md, new_text)
-    print(f"dropped the {'matched' if match else 'first'} open SPEC delta in '{slug}' -> [SPEC · dropped]")
+    print(f"dropped the {'matched' if match else 'first'} open SPEC delta in "
+          f"'{slug}'{' (archived — on-disk record)' if _arch else ''} -> [SPEC · dropped]")
     print(_next_footer(root, state))
 
 
@@ -790,12 +831,12 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
     every open delta in the task; `--match` targets the unique one. Validate-then-write."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
+    _arch_note = " (archived — on-disk record)" if _arch else ""
     reason = (getattr(args, "reason", None) or "").strip()
     if not reason:
         _die("carry_reason_required: carry-delta needs a --reason — a deferral must say why "
              "(it is the breadcrumb a future loop reads)")
-    task_md = root / "tasks" / slug / "TASK.md"
     text = task_md.read_text(encoding="utf-8")
     stamp = f"[carried: {reason}]"
     if getattr(args, "all", False):
@@ -805,7 +846,7 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
         for idx in idxs:                                   # indices stay valid (flip is in-place)
             text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
         _atomic_write(task_md, text)
-        print(f"carried {len(idxs)} open SPEC delta(s) in '{slug}' -> [SPEC · carried]  ({reason})")
+        print(f"carried {len(idxs)} open SPEC delta(s) in '{slug}'{_arch_note} -> [SPEC · carried]  ({reason})")
         print(_next_footer(root, state))
         return
     match = getattr(args, "match", None)
@@ -819,7 +860,7 @@ def cmd_carry_delta(args: argparse.Namespace) -> None:
              f"'{slug}' — narrow it, or use --all")
     new_text = _resolve_spec_delta(text, "carried", line_index=idx, stamp=stamp)
     _atomic_write(task_md, new_text)
-    print(f"carried the {'matched' if match else 'first'} open SPEC delta in '{slug}' -> "
+    print(f"carried the {'matched' if match else 'first'} open SPEC delta in '{slug}'{_arch_note} -> "
           f"[SPEC · carried]  ({reason})")
     print(_next_footer(root, state))
 
@@ -831,8 +872,7 @@ def cmd_reopen_delta(args: argparse.Namespace) -> None:
     targets the unique carried delta. Validate-then-write; refuse `no_carried_spec_delta`."""
     root = _require_root()
     state = load_state(root)
-    slug = _resolve_task(state, args.slug)
-    task_md = root / "tasks" / slug / "TASK.md"
+    slug, task_md, _arch = _delta_task_md(root, state, args.slug)
     text = task_md.read_text(encoding="utf-8")
     match = getattr(args, "match", None)
     status, idx, _disp = _select_spec_delta(text, match, status="carried")
@@ -847,7 +887,8 @@ def cmd_reopen_delta(args: argparse.Namespace) -> None:
     eol = lines[idx][len(lines[idx].rstrip("\n")):]
     lines[idx] = re.sub(r"\s*\[carried:[^\]]*\]\s*$", "", lines[idx].rstrip("\n")) + eol
     _atomic_write(task_md, "".join(lines))
-    print(f"reopened the {'matched' if match else 'first'} carried SPEC delta in '{slug}' -> [SPEC · open]")
+    print(f"reopened the {'matched' if match else 'first'} carried SPEC delta in "
+          f"'{slug}'{' (archived — on-disk record)' if _arch else ''} -> [SPEC · open]")
     print(_next_footer(root, state))
 
 
@@ -1059,6 +1100,35 @@ def cmd_phase(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def cmd_recross(args: argparse.Namespace) -> None:
+    """The RECORDED post-freeze re-cross (bundle-advance): a HUMAN-APPROVED test change after
+    the tests->build crossing (e.g. a test added at review) re-arms the tamper tripwire + §5
+    scope snapshot by re-running the IDENTICAL _build_entry gate stack — never a freeze bypass
+    (a DRAFT §3 still refuses contract_not_frozen). The approver is recorded in state
+    (tasks[slug]["recross"] = {by, at, from_phase}) so an audit can tell a signed re-cross
+    from silent tampering. Replaces the undocumented `phase tests` + `advance` dance."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)
+    cur = state["tasks"][slug]["phase"]
+    if cur not in ("build", "verify"):
+        _die(f"recross_wrong_phase: re-cross re-arms the tests->build snapshots — only a "
+             f"task at build or verify can re-cross (task '{slug}' is at {cur})")
+    if not (getattr(args, "by", "") or "").strip():
+        _die("recross_unsigned: a post-freeze test change is human-approved — record the "
+             "approver with --by <name>")
+    _build_entry(root, state, slug)          # full gate stack; validate-then-write
+    state["tasks"][slug]["recross"] = {"by": args.by.strip(), "at": _now(),
+                                       "from_phase": cur}
+    state["tasks"][slug]["phase"] = "build"
+    state["tasks"][slug]["updated"] = _now()
+    save_state(root, state)                  # durable state FIRST (source of truth)
+    _sync_task_marker(root, slug, "build")   # then mirror into TASK.md — no split-brain
+    print(f"task '{slug}' re-crossed tests->build — tripwire + scope re-snapshotted "
+          f"(approved by {args.by.strip()})")
+    print(_next_footer(root, state))
+
+
 def cmd_advance(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -1067,6 +1137,18 @@ def cmd_advance(args: argparse.Namespace) -> None:
     idx = PHASES.index(cur)
     if idx >= len(PHASES) - 1:
         _die(f"task '{slug}' already at final phase ({cur})")
+    # bundle fast-forward (bundle-advance): --to repeats the SINGLE-STEP advance — every
+    # crossing guard below runs per step — and stops hard at `tests`: the tests->build
+    # crossing carries the gate stack (_build_entry) and is never fast-forwarded.
+    _to = getattr(args, "to", None)
+    if _to is not None:
+        if _to not in PHASES:
+            _die(f"advance_to_invalid: --to must be one of: {', '.join(PHASES)}")
+        if PHASES.index(_to) > PHASES.index("tests"):
+            _die("advance_to_stops_at_tests: --to fast-forwards the bundle bookkeeping only — "
+                 "the tests->build crossing carries the gate stack; cross it with a plain advance")
+        if PHASES.index(_to) <= idx:
+            _die(f"advance_to_not_forward: task '{slug}' is already at {cur}")
     nxt = PHASES[idx + 1]
     # build-boundary gate: pre-lock the front (specify..tests) is allowed, but crossing
     # into build/verify/observe/done is refused until `add.py lock`.
@@ -1146,6 +1228,11 @@ def cmd_advance(args: argparse.Namespace) -> None:
         print("  note: record the lessons this loop taught the foundation in §7 "
               "OBSERVE, then update PROJECT.md when ready:")
         print(f"    add.py {_FOLD_VERB} --task {slug}   (review first: add.py deltas)")
+    # bundle fast-forward: keep stepping (each pass re-loads state and re-runs every
+    # crossing guard) until the validated --to target is reached.
+    if _to is not None and PHASES.index(nxt) < PHASES.index(_to):
+        cmd_advance(args)
+        return
     print(_next_footer(root, state))
 
 
@@ -1329,9 +1416,47 @@ def _driver_marker(stop: bool) -> str:
     return " [human gate]" if stop else " [you drive]"
 
 
+def _gate_explain(root: Path, state: dict, slug: str) -> None:
+    """gate-explain (method-ergonomics): compose the gate decision from the SAME predicates
+    cmd_gate enforces, as a READ-ONLY answer — the agent asks instead of recalling run.md.
+    PURE: prints, writes nothing."""
+    hdr = _task_header(root, slug)
+    body6 = _raw_phase_bodies(root, slug).get(6, "")
+    from add_engine.autonomy import _autonomy_level
+    level = _autonomy_level(hdr) or "auto"
+    high = bool(_RISK_HIGH_RE.search(hdr))
+    sens = _task_sensitivity(hdr, valid=_project_sensitivity_values(root)) or "unset"
+    adv_pass = _advisor_verdict_is_pass(body6)
+    adv_clean = adv_pass and _advisor_no_residue(body6)
+    relaxed = sens == "mechanical" and adv_clean
+    print(f"gate-explain {slug}")
+    print(f"  phase: {state['tasks'][slug].get('phase', '?')}")
+    print(f"  autonomy: {level} · risk: {'high' if high else 'unset/low'} · sensitivity: {sens}")
+    print(f"  advisor 3-lens: {'PASS, residue none' if adv_clean else ('PASS with residue' if adv_pass else 'unrecorded or non-PASS')}")
+    print(f"  advisor-gate-relax: {'applies (mechanical + clean advisor verdict)' if relaxed else 'not applicable'}")
+    if _autonomy_lowered(hdr):
+        print("  path: HUMAN — the lowered autonomy level puts a person at this verify gate")
+    elif high and not relaxed:
+        print("  path: REFUSED at completion (unguarded_high_risk_auto) — lower the autonomy "
+              "level (`add.py autonomy set conservative`), or for a mechanical task record a "
+              "clean Advisor 3-lens verdict")
+    elif relaxed:
+        print("  path: RELAX — mechanical sensitivity + advisor PASS/none may complete "
+              "without a lowered level (advisor-gate-relax)")
+    else:
+        print("  path: AUTO — may auto-PASS on complete evidence (tests green · no tamper · "
+              "loops dry · deep check + refute-read + 3-lens recorded) with no residue")
+    print("  floor: a security finding is always HARD-STOP — never auto-passed, on every path")
+
+
 def cmd_gate(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
+    if getattr(args, "explain", False):
+        # slug may have landed in the outcome slot (`gate --explain <slug>`)
+        cand = args.slug or (args.outcome if args.outcome not in GATES else None)
+        _gate_explain(root, state, _resolve_task(state, cand))
+        return
     slug = _resolve_task(state, args.slug)
     # build-boundary gate: no verdict may be recorded before the setup is locked.
     if not _setup_locked(state):
@@ -1517,6 +1642,55 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
     _atomic_write(task_md, _autonomy_decl_line(task_md.read_text(encoding="utf-8"), level))
     print(f"task '{slug}' autonomy -> {level}")
     _print_autonomy(root, state, slug)
+
+
+def cmd_worktree_prep(args: argparse.Namespace) -> None:
+    """Mechanize streams.md's manual worktree recipe (worktree-prep): cut an isolated git
+    worktree at HEAD for a spawned worker, materialize the gitignored engine content a
+    tracked-only checkout lacks (.add/tooling · .add/docs — confirmed absent 3-for-3 when
+    done by hand), and echo the fork base for the WAVE.md ledger. Workspace-only: never
+    writes state.json (prep is not a state transition). validate-then-act — every refusal
+    precedes the first filesystem write; a dirty tree WARNS (streams.md: cut AFTER the
+    bundle commit) but proceeds. Runs git only (identity.py precedent) — the NO-EXEC floor
+    (never run a verify suite) is untouched."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)                  # unknown task -> _die
+    project = root.parent
+    try:
+        r = subprocess.run(["git", "-C", str(project), "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        r = None
+    if r is None or r.returncode != 0:
+        _die("worktree_prep_no_git: the project root is not a git repository with a commit — "
+             "worktree isolation needs git (commit the frozen bundle first)")
+    base = r.stdout.strip()
+    dest = (Path(args.dir).expanduser().resolve() if getattr(args, "dir", None)
+            else project.parent / f"{project.name}-wt-{slug}")
+    if dest.exists():
+        _die(f"worktree_prep_exists: {dest} already exists — remove it or pass --dir <path>")
+    dirty = subprocess.run(["git", "-C", str(project), "status", "--porcelain"],
+                           capture_output=True, text=True, timeout=30).stdout.strip()
+    if dirty:
+        print("warning: worktree_prep_dirty_tree — uncommitted changes will NOT ride into the "
+              "worktree; streams.md cuts AFTER committing the frozen bundle", file=sys.stderr)
+    r = subprocess.run(["git", "-C", str(project), "worktree", "add", str(dest), "HEAD"],
+                       capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        _die(f"worktree_prep_git_failed: git worktree add refused — {r.stderr.strip()[:300]}")
+    copied = []                                             # tracked-only checkout lacks these
+    for name in ("tooling", "docs"):
+        src = root / name
+        if src.is_dir():
+            shutil.copytree(src, dest / ".add" / name, dirs_exist_ok=True)
+            copied.append(f".add/{name}")
+    print(f"worktree ready: {dest}")
+    print(f"fork base: {base}  (record it in the WAVE.md ledger; the worker's step-0 "
+          "re-echoes `git rev-parse HEAD` and wave-verify checks the match)")
+    print(f"materialized (gitignored, absent from a bare checkout): "
+          f"{', '.join(copied) if copied else 'none found'}")
+    print(f"cleanup when merged: git -C {project} worktree remove {dest}")
 
 
 def cmd_streams(args: argparse.Namespace) -> None:
@@ -6253,7 +6427,9 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
             if marked:
                 f(slug, "risk_accepted_security",
                   "a waiver on a marked security item is never allowed")
-            if not all(re.search(rf"{k}:\s*(?!<)\S", s6)
+            # case-insensitive: human-signed records write Owner:/Ticket:/Expires: —
+            # the seam is the field EXISTING, casing is presentation (waiver-field-case)
+            if not all(re.search(rf"{k}:\s*(?!<)\S", s6, re.IGNORECASE)
                        for k in ("owner", "ticket", "expires")):
                 f(slug, "waiver_incomplete",
                   "RISK-ACCEPTED needs owner · ticket · expires")
@@ -6396,7 +6572,12 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
             "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier,
             "rule_coverage_gap": rule_coverage_gap,
             "contract_report_unrecorded": contract_report_unrecorded,
-            "verify_report_unrecorded": verify_report_unrecorded}
+            "verify_report_unrecorded": verify_report_unrecorded,
+            # DERIVED rollup (verify-record-rollup): one summary list over the four §6-record
+            # lists — additive; the per-code lists above stay the source of truth.
+            "verify_record_incomplete": sorted(
+                set(shallow) | set(refute_unrecorded)
+                | set(advisor_verdict_unrecorded) | set(verify_report_unrecorded))}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -6459,6 +6640,11 @@ def cmd_audit(args: argparse.Namespace) -> None:
             vr = glints["verify_report_unrecorded"]
             print(f"audit: verify_report_unrecorded — {len(vr)} task(s): {', '.join(vr)} "
                   f"— record the rendered gate report (§6 `Reported: yes`); a spot-audit is the backstop")
+        if glints["verify_record_incomplete"]:
+            vi = glints["verify_record_incomplete"]
+            print(f"audit: verify_record_incomplete — {len(vi)} task(s): {', '.join(vi)} "
+                  f"— fill the §6 verify record (rollup of the four detail lines above: "
+                  f"deep-check · refute-read · 3-lens · gate-report)")
         if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
                 and not glints["refute_unrecorded"] and not glints["advisor_verdict_unrecorded"] \
                 and not glints["sensitivity_unset"] \
@@ -7264,11 +7450,24 @@ def build_parser() -> argparse.ArgumentParser:
     pa.add_argument("--skip-freeze", action="store_true",
                     help="cross tests->build on a DRAFT §3, recording an auditable freeze_skipped "
                          "marker (the universal freeze gate's only bypass; never auto-freezes §3)")
+    pa.add_argument("--to", default=None,
+                    help="fast-forward the bundle bookkeeping to this phase (at most `tests`); "
+                         "every crossing guard still runs per step")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
 
+    prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
+                                          "HUMAN-APPROVED post-freeze test change")
+    prx.add_argument("slug", nargs="?", default=None)
+    prx.add_argument("--by", default="",
+                     help="the human approver (required — a post-freeze test change is human-approved)")
+    prx.set_defaults(func=cmd_recross, _opt_positionals=("slug",))
+
     pg = sub.add_parser("gate", help="record a verify gate outcome")
-    pg.add_argument("outcome", choices=GATES)
-    pg.add_argument("slug", nargs="?", default=None)
+    pg.add_argument("outcome", nargs="?", default=None)   # validated in cmd_gate (gate-explain
+    pg.add_argument("slug", nargs="?", default=None)      # made it optional under --explain)
+    pg.add_argument("--explain", action="store_true",
+                    help="READ-ONLY: print the composed auto-pass/escalation path for the task "
+                         "(autonomy · risk · sensitivity · advisor verdict), then exit")
     pg.add_argument("--owner", help="RISK-ACCEPTED waiver: accountable owner")
     pg.add_argument("--ticket", help="RISK-ACCEPTED waiver: tracking ticket/link")
     pg.add_argument("--expires", help="RISK-ACCEPTED waiver: expiry date")
@@ -7288,6 +7487,13 @@ def build_parser() -> argparse.ArgumentParser:
     pst.add_argument("action", nargs="?", choices=("show", "set"), default="show")
     pst.add_argument("posture", nargs="?", default=None, help="set: <parallel|sequential>")
     pst.set_defaults(func=cmd_streams, _opt_positionals=("posture",))
+
+    pwt = sub.add_parser("worktree-prep",
+                         help="cut a worker worktree at HEAD + materialize gitignored "
+                              ".add/tooling + .add/docs + echo the fork base (streams.md recipe)")
+    pwt.add_argument("slug", nargs="?", default=None, help="task the worktree is for (default: active)")
+    pwt.add_argument("--dir", default=None, help="worktree path (default: ../<project>-wt-<slug>)")
+    pwt.set_defaults(func=cmd_worktree_prep)
 
     pto = sub.add_parser("todo", help="capture / list / close a lightweight backlog todo (jot an idea)")
     pto.add_argument("text", nargs="?", default=None,
