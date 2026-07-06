@@ -33,6 +33,7 @@ Out: engine-checked flow: validation (stays presence-based/RECOMMENDED) · new p
 
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] A dynamically drafted persona is born routable — flow:/source:/## Abilities in the draft, flow in the verdict, and every consuming surface (5 roster agents ×3 trees · design.md · advisor.md ×3 trees · 6/6 dogfood personas) selects by flow:, guarded by test_persona_flow_routing (10 green)        (← persona-flow-routing)
+- [x] A loaded persona is current-schema, invariant-true, and command-anchored (## Abilities + ## Anti-patterns on all 6; 0 rotted literals), and selection is frontmatter-first (~5KB, not 25KB) with teacher routing by division dir        (← persona-load-performance)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
