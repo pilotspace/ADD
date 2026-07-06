@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fastlane-intake-nudge",
+  "active_task": "persona-required-domain-hint",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2961,10 +2961,44 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-required-domain-hint": {
+      "title": "Persona required + domain-strategy hint in TASK templates",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-06T11:17:06+00:00",
+      "updated": "2026-07-06T11:33:30+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "264bc94c1c423069088e65aaee772068",
+        "tests": {
+          "add-method/tooling/test_persona_required_domain_hint.py": "a604114c778147ebefca4376ed63cb15"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          ".add/tooling/templates/TASK.md.tmpl",
+          ".add/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_persona_required_domain_hint.py"
+        ],
+        "snapshot_md5": "2f76d42ae1853cc830aa3c5cbe5ff29b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-06T09:38:49+00:00",
+  "updated": "2026-07-06T11:33:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
