@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-required-domain-hint",
+  "active_task": "verify-record-scaffold",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -2995,10 +2995,43 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "verify-record-scaffold": {
+      "title": "Engine-scaffolded \u00a76 verify record",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "method-ergonomics",
+      "depends_on": [],
+      "created": "2026-07-06T14:12:20+00:00",
+      "updated": "2026-07-06T14:26:00+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5e77686a3c6a19b7cc30287e3df867a0",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_verify_record_rollup.py",
+          "add-method/skill/add/phases/4-tests.md",
+          ".claude/skills/add/phases/4-tests.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/4-tests.md",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py"
+        ],
+        "snapshot_md5": "d3dc22e0455133f22e0e89b78ab4dc85"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-06T11:33:30+00:00",
+  "updated": "2026-07-06T14:26:00+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -3180,9 +3213,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "method-ergonomics": {
+      "title": "Method ergonomics",
+      "goal": "every recurring rule an agent must recall at a gate becomes a form the engine presents at that moment, cutting per-task ceremony across all execution paths without moving the safety floor",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-06T14:10:45+00:00",
+      "updated": "2026-07-06T14:12:20+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-06T14:12:20+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": null,
+  "active_milestone": "method-ergonomics",
   "archived": [
     {
       "slug": "v5",
@@ -3940,9 +3990,12 @@
       "archived": "2026-07-05"
     }
   ],
-  "active_milestones": [],
+  "active_milestones": [
+    "method-ergonomics"
+  ],
   "active_tasks": {
-    "flow-simplification": "phase-review"
+    "flow-simplification": "phase-review",
+    "method-ergonomics": "verify-record-scaffold"
   },
   "todos": [
     {

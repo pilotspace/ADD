@@ -4,9 +4,9 @@ Goal: turn scenarios + contract into automated tests and confirm they FAIL befor
 
 ## The must-fail principle
 
-Run the suite now, with no implementation — it must be **red for the right
-reason** (missing implementation, not a broken harness). A test that passes
-before code exists is testing nothing and will wave bad code through later.
+Run the suite now, with no implementation — **red for the right reason**
+(missing implementation, not a broken harness). A test green before code
+exists is testing nothing.
 
 ## Produce
 
@@ -15,6 +15,7 @@ before code exists is testing nothing and will wave bad code through later.
 - Contract-conformance tests (shapes + error responses from §3).
 - Side-effect assertions on rejection paths (`assert balance unchanged`).
 - A recorded coverage target in §4.
+- §6 **Build expectations** filled now, BEFORE build — observable outcomes from §2 + §3.
 </output_format>
 
 ## Declaring where tests live
@@ -51,7 +52,7 @@ Never: implement the feature, or assert on internals.
 </exit_gate>
 
 > **Persona** — let the fit persona's `## Success Metrics` shape the red suite (advisory).
-> **Advisor · Confidence** — spawn a test-author for a broad red suite (advisor.md); score Completeness — one test per scenario, every rejection covered (confidence.md).
+> **Advisor · Confidence** — spawn a test-author for a broad red suite (advisor.md); score Completeness honestly (confidence.md).
 
 ## Next
 

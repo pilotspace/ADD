@@ -6420,7 +6420,12 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
             "advisor_residue_on_mechanical_mis_tier": advisor_residue_on_mechanical_mis_tier,
             "rule_coverage_gap": rule_coverage_gap,
             "contract_report_unrecorded": contract_report_unrecorded,
-            "verify_report_unrecorded": verify_report_unrecorded}
+            "verify_report_unrecorded": verify_report_unrecorded,
+            # DERIVED rollup (verify-record-rollup): one summary list over the four §6-record
+            # lists — additive; the per-code lists above stay the source of truth.
+            "verify_record_incomplete": sorted(
+                set(shallow) | set(refute_unrecorded)
+                | set(advisor_verdict_unrecorded) | set(verify_report_unrecorded))}
 
 
 def cmd_audit(args: argparse.Namespace) -> None:
@@ -6483,6 +6488,11 @@ def cmd_audit(args: argparse.Namespace) -> None:
             vr = glints["verify_report_unrecorded"]
             print(f"audit: verify_report_unrecorded — {len(vr)} task(s): {', '.join(vr)} "
                   f"— record the rendered gate report (§6 `Reported: yes`); a spot-audit is the backstop")
+        if glints["verify_record_incomplete"]:
+            vi = glints["verify_record_incomplete"]
+            print(f"audit: verify_record_incomplete — {len(vi)} task(s): {', '.join(vi)} "
+                  f"— fill the §6 verify record (rollup of the four detail lines above: "
+                  f"deep-check · refute-read · 3-lens · gate-report)")
         if not findings and not skips and not glints["shallow"] and not glints["risk_unset"] \
                 and not glints["refute_unrecorded"] and not glints["advisor_verdict_unrecorded"] \
                 and not glints["sensitivity_unset"] \
