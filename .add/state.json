@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-scaffold",
+  "active_task": "bench-runner",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6138,10 +6138,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-runner": {
+      "title": "headless claude -p runner: sandboxed arm workspaces, WM sequencing with resume, timeout/retry, transcript+token capture",
+      "phase": "contract",
+      "gate": "none",
+      "milestone": "add-bench",
+      "depends_on": [],
+      "created": "2026-07-07T09:42:11+00:00",
+      "updated": "2026-07-07T09:44:22+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T09:40:55+00:00",
+  "updated": "2026-07-07T09:44:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7210,7 +7219,7 @@
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
-    "add-bench": "bench-scaffold"
+    "add-bench": "bench-runner"
   },
   "todos": [
     {
