@@ -18,6 +18,7 @@ import pathlib
 import sys
 
 from benchmark.arms.loader import ARM_NAMES, load_arm
+from benchmark.report import render_report
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import find_resume_point
 from benchmark.schema.run_record import BenchError
@@ -46,6 +47,12 @@ def _build_parser() -> argparse.ArgumentParser:
     score_p.add_argument("--arm", required=True)
     score_p.add_argument("--wm", type=int, required=True)
     score_p.add_argument("--judge-cmd", nargs="*", default=None)
+
+    report_p = sub.add_parser("report")
+    report_p.add_argument("--arm", default=None)
+    report_p.add_argument("--wm", type=int, default=None)
+    report_p.add_argument("--runs-root", default=None)
+    report_p.add_argument("--out", default=None)
 
     return parser
 
@@ -110,6 +117,24 @@ def main(argv: list[str] | None = None) -> int:
             print(str(exc), file=sys.stderr)
             return 2
         print(record.to_json())
+        return 0
+
+    if args.command == "report":
+        if args.arm is not None and args.arm not in ARM_NAMES:
+            print(f"unknown_arm: {args.arm}", file=sys.stderr)
+            return 2
+        if args.wm is not None and args.wm not in VALID_WMS:
+            print(f"invalid_wm: {args.wm}", file=sys.stderr)
+            return 2
+
+        runs_root = pathlib.Path(args.runs_root) if args.runs_root else None
+        arms = [args.arm] if args.arm is not None else ARM_NAMES
+        wms = [args.wm] if args.wm is not None else VALID_WMS
+        text = render_report(runs_root, arms=arms, wms=wms)
+        if args.out:
+            pathlib.Path(args.out).write_text(text)
+        else:
+            print(text)
         return 0
 
     parser.error("unknown command")

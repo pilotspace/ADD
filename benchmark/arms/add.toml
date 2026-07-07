@@ -1,7 +1,8 @@
 name = "add"
 setup_steps = [
-  "pip install -e add-method  # or: npm install -g add-method (this repo's package source)",
-  "python3 .add/tooling/add.py init --auto",
+  "uv venv .venv",
+  "uv pip install -e {REPO_ROOT}/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init --yes --non-interactive",
 ]
 prompt_wrapper = "raw"
 pin = "add-method (this repo, path pin — see .add/tasks/bench-scaffold/TASK.md Ground SHA)"
