@@ -129,6 +129,15 @@ def _extract_count(pattern: re.Pattern, text: str) -> int:
     return int(match.group(1)) if match else 0
 
 
+def _engine_call_census(transcript_path: pathlib.Path) -> int:
+    """Count `add.py <subcommand>` invocations in a run transcript — the loop-adherence
+    census (bench-adherence-census). A comparative ARTIFACT, never a metric: the frozen
+    5-metric set is untouched. 0 when the transcript is missing or engine-silent."""
+    if not transcript_path.exists():
+        return 0
+    return len(re.findall(r"add\.py\s+[a-z][a-z-]*", transcript_path.read_text(errors="replace")))
+
+
 def score_record(
     arm_name: str,
     wm: int,
@@ -194,6 +203,11 @@ def score_record(
         workspace, wm, oracle_report, judge_cmd=judge_cmd
     )
     artifacts["judge_scores"] = ";".join(str(s) for s in judge_scores)
+
+    transcript_str = artifacts.get("transcript", "")
+    artifacts["engine_calls"] = str(
+        _engine_call_census(pathlib.Path(transcript_str)) if transcript_str else 0
+    )
 
     if wm == 3:
         # M4/M6: regression_rate + context_rot_slope are real computations at WM3.

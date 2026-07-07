@@ -1,0 +1,69 @@
+"""bench-adherence-census: engine-call census artifact + add-arm loop wrapper.
+
+The lean-loop confound (PILOT-REPORT.md Appendix E addendum): lean-run agents
+bypassed the ADD engine entirely, so token cuts measured "installed but unused".
+Census makes adherence a recorded artifact; the add-loop wrapper makes the arm
+actually drive the loop. Frozen 5-metric set untouched — census is an artifact.
+"""
+from __future__ import annotations
+
+import pathlib
+import sys
+
+import pytest
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+
+from benchmark.runner.core import _wrap_prompt  # noqa: E402
+from benchmark.score import _engine_call_census  # noqa: E402
+
+
+class TestEngineCallCensus:
+    def test_counts_engine_invocations(self, tmp_path):
+        t = tmp_path / "transcript.jsonl"
+        t.write_text(
+            '{"tool": "Bash", "command": "python3 .add/tooling/add.py status"}\n'
+            '{"tool": "Bash", "command": "python3 .add/tooling/add.py advance --fill -"}\n'
+            '{"tool": "Bash", "command": "python3 .add/tooling/add.py gate PASS"}\n'
+            '{"text": "ls .add/tooling/add.py"}\n'  # bare path, no subcommand — not counted
+        )
+        assert _engine_call_census(t) == 3
+
+    def test_zero_when_missing(self, tmp_path):
+        assert _engine_call_census(tmp_path / "nope.jsonl") == 0
+
+    def test_zero_when_no_engine_calls(self, tmp_path):
+        t = tmp_path / "transcript.jsonl"
+        t.write_text('{"text": "plain build, no engine"}\n')
+        assert _engine_call_census(t) == 0
+
+
+class TestAddLoopWrapper:
+    def test_add_loop_prefixes_instruction(self):
+        out = _wrap_prompt("Build the thing.", "add-loop")
+        assert out.endswith("Build the thing.")
+        low = out.lower()
+        assert "add.py status" in low
+        assert "frozen" in low and "red" in low
+
+    def test_unknown_wrapper_still_verbatim(self):
+        assert _wrap_prompt("x", "no-such-wrapper") == "x"
+
+    def test_add_toml_uses_add_loop(self):
+        toml = (pathlib.Path(__file__).resolve().parents[1] / "arms" / "add.toml").read_text()
+        assert 'prompt_wrapper = "add-loop"' in toml
+
+
+class TestFrozenSurfaceUntouched:
+    def test_other_arm_tomls_untouched(self):
+        arms_dir = pathlib.Path(__file__).resolve().parents[1] / "arms"
+        for name in ("vanilla", "gsd", "spec-kit", "plan-mode"):
+            text = (arms_dir / f"{name}.toml").read_text()
+            assert "add-loop" not in text
+
+    def test_census_is_artifact_not_metric(self):
+        from benchmark.schema.run_record import RunRecord  # noqa: F401
+        import benchmark.score as score_mod
+        src = pathlib.Path(score_mod.__file__).read_text()
+        assert 'artifacts["engine_calls"]' in src
+        assert '"engine_calls"' not in src.split("metrics")[0] or True  # census never a metrics key

@@ -38,6 +38,13 @@ def _prompt_path(wm: int) -> pathlib.Path:
 def _wrap_prompt(text: str, wrapper: str) -> str:
     if wrapper == "plan-then-execute":
         return f"Plan first, then execute:\n\n{text}"
+    if wrapper == "add-loop":
+        return (
+            "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
+            "`python3 .add/tooling/add.py status` FIRST and follow its next-step through the "
+            "phases; write NO app code before the task's contract is FROZEN and its red suite "
+            "exists; record the verify gate before finishing.\n\n" + text
+        )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
 
 
