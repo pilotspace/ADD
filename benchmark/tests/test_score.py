@@ -328,7 +328,30 @@ def test_regression_rate_computed_at_wm3(tmp_path):
     score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    assert written["metrics"]["regression_rate"] == pytest.approx(0.2)
+    # bench-regression-split: `-m regression` now selects only the 3 shape-
+    # independent must-survive tests; the fixture app honors all three.
+    assert written["metrics"]["regression_rate"] == pytest.approx(0.0)
+
+
+def test_regression_rate_counts_must_survive_failures(tmp_path):
+    runs_root = tmp_path / "runs"
+    _make_record(tmp_path, runs_root, "add", 1, status="done", spec_fidelity=0.9)
+    _make_record(tmp_path, runs_root, "add", 2, status="done", spec_fidelity=0.75)
+    record_path = _make_record(tmp_path, runs_root, "add", 3, spec_fidelity=0.0)
+
+    workspace_dir = runs_root / "add" / "wm3" / "workspace"
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+    # break exactly one must-survive behavior: unauthenticated GET now 200s
+    (workspace_dir / "app.py").write_text(
+        _APP_PY.replace('self._send(401, {"error": "unauthenticated"})',
+                        'self._send(200, [])', 1)
+    )
+    judge_cmd = _fake_judge(tmp_path, "0.6")
+
+    score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
+
+    written = json.loads(record_path.read_text())
+    assert written["metrics"]["regression_rate"] == pytest.approx(1 / 3)
 
 
 # --------------------------------------------------------------------------

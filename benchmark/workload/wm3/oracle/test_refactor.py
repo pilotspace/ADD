@@ -59,11 +59,13 @@ from benchmark.workload.wm2.oracle.test_business_rules import (  # noqa: E402  (
 )
 
 # pytest needs the *_test_* names to remain callable functions with the `test_` prefix
-# (already true from the import-as above) — tag each with the `regression` marker so
-# regression_rate scoring can select exactly this re-exported set.
-test_regression_wm1_create_and_fetch_booking = pytest.mark.regression(test_regression_wm1_create_and_fetch_booking)
-test_regression_wm1_list_bookings = pytest.mark.regression(test_regression_wm1_list_bookings)
-test_regression_wm1_update_and_delete_booking = pytest.mark.regression(test_regression_wm1_update_and_delete_booking)
+# (already true from the import-as above). Marker split (bench-regression-split):
+# `regression` = the 3 shape-independent must-survive behaviors regression_rate counts;
+# `legacy_shape` = the 7 re-exports whose duration_minutes payloads WM3's own contract
+# forces every arm to reject — by-construction failures, excluded from the rate.
+test_regression_wm1_create_and_fetch_booking = pytest.mark.legacy_shape(test_regression_wm1_create_and_fetch_booking)
+test_regression_wm1_list_bookings = pytest.mark.legacy_shape(test_regression_wm1_list_bookings)
+test_regression_wm1_update_and_delete_booking = pytest.mark.legacy_shape(test_regression_wm1_update_and_delete_booking)
 test_regression_wm1_missing_required_field_rejected = pytest.mark.regression(
     test_regression_wm1_missing_required_field_rejected
 )
@@ -71,13 +73,13 @@ test_regression_wm1_unknown_booking_is_404 = pytest.mark.regression(test_regress
 test_regression_wm2_unauthenticated_request_rejected = pytest.mark.regression(
     test_regression_wm2_unauthenticated_request_rejected
 )
-test_regression_wm2_no_double_booking_for_same_owner = pytest.mark.regression(
+test_regression_wm2_no_double_booking_for_same_owner = pytest.mark.legacy_shape(
     test_regression_wm2_no_double_booking_for_same_owner
 )
-test_regression_wm2_ownership_forbids_cross_user_edit = pytest.mark.regression(
+test_regression_wm2_ownership_forbids_cross_user_edit = pytest.mark.legacy_shape(
     test_regression_wm2_ownership_forbids_cross_user_edit
 )
-test_regression_wm2_cancellation_window_enforced = pytest.mark.regression(
+test_regression_wm2_cancellation_window_enforced = pytest.mark.legacy_shape(
     test_regression_wm2_cancellation_window_enforced
 )
-test_regression_wm2_list_scoped_to_caller = pytest.mark.regression(test_regression_wm2_list_scoped_to_caller)
+test_regression_wm2_list_scoped_to_caller = pytest.mark.legacy_shape(test_regression_wm2_list_scoped_to_caller)

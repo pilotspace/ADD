@@ -9,6 +9,7 @@ on anything the subprocess can't turn into a float in [0.0, 1.0].
 from __future__ import annotations
 
 import pathlib
+import statistics
 import subprocess
 from typing import Sequence
 
@@ -92,3 +93,32 @@ def judge_fidelity(
         raise BenchError(f"unparseable_judge_output: value out of range [0.0, 1.0]: {value!r}")
 
     return value
+
+
+def judge_fidelity_median(
+    workspace: pathlib.Path,
+    wm: int,
+    oracle_report: dict,
+    *,
+    judge_cmd: Sequence[str] | None = None,
+    n: int = 3,
+) -> tuple[float, list[float]]:
+    """Run judge_fidelity up to `n` times and return (median, scores).
+
+    Single-call judging showed a +-0.05-0.10 spread on identical inputs in
+    the round-3 pilot sweep — larger than any arm-vs-arm fidelity gap.
+    Individual call failures are tolerated; fewer than 2 successes raises,
+    since a lone value is exactly the noise this function exists to damp.
+    """
+    scores: list[float] = []
+    last_err: BenchError | None = None
+    for _ in range(n):
+        try:
+            scores.append(judge_fidelity(workspace, wm, oracle_report, judge_cmd=judge_cmd))
+        except BenchError as exc:
+            last_err = exc
+    if len(scores) < 2:
+        raise BenchError(
+            f"unparseable_judge_output: only {len(scores)}/{n} judge calls succeeded; last: {last_err}"
+        )
+    return statistics.median(scores), scores

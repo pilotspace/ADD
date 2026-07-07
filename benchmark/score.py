@@ -188,8 +188,12 @@ def score_record(
         if oracle_report_path.exists():
             oracle_report = json.loads(oracle_report_path.read_text())
 
-    # M3: spec_fidelity always recomputed via the injectable judge seam.
-    spec_fidelity = judge.judge_fidelity(workspace, wm, oracle_report, judge_cmd=judge_cmd)
+    # M3: spec_fidelity always recomputed via the injectable judge seam —
+    # median-of-3 to damp single-call variance, raw scores kept auditable.
+    spec_fidelity, judge_scores = judge.judge_fidelity_median(
+        workspace, wm, oracle_report, judge_cmd=judge_cmd
+    )
+    artifacts["judge_scores"] = ";".join(str(s) for s in judge_scores)
 
     if wm == 3:
         # M4/M6: regression_rate + context_rot_slope are real computations at WM3.
