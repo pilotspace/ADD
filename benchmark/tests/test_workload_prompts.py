@@ -19,6 +19,9 @@ def test_prompts_identical_contract_and_bait():
     for wm, text in texts.items():
         for snippet in ENTRY_CONTRACT_SNIPPETS:
             assert snippet in text, f"wm{wm} PROMPT.md missing entry-contract snippet {snippet!r}"
-    # WM3 must name a breaking change to a WM1-frozen shape (the regression bait).
-    assert "wm1" in texts[3].lower() or "task/booking" in texts[3].lower() or "breaking" in texts[3].lower()
-    assert "breaking" in texts[3].lower() or "refactor" in texts[3].lower()
+    # WM3 must name the concrete regression bait `test_refactor.py` actually oracles:
+    # the `duration_minutes` -> `end_time` field removal (M10 tightening, not a
+    # loose keyword or-chain over "wm1"/"task/booking"/"breaking").
+    wm3_lower = texts[3].lower()
+    assert "duration_minutes" in wm3_lower, "wm3 PROMPT.md must name the removed duration_minutes field"
+    assert "end_time" in wm3_lower, "wm3 PROMPT.md must name the replacement end_time field"

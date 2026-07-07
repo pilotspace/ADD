@@ -3,10 +3,13 @@
 
   run.py run --arm <name> --wm <1|2|3> [--timeout-s S] [--retries N] [--agent-cmd ARGV...]
   run.py resume --arm <name> [--timeout-s S] [--retries N] [--agent-cmd ARGV...]
+  run.py score --arm <name> --wm <1|2|3> [--judge-cmd ARGV...]
 
 exit 0 on success; exit 2 with one of the frozen codes on rejection
-(unknown_arm | invalid_arm_recipe | invalid_wm | nothing_to_resume) — no
-workspace/record created for any exit-2 path.
+(unknown_arm | invalid_arm_recipe | invalid_wm | nothing_to_resume |
+record_not_found | record_not_done | missing_prior_wm_record |
+unparseable_judge_output | regression_run_failed) — no workspace/record
+created or modified for any exit-2 path (bench-scoring TASK.md §3 CONTRACT).
 """
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ from benchmark.arms.loader import ARM_NAMES, load_arm
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import find_resume_point
 from benchmark.schema.run_record import BenchError
+from benchmark.score import score_record
 
 ARMS_DIR = pathlib.Path(__file__).resolve().parent / "arms"
 VALID_WMS = (1, 2, 3)
@@ -37,6 +41,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--wm", type=int, required=True)
 
     sub.add_parser("resume", parents=[common])
+
+    score_p = sub.add_parser("score")
+    score_p.add_argument("--arm", required=True)
+    score_p.add_argument("--wm", type=int, required=True)
+    score_p.add_argument("--judge-cmd", nargs="*", default=None)
 
     return parser
 
@@ -92,6 +101,15 @@ def main(argv: list[str] | None = None) -> int:
                 retries=args.retries,
             )
             print(last_record.to_json())
+        return 0
+
+    if args.command == "score":
+        try:
+            record = score_record(args.arm, args.wm, judge_cmd=args.judge_cmd)
+        except BenchError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(record.to_json())
         return 0
 
     parser.error("unknown command")
