@@ -129,6 +129,17 @@ def _extract_count(pattern: re.Pattern, text: str) -> int:
     return int(match.group(1)) if match else 0
 
 
+def _fidelity_artifacts(prior_fidelities: list[float], wm3_fidelity: float) -> dict[str, str]:
+    """WM3 trajectory + min artifacts (bench-fidelity-dip). OLS slope at n=3 is
+    (f3-f1)/2 — the middle WM has zero weight — so a mid-run collapse is invisible
+    to context_rot_slope. Artifacts only; the frozen 5-metric set is untouched."""
+    fids = [*prior_fidelities, wm3_fidelity]
+    return {
+        "fidelity_trajectory": ";".join(str(f) for f in fids),
+        "fidelity_min": str(min(fids)),
+    }
+
+
 def _engine_call_census(transcript_path: pathlib.Path) -> int:
     """Count `add.py <subcommand>` invocations in a run transcript — the loop-adherence
     census (bench-adherence-census). A comparative ARTIFACT, never a metric: the frozen
@@ -213,6 +224,7 @@ def score_record(
         # M4/M6: regression_rate + context_rot_slope are real computations at WM3.
         regression_rate = compute_regression_rate(workspace)
         context_rot_slope = compute_context_rot_slope([*prior_fidelities, spec_fidelity])
+        artifacts.update(_fidelity_artifacts(prior_fidelities, spec_fidelity))
     else:
         # M5/M7: 0.0 BY DEFINITION before WM3 — structurally N/A, not a failure;
         # an unconditional early-return branch, never routed through a Reject raise.

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-adherence-census",
+  "active_task": "bench-fidelity-dip",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7117,10 +7117,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-fidelity-dip": {
+      "title": "Fidelity trajectory + dip artifacts at WM3 \u2014 make mid-run collapses visible",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T18:04:57+00:00",
+      "updated": "2026-07-07T18:06:50+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "66bb8e3659a0f3b9339620867946f21f",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".add/tasks/bench-fidelity-dip/src/"
+        ],
+        "snapshot_md5": "54addb073ae5a4edb9b9be6b01900f96"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-07T18:06:37+00:00",
+            "reason": "scope_violation: task 'bench-fidelity-dip' touched outside its declared \u00a75 Scope \u2014 benchmark/score.py (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-07T18:06:49+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T17:58:23+00:00",
+  "updated": "2026-07-07T18:06:50+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8208,7 +8249,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "bench-adherence-census"
+    "add-lean-loop": "bench-fidelity-dip"
   },
   "todos": [
     {
