@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fast-lane-intake-heuristic",
+  "active_task": "bench-rerun-add-arm",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6999,10 +6999,36 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-rerun-add-arm": {
+      "title": "Re-run add arm on the lean loop vs round-3 baseline",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T16:33:07+00:00",
+      "updated": "2026-07-07T16:42:55+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "36b4749705b74a23c6decb81ab7703cb",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/runs/"
+        ],
+        "snapshot_md5": "3d9797de8d98433e57b4ddf809d11b1c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:32:46+00:00",
+  "updated": "2026-07-07T16:42:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8090,7 +8116,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "fast-lane-intake-heuristic"
+    "add-lean-loop": "bench-rerun-add-arm"
   },
   "todos": [
     {
