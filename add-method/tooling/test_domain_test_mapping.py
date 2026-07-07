@@ -22,9 +22,12 @@ TREES = (
 )
 # the frozen phases pool ceiling (test_skill_lean: baseline 41190 × ratio 0.80) — this task
 # must fit UNDER it with no rebaseline; duplicated here so a pool bust names this task too
+# 41190 → 41605 @ strategy-facet-block (contract FROZEN @ v1, M6-signed rebaseline — see the
+# ledger entry in test_skill_lean.py): the duplicate migrates FORWARD in lockstep; the
+# domain-form addition this file guards remains absorbed (its own net ≤0B claim unchanged).
 POOL_GUIDES = ["0-ground.md", "0-setup.md", "1-specify.md", "2-scenarios.md", "3-contract.md",
                "4-tests.md", "5-build.md", "6-verify.md", "7-observe.md"]
-POOL_CEILING = int(41190 * 0.80)
+POOL_CEILING = int(41605 * 0.80)
 
 
 class DomainTestMappingTest(unittest.TestCase):

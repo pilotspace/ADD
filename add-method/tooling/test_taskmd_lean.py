@@ -21,7 +21,10 @@ TREES = (CANON,
          REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
          ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl")
 
-SIZE_CEILING = 10600      # UTF-8 bytes (pre-task: 12442)
+# 10600 → 11400 @ strategy-facet-block (contract FROZEN @ v1): §5 gains the four facet lines
+# (+732 B contract-exact template surface, zero new comments — COMMENT_CEILING untouched);
+# the won comment-lean ground is preserved, the ceiling migrates forward with the approved lines.
+SIZE_CEILING = 11400      # UTF-8 bytes (pre-task: 12442; post-taskmd-optimize: 10600)
 COMMENT_CEILING = 2500   # UTF-8 bytes of HTML comments (pre-task: 3418)
 
 

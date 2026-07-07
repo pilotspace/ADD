@@ -214,7 +214,14 @@ POOLS = [
     # parallel streaming is still available as a named, explicit opt-in for a milestone with
     # independent tasks. +71 B human-directed surface. RATIO 0.80 kept EXACTLY; baseline grows by
     # surface ÷ ratio (+⌈71/0.80⌉=89). The won ground on every other phase guide is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 41190,
+    # phases 41190 → 41605 @ strategy-facet-block (milestone build-strategy-facets, contract FROZEN
+    # @ v1 — M6 signs this rebaseline explicitly): phases/5-build.md's scope-of-impact section gains
+    # the **Strategy facets** bullet (Approach · Data strategy · Pattern · Optimization stance —
+    # domain-generic, upstream-anchored §1/§3/§0, drafted at tests->build, advisory never a gate)
+    # after in-file compression absorbed ~100 B (declaration sentence, small-batches line, persona
+    # overlay lead) — +332 B residual human-approved surface (32943 → 33275 actual). RATIO 0.80 kept
+    # EXACTLY; baseline grows by surface ÷ ratio (+⌈332/0.80⌉=415). The won ground is untouched.
+    {"name": "phases",        "ratio": 0.80, "baseline": 41605,
      "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
                 "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},

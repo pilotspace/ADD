@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""Red/green tests for the faceted §5 build strategy block (task strategy-facet-block,
+milestone build-strategy-facets, contract FROZEN @ v1).
+
+A prose/template-only task: full TASK.md.tmpl §5 gains four ADDITIVE, domain-generic
+facet lines — Approach (domain strategy) · Data strategy · Pattern · Optimization
+stance — between the Strategy (ordered batches) line and the Persona line; the fast
+template collapses to ONE Approach line (collapse, never skip); phases/5-build.md and
+the 07-step-5-build.md chapter teach the facets; the engine is untouched. Placeholders
+carry spaces (frozen tag census unchanged), no new HTML comment (ceiling <12), no
+backtick in any new §5 line (scope-token grammar unaffected). Run:
+    python3 -m unittest test_strategy_facets -v
+"""
+import hashlib
+import io
+import os
+import shutil
+import re
+import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+
+import add
+import engine_pin
+import test_skill_lean
+from test_scope_decl_template import (EXISTING_LINES, FROZEN_TAGS, ACTUAL_LABEL,
+                                      FAST_STRATEGY_LABEL, STRATEGY_LABEL)
+
+HERE = Path(__file__).resolve().parent          # add-method/tooling
+ADD_METHOD = HERE.parent
+REPO = ADD_METHOD.parent
+BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
+
+# 4-twin lockstep for each template (canon · repo dogfood · add-method dogfood · bundle)
+FULL_TWINS = (HERE / "templates" / "TASK.md.tmpl",
+              REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+              ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+              BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
+FAST_TWINS = (HERE / "templates" / "TASK.fast.md.tmpl",
+              REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+              ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+              BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl")
+BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "5-build.md",
+                REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md",
+                BUNDLE / "skill" / "add" / "phases" / "5-build.md")
+CHAPTERS = (ADD_METHOD / "docs" / "07-step-5-build.md",
+            REPO / "07-step-5-build.md",
+            BUNDLE / "docs" / "07-step-5-build.md")
+ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
+              BUNDLE / "tooling" / "add.py")
+
+PERSONA_LABEL = "Persona (required):"
+APPROACH_LABEL = "Approach (domain strategy):"
+DATA_LABEL = "Data strategy:"
+PATTERN_LABEL = "Pattern:"
+STANCE_LABEL = "Optimization stance:"
+
+# the contract-frozen facet lines (§3 v1) — byte-exact
+FULL_FACET_LINES = (
+    "Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain "
+    "— an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named "
+    "Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>",
+    "Data strategy: <the shapes and access patterns the work realizes — data structures, schema "
+    "use, information architecture for prose/docs — must agree with the §3 Schema line>",
+    "Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor "
+    "it extends>",
+    "Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, "
+    "readability — or \"correctness-first, no budget\"; never blank; ⚠-mark the facet you trust "
+    "least; risk: high -> consult add-advisor; facets draft at tests->build; advisory, never a gate>",
+)
+FAST_FACET_LINE = ("Approach (domain strategy): <technique · shapes · pattern · optimization "
+                   "stance in one line, in the task's domain vocabulary — or \"obvious, "
+                   "correctness-first\">")
+
+
+def _md5(p: Path) -> str:
+    return hashlib.md5(p.read_bytes()).hexdigest()
+
+
+class StrategyFacetsTest(unittest.TestCase):
+    # ---- M1: the four facet lines, in order, between Strategy and Persona -------
+    def test_full_template_facet_lines_ordered(self):
+        text = FULL_TWINS[0].read_text(encoding="utf-8")
+        idx = [text.index(STRATEGY_LABEL)]
+        for line in FULL_FACET_LINES:
+            self.assertIn(line, text, f"full §5 missing the contract-exact facet line: {line[:40]}…")
+            idx.append(text.index(line))
+        idx.append(text.index(PERSONA_LABEL))
+        self.assertEqual(idx, sorted(idx),
+                         "facet order must be Strategy < Approach < Data < Pattern < Stance < Persona")
+
+    # ---- M2: each hint names its upstream anchor + stays domain-generic ---------
+    def test_facet_hints_cite_upstream_anchors(self):
+        self.assertIn("§1 Framings weighed", FULL_FACET_LINES[0])
+        self.assertIn("§3 Schema", FULL_FACET_LINES[1])
+        self.assertIn("§0 Honors", FULL_FACET_LINES[2])
+        # domain-generic: a non-code example rides next to the dev ones
+        self.assertIn("prose structure", FULL_FACET_LINES[0])
+        self.assertIn("information architecture", FULL_FACET_LINES[1])
+
+    # ---- M3: the stance line carries the fill discipline ------------------------
+    def test_optimization_stance_fill_discipline(self):
+        stance = FULL_FACET_LINES[3]
+        for token in ("never blank", "⚠", "add-advisor", "tests->build", "advisory, never a gate"):
+            self.assertIn(token, stance, f"Optimization stance missing discipline token: {token}")
+
+    # ---- M4: fast template collapses to exactly ONE Approach line ---------------
+    def test_fast_template_single_collapsed_line(self):
+        text = FAST_TWINS[0].read_text(encoding="utf-8")
+        self.assertIn(FAST_FACET_LINE, text, "fast §5 missing the collapsed Approach line")
+        self.assertEqual(text.count(APPROACH_LABEL), 1, "fast §5 must carry exactly one Approach line")
+        for label in (DATA_LABEL, STANCE_LABEL):
+            self.assertNotIn(label, text, f"fast §5 must NOT carry the {label} facet (collapse)")
+        self.assertLess(text.index(FAST_STRATEGY_LABEL), text.index(FAST_FACET_LINE),
+                        "collapsed Approach must sit BELOW the fast strategy line")
+        self.assertLess(text.index(FAST_FACET_LINE), text.index(ACTUAL_LABEL),
+                        "collapsed Approach must sit ABOVE Strategy actually used")
+
+    # ---- M5: twins in md5 lockstep ----------------------------------------------
+    def test_template_twins_lockstep(self):
+        self.assertEqual(len({_md5(p) for p in FULL_TWINS}), 1, "TASK.md.tmpl twins diverged")
+        self.assertEqual(len({_md5(p) for p in FAST_TWINS}), 1, "TASK.fast.md.tmpl twins diverged")
+
+    # ---- M6: the build guide teaches the facets, trio identical -----------------
+    def test_build_guide_teaches_facets(self):
+        digests = set()
+        for p in BUILD_GUIDES:
+            text = p.read_text(encoding="utf-8")
+            for anchor in (APPROACH_LABEL.rstrip(":"), "Optimization stance"):
+                self.assertIn(anchor, text, f"{p} does not teach the facets ({anchor})")
+            digests.add(_md5(p))
+        self.assertEqual(len(digests), 1, "5-build.md trees diverged")
+
+    # ---- M6: the phases lean fence holds (same math as test_skill_lean) ---------
+    def test_phases_pool_fence_held(self):
+        pool = next(p for p in test_skill_lean.POOLS if p["name"] == "phases")
+        nbytes = test_skill_lean._pool_bytes(pool)
+        self.assertLessEqual(nbytes, int(pool["baseline"] * pool["ratio"]),
+                             "phases pool over its fence — compress 5-build.md, don't rebaseline silently")
+
+    # ---- M7: the book chapter gains the strategy-choice passage -----------------
+    def test_book_chapter_strategy_passage(self):
+        digests = set()
+        for p in CHAPTERS:
+            self.assertIn("Choosing the implementation strategy", p.read_text(encoding="utf-8"),
+                          f"{p} missing the strategy-choice passage")
+            digests.add(_md5(p))
+        self.assertEqual(len(digests), 1, "07-step-5-build.md twins diverged")
+
+    # ---- R:tag_census_amend ------------------------------------------------------
+    def test_tag_census_unchanged(self):
+        tags = sorted(set(re.findall(r"</?([a-z_]+)>", FULL_TWINS[0].read_text(encoding="utf-8"))))
+        self.assertEqual(tags, FROZEN_TAGS, "template tag census changed — the v16/v18 vocab is frozen")
+
+    # ---- R:comment_ceiling -------------------------------------------------------
+    def test_comment_ceiling_held(self):
+        count = FULL_TWINS[0].read_text(encoding="utf-8").count("<!--")
+        self.assertLess(count, 12, "TASK.md.tmpl gained a comment — facet guidance lives in line hints")
+
+    # ---- R:nonadditive_change ----------------------------------------------------
+    def test_additive_only(self):
+        text = FULL_TWINS[0].read_text(encoding="utf-8")
+        for line in EXISTING_LINES + (STRATEGY_LABEL, ACTUAL_LABEL):
+            self.assertIn(line, text, "pre-existing §5 line changed — the add is additive")
+        self.assertIn(FAST_STRATEGY_LABEL, FAST_TWINS[0].read_text(encoding="utf-8"))
+
+    # ---- R:scope_token_leak ------------------------------------------------------
+    def test_no_backtick_in_facet_lines(self):
+        for line in FULL_FACET_LINES + (FAST_FACET_LINE,):
+            self.assertNotIn("`", line, "a backtick in a §5 line can parse as a scope token")
+
+    # ---- R:engine_touched --------------------------------------------------------
+    def test_engine_untouched(self):
+        digests = {_md5(p) for p in ADDPY_TRIO}
+        self.assertEqual(len(digests), 1, "add.py trio diverged")
+        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
+                         "add.py changed — this is a prose/template-only task")
+
+    # ---- After-1: a fresh scaffold carries the facets (full + fast) --------------
+    def test_scaffold_carries_facets(self):
+        cwd = Path.cwd()
+        tmp = Path(tempfile.mkdtemp(prefix="add-strat-facet-")).resolve()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.addCleanup(os.chdir, cwd)
+        try:
+            os.chdir(tmp)
+            buf, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(buf), redirect_stderr(err):
+                add.main(["init", "--name", "demo"])
+                add.main(["lock", "--force"])
+                add.main(["new-task", "fullx", "--title", "fullx"])
+                add.main(["new-task", "fastx", "--title", "fastx", "--fast"])
+            full = (tmp / ".add" / "tasks" / "fullx" / "TASK.md").read_text(encoding="utf-8")
+            fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
+            for line in FULL_FACET_LINES:
+                self.assertIn(line, full, "full scaffold missing a facet line")
+            self.assertIn(FAST_FACET_LINE, fast, "fast scaffold missing the collapsed Approach line")
+        finally:
+            os.chdir(cwd)
+
+
+if __name__ == "__main__":
+    unittest.main()
