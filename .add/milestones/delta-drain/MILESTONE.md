@@ -3,7 +3,7 @@
 goal: the 4 open SPEC deltas are each resolved into a shipped behavior — compact-foundation gains a read-only --propose preview, personas gain a dedicated `verify` flow value, the streams.md worker-contract `<persona>` block names the flow preference, and status/check render an engine-built persona roster line — leaving zero open SPEC deltas
 rationale: intake bucket=sub-milestone (2026-07-07, Tin: "implement all directly"): 4 independent deltas from 3 prior tasks, each small but crossing engine+skill+guard surfaces; loose fast tasks would lose the shared roster/flow decisions, so a thin milestone binds them
 stage: mvp · status: active · created: 2026-07-07T08:15:15+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

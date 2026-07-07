@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.18.0 — 2026-07-07
+
+- Drain the 4 open SPEC deltas — 0 carried · 0 key decision(s)
+- Faceted §5 build strategy — 0 carried · 0 key decision(s)
+
 ## 1.17.0 — 2026-07-07
 
 - Persona domain-fit nudge — 2 carried · 0 key decision(s)
