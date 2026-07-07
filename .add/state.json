@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "compact-propose",
+  "active_task": "bench-scaffold",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6104,10 +6104,44 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-scaffold": {
+      "title": "benchmark/ tree: workload spec, oracle suites, 5 arm definitions, run-record schema",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-bench",
+      "depends_on": [],
+      "created": "2026-07-07T09:16:04+00:00",
+      "updated": "2026-07-07T09:40:55+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d0d68b494cd2a0fed3cfde07a230c6e3",
+        "tests": {
+          "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
+          "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
+          "benchmark/tests/test_arms.py": "ecde8e754b161f9699147e07c80d3426",
+          "benchmark/tests/test_isolation.py": "3d5519c6572c0121e2c6049ab76420f1",
+          "benchmark/tests/test_oracles_red.py": "5708d42b875b811cee984a4233ac1f0b",
+          "benchmark/tests/test_run_record.py": "89c2e819fdb02edb2d78a6c9c9b7da64",
+          "benchmark/tests/test_workload_prompts.py": "f16cef9914987e13ed383809430265b5"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/",
+          "benchmark/.gitignore"
+        ],
+        "snapshot_md5": "c07a2a1bdcba21e10e0388205ccc3186"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T08:54:39+00:00",
+  "updated": "2026-07-07T09:40:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -6360,15 +6394,32 @@
       "stage": "mvp",
       "status": "done",
       "created": "2026-07-07T08:15:15+00:00",
-      "updated": "2026-07-07T08:54:39+00:00",
+      "updated": "2026-07-07T09:14:41+00:00",
       "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "add-bench": {
+      "title": "Add Bench",
+      "goal": "",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-07T09:14:41+00:00",
+      "updated": "2026-07-07T09:16:04+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-07T09:16:04+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
     }
   },
-  "active_milestone": "delta-drain",
+  "active_milestone": "add-bench",
   "archived": [
     {
       "slug": "v5",
@@ -7150,14 +7201,16 @@
     "dynamic-personas",
     "self-improving-loop",
     "build-strategy-facets",
-    "delta-drain"
+    "delta-drain",
+    "add-bench"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "dynamic-personas": "persona-load-performance",
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
-    "delta-drain": "compact-propose"
+    "delta-drain": "compact-propose",
+    "add-bench": "bench-scaffold"
   },
   "todos": [
     {
