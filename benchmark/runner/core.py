@@ -11,6 +11,7 @@ import io
 import json
 import os
 import pathlib
+import shlex
 import signal
 import subprocess
 import time
@@ -91,6 +92,44 @@ def _invoke_once(argv: list[str], *, timeout_s: float, log_path: pathlib.Path) -
         fh.write("\n")
 
     return outcome, lines, first_edit_elapsed
+
+
+def _run_setup_steps(
+    setup_steps: list[str], *, cwd: pathlib.Path, log_path: pathlib.Path
+) -> tuple[bool, list[str]]:
+    """Run an arm's `setup_steps` lines, in order, before agent invocation.
+
+    Per line: strip an inline `#` comment, `shlex.split()` the remainder, run
+    as list-form argv (no `shell=True`) with cwd=the sandboxed workspace. A
+    nonzero step fails loudly — recorded, not swallowed — and stops the
+    remaining steps. Empty `setup_steps` is a no-op.
+    """
+    log_lines: list[str] = []
+    for raw_line in setup_steps:
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        argv = shlex.split(line)
+        if not argv:
+            continue
+        proc = subprocess.run(
+            argv,
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        entry = f"setup: {argv} -> exit {proc.returncode}"
+        log_lines.append(entry)
+        with log_path.open("a") as fh:
+            fh.write(entry + "\n")
+            if proc.stdout:
+                fh.write(proc.stdout)
+                if not proc.stdout.endswith("\n"):
+                    fh.write("\n")
+        if proc.returncode != 0:
+            return False, log_lines
+    return True, log_lines
 
 
 def _kill_process_group(proc: subprocess.Popen) -> None:
@@ -177,6 +216,28 @@ def execute_wm(
     prompt_text = _wrap_prompt(_prompt_path(wm).read_text(), arm.prompt_wrapper)
 
     attempts_log: list[str] = []
+
+    setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
+    attempts_log.extend(setup_log)
+    if not setup_ok:
+        record = validate(
+            {
+                "arm": arm.name,
+                "wm": wm,
+                "rep": 0,
+                "status": "failed",
+                "metrics": _zero_metrics(),
+                "artifacts": {
+                    "workspace": str(workspace_dir),
+                    "transcript": str(transcript_path),
+                    "oracle_report": "",
+                    "attempts": "; ".join(attempts_log),
+                },
+            }
+        )
+        write_record_atomic(record_path, record)
+        return record
+
     outcome = "failed"
     lines: list[str] = []
     first_edit_elapsed = 0.0
@@ -188,8 +249,12 @@ def execute_wm(
         argv = build_argv(prompt_text, agent_cmd)
         outcome, lines, first_edit_elapsed = _invoke_once(argv, timeout_s=timeout_s, log_path=transcript_path)
         attempts_log.append(f"attempt {attempt_count}: {outcome}")
-        if outcome in ("done", "timeout"):
-            break  # timeout is terminal, never retried; done needs no retry
+        if outcome == "done":
+            break  # a timeout or a failed attempt each consume a retry;
+            # only "done" is terminal early — a timeout is retried like any
+            # other transient failure, and only the LAST attempt's outcome
+            # (timeout or failed) becomes the final status once retries are
+            # exhausted, per §1's frozen "after exhausting retries" wording.
 
     if outcome == "timeout":
         record = validate(

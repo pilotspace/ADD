@@ -229,7 +229,19 @@ def test_add_arm_pin_resolved_to_sha(tmp_path):
     )
     from benchmark.arms.loader import load_arm
 
-    arm = load_arm(BENCHMARK_ROOT / "arms" / "add.toml")
+    real_add = load_arm(BENCHMARK_ROOT / "arms" / "add.toml")
+    # Fixture correction (re-cross, human-approved 2026-07-07): keep the real
+    # add.toml pin but drop its env-provisioning setup_steps, which cannot
+    # succeed in an empty sandbox — this test asserts M7 (pin -> SHA), not M1.
+    arm = Arm(
+        name=real_add.name,
+        setup_steps=[],
+        prompt_wrapper=real_add.prompt_wrapper,
+        pin=real_add.pin,
+        same_model=real_add.same_model,
+        token_ceiling=real_add.token_ceiling,
+        turn_ceiling=real_add.turn_ceiling,
+    )
     runs_root = tmp_path / "runs"
     record = execute_wm(
         arm,
@@ -243,3 +255,140 @@ def test_add_arm_pin_resolved_to_sha(tmp_path):
     resolved = record.artifacts["resolved_pin"]
     assert resolved != arm.pin
     assert len(resolved) in (7, 40) or all(c in "0123456789abcdef" for c in resolved)
+
+
+def test_setup_steps_run_in_order_before_agent(tmp_path):
+    """gapfix M1: setup_steps run, in order, before the agent invocation."""
+    order_file = tmp_path / "order.txt"
+    script = _write_script(
+        tmp_path,
+        "fake_after_setup.py",
+        f"""
+        #!/usr/bin/env python3
+        import sys
+        with open({str(order_file)!r}, "a") as f:
+            f.write("agent\\n")
+        sys.exit(0)
+        """,
+    )
+    arm = Arm(
+        name="setup-arm",
+        setup_steps=[
+            f"{sys.executable} -c \"open({str(order_file)!r}, 'a').write('step1\\n')\"  # inline comment stripped",
+            f"{sys.executable} -c \"open({str(order_file)!r}, 'a').write('step2\\n')\"",
+        ],
+        prompt_wrapper="raw",
+        pin="",
+        same_model=True,
+        token_ceiling=200000,
+        turn_ceiling=60,
+    )
+    runs_root = tmp_path / "runs"
+    record = execute_wm(
+        arm,
+        1,
+        agent_cmd=[sys.executable, str(script)],
+        timeout_s=10,
+        retries=0,
+        runs_root=runs_root,
+    )
+    assert record.status == "done"
+    assert order_file.read_text().splitlines() == ["step1", "step2", "agent"]
+    # setup outcomes are visible in artifacts/transcript, like agent attempts
+    assert "setup:" in record.artifacts["attempts"]
+    transcript_path = pathlib.Path(record.artifacts["transcript"])
+    assert "setup:" in transcript_path.read_text()
+
+
+def test_setup_steps_empty_is_noop(tmp_path):
+    script = _write_script(
+        tmp_path,
+        "fake_ok2.py",
+        """
+        #!/usr/bin/env python3
+        import sys
+        sys.exit(0)
+        """,
+    )
+    runs_root = tmp_path / "runs"
+    record = execute_wm(
+        _arm(),  # setup_steps=[] by default
+        1,
+        agent_cmd=[sys.executable, str(script)],
+        timeout_s=10,
+        retries=0,
+        runs_root=runs_root,
+    )
+    assert record.status == "done"
+    assert "setup:" not in record.artifacts["attempts"]
+
+
+def test_setup_step_failure_fails_attempt_visibly(tmp_path):
+    """A nonzero setup step fails that attempt loudly — recorded, not
+    swallowed — and the agent is never invoked."""
+    invocation_log = tmp_path / "invocations.txt"
+    script = _write_script(
+        tmp_path,
+        "fake_never.py",
+        f"""
+        #!/usr/bin/env python3
+        import sys
+        with open({str(invocation_log)!r}, "a") as f:
+            f.write("invoked\\n")
+        sys.exit(0)
+        """,
+    )
+    arm = Arm(
+        name="setup-fail-arm",
+        setup_steps=[f"{sys.executable} -c \"import sys; sys.exit(1)\"  # deliberately fails"],
+        prompt_wrapper="raw",
+        pin="",
+        same_model=True,
+        token_ceiling=200000,
+        turn_ceiling=60,
+    )
+    runs_root = tmp_path / "runs"
+    record = execute_wm(
+        arm,
+        1,
+        agent_cmd=[sys.executable, str(script)],
+        timeout_s=10,
+        retries=1,
+        runs_root=runs_root,
+    )
+    assert record.status == "failed"
+    assert not invocation_log.exists()  # agent never invoked
+    assert "setup:" in record.artifacts["attempts"]
+    assert "exit 1" in record.artifacts["attempts"]
+
+
+def test_timeout_consumes_a_retry_then_succeeds(tmp_path):
+    """gapfix M2: a timeout counts as one failed attempt that consumes a
+    retry; status='timeout' only once retries are exhausted."""
+    sentinel = tmp_path / "sentinel"
+    script = _write_script(
+        tmp_path,
+        "fake_flip.py",
+        f"""
+        #!/usr/bin/env python3
+        import pathlib, sys, time
+        sentinel = pathlib.Path({str(sentinel)!r})
+        if not sentinel.exists():
+            sentinel.write_text("x")
+            time.sleep(30)
+        else:
+            sys.exit(0)
+        """,
+    )
+    runs_root = tmp_path / "runs"
+    record = execute_wm(
+        _arm(),
+        1,
+        agent_cmd=[sys.executable, str(script)],
+        timeout_s=0.5,
+        retries=1,
+        runs_root=runs_root,
+    )
+    assert record.status == "done"
+    assert "attempt 1: timeout" in record.artifacts["attempts"]
+    assert "attempt 2: done" in record.artifacts["attempts"]
