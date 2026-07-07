@@ -1,11 +1,11 @@
 # Releases
 
-## 1.17.0 — 2026-07-06
-milestones: persona-domain-fit, method-ergonomics
+## 1.17.0 — 2026-07-07
+milestones: persona-domain-fit, method-ergonomics, dynamic-personas, self-improving-loop
 loose tasks: grep-binary-agnostic-milestone-test, prune-data-update-lock, sweep-orphan-reclaim-tickets, adr-harvester-multiline-fields, strip-scaffold-backtick-comment-fix, worktree-isolated-spawn-default, fold-glossary-deltas, reclaim-ticket-race, js-reclaim-lock-heartbeat, scope-components-check, fastlane-intake-nudge, persona-required-domain-hint
 waivers: reclaim-ticket-race, js-reclaim-lock-heartbeat
 actor: Tin Dang <tindang.ht97@gmail.com> (git)
-evidence: recorded by add.py release
+evidence: recorded by add.py release; amended (unpublished — no tag cut yet) to attribute dynamic-personas (2/2 tasks, flow: routing + load performance) and self-improving-loop (3/3 tasks, fold persona sections + loop surfacing nudges + self-improve.md) merged via PR #137 after the initial cut; PRs #135 (method-ergonomics + persona-domain-fit), #136 (release cut), #137 all merged to main; suite/check green throughout, no HARD-STOP
 
 ## 1.16.1 — 2026-07-04
 milestones: none

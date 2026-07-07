@@ -3,7 +3,7 @@
 goal: the observe→deltas→fold→compact loop actually converges — persona-targeted lessons grow the NEW schema sections, the engine surfaces compaction debt + the carried backlog instead of letting them rot silently, and the self-improving loop is readable as ONE surface across the 5 domains
 rationale: sub-milestone — Tin 2026-07-07 'fix all then review ADD flow to make sure ADD are optimized for self-improving SKILL via 5 Domains - 8 step'; investigation found: fold's persona allowlist frozen at the pre-1.16.1 schema (Anti-patterns/Abilities unroutable) · compaction last rolled at fv20 (now fv64; 303 folded bullets live) · 88 carried deltas with no resurfacing trigger · persona learning loop used once ever
 stage: mvp · status: active · created: 2026-07-06T17:39:09+00:00
-release: pending
+release: 1.17.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

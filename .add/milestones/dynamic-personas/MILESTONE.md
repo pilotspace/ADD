@@ -3,7 +3,7 @@
 goal: the persona system's value proposition — DYNAMIC per-domain personas at teacher-grade depth (distilled from `.add/personas-teacher/`) — is actually wired: every drafted persona carries `flow:` routing and every consuming surface (roster agents · design.md · advisor.md) selects by it
 rationale: sub-milestone — investigation (2026-07-06, Tin: "correct ADD flow with personas and design.md flow" · "personas for agents team" · "we offer dynamic personas but high performance as personas_teacher") found the 1.16.1 `flow:` + `## Abilities` schema landed in template+docs with ZERO consumers: nothing writes flow: (dogfood 0/6, add-persona drafts the stale schema) and nothing reads it (all 5 roster agents, design.md, advisor.md select by archetype prose) — the routing mechanism is dead wiring
 stage: mvp · status: active · created: 2026-07-06T16:50:24+00:00
-release: pending
+release: 1.17.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

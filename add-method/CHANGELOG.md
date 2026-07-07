@@ -6,12 +6,15 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [1.17.0] — 2026-07-06
 
-Minor: two milestones — **method-ergonomics** (every recurring gate rule becomes
+Minor: four milestones — **method-ergonomics** (every recurring gate rule becomes
 a form the engine presents at that moment, cutting per-task ceremony without
-moving the safety floor) and **persona-domain-fit** (a new milestone or task
-whose domain no existing persona covers gets a concrete draft-one nudge) — plus
-twelve loose tasks. New engine verbs are additive; no gate weakened, nothing
-removed or renamed.
+moving the safety floor), **persona-domain-fit** (a new milestone or task
+whose domain no existing persona covers gets a concrete draft-one nudge),
+**dynamic-personas** (a drafted persona carries `flow:` routing to its agent
+surface, at teacher-grade depth and load cost), and **self-improving-loop**
+(the observe→deltas→fold→compact loop surfaces its own accumulation instead of
+rotting silently) — plus twelve loose tasks. New engine verbs are additive; no
+gate weakened, nothing removed or renamed.
 
 ### Added
 - **`add.py gate --explain [slug]`** — a read-only dry-run of the verify gate:
@@ -44,6 +47,27 @@ removed or renamed.
   require a named persona and carry a domain-strategy hint.
 - **Fast-lane ground anchor** — the `--fast` template's §0 gains the
   `Ground SHA:` drift anchor, so a fast task can clear the stale-line-ref WARN.
+- **Persona `flow:` routing** — a persona's `flow:` frontmatter (design | build
+  | advisor) is now read, not just written: the 4 flow-routed roster agents,
+  `design.md`'s evidence checklist, and `advisor.md`'s spawn block all select
+  a persona flow-first; add-persona drafts the current schema (`flow:` /
+  `source:` / `## Abilities`) and returns `flow` in its verdict.
+- **Persona load performance** — every seeded persona gains `## Abilities`
+  (orient-command-led) and `## Anti-patterns`; selection is frontmatter-first
+  (name · vibe · flow, then one body — not the whole roster); add-persona
+  routes the teacher library by division directory, never its catalog README.
+- **Fold grows the current persona schema** — `add.py fold` routes a
+  `persona:<slug> · anti-pattern|ability` lesson into those sections too (was
+  limited to `critical-rule`/`success-metric`), so the persona learning loop
+  can grow the sections that shape agent behavior.
+- **Loop-surfacing status cues** — `add.py status` names the carried
+  spec-delta backlog and the un-compacted foundation tail (last-rolled vs.
+  current `foundation-version`) once either passes a noticeable size;
+  `release-report` lists the carried total. Additive; a clean project's
+  output is unchanged.
+- **`skill/add/self-improve.md`** — one map of how ADD improves itself: the
+  four self-improving artifacts (foundation · personas · `SOUL.md` · next
+  scope), routed across the 5 domains, fed by all 8 steps.
 
 ### Changed
 - **Sequential+auto is the default run mode** — parallel streams stay a

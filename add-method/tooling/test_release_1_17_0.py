@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.17.0 release readiness (method-ergonomics + persona-domain-fit).
+"""Red/green tests for the 1.17.0 release readiness (method-ergonomics + persona-domain-fit +
+dynamic-personas + self-improving-loop).
 
-Minor cut: two milestones (method-ergonomics — engine-presented forms replace
+Minor cut: four milestones (method-ergonomics — engine-presented forms replace
 recalled ceremony: gate --explain · advance --to · re-cross · worktree-prep ·
 verify-record rollup · archived-delta verbs · batched intake · leaner template/
-guides; persona-domain-fit — the domain-fit nudge) + twelve loose tasks. All
-additive; no gate weakened, nothing removed or renamed.
+guides; persona-domain-fit — the domain-fit nudge; dynamic-personas — flow:
+routing + teacher-grade load performance; self-improving-loop — fold grows
+the persona schema, status surfaces the loop's own debt, self-improve.md)
++ twelve loose tasks. All additive; no gate weakened, nothing removed or
+renamed. dynamic-personas + self-improving-loop merged via PR #137 AFTER the
+initial cut (PR #136) — an in-place amendment to the still-unpublished
+1.17.0 entry, not a version bump (no tag has been pushed for 1.17.0 yet).
 
 In-repo readiness only — the live-registry halves (npm/PyPI serving 1.17.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
@@ -33,9 +39,11 @@ PRIOR_VERSIONS = ("1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0", "1
                   "1.2.0", "1.1.0", "1.0.0")
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline changes the 1.16.1 notes must name
+# the headline changes the 1.17.0 notes must name
 FEATURE_ANCHORS = ("gate --explain", "worktree-prep", "re-cross",
-                   "Batched intake", "domain-fit")
+                   "Batched intake", "domain-fit", "flow:` routing",
+                   "Fold grows the current persona schema",
+                   "Loop-surfacing status cues", "self-improve.md")
 
 
 class ChangelogTest(unittest.TestCase):

@@ -1,9 +1,11 @@
 # Changelog
 
-## 1.17.0 — 2026-07-06
+## 1.17.0 — 2026-07-07
 
 - Persona domain-fit nudge — 2 carried · 0 key decision(s)
 - Method ergonomics — 0 carried · 0 key decision(s)
+- Dynamic teacher-grade personas routed by flow: — 4 carried · 0 key decision(s)
+- The observe loop optimized for self-improvement across the 5 domains — 0 carried · 0 key decision(s)
 
 ## 1.16.1 — 2026-07-04
 
