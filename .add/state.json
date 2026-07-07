@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-scoring",
+  "active_task": "bench-pilot-report",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6222,10 +6222,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-pilot-report": {
+      "title": "run the 5-arm x 3-WM x 1-rep pilot and render the arm-vs-arm report with evidence links",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": "add-bench",
+      "depends_on": [],
+      "created": "2026-07-07T11:26:43+00:00",
+      "updated": "2026-07-07T11:51:37+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T11:26:43+00:00",
+  "updated": "2026-07-07T11:51:37+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7294,7 +7303,7 @@
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
-    "add-bench": "bench-scoring"
+    "add-bench": "bench-pilot-report"
   },
   "todos": [
     {
