@@ -496,6 +496,24 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
             pass
         return "as planned"
 
+    # §5 strategy facets (facet-adr-harvest): each FILLED facet earns its own [AI] build
+    # line, in this order, directly before the strategy-used line. Harvest reads bodies[5]
+    # ONLY (never another section); a LEADING "<" is the template placeholder and stays
+    # silent per facet — zero filled facets collapse to the legacy 4-line block exactly.
+    _FACETS = (("Approach (domain strategy)", "approach"), ("Data strategy", "data strategy"),
+               ("Pattern", "pattern"), ("Optimization stance", "optimization stance"))
+
+    def _facets():                               # §5 -> [AI]: one (key, value) per FILLED facet
+        out = []
+        try:
+            for label, key in _FACETS:
+                val = _capture_wrapped(label, bodies.get(5, ""))
+                if val and not val.startswith("<"):
+                    out.append((key, val))
+        except Exception:
+            return []
+        return out
+
     def _gate():                                 # §6 -> [human|AI]: outcome + reviewer
         try:
             mo = re.search(r"(?m)^Outcome:[ \t]*(\S+)", bodies.get(6, ""))
@@ -511,6 +529,7 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
     try:
         chosen, rejected = _framing()
         fver, fby = _freeze()
+        facets = _facets()
         strat = _strategy()
         outcome, rev, gate_actor = _gate()
     except Exception:
@@ -519,6 +538,7 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
     lines = [
         f"- [AI] specify — chose {chosen}{rej}",
         f"- [human] freeze — froze §3 @ {fver} (approved by {fby})",
+        *(f"- [AI] build — {key}: {val}" for key, val in facets),
         f"- [AI] build — strategy used: {strat}",
         f"- [{gate_actor}] verify — gate {outcome} (reviewed by {rev})",
     ]

@@ -34,6 +34,17 @@ For the running example, the feature-specific safety rule is *"make the balance 
 
 See `playbook/5_build.md` in [Appendix B](./appendix-b-prompts.md).
 
+## Choosing the implementation strategy
+
+The spec, contract, and tests fix *what* correct means; they deliberately do not fix *how* the build achieves it — and "how" is itself a decision worth making explicitly rather than letting the first plausible implementation win. §5 of the task file declares it as four small **strategy facets**, each derived from work already done, never invented fresh at build time:
+
+- **Approach (domain strategy)** — the core technique and why it fits this task's domain: an algorithm, a data model, a migration path, a prose structure, a UX flow. It comes from the framings §1 already weighed, stated in the loaded persona's domain vocabulary.
+- **Data strategy** — the shapes and access patterns the work realizes; it must agree with the schema line the frozen contract states.
+- **Pattern** — the domain pattern the build follows, citing the convention (§0 Honors / CONVENTIONS.md) it extends.
+- **Optimization stance** — what, if anything, is being optimized and to what budget: latency, memory, token cost, readability. "Correctness-first, no budget" is a legitimate answer; silence is not, because the stance you declare here is the monitor you install at Observe.
+
+The facets are drafted at the tests→build crossing — the moment the red suite makes the shape concrete and a challenge is still cheap — with the facet you trust least ⚠-marked (on a high-risk task, that flag is the natural advisor consult). They are guidance, not a gate: the builder may improve on them as reality pushes back, and reports the strategy actually used at Verify, where it feeds the task's decision record.
+
 ## Work in small batches
 
 Direct the AI one task at a time, and keep each task small enough that its result can be reviewed in full. This is a direct application of the principle *you cannot move faster than you can verify.* A single enormous change that turns the whole suite green at once is not a triumph — it is an unreviewable blob. Small batches keep the verification step (next chapter) tractable and keep a human genuinely in the loop.

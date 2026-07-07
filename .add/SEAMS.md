@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:4756` (`_declared_scope`)
+Anchor: `add-method/tooling/add.py:4786` (`_declared_scope`)   <!-- re-pinned 2026-07-07 twice: 4756→4766 (pre-existing drift on main, found at strategy-facet-block verify) then 4766→4786 (facet-adr-harvest's _facets loop added lines above — the line-number pin drifts on ANY upstream engine growth; symbol cited alongside so the drift is at least self-describing) -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

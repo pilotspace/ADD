@@ -6,21 +6,22 @@ ambiguity. Write code into `.add/tasks/<slug>/src/`.
 
 ## Work in small batches
 
-Pick ONE task-sized slice, restate its tests, implement, iterate to green.
-Keep each batch small enough to review in full.
+Pick ONE task-sized slice, restate its tests, implement, iterate to green —
+each batch small enough to review in full.
 
 ## Declaring the scope of impact (Scope + Strategy)
 
-§5 opens with two declarations, drafted with the bundle and frozen by the §3 approval — never invented mid-build:
+§5's declarations are drafted with the bundle and frozen by the §3 approval — never invented mid-build:
 
-- **Scope (may touch)** — the allowlist of files the build may write (backticked tokens). A file outside it is a **STOP → change request** back to Specify, never improvisation.
+- **Scope (may touch)** — the allowlist the build may write (backticked tokens); a file outside it is a **STOP → change request** back to Specify.
 - **Strategy (ordered batches)** — the planned build order; guidance, not enforced.
+- **Strategy facets** — Approach (domain strategy) · Data strategy · Pattern · Optimization stance: the domain HOW, anchored upstream (§1 Framings · §3 Schema · §0 Honors), drafted at tests->build in the Persona's domain vocabulary; ⚠-mark the facet you trust least (risk: high → consult add-advisor). Advisory, never a gate.
 
 Enforced: a completing verify gate refuses an out-of-scope build (`scope_violation` → self-heal).
 
 ## Persona overlay (optional)
 
-You may load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md` (SOUL = voice/trust; persona = domain **stance**) — name it in §5. SOUL.md is **human-owned**: the overlay never rewrites it (`soul.md`). Advisory — it never lowers a gate; security still **HARD-STOPs**.
+Load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md` (SOUL = voice/trust; persona = domain **stance**) — name it in §5; its domain supplies the facet vocabulary. SOUL.md is **human-owned**: the overlay never rewrites it (`soul.md`). Advisory — it never lowers a gate; security still **HARD-STOPs**.
 
 ## The cardinal rule
 

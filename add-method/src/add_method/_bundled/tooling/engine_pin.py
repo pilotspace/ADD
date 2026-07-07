@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "17c1ec5c49bcc2800a2d3053c59bad6d"  # re-aimed @ self-improving-loop wording fix (consolidated-lesson cue). prior: c7675a7a… @ loop-surfacing-nudges
-ENGINE_PKG_MD5 = "a59f79d0fdc40553838e0a6449050d12"  # re-aimed @ fastlane-ground-lite (_FALLBACK_TASK_FAST §0 gains the Ground SHA drift-anchor line, matching the fast template). prior: e14b7d38… @ persona-fit-nudge
+ENGINE_MD5 = "35e7f7014ebb184ffcc4859e1ade1634"  # re-aimed @ facet-adr-harvest (_facets loop in _stamp_adr_record — per-facet [AI] build ADR lines). prior: 78baf42b… @ persona-schema-hardening
+ENGINE_PKG_MD5 = "c29c2e05e429948813c2b0ba0d325da8"  # re-aimed @ persona-schema-hardening (_persona_quality_warnings + PERSONA_FLOW_VALUES). prior: a59f79d0… @ fastlane-ground-lite
