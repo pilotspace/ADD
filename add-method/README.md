@@ -2,12 +2,13 @@
   <a href="https://www.npmjs.com/package/@pilotspace/add"><img alt="npm version" src="https://img.shields.io/npm/v/@pilotspace/add.svg"></a>
   <a href="https://pypi.org/project/pilotspace-add/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/pilotspace-add.svg"></a>
   <a href="https://github.com/pilotspace/ADD/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://pilotspace.github.io/ADD/"><img alt="Read the book" src="https://img.shields.io/badge/docs-read%20the%20book-blue.svg"></a>
   <a href="https://github.com/pilotspace/ADD/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pilotspace/ADD.svg"></a>
 </p>
 
 # ADD — AI-Driven Development
 
-**One skill. Eight steps. Five disciplines. Every feature ships through the loop.**
+**Describe the feature. The agent drives the build. You approve once — exactly where a mistake would actually cost you.**
 
 > A minimal, state-tracked skill for building software when the AI writes the code
 > and **you** own the two things it cannot do alone: decide *what* to build, and
@@ -46,7 +47,27 @@ scenarios → contract → tests as one bundle (you approve once, at the frozen
 contract), then builds and verifies to green. Full detail below — **Install**,
 **Use it**, and the [10-minute Quickstart](./GETTING-STARTED.md).
 
+## Highlights
+
+- ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent builds the rest.
+- 🔬 **Proof, not promises** — verified against observed behavior and pre-declared expectations, never just a plausible-looking diff.
+- 🔒 **Security never gets waved through** — any security finding is a hard stop, human in the loop.
+- 🌱 **Prototype to production** — task → milestone → graduate (analytics-gated) → recorded release, one method throughout.
+- 🧠 **Smarter as you go** — lessons consolidate into a living, compacting foundation carried across milestones.
+- 🎨 **See it before you build it** — a wireframe and a zero-dependency HTML mock, approved before any code.
+- 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
+- 🧩 **One slice, many components** — monorepo or multi-repo, in one team.
+- 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+
+> _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
+
 ## Why ADD (and why it is minimal)
+
+Every AI coding tool can write code fast now. The part that never got solved is
+trust — how do you know it built the *right* thing, and how do you know it's
+*correct*, without reading every line yourself? ADD answers both: freeze the
+direction *before* any code is written, then trust the result through passing
+evidence, never a diff that merely looks right.
 
 Heavy doc-first methods burn your time writing documents and lose the thread
 across sessions (context rot). ADD fixes both:
@@ -224,6 +245,12 @@ be upset to lose is "the code," you're still working the old way.
 
 Start at [`docs/README.md`](./docs/README.md) — Foundations → the six steps →
 operating it across a team → templates, prompts, and a full worked example.
+
+More entry points:
+
+- 📖 [Read the book online](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
+- 🔍 [Full hands-on walkthrough](./GETTING-STARTED.md) — one real feature, end to end
+- 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
 
 ## What's next
 

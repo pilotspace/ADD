@@ -5,7 +5,7 @@
 - Drain the 4 open SPEC deltas — 0 carried · 0 key decision(s)
 - Faceted §5 build strategy — 0 carried · 0 key decision(s)
 
-## 1.17.0 — 2026-07-07
+## 1.17.0 — 2026-07-06
 
 - Persona domain-fit nudge — 2 carried · 0 key decision(s)
 - Method ergonomics — 0 carried · 0 key decision(s)
