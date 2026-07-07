@@ -307,7 +307,7 @@ def _contract_fingerprint(raw3: str) -> str:
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
     _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
-    _task_done, _persona_missing, _persona_slug_valid, _rule_coverage_gaps,
+    _task_done, _persona_missing, _persona_quality_warnings, _persona_slug_valid, _rule_coverage_gaps,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -3150,6 +3150,16 @@ def cmd_check(args: argparse.Namespace) -> None:
                                  "persona_schema_incomplete: missing " + ", ".join(missing)))
             else:
                 infos.append((f"persona '{slug}'", "schema-conformant"))
+                # persona-schema-hardening: quality findings the presence check can't see
+                # (typo'd flow: value · bare <…> placeholder) — WARN-only (measure-not-block),
+                # REAL personas only: the seeded `_template.md` is all placeholders by design.
+                if not slug.startswith("_"):
+                    try:
+                        text = pf.read_text(encoding="utf-8")
+                    except OSError:
+                        text = ""
+                    for finding in _persona_quality_warnings(text):
+                        warnings.append((f"persona '{slug}'", f"persona_quality: {finding}"))
     # persona-seed-nudge: surface the SAME "no real persona" gap `new-milestone` nudges on, so
     # it is also visible on a plain `check`/`status` sweep — an INFO affirmation-of-absence,
     # never a WARN (measure-not-block; a project with no personas behaves exactly as before).
