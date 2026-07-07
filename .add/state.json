@@ -6141,16 +6141,16 @@
     },
     "bench-runner": {
       "title": "headless claude -p runner: sandboxed arm workspaces, WM sequencing with resume, timeout/retry, transcript+token capture",
-      "phase": "contract",
+      "phase": "tests",
       "gate": "none",
       "milestone": "add-bench",
       "depends_on": [],
       "created": "2026-07-07T09:42:11+00:00",
-      "updated": "2026-07-07T09:44:22+00:00"
+      "updated": "2026-07-07T10:01:24+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T09:44:22+00:00",
+  "updated": "2026-07-07T10:01:24+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

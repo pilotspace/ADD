@@ -3,7 +3,7 @@
 slug: bench-runner · created: 2026-07-07 · stage: mvp
 milestone: add-bench
 autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: contract   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
@@ -72,7 +72,7 @@ After:
 </after>
 Assumptions — lowest-confidence first:
 <assumptions>
-  ⚠ token-count sourcing from `claude -p`'s JSON stream output is assumed available and parseable per-turn — lowest confidence because this task has never actually invoked the real CLI (tests are hermetic-only, fake-agent seam) and the JSON schema of `claude -p` output is asserted from documentation/memory, not verified against this task's own evidence; if wrong: `tokens_total` silently under/over-counts, corrupting the `bench-scoring` task downstream and the pilot's cost metric.
+  - [x] token-count sourcing from `claude -p` JSON output — CONFIRMED by live spike 2026-07-07 (orchestrator ran `claude -p "Reply with exactly: ok" --output-format json`): the result event carries top-level `total_cost_usd`, `num_turns`, and `usage.{input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens}`; `--output-format stream-json` yields the per-event transcript (source for `time_to_first_edit` = first Edit/Write tool_use event). Contract pins these exact field names; fallback when unparseable: `tokens_total=0` + a loud mark in artifacts.
   - [ ] the startup-detection heuristic in `_oracle_lib.running_app` (10s deadline, 0.2s poll) is assumed "good enough to harden with a retry wrapper" rather than needing a full rewrite — confirm or deny once a real arm-built app is driven through it; if wrong, the fix is bigger than this task's Strategy assumes.
   - [ ] `claude -p`'s exit code reliably distinguishes "agent finished (successfully or not)" from "process crashed" for the retry-vs-timeout-vs-failed classification — assumed true from general CLI convention, not confirmed against this specific tool's behavior.
   - [ ] resuming from run-records alone (no separate ledger) is sufficient even if a WM is retried multiple times before succeeding — assumed the LAST written record per WM is authoritative and prior failed-attempt records for the same WM are either overwritten or clearly superseded, not accumulated as ambiguous siblings.
@@ -162,11 +162,15 @@ Scenario: a crash mid-write never leaves a partial record   # R5
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
 
 ```
-CLI run.py run --arm <name> --wm <1|2|3> [--timeout-s <float>] [--retries <int>] [--agent-cmd <argv...>]
+CLI run.py run --arm <name> --wm <1|2|3> [--timeout-s <float>=1800] [--retries <int>=1] [--agent-cmd <argv...>]
+  token/cost sourcing (pinned by live spike 2026-07-07): the final `claude -p --output-format stream-json` result event's
+  usage fields — tokens_total = usage.input_tokens + usage.cache_creation_input_tokens + usage.cache_read_input_tokens
+  + usage.output_tokens; cost_usd = total_cost_usd; time_to_first_edit = elapsed seconds to the first Edit|Write
+  tool_use event in the stream (fallback when unparseable: tokens_total=0 + artifacts["token_source"]="unparseable", loud)
   exit 0 -> writes benchmark/runs/<arm>/wm<n>/record.json { arm, wm, rep, status: "done"|"timeout"|"failed", metrics: {5 frozen keys}, artifacts: {workspace, transcript, oracle_report, resolved_pin?} }
   exit 2 -> "unknown_arm" | "invalid_arm_recipe" | "invalid_wm"   (no workspace/record created)
 
-CLI run.py resume --arm <name> [--timeout-s <float>] [--retries <int>] [--agent-cmd <argv...>]
+CLI run.py resume --arm <name> [--timeout-s <float>=1800] [--retries <int>=1] [--agent-cmd <argv...>]
   exit 0 -> sequences remaining WM(s) from last status="done", writes one record.json per WM run, same shape as `run`
   exit 2 -> "nothing_to_resume"   (no prior record.json under benchmark/runs/<arm>/)
 
@@ -181,9 +185,9 @@ Schema: no new persistent schema — reuses the frozen `benchmark/schema/run_rec
 ```
 
 Glossary deltas: **resolved pin** — the concrete, re-derivable reference (a git SHA) the runner records in `artifacts.resolved_pin` when an arm's TOML `pin` field is not itself reproducible (currently only the `add` arm); **fake-agent seam** — the `--agent-cmd`/`agent_cmd` injection point tests use to substitute a stdlib script for the real `claude -p` process, keeping the suite hermetic.
-Status: DRAFT
-Least-sure flag surfaced at freeze: [spec] — the token-count sourcing assumption (§1 ⚠, ranked #1: `claude -p` JSON-stream parseability, never verified against this task's own evidence) is the flag most likely to force a re-open of this contract's `metrics.tokens_total` sourcing once a real agent is driven through it.
-Reported: no — pending the human freeze decision (this bundle is the freeze-report raw material, rendered in this task's Return, not yet approved)
+Status: FROZEN @ v1 — approved by Tin Dang (2026-07-07)
+Least-sure flag surfaced at freeze: [spec] — with token sourcing spiked and pinned (live `claude -p` probe), the least-sure remaining assumption is exit-code classification: that `claude -p`'s exit code reliably separates "agent finished" from "process crashed" for the retry-vs-failed decision — asserted from CLI convention, not probed; if wrong: retries fire on completed-but-unhappy runs, inflating attempt counts in the record (cost: a targeted re-open of the retry-classification line, not the shape). Human approved at freeze after the ⚠1 spike (defaults 1800s/1 retry and add-arm-only resolve_pin decided by the human 2026-07-07).
+Reported: yes — freeze report rendered (SHAPE/FLAGS/decisions); ⚠1 resolved by live spike before approval
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
