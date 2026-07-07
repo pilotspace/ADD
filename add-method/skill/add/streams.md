@@ -49,7 +49,7 @@ tier hint: top → dag-scheduler, setup-run-mode; mid → the rest
 ```
 
 - **Wave = a fan-out batch.** Every task in a wave has all in-milestone deps PASS, so the whole
-  wave is spawnable at once — worktree isolation is the default for any spawn, not just a wave.
+  wave is spawnable at once — worktree isolation is the default for any spawn.
   Finish a wave, gate tasks PASS, then `add.py waves` again — the next wave is unblocked.
 - **Run the widest wave first** to hide the most build latency under human review latency.
 - **Spend your strongest model on the critical path.** Critical-path tasks gate the most
@@ -80,7 +80,7 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
 <constraints>
 - **You (orchestrator)** own all shared writes: `MILESTONE.md`, and every `add.py advance <slug>` /
   `add.py gate <outcome> <slug>` call. Always pass the explicit `<slug>` — **name the task every time** —
-  omitting it falls back to the single `active_task`, which races once more than one stream is live.
+  omitting it falls back to `active_task`, which races once >1 stream is live.
   Workers never run these.
 - **A worker** owns only its own `.add/tasks/<slug>/` — it builds `src/`, drives tests green,
   gathers evidence, and writes `SUMMARY.md` + OBSERVE deltas. It touches **no sibling stream and
@@ -174,8 +174,9 @@ decision points (bundle approval · escalated Verify) are NOT yours.
 
 <persona>
 Load `.add/personas/{{PERSONA_SLUG}}.md` (Identity→you · Critical Rules→constraints · Success
-Metrics→done-bar); no match → the generic default below. Portable body + per-runner spawn stubs:
-`templates/PROMPT.persona.md.tmpl` (one canonical body; Claude Code verified, the rest illustrative).
+Metrics→done-bar); no match → the generic default below; spawn stubs: `templates/PROMPT.persona.md.tmpl`.
+Select by frontmatter flow, matched to the worker's step (build -> flow: build ·
+verify refute-read -> flow: verify), then use-when; read ONE body.
 You are a {{DOMAIN}} engineer with 15 years building {{DOMAIN_DETAIL}}.
 A wrong-but-plausible result here is expensive; correctness over speed.
 Work step by step:

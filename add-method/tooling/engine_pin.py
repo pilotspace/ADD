@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "35e7f7014ebb184ffcc4859e1ade1634"  # re-aimed @ facet-adr-harvest (_facets loop in _stamp_adr_record — per-facet [AI] build ADR lines). prior: 78baf42b… @ persona-schema-hardening
-ENGINE_PKG_MD5 = "c29c2e05e429948813c2b0ba0d325da8"  # re-aimed @ persona-schema-hardening (_persona_quality_warnings + PERSONA_FLOW_VALUES). prior: a59f79d0… @ fastlane-ground-lite
+ENGINE_MD5 = "9be0267f079db834f525f80b32ac1c92"  # re-aimed @ compact-propose (compact-foundation --propose verb). prior: 420ae4bd… @ roster-status-line
+ENGINE_PKG_MD5 = "a00e1d366d7453dc578ba24764efcd6b"  # re-aimed @ verify-flow-value (PERSONA_FLOW_VALUES + "verify"). prior: c29c2e05… @ persona-schema-hardening

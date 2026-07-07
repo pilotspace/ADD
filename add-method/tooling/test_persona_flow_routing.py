@@ -29,7 +29,7 @@ PERSONAS = REPO / ".add" / "personas"
 # roster agent → the flow: value its "Become the persona" stanza must select first
 FLOW_OF = {"add-design": "design", "add-build": "build",
            "add-verify": "advisor", "add-advisor": "advisor"}
-KNOWN_FLOWS = {"design", "build", "advisor"}
+KNOWN_FLOWS = {"design", "build", "advisor", "verify"}  # verify added @ verify-flow-value (delta-drain, contract FROZEN @ v1) — pin migrated forward
 
 
 def _agent(name: str) -> str:

@@ -83,7 +83,8 @@ class QualityPredicateTest(unittest.TestCase):
     # §1 Must: flow values single-sourced from constants.PERSONA_FLOW_VALUES
     def test_flow_values_single_source(self):
         from add_engine import constants
-        self.assertEqual(constants.PERSONA_FLOW_VALUES, ("design", "build", "advisor"))
+        self.assertEqual(constants.PERSONA_FLOW_VALUES,
+                         ("design", "build", "advisor", "verify"))  # verify @ verify-flow-value v1
         self.assertIn("PERSONA_FLOW_VALUES", constants.__all__)
         src = inspect.getsource(add._persona_quality_warnings)
         self.assertIn("PERSONA_FLOW_VALUES", src,

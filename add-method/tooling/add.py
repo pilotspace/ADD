@@ -2112,6 +2112,13 @@ def cmd_status(args: argparse.Namespace) -> None:
     # never gates, never touches the --json branch (human-readable orientation surface only).
     if _personas_unseeded(root):
         print(f"persona : {PERSONA_HINT}")
+    else:
+        # persona roster (roster-status-line): one frontmatter-sourced line per REAL persona
+        # (slug · flow · vibe) so a selector never needs whole-roster body reads. Existence-
+        # gated: a persona-less project's output is byte-identical; advisory, never a gate.
+        print("personas:")
+        for _slug, _flow, _vibe in _persona_roster(root):
+            print(f"  - {_slug} [{_flow}] — {_vibe}")
     # wave resume hint — a live ledger outranks memory (streams.md "Wave ledger").
     # Existence-only: no open/read/parse, so the hint adds no IO failure path; a
     # non-file at the path is not a ledger. One line PER live ledger — more than
@@ -3185,6 +3192,11 @@ def cmd_check(args: argparse.Namespace) -> None:
     # never a WARN (measure-not-block; a project with no personas behaves exactly as before).
     if _personas_unseeded(root):
         infos.append(("personas", f"unseeded — {PERSONA_HINT}"))
+    else:
+        # roster-status-line: the same frontmatter roster as `status`, packed into one INFO
+        # row (vibe elided — check is a linter). Advisory; never a WARN, never a gate.
+        infos.append(("personas", "roster: " + " · ".join(
+            f"{s}[{fl}]" for s, fl, _ in _persona_roster(root))))
 
     # drift: a done milestone must have no unfinished tasks
     for mslug, m in milestones.items():
@@ -5891,6 +5903,32 @@ def _collect_open_spec_deltas(root: Path) -> list[dict]:
     return _collect_spec_deltas(root, "open")
 
 
+def _persona_roster(root: Path) -> list[tuple[str, str, str]]:
+    """(slug, flow, vibe) per REAL persona under `.add/personas/` — the frontmatter-only
+    roster read behind the status/check roster lines (roster-status-line): agents pick a
+    persona from this line instead of whole-roster body reads. Fail-soft like its
+    `_real_persona_slugs` sibling: a parse miss degrades that field to "?", never raises."""
+    rows = []
+    for slug in _real_persona_slugs(root):
+        flow = vibe = "?"
+        try:
+            text = (root / "personas" / f"{slug}.md").read_text(encoding="utf-8")
+            fm = re.match(r"\s*---\s*\n(.*?)\n---\s*\n", text, re.S)
+            body = fm.group(1) if fm else ""
+            m = re.search(r"(?m)^\s*flow\s*:\s*(.+)$", body)
+            if m:
+                flow = m.group(1).strip()
+            m = re.search(r"(?m)^\s*vibe\s*:\s*(.+)$", body)
+            if m:
+                vibe = m.group(1).strip()
+        except OSError:
+            pass
+        if vibe != "?" and len(vibe) > 70:
+            vibe = vibe[:70] + "…"
+        rows.append((slug, flow, "" if vibe == "?" else vibe))
+    return rows
+
+
 def _foundation_tail(root: Path) -> dict:
     """Count the un-compacted foundation tail — READ-ONLY facts for the status compaction cue.
 
@@ -7165,6 +7203,39 @@ def cmd_release(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def cmd_compact_foundation(args: argparse.Namespace) -> None:
+    """READ-ONLY preview of the compact-foundation.md ritual's "propose" step (compact-propose):
+    per foundation spec (PROJECT.md · CONVENTIONS.md) with >=1 live `[folded foundation-version N]`
+    stamp, render the would-be settled line with the per-file fv range. Writes NOTHING on any
+    path — the write stays the human-confirmed ritual. Bare `compact-foundation` exits 2
+    (propose_only): the verb has no other mode, so a habit-typed bare call can never drift
+    toward a write. Distinct from engine `add.py compact <slug>` (the archive recovery bundle)."""
+    if not args.propose:
+        print("compact-foundation: pass --propose — read-only preview only; the write is the "
+              "human ritual (compact-foundation.md)", file=sys.stderr)
+        raise SystemExit(2)
+    root = _require_root()
+    any_tail = False
+    for name in ("PROJECT.md", "CONVENTIONS.md"):
+        fpath = root / name
+        if not fpath.is_file():
+            continue
+        try:
+            text = fpath.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fvs = [int(m) for m in re.findall(r"\[folded foundation-version (\d+)\]", text)]
+        if not fvs:
+            continue
+        any_tail = True
+        lo, hi = min(fvs), max(fvs)
+        print(f"{name} : {len(fvs)} folded line(s) (fv{lo}-fv{hi}) -> propose: "
+              f"settled fv{lo}-fv{hi} — <theme — draft at confirm> (see git)")
+    if not any_tail:
+        print("nothing to propose — no folded tail above the settled line")
+    print("read-only preview — the write stays the human-confirmed ritual (compact-foundation.md)")
+
+
 def cmd_deltas(args: argparse.Namespace) -> None:
     """Read-only: report open competency lessons AND open SPEC deltas, SEPARATELY — plus, with
     `--carried`/`--all`, the carried (deferred, non-lossy) SPEC deltas as a RETRIEVAL surface.
@@ -7687,6 +7758,13 @@ def build_parser() -> argparse.ArgumentParser:
                           "(task -> decision digest; milestone -> DECIDE NEXT only; "
                           "bare -> the active task)")
     prp.set_defaults(func=cmd_report, _opt_positionals=("milestone", "task"))
+
+    pcf = sub.add_parser("compact-foundation",
+                         help="read-only preview of the compact-foundation.md ritual's propose "
+                              "step (--propose required; the write stays the human ritual)")
+    pcf.add_argument("--propose", action="store_true",
+                     help="render the per-spec would-be settled line for the un-compacted tail")
+    pcf.set_defaults(func=cmd_compact_foundation)
 
     pdt = sub.add_parser("deltas",
                          help="read-only report: open lessons learned grouped by competency")
