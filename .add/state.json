@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-runner",
+  "active_task": "bench-scoring",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6180,10 +6180,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-scoring": {
+      "title": "scorers for the 5 frozen metrics: oracle re-runs (regression_rate), rubric judge (spec_fidelity), token/cost ledger, context-rot slope, time-to-first-edit",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": "add-bench",
+      "depends_on": [],
+      "created": "2026-07-07T11:04:49+00:00",
+      "updated": "2026-07-07T11:13:39+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T11:04:39+00:00",
+  "updated": "2026-07-07T11:13:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7252,7 +7261,7 @@
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
-    "add-bench": "bench-runner"
+    "add-bench": "bench-scoring"
   },
   "todos": [
     {
