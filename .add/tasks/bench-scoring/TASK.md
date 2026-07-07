@@ -2,9 +2,8 @@
 
 slug: bench-scoring · created: 2026-07-07 · stage: mvp
 milestone: add-bench
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -79,8 +78,6 @@ Assumptions — lowest-confidence first:
   - [ ] the rubric judge's real invocation shape (a `claude -p` prompt template, its exact scoring rubric text, and where the rubric prompt template file lives under `benchmark/`) is deferred to BUILD as an implementation detail, not frozen in §3 beyond the `judge_cmd` seam signature — confirm this is an acceptable looseness for a "preferred, not enforced" Strategy, not a contract gap.
   - [ ] `pytest -m regression`'s exit/collection behavior when the WM3 workspace app is unreachable (vs a genuine test failure) is assumed distinguishable via pytest's own exit codes (5 = no tests collected, 2 = interrupted) — not yet probed against a live fixture; if wrong, "regression_run_failed" may fire on transient app-not-up conditions that a retry would have cleared.
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -197,8 +194,6 @@ Scenario: regression subprocess itself errors   # R7 regression_run_failed
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -250,7 +245,6 @@ Glossary deltas: **scored record** — a record.json whose 5 metrics have been o
 Status: FROZEN @ v1 — approved by Tin Dang (2026-07-07; all 3 freeze questions answered: write-back approved · 0.0-by-definition pre-WM3 approved · judge prompt text deferred to build)
 Least-sure flag surfaced at freeze: [contract] — the write-back-into-record.json vs sidecar decision (§1 ⚠1) is the single biggest unresolved shape question: nothing in MILESTONE.md or bench-runner's frozen §3 explicitly authorizes a SECOND writer to mutate a record.json that has already passed `validate()` once. If the human instead wants an append-only/immutable run-record (sidecar `score.json`, or a `scored: true` flag file), this whole §3 internal surface (`score_record`/`write_record_atomic` reuse) re-opens — cost: a re-cross to CONTRACT for this task only; the runner/schema task themselves stay untouched either way since `write_record_atomic` is reused as-is, not modified.
 Reported: yes — freeze report (SHAPE/FLAGS/lead recommendation) rendered to the human; approved with both ⚠ flags explicitly accepted (write-back, 0.0-by-definition).
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -279,9 +273,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `./tests/` `benchmark/tests/` `benchmark/tests/test_workload_prompts.py` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -310,76 +301,86 @@ Safety rule (feature-specific): a scored write is all-or-nothing — `score_reco
 Code lives in: `benchmark/`
 Constraints: do NOT change any test's assertions except the one named M10 tightening (`test_prompts_identical_contract_and_bait`, explicitly in-scope per the absorbed spec delta) or the frozen contract; allow-list packages only (stdlib + pytest, already a project dependency); ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
-
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — 59/59 green (`uv run --with pytest pytest benchmark/tests -q` → "59 passed in 15.74s"); `python3 .add/tooling/add.py check` → "611 passed, 0 failed (85 warnings)"
+- [x] coverage did not decrease — score.py 96% / judge.py 84% (93% combined vs 90% target), per build report; no coverage regression in touched files observed during this review
+- [x] no test or contract was altered during build — `git diff HEAD~1 -- benchmark/tests/test_workload_prompts.py` shows exactly the M10-authorized change (loose 3-way or-chain → exact `duration_minutes`/`end_time` assertions); §3 CONTRACT block unchanged since freeze (Status: FROZEN @ v1, no diff)
+- [x] the green was EARNED, not gamed — see Refute-read verdict below: EARNED
+- [x] concurrency / timing of the risky operation is safe (with one noted RESIDUE — see Advisor lens 2 below)
+- [x] no exposed secrets, injection openings, or unexpected dependencies — `grep -rn "shell=True"` over `benchmark/` = 0 hits; all subprocess calls are list-argv (`judge.py:71`, `score.py:81`); no new third-party deps (stdlib + pytest only)
+- [x] layering & dependencies follow CONVENTIONS.md — score/judge sit above runner/schema, never modify them; judge.py mirrors runner/agent.py's injectable-argv seam shape exactly
+- [ ] a person reviewed and approved the change — pending human gate (this is a proposed recommendation, not the recorded gate)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] `python benchmark/run.py score --arm add --wm 1` against a fixture "done" record rewrites metrics.spec_fidelity/regression_rate(=0.0)/context_rot_slope(=0.0) while leaving tokens_total/cost_usd/time_to_first_edit byte-identical — confirmed by diffing record.json before/after
-- [ ] `score --arm add --wm 3` against fixture wm1/wm2/wm3 records with known spec_fidelity values produces the exact least-squares slope by hand-calculation — confirmed by a direct numeric assertion in test output
-- [ ] `score --arm add --wm 3` against a fixture with N of the 10 regression-marked tests failing produces regression_rate == N/10 exactly — confirmed by the printed record.json's metrics field
-- [ ] every one of the 7 Reject codes is reachable and, when triggered, leaves the on-disk record.json (if any) byte-unchanged — confirmed by a before/after hash comparison per rejection test
-- [ ] no test in the suite spawns the literal `claude` binary — confirmed by grepping test output/process list during the run, or by a monkeypatched subprocess assertion
-- [ ] `test_prompts_identical_contract_and_bait` fails if wm3/PROMPT.md's duration_minutes->end_time bait language is stripped from a copy — confirmed by a mutation check in the test itself
-- [ ] a scored record.json still passes `benchmark/schema/run_record.py:validate()` unmodified — confirmed by re-importing and calling validate() on the written file in a test
+- [x] `python benchmark/run.py score --arm add --wm 1` against a fixture "done" record rewrites metrics.spec_fidelity/regression_rate(=0.0)/context_rot_slope(=0.0) while leaving tokens_total/cost_usd/time_to_first_edit byte-identical — confirmed via `test_validates_tokens_cost_first_edit_unchanged` (score.py:162-165 validates-only, never recomputes those 3 keys) — re-ran green
+- [x] `score --arm add --wm 3` against fixture wm1/wm2/wm3 records with known spec_fidelity values produces the exact least-squares slope by hand-calculation — hand-computed (1,0.9)(2,0.75)(3,0.6): x̄=2, ȳ=0.75, numerator=(-1)(0.15)+(0)(0)+(1)(-0.15)=-0.3, denominator=1+0+1=2, slope=-0.15 — matches `test_context_rot_slope_computed_at_wm3`'s asserted `pytest.approx(-0.15)` exactly; `compute_context_rot_slope` (score.py:56-69) is a pure function, verified by direct read
+- [x] `score --arm add --wm 3` against a fixture with N of the 10 regression-marked tests failing produces regression_rate == N/10 exactly — re-ran `test_regression_rate_computed_at_wm3` standalone (`pytest -k regression_rate_computed_at_wm3 -v` → 1 passed); this is a REAL unmocked `pytest -m regression` subprocess against a real fixture HTTP app (score.py:_APP_PY), not stubbed — asserts `regression_rate == pytest.approx(0.2)` from a genuine wm1/wm2 auth-rule conflict (not an injected defect), matching the build report's claim
+- [x] every one of the 7 Reject codes is reachable and, when triggered, leaves the on-disk record.json (if any) byte-unchanged — confirmed by reading `test_score.py`'s `before = record_path.read_bytes()` / `assert record_path.read_bytes() == before` pattern present at lines 242/247 and 472/477, and equivalently for each Reject-path test (R1/R3/R4/R5/R6/R7 + M1/R2)
+- [x] no test in the suite spawns the literal `claude` binary — `test_spec_fidelity_via_fake_judge` monkeypatches `judge.subprocess.run` as a spy and asserts `"claude" not in argv` for every captured call; `grep -rn '"claude"' benchmark/tests/` shows only this assertion, never an actual invocation
+- [x] `test_prompts_identical_contract_and_bait` fails if wm3/PROMPT.md's duration_minutes->end_time bait language is stripped from a copy — confirmed: `test_wm3_bait_assertion_is_exact` (test_score.py:437+) builds a stripped copy (`.replace("duration_minutes", "").replace("end_time", "")`) and the surrounding test asserts a failure on that copy — mutation-style self-check present
+- [x] a scored record.json still passes `benchmark/schema/run_record.py:validate()` unmodified — `score_record` (score.py:197-206) calls the frozen `validate()` on the complete 5-key dict before every write; `test_scored_record_still_validates` covers this directly
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — `score.score_record` is called from `run.py`'s new `score` subparser (confirmed via `git diff --stat` showing `benchmark/run.py | 120 ++++`); `judge.judge_fidelity` is called from `score_record` (score.py:181); `compute_regression_rate`/`compute_context_rot_slope`/`read_prior_wm_record` are all called from `score_record`'s wm==3 branch (score.py:152-155, 185-186) — no orphaned new symbol found
+- [x] DEAD-CODE (code) — every new public function in score.py/judge.py (`build_judge_argv`, `default_judge_cmd`, `build_rubric_prompt`, `judge_fidelity`, `compute_context_rot_slope`, `compute_regression_rate`, `read_prior_wm_record`, `score_record`) is exercised by at least one test in test_score.py per the §4 test_plan mapping; none unused
+- [ ] SEMANTIC (prose / non-code) — N/A, this task is code not prose (test_workload_prompts.py's tightened prose assertion covered under Build expectations above)
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
-> Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by direct Read of `benchmark/score.py` (score_record, compute_context_rot_slope, compute_regression_rate, read_prior_wm_record all present at the cited signatures) and `benchmark/judge.py` (build_judge_argv, judge_fidelity present); `RunRecord`/`validate`/`BenchError`/`write_record_atomic` imports resolve cleanly (score.py:20-23)
+- [x] no anchor moved/renamed since Ground SHA (8668859) — this is the FIRST commit introducing score.py/judge.py, so no drift window existed
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self (add-verify, tdd-verifier persona) · adversarially checked:
+  - judge_fidelity: probed for silent-default behavior — confirmed BenchError raised (not a masked 0.0) on empty stdout, non-float stdout, and out-of-range/NaN values (judge.py:83-92); no fallback path found
+  - compute_context_rot_slope: hand-computed the M6 fixture's slope independently (-0.15) and it matches the test's asserted value exactly — not a vacuous `assert result == result` pattern; WM1/WM2's 0.0-by-definition path (score.py:187-191) is a structurally separate unconditional branch, never sharing code with the Reject-raise path, so a real failure could not be silently coerced to the same 0.0
+  - compute_regression_rate: re-ran `test_regression_rate_computed_at_wm3` in isolation — confirmed it is a genuine subprocess run against a real fixture app producing a real 2/10 failure ratio (not asserted against a monkeypatched/stubbed subprocess as M4's real path), while R7 correctly uses a monkeypatch only for the unreproducible collection-error path — the two are not conflated
+  - write-back byte-identity: read the exact `before/after` byte-comparison assertions in test_score.py rather than trusting the build report's prose claim
+  - M10: diffed the actual test file change against the frozen bundle's exact M10 wording — confirms ONLY that one assertion changed, no other test weakened
+- No stubbed-away logic, no overfit-to-fixture-only assertion, no vacuous pass found. Full suite reruns green from a fresh invocation (not just relying on the build's earlier claim).
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self (add-verify)
+1. Security: CLEAR — no `shell=True` anywhere in benchmark/; both new subprocess call sites (judge.py:71, score.py:81) use list-form argv exclusively; the judge's rubric prompt is passed as a single argv element (never interpolated into a shell string), so no argv/shell injection surface from PROMPT.md content or arbitrary rubric text; no secrets touched; no new third-party dependency (stdlib + pytest only, matching the allow-list constraint)
+2. Concurrency: RESIDUE — `write_record_atomic`'s temp-file+`os.replace` is atomic PER WRITE (no corrupt/partial file possible), but there is no lock guarding two concurrent `score` invocations against the SAME record.json: a second writer racing the first would read-modify-write on a stale in-memory copy and the last `os.replace` wins, silently dropping the first writer's computed metrics (no error, no BenchError, no detection). This is not a new class of bug (bench-runner's `execute_wm` has the same single-writer assumption), and the CLI's a-single-operator/pilot-scale usage (5 arms × 3 WMs × 1 rep, no stated concurrent invocation) makes actual contention unlikely — but it is real, unmitigated, and undocumented as a constraint anywhere in §3. Recommend: note this as a known limitation in Observe/§7, not a blocking gap for this pilot-scale task.
+3. Architecture: CLEAR — score/judge sit strictly above runner/schema (import direction: score.py imports from runner.records and schema.run_record, never the reverse); no new schema/ledger; judge.py mirrors runner/agent.py's seam shape exactly per the Honors pattern; stdlib-first honored throughout
+Verdict: PASS (with concurrency RESIDUE noted, non-blocking at pilot scale)
+Residue: concurrency — no second-writer lock on record.json across concurrent `score` invocations (see lens 2); recommend documenting as an operational constraint (single-operator CLI use) rather than a code fix, since bench-runner's own writer has the identical assumption and no scenario in §2 covers concurrent scoring
+Binding: advisory — this is not a security/mechanical-sensitivity finding, and no domain sensitivity classes are yet declared (per `add.py check`'s `sensitivity_classes_unset` warning, a pre-existing project-wide gap, not specific to this task)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — this Verify report is the gate report, rendered before recording
+Outcome: PASS
+Reviewed by: add-verify (tdd-verifier persona) · date: 2026-07-07 — recommendation only; the human is the final approver of this recorded outcome (per boundary: MUST NOT auto-run `add.py gate`)
 
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
-Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
+Watch (reuse scenarios as monitors): `unparseable_judge_output` rate during the live pilot (each one = a judge-prompt robustness problem) · `regression_run_failed` occurrences (an oracle infrastructure failure, distinct from a real regression) · **operational constraint: `score` assumes a single operator — two concurrent score invocations on the same record.json are last-write-wins with no lock/detection (Advisor concurrency residue, acceptable at pilot scale; revisit before any parallel scale-up)** · WM3 regression-rate spread across arms (if every arm scores ~0 or ~1, the bait is mis-tuned).
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose **write-back into record.json**; rejected sidecar `score.json` per WM (rejected: `validate()`'s exact metrics-key match means a sidecar would either duplicate the same 5-key schema — two files that can silently drift — or force a second schema that MILESTONE.md never asked for; write-back keeps ONE source of truth and reuses the already-frozen atomic writer verbatim) · a single `report`-owned cross-WM aggregator instead of per-WM `score` (rejected: MILESTONE.md's task stub explicitly separates `score` from `report`, and `context_rot_slope`/`regression_rate` needing prior-WM data is handled by reading sibling record.json files, not by merging the two tasks).
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang (2026-07-07; all 3 freeze questions answered: write-back approved · 0.0-by-definition pre-WM3 approved · judge prompt text deferred to build))
+- [AI] build — approach: stdlib-first fail-loud validation pipeline, matching the methodology-engine-dev discipline already established in `run_record.py`/`runner/core.py` — every eligibility check is a guard clause raising a named `BenchError` before any computation runs, so a Reject case never touches disk. The two genuinely-novel algorithms (least-squares slope, regression pass/fail ratio) are kept as pure functions with no I/O, tested in isolation before the orchestrator wires them to disk reads.
+- [AI] build — data strategy: no new schema — read-modify-write over the frozen `RunRecord`/`validate()` shape via `write_record_atomic` (reused, not reimplemented); WM3's cross-record reads (`read_prior_wm_record`) are plain file reads of sibling `record.json`s, no new index/ledger.
+- [AI] build — pattern: fixture-and-oracle pattern (bench-scaffold's own Observe-block pattern) extended one step further — score is the oracle-suite's CONSUMER, turning oracle pass/fail + judge output into the frozen metric numbers; the injectable-command seam explicitly extends `runner/agent.py`'s fake-agent pattern to a second subprocess boundary (the judge).
+- [AI] build — optimization stance: correctness-first, no perf budget — pilot scale (5 arms × 3 WMs × 1 rep), same stance bench-scaffold/bench-runner already declared. ⚠ least-trusted facet: the rubric judge's real prompt/scoring text is an implementation detail deferred past this freeze (§1 assumption 2) — trusted least because a badly-worded rubric could produce spec_fidelity numbers that don't actually track prompt-requirement coverage, silently undermining the whole pilot's headline metric.
+- [AI] build — strategy used: as planned, batches 1-4 in order (judge.py -> score.py pure helpers -> score_record orchestrator -> run.py CLI wiring), with batch 5 (the M10 prompt-test tightening) done alongside batch 1 rather than last, since it was independent and smallest — no blocking dependency either way. RED was confirmed for the right reason (ImportError on `benchmark.score`, not a broken harness) by temporarily moving score.py/judge.py aside and reverting run.py's CLI wiring before the first pytest run, then restoring both. compute_regression_rate's "collection error" Reject path (R7) is exercised via a monkeypatched subprocess.run (returncode=2) rather than a genuinely broken oracle collection, since the frozen oracle files can't be perturbed to produce one hermetically; M4's "2 of 10 regression tests fail" is instead a real, unmocked `pytest -m regression` subprocess run against a from-scratch minimal stdlib HTTP fixture app (benchmark/tests/test_score.py's `_APP_PY`) whose only two natural failures are a genuine, inherent conflict already latent in the frozen wm1 vs wm2 oracle re-exports (WM1's `test_list_bookings`/`test_update_and_delete_booking` assume anonymous access; WM2's auth rules require it) — not an artificially injected defect.
+- [AI] verify — gate PASS (reviewed by add-verify (tdd-verifier persona))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
+- [SPEC · seeded] single-operator/no-concurrent-score constraint documented in Watch above; formalize (a lock or a scored-by stamp) before any multi-rep parallel scale-up (evidence: verify Advisor lens 2 — last-write-wins on record.json)
+- [SPEC · open] the real rubric-judge prompt text (deferred to build, shipped as a first cut) has never met a real arm output — bench-pilot-report should human-spot-check 2-3 judge verdicts against the workspaces before trusting spec_fidelity (evidence: judge seam is hermetic-tested only)
+- [SPEC · open] `add.py check` emits rule_coverage_gap for this task's 7 Reject codes despite §4 listing covers: R1..R7 — likely a covers:-tag format mismatch in the audit parser, needs an engine-side look (evidence: verify 💭 note; warnings, not failures)
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [TDD · open] the strongest scorer test was the un-mocked one: a real `pytest -m regression` subprocess against a real fixture app surfaced a genuine WM1-vs-WM2 auth conflict no mock would have shown (evidence: M4 scenario, 2/10 real failures)
+- [SDD · open] absorbing a carried delta INTO a frozen bundle (M10's exact-assertion tightening named in §1/§2/§5) is the clean way to authorize a pre-existing-test edit — no re-cross needed because the freeze itself covered it (evidence: verify's git-diff scope check passed)
+
