@@ -5558,12 +5558,12 @@
     },
     "facet-adr-harvest": {
       "title": "Per-facet ADR harvest + Watch cites the Optimization stance",
-      "phase": "verify",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "build-strategy-facets",
       "depends_on": [],
       "created": "2026-07-07T05:09:26+00:00",
-      "updated": "2026-07-07T07:33:18+00:00",
+      "updated": "2026-07-07T07:56:45+00:00",
       "flag_verified": true,
       "tripwire": {
         "contract_md5": "329813bbfe2b1b34f73850fc4854460f",
@@ -5910,12 +5910,32 @@
           "add-method/.add/tooling/",
           "add-method/src/add_method/_bundled/tooling/"
         ],
-        "snapshot_md5": "da3801620bc3f539966fc6228c036bb4"
+        "snapshot_md5": "b6b738887422927645418adc7f1c4423"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-07T07:55:03+00:00",
+            "reason": "scope_violation: task 'facet-adr-harvest' touched outside its declared \u00a75 Scope \u2014 tmp/facet-adr-harvest.txt (1 total)",
+            "source": "scope"
+          },
+          {
+            "at": "2026-07-07T07:56:03+00:00",
+            "reason": "scope_violation: task 'facet-adr-harvest' touched outside its declared \u00a75 Scope \u2014 tmp/strategy-facet-block.txt (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T07:33:18+00:00",
+  "updated": "2026-07-07T07:57:47+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -6144,14 +6164,19 @@
       "title": "Faceted \u00a75 build strategy",
       "goal": "",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-07T03:57:31+00:00",
-      "updated": "2026-07-07T03:58:21+00:00",
+      "updated": "2026-07-07T07:57:47+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-07T03:58:21+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"

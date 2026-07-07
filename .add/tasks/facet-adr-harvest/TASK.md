@@ -2,9 +2,8 @@
 
 slug: facet-adr-harvest · created: 2026-07-07 · stage: mvp · sensitivity: architecture
 milestone: build-strategy-facets
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -58,8 +57,6 @@ Assumptions — lowest-confidence first:
   ⚠ FILLED-is-diverged is the right harvest trigger (vs diffing plan-vs-actual) — lowest confidence because a facet may be filled at tests->build and followed exactly; if wrong the ADR gains true-but-planned lines, cost = mild ADR noise, no data loss (strategy-used still records divergence)
   - [x] the "<" prefix placeholder rule matches all four facet template hints — confirmed: all start "<the "/"<WHAT " per task 1's frozen lines
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -119,8 +116,6 @@ Scenario: no cross-section bleed   # R:cross_section_bleed
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -149,7 +144,6 @@ Glossary deltas: none (uses task 1's "Strategy facet")
 Status: FROZEN @ v1 — approved by Tin (2026-07-07)
 Reported: yes — banner/ARC/SHAPE/FLAGS rendered before the freeze
 Least-sure flag surfaced at freeze: [spec] filled-is-harvested as the trigger — a facet followed exactly as planned still earns its ADR line; if wrong the cost is mild ADR noise (true-but-planned lines), no data loss since strategy-used still records divergence
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -169,9 +163,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/` test_facet_adr_harvest.py · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -187,65 +178,61 @@ Optimization stance: correctness-first, no budget — the stamp runs once per ta
 Persona (required): methodology-engine-dev
 Spawn isolation (default): shared tree — orchestrator builds inline (sequential mode, single writer)
 Known-problem fixes: label bleed from prose → harvest bodies[5] only + line-start-anchored _capture_wrapped · placeholder false-positive on values quoting tags → leading-"<" rule only · stale-pin dishonesty → re-pin from a fresh md5 of the BUILT add.py, diffed vs main, trio synced before pinning · tmpl growth → Watch line delta ≈ +60 B, ceiling 11400 has ~68 B headroom (11332 now) — verify before copy
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: as planned, with two deviations — the Watch line overshot the 11400 ceiling by 12 B (headroom estimate missed the em-dash bytes), reclaimed from the unpinned Spawn-isolation hint rather than touching the frozen line; and the full suite exposed two fresh-checkout/anchor ripples (gitignored-dogfood twin absent in a clean clone → skip-tolerance per ba09498; SEAMS.md pin re-drifted under this task's own +20 lines → re-pinned 4786), both healed via the tests->build re-cross convention
 Safety rule (feature-specific): the harvest must never block or fail a gate — every new code path stays inside _stamp_adr_record's existing try/except shield; frozen §3 of ANY task is never parsed for facets (facets live in §5 only)
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — full tooling suite 3141/3141 OK post-commit (incl. the fresh-checkout clone test and the seams anchor test)
+- [x] coverage did not decrease — 9 new tests added, none removed; adjacent ADR/repin/lean suites green
+- [x] no test or contract was altered during build — EXCEPT two disclosed heals re-anchored by re-crossing tests->build: fresh-checkout skip-tolerance in the two new twin-parity suites (gitignored dogfood twin absent on a clean clone, ba09498 precedent) and the SEAMS.md line pin 4766→4786 (this task's own upstream growth); frozen §3 untouched since v1
+- [x] the green was EARNED — refute-read by add-verify agent (below): mutation probe on a scratch copy redded the placeholder-rule tests; the never-blocks-gate mock traced to the real shielded path
+- [x] concurrency / timing safe — single-pass stamp at gate time, atomic write (_atomic_write), no shared state
+- [x] no exposed secrets, injection openings, or unexpected dependencies — zero packages; harvest renders only text already present in the task file
+- [x] layering follows CONVENTIONS.md — harvest-not-author preserved (every line sourced from an existing §5 stamp); NO-EXEC; trio byte-copied; honest re-pin
+- [ ] a person reviewed and approved the change — THIS gate (sensitivity: architecture -> human decision)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] THIS task's own §7 Decisions block, stamped at done, shows one [AI] line per facet I filled in §5 above (approach · data strategy · pattern · optimization stance) — confirmed by reading this file after the gate (self-dogfood)
-- [ ] a legacy done task (e.g. strategy-facet-block) re-stamps byte-identical — confirmed by diffing its ADR block before/after a re-stamp in a scratch copy
-- [ ] the canon TASK.md.tmpl §7 Watch line names the Optimization stance and all 4 twins hash to one md5 ≤ 11400 B — confirmed by md5 sweep + byte count
-- [ ] git diff of add.py shows ONLY the _strategy()/FACETS change; new ENGINE_MD5 equals the fresh md5 of the built file — confirmed by md5 add.py vs engine_pin.py on the branch
+- [x] THIS task's own §7 Decisions block will show one [AI] line per facet filled in §5 above — the mechanism is proven by test_filled_facets_each_earn_a_line on the same engine; final self-dogfood reading happens right after the gate stamps (confirmed post-gate, see §7)
+- [x] a legacy done task re-stamps byte-identical — confirmed by test_legacy_collapse_byte_identical + the grandfather placeholder rule (a resolved block is a no-op; strategy-facet-block's block is already resolved so it can never be re-written)
+- [x] the canon TASK.md.tmpl §7 Watch line names the Optimization stance, 4 twins one md5, 11379 B ≤ 11400 — confirmed by md5 sweep + byte count (mine and the refute-read's, independently)
+- [x] git diff main..HEAD of add.py is ONLY the _facets addition (+20/-0); ENGINE_MD5 35e7f701 equals the fresh md5 of all three built copies — confirmed by direct md5 on the branch
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — `_facets` is called at the harvest gather (add.py:532) and consumed in the `lines` render (add.py:541); confirmed by the refute-read's trace + the green M1/M2 tests
+- [x] DEAD-CODE (code) — no new unused symbol: `_FACETS`/`_facets` both referenced; nothing else added
+- [x] SEMANTIC (prose / non-code) — read in full: the Watch line (contract-byte-exact) and the trimmed Spawn-isolation hint (meaning preserved: worktree default + stated-reason exception + seam name all retained)
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 cites resolves: _stamp_adr_record/_strategy/_capture_wrapped/_facets in the current add.py; ENGINE_MD5/ENGINE_PKG_MD5 in engine_pin.py; the four facet labels in the template; the Watch line present
+- [x] anchors that moved since Ground SHA, named: _declared_scope drifted 4766→4786 under this task's own +20 lines (SEAMS.md re-pinned, disclosed); ENGINE_MD5 78baf42b→35e7f701 (the deliberate re-pin)
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: add-verify agent a69363da5d75f0a8d (persona tdd-verifier) · adversarially checked: mock reachability of the never-blocks-gate shield (traced to the real path) · mutation probe on a scratch copy (placeholder-rule removal redded 2 tests for the right reason; repo restored, git clean) · legacy re-stamp via real synthetic tasks · ENGINE_MD5 re-derived on all 3 copies · Watch line byte-exact + twins + ceiling · 38/38 guard+adjacent suites
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: add-verify agent a69363da5d75f0a8d
+1. Security: CLEAR — harvest renders only text already in the task file; NO-EXEC; no new input surface
+2. Concurrency: CLEAR — single-pass stamp, atomic write, no shared mutable state
+3. Architecture: CLEAR — harvest-not-author invariant preserved; bodies[5]-only sourcing structural; trio parity + honest re-pin
+Verdict: PASS
+Residue: none
+Binding: advisory — architecture
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Reported: yes — gate report (banner/ARC/SUMMARY/FLAGS/EVIDENCE) rendered to Tin before any outcome is recorded
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reviewed by: Tin · date: 2026-07-07
 
 ---
 
@@ -254,11 +241,18 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose extend _stamp_adr_record to emit one [AI] build line per FILLED facet, keeping the strategy-used line; rejected merge facets INTO the single strategy-used line (loses per-facet ADR granularity, the milestone's point) · harvest at verify instead of done (changes the stamp lifecycle for no gain)
+- [human] freeze — froze §3 @ v1 (approved by Tin (2026-07-07))
+- [AI] build — approach: extend the existing single-pass ADR stamp with a declarative FACETS tuple loop — the same _capture_wrapped + placeholder-prefix idiom the harvester already trusts, no new parsing machinery; fits because the harvester's domain is faithful line-capture, and reuse keeps the failure surface inside the one existing try/except
+- [AI] build — data strategy: FACETS as an ordered tuple of (label, key) pairs; harvest reads bodies[5] only (the §-body dict the stamp already builds — agrees with the §3 Schema line's add.py-trio scope); output is ordered ADR lines, facet lines strictly before the strategy-used line
+- [AI] build — pattern: faithful-capture + collapse-to-legacy (§0 Honors: only a LEADING placeholder degrades; harvest-never-blocks-the-gate try/except; additive behavior so done tasks re-stamp byte-identical)
+- [AI] build — optimization stance: correctness-first, no budget — the stamp runs once per task at done, performance is immaterial; ⚠ least-trusted facet: Data strategy (the bodies[5]-only sourcing is asserted by R:cross_section_bleed, the risk I most want the tests to catch)
+- [AI] build — strategy used: as planned, with two deviations — the Watch line overshot the 11400 ceiling by 12 B (headroom estimate missed the em-dash bytes), reclaimed from the unpinned Spawn-isolation hint rather than touching the frozen line; and the full suite exposed two fresh-checkout/anchor ripples (gitignored-dogfood twin absent in a clean clone → skip-tolerance per ba09498; SEAMS.md pin re-drifted under this task's own +20 lines → re-pinned 4786), both healed via the tests->build re-cross convention
+- [AI] verify — gate PASS (reviewed by Tin)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
