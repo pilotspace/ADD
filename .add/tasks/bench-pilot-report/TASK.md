@@ -2,9 +2,8 @@
 
 slug: bench-pilot-report · created: 2026-07-07 · stage: mvp
 milestone: add-bench
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -85,8 +84,6 @@ Assumptions — lowest-confidence first:
   - [x] DECIDED at freeze (human, 2026-07-07): attest writes a STRUCTURED audit record `{reviewer, date, note}` (serialized into artifacts["spec_fidelity_audit"]), not a free-text string — was: free-text `--note` assumed sufficient
   - [ ] halting an arm's sequence on the first non-"done" WM (M8) — rather than attempting WM2/WM3 anyway against a stale/incomplete workspace to at least gather partial metrics — is assumed the right pilot-report tradeoff (a clean halt vs. attempting a probably-meaningless run); if wrong, the report would need a way to distinguish "never attempted" from "attempted against a broken predecessor," which M8/M1's "not run" rendering does not currently separate.
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -198,8 +195,6 @@ Scenario: resolve_setup_steps rejects a nonexistent repo_root   # R7 invalid_rep
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -263,7 +258,7 @@ Schema: no new persistent schema — report reads the frozen RunRecord/validate 
 Glossary deltas: **spot-checked cell** — an arm×WM record.json whose `artifacts["spec_fidelity_audit"]` key is present, meaning a human has manually compared the judge's `spec_fidelity` verdict against the real workspace/transcript at least once; **provisioned arm** — an `Arm` returned by `resolve_setup_steps`, whose `setup_steps` have every `{REPO_ROOT}` token resolved to a concrete filesystem path, ready for `execute_wm`.
 Status: FROZEN @ v1 — approved by Tin Dang (2026-07-07; provisioning spiked live pre-freeze; decisions: 3 per-WM tables + a headline WM3 summary table on top · attest writes a structured {reviewer, date, note} audit record · the LIVE pilot needs a final human go/no-go after build-verify, never auto-fires)
 Reported: yes — freeze report + live-pilot cost envelope (~15 claude -p runs + 15 judge calls, ~$50–300) rendered; ⚠1 resolved by spike before approval
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
+
 Least-sure flag surfaced at freeze: [spec] with provisioning spiked and confirmed (uv venv + editable install + `pilotspace-add init --yes --non-interactive`, live 2026-07-07), the least-sure remaining assumption is judge-verdict quality: the rubric judge's `spec_fidelity` scores have never met a real arm output, so the pilot's headline metric could be systematically miscalibrated across arms — mitigated by the frozen attest flow (report renders `(unaudited)` until a structured human spot-check exists) and by the human go/no-go before any live spend; if wrong: the rubric prompt iterates at observe, the contract shape (judge seam, attest, report) survives.
 
 ---
@@ -294,9 +289,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `benchmark/tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -326,8 +318,6 @@ Strategy actually used: as planned, batches 1-7 in the declared order, with one 
 Safety rule (feature-specific): a `run_pilot` sequence is per-arm all-or-nothing-forward: once a WM's `execute_wm` result is not `"done"`, no further WM in that arm's sequence is ever attempted (no partial/inconsistent workspace is ever built upon) — but a halt on one arm never blocks or corrupts any other arm's independent sequence.
 Code lives in: `benchmark/`
 Constraints: do NOT change any test or the contract; allow-list packages only (stdlib + pytest + `uv` as an external CLI tool, not a Python dependency); ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -388,8 +378,6 @@ Outcome: PASS
 Reviewed by: add-verify (self) · date: 2026-07-07
 Note: the human gate (checkbox "a person reviewed and approved the change") and the LIVE PILOT go/no-go remain open — this PASS covers the BUILD (hermetic suite + provisioning-in-isolation), not the live 5×3×1 spend, which is its own separate §6/§7 VERIFY/OBSERVE activity per the frozen contract's own note.
 
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
-
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
@@ -397,7 +385,14 @@ Note: the human gate (checkbox "a person reviewed and approved the change") and 
 Watch (reuse scenarios as monitors): per-arm setup-step failure rate during the live pilot (a high `add`-arm setup failure rate = the ⚠ provisioning assumption was wrong, not an arm defect) · `(unaudited)` cell count in the rendered report after the pilot (should shrink toward 2-3 spot-checked cells per the absorbed delta, never stay at 15/15) · arms halted mid-sequence (a non-"done" WM1/WM2 for a competitor arm may be a fairness/setup problem, not a real arm defect) · `rule_coverage_gap` warning on this task's own Reject `covers:` tags (routed, not absorbed — watch whether it recurs; if so, escalate to the engine-side task named in §0).
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose <unrecorded>
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang (2026-07-07; provisioning spiked live pre-freeze; decisions: 3 per-WM tables + a headline WM3 summary table on top · attest writes a structured {reviewer, date, note} audit record · the LIVE pilot needs a final human go/no-go after build-verify, never auto-fires))
+- [AI] build — approach: same stdlib-first, fail-loud, guard-clause-before-any-I/O discipline `run_record.py`/`runner/core.py`/`score.py` already established — every new Reject case is an early `BenchError` raise before any disk write, matching `score_record`'s "compute everything into an in-memory dict, validate once, write once" all-or-nothing shape, now applied to `attest_record` (single-field update) and `run_pilot` (multi-WM sequencing halted on the first non-"done" result rather than continuing into an inconsistent state).
+- [AI] build — data strategy: no new schema — `report` is a third READER of the frozen `RunRecord`/`validate` shape (after runner, score); `attest` is a third WRITER adding one more tolerated-extra `artifacts` key (`spec_fidelity_audit`), following score.py's own `metrics_warnings` precedent exactly; `run_pilot` writes nothing itself — it is pure orchestration delegating every actual write to `execute_wm`/`score_record`'s own `write_record_atomic` calls.
+- [AI] build — pattern: orchestrator-over-frozen-primitives pattern — `run_pilot` is a thin sequencing loop composed entirely of already-frozen, already-tested building blocks (`load_arm`, `execute_wm`, `score_record`, `find_resume_point`), the same "don't reimplement, import and sequence" discipline the objective's constraint demands; `report` extends the fixture-and-oracle pattern one more step (bench-scoring's own Observe-block phrase) as the harness's final CONSUMER, turning scored records into a human-readable comparison.
+- [AI] build — optimization stance: correctness-first, no perf budget for the hermetic suite (pilot scale, matches every prior bench-* task's stance); ⚠ least-trusted facet: the concrete `uv venv`/`uv pip install` provisioning lines (§1/§3 ⚠) — budget is "prove it works against one real bare sandbox" (test_add_arm_setup_succeeds_in_bare_sandbox), not "assume the reasoning is correct without ever running it."
+- [AI] build — strategy used: as planned, batches 1-7 in the declared order, with one addition — after batch 6 (CLI wiring), a coverage pass added two CLI-level tests (`test_cli_attest_success_and_rejection`, `test_cli_run_all_rejects_unknown_arm`) exercising `pilot.py main()`'s `attest`/`run-all` argparse paths directly, since the internal-function tests alone left `pilot.py`'s CLI branch under the 90% coverage target (60% pilot.py-only); this raised combined pilot.py+report.py coverage to 96%. No other deviation from the strategy or scope.
+- [AI] verify — gate PASS (reviewed by add-verify (self))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
@@ -406,4 +401,4 @@ One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence �
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+

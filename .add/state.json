@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-exclude-test-caches",
+  "active_task": "bench-pilot-report",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6225,12 +6225,12 @@
     },
     "bench-pilot-report": {
       "title": "run the 5-arm x 3-WM x 1-rep pilot and render the arm-vs-arm report with evidence links",
-      "phase": "verify",
-      "gate": "HARD-STOP",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-bench",
       "depends_on": [],
       "created": "2026-07-07T11:26:43+00:00",
-      "updated": "2026-07-07T12:08:18+00:00",
+      "updated": "2026-07-07T12:15:17+00:00",
       "flag_verified": true,
       "tripwire": {
         "contract_md5": "32ea4a7c655a298a09bc4a420af82ee6",
@@ -6259,7 +6259,7 @@
           "benchmark/arms/add.toml",
           "benchmark/tests/"
         ],
-        "snapshot_md5": "9977e49e5e2d496c29a4fd3f80ee55e6"
+        "snapshot_md5": "7ed38b8628ceca660fa15416e5ee94e6"
       },
       "heal": {
         "attempts": 3,
@@ -6283,8 +6283,23 @@
             "at": "2026-07-07T12:08:18+00:00",
             "reason": "scope_violation: task 'bench-pilot-report' touched outside its declared \u00a75 Scope \u2014 benchmark/.pytest_cache/.gitignore \u00b7 benchmark/.pytest_cache/CACHEDIR.TAG \u00b7 benchmark/.pytest_cache/README.md \u00b7 benchmark/.pytest_cache/v/cache/lastfailed \u00b7 benchmark/.pytest_cache/v/cache/nodeids (5 total)",
             "source": "scope"
+          },
+          {
+            "at": "2026-07-07T12:14:55+00:00",
+            "reason": "scope_violation: task 'bench-pilot-report' touched outside its declared \u00a75 Scope \u2014 .pytest_cache/.gitignore \u00b7 .pytest_cache/CACHEDIR.TAG \u00b7 .pytest_cache/README.md \u00b7 .pytest_cache/v/cache/lastfailed \u00b7 .pytest_cache/v/cache/nodeids (20 total)",
+            "source": "scope"
           }
         ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-07T12:15:08+00:00",
+        "from_phase": "verify"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "scope-exclude-test-caches": {
@@ -6656,7 +6671,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T12:14:36+00:00",
+  "updated": "2026-07-07T12:15:17+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7725,7 +7740,7 @@
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
-    "add-bench": "scope-exclude-test-caches"
+    "add-bench": "bench-pilot-report"
   },
   "todos": [
     {
