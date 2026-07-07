@@ -4548,8 +4548,8 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
 # task's declared source; without it, the walk descends into `.claude/worktrees/<wt>/` (linked
 # git worktrees: full branch checkouts) and their churn produces false `scope_violation`s.
 _SCOPE_EXCLUDE_DIRS = (".git", ".add", ".claude", "__pycache__", "node_modules", ".serena",
-                       ".next", "coverage", "test-results")
-_SCOPE_EXCLUDE_FILES = (".DS_Store",)                  # plus *.pyc / *.tsbuildinfo by suffix
+                       ".next", "coverage", "test-results", ".pytest_cache")
+_SCOPE_EXCLUDE_FILES = (".DS_Store", ".coverage")      # plus *.pyc / *.tsbuildinfo by suffix
 _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")
 
 

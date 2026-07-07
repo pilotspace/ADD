@@ -3,7 +3,7 @@
 slug: bench-pilot-report · created: 2026-07-07 · stage: mvp
 milestone: add-bench
 autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: verify   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
 <!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
@@ -333,53 +333,60 @@ Constraints: do NOT change any test or the contract; allow-list packages only (s
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — 80/80 green (`uv run --with pytest pytest benchmark/tests -q`, re-run independently at gate)
+- [x] coverage did not decrease — pilot.py 95% (106 stmts, 5 miss: lines 212-214 `run-all` json-print loop tail, 226/231 `unknown command`/`__main__` guards), report.py 97% (61 stmts, 2 miss: 34-35 a `BenchError` parse-failure branch in `_load_record`) — matches build's claimed 95%/97% exactly, combined 96%
+- [x] no test or contract was altered during build — `git diff 876254a..0c716f0` (tests-commit → build-commit) touches only `benchmark/arms/add.toml`, `benchmark/pilot.py`, `benchmark/report.py`, `benchmark/run.py`, and a 1-line TASK.md phase bump; zero bytes changed under `benchmark/tests/`
+- [x] the green was EARNED, not gamed — see Refute-read verdict below
+- [x] concurrency / timing of the risky operation is safe — `run_pilot` is a single-threaded `for arm in arms: for wm in sequence:` loop; no threads/async/multiprocessing; `write_record_atomic` (reused verbatim) does temp-file+`os.fsync`+`os.replace`, so a crash mid-write leaves the prior complete record or nothing, never a partial file
+- [x] no exposed secrets — 🟡 one concern found (see Security lens below), no HARD-STOP
+- [x] layering & dependencies follow CONVENTIONS.md — orchestrator-over-frozen-primitives; pilot.py/report.py import execute_wm/score_record/find_resume_point/write_record_atomic verbatim, never reimplement; stdlib-first (argparse, dataclasses, pathlib, json only)
+- [ ] a person reviewed and approved the change — pending human gate (this is the verify recommendation feeding that gate)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
 - [ ] `python benchmark/run.py report` against the hermetic fixture tree renders 3 markdown tables (one per WM), every cell populated (real value / N/A-by-definition / (unaudited) / not-run), each numeric cell carrying an evidence link — confirmed by `test_report_renders_full_grid` + `test_report_missing_record_renders_not_run`.
-- [ ] the real `add` arm's rewritten `setup_steps`, resolved via `resolve_setup_steps` against this repo's real path, complete with exit 0 in a from-scratch bare sandbox directory (no pre-existing venv/site-packages) — confirmed by `test_add_arm_setup_succeeds_in_bare_sandbox` (or a named, loud skip if `uv` is unavailable in the build environment — never a silent pass).
-- [ ] `pilot.py run-all` against a fully-fixtured fake-agent+fake-judge pair sequences all 5 arms × 3 WMs (or halts an arm early on an injected failure) with zero live `claude`/live-LLM subprocess calls — confirmed by `test_run_pilot_halts_arm_on_non_done_wm` + a grep-for-"claude" check across the pilot test module (mirrors bench-scoring's own no-live-claude assertion pattern).
-- [ ] `pilot.py attest` followed by `report` visibly flips one cell's unaudited annotation off while leaving every other cell (and every other artifacts field on that same record) untouched — confirmed by `test_attest_then_report_drops_unaudited`.
+- [x] the real `add` arm's rewritten `setup_steps`, resolved via `resolve_setup_steps` against this repo's real path, complete with exit 0 in a from-scratch bare sandbox directory (no pre-existing venv/site-packages) — confirmed live at the gate: re-ran `test_add_arm_setup_succeeds_in_bare_sandbox` in isolation (`pytest -k bare_sandbox`), PASSED against the real repo root (`uv` present on PATH — not a skip); asserts all 3 transcript `setup:` lines contain "exit 0".
+- [x] `pilot.py run-all` against a fully-fixtured fake-agent+fake-judge pair sequences all 5 arms × 3 WMs (or halts an arm early on an injected failure) with zero live `claude`/live-LLM subprocess calls — confirmed by `test_run_pilot_halts_arm_on_non_done_wm` + the AST-based `test_no_live_claude_call_in_this_module` (walks every function body except itself, asserts no string constant contains "claude").
+- [x] `pilot.py attest` followed by `report` visibly flips one cell's unaudited annotation off while leaving every other cell (and every other artifacts field on that same record) untouched — confirmed by `test_attest_then_report_drops_unaudited` (asserts "(unaudited)" present before, absent after, "0.82" value preserved).
 - [ ] LIVE-PILOT expectation (not a unit test — a §6/§7 VERIFY/OBSERVE activity once BUILD is green): running the real `pilot.py run-all` end-to-end for at least the `add` arm against the live `claude -p` CLI produces 3 real `record.json` files with non-placeholder `spec_fidelity`/`tokens_total`/`cost_usd` values, and `report` renders a real (not fixture) arm-vs-arm table from them — this is what a human running the actual pilot should SEE; it cannot be asserted by a hermetic test and is not claimed as "tested" by any test in §4.
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — every new symbol referenced: `resolve_setup_steps`/`attest_record`/`run_pilot` used by `pilot.py main()`'s CLI + by `benchmark/tests/test_pilot.py`; `render_report` wired into `run.py`'s new `report` subparser (`benchmark/run.py:133`) and used directly by `test_report.py`/`test_attest_then_report_drops_unaudited`; the guard test in `test_runner_records.py` imports `find_resume_point` (unmodified) — confirmed by grep + read of `benchmark/run.py` L20-24, L120-138 and `benchmark/pilot.py` L20-24.
+- [x] DEAD-CODE (code) — no orphaned symbol: every function in `pilot.py`/`report.py` is either CLI-reachable (`main`/`_build_parser`) or test-covered per the coverage report (95%/97%, misses are only argparse-error/`__main__` boilerplate lines 212-214/226/231 in pilot.py and one `BenchError`-catch branch in report.py's `_load_record`, not unreachable code).
+- [ ] SEMANTIC (prose / non-code) — n/a, this task's deliverable is code (pilot.py/report.py/add.toml), not prose; §0-§5 of this TASK.md itself were read in full during this verify pass.
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by grepping the current tree for each: `execute_wm` (benchmark/runner/core.py), `score_record` (benchmark/score.py), `find_resume_point`/`write_record_atomic`/`DEFAULT_RUNS_ROOT` (benchmark/runner/records.py), `load_arm`/`Arm`/`ARM_NAMES` (benchmark/arms/loader.py), `RunRecord`/`validate`/`BenchError` (benchmark/schema/run_record.py) — all 11 anchors present at their §0/§3-named paths, no move/rename since Ground SHA `4f75b73`.
+- [x] any anchor that moved/renamed since Ground SHA is named here, not left silent — none moved; no discrepancy found.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self (add-verify) · adversarially checked:
+  - `resolve_setup_steps`: confirmed a real `{REPO_ROOT}` substitution (not a stub) — `test_resolve_setup_steps_substitutes_token` asserts the tmp_path string literally appears in the resolved line AND the original arm's `setup_steps` list is unchanged (identity-safety, `dataclasses.replace` not in-place mutation); the no-token passthrough test asserts full list equality, not just "no crash".
+  - `attest_record`: read the full guard-clause chain (record_not_found → record_not_done → record_not_scored) and confirmed each Reject test byte-diffs the on-disk record.json before/after (`before_bytes == record_path.read_bytes()`) — a real no-write assertion, not a vacuous "raises" check.
+  - `run_pilot`: confirmed resumability is real, not simulated — `test_run_pilot_resumes_without_reinvoking` monkeypatches `execute_wm`/`score_record` to `raise AssertionError` if called at all, so the test fails loudly if resume silently re-invokes anything; the halt test uses a real fake-agent subprocess (nonzero exit) wired through the actual `execute_wm`, confirms `score_record` is never called for the failed WM via a call-log spy, and confirms the OTHER arm (vanilla) is unaffected (arms-are-independent, per M8/M9).
+  - `render_report`: read `_render_cell`'s exact branch order — N/A-by-definition checked before the unaudited-suffix logic, so a WM1/WM2 cell never falls through to a bare numeric value; evidence links are real relative record.json/transcript paths built from `record.artifacts["transcript"]`, not hardcoded fixture strings.
+  - the one real (non-hermetic) test, `test_add_arm_setup_succeeds_in_bare_sandbox`, was independently re-run in isolation at this gate (`pytest -k bare_sandbox`) — PASSED live against the real repo root with `uv` present (not a skip), confirming the provisioning claim is real, not asserted-and-never-exercised.
+  - confirmed via `git diff 876254a..0c716f0` that build touched ZERO bytes under `benchmark/tests/` — the green suite was never adjusted to fit the implementation.
+  No overfit, no vacuous asserts, no stubbed-away logic found.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self (add-verify)
+1. Security: CLEAR — no shell=True anywhere (`_run_setup_steps` uses `shlex.split()` + list-argv, frozen/unmodified); `{REPO_ROOT}` substitution is a plain `str.replace`, no eval/exec/shell-interpolation, so no command-injection vector even with an adversarial repo_root string. 🟡 one non-security ROBUSTNESS concern found and folded into Observe below: a `repo_root` path containing a space is NOT quoted before substitution, so `shlex.split()` on the resulting line silently mis-tokenizes the argv (verified live: `/tmp/my repo` → `['uv','pip','install','-e','/tmp/my','repo/add-method',...]`) — a corrupted-but-not-injected argv, would surface as a confusing setup-step failure exactly as §1 Reject R7's rationale already anticipates for a bad path, just not for THIS specific bad-path shape. Attest `note` and `spec_fidelity_audit` flow through `json.dumps` (stdlib escaping) into the record — no injection surface there.
+2. Concurrency: CLEAR — `run_pilot` is single-threaded, strictly sequential per-arm/per-WM; `write_record_atomic` (reused verbatim, unmodified) does temp-file+fsync+`os.replace`, so no torn-write hazard even if the live pilot process were killed mid-WM.
+3. Architecture: CLEAR — orchestrator-over-frozen-primitives layering held throughout; `pilot.py`/`report.py` import and reuse `execute_wm`/`score_record`/`find_resume_point`/`write_record_atomic` verbatim, zero reimplementation; stdlib-first (argparse/dataclasses/pathlib/json only, no new third-party dependency).
+Verdict: PASS
+Residue: none blocking — one 🟡 concern (repo_root-with-spaces argv mis-tokenization) recorded in §7 Observe as a forward spec delta, not a build defect (no test scenario named this shape; real REPO_ROOT in this repo has no space).
+Binding: advisory — non-security concern; does not gate this PASS.
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
+Reported: yes — this §6 evidence block rendered before recording the outcome below.
+Outcome: PASS
+Reviewed by: add-verify (self) · date: 2026-07-07
+Note: the human gate (checkbox "a person reviewed and approved the change") and the LIVE PILOT go/no-go remain open — this PASS covers the BUILD (hermetic suite + provisioning-in-isolation), not the live 5×3×1 spend, which is its own separate §6/§7 VERIFY/OBSERVE activity per the frozen contract's own note.
 
 <!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
 
@@ -395,6 +402,7 @@ Watch (reuse scenarios as monitors): per-arm setup-step failure rate during the 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 - [SPEC · open] `rule_coverage_gap` audit-format question ROUTED (not absorbed) — the `covers:` tag parser mismatch bench-scoring surfaced is an engine-side (`.add/tooling/`) concern outside this task's `benchmark/` Scope; needs its own future task (evidence: bench-scoring TASK.md §7).
+- [SPEC · open] `resolve_setup_steps`'s `{REPO_ROOT}` token substitution is a plain unquoted `str.replace`; a `repo_root` path containing a space silently mis-tokenizes the resulting `shlex.split()` argv instead of failing loudly (evidence: verify-gate repro, `/tmp/my repo` → argv split at the space) — not exploitable (no shell=True, no injection), but a real robustness gap distinct from R7's already-handled "path doesn't exist" case; fix (quote the substituted token, e.g. `shlex.quote(str(repo_root))`) is small and low-risk but out of THIS task's frozen §3 shape — route to a future fast task.
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
