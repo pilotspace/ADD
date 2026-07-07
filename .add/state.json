@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "facet-adr-harvest",
+  "active_task": "compact-propose",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -5932,10 +5932,182 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "compact-propose": {
+      "title": "compact-foundation --propose read-only preview",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "delta-drain",
+      "depends_on": [],
+      "created": "2026-07-07T08:16:05+00:00",
+      "updated": "2026-07-07T08:47:17+00:00",
+      "from_delta": "loop-surfacing-nudges",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-07T08:26:05+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "61df19cebee304eba427d8c6ffc2e8ec",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "b46f1449a81cff3894e7ab2b5ec0863c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "verify-flow-value": {
+      "title": "dedicated verify persona flow value",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "delta-drain",
+      "depends_on": [],
+      "created": "2026-07-07T08:16:05+00:00",
+      "updated": "2026-07-07T08:34:42+00:00",
+      "from_delta": "persona-flow-routing",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-07T08:26:06+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "76141405a8474949060ef79dd017fd27",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/",
+          "add-method/skill/",
+          ".claude/skills/",
+          "add-method/agents/",
+          ".claude/agents/",
+          "add-method/docs/",
+          ".add/docs/",
+          ".add/personas/",
+          "18-personas.md"
+        ],
+        "snapshot_md5": "9524ff3ac1db0a52f79fc51a6b14164b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "streams-persona-flow": {
+      "title": "worker-contract persona block names flow preference",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "delta-drain",
+      "depends_on": [
+        "verify-flow-value"
+      ],
+      "created": "2026-07-07T08:16:05+00:00",
+      "updated": "2026-07-07T08:38:19+00:00",
+      "from_delta": "persona-flow-routing",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-07T08:26:06+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "2f48cf82df519f6070ef8a7f1a387469",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/",
+          ".claude/skills/",
+          "add-method/src/add_method/_bundled/skill/",
+          "add-method/tooling/"
+        ],
+        "snapshot_md5": "a39bff2b0c44348b442ca8e44c9f201a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "roster-status-line": {
+      "title": "engine-rendered persona roster line in status/check",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "delta-drain",
+      "depends_on": [
+        "verify-flow-value"
+      ],
+      "created": "2026-07-07T08:16:06+00:00",
+      "updated": "2026-07-07T08:45:40+00:00",
+      "from_delta": "persona-load-performance",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-07T08:26:07+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d63019cd9871b67d5fe7ee7e039bc60d",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "2b64cc8ce2e6416a87e0520d3a9d17b2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T07:57:47+00:00",
+  "updated": "2026-07-07T08:54:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -6181,9 +6353,22 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "delta-drain": {
+      "title": "Drain the 4 open SPEC deltas",
+      "goal": "",
+      "stage": "mvp",
+      "status": "done",
+      "created": "2026-07-07T08:15:15+00:00",
+      "updated": "2026-07-07T08:54:39+00:00",
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "build-strategy-facets",
+  "active_milestone": "delta-drain",
   "archived": [
     {
       "slug": "v5",
@@ -6964,13 +7149,15 @@
   "active_milestones": [
     "dynamic-personas",
     "self-improving-loop",
-    "build-strategy-facets"
+    "build-strategy-facets",
+    "delta-drain"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
     "dynamic-personas": "persona-load-performance",
     "self-improving-loop": "persona-schema-hardening",
-    "build-strategy-facets": "facet-adr-harvest"
+    "build-strategy-facets": "facet-adr-harvest",
+    "delta-drain": "compact-propose"
   },
   "todos": [
     {

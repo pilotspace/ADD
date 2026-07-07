@@ -109,6 +109,7 @@ LIFECYCLE = [
     ["guide", "t"],
     ["report"], ["report", "mvp"],             # read-only dashboard (reads MILESTONE/TASK, not docs/)
     ["deltas"],                                # read-only: open competency deltas report
+    ["compact-foundation", "--propose"],       # read-only: settled-line preview (delta-drain)
     ["drop-delta", "t"],                       # SPEC-delta dismiss verb: task t holds no open
                                                # SPEC delta here -> refuses no_open_spec_delta
                                                # (expected nonzero, tolerated; reads TASK.md, never docs/)

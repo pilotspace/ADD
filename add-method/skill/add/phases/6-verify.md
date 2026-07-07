@@ -59,7 +59,7 @@ Present this gate via `report-template.md`'s ARC, render APPROVE, and reconcile 
   (under `autonomy: auto`, no residue) the run auto-resolved as accountable owner.
 </exit_gate>
 
-> **Persona** — run the refute-read under the fit persona / Code-Reviewer lens (advisory; security still HARD-STOPs).
+> **Persona** — refute-read under the fit `flow: verify` persona / Code-Reviewer lens (advisory; security still HARD-STOPs).
 > **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (advisor.md); score it before recording the gate (confidence.md).
 
 ```bash

@@ -220,11 +220,11 @@ Watch (reuse scenarios as monitors): next add-persona spawn should return `flow`
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
-  - [SPEC · open] weigh a dedicated `verify` flow value vs folding verify under advisor — the §1 ⚠ flag, revisit after the roster runs with flow: routing (evidence: TASK §1 assumptions)
-  - [SPEC · open] the streams.md worker-contract `<persona>` block could also name flow: preference — deferred to keep the pin-locked `<strategy>` floor untouched (evidence: test_streams byte pins)
+  - [SPEC · seeded] weigh a dedicated `verify` flow value vs folding verify under advisor — the §1 ⚠ flag, revisit after the roster runs with flow: routing (evidence: TASK §1 assumptions) [→ verify-flow-value]
+  - [SPEC · seeded] the streams.md worker-contract `<persona>` block could also name flow: preference — deferred to keep the pin-locked `<strategy>` floor untouched (evidence: test_streams byte pins) [→ streams-persona-flow]
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
 
-  - [ADD · open] a schema field shipped without a consumer is dead wiring — land writer+reader in the SAME task, or the field rots unnoticed for a release (evidence: flow: shipped 1.16.1, first consumer 2026-07-06)
-  - [TDD · open] a text-index ordering assertion must key on line-start tags when the guide also MENTIONS the tag in prose (evidence: test_persona_still_precedes_strategy false red)
+  - [ADD · folded] a schema field shipped without a consumer is dead wiring — land writer+reader in the SAME task, or the field rots unnoticed for a release (evidence: flow: shipped 1.16.1, first consumer 2026-07-06) [folded foundation-version 65]
+  - [TDD · folded] a text-index ordering assertion must key on line-start tags when the guide also MENTIONS the tag in prose (evidence: test_persona_still_precedes_strategy false red) [folded foundation-version 65]

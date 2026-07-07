@@ -54,12 +54,12 @@ and compare it to the un-personaed result — growth without a check risks rules
 their weight. And ask which Critical Rules fired zero times this milestone; pruning a dead rule
 is a human-approved edit at the same retrospective, so the persona stays lean instead of accreting.
 
-## Apply — three surfaces
+## Apply — four surfaces
 
 A seeded, grown persona earns its keep when work adopts it. A persona names which of these
 surfaces load it in its `flow:` frontmatter, and its `use-when:`/`not-when:` lines tell a selector
-when to pick it over a sibling. Three surfaces apply a persona, and all
-three treat it the same way — as **advice**, never authority:
+when to pick it over a sibling. Four surfaces apply a persona, and all
+four treat it the same way — as **advice**, never authority:
 
 - **UDD (design).** At the design-definition loop a persona frames the requirements lens: which
   rules and metrics a UI/UX slice must satisfy for this project's users.
@@ -69,6 +69,9 @@ three treat it the same way — as **advice**, never authority:
   **Code-Reviewer** persona whose findings carry severity markers — 🔴 blocker · 🟡 concern · 💭 note.
   The same canonical persona body rides every runner (Claude, Cursor, Copilot, Codex), so a
   **cross-runner subagent** behaves identically wherever it is spawned.
+- **verify (evidence).** The verify/observe steps load a persona as the evidence-judging lens:
+  the earned-green refute-read and the gate record select a `flow: verify` persona first (advisor
+  stays the delegation fallback), and its severity convention tags the findings.
 - **build (overlay).** While building, the orchestrating agent may load the active persona as a
   domain identity **overlay** layered on `SOUL.md`: SOUL is the voice and trust rules; the persona is
   the domain stance. The overlay **never rewrites** SOUL.md (it is human-owned) and never overrides a

@@ -104,7 +104,7 @@ PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Req
 # persona-schema-hardening: the closed set of apply-surfaces a `flow:` value may name — the
 # single source the quality predicate reads (a value outside this set is loaded by NO surface,
 # so a typo would otherwise fail silently). Findings are WARN-only (measure-not-block).
-PERSONA_FLOW_VALUES = ("design", "build", "advisor")
+PERSONA_FLOW_VALUES = ("design", "build", "advisor", "verify")
 
 # persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.

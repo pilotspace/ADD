@@ -6,7 +6,7 @@ streams: sequential
 > manual. Map to the AIDD diagram: Domain = DDD · Spec = SDD (living document) ·
 > UI/UX = UDD. When a loop reveals a gap here, come back and update this file.
 
-slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 64
+slug: AIDD-Book · stage: mvp · updated: 2026-06-16 · foundation-version: 65
 autonomy: auto   <!-- project default — new tasks inherit this rung (manual < conservative < auto); lower a single task in its TASK.md header when it needs a human gate. -->
 goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec-and-tests-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with less doc-time than GSD and no lost context across sessions
 
@@ -273,6 +273,7 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 ## Key Decisions (append-only — newest-first; compaction door per compact-foundation.md)
 | date | decision | why | outcome |
 |------|----------|-----|---------|
+| 2026-07-07 | fold all → foundation-version 65 (TDD 2 · ADD 2) | consolidate captured OBSERVE lessons into the versioned foundation | 4 lessons open→folded; +4 routed bullets; 64→65 |
 | 2026-07-06 | streams: parallel → sequential (`add.py streams set sequential`) | this project predates the setup-run-mode step (v13-onboarding-polish) and had been silently riding the code fallback default ("parallel", never an actual confirm-to-keep) — real usage across this and other real projects (e.g. ai-proxy) rarely spawns multi-agent/parallel work | `run mode` now reads `sequential + auto`; no engine/gate change (streams is display+advisory only, per streams.md) |
 | 2026-07-06 | fold all → foundation-version 64 (TDD 7 · ADD 6 · GLOSSARY 6) | consolidate captured OBSERVE lessons into the versioned foundation | 13 lessons open→folded; +13 routed bullets; 6 glossary term(s) added; 63→64 |
 | 2026-07-03 | fold all → foundation-version 63 (SDD 2 · TDD 8 · ADD 6) | consolidate captured OBSERVE lessons into the versioned foundation | 16 lessons open→folded; +16 routed bullets; 62→63 |

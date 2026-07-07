@@ -200,10 +200,10 @@ Watch (reuse scenarios as monitors): do spawned agents actually cite orient-comm
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
-  - [SPEC · open] if agents keep whole-roster reads despite the frontmatter-first instruction, add an engine-rendered persona roster line (slug · flow · vibe) to status/check — the recorded escalation (evidence: TASK §1 ⚠)
+  - [SPEC · seeded] if agents keep whole-roster reads despite the frontmatter-first instruction, add an engine-rendered persona roster line (slug · flow · vibe) to status/check — the recorded escalation (evidence: TASK §1 ⚠) [→ roster-status-line]
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
 
-  - [TDD · open] check a new guard for VACUOUS pass against the current tree before calling it red — an assertion satisfied by unrelated existing prose guards nothing (evidence: M3 'frontmatter' matched last task's phrase)
-  - [ADD · open] a review finding derived from grep must be re-verified fence-aware before it becomes scope — the 'leaked skeletons' finding was a false positive (evidence: fenced ## headers in 2 personas)
+  - [TDD · folded] check a new guard for VACUOUS pass against the current tree before calling it red — an assertion satisfied by unrelated existing prose guards nothing (evidence: M3 'frontmatter' matched last task's phrase) [folded foundation-version 65]
+  - [ADD · folded] a review finding derived from grep must be re-verified fence-aware before it becomes scope — the 'leaked skeletons' finding was a false positive (evidence: fenced ## headers in 2 personas) [folded foundation-version 65]

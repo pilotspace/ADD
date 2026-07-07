@@ -201,7 +201,7 @@ Watch (reuse scenarios as monitors): does the carried count drop across the next
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
-  - [SPEC · open] a `compact-foundation --propose` read-only verb (render the per-spec settled line for the eligible tail) if the nudge alone doesn't drive the ritual (evidence: TASK §1 framings)
+  - [SPEC · seeded] a `compact-foundation --propose` read-only verb (render the per-spec settled line for the eligible tail) if the nudge alone doesn't drive the ritual (evidence: TASK §1 framings) [→ compact-propose]
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
