@@ -2,9 +2,8 @@
 
 slug: bench-runner · created: 2026-07-07 · stage: mvp
 milestone: add-bench
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: tests   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -77,8 +76,6 @@ Assumptions — lowest-confidence first:
   - [ ] `claude -p`'s exit code reliably distinguishes "agent finished (successfully or not)" from "process crashed" for the retry-vs-timeout-vs-failed classification — assumed true from general CLI convention, not confirmed against this specific tool's behavior.
   - [ ] resuming from run-records alone (no separate ledger) is sufficient even if a WM is retried multiple times before succeeding — assumed the LAST written record per WM is authoritative and prior failed-attempt records for the same WM are either overwritten or clearly superseded, not accumulated as ambiguous siblings.
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -155,8 +152,6 @@ Scenario: a crash mid-write never leaves a partial record   # R5
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -188,7 +183,6 @@ Glossary deltas: **resolved pin** — the concrete, re-derivable reference (a gi
 Status: FROZEN @ v1 — approved by Tin Dang (2026-07-07)
 Least-sure flag surfaced at freeze: [spec] — with token sourcing spiked and pinned (live `claude -p` probe), the least-sure remaining assumption is exit-code classification: that `claude -p`'s exit code reliably separates "agent finished" from "process crashed" for the retry-vs-failed decision — asserted from CLI convention, not probed; if wrong: retries fire on completed-but-unhappy runs, inflating attempt counts in the record (cost: a targeted re-open of the retry-classification line, not the shape). Human approved at freeze after the ⚠1 spike (defaults 1800s/1 retry and add-arm-only resolve_pin decided by the human 2026-07-07).
 Reported: yes — freeze report rendered (SHAPE/FLAGS/decisions); ⚠1 resolved by live spike before approval
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -213,9 +207,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `benchmark/tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -235,76 +226,99 @@ Safety rule (feature-specific): the agent subprocess and its timeout/kill/retry 
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
-
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — `uv run --with pytest pytest benchmark/tests -q` → 35 passed; `add.py check` → 607 passed, 0 failed (78 warnings, none new-blocking — see below)
+- [x] coverage did not decrease (new files; measured 89% on `benchmark/runner`+`benchmark/run` vs §4's 90% target — 🟡 under target, see findings)
+- [x] no test or contract was altered during build — `git diff --stat` shows only new files under `benchmark/runner/` + `benchmark/run.py`; TASK.md §3 unchanged since freeze
+- [ ] the green was EARNED, not gamed — see Refute-read verdict below: EARNED for what's tested, but a Must-rule (setup_steps) has ZERO test coverage because it's ZERO-implemented — 🔴 see findings, this is a real gap not a cheat but the checklist item cannot be ticked clean
+- [x] concurrency / timing of the risky operation is safe — see Advisor lens
+- [x] no exposed secrets, injection openings, or unexpected dependencies — see Advisor lens
+- [x] layering & dependencies follow CONVENTIONS.md — see Advisor lens
+- [ ] a person reviewed and approved the change — pending human gate
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] `run --arm add --wm 1 --agent-cmd <fake-agent-script>` (hermetic, no live `claude` call) completes and writes a `validate()`-clean `benchmark/runs/add/wm1/record.json` with status="done" — confirmed by direct file read + `RunRecord.from_json`
-- [ ] killing/interrupting a run after wm1 completes, then calling `resume --arm <name>`, invokes the fake-agent exactly once more (for wm2), never re-invoking it for wm1 — confirmed by a fake-agent invocation counter file
-- [ ] a fake-agent that sleeps past `--timeout-s` results in the process no longer running (`psutil`/`os.kill(pid,0)`-style liveness check or exit-status inspection) and a status="timeout" record — confirmed live
-- [ ] a planted oracle-file copy inside the run's workspace at teardown forces status="failed" with the leak path recorded — confirmed by reading the record's artifacts after a deliberate plant
-- [ ] the `add` arm's recorded `artifacts.resolved_pin` is a real git SHA matching `git rev-parse HEAD` of the pinned path, not the raw TOML string — confirmed by string comparison against a live `git rev-parse` call
-- [ ] `benchmark/runs/` remains untracked by git after a full run (`git status --porcelain benchmark/runs` empty) — confirmed live, same check bench-scaffold used
+- [x] `run --arm add --wm 1 --agent-cmd <fake-agent-script>` (hermetic, no live `claude` call) completes and writes a `validate()`-clean `benchmark/runs/add/wm1/record.json` with status="done" — confirmed by `test_run_writes_done_record` + `test_add_arm_pin_resolved_to_sha` (execute_wm-level, uses a fake-arm/`add` recipe) reading the on-disk record via `RunRecord.from_json`. NOTE: the CLI entrypoint form (`python run.py run --arm add --wm 1 --agent-cmd ...`) itself is NOT exercised end-to-end by any test — `run.py`'s success path (lines 61-69) is 0%-covered; only its exit-2 rejection branches are CLI-tested (`test_run_cli.py`). The underlying `execute_wm` is well-tested, but the CLI glue that wires argparse → `execute_wm` is unverified.
+- [x] killing/interrupting a run after wm1 completes, then calling `resume --arm <name>`, invokes the fake-agent exactly once more (for wm2), never re-invoking it for wm1 — confirmed by `test_resume_skips_done_wm` via an invocation-counter file, BUT this test calls `execute_wm` directly after computing `find_resume_point` itself in the test body — it does NOT call `run.py resume` as a CLI command. `run.py`'s actual `resume` sequencing loop (lines 79-97, the real WM 1→3 for-loop over `execute_wm`) is 0%-covered by any test. This is the §3-contracted CLI surface for M4 and it has no integration test.
+- [x] a fake-agent that sleeps past `--timeout-s` results in the process no longer running and a status="timeout" record — confirmed live by `test_run_timeout_kills_and_records`: verified in code that `_invoke_once`'s `finally` calls `_kill_process_group` (`os.killpg(..., SIGKILL)`) and `proc.wait(timeout=5)` on every exit path, not just the timeout branch, so no zombie survives even on the done/failed paths.
+- [x] a planted oracle-file copy inside the run's workspace at teardown forces status="failed" with the leak path recorded — confirmed by `test_oracle_leak_fails_run`; code path in `core.py:_isolation_check`→`execute_wm` sets `status = "done" if isolation_clean else "failed"` and records `artifacts["leak_path"]`.
+- [x] the `add` arm's recorded `artifacts.resolved_pin` is a real git SHA matching `git rev-parse HEAD` of the pinned path — confirmed by `test_add_arm_pin_resolved_to_sha`; `pin.py:resolve_pin` shells `["git","rev-parse","HEAD"]` list-argv (no shell string) against `REPO_ROOT`, genuine not stubbed.
+- [x] `benchmark/runs/` remains untracked by git after a full run — `.gitignore:49` already covers it (bench-scaffold-era); no new write path escapes `benchmark/runs/<arm>/wm<n>/` per code read of `core.py`.
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — every new symbol referenced: `build_argv`/`default_agent_cmd` used by `core.py`; `write_record_atomic`/`find_resume_point`/`DEFAULT_RUNS_ROOT` used by `core.py`+`run.py`; `resolve_pin` used by `core.py` (add-arm branch); `execute_wm` used by `run.py` both commands. No orphaned import.
+- [x] DEAD-CODE (code) — `_oracle_lib.running_app`/`http_call` are now called from `core.py:_post_agent_app_check` (closes bench-scaffold's dead-code finding, confirmed by direct read of core.py:140-142). No new unused symbol found.
+- [ ] SEMANTIC — 🔴 the one symbol §3 explicitly documents (`execute_wm`) does NOT implement the full behavior §1 M1 requires: `arm.setup_steps` is loaded (`Arm.setup_steps` populated by `loader.py`) but never read/executed anywhere in `core.py` (`grep -n setup_steps benchmark/runner/` → zero hits outside test fixtures). This is a genuine Must-rule gap, not a skim miss — see findings below.
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
-> Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree: `runner.execute_wm` (core.py:160), `runner.find_resume_point` (records.py:43), `runner.write_record_atomic` (records.py:20), `runner.resolve_pin` (pin.py:16) — all present with the exact frozen signatures (verified by direct read, not grep-only).
+- [x] no anchor moved/renamed since Ground SHA (a0d7183) — `RunRecord`/`validate`/`BenchError`, `load_arm`/`Arm`/`ARM_NAMES`, `running_app`/`http_call`, `check_isolation.find_leaks`/`main`, `PROMPT.md` paths all resolve at their §0-cited locations, confirmed by the import lines in core.py/run.py/records.py/pin.py.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED (for what is tested) — with a disclosed material gap outside the tested surface (see findings)
+By: self (add-verify) · adversarially checked:
+  - `write_record_atomic`: crash-injection test monkeypatches `os.replace` to raise — genuine fault injection, not a stub; confirmed target path absent + no leaked temp file + `find_resume_point` correctly treats it as not-done. Partial-file-impossible claim holds: write goes to a `tempfile.mkstemp` sibling, only `os.replace` publishes it.
+  - `find_resume_point`: only single-retry-per-WM scenario tested (no test for done-wm1 + done-wm3 with wm2 missing/failed — a real gap the WM 1→2→3 sequential design makes moot in practice, but the function itself would return 2 correctly by construction, not defensively verified).
+  - timeout path: confirmed genuine — `_invoke_once`'s `finally` unconditionally calls `_kill_process_group` (SIGKILL via `os.killpg` on `start_new_session=True`'s own process group) + `proc.wait(timeout=5)` on EVERY exit path (done/failed/timeout), not just timeout. Verified by code read, not just test pass.
+  - token parsing: matches the §3-pinned live-spike field names exactly (`usage.{input,output,cache_creation_input,cache_read_input}_tokens`, `total_cost_usd`) — genuine JSON parse of the fake agent's real stdout, not a hardcoded return.
+  - `resolve_pin`: genuine `subprocess.run(["git","rev-parse","HEAD"], cwd=repo_path)` list-argv call, not stubbed; test asserts against a live independent `git rev-parse HEAD` call for comparison.
+  - CONCERN (not a cheat, a coverage gap): `run.py`'s CLI success paths (`run` lines 61-69, `resume` lines 71-97 including the actual WM-sequencing for-loop) are 0%-covered — `test_run_cli.py` only exercises the 4 rejection codes; `test_runner_resume.py`/`test_runner_core.py` test `execute_wm`/`find_resume_point` directly, never through `run_mod.main([...])`. The contracted CLI surface (`run.py run|resume`) itself has no green test proving it, only its parts.
+  - CONFIRMED GAP (not a cheat, a Must-rule violation): setup_steps — see findings below; no test exists for it because it isn't implemented, so the suite cannot have "gamed" it, but M1's green is incomplete for this clause.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self (add-verify, tdd-verifier persona lens)
+1. Security: CLEAR — every subprocess call across `agent.py`/`pin.py`/`core.py` uses list-form argv (`subprocess.Popen(argv, ...)`, `subprocess.run(["git","rev-parse","HEAD"], ...)`), no `shell=True`, no string interpolation into a shell; no secrets/env handling introduced; `resolve_pin`'s `cwd` defaults to a fixed `REPO_ROOT`, not user input.
+2. Concurrency: CLEAR — single-process sequential design per §1's chosen framing; timeout kill uses `start_new_session=True` + `os.killpg(SIGKILL)` in a `finally` covering every exit path, confirmed no zombie risk; `write_record_atomic` is a single-writer temp-file+`os.replace` (atomic rename), no concurrent-writer race in this design (no concurrency was ever introduced).
+3. Architecture: CLEAR structurally (clean `agent → pin/records → core → run.py` layering, stdlib-first, no circular imports) — but flagging as RESIDUE at the completeness level: `execute_wm` (the one symbol carrying the whole Must-set) silently omits the `setup_steps` clause of M1 with no runtime signal (no exception, no artifact note, no log) that it was skipped — a future caller reading only the record.json would not know setup never ran.
+Verdict: PASS (lens-wise) — Residue carried forward as a non-security completeness gap, not a lens HARD-STOP
+Residue: `execute_wm` never executes `arm.setup_steps` (M1 Must-clause), and no artifact/record field discloses that omission at runtime — see findings
+Binding: advisory — this task is `autonomy: auto`, non-mechanical change; the setup_steps gap is a content/completeness finding, not itself security/concurrency/architecture in the classic sense, so it is NOT auto-binding to HARD-STOP by the 3-lens rule, but it is binding on the GATE RECORD outcome below because it is an unresolved Must-rule.
 
-### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+### GATE RECORD — gaps closed post-recommendation (human-approved re-cross, recorded by the engine)
+> Verify's CLOSE-GAP-BEFORE-GATE recommendation was executed before gating, not waived: (1) M1 setup_steps now
+> implemented in execute_wm (shlex list-argv, no shell; "setup: <argv> -> exit N" recorded in attempts + transcript;
+> a failing step fails the attempt loudly, pre-agent) with 3 new tests; (2) timeout now consumes a retry per the
+> frozen §1 wording, with a timeout-then-success test; (3) CLI happy paths (run success end-to-end, resume
+> sequencing wm2/wm3) tested through run_mod.main. Fixture correction human-approved: the M7 pin test keeps its
+> SHA assertions on the real add.toml pin but with empty setup_steps (real provisioning cannot run in an empty
+> sandbox; intent = pin resolution). Suite 41/41 green · coverage 93% (target 90) · check 607/0 ·
+> re-cross recorded by engine (approved by Tin Dang, 2026-07-07).
+Reported: yes — verify findings + close-gap plan rendered to the human; both decisions (fix-all-3, fixture adaptation) human-answered before this record
+Outcome: PASS
+If RISK-ACCEPTED -> owner: n/a · ticket: n/a · expires: n/a
+Reviewed by: Tin Dang (close-gap + fixture decisions) with add-verify findings · date: 2026-07-07
 
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
-Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
+Watch (reuse scenarios as monitors): timeout/failed record rate per arm during the pilot (a high setup-failure rate for one arm = fairness problem, not an arm defect) · zombie/orphan processes after killed runs (should be zero) · `token_source: unparseable` occurrences (each one degrades `tokens_total`) · real `add`-arm setup_steps success in a fresh sandbox (first live pilot run is the real test of the provisioning lines).
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose <unrecorded>
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang (2026-07-07))
+- [AI] build — approach: sequential single-process orchestration per §1's chosen framing — one `execute_wm` call does one arm×WM end-to-end (workspace → setup → invoke → capture → check → record), no concurrency; the injectable `agent_cmd` seam is the core technique that makes this hermetically testable, mirroring bench-scaffold's own fail-loud validation discipline (raise `BenchError`-flavored, frozen-code failures rather than silently degrading) extended here to subprocess/IO failure modes (timeout, retry, atomic write) per CLAUDE.md's "design for failure" rule.
+- [AI] build — data strategy: run-records-as-ledger (no second state file) — `find_resume_point` derives all resume state by re-reading the existing frozen `RunRecord` shape from disk; matches the §3 Schema line ("no new persistent schema... this task is its first writer").
+- [AI] build — pattern: fixture-and-oracle pattern (bench-scaffold's own, extended) — the runner is the harness that drives the fixed `PROMPT.md` fixture through an arm and checks isolation before trusting the result, same discipline as the oracle suites, now operationalized as a live loop instead of a static check.
+- [AI] build — optimization stance: correctness-first, no perf budget — pilot scale (5×3×1), matches bench-scaffold's own stance; ⚠ least-trusted facet: the token-count sourcing from `claude -p` JSON output (§1's #1 ⚠) — budget is "get a number, document the fallback," not "get it exactly right this task."
+- [AI] build — strategy used: as planned (agent.py -> records.py -> pin.py -> core.py -> run.py -> oracle wiring), with one deliberate scope-narrowing: `execute_wm` does NOT shell out each arm's `setup_steps` strings — they're free-text install/init lines with inline comments (e.g. "pip install -e add-method  # or: npm install..."), which cannot be run as list-form argv (the §0 "no shell string" security constraint) without a shell, and shelling them would call live network/CLI tools inside a "hermetic, no live claude call" test suite. Environment setup for a real pilot run stays a pre-runner manual/CI step for this task; `setup_steps` content is preserved on the loaded `Arm` for a future task to wire (recorded as a Spec delta in §7). `_invoke_once` also switched from a streaming readline-based watcher to `subprocess.communicate(timeout=...)` mid-build: readline() blocks past the deadline on a silent/sleeping fake agent, which produced a real RED (test_run_timeout_kills_and_records got status="done" instead of "timeout") — communicate()'s TimeoutExpired is the correct primitive for this seam.
+- [AI] verify — gate PASS (reviewed by Tin Dang (close-gap + fixture decisions) with add-verify findings)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
+- [SPEC · open] the real `add.toml` setup_steps (`pip install -e` …) cannot succeed in a bare sandbox — bench-pilot-report must provision arm environments (venv/uv per workspace) before the live pilot, or amend the arm recipes' setup lines (evidence: fixture correction at re-cross; direct repro `externally-managed-environment`)
+- [SPEC · open] `find_resume_point` is not defensively tested for non-contiguous done-WMs (done-wm1 + done-wm3, wm2 missing) — moot under sequential 1→2→3 but worth one guard test at bench-pilot-report (evidence: §6 refute-read note)
+
+### Competency deltas
+One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
+- [TDD · open] a disclosed deviation from a frozen Must is still a Must violation — verify escalated CLOSE-GAP-BEFORE-GATE instead of accepting the builder's honest §7 delta, and the gap closed in one re-cross (evidence: setup_steps finding → shlex list-argv fix, 41/41 green)
+- [ADD · open] a pre-existing test whose fixture can never run for real (real pip in an empty sandbox) is a fixture bug, not a contract conflict — adapt the fixture to the test's stated intent (M7) with human approval, never weaken the assertion (evidence: test_add_arm_pin_resolved_to_sha correction)
+- [TDD · open] red-first caught a real orchestration bug pre-implementation: a blocking readline() loop can never observe a deadline against a silent child — subprocess.communicate(timeout=) is the correct shape (evidence: build report RED excerpt)
   - [SPEC · open] `execute_wm` does not execute an arm's `setup_steps` (install/init shell lines) — a future task must decide how/where arm environment provisioning runs (sandboxed shell? container?) without violating the list-form-argv-only security constraint (evidence: TASK.md §5 "Strategy actually used").
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+

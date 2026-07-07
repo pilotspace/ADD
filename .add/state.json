@@ -6141,16 +6141,49 @@
     },
     "bench-runner": {
       "title": "headless claude -p runner: sandboxed arm workspaces, WM sequencing with resume, timeout/retry, transcript+token capture",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-bench",
       "depends_on": [],
       "created": "2026-07-07T09:42:11+00:00",
-      "updated": "2026-07-07T10:01:24+00:00"
+      "updated": "2026-07-07T11:04:39+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7766902ec190d5901cd9fb4ce89fc742",
+        "tests": {
+          "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
+          "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
+          "benchmark/tests/test_arms.py": "ecde8e754b161f9699147e07c80d3426",
+          "benchmark/tests/test_isolation.py": "3d5519c6572c0121e2c6049ab76420f1",
+          "benchmark/tests/test_oracles_red.py": "5708d42b875b811cee984a4233ac1f0b",
+          "benchmark/tests/test_run_cli.py": "5e791c11443d4ac402b229fc78508815",
+          "benchmark/tests/test_run_record.py": "89c2e819fdb02edb2d78a6c9c9b7da64",
+          "benchmark/tests/test_runner_core.py": "97d1370ee4632c4610bc1ce12f0b9677",
+          "benchmark/tests/test_runner_records.py": "10998adb4c104c8014ee4080abffde54",
+          "benchmark/tests/test_runner_resume.py": "f9263abf61155733253b9bc400567e2d",
+          "benchmark/tests/test_workload_prompts.py": "f16cef9914987e13ed383809430265b5"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/"
+        ],
+        "snapshot_md5": "ab32ba12a1caf58ccea03c459d736948"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-07T11:03:13+00:00",
+        "from_phase": "verify"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T10:01:24+00:00",
+  "updated": "2026-07-07T11:04:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
