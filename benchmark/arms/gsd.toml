@@ -1,7 +1,6 @@
 name = "gsd"
 setup_steps = [
-  "npm install -g get-shit-done-cc@1.42.3",
-  "gsd init  # pre-seed .claude/ before the headless run",
+  "npx -y get-shit-done-cc@1.42.3 init  # pre-seed .claude/ without a global-install PATH dependency",
 ]
 prompt_wrapper = "raw"
 # Real, reproducible upstream pin (confirmed via `npm view get-shit-done-cc versions` 2026-07-07).

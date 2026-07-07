@@ -112,13 +112,20 @@ def _run_setup_steps(
         argv = shlex.split(line)
         if not argv:
             continue
-        proc = subprocess.run(
-            argv,
-            cwd=str(cwd),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+        try:
+            proc = subprocess.run(
+                argv,
+                cwd=str(cwd),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+        except OSError as exc:  # unlaunchable command: fail the attempt, never the pilot
+            entry = f"setup: {argv} -> unlaunchable: {type(exc).__name__}: {exc}"
+            log_lines.append(entry)
+            with log_path.open("a") as fh:
+                fh.write(entry + "\n")
+            return False, log_lines
         entry = f"setup: {argv} -> exit {proc.returncode}"
         log_lines.append(entry)
         with log_path.open("a") as fh:

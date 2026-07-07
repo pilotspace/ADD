@@ -1,7 +1,5 @@
 name = "vanilla"
-setup_steps = [
-  "claude --print  # bare Claude Code, no scaffolding, no system-prompt ceremony",
-]
+setup_steps = []  # bare Claude Code — no ceremony IS the arm definition
 prompt_wrapper = "raw"
 pin = ""
 

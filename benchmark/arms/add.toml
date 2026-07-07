@@ -1,6 +1,6 @@
 name = "add"
 setup_steps = [
-  "uv venv .venv",
+  "uv venv .venv --clear",
   "uv pip install -e {REPO_ROOT}/add-method --python .venv/bin/python",
   ".venv/bin/pilotspace-add init --yes --non-interactive",
 ]

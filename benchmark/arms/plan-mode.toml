@@ -1,7 +1,5 @@
 name = "plan-mode"
-setup_steps = [
-  "claude --print --permission-mode plan  # forces a plan-first pass before any edit",
-]
+setup_steps = []  # plan-mode ceremony lives in prompt_wrapper, not setup
 prompt_wrapper = "plan-then-execute"
 pin = ""
 
