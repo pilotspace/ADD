@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "lightweight-setup",
+  "active_task": "fast-lane-intake-heuristic",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6971,10 +6971,38 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fast-lane-intake-heuristic": {
+      "title": "Intake proposes --fast for small/mechanical tasks (human still confirms)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T16:25:55+00:00",
+      "updated": "2026-07-07T16:32:46+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b68f88f68caf44e4446e3064290fc2bc",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/intake.md",
+          ".claude/skills/add/intake.md",
+          "add-method/src/add_method/_bundled/skill/add/intake.md",
+          "add-method/tooling/test_fast_lane_heuristic.py"
+        ],
+        "snapshot_md5": "40939e7257b3a8822cd44fba7c15e7c9"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:24:44+00:00",
+  "updated": "2026-07-07T16:32:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8062,7 +8090,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "lightweight-setup"
+    "add-lean-loop": "fast-lane-intake-heuristic"
   },
   "todos": [
     {
