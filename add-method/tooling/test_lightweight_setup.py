@@ -93,3 +93,17 @@ class NeverDeferInvariants(unittest.TestCase):
         self.assertIn("run/entry contract", text)
         self.assertIn("§0", text.split("Pin invariants first", 1)[1][:400],
                       "guide must say every task §0 re-states the invariants")
+
+    def test_claude_block_carries_invariants(self):
+        """Escalation (lean-r2 wm3 rationalization): the sync-guidelines block —
+        the one surface every agent re-reads — binds the invariants line."""
+        sys.path.insert(0, str(HERE))
+        try:
+            from add_engine.guidelines import _guideline_block
+        finally:
+            sys.path.remove(str(HERE))
+        block = _guideline_block()
+        self.assertIn("invariants:", block)
+        self.assertIn("BARE declared runtime", block)
+        self.assertIn("never", block.split("invariants:", 1)[1][:300].lower(),
+                      "the block must forbid rationalizing an invariant away")

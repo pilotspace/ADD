@@ -11,10 +11,10 @@ repo and **arm the baseline-approval gate** with `--await-lock`:
 python3 .add/tooling/add.py init --name "<inferred from repo/dir>" --stage <prototype|poc|mvp|production> --await-lock
 ```
 
-- `--await-lock` seeds an *unlocked* setup — the engine refuses build/`gate` until you `lock`; a plain `init` is grandfathered-locked.
+- `--await-lock` seeds an *unlocked* setup — the engine refuses build/`gate` until you `lock`; a plain `init` is grandfathered-locked (re-lock: `already_locked`).
 - name + stage are **your judgment**: throwaway → `prototype`, risky slice → `poc`, narrow → `mvp`, full rigor → `production`.
 
-`init` prints one of two things — **that is your branch**:
+`init` prints your branch:
 - `brownfield:` → existing code (go to **2a**);
 - no `brownfield:` → empty repo (go to **2b**).
 
@@ -45,16 +45,15 @@ Ask only the live ones. Rank: `⚠ <assumption> — lowest confidence because <w
 | **UDD** (users) | primary user → jobs, surface, the one flow that must feel right |
 | **TDD** (trust) | what "done & trusted" means: risks to prove, evidence that closes them |
 
-Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** as it lands.
+Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions**.
 
-**Under `autonomy: auto`, auto-complete all four drives in one pass** — lowest-confidence-first. This deepens **drafting**, never the gate — `lock` stays the one decision.
+**Under `autonomy: auto`, auto-complete all four drives in one pass**, lowest-confidence-first — deepens **drafting**, never the gate; `lock` stays the one decision.
 
 ## 3 · Draft to the lock (both paths)
 
 1. **Pin invariants first — never defer.** The Domain-lens "never breaks" invariant and any imposed
-   run/entry contract (how the artifact is executed/consumed: interpreter · port · packaging ·
-   protocol) land in PROJECT.md `invariants:` NOW; every task §0 re-states them. Defer the rest.
-2. **Seed, don't draft.** Fill ONLY: the `goal:` line, the 4-lens seed answers (one line each into PROJECT.md Domain · Spec · UI/UX · Key Decisions), and the sections the FIRST milestone touches. Every other living-doc section keeps its `<!-- living: fill on first touch -->` marker — the milestone/task loop grows it on first touch and `fold` consolidates it. Brownfield: evidence-grounded from code as today (`adopt.md`). One `generic` persona is enough at setup; author a per-role persona when a task first embodies that role (teacher library `.add/personas-teacher/`, off-build).
+   run/entry contract (interpreter · port · packaging · protocol) land in PROJECT.md `invariants:` NOW; every task §0 re-states them.
+2. **Seed, don't draft.** Fill ONLY: the `goal:` line, the 4-lens seed answers (one line each into PROJECT.md Domain · Spec · UI/UX · Key Decisions), and the sections the FIRST milestone touches (UI project: seed `DESIGN.md` per `design.md`; delete if no UI). Every other living documentation section keeps its `<!-- living: fill on first touch -->` marker — the milestone/task loop grows it on first touch and `fold` consolidates it. Brownfield: evidence-grounded from code as today (`adopt.md`). One `generic` persona is enough at setup; author a per-role persona when a task first embodies that role (teacher library `.add/personas-teacher/`, off-build).
 3. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 4. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash

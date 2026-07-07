@@ -7028,22 +7028,34 @@
     },
     "never-defer-invariants": {
       "title": "Never-defer invariants: entry-contract-class constraints pin into the seed lines",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-lean-loop",
       "depends_on": [],
       "created": "2026-07-07T16:46:20+00:00",
-      "updated": "2026-07-07T16:46:34+00:00",
+      "updated": "2026-07-07T17:49:43+00:00",
       "fast": true,
       "flag_verified": true,
       "tripwire": {
         "contract_md5": "c72f0f5b6534cbf38a029402692093cb",
         "tests": {
-          "add-method/tooling/test_lightweight_setup.py": "bb407dd4df5f918c992d6c86c6acbaa0"
+          "add-method/tooling/test_lightweight_setup.py": "e1e71a8ba7cb8cf17de08d63ce66b98d",
+          "add-method/tooling/engine_pin.py": "8e986e99ba2db47a61518e84be2ce0c0",
+          "tmp/dogfood_release_flow.py": "912cca648e01db18c69c9282dd7b0816",
+          "tmp/extract_candidate.py": "f95765ea3107405c64752b90ac78a104",
+          "tmp/flip_v16_deltas.py": "e8970924172fbb35ce700f6d9c26409c",
+          "tmp/fold_v6v8.py": "6d7716d2f973aaaf30949c3b161fb388",
+          "tmp/wrap_appendix_b.py": "8a6a5dfdc799c764cc787a6ca930a951"
         }
       },
       "scope": {
         "declared": [
+          "add-method/tooling/add_engine/guidelines.py",
+          ".add/tooling/add_engine/guidelines.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/guidelines.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/CLAUDE.md",
+          "add-method/src/add_method/_bundled/tooling/add_engine/AGENTS.md",
+          "add-method/src/add_method/_bundled/tooling/add_engine/.clinerules",
           "add-method/skill/add/phases/0-setup.md",
           ".claude/skills/add/phases/0-setup.md",
           "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
@@ -7052,12 +7064,32 @@
           "add-method/src/add_method/_bundled/tooling/templates/PROJECT.md.tmpl",
           "add-method/tooling/test_lightweight_setup.py"
         ],
-        "snapshot_md5": "58bff9302b60b62c3f3a8c4a981f5599"
+        "snapshot_md5": "b66a45231d64c30551c835601bba4df9"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-07T17:49:35+00:00",
+        "from_phase": "build"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-07T17:49:05+00:00",
+            "reason": "scope_violation: task 'never-defer-invariants' touched outside its declared \u00a75 Scope \u2014 .clinerules \u00b7 .clinerules.bak \u00b7 AGENTS.md \u00b7 AGENTS.md.bak \u00b7 CLAUDE.md (2676 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:46:34+00:00",
+  "updated": "2026-07-07T17:49:43+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

@@ -8,7 +8,7 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 
 Run `add.py search <keyword> ...` first — it surfaces overlapping/prior work in one command. When
 the request is a question or won't place in one bucket, explore it WITH the user first: reflect
-the intent, name in/out of scope, offer 2–3 sized options with a recommendation, then emit
+the intent, name in/out of scope, offer 2–3 sized options with a recommendation. Only then emit
 `{ bucket, rationale, command }`. `ask_human` stays the floor: if interviewing can't sharpen it,
 reject — never guess a bucket.
 
