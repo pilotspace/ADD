@@ -42,3 +42,8 @@ add-method/.add/
 add-method/.claude/
 add-method/AGENTS.md
 add-method/CLAUDE.md
+
+# Benchmark run outputs (transcripts, per-arm workspaces, run records) are
+# generated artifacts of later bench-runner/bench-scoring tasks — never
+# committed. The benchmark/ scaffold itself (workload/arms/schema) IS tracked.
+benchmark/runs/
