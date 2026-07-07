@@ -1,0 +1,51 @@
+# MILESTONE: add-lean-loop — cut ADD's token cost, hold the trust floor
+
+slug: add-lean-loop · created: 2026-07-07 · status: draft (await-confirm)
+parent: ADD method (add-method/)
+
+## Goal
+
+Cut ADD's per-milestone token cost by ≥50% on the benchmark workload while
+holding fidelity and the non-negotiable trust floor (frozen contract · red
+test before build · recorded verify gate · security HARD-STOP).
+
+## Why (evidence from the add-bench round-3 pilot)
+
+- ADD spent $16.30 vs gsd $4.82 / spec-kit $2.54 for the same 3-milestone job
+  at the SAME quality (median-of-3 judge: all 0.90–0.97; ADD the most stable).
+- Decomposition (PILOT-REPORT.md Appendix B): 41–64% of each milestone's
+  tokens burn BEFORE the first line of app code — 21–27 `add.py` round-trips
+  and ~17 TASK.md section writes per milestone, each turn re-reading the full
+  growing context. The cost is a per-turn context tax, not a one-time init.
+
+## Scope
+
+- add-method/tooling/add.py (+ 3-tree parity) — engine ergonomics only;
+  no gate, freeze, or evidence rule may weaken.
+- The `add` skill prompt + phase guides — loading discipline, not content.
+- benchmark/ — reused as the measuring stick (no scoring changes).
+
+## Tasks (breadth-first)
+
+1. **engine-batch-ops** — one round-trip per phase transition:
+   `add.py advance --fill <file|stdin>` writes the section AND advances in a
+   single call; a combined `status --brief` that stops printing what the agent
+   already has in context. Target: engine calls per milestone 21–27 → ≤8.
+2. **progressive-task-context** — `add.py show <section>` + guide guidance to
+   read ONLY the active TASK.md section instead of the whole file each turn;
+   phase guides state the anti-context-rot loading rule explicitly.
+3. **fast-lane-intake-heuristic** — intake proposes `--fast` automatically for
+   small/mechanical requests (human still confirms; flag stays human-owned).
+   The full bundle for a CRUD-sized milestone is where the 41–55% pre-code
+   share came from.
+4. **bench-rerun-add-arm** — re-run ONLY the add arm on WM1–WM3 with the lean
+   loop and compare against the round-3 records (kept as baseline).
+
+## Exit criteria
+
+- [ ] add arm tokens_total per WM ≤50% of round-3 baseline (13.4M/3.1M/4.0M)
+- [ ] add arm median-of-3 spec_fidelity within ±0.05 of round-3 (0.94–0.97 band)
+- [ ] context_rot_slope stays ≥ −0.01 (ADD's flat-slope advantage preserved)
+- [ ] trust floor intact: frozen contract, red-first, gate record present in
+      the rerun transcripts (spot-checked), engine suite + benchmark suite green
+- [ ] no gate/freeze/evidence semantics changed (engine diff review confirms)

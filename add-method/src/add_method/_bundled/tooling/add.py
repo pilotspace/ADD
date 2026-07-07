@@ -1149,10 +1149,69 @@ def cmd_recross(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: str) -> None:
+    """`advance --fill` (engine-batch-ops): draft the CURRENT phase's §body and
+    advance in ONE call — the round-trip batching the add-lean-loop milestone
+    exists for. ALL-OR-NOTHING (human-chosen at freeze): the original TASK.md
+    bytes are snapshotted, the fill is written, and the UNCHANGED advance guard
+    stack runs; any refusal (every _die exit path — SystemExit included)
+    restores the snapshot byte-identical and re-raises, so no path leaves a
+    filled section with an unmoved phase. Section located with the taskdoc
+    `^##\\s*<n>\\s*·` grammar — the one canonical scan, never a second parser."""
+    cur = state["tasks"][slug]["phase"]
+    if cur not in PHASES or PHASES.index(cur) >= len(PHASES) - 1:
+        _die(f"task '{slug}' already at final phase ({cur})")
+    if args.fill == "-":
+        payload = sys.stdin.read()
+    else:
+        try:
+            payload = Path(args.fill).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            _die(f"fill_unreadable: {exc}")
+    for ln in payload.splitlines():
+        # a line-start "## " or bare "---" would truncate the §-section scan
+        # (taskdoc._phase_spans KNOWN LIMIT) — refuse before any write.
+        if ln.startswith("## ") or re.match(r"^---\s*$", ln):
+            _die("fill_body_unparseable: the payload contains a line-start '## ' or a bare "
+                 "'---' line — these truncate the §-section scan; reword or indent them")
+    n = PHASES.index(cur)  # ground→0 … observe→7 (the §-number IS the phase ordinal)
+    f = root / "tasks" / slug / "TASK.md"
+    try:
+        original = f.read_bytes()
+    except OSError as exc:
+        _die(f"fill_unreadable: {exc}")
+    lines = original.decode("utf-8").splitlines(keepends=True)
+    head = re.compile(rf"^##\s*{n}\s*·")
+    start = next((i for i, ln in enumerate(lines) if head.match(ln)), None)
+    if start is None:
+        _die(f"fill_section_missing: no '## {n} ·' heading for phase '{cur}' in {f}")
+    end = start + 1
+    while end < len(lines) and not (lines[end].startswith("## ")
+                                    or re.match(r"^---\s*$", lines[end])):
+        end += 1
+    body = "\n" + payload.rstrip("\n") + "\n\n"
+    _atomic_write(f, "".join(lines[:start + 1]) + body + "".join(lines[end:]))
+    args.fill = None  # consumed — the plain advance below must not re-enter
+    try:
+        cmd_advance(args)
+    except BaseException:
+        # all-or-nothing: restore the pre-fill bytes on ANY refusal, then
+        # surface the guard's own message unchanged.
+        _atomic_write(f, original.decode("utf-8"))
+        raise
+    print(f"filled §{n} ({cur}) from --fill")
+
+
 def cmd_advance(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
     slug = _resolve_task(state, args.slug)
+    if getattr(args, "fill", None) is not None:
+        if getattr(args, "to", None) is not None:
+            _die("fill_with_to_unsupported: --fill drafts ONE section for ONE crossing — "
+                 "fast-forward with --to separately")
+        _fill_and_advance(args, root, state, slug)
+        return
     cur = state["tasks"][slug]["phase"]
     idx = PHASES.index(cur)
     if idx >= len(PHASES) - 1:
@@ -2021,6 +2080,19 @@ def _sorted_by_updated(items: dict) -> list:
 
 
 def cmd_status(args: argparse.Namespace) -> None:
+    if getattr(args, "brief", False):
+        # --brief (engine-batch-ops): the resume essentials ONLY — the agent
+        # re-orienting mid-task already holds the foundation in context; the
+        # full dump is a per-turn token tax. Plain `status` is unchanged.
+        root = _require_root()
+        state = load_state(root)
+        active = _active_task(state)
+        if active and active in (state.get("tasks") or {}):
+            print(f"task: {active} · phase: {state['tasks'][active].get('phase', '?')}")
+        else:
+            print("no active task")
+        print(_next_footer(root, state))
+        return
     show_all = getattr(args, "all", False)
     if getattr(args, "json", False):
         root, state = _load_state_for_json()
@@ -7604,6 +7676,10 @@ def build_parser() -> argparse.ArgumentParser:
     pa.add_argument("--to", default=None,
                     help="fast-forward the bundle bookkeeping to this phase (at most `tests`); "
                          "every crossing guard still runs per step")
+    pa.add_argument("--fill", default=None, metavar="PATH",
+                    help="draft the CURRENT phase's TASK.md section from PATH (or '-' for stdin) "
+                         "and advance in one call; all-or-nothing — a refused crossing restores "
+                         "TASK.md byte-identical (incompatible with --to)")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
 
     prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
@@ -7680,6 +7756,8 @@ def build_parser() -> argparse.ArgumentParser:
                       "{slug, phase, gate, milestone, owner, assignee} object")
     pst.add_argument("--all", action="store_true", help="show every milestone/task "
                       "(default: top 10 by most-recently-updated)")
+    pst.add_argument("--brief", action="store_true",
+                     help="resume essentials only: the active task's slug · phase + the next: hint")
     pst.set_defaults(func=cmd_status)
 
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")
