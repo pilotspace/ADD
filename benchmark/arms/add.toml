@@ -1,0 +1,12 @@
+name = "add"
+setup_steps = [
+  "pip install -e add-method  # or: npm install -g add-method (this repo's package source)",
+  "python3 .add/tooling/add.py init --auto",
+]
+prompt_wrapper = "raw"
+pin = "add-method (this repo, path pin — see .add/tasks/bench-scaffold/TASK.md Ground SHA)"
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

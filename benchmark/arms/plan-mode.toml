@@ -1,0 +1,11 @@
+name = "plan-mode"
+setup_steps = [
+  "claude --print --permission-mode plan  # forces a plan-first pass before any edit",
+]
+prompt_wrapper = "plan-then-execute"
+pin = ""
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

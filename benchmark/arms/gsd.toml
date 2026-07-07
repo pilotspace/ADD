@@ -1,0 +1,13 @@
+name = "gsd"
+setup_steps = [
+  "npm install -g get-shit-done-cc@1.42.3",
+  "gsd init  # pre-seed .claude/ before the headless run",
+]
+prompt_wrapper = "raw"
+# Real, reproducible upstream pin (confirmed via `npm view get-shit-done-cc versions` 2026-07-07).
+pin = "get-shit-done-cc@1.42.3"
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

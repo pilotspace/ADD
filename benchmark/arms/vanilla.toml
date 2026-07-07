@@ -1,0 +1,11 @@
+name = "vanilla"
+setup_steps = [
+  "claude --print  # bare Claude Code, no scaffolding, no system-prompt ceremony",
+]
+prompt_wrapper = "raw"
+pin = ""
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60
