@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "progressive-task-context",
+  "active_task": "lightweight-setup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6920,10 +6920,61 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "lightweight-setup": {
+      "title": "Lightweight setup: seed-and-defer foundation \u2014 sections fill on first touch by milestones/tasks",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T16:16:07+00:00",
+      "updated": "2026-07-07T16:24:44+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "85ab87908cd8335adb96206288528a1a",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/PROJECT.md.tmpl",
+          ".add/tooling/templates/PROJECT.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/PROJECT.md.tmpl",
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_lightweight_setup.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/skill/add/phases/0-setup.md",
+          ".claude/skills/add/phases/0-setup.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
+          ".add/SEAMS.md"
+        ],
+        "snapshot_md5": "ba75c55157916f5697b68a0cdd90c308"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-07T16:24:27+00:00",
+            "reason": "scope_violation: task 'lightweight-setup' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/templates/PROJECT.md.tmpl \u00b7 add-method/tooling/templates/PROJECT.md.tmpl (2 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-07T16:24:43+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:14:46+00:00",
+  "updated": "2026-07-07T16:24:44+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8011,7 +8062,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "progressive-task-context"
+    "add-lean-loop": "lightweight-setup"
   },
   "todos": [
     {

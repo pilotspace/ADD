@@ -51,8 +51,7 @@ Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** a
 
 ## 3 · Draft to the lock (both paths)
 
-1. **Fill the living documentation**: `.add/PROJECT.md` (Domain · Spec · UI/UX · Key Decisions), `CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`, and — for a UI project — `DESIGN.md` (delete if no UI; `design.md`). Brownfield: from code. Greenfield: from interview, gaps flagged `guessed`.
-   - **Seed personas** (`.add/personas/`): `init` scaffolds `_template.md` (the schema). **Author one per role** from PROJECT.md + the vendored teacher library `.add/personas-teacher/` (read off-build; engine never fetches) — citing the teacher in `source:` and carrying its top `## Playbook` are the two optional parts, not the authoring. Covered by the **baseline approval**; `add.py check` validates; never clobber. Still unseeded later? `status`/`check`/`new-milestone`'s hint means: return here, draft every missing project persona — not just one.
+1. **Seed, don't draft.** Fill ONLY: the `goal:` line, the 4-lens seed answers (one line each into PROJECT.md Domain · Spec · UI/UX · Key Decisions), and the sections the FIRST milestone touches. Every other living-doc section keeps its `<!-- living: fill on first touch -->` marker — the milestone/task loop grows it on first touch and `fold` consolidates it. Brownfield: evidence-grounded from code as today (`adopt.md`). One `generic` persona is enough at setup; author a per-role persona when a task first embodies that role (teacher library `.add/personas-teacher/`, off-build).
 2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
 3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash
@@ -93,7 +92,7 @@ Typing it themselves stays the **escape hatch** — the decision is the human's;
 
 <exit_gate>
 - [ ] `.add/state.json` exists; setup was seeded unlocked (`--await-lock`) then locked.
-- [ ] Living docs filled (brownfield: from code, tagged evidence-grounded; greenfield: from the interview).
+- [ ] Seed lines filled (goal · 4-lens · first-milestone touches); untouched sections carry the living marker (brownfield: evidence-grounded from code).
 - [ ] First task created; **§1–§4 drafted — the red suite (per `phases/4-tests.md`) runs RED before build opens**; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
 - [ ] Human confirmed the baseline approval and `add.py lock --by` ran with their name; first task §3 `FROZEN @ v1`; build open.
 </exit_gate>
