@@ -230,7 +230,7 @@ Optimization stance: correctness-first, no perf budget — pilot scale (5×3×1)
 Persona (required): methodology-engine-dev — same adaptation bench-scaffold used (fail-loud validation, pinned/resolved versions, stdlib-first), extended here from static validators to a live subprocess-orchestration loop; no benchmark-runner-specific persona exists yet.
 Spawn isolation (default): worktree — no shared-tree reason applies (single-agent build, no parallel spawn needed).
 Known-problem fixes: crash mid-record-write → `write_record_atomic`'s temp-file+`os.replace` (R5) · slow-starting real app defeating the startup-poll heuristic → wrap `running_app`'s poll in the runner's own bounded retry/timeout rather than trusting a single 10s window (named risk from §0, hardened not rewritten this task) · oracle contamination surviving into a scored run → `check_isolation.main` called at teardown, a leak forces status="failed" (M6) · unresolvable `add` arm pin drifting the fairness record → `resolve_pin` records a concrete SHA every run (M7).
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned")>
+Strategy actually used: as planned (agent.py -> records.py -> pin.py -> core.py -> run.py -> oracle wiring), with one deliberate scope-narrowing: `execute_wm` does NOT shell out each arm's `setup_steps` strings — they're free-text install/init lines with inline comments (e.g. "pip install -e add-method  # or: npm install..."), which cannot be run as list-form argv (the §0 "no shell string" security constraint) without a shell, and shelling them would call live network/CLI tools inside a "hermetic, no live claude call" test suite. Environment setup for a real pilot run stays a pre-runner manual/CI step for this task; `setup_steps` content is preserved on the loaded `Arm` for a future task to wire (recorded as a Spec delta in §7). `_invoke_once` also switched from a streaming readline-based watcher to `subprocess.communicate(timeout=...)` mid-build: readline() blocks past the deadline on a silent/sleeping fake agent, which produced a real RED (test_run_timeout_kills_and_records got status="done" instead of "timeout") — communicate()'s TimeoutExpired is the correct primitive for this seam.
 Safety rule (feature-specific): the agent subprocess and its timeout/kill/retry sequence plus the final record write are the one atomic-outcome unit — a kill, a retry exhaustion, or a mid-write crash must each resolve to exactly one of {no record yet, prior complete record, one newly-complete record}, never a torn/partial record on disk.
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
@@ -303,6 +303,7 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency 
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
+  - [SPEC · open] `execute_wm` does not execute an arm's `setup_steps` (install/init shell lines) — a future task must decide how/where arm environment provisioning runs (sandboxed shell? container?) without violating the list-form-argv-only security constraint (evidence: TASK.md §5 "Strategy actually used").
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
