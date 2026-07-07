@@ -71,3 +71,25 @@ class SkillTreesStayIdentical(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class NeverDeferInvariants(unittest.TestCase):
+    """never-defer-invariants: entry-contract-class constraints pin at setup."""
+
+    def test_invariants_seed_line_on_init(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = subprocess.run([sys.executable, str(ADD_PY), "init", "--name", "ndi",
+                                "--stage", "mvp"], cwd=tmp, capture_output=True,
+                               text=True, timeout=120)
+            self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+            proj = (pathlib.Path(tmp) / ".add" / "PROJECT.md").read_text()
+            dom = proj.split("## Domain", 1)[1][:400]
+            self.assertIn("invariants:", dom)
+            self.assertIn("never deferred", dom)
+
+    def test_setup_guide_pins_invariants(self):
+        text = SETUP_GUIDE.read_text()
+        self.assertIn("Pin invariants first", text)
+        self.assertIn("run/entry contract", text)
+        self.assertIn("§0", text.split("Pin invariants first", 1)[1][:400],
+                      "guide must say every task §0 re-states the invariants")

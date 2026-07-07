@@ -1,17 +1,17 @@
 # Phase 0 — Setup (autonomous draft → one human baseline approval)
 
-Goal: point ADD at a repo and **you** draft the whole foundation — domain, first-milestone scope, first task's contract — then hand the human one decision: the **baseline approval**. Brownfield silent; greenfield keeps a short interview; either way the only gate is `add.py lock`.
+Goal: point ADD at a repo, **you** draft the foundation seeds — invariants, first-milestone scope, first task's contract — then hand the human one decision: the **baseline approval**. Brownfield silent; greenfield keeps a short interview; either way the only gate is `add.py lock`.
 
 ## 1 · Zero-touch entry — you run init yourself
 
-No `.add/state.json`? Don't tell the human to initialise — run it yourself. Infer name + stage
-from the repo and **arm the baseline-approval gate** with `--await-lock`:
+No `.add/state.json`? Run init yourself — never tell the human to. Infer name + stage from the
+repo and **arm the baseline-approval gate** with `--await-lock`:
 
 ```bash
 python3 .add/tooling/add.py init --name "<inferred from repo/dir>" --stage <prototype|poc|mvp|production> --await-lock
 ```
 
-- `--await-lock` seeds an *unlocked* setup — the engine refuses build or `gate` until you `lock`. A plain `init` is grandfathered-locked (`already_locked` on a later `lock`).
+- `--await-lock` seeds an *unlocked* setup — the engine refuses build/`gate` until you `lock`; a plain `init` is grandfathered-locked.
 - name + stage are **your judgment**: throwaway → `prototype`, risky slice → `poc`, narrow → `mvp`, full rigor → `production`.
 
 `init` prints one of two things — **that is your branch**:
@@ -51,14 +51,17 @@ Capture each surfaced decision as an **ADR** in `PROJECT.md` **Key Decisions** a
 
 ## 3 · Draft to the lock (both paths)
 
-1. **Seed, don't draft.** Fill ONLY: the `goal:` line, the 4-lens seed answers (one line each into PROJECT.md Domain · Spec · UI/UX · Key Decisions), and the sections the FIRST milestone touches. Every other living-doc section keeps its `<!-- living: fill on first touch -->` marker — the milestone/task loop grows it on first touch and `fold` consolidates it. Brownfield: evidence-grounded from code as today (`adopt.md`). One `generic` persona is enough at setup; author a per-role persona when a task first embodies that role (teacher library `.add/personas-teacher/`, off-build).
-2. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
-3. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
+1. **Pin invariants first — never defer.** The Domain-lens "never breaks" invariant and any imposed
+   run/entry contract (how the artifact is executed/consumed: interpreter · port · packaging ·
+   protocol) land in PROJECT.md `invariants:` NOW; every task §0 re-states them. Defer the rest.
+2. **Seed, don't draft.** Fill ONLY: the `goal:` line, the 4-lens seed answers (one line each into PROJECT.md Domain · Spec · UI/UX · Key Decisions), and the sections the FIRST milestone touches. Every other living-doc section keeps its `<!-- living: fill on first touch -->` marker — the milestone/task loop grows it on first touch and `fold` consolidates it. Brownfield: evidence-grounded from code as today (`adopt.md`). One `generic` persona is enough at setup; author a per-role persona when a task first embodies that role (teacher library `.add/personas-teacher/`, off-build).
+3. **Propose, then size it.** Float a **kickoff suggestion** for the first milestone: a **goal** (one sentence), a **flow** (task order), **scenarios** (examples of what ships). Not the frozen `MILESTONE.md`. On their reaction, draft `MILESTONE.md` (read `scope.md`).
+4. **Create the first task and draft its candidate specification bundle.** `new-task` is allowed pre-lock:
    ```bash
    python3 .add/tooling/add.py new-task <slug> --title "<first feature>"
    ```
    Draft the full bundle **§1–§4** incl. the **§4 red suite** (`phases/4-tests.md`); the lock approves it whole. **Leave §3 `Status: DRAFT`** — the lock is its approval. You MAY `advance` pre-lock, but the engine **refuses build** until you `lock` (`setup_unlocked`). Sequence: **bundle (§1–§4, tests RED) → lock → build** — the red suite must FAIL before build.
-4. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
+5. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
 
 ## Run mode — how the build will be driven (propose sequential + auto; confirm to keep)
 
@@ -81,7 +84,7 @@ Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE
 python3 .add/tooling/add.py lock --by "<name>"
 ```
 
-Typing it themselves stays the **escape hatch** — the decision is the human's; you execute. `lock` writes the lock layers atomically and opens the build.
+Typing it themselves stays the **escape hatch** — the decision is theirs; you execute. `lock` writes the lock layers atomically and opens the build.
 
 ## 5 · After the lock
 

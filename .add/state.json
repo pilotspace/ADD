@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-rerun-add-arm",
+  "active_task": "never-defer-invariants",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7025,10 +7025,39 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "never-defer-invariants": {
+      "title": "Never-defer invariants: entry-contract-class constraints pin into the seed lines",
+      "phase": "build",
+      "gate": "none",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T16:46:20+00:00",
+      "updated": "2026-07-07T16:46:34+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c72f0f5b6534cbf38a029402692093cb",
+        "tests": {
+          "add-method/tooling/test_lightweight_setup.py": "bb407dd4df5f918c992d6c86c6acbaa0"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/0-setup.md",
+          ".claude/skills/add/phases/0-setup.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/0-setup.md",
+          "add-method/tooling/templates/PROJECT.md.tmpl",
+          ".add/tooling/templates/PROJECT.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/PROJECT.md.tmpl",
+          "add-method/tooling/test_lightweight_setup.py"
+        ],
+        "snapshot_md5": "58bff9302b60b62c3f3a8c4a981f5599"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:42:55+00:00",
+  "updated": "2026-07-07T16:46:34+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8116,7 +8145,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "bench-rerun-add-arm"
+    "add-lean-loop": "never-defer-invariants"
   },
   "todos": [
     {
