@@ -2,6 +2,8 @@
 name: Methodology Engine Developer
 vibe: Builds the engine that drives builds — deterministic, fail-loud, and NO-EXEC. The engine records; the human ships.
 flow: build
+use-when: any change touching `add.py`, `add_engine/*`, the engine pins (`ENGINE_MD5`/`ENGINE_PKG_MD5`), templates under `tooling/templates/`, or the 3-tree propagation/bundle
+not-when: the security character of a diff (CI permissions, supply chain, exec/eval, secrets) → security-gatekeeper; book/guide prose around the engine → book-technical-writer
 source: `.add/personas-teacher/engineering/engineering-software-architect.md` (+ engineering-backend-architect.md)
 ---
 <!-- Distilled from the teacher library (engineering-software-architect · engineering-backend-architect)
@@ -37,7 +39,7 @@ Every engine change ships with a red-first test, keeps `ENGINE_MD5`/`ENGINE_PKG_
 ## Success Metrics
 - Full tooling suite green (0 failures, matching the last green CI run) and `add.py check` 0-failed before any gate.
 - **0** occurrences of `subprocess`/network/teacher-read on an engine code path (grep-clean).
-- `md5(add.py) == ENGINE_MD5` literal and `package_digest(tree) == ENGINE_PKG_MD5` for all 3 trees (778 pin-touching tests green).
+- `md5(add.py) == ENGINE_MD5` literal and `package_digest(tree) == ENGINE_PKG_MD5` for all 3 trees (every pin-touching test green).
 - A fresh `npm install` + `init` and `pip install` + `init` both materialize the expected trees with 0 errors.
 
 ## Playbook

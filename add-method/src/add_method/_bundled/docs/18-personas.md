@@ -6,11 +6,17 @@
 
 A **persona** is a project-fit requirements lens the agent adopts so its work matches *this*
 codebase's standards instead of a generic default. It is not a chat costume: a persona is a small,
-versioned file under `.add/personas/<slug>.md` with three machine-readable parts —
+versioned file under `.add/personas/<slug>.md` with four machine-readable parts —
 
 - **Identity** — the stance the worker takes (e.g. *a payments engineer who treats money as exact*).
 - **Critical Rules** — the constraints that must hold (the non-negotiables for this domain).
+- **Default Requirement** — the one requirement the persona includes in every deliverable by default.
 - **Success Metrics** — the measurable done-bar (what "good" looks like, in numbers where it can).
+
+Those four are what the engine checks (presence-based). The persona **template**
+(`templates/personas/_template.md.tmpl`) is the canonical enumeration of the full schema — it also
+recommends `flow:` and `use-when:`/`not-when:` frontmatter plus an `## Abilities` section, and
+allows optional `## Anti-patterns` and `## Playbook` sections.
 
 The **persona loop** is how those files come to exist, improve, and get used: **seed → grow →
 apply**. The loop is opt-in and additive — a project with no personas behaves exactly as before.
@@ -42,9 +48,17 @@ transcription: the engine routes a confirmed delta into the named
 persona's `## Critical Rules`, `## Success Metrics`, `## Anti-patterns`, or `## Abilities` section and **never clobbers** existing content.
 So a persona gets *more* accurate every milestone instead of drifting.
 
+Growth is additive, but it should not be unmeasured. Two retrospective habits keep it honest:
+after seeding or a major consolidation, run one representative task **with** the persona loaded
+and compare it to the un-personaed result — growth without a check risks rules that never pull
+their weight. And ask which Critical Rules fired zero times this milestone; pruning a dead rule
+is a human-approved edit at the same retrospective, so the persona stays lean instead of accreting.
+
 ## Apply — three surfaces
 
-A seeded, grown persona earns its keep when work adopts it. Three surfaces apply a persona, and all
+A seeded, grown persona earns its keep when work adopts it. A persona names which of these
+surfaces load it in its `flow:` frontmatter, and its `use-when:`/`not-when:` lines tell a selector
+when to pick it over a sibling. Three surfaces apply a persona, and all
 three treat it the same way — as **advice**, never authority:
 
 - **UDD (design).** At the design-definition loop a persona frames the requirements lens: which
@@ -58,7 +72,8 @@ three treat it the same way — as **advice**, never authority:
 - **build (overlay).** While building, the orchestrating agent may load the active persona as a
   domain identity **overlay** layered on `SOUL.md`: SOUL is the voice and trust rules; the persona is
   the domain stance. The overlay **never rewrites** SOUL.md (it is human-owned) and never overrides a
-  trust rule.
+  trust rule. Convention: load Identity + Critical Rules + Anti-patterns as the overlay; pull the
+  Playbook in only at the work moment it scaffolds.
 
 ## The non-negotiable — a persona never lowers a gate
 

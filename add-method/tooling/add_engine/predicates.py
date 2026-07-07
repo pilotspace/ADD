@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 from add_engine.constants import (
-    PHASE_OWNER, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+    PHASE_OWNER, PERSONA_FLOW_VALUES, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
     _MUST_ID_RE, _REJECT_CODE_RE, _SCENARIO_TAG_RE, _COVERS_LINE_RE, _TAG_TOKEN_RE,
 )
 from add_engine.io_state import _die
@@ -89,6 +89,32 @@ def _persona_missing(md_text: str) -> list[str]:
         if not re.search(rf"(?m)^{re.escape(section)}\s*$", md_text):
             missing.append(section)
     return missing
+
+
+def _persona_quality_warnings(md_text: str) -> list[str]:
+    """Quality findings the presence-based schema check can't see (persona-schema-hardening).
+    `[]` == clean. WARN-only at the caller (measure-not-block); never a gate. Two findings:
+    (A) a `flow:` frontmatter value outside PERSONA_FLOW_VALUES — no apply-surface loads an
+    unknown flow, so a typo otherwise fails silently; an ABSENT `flow:` line is conformant
+    (that is `_persona_missing` territory, and flow is only RECOMMENDED). (B) a bare `<…>`
+    placeholder outside backtick code spans and HTML comments — a half-filled template copy
+    passes the presence check. PURE; NO-EXEC — text in, list of strings out."""
+    findings: list[str] = []
+    fm = re.match(r"\s*---\s*\n(.*?)\n---\s*\n", md_text, re.S)
+    fm_body = fm.group(1) if fm else ""
+    m = re.search(r"(?m)^\s*flow\s*:\s*(.+)$", fm_body)
+    if m:
+        for v in (tok.strip() for tok in m.group(1).split(",")):
+            if v and v not in PERSONA_FLOW_VALUES:
+                findings.append(f"flow value '{v}' not one of " + "|".join(PERSONA_FLOW_VALUES))
+    # strip comments FIRST (a backtick inside a comment is already gone), then ```-fenced
+    # blocks (a Playbook skeleton legitimately carries <placeholder> lines), then inline spans
+    no_comments = re.sub(r"<!--.*?-->", "", md_text, flags=re.S)
+    no_fences = re.sub(r"(?ms)^```.*?^```\s*$", "", no_comments)
+    no_code = re.sub(r"`[^`\n]*`", "", no_fences)
+    for ph in re.findall(r"<[^>\n]+>", no_code):
+        findings.append(f"bare <…> placeholder remains: '{ph[:40]}'")
+    return findings
 
 
 def _persona_slug_valid(slug: str) -> bool:

@@ -2,8 +2,8 @@
  self-improving-loop · The observe loop optimized for self-improvement across the 5 domains
 ════════════════════════════════════════════════════════════════════════
  VERDICT   DONE
- TASKS     3/3 done           CRITERIA  3/3 met
- GATES     3 PASS             WAIVERS   none
+ TASKS     4/4 done           CRITERIA  3/3 met
+ GATES     4 PASS             WAIVERS   none
 
  goal  the observe→deltas→fold→compact loop actually converges —
        persona-targeted lessons grow the NEW schema sections, the engine
@@ -14,9 +14,10 @@
 
  TASK                        PHASE     GATE TESTS PROGRESS
  ───────────────────────────────────────────────────────────────────────
- fold-persona-sections       done      PASS 3107† ●●●●●●●●●
- loop-surfacing-nudges       done      PASS 3107† ●●●●●●●●●
- self-improving-guide        done      PASS 3107† ●●●●●●●●●
+ fold-persona-sections       done      PASS 3118† ●●●●●●●●●
+ loop-surfacing-nudges       done      PASS 3118† ●●●●●●●●●
+ self-improving-guide        done      PASS 3118† ●●●●●●●●●
+ persona-schema-hardening    done      PASS 3118† ●●●●●●●●●
  legend  ● reached  ◉ current  ○ pending   spec→…→done
  † counted at the §4-declared path
 
@@ -24,6 +25,7 @@
    fold-persona-sections    PASS Tin Dang <tindang.ht97@gmail.com>
    loop-surfacing-nudges    PASS Tin Dang <tindang.ht97@gmail.com>
    self-improving-guide     PASS Tin Dang <tindang.ht97@gmail.com>
+   persona-schema-hardening PASS Tin Dang <tindang.ht97@gmail.com>
 
  EXIT CRITERIA  ●●●●●●●●●● 3/3 met
 

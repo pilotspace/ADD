@@ -24,6 +24,7 @@ __all__ = [
     "SETUP_FILES",
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
+    "PERSONA_FLOW_VALUES",
     "PERSONA_HINT",
     "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
@@ -100,6 +101,10 @@ SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md
 # content quality is the AI's authoring concern, not the engine gate. NO-EXEC: validation is pure.
 PERSONA_FRONTMATTER_KEYS = ("name", "vibe")
 PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Requirement", "## Success Metrics")
+# persona-schema-hardening: the closed set of apply-surfaces a `flow:` value may name — the
+# single source the quality predicate reads (a value outside this set is loaded by NO surface,
+# so a typo would otherwise fail silently). Findings are WARN-only (measure-not-block).
+PERSONA_FLOW_VALUES = ("design", "build", "advisor")
 
 # persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.
