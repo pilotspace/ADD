@@ -32,15 +32,23 @@ ADD_METHOD = HERE.parent
 REPO = ADD_METHOD.parent
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-# 4-twin lockstep for each template (canon · repo dogfood · add-method dogfood · bundle)
-FULL_TWINS = (HERE / "templates" / "TASK.md.tmpl",
-              REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-              ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-              BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
-FAST_TWINS = (HERE / "templates" / "TASK.fast.md.tmpl",
-              REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-              ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-              BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl")
+# 4-twin lockstep for each template (canon · repo dogfood · add-method dogfood · bundle).
+# Fresh-checkout skip-tolerance (ba09498 precedent): the dogfood trees are gitignored and
+# absent on a fresh clone — lockstep is asserted over the twins that EXIST; canon + bundle
+# are git-tracked and always present, so the parity claim never goes vacuous.
+def _existing(*paths):
+    present = tuple(p for p in paths if p.exists())
+    assert len(present) >= 2, f"twin set collapsed below canon+bundle: {paths}"
+    return present
+
+FULL_TWINS = _existing(HERE / "templates" / "TASK.md.tmpl",
+                       REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+                       ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+                       BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
+FAST_TWINS = _existing(HERE / "templates" / "TASK.fast.md.tmpl",
+                       REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+                       ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+                       BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl")
 BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "5-build.md",
                 REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md",
                 BUNDLE / "skill" / "add" / "phases" / "5-build.md")
