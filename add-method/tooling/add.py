@@ -2080,6 +2080,28 @@ def _sorted_by_updated(items: dict) -> list:
 
 
 def cmd_status(args: argparse.Namespace) -> None:
+    _section = getattr(args, "section", None)
+    if _section is not None:
+        # --section (progressive-task-context): print ONE raw §body of the
+        # active task — the agent mid-task reads tens of lines, not the whole
+        # growing TASK.md. Raw body only: no banner, no footer. Wins over
+        # --brief/--json when combined (documented precedence, not an error).
+        root = _require_root()
+        state = load_state(root)
+        slug = _resolve_task(state, None)
+        tok = _section.strip().lower()
+        if tok.isdigit() and int(tok) <= 7:
+            n = int(tok)
+        elif tok in PHASES and tok != "done":
+            n = PHASES.index(tok)
+        else:
+            _die(f"section_unknown: '{_section}' is not 0-7 or a phase name "
+                 f"({', '.join(p for p in PHASES if p != 'done')})")
+        bodies = _raw_phase_bodies(root, slug)
+        if n not in bodies:
+            _die(f"section_missing: no '## {n} ·' heading in tasks/{slug}/TASK.md")
+        print(bodies[n])
+        return
     if getattr(args, "brief", False):
         # --brief (engine-batch-ops): the resume essentials ONLY — the agent
         # re-orienting mid-task already holds the foundation in context; the
@@ -7758,6 +7780,9 @@ def build_parser() -> argparse.ArgumentParser:
                       "(default: top 10 by most-recently-updated)")
     pst.add_argument("--brief", action="store_true",
                      help="resume essentials only: the active task's slug · phase + the next: hint")
+    pst.add_argument("--section", default=None, metavar="N|PHASE",
+                     help="print ONE raw §body (0-7 or a phase name) of the active task — "
+                          "read a section, not the whole TASK.md")
     pst.set_defaults(func=cmd_status)
 
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")

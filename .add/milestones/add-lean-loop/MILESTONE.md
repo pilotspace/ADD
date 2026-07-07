@@ -34,11 +34,18 @@ test before build · recorded verify gate · security HARD-STOP).
 2. **progressive-task-context** — `add.py show <section>` + guide guidance to
    read ONLY the active TASK.md section instead of the whole file each turn;
    phase guides state the anti-context-rot loading rule explicitly.
-3. **fast-lane-intake-heuristic** — intake proposes `--fast` automatically for
+3. **lightweight-setup** — init seeds SKELETON foundation files (headings +
+   one-line seeds + `<!-- living: grows with milestones -->` markers) instead
+   of full upfront drafts; sections fill on first touch by the milestone/task
+   that needs them; the existing delta→fold loop keeps them living. The human
+   baseline approval approves the skeleton + first-milestone intent — the
+   trust floor is unchanged. (Human-added 2026-07-07: attacks the bootstrap
+   half of WM1's 9.7M pre-code tokens.)
+4. **fast-lane-intake-heuristic** — intake proposes `--fast` automatically for
    small/mechanical requests (human still confirms; flag stays human-owned).
    The full bundle for a CRUD-sized milestone is where the 41–55% pre-code
    share came from.
-4. **bench-rerun-add-arm** — re-run ONLY the add arm on WM1–WM3 with the lean
+5. **bench-rerun-add-arm** — re-run ONLY the add arm on WM1–WM3 with the lean
    loop and compare against the round-3 records (kept as baseline).
 
 ## Exit criteria

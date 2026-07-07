@@ -28,8 +28,7 @@ You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 result through passing evidence rather than a plausible-looking diff.
 
 **One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — a §0 ground
-preamble plus seven step sections, filled top to bottom. The Python tool tracks where you
-are so context never rots across sessions.
+preamble plus seven step sections, filled top to bottom; the tool tracks where you are.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
@@ -45,7 +44,7 @@ Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure the engine is in the
   `.add/tooling/` (engine) + `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block — like an
   npm/pip install; the skill stays in the plugin, nothing duplicated.
 
-Find the resume point from the tool, not by re-reading the repo:
+Resume from the tool, never by re-reading the repo:
 
 ```bash
 python3 .add/tooling/add.py status
@@ -64,7 +63,7 @@ self-improving via the `soul-self-improve` path). Then branch on state:
   matching `phases/<n>-<phase>.md`. Work *only* that phase.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
-**Quick ref** — `status` resume · `init` bootstrap · `advance` continue · `gate PASS` at verify.
+**Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` read one §body · `gate PASS` at verify.
 **Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
 - **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is a
   blessed standalone low-ceremony lane. Jot ideas first with `add.py todo "<text>"` (then `todo` to

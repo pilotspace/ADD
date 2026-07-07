@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "engine-batch-ops",
+  "active_task": "progressive-task-context",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6887,10 +6887,43 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "progressive-task-context": {
+      "title": "Progressive task context: status --section reads one \u00a7body; skill quick-ref adopts the batched loop",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-07T16:03:16+00:00",
+      "updated": "2026-07-07T16:14:46+00:00",
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fbf882b7c7569d51ef3c79bf00ac2a2e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/test_progressive_context.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/skill/add/SKILL.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          ".add/SEAMS.md"
+        ],
+        "snapshot_md5": "925ae8d451f3de66c5994dfad8f97fec"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T16:01:27+00:00",
+  "updated": "2026-07-07T16:14:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7978,7 +8011,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "engine-batch-ops"
+    "add-lean-loop": "progressive-task-context"
   },
   "todos": [
     {
