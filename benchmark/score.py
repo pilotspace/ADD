@@ -9,6 +9,7 @@ disk write; a scored write is all-or-nothing.
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import pathlib
@@ -69,6 +70,16 @@ def compute_context_rot_slope(fidelities: list[float]) -> float:
     return numerator / denominator
 
 
+def _pytest_argv() -> list[str]:
+    """A pytest-capable interpreter argv: the current interpreter when pytest
+    is importable in it, else the uv-managed fallback — the live-pilot host's
+    `sys.executable` (homebrew 3.14) has no pytest, and its "No module named
+    pytest" exit-1 otherwise parses as a silent zero-collection."""
+    if importlib.util.find_spec("pytest") is not None:
+        return [sys.executable, "-m", "pytest"]
+    return ["uv", "run", "--no-project", "--with", "pytest", "python", "-m", "pytest"]
+
+
 def compute_regression_rate(workspace: pathlib.Path) -> float:
     """Run `pytest -m regression` against the WM3 oracle re-exports for
     `workspace`; return failed_count / total_regression_count.
@@ -80,9 +91,7 @@ def compute_regression_rate(workspace: pathlib.Path) -> float:
     """
     proc = subprocess.run(
         [
-            sys.executable,
-            "-m",
-            "pytest",
+            *_pytest_argv(),
             "-m",
             "regression",
             "-p",
@@ -109,7 +118,9 @@ def compute_regression_rate(workspace: pathlib.Path) -> float:
     errored = _extract_count(_ERROR_RE, summary)
     total = passed + failed + errored
     if total == 0:
-        raise BenchError(f"regression_run_failed: no regression tests collected\n{summary}")
+        raise BenchError(
+            f"regression_run_failed: no regression tests collected\n{summary}\nstderr:\n{proc.stderr}"
+        )
     return (failed + errored) / total
 
 

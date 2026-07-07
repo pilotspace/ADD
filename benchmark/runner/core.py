@@ -41,7 +41,9 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
 
 
-def _invoke_once(argv: list[str], *, timeout_s: float, log_path: pathlib.Path) -> tuple[str, list[str], float]:
+def _invoke_once(
+    argv: list[str], *, cwd: pathlib.Path, timeout_s: float, log_path: pathlib.Path
+) -> tuple[str, list[str], float]:
     """Run one attempt. Returns (outcome, stdout_lines, first_edit_elapsed_s).
 
     outcome is "done" (exit 0), "failed" (nonzero exit), or "timeout".
@@ -50,6 +52,7 @@ def _invoke_once(argv: list[str], *, timeout_s: float, log_path: pathlib.Path) -
     start = time.monotonic()
     proc = subprocess.Popen(
         argv,
+        cwd=str(cwd),  # the agent starts inside its sandbox, never the pilot's cwd
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -254,7 +257,9 @@ def execute_wm(
     for attempt_idx in range(max_attempts):
         attempt_count = attempt_idx + 1
         argv = build_argv(prompt_text, agent_cmd)
-        outcome, lines, first_edit_elapsed = _invoke_once(argv, timeout_s=timeout_s, log_path=transcript_path)
+        outcome, lines, first_edit_elapsed = _invoke_once(
+            argv, cwd=workspace_dir, timeout_s=timeout_s, log_path=transcript_path
+        )
         attempts_log.append(f"attempt {attempt_count}: {outcome}")
         if outcome == "done":
             break  # a timeout or a failed attempt each consume a retry;

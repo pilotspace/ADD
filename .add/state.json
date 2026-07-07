@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "pilot-live-hardening",
+  "active_task": "pilot-cwd-hardening",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -6712,10 +6712,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "pilot-cwd-hardening": {
+      "title": "Pilot round-2 hardening: agent cwd + headless permissions + pytest-capable regression scoring",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-bench",
+      "depends_on": [],
+      "created": "2026-07-07T12:37:24+00:00",
+      "updated": "2026-07-07T12:41:01+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "dce4a56c2474549277aab5ba0c037157",
+        "tests": {
+          "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
+          "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
+          "benchmark/tests/test_arms.py": "ecde8e754b161f9699147e07c80d3426",
+          "benchmark/tests/test_isolation.py": "3d5519c6572c0121e2c6049ab76420f1",
+          "benchmark/tests/test_oracles_red.py": "5708d42b875b811cee984a4233ac1f0b",
+          "benchmark/tests/test_pilot.py": "787279816850776be61616f749c2e83e",
+          "benchmark/tests/test_pilot_cwd_hardening.py": "447d258ba0e2b61b6999ba087b22e616",
+          "benchmark/tests/test_pilot_hardening.py": "7ecb8835c1628fff09e54cc59ef030fa",
+          "benchmark/tests/test_report.py": "5f78884ae5867c74f0077b21a0e7c96b",
+          "benchmark/tests/test_run_cli.py": "5e791c11443d4ac402b229fc78508815",
+          "benchmark/tests/test_run_record.py": "89c2e819fdb02edb2d78a6c9c9b7da64",
+          "benchmark/tests/test_runner_core.py": "97d1370ee4632c4610bc1ce12f0b9677",
+          "benchmark/tests/test_runner_records.py": "a667991dc6e3db572d8dfb5155f5dbb9",
+          "benchmark/tests/test_runner_resume.py": "f9263abf61155733253b9bc400567e2d",
+          "benchmark/tests/test_score.py": "70d4cbc6a6ecfa4b7ad39c5eb6e0174f",
+          "benchmark/tests/test_workload_prompts.py": "fa6897be01059c6b78bd59d63236d86d"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/runner/core.py",
+          "benchmark/score.py",
+          "benchmark/tests/test_pilot_cwd_hardening.py"
+        ],
+        "snapshot_md5": "d51880b4a418d18dc95b9861b5888bb8"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T12:28:41+00:00",
+  "updated": "2026-07-07T12:41:01+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7784,7 +7829,7 @@
     "self-improving-loop": "persona-schema-hardening",
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
-    "add-bench": "pilot-live-hardening"
+    "add-bench": "pilot-cwd-hardening"
   },
   "todos": [
     {
