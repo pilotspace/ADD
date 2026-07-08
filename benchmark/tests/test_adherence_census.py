@@ -45,6 +45,7 @@ class TestAddLoopWrapper:
         low = out.lower()
         assert "add.py status" in low
         assert "frozen" in low and "red" in low
+        assert "proxy authority" in low  # headless runs must not stall at human gates
 
     def test_unknown_wrapper_still_verbatim(self):
         assert _wrap_prompt("x", "no-such-wrapper") == "x"

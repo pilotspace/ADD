@@ -44,7 +44,11 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
             "`python3 .add/tooling/add.py status` FIRST and follow its next-step through the "
             "phases; write NO app code before the task's contract is FROZEN and its red suite "
-            "exists; record the verify gate before finishing.\n\n" + text
+            "exists; record the verify gate before finishing. This is a headless run with no "
+            "human available: you carry the human's proxy authority — approve locks, contract "
+            "freezes, and gates yourself (record them as usual) and NEVER end the run waiting "
+            "for a human reply; the job is done only when the app meets the requirements.\n\n"
+            + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
 
