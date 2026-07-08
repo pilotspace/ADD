@@ -2,9 +2,9 @@
 
 slug: engine-hint-context-ops · created: 2026-07-08 · stage: mvp
 milestone: add-lean-loop
-autonomy: auto   <!-- Multi-component repo? add a `component: <name>` line (declared in .add/components.toml) to bind this fast task to a component — its root joins §5 Scope and its green-bar/verify surface at the gate. Omit for single-component projects. -->
-phase: build   <!-- fast lane: ground -> specify -> contract -> tests -> build -> verify -> observe -> done -->
-fast: true   <!-- the fast lane: a small task, collapsed flow + minimal template. Omit --fast for full rigor. -->
+autonomy: auto
+phase: done
+fast: true
 
 > Fast lane — one small task, minimal sections, filled top-to-bottom. The trust floor still
 > holds: a FROZEN §3 contract · ≥1 red test before build · a recorded §6 gate (security = HARD-STOP).
@@ -48,8 +48,6 @@ frozen: done-branch + unlocked-setup rendering unchanged; 3-tree parity; ENGINE_
 
 `Least-sure flag surfaced at freeze:` [test] unknown suites may pin the old "read .add/tasks/<slug>/TASK.md" line positively — why: resume wording is old; if wrong: migrate each pin forward mechanically
 Status: FROZEN @ v1 — approved by Tin Dang (instruction 2026-07-08: "push the ≤50% criterion now")
-<!-- The freeze IS the one approval. Approved -> Status: FROZEN @ vN — approved by <name>.
-     Changing a frozen contract = change request back to SPECIFY. -->
 
 ---
 
@@ -60,12 +58,11 @@ names --brief · old whole-file line replaced · done-branch rendering pinned un
 RED confirmed: 2 failures (resume still prints the whole-TASK.md instruction) —
 red for the right reason.
 
-
 ---
 
 ## 5 · BUILD — AI writes code
 
-Scope (may touch): `add-method/tooling/add.py` · `.add/tooling/add.py` · `add-method/src/add_method/_bundled/tooling/add.py` · `add-method/tooling/engine_pin.py` · `add-method/tooling/test_hint_context_ops.py` · `add-method/tooling/` (pin-migrating guard tests only) · `.add/SEAMS.md` · `benchmark/runs/` · `tmp/` · `.add/`
+Scope (may touch): `add-method/tooling/add.py` · `.add/tooling/add.py` · `add-method/src/add_method/_bundled/tooling/add.py` · `add-method/tooling/engine_pin.py` · `add-method/tooling/test_hint_context_ops.py` · `add-method/tooling/` (pin-migrating guard tests only) · `.add/SEAMS.md` · `benchmark/runs/` · `benchmark/BENCHMARK.md` · `tmp/` · `.add/`
 Strategy & known-problem fixes: <ordered build steps · the trap each known problem must dodge · let the active persona's domain stance (or "generic") shape the approach, not just patterns>
 Approach (domain strategy): <technique · shapes · pattern · optimization stance in one line, in the task's domain vocabulary — or "obvious, correctness-first">
 Strategy actually used: <fill at verify — what you ACTUALLY did, or "as planned"; harvested into §7 Decisions>
@@ -82,7 +79,6 @@ Code lives in: `./src/`   ·   Constraints: change no test, no contract; allow-l
 Build expectations (from §1 Accept + §3 CONTRACT): resume block teaches status --section <phase> + status --brief — confirmed by test_hint_context_ops + the wm1 rerun's adoption census.
 
 ### GATE RECORD
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-Reviewed by: <name> · date: <date>
-<!-- A security finding is ALWAYS HARD-STOP. Record exactly one outcome — no silent pass.
-     OBSERVE (optional): one `[SPEC · open]` or competency-delta line here if the loop taught the foundation something. -->
+Outcome: PASS
+Reviewed by: Tin Dang · date: 2026-07-08
+

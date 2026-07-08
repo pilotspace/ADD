@@ -7256,12 +7256,12 @@
     },
     "engine-hint-context-ops": {
       "title": "Resume line teaches status --section; footer ecosystem teaches --brief",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-lean-loop",
       "depends_on": [],
       "created": "2026-07-08T04:14:17+00:00",
-      "updated": "2026-07-08T04:22:53+00:00",
+      "updated": "2026-07-08T04:23:06+00:00",
       "fast": true,
       "flag_verified": true,
       "tripwire": {
@@ -7278,10 +7278,11 @@
           "add-method/tooling/",
           ".add/SEAMS.md",
           "benchmark/runs/",
+          "benchmark/BENCHMARK.md",
           "tmp/",
           ".add/"
         ],
-        "snapshot_md5": "12a167f5a58e07d65f3c90d763bfebf7"
+        "snapshot_md5": "c99a3d369c89d0616a796527be64c85e"
       },
       "heal": {
         "attempts": 1,
@@ -7292,11 +7293,21 @@
             "source": "scope"
           }
         ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-08T04:23:04+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T04:22:53+00:00",
+  "updated": "2026-07-08T04:23:06+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

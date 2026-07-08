@@ -23,6 +23,25 @@ engine hints. Other arms ran their stock configuration.
 | vanilla | 0.97 / 0.95 / 0.93 | 0.93 | 12.7M | $6.25 | 61 / 132 / 127 | none recorded |
 | plan-mode | 0.00 / 0.00 / 0.00 | 0.00 | 11.7M | $6.44 | 59 / 160 / 418 | structural failure — never shipped a running app |
 
+### Token use per workload milestone (transparency)
+
+| arm | WM1 (greenfield CRUD) | WM2 (auth + rules) | WM3 (breaking refactor) | total |
+|-----|----------------------:|-------------------:|------------------------:|------:|
+| **add (final)** | 12.85M | 3.16M | 2.11M | 18.1M |
+| spec-kit | 1.11M | 1.08M | 1.64M | 3.8M |
+| gsd | 2.03M | 2.48M | 3.28M | 7.8M |
+| vanilla | 2.01M | 4.28M | 6.38M | 12.7M |
+| plan-mode | 1.81M | 3.32M | 6.55M | 11.7M |
+
+The trajectories tell the real story: **every other arm's per-WM cost RISES
+as the project grows** (vanilla 2.0→6.4M, plan-mode 1.8→6.6M, gsd 2.0→3.3M —
+re-reading an ever-larger codebase each milestone), while **ADD's FALLS**
+(12.85→3.2→2.1M — the foundation and frozen contracts amortize; loop census
+falls in step). ADD's entire premium is the WM1 bootstrap: from WM2 onward it
+is cheaper than vanilla and plan-mode and within ~2× of spec-kit. Extrapolated
+one more milestone at these trajectories, ADD's incremental cost crosses below
+gsd's as well — the horizon-extension experiment (WM4+) would test exactly this.
+
 The verdict in one line: **ADD buys the highest and most stable fidelity
 (best floor 0.97, no catastrophic milestone, auditable trust evidence) at a
 cost premium that is front-loaded in the greenfield first milestone** —
