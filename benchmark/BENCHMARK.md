@@ -250,10 +250,73 @@ into smaller turns.
       the checklist, raw records, and transcripts exist so a skeptic can
       re-derive every number.
 
+## WM6 — the hard-milestone verdict (precision semantics)
+
+WM6 was designed to find the terrain where ADD's ceremony should beat a
+lighter method: four precision requirements (timezone-correct instant
+comparison, half-open `[start, end)` fenceposts, Idempotency-Key semantics,
+input hardening) where naive implementations pass casual review and fail
+exact checks. A 12-probe hidden oracle discriminates. Both arms ran wm6
+seeded from their own wm5, on the latest project-folder engine
+(`pilotspace-add init --force` refreshes seeded tooling; verified by digest).
+
+| | add | spec-kit |
+|---|---|---|
+| **12-probe precision oracle** | **12/12 pass** | **12/12 pass** |
+| judge fidelity (median-of-3) | 0.98 | 0.97 |
+| cost / tokens_total / uncached | $4.11* / 2.7M* / 42k* | $2.85 / 5.9M / 137k |
+| wall-clock / turns | 3.3 min* / 20* | 8.2 min / 57 |
+| engine calls | 138 | 0 |
+
+\* add's wm6 numbers cover attempt 2 only — attempt 1 hit the run timeout
+and the per-attempt transcript overwrite lost its spend (known harness cap:
+cost/tokens/time under-report on any retried run; attempts are recorded in
+the record's `attempts` artifact).
+
+**Verdict: the discrimination hypothesis is REFUTED. Both methods aced the
+precision milestone** — spec-kit (with its own spec+tests flow and sonnet-5
+underneath) handled tz instants, fenceposts, and idempotency correctly
+without ADD's contract/gate machinery. Six-milestone fidelity trajectories:
+add 0.97;0.98;0.97;0.98;0.98;0.98 (floor 0.97, slope +0.0017) vs spec-kit
+0.97;0.95;0.97;0.95;0.97;0.97 (floor 0.95, slope +0.0011). ADD keeps the
+higher floor and the trust artifacts; it did not produce a *correctness*
+outcome spec-kit failed to reach, on any of the six milestones.
+
+Harness defect found by wm6 (now fixed): the workload prompts never name
+bearer-token strings ("a fixed set of valid tokens"), but the oracles
+hardcoded `test-token-alice` — both arms independently chose `token-alice`,
+so raw oracle runs 401-failed symmetrically. The wm6 oracle now reads
+`BENCH_TOKEN_A`/`BENCH_TOKEN_B` (defaults unchanged); head-to-head results
+above use each workspace's real tokens, identically for both arms. The
+wm1-oracle regression re-exports carry the same latent mismatch (open delta).
+
+### Advisory: wall-clock per milestone (not a frozen metric)
+
+| WM | add | spec-kit | add turns | spec-kit turns |
+|----|-----|----------|----------:|---------------:|
+| 1 | 13.6 min | 9.2 min | 125 | 77 |
+| 2 | 3.1 min | 7.3 min | 39 | 42 |
+| 3 | 2.2 min | 7.5 min | 27 | 48 |
+| 4 | 19.9 min | 9.1 min | 173 | 61 |
+| 5 | 22.8 min | 10.6 min | 170 | 88 |
+| 6 | 3.3 min* | 8.2 min | 20* | 57 |
+
+Same shape as cost: ADD is 2–3× FASTER on small increments over frozen
+contracts (wm2/wm3), ~2× slower on big milestones (wm4/wm5), where the
+premium is turn fragmentation (~112 extra API round-trips on wm4), not the
+spec phases. Advisory only: wall-clock is machine/network-sensitive and
+retried attempts' time is lost to transcript overwrite.
+
+**WM4 value audit** (the sharpest 2×-for-what case): both arms passed the
+wm4 oracle 6/6 and wrote comparable suites (add 100 test cases, spec-kit
+85); judge delta +0.03 is within noise. The extra 10.8 minutes bought
+process evidence — frozen contracts, gate records, red→green per task —
+i.e. insurance that never paid out in a run with no regression event.
+
 Bottom line, updated: **ADD's price is proportional to how much specification
 ceremony a milestone triggers, and does not converge to spec-kit's at any
-tested horizon. What the premium buys — a 0.97 fidelity floor over five
-milestones, zero measured rot, and an auditable trust record per task — is
+tested horizon. What the premium buys — a 0.97 fidelity floor over six
+milestones (incl. the precision-hardening WM6), zero measured rot, and an auditable trust record per task — is
 worth 2.2× on work where a bad milestone is expensive, and is not worth it
 on work where a 0.95 floor and no audit trail are acceptable.** The next
 cost lever is risk-proportional ceremony (route small/mechanical work down

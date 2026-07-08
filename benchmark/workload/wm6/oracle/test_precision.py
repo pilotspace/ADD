@@ -10,8 +10,10 @@ import pytest
 
 from benchmark.workload._oracle_lib import http_call, running_app
 
-TOKEN_A = "test-token-alice"
-TOKEN_B = "test-token-bob"
+# The PROMPTs never name token strings ("a fixed set of valid tokens"), so the
+# arm's app legitimately picks its own; override to match the workspace under test.
+TOKEN_A = os.environ.get("BENCH_TOKEN_A", "test-token-alice")
+TOKEN_B = os.environ.get("BENCH_TOKEN_B", "test-token-bob")
 
 
 def _workspace() -> str:
