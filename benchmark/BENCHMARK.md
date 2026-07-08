@@ -117,3 +117,56 @@ The 0.67 regression_rate at wm3 is a workload artifact shared by every arm.
 4. **Greenfield bootstrap dominates ADD's cost** (~250 turns × growing context);
    setup tokens stay in tokens_total (every arm pays its own bootstrap) —
    amortized comparisons use the per-WM incremental numbers.
+
+
+## WM4/WM5 horizon extension — the crossover verdict
+
+Hypothesis (from the 3-WM trajectories): add's falling per-WM cost crosses
+below spec-kit's rising cost around WM4–5. Test: two new milestones — WM4
+feature growth (filters · pagination · recurring) and WM5 cross-cutting
+change (rooms, per-room overlap) — both arms run wm1→wm5 under the SAME
+harness (loop-enforced add with headless proxy authority; carry-forward
+seeding for every arm).
+
+| WM | add fid / tokens | spec-kit fid / tokens |
+|----|------------------|----------------------|
+| 1 | 0.97 / 17.3M | 0.97 / 8.9M |
+| 2 | 0.98 / 3.2M | 0.95 / 4.5M |
+| 3 | 0.97 / 2.1M | 0.97 / 5.4M |
+| 4 | 0.98 / 30.2M | 0.95 / 7.8M |
+| 5 | 0.98 / 34.1M | 0.97 / 12.7M |
+| **total** | **min 0.97 / 86.9M** | **min 0.95 / 39.2M** |
+
+**Verdict: the crossover hypothesis is REFUTED at this horizon.** ADD was
+cheaper per-WM only on the small milestones (wm2/wm3); when milestone scope
+grew (wm4/wm5), BOTH arms' costs rose with scope and ADD's rose ~3–4× steeper
+(full specification bundles + per-task ceremony over a now-large codebase).
+The earlier "falling curve" conflated foundation amortization with shrinking
+milestone scope. Cumulative: add 86.9M vs spec-kit 39.2M (2.2×).
+
+What the extension DID prove:
+- **Five-milestone quality**: add 0.97;0.98;0.97;0.98;0.98 (min 0.97, slope
+  +0.002 — zero rot over 5 WMs) vs spec-kit 0.97;0.95;0.97;0.95;0.97 (min
+  0.95, slope 0.0). Both excellent; add holds a small, consistent edge and
+  the higher floor, with per-task trust evidence spec-kit does not produce.
+- **Cost tracks milestone SCOPE, not milestone COUNT, for both methods.**
+  Amortization is real (add's census fell 251→74→27 on wm1–3) but is
+  overwhelmed by scope growth once milestones get structurally bigger.
+- **Harness findings**: ADD's contract-freeze human gate stalls headless runs
+  (fixed: proxy-authority wrapper clause); spec-kit's `specify init --here`
+  aborts on the non-empty seeded workspaces (fixed: `--force`); spec-kit's
+  own costs under the honest longitudinal harness (8.9→12.7M) are far above
+  its round-3 fresh-dir numbers (1.1–1.6M) — the "cheap" reputation was
+  partly the rebuild-from-scratch shortcut.
+- Run-to-run variance at n=1 is large for BOTH arms (add wm1: 12.8–18.1M
+  across three same-config runs; one add wm2 rerun scored ~0.0 where another
+  scored 0.98; spec-kit wm1: 1.1M vs 8.9M). Trajectory claims need ≥3 reps.
+
+Bottom line, updated: **ADD's price is proportional to how much specification
+ceremony a milestone triggers, and does not converge to spec-kit's at any
+tested horizon. What the premium buys — a 0.97 fidelity floor over five
+milestones, zero measured rot, and an auditable trust record per task — is
+worth 2.2× on work where a bad milestone is expensive, and is not worth it
+on work where a 0.95 floor and no audit trail are acceptable.** The next
+cost lever is risk-proportional ceremony (route small/mechanical work down
+the fast lane by default), not further micro-optimization of the full loop.
