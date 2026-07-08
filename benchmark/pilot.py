@@ -26,7 +26,7 @@ from benchmark.score import score_record
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ARMS_DIR = pathlib.Path(__file__).resolve().parent / "arms"
 REPO_ROOT_TOKEN = "{REPO_ROOT}"
-VALID_WMS = (1, 2, 3)
+VALID_WMS = (1, 2, 3, 4, 5)
 
 
 def resolve_setup_steps(arm: Arm, repo_root: pathlib.Path) -> Arm:
@@ -95,7 +95,7 @@ def attest_record(
 
 def run_pilot(
     arms: Sequence[str] = ARM_NAMES,
-    wms: Sequence[int] = (1, 2, 3),
+    wms: Sequence[int] = (1, 2, 3, 4, 5),
     *,
     resume: bool = True,
     agent_cmd: Sequence[str] | None = None,
@@ -169,7 +169,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run_all_p = sub.add_parser("run-all")
     run_all_p.add_argument("--arms", nargs="*", default=list(ARM_NAMES))
-    run_all_p.add_argument("--wms", nargs="*", type=int, default=[1, 2, 3])
+    run_all_p.add_argument("--wms", nargs="*", type=int, default=[1, 2, 3, 4, 5])
     run_all_p.add_argument("--resume", type=lambda s: s.lower() != "false", default=True)
     run_all_p.add_argument("--agent-cmd", nargs="*", default=None)
     run_all_p.add_argument("--judge-cmd", nargs="*", default=None)

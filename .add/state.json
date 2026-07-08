@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "engine-hint-context-ops",
+  "active_task": "bench-wm4plus-horizon",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7304,10 +7304,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-wm4plus-horizon": {
+      "title": "WM4/WM5 horizon extension \u2014 prove or refute the ADD/spec-kit crossover",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-08T04:31:56+00:00",
+      "updated": "2026-07-08T04:50:01+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9e08dac843d242c977e07b2265d833db",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/workload/",
+          "benchmark/run.py",
+          "benchmark/pilot.py",
+          "benchmark/score.py",
+          "benchmark/tests/",
+          "benchmark/runs/",
+          "benchmark/BENCHMARK.md",
+          "tmp/",
+          ".add/"
+        ],
+        "snapshot_md5": "3034343d2ab44aaaa6bc32a32095d44a"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-08T04:49:58+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T04:23:06+00:00",
+  "updated": "2026-07-08T04:50:01+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8395,7 +8434,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "engine-hint-context-ops"
+    "add-lean-loop": "bench-wm4plus-horizon"
   },
   "todos": [
     {

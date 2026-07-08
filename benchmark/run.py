@@ -25,7 +25,7 @@ from benchmark.schema.run_record import BenchError
 from benchmark.score import score_record
 
 ARMS_DIR = pathlib.Path(__file__).resolve().parent / "arms"
-VALID_WMS = (1, 2, 3)
+VALID_WMS = (1, 2, 3, 4, 5)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
         last_record = None
-        for wm in range(resume_wm, 4):
+        for wm in range(resume_wm, 6):
             last_record = execute_wm(
                 arm,
                 wm,

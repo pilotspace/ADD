@@ -26,7 +26,7 @@ from benchmark.schema.run_record import BenchError, RunRecord, validate
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 WM3_REGRESSION_TEST_PATH = REPO_ROOT / "benchmark" / "workload" / "wm3" / "oracle" / "test_refactor.py"
 REGRESSION_SUBPROCESS_TIMEOUT_S = 300.0
-VALID_WMS = (1, 2, 3)
+VALID_WMS = (1, 2, 3, 4, 5)
 
 _PASS_RE = re.compile(r"(\d+) passed")
 _FAIL_RE = re.compile(r"(\d+) failed")
@@ -176,14 +176,15 @@ def score_record(
     if record.status != "done":
         raise BenchError(f"record_not_done: status={record.status!r} (nothing to score)")
 
-    # WM3 needs WM1+WM2's own already-scored spec_fidelity before computing
+    # WM>=3 needs every prior WM's already-scored spec_fidelity before computing
     # anything — checked (and may raise missing_prior_wm_record) before any
-    # compute/write, per the all-or-nothing safety rule.
+    # compute/write, per the all-or-nothing safety rule. (bench-wm4plus-horizon:
+    # generalized from wm==3 so the slope spans the full trajectory at WM4/WM5.)
     prior_fidelities: list[float] = []
-    if wm == 3:
-        wm1_record = read_prior_wm_record(arm_name, 1, runs_root=root)
-        wm2_record = read_prior_wm_record(arm_name, 2, runs_root=root)
-        prior_fidelities = [wm1_record.metrics["spec_fidelity"], wm2_record.metrics["spec_fidelity"]]
+    if wm >= 3:
+        for prior_wm in range(1, wm):
+            prior = read_prior_wm_record(arm_name, prior_wm, runs_root=root)
+            prior_fidelities.append(prior.metrics["spec_fidelity"])
 
     metrics = dict(record.metrics)
     artifacts = dict(record.artifacts)
@@ -220,9 +221,11 @@ def score_record(
         _engine_call_census(pathlib.Path(transcript_str)) if transcript_str else 0
     )
 
-    if wm == 3:
-        # M4/M6: regression_rate + context_rot_slope are real computations at WM3.
-        regression_rate = compute_regression_rate(workspace)
+    if wm >= 3:
+        # M4/M6: context_rot_slope over the FULL trajectory at every WM>=3;
+        # regression_rate is real ONLY at WM3 (its refactor bait) — 0.0 by
+        # definition elsewhere, same rule as WM1/WM2.
+        regression_rate = compute_regression_rate(workspace) if wm == 3 else 0.0
         context_rot_slope = compute_context_rot_slope([*prior_fidelities, spec_fidelity])
         artifacts.update(_fidelity_artifacts(prior_fidelities, spec_fidelity))
     else:

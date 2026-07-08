@@ -331,13 +331,13 @@ def test_run_pilot_resumes_without_reinvoking(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(pilot_mod, "ARMS_DIR", arms_dir)
 
-    for wm in (1, 2, 3):
+    for wm in (1, 2, 3, 4, 5):
         _seed_record(
             runs_root,
             "add",
             wm,
             metrics={
-                "regression_rate": 0.0 if wm < 3 else 0.1,
+                "regression_rate": 0.0 if wm != 3 else 0.1,
                 "spec_fidelity": 0.8,
                 "tokens_total": 10.0,
                 "cost_usd": 0.01,
@@ -347,7 +347,7 @@ def test_run_pilot_resumes_without_reinvoking(tmp_path, monkeypatch):
         )
 
     before_bytes = {
-        wm: (runs_root / "add" / f"wm{wm}" / "record.json").read_bytes() for wm in (1, 2, 3)
+        wm: (runs_root / "add" / f"wm{wm}" / "record.json").read_bytes() for wm in (1, 2, 3, 4, 5)
     }
 
     def _boom_execute_wm(*args, **kwargs):
