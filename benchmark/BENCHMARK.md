@@ -128,21 +128,30 @@ change (rooms, per-room overlap) — both arms run wm1→wm5 under the SAME
 harness (loop-enforced add with headless proxy authority; carry-forward
 seeding for every arm).
 
-| WM | add fid / tokens | spec-kit fid / tokens |
-|----|------------------|----------------------|
-| 1 | 0.97 / 17.3M | 0.97 / 8.9M |
-| 2 | 0.98 / 3.2M | 0.95 / 4.5M |
-| 3 | 0.97 / 2.1M | 0.97 / 5.4M |
-| 4 | 0.98 / 30.2M | 0.95 / 7.8M |
-| 5 | 0.98 / 34.1M | 0.97 / 12.7M |
-| **total** | **min 0.97 / 86.9M** | **min 0.95 / 39.2M** |
+| WM | add fid / **cost** / tokens | spec-kit fid / **cost** / tokens |
+|----|------------------------------|-----------------------------------|
+| 1 | 0.97 / **$7.48** / 17.3M | 0.97 / **$4.00** / 8.9M |
+| 2 | 0.98 / **$1.27** / 3.2M | 0.95 / **$2.65** / 4.5M |
+| 3 | 0.97 / **$1.12** / 2.1M | 0.97 / **$2.80** / 5.4M |
+| 4 | 0.98 / **$11.50** / 30.2M | 0.95 / **$3.74** / 7.8M |
+| 5 | 0.98 / **$13.00** / 34.1M | 0.97 / **$5.48** / 12.7M |
+| **total** | **min 0.97 / $34.37 / 86.9M** | **min 0.95 / $18.66 / 39.2M** |
+
+**Cost is the fair headline, not raw tokens.** `tokens_total` weights cache
+reads equally with fresh input, but cache reads bill at ~10% of the input
+rate — and 99% of ADD's volume is cache reads (wm5: 33.7M of 34.1M; a
+many-turn loop re-reading a cache-hot context). In dollars the premium is
+**1.8×** ($34.37 vs $18.66), not the 2.2× the token ratio suggests — and on
+the small incremental milestones (wm2/wm3) ADD was **half spec-kit's price**
+($1.27/$1.12 vs $2.65/$2.80).
 
 **Verdict: the crossover hypothesis is REFUTED at this horizon.** ADD was
 cheaper per-WM only on the small milestones (wm2/wm3); when milestone scope
 grew (wm4/wm5), BOTH arms' costs rose with scope and ADD's rose ~3–4× steeper
 (full specification bundles + per-task ceremony over a now-large codebase).
 The earlier "falling curve" conflated foundation amortization with shrinking
-milestone scope. Cumulative: add 86.9M vs spec-kit 39.2M (2.2×).
+milestone scope. Cumulative: add $34.37 / 86.9M vs spec-kit $18.66 / 39.2M
+(1.8× in dollars, 2.2× in raw tokens).
 
 What the extension DID prove:
 - **Five-milestone quality**: add 0.97;0.98;0.97;0.98;0.98 (min 0.97, slope
@@ -161,6 +170,32 @@ What the extension DID prove:
 - Run-to-run variance at n=1 is large for BOTH arms (add wm1: 12.8–18.1M
   across three same-config runs; one add wm2 rerun scored ~0.0 where another
   scored 0.98; spec-kit wm1: 1.1M vs 8.9M). Trajectory claims need ≥3 reps.
+
+### Where ADD's tokens actually go (wm4+wm5 phase decomposition)
+
+Per-turn usage attributed to the active loop phase (proportions of the two
+big milestones' combined volume; turn counts in parentheses):
+
+| loop phase | share | turns |
+|-----------|------:|------:|
+| tests (author + run the red suite) | 34% | 215 |
+| verify (+ gate evidence) | 30% | 162 |
+| done / observe / deltas | 16% | 80 |
+| build | 13% | 65 |
+| orient (status/resume) | 4% | 59 |
+| contract | 2% | 18 |
+| specify + scenarios | 1% | 13 |
+
+The expensive part of ADD is NOT writing specifications (specify + scenarios
++ contract = ~3%) — it is **executing trust**: authoring and repeatedly
+running test suites (34%) and gathering verify/gate evidence (30%) inside an
+ever-larger codebase, across ~500 turns that each re-read the full context.
+spec-kit ships the same milestone in half the turns (wm5: 88 vs 170) because
+it writes spec documents, implements, and stops — no red-first suites, no
+evidence gathering, no gate records. That is the literal price of the trust
+floor, and why the next lever is risk-proportional ceremony: route small
+tasks down a lane with ONE suite run and a thin gate, keep the full
+machinery for milestones that earn it.
 
 Bottom line, updated: **ADD's price is proportional to how much specification
 ceremony a milestone triggers, and does not converge to spec-kit's at any
