@@ -197,6 +197,59 @@ floor, and why the next lever is risk-proportional ceremony: route small
 tasks down a lane with ONE suite run and a thin gate, keep the full
 machinery for milestones that earn it.
 
+### Fairness digest — like-for-like phase statistics + audit checklist
+
+**Same-classifier activity decomposition** (one activity classifier applied to
+BOTH arms' wm4+wm5 transcripts — turns classified by what their tool calls DO,
+never by arm-specific vocabulary):
+
+| activity | add share (turns) | spec-kit share (turns) |
+|----------|------------------:|------------------------:|
+| thinking / responding | 44.9% (276) | 44.8% (121) |
+| misc shell | 13.0% (84) | 12.5% (34) |
+| method tooling (add.py / specify) | 11.9% (71) | 2.4% (10) |
+| reading code | 9.6% (59) | 8.0% (25) |
+| running tests | 7.4% (44) | 12.2% (28) |
+| writing docs/specs | 5.4% (35) | 2.6% (7) |
+| writing tests | 3.7% (23) | 6.7% (17) |
+| writing app code | 2.7% (14) | 9.4% (23) |
+| verifying the running app | 1.3% (6) | 1.4% (3) |
+| **totals** | **612 turns · 115M** | **268 turns · 36M** |
+
+The profiles are nearly IDENTICAL in proportion (thinking 44.9% vs 44.8%;
+misc shell 13.0% vs 12.5%) — ADD does not spend on *different* activities,
+it does the same work across **2.3× more turns** (612 vs 268), each turn
+dragging a larger context (avg 188k vs 135k tokens/turn). The two visible
+structural deltas: method tooling (11.9% vs 2.4% — the engine round-trips)
+and the write balance (ADD writes proportionally more docs/tests, spec-kit
+more app code). Cost = turns × context; ADD's premium is turn count, and the
+engine round-trips both add turns directly and fragment the rest of the work
+into smaller turns.
+
+**Fairness audit checklist** (what a skeptical reviewer should check):
+
+- [x] Same model + wrappers for agent and judge (`claude-sonnet-5`) — all arms.
+- [x] Same ceilings — token_ceiling 200000, turn_ceiling 60, in every arm TOML.
+- [x] Same workload prompts, byte-identical across arms (wrapper prefix excepted).
+- [x] Same oracle suites, never visible to any arm; same median-of-3 judge.
+- [x] Same carry-forward seeding for every arm from WM2 on.
+- [x] Same activity classifier for the phase statistics above.
+- [x] One harness un-block fix per arm where the longitudinal harness broke it
+      (add: headless proxy-authority clause; spec-kit: `specify init --force`).
+- [ ] **Prompt-wrapper asymmetry** — add runs under an enforcement wrapper
+      (drive the loop, proxy authority); spec-kit runs `raw`. Defensible
+      (each arm driven as its method intends) but the add wrapper was tuned
+      across 3 iterations this pilot; spec-kit's flow got no equivalent tuning.
+- [ ] **Optimization asymmetry** — the engine grew moment-of-use hints during
+      the pilot specifically to cut add's cost; no spec-kit-side equivalent
+      was attempted.
+- [ ] **n=1 reps** — run-to-run variance is documented at up to 8× (spec-kit
+      wm1: 1.1M vs 8.9M) and a full fidelity flip (an add wm2 rerun: 0.0 vs
+      0.98). Every per-cell number here needs ≥3 reps before external use.
+- [ ] **Author bias** — the benchmark is built and run by the ADD authors;
+      the checklist, raw records, and transcripts exist so a skeptic can
+      re-derive every number.
+
 Bottom line, updated: **ADD's price is proportional to how much specification
 ceremony a milestone triggers, and does not converge to spec-kit's at any
 tested horizon. What the premium buys — a 0.97 fidelity floor over five
