@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-fidelity-dip",
+  "active_task": "bench-carry-forward",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7158,10 +7158,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-carry-forward": {
+      "title": "Seed WM(k) workspace from WM(k-1) \u2014 make the benchmark truly longitudinal",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-08T02:17:11+00:00",
+      "updated": "2026-07-08T02:19:23+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "865a46bccdc264840aa7c53f087e1b01",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/runner/core.py",
+          "benchmark/tests/test_carry_forward.py",
+          "benchmark/runs/",
+          "tmp/",
+          ".add/"
+        ],
+        "snapshot_md5": "7b152d07407fa4ac6e18bb457c483b5c"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-08T02:19:01+00:00",
+            "reason": "scope_violation: task 'bench-carry-forward' touched outside its declared \u00a75 Scope \u2014 benchmark/runner/core.py (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-08T02:19:22+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-07T18:06:50+00:00",
+  "updated": "2026-07-08T02:19:23+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8249,7 +8294,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "bench-fidelity-dip"
+    "add-lean-loop": "bench-carry-forward"
   },
   "todos": [
     {

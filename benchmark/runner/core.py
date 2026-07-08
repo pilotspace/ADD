@@ -13,6 +13,7 @@ import os
 import pathlib
 import shlex
 import signal
+import shutil
 import subprocess
 import time
 from typing import Sequence
@@ -213,6 +214,26 @@ def _isolation_check(workspace_dir: pathlib.Path) -> tuple[bool, list[str]]:
     return rc == 0, leaks
 
 
+def _seed_from_prior(
+    workspace_dir: pathlib.Path, arm_name: str, wm: int, runs_root: pathlib.Path
+) -> str | None:
+    """Carry the prior WM's completed workspace forward (bench-carry-forward).
+
+    WM2/WM3 prompts assume the prior milestone's app exists. Seeds ONLY a fresh
+    (empty) workspace for wm>1 — a populated workspace (resume/retry) is never
+    overwritten; `.venv` is excluded (setup recreates it per WM).
+    Returns a one-line note for the attempts log, or None when not applicable.
+    """
+    if wm <= 1 or any(workspace_dir.iterdir()):
+        return None
+    prior = runs_root / arm_name / f"wm{wm - 1}" / "workspace"
+    if not prior.is_dir():
+        return f"unseeded: no prior workspace at wm{wm - 1}"
+    shutil.copytree(prior, workspace_dir, dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns(".venv"))
+    return f"seeded from wm{wm - 1}"
+
+
 def execute_wm(
     arm: Arm,
     wm: int,
@@ -227,12 +248,15 @@ def execute_wm(
     wm_dir = root / arm.name / f"wm{wm}"
     workspace_dir = wm_dir / "workspace"
     workspace_dir.mkdir(parents=True, exist_ok=True)
+    seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root)
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
 
     prompt_text = _wrap_prompt(_prompt_path(wm).read_text(), arm.prompt_wrapper)
 
     attempts_log: list[str] = []
+    if seed_note:
+        attempts_log.append(seed_note)
 
     setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
     attempts_log.extend(setup_log)
