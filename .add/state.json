@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "tiny-plan-small-scope",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7432,10 +7432,19 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "tiny-plan-small-scope": {
+      "title": "new-milestone --tiny: one-approval compact plan for small scope",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "add-bench-2",
+      "depends_on": [],
+      "created": "2026-07-08T08:41:37+00:00",
+      "updated": "2026-07-08T08:41:37+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T08:35:21+00:00",
+  "updated": "2026-07-08T08:41:37+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7755,9 +7764,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "add-bench-2": {
+      "title": "Add Bench 2",
+      "goal": "benchmark ADD on the terrain its machinery actually defends: interruption-resume, ambiguity surfacing, regression storms, cold-start maintenance, and security bait \u2014 measuring what WM1-6 never triggered",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-08T08:41:06+00:00",
+      "updated": "2026-07-08T08:41:06+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-08T08:41:06+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "risk-proportional-ceremony",
+  "active_milestone": "add-bench-2",
   "archived": [
     {
       "slug": "v5",
@@ -8542,7 +8568,8 @@
     "delta-drain",
     "add-bench",
     "add-lean-loop",
-    "risk-proportional-ceremony"
+    "risk-proportional-ceremony",
+    "add-bench-2"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -8551,7 +8578,8 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "persona-nudge-quiet"
+    "add-lean-loop": "persona-nudge-quiet",
+    "add-bench-2": "tiny-plan-small-scope"
   },
   "todos": [
     {
