@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "engine-hint-batch-ops",
+  "active_task": "engine-hint-context-ops",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7253,10 +7253,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-hint-context-ops": {
+      "title": "Resume line teaches status --section; footer ecosystem teaches --brief",
+      "phase": "build",
+      "gate": "none",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-08T04:14:17+00:00",
+      "updated": "2026-07-08T04:22:53+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7ff5748699773d3b01fadc07d01b1cf7",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_hint_context_ops.py",
+          "add-method/tooling/",
+          ".add/SEAMS.md",
+          "benchmark/runs/",
+          "tmp/",
+          ".add/"
+        ],
+        "snapshot_md5": "12a167f5a58e07d65f3c90d763bfebf7"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-08T04:22:53+00:00",
+            "reason": "scope_violation: task 'engine-hint-context-ops' touched outside its declared \u00a75 Scope \u2014 benchmark/BENCHMARK.md (1 total)",
+            "source": "scope"
+          }
+        ]
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T03:40:11+00:00",
+  "updated": "2026-07-08T04:22:53+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8344,7 +8384,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "engine-hint-batch-ops"
+    "add-lean-loop": "engine-hint-context-ops"
   },
   "todos": [
     {

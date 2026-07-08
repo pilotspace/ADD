@@ -2407,7 +2407,11 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print(f"          (the loop: .add/docs/{_chap})")
         else:
             print(f"\nresume  : task '{active}' is at phase '{ph}'.")
-            print(f"          read .add/tasks/{active}/TASK.md and continue that phase.")
+            # engine-hint-context-ops: teach the cheap context ops at the moment of
+            # use — a whole-TASK.md read every re-orient is the context-tax driver.
+            print(f"          read its live section: add.py status --section {ph}"
+                  "  (whole TASK.md only if needed)")
+            print("          re-orient next turn: add.py status --brief")
 
 
 # Agent-portability (v14): `guide` names the PHASE PLAYBOOK file — the same
