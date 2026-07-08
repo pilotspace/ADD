@@ -50,7 +50,7 @@ test before build · recorded verify gate · security HARD-STOP).
 
 ## Exit criteria
 
-- [ ] add arm tokens_total per WM ≤50% of round-3 baseline — **NOT MET under honest
+- [x] add arm tokens_total per WM ≤50% of round-3 baseline — **NOT MET under honest
       enforcement**: the −79% was loop-bypass (census 3/0/0). Enforced+seeded:
       18.1M / 3.2M / 2.1M = 23.4M vs 20.5M. Valid lean win = incremental cost
       AFTER wm1 (wm2+wm3 = 5.3M vs 7.1M baseline, −25%, at higher fidelity);
@@ -58,6 +58,8 @@ test before build · recorded verify gate · security HARD-STOP).
       12 × advance --fill adopted. Honest loop total 18.2M vs 20.5M (−11%) at
       higher fidelity. ≤50% still unmet — remaining levers: --brief/--section
       moment-of-use hints (adoption 0), setup drafting volume, heal churn.
+      **WAIVED by Tin Dang 2026-07-08** (close at honest 4/5; benchmark verdict of record in
+      benchmark/BENCHMARK.md — remaining lever re-scoped to the risk-proportional-ceremony milestone).
 - [x] add arm median-of-3 spec_fidelity within ±0.05 of round-3 (0.94–0.97 band) — enforced+seeded 0.97 / 0.98 / 0.97 (above baseline)
 - [x] context_rot_slope stays ≥ −0.01 — 0.0 (enforced+seeded; fidelity_trajectory 0.97;0.98;0.97)
 - [x] trust floor intact — RESOLVED by the enforced+seeded rerun (human-chosen
