@@ -5744,8 +5744,15 @@ def _next_footer(root: Path, state: dict) -> str:
         if t and t.get("gate", "none") == "none" and t.get("phase") != "done":
             phase = t.get("phase")
             why = PHASE_GUIDE[phase][0].split(" — ")[0].strip()   # the short phase clause
-            command = ("add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
-                       if phase == "verify" else "add.py advance")
+            # engine-hint-batch-ops: drafting phases teach the batch form at the
+            # moment of use (enforced-rerun census: the lean ops went unused when
+            # only the guides named them — the footer is read every turn).
+            if phase == "verify":
+                command = "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
+            elif phase in ("ground", "specify", "scenarios", "contract", "tests"):
+                command = "add.py advance --fill <draft>"
+            else:
+                command = "add.py advance"
             marker = _driver_marker(_driver_stop(root, state, slug, phase))
             return f"next: {command} — {why}{marker}"
         mslug = _active_milestone(state)

@@ -50,15 +50,17 @@ test before build · recorded verify gate · security HARD-STOP).
 
 ## Exit criteria
 
-- [x] add arm tokens_total per WM ≤50% of round-3 baseline (13.4M/3.1M/4.0M) — 2.07M (15%) / 1.22M (39%) / 1.06M (26%); loop total 4.35M vs 20.5M (−79%)
-- [x] add arm median-of-3 spec_fidelity within ±0.05 of round-3 (0.94–0.97 band) — 0.95 / 0.92 / 0.95 vs 0.97 / 0.95 / 0.95 (max delta 0.03)
-- [x] context_rot_slope stays ≥ −0.01 — 0.0 on all three WMs
-- [ ] trust floor intact — **NOT MET / CONFOUNDED**: transcript audit of the lean
-      reruns shows the workspace agent largely BYPASSED the engine (wm1: 3 calls,
-      wm2: 0, wm3: 0 — vs 167 in baseline wm1); no frozen contract, red suite, or
-      gate record exists in the lean workspaces. The −79% token cut is therefore
-      substantially "ADD installed but unused", not "ADD run lean". Engine suite
-      3202 green (CI-mirror cleared at 1c65269) + benchmark suite 94 green hold,
-      but the rerun does not evidence the floor. HUMAN DECISION needed: rerun with
-      loop-adherence enforced/measured, or re-scope the exit criterion.
+- [ ] add arm tokens_total per WM ≤50% of round-3 baseline — **NOT MET under honest
+      enforcement**: the −79% was loop-bypass (census 3/0/0). Enforced+seeded:
+      18.1M / 3.2M / 2.1M = 23.4M vs 20.5M. Valid lean win = incremental cost
+      AFTER wm1 (wm2+wm3 = 5.3M vs 7.1M baseline, −25%, at higher fidelity);
+      wm1's 18.1M is 246 turns with ZERO batch-op adoption — remedy shipped
+      (engine-hint-batch-ops), unvalidated until the next rerun.
+- [x] add arm median-of-3 spec_fidelity within ±0.05 of round-3 (0.94–0.97 band) — enforced+seeded 0.97 / 0.98 / 0.97 (above baseline)
+- [x] context_rot_slope stays ≥ −0.01 — 0.0 (enforced+seeded; fidelity_trajectory 0.97;0.98;0.97)
+- [x] trust floor intact — RESOLVED by the enforced+seeded rerun (human-chosen
+      path): every workspace task carries a FROZEN contract + a recorded gate;
+      censuses 208/74/27 prove the loop was driven; fidelity 0.97/0.98/0.97
+      (fidelity_min 0.97, slope 0.0) — the best of any arm-run in the pilot.
+      Engine suite 3203 green · benchmark suite 110 green.
 - [x] no gate/freeze/evidence semantics changed — engine diff is ergonomics (advance --fill, status --brief/--section) + prose/guides; guard tests pin gate/freeze behavior unchanged

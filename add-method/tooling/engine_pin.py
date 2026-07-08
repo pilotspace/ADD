@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "d6febe37fa909d006bc72868e81bf6d0"  # re-aimed @ compact-propose (compact-foundation --propose verb). prior: 420ae4bd… @ roster-status-line
+ENGINE_MD5 = "3745c8476c5008fb286fd42ead630d3d"  # re-aimed @ engine-hint-batch-ops (footer teaches advance --fill in drafting phases). prior: d6febe37… @ compact-propose
 ENGINE_PKG_MD5 = "d3bb5326feacf06f54ecd338d5be2413"  # re-aimed @ never-defer-invariants (guidelines block binds PROJECT.md invariants). prior: a00e1d36… @ verify-flow-value
