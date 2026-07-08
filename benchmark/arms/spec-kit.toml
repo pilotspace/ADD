@@ -1,6 +1,6 @@
 name = "spec-kit"
 setup_steps = [
-  "uvx --from git+https://github.com/github/spec-kit.git@v0.12.5 specify init --here",
+  "uvx --from git+https://github.com/github/spec-kit.git@v0.12.5 specify init --here --force",
 ]
 prompt_wrapper = "raw"
 # Real, reproducible upstream pin: latest release tag (confirmed via
