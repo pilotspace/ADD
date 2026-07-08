@@ -1,13 +1,61 @@
 # add-bench — final pilot results
 
 Final results of record for the add-bench pilot (2026-07-07/08). One rep,
-5 arms × 3 workload milestones (task/booking REST API + CLI: CRUD → auth/rules
-→ breaking-shape refactor), agent + median-of-3 judge on `claude --model
-claude-sonnet-5`. Frozen metrics (5): regression_rate · spec_fidelity ·
-tokens_total (+cost_usd) · context_rot_slope · time_to_first_edit. Advisory
-artifacts: judge_scores · engine_calls (loop-adherence census) ·
-fidelity_trajectory / fidelity_min. Full per-run detail: `runs/PILOT-REPORT.md`
-(gitignored with the run artifacts).
+agent + median-of-3 judge on `claude --model claude-sonnet-5`. Full per-run
+detail: `runs/PILOT-REPORT.md` (gitignored with the run artifacts).
+
+## What is being benchmarked
+
+**The arms** — five ways of driving the same coding agent:
+
+- **add** — this repo's AI-Driven Development method: spec → scenarios →
+  frozen contract → red tests → build → recorded verify gate, driven through
+  the `add.py` engine.
+- **vanilla** — the bare agent, prompt in / code out, no method.
+- **plan-mode** — the agent with a "plan first, then execute" wrapper.
+- **gsd** — the GSD orchestration framework (research → plan → execute phases).
+- **spec-kit** — GitHub's spec-kit (constitution + spec-driven prompts).
+
+**The workload** — one longitudinal greenfield project (a task/booking REST
+API + CLI) grown across three milestones; each WM(k) workspace inherits the
+finished WM(k−1) app, so later milestones work against real accumulated code:
+
+- **WM1 — greenfield CRUD**: bookings resource (`title`, `start_time`,
+  `duration_minutes`, `status`) with 5 REST endpoints + a CLI over the same
+  logic. Entry contract: the app must run as `python -m app` on `$PORT`.
+- **WM2 — auth + business rules**: token auth, per-user ownership,
+  double-booking overlap rejection, cancellation-window rule — layered onto
+  the WM1 app without breaking it.
+- **WM3 — breaking-shape refactor (regression bait)**: `duration_minutes` is
+  REMOVED in favor of `end_time`; every endpoint, CLI command, and WM2
+  business rule must migrate while behavior holds. Deliberately breaks the
+  WM1-frozen shape to test how each method handles a controlled breaking
+  change.
+
+## Metrics
+
+Five frozen metrics, scored per WM from the run record, the workspace, and an
+oracle test suite the agent never sees:
+
+- **spec_fidelity** (0–1) — how faithfully the shipped app matches the WM's
+  written requirements; median of 3 independent LLM-judge calls against the
+  oracle report (raw scores kept as the `judge_scores` artifact).
+- **regression_rate** (0–1, WM3 only) — fraction of must-survive oracle tests
+  (WM1/WM2 behaviors that legitimately survive the WM3 refactor) that FAIL
+  after it; 0 is clean.
+- **tokens_total / cost_usd** — total tokens and USD billed for the WM's agent
+  run, parsed from the transcript. Setup/bootstrap is included: every arm pays
+  its own.
+- **context_rot_slope** — OLS slope over the three per-WM fidelities; measures
+  quality decay as the project grows. Caveat: at n=3 it equals (f3−f1)/2 — the
+  middle WM has zero weight — so it is complemented by `fidelity_trajectory` /
+  `fidelity_min`.
+- **time_to_first_edit** (s) — seconds from agent start to the first file
+  edit; the latency cost of a method's up-front ceremony.
+
+Advisory artifacts (recorded, never gate anything): `judge_scores` ·
+`engine_calls` (loop-adherence census — how often the agent actually drove
+the ADD engine) · `fidelity_trajectory` / `fidelity_min`.
 
 ## Final cross-arm comparison
 
