@@ -32,7 +32,7 @@ Out: <explicitly deferred — the anti-scope-creep list>
 - census-countable (full-suite runs countable from transcript) -> bench-premium-recheck
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] tiny-plan-small-scope       depends-on: none — `new-milestone --tiny`: one compact plan (goal + ≤5-line task list + exit checks), member tasks default to the fast lane, observe deferred to close — the whole small-scope flow in ONE approval
+- [x] tiny-plan-small-scope       depends-on: none — `new-milestone --tiny`: one compact plan (goal + ≤5-line task list + exit checks), member tasks default to the fast lane, observe deferred to close — the whole small-scope flow in ONE approval
 - [ ] lane-suggest-at-intake      depends-on: none — engine scores a new task's risk (sensitivity + scope size) and SUGGESTS the fast lane in new-task output (moment-of-use, adoption-measurable)
 - [ ] three-canonical-suite-runs  depends-on: none — loop teaches exactly red (tests) · green (build) · gate (verify) full-suite runs; targeted tests between (benchmark: 13-16 runs/WM vs 3 needed)
 - [ ] defer-observe-to-close      depends-on: none — per-task done/observe ceremony (16% of turns, zero artifact yield on wm4/wm5) batches at milestone close
@@ -45,7 +45,7 @@ Out: <explicitly deferred — the anti-scope-creep list>
 - [ ] full-suite runs per task ≤4 on the recheck transcripts        (← three-canonical-suite-runs)
 - [ ] no gate/tripwire weakened — tamper-tripwire + engine full suite green        (← all)
 - [ ] fast-lane suggestion adopted ≥1 time in the recheck run        (← lane-suggest-at-intake)
-- [ ] a WM1-6-scale milestone completes under --tiny with ONE plan approval and the full trust floor        (← tiny-plan-small-scope)
+- [x] a WM1-6-scale milestone completes under --tiny with ONE plan approval and the full trust floor        (← tiny-plan-small-scope; engine capability shipped + 8/8 suite — the recheck run exercises it end-to-end)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine

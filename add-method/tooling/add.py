@@ -721,6 +721,17 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # The human opts in explicitly (the engine never guesses ceremony); the freeze floor is held by
     # the freeze-before-build gate's fast arm (cmd_advance), so the lighter shape never drops the trust seam.
     fast = bool(getattr(args, "fast", False))
+    # tiny-milestone default lane (tiny-plan-small-scope): member tasks of a tiny
+    # milestone scaffold the fast template WITHOUT a per-task --fast; `--full` opts back,
+    # and a base-class sensitivity (security|data|architecture) ALWAYS gets the full
+    # template — the risk floor outranks the lane default. The human declared the lane
+    # once, at `new-milestone --tiny`; this only applies that declaration.
+    sensitivity = (getattr(args, "sensitivity", None) or "").strip().lower()
+    _tiny_parent = bool(milestone and state.get("milestones", {}).get(milestone, {}).get("tiny"))
+    if _tiny_parent and not fast:
+        if not bool(getattr(args, "full", False)) and sensitivity not in (
+                "security", "data", "architecture"):
+            fast = True
     rendered = _render_template(
         "TASK.fast.md" if fast else "TASK.md",
         title=title, slug=slug, date=date.today().isoformat(),
@@ -765,6 +776,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
     if fast:
         state["tasks"][slug]["fast"] = True                 # durable lane marker (absent == not-fast)
+    if sensitivity:
+        state["tasks"][slug]["sensitivity"] = sensitivity   # declared at creation (tiny-plan-small-scope)
     _set_active_task(state, slug, milestone)
     save_state(root, state)
     print(f"created task '{slug}' -> {task_md}")
@@ -3762,9 +3775,25 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     # One _now() instant feeds BOTH the MILESTONE.md render and the state record, so the
     # human-facing `created:` is a full ISO timestamp provably equal to state.json.
     now = _now()
-    _atomic_write(mfile, _render_template(
-        "MILESTONE.md", title=title, goal=args.goal or "<goal>",
-        stage=args.stage, date=now))
+    # tiny lane (tiny-plan-small-scope): --tiny writes a COMPACT plan — goal + Plan +
+    # Done-when only. Human-declared, never engine-elected; the trust floor is untouched
+    # (member tasks still freeze/red/gate — only the PLAN artifact shrinks to fit the scope).
+    tiny = bool(getattr(args, "tiny", False))
+    if tiny:
+        _atomic_write(mfile, (
+            f"# MILESTONE: {title}\n\n"
+            f"goal: {args.goal or '<goal>'}\n"
+            f"stage: {args.stage} \u00b7 status: active \u00b7 created: {now} \u00b7 lane: tiny\n"
+            f"release: pending\n\n"
+            "> Tiny plan \u2014 small scope, one approval. Keep it to a handful of lines; if it\n"
+            "> outgrows this shape, recreate without --tiny (the full SDD scaffold).\n\n"
+            "## Plan\n\n"
+            "## Done when\n"
+        ))
+    else:
+        _atomic_write(mfile, _render_template(
+            "MILESTONE.md", title=title, goal=args.goal or "<goal>",
+            stage=args.stage, date=now))
     # confirm-parent gate (OPT-IN, mirrors `init --await-lock`): `--await-confirm` seeds the
     # milestone UNCONFIRMED so new-task is held until `add.py milestone-confirm`. WITHOUT the flag
     # NO `confirmed` key is written → grandfathered-confirmed → no gate (so the existing engine
@@ -3778,6 +3807,8 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
         "title": title, "goal": args.goal or "", "stage": args.stage,
         "status": "queued" if queued else "active", "created": now, "updated": now,
     }
+    if tiny:
+        record["tiny"] = True   # durable lane marker (absent == full; grandfather-safe)
     if await_confirm:
         # `await_confirm` is the STABLE opt-in marker (set ONLY here, at creation). `confirmed`
         # alone is NOT a reliable opt-in signal: milestone-confirm stamps confirmed:true on a plain
@@ -3837,7 +3868,14 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     if "confirmed" in m:
         mfile = root / "milestones" / slug / MILESTONE_FILE
         md = mfile.read_text(encoding="utf-8") if mfile.exists() else ""
-        if _section_unfilled(md, "## Shared / risky contracts"):
+        if m.get("tiny"):
+            # tiny-plan gate (tiny-plan-small-scope): a tiny milestone has no contracts
+            # scaffold — its fill floor is the compact plan itself (Plan + Done-when).
+            if (_section_unfilled(md, "## Plan")
+                    or _section_unfilled(md, "## Done when")):
+                _die("tiny_plan_unfilled: fill '## Plan' and '## Done when' of "
+                     f"{slug}'s tiny MILESTONE.md before confirming")
+        elif _section_unfilled(md, "## Shared / risky contracts"):
             _die("milestone_contracts_unfilled: fill the '## Shared / risky contracts' "
                  f"section of {slug}'s MILESTONE.md before confirming")
     who = getattr(args, "by", None) or getpass.getuser()
@@ -7587,6 +7625,13 @@ def build_parser() -> argparse.ArgumentParser:
     pn.add_argument("--fast", action="store_true",
                     help="opt into the fast lane: scaffold the minimal TASK.fast.md template + "
                          "hold the task to the freeze floor under any milestone")
+    pn.add_argument("--full", action="store_true",
+                    help="under a tiny milestone: opt back into the FULL TASK.md template "
+                         "(tiny members default to the fast lane)")
+    pn.add_argument("--sensitivity", default=None, metavar="CLASS",
+                    help="declare the task's risk class at creation (base: security|data|"
+                         "architecture|mechanical \u222a GLOSSARY classes); a base non-mechanical "
+                         "class forces the full template even under a tiny milestone")
     pn.set_defaults(func=cmd_new_task)
 
     pdd = sub.add_parser("drop-delta",
@@ -7624,6 +7669,10 @@ def build_parser() -> argparse.ArgumentParser:
     pm.add_argument("--goal", default=None, help="one-sentence outcome")
     pm.add_argument("--stage", default="mvp", choices=STAGES)
     pm.add_argument("--force", action="store_true", help="overwrite MILESTONE.md if present")
+    pm.add_argument("--tiny", action="store_true",
+                    help="tiny plan for small scope: compact MILESTONE.md (goal + Plan + "
+                         "Done-when, no contracts scaffold); member tasks default to the "
+                         "fast lane. Human-declared; the freeze/red/gate floor is unchanged.")
     pm.add_argument("--queued", action="store_true",
                     help="create the milestone QUEUED (status=queued), not active: it is recorded "
                          "and its MILESTONE.md written, but the active focus is unchanged. Promote it "
