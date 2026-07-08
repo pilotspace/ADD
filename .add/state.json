@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bench-hard-wm6",
+  "active_task": "persona-nudge-quiet",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7382,10 +7382,60 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-nudge-quiet": {
+      "title": "Persona nudge fires at seams only + tokens_uncached artifact",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-lean-loop",
+      "depends_on": [],
+      "created": "2026-07-08T07:07:24+00:00",
+      "updated": "2026-07-08T07:15:10+00:00",
+      "fast": true,
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "69b31eae5c82fdbd011c44559c94975e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_persona_nudge_quiet.py",
+          "benchmark/score.py",
+          "benchmark/tests/",
+          "benchmark/runs/",
+          "tmp/",
+          ".add/"
+        ],
+        "snapshot_md5": "20e4fd42841f49124bedee30cea9172c"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-08T07:14:53+00:00",
+            "reason": "scope_violation: task 'persona-nudge-quiet' touched outside its declared \u00a75 Scope \u2014 benchmark/arms/add.toml (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-08T07:15:09+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T07:01:37+00:00",
+  "updated": "2026-07-08T07:15:10+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8473,7 +8523,7 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "bench-hard-wm6"
+    "add-lean-loop": "persona-nudge-quiet"
   },
   "todos": [
     {

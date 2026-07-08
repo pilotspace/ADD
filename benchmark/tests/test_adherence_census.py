@@ -55,6 +55,21 @@ class TestAddLoopWrapper:
         assert 'prompt_wrapper = "add-loop"' in toml
 
 
+class TestTokensUncached:
+    def test_uncached_artifact_from_final_usage(self, tmp_path):
+        from benchmark.score import _tokens_uncached
+        t = tmp_path / "transcript.jsonl"
+        t.write_text(
+            '{"usage": {"input_tokens": 100, "cache_creation_input_tokens": 50, '
+            '"cache_read_input_tokens": 99999, "output_tokens": 25}, "total_cost_usd": 1.0}\n'
+        )
+        assert _tokens_uncached(t) == 175  # cache reads excluded
+
+    def test_uncached_zero_when_missing(self, tmp_path):
+        from benchmark.score import _tokens_uncached
+        assert _tokens_uncached(tmp_path / "nope.jsonl") == 0
+
+
 class TestFrozenSurfaceUntouched:
     def test_other_arm_tomls_untouched(self):
         arms_dir = pathlib.Path(__file__).resolve().parents[1] / "arms"

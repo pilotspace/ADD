@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "352d8bc29594d8077e7a644890ca3fac"  # re-aimed @ engine-hint-context-ops (resume teaches status --section/--brief). prior: 3745c847… @ engine-hint-batch-ops
+ENGINE_MD5 = "3ea3da85d306f6c8bf334104ba778694"  # re-aimed @ persona-nudge-quiet (status nudge gated to idle). prior: 352d8bc2… @ engine-hint-context-ops
 ENGINE_PKG_MD5 = "d3bb5326feacf06f54ecd338d5be2413"  # re-aimed @ never-defer-invariants (guidelines block binds PROJECT.md invariants). prior: a00e1d36… @ verify-flow-value

@@ -2204,8 +2204,12 @@ def cmd_status(args: argparse.Namespace) -> None:
     # persona pointer (persona-seed-nudge v2): project-wide, read every session like context/voice
     # above — fires until >=1 REAL persona is seeded, self-clears once one lands. Advisory only;
     # never gates, never touches the --json branch (human-readable orientation surface only).
+    # persona-nudge-quiet: the unseeded hint is a DISCOVERY nudge — it fires at the
+    # seams (init · new-milestone · idle status), never on every active-task status
+    # (benchmark evidence: 20-30 prints/run, 0 personas ever seeded — context noise).
     if _personas_unseeded(root):
-        print(f"persona : {PERSONA_HINT}")
+        if not _active_task(state):
+            print(f"persona : {PERSONA_HINT}")
     else:
         # persona roster (roster-status-line): one frontmatter-sourced line per REAL persona
         # (slug · flow · vibe) so a selector never needs whole-roster body reads. Existence-

@@ -140,6 +140,25 @@ def _fidelity_artifacts(prior_fidelities: list[float], wm3_fidelity: float) -> d
     }
 
 
+def _tokens_uncached(transcript_path: pathlib.Path) -> int:
+    """Uncached completion tokens — input + cache_creation + output from the final
+    usage event; the honest "new LLM work" measure (cache reads bill ~10% and are
+    99% of a many-turn loop's raw volume). Artifact only; metrics untouched."""
+    if not transcript_path.exists():
+        return 0
+    for line in reversed(transcript_path.read_text(errors="replace").splitlines()):
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        usage = event.get("usage") if isinstance(event, dict) else None
+        if isinstance(usage, dict) and usage:
+            return (int(usage.get("input_tokens", 0))
+                    + int(usage.get("cache_creation_input_tokens", 0))
+                    + int(usage.get("output_tokens", 0)))
+    return 0
+
+
 def _engine_call_census(transcript_path: pathlib.Path) -> int:
     """Count `add.py <subcommand>` invocations in a run transcript — the loop-adherence
     census (bench-adherence-census). A comparative ARTIFACT, never a metric: the frozen
@@ -219,6 +238,9 @@ def score_record(
     transcript_str = artifacts.get("transcript", "")
     artifacts["engine_calls"] = str(
         _engine_call_census(pathlib.Path(transcript_str)) if transcript_str else 0
+    )
+    artifacts["tokens_uncached"] = str(
+        _tokens_uncached(pathlib.Path(transcript_str)) if transcript_str else 0
     )
 
     if wm >= 3:
