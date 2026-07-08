@@ -54,8 +54,10 @@ test before build · recorded verify gate · security HARD-STOP).
       enforcement**: the −79% was loop-bypass (census 3/0/0). Enforced+seeded:
       18.1M / 3.2M / 2.1M = 23.4M vs 20.5M. Valid lean win = incremental cost
       AFTER wm1 (wm2+wm3 = 5.3M vs 7.1M baseline, −25%, at higher fidelity);
-      wm1's 18.1M is 246 turns with ZERO batch-op adoption — remedy shipped
-      (engine-hint-batch-ops), unvalidated until the next rerun.
+      wm1 remedy VALIDATED: post-hint wm1 = 12.8M (−29%) at fid 0.97 unanimous,
+      12 × advance --fill adopted. Honest loop total 18.2M vs 20.5M (−11%) at
+      higher fidelity. ≤50% still unmet — remaining levers: --brief/--section
+      moment-of-use hints (adoption 0), setup drafting volume, heal churn.
 - [x] add arm median-of-3 spec_fidelity within ±0.05 of round-3 (0.94–0.97 band) — enforced+seeded 0.97 / 0.98 / 0.97 (above baseline)
 - [x] context_rot_slope stays ≥ −0.01 — 0.0 (enforced+seeded; fidelity_trajectory 0.97;0.98;0.97)
 - [x] trust floor intact — RESOLVED by the enforced+seeded rerun (human-chosen
