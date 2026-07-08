@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "3ea3da85d306f6c8bf334104ba778694"  # re-aimed @ persona-nudge-quiet (status nudge gated to idle). prior: 352d8bc2… @ engine-hint-context-ops
-ENGINE_PKG_MD5 = "d3bb5326feacf06f54ecd338d5be2413"  # re-aimed @ never-defer-invariants (guidelines block binds PROJECT.md invariants). prior: a00e1d36… @ verify-flow-value
+ENGINE_MD5 = "99c3bf04ba6d1284ba9fac548b2960d3"  # re-aimed @ phase-bundles (status/guide bundle line + --json field). prior: 3ea3da85… @ persona-nudge-quiet
+ENGINE_PKG_MD5 = "9883ce7290ff56af189bf917f3d35bf6"  # re-aimed @ phase-bundles (PHASE_GROUPS/PHASE_AGENT + _phase_bundle). prior: d3bb5326… @ never-defer-invariants

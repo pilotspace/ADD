@@ -306,7 +306,7 @@ def _contract_fingerprint(raw3: str) -> str:
 
 # --- state/markdown predicates (moved to add_engine/predicates.py) -----------
 from add_engine.predicates import (
-    _phase_owner, _setup_locked, _milestone_confirmed, _section_unfilled,
+    _phase_owner, _phase_bundle, _setup_locked, _milestone_confirmed, _section_unfilled,
     _task_done, _persona_missing, _persona_quality_warnings, _persona_slug_valid, _rule_coverage_gaps,
 )
 
@@ -2126,7 +2126,8 @@ def cmd_status(args: argparse.Namespace) -> None:
                 _die("unknown_task")
             print(json.dumps({"slug": task_slug, "phase": t.get("phase"), "gate": t.get("gate"),
                                "milestone": t.get("milestone"),
-                               "owner": t.get("owner"), "assignee": t.get("assignee")}))
+                               "owner": t.get("owner"), "assignee": t.get("assignee"),
+                               "bundle": _phase_bundle(t.get("phase"))}))
             return
         milestones = state.get("milestones") or {}
         sorted_ms = _sorted_by_updated(milestones)
@@ -2151,7 +2152,8 @@ def cmd_status(args: argparse.Namespace) -> None:
             "milestones_total": len(milestones),
             "tasks": [{"slug": s, "phase": t.get("phase"), "gate": t.get("gate"),
                        "milestone": t.get("milestone"),
-                       "owner": t.get("owner"), "assignee": t.get("assignee")}
+                       "owner": t.get("owner"), "assignee": t.get("assignee"),
+                       "bundle": _phase_bundle(t.get("phase"))}
                       for s, t in page_tasks],
             "tasks_total": len(tasks),
             "graduation_ready": grad_ready,
@@ -2327,6 +2329,15 @@ def cmd_status(args: argparse.Namespace) -> None:
         # sensitivity is declared; "unset" cue when absent; "?" surfaces a typo to fix at freeze.
         _sens = _task_sensitivity(_task_header(root, active), valid=_project_sensitivity_values(root))
         print(f"sensitivity: {('unset' if _sens is None else _sens)}")
+        # phase bundle (phase-bundles): which of the 3 agent-owned bundles (DIRECTION/BUILD/
+        # VERIFY) the active phase belongs to + the roster agent preferred for THIS phase —
+        # additive-cue convention (present-only; silent at "done", the one PHASES member with
+        # no owning bundle — _phase_bundle returns None there, never a fabricated name).
+        _active_phase = tasks[active].get("phase")
+        _bundle = _phase_bundle(_active_phase)
+        if _bundle is not None:
+            print(f"bundle  : {_bundle}  ({'·'.join(PHASE_GROUPS[_bundle])})"
+                  f"  — prefer: {PHASE_AGENT[_active_phase]} agent")
         # step-spawn-hint (advisor-gated-autonomy): one advisory line naming the agent shape a
         # parallel run would fan out at THIS step. Present-only (None → no line): suppressed under
         # the `manual` dial and at contract/done. The tier reflects declared `risk: high`.
@@ -2454,7 +2465,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
             print(json.dumps({"task": None, "phase": None, "owner": "human", "stop": True,
                               "next_step": "start your first feature -> add.py new-task <slug>",
                               "chapter": ".add/docs/02-the-flow.md", "gate": None,
-                              "guide": None}))
+                              "guide": None, "bundle": None}))
             return
         t = (state.get("tasks") or {}).get(slug)
         if t is None:
@@ -2469,7 +2480,8 @@ def cmd_guide(args: argparse.Namespace) -> None:
         print(json.dumps({"task": slug, "phase": phase, "owner": owner,
                           "stop": owner != "ai", "next_step": action,
                           "chapter": f".add/docs/{chapter}", "gate": t.get("gate"),
-                          "guide": _phase_guide_path(json_root.parent, phase)}))
+                          "guide": _phase_guide_path(json_root.parent, phase),
+                          "bundle": _phase_bundle(phase)}))
         return
     root = _require_root()
     state = load_state(root)
@@ -2503,6 +2515,12 @@ def cmd_guide(args: argparse.Namespace) -> None:
         print(f"guide  : {gp}")
     elif phase in _PHASE_GUIDE_FILES:
         print("guide  : (phase guides not installed — npx @pilotspace/add init)")
+    # phase bundle (phase-bundles): names the active bundle + states agent-call-preferred —
+    # calling the named roster agent for its bundle's phases is the DEFAULT execution mode.
+    # Present-only: silent at "done" (_phase_bundle returns None there, never fabricated).
+    _bundle = _phase_bundle(phase)
+    if _bundle is not None:
+        print(f"bundle : {_bundle}  — agent-call-preferred: {PHASE_AGENT[phase]}")
     # step-spawn-hint (advisor-gated-autonomy): one advisory line naming the agent shape a parallel
     # run would fan out at THIS step. Present-only: suppressed under `manual` and at contract/done.
     _hint = _spawn_hint_line(

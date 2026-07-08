@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "phase-bundles",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7432,10 +7432,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "phase-bundles": {
+      "title": "8 phases render as 3 agent-owned bundles; status/guide show active bundle; agent-call-preferred documented as default",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [],
+      "created": "2026-07-08T17:56:13+00:00",
+      "updated": "2026-07-08T19:03:19+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-08T18:18:12+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "65d67f507f1018f3a68a31ba21ed5e8b",
+        "tests": {
+          "add-method/tooling/test_phase_bundles.py": "d3cbe5c54270363e557b05e35a1f8a96"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/skill/add/",
+          ".claude/skills/add/",
+          "add-method/src/add_method/_bundled/skill/add/",
+          ".add/SEAMS.md"
+        ],
+        "snapshot_md5": "6d30b1d0dff0cbf03309c300544c5d52"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T08:28:21+00:00",
+  "updated": "2026-07-08T19:03:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7750,9 +7793,26 @@
       "confirmed_at": null,
       "confirmed_by": null,
       "await_confirm": true
+    },
+    "three-phase-flow": {
+      "title": "Three Phase Flow",
+      "goal": "",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-08T17:51:23+00:00",
+      "updated": "2026-07-08T17:56:12+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-08T17:56:12+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "risk-proportional-ceremony",
+  "active_milestone": "three-phase-flow",
   "archived": [
     {
       "slug": "v5",
@@ -8537,7 +8597,8 @@
     "delta-drain",
     "add-bench",
     "add-lean-loop",
-    "risk-proportional-ceremony"
+    "risk-proportional-ceremony",
+    "three-phase-flow"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -8546,7 +8607,8 @@
     "build-strategy-facets": "facet-adr-harvest",
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
-    "add-lean-loop": "persona-nudge-quiet"
+    "add-lean-loop": "persona-nudge-quiet",
+    "three-phase-flow": "phase-bundles"
   },
   "todos": [
     {

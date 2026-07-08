@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 from add_engine.constants import (
-    PHASE_OWNER, PERSONA_FLOW_VALUES, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+    PHASE_OWNER, PHASE_GROUPS, PERSONA_FLOW_VALUES, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
     _MUST_ID_RE, _REJECT_CODE_RE, _SCENARIO_TAG_RE, _COVERS_LINE_RE, _TAG_TOKEN_RE,
 )
 from add_engine.io_state import _die
@@ -22,6 +22,19 @@ def _phase_owner(phase: str) -> str:
     if owner is None:
         _die("unmapped_phase")
     return owner
+
+def _phase_bundle(phase: str) -> str | None:
+    """Map a phase to its PHASE_GROUPS bundle name (DIRECTION|BUILD|VERIFY); `None` for
+    the terminal "done" phase (a deliberate, documented non-crash — done is a human-led
+    terminal state, not work any of the three roster agents drive); `_die
+    ("unmapped_phase_bundle")` for any other token absent from PHASE_GROUPS (fail closed,
+    mirrors `_phase_owner`'s exact idiom)."""
+    if phase == "done":
+        return None
+    for bundle, phases in PHASE_GROUPS.items():
+        if phase in phases:
+            return bundle
+    _die("unmapped_phase_bundle")
 
 def _setup_locked(state: dict) -> bool:
     """True when the project's setup is locked — i.e. the build-boundary gate is OPEN.
