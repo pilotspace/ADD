@@ -47,7 +47,7 @@ class TestHarnessExtended:
         from benchmark.run import VALID_WMS as run_wms
         from benchmark.pilot import VALID_WMS as pilot_wms
         from benchmark.score import VALID_WMS as score_wms
-        assert run_wms == pilot_wms == score_wms == (1, 2, 3, 4, 5)
+        assert run_wms == pilot_wms == score_wms == (1, 2, 3, 4, 5, 6)  # extended @ bench-hard-wm6
 
     def test_score_generalizes_priors(self):
         src = (BENCH / "score.py").read_text()

@@ -331,7 +331,7 @@ def test_run_pilot_resumes_without_reinvoking(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(pilot_mod, "ARMS_DIR", arms_dir)
 
-    for wm in (1, 2, 3, 4, 5):
+    for wm in (1, 2, 3, 4, 5, 6):
         _seed_record(
             runs_root,
             "add",

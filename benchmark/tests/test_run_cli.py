@@ -50,7 +50,7 @@ def test_invalid_wm_rejected(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr(records_mod, "DEFAULT_RUNS_ROOT", tmp_path / "runs")
     monkeypatch.setattr(core_mod, "DEFAULT_RUNS_ROOT", tmp_path / "runs")
 
-    rc = run_mod.main(["run", "--arm", "vanilla", "--wm", "6"])
+    rc = run_mod.main(["run", "--arm", "vanilla", "--wm", "7"])
     assert rc == 2
     out = capsys.readouterr()
     assert "invalid_wm" in out.err
@@ -160,6 +160,6 @@ def test_resume_cli_sequences_remaining_wms(tmp_path, monkeypatch):
 
     rc = run_mod.main(["resume", "--arm", "vanilla", "--agent-cmd", sys.executable, str(script)])
     assert rc == 0
-    assert invocation_log.read_text().count("invoked") == 4  # wm2..wm5 only, never wm1 (VALID_WMS extended to 5 @ bench-wm4plus-horizon)
+    assert invocation_log.read_text().count("invoked") == 5  # wm2..wm6 only, never wm1 (VALID_WMS extended @ bench-hard-wm6)
     assert (runs_root / "vanilla" / "wm2" / "record.json").exists()
     assert (runs_root / "vanilla" / "wm3" / "record.json").exists()

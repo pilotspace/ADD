@@ -26,7 +26,7 @@ from benchmark.schema.run_record import BenchError, RunRecord, validate
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 WM3_REGRESSION_TEST_PATH = REPO_ROOT / "benchmark" / "workload" / "wm3" / "oracle" / "test_refactor.py"
 REGRESSION_SUBPROCESS_TIMEOUT_S = 300.0
-VALID_WMS = (1, 2, 3, 4, 5)
+VALID_WMS = (1, 2, 3, 4, 5, 6)
 
 _PASS_RE = re.compile(r"(\d+) passed")
 _FAIL_RE = re.compile(r"(\d+) failed")
