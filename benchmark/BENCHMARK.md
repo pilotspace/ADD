@@ -11,15 +11,25 @@ Frozen metrics (5): regression_rate · spec_fidelity · tokens_total (+cost_usd)
 · context_rot_slope · time_to_first_edit. Advisory artifacts: judge_scores ·
 engine_calls (loop-adherence census) · fidelity_trajectory / fidelity_min.
 
-## Cross-arm round 3 (heavy-baseline ADD)
+## Cross-arm round 3 (heavy-baseline ADD) — full comparison
 
-| arm | fidelity wm1→wm3 | slope | cost |
-|-----|------------------|-------|------|
-| add | 0.97 / 0.95 / 0.95 | −0.01 | $16.30 |
-| spec-kit | 0.97 / 0.95 / 0.95 | −0.01 | $2.54 |
-| gsd | 0.97 / **0.50** / 0.95 | −0.01 | $4.82 |
-| vanilla | 0.97 / 0.95 / 0.93 | −0.02 | — |
-| plan-mode | 0.00 / 0.00 / 0.00 (structural failure) | 0.0 | — |
+| arm | fidelity wm1→wm3 | slope | tokens (3 WMs) | cost | time-to-first-edit (s) | regression @wm3 |
+|-----|------------------|-------|---------------:|-----:|------------------------|-----------------|
+| add | 0.97 / 0.95 / 0.95 | −0.01 | 20.5M | $16.30 | 242 / 242 / 348 | 0.67 |
+| spec-kit | 0.97 / 0.95 / 0.95 | −0.01 | 3.8M | $2.53 | 44 / 68 / 103 | 0.67 |
+| gsd | 0.97 / **0.50** / 0.95 | −0.01 | 7.8M | $4.81 | 84 / 103 / 123 | 0.67 |
+| vanilla | 0.97 / 0.95 / 0.93 | −0.02 | 12.7M | $6.25 | 61 / 132 / 127 | 0.67 |
+| plan-mode | 0.00 / 0.00 / 0.00 (structural failure) | 0.0 | 11.7M | $6.44 | 59 / 160 / 418 | 1.00 |
+
+Reading: at n=1 rep these separate into tiers, not rankings. spec-kit is the
+cost/latency frontier; add is the stability/trust frontier (no catastrophic
+milestone, frozen-contract + gate evidence, best fidelity floor — see the
+enforced+seeded arc below where add reaches 0.97/0.98/0.97 at 18.2M);
+gsd's wm2 collapse (0.50, invisible to the slope) is the variance cautionary
+tale; plan-mode failed structurally (never shipped a running app). The 0.67
+regression is a shared workload artifact (wm1 re-exports under wm3 auth),
+arm-independent. Caveats: single rep, one small CRUD domain, 3-WM horizon —
+too short for context-rot separation (see slope caveat below).
 
 Slope caveat: at n=3 the OLS slope is (f3−f1)/2 — the middle WM has zero
 weight, so gsd's wm2 collapse is invisible to it (hence fidelity_min).
