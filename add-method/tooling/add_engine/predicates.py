@@ -56,6 +56,26 @@ def _ai_freeze_allowed(gate_mode: str | None, sensitivity: str | None, autonomy:
     return True, None
 
 
+def _skip_lane_eligible(fast: bool, oneshot: bool, benchmark_mode: bool) -> bool:
+    """fast-lane-skips: may a task declare a scenarios/observe skip at all? PURE. True iff
+    ANY of the three independent triggers MILESTONE.md Scope(3) names is set — the existing
+    fast lane, the new --oneshot flag, or a project-wide benchmark_mode:true opt-in. Does not
+    itself validate the declared token set (see _skip_set_allowed) — single responsibility."""
+    return fast or oneshot or benchmark_mode
+
+
+def _skip_set_allowed(skip_tokens: frozenset[str], eligible: bool) -> tuple[bool, str | None]:
+    """fast-lane-skips: may THIS declared (already closed-set-validated) skip-set be honored?
+    PURE, fail-closed. `skip_tokens` is assumed already validated by _task_skip_set — this
+    predicate's single responsibility is the LANE-ELIGIBILITY axis, not set-membership (two
+    distinct error codes for two distinct failure shapes, mirrors _ai_freeze_allowed's split
+    from _task_gate_mode). An EMPTY skip-set is always permitted (nothing declared, nothing to
+    gate) regardless of eligibility."""
+    if skip_tokens and not eligible:
+        return False, "skip_lane_required"
+    return True, None
+
+
 def _setup_locked(state: dict) -> bool:
     """True when the project's setup is locked — i.e. the build-boundary gate is OPEN.
 

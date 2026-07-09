@@ -308,7 +308,7 @@ def _contract_fingerprint(raw3: str) -> str:
 from add_engine.predicates import (
     _phase_owner, _phase_bundle, _setup_locked, _milestone_confirmed, _section_unfilled,
     _task_done, _persona_missing, _persona_quality_warnings, _persona_slug_valid, _rule_coverage_gaps,
-    _ai_freeze_allowed,
+    _ai_freeze_allowed, _skip_lane_eligible, _skip_set_allowed,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -721,12 +721,25 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # fast lane (fast-new-task-flag): --fast scaffolds the MINIMAL template instead of the full one.
     # The human opts in explicitly (the engine never guesses ceremony); the freeze floor is held by
     # the freeze-before-build gate's fast arm (cmd_advance), so the lighter shape never drops the trust seam.
-    fast = bool(getattr(args, "fast", False))
+    # fast-lane-skips: --oneshot is a REQUEST for BOTH the fast template AND task2's
+    # AI-plan-verify contract-freeze gate — it implies the minimal fast template (no new
+    # template file) plus two additive header lines spliced in below. Whether the freeze
+    # request is ever honored is entirely governed by task2's own, unchanged,
+    # _ai_freeze_allowed — this task adds zero new code to that floor.
+    oneshot = bool(getattr(args, "oneshot", False))
+    fast = bool(getattr(args, "fast", False)) or oneshot
     rendered = _render_template(
         "TASK.fast.md" if fast else "TASK.md",
         title=title, slug=slug, date=date.today().isoformat(),
         stage=state["stage"], autonomy=autonomy,
         milestone=_milestone_backlink_value(milestone))
+    if oneshot:
+        # splice directly beneath the rendered "fast: true" line (regex sub, count=1,
+        # preserving that line's own trailing HTML comment) — mirrors the §1 Feature /
+        # §0 Related-intent pre-fill idiom above.
+        rendered = re.sub(r"(?m)^(fast:\s*true\b[^\n]*)$",
+                          lambda m: m.group(1) + "\noneshot: true\ngate_mode: ai-plan-verify",
+                          rendered, count=1)
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
                           lambda _m: f"Feature: {feature_override}", rendered, count=1)
@@ -766,6 +779,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
     if fast:
         state["tasks"][slug]["fast"] = True                 # durable lane marker (absent == not-fast)
+    if oneshot:
+        state["tasks"][slug]["oneshot"] = True               # durable lane marker (absent == not-oneshot)
     _set_active_task(state, slug, milestone)
     save_state(root, state)
     print(f"created task '{slug}' -> {task_md}")
@@ -1269,6 +1284,37 @@ def cmd_advance(args: argparse.Namespace) -> None:
         if PHASES.index(_to) <= idx:
             _die(f"advance_to_not_forward: task '{slug}' is already at {cur}")
     nxt = PHASES[idx + 1]
+    # fast-lane-skips: the ONLY new code the other 6 crossings ever reach is this membership
+    # test itself — a False result is a no-op, zero further bytes executed. scenarios/observe
+    # may be jumped as a SINGLE crossing (never entered) when the task declares them, is
+    # lane-eligible (fast:true | oneshot:true | project benchmark_mode:true), and states a
+    # reason BEFORE the jump — no silent skip. Every _die below fires BEFORE the phase write
+    # further down (validate-then-write, matching every other guard in this function).
+    if nxt in _SKIPPABLE_PHASES:
+        hdr = _task_header(root, slug)
+        tokens, skip_err = _task_skip_set(hdr)
+        if skip_err:
+            _die(skip_err)          # "skip_not_allowed" — fires the first time either
+                                     # skippable phase is reached, regardless of which token
+                                     # in the malformed declaration is actually bad
+        if nxt in tokens:
+            eligible = _skip_lane_eligible(
+                state["tasks"][slug].get("fast") is True,
+                state["tasks"][slug].get("oneshot") is True,
+                _project_benchmark_mode(root))
+            skip_ok, skip_code = _skip_set_allowed(tokens, eligible)
+            if not skip_ok:
+                _die(skip_code)     # "skip_lane_required"
+            raw0 = _raw_phase_bodies(root, slug).get(0, "")
+            reason = _skip_rationale(raw0, nxt)
+            if not reason:
+                _die("skip_reason_missing")
+            state["tasks"][slug].setdefault("skips", []).append({
+                "phase": nxt, "reason": reason,
+                "by": identity._actor_stamp(state)["name"], "at": _now()})
+            nxt = PHASES[idx + 2]   # hop the skipped phase; always in-bounds (neither
+                                     # "scenarios" nor "observe" is PHASES[-1])
+        # else: nxt not in tokens -> fall through unchanged, phase entered normally (no-op)
     # build-boundary gate: pre-lock the front (specify..tests) is allowed, but crossing
     # into build/verify/observe/done is refused until `add.py lock`.
     if not _setup_locked(state) and nxt in ("build", "verify", "observe", "done"):
@@ -1405,6 +1451,96 @@ def _task_gate_mode(hdr: str) -> str | None:
         return None
     tok = m.group(1).strip().lower()
     return tok if tok in _GATE_MODES else "?"
+
+
+# fast-lane-skips: the AI-declared skip-set — same anchored declaration grammar as
+# gate_mode:/sensitivity:/autonomy: (line-start or `·`, value stops at whitespace/`<`/`#`/`|`).
+_SKIPS_LINE_RE = re.compile(r"(?:^|·)[ \t]*skips:[ \t]*([^\s<#|]+)", re.MULTILINE)
+
+
+def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
+    """The declared skip-set from a TASK.md header region (HTML comments already stripped by
+    _task_header). No `skips:` line -> (frozenset(), None) — the universal, byte-identical
+    default. A present line's captured token comma-split, every element a member of
+    _SKIPPABLE_PHASES -> (frozenset(elements), None). ANY split element outside
+    _SKIPPABLE_PHASES (a typo, another phase's name, an empty element from a double/trailing
+    comma) -> (frozenset(), "skip_not_allowed") — the WHOLE declaration is discarded on any
+    single bad element, never partially honored (mirrors _ai_freeze_allowed's "?" fail-closed
+    philosophy, not _task_sensitivity's "None means absent, default safely" philosophy — a
+    malformed CSV element is garbled, not absent). PURE."""
+    m = _SKIPS_LINE_RE.search(hdr)
+    if not m:
+        return frozenset(), None
+    toks = [t.strip() for t in m.group(1).split(",")]
+    if any(t not in _SKIPPABLE_PHASES for t in toks):
+        return frozenset(), "skip_not_allowed"
+    return frozenset(toks), None
+
+
+# fast-lane-skips: the §0 GROUND "Skip rationale:" clause extractor — deliberately simpler
+# than _flag_well_formed's [part]-tag grammar (no "none material" escape hatch): an irreversible
+# phase jump always needs a stated reason, or it never happens.
+_SKIP_RATIONALE_LINE_RE = re.compile(r"^[ \t]*Skip rationale:[ \t]*(.*)$", re.MULTILINE)
+_SKIP_RATIONALE_CLAUSE_RE = re.compile(r"^\s*(scenarios|observe)\s*[-—:]\s*(.+)$")
+
+
+def _skip_rationale(raw0: str, phase: str) -> str | None:
+    """The stated reason for skipping `phase` (a member of _SKIPPABLE_PHASES), read from a
+    task's raw §0 GROUND body. Finds the "Skip rationale:" line, splits its value on ";", and
+    matches a `<phase> — <reason>` (or `:`/`-`) clause for `phase`. Returns the trimmed reason,
+    or None when the line is absent, no clause names `phase`, or the reason text is
+    empty/whitespace-only after trim (fail-closed — an unstated reason is never inferred). PURE."""
+    m = _SKIP_RATIONALE_LINE_RE.search(raw0)
+    if not m:
+        return None
+    for clause in m.group(1).split(";"):
+        cm = _SKIP_RATIONALE_CLAUSE_RE.match(clause.strip())
+        if cm and cm.group(1) == phase:
+            reason = cm.group(2).strip()
+            return reason or None
+    return None
+
+
+# fast-lane-skips: the project-level benchmark-mode opt-in — mirrors _streams_posture /
+# _project_autonomy_token's idiom exactly (anchored declaration, HTML comments stripped,
+# fail-SAFE default: a NEW ceremony-loosening capability never silently activates).
+_BENCHMARK_MODE_RE = re.compile(r"(?:^|·)[ \t]*benchmark_mode:[ \t]*(true|false)",
+                                 re.IGNORECASE | re.MULTILINE)
+
+
+def _project_benchmark_mode(root: Path) -> bool:
+    """Whether the project runs in benchmark mode (fast-lane-skips): every task in the project
+    is skip-eligible without needing --oneshot/--fast individually. Fail-SAFE: `true` -> True;
+    `false`, absent, an unreadable foundation, or any other token -> False. Read-only and PURE."""
+    try:
+        text = (root / "PROJECT.md").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    m = _BENCHMARK_MODE_RE.search(text)
+    return bool(m) and m.group(1).strip().lower() == "true"
+
+
+def _skip_status_line(root: Path, state: dict, slug: str) -> str | None:
+    """fast-lane-skips: the additive status/guide line — SHARED by cmd_status and cmd_guide so
+    the wording never drifts across the two surfaces. Present-only: None (no line) unless the
+    task is skip-eligible AND (a non-empty `skips:` declaration exists OR >=1 skip is already
+    recorded) — byte-identical to today for every task without a skip declaration. A malformed
+    declaration (skip_not_allowed) degrades to the empty-set reading here (a status line is
+    read-only and must never raise; `advance` is the enforcement point)."""
+    t = state["tasks"][slug]
+    tokens, err = _task_skip_set(_task_header(root, slug))
+    if err:
+        tokens = frozenset()
+    eligible = _skip_lane_eligible(t.get("fast") is True, t.get("oneshot") is True,
+                                    _project_benchmark_mode(root))
+    recorded = t.get("skips") or []
+    if not eligible or not (tokens or recorded):
+        return None
+    csv = ",".join(p for p in _SKIPPABLE_PHASES if p in tokens)
+    done = [p for p in _SKIPPABLE_PHASES if p in {e.get("phase") for e in recorded}]
+    return (f"skips   : declared {csv or '(none)'} · skipped so far "
+            f"{len(recorded)}/{len(tokens)} ({', '.join(done)})")
 
 
 # sensitivity-glossary: a project EXTENDS the universal base with domain risk-classes declared in
@@ -1606,6 +1742,16 @@ def _gate_explain(root: Path, state: dict, slug: str) -> None:
     if gate_mode == "ai-plan-verify":
         ai_ok, ai_code = _ai_freeze_allowed(gate_mode, _task_sensitivity(hdr, valid=_project_sensitivity_values(root)), level)
         print(f"  ai-plan-verify-gate: {'allowed' if ai_ok else f'blocked ({ai_code})'}")
+    # fast-lane-skips: a declared (non-empty) skips: outcome is explained REGARDLESS of
+    # eligibility — that is the whole point (this is where a BLOCKED declaration surfaces).
+    skip_tokens, skip_err = _task_skip_set(hdr)
+    if not skip_err and skip_tokens:
+        skip_eligible = _skip_lane_eligible(
+            state["tasks"][slug].get("fast") is True,
+            state["tasks"][slug].get("oneshot") is True,
+            _project_benchmark_mode(root))
+        skip_ok, skip_code = _skip_set_allowed(skip_tokens, skip_eligible)
+        print(f"  skip-set: {'allowed' if skip_ok else f'blocked ({skip_code})'}")
     if _autonomy_lowered(hdr):
         print("  path: HUMAN — the lowered autonomy level puts a person at this verify gate")
     elif high and not relaxed:
@@ -2422,6 +2568,10 @@ def cmd_status(args: argparse.Namespace) -> None:
         # sensitivity is declared; "unset" cue when absent; "?" surfaces a typo to fix at freeze.
         _sens = _task_sensitivity(_task_header(root, active), valid=_project_sensitivity_values(root))
         print(f"sensitivity: {('unset' if _sens is None else _sens)}")
+        # fast-lane-skips: declared/consumed skip-set — present-only (additive-cue convention).
+        _skips_line = _skip_status_line(root, state, active)
+        if _skips_line:
+            print(_skips_line)
         # phase bundle (phase-bundles): which of the 3 agent-owned bundles (DIRECTION/BUILD/
         # VERIFY) the active phase belongs to + the roster agent preferred for THIS phase —
         # additive-cue convention (present-only; silent at "done", the one PHASES member with
@@ -2614,6 +2764,10 @@ def cmd_guide(args: argparse.Namespace) -> None:
     _bundle = _phase_bundle(phase)
     if _bundle is not None:
         print(f"bundle : {_bundle}  — agent-call-preferred: {PHASE_AGENT[phase]}")
+    # fast-lane-skips: declared/consumed skip-set — present-only (additive-cue convention).
+    _skips_line = _skip_status_line(root, state, slug)
+    if _skips_line:
+        print(_skips_line)
     # step-spawn-hint (advisor-gated-autonomy): one advisory line naming the agent shape a parallel
     # run would fan out at THIS step. Present-only: suppressed under `manual` and at contract/done.
     _hint = _spawn_hint_line(
@@ -6722,6 +6876,16 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
             f(slug, "ai_freeze_checklist_missing",
               "freeze.mode is ai-plan-verify but the current §3 'AI-verify record' checklist "
               "is missing, incomplete, or lost its 'Verified by:' value")
+        # fast-lane-skips residual glint: symmetric to ai_freeze_checklist_missing above — a
+        # hand-edit that deletes/mangles a recorded skip's §0 rationale post-skip goes
+        # undetected otherwise. MEASURE-NOT-BLOCK, a human spot-audit backstop.
+        _skips_recorded = t.get("skips") or []
+        if _skips_recorded:
+            s0 = raw.get(0, "")
+            if any(_skip_rationale(s0, e.get("phase")) is None for e in _skips_recorded):
+                f(slug, "skip_rationale_missing_post_hoc",
+                  "state.json records >=1 skipped phase but the CURRENT §0 'Skip rationale:' "
+                  "line no longer has a matching clause for every recorded phase")
         outcomes = _AUDIT_OUTCOME_RE.findall(s6)
         if len(outcomes) != 1:
             f(slug, "malformed_gate_record",
@@ -7711,6 +7875,11 @@ def build_parser() -> argparse.ArgumentParser:
     pn.add_argument("--fast", action="store_true",
                     help="opt into the fast lane: scaffold the minimal TASK.fast.md template + "
                          "hold the task to the freeze floor under any milestone")
+    pn.add_argument("--oneshot", action="store_true",
+                    help="fast lane + a REQUEST for the AI-plan-verify contract-freeze gate: "
+                         "scaffolds fast:true, oneshot:true, gate_mode:ai-plan-verify (task2's "
+                         "_ai_freeze_allowed, unchanged, is the sole arbiter of whether it is "
+                         "ever honored) — also unlocks scenarios/observe skip declarations")
     pn.set_defaults(func=cmd_new_task)
 
     pdd = sub.add_parser("drop-delta",

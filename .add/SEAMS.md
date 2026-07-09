@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5011` (`_declared_scope`)   <!-- re-pinned 2026-07-09 x10: 4786→4798→4870→4892→4896→4900→4918→5002→5011 (engine growth above — the line pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes) -->
+Anchor: `add-method/tooling/add.py:5165` (`_declared_scope`)   <!-- re-pinned 2026-07-09 x11: 4786→4798→4870→4892→4896→4900→4918→5002→5011→5165 (fast-lane-skips's own add.py growth above it shifted the line — the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes) -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,
@@ -88,7 +88,7 @@ Citations: 26 files / 93 mentions — method:
 
 ## section-unfilled-truth-table
 Name: `_section_unfilled`'s placeholder/grandfather truth table
-Anchor: `add-method/tooling/add_engine/predicates.py:80` (`_section_unfilled`)   <!-- re-pinned 2026-07-09 x2: 47→60→80 (ai-plan-verify-gate's _ai_freeze_allowed addition above it shifted the line) -->
+Anchor: `add-method/tooling/add_engine/predicates.py:100` (`_section_unfilled`)   <!-- re-pinned 2026-07-09 x3: 47→60→80→100 (fast-lane-skips's own _skip_lane_eligible/_skip_set_allowed addition above it shifted the line) -->
 Contract: A pure 3-way predicate reused across every fill-gate: header ABSENT -> False
   (grandfathered legacy task); header PRESENT but empty or a bare `<...>` placeholder ->
   True (unfilled, gate fires); header PRESENT with ≥1 real bullet -> False (filled, gate

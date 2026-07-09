@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "ai-plan-verify-gate",
+  "active_task": "fast-lane-skips",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7525,10 +7525,59 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fast-lane-skips": {
+      "title": "oneshot/benchmark/small-medium declares an AI-chosen skip-set from {scenarios,observe} only; contract AI-auto-frozen (never skipped); every skip recorded (no silent skips)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [
+        "ai-plan-verify-gate"
+      ],
+      "created": "2026-07-09T04:29:25+00:00",
+      "updated": "2026-07-09T06:26:17+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T05:33:23+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "0f03421c56bd567b6d6f538bff65fc6d",
+        "tests": {
+          "add-method/tooling/test_fast_lane_skips.py": "bb663a1dafb3f7738a54edde71695f64"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/.add/tooling/templates/",
+          ".add/SEAMS.md",
+          "tmp/three-phase-flow/fast-lane-skips/"
+        ],
+        "snapshot_md5": "e226fc5701aeef840610112da1f4c62d"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-09T06:12:27+00:00",
+        "from_phase": "verify"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T04:28:27+00:00",
+  "updated": "2026-07-09T06:26:17+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8658,7 +8707,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "ai-plan-verify-gate"
+    "three-phase-flow": "fast-lane-skips"
   },
   "todos": [
     {

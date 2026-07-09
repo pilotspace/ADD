@@ -33,6 +33,7 @@ __all__ = [
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
     "_GATE_MODES",
+    "_SKIPPABLE_PHASES",
 ]
 
 ROOT_DIRNAME = ".add"
@@ -334,3 +335,11 @@ _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
 #     Absent header line -> None from the resolver, treated as "human" by every caller (fail-closed
 #     default — never silently upgrades to the loosened path). ---
 _GATE_MODES = ("human", "ai-plan-verify")
+
+# --- skippable phases (shared: _task_skip_set reader + cmd_advance's skip pre-pass) — the
+#     fast-lane-skips closed 2-tuple: the ONLY set cmd_advance's skip pre-pass ever tests `nxt`
+#     against. ground/specify/contract/tests/build/verify can NEVER be skipped — a structural
+#     exclusion (this tuple never names them), not a runtime-checked policy. Same relative order
+#     as PHASES. Listed in __all__ (mirrors _GATE_MODES): a new trust-loosening capability is
+#     deliberately surfaced via `from add_engine.constants import *`, not tucked away. ---
+_SKIPPABLE_PHASES = ("scenarios", "observe")

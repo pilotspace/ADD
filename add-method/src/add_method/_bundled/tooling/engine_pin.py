@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "54029cedd869eab4c6e0a9435b6da2ea"  # re-aimed @ ai-plan-verify-gate v2 (cmd_freeze: skip the generic "?" guard on --ai-plan-verify so a malformed sensitivity routes to ai_freeze_unknown_sensitivity, not sensitivity_invalid). prior: 4b61de4f… @ ai-plan-verify-gate v1
-ENGINE_PKG_MD5 = "9e9eb184c76bf657963eef9df9d7a5ee"  # unchanged @ ai-plan-verify-gate v2 (only add.py changed this round; add_engine/*.py untouched). prior: 9883ce72… @ phase-bundles
+ENGINE_MD5 = "4fefc0bb522c6343aca1af3dd9940926"  # re-aimed @ fast-lane-skips v1 (_SKIPS_LINE_RE/_task_skip_set/_skip_rationale/_project_benchmark_mode + cmd_advance skip pre-pass + new-task --oneshot + status/guide/gate-explain/audit surfacing). prior: 54029ced… @ ai-plan-verify-gate v2
+ENGINE_PKG_MD5 = "b287ceedad9e29013a798b8faa978605"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2
