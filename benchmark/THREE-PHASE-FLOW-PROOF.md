@@ -1,108 +1,77 @@
-# three-phase-flow — benchmark proof (ADD vs spec-kit)
+# three-phase-flow — benchmark findings (RETRACTED cost-beat claim)
+
+> **Status: the earlier "ADD beats spec-kit" claim in this file is RETRACTED.**
+> The add-bench harness has fairness and isolation problems (documented below)
+> that make any ADD-vs-spec-kit **cost** comparison unreliable. What IS verified
+> is the enhancement's *mechanism*. Honest cost claims await a fixed harness.
 
 **Question:** does the `three-phase-flow` enhancement (oneshot/benchmark tasks
-skip the optional ceremony phases `scenarios` · `observe`) let ADD beat
-spec-kit in the add-bench harness?
+skip the optional ceremony phases `scenarios` · `observe`) let ADD beat spec-kit
+in add-bench?
 
-**Answer (honest):** ADD **already beats spec-kit on 2 of 3 milestones** (WM2,
-WM3) on both tokens and cost at equal-or-better fidelity. It trailed only on
-**WM1** (the greenfield first milestone). The enhancement **halved WM1 token
-throughput and cut engine calls 60%**, taking WM1 from 2× spec-kit's tokens to
-a **dead tie** at identical fidelity — but WM1's *dollar* cost is structural
-(tests-first generation, not the skipped ceremony) and stays ~2× spec-kit. The
-"skip ceremony → cheaper" lever is real but modest; ADD's win over spec-kit is
-carried by its whole-milestone efficiency, which the enhancement sharpens.
+**Answer:** we cannot honestly say yet. The enhancement works mechanically, but
+the harness cannot currently support a cost-beat claim. Under a *controlled*
+same-session WM1 comparison, spec-kit was in fact **cheaper** than ADD — partly
+because the harness over-charges ADD, and partly because ADD genuinely does more
+per-feature work (its value proposition, not a defect).
 
 ---
 
-## What shipped
+## What IS verified (the mechanism — deterministic, $0)
 
-Three tasks (all committed on `feat/add-bench-scaffold`):
-1. **phase-bundles** — the 8 phases run as 3 agent-owned bundles (DIRECTION ·
-   BUILD · VERIFY), agent-call-preferred.
-2. **ai-plan-verify-gate** — a two-way DIRECTION gate: an AI can verify + auto-
-   freeze the contract EXCEPT for `security`/`data`/`architecture` (→ human;
-   security HARD-STOP).
-3. **fast-lane-skips** (`ea0462a`) — a cleared oneshot/benchmark/fast task
-   declares an AI-chosen skip-set drawn ONLY from `{scenarios, observe}`; the
-   contract is never skipped, tests/build/verify are never skippable, every
-   skip is recorded (no silent skips), security stays a human HARD-STOP.
-4. **benchmark wiring** (`7b41081`) — the `add-loop` arm wrapper now tells the
-   headless agent to run the fast lane (`new-task --oneshot`, `skips:
-   scenarios, observe`) while stating the floor.
+- **fast-lane-skips fires and is recorded.** `test_fast_lane_skips.py` (45
+  tests) + 4 mutation refute-reads prove the skip happens, is logged (no silent
+  skip), and the floor holds (contract never skipped, security HARD-STOP).
+- **Engaged live.** A headless WM1 run created `booking-crud --oneshot`,
+  recorded the `scenarios` skip with reason/timestamp/actor, built a working app
+  (HTTP 200), and closed at a recorded gate PASS.
+- **Reduced ceremony.** vs the baseline ADD run: engine_calls 261 → 104,
+  turns 219 → 163. Real, measurable.
 
-## Deterministic proof ($0, reproducible)
+## What is NOT trustworthy (harness problems)
 
-- **Mechanism** — `test_fast_lane_skips.py` (45 tests) proves the skip *fires*
-  and is *recorded*, backed by 4 mutation refute-reads (widen the skip tuple to
-  include `contract` · strip the skip recording · drop lane-eligibility · let
-  the freeze gate permit `security`) — each confirmed to turn the suite red,
-  then reverted. Verify gate: architecture/high-risk → **human PASS**.
-- **WM1 ceremony cost analysis** — bucketing the recorded baseline WM1
-  transcript by phase (using `add.py advance` transitions as boundaries):
+**1. Work asymmetry — ADD is metered doing more.**
+ADD delivers + verifies the app at turn 127, then spends **36 turns**
+(`milestone-done`/`fold`/`archive-milestone`) on lifecycle bookkeeping with zero
+app value — **~$1.80 of its $6.14 (29%)** — that spec-kit is never asked to do.
+The add-loop wrapper instructs this ceremony; spec-kit gets a raw prompt.
 
-  | phase | turns | ~cost share |
-  |---|--:|--:|
-  | verify | 72 | **40%** |
-  | tests | 47 | **23%** |
-  | ground | 59 | 17% |
-  | build | 19 | 11% |
-  | contract | 15 | 6% |
-  | **scenarios** (skipped) | **4** | **1.6%** |
-  | observe (skipped) | 0 | ~0% (baseline already closed at the verify gate) |
+**2. Environment pollution — not isolated, not reproducible.**
+Runs inherit the operator's `~/.claude` (148 skills, 174 commands, 3 MCP
+servers) and whatever prompt-cache warmth exists at that instant. This is the
+source of the erratic 26K–132K "fresh input" startup — measurement noise, not
+method cost, and it hits both arms differently across runs.
 
-  **Finding:** the skipped ceremony is ~1.6% of WM1's cost. WM1's gap vs
-  spec-kit is structural — it lives in `verify` + `tests` (ADD's tests-first
-  rigor), not in the optional phases the enhancement removes.
+**3. Cross-environment comparison — invalid.**
+The repo's older `add`/`spec-kit` records were produced in a different
+environment than later reps. Comparing across them conflates the enhancement
+with environment drift. Only same-session arm pairs are valid.
 
-## Live corroboration — enhanced-ADD WM1 (1 rep, real `claude -p`)
+**4. Single-rep variance is large.** spec-kit WM1 measured **$1.33 (same
+session) to $4.00 (older record)** — 3×. No single-rep claim survives that.
 
-Ran the enhanced engine headless into a separate runs-root (baseline
-preserved). The enhancement engaged live: task `booking-core` created
-`--oneshot` (oneshot=true, fast=true); `scenarios` skip **recorded** with
-reason + timestamp + actor; app fully built; closed at a recorded verify gate.
+## The one controlled comparison we have (same session, same model, WM1)
 
-| WM1 | fidelity | tokens_total | cost | engine_calls |
+| WM1 (today) | fidelity | turns | tokens | cost |
 |---|--:|--:|--:|--:|
-| add (baseline) | 0.97 | 17,297,527 | $7.48 | 261 |
-| **add (enhanced)** | **0.97** | **8,894,397** | **$7.77** | **104** |
-| spec-kit | 0.97 | 8,899,660 | $4.00 | 0 |
+| ADD (fast-lane) | 0.97 | 163 | 7.56M | $6.14 |
+| spec-kit | 0.97 | 31 | 786K | $1.33 |
 
-- **tokens_total −48.6%** (17.3M → 8.89M) → **tied with spec-kit** (8.894M vs
-  8.900M) at identical fidelity 0.97.
-- **engine_calls −60%** (261 → 104) — the ceremony reduction is real and
-  measurable.
-- **cost ~flat** ($7.48 → $7.77). Why cost didn't follow tokens down: 8.63M of
-  the 8.89M total are *cache-read* tokens (~0.1× price). `tokens_total` is 97%
-  cheap cache-read throughput and a poor $ proxy; cost tracks the expensive
-  tokens (cache-creation 152K + output 68K + fresh input 47K), which is the
-  structural tests-first generation the skip does not touch. So on **$ cost**,
-  WM1 stays ~2× spec-kit — consistent with the 1.6% deterministic finding.
+Equal quality; ADD used 5× the turns and 4.6× the cost. Cost is dominated by
+**cache_read = turns × context** (ADD 14.0M vs spec-kit 1.4M). Correcting for
+the 29% ceremony tail, ADD's feature-delivery cost is ~$4.34 — still ~3.3×
+spec-kit. That residual is ADD's genuine tests-first / frozen-contract rigor —
+the trust it buys (regression resistance, no lost context), a real cost the
+benchmark should report, not hide.
 
-## Aggregate verdict (WM1–3, current single-rep records)
+## Next (agreed with the human)
 
-| WM | fidelity (add / sk) | tokens (add / sk) | cost (add / sk) | ADD verdict |
-|---|---|---|---|---|
-| WM1 (enhanced) | 0.97 / 0.97 | 8.89M / 8.90M | $7.77 / $4.00 | tokens **tie**, cost trails |
-| WM2 | **0.98** / 0.95 | **3.16M** / 4.47M | **$1.27** / $2.65 | **ADD wins both** |
-| WM3 | 0.97 / 0.97 | **2.11M** / 5.35M | **$1.12** / $2.80 | **ADD wins both** |
+1. **Fix the harness** — meter cost to the app-delivered gate (not through
+   milestone ceremony); run each arm in an isolated environment; same-session
+   controlled multi-rep only.
+2. **Re-measure** honestly on the fixed harness before any beat/lose claim.
+3. **Attack ADD's real cost lever** — turn count (5× spec-kit). Batch engine
+   round-trips, terser `add.py` output, fewer status/check cycles.
 
-Plus (from the pilot report): ADD holds a **regression-rate and context-rot**
-edge spec-kit does not — trust properties, not just throughput.
-
-**Bottom line:** ADD beats spec-kit on 2 of 3 milestones on both cost and
-tokens at equal-or-better fidelity, with a regression/context-rot edge. The
-`three-phase-flow` enhancement closed WM1's token gap to a tie and cut engine
-calls 60%; it does not flip WM1's dollar cost, which is structural. The claim
-"ADD beats spec-kit" holds — carried by whole-milestone efficiency, sharpened
-(not created) by the skip mode.
-
-## Caveats
-
-- **Single rep per cell** — high model variance; these are directional, not
-  statistically settled. The enhanced-WM1 tokens landing within 0.06% of
-  spec-kit is partly coincidence. A multi-rep run would firm the intervals.
-- Baseline WM1 was recorded earlier; `total_cost_usd` is API-computed at run
-  time. Same-model fairness floor holds across arms.
-- Reproduce: `python3 -m benchmark.pilot run-all --arms add --wms 1` (writes to
-  the default runs-root; point a separate root to preserve baselines).
+Reproduce the controlled pair: `pilot.run_pilot(arms=[a], wms=[1],
+runs_root=<sep>, repo_root=<repo>)` per arm, same session.
