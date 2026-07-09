@@ -36,6 +36,26 @@ def _phase_bundle(phase: str) -> str | None:
             return bundle
     _die("unmapped_phase_bundle")
 
+def _ai_freeze_allowed(gate_mode: str | None, sensitivity: str | None, autonomy: str) -> tuple[bool, str | None]:
+    """The ai-plan-verify-gate predicate: may an AI agent perform the §3 contract freeze in
+    place of a human? PURE, fail-closed. A BLOCK-list (not an allow-list of one, human freeze
+    decision 2026-07-09): the human floor is exactly {security, data, architecture} plus a
+    malformed "?" token; undeclared sensitivity (None), the literal "mechanical" token, and any
+    other valid project-GLOSSARY class all qualify — the double opt-in (gate_mode: ai-plan-verify
+    AND autonomy: auto, both human-declared) IS the sign-off. Sibling of advisor-gate-relax (a
+    DIFFERENT, narrower allow-list-of-"mechanical" floor at the VERIFY/completion boundary) —
+    related but not identical floors, never interchangeable."""
+    if gate_mode != "ai-plan-verify":
+        return False, "ai_freeze_not_opted_in"
+    if autonomy != "auto":
+        return False, "ai_freeze_requires_auto"
+    if sensitivity in ("security", "data", "architecture"):
+        return False, "ai_freeze_blocked_sensitivity"
+    if sensitivity == "?":
+        return False, "ai_freeze_unknown_sensitivity"
+    return True, None
+
+
 def _setup_locked(state: dict) -> bool:
     """True when the project's setup is locked — i.e. the build-boundary gate is OPEN.
 

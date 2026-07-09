@@ -32,6 +32,7 @@ __all__ = [
     "GUIDELINE_FILES",
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
+    "_GATE_MODES",
 ]
 
 ROOT_DIRNAME = ".add"
@@ -324,3 +325,12 @@ _STREAMS_POSTURES = ("parallel", "sequential")
 #     engine validates + surfaces a HUMAN-declared token; it NEVER classifies. A closed enum, sibling
 #     of _AUTONOMY_LEVELS/_STREAMS_POSTURES. Consumed downstream by advisor-gate-relax (mechanical). ---
 _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
+
+# --- gate mode (shared: _task_gate_mode reader + cmd_freeze's --ai-plan-verify path) — the
+#     two-way DIRECTION-freeze declaration (ai-plan-verify-gate): human (default) | ai-plan-verify.
+#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_STREAMS_POSTURES/_SENSITIVITY_VALUES — but,
+#     unlike them, listed in __all__: a NEW trust-loosening capability is deliberately surfaced via
+#     `from add_engine.constants import *`, not tucked into the _-prefixed sibling import list.
+#     Absent header line -> None from the resolver, treated as "human" by every caller (fail-closed
+#     default — never silently upgrades to the loosened path). ---
+_GATE_MODES = ("human", "ai-plan-verify")

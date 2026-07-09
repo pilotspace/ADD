@@ -308,6 +308,7 @@ def _contract_fingerprint(raw3: str) -> str:
 from add_engine.predicates import (
     _phase_owner, _phase_bundle, _setup_locked, _milestone_confirmed, _section_unfilled,
     _task_done, _persona_missing, _persona_quality_warnings, _persona_slug_valid, _rule_coverage_gaps,
+    _ai_freeze_allowed,
 )
 
 # --- git-native identity/actor seam (moved to add_engine/identity.py) --------
@@ -958,14 +959,42 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     # unknown sensitivity token is refused here (validate-then-write — nothing is written);
     # an absent token is grandfathered (allowed), a valid member proceeds. The engine never
     # classifies — it only validates the human's declaration.
+    #
+    # ai-plan-verify-gate v2 (2026-07-09 amendment, change request): this generic "?" guard
+    # runs ONLY on the HUMAN path now. On the --ai-plan-verify path it is deliberately SKIPPED
+    # here so a malformed token flows into _ai_freeze_allowed instead, which returns the
+    # DISTINCT, CLI-reachable "ai_freeze_unknown_sensitivity" code — the AI path's own error
+    # taxonomy, never borrowing the human path's "sensitivity_invalid". Both paths still refuse
+    # a malformed token (fail-safe preserved); only the error code and precedence position
+    # differ. The human (flagless) path below is unchanged — same check, same code, same spot
+    # in precedence relative to already_frozen/contract_not_drafted/unflagged_freeze.
     _valid_sens = _project_sensitivity_values(root)        # base ∪ project GLOSSARY classes (sensitivity-glossary)
-    if _task_sensitivity(_task_header(root, slug), valid=_valid_sens) == "?":
+    ai_plan_verify = getattr(args, "ai_plan_verify", False)
+    if not ai_plan_verify and _task_sensitivity(_task_header(root, slug), valid=_valid_sens) == "?":
         _die(f"sensitivity_invalid: {slug} declares an unknown sensitivity — use one of "
              f"{', '.join(_valid_sens)} (or add the class to GLOSSARY.md's '## Sensitivity classes', "
              "or omit the line)")
+    # ai-plan-verify-gate: an ADDITIVE branch reached ONLY behind --ai-plan-verify — the
+    # flagless path above (and its 4 checks) is byte-identical to today. validate-then-write:
+    # every refusal below fires before any write, same discipline as the checks above.
+    if ai_plan_verify:
+        if not args.by:
+            _die("ai_freeze_missing_actor: --ai-plan-verify requires --by AGENT_ID — an AI "
+                 "freeze must name its own agent id, never inherit the CLI-runner's identity")
+        hdr = _task_header(root, slug)
+        ai_ok, ai_code = _ai_freeze_allowed(_task_gate_mode(hdr),
+                                            _task_sensitivity(hdr, valid=_valid_sens),
+                                            _effective_autonomy(root, state, slug))
+        if not ai_ok:
+            _die(f"{ai_code}: {slug} does not qualify for an AI-plan-verify freeze")
+        if not _ai_verify_checklist_complete(raw3):
+            _die(f"ai_freeze_checklist_incomplete: {slug}'s §3 'AI-verify record' must be "
+                 f"present with all 4 checklist items '- [x]' and a non-empty 'Verified by:' "
+                 f"before an AI freeze")
     # --- write ---
     ver = _next_freeze_version(state, slug)
     who = args.by or identity._actor_stamp(state)["name"]
+    ts = _now()
     # flip the `Status: DRAFT` line WITHIN the §3 region only — a bare `Status: DRAFT` in
     # §1/§2 prose must never be frozen by mistake (refute-read finding). §3 span runs from
     # its `## 3 ·` heading to the next `## `/`---`/EOF (same boundary as _phase_spans).
@@ -975,15 +1004,26 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     seg_start = h3.end()
     nxt = re.search(r"(?m)^(?:##\s|---\s*$)", text[seg_start:])
     seg_end = seg_start + (nxt.start() if nxt else len(text) - seg_start)
-    new_seg, n = re.subn(r"(?m)^(\s*)Status:\s*DRAFT\s*$",
-                         lambda m: f"{m.group(1)}Status: FROZEN @ {ver} — approved by {who}",
-                         text[seg_start:seg_end], count=1)
+    if ai_plan_verify:
+        # additive line directly beneath Status — the human path never writes this line.
+        new_seg, n = re.subn(r"(?m)^(\s*)Status:\s*DRAFT\s*$",
+                             lambda m: (f"{m.group(1)}Status: FROZEN @ {ver} — approved by {who}\n"
+                                        f"{m.group(1)}Freeze mode: ai-plan-verify — verified by {who} at {ts}"),
+                             text[seg_start:seg_end], count=1)
+    else:
+        new_seg, n = re.subn(r"(?m)^(\s*)Status:\s*DRAFT\s*$",
+                             lambda m: f"{m.group(1)}Status: FROZEN @ {ver} — approved by {who}",
+                             text[seg_start:seg_end], count=1)
     if n == 0:
         _die(f"contract_not_drafted: {slug}'s §3 has no 'Status: DRAFT' line to freeze")
     new_text = text[:seg_start] + new_seg + text[seg_end:]
     _atomic_write(task_md, new_text)                       # TASK.md first (audit source of truth)
-    state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": _now(),
+    state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": ts,
                                       "approved_by": who, "actor": identity._actor_stamp(state)}
+    if ai_plan_verify:
+        state["tasks"][slug]["freeze"]["mode"] = "ai-plan-verify"
+        state["tasks"][slug]["freeze"]["verified"] = {"anchors": True, "rules": True,
+                                                       "shape": True, "flag": True}
     save_state(root, state)
     print(f"froze §3 of {slug} @ {ver} — approved by {who}")
     print(_next_footer(root, state))
@@ -1348,6 +1388,25 @@ def _task_sensitivity(hdr: str, valid=None):
     return tok if tok in valid else "?"
 
 
+# gate mode (ai-plan-verify-gate): the two-way DIRECTION-freeze declaration — same anchored
+# declaration grammar as sensitivity:/autonomy: (line-start or `·`, value stops at whitespace/
+# `<`/`#`/`|`), so a title/prose substring is never a declaration.
+_GATE_MODE_RE = re.compile(r"(?:^|·)[ \t]*gate_mode:[ \t]*([^\s<#|]+)", re.MULTILINE)
+
+
+def _task_gate_mode(hdr: str) -> str | None:
+    """The declared gate mode from a TASK.md header region (HTML comments already stripped by
+    _task_header). A member of _GATE_MODES, None when no `gate_mode:` line is present (absent —
+    every caller treats this as "human", the fail-closed default; a NEW trust-loosening capability
+    never silently activates), or "?" when a REAL token outside _GATE_MODES was written. PURE —
+    validates a human-declared token, never infers one (mirrors _task_sensitivity/_autonomy_level)."""
+    m = _GATE_MODE_RE.search(hdr)
+    if not m:
+        return None
+    tok = m.group(1).strip().lower()
+    return tok if tok in _GATE_MODES else "?"
+
+
 # sensitivity-glossary: a project EXTENDS the universal base with domain risk-classes declared in
 # GLOSSARY.md's "## Sensitivity classes" section (the AI keeps it current per the skill guide). The
 # base four stay method-universal (advisor-gate-relax keys off `mechanical`) — a project never
@@ -1447,6 +1506,36 @@ def _advisor_no_residue(body6: str) -> bool:
     return bool(m) and m.group(1).strip().lower() == "none"
 
 
+# ai-plan-verify-gate helpers: read the "### AI-verify record" SUB-SECTION of raw3 (§3 body),
+# mirroring _advisor_slice's heading-bounded-slice idiom exactly (same shape, different heading/
+# section). Fail-safe: both return ''/False when the block is absent (the freeze guard fires).
+
+def _ai_verify_slice(raw3: str) -> str:
+    """Return the '### AI-verify record' sub-section text from §3 body.
+    Returns '' when the block is absent (fail-safe)."""
+    m = re.search(r"(?m)^### AI-verify record\b", raw3)
+    if not m:
+        return ""
+    nxt = re.search(r"(?m)^### ", raw3[m.end():])
+    end = m.end() + nxt.start() if nxt else len(raw3)
+    return raw3[m.start():end]
+
+
+def _ai_verify_checklist_complete(raw3: str) -> bool:
+    """True iff the §3 'AI-verify record' sub-block is present, carries exactly its 4 checklist
+    items all marked '- [x]', and 'Verified by:' has non-empty content. Engine-enforced precondition
+    (mirrors _flag_well_formed's style) — not merely advisory prose. Fail-closed: False when the
+    block is absent, has any unchecked item, or an empty 'Verified by:'."""
+    slc = _ai_verify_slice(raw3)
+    if not slc:
+        return False
+    items = re.findall(r"(?m)^\s*-\s*\[([ xX])\]", slc)
+    if len(items) != 4 or not all(c.lower() == "x" for c in items):
+        return False
+    m = re.search(r"(?m)^\s*Verified by:[ \t]*(.+)$", slc)
+    return bool(m and m.group(1).strip())
+
+
 # step-spawn-hint (advisor-gated-autonomy): the engine's pinned terse copy of each phase
 # guide's Advisor hook — one spawn idiom per phase. contract/done are ABSENT (no batch to
 # fan out: a freeze is one human decision; done is closed). Advisory ONLY — the engine never
@@ -1513,6 +1602,10 @@ def _gate_explain(root: Path, state: dict, slug: str) -> None:
     print(f"  autonomy: {level} · risk: {'high' if high else 'unset/low'} · sensitivity: {sens}")
     print(f"  advisor 3-lens: {'PASS, residue none' if adv_clean else ('PASS with residue' if adv_pass else 'unrecorded or non-PASS')}")
     print(f"  advisor-gate-relax: {'applies (mechanical + clean advisor verdict)' if relaxed else 'not applicable'}")
+    gate_mode = _task_gate_mode(hdr)
+    if gate_mode == "ai-plan-verify":
+        ai_ok, ai_code = _ai_freeze_allowed(gate_mode, _task_sensitivity(hdr, valid=_project_sensitivity_values(root)), level)
+        print(f"  ai-plan-verify-gate: {'allowed' if ai_ok else f'blocked ({ai_code})'}")
     if _autonomy_lowered(hdr):
         print("  path: HUMAN — the lowered autonomy level puts a person at this verify gate")
     elif high and not relaxed:
@@ -6622,6 +6715,13 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
             f(slug, "unflagged_freeze",
               "flag_verified record lost its well-formed "
               "'Least-sure flag surfaced at freeze:' unit")
+        # ai-plan-verify-gate residual glint: symmetric to unflagged_freeze above — a
+        # hand-edit that deletes/mangles the AI-verify evidence post-freeze goes undetected
+        # otherwise. MEASURE-NOT-BLOCK, a human spot-audit backstop (never engine-blocking).
+        if (t.get("freeze") or {}).get("mode") == "ai-plan-verify" and not _ai_verify_checklist_complete(s3):
+            f(slug, "ai_freeze_checklist_missing",
+              "freeze.mode is ai-plan-verify but the current §3 'AI-verify record' checklist "
+              "is missing, incomplete, or lost its 'Verified by:' value")
         outcomes = _AUDIT_OUTCOME_RE.findall(s6)
         if len(outcomes) != 1:
             f(slug, "malformed_gate_record",
@@ -7559,7 +7659,13 @@ def build_parser() -> argparse.ArgumentParser:
                               "FROZEN @ vN + a structured actor on the task record")
     pfz.add_argument("slug", nargs="?", default=None,
                      help="task to freeze (default: the active task)")
-    pfz.add_argument("--by", default=None, help="approver name (default: the resolved actor)")
+    pfz.add_argument("--by", default=None, help="approver name (default: the resolved actor); "
+                     "REQUIRED (an agent id) with --ai-plan-verify")
+    pfz.add_argument("--ai-plan-verify", action="store_true", dest="ai_plan_verify",
+                     help="AI-plan-verify-gate: let an AI agent (--by AGENT_ID) perform this "
+                          "freeze in place of a human — refused unless gate_mode: ai-plan-verify, "
+                          "autonomy: auto, sensitivity outside {security,data,architecture}, and "
+                          "a complete §3 'AI-verify record' checklist")
     pfz.set_defaults(func=cmd_freeze)
 
     pwho = sub.add_parser("whoami",

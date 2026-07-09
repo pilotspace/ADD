@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "99c3bf04ba6d1284ba9fac548b2960d3"  # re-aimed @ phase-bundles (status/guide bundle line + --json field). prior: 3ea3da85… @ persona-nudge-quiet
-ENGINE_PKG_MD5 = "9883ce7290ff56af189bf917f3d35bf6"  # re-aimed @ phase-bundles (PHASE_GROUPS/PHASE_AGENT + _phase_bundle). prior: d3bb5326… @ never-defer-invariants
+ENGINE_MD5 = "54029cedd869eab4c6e0a9435b6da2ea"  # re-aimed @ ai-plan-verify-gate v2 (cmd_freeze: skip the generic "?" guard on --ai-plan-verify so a malformed sensitivity routes to ai_freeze_unknown_sensitivity, not sensitivity_invalid). prior: 4b61de4f… @ ai-plan-verify-gate v1
+ENGINE_PKG_MD5 = "9e9eb184c76bf657963eef9df9d7a5ee"  # unchanged @ ai-plan-verify-gate v2 (only add.py changed this round; add_engine/*.py untouched). prior: 9883ce72… @ phase-bundles

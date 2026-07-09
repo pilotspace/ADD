@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-bundles",
+  "active_task": "ai-plan-verify-gate",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7475,10 +7475,60 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ai-plan-verify-gate": {
+      "title": "two-way DIRECTION gate: gate_mode=human|ai-plan-verify; AI verifies frozen direction bundle and auto-passes the contract freeze EXCEPT security/data/architecture (->human; security HARD-STOP)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [
+        "phase-bundles"
+      ],
+      "created": "2026-07-08T19:07:30+00:00",
+      "updated": "2026-07-09T04:28:27+00:00",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-09T04:16:44+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5f5bea8fa2dde92593f7c46ad08316f7",
+        "tests": {
+          "add-method/tooling/test_ai_plan_verify_gate.py": "3fbf928eb0ade0ca6462091a830803dc"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/.add/tooling/templates/",
+          ".add/SEAMS.md",
+          "tmp/",
+          ".add/"
+        ],
+        "snapshot_md5": "a5d747b50f51a8e91e95cfa5f5e79208"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-09T03:58:41+00:00",
+        "from_phase": "verify"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-08T19:03:19+00:00",
+  "updated": "2026-07-09T04:28:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8608,7 +8658,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "phase-bundles"
+    "three-phase-flow": "ai-plan-verify-gate"
   },
   "todos": [
     {
