@@ -10,6 +10,10 @@ CONTRACT (frozen @ v1):
   - Gating fires ONLY when "setup" in state AND setup.locked is false:
       new-task (>=1 task already) / advance (into build|verify|observe|done) / gate  -> "setup_unlocked".
 
+  AMENDED (first-call-ergonomics, v2, 2026-07-09): a re-lock without --force is no longer a hard
+  error — it is an exit-0 no-op (restates "already locked" on stdout, writes zero bytes); --force
+  re-lock is unchanged. "layers_invalid" and the gating errors above are unchanged.
+
 One test per SCENARIO. Run: python3 -m unittest test_setup_lock -v
 """
 import contextlib
@@ -158,12 +162,17 @@ class SetupLockTest(unittest.TestCase):
         self.assertEqual(_run(["gate", "PASS", "a"])[0], 0)
         self.assertEqual(self._state()["tasks"]["a"]["gate"], "PASS")
 
-    def test_relock_is_guarded(self):
+    def test_relock_is_exit0_noop(self):
+        # first-call-ergonomics M2: an exact already-locked retry (no --force) is now
+        # an exit-0 no-op — it restates locked-ness on stdout and writes zero bytes;
+        # --force still re-locks unchanged.
         self._init_await()
         _run(["lock", "--by", "Tin"])
-        code, _, err = _run(["lock", "--by", "Tin"])
-        self.assertEqual(code, 1)
-        self.assertIn("already_locked", err)
+        before = self._state()
+        code, out, _ = _run(["lock", "--by", "Tin"])
+        self.assertEqual(code, 0)
+        self.assertIn("already locked", out)
+        self.assertEqual(self._state(), before)
         self.assertEqual(_run(["lock", "--by", "Tin", "--force"])[0], 0)
 
     def test_empty_layers_rejected(self):
@@ -173,12 +182,12 @@ class SetupLockTest(unittest.TestCase):
         self.assertIn("layers_invalid", err)
         self.assertFalse(self._state()["setup"]["locked"])
 
-    def test_lock_on_grandfathered_refused(self):
+    def test_lock_on_grandfathered_is_exit0_noop(self):
         self._init_plain()                                  # no "setup" key == grandfathered-locked
-        code, _, err = _run(["lock"])                       # bare lock -> already locked
-        self.assertEqual(code, 1)
-        self.assertIn("already_locked", err)
-        self.assertNotIn("setup", self._state())            # refusal wrote nothing
+        code, out, _ = _run(["lock"])                       # bare lock -> already-locked no-op
+        self.assertEqual(code, 0)
+        self.assertIn("already locked", out)
+        self.assertNotIn("setup", self._state())            # no-op wrote nothing
         self.assertEqual(_run(["lock", "--force"])[0], 0)   # --force writes a fresh block
         self.assertTrue(self._state()["setup"]["locked"])
         self.assertEqual(self._state()["setup"]["locked_by"], getpass.getuser())  # --by default

@@ -31,34 +31,72 @@ Out: touching app-code turns (irreducible deliverable work); suite-run churn / d
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
 > GROUND (2026-07-09) reshaped these: the `advance --to <phase>` bundle fast-forward ALREADY exists (add.py:1259, stops hard at `tests` to preserve the freeze gate) — the agent never used it. The live waste is the engine not HANDING the agent the exact/collapsed next command, so it spelunks `--help` ×7 + single-steps `advance` ×7. Root cause = `_next_footer` (add.py:5993) + `status` emit generic hints, not copy-pasteable commands.
-- [ ] advance-chain-collapse   depends-on: none                    — the post-advance `next:` footer emits the COLLAPSED `advance --to <phase>` command (front drafting span → contract) so the agent uses the existing bundle-advance instead of N single steps. Floor intact: `--to` still stops at `tests`; freeze/gate never auto-crossed.
-- [ ] status-guide-fold        depends-on: advance-chain-collapse  — `status` folds in the guide's next-action AND the `next:` footer emits the EXACT copy-pasteable command WITH its required flags (e.g. `freeze --by <name>`, `gate PASS`) — killing the 7 `--help` discovery turns + the 6 status/guide re-orientation turns.
-- [ ] terser-engine-stdout     depends-on: none                    — trim the fattest per-call stdout (the outputs that grow cache_read on every later turn) while keeping gate-relevant info truthful/complete.
+- [x] advance-chain-collapse   depends-on: none                    — the post-advance `next:` footer emits the COLLAPSED `advance --to <phase>` command (front drafting span → contract) so the agent uses the existing bundle-advance instead of N single steps. Floor intact: `--to` still stops at `tests`; freeze/gate never auto-crossed.   (DONE `027063a`)
+- [x] status-guide-fold        depends-on: advance-chain-collapse  — `status` folds in the guide's next-action AND the `next:` footer emits the EXACT copy-pasteable command WITH its required flags (e.g. `freeze --by <name>`, `gate PASS`) — killing the 7 `--help` discovery turns + the 6 status/guide re-orientation turns.   (DONE `76136f3`)
+- [x] terser-engine-stdout     depends-on: none                    — DROPPED pre-spec, grounded at ~$0.02–0.04 (see Lever-3 note).
+
+> LOOP round 2 (2026-07-09) — goal unmet at re-measure; the pinned-sonnet transcripts name the residual waste
+> as engine-call REDUNDANCY (best run 21 `add.py` calls vs ~10 ideal; worst 33 with a repair loop). Three
+> evidence-named defects (all from `mr-lever-sonnet` rep1/rep2 transcripts):
+> (a) scope_violation death spiral — §5 Scope never declared before the tests→build snapshot → `gate PASS`
+>     fails ×3 (`cheat detected`) → `heal_exhausted` → the agent GREPS THE ENGINE SOURCE ~10 turns to discover
+>     `re-cross`. ~15 wasted turns in rep2.
+> (b) wrong/stale next-footer + non-idempotent retries — after a successful `freeze` the footer says
+>     `next: add.py freeze --by <name>` (phase hasn't moved when the footer renders); `already_frozen` /
+>     `already_locked` / `skip_not_allowed` / `advance`-at-done hard-error on retry instead of no-op'ing
+>     with the true next command.
+> (c) kickoff `--help` spelunking — 7 `--help` calls even in the BEST run; the exact-footer only exists after
+>     a first successful call, so the init→new-milestone→new-task span has no guidance yet.
+- [ ] first-call-ergonomics    depends-on: none                    — kill (b)+(c): post-freeze/gate/re-cross footers emit the TRUE next command for the post-transition state; `already_*`/at-done retries become exit-0 no-ops that restate the state + exact next command; `init` stdout hands the full kickoff sequence (new-milestone → new-task → advance --to contract) as copy-pasteable commands so first-use `--help` is unnecessary. Floor intact: no gate/freeze auto-crossed, errors that guard the floor stay errors.
+- [ ] scope-gate-repair-path   depends-on: first-call-ergonomics   — kill (a): the tests→build crossing warns fail-fast when §5 Scope is still the template default (and suggests real paths, e.g. from git status); a scope_violation gate failure names the EXACT 3-step repair recipe (fix §5 → `re-cross --by <name>` → `gate PASS`) instead of prose that sends the agent source-diving. The tripwire itself is untouched — only its ERROR MESSAGE and the pre-crossing nudge change.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] a fresh fixed-harness add WM1 run shows TURNS and COST below the 63-turn / $3.99 baseline, with fidelity ≥0.95 and app_reachable   (← all three, re-measured)
-- [ ] `add.py advance` crosses multiple AI-owned phases in one invocation yet still halts at contract-freeze and verify-gate (floor intact)   (← advance-chain-collapse)
-- [ ] `add.py status` surfaces the next phase action inline — an agent can proceed without a separate `guide` call   (← status-guide-fold)
+- [ ] a fresh fixed-harness add WM1 run shows TURNS and COST below the 63-turn / $3.99 baseline, with fidelity ≥0.95 and app_reachable   (← levers 1+2, re-measured; lever 3 dropped — see note) **NOT MET as written — measured 2026-07-09, disclosed below.**
+
+> **Re-measure verdict (2026-07-09, pinned `claude-sonnet-5`/medium, n=3 vs n=3).** The 63t/$3.99
+> anchor is VOID — it ran on an unpinned ambient model (harness bug #28, fixed in `4d0c52e`); the
+> only valid comparison is same-model A/B. On the pinned meter: lever (HEAD) mean **98t / $4.30**
+> vs pre-lever (94486bb) mean **102t / $4.51** — levers 1+2 are real (−4% turns / −5% cost) but the
+> effect sits inside the harness's ~2× run-to-run variance (turns 66–127) and the fidelity gate is
+> unjudgeable (judge grounded on PROMPT.md + a reachable-bit only, judge model unpinned — fid spread
+> 0.0–1.0 on runs that all built working apps). Transcript anatomy found the REAL residual lever:
+> even the best run makes 21 `add.py` calls (~2× the ~10-call ideal; worst run 33 with a
+> `status`×6/`gate`×5/`freeze`×3 repair loop) and ceremony consumes ~55–60% of all turns vs
+> spec-kit's 22-turn total. Continuation → LOOP round 2 tasks below (held open per loop.md).
+- [ ] LOOP-2 re-anchored criterion (valid meter): a fresh pinned-sonnet add WM1 run (n=3) shows mean `add.py` calls ≤ 12 with ZERO engine-source spelunking turns, and mean turns/cost at or below the pinned pre-lever mean (102t / $4.51)   (← first-call-ergonomics + scope-gate-repair-path, re-measured on the same harness)
+
+> **Lever 3 (terser-engine-stdout) — DROPPED, disclosed 2026-07-09.** Grounded the actual
+> per-call stdout: fattest is `check` (1251 B) / full `status` (1202 B); `advance` already
+> terse (156 B) from task 1. Total add.py stdout across the whole 63-turn baseline ≈ 4K tokens
+> added to context once → ~60–120K cache_read (~1–3% of 3.87M) ≈ $0.02–0.04. Trimming it in
+> half moves cents, inside the 3× measurement noise. The real wins are levers 1+2 (fewer TURNS,
+> each avoiding a ~61K-token full-context re-read). Kept the milestone honest rather than spend
+> full rigor on a $0.02 lever; the re-measure below proves the 1+2 gain on real evidence.
+- [x] `add.py advance` crosses multiple AI-owned phases in one invocation yet still halts at contract-freeze and verify-gate (floor intact)   (← advance-chain-collapse, `027063a` — `advance --to <phase>` stops hard at tests; live smoke confirmed)
+- [x] `add.py status` surfaces the next phase action inline — an agent can proceed without a separate `guide` call   (← status-guide-fold, `76136f3` — `_next_command` composer feeds guide/status/footer; live smoke confirmed all three)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `add.py` — (1) `advance` footer emits the collapsed `advance --to <phase>` bundle command (`027063a`); (2) `_next_command` composer unifies status/guide/footer into ONE exact copy-pasteable next command (`76136f3`); ENGINE_MD5 4fefc0bb → 10ffdf96, 3-tree parity held
+- skill   : untouched
+- book    : untouched
+- harness (out-of-tree but shipped alongside): `benchmark/runner/agent.py` pins `--model claude-sonnet-5 --effort medium` (`4d0c52e`) — every prior cross-run cost comparison was model-confounded
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- advance-chain-collapse : gate=PASS · targeted green + full suite green · residue=none
+- status-guide-fold      : gate=PASS (auto-gate, refute-read EARNED) · full suite 1 transient pyc flake re-run green in isolation · residue=none
+- terser-engine-stdout   : DROPPED pre-spec — grounded at ~$0.02–0.04 of a $3.99 run (see Lever-3 note); never opened, no gate
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] criteria 2+3 satisfied: Cross-task rows advance-chain-collapse (`027063a`) + status-guide-fold (`76136f3`)
+- [ ] criterion 1 NOT met: measured −4% turns / −5% cost same-model (n=3 vs n=3, pinned sonnet) — real but below the harness noise floor; fidelity gate unjudgeable (judge defect). Recorded honestly, NOT ticked.
+- goal: cut the per-feature turn count — PARTIALLY met at round 1. The shipped levers work (the agent now gets exact/collapsed commands), but transcript anatomy shows the dominant residual waste is engine-call REDUNDANCY (~2× the ideal call count via repair loops), not command discovery. Per loop.md the milestone is HELD OPEN: the evidence became the LOOP-2 tasks (first-call-ergonomics · scope-gate-repair-path) under the re-anchored criterion above. This Close section re-fills when they land.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] open a PR for branch `feat/add-bench-scaffold` (bundles three-phase-flow + harness fixes incl. model pin `4d0c52e` + this milestone's `027063a`/`76136f3`); the human reviews + merges
+- [ ] bundle into the next release cut with the 4 already-closed milestones (release.md; engine records, human tags/publishes)

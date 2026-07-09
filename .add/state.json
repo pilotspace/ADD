@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "status-guide-fold",
+  "active_task": "first-call-ergonomics",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7778,10 +7778,69 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "first-call-ergonomics": {
+      "title": "First-call ergonomics: true post-transition footers + idempotent retries + kickoff command hand-off",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "risk-proportional-ceremony",
+      "depends_on": [],
+      "created": "2026-07-09T16:47:03+00:00",
+      "updated": "2026-07-09T17:30:09+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T16:56:47+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "57084d53449821c7f3883da264d31e9d",
+        "tests": {
+          "add-method/tooling/test_first_call_ergonomics.py": "41f471c4b51fe5e575405940c8ff8bff"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_next_footer_engine.py",
+          "add-method/tooling/test_freeze_command.py",
+          "add-method/tooling/test_setup_lock.py",
+          "add-method/tooling/test_brownfield_scan.py",
+          "add-method/tooling/test_first_call_ergonomics.py",
+          "add-method/tooling/SEMANTIC_INVENTORY.md"
+        ],
+        "snapshot_md5": "a905a051ed50716935102c2b0bfd126a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "scope-gate-repair-path": {
+      "title": "Scope-gate repair path: default-scope fail-fast nudge + exact 3-step repair recipe in the scope_violation error",
+      "phase": "ground",
+      "gate": "none",
+      "milestone": "risk-proportional-ceremony",
+      "depends_on": [
+        "first-call-ergonomics"
+      ],
+      "created": "2026-07-09T16:47:03+00:00",
+      "updated": "2026-07-09T16:47:03+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T10:48:42+00:00",
+  "updated": "2026-07-09T17:30:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8091,11 +8150,16 @@
       "stage": "mvp",
       "status": "active",
       "created": "2026-07-08T08:28:21+00:00",
-      "updated": "2026-07-08T08:28:21+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
+      "updated": "2026-07-09T16:47:02+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-09T16:47:02+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "three-phase-flow": {
       "title": "Three Phase Flow",
@@ -8115,7 +8179,7 @@
       }
     }
   },
-  "active_milestone": "three-phase-flow",
+  "active_milestone": "risk-proportional-ceremony",
   "archived": [
     {
       "slug": "v5",
@@ -8911,7 +8975,8 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "status-guide-fold"
+    "three-phase-flow": "terser-engine-stdout",
+    "risk-proportional-ceremony": "first-call-ergonomics"
   },
   "todos": [
     {
@@ -9068,6 +9133,18 @@
       "id": 26,
       "text": "architecture residue: sweep-orphan-reclaim-tickets' new ticket sweep re-verifies age only at unlink time; the existing inline _project_lock reclaim path re-verifies age+inode identity. Minor precedent inconsistency, non-blocking, candidate follow-up spec delta (flagged at sweep-orphan-reclaim-tickets verify, 2026-07-05)",
       "created": "2026-07-05T02:32:14+00:00",
+      "status": "open"
+    },
+    {
+      "id": 27,
+      "text": "benchmark harness: run.py run/resume bypass resolve_setup_steps -> {REPO_ROOT} arm recipes fail setup (exit 2) via that entry point; only pilot.py substitutes. Move resolve_setup_steps into execute_wm (or the run.py CLI) so both entry points share the substitution. Found during the add WM1 re-measure 2026-07-09.",
+      "created": "2026-07-09T11:53:20+00:00",
+      "status": "open"
+    },
+    {
+      "id": 28,
+      "text": "benchmark harness CRITICAL: default_agent_cmd pins NO --model, so claude -p inherits the ambient session default at run time. Live proof 2026-07-09: same add WM1 ran on claude-opus-4-8 (single, $5.62) vs claude-fable-5 (multi-rep, $8.71-11.02) \u2014 same work, different model, 2x cost. ALL cross-run cost/turn comparisons (incl the $3.99 baseline) are INVALID until --model is pinned in default_agent_cmd AND the account is isolated from concurrent claude sessions (26 procs running during the multi-rep). arm.toml already declares same_model=true but nothing enforces it. Fix before any further add-bench cost claim.",
+      "created": "2026-07-09T13:43:23+00:00",
       "status": "open"
     }
   ]

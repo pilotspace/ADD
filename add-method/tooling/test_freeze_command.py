@@ -149,14 +149,20 @@ class FreezeRejectTest(_Harness):
         self.assertIn("no_active_task", out)
         self.assertEqual(self._state(), before)        # nothing written
 
-    def test_refuse_already_frozen(self):
+    def test_refreeze_is_exit0_noop(self):
+        # first-call-ergonomics M2: an exact already-FROZEN retry is now an exit-0
+        # no-op (never a hard error) — it restates the frozen version + redirects a
+        # real shape change to a SPECIFY change request, and writes ZERO bytes.
         self._new_task_at_contract("t")
         self._silent("freeze")
         frozen3 = self._section3("t")
         rec = self._state()["tasks"]["t"]["freeze"]
         out, code = self._run("freeze")
-        self.assertNotEqual(code, 0)
-        self.assertIn("already_frozen", out)
+        self.assertEqual(code, 0, out)
+        self.assertIn("already frozen", out)
+        self.assertIn("v1", out)
+        self.assertIn("change request", out)
+        self.assertIn("next: add.py advance", out)
         self.assertEqual(self._section3("t"), frozen3)             # §3 unchanged
         self.assertEqual(self._state()["tasks"]["t"]["freeze"], rec)  # stamp unchanged
 

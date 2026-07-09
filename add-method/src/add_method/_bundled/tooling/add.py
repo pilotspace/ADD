@@ -636,6 +636,13 @@ def cmd_init(args: argparse.Namespace) -> None:
     # so the team shares one source of truth; its transient working files are already gitignored.
     print("tip:  commit the .add/ folder to git so your team shares the ADD state "
           "(its transient files are already .gitignored).")
+    # first-call-ergonomics M3: a copy-pasteable, flags-included kickoff hand-off so a
+    # headless agent reaches `advance --to contract` from init's OWN stdout — zero
+    # `--help` reads needed for the ceremony the skill would otherwise narrate.
+    print("kickoff:")
+    print('  add.py new-milestone <slug> --title "..." --goal "..."')
+    print('  add.py new-task <slug> --title "..." --milestone <ms>')
+    print("  add.py advance --to contract")
 
 
 def cmd_sync_guidelines(args: argparse.Namespace) -> None:
@@ -965,8 +972,14 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     phase = (state["tasks"].get(slug) or {}).get("phase", "specify")
     # --- validate (no writes); error precedence: frozen -> not-drafted -> unflagged ---
     if _contract_frozen(raw3):
-        _die(f"already_frozen: {slug}'s §3 is already FROZEN — re-freeze only via a change "
-             f"request back to SPECIFY")
+        # first-call-ergonomics M2: an EXACT already-frozen retry is a READ-only exit-0
+        # no-op, not a hard error — it restates the frozen version and redirects a real
+        # shape change to a change request, and touches zero bytes of TASK.md/state.json.
+        ver_m = re.search(r"FROZEN @ (v\d+)", raw3)
+        ver = ver_m.group(1) if ver_m else "?"
+        print(f"already frozen @ {ver} — a shape change is a change request back to SPECIFY")
+        print(_next_footer(root, state))
+        return
     if _phase_index(phase) < _phase_index("contract") or _CONTRACT_TEMPLATE_RE.search(raw3):
         _die(f"contract_not_drafted: {slug}'s §3 is not a drafted contract yet — reach the "
              f"`contract` phase and replace the template before freezing")
@@ -1217,8 +1230,15 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
     filled section with an unmoved phase. Section located with the taskdoc
     `^##\\s*<n>\\s*·` grammar — the one canonical scan, never a second parser."""
     cur = state["tasks"][slug]["phase"]
-    if cur not in PHASES or PHASES.index(cur) >= len(PHASES) - 1:
-        _die(f"task '{slug}' already at final phase ({cur})")
+    if cur not in PHASES:
+        _die(f"task '{slug}' has unknown phase '{cur}' (state.json corrupted?)")
+    if PHASES.index(cur) >= len(PHASES) - 1:
+        # first-call-ergonomics M2: advance --fill at an already-`done` task is a
+        # READ-only exit-0 no-op (never a hard error) — the fill payload is never
+        # even read, so this stays zero-write no matter what --fill names.
+        print(f"task '{slug}' is done")
+        print(_next_footer(root, state))
+        return
     if args.fill == "-":
         payload = sys.stdin.read()
     else:
@@ -1273,7 +1293,11 @@ def cmd_advance(args: argparse.Namespace) -> None:
     cur = state["tasks"][slug]["phase"]
     idx = PHASES.index(cur)
     if idx >= len(PHASES) - 1:
-        _die(f"task '{slug}' already at final phase ({cur})")
+        # first-call-ergonomics M2: a bare advance at an already-`done` task is a
+        # READ-only exit-0 no-op (never a hard error) — state is untouched.
+        print(f"task '{slug}' is done")
+        print(_next_footer(root, state))
+        return
     # bundle fast-forward (bundle-advance): --to repeats the SINGLE-STEP advance — every
     # crossing guard below runs per step — and stops hard at `tests`: the tests->build
     # crossing carries the gate stack (_build_entry) and is never fast-forwarded.
@@ -2146,9 +2170,13 @@ def cmd_lock(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
     # idempotent-guarded: the predicate also treats a grandfathered (no "setup" key)
-    # project as already locked, so a bare re-lock there refuses too.
+    # project as already locked. first-call-ergonomics M2: an EXACT already-locked
+    # retry without --force is a READ-only exit-0 no-op (never a hard error) —
+    # --force below is the only path that ever re-writes state.
     if _setup_locked(state) and not args.force:
-        _die("already_locked: setup is already locked (use --force to re-lock)")
+        print("already locked (use --force to re-lock)")
+        print(_next_footer(root, state))
+        return
     # parse layers BEFORE any write so an invalid request never half-locks (design-for-failure).
     raw = args.layers if args.layers is not None else "foundation,scope,contract"
     layers = [s.strip() for s in raw.split(",") if s.strip()]
@@ -2670,8 +2698,10 @@ def cmd_status(args: argparse.Namespace) -> None:
             print(f"\nresume  : task '{active}' is at phase '{ph}'.")
             # status-guide-fold: name the EXACT next command inline (the ONE
             # _next_command composer) so an agent reading plain status can proceed
-            # without a separate `guide` round-trip.
-            print(f"          next: {_next_command(ph)}")
+            # without a separate `guide` round-trip. first-call-ergonomics M1: thread
+            # the live frozen-ness so a post-freeze status never re-teaches freeze.
+            _frozen = ph == "contract" and _task_contract_frozen(root, active)
+            print(f"          next: {_next_command(ph, contract_frozen=_frozen)}")
             # engine-hint-context-ops: teach the cheap context ops at the moment of
             # use — a whole-TASK.md read every re-orient is the context-tax driver.
             print(f"          read its live section: add.py status --section {ph}"
@@ -2792,7 +2822,10 @@ def cmd_guide(args: argparse.Namespace) -> None:
         else:
             print('then   : start the next feature -> add.py new-task <slug> --title "..."')
     else:
-        print(f"then   : {_next_command(phase)}")
+        # first-call-ergonomics M1: thread the live frozen-ness so guide never
+        # re-teaches freeze after §3 is already FROZEN.
+        _frozen = phase == "contract" and _task_contract_frozen(root, slug)
+        print(f"then   : {_next_command(phase, contract_frozen=_frozen)}")
 
 
 def _read_task_phase(root: Path, slug: str) -> str | None:
@@ -5999,23 +6032,37 @@ def _decide_next_base(state: dict, d: dict) -> str:
     return _decide_next_pair(state, d)[0]
 
 
-def _next_command(phase: str) -> str:
+def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
     """The ONE exact next CLI command for an in-flight task at `phase` (the
     status/guide next-step unifier task). PURE — the single composer
     `_next_footer` (Arm A),
     `cmd_guide`'s `then:` line, and plain `status`'s next-command all reuse, so
     the three surfaces can never drift. Front drafting phases teach the collapsed
     `advance --to` bundle (advance-chain-collapse); contract names the freeze gate
-    WITH its `--by` flag so a headless agent never reads `freeze --help`."""
+    WITH its `--by` flag so a headless agent never reads `freeze --help`.
+
+    ADDITIVE (first-call-ergonomics, M1): `contract_frozen` (default False) keeps
+    every existing call valid; at `phase=="contract"` it distinguishes the TWO real
+    states a bare phase string can't — a still-DRAFT §3 keeps teaching `freeze --by`,
+    a FROZEN §3 names the true next step (`advance`), so a completing freeze never
+    tells the very agent that just ran it to run it again."""
     if phase == "verify":
         return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
     if phase in ("ground", "specify", "scenarios"):
         return "add.py advance --to contract   (or step-by-step: add.py advance --fill <draft>)"
     if phase == "contract":
-        return "add.py freeze --by <name>"
+        return "add.py advance" if contract_frozen else "add.py freeze --by <name>"
     if phase == "tests":
         return "add.py advance --fill <draft>"
     return "add.py advance"
+
+
+def _task_contract_frozen(root: Path, slug: str) -> bool:
+    """Whether `slug`'s §3 CONTRACT is FROZEN right now, read fresh from its TASK.md —
+    the ONE frozen-ness read the 3 next-command surfaces (footer/status/guide) share
+    (first-call-ergonomics, M1). Fail-closed: a missing/unreadable TASK.md reads as
+    NOT frozen via `_raw_phase_bodies`'s own OSError guard, never a crash."""
+    return _contract_frozen(_raw_phase_bodies(root, slug).get(3, ""))
 
 
 def _next_footer(root: Path, state: dict) -> str:
@@ -6048,7 +6095,14 @@ def _next_footer(root: Path, state: dict) -> str:
             # engine-hint-batch-ops: drafting phases teach the batch form at the
             # moment of use (enforced-rerun census: the lean ops went unused when
             # only the guides named them — the footer is read every turn).
-            command = _next_command(phase)
+            # first-call-ergonomics M1: thread live frozen-ness so a completing
+            # freeze's OWN footer never re-teaches `freeze --by` on itself — and once
+            # frozen, the why/driver halves flip WITH the command (the human seam is
+            # behind us; advancing into tests is AI-owned, never a stale [human gate]).
+            _frozen = phase == "contract" and _task_contract_frozen(root, slug)
+            command = _next_command(phase, contract_frozen=_frozen)
+            if _frozen:
+                return f"next: {command} — §3 frozen; cross into tests{_driver_marker(False)}"
             marker = _driver_marker(_driver_stop(root, state, slug, phase))
             return f"next: {command} — {why}{marker}"
         mslug = _active_milestone(state)
