@@ -13,7 +13,22 @@ import textwrap
 import pytest
 
 from benchmark.arms.loader import Arm
+from benchmark.runner.agent import default_agent_cmd
 from benchmark.runner.core import execute_wm
+
+
+def test_default_agent_cmd_isolates_env():
+    """harness-isolate-env: every real benchmark `claude -p` must run in a minimal,
+    identical environment — no operator skills/commands/MCP leak into the measured
+    system prompt (harness problem #2). Asserts the two isolation flags AND the
+    preserved stream-json transcript contract + the prompt positional."""
+    argv = default_agent_cmd("PROMPT")
+    # env isolation
+    assert "--disable-slash-commands" in argv  # strips the 148-skill/174-command catalog
+    assert "--strict-mcp-config" in argv       # no MCP servers absent an explicit --mcp-config
+    # preserved contract
+    for tok in ("claude", "-p", "PROMPT", "--output-format", "stream-json"):
+        assert tok in argv, tok
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 BENCHMARK_ROOT = REPO_ROOT / "benchmark"

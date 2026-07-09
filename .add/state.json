@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "harness-fair-meter",
+  "active_task": "harness-isolate-env",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7613,10 +7613,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "harness-isolate-env": {
+      "title": "Benchmark claude -p runs isolated from the operator's skill/command/MCP catalog (identical minimal env per arm)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [],
+      "created": "2026-07-09T08:24:10+00:00",
+      "updated": "2026-07-09T08:29:14+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T08:27:06+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "850240abec5ca8c9d88a929b081ba0d0",
+        "tests": {
+          "benchmark/tests/test_runner_core.py": "39f26039fe7818ad84e8ec6a97e818e7"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/runner/agent.py",
+          "benchmark/tests/test_runner_core.py"
+        ],
+        "snapshot_md5": "6cab639e21c20cdb32cd4d37a72c64d7"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T08:21:14+00:00",
+  "updated": "2026-07-09T08:29:14+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8746,7 +8785,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "harness-fair-meter"
+    "three-phase-flow": "harness-isolate-env"
   },
   "todos": [
     {

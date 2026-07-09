@@ -12,8 +12,18 @@ from typing import Sequence
 def default_agent_cmd(prompt: str) -> list[str]:
     """The real `claude -p` invocation, pinned by the 2026-07-07 live spike:
     `--output-format stream-json` gives the per-event transcript this runner
-    parses for tokens/cost/time_to_first_edit."""
-    return ["claude", "-p", prompt, "--output-format", "stream-json", "--verbose"]
+    parses for tokens/cost/time_to_first_edit.
+
+    Env isolation (harness-isolate-env): `--disable-slash-commands` +
+    `--strict-mcp-config` strip the operator's `~/.claude` catalog (skills,
+    slash-commands, MCP servers) from the measured system prompt, so every arm
+    runs in a minimal, identical environment. Both arms drive via Bash
+    (`add.py` / spec-kit scripts) and need neither skills nor MCP."""
+    return [
+        "claude", "-p", prompt,
+        "--output-format", "stream-json", "--verbose",
+        "--disable-slash-commands", "--strict-mcp-config",
+    ]
 
 
 def build_argv(prompt: str, agent_cmd: Sequence[str] | None) -> list[str]:
