@@ -159,6 +159,74 @@ def run_pilot(
 
 
 # --------------------------------------------------------------------------
+# harness-multirep — controlled N-rep runs + distribution aggregation
+# --------------------------------------------------------------------------
+
+_REP_METRICS = (("tokens", "tokens_total"), ("cost", "cost_usd"), ("fidelity", "spec_fidelity"))
+
+
+def aggregate_reps(records: Sequence[RunRecord]) -> dict:
+    """PURE — group `records` by (arm, wm) and, per group, return `n` plus
+    {mean, min, max} for tokens_total / cost_usd / spec_fidelity. No IO.
+    Empty input -> {}. The full distribution (not just the mean) is reported
+    so single-rep variance can't hide behind a central-tendency number."""
+    groups: dict[tuple[str, int], list[RunRecord]] = {}
+    for record in records:
+        groups.setdefault((record.arm, record.wm), []).append(record)
+
+    summary: dict[tuple[str, int], dict] = {}
+    for key, recs in groups.items():
+        entry: dict = {"n": len(recs)}
+        for label, metric in _REP_METRICS:
+            values = [float(r.metrics[metric]) for r in recs]
+            entry[label] = {
+                "mean": sum(values) / len(values),
+                "min": min(values),
+                "max": max(values),
+            }
+        summary[key] = entry
+    return summary
+
+
+def run_reps(
+    arms: Sequence[str] = ARM_NAMES,
+    wms: Sequence[int] = (1, 2, 3, 4, 5, 6),
+    reps: int = 1,
+    *,
+    runs_root: pathlib.Path | None = None,
+    repo_root: pathlib.Path | None = None,
+    agent_cmd: Sequence[str] | None = None,
+    judge_cmd: Sequence[str] | None = None,
+    timeout_s: float = 1800.0,
+    retries: int = 1,
+) -> list[RunRecord]:
+    """Run the full arms×wms pilot `reps` times into DISTINCT `runs_root/rep{i}`
+    roots (resume disabled per rep so each is an independent fresh sample), and
+    return the flat concatenation of every rep's records. Fail-loud: reps<1 is
+    rejected before any run starts."""
+    if reps < 1:
+        raise BenchError("invalid_reps: must be >= 1")
+
+    root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
+
+    records: list[RunRecord] = []
+    for i in range(reps):
+        rep_records = run_pilot(
+            arms,
+            wms,
+            resume=False,
+            agent_cmd=agent_cmd,
+            judge_cmd=judge_cmd,
+            timeout_s=timeout_s,
+            retries=retries,
+            runs_root=root / f"rep{i}",
+            repo_root=repo_root,
+        )
+        records.extend(rep_records)
+    return records
+
+
+# --------------------------------------------------------------------------
 # thin argparse CLI: `pilot.py run-all` / `pilot.py attest`
 # --------------------------------------------------------------------------
 
@@ -175,6 +243,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--judge-cmd", nargs="*", default=None)
     run_all_p.add_argument("--timeout-s", type=float, default=1800.0)
     run_all_p.add_argument("--retries", type=int, default=1)
+    run_all_p.add_argument("--reps", type=int, default=1)
     run_all_p.add_argument("--runs-root", default=None)
     run_all_p.add_argument("--repo-root", default=None)
 
@@ -195,6 +264,29 @@ def main(argv: list[str] | None = None) -> int:
         runs_root = pathlib.Path(args.runs_root) if args.runs_root else None
         repo_root = pathlib.Path(args.repo_root) if args.repo_root else None
         try:
+            if args.reps > 1:
+                records = run_reps(
+                    arms=args.arms,
+                    wms=tuple(args.wms),
+                    reps=args.reps,
+                    agent_cmd=args.agent_cmd,
+                    judge_cmd=args.judge_cmd,
+                    timeout_s=args.timeout_s,
+                    retries=args.retries,
+                    runs_root=runs_root,
+                    repo_root=repo_root,
+                )
+                for (arm, wm), stats in sorted(aggregate_reps(records).items()):
+                    print(
+                        f"{arm} wm{wm}  n={stats['n']}  "
+                        f"tokens[mean={stats['tokens']['mean']:.0f} "
+                        f"min={stats['tokens']['min']:.0f} max={stats['tokens']['max']:.0f}]  "
+                        f"cost[mean={stats['cost']['mean']:.4f} "
+                        f"min={stats['cost']['min']:.4f} max={stats['cost']['max']:.4f}]  "
+                        f"fidelity[mean={stats['fidelity']['mean']:.3f} "
+                        f"min={stats['fidelity']['min']:.3f} max={stats['fidelity']['max']:.3f}]"
+                    )
+                return 0
             records = run_pilot(
                 arms=args.arms,
                 wms=tuple(args.wms),

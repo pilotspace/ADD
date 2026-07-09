@@ -416,3 +416,113 @@ def test_cli_run_all_rejects_unknown_arm(tmp_path, capsys):
     assert rc == 2
     err = capsys.readouterr().err
     assert "unknown_arm" in err
+
+
+# --------------------------------------------------------------------------
+# harness-multirep — aggregate_reps (pure) + run_reps (spy) + --reps CLI
+# --------------------------------------------------------------------------
+
+
+def _rec(arm: str, wm: int, *, tokens: float, cost: float, fidelity: float) -> "object":
+    """Build a validated RunRecord with the given distribution metrics
+    (the others are irrelevant to aggregate_reps and pinned to 0)."""
+    return validate(
+        dict(
+            arm=arm,
+            wm=wm,
+            rep=0,
+            status="done",
+            metrics={
+                "regression_rate": 0.0,
+                "spec_fidelity": fidelity,
+                "tokens_total": tokens,
+                "cost_usd": cost,
+                "context_rot_slope": 0.0,
+                "time_to_first_edit": 0.0,
+            },
+            artifacts={"workspace": "w", "transcript": "t", "oracle_report": "o"},
+        )
+    )
+
+
+def test_aggregate_reps_groups_by_arm_wm_with_mean_min_max():
+    records = [
+        _rec("add", 1, tokens=100.0, cost=1.0, fidelity=0.90),
+        _rec("add", 1, tokens=200.0, cost=3.0, fidelity=0.96),
+        _rec("spec-kit", 1, tokens=50.0, cost=0.5, fidelity=0.80),
+    ]
+
+    agg = pilot_mod.aggregate_reps(records)
+
+    assert set(agg.keys()) == {("add", 1), ("spec-kit", 1)}
+
+    add = agg[("add", 1)]
+    assert add["n"] == 2
+    assert add["tokens"] == {"mean": 150.0, "min": 100.0, "max": 200.0}
+    assert add["cost"] == {"mean": 2.0, "min": 1.0, "max": 3.0}
+    assert add["fidelity"] == {"mean": pytest.approx(0.93), "min": 0.90, "max": 0.96}
+
+    sk = agg[("spec-kit", 1)]
+    assert sk["n"] == 1
+    assert sk["tokens"] == {"mean": 50.0, "min": 50.0, "max": 50.0}
+    assert sk["cost"] == {"mean": 0.5, "min": 0.5, "max": 0.5}
+    assert sk["fidelity"] == {"mean": 0.80, "min": 0.80, "max": 0.80}
+
+
+def test_aggregate_reps_empty_is_empty_dict():
+    assert pilot_mod.aggregate_reps([]) == {}
+
+
+def test_run_reps_invokes_run_pilot_once_per_rep_with_distinct_roots(tmp_path, monkeypatch):
+    runs_root = tmp_path / "runs"
+    calls: list[dict] = []
+
+    def _spy_run_pilot(arms, wms, **kwargs):
+        calls.append({"arms": list(arms), "wms": tuple(wms), **kwargs})
+        # each rep returns one synthetic record so run_reps can concatenate
+        return [_rec("add", 1, tokens=float(len(calls)), cost=1.0, fidelity=0.9)]
+
+    monkeypatch.setattr(pilot_mod, "run_pilot", _spy_run_pilot)
+
+    records = pilot_mod.run_reps(
+        arms=["add"],
+        wms=(1,),
+        reps=3,
+        runs_root=runs_root,
+        repo_root=REPO_ROOT,
+    )
+
+    assert len(calls) == 3
+    # each rep runs into a DISTINCT rep{i} root, resume disabled (fresh each rep)
+    roots = [pathlib.Path(c["runs_root"]) for c in calls]
+    assert roots == [runs_root / "rep0", runs_root / "rep1", runs_root / "rep2"]
+    assert all(c["resume"] is False for c in calls)
+    # flat concatenation of every rep's records
+    assert len(records) == 3
+
+
+def test_run_reps_rejects_non_positive_reps(tmp_path):
+    with pytest.raises(BenchError, match="invalid_reps"):
+        pilot_mod.run_reps(arms=["add"], wms=(1,), reps=0, runs_root=tmp_path, repo_root=REPO_ROOT)
+
+
+def test_cli_run_all_reps_routes_through_run_reps(tmp_path, monkeypatch, capsys):
+    runs_root = tmp_path / "runs"
+    seen: dict = {}
+
+    def _spy_run_reps(arms, wms, reps, **kwargs):
+        seen["reps"] = reps
+        seen["arms"] = list(arms)
+        return [_rec("add", 1, tokens=10.0, cost=1.0, fidelity=0.9)]
+
+    monkeypatch.setattr(pilot_mod, "run_reps", _spy_run_reps)
+
+    rc = pilot_mod.main(
+        ["run-all", "--arms", "add", "--wms", "1", "--reps", "3",
+         "--runs-root", str(runs_root), "--repo-root", str(REPO_ROOT)]
+    )
+
+    assert rc == 0
+    assert seen["reps"] == 3
+    out = capsys.readouterr().out
+    assert "add" in out and "1" in out  # aggregate summary printed

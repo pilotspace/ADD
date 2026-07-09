@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "harness-isolate-env",
+  "active_task": "harness-multirep",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7652,10 +7652,47 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "harness-multirep": {
+      "title": "Controlled multi-rep: run N same-session reps per arm\u00d7wm and aggregate mean/range (trustworthy comparison)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [],
+      "created": "2026-07-09T08:29:44+00:00",
+      "updated": "2026-07-09T08:37:32+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T08:32:01+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "edad97986937512272be5bcc6fd1c9bc",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/pilot.py",
+          "benchmark/tests/test_pilot.py"
+        ],
+        "snapshot_md5": "63493d83e557b77b5b4e0158a7753507"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T08:29:14+00:00",
+  "updated": "2026-07-09T08:37:32+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8785,7 +8822,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "harness-isolate-env"
+    "three-phase-flow": "harness-multirep"
   },
   "todos": [
     {
