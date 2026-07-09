@@ -6022,7 +6022,18 @@ def _next_footer(root: Path, state: dict) -> str:
             # only the guides named them — the footer is read every turn).
             if phase == "verify":
                 command = "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
-            elif phase in ("ground", "specify", "scenarios", "contract", "tests"):
+            elif phase in ("ground", "specify", "scenarios"):
+                # advance-chain-collapse: the front drafting span teaches the
+                # COLLAPSED bundle form — one round-trip to the freeze point via
+                # the already-shipped `advance --to` — while keeping the
+                # per-section `--fill` alt discoverable (the footer is read every
+                # turn). Draft §0–§3 first, then one `advance --to contract`.
+                command = "add.py advance --to contract   (or step-by-step: add.py advance --fill <draft>)"
+            elif phase == "contract":
+                # at the collapse target the next real step is the freeze gate,
+                # not another advance.
+                command = "add.py freeze"
+            elif phase == "tests":
                 command = "add.py advance --fill <draft>"
             else:
                 command = "add.py advance"

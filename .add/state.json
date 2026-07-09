@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "harness-multirep",
+  "active_task": "advance-chain-collapse",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7689,10 +7689,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "advance-chain-collapse": {
+      "title": "add.py advance auto-walks consecutive AI-owned phases in one round-trip, halting at contract-freeze and verify-gate",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "risk-proportional-ceremony",
+      "depends_on": [],
+      "created": "2026-07-09T09:04:46+00:00",
+      "updated": "2026-07-09T09:31:31+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T09:18:50+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "e7bc7e22c248df93b62b46d6be595145",
+        "tests": {
+          "add-method/tooling/test_next_footer_engine.py": "b5ce8e957519514f5cc1bc0a22499e65",
+          "add-method/tooling/test_hint_batch_ops.py": "c89a5368f24c90f6e201e21a7cdd7418"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_next_footer_engine.py",
+          "add-method/tooling/test_hint_batch_ops.py"
+        ],
+        "snapshot_md5": "31917ed9349bdc1679a8370e6734adf3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T08:37:32+00:00",
+  "updated": "2026-07-09T09:31:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8822,7 +8867,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "harness-multirep"
+    "three-phase-flow": "advance-chain-collapse"
   },
   "todos": [
     {

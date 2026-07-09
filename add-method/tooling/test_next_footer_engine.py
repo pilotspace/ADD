@@ -340,6 +340,72 @@ class FooterSweepTest(_Board):
                          "the sweep must exercise every completing mutating verb")
 
 
+# ── advance-chain-collapse: the front-phase footer teaches the bundle form ───
+class FooterCollapseHintTest(_Board):
+    """The `next:` footer hands the agent the COLLAPSED `advance --to contract`
+    at front drafting phases (M1) while keeping the per-section `--fill` alt
+    (M2), points at the freeze gate AT contract (M3), and never names a `--to`
+    target past contract (M4). Render-blind: reads the printed footer only."""
+
+    def test_ground_footer_teaches_collapse(self):            # M1 + M2 @ ground
+        out, _, _ = self._run("new-task", "foo")              # fresh task @ ground
+        footer = self._footer(out)
+        self.assertIn("add.py advance --to contract", footer,
+                      f"ground footer teaches the collapse, got: {footer!r}")
+        self.assertIn("add.py advance --fill <draft>", footer,
+                      f"ground footer keeps the --fill alt, got: {footer!r}")
+
+    def test_specify_footer_teaches_collapse(self):           # M1 + M2 @ specify
+        self._silent("new-task", "foo")
+        out, _, _ = self._run("advance", "foo")               # ground -> specify
+        footer = self._footer(out)
+        self.assertIn("add.py advance --to contract", footer, footer)
+        self.assertIn("add.py advance --fill <draft>", footer, footer)
+
+    def test_scenarios_footer_teaches_collapse(self):         # M1 @ scenarios
+        self._silent("new-task", "foo")
+        self._silent("advance", "foo")                        # -> specify
+        out, _, _ = self._run("advance", "foo")               # -> scenarios
+        footer = self._footer(out)
+        self.assertIn("add.py advance --to contract", footer, footer)
+
+    def test_contract_footer_points_at_freeze(self):          # M3
+        self._silent("new-task", "foo")
+        self._silent("advance", "foo")                        # -> specify
+        self._silent("advance", "foo")                        # -> scenarios
+        out, _, _ = self._run("advance", "foo")               # -> contract
+        footer = self._footer(out)
+        self.assertIn("add.py freeze", footer,
+                      f"contract footer names the freeze gate, got: {footer!r}")
+        self.assertNotIn("advance", footer,
+                         f"contract footer must NOT re-suggest advance, got: {footer!r}")
+        self.assertNotIn("--to", footer,
+                         f"contract footer must NOT name a --to, got: {footer!r}")
+
+    def test_no_front_footer_names_a_to_past_contract(self):  # M4
+        self._silent("new-task", "foo")
+        footers = [self._footer(self._run("new-task", "bar")[0])]   # bar @ ground
+        for _ in range(3):                                    # specify, scenarios, contract
+            footers.append(self._footer(self._run("advance", "bar")[0]))
+        for f in footers:
+            for bad in ("--to tests", "--to build", "--to verify", "--to observe", "--to done"):
+                self.assertNotIn(bad, f, f"no front footer may name {bad!r}: {f!r}")
+
+    def test_failsoft_and_pure(self):                         # M5 + R2
+        before = sorted(p.name for p in self.tmp.rglob("*"))
+        got = add._next_footer(Path("/nonexistent-add-root"), {})
+        self.assertEqual(got, "next: add.py status — re-orient")
+        after = sorted(p.name for p in self.tmp.rglob("*"))
+        self.assertEqual(before, after, "_next_footer must write nothing (pure)")
+
+    def test_done_task_has_no_collapse_hint(self):            # R1
+        self._arm("alpha")                                    # crosses to build
+        out, _, _ = self._gate("alpha", "PASS")               # build->verify->gate (done)
+        footer = self._footer(out)
+        self.assertNotIn("add.py advance --to contract", footer,
+                         f"a done task falls to Arm B — no collapse hint: {footer!r}")
+
+
 # ── the discipline: ×3 parity + pin re-aimed at this task ────────────────────
 class EnginePinTest(unittest.TestCase):
     def test_mirrors_and_pin(self):

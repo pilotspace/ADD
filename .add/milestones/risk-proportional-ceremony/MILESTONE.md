@@ -10,8 +10,8 @@ release: pending
 > written just-in-time. Update this doc whenever a task reveals a milestone gap.
 
 ## Scope
-In:  <what this milestone delivers>
-Out: <explicitly deferred — the anti-scope-creep list>
+In:  cut ADD's per-feature TURN COUNT — the measured cost driver — by collapsing MECHANICAL engine round-trips, without lowering the trust floor. Live evidence (fixed-harness add WM1, 2026-07-09, `scratchpad/baseline-runs/add/wm1`): **63 turns / $3.99 / 4.03M tok (96% cache_read) / fidelity 0.96**; **26 of 63 turns (~41%) are `add.py` round-trips** — `advance`×7, `status`/`guide`×5, ceremony (`new-task`/`lock`/`freeze`/`gate`/`init`/`new-milestone`)×12. Each round-trip re-reads the full ~60K context (that IS the cost). Three levers: (1) collapse the `advance` chain, (2) fold `status`+`guide` orientation, (3) trim per-call stdout that grows cache_read.
+Out: touching app-code turns (irreducible deliverable work); suite-run churn / done-phase ceremony on BIG milestones (separate lever — this milestone targets per-feature fast/oneshot round-trips); any change that skips a freeze, a red suite, or a recorded gate (the floor is non-negotiable); lean-agent roster work (shipped in [[add-lean-loop]]).
 
 > UI/UX in scope? Name it precisely, not "make it nice" — information architecture ·
 > interaction pattern · visual hierarchy · design tokens · component states ·
@@ -22,17 +22,23 @@ Out: <explicitly deferred — the anti-scope-creep list>
 > feature also triggers DESIGN.md via the `add` skill's design.md.
 
 ## Shared decisions & glossary deltas   (living — every task must honor these)
-- <cross-cutting rule, named from GLOSSARY.md>
+- TRUST FLOOR IS INVARIANT: every lane still requires a FROZEN §3 contract, a red suite before build, a recorded §6 gate, and security = HARD-STOP. A round-trip may be collapsed ONLY if it carries no human/proxy decision — freeze and gate are decision points and are never auto-crossed.
+- MEASURE, DON'T ASSUME: each task states its before-number from the live baseline transcript and re-measures after; the milestone's proof is a fresh fixed-harness add WM1 run, not a code-reading argument.
+- BACKWARD-COMPATIBLE CLI: existing subcommands/flags keep working; new behavior is additive (a flag or a smarter default that a bare call still honors) so the 3-tree byte-parity engine and its ~3k tests hold.
 
 ## Shared / risky contracts (freeze these first)
-- <contract name> -> owning task <slug>
+- `add.py advance` collapse semantics (where the chain STOPS) -> owning task advance-chain-collapse — the freeze/gate stop-points every other task assumes.
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] <slug>   depends-on: none     — <one line>
-- [ ] <slug>   depends-on: <slug>   — <one line>
+> GROUND (2026-07-09) reshaped these: the `advance --to <phase>` bundle fast-forward ALREADY exists (add.py:1259, stops hard at `tests` to preserve the freeze gate) — the agent never used it. The live waste is the engine not HANDING the agent the exact/collapsed next command, so it spelunks `--help` ×7 + single-steps `advance` ×7. Root cause = `_next_footer` (add.py:5993) + `status` emit generic hints, not copy-pasteable commands.
+- [ ] advance-chain-collapse   depends-on: none                    — the post-advance `next:` footer emits the COLLAPSED `advance --to <phase>` command (front drafting span → contract) so the agent uses the existing bundle-advance instead of N single steps. Floor intact: `--to` still stops at `tests`; freeze/gate never auto-crossed.
+- [ ] status-guide-fold        depends-on: advance-chain-collapse  — `status` folds in the guide's next-action AND the `next:` footer emits the EXACT copy-pasteable command WITH its required flags (e.g. `freeze --by <name>`, `gate PASS`) — killing the 7 `--help` discovery turns + the 6 status/guide re-orientation turns.
+- [ ] terser-engine-stdout     depends-on: none                    — trim the fattest per-call stdout (the outputs that grow cache_read on every later turn) while keeping gate-relevant info truthful/complete.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] User can <observable behavior>        (← <slug>)
+- [ ] a fresh fixed-harness add WM1 run shows TURNS and COST below the 63-turn / $3.99 baseline, with fidelity ≥0.95 and app_reachable   (← all three, re-measured)
+- [ ] `add.py advance` crosses multiple AI-owned phases in one invocation yet still halts at contract-freeze and verify-gate (floor intact)   (← advance-chain-collapse)
+- [ ] `add.py status` surfaces the next phase action inline — an agent can proceed without a separate `guide` call   (← status-guide-fold)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
