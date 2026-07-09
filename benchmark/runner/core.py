@@ -47,7 +47,12 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "exists; record the verify gate before finishing. This is a headless run with no "
             "human available: you carry the human's proxy authority — approve locks, contract "
             "freezes, and gates yourself (record them as usual) and NEVER end the run waiting "
-            "for a human reply; the job is done only when the app meets the requirements.\n\n"
+            "for a human reply; the job is done only when the app meets the requirements. "
+            "This is a CLEARED, fully-specified benchmark task, so run the fast lane: create "
+            "each task with `add.py new-task <slug> --oneshot`, declare `skips: scenarios, "
+            "observe` with a one-line rationale, and skip ONLY that optional ceremony — the "
+            "contract is still FROZEN and the red suite still precedes the build (never skip "
+            "contract, tests, build, or verify).\n\n"
             + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim

@@ -47,6 +47,19 @@ class TestAddLoopWrapper:
         assert "frozen" in low and "red" in low
         assert "proxy authority" in low  # headless runs must not stall at human gates
 
+    def test_add_loop_instructs_benchmark_skip(self):
+        """three-phase-flow proof: a cleared benchmark workload is a fully-specified
+        oneshot task, so the wrapper must tell the headless agent to engage the skip
+        lane (--oneshot) and skip the optional ceremony (scenarios · observe) — while
+        the floor (contract frozen · red suite before build) stays explicitly stated."""
+        out = _wrap_prompt("Build the thing.", "add-loop")
+        low = out.lower()
+        # engages the skip lane + names the exact optional phases it may skip
+        assert "--oneshot" in low
+        assert "scenarios" in low and "observe" in low
+        # floor still stated in the same wrapper (never skip contract/tests)
+        assert "frozen" in low and "red" in low
+
     def test_unknown_wrapper_still_verbatim(self):
         assert _wrap_prompt("x", "no-such-wrapper") == "x"
 
