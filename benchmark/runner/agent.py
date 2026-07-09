@@ -18,9 +18,17 @@ def default_agent_cmd(prompt: str) -> list[str]:
     `--strict-mcp-config` strip the operator's `~/.claude` catalog (skills,
     slash-commands, MCP servers) from the measured system prompt, so every arm
     runs in a minimal, identical environment. Both arms drive via Bash
-    (`add.py` / spec-kit scripts) and need neither skills nor MCP."""
+    (`add.py` / spec-kit scripts) and need neither skills nor MCP.
+
+    Model pin (harness-model-pin #28): `--model claude-sonnet-5 --effort medium`
+    is MANDATORY. Without it `claude -p` inherits whatever ambient model the
+    operator's session defaults to at run time — live proof 2026-07-09 caught the
+    same add WM1 running on opus-4-8 (single, $5.62) vs fable-5 (multi-rep,
+    $8.71-11.02), same work at ~2x cost, invalidating every cross-run cost/turn
+    comparison. Sonnet+medium is the fixed, model-comparable meter for all arms."""
     return [
         "claude", "-p", prompt,
+        "--model", "claude-sonnet-5", "--effort", "medium",
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
     ]

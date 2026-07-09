@@ -30,6 +30,20 @@ def test_default_agent_cmd_isolates_env():
     for tok in ("claude", "-p", "PROMPT", "--output-format", "stream-json"):
         assert tok in argv, tok
 
+
+def test_default_agent_cmd_pins_model_and_effort():
+    """harness-model-pin (#28): default_agent_cmd MUST pin an explicit --model +
+    --effort so `claude -p` never inherits the operator's ambient session default.
+    Live proof 2026-07-09: the same add WM1 ran on opus-4-8 (single) vs fable-5
+    (multi-rep) — same work, ~2x cost — invalidating every cross-run comparison.
+    Pin sonnet + medium so cost/turns are model-comparable across arms and reps."""
+    argv = default_agent_cmd("PROMPT")
+    assert "--model" in argv, "no --model pin: cost/turns un-comparable across runs"
+    model = argv[argv.index("--model") + 1]
+    assert model == "claude-sonnet-5", f"expected sonnet pin, got {model!r}"
+    assert "--effort" in argv, "no --effort pin: thinking budget drifts across runs"
+    assert argv[argv.index("--effort") + 1] == "medium"
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 BENCHMARK_ROOT = REPO_ROOT / "benchmark"
 
