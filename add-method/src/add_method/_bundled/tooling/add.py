@@ -1512,8 +1512,20 @@ def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
     if not m:
         return frozenset(), None
     toks = [t.strip() for t in m.group(1).split(",")]
-    if any(t not in _SKIPPABLE_PHASES for t in toks):
-        return frozenset(), "skip_not_allowed"
+    bad = [t for t in toks if t not in _SKIPPABLE_PHASES]
+    if bad:
+        # skip-error-ergonomics M1: the error carries its own repair — the raw
+        # declaration, the offending token(s), the COMPUTED allowed set, and the
+        # fix — so an agent never trial-and-errors advance or greps this source.
+        # The prefix stays `skip_not_allowed` (pinned by callers/tests); the
+        # fail-closed whole-declaration discard is unchanged.
+        allowed = ", ".join(sorted(_SKIPPABLE_PHASES))
+        return frozenset(), (
+            f"skip_not_allowed: `skips: {m.group(1)}` — "
+            f"{', '.join(repr(t) for t in bad)} cannot be skipped; only "
+            f"{allowed} may be skipped (fast/oneshot/benchmark lanes, with a "
+            "stated Skip rationale). Correct or remove the `skips:` line in the "
+            "TASK.md header, then re-run add.py advance")
     return frozenset(toks), None
 
 
@@ -7362,7 +7374,7 @@ def cmd_graduation_report(args: argparse.Namespace) -> None:
     a gather, not a gate; the ONLY non-zero exit is no_project. Judges nothing. NO writes."""
     root = find_root()
     if root is None:                 # frozen contract: fail-closed with a no_project signal
-        _die("no_project: no .add/ project found. Run `add.py init` first.")
+        _die('no_project: no .add/ project found — run: add.py init --name "<project>" --stage <prototype|poc|mvp|production>')
     state = load_state(root)
     d = graduation_data(root, state)
 
@@ -7560,7 +7572,7 @@ def cmd_release_report(args: argparse.Namespace) -> None:
     not a gate; the ONLY non-zero exit is no_project. Judges nothing. NO writes."""
     root = find_root()
     if root is None:                 # frozen contract: fail-closed with a no_project signal
-        _die("no_project: no .add/ project found. Run `add.py init` first.")
+        _die('no_project: no .add/ project found — run: add.py init --name "<project>" --stage <prototype|poc|mvp|production>')
     state = load_state(root)
     d = release_data(root, state)
 
@@ -7620,7 +7632,7 @@ def cmd_release(args: argparse.Namespace) -> None:
     A failed second write rolls back the first (release_write_failed)."""
     root = find_root()
     if root is None:                 # frozen contract: fail-closed with a no_project signal
-        _die("no_project: no .add/ project found. Run `add.py init` first.")
+        _die('no_project: no .add/ project found — run: add.py init --name "<project>" --stage <prototype|poc|mvp|production>')
     state = load_state(root)
     d = release_data(root, state)
     forced = getattr(args, "force", False)

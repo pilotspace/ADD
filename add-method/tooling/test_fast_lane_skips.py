@@ -193,12 +193,18 @@ class TaskSkipSetResolverTest(unittest.TestCase):
                          (frozenset({"scenarios"}), None))
 
     def test_one_bad_token_refuses_whole_declaration(self):
-        self.assertEqual(add._task_skip_set("skips: scenarios,build\n"),
-                         (frozenset(), "skip_not_allowed"))
+        # skip-error-ergonomics: the error string now carries its own repair —
+        # assert the empty set + the stable `skip_not_allowed` prefix, not equality.
+        toks, err = add._task_skip_set("skips: scenarios,build\n")
+        self.assertEqual(toks, frozenset())
+        self.assertTrue(err and err.startswith("skip_not_allowed"), err)
+        self.assertIn("'build'", err, "the bad token is named")
 
     def test_wholly_unknown_token(self):
-        self.assertEqual(add._task_skip_set("skips: bogus\n"),
-                         (frozenset(), "skip_not_allowed"))
+        toks, err = add._task_skip_set("skips: bogus\n")
+        self.assertEqual(toks, frozenset())
+        self.assertTrue(err and err.startswith("skip_not_allowed"), err)
+        self.assertIn("'bogus'", err, "the bad token is named")
 
 
 # ---------------------------------------------------------------------------

@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "1478748399239a3502c5985eb023aee9"  # re-aimed @ status-guide-fold v1 (_next_command single composer feeds guide/status/footer + setup exact-flag commands; contract->freeze --by; docstring de-slanged). prior: 6bb86306… @ advance-chain-collapse v1
-ENGINE_PKG_MD5 = "b287ceedad9e29013a798b8faa978605"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2
+ENGINE_MD5 = "147820fde5c6806d7360a43e81f7af5b"  # re-aimed @ status-guide-fold v1 (_next_command single composer feeds guide/status/footer + setup exact-flag commands; contract->freeze --by; docstring de-slanged). prior: 6bb86306… @ advance-chain-collapse v1
+ENGINE_PKG_MD5 = "5f60c0b2af321c1dcb053a5a06473a92"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2

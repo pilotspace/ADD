@@ -127,7 +127,11 @@ def find_root(start: Path | None = None) -> Path | None:
 def _require_root() -> Path:
     root = find_root()
     if root is None:
-        _die("no .add/ project found. Run `add.py init` first.")
+        # skip-error-ergonomics M2: hand the exact command with its flags — the
+        # bare "run init first" hint made every fresh headless agent read
+        # `init --help` before its first real call (LOOP-2 re-measure, all reps).
+        _die('no .add/ project found — run: add.py init --name "<project>" '
+             "--stage <prototype|poc|mvp|production>")
     return root
 
 def _migrate_state(state: dict) -> dict:
