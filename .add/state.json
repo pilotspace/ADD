@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "advance-chain-collapse",
+  "active_task": "status-guide-fold",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7734,10 +7734,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "status-guide-fold": {
+      "title": "status folds in the guide next-action + the footer emits exact copy-pasteable commands with flags (kills the --help discovery churn)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "risk-proportional-ceremony",
+      "depends_on": [],
+      "created": "2026-07-09T09:32:55+00:00",
+      "updated": "2026-07-09T10:48:42+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T10:23:10+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "53e261ae57cae3650bebccb17b50a663",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_next_footer_engine.py",
+          "add-method/tooling/test_hint_batch_ops.py",
+          "add-method/tooling/test_loop_aware_orient.py",
+          "add-method/tooling/test_progressive_context.py"
+        ],
+        "snapshot_md5": "8cc1adfd4be1a9a5c387245957003c43"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T09:31:31+00:00",
+  "updated": "2026-07-09T10:48:42+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8867,7 +8911,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "advance-chain-collapse"
+    "three-phase-flow": "status-guide-fold"
   },
   "todos": [
     {

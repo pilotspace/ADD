@@ -64,6 +64,23 @@ class GuideTest(unittest.TestCase):
         self.assertIn("add.py gate", out)
         self.assertNotIn("advance", out, "verify must point at the gate, not advance")
 
+    def test_guide_contract_points_at_freeze(self):
+        # status-guide-fold: guide reuses the ONE next-step composer, so at
+        # contract it names the freeze gate — never the divergent `add.py advance`.
+        add.main(["new-task", "feat-a"])
+        add.main(["phase", "contract", "feat-a"])
+        out = self._guide()
+        self.assertIn("add.py freeze", out, f"contract guide points at freeze: {out!r}")
+        self.assertNotIn("then   : add.py advance", out,
+                         "contract must NOT tell the agent to advance")
+
+    def test_guide_front_phase_teaches_collapse(self):
+        # the read-only guide teaches the SAME collapse the mutating footer does
+        add.main(["new-task", "feat-a"])                         # phase=ground
+        out = self._guide()
+        self.assertIn("add.py advance --to contract", out,
+                      f"ground guide teaches the collapse: {out!r}")
+
     def test_guide_done_points_at_new_task(self):
         add.main(["new-task", "feat-a"])
         add.main(["phase", "done", "feat-a"])

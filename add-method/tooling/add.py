@@ -629,6 +629,9 @@ def cmd_init(args: argparse.Namespace) -> None:
     else:
         print("next: open Claude Code, run `/add`, and say what you want to build —")
         print("      the `add` skill sizes it into a milestone and drives the build with you.")
+        # status-guide-fold: name the exact CLI ceremony command for a HEADLESS run
+        # (no skill available) so the agent never reads `new-milestone --help`.
+        print('      or headless: add.py new-milestone <slug> --title "..." --goal "..."')
     # setup hygiene (both branches): the .add/ folder IS the shared project state — commit it
     # so the team shares one source of truth; its transient working files are already gitignored.
     print("tip:  commit the .add/ folder to git so your team shares the ADD state "
@@ -2665,6 +2668,10 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print(f"          (the loop: .add/docs/{_chap})")
         else:
             print(f"\nresume  : task '{active}' is at phase '{ph}'.")
+            # status-guide-fold: name the EXACT next command inline (the ONE
+            # _next_command composer) so an agent reading plain status can proceed
+            # without a separate `guide` round-trip.
+            print(f"          next: {_next_command(ph)}")
             # engine-hint-context-ops: teach the cheap context ops at the moment of
             # use — a whole-TASK.md read every re-orient is the context-tax driver.
             print(f"          read its live section: add.py status --section {ph}"
@@ -2776,15 +2783,16 @@ def cmd_guide(args: argparse.Namespace) -> None:
         _project_autonomy(root))
     if _hint:
         print(_hint)
-    if phase == "verify":
-        print("then   : add.py gate PASS | RISK-ACCEPTED | HARD-STOP")
-    elif phase == "done":
+    # status-guide-fold: the `then:` line reuses the ONE _next_command composer,
+    # so guide teaches the SAME exact command as the mutating-verb footer (collapse
+    # at front phases, `freeze --by <name>` at contract) — never a divergent hint.
+    if phase == "done":
         if chapter != "02-the-flow.md":        # loop juncture / goal met -> the steered command
             print(f"then   : {action}")
         else:
-            print("then   : start the next feature -> add.py new-task <slug>")
+            print('then   : start the next feature -> add.py new-task <slug> --title "..."')
     else:
-        print("then   : add.py advance")
+        print(f"then   : {_next_command(phase)}")
 
 
 def _read_task_phase(root: Path, slug: str) -> str | None:
@@ -5954,8 +5962,9 @@ def _decide_next_pair(state: dict, d: dict) -> tuple[str, bool]:
     rows = d["tasks"]
     if not rows:
         # command-first (next-footer-engine): an empty milestone's next step is to
-        # decompose it — name the command, not the dead-end "none — no tasks yet".
-        return f"decompose into tasks — add.py new-task {ms}", True
+        # decompose it — name the command WITH its --title flag (status-guide-fold)
+        # so a headless agent never reads `new-task --help`.
+        return f'decompose into tasks — add.py new-task {ms} --title "..."', True
     stopped = [r for r in rows if r["gate"] == "HARD-STOP"]
     if stopped:
         return f"resolve HARD-STOP on {stopped[0]['slug']}", True
@@ -5990,6 +5999,25 @@ def _decide_next_base(state: dict, d: dict) -> str:
     return _decide_next_pair(state, d)[0]
 
 
+def _next_command(phase: str) -> str:
+    """The ONE exact next CLI command for an in-flight task at `phase` (the
+    status/guide next-step unifier task). PURE — the single composer
+    `_next_footer` (Arm A),
+    `cmd_guide`'s `then:` line, and plain `status`'s next-command all reuse, so
+    the three surfaces can never drift. Front drafting phases teach the collapsed
+    `advance --to` bundle (advance-chain-collapse); contract names the freeze gate
+    WITH its `--by` flag so a headless agent never reads `freeze --help`."""
+    if phase == "verify":
+        return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
+    if phase in ("ground", "specify", "scenarios"):
+        return "add.py advance --to contract   (or step-by-step: add.py advance --fill <draft>)"
+    if phase == "contract":
+        return "add.py freeze --by <name>"
+    if phase == "tests":
+        return "add.py advance --fill <draft>"
+    return "add.py advance"
+
+
 def _next_footer(root: Path, state: dict) -> str:
     """The single engine-sourced `next:` line a COMPLETING (exit-0) mutating verb prints
     as its last stdout (task next-footer-engine). ONE resolver, two arms — reusing the
@@ -6020,23 +6048,7 @@ def _next_footer(root: Path, state: dict) -> str:
             # engine-hint-batch-ops: drafting phases teach the batch form at the
             # moment of use (enforced-rerun census: the lean ops went unused when
             # only the guides named them — the footer is read every turn).
-            if phase == "verify":
-                command = "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
-            elif phase in ("ground", "specify", "scenarios"):
-                # advance-chain-collapse: the front drafting span teaches the
-                # COLLAPSED bundle form — one round-trip to the freeze point via
-                # the already-shipped `advance --to` — while keeping the
-                # per-section `--fill` alt discoverable (the footer is read every
-                # turn). Draft §0–§3 first, then one `advance --to contract`.
-                command = "add.py advance --to contract   (or step-by-step: add.py advance --fill <draft>)"
-            elif phase == "contract":
-                # at the collapse target the next real step is the freeze gate,
-                # not another advance.
-                command = "add.py freeze"
-            elif phase == "tests":
-                command = "add.py advance --fill <draft>"
-            else:
-                command = "add.py advance"
+            command = _next_command(phase)
             marker = _driver_marker(_driver_stop(root, state, slug, phase))
             return f"next: {command} — {why}{marker}"
         mslug = _active_milestone(state)

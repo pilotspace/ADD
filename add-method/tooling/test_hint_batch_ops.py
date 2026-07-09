@@ -64,10 +64,12 @@ class FooterTeachesBatchForm(unittest.TestCase):
                               f"{expect_phase} footer must teach the batch form:\n{out}")
             _run(self.root, "advance")
         # tests->build is guarded (red suite / expectations) — the walk cannot cheaply
-        # reach build, so the bare-branch is pinned in the composer source instead:
+        # reach build, so the tests-phase branch is pinned in the ONE _next_command
+        # composer source instead (status-guide-fold extracted it from _next_footer):
         src = ADD_PY.read_text()
-        branch = src.split('elif phase == "tests"', 1)[1]
-        self.assertIn('command = "add.py advance --fill <draft>"', branch,
+        composer = src.split("def _next_command", 1)[1].split("def _next_footer", 1)[0]
+        self.assertIn('if phase == "tests":', composer)
+        self.assertIn('return "add.py advance --fill <draft>"', composer,
                       "the tests phase keeps the per-section --fill hint")
 
 

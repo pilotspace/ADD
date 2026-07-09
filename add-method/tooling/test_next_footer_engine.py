@@ -406,6 +406,30 @@ class FooterCollapseHintTest(_Board):
                          f"a done task falls to Arm B — no collapse hint: {footer!r}")
 
 
+# ── status-guide-fold: exact-flag commands on every next-step surface ────────
+class FooterFoldTest(_Board):
+    """The empty-milestone + read-only surfaces name the EXACT command with
+    flags (M2/M3), so a headless agent never reads --help."""
+
+    def test_empty_milestone_names_flagged_new_task(self):     # M3
+        # setUp already made milestone v1 with zero tasks; new-milestone's own
+        # footer is the Arm-B empty-milestone command.
+        out, _, _ = self._run("new-milestone", "m2", "--title", "T", "--goal", "g")
+        footer = self._footer(out)
+        self.assertIn("add.py new-task", footer)
+        self.assertIn("--title", footer,
+                      f"empty-milestone next-step must name --title: {footer!r}")
+
+    def test_plain_status_carries_next_command_inline(self):   # M2
+        self._silent("new-task", "foo")
+        self._silent("advance", "foo")                          # -> specify
+        self._silent("advance", "foo")                          # -> scenarios
+        self._silent("advance", "foo")                          # -> contract
+        out, _, _ = self._run("status")                         # plain full status
+        self.assertIn("add.py freeze", out,
+                      f"plain status must name the next command inline: {out}")
+
+
 # ── the discipline: ×3 parity + pin re-aimed at this task ────────────────────
 class EnginePinTest(unittest.TestCase):
     def test_mirrors_and_pin(self):
