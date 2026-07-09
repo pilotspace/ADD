@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "first-call-ergonomics",
+  "active_task": "scope-gate-repair-path",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7829,18 +7829,54 @@
     },
     "scope-gate-repair-path": {
       "title": "Scope-gate repair path: default-scope fail-fast nudge + exact 3-step repair recipe in the scope_violation error",
-      "phase": "ground",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "risk-proportional-ceremony",
       "depends_on": [
         "first-call-ergonomics"
       ],
       "created": "2026-07-09T16:47:03+00:00",
-      "updated": "2026-07-09T16:47:03+00:00"
+      "updated": "2026-07-09T17:44:00+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T17:36:25+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ff8b40741c85b6dd489054bef2aaac2e",
+        "tests": {
+          "add-method/tooling/test_scope_repair_path.py": "1ae3f38c4c251499664b36da74008b14"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_scope_repair_path.py",
+          "add-method/tooling/test_scope_violation_heal.py",
+          "add-method/tooling/test_scope_gate_enforce.py"
+        ],
+        "snapshot_md5": "30b1a0fd72594fba4915003d1908ce4c"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T17:30:09+00:00",
+  "updated": "2026-07-09T17:44:00+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8976,7 +9012,7 @@
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
     "three-phase-flow": "terser-engine-stdout",
-    "risk-proportional-ceremony": "first-call-ergonomics"
+    "risk-proportional-ceremony": "scope-gate-repair-path"
   },
   "todos": [
     {

@@ -1157,6 +1157,19 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) 
                                        # torn sidecar (payload verbatim, no newline → md5 anchor holds)
         state["tasks"][slug]["scope"] = {"declared": declared,
                                          "snapshot_md5": _md5_text(payload)}
+        # scope-gate-repair-path M1: the crossing WARNS (never refuses) when the §5
+        # Scope line still carries the template placeholder — the default `./src/`
+        # resolves to THIS TASK's dir, so it silently arms a guaranteed
+        # scope_violation at the gate (the live-benchmark death spiral). Print-only:
+        # exit, snapshot, and state above are byte-identical either way.
+        body5 = _raw_phase_bodies(root, slug).get(5, "")
+        m5 = re.search(r"^\s*Scope \(may touch\):.*$", body5, re.M)
+        if m5 and "<fill before the §3 freeze" in m5.group(0):
+            print(f"warning: task '{slug}' §5 Scope is still the template default — "
+                  "`./src/` resolves to THIS TASK's dir (.add/tasks/"
+                  f"{slug}/src/), not your project files. Edit the §5 Scope line to "
+                  "the real paths the build may touch, then re-snapshot: "
+                  "add.py re-cross --by <name>")
     else:
         state["tasks"][slug].pop("scope", None)
         try:
@@ -5379,9 +5392,22 @@ def _heal_or_escalate(root: Path, state: dict, slug: str, *, reason: str, source
     t["updated"] = _now()
     _sync_task_marker(root, slug, "build")
     save_state(root, state)                   # the increment is durable BEFORE the exit
+    # scope-gate-repair-path M2: the advice tail branches by SOURCE. A scope
+    # violation's honest repair is usually a WRONG/DEFAULT §5 declaration, not a
+    # tampered file — the generic revert advice sent the live-benchmark agent
+    # source-diving for ~10 turns to discover `re-cross`. Message layer only:
+    # counter/exit/history above are identical for every source.
+    if source == "scope":
+        advice = ("repair: 1. edit the §5 Scope line to cover the real paths the "
+                  "build touches · 2. add.py re-cross --by <name> (re-snapshots "
+                  "scope + tripwire) · 3. add.py advance, then add.py gate PASS. "
+                  "If the touch was genuinely out of bounds, revert it instead and "
+                  "advance back to verify.")
+    else:
+        advice = ("Revert the tampered file or rebuild src honestly, then advance "
+                  "back to verify.")
     print(f"return_to_build: task '{slug}' — cheat detected ({reason}); RETURN TO BUILD for an "
-          f"HONEST redo, attempt {heal['attempts']} of {HEAL_CAP}. Revert the tampered file or "
-          "rebuild src honestly, then advance back to verify.")
+          f"HONEST redo, attempt {heal['attempts']} of {HEAL_CAP}. {advice}")
     raise SystemExit(3)                       # redo signal (distinct from _die's 1, argparse's 2)
 
 

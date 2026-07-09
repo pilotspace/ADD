@@ -2,9 +2,8 @@
 
 slug: scope-gate-repair-path · created: 2026-07-09 · stage: mvp
 milestone: risk-proportional-ceremony
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -12,40 +11,43 @@ phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> buil
 
 ## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md
 
-Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
-Context (working folder): <docs · todos · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
-Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
-Anchors the contract cites: <the symbols §3 will name>
-Issues/Risks (→ feed §1): <problems · traps · untestable risks found in the real code — task-delta; §1 builds on these>
-Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
-Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
+Touches (files · symbols · signatures): add-method/tooling/add.py:`_build_entry` (~1092, the tests→build crossing; snapshots §5 scope UNCONDITIONALLY and SILENTLY — even the template-default `./src/` which resolves to the TASK DIR's src, never the real project files) · `_heal_or_escalate` (~5351; its return_to_build print gives ONE generic advice line — "Revert the tampered file or rebuild src honestly" — right for source="scope-tamper"/"refute-read", WRONG for source="scope" whose repair is fix-§5 → re-cross → re-gate) · `_declared_scope` (~5327, resolution grammar — untouched) · scope check `_verify_scope` reason string (~5347)
+Context (working folder): mr-lever-sonnet/rep2 transcript — gate PASS failed 3×on scope_violation, agent then grepped engine source ~10 turns to discover `re-cross`; ~15 wasted turns
+Honors (patterns / conventions): tripwire/scope MECHANICS are frozen behavior (audit-hardening, verify-integrity) — this task changes MESSAGES + adds ONE pre-crossing warning, never the enforcement · warnings print to stdout, never block (cmd_check convention) · banned-slang string guard
+Seams consulted: .add/SEAMS.md#scope-token-grammar (why `./src/` default resolves task-dir-relative — the trap's root)
+Anchors the contract cites: `_build_entry` · `_heal_or_escalate` · `_verify_scope`'s scope_violation reason
+Issues/Risks (→ feed §1): (1) legit `./src/` tasks EXIST (standalone fast lane; template says "Code lives in: ./src/") — the nudge must WARN, never refuse. (2) advice text must branch by heal `source` — tamper advice stays byte-identical (test_scope_violation_heal pins it? enumerate red-first). (3) heal loop and HEAL_CAP semantics untouched.
+Related intent: milestone risk-proportional-ceremony LOOP-2 defect (a) — the scope_violation death spiral; exit criterion mean add.py calls ≤12
+Ground SHA: 5a76222 — line refs "as of" this commit
 
 ---
 
 ## 1 · SPECIFY — the rules ▸ docs/03-step-1-specify.md
 
-Feature: <name>
-Framings weighed: <chosen> (chosen) · <alternative> · <alternative>
+Feature: scope-gate repair path — a scope_violation names its own exact repair; the crossing warns when §5 Scope is still the template default
+Framings weighed: message-layer-only (chosen — enforcement untouched, smallest diff, zero floor risk) · auto-suggest scope from git-touched files (rejected: the engine can't know intent; a wrong auto-scope grants wrong cover) · make default-scope a hard refusal (rejected: legit ./src/ fast-lane tasks exist)
 Must:
 <must>
-  - <required behavior>
+  - M1 the tests→build crossing (_build_entry) prints a WARNING when the declared §5 Scope line still carries the template placeholder (`<fill before the §3 freeze`) — naming the trap (./src/ = the TASK dir, not the project) and the fix (edit the §5 line to real project paths; the collapsed `re-cross --by <name>` recipe if already crossed)
+  - M2 a scope_violation heal (source=="scope") prints the exact 3-step repair recipe: 1. edit the §5 Scope line to cover the real paths · 2. `add.py re-cross --by <name>` (re-snapshots scope + tripwire) · 3. `add.py advance` then `add.py gate PASS`
+  - M3 tamper/refute-read heal advice stays byte-identical; HEAL_CAP, exit codes (3 redo · 1 die), heal counter mechanics untouched
+  - M4 3-tree parity + ENGINE_MD5 re-pin + full suite green
 </must>
 Reject:
 <reject>
-  - <bad input / situation> -> "<error_code>"
+  - weakening/skipping the scope snapshot or the violation refusal itself -> forbidden (enforcement layer untouched)
+  - a warning that blocks a legit ./src/ crossing -> forbidden (warn = stdout line, exit unchanged)
 </reject>
 After:
 <after>
-  - <state that is true once it succeeds>
+  - an agent hitting scope_violation can repair in 3 commands from the error text alone — zero engine-source reads
+  - a task crossing with the untouched template scope line sees the trap named BEFORE building
 </after>
 Assumptions — lowest-confidence first:
 <assumptions>
-  ⚠ <the one assumption most likely to be wrong> — lowest confidence because <why>; if wrong: <cost>
-  - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
+  ⚠ the template-placeholder detection (`<fill before the §3 freeze` on the Scope line) is the right "still default" signal — lowest confidence because an agent may delete the comment but keep `./src/` deliberately; if wrong: a missed warning (cost: one benchmark rep's death spiral persists) — acceptable, the M2 recipe still catches it at the violation itself
+  - [x] existing tests pin the heal print — test_scope_violation_heal.py asserts on return_to_build text (red-first enumeration will show exactly which; updated in TESTS phase)
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -54,119 +56,144 @@ Assumptions — lowest-confidence first:
 <scenarios>
 
 ```gherkin
-Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
-  Given <starting situation>
-  When <action>
-  Then <expected result>
-  And <what must remain unchanged>   # required for every rejection
+Scenario: default-scope crossing warns   # M1
+  Given a task at tests whose §5 Scope line still carries the template placeholder
+  When it crosses tests->build (advance)
+  Then stdout contains a warning naming the ./src/-is-the-task-dir trap and the §5 fix
+  And the crossing still succeeds (exit 0, phase=build, snapshot taken as today)
+
+Scenario: real-scope crossing stays silent   # M1 guard
+  Given a task whose §5 Scope names real project paths (no placeholder)
+  When it crosses tests->build
+  Then no default-scope warning is printed
+
+Scenario: scope violation names its repair   # M2
+  Given a built task that touched files outside its declared §5 Scope
+  When the verify gate refuses with scope_violation (return_to_build)
+  Then the error text contains the 3 steps: edit §5 Scope · re-cross --by <name> · advance + gate PASS
+  And the heal attempt counter increments exactly as today (exit 3)
+
+Scenario: tamper advice unchanged   # M3
+  Given a task whose tripwire detects a tampered test file (source=scope-tamper)
+  When return_to_build fires
+  Then the advice line is byte-identical to today's ("Revert the tampered file...")
+  And HEAL_CAP escalation (heal_exhausted) is unchanged
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
 
 ```
-<METHOD> <path>   body: { <fields> }
-  200 -> { <success fields> }
-  4xx -> { error: "<code>" | "<code>" }
-Schema: <tables/fields touched, and access pattern>
+_build_entry(...)   # tests->build crossing — ADDITIVE stdout only
+  §5 Scope line contains the template placeholder "<fill before the §3 freeze"
+    -> print warning: "warning: §5 Scope is still the template default — `./src/` resolves to
+       THIS TASK's dir (.add/tasks/<slug>/src/), not your project files; edit the §5 Scope line
+       to the real paths your build may touch (or it will trip scope_violation at the gate;
+       repair then: edit §5 -> add.py re-cross --by <name>)"
+    -> crossing behavior otherwise byte-identical (exit, snapshot, state)
+  no placeholder -> zero new output
+
+_heal_or_escalate(source=="scope")   # message layer only
+  return_to_build print gains the recipe (replacing the generic revert advice FOR THIS SOURCE):
+    "repair: 1. edit the §5 Scope line to cover the real paths · 2. add.py re-cross --by <name>
+     (re-snapshots scope + tripwire) · 3. add.py advance, then add.py gate PASS"
+  source in {"scope-tamper","refute-read", ...} -> advice byte-identical to today
+  exit codes (3 / 1), HEAL_CAP, counter increments, heal history entries: unchanged
+
+Schema: no state-shape change; heal history entry dicts byte-compatible
 ```
 
-Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
-Status: DRAFT
+Glossary deltas: none
+Least-sure flag surfaced at freeze: [spec] the placeholder-string detection is the weakest part — an agent that deletes the template comment but keeps a wrong `./src/` gets no crossing warning; accepted because the M2 recipe still names the repair AT the violation, which is the death-spiral killer. Cost if wrong: one warning missed, never a wrong refusal.
+Status: FROZEN @ v1 — approved by Tin Dang
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: every §2 scenario = 1 test; both new message branches covered
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_default_scope_crossing_warns: task with template §5 line / advance tests->build / assert warning text + exit 0 + phase build + snapshot exists · covers: M1
+  - test_real_scope_crossing_silent: task with real §5 paths / cross / assert no "template default" text · covers: M1 guard
+  - test_scope_violation_names_repair: declared scope, touch outside, gate / assert exit 3 + "re-cross --by" + "edit the §5 Scope" + attempts==1 · covers: M2
+  - test_tamper_advice_unchanged: tamper a tripwired test file, gate / assert exit 3 + "Revert the tampered file" + no "re-cross --by" recipe line · covers: M3
+  - (existing) test_scope_violation_heal.py / test_scope_gate_enforce.py pinned strings — red-first enumeration; update only asserts invalidated by the frozen message change
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
+Tests live in: `add-method/tooling/test_scope_repair_path.py` (new, sibling convention) · MUST run red (missing implementation) before Build.
 
 ---
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
-Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>
-Data strategy: <the shapes and access patterns the work realizes — data structures, schema use, information architecture for prose/docs — must agree with the §3 Schema line>
-Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor it extends>
-Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, readability — or "correctness-first, no budget"; never blank; ⚠-mark the facet you trust least; risk: high -> consult add-advisor; facets draft at tests->build; advisory, never a gate>
+Scope (may touch): `add-method/tooling/add.py` `.add/tooling/add.py` `add-method/src/add_method/_bundled/tooling/add.py` `add-method/tooling/engine_pin.py` `.add/tooling/engine_pin.py` `add-method/src/add_method/_bundled/tooling/engine_pin.py` `add-method/tooling/test_scope_repair_path.py` `add-method/tooling/test_scope_violation_heal.py` `add-method/tooling/test_scope_gate_enforce.py`
+Strategy (ordered batches): 1. red suite (new file + enumerate pinned-string breakage in the 2 existing scope suites). 2. `_build_entry`: placeholder check on the §5 Scope line -> warning print (after the snapshot block, before the completing return). 3. `_heal_or_escalate`: branch the advice tail by `source` ("scope" -> recipe; else today's text verbatim). 4. twins sync + re-pin + full suite to file.
+Approach (domain strategy): message-layer repair — the enforcement stays byte-identical; only WHAT THE ERROR TEACHES changes. Mirrors first-call-ergonomics: the engine hands the exact next command at the moment of failure.
+Data strategy: none — no state shape touched; heal entries byte-compatible.
+Pattern: extends the exact-command surface (status-guide-fold glossary) to the failure path.
+Optimization stance: token-cost (turn-count) — kill the ~15-turn death spiral; budget = LOOP-2 criterion. ⚠ least-trusted facet: placeholder detection breadth (flagged at freeze). correctness-first otherwise.
 
-Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
-Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+Persona (required): methodology-engine-dev
+Spawn isolation (default): none — INLINE build by the orchestrator (user speed directive 2026-07-10; single-file message-layer diff)
+Known-problem fixes: banned-slang string guard · `| tail` exit masking · prepare_bundle deletes bundled engine_pin (git-restore + re-pin) · __pycache__ parity flake · SEAMS line-pin drift (re-pin after) · pinned-string churn in scope suites (red-first enumeration)
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
+Code lives in: `add-method/tooling/add.py` (canonical; twins synced at build end)
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass   (full suite Ran 3350 — OK; new suite 5/5; scope suites green post-sync)
+- [x] coverage did not decrease   (5 new tests; zero removed/weakened; both message branches covered)
+- [x] no test or contract was altered during build   (suite written red-first in TESTS; §3 untouched post-freeze; zero existing-test edits needed — the old advice string was not pinned)
+- [x] the green was EARNED, not gamed — refute-read below
+- [x] concurrency / timing safe   (advisor lens 2)
+- [x] no exposed secrets / injection / new deps   (advisor lens 1 — print-only)
+- [x] layering follows CONVENTIONS.md   (advisor lens 3)
+- [ ] a person reviewed and approved the change   (human backstop — spot-audit welcome; auto-gate below)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a live smoke: template-scope crossing printed `warning: task 't1' §5 Scope is still the template default — ./src/ resolves to THIS TASK's dir...re-snapshot: add.py re-cross --by <name>`; forced violation printed `repair: 1. edit the §5 Scope line...2. add.py re-cross --by <name>...3. add.py advance, then add.py gate PASS` exit=3 attempt 1 of 3 (smoke-sgrp2, 2026-07-10); tamper advice byte-pinned by test_tamper_advice_unchanged
+- [x] 3 trees byte-identical + ENGINE_MD5 re-pinned — md5 `14787483…` ×3
+- [x] full suite Ran 3350 in 255.9s — OK (/tmp/sgrp-fullsuite.txt)
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — no new symbol; two in-place message branches (the `_build_entry` warning block · `_heal_or_escalate` advice branch), both exercised by the new suite
+- [x] DEAD-CODE (code) — none introduced; both branches reachable and tested (warn/silent · scope/tamper)
+- [x] SEMANTIC (prose / non-code) — new stdout strings read in full: no banned slang; the recipe's 3 commands verified against real CLI signatures (re-cross --by exists, gate PASS exists)
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves — `_build_entry` (~1092, warning at ~1160) · `_heal_or_escalate` (advice branch ~5395) · `_verify_scope` reason untouched — grep-confirmed post-build
+- [x] anchors moved: `_declared_scope` 5206→5219 → SEAMS.md re-pinned x14 (this task's own warning block above it)
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self (orchestrator; built inline per user speed directive) · adversarially checked: the M1 guard tests prove the warning does NOT fire on real/undeclared scope (no over-warn); M2 test asserts the heal counter still increments and exit stays 3 (message-only, no enforcement drift); M3 test asserts the scope recipe never leaks into tamper advice AND today's tamper text survives byte-for-byte; live smoke reproduced the exact benchmark death-spiral sequence and the recipe now names all 3 repair commands
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self (orchestrator)
+1. Security: CLEAR — print-only branches; no new input parsing, writes, or subprocess; enforcement (snapshot, HEAL_CAP, exit codes) byte-identical and test-pinned
+2. Concurrency: CLEAR — no new state access; the warning reads the already-loaded §5 body
+3. Architecture: CLEAR — message layer extends the exact-command surface convention; no new symbol, no parallel emitter
+Verdict: PASS
+Residue: none
+Binding: advisory — mechanical (stdout messages only)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — live-smoke stdout + suite lines rendered to the user before recording
+Outcome: PASS
+Reviewed by: auto-gate (autonomy: auto — inline build by orchestrator, refute-read EARNED, advisor 3-lens CLEAR/PASS, residue none, sensitivity mechanical; human backstop box open) · date: 2026-07-10
 
 ---
 
@@ -175,11 +202,18 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose message-layer-only; rejected auto-suggest scope from git-touched files (rejected: the engine can't know intent; a wrong auto-scope grants wrong cover) · make default-scope a hard refusal (rejected: legit ./src/ fast-lane tasks exist)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — approach: message-layer repair — the enforcement stays byte-identical; only WHAT THE ERROR TEACHES changes. Mirrors first-call-ergonomics: the engine hands the exact next command at the moment of failure.
+- [AI] build — data strategy: none — no state shape touched; heal entries byte-compatible.
+- [AI] build — pattern: extends the exact-command surface (status-guide-fold glossary) to the failure path.
+- [AI] build — optimization stance: token-cost (turn-count) — kill the ~15-turn death spiral; budget = LOOP-2 criterion. ⚠ least-trusted facet: placeholder detection breadth (flagged at freeze). correctness-first otherwise.
+- [AI] build — strategy used: as planned
+- [AI] verify — gate PASS (reviewed by auto-gate (autonomy: auto — inline build by orchestrator, refute-read EARNED, advisor 3-lens CLEAR/PASS, residue none, sensitivity mechanical; human backstop box open))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
