@@ -52,7 +52,10 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "each task with `add.py new-task <slug> --oneshot`, declare `skips: scenarios, "
             "observe` with a one-line rationale, and skip ONLY that optional ceremony — the "
             "contract is still FROZEN and the red suite still precedes the build (never skip "
-            "contract, tests, build, or verify).\n\n"
+            "contract, tests, build, or verify). Finish the run once the app meets the "
+            "requirements and the verify gate is recorded — do NOT run milestone-done, fold, "
+            "or archive-milestone: that milestone-ledger close-out is project bookkeeping, not "
+            "part of delivering this feature, and is out of scope for the benchmark.\n\n"
             + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim

@@ -60,6 +60,22 @@ class TestAddLoopWrapper:
         # floor still stated in the same wrapper (never skip contract/tests)
         assert "frozen" in low and "red" in low
 
+    def test_add_loop_stops_at_gate(self):
+        """harness-fair-meter: the benchmark ADD arm must meter FEATURE-DELIVERY
+        cost only — the wrapper tells the agent to finish at the recorded verify
+        gate and NOT run the milestone-ledger close-out (milestone-done/fold/
+        archive), which spec-kit never does (closes the ~29% metering asymmetry)."""
+        out = _wrap_prompt("Build the thing.", "add-loop")
+        low = out.lower()
+        # names the ledger close-out as NOT-to-run
+        assert "milestone-done" in low
+        assert "fold" in low and "archive" in low
+        # finish boundary is the recorded verify gate
+        assert "verify gate" in low
+        # existing floor still stated (unchanged)
+        assert "add.py status" in low and "frozen" in low and "red" in low
+        assert out.endswith("Build the thing.")
+
     def test_unknown_wrapper_still_verbatim(self):
         assert _wrap_prompt("x", "no-such-wrapper") == "x"
 

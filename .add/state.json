@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fast-lane-skips",
+  "active_task": "harness-fair-meter",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7574,10 +7574,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "harness-fair-meter": {
+      "title": "Benchmark ADD arm stops at the delivered+verified gate (drop the milestone-ledger tail from measured cost)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "three-phase-flow",
+      "depends_on": [],
+      "created": "2026-07-09T08:11:57+00:00",
+      "updated": "2026-07-09T08:21:14+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-09T08:18:45+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6dfcf0220c6f650ff61845b5b673c8f0",
+        "tests": {
+          "benchmark/tests/test_adherence_census.py": "0762a2c8ab78e2e9996dd49274ba8a0e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/runner/core.py",
+          "benchmark/tests/test_adherence_census.py"
+        ],
+        "snapshot_md5": "1b9291948619ff947ea54fd80fca867a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T06:26:17+00:00",
+  "updated": "2026-07-09T08:21:14+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8707,7 +8746,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "fast-lane-skips"
+    "three-phase-flow": "harness-fair-meter"
   },
   "todos": [
     {
