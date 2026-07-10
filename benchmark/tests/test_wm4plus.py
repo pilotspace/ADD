@@ -52,8 +52,9 @@ class TestHarnessExtended:
     def test_score_generalizes_priors(self):
         src = (BENCH / "score.py").read_text()
         assert "if wm >= 3:" in src, "priors/slope must generalize to wm>=3"
-        # regression stays the wm3 bait:
-        assert "wm == 3" in src
+        # v2-meter-fixes M2: regression generalized from the wm3 bait to
+        # re-running ALL earlier WMs' oracle suites at every WM
+        assert "compute_regression_rate_v2" in src
 
 
 class TestSlopeOverFullTrajectory:

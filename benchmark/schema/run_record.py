@@ -22,6 +22,12 @@ REQUIRED_METRICS = frozenset(
     }
 )
 
+# Schema v2 (v2-meter-fixes TASK.md §3 CONTRACT @ v1): ADDITIVE-OPTIONAL keys —
+# a metrics dict may carry any SUBSET of these on top of the required six, so
+# every archived v1 record still validates byte-unchanged. Unknown keys stay
+# rejected: additive is not open-ended.
+OPTIONAL_METRICS = frozenset({"oracle_pass_rate", "tests_weakened"})
+
 REQUIRED_ARTIFACTS = frozenset({"workspace", "transcript", "oracle_report"})
 
 VALID_STATUSES = frozenset({"done", "timeout", "failed"})
@@ -81,11 +87,12 @@ def validate(d: dict[str, Any]) -> RunRecord:
     if not isinstance(metrics, dict):
         raise BenchError("invalid_run_record: metrics must be a mapping")
     metric_keys = set(metrics.keys())
-    if metric_keys != set(REQUIRED_METRICS):
-        extra = metric_keys - REQUIRED_METRICS
-        missing = REQUIRED_METRICS - metric_keys
+    extra = metric_keys - REQUIRED_METRICS - OPTIONAL_METRICS
+    missing = REQUIRED_METRICS - metric_keys
+    if extra or missing:
         raise BenchError(
-            f"invalid_run_record: metrics keys must be exactly {sorted(REQUIRED_METRICS)} "
+            f"invalid_run_record: metrics keys must be {sorted(REQUIRED_METRICS)} "
+            f"plus an optional subset of {sorted(OPTIONAL_METRICS)} "
             f"(extra={sorted(extra)}, missing={sorted(missing)})"
         )
 

@@ -328,9 +328,12 @@ def test_regression_rate_computed_at_wm3(tmp_path):
     score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    # bench-regression-split: `-m regression` now selects only the 3 shape-
-    # independent must-survive tests; the fixture app honors all three.
-    assert written["metrics"]["regression_rate"] == pytest.approx(0.0)
+    # v2-meter-fixes M2/M7: regression = re-run of ALL earlier WMs' oracle
+    # suites (wm1's 5 + wm2's 5 probes); the fixture app honors 8 of the 10
+    # (it predates the wm2 owner-visibility shape on 2 probes) -> 2/10.
+    # The record self-describes the semantics that produced the number.
+    assert written["metrics"]["regression_rate"] == pytest.approx(0.2)
+    assert written["artifacts"]["regression_source"] == "v2-earlier-oracles"
 
 
 def test_regression_rate_counts_must_survive_failures(tmp_path):
@@ -351,7 +354,10 @@ def test_regression_rate_counts_must_survive_failures(tmp_path):
     score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    assert written["metrics"]["regression_rate"] == pytest.approx(1 / 3)
+    # v2 semantics: the auth break fails 3 of the 10 pooled wm1+wm2 probes
+    # (the wm3 bait's 1/3 under v1) — a WORSE app now scores WORSE on the
+    # pooled denominator instead of only on the bait subset.
+    assert written["metrics"]["regression_rate"] == pytest.approx(0.3)
 
 
 # --------------------------------------------------------------------------
@@ -429,7 +435,9 @@ def test_scored_record_still_validates(tmp_path):
     score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
 
     reloaded = validate(json.loads(record_path.read_text()))
-    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS)
+    # v2-meter-fixes M1/M6: the deterministic fidelity of record is always
+    # written; tests_weakened stays absent here (no snapshots in this fixture).
+    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS) | {"oracle_pass_rate"}
 
 
 # --------------------------------------------------------------------------

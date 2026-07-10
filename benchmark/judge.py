@@ -20,8 +20,11 @@ JUDGE_TIMEOUT_S = 120.0
 
 
 def default_judge_cmd(rubric_prompt: str) -> list[str]:
-    """The real `claude -p <rubric>` rubric-scoring invocation."""
-    return ["claude", "-p", rubric_prompt]
+    """The real `claude -p <rubric>` rubric-scoring invocation — model PINNED
+    (v2-meter-fixes M5, closes todo #28-judge): an unpinned judge made v1
+    fidelity numbers noise across model generations. The judge is a SECONDARY
+    annotator in v2; oracle_pass_rate is the fidelity of record."""
+    return ["claude", "-p", rubric_prompt, "--model", "claude-sonnet-5"]
 
 
 def build_judge_argv(rubric_prompt: str, judge_cmd: Sequence[str] | None) -> list[str]:

@@ -18,7 +18,7 @@ import subprocess
 import sys
 from typing import Sequence
 
-from benchmark import judge
+from benchmark import judge, tamper
 from benchmark.arms.loader import ARM_NAMES
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord, validate
@@ -78,6 +78,71 @@ def _pytest_argv() -> list[str]:
     if importlib.util.find_spec("pytest") is not None:
         return [sys.executable, "-m", "pytest"]
     return ["uv", "run", "--no-project", "--with", "pytest", "python", "-m", "pytest"]
+
+
+def _run_oracle_suites(workspace: pathlib.Path, oracle_paths: list[pathlib.Path], error_code: str) -> tuple[int, int]:
+    """Run pytest over `oracle_paths` against `workspace` (BENCH_WORKSPACE);
+    return (failed+errored, total). Raises BenchError("<error_code>: ...") on
+    a collection/execution error (exit outside {0,1}) or zero collected —
+    never conflated with a normal test failure, which is signal, not error."""
+    proc = subprocess.run(
+        [
+            *_pytest_argv(),
+            "-p",
+            "no:cacheprovider",
+            "--tb=no",
+            "-q",
+            *[str(p) for p in oracle_paths],
+        ],
+        cwd=str(REPO_ROOT),
+        env={**os.environ, "BENCH_WORKSPACE": str(workspace)},
+        capture_output=True,
+        text=True,
+        timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
+    )
+    if proc.returncode not in (0, 1):
+        raise BenchError(
+            f"{error_code}: pytest exited {proc.returncode}\n"
+            f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+        )
+    summary = proc.stdout
+    passed = _extract_count(_PASS_RE, summary)
+    failed = _extract_count(_FAIL_RE, summary)
+    errored = _extract_count(_ERROR_RE, summary)
+    total = passed + failed + errored
+    if total == 0:
+        raise BenchError(
+            f"{error_code}: no oracle tests collected\n{summary}\nstderr:\n{proc.stderr}"
+        )
+    return failed + errored, total
+
+
+def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
+    """The DETERMINISTIC fidelity of record (v2-meter-fixes M1): run the WM's
+    OWN oracle probe suite (workload/wm{wm}/oracle/) against the workspace and
+    return passed/total in [0.0, 1.0]. No LLM in the path — identical inputs
+    yield the identical value. An unbootable workspace fails every probe as an
+    ordinary connection error -> 0.0, never a harness crash.
+    Raises BenchError("oracle_run_failed: ...") on exit outside {0,1} or zero
+    collected — a 0/0 is an error, never a silent score."""
+    oracle_dir = REPO_ROOT / "benchmark" / "workload" / f"wm{wm}" / "oracle"
+    bad, total = _run_oracle_suites(workspace, [oracle_dir], "oracle_run_failed")
+    return (total - bad) / total
+
+
+def compute_regression_rate_v2(workspace: pathlib.Path, wm: int) -> float:
+    """v2 regression semantics (v2-meter-fixes M2): re-run ALL earlier WMs'
+    oracle suites (wm1..wm-1) against the CURRENT workspace; return
+    (failed+errored)/total. wm==1 -> 0.0 by definition, no pytest spawn.
+    Raises BenchError("regression_run_failed: ...") — same policy as v1."""
+    if wm == 1:
+        return 0.0
+    earlier = [
+        REPO_ROOT / "benchmark" / "workload" / f"wm{prior}" / "oracle"
+        for prior in range(1, wm)
+    ]
+    bad, total = _run_oracle_suites(workspace, earlier, "regression_run_failed")
+    return bad / total
 
 
 def compute_regression_rate(workspace: pathlib.Path) -> float:
@@ -244,21 +309,37 @@ def score_record(
     )
 
     if wm >= 3:
-        # M4/M6: context_rot_slope over the FULL trajectory at every WM>=3;
-        # regression_rate is real ONLY at WM3 (its refactor bait) — 0.0 by
-        # definition elsewhere, same rule as WM1/WM2.
-        regression_rate = compute_regression_rate(workspace) if wm == 3 else 0.0
+        # context_rot_slope over the FULL spec_fidelity trajectory at every
+        # WM>=3 (v1 semantics, judge-fed, kept as a secondary trend signal).
         context_rot_slope = compute_context_rot_slope([*prior_fidelities, spec_fidelity])
         artifacts.update(_fidelity_artifacts(prior_fidelities, spec_fidelity))
     else:
-        # M5/M7: 0.0 BY DEFINITION before WM3 — structurally N/A, not a failure;
-        # an unconditional early-return branch, never routed through a Reject raise.
-        regression_rate = 0.0
         context_rot_slope = 0.0
+
+    # v2 regression semantics at EVERY WM (v2-meter-fixes M2/M7): re-run all
+    # earlier WMs' oracle suites; wm==1 -> 0.0 by definition. The record
+    # self-describes which semantics produced the number (regression_source).
+    regression_rate = compute_regression_rate_v2(workspace, wm)
+    artifacts["regression_source"] = "v2-earlier-oracles"
 
     metrics["spec_fidelity"] = spec_fidelity
     metrics["regression_rate"] = regression_rate
     metrics["context_rot_slope"] = context_rot_slope
+
+    # v2 deterministic fidelity of record (M1) — always computed; the judge
+    # float above stays as a SECONDARY, v1-comparable annotator.
+    metrics["oracle_pass_rate"] = compute_oracle_pass_rate(workspace, wm)
+
+    # v2 mechanical tamper count (M4/M7) — only when the snapshot pair for
+    # this WM exists (run_pilot writes them; a hand-scored record without
+    # snapshots simply omits the OPTIONAL key).
+    arm_root = root / arm_name
+    snap_current = arm_root / "snapshots" / f"wm{wm}"
+    snap_prior = arm_root / "snapshots" / f"wm{wm - 1}"
+    if wm == 1 and snap_current.is_dir():
+        metrics["tests_weakened"] = 0.0  # by definition at the first WM
+    elif wm >= 2 and snap_current.is_dir() and snap_prior.is_dir():
+        metrics["tests_weakened"] = float(tamper.compute_tests_weakened(arm_root, wm))
 
     updated = validate(
         {

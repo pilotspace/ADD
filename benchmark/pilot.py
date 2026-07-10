@@ -22,6 +22,7 @@ from benchmark.runner.core import execute_wm
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, find_resume_point, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord, validate
 from benchmark.score import score_record
+from benchmark.tamper import snapshot_tests
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ARMS_DIR = pathlib.Path(__file__).resolve().parent / "arms"
@@ -152,6 +153,10 @@ def run_pilot(
             records.append(record)
             if record.status != "done":
                 break  # halt this arm's remaining WMs (M8); continue to next arm
+            # v2-meter-fixes M8: snapshot the workspace's test files BEFORE
+            # scoring, so score_record can compute tests_weakened at wm>=2
+            # with no manual step. Failed/timeout WMs never reach here.
+            snapshot_tests(pathlib.Path(record.artifacts["workspace"]), root / arm_name, wm)
             scored = score_record(arm_name, wm, judge_cmd=judge_cmd, runs_root=root)
             records[-1] = scored
 
