@@ -34,12 +34,15 @@ Must:
   - M3 the WV1 campaign runs `run-all --arms add add-main spec-kit vanilla --wms 1,2,3 --reps 3` on the PINNED meter (claude-sonnet-5 / effort medium, pin `4d0c52e`) — ONLY after an explicit human spend go (milestone shared decision); partial reps (arm-halt on a failed WM) are recorded as-is, never re-rolled silently   <!-- @v2 change request 2026-07-10 (human directive): + add-main control arm -->
   - M5 (@v2) a new `add-main` CONTROL arm — ADD installed from the MAIN branch via a pinned git worktree — same fairness floor (same_model · 200k tokens · 60 turns), pin = the main SHA; controls this branch's engine changes against the released flow
   - M4 results land as a ledger section in `benchmark/results/` — per-arm × per-WM table: cost · turns · oracle_pass_rate · regression_rate · tests_weakened, with the honest-outcome clause applied (any floor spec-kit/vanilla holds is stated) and every partial/failed rep disclosed
+  - M6 (@v3) wm2 PROMPT.md PINS the exact token set the oracle asserts (`test-token-alice` → alice · `test-token-bob` → bob) — live rep0 proof: a spec-compliant app choosing `token-alice` scored pass_rate 0.2 on a meter artifact, the v1-judge defect class reborn; the wm1/wm3 substring anchors (test_wm123_untouched) stay intact
+  - M7 (@v3) regression measures MUST-SURVIVE INVARIANTS, not wholesale earlier suites: each earlier WM's oracle gains a `survivors.py` of auth-carrying, shape-tolerant probes (always send the pinned token — wm1 apps ignore it, wm2+ apps require it); `compute_regression_rate_v2` re-runs ONLY survivors for wm<n — live rep0 proof: wholesale re-runs scored a CORRECT auth implementation regression=1.0 (inverted incentive); supersedes v2-meter-fixes M2 semantics (spec delta recorded)
 </must>
 Reject:
 <reject>
   - aggregate_reps sees a metric present in ZERO records of a group -> that metric reported as {"n_missing": n, no distribution} — never a fabricated 0.0 mean
   - a campaign run on an unpinned/other-model meter -> VOID, excluded from the ledger (milestone shared decision — enforced editorially, disclosed in the ledger)
   - a rep re-rolled because its result "looked wrong" -> forbidden; every launched rep is reported (partial included)
+  - (@v3) scores from a KNOWN-DEFECTIVE meter presented as results -> forbidden; rep0's wm2+ pass_rate/regression are VOID-with-cause in the ledger (defect named, raw records kept) — a meter-defect relaunch is NOT a re-roll
 </reject>
 After:
 <after>
@@ -128,15 +131,31 @@ ledger (M4): a "WV1 longitudinal" section in benchmark/results/ (same file or si
   2026-07-sonnet-campaign.md): per-arm x per-WM table of cost · turns · oracle_pass_rate ·
   regression_rate · tests_weakened + findings applying the honest-outcome clause
 
+meter-defect fixes (M6+M7 @v3 — live rep0 findings 2026-07-10):
+  benchmark/workload/wm2/PROMPT.md: pins the EXACT token set the oracle asserts —
+    "Valid tokens (exactly these): test-token-alice -> alice · test-token-bob -> bob"
+    (defect 1: oracle-convention coupling; a compliant app choosing other token
+    strings scored pass_rate 0.2)
+  benchmark/workload/wm{1,2}/oracle/survivors.py (NEW): must-survive INVARIANT probes —
+    every probe sends "Authorization: Bearer test-token-alice" (wm1 apps ignore it,
+    wm2+ apps require it) and asserts shape-tolerant invariants (id roundtrip, status
+    codes, caller-scoped listing) that hold at EVERY later WM
+  benchmark/score.py compute_regression_rate_v2: re-runs workload/wm{k}/oracle/survivors.py
+    (k = 1..wm-1) instead of the whole earlier suites; wm==1 -> 0.0 unchanged; missing
+    survivors file for an earlier wm -> BenchError("regression_run_failed: ...")
+    (defect 2: wholesale re-runs scored correct spec evolution as regression=1.0)
+  rep0 disposition: add wm1 scores VALID; add wm2/wm3 pass_rate+regression VOID-with-cause
+    (raw records + transcripts kept); full 4-arm rep0 relaunch on the fixed meter
+
 Schema: no record-schema change (task1's v2 keys reused); aggregate output dict gains the
         3 labels + n_missing; ledger is prose/markdown.
 ```
 
 Glossary deltas: `n_missing: per-metric count of records in a rep group not carrying an optional v2 key — disclosure, never imputation`
 Least-sure flag surfaced at freeze: [spec] the spend estimate (now 4 arms, ~$80–120) is extrapolated from wm1-only pricing — wm2/wm3 grown-workspace runs may cost materially more; mitigated by the staged rep0 → extrapolate → human-continue gate inside M3. (@v2 note: the add-main worktree pins main at ONE SHA — a moving main is never re-measured silently.)
-Status: FROZEN @ v2 — approved by Tin Dang
-<!-- @v2 change request 2026-07-10 — human directive: + add-main control arm; v1 was approved by Tin Dang -->
-Reported: yes — @v1 freeze report + the @v2 change rendered in-chat before re-freeze
+Status: FROZEN @ v3 — approved by Tin Dang
+<!-- @v3 change request 2026-07-10 — meter defects found live in rep0 (token coupling + regression inversion); human picked "finish add wm3, stop, fix both defects, relaunch". @v2 (+add-main) and @v1 were approved by Tin Dang -->
+Reported: yes — the two defects + fix shape rendered in-chat (diagnosis with live probe evidence) before re-freeze
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
@@ -150,6 +169,11 @@ Plan (one test per scenario, asserting behavior not internals):
   - test_aggregate_v1_output_unchanged: arrange v1-only records / act / assert the tokens/cost/fidelity sub-dicts equal today's output exactly · covers: M2
   - test_aggregate_mixed_records_n_missing: arrange 2 v2 + 1 v1 record in one group / act / assert v2 metric aggregates over 2 with n_missing 1; a zero-carrier group yields {"n_missing": 3} only, no mean key · covers: M1, R1
   - (@v2) test_arms.py amended: all ARM_NAMES recipes validate incl. add-main, fairness parity across the FULL set, add-main pin non-empty · covers: M5
+  - (@v3) test_regression_v2_runs_survivors_only: arrange spy on the pytest-run seam / act compute_regression_rate_v2(ws, 3) / assert argv targets wm1+wm2 survivors.py, NOT the full oracle dirs · covers: M7
+  - (@v3) test_regression_v2_missing_survivors_raises: arrange an earlier wm with no survivors.py (fake workload root not possible — spy raises on real path check instead: assert BenchError when a survivors path is absent via monkeypatched existence) · covers: M7
+  - (@v3) test_wm2_prompt_pins_tokens: assert wm2 PROMPT.md names test-token-alice AND test-token-bob verbatim · covers: M6
+  - (@v3) test_survivors_send_pinned_token: read both survivors.py sources, assert every http_call carries the Authorization header helper · covers: M7
+  - (@v3) live guard: wm1 survivors run GREEN against the rep0 add wm2 workspace (the workspace that scored the false regression=1.0) — the defect's own reproduction becomes the fix's proof · covers: M7
 </test_plan>
 
 Tests live in: `benchmark/tests/` · MUST run red (missing implementation) before Build. (M3/M4 are campaign execution + prose — verified at the gate by the records + ledger themselves, not unit tests.)

@@ -328,11 +328,11 @@ def test_regression_rate_computed_at_wm3(tmp_path):
     score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    # v2-meter-fixes M2/M7: regression = re-run of ALL earlier WMs' oracle
-    # suites (wm1's 5 + wm2's 5 probes); the fixture app honors 8 of the 10
-    # (it predates the wm2 owner-visibility shape on 2 probes) -> 2/10.
-    # The record self-describes the semantics that produced the number.
-    assert written["metrics"]["regression_rate"] == pytest.approx(0.2)
+    # v2-wv1-longitudinal @v3 (M7): regression = the 7 must-survive SURVIVORS
+    # (wm1's 3 + wm2's 4), auth-carrying + shape-tolerant. The fixture app is
+    # correct spec evolution (pinned-token auth) -> 0.0. Wholesale earlier-suite
+    # re-runs were retired after scoring a correct auth app regression=1.0 live.
+    assert written["metrics"]["regression_rate"] == pytest.approx(0.0)
     assert written["artifacts"]["regression_source"] == "v2-earlier-oracles"
 
 
@@ -354,10 +354,10 @@ def test_regression_rate_counts_must_survive_failures(tmp_path):
     score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    # v2 semantics: the auth break fails 3 of the 10 pooled wm1+wm2 probes
-    # (the wm3 bait's 1/3 under v1) — a WORSE app now scores WORSE on the
-    # pooled denominator instead of only on the bait subset.
-    assert written["metrics"]["regression_rate"] == pytest.approx(0.3)
+    # @v3 survivor semantics: the auth break (unauthenticated GET now 200s)
+    # fails exactly wm2's must-survive auth-floor probe -> 1 of the 7
+    # survivors. A REAL regression scores; correct evolution doesn't.
+    assert written["metrics"]["regression_rate"] == pytest.approx(1 / 7)
 
 
 # --------------------------------------------------------------------------

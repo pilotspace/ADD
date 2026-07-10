@@ -131,16 +131,32 @@ def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
 
 
 def compute_regression_rate_v2(workspace: pathlib.Path, wm: int) -> float:
-    """v2 regression semantics (v2-meter-fixes M2): re-run ALL earlier WMs'
-    oracle suites (wm1..wm-1) against the CURRENT workspace; return
-    (failed+errored)/total. wm==1 -> 0.0 by definition, no pytest spawn.
-    Raises BenchError("regression_run_failed: ...") — same policy as v1."""
+    """v2 regression semantics (v2-wv1-longitudinal §3 @ v3, M7 — supersedes
+    the wholesale-suite form): re-run each earlier WM's SURVIVORS — the
+    auth-carrying, shape-tolerant must-survive invariants in
+    workload/wm{k}/oracle/survivors.py — against the CURRENT workspace;
+    return (failed+errored)/total. wm==1 -> 0.0 by definition, no spawn.
+
+    Why not the whole earlier suites: later WMs legitimately supersede
+    earlier observable behavior (WM2's mandatory auth 401s WM1's
+    unauthenticated probes; WM3's shape break 400s duration_minutes) — the
+    live rep0 campaign scored a CORRECT auth implementation regression=1.0
+    on wholesale re-runs, inverting the incentive.
+
+    Raises BenchError("regression_run_failed: ...") on a missing survivors
+    file (checked BEFORE any spawn), exit outside {0,1}, or zero collected."""
     if wm == 1:
         return 0.0
     earlier = [
-        REPO_ROOT / "benchmark" / "workload" / f"wm{prior}" / "oracle"
+        REPO_ROOT / "benchmark" / "workload" / f"wm{prior}" / "oracle" / "survivors.py"
         for prior in range(1, wm)
     ]
+    missing = [str(p) for p in earlier if not p.exists()]
+    if missing:
+        raise BenchError(
+            "regression_run_failed: missing survivors file(s) "
+            f"{missing} — every WM below wm{wm} needs must-survive probes before it can be scored"
+        )
     bad, total = _run_oracle_suites(workspace, earlier, "regression_run_failed")
     return bad / total
 

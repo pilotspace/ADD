@@ -7988,10 +7988,10 @@
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T02:59:51+00:00",
-      "updated": "2026-07-10T03:14:25+00:00",
+      "updated": "2026-07-10T03:55:09+00:00",
       "freeze": {
-        "version": "v2",
-        "frozen_at": "2026-07-10T03:13:58+00:00",
+        "version": "v3",
+        "frozen_at": "2026-07-10T03:50:07+00:00",
         "approved_by": "Tin Dang",
         "actor": {
           "name": "Tin Dang",
@@ -8001,7 +8001,7 @@
       },
       "flag_verified": true,
       "tripwire": {
-        "contract_md5": "d774495c51e8791be25b00d08f585b0b",
+        "contract_md5": "a0507bfac63fe460c800bc6b855ac44a",
         "tests": {
           "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
           "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
@@ -8023,23 +8023,24 @@
           "benchmark/tests/test_runner_core.py": "b7a80148259ee717f1bab95c60045458",
           "benchmark/tests/test_runner_records.py": "a667991dc6e3db572d8dfb5155f5dbb9",
           "benchmark/tests/test_runner_resume.py": "f9263abf61155733253b9bc400567e2d",
-          "benchmark/tests/test_score.py": "2ffa4bbd2cc1281d731e7c7cb976b2d1",
+          "benchmark/tests/test_score.py": "a95c20c2f597fc9b8fdba067683b71ab",
           "benchmark/tests/test_v2_meter.py": "a5ca5a2d8957f090709f01ee80e23760",
           "benchmark/tests/test_wm4plus.py": "7b92aed2c7c91cf18c79e20838273ee1",
           "benchmark/tests/test_workload_prompts.py": "fa6897be01059c6b78bd59d63236d86d",
-          "benchmark/tests/test_wv1_aggregate.py": "fbd3f009b7e29bafeb96a70df4d593bd"
+          "benchmark/tests/test_wv1_aggregate.py": "fbd3f009b7e29bafeb96a70df4d593bd",
+          "benchmark/tests/test_wv1_survivors.py": "81156183e034d0e2e260091541352e8c"
         }
       },
       "scope": {
         "declared": [
           "benchmark/"
         ],
-        "snapshot_md5": "b3df6a45c6b37c24dea1a16ab1cc8a8b"
+        "snapshot_md5": "b3bea865ac9c8d64b7e411ab803e2b1e"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T03:14:25+00:00",
+  "updated": "2026-07-10T03:55:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

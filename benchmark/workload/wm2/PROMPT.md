@@ -3,8 +3,10 @@
 Extend the task/booking REST API and CLI from the previous milestone with:
 
 - Authentication: every request must include a header `Authorization: Bearer
-  <token>`. A fixed set of valid tokens maps to a `user_id`. Requests without
-  a valid token get `401`.
+  <token>`. Exactly these tokens are valid, mapping to these user ids
+  (hardcoding this fixed set is expected — it is the test credential set):
+  `test-token-alice` -> `alice` and `test-token-bob` -> `bob`. Requests
+  without a valid token get `401`.
 - Ownership: a booking now has an `owner_id` field, set from the
   authenticated caller on create. A caller may only `PATCH`/`DELETE` a
   booking they own — otherwise `403`.
