@@ -8102,12 +8102,12 @@
     },
     "v2-scoring-report": {
       "title": "Two-axis scoring report \u2014 trust vector + cost-per-trusted-feature (no agent spend)",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T09:13:31+00:00",
-      "updated": "2026-07-10T10:02:08+00:00",
+      "updated": "2026-07-10T10:15:24+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-10T10:00:52+00:00",
@@ -8129,11 +8129,16 @@
           "tmp/"
         ],
         "snapshot_md5": "47c07bde5217255c5a07dec760798923"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T10:02:08+00:00",
+  "updated": "2026-07-10T10:15:24+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

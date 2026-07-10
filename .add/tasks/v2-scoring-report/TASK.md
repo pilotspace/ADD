@@ -2,9 +2,8 @@
 
 slug: v2-scoring-report · created: 2026-07-10 · stage: mvp
 milestone: add-bench-v2
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -66,7 +65,6 @@ Assumptions — lowest-confidence first:
   - [ ] snapshot fingerprint data suffices for rename-matching (no source re-read needed) — confirmed at ground: _test_functions returns name -> multiset
   - [ ] report CLI shape: extend benchmark.report main with --trust/--family flags rather than a new entrypoint — verify report.py has a main/CLI at tests time
 </assumptions>
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -110,8 +108,6 @@ Scenario: the report is read-only over records   # M6, R5
 ```
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -139,7 +135,6 @@ Glossary deltas: `Trust vector: the per-step tuple (fidelity · regression · we
 Least-sure flag surfaced at freeze: [spec] own-suite report-time execution on archived workspaces may not collect (third-party test deps, stale envs) — those cells render "unverified" and CANNOT earn trusted; if widespread, the rep0 trust tables go sparse and the honest fix is recording own-suite results at execute time in FUTURE campaigns (a meter change, out of this task's scope)
 Status: FROZEN @ v1 — approved by Tin Dang
 Reported: yes — banner/ARC/SHAPE + the ⚠ own-suite-execution flag rendered before the freeze question
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -152,96 +147,101 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
 Scope (may touch): `benchmark/` `tmp/`
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
-Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>
-Data strategy: <the shapes and access patterns the work realizes — data structures, schema use, information architecture for prose/docs — must agree with the §3 Schema line>
-Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor it extends>
-Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, readability — or "correctness-first, no budget"; never blank; ⚠-mark the facet you trust least; risk: high -> consult add-advisor; facets draft at tests->build; advisory, never a gate>
+Strategy (ordered batches): 1. red suite first (11 pins, test_trust_report.py) 2. trust.py (weakened_verdict → own_suite_status → trusted) 3. report.py v2 section (render_trust_report + argparse CLI) 4. wm2 survivors → disjoint 2028 windows + hv2 byte-refresh 5. prove against BOTH real rep0 archives before the gate
+Approach (domain strategy): rename-tolerant weakening = pooled-fingerprint set difference (Counter over ALL fns per side) laid OVER the raw per-fn tamper diff — the raw count stays (mechanical truth), the adjusted count answers "did any assertion actually vanish"; trust is a floor vector, never a bare bool
+Data strategy: 8-key trust vector dict per (arm, step); fingerprints reuse tamper.py's `_test_functions` census verbatim (no second census); records are READ-ONLY inputs — the report never writes into an archive
+Pattern: extends the existing benchmark.report module + tamper fingerprint census (§0 Honors) — v2 is an appended section and CLI flag, not a new entrypoint
+Optimization stance: correctness-first, no budget; ⚠ own-suite report-time execution (arm workspaces may not collect in the report host env → honest "unverified", never fake green)
 
-Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
-Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Persona (required): methodology-engine-dev
+Spawn isolation (default): inline, no spawns — sequential scoring-layer build (inline-over-heavy-spawns feedback); shared tree
+Known-problem fixes: probe-state pollution (proven 2× in WV2 rep0) → per-probe disjoint 2028 days; fake green → green requires pytest exit 0 AND " passed" AND >0 collected; heredoc `\n` evaluation corrupting report.py → escaped-newline writes then normalize
+Strategy actually used: as planned, plus one repair — the report.py heredoc write evaluated `\n` inside the payload and corrupted two join lines; repaired in place before the suite ran
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
-
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — `benchmark/tests/` 190 passed in 49.96s (full suite, post-survivors-move)
+- [x] coverage did not decrease — 11 new pins added (test_trust_report.py); zero tests removed; v1 report pins untouched
+- [x] no test or contract was altered during build — the one red pin went green via survivors.py (in-scope build target, not a test); §3 @v1 untouched since freeze
+- [x] the green was EARNED, not gamed — refute-read below; the strongest evidence is LIVE renders against both real rep0 archives producing numbers that reconcile with the record ledgers by hand
+- [x] concurrency / timing of the risky operation is safe — report is single-threaded; own-suite subprocess has a 120s timeout and `-p no:cacheprovider` (no state left in workspaces)
+- [x] no exposed secrets, injection openings, or unexpected dependencies — subprocess uses a fixed argv LIST (no shell), stdlib-only imports, archives read-only
+- [x] layering & dependencies follow CONVENTIONS.md — trust.py derives from tamper.py's census (one fingerprint definition); report.py extends the existing module/CLI
+- [x] a person reviewed and approved the change — human froze §3 @v1; gate auto-resolved under `autonomy: auto` on the evidence above
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] `python3 -m benchmark.report --trust --runs-root <both rep0 archives>` renders trust tables + two-axis headline for wm AND hv families — confirmed by running it on the real archives at the gate
-- [ ] full suite green (v1 report pins untouched); survivors window move keeps all survivors/byte-guard pins green — pytest summary
-- [ ] rep0 render shows add wm2 untrusted with the vector explaining why (pass 0.8) and the honest-outcome cost-only line — read the output
-- [ ] record.json hashes unchanged after rendering — the read-only test
+- [x] `python3 -m benchmark.report --trust --runs-root <both rep0 archives>` renders trust tables + two-axis headline for wm AND hv families — confirmed by running it on the real archives at the gate: WV1 wm renders 12 vector rows + two-axis (spec-kit $1.14 · vanilla $1.53 · add $4.65 · add-main $13.94 per trusted feature); WV2 hv renders 12 rows + two-axis
+- [x] full suite green (v1 report pins untouched); survivors window move keeps all survivors/byte-guard pins green — 190 passed (incl. test_report.py, test_wv1_survivors.py, test_wv2_family.py byte-guard)
+- [x] rep0 render shows add wm2 untrusted with the vector explaining why (pass 0.80, `trusted NO`) — read in the output. DEVIATION, disclosed: the honest-outcome cost-only line did NOT render on the real archives — the rename-tolerant ADJUSTED verdict marks add-main wm2/wm3, vanilla wm2, vanilla hv2 as weakened (fingerprints genuinely vanished during rule rewrites), so trusted counts do not tie. The tie path was proven LIVE on an all-arms-tie fixture (scratchpad render: "**Honest-outcome:** … separation is cost-only." printed). The expectation predicted the archives' shape, not the code's; the code behaves as contracted.
+- [x] record.json hashes unchanged after rendering — test_report_is_read_only_over_records green (sha256 before/after over rglob record.json)
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — weakened_verdict/own_suite_status/trusted all imported and called by report.py:129 (render_trust_report) and test_trust_report.py; render_trust_report ← main ← `__main__` (report.py:184/202); CLI exercised live on both archives
+- [x] DEAD-CODE (code) — no orphan: every new fn referenced (above); `detail` key of weakened_verdict is the hand-diff evidence surface consumed by the report's weakened cells
+- [x] SEMANTIC (prose / non-code) — both rendered reports read in full: WV1/WV2 numbers cross-checked against the rep0 ledgers (`benchmark/results/2026-07-wv*.md`) — costs, pass rates, add wm2 0.80 all reconcile
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — `_test_functions` (benchmark/tamper.py), `compute_tests_weakened`, `RunRecord.from_json`, `report.main` all import-resolve (190-test suite + live CLI runs would fail loudly otherwise)
+- [x] any anchor that moved/renamed since Ground SHA (aa19ea4) is named here, not left silent — none moved
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self · adversarially checked: (1) own-suite "green" cannot be faked — requires a REAL pytest subprocess exit 0 + " passed" + >0 collected fns; the uncollectable-import fixture correctly lands "unverified". (2) read-only pin actually re-hashes every record.json after a full render (which runs the pytest subprocesses) — not a mock. (3) honest-outcome tie line is NOT dead code — proven live on a tie fixture since the real archives don't tie. (4) known soft spot, disclosed: test_wm_survivors_use_disjoint_2028_windows is vacuous for wm1 (it books no windows by design — only wm2 binds); the wm2 half binds all four bookings. (5) the adjusted-verdict logic disagreeing with the earlier hand-diff on 4 cells was hand-re-checked: those cells DID lose fingerprints (assert lines rewritten under new rules) — the metric reports the mechanical truth and the caveat line carries the hand-diff context; not a false green, a stricter honest reading.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — fixed argv list subprocess (no shell interpolation), cwd pinned to the archive workspace, no network, no secrets read; report never writes outside stdout
+2. Concurrency: CLEAR — sequential rendering; the only subprocess is timeout-bounded (120s) and cache-provider-disabled so parallel report runs cannot corrupt a workspace
+3. Architecture: CLEAR — single fingerprint census reused from tamper.py; v2 report appended to the existing module + CLI (no parallel entrypoint); records stay read-only by contract and by pin
+Verdict: PASS
+Residue: none
+Binding: advisory — no sensitivity declared (mechanical-adjacent scoring layer)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Reported: yes — gate report (banner/ARC + evidence + the disclosed honest-outcome deviation) rendered in-session before this outcome recorded
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reviewed by: auto-resolved (autonomy: auto — complete evidence, no security finding, no residue) · date: 2026-07-10
 
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
-Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
+Watch (reuse scenarios as monitors): unverified own-suite cell rate on future campaign renders (>0 sustained → move own-suite recording to execute time) · the honest-outcome line's tie condition on future reps (it fired on neither rep0 archive — the adjusted verdict separates arms) · report wall time (own-suite subprocess ×12 records ≈ tens of seconds; budget: tolerable for a report, never for scoring)
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose new trust.py module + report v2 section; rejected rewrite report.py wholesale (rejected: v1 tables are test-pinned and still honest for v1 records) · trusted flag stored INTO records (rejected: derived verdicts must stay recomputable; records stay raw + provenance-only)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — approach: rename-tolerant weakening = pooled-fingerprint set difference (Counter over ALL fns per side) laid OVER the raw per-fn tamper diff — the raw count stays (mechanical truth), the adjusted count answers "did any assertion actually vanish"; trust is a floor vector, never a bare bool
+- [AI] build — data strategy: 8-key trust vector dict per (arm, step); fingerprints reuse tamper.py's `_test_functions` census verbatim (no second census); records are READ-ONLY inputs — the report never writes into an archive
+- [AI] build — pattern: extends the existing benchmark.report module + tamper fingerprint census (§0 Honors) — v2 is an appended section and CLI flag, not a new entrypoint
+- [AI] build — optimization stance: correctness-first, no budget; ⚠ own-suite report-time execution (arm workspaces may not collect in the report host env → honest "unverified", never fake green)
+- [AI] build — strategy used: as planned, plus one repair — the report.py heredoc write evaluated `\n` inside the payload and corrupted two join lines; repaired in place before the suite ran
+- [AI] verify — gate PASS (reviewed by auto-resolved (autonomy: auto — complete evidence, no security finding, no residue))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
+- [SPEC · open] record own-suite status at EXECUTE time into record artifacts, so the trust report reads it instead of re-running archived workspaces — report-time execution is env-fragile by design and the ⚠ assumption stays live (evidence: §1 lowest-confidence flag + own_suite_status's unverified path existing at all)
+- [SPEC · open] per-cell human-adjudication provenance for weakened verdicts — 4 rep0 cells render mechanically `weakened` (adjusted > 0) that the hand-diff adjudicated as spec-driven evolution; today the caveat line carries that context globally, a per-cell `adjudicated: evolution (by, date)` annotation would let the trusted flag honor it without weakening the mechanical default (evidence: WV1 render — add-main wm2/wm3, vanilla wm2; WV2 render — vanilla hv2)
+- [SPEC · open] wm1 has no survivor bookings so the disjoint-2028-windows pin binds only wm2 — when wm4-6 survivors are authored (standing delta), the pin's fn-level day-uniqueness must extend to them in the same change (evidence: test_wm_survivors_use_disjoint_2028_windows vacuous-for-wm1 disclosure in the §6 refute-read)
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [TDD · open] a build expectation that predicts the DATA's shape (not the code's behavior) can be wrong while the code is right — record the deviation and prove the unexercised branch live instead of editing the expectation (evidence: honest-outcome tie line absent on both real archives, proven on a tie fixture at the gate)
+- [ADD · open] a stricter mechanical metric layered over a prior human judgment must carry the judgment as context, not overwrite it — raw + adjusted + caveat rendered together kept both truths visible (evidence: 4 weakened cells vs the hand-diff, §6 refute-read item 5)
+
