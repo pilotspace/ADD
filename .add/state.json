@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "prune-benchmark-deadweight",
+  "active_task": "persona-nudge-quiet",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7433,494 +7433,6 @@
         "source": "git"
       }
     },
-    "phase-bundles": {
-      "title": "8 phases render as 3 agent-owned bundles; status/guide show active bundle; agent-call-preferred documented as default",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [],
-      "created": "2026-07-08T17:56:13+00:00",
-      "updated": "2026-07-08T19:03:19+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-08T18:18:12+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "65d67f507f1018f3a68a31ba21ed5e8b",
-        "tests": {
-          "add-method/tooling/test_phase_bundles.py": "d3cbe5c54270363e557b05e35a1f8a96"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          "add-method/skill/add/",
-          ".claude/skills/add/",
-          "add-method/src/add_method/_bundled/skill/add/",
-          ".add/SEAMS.md"
-        ],
-        "snapshot_md5": "6d30b1d0dff0cbf03309c300544c5d52"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "ai-plan-verify-gate": {
-      "title": "two-way DIRECTION gate: gate_mode=human|ai-plan-verify; AI verifies frozen direction bundle and auto-passes the contract freeze EXCEPT security/data/architecture (->human; security HARD-STOP)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [
-        "phase-bundles"
-      ],
-      "created": "2026-07-08T19:07:30+00:00",
-      "updated": "2026-07-09T04:28:27+00:00",
-      "freeze": {
-        "version": "v2",
-        "frozen_at": "2026-07-09T04:16:44+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "5f5bea8fa2dde92593f7c46ad08316f7",
-        "tests": {
-          "add-method/tooling/test_ai_plan_verify_gate.py": "3fbf928eb0ade0ca6462091a830803dc"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          "add-method/.add/tooling/templates/",
-          ".add/SEAMS.md",
-          "tmp/",
-          ".add/"
-        ],
-        "snapshot_md5": "a5d747b50f51a8e91e95cfa5f5e79208"
-      },
-      "recross": {
-        "by": "Tin Dang",
-        "at": "2026-07-09T03:58:41+00:00",
-        "from_phase": "verify"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "fast-lane-skips": {
-      "title": "oneshot/benchmark/small-medium declares an AI-chosen skip-set from {scenarios,observe} only; contract AI-auto-frozen (never skipped); every skip recorded (no silent skips)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [
-        "ai-plan-verify-gate"
-      ],
-      "created": "2026-07-09T04:29:25+00:00",
-      "updated": "2026-07-09T06:26:17+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T05:33:23+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "0f03421c56bd567b6d6f538bff65fc6d",
-        "tests": {
-          "add-method/tooling/test_fast_lane_skips.py": "bb663a1dafb3f7738a54edde71695f64"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/",
-          ".add/tooling/",
-          "add-method/src/add_method/_bundled/tooling/",
-          "add-method/.add/tooling/templates/",
-          ".add/SEAMS.md",
-          "tmp/three-phase-flow/fast-lane-skips/"
-        ],
-        "snapshot_md5": "e226fc5701aeef840610112da1f4c62d"
-      },
-      "recross": {
-        "by": "Tin Dang",
-        "at": "2026-07-09T06:12:27+00:00",
-        "from_phase": "verify"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "harness-fair-meter": {
-      "title": "Benchmark ADD arm stops at the delivered+verified gate (drop the milestone-ledger tail from measured cost)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [],
-      "created": "2026-07-09T08:11:57+00:00",
-      "updated": "2026-07-09T08:21:14+00:00",
-      "fast": true,
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T08:18:45+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "6dfcf0220c6f650ff61845b5b673c8f0",
-        "tests": {
-          "benchmark/tests/test_adherence_census.py": "0762a2c8ab78e2e9996dd49274ba8a0e"
-        }
-      },
-      "scope": {
-        "declared": [
-          "benchmark/runner/core.py",
-          "benchmark/tests/test_adherence_census.py"
-        ],
-        "snapshot_md5": "1b9291948619ff947ea54fd80fca867a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "harness-isolate-env": {
-      "title": "Benchmark claude -p runs isolated from the operator's skill/command/MCP catalog (identical minimal env per arm)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [],
-      "created": "2026-07-09T08:24:10+00:00",
-      "updated": "2026-07-09T08:29:14+00:00",
-      "fast": true,
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T08:27:06+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "850240abec5ca8c9d88a929b081ba0d0",
-        "tests": {
-          "benchmark/tests/test_runner_core.py": "39f26039fe7818ad84e8ec6a97e818e7"
-        }
-      },
-      "scope": {
-        "declared": [
-          "benchmark/runner/agent.py",
-          "benchmark/tests/test_runner_core.py"
-        ],
-        "snapshot_md5": "6cab639e21c20cdb32cd4d37a72c64d7"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "harness-multirep": {
-      "title": "Controlled multi-rep: run N same-session reps per arm\u00d7wm and aggregate mean/range (trustworthy comparison)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "three-phase-flow",
-      "depends_on": [],
-      "created": "2026-07-09T08:29:44+00:00",
-      "updated": "2026-07-09T08:37:32+00:00",
-      "fast": true,
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T08:32:01+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "edad97986937512272be5bcc6fd1c9bc",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/pilot.py",
-          "benchmark/tests/test_pilot.py"
-        ],
-        "snapshot_md5": "63493d83e557b77b5b4e0158a7753507"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "advance-chain-collapse": {
-      "title": "add.py advance auto-walks consecutive AI-owned phases in one round-trip, halting at contract-freeze and verify-gate",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "risk-proportional-ceremony",
-      "depends_on": [],
-      "created": "2026-07-09T09:04:46+00:00",
-      "updated": "2026-07-09T09:31:31+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T09:18:50+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "e7bc7e22c248df93b62b46d6be595145",
-        "tests": {
-          "add-method/tooling/test_next_footer_engine.py": "b5ce8e957519514f5cc1bc0a22499e65",
-          "add-method/tooling/test_hint_batch_ops.py": "c89a5368f24c90f6e201e21a7cdd7418"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_next_footer_engine.py",
-          "add-method/tooling/test_hint_batch_ops.py"
-        ],
-        "snapshot_md5": "31917ed9349bdc1679a8370e6734adf3"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "status-guide-fold": {
-      "title": "status folds in the guide next-action + the footer emits exact copy-pasteable commands with flags (kills the --help discovery churn)",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "risk-proportional-ceremony",
-      "depends_on": [],
-      "created": "2026-07-09T09:32:55+00:00",
-      "updated": "2026-07-09T10:48:42+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T10:23:10+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "53e261ae57cae3650bebccb17b50a663",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_next_footer_engine.py",
-          "add-method/tooling/test_hint_batch_ops.py",
-          "add-method/tooling/test_loop_aware_orient.py",
-          "add-method/tooling/test_progressive_context.py"
-        ],
-        "snapshot_md5": "8cc1adfd4be1a9a5c387245957003c43"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "first-call-ergonomics": {
-      "title": "First-call ergonomics: true post-transition footers + idempotent retries + kickoff command hand-off",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "risk-proportional-ceremony",
-      "depends_on": [],
-      "created": "2026-07-09T16:47:03+00:00",
-      "updated": "2026-07-09T17:30:09+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T16:56:47+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "57084d53449821c7f3883da264d31e9d",
-        "tests": {
-          "add-method/tooling/test_first_call_ergonomics.py": "41f471c4b51fe5e575405940c8ff8bff"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_next_footer_engine.py",
-          "add-method/tooling/test_freeze_command.py",
-          "add-method/tooling/test_setup_lock.py",
-          "add-method/tooling/test_brownfield_scan.py",
-          "add-method/tooling/test_first_call_ergonomics.py",
-          "add-method/tooling/SEMANTIC_INVENTORY.md"
-        ],
-        "snapshot_md5": "a905a051ed50716935102c2b0bfd126a"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "scope-gate-repair-path": {
-      "title": "Scope-gate repair path: default-scope fail-fast nudge + exact 3-step repair recipe in the scope_violation error",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "risk-proportional-ceremony",
-      "depends_on": [
-        "first-call-ergonomics"
-      ],
-      "created": "2026-07-09T16:47:03+00:00",
-      "updated": "2026-07-09T17:44:00+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T17:36:25+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "ff8b40741c85b6dd489054bef2aaac2e",
-        "tests": {
-          "add-method/tooling/test_scope_repair_path.py": "1ae3f38c4c251499664b36da74008b14"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_scope_repair_path.py",
-          "add-method/tooling/test_scope_violation_heal.py",
-          "add-method/tooling/test_scope_gate_enforce.py"
-        ],
-        "snapshot_md5": "30b1a0fd72594fba4915003d1908ce4c"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "skip-error-ergonomics": {
-      "title": "skip_not_allowed names the bad token, the allowed set, and the fix; pre-init error hands the exact init command",
-      "phase": "done",
-      "gate": "PASS",
-      "milestone": "risk-proportional-ceremony",
-      "depends_on": [],
-      "created": "2026-07-09T18:16:55+00:00",
-      "updated": "2026-07-09T18:35:10+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-09T18:19:12+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "tripwire": {
-        "contract_md5": "43389ca56735378d317b00a1e0674276",
-        "tests": {
-          "add-method/tooling/test_skip_error_ergonomics.py": "c9908aae30eaa43fdd37523025a39935"
-        }
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          ".add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/add_engine/io_state.py",
-          ".add/tooling/add_engine/io_state.py",
-          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py",
-          "add-method/tooling/engine_pin.py",
-          ".add/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_skip_error_ergonomics.py",
-          "add-method/tooling/test_fast_lane_skips.py"
-        ],
-        "snapshot_md5": "dac40d380041dfeb30a9433e16fa23b7"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
     "tiny-plan-small-scope": {
       "title": "new-milestone --tiny: one-approval compact plan for small scope",
       "phase": "done",
@@ -8035,7 +7547,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T17:08:22+00:00",
+  "updated": "2026-07-10T17:10:26+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8339,45 +7851,6 @@
         "source": "git"
       }
     },
-    "risk-proportional-ceremony": {
-      "title": "Risk Proportional Ceremony",
-      "goal": "cut ADD's big-milestone cost premium (1.8x dollars / 2x wall-clock vs spec-kit) toward ~1.3x by scaling ceremony to task risk \u2014 never by lowering the trust floor (frozen contract, red suite, recorded gate hold in every lane)",
-      "stage": "mvp",
-      "status": "done",
-      "created": "2026-07-08T08:28:21+00:00",
-      "updated": "2026-07-10T01:46:46+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-07-09T16:47:02+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "done_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
-    "three-phase-flow": {
-      "title": "Three Phase Flow",
-      "goal": "",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-07-08T17:51:23+00:00",
-      "updated": "2026-07-08T17:56:12+00:00",
-      "confirmed": true,
-      "confirmed_at": "2026-07-08T17:56:12+00:00",
-      "confirmed_by": "tindang",
-      "await_confirm": true,
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      }
-    },
     "add-bench-2": {
       "title": "Add Bench 2",
       "goal": "benchmark ADD on the terrain its machinery actually defends: interruption-resume, ambiguity surfacing, regression storms, cold-start maintenance, and security bait \u2014 measuring what WM1-6 never triggered",
@@ -8396,7 +7869,7 @@
       }
     }
   },
-  "active_milestone": "three-phase-flow",
+  "active_milestone": "add-lean-loop",
   "archived": [
     {
       "slug": "v5",
@@ -9184,6 +8657,33 @@
         "v2-scoring-report"
       ],
       "archived": "2026-07-10"
+    },
+    {
+      "slug": "three-phase-flow",
+      "title": "Three Phase Flow",
+      "tasks": 6,
+      "task_slugs": [
+        "phase-bundles",
+        "ai-plan-verify-gate",
+        "fast-lane-skips",
+        "harness-fair-meter",
+        "harness-isolate-env",
+        "harness-multirep"
+      ],
+      "archived": "2026-07-11"
+    },
+    {
+      "slug": "risk-proportional-ceremony",
+      "title": "Risk Proportional Ceremony",
+      "tasks": 5,
+      "task_slugs": [
+        "advance-chain-collapse",
+        "status-guide-fold",
+        "first-call-ergonomics",
+        "scope-gate-repair-path",
+        "skip-error-ergonomics"
+      ],
+      "archived": "2026-07-11"
     }
   ],
   "active_milestones": [
@@ -9192,9 +8692,7 @@
     "build-strategy-facets",
     "delta-drain",
     "add-bench",
-    "add-lean-loop",
-    "risk-proportional-ceremony",
-    "three-phase-flow"
+    "add-lean-loop"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -9204,8 +8702,6 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "prune-benchmark-deadweight",
-    "risk-proportional-ceremony": "skip-error-ergonomics",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "todos": [

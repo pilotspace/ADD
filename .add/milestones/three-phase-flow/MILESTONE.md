@@ -33,34 +33,40 @@ Out: collapsing the engine to 3 phase-STATES (kept at 8 + bundle metadata — de
 - skip-set declaration shape (subset of {scenarios, observe}) + contract-auto-freeze semantics -> owning task `fast-lane-skips`
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] phase-bundles       depends-on: none              — group the 8 phases into 3 agent-owned bundles (DIRECTION/BUILD/VERIFY); `status`/`guide` show the active bundle; document "agent-call-preferred" as the default execution mode
-- [ ] ai-plan-verify-gate depends-on: phase-bundles      — two-way DIRECTION gate `gate_mode=human|ai-plan-verify`; AI verifies the frozen direction bundle and auto-passes the contract freeze EXCEPT security/data/architecture (→ human; security HARD-STOP)
-- [ ] fast-lane-skips      depends-on: ai-plan-verify-gate — `--oneshot`/benchmark-mode + the fast/small-medium lane declare an AI-chosen skip-set from {scenarios, observe}; contract AI-auto-frozen (never skipped); every skip recorded
+- [x] phase-bundles       depends-on: none              — group the 8 phases into 3 agent-owned bundles (DIRECTION/BUILD/VERIFY); `status`/`guide` show the active bundle; document "agent-call-preferred" as the default execution mode   (gate PASS `1af4c1e`)
+- [x] ai-plan-verify-gate depends-on: phase-bundles      — two-way DIRECTION gate `gate_mode=human|ai-plan-verify`; AI verifies the frozen direction bundle and auto-passes the contract freeze EXCEPT security/data/architecture (→ human; security HARD-STOP)   (gate PASS `38efd8f`)
+- [x] fast-lane-skips      depends-on: ai-plan-verify-gate — `--oneshot`/benchmark-mode + the fast/small-medium lane declare an AI-chosen skip-set from {scenarios, observe}; contract AI-auto-frozen (never skipped); every skip recorded   (gate PASS `ea0462a`)
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `status`/`guide` show a task's active phase-bundle (DIRECTION/BUILD/VERIFY) and "agent-call-preferred" is the documented default execution mode        (← phase-bundles)
-- [ ] a non-security/data/architecture task under `autonomy:auto` passes the DIRECTION gate via AI-plan-verify with no human freeze; a security/data/architecture task still requires the human freeze (security HARD-STOP)        (← ai-plan-verify-gate)
-- [ ] a `--oneshot` (or benchmark/fast/small-medium) task runs with the AI's declared {scenarios, observe} skips, the contract AI-auto-frozen (never skipped), a red test before build, and every skip recorded — no silent skips        (← fast-lane-skips)
+- [x] `status`/`guide` show a task's active phase-bundle (DIRECTION/BUILD/VERIFY) and "agent-call-preferred" is the documented default execution mode        (← phase-bundles; PHASE_GROUPS + `_phase_bundle` resolver live, SKILL.md documents agent-call-preferred in all three skill trees)
+- [x] a non-security/data/architecture task under `autonomy:auto` passes the DIRECTION gate via AI-plan-verify with no human freeze; a security/data/architecture task still requires the human freeze (security HARD-STOP)        (← ai-plan-verify-gate; PROVEN LIVE 2026-07-10: `prune-benchmark-deadweight` (mechanical) froze @v1 via `freeze --ai-plan-verify --by claude-fable-5` with a complete AI-verify record — the engine's double opt-in enforced gate_mode + autonomy + sensitivity; test_ai_plan_verify_gate.py 582 lines pin the sensitivity fallback)
+- [x] a `--oneshot` (or benchmark/fast/small-medium) task runs with the AI's declared {scenarios, observe} skips, the contract AI-auto-frozen (never skipped), a red test before build, and every skip recorded — no silent skips        (← fast-lane-skips; PROVEN LIVE 2026-07-10: the same prune task ran the FULL oneshot lane end-to-end — skip rationale recorded in §0, contract frozen (never skipped), 3 guards red before build, one explicit TESTS re-cross mid-build, gate PASS — first real dogfood, zero engine friction)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : add.py + add_engine (PHASE_GROUPS/_phase_bundle · _GATE_MODES + cmd_freeze --ai-plan-verify · _SKIPPABLE_PHASES + cmd_advance skip pre-pass + --oneshot flag) · TASK.fast.md.tmpl (oneshot/gate_mode/skips header + AI-verify record block) · engine pin re-aimed; all three engine trees byte-identical
+- skill   : SKILL.md documents agent-call-preferred as the default execution mode + the oneshot lane (three skill trees in lockstep)
+- book    : untouched (guides reference the bundles via the skill layer)
+- harness (rider tasks): fair-meter (feature-delivery-only metering) · isolate-env (--strict-mcp-config isolation) · multirep (controlled N-rep aggregation) — benchmark-side, shipped under this milestone's confirm
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- phase-bundles : gate=PASS `1af4c1e` · tests=337-line pin suite green · residue=none
+- ai-plan-verify-gate : gate=PASS `38efd8f` · tests=582-line pin suite green · residue=none
+- fast-lane-skips : gate=PASS `ea0462a` · tests=646-line pin suite green · residue=none
+- harness-fair-meter : gate=PASS `efc100b` · tests=suite green at close · residue=none
+- harness-isolate-env : gate=PASS `2d9d238` · tests=suite green at close · residue=none
+- harness-multirep : gate=PASS `94486bb` · tests=suite green at close · residue=none
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (criterion 1 ← phase-bundles row + skill Ship line; criteria 2+3 ← their task rows AND the live end-to-end dogfood: prune-benchmark-deadweight ran the whole oneshot lane 2026-07-10 with the floor visibly held — AI freeze recorded, red-first guards, one explicit TESTS re-cross, gate PASS)
+- goal: let the AI drive a clear/small/benchmark task through the 8 phases as 3 agent-owned bundles with the frozen-contract · red-suite · recorded-gate · security-HARD-STOP floor holding in every mode — PROVEN by the first real oneshot run: one AI-verified freeze replaced the human wait, zero silent skips, and the tamper/re-cross machinery still bound every test edit.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] merge via PR #142 (bundles this milestone + add-bench-v2 + risk-proportional-ceremony + tiny-plan; human authorized "prune, then merge one PR" 2026-07-10)
+- [ ] bundle into the next release cut with the sibling closed milestones (release.md; engine records, human tags/publishes)
+- [ ] follow-on (strategy A, human-picked): drive oneshot/tiny adoption, then one cheap pinned-meter WM1-3 re-run to verify the premium dropped toward 1.3×
