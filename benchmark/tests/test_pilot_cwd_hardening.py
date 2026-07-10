@@ -61,16 +61,3 @@ def test_pytest_argv_falls_back_to_uv(monkeypatch):
         "uv", "run", "--no-project", "--with", "pytest", "python", "-m", "pytest",
     ]
 
-
-def test_zero_collected_error_includes_stderr(monkeypatch, tmp_path):
-    class FakeProc:
-        returncode = 1
-        stdout = ""
-        stderr = "/some/python: No module named pytest"
-
-    monkeypatch.setattr(score.subprocess, "run", lambda *a, **k: FakeProc())
-    with pytest.raises(BenchError) as exc:
-        score.compute_regression_rate(tmp_path)
-    msg = str(exc.value)
-    assert msg.startswith("regression_run_failed: no regression tests collected")
-    assert "No module named pytest" in msg

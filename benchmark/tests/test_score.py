@@ -370,11 +370,6 @@ def test_regression_rate_zero_before_wm3(tmp_path, monkeypatch):
     record_path = _make_record(tmp_path, runs_root, "add", 1)
     judge_cmd = _fake_judge(tmp_path, "0.5")
 
-    def _boom(*args, **kwargs):
-        raise AssertionError("compute_regression_rate must not be invoked for wm1/wm2")
-
-    monkeypatch.setattr(score_mod, "compute_regression_rate", _boom)
-
     score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())

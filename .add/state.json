@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "terser-engine-stdout",
+  "active_task": "prune-benchmark-deadweight",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7956,10 +7956,86 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "prune-benchmark-deadweight": {
+      "title": "Prune benchmark dead weight: hv track + v1 regression fn (pre-merge)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-10T16:58:33+00:00",
+      "updated": "2026-07-10T17:08:22+00:00",
+      "fast": true,
+      "oneshot": true,
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-10T17:01:46+00:00",
+        "approved_by": "claude-fable-5",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        },
+        "mode": "ai-plan-verify",
+        "verified": {
+          "anchors": true,
+          "rules": true,
+          "shape": true,
+          "flag": true
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c96c8c87f64d911b9b61337fec58a80e",
+        "tests": {
+          "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
+          "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
+          "benchmark/tests/test_adherence_census.py": "0762a2c8ab78e2e9996dd49274ba8a0e",
+          "benchmark/tests/test_arms.py": "639562d3d560c4cfa99ab490cac522c5",
+          "benchmark/tests/test_carry_forward.py": "35bb76ee6fec7b18c7409a8145efbedb",
+          "benchmark/tests/test_fidelity_dip.py": "413b79b07679ac9e27c450472e4dc794",
+          "benchmark/tests/test_hard_wm6.py": "6388035400849ea7bbd2c85549cf2b97",
+          "benchmark/tests/test_isolation.py": "3d5519c6572c0121e2c6049ab76420f1",
+          "benchmark/tests/test_judge_median.py": "6216a45cef8b3f40c6bcfed12abf7257",
+          "benchmark/tests/test_oracles_red.py": "5708d42b875b811cee984a4233ac1f0b",
+          "benchmark/tests/test_pilot.py": "6bb317b7df99f2a42b1b781495a919f7",
+          "benchmark/tests/test_pilot_cwd_hardening.py": "40ef9f11fe24ea6b1ab091a81acfa557",
+          "benchmark/tests/test_pilot_hardening.py": "7ecb8835c1628fff09e54cc59ef030fa",
+          "benchmark/tests/test_prune_deadweight.py": "5788e21bf10c69006f806a8b0a0243db",
+          "benchmark/tests/test_regression_split.py": "3370c72a38415c11095693a7530784c4",
+          "benchmark/tests/test_report.py": "5f78884ae5867c74f0077b21a0e7c96b",
+          "benchmark/tests/test_run_cli.py": "6bd536bff37cfe493434bcaf83054d56",
+          "benchmark/tests/test_run_record.py": "89c2e819fdb02edb2d78a6c9c9b7da64",
+          "benchmark/tests/test_runner_core.py": "20941776cfcc7ebb4ef70f91f2c82b48",
+          "benchmark/tests/test_runner_records.py": "a667991dc6e3db572d8dfb5155f5dbb9",
+          "benchmark/tests/test_runner_resume.py": "f9263abf61155733253b9bc400567e2d",
+          "benchmark/tests/test_score.py": "08b7fc52a5a1e33f31f8f811dffed68e",
+          "benchmark/tests/test_trust_report.py": "9285c5d738a7bf5474e0b797adb12aae",
+          "benchmark/tests/test_v2_meter.py": "e4dcbaf7ed169e17a8c0a5538ca7d934",
+          "benchmark/tests/test_wm4plus.py": "7b92aed2c7c91cf18c79e20838273ee1",
+          "benchmark/tests/test_workload_prompts.py": "fa6897be01059c6b78bd59d63236d86d",
+          "benchmark/tests/test_wv1_aggregate.py": "fbd3f009b7e29bafeb96a70df4d593bd",
+          "benchmark/tests/test_wv1_survivors.py": "264aed28b12d53f5ea5c1fff44b64ad5",
+          "benchmark/tests/test_wv2_family.py": "7d274e4db2a645c10ee192377f6005da"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/",
+          "tmp/"
+        ],
+        "snapshot_md5": "3466dd9941305935a06e18a9bf5efcad"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T10:22:32+00:00",
+  "updated": "2026-07-10T17:08:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9128,7 +9204,7 @@
     "delta-drain": "compact-propose",
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
-    "three-phase-flow": "terser-engine-stdout",
+    "three-phase-flow": "prune-benchmark-deadweight",
     "risk-proportional-ceremony": "skip-error-ergonomics",
     "add-bench-2": "tiny-plan-small-scope"
   },

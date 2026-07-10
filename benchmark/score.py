@@ -187,50 +187,6 @@ def compute_regression_rate_v2(workspace: pathlib.Path, wm: int, family: str = "
     return bad / total
 
 
-def compute_regression_rate(workspace: pathlib.Path) -> float:
-    """Run `pytest -m regression` against the WM3 oracle re-exports for
-    `workspace`; return failed_count / total_regression_count.
-
-    Raises BenchError("regression_run_failed: ...") on a collection/
-    execution error (pytest exit codes outside {0 (all passed), 1 (some
-    failed)}) — never conflated with a normal test failure, which is
-    signal, not error.
-    """
-    proc = subprocess.run(
-        [
-            *_pytest_argv(),
-            "-m",
-            "regression",
-            "-p",
-            "no:cacheprovider",
-            "--tb=no",
-            "-q",
-            str(WM3_REGRESSION_TEST_PATH),
-        ],
-        cwd=str(REPO_ROOT),
-        env={**os.environ, "BENCH_WORKSPACE": str(workspace)},
-        capture_output=True,
-        text=True,
-        timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
-    )
-    if proc.returncode not in (0, 1):
-        raise BenchError(
-            f"regression_run_failed: pytest exited {proc.returncode}\n"
-            f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
-        )
-
-    summary = proc.stdout
-    passed = _extract_count(_PASS_RE, summary)
-    failed = _extract_count(_FAIL_RE, summary)
-    errored = _extract_count(_ERROR_RE, summary)
-    total = passed + failed + errored
-    if total == 0:
-        raise BenchError(
-            f"regression_run_failed: no regression tests collected\n{summary}\nstderr:\n{proc.stderr}"
-        )
-    return (failed + errored) / total
-
-
 def _extract_count(pattern: re.Pattern, text: str) -> int:
     match = pattern.search(text)
     return int(match.group(1)) if match else 0
