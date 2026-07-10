@@ -21,7 +21,7 @@ from typing import Sequence
 from benchmark.arms.loader import Arm
 from benchmark.check_isolation import find_leaks
 from benchmark.check_isolation import main as check_isolation_main
-from benchmark.runner.agent import build_argv
+from benchmark.runner.agent import PINNED_MODEL, build_argv
 from benchmark.runner.pin import resolve_pin
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import RunRecord, validate
@@ -32,8 +32,10 @@ BENCHMARK_ROOT = pathlib.Path(__file__).resolve().parents[1]
 _EDIT_TOOL_NAMES = frozenset({"Edit", "Write"})
 
 
-def _prompt_path(wm: int) -> pathlib.Path:
-    return BENCHMARK_ROOT / "workload" / f"wm{wm}" / "PROMPT.md"
+def _prompt_path(wm: int, family: str = "wm") -> pathlib.Path:
+    """Workload family seam (wv2-family): `family` names the workload track
+    (wm = longitudinal, hv = hostile-change); indexes are family-local."""
+    return BENCHMARK_ROOT / "workload" / f"{family}{wm}" / "PROMPT.md"
 
 
 def _wrap_prompt(text: str, wrapper: str) -> str:
@@ -227,7 +229,8 @@ def _isolation_check(workspace_dir: pathlib.Path) -> tuple[bool, list[str]]:
 
 
 def _seed_from_prior(
-    workspace_dir: pathlib.Path, arm_name: str, wm: int, runs_root: pathlib.Path
+    workspace_dir: pathlib.Path, arm_name: str, wm: int, runs_root: pathlib.Path,
+    family: str = "wm",
 ) -> str | None:
     """Carry the prior WM's completed workspace forward (bench-carry-forward).
 
@@ -238,12 +241,12 @@ def _seed_from_prior(
     """
     if wm <= 1 or any(workspace_dir.iterdir()):
         return None
-    prior = runs_root / arm_name / f"wm{wm - 1}" / "workspace"
+    prior = runs_root / arm_name / f"{family}{wm - 1}" / "workspace"
     if not prior.is_dir():
-        return f"unseeded: no prior workspace at wm{wm - 1}"
+        return f"unseeded: no prior workspace at {family}{wm - 1}"
     shutil.copytree(prior, workspace_dir, dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns(".venv"))
-    return f"seeded from wm{wm - 1}"
+    return f"seeded from {family}{wm - 1}"
 
 
 def execute_wm(
@@ -254,17 +257,18 @@ def execute_wm(
     timeout_s: float = 1800.0,
     retries: int = 1,
     runs_root: pathlib.Path | None = None,
+    family: str = "wm",
 ) -> RunRecord:
     """Drive one arm x WM end-to-end and write exactly one RunRecord."""
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
-    wm_dir = root / arm.name / f"wm{wm}"
+    wm_dir = root / arm.name / f"{family}{wm}"
     workspace_dir = wm_dir / "workspace"
     workspace_dir.mkdir(parents=True, exist_ok=True)
-    seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root)
+    seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
 
-    prompt_text = _wrap_prompt(_prompt_path(wm).read_text(), arm.prompt_wrapper)
+    prompt_text = _wrap_prompt(_prompt_path(wm, family).read_text(), arm.prompt_wrapper)
 
     attempts_log: list[str] = []
     if seed_note:
@@ -285,6 +289,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
+                    "model": PINNED_MODEL,
                 },
             }
         )
@@ -324,6 +329,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
+                    "model": PINNED_MODEL,
                 },
             }
         )
@@ -343,6 +349,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
+                    "model": PINNED_MODEL,
                 },
             }
         )

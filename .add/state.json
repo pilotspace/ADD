@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "v2-wv1-longitudinal",
+  "active_task": "v2-wv2-hostile-change",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8063,10 +8063,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "v2-wv2-hostile-change": {
+      "title": "WV2 hostile-change workload \u2014 gaming resistance + stored-data migration probe (spend gated)",
+      "phase": "build",
+      "gate": "none",
+      "milestone": "add-bench-v2",
+      "depends_on": [],
+      "created": "2026-07-10T06:25:26+00:00",
+      "updated": "2026-07-10T06:46:46+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-10T06:35:05+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "f70f3ba388f7c2e223211c5c068c41c4",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/",
+          "tmp/"
+        ],
+        "snapshot_md5": "76f78737e47ffa18e40a25b159269371"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T06:23:34+00:00",
+  "updated": "2026-07-10T06:46:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9226,7 +9257,7 @@
     "add-lean-loop": "persona-nudge-quiet",
     "three-phase-flow": "terser-engine-stdout",
     "risk-proportional-ceremony": "skip-error-ergonomics",
-    "add-bench-v2": "v2-wv1-longitudinal"
+    "add-bench-v2": "v2-wv2-hostile-change"
   },
   "todos": [
     {

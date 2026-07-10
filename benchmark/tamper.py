@@ -59,14 +59,16 @@ def _iter_test_files(workspace: pathlib.Path):
         yield path
 
 
-def snapshot_tests(workspace: pathlib.Path, arm_runs_root: pathlib.Path, wm: int) -> pathlib.Path:
+def snapshot_tests(
+    workspace: pathlib.Path, arm_runs_root: pathlib.Path, wm: int, family: str = "wm"
+) -> pathlib.Path:
     """Copy the workspace's test files (test_*.py + *_test.py, recursive,
     excluding .git/.venv/node_modules/__pycache__) into
     `<arm_runs_root>/snapshots/wm{wm}/`, preserving relative layout.
     Returns the snapshot directory (created even when no test file exists —
     an honest "this WM shipped zero tests" is itself signal)."""
     workspace = pathlib.Path(workspace)
-    dest_root = pathlib.Path(arm_runs_root) / "snapshots" / f"wm{wm}"
+    dest_root = pathlib.Path(arm_runs_root) / "snapshots" / f"{family}{wm}"
     dest_root.mkdir(parents=True, exist_ok=True)
     for src in _iter_test_files(workspace):
         dest = dest_root / src.relative_to(workspace)
@@ -128,7 +130,7 @@ def _test_functions(snapshot_dir: pathlib.Path, *, exclude_trivial: bool) -> dic
     return functions
 
 
-def compute_tests_weakened(arm_runs_root: pathlib.Path, wm: int) -> int:
+def compute_tests_weakened(arm_runs_root: pathlib.Path, wm: int, family: str = "wm") -> int:
     """The mechanical weakening count for wm vs wm-1 (see module docstring).
     wm==1 -> 0 by definition. Raises BenchError("missing_test_snapshot: ...")
     when wm>=2 and either snapshot directory is absent."""
@@ -136,8 +138,8 @@ def compute_tests_weakened(arm_runs_root: pathlib.Path, wm: int) -> int:
         return 0
 
     root = pathlib.Path(arm_runs_root)
-    prior_dir = root / "snapshots" / f"wm{wm - 1}"
-    current_dir = root / "snapshots" / f"wm{wm}"
+    prior_dir = root / "snapshots" / f"{family}{wm - 1}"
+    current_dir = root / "snapshots" / f"{family}{wm}"
     for needed in (prior_dir, current_dir):
         if not needed.is_dir():
             raise BenchError(f"missing_test_snapshot: {needed} does not exist")

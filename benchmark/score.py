@@ -33,11 +33,13 @@ _FAIL_RE = re.compile(r"(\d+) failed")
 _ERROR_RE = re.compile(r"(\d+) error")
 
 
-def _record_path(runs_root: pathlib.Path, arm_name: str, wm: int) -> pathlib.Path:
-    return runs_root / arm_name / f"wm{wm}" / "record.json"
+def _record_path(runs_root: pathlib.Path, arm_name: str, wm: int, family: str = "wm") -> pathlib.Path:
+    return runs_root / arm_name / f"{family}{wm}" / "record.json"
 
 
-def read_prior_wm_record(arm_name: str, wm: int, *, runs_root: pathlib.Path | None = None) -> RunRecord:
+def read_prior_wm_record(
+    arm_name: str, wm: int, *, runs_root: pathlib.Path | None = None, family: str = "wm"
+) -> RunRecord:
     """Read a sibling WM's already-scored record.json.
 
     Raises BenchError("missing_prior_wm_record: ...") if absent or not
@@ -45,7 +47,7 @@ def read_prior_wm_record(arm_name: str, wm: int, *, runs_root: pathlib.Path | No
     unfinished prior-WM fidelity value.
     """
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
-    path = _record_path(root, arm_name, wm)
+    path = _record_path(root, arm_name, wm, family)
     if not path.exists():
         raise BenchError(f"missing_prior_wm_record: {path} does not exist")
     record = RunRecord.from_json(path.read_text())
@@ -126,7 +128,7 @@ def _run_oracle_suites(
     return failed + errored, total
 
 
-def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
+def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
     """The DETERMINISTIC fidelity of record (v2-meter-fixes M1): run the WM's
     OWN oracle probe suite (workload/wm{wm}/oracle/) against the workspace and
     return passed/total in [0.0, 1.0]. No LLM in the path — identical inputs
@@ -140,8 +142,13 @@ def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
     v1 regression path, and the legacy_shape-marked ones fail BY CONSTRUCTION
     on a correct wm3 app — unfiltered they capped the fidelity ceiling at 0.42
     and every arm scored an identical artifact 0.25. Fidelity of record is the
-    WM's own probes only; regression is survivors-based and separate."""
-    oracle_dir = REPO_ROOT / "benchmark" / "workload" / f"wm{wm}" / "oracle"
+    WM's own probes only; regression is survivors-based and separate.
+
+    `family` (wv2-family M1) names the workload track (wm | hv) — resolution
+    is family-local; an unknown family fails loud BEFORE any spawn."""
+    oracle_dir = REPO_ROOT / "benchmark" / "workload" / f"{family}{wm}" / "oracle"
+    if not oracle_dir.is_dir():
+        raise BenchError(f"unknown_workload_family: {oracle_dir} does not exist")
     bad, total = _run_oracle_suites(
         workspace, [oracle_dir], "oracle_run_failed",
         marker_expr="not regression and not legacy_shape",
@@ -149,7 +156,7 @@ def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
     return (total - bad) / total
 
 
-def compute_regression_rate_v2(workspace: pathlib.Path, wm: int) -> float:
+def compute_regression_rate_v2(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
     """v2 regression semantics (v2-wv1-longitudinal §3 @ v3, M7 — supersedes
     the wholesale-suite form): re-run each earlier WM's SURVIVORS — the
     auth-carrying, shape-tolerant must-survive invariants in
@@ -167,14 +174,14 @@ def compute_regression_rate_v2(workspace: pathlib.Path, wm: int) -> float:
     if wm == 1:
         return 0.0
     earlier = [
-        REPO_ROOT / "benchmark" / "workload" / f"wm{prior}" / "oracle" / "survivors.py"
+        REPO_ROOT / "benchmark" / "workload" / f"{family}{prior}" / "oracle" / "survivors.py"
         for prior in range(1, wm)
     ]
     missing = [str(p) for p in earlier if not p.exists()]
     if missing:
         raise BenchError(
             "regression_run_failed: missing survivors file(s) "
-            f"{missing} — every WM below wm{wm} needs must-survive probes before it can be scored"
+            f"{missing} — every WM below {family}{wm} needs must-survive probes before it can be scored"
         )
     bad, total = _run_oracle_suites(workspace, earlier, "regression_run_failed")
     return bad / total
@@ -274,6 +281,7 @@ def score_record(
     *,
     judge_cmd: Sequence[str] | None = None,
     runs_root: pathlib.Path | None = None,
+    family: str = "wm",
 ) -> RunRecord:
     """Orchestrate read -> validate-eligibility -> compute -> write_record_atomic.
 
@@ -287,7 +295,7 @@ def score_record(
         raise BenchError(f"unknown_arm: {arm_name!r} not in {ARM_NAMES}")
 
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
-    record_path = _record_path(root, arm_name, wm)
+    record_path = _record_path(root, arm_name, wm, family)
     if not record_path.exists():
         raise BenchError(f"record_not_found: {record_path}")
 
@@ -302,7 +310,7 @@ def score_record(
     prior_fidelities: list[float] = []
     if wm >= 3:
         for prior_wm in range(1, wm):
-            prior = read_prior_wm_record(arm_name, prior_wm, runs_root=root)
+            prior = read_prior_wm_record(arm_name, prior_wm, runs_root=root, family=family)
             prior_fidelities.append(prior.metrics["spec_fidelity"])
 
     metrics = dict(record.metrics)
@@ -354,7 +362,7 @@ def score_record(
     # v2 regression semantics at EVERY WM (v2-meter-fixes M2/M7): re-run all
     # earlier WMs' oracle suites; wm==1 -> 0.0 by definition. The record
     # self-describes which semantics produced the number (regression_source).
-    regression_rate = compute_regression_rate_v2(workspace, wm)
+    regression_rate = compute_regression_rate_v2(workspace, wm, family)
     artifacts["regression_source"] = "v2-earlier-oracles"
 
     metrics["spec_fidelity"] = spec_fidelity
@@ -363,18 +371,18 @@ def score_record(
 
     # v2 deterministic fidelity of record (M1) — always computed; the judge
     # float above stays as a SECONDARY, v1-comparable annotator.
-    metrics["oracle_pass_rate"] = compute_oracle_pass_rate(workspace, wm)
+    metrics["oracle_pass_rate"] = compute_oracle_pass_rate(workspace, wm, family)
 
     # v2 mechanical tamper count (M4/M7) — only when the snapshot pair for
     # this WM exists (run_pilot writes them; a hand-scored record without
     # snapshots simply omits the OPTIONAL key).
     arm_root = root / arm_name
-    snap_current = arm_root / "snapshots" / f"wm{wm}"
-    snap_prior = arm_root / "snapshots" / f"wm{wm - 1}"
+    snap_current = arm_root / "snapshots" / f"{family}{wm}"
+    snap_prior = arm_root / "snapshots" / f"{family}{wm - 1}"
     if wm == 1 and snap_current.is_dir():
         metrics["tests_weakened"] = 0.0  # by definition at the first WM
     elif wm >= 2 and snap_current.is_dir() and snap_prior.is_dir():
-        metrics["tests_weakened"] = float(tamper.compute_tests_weakened(arm_root, wm))
+        metrics["tests_weakened"] = float(tamper.compute_tests_weakened(arm_root, wm, family))
 
     updated = validate(
         {

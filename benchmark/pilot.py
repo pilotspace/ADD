@@ -105,6 +105,7 @@ def run_pilot(
     retries: int = 1,
     runs_root: pathlib.Path | None = None,
     repo_root: pathlib.Path | None = None,
+    family: str = "wm",
 ) -> list[RunRecord]:
     """Sequences, PER ARM independently: resolve the arm (load_arm +
     resolve_setup_steps) -> determine the starting WM (find_resume_point
@@ -149,6 +150,7 @@ def run_pilot(
                 timeout_s=timeout_s,
                 retries=retries,
                 runs_root=root,
+                family=family,
             )
             records.append(record)
             if record.status != "done":
@@ -156,8 +158,8 @@ def run_pilot(
             # v2-meter-fixes M8: snapshot the workspace's test files BEFORE
             # scoring, so score_record can compute tests_weakened at wm>=2
             # with no manual step. Failed/timeout WMs never reach here.
-            snapshot_tests(pathlib.Path(record.artifacts["workspace"]), root / arm_name, wm)
-            scored = score_record(arm_name, wm, judge_cmd=judge_cmd, runs_root=root)
+            snapshot_tests(pathlib.Path(record.artifacts["workspace"]), root / arm_name, wm, family)
+            scored = score_record(arm_name, wm, judge_cmd=judge_cmd, runs_root=root, family=family)
             records[-1] = scored
 
     return records
@@ -226,6 +228,7 @@ def run_reps(
     judge_cmd: Sequence[str] | None = None,
     timeout_s: float = 1800.0,
     retries: int = 1,
+    family: str = "wm",
 ) -> list[RunRecord]:
     """Run the full arms×wms pilot `reps` times into DISTINCT `runs_root/rep{i}`
     roots (resume disabled per rep so each is an independent fresh sample), and
@@ -248,6 +251,7 @@ def run_reps(
             retries=retries,
             runs_root=root / f"rep{i}",
             repo_root=repo_root,
+            family=family,
         )
         records.extend(rep_records)
     return records
@@ -273,6 +277,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--reps", type=int, default=1)
     run_all_p.add_argument("--runs-root", default=None)
     run_all_p.add_argument("--repo-root", default=None)
+    run_all_p.add_argument("--family", default="wm", choices=("wm", "hv"))
 
     attest_p = sub.add_parser("attest")
     attest_p.add_argument("--arm", required=True)
@@ -302,6 +307,7 @@ def main(argv: list[str] | None = None) -> int:
                     retries=args.retries,
                     runs_root=runs_root,
                     repo_root=repo_root,
+                    family=args.family,
                 )
                 for (arm, wm), stats in sorted(aggregate_reps(records).items()):
                     print(
@@ -324,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
                 retries=args.retries,
                 runs_root=runs_root,
                 repo_root=repo_root,
+                family=args.family,
             )
         except BenchError as exc:
             print(str(exc), file=sys.stderr)

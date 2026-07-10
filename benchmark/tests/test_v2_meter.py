@@ -393,9 +393,21 @@ def test_score_record_writes_v2_metrics(tmp_path, monkeypatch):
     tamper.snapshot_tests(workspace, runs_root / "add", 1)
     tamper.snapshot_tests(workspace, runs_root / "add", 2)
 
-    # deterministic seams: no live pytest / claude in this wiring test
-    monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", lambda ws, wm: 0.75)
-    monkeypatch.setattr(score_mod, "compute_regression_rate_v2", lambda ws, wm: 0.125)
+    # deterministic seams: no live pytest / claude in this wiring test.
+    # (wv2-family M1): score_record threads a family arg — default "wm" —
+    # through both computations; the seam pins that it arrives.
+    seen_families: list[str] = []
+
+    def fake_pass_rate(ws, wm, family="wm"):
+        seen_families.append(family)
+        return 0.75
+
+    def fake_regression(ws, wm, family="wm"):
+        seen_families.append(family)
+        return 0.125
+
+    monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", fake_pass_rate)
+    monkeypatch.setattr(score_mod, "compute_regression_rate_v2", fake_regression)
 
     scored = score_mod.score_record("add", 2, judge_cmd=_fake_judge(tmp_path, "0.9"), runs_root=runs_root)
 
@@ -404,6 +416,7 @@ def test_score_record_writes_v2_metrics(tmp_path, monkeypatch):
     assert scored.metrics["regression_rate"] == 0.125
     assert scored.metrics["spec_fidelity"] == 0.9  # kept, judge-sourced, secondary
     assert scored.artifacts["regression_source"] == "v2-earlier-oracles"
+    assert seen_families == ["wm", "wm"], "family default must flow through both seams"
     # the written record round-trips through validate
     validate(json.loads((wm_dir / "record.json").read_text()))
 

@@ -8,6 +8,10 @@ from __future__ import annotations
 
 from typing import Sequence
 
+# the single source of truth for the pinned meter model — stamped into every
+# record's artifacts (wv2-family M7) and asserted by the model-pin tests
+PINNED_MODEL = "claude-sonnet-5"
+
 
 def default_agent_cmd(prompt: str) -> list[str]:
     """The real `claude -p` invocation, pinned by the 2026-07-07 live spike:
@@ -35,7 +39,7 @@ def default_agent_cmd(prompt: str) -> list[str]:
     comparison. Sonnet+medium is the fixed, model-comparable meter for all arms."""
     return [
         "claude", "-p", prompt,
-        "--model", "claude-sonnet-5", "--effort", "medium",
+        "--model", PINNED_MODEL, "--effort", "medium",
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
         "--dangerously-skip-permissions",
