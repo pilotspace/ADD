@@ -38,6 +38,7 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
+    _DIALECT_CLASSES,   # shared (spec-dialect-floor) — crossing warning + check lint
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
     _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
     _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
@@ -1102,6 +1103,33 @@ def _resolve_task(state: dict, slug: str | None) -> str:
     return slug
 
 
+def _dialect_gaps(root: Path, slug: str) -> list:
+    """spec-dialect-floor (quality-floors): the dialect classes the frozen §3 speaks that NO
+    declared §4 test file does. PURE — reads TASK.md + declared test files, writes nothing.
+    Fail-open by design: no §3 match, no declared test files, or unreadable files -> [] —
+    the floor warns where it can SEE a gap and never invents one (wm2 evidence: the gap it
+    exists to catch is a suite speaking a friendlier input dialect than the spec's own
+    examples)."""
+    body3 = _raw_phase_bodies(root, slug).get(3, "")
+    if not body3:
+        return []
+    files = _declared_test_files(root, slug)
+    if not files:
+        return []
+    corpus = ""
+    for f in files:
+        try:
+            corpus += f.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+    gaps = []
+    for name, pattern in _DIALECT_CLASSES:
+        rx = re.compile(pattern)
+        if rx.search(body3) and not rx.search(corpus):
+            gaps.append(name)
+    return gaps
+
+
 def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) -> None:
     """The shared tests->build entry guards + snapshots (task phase-build-guard, F4).
 
@@ -1189,6 +1217,16 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) 
             side.unlink()
         except OSError:
             pass
+    # spec-dialect-floor (quality-floors M3): warn — NEVER refuse — when the frozen §3 speaks
+    # a format dialect no declared §4 test file does (benchmark wm2: naive-timestamp tests
+    # kept an aware/naive crash green while the spec's own examples were Z-suffixed).
+    # Print-only, after every guard and snapshot: exit and state are byte-identical.
+    for _cls in _dialect_gaps(root, slug):
+        print(f"warning: task '{slug}' frozen §3 carries a '{_cls}' value but no declared "
+              "§4 test file speaks that format — a suite testing a friendlier input dialect "
+              "than the spec's own examples can stay green through a real crash (benchmark "
+              "wm2 evidence). Add one test using the contract's literal format, then "
+              "re-snapshot: add.py re-cross --by <name>")
 
 
 def cmd_phase(args: argparse.Namespace) -> None:
@@ -3692,6 +3730,23 @@ def cmd_check(args: argparse.Namespace) -> None:
                          "vocabulary to GLOSSARY.md's '## Sensitivity classes' section (the base "
                          "security|data|architecture|mechanical always apply; the AI keeps the "
                          "domain classes current — see the sensitivity skill guide)"))
+
+    # spec-dialect-floor (quality-floors M5): the rescannable twin of the crossing warning.
+    # WARN, NEVER red (measure-not-block, mirrors goal_not_auto_ready) — lists ACTIVE tasks at
+    # build/verify/done whose frozen §3 speaks a dialect class their declared §4 files don't.
+    # ACTIVE state only (never archived history): the audit-scan mitigation the freeze flag pinned.
+    _dialect_gapped = []
+    for _dg_slug in sorted(tasks):
+        if (tasks[_dg_slug] or {}).get("phase") not in ("build", "verify", "observe", "done"):
+            continue
+        if _dialect_gaps(root, _dg_slug):
+            _dialect_gapped.append(_dg_slug)
+    if _dialect_gapped:
+        warnings.append(("dialect_gap",
+                         f"{len(_dialect_gapped)} task(s) whose frozen §3 speaks a format "
+                         f"dialect no declared §4 test file does: {', '.join(_dialect_gapped)} "
+                         "— add one test per gap using the contract's literal format "
+                         "(spec-dialect floor, benchmark wm2 evidence)"))
 
     # wave-ledger fork-base (engine-merge-base-enforcement): the engine EXECUTES the
     # streams.md rule — every roster echo must match `base:`. A FILLED mismatch is red at

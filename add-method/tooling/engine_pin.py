@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "5b0f0538c990ec1521c131780a277c98"  # re-aimed @ branch-merge 2026-07-10 (union of the local --oneshot/first-call-ergonomics chain and the remote tiny-plan-small-scope lane pushed 2026-07-08 — both features kept verbatim in cmd_new_task + argparse). prior: 147820fd… @ first-call-ergonomics v1
-ENGINE_PKG_MD5 = "5f60c0b2af321c1dcb053a5a06473a92"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2
+ENGINE_MD5 = "7f96609e2ffb60fb0fcce33c4a763b96"  # re-aimed @ spec-dialect-floor v1 (_dialect_gaps helper + tests->build dialect warning + check dialect_gap lint). prior: 5b0f0538… @ branch-merge 2026-07-10
+ENGINE_PKG_MD5 = "710a009fd35e945f0d0143bcd59ee05c"  # re-aimed @ spec-dialect-floor v1 (add_engine/constants.py: _DIALECT_CLASSES registry). prior: 5f60c0b2… @ fast-lane-skips v1

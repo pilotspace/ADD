@@ -34,6 +34,7 @@ __all__ = [
     "WORKFLOW_HEADINGS",
     "_GATE_MODES",
     "_SKIPPABLE_PHASES",
+    "_DIALECT_CLASSES",
 ]
 
 ROOT_DIRNAME = ".add"
@@ -343,3 +344,15 @@ _GATE_MODES = ("human", "ai-plan-verify")
 #     as PHASES. Listed in __all__ (mirrors _GATE_MODES): a new trust-loosening capability is
 #     deliberately surfaced via `from add_engine.constants import *`, not tucked away. ---
 _SKIPPABLE_PHASES = ("scenarios", "observe")
+
+# --- format-dialect registry (shared: _dialect_gaps + the tests->build crossing warning +
+#     cmd_check's dialect_gap lint) — quality-floors floor 1. Closed (name, regex) pairs: a
+#     class matches only its FULL value shape, never prose fragments (a bare `2026-07-10`
+#     date must not match — the aware class requires the T separator + a zone suffix). Born
+#     from benchmark WV1 wm2: an arm's own suite stayed green on naive timestamps while the
+#     spec's own examples were Z-suffixed; the aware/naive crash shipped green. Listed in
+#     __all__ (mirrors _GATE_MODES): a new trust surface is deliberately surfaced. ---
+_DIALECT_CLASSES = (
+    ("aware-iso-timestamp",
+     r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})"),
+)
