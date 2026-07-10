@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-nudge-quiet",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7547,7 +7547,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T17:10:26+00:00",
+  "updated": "2026-07-10T17:12:59+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -7867,9 +7867,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "quality-floors": {
+      "title": "Quality floors for lean ADD",
+      "goal": "",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-10T17:12:27+00:00",
+      "updated": "2026-07-10T17:12:59+00:00",
+      "tiny": true,
+      "confirmed": true,
+      "confirmed_at": "2026-07-10T17:12:59+00:00",
+      "confirmed_by": "tindang",
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "add-lean-loop",
+  "active_milestone": "quality-floors",
   "archived": [
     {
       "slug": "v5",
@@ -8692,7 +8709,8 @@
     "build-strategy-facets",
     "delta-drain",
     "add-bench",
-    "add-lean-loop"
+    "add-lean-loop",
+    "quality-floors"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
