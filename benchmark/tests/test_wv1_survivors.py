@@ -92,6 +92,43 @@ def test_survivors_pass_against_own_wm_fixture_shapes():
     assert total >= 5
 
 
+def test_survivors_create_fallback_only_on_shape_rejection():
+    """Live defect 2026-07-10 (meter defect #5): _create's shape-adaptive
+    fallback fired on ANY non-2xx — so an app's CORRECT 409 overlap rejection
+    triggered a duration_minutes retry, the wm3 app answered 400 (unknown
+    field), and the survivor asserted 400 == 409: every arm scored a false
+    regression on a behavior it implemented correctly. The fallback may fire
+    ONLY on 400 (shape rejection); business-rule statuses (401/403/409) must
+    pass through untouched."""
+    import importlib.util
+
+    path = WORKLOAD / "wm2" / "oracle" / "survivors.py"
+    spec = importlib.util.spec_from_file_location("survivors_wm2_fallback", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    calls: list = []
+
+    def fake_http_call(method, url, payload=None, headers=None):
+        calls.append(payload)
+        return 409, {"error": "overlap"}
+
+    mod.http_call = fake_http_call
+    status, body = mod._create("http://x", "test-token-alice", "t", "s", "e", 30)
+    assert status == 409, "a 409 must be returned to the caller, not retried"
+    assert len(calls) == 1, f"fallback fired on 409: {calls}"
+    # a real shape rejection (400) still falls back
+    calls.clear()
+
+    def fake_http_call_400(method, url, payload=None, headers=None):
+        calls.append(payload)
+        return (400, {"error": "unknown field"}) if len(calls) == 1 else (201, {"id": "1"})
+
+    mod.http_call = fake_http_call_400
+    status, _ = mod._create("http://x", "test-token-alice", "t", "s", "e", 30)
+    assert status == 201 and len(calls) == 2, "400 must still trigger the shape fallback"
+
+
 @pytest.mark.skipif(not REP0_WM1_WORKSPACE.exists(), reason="rep0 archive not on this machine")
 def test_live_guard_survivors_green_on_a_real_pre_auth_workspace():
     """Survivors must not false-positive on a NO-AUTH app: the rep0 add wm1

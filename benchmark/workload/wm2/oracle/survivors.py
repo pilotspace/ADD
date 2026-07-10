@@ -29,16 +29,17 @@ def _workspace() -> str:
 
 
 def _create(base: str, token: str, title: str, start: str, end: str, minutes: int):
-    """Shape-adaptive create: try the WM3+ end_time shape, fall back to the
-    WM2 duration_minutes shape. Returns (status, body) of the accepted form;
-    if both shapes are rejected, returns the LAST response for the caller's
-    assert to fail loudly on."""
+    """Shape-adaptive create: try the WM3+ end_time shape; fall back to the
+    WM2 duration_minutes shape ONLY on a 400 shape rejection. Any other
+    status — including business-rule answers like 401/403/409 — is returned
+    untouched (meter defect #5: falling back on a correct 409 turned it into
+    the fallback's 400 and scored a false regression on every arm)."""
     status, body = http_call(
         "POST", f"{base}/bookings",
         {"title": title, "start_time": start, "end_time": end},
         headers=_auth(token),
     )
-    if status in (200, 201):
+    if status != 400:
         return status, body
     return http_call(
         "POST", f"{base}/bookings",
