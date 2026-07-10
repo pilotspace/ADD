@@ -104,6 +104,42 @@ def test_oracle_pass_rate_partial(monkeypatch):
     assert any("wm1" in str(part) and "oracle" in str(part) for part in argv)
 
 
+def test_oracle_pass_rate_deselects_regression_reexports(monkeypatch):
+    """Live defect 2026-07-10 (WV1 rep0, meter defect #4): wm3's oracle dir
+    re-exports the wm1+wm2 suites for the v1 regression path; 7 of them are
+    `legacy_shape`-marked BY-CONSTRUCTION failures on a correct wm3 app
+    (they send the duration_minutes payloads wm3's own contract forces every
+    arm to reject). Collected unfiltered, the denominator became 12 and the
+    fidelity ceiling 0.42 — add, add-main and spec-kit all scored an identical
+    artifact 0.25. Fidelity of record = the WM's OWN probes only: the marked
+    re-exports must be deselected."""
+    calls: list = []
+    _patch_pytest_run(monkeypatch, "2 passed in 0.5s", 0, calls)
+    score_mod.compute_oracle_pass_rate(pathlib.Path("/tmp/ws"), 3)
+    argv = [str(part) for part in calls[0][0]]
+    # the interpreter prefix is `python -m pytest` — look for the MARKER -m,
+    # i.e. an adjacent pair ("-m", <expr containing the deselections>)
+    marker_exprs = [argv[i + 1] for i, tok in enumerate(argv[:-1]) if tok == "-m"]
+    assert any(
+        "not regression" in expr and "not legacy_shape" in expr for expr in marker_exprs
+    ), f"no marker filter in argv: regression re-exports poison the denominator ({argv})"
+
+
+def test_wm3_oracle_own_probes_collect_exactly_two():
+    """The live denominator guard: under the marker filter the wm3 oracle dir
+    must collect exactly its 2 native shape probes — an UNMARKED re-export
+    added later would silently poison the fidelity denominator again."""
+    import subprocess
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q",
+         "-m", "not regression and not legacy_shape",
+         str(REPO_ROOT / "benchmark" / "workload" / "wm3" / "oracle")],
+        capture_output=True, text=True, cwd=REPO_ROOT,
+    )
+    assert "2/12 tests collected" in proc.stdout, proc.stdout[-400:]
+
+
 def test_oracle_pass_rate_unbootable_zero(tmp_path):
     # REAL subprocess: empty workspace -> `python -m app` dies -> every probe
     # fails as an ordinary connection AssertionError -> 0.0, never a crash.

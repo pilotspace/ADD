@@ -80,11 +80,19 @@ def _pytest_argv() -> list[str]:
     return ["uv", "run", "--no-project", "--with", "pytest", "python", "-m", "pytest"]
 
 
-def _run_oracle_suites(workspace: pathlib.Path, oracle_paths: list[pathlib.Path], error_code: str) -> tuple[int, int]:
+def _run_oracle_suites(
+    workspace: pathlib.Path,
+    oracle_paths: list[pathlib.Path],
+    error_code: str,
+    marker_expr: str | None = None,
+) -> tuple[int, int]:
     """Run pytest over `oracle_paths` against `workspace` (BENCH_WORKSPACE);
     return (failed+errored, total). Raises BenchError("<error_code>: ...") on
     a collection/execution error (exit outside {0,1}) or zero collected —
-    never conflated with a normal test failure, which is signal, not error."""
+    never conflated with a normal test failure, which is signal, not error.
+    `marker_expr` (pytest -m) lets a caller deselect probes that don't belong
+    to its metric — e.g. wm3's regression re-exports out of the fidelity run."""
+    marker_args = ["-m", marker_expr] if marker_expr else []
     proc = subprocess.run(
         [
             *_pytest_argv(),
@@ -92,6 +100,7 @@ def _run_oracle_suites(workspace: pathlib.Path, oracle_paths: list[pathlib.Path]
             "no:cacheprovider",
             "--tb=no",
             "-q",
+            *marker_args,
             *[str(p) for p in oracle_paths],
         ],
         cwd=str(REPO_ROOT),
@@ -124,9 +133,19 @@ def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int) -> float:
     yield the identical value. An unbootable workspace fails every probe as an
     ordinary connection error -> 0.0, never a harness crash.
     Raises BenchError("oracle_run_failed: ...") on exit outside {0,1} or zero
-    collected — a 0/0 is an error, never a silent score."""
+    collected — a 0/0 is an error, never a silent score.
+
+    Marked regression re-exports are DESELECTED (live defect 2026-07-10,
+    meter defect #4): wm3's oracle dir re-exports the wm1+wm2 suites for the
+    v1 regression path, and the legacy_shape-marked ones fail BY CONSTRUCTION
+    on a correct wm3 app — unfiltered they capped the fidelity ceiling at 0.42
+    and every arm scored an identical artifact 0.25. Fidelity of record is the
+    WM's own probes only; regression is survivors-based and separate."""
     oracle_dir = REPO_ROOT / "benchmark" / "workload" / f"wm{wm}" / "oracle"
-    bad, total = _run_oracle_suites(workspace, [oracle_dir], "oracle_run_failed")
+    bad, total = _run_oracle_suites(
+        workspace, [oracle_dir], "oracle_run_failed",
+        marker_expr="not regression and not legacy_shape",
+    )
     return (total - bad) / total
 
 
