@@ -20,6 +20,13 @@ def default_agent_cmd(prompt: str) -> list[str]:
     runs in a minimal, identical environment. Both arms drive via Bash
     (`add.py` / spec-kit scripts) and need neither skills nor MCP.
 
+    Permission grant (harness-permission-grant): `--dangerously-skip-permissions`
+    is MANDATORY — headless runs get no permission prompt, and ambient operator
+    config is nondeterministic. Live proof 2026-07-10 (WV1 rep0): spec-kit and
+    vanilla had every workspace mkdir/Write denied and scored artifact 0.00s,
+    while the add arms happened to dodge the checks — a fairness break, not a
+    result. The workspace is a fresh throwaway dir; blanket grant is safe there.
+
     Model pin (harness-model-pin #28): `--model claude-sonnet-5 --effort medium`
     is MANDATORY. Without it `claude -p` inherits whatever ambient model the
     operator's session defaults to at run time — live proof 2026-07-09 caught the
@@ -31,6 +38,7 @@ def default_agent_cmd(prompt: str) -> list[str]:
         "--model", "claude-sonnet-5", "--effort", "medium",
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
+        "--dangerously-skip-permissions",
     ]
 
 

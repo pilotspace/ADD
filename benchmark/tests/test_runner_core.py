@@ -44,6 +44,20 @@ def test_default_agent_cmd_pins_model_and_effort():
     assert "--effort" in argv, "no --effort pin: thinking budget drifts across runs"
     assert argv[argv.index("--effort") + 1] == "medium"
 
+def test_default_agent_cmd_grants_headless_write_permissions():
+    """harness-permission-grant: headless `claude -p` must carry its OWN
+    permission grant, never lean on ambient operator config. Live proof
+    2026-07-10 (WV1 rep0): spec-kit + vanilla agents had every mkdir/Write
+    into their fresh workspaces denied ("you haven't granted it yet") and
+    scored artifact 0.00s at ~$0.4/WM, while the add arms — whose add.py
+    scaffolding happened to dodge the checks — sailed through. An arm's
+    score must never depend on a nondeterministic permission environment."""
+    argv = default_agent_cmd("PROMPT")
+    assert "--dangerously-skip-permissions" in argv, (
+        "no explicit permission grant: arm outcomes hostage to ambient config"
+    )
+
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 BENCHMARK_ROOT = REPO_ROOT / "benchmark"
 

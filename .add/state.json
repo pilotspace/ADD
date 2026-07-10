@@ -7988,7 +7988,7 @@
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T02:59:51+00:00",
-      "updated": "2026-07-10T03:55:09+00:00",
+      "updated": "2026-07-10T05:27:46+00:00",
       "freeze": {
         "version": "v3",
         "frozen_at": "2026-07-10T03:50:07+00:00",
@@ -8020,7 +8020,7 @@
           "benchmark/tests/test_report.py": "5f78884ae5867c74f0077b21a0e7c96b",
           "benchmark/tests/test_run_cli.py": "6bd536bff37cfe493434bcaf83054d56",
           "benchmark/tests/test_run_record.py": "89c2e819fdb02edb2d78a6c9c9b7da64",
-          "benchmark/tests/test_runner_core.py": "b7a80148259ee717f1bab95c60045458",
+          "benchmark/tests/test_runner_core.py": "20941776cfcc7ebb4ef70f91f2c82b48",
           "benchmark/tests/test_runner_records.py": "a667991dc6e3db572d8dfb5155f5dbb9",
           "benchmark/tests/test_runner_resume.py": "f9263abf61155733253b9bc400567e2d",
           "benchmark/tests/test_score.py": "a95c20c2f597fc9b8fdba067683b71ab",
@@ -8035,12 +8035,12 @@
         "declared": [
           "benchmark/"
         ],
-        "snapshot_md5": "b3bea865ac9c8d64b7e411ab803e2b1e"
+        "snapshot_md5": "f7d3813b15a8d16e5fb29833ba925f68"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T03:55:09+00:00",
+  "updated": "2026-07-10T05:27:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
