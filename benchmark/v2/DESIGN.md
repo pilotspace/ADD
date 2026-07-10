@@ -1,4 +1,4 @@
-# add-bench v2 — the trust-dimension benchmark (DRAFT for intake)
+# add-bench v2 — the trust-dimension benchmark (EXECUTED — WV1+WV2 rep0 complete, ledgers in `../results/`; WV3–WV6 remain gated)
 
 ## Why v2
 
