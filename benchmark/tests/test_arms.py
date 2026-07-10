@@ -12,15 +12,21 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 ARMS_DIR = ROOT / "arms"
 
 
-def test_five_arms_validate_with_fairness_parity():
+def test_all_arms_validate_with_fairness_parity():
+    # v2-wv1-longitudinal M5 (@v2): add-main joins as the main-branch control arm
+    assert "add-main" in ARM_NAMES
     arms = [load_arm(ARMS_DIR / f"{name}.toml") for name in ARM_NAMES]
-    assert len(arms) == 5
+    assert len(arms) == 6
     fairness = {(a.same_model, a.token_ceiling, a.turn_ceiling) for a in arms}
     assert len(fairness) == 1, f"fairness fields diverge across arms: {fairness}"
     for a in arms:
         assert a.same_model is True
         if a.name in ("gsd", "spec-kit"):
             assert a.pin, f"{a.name} missing pin"
+    # the control arm must be SHA-pinned even though first-party (a moving
+    # main is never re-measured silently — §3 @v2 flag)
+    add_main = next(a for a in arms if a.name == "add-main")
+    assert add_main.pin, "add-main missing its main-SHA pin"
 
 
 def test_unpinned_arm_rejected(tmp_path):

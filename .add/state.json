@@ -7988,10 +7988,10 @@
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T02:59:51+00:00",
-      "updated": "2026-07-10T03:05:00+00:00",
+      "updated": "2026-07-10T03:14:25+00:00",
       "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-10T03:03:49+00:00",
+        "version": "v2",
+        "frozen_at": "2026-07-10T03:13:58+00:00",
         "approved_by": "Tin Dang",
         "actor": {
           "name": "Tin Dang",
@@ -8001,12 +8001,12 @@
       },
       "flag_verified": true,
       "tripwire": {
-        "contract_md5": "6ad9b3effdbde8db92bc72a4ae6b2571",
+        "contract_md5": "d774495c51e8791be25b00d08f585b0b",
         "tests": {
           "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
           "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
           "benchmark/tests/test_adherence_census.py": "0762a2c8ab78e2e9996dd49274ba8a0e",
-          "benchmark/tests/test_arms.py": "ecde8e754b161f9699147e07c80d3426",
+          "benchmark/tests/test_arms.py": "639562d3d560c4cfa99ab490cac522c5",
           "benchmark/tests/test_carry_forward.py": "35bb76ee6fec7b18c7409a8145efbedb",
           "benchmark/tests/test_fidelity_dip.py": "413b79b07679ac9e27c450472e4dc794",
           "benchmark/tests/test_hard_wm6.py": "6388035400849ea7bbd2c85549cf2b97",
@@ -8034,12 +8034,12 @@
         "declared": [
           "benchmark/"
         ],
-        "snapshot_md5": "8542fb9fa603204ca83ff83ee4f1e823"
+        "snapshot_md5": "b3df6a45c6b37c24dea1a16ab1cc8a8b"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T03:05:00+00:00",
+  "updated": "2026-07-10T03:14:25+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

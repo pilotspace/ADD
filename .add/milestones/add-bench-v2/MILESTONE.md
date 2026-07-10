@@ -20,6 +20,8 @@ Out: WV3–WV6 (interrupted-session · underspecified · security-floor · trace
 - **n≥3 reps** for any headline claim; single reps are labeled n=1 and never headline.
 - **Spend is human-gated per campaign**: harness code builds freely; every paid agent-run campaign gets an explicit human go (WV1 ≈ $60–90 · WV2 ≈ $25–40).
 - Run all campaigns via `benchmark.pilot run-all` (run.py bypasses resolve_setup_steps — todo #27).
+- **Trusted-flag floor (2026-07-10, human fairness challenge)**: a feature is `trusted` only if probes pass AND regression = 0 AND tests_weakened = 0 AND **the arm's own test suite exists and is green** — a testless arm can never score trusted (closes the tests_weakened loophole). Trust axis reports as a vector, never one collapsed float.
+- **Control arm (2026-07-10, human directive)**: campaigns also run `add-main` — ADD installed from the MAIN branch — so branch-engine changes are controlled against the released flow, not just against other tools.
 
 ## Shared / risky contracts (freeze these first)
 - probe-suite format (per-WM deterministic fidelity oracle: endpoint × payload × expected) -> owning task v2-meter-fixes

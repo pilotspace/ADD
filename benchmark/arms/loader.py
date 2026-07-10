@@ -12,7 +12,9 @@ import tomllib
 
 from benchmark.schema.run_record import BenchError
 
-ARM_NAMES = ("add", "vanilla", "plan-mode", "gsd", "spec-kit")
+# add-main: the MAIN-branch control arm (v2-wv1-longitudinal M5 @v2) — first-party,
+# SHA-pinned via its toml so branch-engine changes are controlled against the release.
+ARM_NAMES = ("add", "add-main", "vanilla", "plan-mode", "gsd", "spec-kit")
 PIN_REQUIRED_ARMS = frozenset({"gsd", "spec-kit"})
 REQUIRED_KEYS = ("name", "setup_steps", "prompt_wrapper", "pin")
 REQUIRED_FAIRNESS_KEYS = ("same_model", "token_ceiling", "turn_ceiling")

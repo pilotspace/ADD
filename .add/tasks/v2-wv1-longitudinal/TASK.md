@@ -31,7 +31,8 @@ Must:
 <must>
   - M1 `aggregate_reps` additionally aggregates the v2 metrics — regression_rate, oracle_pass_rate, tests_weakened — with OPTIONAL-key tolerance: a record missing a key is EXCLUDED from that metric's distribution and counted in `n_missing_<label>`; mixed v1/v2 record sets never crash
   - M2 `_REP_METRICS` grows the three v2 entries; the existing (tokens, cost, fidelity) triple is untouched so archived-campaign aggregation is byte-identical for v1 keys
-  - M3 the WV1 campaign runs `run-all --arms add,spec-kit,vanilla --wms 1,2,3 --reps 3` on the PINNED meter (claude-sonnet-5 / effort medium, pin `4d0c52e`) — ONLY after an explicit human spend go (milestone shared decision); partial reps (arm-halt on a failed WM) are recorded as-is, never re-rolled silently
+  - M3 the WV1 campaign runs `run-all --arms add add-main spec-kit vanilla --wms 1,2,3 --reps 3` on the PINNED meter (claude-sonnet-5 / effort medium, pin `4d0c52e`) — ONLY after an explicit human spend go (milestone shared decision); partial reps (arm-halt on a failed WM) are recorded as-is, never re-rolled silently   <!-- @v2 change request 2026-07-10 (human directive): + add-main control arm -->
+  - M5 (@v2) a new `add-main` CONTROL arm — ADD installed from the MAIN branch via a pinned git worktree — same fairness floor (same_model · 200k tokens · 60 turns), pin = the main SHA; controls this branch's engine changes against the released flow
   - M4 results land as a ledger section in `benchmark/results/` — per-arm × per-WM table: cost · turns · oracle_pass_rate · regression_rate · tests_weakened, with the honest-outcome clause applied (any floor spec-kit/vanilla holds is stated) and every partial/failed rep disclosed
 </must>
 Reject:
@@ -76,8 +77,14 @@ Scenario: mixed v1/v2 records never crash   # M1, R1
 Scenario: campaign spend is human-gated and staged   # M3
   Given the harness is ready and the human said go
   When the WV1 campaign launches
-  Then rep0 runs first across all 3 arms; the 3× extrapolation is shown before reps 1-2 continue
+  Then rep0 runs first across all arms; the 3× extrapolation is shown before reps 1-2 continue
   And every launched rep lands in the ledger — partial arm-halts disclosed, none re-rolled
+
+Scenario: add-main is a valid control arm   # M5 (@v2)
+  Given benchmark/arms/add-main.toml pointing at a main-branch worktree, pin = the main SHA
+  When load_arm validates all ARM_NAMES recipes
+  Then add-main loads with the identical fairness floor as every other arm
+  And the existing arms' tomls are byte-unchanged
 
 Scenario: the ledger answers the hypothesis honestly   # M4, R2, R3
   Given all reps complete (or halt)
@@ -105,11 +112,17 @@ benchmark/pilot.py:
     inside that metric's entry (0 carriers -> entry is {"n_missing": n} ONLY)   # R1
 
 campaign (M3 — execution, not code):
-  python3 -m benchmark.pilot run-all --arms add spec-kit vanilla --wms 1 2 3 --reps 3
+  python3 -m benchmark.pilot run-all --arms add add-main spec-kit vanilla --wms 1 2 3 --reps 3
     --runs-root <fresh dir> --repo-root <this repo> --timeout-s 1800
   meter: pinned claude-sonnet-5 / effort medium (pin 4d0c52e); launch AFTER human go;
   staged: rep0 all arms -> show 3x cost extrapolation -> human continue for reps 1-2
   halts recorded as-is; no silent re-rolls                            # R3
+
+add-main control arm (M5 @v2 — human directive 2026-07-10):
+  benchmark/arms/add-main.toml: setup_steps install add-method from a MAIN-branch
+  git worktree (absolute campaign-local path), prompt_wrapper = "add-loop",
+  pin = "<main SHA> (git worktree of main)"; fairness floor identical to all arms.
+  loader.ARM_NAMES += "add-main"  (first-party arm: pin key present, not PIN_REQUIRED)
 
 ledger (M4): a "WV1 longitudinal" section in benchmark/results/ (same file or sibling of
   2026-07-sonnet-campaign.md): per-arm x per-WM table of cost · turns · oracle_pass_rate ·
@@ -120,9 +133,10 @@ Schema: no record-schema change (task1's v2 keys reused); aggregate output dict 
 ```
 
 Glossary deltas: `n_missing: per-metric count of records in a rep group not carrying an optional v2 key — disclosure, never imputation`
-Least-sure flag surfaced at freeze: [spec] the $60–90 spend estimate is extrapolated from wm1-only pricing — wm2/wm3 grown-workspace runs may cost materially more; mitigated by the staged rep0 → extrapolate → human-continue gate inside M3.
-Status: FROZEN @ v1 — approved by Tin Dang
-Reported: yes — freeze report rendered 2026-07-10 (banner/ARC/SHAPE, AskUserQuestion)
+Least-sure flag surfaced at freeze: [spec] the spend estimate (now 4 arms, ~$80–120) is extrapolated from wm1-only pricing — wm2/wm3 grown-workspace runs may cost materially more; mitigated by the staged rep0 → extrapolate → human-continue gate inside M3. (@v2 note: the add-main worktree pins main at ONE SHA — a moving main is never re-measured silently.)
+Status: FROZEN @ v2 — approved by Tin Dang
+<!-- @v2 change request 2026-07-10 — human directive: + add-main control arm; v1 was approved by Tin Dang -->
+Reported: yes — @v1 freeze report + the @v2 change rendered in-chat before re-freeze
 <!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
@@ -135,6 +149,7 @@ Plan (one test per scenario, asserting behavior not internals):
   - test_aggregate_v2_metrics: arrange 3 synthetic v2 records (add, wm2) / act aggregate_reps / assert pass_rate {mean 0.9, min 0.8, max 1.0} + regression mean ≈0.0333 · covers: M1, M2
   - test_aggregate_v1_output_unchanged: arrange v1-only records / act / assert the tokens/cost/fidelity sub-dicts equal today's output exactly · covers: M2
   - test_aggregate_mixed_records_n_missing: arrange 2 v2 + 1 v1 record in one group / act / assert v2 metric aggregates over 2 with n_missing 1; a zero-carrier group yields {"n_missing": 3} only, no mean key · covers: M1, R1
+  - (@v2) test_arms.py amended: all ARM_NAMES recipes validate incl. add-main, fairness parity across the FULL set, add-main pin non-empty · covers: M5
 </test_plan>
 
 Tests live in: `benchmark/tests/` · MUST run red (missing implementation) before Build. (M3/M4 are campaign execution + prose — verified at the gate by the records + ledger themselves, not unit tests.)
@@ -227,6 +242,8 @@ Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency 
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
+- [SPEC · open] tests_weakened has a TESTLESS-ARM LOOPHOLE: an arm writing zero tests can never weaken one (clean 0) while ADD carries the largest false-positive surface — the `trusted` flag must ALSO require the arm's OWN suite to exist and be green; add snapshot-derived own_tests_count/own_asserts_count (tamper.py snapshots already hold the data, zero re-runs) (evidence: human fairness challenge 2026-07-10; owned by v2-scoring-report)
+- [SPEC · open] the trust axis prints as a VECTOR (pass rate · regression · weakened · own-test evidence · traceability when WV6 lands), never collapsed to one float; human-attention cost stays a disclosed unmeasurable with WV6 traceability as proxy (evidence: same challenge; owned by v2-scoring-report)
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
