@@ -1000,6 +1000,19 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not _flag_well_formed(raw3):
         _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
              f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # quality-floors lever 2 (fast-lane-boundary-line): a §1 `Boundary:` line still carrying
+    # the bare template placeholder (or empty) refuses the freeze — the wm2 input-dialect
+    # floor at the fast lane's single approval seam. Absent line = grandfathered (legacy
+    # fast tasks + the full lane gain no new refusal). Reads the §1 span only, first
+    # physical line of the declaration (the _declared_scope convention); a backtick-carrying
+    # value is exempt from the placeholder rule (_section_unfilled's fence exemption).
+    bnd = re.search(r"(?m)^Boundary:[ \t]*(.*)$", _phase_spans(text).get(1, ""))
+    if bnd is not None:
+        bval = bnd.group(1).strip()
+        if not bval or ("`" not in bval and re.fullmatch(r"<.*>", bval)):
+            _die(f"boundary_unfilled: {slug}'s §1 Boundary: line still carries the template "
+                 f"placeholder — declare >=1 format-variant per external input shape "
+                 f"(or an explicit \"none — ...\"), then re-freeze")
     # the human declares the risk-CLASS at freeze (risk-sensitivity-taxonomy): a present-but-
     # unknown sensitivity token is refused here (validate-then-write — nothing is written);
     # an absent token is grandfathered (allowed), a valid member proceeds. The engine never

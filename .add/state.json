@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "dialect-check-and-data-vocab",
+  "active_task": "fast-lane-boundary-line",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7653,10 +7653,58 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fast-lane-boundary-line": {
+      "title": "Fast-lane Boundary: line \u2014 the fast freeze refuses an undeclared input-format boundary",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "quality-floors",
+      "depends_on": [],
+      "created": "2026-07-10T18:07:42+00:00",
+      "updated": "2026-07-10T18:21:21+00:00",
+      "fast": true,
+      "oneshot": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-10T18:09:30+00:00",
+        "approved_by": "claude-fable-5",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        },
+        "mode": "ai-plan-verify",
+        "verified": {
+          "anchors": true,
+          "rules": true,
+          "shape": true,
+          "flag": true
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "a91b41247fee60972018aa10a1eb095e",
+        "tests": {
+          "add-method/tooling/test_fast_boundary_line.py": "6896b88704e4568d91fb31e5809b3d4c"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/",
+          ".add/SEAMS.md",
+          "tmp/"
+        ],
+        "snapshot_md5": "a020c8e5810621aa5e5a9394aa3820cb"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T18:05:06+00:00",
+  "updated": "2026-07-10T18:21:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8830,7 +8878,7 @@
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
-    "quality-floors": "dialect-check-and-data-vocab"
+    "quality-floors": "fast-lane-boundary-line"
   },
   "todos": [
     {

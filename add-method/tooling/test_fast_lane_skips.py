@@ -114,6 +114,16 @@ class _Harness(unittest.TestCase):
     def _task_md(self, slug):
         return self.tmp / ".add" / "tasks" / slug / "TASK.md"
 
+    def _fill_boundary(self, slug):
+        # boundary floor (fast-lane-boundary-line): the rendered fast template now
+        # scaffolds a placeholder `Boundary:` line that refuses the freeze — fill it
+        # with a real declaration, as any real task must before its freeze
+        p = self._task_md(slug)
+        t = p.read_text(encoding="utf-8")
+        t = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                   "Boundary: aware vs naive timestamp on the request payload", t, count=1)
+        p.write_text(t, encoding="utf-8")
+
     def _set_header(self, slug, **kv):
         """Insert/replace autonomy:/fast:/oneshot:/skips: header lines."""
         p = self._task_md(slug)
@@ -330,6 +340,7 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
         new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
+        self._fill_boundary(slug)
         self._silent("freeze", "--by", "Human")
 
     def test_six_non_skippable_crossings_never_invoke_task_skip_set(self):
@@ -598,6 +609,7 @@ class FloorCompositionTest(_Harness):
         new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
+        self._fill_boundary("risky")
         out, code = self._run("freeze", "--ai-plan-verify", "--by", "agent:x")
         self.assertNotEqual(code, 0)
         self.assertIn("ai_freeze_blocked_sensitivity", out)

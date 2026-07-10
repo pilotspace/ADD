@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "7f96609e2ffb60fb0fcce33c4a763b96"  # re-aimed @ spec-dialect-floor v1 (_dialect_gaps helper + tests->build dialect warning + check dialect_gap lint). prior: 5b0f0538… @ branch-merge 2026-07-10
+ENGINE_MD5 = "16cd7cca2754c31ae0ff147b14839bee"  # re-aimed @ fast-lane-boundary-line v1 (cmd_freeze boundary_unfilled guard after unflagged_freeze). prior: 7f96609e… @ spec-dialect-floor
 ENGINE_PKG_MD5 = "710a009fd35e945f0d0143bcd59ee05c"  # re-aimed @ spec-dialect-floor v1 (add_engine/constants.py: _DIALECT_CLASSES registry). prior: 5f60c0b2… @ fast-lane-skips v1
