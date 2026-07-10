@@ -482,13 +482,14 @@ class TemplateScaffoldTest(unittest.TestCase):
         self.assertIn("skips:", text)
         self.assertIn("Skip rationale:", text)
 
-    def test_full_template_byte_identical_to_before(self):
-        # the full-lane template's git-tracked content must be untouched by this task
-        import subprocess
-        out = subprocess.run(["git", "diff", "--stat", "HEAD", "--",
-                              "add-method/tooling/templates/TASK.md.tmpl"],
-                             cwd=REPO_ROOT, capture_output=True, text=True)
-        self.assertEqual(out.stdout.strip(), "", "TASK.md.tmpl must be untouched")
+    def test_full_template_carries_no_skips_machinery(self):
+        # the skip lane is fast-template-only: the full template must never gain a
+        # `skips:` header hint. (Amended @ dialect-check-and-data-vocab TESTS re-cross:
+        # the original empty-git-diff guard was task-local and could not survive any
+        # later legitimate full-template task — re-pinned to the invariant it protected.)
+        body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
+                "TASK.md.tmpl").read_text(encoding="utf-8")
+        self.assertNotIn("skips:", body, "skip machinery must stay fast-lane-only")
 
 
 # ---------------------------------------------------------------------------

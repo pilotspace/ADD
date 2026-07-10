@@ -101,7 +101,7 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
 Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
+Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
 Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>
 Data strategy: <the shapes and access patterns the work realizes — data structures, schema use, information architecture for prose/docs — must agree with the §3 Schema line>
 Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor it extends>
@@ -136,6 +136,7 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] <another observable outcome> — confirmed by <evidence seen>
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
+- [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
 - [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
 - [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
 - [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>

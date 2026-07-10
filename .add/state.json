@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "spec-dialect-floor",
+  "active_task": "dialect-check-and-data-vocab",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -7603,10 +7603,60 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "dialect-check-and-data-vocab": {
+      "title": "\u00a76 dialect check line + datetime/money/tz \u21d2 data sensitivity vocabulary",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "quality-floors",
+      "depends_on": [],
+      "created": "2026-07-10T17:36:22+00:00",
+      "updated": "2026-07-10T18:05:06+00:00",
+      "fast": true,
+      "oneshot": true,
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-10T17:38:23+00:00",
+        "approved_by": "claude-fable-5",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        },
+        "mode": "ai-plan-verify",
+        "verified": {
+          "anchors": true,
+          "rules": true,
+          "shape": true,
+          "flag": true
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7643468103648bf38a55fab4c7c302b8",
+        "tests": {
+          "add-method/tooling/test_dialect_vocab_lines.py": "a5792651f844600977d5117eb8046335"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/",
+          ".claude/",
+          ".add/GLOSSARY.md",
+          "tmp/"
+        ],
+        "snapshot_md5": "cbc86c6b27748b7cb2d14e4a7d1e55c0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T17:35:35+00:00",
+  "updated": "2026-07-10T18:05:06+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8780,7 +8830,7 @@
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
-    "quality-floors": "spec-dialect-floor"
+    "quality-floors": "dialect-check-and-data-vocab"
   },
   "todos": [
     {

@@ -9,6 +9,9 @@ DOMAIN classes (the AI keeps these current as the domain is learned — see the 
 
 Base (always apply): security · data · architecture · mechanical
 
+Datetime, money, or timezone arithmetic ⇒ declare `data` (full lane) — value formats are the
+risk surface (a naive-timestamp suite stays green through an aware-timestamp crash: bench wm2).
+
 <!-- Domain classes — uncomment and add yours, one `- <token>: <definition>` bullet per line:
 - pii: personally identifiable information; any task touching it escalates to human review
 - payments: money movement; reconciliation + an audit trail are required

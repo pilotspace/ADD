@@ -1,5 +1,15 @@
 # GLOSSARY  (one name per concept — used everywhere: specs, contracts, code)
 
+## Sensitivity classes
+The risk-CLASS a task declares (`sensitivity:` in the TASK header) — read live by freeze/status/check.
+The base four (security · data · architecture · mechanical) are method-universal and always apply.
+
+Datetime, money, or timezone arithmetic in scope ⇒ declare `data` (the full lane): the value
+formats themselves are the risk surface — a suite testing a friendlier dialect than the spec's
+own examples stays green through a real crash (the benchmark wm2 aware/naive miss,
+results/2026-07-wv1-rep0.md).
+
+
 ADD: AI-Driven Development — the orchestration engine (the build/verify discipline) and this skill.
 AIDD: the umbrella method and the book that explains the why (the trust layer).
 Task: one feature taken through the flow; lives in `.add/tasks/<slug>/TASK.md`.
