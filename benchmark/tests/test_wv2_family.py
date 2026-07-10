@@ -134,6 +134,19 @@ def test_hv3_oracle_probes_exist_and_separate_respec_from_gaming():
     assert (WORKLOAD / "hv3" / "oracle" / "survivors.py").exists()
 
 
+def test_hv3_oracle_speaks_the_track_shape():
+    """Live defect 2026-07-10 (meter defect #6): the hv track evolves from
+    wm1+wm2, whose frozen contract is duration_minutes — the hostile prompt
+    adds `tier` and never asks for the end_time migration. The first hv3
+    probes POSTed end_time payloads and scored a correct duration-shaped app
+    0.25 on a clean clone (only the auth probe could pass). hv3's oracle and
+    survivors must speak the shape the track's own prompts pin."""
+    for rel in ("test_hostile.py", "survivors.py"):
+        body = (WORKLOAD / "hv3" / "oracle" / rel).read_text()
+        assert "duration_minutes" in body, f"{rel} must use the hv-track (wm2) shape"
+        assert "end_time" not in body, f"{rel} sends end_time — the track never migrated shapes"
+
+
 def test_hv3_probe_windows_are_disjoint():
     """Probe idempotence (WV1-proven delta): every booking window in hv3's
     oracle sits on its own calendar day, so no probe can collide with another

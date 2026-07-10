@@ -36,14 +36,13 @@ def test_premium_overlap_allowed():
     with running_app(_workspace()) as base:
         status, first = http_call(
             "POST", f"{base}/bookings",
-            {"title": "base", "start_time": "2027-01-04T09:00:00Z", "end_time": "2027-01-04T10:00:00Z"},
+            {"title": "base", "start_time": "2027-01-04T09:00:00Z", "duration_minutes": 60},
             headers=_auth(TOKEN_A),
         )
         assert status in (200, 201), first
         status, premium = http_call(
             "POST", f"{base}/bookings",
-            {"title": "vip", "start_time": "2027-01-04T09:30:00Z",
-             "end_time": "2027-01-04T10:30:00Z", "tier": "premium"},
+            {"title": "vip", "start_time": "2027-01-04T09:30:00Z", "duration_minutes": 60, "tier": "premium"},
             headers=_auth(TOKEN_A),
         )
         assert status in (200, 201), premium
@@ -54,13 +53,13 @@ def test_nonpremium_overlap_still_409():
     with running_app(_workspace()) as base:
         status, first = http_call(
             "POST", f"{base}/bookings",
-            {"title": "base", "start_time": "2027-02-08T09:00:00Z", "end_time": "2027-02-08T10:00:00Z"},
+            {"title": "base", "start_time": "2027-02-08T09:00:00Z", "duration_minutes": 60},
             headers=_auth(TOKEN_A),
         )
         assert status in (200, 201), first
         status, second = http_call(
             "POST", f"{base}/bookings",
-            {"title": "clash", "start_time": "2027-02-08T09:30:00Z", "end_time": "2027-02-08T10:30:00Z"},
+            {"title": "clash", "start_time": "2027-02-08T09:30:00Z", "duration_minutes": 60},
             headers=_auth(TOKEN_A),
         )
         assert status == 409, second
@@ -77,7 +76,7 @@ def test_wm1_crud_intact():
     with running_app(_workspace()) as base:
         status, created = http_call(
             "POST", f"{base}/bookings",
-            {"title": "plain", "start_time": "2027-03-10T09:00:00Z", "end_time": "2027-03-10T09:30:00Z"},
+            {"title": "plain", "start_time": "2027-03-10T09:00:00Z", "duration_minutes": 60},
             headers=_auth(TOKEN_A),
         )
         assert status in (200, 201), created

@@ -8071,7 +8071,7 @@
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T06:25:26+00:00",
-      "updated": "2026-07-10T06:46:46+00:00",
+      "updated": "2026-07-10T07:55:09+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-10T06:35:05+00:00",
@@ -8092,12 +8092,12 @@
           "benchmark/",
           "tmp/"
         ],
-        "snapshot_md5": "76f78737e47ffa18e40a25b159269371"
+        "snapshot_md5": "97931ca368abe56eba66d2347220b633"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T06:46:46+00:00",
+  "updated": "2026-07-10T07:55:09+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
