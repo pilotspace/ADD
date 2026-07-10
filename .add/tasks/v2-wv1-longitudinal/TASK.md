@@ -2,9 +2,8 @@
 
 slug: v2-wv1-longitudinal · created: 2026-07-10 · stage: mvp
 milestone: add-bench-v2
-autonomy: auto   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -31,7 +30,7 @@ Must:
 <must>
   - M1 `aggregate_reps` additionally aggregates the v2 metrics — regression_rate, oracle_pass_rate, tests_weakened — with OPTIONAL-key tolerance: a record missing a key is EXCLUDED from that metric's distribution and counted in `n_missing_<label>`; mixed v1/v2 record sets never crash
   - M2 `_REP_METRICS` grows the three v2 entries; the existing (tokens, cost, fidelity) triple is untouched so archived-campaign aggregation is byte-identical for v1 keys
-  - M3 the WV1 campaign runs `run-all --arms add add-main spec-kit vanilla --wms 1,2,3 --reps 3` on the PINNED meter (claude-sonnet-5 / effort medium, pin `4d0c52e`) — ONLY after an explicit human spend go (milestone shared decision); partial reps (arm-halt on a failed WM) are recorded as-is, never re-rolled silently   <!-- @v2 change request 2026-07-10 (human directive): + add-main control arm -->
+  - M3 the WV1 campaign runs `run-all --arms add add-main spec-kit vanilla --wms 1,2,3 --reps 3` on the PINNED meter (claude-sonnet-5 / effort medium, pin `4d0c52e`) — ONLY after an explicit human spend go (milestone shared decision); partial reps (arm-halt on a failed WM) are recorded as-is, never re-rolled silently
   - M5 (@v2) a new `add-main` CONTROL arm — ADD installed from the MAIN branch via a pinned git worktree — same fairness floor (same_model · 200k tokens · 60 turns), pin = the main SHA; controls this branch's engine changes against the released flow
   - M4 results land as a ledger section in `benchmark/results/` — per-arm × per-WM table: cost · turns · oracle_pass_rate · regression_rate · tests_weakened, with the honest-outcome clause applied (any floor spec-kit/vanilla holds is stated) and every partial/failed rep disclosed
   - M6 (@v3) wm2 PROMPT.md PINS the exact token set the oracle asserts (`test-token-alice` → alice · `test-token-bob` → bob) — live rep0 proof: a spec-compliant app choosing `token-alice` scored pass_rate 0.2 on a meter artifact, the v1-judge defect class reborn; the wm1/wm3 substring anchors (test_wm123_untouched) stay intact
@@ -55,8 +54,6 @@ Assumptions — lowest-confidence first:
   - [x] the carry-forward seed gives WV1 its same-codebase evolution — confirmed: _seed_from_prior copies the prior WM's completed workspace (task1 ground + this §0)
   - [x] wm1-3 prompts form the intended longitudinal triple — confirmed: CRUD → auth/business rules touching wm1 handlers → refactor+conflict rules (test_wm123_untouched pins them)
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -98,8 +95,6 @@ Scenario: the ledger answers the hypothesis honestly   # M4, R2, R3
 ```
 
 </scenarios>
-
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
 
 ---
 
@@ -154,9 +149,8 @@ Schema: no record-schema change (task1's v2 keys reused); aggregate output dict 
 Glossary deltas: `n_missing: per-metric count of records in a rep group not carrying an optional v2 key — disclosure, never imputation`
 Least-sure flag surfaced at freeze: [spec] the spend estimate (now 4 arms, ~$80–120) is extrapolated from wm1-only pricing — wm2/wm3 grown-workspace runs may cost materially more; mitigated by the staged rep0 → extrapolate → human-continue gate inside M3. (@v2 note: the add-main worktree pins main at ONE SHA — a moving main is never re-measured silently.)
 Status: FROZEN @ v3 — approved by Tin Dang
-<!-- @v3 change request 2026-07-10 — meter defects found live in rep0 (token coupling + regression inversion); human picked "finish add wm3, stop, fix both defects, relaunch". @v2 (+add-main) and @v1 were approved by Tin Dang -->
+
 Reported: yes — the two defects + fix shape rendered in-chat (diagnosis with live probe evidence) before re-freeze
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -177,15 +171,12 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `benchmark/tests/` · MUST run red (missing implementation) before Build. (M3/M4 are campaign execution + prose — verified at the gate by the records + ledger themselves, not unit tests.)
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
 ## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
 
-Scope (may touch): `benchmark/`
+Scope (may touch): `benchmark/` `tmp/`
 Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; preferred architecture/pattern strategies; advise solution/method to resolve issues/implement features; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
 Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>
 Data strategy: <the shapes and access patterns the work realizes — data structures, schema use, information architecture for prose/docs — must agree with the §3 Schema line>
@@ -200,60 +191,56 @@ Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
-
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — full benchmark suite 167 passed (post survivors-fallback fix, 2026-07-10)
+- [x] coverage did not decrease — suite grew 154→167 (aggregate 3 · survivors 7 · permission pin 1 · denominator pins 2)
+- [x] no test or contract was altered during build — every test change went through a TESTS re-cross (4 re-crosses this task, each strengthen-only); §3 changed only via @v2/@v3 change requests, re-frozen
+- [x] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
+- [x] concurrency / timing — campaigns serialized (one pilot at a time); mid-campaign score.py edit safe because the pilot's import is cached and spawned oracles never import score.py (verified before editing)
+- [x] no exposed secrets/injection/deps — oracle tokens are fake test literals; `--dangerously-skip-permissions` scoped to throwaway bench workspaces only (agent.py docstring states the bound)
+- [x] layering — marker filter enters via the existing _run_oracle_suites seam (optional arg, callers unchanged); survivors fix is workload-local
+- [x] a person reviewed and approved — human directed the meter-defect relaunch, the add-main control arm, and exercised the M3 spend gate (skip reps 1-2 → WV2) 2026-07-10
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] `python3 -m pytest benchmark/tests/test_wv1_aggregate.py` 3/3 green + full benchmark suite green — confirmed by pytest summary lines
-- [ ] rep0 campaign (3 arms × wm1-3, pinned meter) produces 9 record.json with oracle_pass_rate + regression_rate (+ tests_weakened where snapshots pair) — confirmed by reading the records
-- [ ] the rep0 → 3× cost extrapolation is shown to the human BEFORE reps 1-2 launch — confirmed by the conversation record
-- [ ] WV1 ledger section exists in benchmark/results/ with the per-arm × per-WM table + honest-outcome findings — confirmed by reading it
+- [x] test_wv1_aggregate 3/3 green inside the 167-passed full run — pytest summaries in the session record
+- [x] rep0 campaign grew to 4 arms (M5 @v2 add-main) × wm1-3 = 12 scored record.json, all with oracle_pass_rate + regression_rate + tests_weakened — read individually; 5 records carry a `rescored` provenance artifact (meter defects #4/#5 + probe-state pollution, originals preserved)
+- [x] rep0 → 3× extrapolation shown ($29.74/rep → ≈$104 total) BEFORE any reps 1-2 launch; human chose skip-to-WV2 at the gate — reps 1-2 never launched (the staged gate working as designed)
+- [x] ledger benchmark/results/2026-07-wv1-rep0.md — corrected scoreboard, honest-outcome findings (WV1 non-differentiating at n=1; vanilla/spec-kit hold all floors ~3× cheaper; branch wm2 cancellation-window miss named), 5 meter defects, void disclosures
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING — marker_expr consumed by compute_oracle_pass_rate; survivors._create fix exercised by all 7 survivors probes; permission flag in default_agent_cmd argv (pin test asserts each)
+- [x] DEAD-CODE — none added; v1 compute_regression_rate remains a PRE-EXISTING disclosed prune candidate (§7 delta, unchanged this task)
+- [x] SEMANTIC — ledger read end-to-end after writing: table values re-checked against the 12 records via script; WHY-VOID.md matches the transcripts it cites
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] §3 anchors resolve — aggregate_reps/_REP_METRICS (pilot.py), compute_regression_rate_v2 + survivors paths (score.py, workload/wm{1,2}/oracle/survivors.py), add-main.toml + ARM_NAMES (loader.py): all grep-confirmed in the current tree at gate time
+- [x] anchors moved: none renamed; default_agent_cmd and compute_oracle_pass_rate grew flags/args in place (pin tests updated via TESTS re-cross)
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self · adversarially checked: the campaign itself was the refute pass — every all-arms-identical score was treated as a meter indictment, not accepted (defects #4/#5 found that way); the clean-state rescore ran against a KNOWN-GOOD control app first (probe validated before arms rescored); each of the 5 meter fixes landed red-first; the corrected board CONTRADICTS my own earlier "ADD arms failed wm3" claim — retracted in the ledger, the opposite of confirmation bias
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — bench tokens are fake literals; permission bypass bounded to throwaway workspaces; no secret/injection surface added
+2. Concurrency: CLEAR — pilots serialized; monitor loops read-only; mid-campaign score.py edit proven inert to the running pilot before editing
+3. Architecture: CLEAR — fixes entered via existing seams (marker arg, argv builder, workload-local probe); no new layers
+Verdict: PASS
+Residue: none (reps 1-2 not run is a HUMAN GATE DECISION recorded below, not residue)
+Binding: advisory — mechanical
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — corrected scoreboard + honest-outcome findings + cost model rendered to the human before the gate question
+Outcome: PASS
+Note: M3's --reps 3 closed at rep0 by the human exercising the M3 staged spend gate (skip reps 1-2 → WV2, 2026-07-10) — the gate mechanism §3 prescribes, not an unmet criterion
+Reviewed by: Tin Dang (gate answer, 2026-07-10) · date: 2026-07-10
 
 ---
 
@@ -262,13 +249,24 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose aggregate-extension + hand-run campaign; rejected new WV1-specific runner module (rejected: run_reps already does per-rep roots + halt semantics) · defer aggregation to v2-scoring-report (rejected: an unreadable campaign result can't be sanity-checked at the spend it costs)
+- [human] freeze — froze §3 @ v3 (approved by Tin Dang)
+- [AI] build — strategy used: as planned
+- [AI] verify — gate PASS (reviewed by Tin Dang (gate answer, 2026-07-10))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 - [SPEC · open] tests_weakened has a TESTLESS-ARM LOOPHOLE: an arm writing zero tests can never weaken one (clean 0) while ADD carries the largest false-positive surface — the `trusted` flag must ALSO require the arm's OWN suite to exist and be green; add snapshot-derived own_tests_count/own_asserts_count (tamper.py snapshots already hold the data, zero re-runs) (evidence: human fairness challenge 2026-07-10; owned by v2-scoring-report)
 - [SPEC · open] the trust axis prints as a VECTOR (pass rate · regression · weakened · own-test evidence · traceability when WV6 lands), never collapsed to one float; human-attention cost stays a disclosed unmeasurable with WV6 traceability as proxy (evidence: same challenge; owned by v2-scoring-report)
+- [SPEC · open] PROBE IDEMPOTENCE is load-bearing: score-time probes write bookings into persistent workspace stores, state seeds forward across WMs, and re-scores collide with prior runs — probes need unique per-run time windows or a state snapshot/restore around scoring; proved consequential (4 arms' wm3 scores + regressions were pollution artifacts) (evidence: 2026-07-10 clean-state rescore, benchmark/results/2026-07-wv1-rep0.md; owned by v2-wv2-hostile-change or v2-scoring-report)
+- [SPEC · open] records must stamp the resolved MODEL into artifacts — provenance today only recoverable from transcripts (evidence: human "all run in sonnet?" check 2026-07-10; owned by v2-scoring-report)
+- [SPEC · open] tests_weakened needs rename/evolution tolerance (match orphaned fingerprint multisets across names) or a printed caveat before it can sit in the trusted flag as ==0 — every nonzero value this campaign (5 of 5 diffed) was legit spec-driven evolution with growing suites (evidence: hand diffs in the 2026-07-10 session; ledger §weakened footnote)
+- [SPEC · open] WV2 should probe STORED-DATA MIGRATION deliberately: at wm3, add-main migrated its store and vanilla tolerated legacy rows, while add and spec-kit both CRASH (KeyError 'end_time') — a real un-metered trust differentiator found during rescore (evidence: per-arm stderr captures 2026-07-10; ledger finding 4)
+- [SPEC · open] add (branch) wm2 cancellation-window miss reproduces on clean state while add-main passes — a branch-flow fidelity regression to chase in the engine, not an ADD-flow property (evidence: clean-state wm2 rescore 2026-07-10)
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+- [ADD · open] IDENTICAL scores across independent arms indict the METER, not the arms — both wm3 defects (denominator ceiling, survivors fallback) were caught by that smell alone; cheap-looking runs ($0.4/WM vs $3-6 expected) are the same class of smell (evidence: meter defects #3-#5, 2026-07-10)
+- [ADD · open] a headless meter must be environmentally SELF-SUFFICIENT — model pin, permission grant, state isolation; ambient operator config changed mid-campaign and voided two arms (evidence: rep0-VOID-permdefect/WHY-VOID.md)
+- [TDD · open] validate a probe against a KNOWN-GOOD control app before believing it about arms under test — the goodapp control separated probe defects from arm failures in minutes (evidence: scratchpad goodapp 2/2 while all arms failed, 2026-07-10)
+

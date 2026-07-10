@@ -7983,12 +7983,12 @@
     },
     "v2-wv1-longitudinal": {
       "title": "WV1 longitudinal evolution \u2014 same-workspace WM1\u2192WM2\u2192WM3 workload + 3-arm campaign (spend gated)",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T02:59:51+00:00",
-      "updated": "2026-07-10T06:11:06+00:00",
+      "updated": "2026-07-10T06:23:34+00:00",
       "freeze": {
         "version": "v3",
         "frozen_at": "2026-07-10T03:50:07+00:00",
@@ -8033,14 +8033,40 @@
       },
       "scope": {
         "declared": [
-          "benchmark/"
+          "benchmark/",
+          "tmp/"
         ],
-        "snapshot_md5": "7e6933daaae7ab33c6286da60ee521ca"
+        "snapshot_md5": "c76ba9e3c74035cce654e47930ee1800"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-10T06:22:51+00:00",
+            "reason": "scope_violation: task 'v2-wv1-longitudinal' touched outside its declared \u00a75 Scope \u2014 tmp/abv2-wv1-survivorfallback.txt (1 total)",
+            "source": "scope"
+          },
+          {
+            "at": "2026-07-10T06:23:10+00:00",
+            "reason": "scope_violation: task 'v2-wv1-longitudinal' touched outside its declared \u00a75 Scope \u2014 tmp/abv2-wv1-oracledenominator.txt \u00b7 tmp/abv2-wv1-permgrant.txt (2 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-10T06:23:30+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T06:11:06+00:00",
+  "updated": "2026-07-10T06:23:34+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
