@@ -8066,12 +8066,12 @@
     },
     "v2-wv2-hostile-change": {
       "title": "WV2 hostile-change workload \u2014 gaming resistance + stored-data migration probe (spend gated)",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "add-bench-v2",
       "depends_on": [],
       "created": "2026-07-10T06:25:26+00:00",
-      "updated": "2026-07-10T07:55:09+00:00",
+      "updated": "2026-07-10T09:03:02+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-10T06:35:05+00:00",
@@ -8093,11 +8093,16 @@
           "tmp/"
         ],
         "snapshot_md5": "97931ca368abe56eba66d2347220b633"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T07:55:09+00:00",
+  "updated": "2026-07-10T09:03:02+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
