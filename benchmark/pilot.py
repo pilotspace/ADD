@@ -167,14 +167,29 @@ def run_pilot(
 # harness-multirep — controlled N-rep runs + distribution aggregation
 # --------------------------------------------------------------------------
 
-_REP_METRICS = (("tokens", "tokens_total"), ("cost", "cost_usd"), ("fidelity", "spec_fidelity"))
+_REP_METRICS = (
+    ("tokens", "tokens_total"),
+    ("cost", "cost_usd"),
+    ("fidelity", "spec_fidelity"),
+    # v2-wv1-longitudinal M2: the v2 trust metrics. regression_rate is a
+    # required key; oracle_pass_rate/tests_weakened are OPTIONAL (schema v2) —
+    # aggregation tolerates records that don't carry them (n_missing below).
+    ("pass_rate", "oracle_pass_rate"),
+    ("regression", "regression_rate"),
+    ("weakened", "tests_weakened"),
+)
 
 
 def aggregate_reps(records: Sequence[RunRecord]) -> dict:
     """PURE — group `records` by (arm, wm) and, per group, return `n` plus
-    {mean, min, max} for tokens_total / cost_usd / spec_fidelity. No IO.
-    Empty input -> {}. The full distribution (not just the mean) is reported
-    so single-rep variance can't hide behind a central-tendency number."""
+    {mean, min, max} for every _REP_METRICS entry. No IO. Empty input -> {}.
+    The full distribution (not just the mean) is reported so single-rep
+    variance can't hide behind a central-tendency number.
+
+    OPTIONAL v2 keys (schema v2) aggregate over the records CARRYING them;
+    absent carriers are disclosed as "n_missing": <count> inside that
+    metric's entry (only when > 0). A metric with ZERO carriers reports
+    {"n_missing": n} alone — never a fabricated 0.0 mean (R1)."""
     groups: dict[tuple[str, int], list[RunRecord]] = {}
     for record in records:
         groups.setdefault((record.arm, record.wm), []).append(record)
@@ -183,12 +198,19 @@ def aggregate_reps(records: Sequence[RunRecord]) -> dict:
     for key, recs in groups.items():
         entry: dict = {"n": len(recs)}
         for label, metric in _REP_METRICS:
-            values = [float(r.metrics[metric]) for r in recs]
-            entry[label] = {
+            values = [float(r.metrics[metric]) for r in recs if metric in r.metrics]
+            missing = len(recs) - len(values)
+            if not values:
+                entry[label] = {"n_missing": missing}
+                continue
+            stats: dict = {
                 "mean": sum(values) / len(values),
                 "min": min(values),
                 "max": max(values),
             }
+            if missing:
+                stats["n_missing"] = missing
+            entry[label] = stats
         summary[key] = entry
     return summary
 
