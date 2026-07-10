@@ -25,8 +25,8 @@ NOT_RUN = "not run"
 NA_BY_DEFINITION = "N/A (by definition)"
 
 
-def _load_record(runs_root: pathlib.Path, arm: str, wm: int) -> RunRecord | None:
-    path = runs_root / arm / f"wm{wm}" / "record.json"
+def _load_record(runs_root: pathlib.Path, arm: str, wm: int, family: str = "wm") -> RunRecord | None:
+    path = runs_root / arm / f"{family}{wm}" / "record.json"
     if not path.exists():
         return None
     try:
@@ -102,3 +102,102 @@ def render_report(
     for wm in wms:
         sections.append(_render_wm_table(root, wm, arms))
     return "\n".join(sections)
+
+
+# --------------------------------------------------------------------------
+# v2 — the trust vector + two-axis report (v2-scoring-report §3 @ v1)
+# --------------------------------------------------------------------------
+
+_WEAKENED_CAVEAT = (
+    "> tests_weakened caveat: raw counts include legitimate spec-driven test "
+    "evolution (renames, rule changes); the adjusted count is rename-tolerant "
+    "(only fingerprints present in NO current test count). Every WV1+WV2 rep0 "
+    "flag hand-diffed as evolution, zero tampering."
+)
+
+
+def render_trust_report(
+    runs_root: pathlib.Path,
+    arms: Sequence[str] = ARM_NAMES,
+    steps: Sequence[int] = (1, 2, 3),
+    family: str = "wm",
+) -> str:
+    """The two-axis report: per-arm x per-step TRUST VECTOR table (the
+    trusted flag never prints without its vector) + the headline printing v1
+    raw cost-per-feature BESIDE cost-per-trusted-feature. Read-only over
+    records; honest-outcome line REQUIRED when all arms tie on trust."""
+    from benchmark.trust import trusted
+
+    root = pathlib.Path(runs_root)
+    sections = [f"# Trust report — family {family}", "", _WEAKENED_CAVEAT, ""]
+
+    header = ("| arm | step | trusted | pass | regression | weakened raw/adj (verdict) "
+              "| own tests | own suite |")
+    rule = "|---|---|---|---|---|---|---|---|"
+    rows = [header, rule]
+    totals: dict[str, dict] = {}
+    for arm in arms:
+        cost = 0.0
+        trusted_steps = 0
+        seen_steps = 0
+        for step in steps:
+            record = _load_record(root, arm, step, family)
+            if record is None:
+                rows.append(f"| {arm} | {family}{step} | {NOT_RUN} | - | - | - | - | - |")
+                continue
+            v = trusted(record, root / arm, family)
+            seen_steps += 1
+            cost += float(record.metrics.get("cost_usd", 0.0))
+            trusted_steps += 1 if v["trusted"] else 0
+            rows.append(
+                f"| {arm} | {family}{step} | {'yes' if v['trusted'] else 'NO'} "
+                f"| {v['pass_rate']:.2f} | {v['regression']:.2f} "
+                f"| {v['weakened_raw']}/{v['weakened_adjusted']} ({v['weakened_verdict']}) "
+                f"| {v['own_tests']} | {v['own_suite']} |"
+            )
+        totals[arm] = {"cost": cost, "trusted": trusted_steps, "seen": seen_steps}
+    sections.append("\n".join(rows))
+    sections.append("")
+
+    sections.append("## Two-axis headline")
+    sections.append("| arm | raw cost-per-feature (v1 axis) | cost-per-trusted-feature (v2 axis) |")
+    sections.append("|---|---|---|")
+    for arm, s in totals.items():
+        if s["seen"] == 0:
+            sections.append(f"| {arm} | {NOT_RUN} | {NOT_RUN} |")
+            continue
+        raw_axis = s["cost"] / s["seen"]
+        trusted_axis = (f"${s['cost'] / s['trusted']:.2f}" if s["trusted"]
+                        else "n/a (0 trusted steps)")
+        sections.append(f"| {arm} | ${raw_axis:.2f} | {trusted_axis} |")
+
+    ran = {arm: s for arm, s in totals.items() if s["seen"]}
+    if ran and len({s["trusted"] for s in ran.values()}) == 1:
+        sections.append("")
+        sections.append(
+            "**Honest-outcome:** every arm holds the same trusted-step count — "
+            "the trust axis does not separate the arms here; separation is cost-only."
+        )
+    return "\n".join(sections)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="benchmark.report")
+    parser.add_argument("--trust", action="store_true")
+    parser.add_argument("--runs-root", default=None)
+    parser.add_argument("--family", default="wm", choices=("wm", "hv"))
+    parser.add_argument("--arms", nargs="*", default=list(ARM_NAMES))
+    parser.add_argument("--steps", nargs="*", type=int, default=[1, 2, 3])
+    args = parser.parse_args(argv)
+    root = pathlib.Path(args.runs_root) if args.runs_root else DEFAULT_RUNS_ROOT
+    if args.trust:
+        print(render_trust_report(root, arms=args.arms, steps=tuple(args.steps), family=args.family))
+    else:
+        print(render_report(root, arms=args.arms, wms=tuple(args.steps)))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

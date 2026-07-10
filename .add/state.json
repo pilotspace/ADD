@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "v2-wv2-hostile-change",
+  "active_task": "v2-scoring-report",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8099,10 +8099,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "v2-scoring-report": {
+      "title": "Two-axis scoring report \u2014 trust vector + cost-per-trusted-feature (no agent spend)",
+      "phase": "build",
+      "gate": "none",
+      "milestone": "add-bench-v2",
+      "depends_on": [],
+      "created": "2026-07-10T09:13:31+00:00",
+      "updated": "2026-07-10T10:02:08+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-10T10:00:52+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "f88e2d7c45e4372c715255c75db81299",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/",
+          "tmp/"
+        ],
+        "snapshot_md5": "47c07bde5217255c5a07dec760798923"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-10T09:03:02+00:00",
+  "updated": "2026-07-10T10:02:08+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9262,7 +9293,7 @@
     "add-lean-loop": "persona-nudge-quiet",
     "three-phase-flow": "terser-engine-stdout",
     "risk-proportional-ceremony": "skip-error-ergonomics",
-    "add-bench-v2": "v2-wv2-hostile-change"
+    "add-bench-v2": "v2-scoring-report"
   },
   "todos": [
     {

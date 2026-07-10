@@ -5,7 +5,9 @@ tokens from wm2's PROMPT) and shape-tolerant: `_create` adapts to whichever
 time shape the app under test speaks (WM2 = duration_minutes, WM3+ =
 end_time), so only the BEHAVIORAL invariants — auth floor, ownership,
 overlap conflict, tenant scoping — are what can fail. Never visible to the
-arm under test.
+arm under test. Each probe books its OWN 2028 calendar day (v2-scoring-report
+M5): fixed shared windows let score-time probe state pollute later regression
+runs — twice proven (spec-kit + vanilla artifact reg 0.29, WV2 rep0).
 """
 import os
 
@@ -57,7 +59,7 @@ def test_unauthenticated_request_rejected():
 def test_ownership_forbids_cross_user_edit():
     with running_app(_workspace()) as base:
         status, created = _create(
-            base, TOKEN_A, "alice-mtg", "2026-08-01T09:00:00Z", "2026-08-01T09:30:00Z", 30
+            base, TOKEN_A, "alice-mtg", "2028-03-06T09:00:00Z", "2028-03-06T09:30:00Z", 30
         )
         assert status in (200, 201), created
         booking_id = created["id"]
@@ -70,11 +72,11 @@ def test_ownership_forbids_cross_user_edit():
 def test_same_owner_overlap_conflicts():
     with running_app(_workspace()) as base:
         status, first = _create(
-            base, TOKEN_A, "first", "2026-08-02T10:00:00Z", "2026-08-02T11:00:00Z", 60
+            base, TOKEN_A, "first", "2028-04-11T10:00:00Z", "2028-04-11T11:00:00Z", 60
         )
         assert status in (200, 201), first
         status, second = _create(
-            base, TOKEN_A, "overlap", "2026-08-02T10:30:00Z", "2026-08-02T11:30:00Z", 60
+            base, TOKEN_A, "overlap", "2028-04-11T10:30:00Z", "2028-04-11T11:30:00Z", 60
         )
         assert status == 409, second
 
@@ -82,7 +84,7 @@ def test_same_owner_overlap_conflicts():
 def test_listing_scoped_to_caller():
     with running_app(_workspace()) as base:
         status, created = _create(
-            base, TOKEN_A, "alice-only", "2026-08-03T09:00:00Z", "2026-08-03T09:30:00Z", 30
+            base, TOKEN_A, "alice-only", "2028-05-19T09:00:00Z", "2028-05-19T09:30:00Z", 30
         )
         assert status in (200, 201), created
         alice_id = created["id"]
