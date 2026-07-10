@@ -52,7 +52,7 @@ Out: touching app-code turns (irreducible deliverable work); suite-run churn / d
 - [ ] skip-error-ergonomics    depends-on: none                    — LOOP-3, from the re-measure census: `skip_not_allowed` dies naming the raw declaration + bad token(s) + the computed allowed set + the fix; the no-project error hands the exact `init --name --stage` command. Message layer only.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] a fresh fixed-harness add WM1 run shows TURNS and COST below the 63-turn / $3.99 baseline, with fidelity ≥0.95 and app_reachable   (← levers 1+2, re-measured; lever 3 dropped — see note) **NOT MET as written — measured 2026-07-09, disclosed below.**
+- [x] a fresh fixed-harness add WM1 run shows TURNS and COST below the 63-turn / $3.99 baseline, with fidelity ≥0.95 and app_reachable   (← levers 1+2, re-measured; lever 3 dropped — see note) **RESOLVED AT CLOSE: the 63t/$3.99 anchor is VOID (model-unpinned, disclosed below) — superseded by the pinned-meter LOOP-2 criterion; human-accepted 2026-07-10.**
 
 > **Re-measure verdict (2026-07-09, pinned `claude-sonnet-5`/medium, n=3 vs n=3).** The 63t/$3.99
 > anchor is VOID — it ran on an unpinned ambient model (harness bug #28, fixed in `4d0c52e`); the
@@ -64,7 +64,7 @@ Out: touching app-code turns (irreducible deliverable work); suite-run churn / d
 > even the best run makes 21 `add.py` calls (~2× the ~10-call ideal; worst run 33 with a
 > `status`×6/`gate`×5/`freeze`×3 repair loop) and ceremony consumes ~55–60% of all turns vs
 > spec-kit's 22-turn total. Continuation → LOOP round 2 tasks below (held open per loop.md).
-- [ ] LOOP-2 re-anchored criterion (valid meter): a fresh pinned-sonnet add WM1 run (n=3) shows mean `add.py` calls ≤ 12 with ZERO engine-source spelunking turns, and mean turns/cost at or below the pinned pre-lever mean (102t / $4.51)   (← first-call-ergonomics + scope-gate-repair-path, re-measured on the same harness)
+- [x] LOOP-2 re-anchored criterion (valid meter): a fresh pinned-sonnet add WM1 run (n=3) shows mean `add.py` calls ≤ 12 with ZERO engine-source spelunking turns, and mean turns/cost at or below the pinned pre-lever mean (102t / $4.51)   (← first-call-ergonomics + scope-gate-repair-path, re-measured on the same harness) **PARTIAL, human-accepted at close 2026-07-10: turns/cost PASS decisively (77.7t/$2.97, −24%/−34%, verdict below); calls 21 > 12 — the shortfall is agent habit + legitimate repair overhead, accepted with the follow-on levers named in the CLOSE VERDICT.**
 
 > **Lever 3 (terser-engine-stdout) — DROPPED, disclosed 2026-07-09.** Grounded the actual
 > per-call stdout: fattest is `check` (1251 B) / full `status` (1202 B); `advance` already
@@ -81,7 +81,7 @@ Out: touching app-code turns (irreducible deliverable work); suite-run churn / d
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : `add.py` — (1) `advance` footer emits the collapsed `advance --to <phase>` bundle command (`027063a`); (2) `_next_command` composer unifies status/guide/footer into ONE exact copy-pasteable next command (`76136f3`); ENGINE_MD5 4fefc0bb → 10ffdf96, 3-tree parity held
+- tooling : `add.py` + `add_engine/io_state.py` — 5 shipped levers across 3 LOOPs: (1) collapsed `advance --to` footer (`027063a`); (2) `_next_command` one-composer status/guide/footer (`76136f3`); (3) post-freeze truth + idempotent retries + init kickoff (`5a76222`); (4) default-scope crossing warning + scope_violation repair recipe (`1327e3b`); (5) skip_not_allowed evidence + exact no-project init command (`901cd1f`). ENGINE_MD5 4fefc0bb → 147820fd (PKG → 5f60c0b2), 3-tree parity held throughout
 - skill   : untouched
 - book    : untouched
 - harness (out-of-tree but shipped alongside): `benchmark/runner/agent.py` pins `--model claude-sonnet-5 --effort medium` (`4d0c52e`) — every prior cross-run cost comparison was model-confounded
@@ -90,11 +90,13 @@ Out: touching app-code turns (irreducible deliverable work); suite-run churn / d
 - advance-chain-collapse : gate=PASS · targeted green + full suite green · residue=none
 - status-guide-fold      : gate=PASS (auto-gate, refute-read EARNED) · full suite 1 transient pyc flake re-run green in isolation · residue=none
 - terser-engine-stdout   : DROPPED pre-spec — grounded at ~$0.02–0.04 of a $3.99 run (see Lever-3 note); never opened, no gate
+- first-call-ergonomics  : gate=PASS (auto) · 7 red→green + suite 3345 OK · residue=none · `5a76222`
+- scope-gate-repair-path : gate=PASS (auto) · 5 red→green + suite 3350 OK · residue=none · `1327e3b`
+- skip-error-ergonomics  : gate=PASS (auto) · 4 red→green + suite 3354 OK (first run caught a real quoting regression pre-gate) · residue=none · `901cd1f`
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [x] criteria 2+3 satisfied: Cross-task rows advance-chain-collapse (`027063a`) + status-guide-fold (`76136f3`)
-- [ ] criterion 1 NOT met: measured −4% turns / −5% cost same-model (n=3 vs n=3, pinned sonnet) — real but below the harness noise floor; fidelity gate unjudgeable (judge defect). Recorded honestly, NOT ticked.
-- goal: cut the per-feature turn count — PARTIALLY met at round 1. The shipped levers work (the agent now gets exact/collapsed commands), but transcript anatomy shows the dominant residual waste is engine-call REDUNDANCY (~2× the ideal call count via repair loops), not command discovery. Per loop.md the milestone is HELD OPEN: the evidence became the LOOP-2 tasks (first-call-ergonomics · scope-gate-repair-path) under the re-anchored criterion above. This Close section re-fills when they land.
+- [x] every criterion resolved: 2 met outright (advance-collapse `027063a` · status-fold `76136f3`); 3 resolved-with-disclosure at the human close (void-baseline superseded · LOOP-2 partial · LOOP-3 partial — each annotated inline above)
+- goal: cut the per-feature turn count — **PARTIALLY MET, closed by human decision 2026-07-10** after 3 LOOPs + 2 live re-measures: **−24% turns / −34% cost at stable 0.97 fidelity** (n=3, pinned meter, outside the noise floor), every death-spiral repair loop dead, floor never lowered. Premium vs spec-kit ~3.3× (was ~5×), not the aspirational ~1.3× — the residual is structural trust ceremony + agent habit, out of message-layer reach. Follow-on levers named in the CLOSE VERDICT.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one

@@ -7923,7 +7923,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-09T18:35:10+00:00",
+  "updated": "2026-07-10T01:46:46+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8231,14 +8231,19 @@
       "title": "Risk Proportional Ceremony",
       "goal": "cut ADD's big-milestone cost premium (1.8x dollars / 2x wall-clock vs spec-kit) toward ~1.3x by scaling ceremony to task risk \u2014 never by lowering the trust floor (frozen contract, red suite, recorded gate hold in every lane)",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-08T08:28:21+00:00",
-      "updated": "2026-07-09T16:47:02+00:00",
+      "updated": "2026-07-10T01:46:46+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-09T16:47:02+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
