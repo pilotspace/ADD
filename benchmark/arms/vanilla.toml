@@ -1,0 +1,9 @@
+name = "vanilla"
+setup_steps = []  # bare Claude Code — no ceremony IS the arm definition
+prompt_wrapper = "raw"
+pin = ""
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

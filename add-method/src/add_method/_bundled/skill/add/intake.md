@@ -6,12 +6,11 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 
 ## Interview before you size
 
-Run `add.py search <keyword> [<keyword> ...]` first — it surfaces overlapping/prior work in one
-command instead of a full manual re-read. When the request arrives as a question, or its intent is
-not sharp enough to place in one bucket: explore it WITH the user before classifying. Reflect the intent you heard, name what seems in and
-out of scope, and offer 2–3 sized options with your own recommendation. Only then emit
-`{ bucket, rationale, command }`. `ask_human` stays the floor: when interviewing cannot sharpen the
-request, reject — never guess a bucket.
+Run `add.py search <keyword> ...` first — it surfaces overlapping/prior work in one command. When
+the request is a question or won't place in one bucket, explore it WITH the user first: reflect
+the intent, name in/out of scope, offer 2–3 sized options with a recommendation. Only then emit
+`{ bucket, rationale, command }`. `ask_human` stays the floor: if interviewing can't sharpen it,
+reject — never guess a bucket.
 
 ## The four buckets
 
@@ -29,14 +28,16 @@ already-frozen scope?" → if yes it is a `change-request` (never re-size frozen
 Only if no, apply the size test: a new theme → `new-major`; a slice of a live theme → `sub-milestone`;
 fits the active milestone → `task`.
 
-**One-task gap rule.** If the request is ONE task but does NOT fit the active milestone's stated
-scope, do not force it into `sub-milestone` (which requires "too big for one task"): create a new
-micro-milestone to house it (`new-milestone` + `new-task`) — ledger attribution + clear
-exit criteria without inflating scope.
+**Fast-fit test (task bucket only).** single behavior · no new contract surface others consume ·
+sensitivity mechanical → propose `add.py new-task <slug> --fast` + why. The flag stays human-owned:
+the proposal carries it; the human's confirm picks it. Any doubt → the full lane.
 
-**Batched intake.** N same-bucket items arriving together (one directive; a drafted
-milestone's task list) classify as ONE proposal: one report listing every item, one
-human confirm covering the batch — never N sequential asks. Mixed buckets stay
+**One-task gap rule.** ONE task that does NOT fit the active milestone's scope: never force it
+into `sub-milestone` — create a micro-milestone to house it (`new-milestone` + `new-task`) for
+ledger attribution + clear exit criteria without inflating scope.
+
+**Batched intake.** N same-bucket items arriving together classify as ONE proposal: one report,
+one human confirm covering the batch — never N sequential asks. Mixed buckets stay
 `split_required`.
 
 ## What you emit (the proposal)

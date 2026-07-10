@@ -1,0 +1,12 @@
+name = "gsd"
+setup_steps = [
+  "npx -y get-shit-done-cc@1.42.3 init  # pre-seed .claude/ without a global-install PATH dependency",
+]
+prompt_wrapper = "raw"
+# Real, reproducible upstream pin (confirmed via `npm view get-shit-done-cc versions` 2026-07-07).
+pin = "get-shit-done-cc@1.42.3"
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

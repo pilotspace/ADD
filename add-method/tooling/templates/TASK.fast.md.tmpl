@@ -5,6 +5,7 @@ milestone: {{milestone}}
 autonomy: {{autonomy}}   <!-- Multi-component repo? add a `component: <name>` line (declared in .add/components.toml) to bind this fast task to a component — its root joins §5 Scope and its green-bar/verify surface at the gate. Omit for single-component projects. -->
 phase: ground   <!-- fast lane: ground -> specify -> contract -> tests -> build -> verify -> observe -> done -->
 fast: true   <!-- the fast lane: a small task, collapsed flow + minimal template. Omit --fast for full rigor. -->
+<!-- skips: <csv subset of scenarios,observe — omit this line for none> -->
 
 > Fast lane — one small task, minimal sections, filled top-to-bottom. The trust floor still
 > holds: a FROZEN §3 contract · ≥1 red test before build · a recorded §6 gate (security = HARD-STOP).
@@ -19,6 +20,7 @@ Context (working folder): <docs · config · data the task touches — task-delt
 Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta>
 Anchors the contract cites: <the symbols §3 will name>
 Ground SHA: <`git rev-parse --short HEAD` at ground time — any line ref reads "as of" it>
+Skip rationale: <phase> — <reason>; <phase> — <reason>
 
 ---
 
@@ -44,6 +46,13 @@ Assumptions: ⚠ <the one most likely wrong> — why; if wrong: <cost>   (or "no
 Status: DRAFT
 <!-- The freeze IS the one approval. Approved -> Status: FROZEN @ vN — approved by <name>.
      Changing a frozen contract = change request back to SPECIFY. -->
+
+### AI-verify record (required when gate_mode: ai-plan-verify)
+- [ ] §0 GROUND anchors resolve in the current tree
+- [ ] §1 every Must + every Reject present, each Reject paired with an error code
+- [ ] §3 CONTRACT shape is concrete (no template placeholder text remains)
+- [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
+Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
 ---
 

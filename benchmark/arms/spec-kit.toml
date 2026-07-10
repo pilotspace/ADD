@@ -1,0 +1,13 @@
+name = "spec-kit"
+setup_steps = [
+  "uvx --from git+https://github.com/github/spec-kit.git@v0.12.5 specify init --here --force",
+]
+prompt_wrapper = "raw"
+# Real, reproducible upstream pin: latest release tag (confirmed via
+# `gh api repos/github/spec-kit/releases/latest` 2026-07-07).
+pin = "git+https://github.com/github/spec-kit.git@v0.12.5"
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

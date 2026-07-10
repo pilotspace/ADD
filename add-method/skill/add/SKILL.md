@@ -1,16 +1,13 @@
 ---
 name: add
 description: >-
-  ADD (AI-Driven Development) — a minimal, state-tracked workflow for building
-  software where the AI writes the code and the human owns direction and
-  verification. Drives every feature through one lean TASK.md: Specify →
-  Scenarios → Contract → Tests → Build → Verify → Observe, with red/green TDD
-  built in. Use this skill whenever working in a repo that has a `.add/`
-  directory, when the user says "add", "start a task", "next phase", "specify
-  this feature", "ADD method", or "AI-driven development", or when scaffolding a
-  new feature and you want spec/tests-first discipline instead of vague-prompt
-  coding. Also use it to resume work across sessions (it reads `.add/state.json`
-  so you never re-read the whole repo).
+  ADD (AI-Driven Development) — a minimal, state-tracked workflow: the AI writes
+  the code, the human owns direction and verification. Drives every feature through
+  one lean TASK.md: Specify → Scenarios → Contract → Tests → Build → Verify → Observe,
+  red/green TDD built in. Use whenever a repo has `.add/`, or the user says "add",
+  "start a task", "next phase", "specify this feature", "ADD method", "AI-driven
+  development", or wants spec/tests-first discipline over vague-prompt coding. Also
+  resumes work across sessions via `.add/state.json` (never re-read the whole repo).
 user-invocable: true
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, scenarios, verify, milestone, task-orchestration]
@@ -28,8 +25,7 @@ You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 result through passing evidence rather than a plausible-looking diff.
 
 **One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — a §0 ground
-preamble plus seven step sections, filled top to bottom. The Python tool tracks where you
-are so context never rots across sessions.
+preamble plus seven step sections, filled top to bottom; the tool tracks where you are.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
@@ -45,7 +41,7 @@ Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure the engine is in the
   `.add/tooling/` (engine) + `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block — like an
   npm/pip install; the skill stays in the plugin, nothing duplicated.
 
-Find the resume point from the tool, not by re-reading the repo:
+Resume from the tool, never by re-reading the repo:
 
 ```bash
 python3 .add/tooling/add.py status
@@ -64,7 +60,7 @@ self-improving via the `soul-self-improve` path). Then branch on state:
   matching `phases/<n>-<phase>.md`. Work *only* that phase.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
-**Quick ref** — `status` resume · `init` bootstrap · `advance` continue · `gate PASS` at verify.
+**Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` read one §body · `gate PASS` at verify.
 **Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
 - **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is a
   blessed standalone low-ceremony lane. Jot ideas first with `add.py todo "<text>"` (then `todo` to
@@ -87,17 +83,17 @@ first phase guide.
 
 Load the phase guide **only for the phase you are in** (progressive disclosure):
 
-| Phase | Guide | Produces (TASK.md section) | Who leads |
-|-------|-------|----------------------------|-----------|
-| setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) |
-| ground | `phases/0-ground.md` | §0 GROUND map (real files · symbols · the anchors §3 cites) | **AI** (the §0 preamble — no new gate) |
-| specify | `phases/1-specify.md` | §1 rules + ranked lowest-confidence flag | AI drafts (co-specify)† |
-| scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | AI drafts† |
-| contract | `phases/3-contract.md` | §3 frozen shape | AI drafts → **human approves once** (the decision point)† |
-| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† |
-| build | `phases/5-build.md` | code in `src/`, tests green | **AI** |
-| verify | `phases/6-verify.md` | §6 checks + gate record | **AI auto-gates on evidence**; human on residue/security‡ |
-| observe | `phases/7-observe.md` | §7 spec delta | human + AI |
+| Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
+|-------|-------|----------------------------|-----------|--------|
+| setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) | – |
+| ground | `phases/0-ground.md` | §0 GROUND map (real files · symbols · the anchors §3 cites) | **AI** (the §0 preamble — no new gate) | DIRECTION |
+| specify | `phases/1-specify.md` | §1 rules + ranked lowest-confidence flag | AI drafts (co-specify)† | DIRECTION |
+| scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | AI drafts† | DIRECTION |
+| contract | `phases/3-contract.md` | §3 frozen shape | AI drafts → **human approves once** (the decision point)† | DIRECTION |
+| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† | DIRECTION |
+| build | `phases/5-build.md` | code in `src/`, tests green | **AI** | BUILD |
+| verify | `phases/6-verify.md` | §6 checks + gate record | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |
+| observe | `phases/7-observe.md` | §7 spec delta | human + AI | VERIFY |
 
 † **The specification bundle (v7).** §1–§4 are one bundle; the human gives **one approval at the
 contract freeze**, lowest-confidence-first — see `run.md`.
@@ -120,10 +116,11 @@ once the human confirms, rewrites `SOUL.md` (the human is the only writer) — `
 
 - **§3 CONTRACT FROZEN** → build→verify is a dynamic, auto-gated run (`autonomy: auto` default; lower to
   `conservative`/`manual` for a human gate) — `run.md`. Pipeline ready tasks behind frozen
-  contracts — `streams.md`. Delegate one piece of your plan to a subagent — prefer the named roster
-  (`add-design`/`add-build`/`add-verify`/`add-persona`/`add-advisor`) over an ad-hoc spawn; when to
-  spawn, the prompt template, the tier — `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9)
-  — `confidence.md`. Both advisory; the engine never spawns.
+  contracts — `streams.md`. Delegate one piece of your plan to a subagent — the named roster
+  (`add-design`/`add-build`/`add-verify`/`add-persona`/`add-advisor`) is agent-call-preferred, the
+  default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
+  `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9) — `confidence.md`.
+  Both advisory; the engine never spawns.
 - **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
   `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
   red test · verify gate; freeze-gated under any milestone). Collapse, never skip; opt-in.

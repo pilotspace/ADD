@@ -1,0 +1,16 @@
+name = "add-main"
+setup_steps = [
+  "uv venv .venv --clear",
+  # CONTROL ARM (v2-wv1-longitudinal M5 @v2): ADD as released on MAIN — installed
+  # from a git worktree pinned at the SHA below, NOT from {REPO_ROOT} (which is the
+  # branch under test). Controls branch-engine changes against the released flow.
+  "uv pip install -e /Users/tindang/add-benchmark-archives/add-main-wt/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init --yes --non-interactive --force",
+]
+prompt_wrapper = "add-loop"
+pin = "0ff7d75 (git worktree of main @ ~/add-benchmark-archives/add-main-wt)"
+
+# Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

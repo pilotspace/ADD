@@ -21,6 +21,8 @@ __all__ = [
     "HEAL_CAP",
     "PHASE_GUIDE",
     "PHASE_OWNER",
+    "PHASE_GROUPS",
+    "PHASE_AGENT",
     "SETUP_FILES",
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
@@ -30,6 +32,8 @@ __all__ = [
     "GUIDELINE_FILES",
     "RULES_FILE_REL",
     "WORKFLOW_HEADINGS",
+    "_GATE_MODES",
+    "_SKIPPABLE_PHASES",
 ]
 
 ROOT_DIRNAME = ".add"
@@ -92,6 +96,30 @@ PHASE_OWNER = {
     "ground": "ai",
     "specify": "human", "scenarios": "human", "contract": "seam",
     "tests": "ai", "build": "ai", "verify": "human", "observe": "ai", "done": "human",
+}
+# phase-bundles: the 8 work phases (PHASES minus the terminal "done") group into 3
+# agent-owned bundles surfaced at `status`/`guide` — DIRECTION fixes the shape (through
+# the frozen contract AND the red suite — the method thesis is "fix spec/scenarios/
+# contract/failing-tests BEFORE the build"), BUILD makes it green, VERIFY earns trust
+# and feeds the next loop. A grouping OVER PHASES, never a reorder; "done" (terminal,
+# human-led) deliberately has no bundle — see PHASE_AGENT/_phase_bundle below. Union ==
+# set(PHASES) - {"done"}, pairwise disjoint (asserted by test_phase_bundles.py).
+PHASE_GROUPS = {
+    "DIRECTION": ("ground", "specify", "scenarios", "contract", "tests"),
+    "BUILD": ("build",),
+    "VERIFY": ("verify", "observe"),
+}
+# phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
+# `tests` bundles into DIRECTION above yet its preferred agent is still add-build, the
+# shipped roster's own boundary: add-design owns ground/specify/scenarios/contract,
+# add-build owns tests/build, add-verify owns verify/observe). A phase missing here is
+# a bug (PHASE_GROUPS' own union covers every key); `_phase_bundle` is the fail-closed
+# resolver for an unmapped/corrupted phase token, not this map directly.
+PHASE_AGENT = {
+    "ground": "add-design", "specify": "add-design", "scenarios": "add-design",
+    "contract": "add-design",
+    "tests": "add-build", "build": "add-build",
+    "verify": "add-verify", "observe": "add-verify",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 
@@ -298,3 +326,20 @@ _STREAMS_POSTURES = ("parallel", "sequential")
 #     engine validates + surfaces a HUMAN-declared token; it NEVER classifies. A closed enum, sibling
 #     of _AUTONOMY_LEVELS/_STREAMS_POSTURES. Consumed downstream by advisor-gate-relax (mechanical). ---
 _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
+
+# --- gate mode (shared: _task_gate_mode reader + cmd_freeze's --ai-plan-verify path) — the
+#     two-way DIRECTION-freeze declaration (ai-plan-verify-gate): human (default) | ai-plan-verify.
+#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_STREAMS_POSTURES/_SENSITIVITY_VALUES — but,
+#     unlike them, listed in __all__: a NEW trust-loosening capability is deliberately surfaced via
+#     `from add_engine.constants import *`, not tucked into the _-prefixed sibling import list.
+#     Absent header line -> None from the resolver, treated as "human" by every caller (fail-closed
+#     default — never silently upgrades to the loosened path). ---
+_GATE_MODES = ("human", "ai-plan-verify")
+
+# --- skippable phases (shared: _task_skip_set reader + cmd_advance's skip pre-pass) — the
+#     fast-lane-skips closed 2-tuple: the ONLY set cmd_advance's skip pre-pass ever tests `nxt`
+#     against. ground/specify/contract/tests/build/verify can NEVER be skipped — a structural
+#     exclusion (this tuple never names them), not a runtime-checked policy. Same relative order
+#     as PHASES. Listed in __all__ (mirrors _GATE_MODES): a new trust-loosening capability is
+#     deliberately surfaced via `from add_engine.constants import *`, not tucked away. ---
+_SKIPPABLE_PHASES = ("scenarios", "observe")

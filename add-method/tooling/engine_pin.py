@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "9be0267f079db834f525f80b32ac1c92"  # re-aimed @ compact-propose (compact-foundation --propose verb). prior: 420ae4bd… @ roster-status-line
-ENGINE_PKG_MD5 = "a00e1d366d7453dc578ba24764efcd6b"  # re-aimed @ verify-flow-value (PERSONA_FLOW_VALUES + "verify"). prior: c29c2e05… @ persona-schema-hardening
+ENGINE_MD5 = "5b0f0538c990ec1521c131780a277c98"  # re-aimed @ branch-merge 2026-07-10 (union of the local --oneshot/first-call-ergonomics chain and the remote tiny-plan-small-scope lane pushed 2026-07-08 — both features kept verbatim in cmd_new_task + argparse). prior: 147820fd… @ first-call-ergonomics v1
+ENGINE_PKG_MD5 = "5f60c0b2af321c1dcb053a5a06473a92"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2

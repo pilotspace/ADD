@@ -1,0 +1,13 @@
+name = "add"
+setup_steps = [
+  "uv venv .venv --clear",
+  "uv pip install -e {REPO_ROOT}/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init --yes --non-interactive --force",
+]
+prompt_wrapper = "add-loop"
+pin = "add-method (this repo, path pin — see .add/tasks/bench-scaffold/TASK.md Ground SHA)"
+
+# Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

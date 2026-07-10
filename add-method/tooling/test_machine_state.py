@@ -123,8 +123,10 @@ class MachineStateTest(unittest.TestCase):
         code, out, _ = _run(["status", "--json", "--task", "t"])
         self.assertEqual(code, 0)
         d = self._json_only(out)
+        # phase-bundles: additive "bundle" key (ground -> DIRECTION); every other key unchanged.
         self.assertEqual(d, {"slug": "t", "phase": "ground", "gate": "none",
-                              "milestone": "m", "owner": None, "assignee": None})
+                              "milestone": "m", "owner": None, "assignee": None,
+                              "bundle": "DIRECTION"})
 
     def test_status_json_task_filter_unknown_slug_dies_unknown_task(self):
         code, out, err = _run(["status", "--json", "--task", "does-not-exist"])
