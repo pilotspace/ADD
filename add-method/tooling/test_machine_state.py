@@ -92,9 +92,10 @@ class MachineStateTest(unittest.TestCase):
         self.assertEqual(d["phase"], "build")
 
     def test_owner_map_stops_at_human_and_seam(self):
+        # plan-phase-core: ground+contract collapsed into `plan` — it stays the seam owner.
         expect = {
             "specify": ("human", True), "scenarios": ("human", True),
-            "contract": ("seam", True), "tests": ("ai", False),
+            "plan": ("seam", True), "tests": ("ai", False),
             "build": ("ai", False), "verify": ("human", True),
             "observe": ("ai", False), "done": ("human", True),
         }
@@ -123,8 +124,9 @@ class MachineStateTest(unittest.TestCase):
         code, out, _ = _run(["status", "--json", "--task", "t"])
         self.assertEqual(code, 0)
         d = self._json_only(out)
-        # phase-bundles: additive "bundle" key (ground -> DIRECTION); every other key unchanged.
-        self.assertEqual(d, {"slug": "t", "phase": "ground", "gate": "none",
+        # phase-bundles: additive "bundle" key (specify -> DIRECTION); every other key
+        # unchanged. plan-phase-core: new-task now seeds `specify` (was `ground`).
+        self.assertEqual(d, {"slug": "t", "phase": "specify", "gate": "none",
                               "milestone": "m", "owner": None, "assignee": None,
                               "bundle": "DIRECTION"})
 

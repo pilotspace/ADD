@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5337` (`_declared_scope`)   <!-- re-pinned 2026-07-11 x18: 4786→…→5269→5324→5337 (fast-lane-boundary-line's cmd_freeze boundary guard above it — the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes) -->
+Anchor: `add-method/tooling/add.py:5402` (`_declared_scope`)   <!-- re-pinned 2026-07-12 plan-phase-core: 4786→…→5324→5337→5391→5402 (the ground+contract→plan collapse + phase-ordinal→§-number bug fixes shifted everything below it — the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes) -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

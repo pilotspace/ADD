@@ -24,8 +24,13 @@ TREES = (CANON,
 # 10600 → 11400 @ strategy-facet-block (contract FROZEN @ v1): §5 gains the four facet lines
 # (+732 B contract-exact template surface, zero new comments — COMMENT_CEILING untouched);
 # the won comment-lean ground is preserved, the ceiling migrates forward with the approved lines.
-SIZE_CEILING = 11400      # UTF-8 bytes (pre-task: 12442; post-taskmd-optimize: 10600)
-COMMENT_CEILING = 2500   # UTF-8 bytes of HTML comments (pre-task: 3418)
+# 11400 → 12400 / 2500 → 2850 @ plan-phase-core: §0 GROUND + the standalone §3 CONTRACT
+# collapse into ONE §3 PLAN section carrying three sub-blocks (### Grounding · ### Contract ·
+# ### Build-strategy) — net-additive prose (sub-headings + the merged freeze-approval comment
+# absorbs what used to be two separate EXIT comments), so both ceilings migrate forward again
+# with the approved restructuring.
+SIZE_CEILING = 12400      # UTF-8 bytes (pre-task: 12442; post-taskmd-optimize: 10600)
+COMMENT_CEILING = 2850   # UTF-8 bytes of HTML comments (pre-task: 3418)
 
 
 class LeanTemplateTest(unittest.TestCase):
@@ -51,7 +56,7 @@ class LeanTemplateTest(unittest.TestCase):
             self.assertIn(anchor, self.text, f"machine-read anchor lost: {anchor}")
 
     def test_sec3_single_comment(self):
-        sec3 = self.text.split("## 3 · CONTRACT")[1].split("## 4 · TESTS")[0]
+        sec3 = self.text.split("## 3 · PLAN")[1].split("## 4 · TESTS")[0]
         self.assertEqual(1, sec3.count("<!--"), "§3 keeps exactly ONE merged comment")
 
     def test_trees_byte_identical(self):

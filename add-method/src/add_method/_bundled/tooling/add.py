@@ -527,18 +527,19 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
             pass
         return "as planned"
 
-    # §5 strategy facets (facet-adr-harvest): each FILLED facet earns its own [AI] build
-    # line, in this order, directly before the strategy-used line. Harvest reads bodies[5]
-    # ONLY (never another section); a LEADING "<" is the template placeholder and stays
-    # silent per facet — zero filled facets collapse to the legacy 4-line block exactly.
+    # §3 Build-strategy facets (facet-adr-harvest): each FILLED facet earns its own [AI] build
+    # line, in this order, directly before the strategy-used line. Harvest reads bodies[3]
+    # ONLY (the facets moved from §5 into §3's ### Build-strategy sub-block with plan-phase-core;
+    # never another section); a LEADING "<" is the template placeholder and stays silent per
+    # facet — zero filled facets collapse to the legacy 4-line block exactly.
     _FACETS = (("Approach (domain strategy)", "approach"), ("Data strategy", "data strategy"),
                ("Pattern", "pattern"), ("Optimization stance", "optimization stance"))
 
-    def _facets():                               # §5 -> [AI]: one (key, value) per FILLED facet
+    def _facets():                               # §3 Build-strategy -> [AI]: one (key, value) per FILLED facet
         out = []
         try:
             for label, key in _FACETS:
-                val = _capture_wrapped(label, bodies.get(5, ""))
+                val = _capture_wrapped(label, bodies.get(3, ""))
                 if val and not val.startswith("<"):
                     out.append((key, val))
         except Exception:
@@ -1173,7 +1174,8 @@ def _dialect_gaps(root: Path, slug: str) -> list:
     return gaps
 
 
-def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) -> None:
+def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
+                 require_frozen: bool = False) -> None:
     """The shared tests->build entry guards + snapshots (task phase-build-guard, F4).
 
     Extracted VERBATIM from cmd_advance's `nxt == "build"` block so BOTH `advance` and the
@@ -1198,8 +1200,11 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) 
     if not _contract_frozen(raw3):
         # a freeze_skipped recorded at the plan->tests gate carries through here (a single
         # --skip-freeze is enough for the whole plan->tests->build run); a still-DRAFT §3 with
-        # no prior skip and no --skip-freeze on THIS crossing is refused.
-        already_skipped = bool(state["tasks"][slug].get("freeze_skipped"))
+        # no prior skip and no --skip-freeze on THIS crossing is refused. require_frozen (re-cross)
+        # IGNORES the carry-through marker: a re-cross is a deliberate re-entry that must re-assert
+        # the freeze (its contract is "never a freeze bypass"), so a DRAFT §3 always refuses there
+        # regardless of any historical skip.
+        already_skipped = (not require_frozen) and bool(state["tasks"][slug].get("freeze_skipped"))
         if not skip_freeze and not already_skipped:
             _die("contract_not_frozen: freeze §3 before crossing into build — approve "
                  f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN), or pass "
@@ -1321,7 +1326,9 @@ def cmd_recross(args: argparse.Namespace) -> None:
     if not (getattr(args, "by", "") or "").strip():
         _die("recross_unsigned: a post-freeze test change is human-approved — record the "
              "approver with --by <name>")
-    _build_entry(root, state, slug)          # full gate stack; validate-then-write
+    _build_entry(root, state, slug, require_frozen=True)   # full gate stack; a DRAFT §3
+                                             # always refuses here — re-cross is never a freeze
+                                             # bypass, even for a task that earlier --skip-freeze'd
     state["tasks"][slug]["recross"] = {"by": args.by.strip(), "at": _now(),
                                        "from_phase": cur}
     state["tasks"][slug]["phase"] = "build"
@@ -1365,7 +1372,8 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
         if ln.startswith("## ") or re.match(r"^---\s*$", ln):
             _die("fill_body_unparseable: the payload contains a line-start '## ' or a bare "
                  "'---' line — these truncate the §-section scan; reword or indent them")
-    n = PHASES.index(cur)  # ground→0 … observe→7 (the §-number IS the phase ordinal)
+    n = PHASES.index(cur) + 1  # phase ordinal → TASK.md §-number: specify→§1 … observe→§7
+                               # (§0 GROUND is gone, so the section number is ordinal + 1)
     f = root / "tasks" / slug / "TASK.md"
     try:
         original = f.read_bytes()
@@ -1445,8 +1453,10 @@ def cmd_advance(args: argparse.Namespace) -> None:
             skip_ok, skip_code = _skip_set_allowed(tokens, eligible)
             if not skip_ok:
                 _die(skip_code)     # "skip_lane_required"
-            raw0 = _raw_phase_bodies(root, slug).get(0, "")
-            reason = _skip_rationale(raw0, nxt)
+            # the Skip rationale line now lives with the `skips:` declaration in the task
+            # header/preamble (§0 GROUND is gone); read hdr first, fall back to a legacy §0 body.
+            rat_src = hdr + "\n" + _raw_phase_bodies(root, slug).get(0, "")
+            reason = _skip_rationale(rat_src, nxt)
             if not reason:
                 _die("skip_reason_missing")
             state["tasks"][slug].setdefault("skips", []).append({
@@ -1656,7 +1666,8 @@ _SKIP_RATIONALE_CLAUSE_RE = re.compile(r"^\s*(scenarios|observe)\s*[-—:]\s*(.+
 
 def _skip_rationale(raw0: str, phase: str) -> str | None:
     """The stated reason for skipping `phase` (a member of _SKIPPABLE_PHASES), read from a
-    task's raw §0 GROUND body. Finds the "Skip rationale:" line, splits its value on ";", and
+    task's header/preamble (the Skip rationale line co-locates with the `skips:` declaration;
+    a legacy §0 GROUND body is also accepted). Finds the "Skip rationale:" line, splits its value on ";", and
     matches a `<phase> — <reason>` (or `:`/`-`) clause for `phase`. Returns the trimmed reason,
     or None when the line is absent, no clause names `phase`, or the reason text is
     empty/whitespace-only after trim (fail-closed — an unstated reason is never inferred). PURE."""
@@ -2507,7 +2518,7 @@ def cmd_status(args: argparse.Namespace) -> None:
         if tok.isdigit() and int(tok) <= 7:
             n = int(tok)
         elif tok in PHASES and tok != "done":
-            n = PHASES.index(tok)
+            n = PHASES.index(tok) + 1   # phase name → TASK.md §-number (specify→§1 … observe→§7)
         else:
             _die(f"section_unknown: '{_section}' is not 0-7 or a phase name "
                  f"({', '.join(p for p in PHASES if p != 'done')})")
@@ -5716,23 +5727,26 @@ def _clean_phase_body(body: str) -> str:
 
 
 def task_phases(root: Path, slug: str) -> list[dict]:
-    """The frozen per-task PHASE-DETAIL shape (v9-1): parse TASK.md §0–§7 into eight
-    blocks ground→observe. PURE — NO writes. Each entry is
-    { "phase": <name>, "n": <0..7>, "body": <cleaned text | "(empty)"> }.
+    """The frozen per-task PHASE-DETAIL shape (v9-1): parse the task section blocks into
+    the non-terminal phases specify→observe. PURE — NO writes. Each entry is
+    { "phase": <name>, "n": <0..len(names)-1>, "body": <cleaned text | "(empty)"> }.
 
     The heading scan lives in _phase_spans (shared with the decide digest); this view
     CLEANS each body. Missing file / missing section / placeholder-only body ->
-    "(empty)" (fail-closed)."""
+    "(empty)" (fail-closed). The bound tracks len(names) so it follows PHASES length."""
     names = PHASES[:-1]  # specify..observe; "done" is a terminal STATE, not a section
     f = root / "tasks" / slug / "TASK.md"
     try:
         text = f.read_text(encoding="utf-8")
     except OSError:   # missing OR unreadable -> every phase fail-closed to "(empty)"
-        return [{"phase": names[n], "n": n, "body": "(empty)"} for n in range(0, 8)]
+        return [{"phase": names[n], "n": n, "body": "(empty)"} for n in range(len(names))]
     spans = _phase_spans(text)
+    # spans is keyed by the TASK.md SECTION number (§1 SPECIFY .. §7 OBSERVE); the phase
+    # index n (0..len-1) maps to section n+1 now that §0 GROUND is gone (specify=§1). The
+    # old model had a §0, so n and the section number were aligned — they diverge by one now.
     return [{"phase": names[n], "n": n,
-             "body": _clean_phase_body(spans[n]) if n in spans else "(empty)"}
-            for n in range(0, 8)]
+             "body": _clean_phase_body(spans[n + 1]) if (n + 1) in spans else "(empty)"}
+            for n in range(len(names))]
 
 
 def _task_title(root: Path, slug: str) -> str:
@@ -5808,13 +5822,13 @@ def render_task_detail(root: Path, state: dict, mslug: str, slug: str, *,
     L.append(f" PHASE {phase}    GATE {gate}")
     L.append(banner)
     for p in task_phases(root, slug):
-        i = p["n"]   # n IS the PHASES index now (ground=0 .. observe=7)
+        i = p["n"]   # n IS the PHASES index now (specify=0 .. observe=6)
         mk = (g["reached"] if (phase == "done" or i < ci)
               else g["current"] if i == ci else g["pending"])
         L.append("")
         L.append(f" {mk} {p['n']} {p['phase'].upper()}")
         L.append(rule)
-        if p["n"] == 6:   # verify: the recorded gate, sourced from state (not prose)
+        if p["phase"] == "verify":   # the recorded gate, sourced from state (not prose)
             L.append(f"   GATE  {gate}")
         if p["body"] == "(empty)":
             L.append("   (empty)")
@@ -7152,14 +7166,15 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
               "freeze.mode is ai-plan-verify but the current §3 'AI-verify record' checklist "
               "is missing, incomplete, or lost its 'Verified by:' value")
         # fast-lane-skips residual glint: symmetric to ai_freeze_checklist_missing above — a
-        # hand-edit that deletes/mangles a recorded skip's §0 rationale post-skip goes
-        # undetected otherwise. MEASURE-NOT-BLOCK, a human spot-audit backstop.
+        # hand-edit that deletes/mangles a recorded skip's rationale post-skip goes undetected
+        # otherwise. The rationale lives in the header/preamble now (with `skips:`); a legacy §0
+        # body is still accepted. MEASURE-NOT-BLOCK, a human spot-audit backstop.
         _skips_recorded = t.get("skips") or []
         if _skips_recorded:
-            s0 = raw.get(0, "")
+            s0 = _task_header(root, slug) + "\n" + raw.get(0, "")
             if any(_skip_rationale(s0, e.get("phase")) is None for e in _skips_recorded):
                 f(slug, "skip_rationale_missing_post_hoc",
-                  "state.json records >=1 skipped phase but the CURRENT §0 'Skip rationale:' "
+                  "state.json records >=1 skipped phase but the CURRENT header 'Skip rationale:' "
                   "line no longer has a matching clause for every recorded phase")
         outcomes = _AUDIT_OUTCOME_RE.findall(s6)
         if len(outcomes) != 1:

@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "07659b10a8a7bc8b1d45c7009c107d17"  # re-aimed @ plan-phase-core v1 (expectations-first: collapse ground+contract into the plan phase; PHASES/seam/grounding/scope re-point + plan->tests freeze gate). prior: 16cd7cca… @ fast-lane-boundary-line
-ENGINE_PKG_MD5 = "45e288b049b34fde3a967257fd3f0fff"  # re-aimed @ plan-phase-core v1 (add_engine/constants.py: PHASES/PHASE_GROUPS/PHASE_OWNER/PHASE_AGENT/PHASE_GUIDE + fallback templates). prior: 710a009f… @ spec-dialect-floor
+ENGINE_MD5 = "33f46b7de23cacd5bb1febe077b87f01"  # re-aimed @ plan-phase-core v1 (expectations-first: collapse ground+contract into the plan phase; PHASES/seam/grounding/scope re-point + plan->tests freeze gate + phase-ordinal→§-number fixes: task_phases/fill/status-section, facet harvest §3, re-cross freeze, skip-rationale header). prior: 16cd7cca… @ fast-lane-boundary-line
+ENGINE_PKG_MD5 = "a968f9e6713cffd9656e72c2fa5e8849"  # re-aimed @ plan-phase-core v1 (add_engine/constants.py: PHASES/PHASE_GROUPS/PHASE_OWNER/PHASE_AGENT/PHASE_GUIDE + fallback templates incl. fast §5 BUILD). prior: 710a009f… @ spec-dialect-floor

@@ -70,6 +70,13 @@ def _section0(tmpl: str) -> str:
     return m.group(0) if m else ""
 
 
+def _grounding_block(tmpl: str) -> str:
+    """plan-phase-core: grounding moved from `## 0 · GROUND` into `## 3 · PLAN`'s
+    `### Grounding` sub-block (up to the next `### `/`## ` heading, i.e. `### Contract`)."""
+    m = re.search(r"### Grounding\b.*?(?=\n(?:### |## ))", tmpl, flags=re.S)
+    return m.group(0) if m else ""
+
+
 class GuideNamesRelatedIntent(unittest.TestCase):
     def test_guide_names_related_intent(self):
         self.assertIn(FIELD, _guide(),
@@ -93,20 +100,23 @@ class GuideNamesRelatedIntent(unittest.TestCase):
 
 
 class TemplateGainsRelatedIntentLine(unittest.TestCase):
+    """plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
+    `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block)."""
+
     def test_section0_has_related_intent_line(self):
-        sec0 = _section0(_tmpl())
-        self.assertTrue(sec0, "the template must have a `## 0 · GROUND` section")
-        self.assertIn(f"{FIELD}:", sec0, "§0 must gain the `Related intent:` line")
+        grounding = _grounding_block(_tmpl())
+        self.assertTrue(grounding, "the template must have a `### Grounding` sub-block (§3 PLAN)")
+        self.assertIn(f"{FIELD}:", grounding, "§3 PLAN Grounding must carry the `Related intent:` line")
 
     def test_related_intent_after_issues(self):
-        sec0 = _section0(_tmpl())
-        self.assertIn("Issues/Risks", sec0, "the Issues/Risks line must remain")
-        self.assertLess(sec0.index("Issues/Risks"), sec0.index(f"{FIELD}:"),
+        grounding = _grounding_block(_tmpl())
+        self.assertIn("Issues/Risks", grounding, "the Issues/Risks line must remain")
+        self.assertLess(grounding.index("Issues/Risks"), grounding.index(f"{FIELD}:"),
                         "Related intent must come AFTER the Issues/Risks line")
 
     def test_section0_preserves_anchors_line(self):
-        self.assertIn("Anchors the contract cites:", _section0(_tmpl()),
-                      "the §0 grounding-measure line must be preserved verbatim")
+        self.assertIn("Anchors the contract cites:", _grounding_block(_tmpl()),
+                      "the §3 PLAN grounding-measure line must be preserved verbatim")
 
 
 class EngineMeasureUntouched(unittest.TestCase):

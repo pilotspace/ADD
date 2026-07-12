@@ -145,7 +145,7 @@ class DecideDigestTest(unittest.TestCase):
     def test_front_seam_renders_bundle_for_approval(self):
         sec1 = SEC1_FLAG + "\n  ⚠ second flag — least sure because new; if wrong: redo"
         sec3 = "the-frozen-shape-text\n\nStatus: DRAFT"
-        self._mk_task("alpha", phase="contract", sec1=sec1, sec3=sec3)
+        self._mk_task("alpha", phase="plan", sec1=sec1, sec3=sec3)
         out, _, code = self._run("v13", "alpha", "--decide")
         self.assertEqual(code, 0)
         self.assertIn("risky assumption", out)
@@ -260,7 +260,7 @@ class DecideDigestTest(unittest.TestCase):
     def test_footer_hard_stop_wins(self):
         self._mk_task("alpha", phase="verify")
         add.main(["gate", "HARD-STOP", "alpha"])
-        self._mk_task("beta", phase="contract")      # also awaiting an approval
+        self._mk_task("beta", phase="plan")           # also awaiting an approval
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
         footer = out[out.index("DECIDE NEXT"):]

@@ -47,11 +47,13 @@ class OrchestratorBuildPersonaTest(unittest.TestCase):
         self.assertIn("stance", self.low, "5-build.md must distinguish SOUL voice from the persona's domain stance")
 
     def test_task_template_has_persona_hook(self):
+        # plan-phase-core relocated the Persona hook from §5 BUILD into §3 PLAN's own
+        # ### Build-strategy sub-block — re-point, same field, new home.
         body = TEMPLATE_TREES[0].read_text(encoding="utf-8")
-        section = body.split("## 5 · BUILD", 1)[1].split("## 6 ·", 1)[0]
+        section = body.split("### Build-strategy", 1)[1].split("## 4 ·", 1)[0]
         self.assertIn(".add/personas/", section,
-                      "TASK.md.tmpl §5 must name an optional .add/personas/<slug>.md persona hook")
-        self.assertIn("persona", section.lower(), "§5 must mention the persona hook")
+                      "TASK.md.tmpl §3 Build-strategy must name a .add/personas/<slug>.md persona hook")
+        self.assertIn("persona", section.lower(), "§3 Build-strategy must mention the persona hook")
 
     def test_overlay_never_rewrites_soul(self):
         self.assertIn("human-owned", self.low.replace("human owned", "human-owned"),

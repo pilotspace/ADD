@@ -49,9 +49,11 @@ def _md5(p: Path) -> str:
 
 
 class PersonaRequiredTest(unittest.TestCase):
+    # plan-phase-core relocated Persona/Strategy from §5 BUILD into §3 PLAN's own
+    # ### Build-strategy sub-block — re-point the extraction there, same field, new home.
     def setUp(self):
         self.text = CANON_TMPL.read_text(encoding="utf-8")
-        self.section5 = _section(self.text, "## 5 · BUILD", "## 6 ·")
+        self.section5 = _section(self.text, "### Build-strategy", "## 4 ·")
 
     def test_persona_line_is_required(self):
         self.assertIn("Persona (required):", self.section5,

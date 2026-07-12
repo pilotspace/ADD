@@ -410,10 +410,11 @@ async function loadClack() {
 // --- brand + feature showcase (interactive path only; fail-soft) -------------
 // Wordmark + value line + the 7-step Specify->Observe loop, rendered BEFORE the first
 // prompt on the interactive path only — so the non-interactive byte stream is unchanged.
-// The 7 labels are the real ADD phases (grounded in the method, never invented). Fail-soft:
-// any draw error is swallowed so a banner can never abort the install. No color is emitted
-// (default accent: none); the glyphs / tagline / accent are a SWAPPABLE content slot.
-const BRAND_LOOP = ["Specify", "Scenarios", "Contract", "Tests", "Build", "Verify", "Observe"];
+// The 7 labels are the real ADD phases (grounded in the method, never invented; grounding
+// itself is folded into step 3, Plan, not a separate phase). Fail-soft: any draw error is
+// swallowed so a banner can never abort the install. No color is emitted (default accent:
+// none); the glyphs / tagline / accent are a SWAPPABLE content slot.
+const BRAND_LOOP = ["Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe"];
 
 function terminalCaps(env, stream) {
   const width = Number(env.COLUMNS) || (stream && stream.columns) || 80;

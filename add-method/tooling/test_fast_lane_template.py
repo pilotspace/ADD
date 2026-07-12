@@ -5,8 +5,9 @@ milestone fast-lane).
 A template-artifact task: ship `templates/TASK.fast.md.tmpl` (a strict SUBSET of the full
 TASK.md.tmpl) + an embedded `add._FALLBACK_TASK_FAST` circuit-breaker analog, and extend
 `_render_template`'s fallback branch to cover "TASK.fast.md". The frozen seam (§3 of the
-task's TASK.md) is the kept-section set {0,1,3,4,5,6} (DROP §2 SCENARIOS, §7 OBSERVE) plus
-the trust-floor marker lines that the engine's gate guards read.
+task's TASK.md) is the kept-section set {1,3,4,5,6} (DROP §2 SCENARIOS, §7 OBSERVE) plus
+the trust-floor marker lines that the engine's gate guards read. (plan-phase-core: §0 GROUND
+folded into §3 PLAN's ### Grounding sub-block — §0 is no longer a heading of its own.)
 
 The `--fast` flag + cmd_new_task wiring + check/audit tolerance are OUT OF SCOPE here (owned
 by fast-new-task-flag); this suite pins only the artifact + fallback + parity across 3 trees.
@@ -31,8 +32,10 @@ FAST_TREES = (CANON_FAST, DOG_FAST, BUNDLE_FAST)
 
 CANON_FULL = HERE / "templates" / "TASK.md.tmpl"
 
-KEPT = {0, 1, 3, 4, 5, 6}            # the frozen kept-section set
-DROPPED = {2, 7}                     # §2 SCENARIOS, §7 OBSERVE
+KEPT = {1, 3, 4, 5, 6}                # the frozen kept-section set (§0 folded into §3 PLAN)
+DROPPED = {2, 7}                     # §2 SCENARIOS, §7 OBSERVE (TASK.md SECTION numbers)
+DROPPED_IDX = {1, 6}                 # the same phases as task_phases()["n"] PHASE INDICES
+                                     # (scenarios=1, observe=6; n is the ordinal, not the §-number)
 
 
 def _sections(text: str) -> set[int]:
@@ -68,7 +71,7 @@ class SubsetSectionSet(unittest.TestCase):
     def setUp(self):
         self.text = CANON_FAST.read_text(encoding="utf-8")
 
-    def test_kept_section_set_is_exactly_0_1_3_4_5_6(self):
+    def test_kept_section_set_is_exactly_1_3_4_5_6(self):
         self.assertEqual(_sections(self.text), KEPT)
 
     def test_scenarios_and_observe_are_absent(self):
@@ -135,10 +138,10 @@ class HeaderAndRender(unittest.TestCase):
             (root / "tasks" / "s").mkdir(parents=True)
             (root / "tasks" / "s" / "TASK.md").write_text(self.rendered, encoding="utf-8")
             phases = add.task_phases(root, "s")
-        self.assertEqual(len(phases), 8)              # ground..observe always 8 entries
-        bynum = {p["n"]: p["body"] for p in phases}
-        for n in DROPPED:
-            self.assertEqual(bynum[n], "(empty)")     # dropped sections render empty, no crash
+        self.assertEqual(len(phases), 7)              # specify..observe always 7 entries now
+        bynum = {p["n"]: p["body"] for p in phases}   # keyed by PHASE INDEX (n), not §-number
+        for n in DROPPED_IDX:
+            self.assertEqual(bynum[n], "(empty)")     # dropped phases render empty, no crash
 
 
 class BuildExpectationsWording(unittest.TestCase):
@@ -182,8 +185,8 @@ class MateriallySmaller(unittest.TestCase):
         self.full = CANON_FULL.read_text(encoding="utf-8")
 
     def test_strictly_fewer_sections(self):
-        self.assertEqual(len(_sections(self.fast)), 6)
-        self.assertEqual(len(_sections(self.full)), 8)   # §0..§7
+        self.assertEqual(len(_sections(self.fast)), 5)
+        self.assertEqual(len(_sections(self.full)), 7)   # §1..§7 (§0 folded into §3 PLAN)
         self.assertLess(len(_sections(self.fast)), len(_sections(self.full)))
 
     def test_substantially_fewer_lines(self):

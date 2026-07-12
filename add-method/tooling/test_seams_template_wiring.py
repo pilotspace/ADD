@@ -90,7 +90,10 @@ def _parse_grep_cl_matches(raw_lines):
 
 
 def _section0(text: str) -> str:
-    m = re.search(r"## 0 .*?GROUND.*?(?=\n## 1 )", text, flags=re.S)
+    """The grounding sub-block. plan-phase-core collapsed §0 GROUND into §3 PLAN's
+    `### Grounding` sub-block (no more standalone `## 0 ·` heading); extract that
+    sub-block instead, ending right before the `### Contract` sub-block starts."""
+    m = re.search(r"### Grounding.*?(?=\n### Contract)", text, flags=re.S)
     return m.group(0) if m else ""
 
 
@@ -112,7 +115,7 @@ class SeamsLineAddedTest(unittest.TestCase):
     def test_line_lands_between_honors_and_anchors(self):
         for p in TMPL_COPIES:
             sec0 = _section0(p.read_text(encoding="utf-8"))
-            self.assertTrue(sec0, f"{p}: no §0 GROUND section found")
+            self.assertTrue(sec0, f"{p}: no §3 PLAN ### Grounding sub-block found")
             self.assertIn(HONORS, sec0, f"{p}: missing Honors line")
             self.assertIn(ANCHORS, sec0, f"{p}: missing Anchors line")
             self.assertIn(LABEL, sec0, f"{p}: missing {LABEL!r} in §0")
@@ -142,7 +145,7 @@ class SeamsLineAddedTest(unittest.TestCase):
             "Context (working folder):",
             HONORS,
             ANCHORS,
-            "Issues/Risks (→ feed §1):",
+            "Issues/Risks:",   # plan-phase-core: label lost its "(→ feed §1)" suffix
             "Related intent:",
             "Ground SHA:",
         ]

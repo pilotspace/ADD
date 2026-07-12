@@ -21,15 +21,17 @@ from add_engine import identity
 
 KNOWN = {"name": "Ada", "email": "ada@x.io", "source": "git"}
 
-# a real drafted §3 body (no template placeholders) — optionally with the well-formed flag
+# a real drafted §3 PLAN body (no template placeholders) — optionally with the well-formed flag.
+# plan-phase-core: §3 is now "## 3 · PLAN"; the fenced shape lives under its "### Contract"
+# sub-block (fenced shape FIRST, then Status: — rule 6).
 _DRAFT_FLAGGED = (
-    "\n```\nGET /widget  body: { id }\n  200 -> { ok: true }\n```\n\n"
+    "\n### Contract\n```\nGET /widget  body: { id }\n  200 -> { ok: true }\n```\n\n"
     "Status: DRAFT\n"
     "Least-sure flag surfaced at freeze:\n"
     "  ⚠ [contract] the id encoding is the least-sure part — cost if wrong: a reparse.\n"
 )
 _DRAFT_NOFLAG = (
-    "\n```\nGET /widget  body: { id }\n  200 -> { ok: true }\n```\n\nStatus: DRAFT\n"
+    "\n### Contract\n```\nGET /widget  body: { id }\n  200 -> { ok: true }\n```\n\nStatus: DRAFT\n"
 )
 
 
@@ -68,20 +70,21 @@ class _Harness(unittest.TestCase):
     def _task_md(self, slug):
         return self.tmp / ".add" / "tasks" / slug / "TASK.md"
 
-    def _new_task_at_contract(self, slug="t", drafted=_DRAFT_FLAGGED):
-        """Lock, a milestone + task, jump to `contract`, and replace §3 with `drafted`."""
+    def _new_task_at_plan(self, slug="t", drafted=_DRAFT_FLAGGED):
+        """Lock, a milestone + task, jump to `plan` (plan-phase-core: ground+contract
+        collapsed into one `plan` phase), and replace §3 with `drafted`."""
         self._silent("lock", "--force")
         if "m" not in self._state().get("milestones", {}):
             self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", slug, "--title", "Feature")
-        self._silent("phase", "contract", slug)
+        self._silent("phase", "plan", slug)
         if drafted is not None:
             self._set_section3(slug, drafted)
 
     def _set_section3(self, slug, body):
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
 
@@ -91,7 +94,7 @@ class _Harness(unittest.TestCase):
 
 class FreezeHappyPathTest(_Harness):
     def test_freeze_active_stamps_section3_and_actor(self):
-        self._new_task_at_contract("t")
+        self._new_task_at_plan("t")
         with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
             self._silent("freeze")
         raw3 = self._section3("t")
@@ -104,7 +107,7 @@ class FreezeHappyPathTest(_Harness):
         self.assertIn("frozen_at", rec)
 
     def test_freeze_named_task_leaves_focus_unchanged(self):
-        self._new_task_at_contract("first")
+        self._new_task_at_plan("first")
         # a second task becomes active; freeze `first` by slug
         self._silent("new-task", "second", "--title", "Other")
         self._silent("use", "second")
@@ -113,14 +116,14 @@ class FreezeHappyPathTest(_Harness):
         self.assertEqual(add._active_task(self._state()), "second")  # focus unchanged
 
     def test_by_overrides_approver_name(self):
-        self._new_task_at_contract("t")
+        self._new_task_at_plan("t")
         self._silent("freeze", "--by", "Tin Dang")
         self.assertRegex(self._section3("t"), r"Status:\s*FROZEN @ v1 — approved by Tin Dang")
         self.assertEqual(self._state()["tasks"]["t"]["freeze"]["approved_by"], "Tin Dang")
 
     def test_freeze_targets_section3_not_a_decoy_draft_line(self):
         # regression: a bare `Status: DRAFT` in §1 prose must NOT be the line that freezes
-        self._new_task_at_contract("t")
+        self._new_task_at_plan("t")
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")
         text = text.replace("## 1 · SPECIFY", "## 1 · SPECIFY\nStatus: DRAFT\n", 1)
@@ -132,7 +135,7 @@ class FreezeHappyPathTest(_Harness):
         self.assertNotRegex(sec1, r"Status:\s*FROZEN")
 
     def test_refreeze_after_change_request_increments_version(self):
-        self._new_task_at_contract("t")
+        self._new_task_at_plan("t")
         self._silent("freeze")
         # change-request: revert §3 to a flagged DRAFT, then re-freeze
         self._set_section3("t", _DRAFT_FLAGGED)
@@ -153,7 +156,7 @@ class FreezeRejectTest(_Harness):
         # first-call-ergonomics M2: an exact already-FROZEN retry is now an exit-0
         # no-op (never a hard error) — it restates the frozen version + redirects a
         # real shape change to a SPECIFY change request, and writes ZERO bytes.
-        self._new_task_at_contract("t")
+        self._new_task_at_plan("t")
         self._silent("freeze")
         frozen3 = self._section3("t")
         rec = self._state()["tasks"]["t"]["freeze"]
@@ -167,8 +170,8 @@ class FreezeRejectTest(_Harness):
         self.assertEqual(self._state()["tasks"]["t"]["freeze"], rec)  # stamp unchanged
 
     def test_refuse_contract_not_drafted_template(self):
-        # at `contract` but §3 still the unfilled template (has <METHOD> placeholder)
-        self._new_task_at_contract("t", drafted=None)
+        # at `plan` but §3 still the unfilled template (has <METHOD> placeholder)
+        self._new_task_at_plan("t", drafted=None)
         out, code = self._run("freeze")
         self.assertNotEqual(code, 0)
         self.assertIn("contract_not_drafted", out)
@@ -176,7 +179,7 @@ class FreezeRejectTest(_Harness):
         self.assertNotIn("freeze", self._state()["tasks"]["t"])
 
     def test_refuse_unflagged_freeze(self):
-        self._new_task_at_contract("t", drafted=_DRAFT_NOFLAG)
+        self._new_task_at_plan("t", drafted=_DRAFT_NOFLAG)
         out, code = self._run("freeze")
         self.assertNotEqual(code, 0)
         self.assertIn("unflagged_freeze", out)

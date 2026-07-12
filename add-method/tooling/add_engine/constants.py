@@ -270,6 +270,10 @@ Scope (may touch): `./src/`
 Plan:
 Tests live in: `./tests/` · MUST run red before Build.
 
+## 5 · BUILD
+Strategy actually used:
+Code lives in: `./src/`
+
 ## 6 · VERIFY
 Build expectations (from §1 Accept + §3 CONTRACT):
 ### GATE RECORD

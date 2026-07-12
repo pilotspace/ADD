@@ -91,17 +91,18 @@ class _Harness(unittest.TestCase):
     def _set_section3(self, slug, body):
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
 
     def _new_task_at_contract(self, slug="t", drafted=_DRAFT_FLAGGED):
-        """Lock, a milestone + task, jump to `contract`, and replace §3 with `drafted`."""
+        """Lock, a milestone + task, jump to `plan` (plan-phase-core: ground+contract
+        collapsed into ONE `plan` phase), and replace §3 with `drafted`."""
         self._silent("lock", "--force")
         if "m" not in self._state().get("milestones", {}):
             self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", slug, "--title", "Feature")
-        self._silent("phase", "contract", slug)
+        self._silent("phase", "plan", slug)
         if drafted is not None:
             self._set_section3(slug, drafted)
 
@@ -234,7 +235,7 @@ class InitKickoffTest(unittest.TestCase):
         self.assertIn("--goal", out)
         self.assertIn("new-task", out)
         self.assertIn("--milestone", out)
-        self.assertIn("advance --to contract", out)
+        self.assertIn("advance --to plan", out)
 
 
 # ── R1: the floor guards stay loud errors ────────────────────────────────────

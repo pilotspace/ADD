@@ -84,7 +84,10 @@ class _Board(unittest.TestCase):
 
     def _body(self, slug: str, flag: str, frozen: bool = True) -> str:
         """A full TASK.md whose §3 we control: the FROZEN stamp (optional) plus
-        an optional flag unit appended after it."""
+        an optional flag unit appended after it. plan-phase-core: §3 is now the
+        collapsed `## 3 · PLAN` (rule 6 — fenced shape first, under `### Contract`,
+        then `Status:`); the numeral (not the title) is what the engine's
+        `_phase_spans` keys on, but the label is kept truthful."""
         sec3 = (tga.GOOD3 if frozen else "Status: DRAFT")
         if flag:
             sec3 = f"{sec3}\n{flag}"
@@ -92,7 +95,7 @@ class _Board(unittest.TestCase):
             f"# TASK: {slug}", "",
             "## 1 · SPECIFY", "Feature: f", "",
             "## 2 · SCENARIOS", "(none)", "",
-            "## 3 · CONTRACT", "```\nshape\n```", "", sec3, "",
+            "## 3 · PLAN", "### Contract", "```\nshape\n```", "", sec3, "",
             "## 4 · TESTS", "plan", "",
             "## 5 · BUILD", "code", "",
             "## 6 · VERIFY", tga._sec6(), "",
@@ -191,16 +194,22 @@ class AdvanceGuardTest(_Board):
 
     # -- scope: the guard fires ONLY at the build boundary --
     def test_below_build_boundary_unchecked(self):
-        # a frozen §3 with NO flag, advancing ground->specify->scenarios, is never checked
+        # a frozen §3 with NO flag, advancing specify->scenarios->plan->tests, is never
+        # checked for the flag — the unflagged_freeze guard lives ONLY in `_build_entry`
+        # (the tests->build crossing). The now-earlier plan->tests freeze gate (plan-phase-
+        # core) only checks `_contract_frozen` (true here, via GOOD3), never the flag, so
+        # this fixture legitimately rides all the way to `tests` without tripping either.
         buf, err = io.StringIO(), io.StringIO()
         with redirect_stdout(buf), redirect_stderr(err):
-            add.main(["new-task", "beta", "--title", "beta"])   # stays at ground
+            add.main(["new-task", "beta", "--title", "beta"])   # stays at specify
         self._task_md("beta").write_text(self._body("beta", flag=""), encoding="utf-8")
-        out, err, code = self._advance("beta")                   # ground -> specify
-        self.assertEqual(code, 0, out + err)
         out, err, code = self._advance("beta")                   # specify -> scenarios
         self.assertEqual(code, 0, out + err)
-        self.assertEqual(self._state()["tasks"]["beta"]["phase"], "scenarios")
+        out, err, code = self._advance("beta")                   # scenarios -> plan
+        self.assertEqual(code, 0, out + err)
+        out, err, code = self._advance("beta")                   # plan -> tests (frozen, no flag check here)
+        self.assertEqual(code, 0, out + err)
+        self.assertEqual(self._state()["tasks"]["beta"]["phase"], "tests")
 
 
 # ============================================================================

@@ -73,6 +73,13 @@ def _section0(tmpl: str) -> str:
     return m.group(0) if m else ""
 
 
+def _grounding_block(tmpl: str) -> str:
+    """plan-phase-core: grounding moved from `## 0 · GROUND` into `## 3 · PLAN`'s
+    `### Grounding` sub-block (up to the next `### `/`## ` heading, i.e. `### Contract`)."""
+    m = re.search(r"### Grounding\b.*?(?=\n(?:### |## ))", tmpl, flags=re.S)
+    return m.group(0) if m else ""
+
+
 class GuideBroadensGather(unittest.TestCase):
     """0-ground.md `## Gather` names the working-folder context categories."""
 
@@ -101,24 +108,28 @@ class GuideBroadensGather(unittest.TestCase):
 
 
 class TemplateGainsContextLine(unittest.TestCase):
-    """TASK.md.tmpl §0 carries the light Context line; invariants preserved."""
+    """TASK.md.tmpl carries the light Context line; invariants preserved.
+
+    plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
+    `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block)."""
 
     def test_section0_has_context_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertTrue(sec0, "the template must have a `## 0 · GROUND` section")
-        self.assertIn("Context (working folder):", sec0,
-                      "§0 must gain the light `Context (working folder):` line")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertTrue(grounding, "the template must have a `### Grounding` sub-block (§3 PLAN)")
+        self.assertIn("Context (working folder):", grounding,
+                      "§3 PLAN Grounding must carry the light `Context (working folder):` line")
 
     def test_section0_preserves_anchors_line(self):
         # The grounding measure (_grounded_state) keys on this exact line.
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0,
-                      "the §0 measure line must be preserved verbatim")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding,
+                      "the §3 PLAN grounding measure line must be preserved verbatim")
 
     def test_section0_keeps_heading_tokens(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("## 0 ", sec0, "section 0 heading preserved")
-        self.assertIn("GROUND", sec0, "the §0 GROUND label preserved")
+        tmpl = _canonical_tmpl()
+        self.assertIn("## 3 · PLAN", tmpl, "the §3 PLAN heading must be preserved")
+        self.assertIn("### Grounding", _grounding_block(tmpl),
+                      "the Grounding sub-block heading must be preserved")
 
 
 class CopiesStayByteIdentical(unittest.TestCase):

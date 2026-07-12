@@ -112,7 +112,12 @@ class TinyMemberTasks(TinyPlanBase):
         r = _run(self.root, "new-task", "big-one", "--title", "t", "--full")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = (pathlib.Path(self.root) / ".add" / "tasks" / "big-one" / "TASK.md").read_text()
-        self.assertIn("## 0", body, "--full must scaffold the full template (has §0 GROUND)")
+        # §0 GROUND folded into §3 PLAN (plan-phase-core); the fast lane's dropped-section
+        # set {2, 7} is now the discriminating marker — only the full template scaffolds them.
+        self.assertIn("## 2 · SCENARIOS", body,
+                      "--full must scaffold the full template (has §2 SCENARIOS)")
+        self.assertIn("## 7 · OBSERVE", body,
+                      "--full must scaffold the full template (has §7 OBSERVE)")
 
     def test_security_sensitivity_forces_full(self):
         # S4/R6: base-class sensitivity overrides the tiny default
@@ -121,7 +126,10 @@ class TinyMemberTasks(TinyPlanBase):
                  "--sensitivity", "security")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = (pathlib.Path(self.root) / ".add" / "tasks" / "patch-auth" / "TASK.md").read_text()
-        self.assertIn("## 0", body,
+        # (see test_full_flag_opts_back: §0 GROUND folded into §3 PLAN — §2/§7 discriminate now)
+        self.assertIn("## 2 · SCENARIOS", body,
+                      "a security-sensitive task in a tiny milestone gets the FULL template")
+        self.assertIn("## 7 · OBSERVE", body,
                       "a security-sensitive task in a tiny milestone gets the FULL template")
 
 

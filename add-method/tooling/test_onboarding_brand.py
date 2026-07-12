@@ -26,12 +26,13 @@ from test_installer_prompts import (
 
 INSTALLER_PY = PKG_ROOT / "src" / "add_method" / "_installer.py"
 
-# The 7 post-ground ADD phases the showcase loop must name (grounded in the method,
-# never invented). Build/Tests are excluded from the OUTPUT markers below because the
-# plain installer prose already says "build" — these five are showcase-only words that
-# never appear in normal installer output, so they cleanly separate the two paths.
-LOOP_STEPS = ("Specify", "Scenarios", "Contract", "Tests", "Build", "Verify", "Observe")
-SHOWCASE_MARKERS = ("Specify", "Scenarios", "Contract", "Verify", "Observe")
+# The 7 ADD phases the showcase loop must name (grounded in the method, never invented;
+# grounding itself is folded into Plan, not a separate step). Build/Tests are excluded
+# from the OUTPUT markers below because the plain installer prose already says "build" —
+# these five are showcase-only words that never appear in normal installer output, so
+# they cleanly separate the two paths.
+LOOP_STEPS = ("Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe")
+SHOWCASE_MARKERS = ("Specify", "Scenarios", "Plan", "Verify", "Observe")
 
 
 def _markers_present(text):
@@ -48,15 +49,16 @@ def _load_engine():
 # --- faithful: the loop labels are the real ADD phases, not invented marketing ----
 
 class FaithfulShowcaseTest(unittest.TestCase):
-    def test_loop_steps_are_the_real_post_ground_phases(self):
+    def test_loop_steps_are_the_real_pre_done_phases(self):
         add = _load_engine()
         phases = [p.lower() for p in add.PHASES]
         for s in LOOP_STEPS:
             self.assertIn(s.lower(), phases,
                           f"showcase step {s!r} must be a real ADD phase (grounded, not invented)")
-        # exactly the 7 steps between ground and done, in order
-        self.assertEqual([s.lower() for s in LOOP_STEPS], phases[1:8],
-                         "the showcase must be the 7 post-ground, pre-done phases in order")
+        # exactly the 7 steps before the terminal "done", in order (no separate ground
+        # phase — grounding is folded into step 3, Plan)
+        self.assertEqual([s.lower() for s in LOOP_STEPS], phases[0:7],
+                         "the showcase must be the 7 pre-done phases in order")
 
 
 # --- the banner is actually wired into BOTH twins (decision-equivalent) -----------

@@ -83,10 +83,12 @@ class _Harness(unittest.TestCase):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", slug, "--title", "Feature")
-        self._silent("phase", "contract", slug)
+        self._silent("phase", "plan", slug)          # plan-phase-core: "contract" collapsed into "plan"
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        # plan-phase-core: §3 PLAN now holds ### Grounding + ### Contract + ### Build-strategy —
+        # replace only the ### Contract sub-block body, leaving Grounding/Build-strategy intact.
+        new = re.sub(r"(### Contract[^\n]*\n).*?(\n### Build-strategy)",
                      lambda m: m.group(1) + _DRAFT_FLAGGED + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
 

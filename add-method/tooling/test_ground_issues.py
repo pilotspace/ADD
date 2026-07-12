@@ -82,6 +82,15 @@ def _section0(tmpl: str) -> str:
     return m.group(0) if m else ""
 
 
+def _grounding_block(tmpl: str) -> str:
+    """plan-phase-core: grounding moved from a standalone `## 0 · GROUND` section into
+    the `## 3 · PLAN` section's `### Grounding` sub-block (up to the next `### `/`## `
+    heading — i.e. `### Contract`). Re-points `_section0`'s callers to the new location,
+    scoped the same way (just the grounding fields, not the whole §3 PLAN section)."""
+    m = re.search(r"### Grounding\b.*?(?=\n(?:### |## ))", tmpl, flags=re.S)
+    return m.group(0) if m else ""
+
+
 class GuideNamesIssuesCategory(unittest.TestCase):
     """0-ground.md ## Gather names the Issues/Risks category; existing fields remain."""
 
@@ -115,29 +124,40 @@ class GuideNamesIssuesCategory(unittest.TestCase):
 
 
 class TemplateGainsIssuesLine(unittest.TestCase):
-    """TASK.md.tmpl §0 carries the Issues/Risks line, AFTER the Anchors line."""
+    """TASK.md.tmpl carries the Issues/Risks line, AFTER the Anchors line.
+
+    plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
+    `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block). The field's
+    OWN literal label narrowed from `Issues/Risks (→ feed §1):` to `Issues/Risks:`
+    (the "feed §1" phrasing moved into the field's placeholder prose, not the label) —
+    that is a genuine wording move, not a dropped fact, so the assertions below keep
+    the same STRENGTH by checking the line still names §1 + "feed" explicitly."""
 
     def test_section0_has_issues_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertTrue(sec0, "the template must have a `## 0 · GROUND` section")
-        self.assertIn(f"{FIELD} (→ feed §1):", sec0,
-                      "§0 must gain the `Issues/Risks (→ feed §1):` line")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertTrue(grounding, "the template must have a `### Grounding` sub-block (§3 PLAN)")
+        self.assertIn(f"{FIELD}:", grounding,
+                      "§3 PLAN Grounding must carry the `Issues/Risks:` line")
+        issues_line = next(ln for ln in grounding.splitlines() if ln.startswith(f"{FIELD}:"))
+        self.assertIn("§1", issues_line, "the Issues/Risks line must still say it feeds §1")
+        self.assertIn("feed", issues_line.lower(), "the Issues/Risks line must still say FEED")
 
     def test_issues_line_after_anchors(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0)
-        self.assertLess(sec0.index("Anchors the contract cites:"), sec0.index(f"{FIELD} (→ feed §1):"),
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding)
+        self.assertLess(grounding.index("Anchors the contract cites:"), grounding.index(f"{FIELD}:"),
                         "the Issues/Risks line must come AFTER the Anchors measure line")
 
     def test_section0_preserves_anchors_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0,
-                      "the §0 grounding-measure line must be preserved verbatim")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding,
+                      "the §3 PLAN grounding-measure line must be preserved verbatim")
 
     def test_section0_keeps_heading_tokens(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("## 0 ", sec0)
-        self.assertIn("GROUND", sec0)
+        tmpl = _canonical_tmpl()
+        self.assertIn("## 3 · PLAN", tmpl, "the §3 PLAN heading must be present")
+        self.assertIn("### Grounding", _grounding_block(tmpl),
+                      "the Grounding sub-block heading must be preserved")
 
 
 class SpecifyConsumesIssues(unittest.TestCase):

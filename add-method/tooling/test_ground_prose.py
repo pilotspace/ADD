@@ -49,11 +49,13 @@ def _strip_mermaid(text: str) -> str:
 
 
 class FlowChapterTest(unittest.TestCase):
-    def test_flow_chapter_names_ground_preamble(self):
+    def test_flow_chapter_names_grounding_in_plan(self):
+        # plan-phase-core: grounding is no longer a §0 preamble — it is the first part of the
+        # Plan phase. The prose must still NAME grounding + the plan phase (outside the mermaid).
         prose = _strip_mermaid(FLOW.read_text(encoding="utf-8")).lower()
-        self.assertIn("preamble", prose, "ch02 prose must name the ground preamble")
-        self.assertIn("ground", prose, "ch02 prose must name 'ground' outside the mermaid")
-        # the seven-step brand is preserved (ground is the §0 preamble, not an 8th step)
+        self.assertIn("grounding", prose, "ch02 prose must name grounding")
+        self.assertIn("plan", prose, "ch02 prose must name the plan phase (grounding folds into it)")
+        # the seven-step brand is preserved (specify..observe; grounding is Plan's first part, not a step)
         self.assertIn("seven steps", FLOW.read_text(encoding="utf-8").lower())
 
     def test_flow_chapter_synced_x4(self):

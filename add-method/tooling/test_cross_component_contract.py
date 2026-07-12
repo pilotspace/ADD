@@ -73,17 +73,18 @@ class _Board(unittest.TestCase):
         self._quiet(["new-task", slug])
         p = self._task_path(slug)
         t = p.read_text(encoding="utf-8")
-        t = t.replace("phase: ground", f"{role_line}\nphase: ground", 1)
+        t = t.replace("phase: specify", f"{role_line}\nphase: specify", 1)
         if frozen:
             t = t.replace("Status: DRAFT", f"Status: FROZEN @ {frozen} — approved by T")
-        # force a deterministic fenced §3 shape for hashing — anchor to the §3 CONTRACT heading so
+        # force a deterministic fenced §3 shape for hashing — anchor to the §3 PLAN heading so
         # the fence we set is the one the engine actually hashes (NOT the §2 gherkin fence, which
-        # precedes §3 in the file).
+        # precedes §3 in the file; the §3 PLAN Grounding sub-block carries no fence, so the FIRST
+        # fence inside §3 is still the Contract sub-block's shape).
         import re
-        t = re.sub(r"(## 3 · CONTRACT.*?)```.*?```", rf"\1```\n{fence}\n```", t, count=1, flags=re.DOTALL)
+        t = re.sub(r"(## 3 · PLAN.*?)```.*?```", rf"\1```\n{fence}\n```", t, count=1, flags=re.DOTALL)
         assert f"\n{fence}\n" in t, "fence did not land in §3"
         p.write_text(t, encoding="utf-8")
-        for _ in range(3):    # ground -> specify -> scenarios -> contract
+        for _ in range(2):    # specify -> scenarios -> plan
             self._quiet(["advance", slug])
 
     def _freeze(self, slug: str) -> None:
@@ -137,7 +138,7 @@ class Readers(_Board):
         self._registry()
         self._quiet(["new-task", "p"])
         pp = self._task_path("p")
-        pp.write_text(pp.read_text().replace("phase: ground", "produces: gateway-api\nphase: ground"), encoding="utf-8")
+        pp.write_text(pp.read_text().replace("phase: specify", "produces: gateway-api\nphase: specify"), encoding="utf-8")
         self.assertEqual(add._task_produces(self.addp, "p"), "gateway-api")
         self.assertIsNone(add._task_consumes(self.addp, "p"))
 
@@ -169,10 +170,10 @@ class ProducerWrite(_Board):
         self._registry()
         self._new_at_contract("p", "produces: gateway-api", fence="SHAPE A"); self._advance("p")
         h_a = self._snapshot()["hash"]
-        self._quiet(["phase", "contract", "p"])
+        self._quiet(["phase", "plan", "p"])
         pp = self._task_path("p")
         import re
-        pp.write_text(re.sub(r"(## 3 · CONTRACT.*?)```.*?```", r"\1```\nSHAPE B\n```",
+        pp.write_text(re.sub(r"(## 3 · PLAN.*?)```.*?```", r"\1```\nSHAPE B\n```",
                              pp.read_text(), count=1, flags=re.DOTALL), encoding="utf-8")
         self._advance("p")
         self.assertNotEqual(h_a, self._snapshot()["hash"])
@@ -183,7 +184,7 @@ class ProducerWrite(_Board):
         self._advance("p")
         first = (self.addp / "contracts" / "gateway-api.json").read_text()
         # re-cross by stepping the producer back to contract and forward again
-        self._quiet(["phase", "contract", "p"])
+        self._quiet(["phase", "plan", "p"])
         self._advance("p")
         self.assertEqual(first, (self.addp / "contracts" / "gateway-api.json").read_text())
 
@@ -212,7 +213,7 @@ class ConsumerPin(_Board):
         out, err = self._advance("c")
         self.assertIsNotNone(err)
         self.assertIn("contract_snapshot_missing", err or "")
-        self.assertEqual(self._phase("c"), "contract")
+        self.assertEqual(self._phase("c"), "plan")
         self.assertNotIn("contract_pin", self._state()["tasks"]["c"])
 
 
@@ -227,10 +228,10 @@ class CheckFindings(_Board):
         self._advance("c")
         self.assertNotIn("contract_consumer_stale", self._check())   # fresh pin: not stale
         # producer re-freezes a CHANGED §3 shape and re-crosses -> new snapshot hash
-        self._quiet(["phase", "contract", "p"])
+        self._quiet(["phase", "plan", "p"])
         pp = self._task_path("p")
         import re
-        pp.write_text(re.sub(r"(## 3 · CONTRACT.*?)```.*?```", r"\1```\nSHAPE B (breaking)\n```",
+        pp.write_text(re.sub(r"(## 3 · PLAN.*?)```.*?```", r"\1```\nSHAPE B (breaking)\n```",
                              pp.read_text(), count=1, flags=re.DOTALL), encoding="utf-8")
         self._advance("p")
         self.assertIn("contract_consumer_stale", self._check())
@@ -245,7 +246,7 @@ class CheckFindings(_Board):
         out, err = self._advance("c")
         self.assertIsNotNone(err)
         self.assertIn("contract_snapshot_missing", err or "")
-        self.assertEqual(self._phase("c"), "contract")
+        self.assertEqual(self._phase("c"), "plan")
 
     def test_corrupt_live_snapshot_is_surfaced_not_masked(self):
         # refute Finding 3: a corrupt live snapshot must surface a finding, not silently no-stale.
@@ -262,7 +263,7 @@ class CheckFindings(_Board):
         self._new_at_contract("c", "consumes: gateway-api")
         self._advance("c")
         # producer re-freezes v2 with the SAME shape -> same hash -> no churn
-        self._quiet(["phase", "contract", "p"])
+        self._quiet(["phase", "plan", "p"])
         pp = self._task_path("p")
         pp.write_text(pp.read_text().replace("FROZEN @ v1", "FROZEN @ v2"), encoding="utf-8")
         self._advance("p")
@@ -275,10 +276,13 @@ class CheckFindings(_Board):
 
 class OptIn(_Board):
     def test_zero_contract_no_role_byte_identical(self):
-        # no components.toml at all; a plain task crosses contract->tests as today
+        # no components.toml at all; a plain task crosses plan->tests as today (once frozen —
+        # the universal freeze gate sits at this crossing regardless of the contract system,
+        # unrelated to the cross-component behavior under test here)
         self._quiet(["new-task", "t"])
-        for _ in range(3):
+        for _ in range(2):    # specify -> scenarios -> plan
             self._quiet(["advance", "t"])
+        self._freeze("t")
         out, err = self._advance("t")
         self.assertIsNone(err)
         self.assertEqual(self._phase("t"), "tests")
@@ -300,16 +304,16 @@ class GateConsumerStale(_Board):
             "Least-sure flag surfaced at freeze: [contract] reuse — cost: a re-pin"), encoding="utf-8")
 
     def _consumer_to_verify(self, slug="c"):
-        self._new_at_contract(slug, "consumes: gateway-api")   # at contract (pins on next advance)
+        self._new_at_contract(slug, "consumes: gateway-api")   # at plan (pins on next advance)
         self._flag(slug)
-        for _ in range(3):                                     # contract->tests (pin) -> build -> verify
+        for _ in range(3):                                     # plan->tests (pin) -> build -> verify
             self._advance(slug)
 
     def _refreeze_producer(self, fence):
-        self._quiet(["phase", "contract", "p"])
+        self._quiet(["phase", "plan", "p"])
         pp = self._task_path("p")
         import re
-        pp.write_text(re.sub(r"(## 3 · CONTRACT.*?)```.*?```", rf"\1```\n{fence}\n```",
+        pp.write_text(re.sub(r"(## 3 · PLAN.*?)```.*?```", rf"\1```\n{fence}\n```",
                              pp.read_text(), count=1, flags=re.DOTALL), encoding="utf-8")
         self._advance("p")
 
@@ -365,7 +369,7 @@ class GateConsumerStale(_Board):
         # a task with no consumes: carries no contract_pin -> the guard returns early (byte-identical)
         self._quiet(["new-task", "t"])
         self._freeze("t")                                      # freeze-gate-universal sweep
-        for _ in range(6):                                     # ground -> ... -> verify (6 hops)
+        for _ in range(5):                                     # specify -> ... -> verify (5 hops)
             self._quiet(["advance", "t"])
         self.assertEqual(self._phase("t"), "verify")
         out, err = self._gate("PASS", "t")

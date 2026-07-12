@@ -118,12 +118,14 @@ class _Board(unittest.TestCase):
         lines = [
             f"# TASK: {slug}",
             f"slug: {slug} · created: 2026-06-12 · stage: mvp",
-            "phase: ground",
+            "phase: specify",
             "",
-            *_section(0, "GROUND", "Anchors the contract cites: cmd_advance · cmd_gate"),
             *_section(1, "SPECIFY", "Feature: f"),
             *_section(2, "SCENARIOS", "(none)"),
-            *_section(3, "CONTRACT",
+            *_section(3, "PLAN",
+                      "### Grounding",
+                      "Anchors the contract cites: cmd_advance · cmd_gate",
+                      "### Contract",
                       "```", self._CONTRACT_BODY, "```",
                       "Status: FROZEN @ v1 — approved by Tester 2026-06-12.",
                       "Least-sure flag surfaced at freeze: [contract] the resolver reuses "
@@ -170,14 +172,14 @@ class _Board(unittest.TestCase):
 class FooterArmATest(_Board):
 
     def test_advance_footer_is_phase_command(self):
-        self._silent("new-task", "foo")                  # active, ground
-        out, _, _ = self._run("advance", "foo")          # ground -> specify
+        self._silent("new-task", "foo")                  # active, specify
+        out, _, _ = self._run("advance", "foo")          # specify -> scenarios
         footer = self._footer(out)
         self.assertTrue(footer.startswith("next: add.py advance"),
                         f"a front phase points at advance, got: {footer!r}")
-        self.assertIn("state every rule", footer,
-                      "the why is the specify-phase PHASE_GUIDE copy")
-        self.assertIn("phase ground -> specify", out,
+        self.assertIn("write one Given/When/Then", footer,
+                      "the why is the scenarios-phase PHASE_GUIDE copy")
+        self.assertIn("phase specify -> scenarios", out,
                       "the footer is ADDITIVE — the verb's result line survives")
 
     def test_advance_into_verify_footer_is_gate(self):
@@ -195,9 +197,9 @@ class FooterArmATest(_Board):
         nxt = self._next_lines(out)
         self.assertEqual(len(nxt), 1, f"exactly one next: line, got {nxt!r}")
         self.assertTrue(nxt[0].startswith("next: add.py advance"),
-                        "a fresh task at ground points at advance")
-        self.assertIn("gather the real codebase", nxt[0],
-                      "the why is the ground-phase PHASE_GUIDE copy")
+                        "a fresh task at specify points at advance")
+        self.assertIn("state every rule", nxt[0],
+                      "the why is the specify-phase PHASE_GUIDE copy")
         self.assertNotIn("then: add.py advance", out,
                          "the old ad-hoc tail converges onto the footer (no double-print)")
 
@@ -208,7 +210,7 @@ class FooterArmBTest(_Board):
     def test_gate_pass_routes_state_arm(self):
         self._arm("alpha")                               # active=alpha at build (in v1)
         self._silent("new-task", "beta")                 # active=beta
-        self._silent("phase", "contract", "beta")
+        self._silent("phase", "plan", "beta")
         self._silent("use", "alpha")                     # active=alpha again
         out, _, code = self._gate("alpha", "PASS")       # alpha -> done
         self.assertEqual(code, 0, out)
@@ -264,9 +266,15 @@ class FooterFailSoftTest(_Board):
 class FooterMarkerTest(_Board):
 
     def test_marker_slot_filled(self):
-        # gate-owner-marker filled the slot next-footer-engine reserved: `new-task foo`
-        # lands at ground (owner ai) under the default `auto` rung -> the AI drives.
-        out, _, _ = self._run("new-task", "foo")
+        # gate-owner-marker filled the slot next-footer-engine reserved. `new-task foo`
+        # now lands at specify (owner human — the front phases are human-owned), so arm
+        # through the frozen §3 into `tests` (owner ai) under the default `auto` rung
+        # to exercise the AI-drives branch.
+        self._silent("new-task", "foo")
+        self._silent("advance", "foo")                    # specify -> scenarios
+        self._silent("advance", "foo")                     # scenarios -> plan
+        self._freeze("foo")
+        out, _, _ = self._run("advance", "foo")            # plan -> tests (frozen)
         footer = self._footer(out)
         self.assertTrue(footer.endswith(" [you drive]"),
                         f"the reserved slot now names the driver, got: {footer!r}")
@@ -342,50 +350,42 @@ class FooterSweepTest(_Board):
 
 # ── advance-chain-collapse: the front-phase footer teaches the bundle form ───
 class FooterCollapseHintTest(_Board):
-    """The `next:` footer hands the agent the COLLAPSED `advance --to contract`
+    """The `next:` footer hands the agent the COLLAPSED `advance --to plan`
     at front drafting phases (M1) while keeping the per-section `--fill` alt
-    (M2), points at the freeze gate AT contract (M3), and never names a `--to`
-    target past contract (M4). Render-blind: reads the printed footer only."""
-
-    def test_ground_footer_teaches_collapse(self):            # M1 + M2 @ ground
-        out, _, _ = self._run("new-task", "foo")              # fresh task @ ground
-        footer = self._footer(out)
-        self.assertIn("add.py advance --to contract", footer,
-                      f"ground footer teaches the collapse, got: {footer!r}")
-        self.assertIn("add.py advance --fill <draft>", footer,
-                      f"ground footer keeps the --fill alt, got: {footer!r}")
+    (M2), points at the freeze gate AT plan (M3), and never names a `--to`
+    target past plan (M4). Render-blind: reads the printed footer only."""
 
     def test_specify_footer_teaches_collapse(self):           # M1 + M2 @ specify
-        self._silent("new-task", "foo")
-        out, _, _ = self._run("advance", "foo")               # ground -> specify
+        out, _, _ = self._run("new-task", "foo")              # fresh task @ specify
         footer = self._footer(out)
-        self.assertIn("add.py advance --to contract", footer, footer)
-        self.assertIn("add.py advance --fill <draft>", footer, footer)
+        self.assertIn("add.py advance --to plan", footer,
+                      f"specify footer teaches the collapse, got: {footer!r}")
+        self.assertIn("add.py advance --fill <draft>", footer,
+                      f"specify footer keeps the --fill alt, got: {footer!r}")
 
-    def test_scenarios_footer_teaches_collapse(self):         # M1 @ scenarios
+    def test_scenarios_footer_teaches_collapse(self):         # M1 + M2 @ scenarios
         self._silent("new-task", "foo")
-        self._silent("advance", "foo")                        # -> specify
-        out, _, _ = self._run("advance", "foo")               # -> scenarios
+        out, _, _ = self._run("advance", "foo")               # specify -> scenarios
         footer = self._footer(out)
-        self.assertIn("add.py advance --to contract", footer, footer)
+        self.assertIn("add.py advance --to plan", footer, footer)
+        self.assertIn("add.py advance --fill <draft>", footer, footer)
 
     def test_contract_footer_points_at_freeze(self):          # M3
         self._silent("new-task", "foo")
-        self._silent("advance", "foo")                        # -> specify
         self._silent("advance", "foo")                        # -> scenarios
-        out, _, _ = self._run("advance", "foo")               # -> contract
+        out, _, _ = self._run("advance", "foo")               # -> plan
         footer = self._footer(out)
         self.assertIn("add.py freeze", footer,
-                      f"contract footer names the freeze gate, got: {footer!r}")
+                      f"plan footer names the freeze gate, got: {footer!r}")
         self.assertNotIn("advance", footer,
-                         f"contract footer must NOT re-suggest advance, got: {footer!r}")
+                         f"plan footer must NOT re-suggest advance, got: {footer!r}")
         self.assertNotIn("--to", footer,
-                         f"contract footer must NOT name a --to, got: {footer!r}")
+                         f"plan footer must NOT name a --to, got: {footer!r}")
 
     def test_no_front_footer_names_a_to_past_contract(self):  # M4
         self._silent("new-task", "foo")
-        footers = [self._footer(self._run("new-task", "bar")[0])]   # bar @ ground
-        for _ in range(3):                                    # specify, scenarios, contract
+        footers = [self._footer(self._run("new-task", "bar")[0])]   # bar @ specify
+        for _ in range(2):                                    # scenarios, plan
             footers.append(self._footer(self._run("advance", "bar")[0]))
         for f in footers:
             for bad in ("--to tests", "--to build", "--to verify", "--to observe", "--to done"):
@@ -421,10 +421,9 @@ class FooterFoldTest(_Board):
                       f"empty-milestone next-step must name --title: {footer!r}")
 
     def test_plain_status_carries_next_command_inline(self):   # M2
-        self._silent("new-task", "foo")
-        self._silent("advance", "foo")                          # -> specify
+        self._silent("new-task", "foo")                         # -> specify
         self._silent("advance", "foo")                          # -> scenarios
-        self._silent("advance", "foo")                          # -> contract
+        self._silent("advance", "foo")                          # -> plan
         out, _, _ = self._run("status")                         # plain full status
         self.assertIn("add.py freeze", out,
                       f"plain status must name the next command inline: {out}")

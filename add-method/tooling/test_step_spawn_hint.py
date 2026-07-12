@@ -2,8 +2,9 @@
 """Red/green for the per-step spawn hint (task step-spawn-hint, advisor-gated-autonomy).
 
 CONTRACT (frozen @ v1):
-  _SPAWN_HINTS: dict[str,str]  phase -> idiom; contract/done ABSENT
-    ground:"broad sweep" · specify:"domain researcher" · scenarios:"wide scenario sweep" ·
+  _SPAWN_HINTS: dict[str,str]  phase -> idiom; done ABSENT
+    specify:"domain researcher" · scenarios:"wide scenario sweep" ·
+    plan:"change-plan design sweep" ·
     tests:"red-suite test-author" · build:"independent well-scoped batch" ·
     verify:"earned-green refute-read" · observe:"lessons-mining reviewer"
   _spawn_hint_line(task: dict, autonomy: str) -> str | None   # PURE
@@ -27,9 +28,9 @@ import add
 
 
 EXPECTED = {
-    "ground": "broad sweep",
     "specify": "domain researcher",
     "scenarios": "wide scenario sweep",
+    "plan": "change-plan design sweep",
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
     "verify": "earned-green refute-read",
@@ -87,10 +88,10 @@ class _CLI(unittest.TestCase):
             pass
         return buf.getvalue() + err.getvalue()
 
-    def test_status_renders_hint_for_active_ground(self):
-        # fresh task t is active at ground under the default (auto) project dial
+    def test_status_renders_hint_for_active_specify(self):
+        # fresh task t is active at specify under the default (auto) project dial
         out = self._run("status")
-        self.assertIn("spawn hint: ground → broad sweep (tier: mid)", out)
+        self.assertIn("spawn hint: specify → domain researcher (tier: mid)", out)
 
     def test_manual_dial_suppresses_hint(self):
         self._run("autonomy", "set", "manual", "--project")
@@ -99,7 +100,7 @@ class _CLI(unittest.TestCase):
 
     def test_guide_renders_hint(self):
         out = self._run("guide")
-        self.assertIn("spawn hint: ground → broad sweep", out)
+        self.assertIn("spawn hint: specify → domain researcher", out)
 
     def test_status_does_not_mutate_state(self):
         before = (self.tmp / ".add" / "state.json").read_bytes()

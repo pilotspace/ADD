@@ -85,38 +85,42 @@ class _Board(unittest.TestCase):
                   "fast: true"]
         if oneshot:
             header += ["oneshot: true", "gate_mode: ai-plan-verify"]
-        sec3 = ["```", "shape: f(x) -> ok · bad -> err", "```",
+        # §3 PLAN now carries Grounding + Contract + Build-strategy as sub-blocks (§0 GROUND
+        # and the standalone §3 CONTRACT collapsed into one §3 PLAN section).
+        sec3 = ["### Grounding",
+                "Anchors the contract cites: cmd_advance",
+                "### Contract",
+                "```", "shape: f(x) -> ok · bad -> err", "```",
                 "Least-sure flag surfaced at freeze: [contract] narrow "
                 "shape — cost: one re-freeze.",
-                "Status: DRAFT"]
+                "Status: DRAFT",
+                "### Build-strategy",
+                "Scope (may touch): `src/`"]
         if oneshot:
             sec3 += ["", "### AI-verify record (required when gate_mode: ai-plan-verify)",
-                     "- [x] §0 GROUND anchors resolve in the current tree",
+                     "- [x] §3 PLAN grounding anchors resolve in the current tree",
                      "- [x] §1 every Must + every Reject present, each Reject paired with an error code",
-                     "- [x] §3 CONTRACT shape is concrete (no template placeholder text remains)",
+                     "- [x] §3 Contract shape is concrete (no template placeholder text remains)",
                      "- [x] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)",
                      "Verified by: test-agent · at: 2026-07-11T00:00:00Z"]
         lines = [
             *header,
-            "phase: ground",
+            "phase: specify",
             "",
-            *_section(0, "GROUND", "Anchors the contract cites: cmd_advance"),
             *_section(1, "SPECIFY", *spec1),
             *_section(2, "SCENARIOS", "(none)"),
-            *_section(3, "CONTRACT", *sec3),
+            *_section(3, "PLAN", *sec3),
             *_section(4, "TESTS", "Tests live in: `./tests/`"),
-            *_section(5, "BUILD",
-                      "Scope (may touch): `src/`",
-                      "Code lives in: `./src/`"),
+            *_section(5, "BUILD", "Code lives in: `./src/`"),
             *_section(6, "VERIFY", "checks"),
             *_section(7, "OBSERVE", "watch"),
         ]
         self._task_md(slug).write_text("\n".join(lines), encoding="utf-8")
 
-    def _make_at_contract(self, slug: str, boundary_line: str | None):
+    def _make_at_plan(self, slug: str, boundary_line: str | None):
         self._silent("new-task", slug, "--title", slug)
         self._write_task(slug, boundary_line)
-        self._silent("phase", "contract", slug)
+        self._silent("phase", "plan", slug)
 
     def _freeze(self, slug: str, *extra):
         return self._run("freeze", slug, "--by", "Tester", *extra)
@@ -138,7 +142,7 @@ class TemplateScaffoldTest(unittest.TestCase):
 # ── M2: a placeholder Boundary refuses the freeze, nothing written ───────────
 class PlaceholderRefusedTest(_Board):
     def test_freeze_refuses_placeholder_boundary(self):
-        self._make_at_contract("t", PLACEHOLDER_BOUNDARY)
+        self._make_at_plan("t", PLACEHOLDER_BOUNDARY)
         state_before = (self._root() / "state.json").read_bytes()
         md_before = self._task_md("t").read_bytes()
         out, err, code = self._freeze("t")
@@ -150,7 +154,7 @@ class PlaceholderRefusedTest(_Board):
                          "validate-then-write: §3 must stay DRAFT, zero bytes written")
 
     def test_empty_boundary_value_also_refused(self):
-        self._make_at_contract("t", "Boundary:")
+        self._make_at_plan("t", "Boundary:")
         out, err, code = self._freeze("t")
         self.assertNotEqual(code, 0)
         self.assertIn("boundary_unfilled", out + err)
@@ -160,7 +164,7 @@ class PlaceholderRefusedTest(_Board):
         # an AI freeze may not slip a placeholder Boundary past the floor
         self._silent("new-task", "t", "--title", "t")
         self._write_task("t", PLACEHOLDER_BOUNDARY, oneshot=True)
-        self._silent("phase", "contract", "t")
+        self._silent("phase", "plan", "t")
         out, err, code = self._run("freeze", "t", "--ai-plan-verify",
                                    "--by", "test-agent")
         self.assertNotEqual(code, 0)
@@ -169,7 +173,7 @@ class PlaceholderRefusedTest(_Board):
     def test_ai_plan_verify_path_freezes_real_value(self):
         self._silent("new-task", "t", "--title", "t")
         self._write_task("t", REAL_BOUNDARY, oneshot=True)
-        self._silent("phase", "contract", "t")
+        self._silent("phase", "plan", "t")
         out, err, code = self._run("freeze", "t", "--ai-plan-verify",
                                    "--by", "test-agent")
         self.assertEqual(code, 0, f"a real value must freeze on the ai path: {out+err}")
@@ -180,13 +184,13 @@ class PlaceholderRefusedTest(_Board):
 # ── M3: real and explicit-none values freeze normally ────────────────────────
 class RealValueFreezesTest(_Board):
     def test_real_value_freezes(self):
-        self._make_at_contract("t", REAL_BOUNDARY)
+        self._make_at_plan("t", REAL_BOUNDARY)
         out, err, code = self._freeze("t")
         self.assertEqual(code, 0, f"a real Boundary value must freeze: {out+err}")
         self.assertIn("FROZEN @ v1", self._task_md("t").read_text(encoding="utf-8"))
 
     def test_explicit_none_freezes(self):
-        self._make_at_contract("t", NONE_BOUNDARY)
+        self._make_at_plan("t", NONE_BOUNDARY)
         _, _, code = self._freeze("t")
         self.assertEqual(code, 0, "an explicit none declaration must freeze")
 
@@ -194,7 +198,7 @@ class RealValueFreezesTest(_Board):
 # ── M4: no Boundary line = grandfathered (full lane / legacy fast) ────────────
 class GrandfatherTest(_Board):
     def test_absent_line_grandfathered(self):
-        self._make_at_contract("t", None)
+        self._make_at_plan("t", None)
         out, err, code = self._freeze("t")
         self.assertEqual(code, 0, "a line-less task must freeze exactly as before")
         self.assertNotIn("boundary_unfilled", out + err)
@@ -209,7 +213,7 @@ class GrandfatherTest(_Board):
             "shape: f(x) -> ok · bad -> err",
             "shape: f(x) -> ok · bad -> err\nBoundary: <fence text, not a declaration>"),
             encoding="utf-8")
-        self._silent("phase", "contract", "t")
+        self._silent("phase", "plan", "t")
         out, err, code = self._freeze("t")
         self.assertEqual(code, 0, f"§3 fence text must not trigger the guard: {out+err}")
         self.assertNotIn("boundary_unfilled", out + err)

@@ -286,19 +286,26 @@ class GroundHardenTest(unittest.TestCase):
         # change request @ v2 (human-approved): the §0 <!-- EXIT --> comment clause was DROPPED —
         # it collided with the lean-pass comment fence (test_template_form_tags, count < 12). The
         # template keeps all four field labels; the completeness guidance lives in 0-ground.md.
-        sec = md_section.section(TASK_TMPL.read_text(encoding="utf-8"),
-                                 "## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md")
+        #
+        # plan-phase-core: grounding moved from the standalone `## 0 · GROUND` section into
+        # `## 3 · PLAN`'s `### Grounding` sub-block. Re-pointed via the engine's own
+        # `_ground_section` extractor (add.py) so the assertion stays scoped to just the
+        # grounding fields (not the whole §3 PLAN section, which would make this vacuous).
+        sec = add._ground_section(TASK_TMPL.read_text(encoding="utf-8"))
+        self.assertTrue(sec, "TASK.md.tmpl must carry a `### Grounding` sub-block")
         for f in GROUND_FIELDS:
-            self.assertIn(f, sec, f"TASK.md.tmpl §0 must keep the {f} field")
+            self.assertIn(f, sec, f"TASK.md.tmpl §3 PLAN Grounding must keep the {f} field")
 
     def test_fast_template_section0_names_four_fields(self):
         # §1 ⚠ flag RESOLVED at freeze: human chose uniform grounding — the fast §0 also
         # NAMES the four fields (compactly; it need not carry the full prose rubric).
-        sec = md_section.section(FAST_TMPL.read_text(encoding="utf-8"),
-                                 "## 0 · GROUND — the real codebase")
+        #
+        # plan-phase-core: same re-point as above, fast-template Grounding sub-block.
+        sec = add._ground_section(FAST_TMPL.read_text(encoding="utf-8"))
+        self.assertTrue(sec, "TASK.fast.md.tmpl must carry a `### Grounding` sub-block")
         missing = [f for f in GROUND_FIELDS if f not in sec]
         self.assertEqual(missing, [],
-                         f"the fast §0 must name all four grounding fields (uniform); missing {missing}")
+                         f"the fast §3 PLAN Grounding must name all four grounding fields (uniform); missing {missing}")
 
     def test_ground_harden_three_tree_parity(self):
         for rel in ("phases/0-ground.md", "scope.md"):

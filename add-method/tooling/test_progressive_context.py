@@ -33,7 +33,8 @@ class _Project(unittest.TestCase):
         self.assertEqual(_run(self.root, "init", "--name", "ptc", "--stage", "mvp").returncode, 0)
         _run(self.root, "lock")
         self.assertEqual(_run(self.root, "new-task", "widget", "--title", "Widget").returncode, 0)
-        self.assertEqual(_run(self.root, "advance").returncode, 0)  # -> specify
+        # new-task already seeds `specify` (was `ground` pre-plan-phase-core), so `--fill` here
+        # fills §1 SPECIFY directly — no extra advance to reach specify.
         draft = self.root / "s1.md"
         draft.write_text("Feature: widget rules\nMust:\n  - the one rule\n")
         self.assertEqual(_run(self.root, "advance", "--fill", str(draft)).returncode, 0)  # §1 filled
