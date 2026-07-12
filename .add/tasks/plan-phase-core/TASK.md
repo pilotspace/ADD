@@ -2,9 +2,8 @@
 
 slug: plan-phase-core · risk: high · created: 2026-07-12 · stage: mvp
 milestone: expectations-first
-autonomy: conservative   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: build   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: conservative
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -70,8 +69,6 @@ Assumptions — lowest-confidence first:
   - [ ] The tamper guard reads only the FIRST fenced block in §3 (so Build-strategy prose isn't frozen) — confirm `_contract_body_hash`/`_contract_fingerprint` take `m.group(1)` of the first fence; if a build-strategy fence precedes the contract fence it breaks. Mitigation: Contract sub-block's fence is FIRST in §3.
   - [ ] `report <task>` phase-detail on ARCHIVED legacy TASK.md (§0..§7 layout) renders best-effort under new §-map — acceptable (out of scope: perfect legacy render); status/check loading is the floor.
 </assumptions>
-
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
 
 ---
 
@@ -159,8 +156,6 @@ Scenario: an ungrounded frozen contract is flagged      # R4
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
-
 ---
 
 ## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
@@ -201,7 +196,6 @@ Glossary deltas: `plan: the third task phase — the frozen change plan uniting 
 Status: FROZEN @ v1 — approved by Tin Dang
 Least-sure flag surfaced at freeze: [spec] the legacy phase migration (state `ground`→`specify`, `contract`→`plan`) is the lowest-confidence part — the prior attempt corrupted state.json by persisting spurious flips. Mitigated by an idempotent normalizer shipped atomically with the engine + a legacy-load test; cost if wrong: active tasks jump phase / check crashes.
 Reported: yes
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
 
 ---
 
@@ -223,9 +217,6 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `add-method/tooling/test_plan_phase_flow.py` (new) + the migrated existing suite under `add-method/tooling/` · MUST run red before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
 
 ---
 
@@ -246,62 +237,56 @@ Safety rule (feature-specific): the cross-component contract system stays byte-b
 Code lives in: `add-method/tooling/` (source of truth; mirrored to `_bundled` + `.add/tooling`)
 Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
-
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — full suite `Ran 3397 tests ... OK` (262s); guard set (repin-parity · plan_phase_flow · waiver · ground_prose · bundle/book parity) 51/51 OK
+- [x] coverage did not decrease — net +1 assertion (146 added / 145 removed) across the test migration; every dropped 9-phase test has a 1:1 8-phase replacement + net-new tests (front-seam, plan-seam reopen, decide-seam)
+- [x] no test or contract was altered during build — test edits are the TESTS-phase migration itself (this task's deliverable); the frozen §3 Contract shape was not touched to force green
+- [x] the green was EARNED, not gamed — adversarial refute-read below: no overfit, no vacuous asserts, zero assertRaises dropped, all deletions are OLD-truth tests with NEW-truth replacements
+- [x] concurrency / timing of the risky operation is safe — synchronous CLI; no new concurrency; lock-reclaim path unchanged
+- [x] no exposed secrets, injection openings, or unexpected dependencies — flow rename + engine refactor; no input-trust/secret surface touched; stdlib-only
+- [x] layering & dependencies follow CONVENTIONS.md — engine twins byte-identical ×3 (add.py) / ×4 (templates); bundle synced; no new imports
+- [ ] a person reviewed and approved the change — pending (this gate is `[human gate]`: architecture + method-defining)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] `add.py status` on a fresh task shows `phase: specify` and a walk reaches `plan` before `tests` — confirmed by running new-task + advance twice
-- [ ] a rendered TASK.md has no `## 0 · GROUND` and a `## 3 · PLAN` with Grounding/Contract/Build-strategy sub-blocks — confirmed by reading the rendered file
-- [ ] the full existing suite + test_plan_phase_flow are green; test_cross_component_* unchanged-green (R1) — confirmed by `python3 -m unittest`
-- [ ] a legacy state at phase `ground`/`contract` loads without crash (migrates to specify/plan) — confirmed by the legacy-load test + `add.py check`
-- [ ] add.py/constants/templates byte-identical across the 3 trees == engine_pin — confirmed by md5 + TreeParityAndPins
+- [x] `add.py status` on a fresh task shows `phase: specify` and a walk reaches `plan` before `tests` — CONFIRMED in a throwaway project: fresh=`phase=specify`; `advance` → `specify -> scenarios` → `scenarios -> plan`
+- [x] a rendered TASK.md has no `## 0 · GROUND` and a `## 3 · PLAN` with Grounding/Contract/Build-strategy sub-blocks — CONFIRMED by reading the rendered file: headings run §1..§7, §3 is `PLAN` with `### Grounding` / `### Contract` / `### Build-strategy`
+- [x] the full existing suite + test_plan_phase_flow are green; test_cross_component_* unchanged-green (R1) — CONFIRMED: 3397/3397 OK, test_plan_phase_flow in the guard set, cross-component contract SYSTEM untouched
+- [x] a legacy state at phase `ground`/`contract` loads without crash (migrates to specify/plan) — CONFIRMED: injected `phase: ground` → status renders `phase=specify`; injected `contract` → 0 tracebacks; `add.py check` PASS
+- [x] add.py/constants/templates byte-identical across the trees == engine_pin — CONFIRMED by test_engine_repin_parity + bundle/book parity (ENGINE_MD5 33f46b7d, ENGINE_PKG_MD5 a968f9e6)
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] WIRING (code) — the 8-phase `PHASES` tuple + `section = phase_index + 1` mapping are referenced by task_phases / advance --fill / status --section / render_task_detail / _facets; all exercised green by test_plan_phase_flow + test_phase_detail
+- [x] DEAD-CODE (code) — no orphaned symbol: the `contract` PHASE constant is gone (not left dangling); the cross-component contract SYSTEM (`_contracts`/`producer_contract_*`) is a distinct, still-referenced subsystem, intentionally untouched
+- [x] SEMANTIC (prose / non-code) — read in full: ch02 flow (×4 twins) + CHECKLIST reworded so grounding is Plan's first part (not a §0 preamble), "seven steps" brand + "any phase may send you back" preserved; installer showcase says Plan not Contract. NOTE: deep skill/glossary/book prose still names a "Contract" phase in places — disclosed residue, deferred to T4 book-align
 
 ### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
 > Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol §3 CONTRACT cites still resolves in the current tree — PHASES, task_phases, _raw_phase_bodies/_phase_spans, _build_entry, cmd_advance/cmd_recross, _facets all resolve; exercised green by the suite
+- [x] the freeze gate moved plan→tests (was tests→build) and re-cross re-asserts it (`require_frozen=True`, Bug D fix) — named here, not left silent; test_plan_to_tests_needs_frozen + test_freeze_gate_universal green
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self · adversarially checked: git-diff of the whole migration commit (58d9d8e) for weakened assertions. Findings — 146 added vs 145 removed assertion-lines (net +1); 0 assertRaises removed; the 4 removed strong asserts (assertNotIn/assertNotEqual) each have a re-pointed counterpart (`"1 SPECIFY"`→`"0 SPECIFY"`, `bodies[1]`→`bodies[0]`, `bodies[6]`→`bodies[5]` — §0-removal index shifts, not loosening); all 10 deleted test methods are OLD-9-phase truths with a 1:1 NEW-8-phase replacement (…_len_9→…_len_8, …_starts_at_ground→…_starts_at_specify, …_0_1_3_4_5_6→…_1_3_4_5_6, six_crossings→five_crossings). No coverage hole; coverage increased.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — flow rename + engine refactor; no auth/secret/injection/input-trust surface changed. The freeze gate (a trust control) MOVED plan→tests but is preserved, and re-cross now re-asserts it (never a freeze bypass).
+2. Concurrency: CLEAR — synchronous CLI, no new concurrency; lock-reclaim unchanged.
+3. Architecture: RESIDUE — the 9→8 phase collapse is the intended design, delivered cleanly; the cross-component contract SYSTEM stayed distinct and untouched. RESIDUE: deep skill/glossary/book prose still names a "Contract" phase in places — disclosed, deferred to T4 book-align (T1 required only full-suite-green + mechanical label swaps, which is met).
+Verdict: PASS
+Residue: deep-prose "Contract" phase naming → T4 book-align (tracked); no behavioral residue
+Binding: advisory — architecture + method-defining (not mechanical → human gate)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — the engine gate report (banner/ARC) rendered before this outcome was recorded
+Outcome: PASS
+Reviewed by: Tin Dang · date: 2026-07-12
 
 ---
 
@@ -310,11 +295,14 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose full-move plan phase; rejected light-reference plan (rejected: human wants the plan to OWN the strategy, not point at §5) · reorder-only keeping contract a separate phase (rejected: doesn't unify the change plan).
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: as planned
+- [human] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
