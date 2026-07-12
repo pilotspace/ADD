@@ -3,28 +3,16 @@
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
 autonomy: {{autonomy}}   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: ground   <!-- ground -> specify -> scenarios -> contract -> tests -> build -> verify -> observe -> done -->
+phase: specify   <!-- specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done; the plan phase unites grounding + the frozen contract + the build strategy -->
 <!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
 ---
 
-## 0 · GROUND — the real codebase ▸ docs/02-the-flow.md
-
-Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
-Context (working folder): <docs · todos · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
-Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
-Anchors the contract cites: <the symbols §3 will name>
-Issues/Risks (→ feed §1): <problems · traps · untestable risks found in the real code — task-delta; §1 builds on these>
-Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
-Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
-
----
-
 ## 1 · SPECIFY — the rules ▸ docs/03-step-1-specify.md
 
+> Project the expectations from the milestone Ground + this request — light, not re-invented.
 Feature: <name>
 Framings weighed: <chosen> (chosen) · <alternative> · <alternative>
 Must:
@@ -67,7 +55,19 @@ Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
 
 ---
 
-## 3 · CONTRACT — freeze the shape ▸ docs/05-step-3-contract.md
+## 3 · PLAN — the change plan: ground · contract · build-strategy ▸ docs/05-step-3-contract.md
+
+### Grounding (the real code the contract will cite — gather BEFORE you freeze)
+Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
+Context (working folder): <docs · todos · config · data the task touches — task-delta only>
+Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
+Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
+Anchors the contract cites: <the symbols the Contract below names — it may cite ONLY anchors named here>
+Issues/Risks: <problems · traps · untestable risks found in the real code — task-delta; these feed the rules in §1>
+Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
+Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
+
+### Contract (freeze the shape — the HARD, tamper-guarded core)
 
 ```
 <METHOD> <path>   body: { <fields> }
@@ -79,7 +79,19 @@ Schema: <tables/fields touched, and access pattern>
 Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
 Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
-<!-- The freeze IS the one approval — lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen contract = change request back to SPECIFY. EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY (new terms = Glossary delta) · flag surfaced. -->
+
+### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
+Scope (may touch): `./src/`   <fill before the freeze — every file the build may write; this is the scope-lock source>
+Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; let the named Persona's domain stance shape the approach, not just architecture patterns>
+Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — derive from §1 Framings weighed, not invented here>
+Data strategy: <the shapes and access patterns the work realizes — must agree with the Contract Schema line above>
+Pattern: <the domain pattern this build follows and the Grounding Honors / CONVENTIONS.md anchor it extends>
+Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, readability — or "correctness-first, no budget"; never blank; ⚠-mark the facet you trust least; risk: high -> consult add-advisor; advisory, never a gate>
+Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
+Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
+Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+
+<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered). EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY · the Contract cites only anchors named in Grounding · flag surfaced. -->
 
 ---
 
@@ -98,24 +110,15 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 ---
 
-## 5 · BUILD — AI writes code ▸ docs/07-step-5-build.md
+## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
-Scope (may touch): `./src/`   <fill before the §3 freeze — every file the build may write>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; let the named Persona's domain stance (below) shape the approach, not just architecture patterns>
-Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>
-Data strategy: <the shapes and access patterns the work realizes — data structures, schema use, information architecture for prose/docs — must agree with the §3 Schema line>
-Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor it extends>
-Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, readability — or "correctness-first, no budget"; never blank; ⚠-mark the facet you trust least; risk: high -> consult add-advisor; facets draft at tests->build; advisory, never a gate>
-
-Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
-Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+> The change plan — grounding + contract + build-strategy — was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope, follow the strategy (improve on it if the code teaches you better), and touch no test or the frozen contract.
 Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
-Constraints: do NOT change any test or the contract; allow-list packages only; ask if unclear.
+Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
 
-<!-- Scope tokens, backticked, FIRST declaring line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree (diverges from §4's non-recursive counting) · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered, never retro-red) · enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
+<!-- The scope-lock source is the §3 Build-strategy `Scope (may touch)` line (grammar noted there). Enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 
@@ -141,9 +144,9 @@ Constraints: do NOT change any test or the contract; allow-list packages only; a
 - [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
 - [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
 
-### Live-verify evidence — confirm the §0 GROUND anchors still resolve (fill at the gate)
-> Re-resolve every symbol §3 cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol §3 CONTRACT cites still resolves in the current tree — confirmed by <how / where>
+### Live-verify evidence — confirm the §3 PLAN grounding anchors still resolve (fill at the gate)
+> Re-resolve every symbol the §3 Contract cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
+- [ ] every symbol the §3 Contract cites still resolves in the current tree — confirmed by <how / where>
 - [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
@@ -173,7 +176,7 @@ Reviewed by: <name> · date: <date>
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
-Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §5 Optimization stance budget is a monitor here, not just an intention>
+Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §3 Build-strategy Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
 <harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>

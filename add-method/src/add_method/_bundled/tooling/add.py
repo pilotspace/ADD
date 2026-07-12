@@ -90,7 +90,14 @@ from add_engine.search import _search_corpus
 
 
 def _phase_index(name: str) -> int:
-    """Ordinal of a phase in PHASES; used to enforce forward-skip rules."""
+    """Ordinal of a phase in PHASES; used to enforce forward-skip rules.
+    Fail-soft on the two legacy tokens (expectations-first): a pre-reorder `ground`
+    reads as `specify` and a pre-reorder `contract` as `plan`, so a legacy state still
+    computes an ordinal instead of raising ValueError."""
+    if name == "ground":
+        name = "specify"
+    elif name == "contract":
+        name = "plan"
     return PHASES.index(name)
 
 # --- low-level IO (moved to add_engine/io_state.py — engine-modularization) -
@@ -114,13 +121,33 @@ from add_engine.accessors import (
 
 # --- state load/save (KEPT in add.py: write-path pinned by add._atomic_write tests) -
 
+def _normalize_phase_tokens(state: dict) -> dict:
+    """Rewrite the two legacy phase tokens on task records (expectations-first): `ground`
+    -> `specify`, `contract` -> `plan`. TOTAL · idempotent · never raises. ONLY the two
+    legacy tokens are touched — every other phase (including an already-migrated specify/plan
+    and unrelated tasks) is left byte-identical, so a second pass changes nothing. Normalizes
+    on READ only; state is persisted (migrated) solely when a command legitimately saves —
+    never an auto-write (the over-eager persist was the prior attempt's corruption)."""
+    if not isinstance(state, dict):
+        return state
+    tasks = state.get("tasks")
+    if not isinstance(tasks, dict):
+        return state
+    _legacy = {"ground": "specify", "contract": "plan"}
+    for rec in tasks.values():
+        if isinstance(rec, dict) and rec.get("phase") in _legacy:
+            rec["phase"] = _legacy[rec["phase"]]
+    return state
+
+
 def load_state(root: Path) -> dict:
     """Load + parse state.json, failing CLOSED. A git-conflicted file dies with a merge-specific
     'state_conflicted'; any other corrupt/unreadable file dies with a clean 'state_invalid'
     message (never a raw traceback), so every command that loads state degrades gracefully
-    (design-for-failure). The parsed state is forward-migrated to the multi-active schema."""
+    (design-for-failure). The parsed state is forward-migrated to the multi-active schema and
+    its legacy phase tokens are normalized (ground->specify, contract->plan)."""
     try:
-        return _migrate_state(json.loads(_state_text_or_die(root)))
+        return _normalize_phase_tokens(_migrate_state(json.loads(_state_text_or_die(root))))
     except (json.JSONDecodeError, OSError) as e:
         _die(f"state_invalid: {root / STATE_FILE} is corrupt or unreadable "
              f"({e.__class__.__name__}) — restore it from git or a backup")
@@ -229,12 +256,14 @@ _LINE_REF_RE = re.compile(r"l\.\d+")
 
 
 def _ground_section(text: str) -> str:
-    """The §0 GROUND block of a TASK.md — from the `## 0` heading to the next `## ` heading."""
-    m = re.search(r"(?m)^## 0\b", text)
+    """The grounding block of a TASK.md — the §3 PLAN `### Grounding` sub-block, from the
+    `### Grounding` heading to the next `### ` / `## ` heading (expectations-first: grounding
+    moved from a standalone §0 into the plan phase). Legacy `## 0 GROUND` still resolves."""
+    m = re.search(r"(?m)^### Grounding\b", text) or re.search(r"(?m)^## 0\b", text)
     if not m:
         return ""
     rest = text[m.end():]
-    nxt = re.search(r"(?m)^## ", rest)
+    nxt = re.search(r"(?m)^(?:### |## )", rest)
     return rest[:nxt.start()] if nxt else rest
 
 
@@ -638,12 +667,12 @@ def cmd_init(args: argparse.Namespace) -> None:
     print("tip:  commit the .add/ folder to git so your team shares the ADD state "
           "(its transient files are already .gitignored).")
     # first-call-ergonomics M3: a copy-pasteable, flags-included kickoff hand-off so a
-    # headless agent reaches `advance --to contract` from init's OWN stdout — zero
+    # headless agent reaches `advance --to plan` from init's OWN stdout — zero
     # `--help` reads needed for the ceremony the skill would otherwise narrate.
     print("kickoff:")
     print('  add.py new-milestone <slug> --title "..." --goal "..."')
     print('  add.py new-task <slug> --title "..." --milestone <ms>')
-    print("  add.py advance --to contract")
+    print("  add.py advance --to plan")
 
 
 def cmd_sync_guidelines(args: argparse.Namespace) -> None:
@@ -788,7 +817,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     prior_heal = state["tasks"].get(slug, {}).get("heal") if args.force else None
     state["tasks"][slug] = {
         "title": title,
-        "phase": "ground",
+        "phase": "specify",
         "gate": "none",
         "milestone": milestone,
         "depends_on": depends_on,
@@ -828,7 +857,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         note = _fastlane_nudge(title, slug)
         if note:
             print(note)
-    print("active task set. phase: ground. Gather the real codebase (section 0 GROUND).")
+    print("active task set. phase: specify. State the projected expectations (§1 SPECIFY); "
+          "grounding + contract + build-strategy come next, together, in the plan phase.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
 
 
@@ -994,7 +1024,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
         print(f"already frozen @ {ver} — a shape change is a change request back to SPECIFY")
         print(_next_footer(root, state))
         return
-    if _phase_index(phase) < _phase_index("contract") or _CONTRACT_TEMPLATE_RE.search(raw3):
+    if _phase_index(phase) < _phase_index("plan") or _CONTRACT_TEMPLATE_RE.search(raw3):
         _die(f"contract_not_drafted: {slug}'s §3 is not a drafted contract yet — reach the "
              f"`contract` phase and replace the template before freezing")
     if not _flag_well_formed(raw3):
@@ -1166,15 +1196,20 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) 
     # it stamps an auditable `freeze_skipped` marker (never silent) and never auto-freezes §3
     # (Status stays DRAFT). Still PRECEDES build-expectations: freeze §3 before pre-declaring §6.
     if not _contract_frozen(raw3):
-        if not skip_freeze:
+        # a freeze_skipped recorded at the plan->tests gate carries through here (a single
+        # --skip-freeze is enough for the whole plan->tests->build run); a still-DRAFT §3 with
+        # no prior skip and no --skip-freeze on THIS crossing is refused.
+        already_skipped = bool(state["tasks"][slug].get("freeze_skipped"))
+        if not skip_freeze and not already_skipped:
             _die("contract_not_frozen: freeze §3 before crossing into build — approve "
                  f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN), or pass "
                  "--skip-freeze to cross with a recorded skip")
-        state["tasks"][slug]["freeze_skipped"] = {
-            "by": identity._actor_stamp(state)["name"],
-            "at": _now(),
-            "from_phase": state["tasks"][slug].get("phase", "tests"),
-        }
+        if not already_skipped:
+            state["tasks"][slug]["freeze_skipped"] = {
+                "by": identity._actor_stamp(state)["name"],
+                "at": _now(),
+                "from_phase": state["tasks"][slug].get("phase", "tests"),
+            }
     # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
     # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
     # not just green. Same opt-in switch as the contract-fill gate, one level out.
@@ -1216,8 +1251,9 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False) 
         # resolves to THIS TASK's dir, so it silently arms a guaranteed
         # scope_violation at the gate (the live-benchmark death spiral). Print-only:
         # exit, snapshot, and state above are byte-identical either way.
-        body5 = _raw_phase_bodies(root, slug).get(5, "")
-        m5 = re.search(r"^\s*Scope \(may touch\):.*$", body5, re.M)
+        _rb5 = _raw_phase_bodies(root, slug)
+        m5 = (re.search(r"^\s*Scope \(may touch\):.*$", _rb5.get(3, ""), re.M)
+              or re.search(r"^\s*Scope \(may touch\):.*$", _rb5.get(5, ""), re.M))
         if m5 and "<fill before the §3 freeze" in m5.group(0):
             print(f"warning: task '{slug}' §5 Scope is still the template default — "
                   "`./src/` resolves to THIS TASK's dir (.add/tasks/"
@@ -1258,7 +1294,7 @@ def cmd_phase(args: argparse.Namespace) -> None:
         _build_entry(root, state, slug, skip_freeze=getattr(args, "skip_freeze", False))
     # cross-component-recency: the `phase contract` override runs the SAME consumer HOLD `advance`
     # runs (existence + recency), so it is not a backdoor around producer_contract_unfrozen/_stale.
-    if args.phase == "contract":
+    if args.phase == "plan":
         _consumer_contract_hold(root, state, slug)
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
@@ -1429,7 +1465,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # inside ONE milestone (the FE stays downstream of the frozen endpoint). Validate-before-write:
     # the HARD-STOP precedes the phase bump, so the task stays at `scenarios`. Undeclared id / no
     # `consumes:` header -> no hold (byte-identical; a typo'd id is a cmd_check registry finding).
-    if nxt == "contract":
+    if nxt == "plan":
         # existence + RECENCY (cross-component-recency): a missing snapshot HARD-STOPs
         # producer_contract_unfrozen; a present-but-stale leftover (live producer drifted/unfroze)
         # HARD-STOPs producer_contract_stale. Shared with cmd_phase so the override is no backdoor.
@@ -1451,6 +1487,24 @@ def cmd_advance(args: argparse.Namespace) -> None:
     # phase stays at `contract`, nothing pinned), so a consumer never builds against a guessed
     # shape. No role / no contracts ⇒ neither branch is taken (byte-identical).
     if nxt == "tests":
+        # plan->tests freeze gate (plan-phase-core): the §3 PLAN contract must be FROZEN before
+        # the red suite is written — the suite is derived FROM the frozen shape, so the freeze
+        # enforcement point sits at THIS crossing (one step earlier than the legacy tests->build
+        # gate). The ONLY bypass is the RECORDED `--skip-freeze` escape, which stamps an auditable
+        # freeze_skipped marker (never silent, §3 stays DRAFT) that then carries through the
+        # tests->build _build_entry re-check (a single skip is enough). validate-then-write: the
+        # _die precedes every mutation below, so a refused crossing leaves the task at `plan`.
+        raw3f = _raw_phase_bodies(root, slug).get(3, "")
+        if not _contract_frozen(raw3f):
+            if not getattr(args, "skip_freeze", False):
+                _die("contract_not_frozen: freeze §3 PLAN before crossing into tests — approve "
+                     f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN), or pass "
+                     "--skip-freeze to cross with a recorded skip")
+            state["tasks"][slug]["freeze_skipped"] = {
+                "by": identity._actor_stamp(state)["name"],
+                "at": _now(),
+                "from_phase": state["tasks"][slug].get("phase", "plan"),
+            }
         _prod = _task_produces(root, slug)
         if _prod:
             raw3c = _raw_phase_bodies(root, slug).get(3, "")
@@ -1789,13 +1843,14 @@ def _ai_verify_checklist_complete(raw3: str) -> bool:
 
 
 # step-spawn-hint (advisor-gated-autonomy): the engine's pinned terse copy of each phase
-# guide's Advisor hook — one spawn idiom per phase. contract/done are ABSENT (no batch to
-# fan out: a freeze is one human decision; done is closed). Advisory ONLY — the engine never
-# spawns; the line just NAMES the agent shape a parallel run would use at this step.
+# guide's Advisor hook — one spawn idiom per phase. `done` is ABSENT (closed); the `plan`
+# phase carries a design-sweep hint for DRAFTING the change plan even though its freeze is
+# one human decision. Advisory ONLY — the engine never spawns; the line just NAMES the agent
+# shape a parallel run would use at this step.
 _SPAWN_HINTS = {
-    "ground": "broad sweep",
     "specify": "domain researcher",
     "scenarios": "wide scenario sweep",
+    "plan": "change-plan design sweep",
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
     "verify": "earned-green refute-read",
@@ -2208,7 +2263,7 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     if not reason:
         _die("reopen_reason_required: reopen records WHY — supply a non-empty --reason")
     target = args.to
-    if target not in PHASES[:-1]:        # ground..observe; never "done", never an unknown name
+    if target not in PHASES[:-1]:        # specify..observe; never "done", never an unknown name
         _die(f"reopen_target_invalid: --to must be one of {', '.join(PHASES[:-1])} (got {target!r})")
     now = _now()
     entry = {"from": "done", "to": target, "reason": reason, "at": now,
@@ -2789,7 +2844,7 @@ def cmd_status(args: argparse.Namespace) -> None:
             # _next_command composer) so an agent reading plain status can proceed
             # without a separate `guide` round-trip. first-call-ergonomics M1: thread
             # the live frozen-ness so a post-freeze status never re-teaches freeze.
-            _frozen = ph == "contract" and _task_contract_frozen(root, active)
+            _frozen = ph == "plan" and _task_contract_frozen(root, active)
             print(f"          next: {_next_command(ph, contract_frozen=_frozen)}")
             # engine-hint-context-ops: teach the cheap context ops at the moment of
             # use — a whole-TASK.md read every re-orient is the context-tax driver.
@@ -2804,9 +2859,8 @@ def cmd_status(args: argparse.Namespace) -> None:
 # routed there through the CLI alone. Never a dead pointer: the path is printed
 # only if the file exists; a missing tree gets an install hint instead.
 _PHASE_GUIDE_FILES = {
-    "ground": "0-ground.md",
     "specify": "1-specify.md", "scenarios": "2-scenarios.md",
-    "contract": "3-contract.md", "tests": "4-tests.md",
+    "plan": "3-plan.md", "tests": "4-tests.md",
     "build": "5-build.md", "verify": "6-verify.md", "observe": "7-observe.md",
 }
 _SKILL_PHASES_DIR = Path(".claude") / "skills" / "add" / "phases"
@@ -2913,7 +2967,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
     else:
         # first-call-ergonomics M1: thread the live frozen-ness so guide never
         # re-teaches freeze after §3 is already FROZEN.
-        _frozen = phase == "contract" and _task_contract_frozen(root, slug)
+        _frozen = phase == "plan" and _task_contract_frozen(root, slug)
         print(f"then   : {_next_command(phase, contract_frozen=_frozen)}")
 
 
@@ -5352,8 +5406,11 @@ def _declared_scope(root: Path, slug: str) -> list[str] | None:
     is byte-identical to before."""
     comp = _task_component(root, slug)
     croot = _component_root(root, comp) if comp and comp != "?" else None
-    body = _raw_phase_bodies(root, slug).get(5, "")
-    m = re.search(r"^\s*Scope \(may touch\):.*$", body, re.M)
+    _rb = _raw_phase_bodies(root, slug)
+    # expectations-first: Scope moved into §3 PLAN's `### Build-strategy`; read §3 first,
+    # then a legacy §5 body (this task + pre-reorder tasks keep Scope in §5).
+    m = (re.search(r"^\s*Scope \(may touch\):.*$", _rb.get(3, ""), re.M)
+         or re.search(r"^\s*Scope \(may touch\):.*$", _rb.get(5, ""), re.M))
     if not m:
         return [croot] if croot else None
     tdir = root / "tasks" / slug
@@ -5666,7 +5723,7 @@ def task_phases(root: Path, slug: str) -> list[dict]:
     The heading scan lives in _phase_spans (shared with the decide digest); this view
     CLEANS each body. Missing file / missing section / placeholder-only body ->
     "(empty)" (fail-closed)."""
-    names = PHASES[:-1]  # ground..observe; "done" is a terminal STATE, not a section
+    names = PHASES[:-1]  # specify..observe; "done" is a terminal STATE, not a section
     f = root / "tasks" / slug / "TASK.md"
     try:
         text = f.read_text(encoding="utf-8")
@@ -5890,7 +5947,7 @@ def render_report(root: Path, state: dict, mslug: str, *,
 # never interprets, scores, or filters — add.py stays judgment-free, the human
 # signature is the gate.
 _MARKER_PREFIXES = (("⚠", "⚠"), ("- [~]", "[~]"), ("- [ ]", "[ ]"))
-_FRONT_PHASES = ("specify", "scenarios", "contract", "tests")
+_FRONT_PHASES = ("specify", "scenarios", "plan", "tests")
 
 
 def _decision_markers(body: str, section: int) -> list[dict]:
@@ -5931,10 +5988,11 @@ def _contract_frozen(raw3: str) -> bool:
     return any(re.match(r"\s*Status:\s*FROZEN", ln) for ln in raw3.splitlines())
 
 
-def _section0_anchors(raw0: str) -> str | None:
-    """The value of the §0 GROUND "Anchors the contract cites:" line, stripped.
-    None when the §0 body carries no such line (no §0, or a malformed map). PURE."""
-    for ln in raw0.splitlines():
+def _section0_anchors(body: str) -> str | None:
+    """The value of a body's "Anchors the contract cites:" line, stripped. None when the
+    body carries no such line. PURE. (expectations-first: the line lives in the §3 PLAN
+    `### Grounding` sub-block now; still reads a legacy §0 body the same way.)"""
+    for ln in body.splitlines():
         m = re.match(r"\s*Anchors the contract cites:\s*(.*)$", ln)
         if m:
             return m.group(1).strip()
@@ -5943,17 +6001,20 @@ def _section0_anchors(raw0: str) -> str | None:
 
 def _grounded_state(raw: dict[int, str]) -> bool | None:
     """Tri-state grounding measure over a task's RAW §bodies (measure-not-block):
-      True  — the §0 "Anchors the contract cites:" line is filled (real content)
-      False — the §0 section exists but its Anchors line is the "<…>" placeholder / empty
-      None  — no §0 section (a pre-ground / legacy task), OR a §0 with no Anchors line
-    PURE; fail-open (an unparseable §0 -> None, never a false False). The freeze review
-    checklist asks the human to confirm True; status/check surface it, never block on it."""
-    if 0 not in raw:
-        return None
-    anchors = _section0_anchors(raw[0])
-    if anchors is None:
-        return None
-    return bool(anchors) and not anchors.startswith("<")
+      True  — the §3 PLAN "Anchors the contract cites:" line is filled (real content)
+      False — the line exists but is the "<…>" placeholder / empty
+      None  — no grounding sub-block (a pre-plan / legacy task), OR no Anchors line
+    Reads §3 PLAN first, then a legacy §0 GROUND body (fallback). PURE; fail-open (an
+    unparseable body -> None, never a false False). The freeze review checklist asks the
+    human to confirm True; status/check surface it, never block on it."""
+    for n in (3, 0):
+        body = raw.get(n)
+        if body is None:
+            continue
+        anchors = _section0_anchors(body)
+        if anchors is not None:
+            return bool(anchors) and not anchors.startswith("<")
+    return None
 
 
 def _task_grounded(root: Path, slug: str) -> bool | None:
@@ -6009,8 +6070,6 @@ def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
     gate = t.get("gate", "none")
     if gate != "none" or phase in ("observe", "done"):
         seam = "recorded"
-    elif phase == "ground":
-        seam = "ground"
     elif phase in _FRONT_PHASES:
         seam = "front"
     else:
@@ -6021,8 +6080,6 @@ def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
         judgment = _decision_markers(raw.get(6, ""), 6) + _decision_markers(raw.get(1, ""), 1)
     elif seam == "front" and not frozen:
         judgment = _decision_markers(raw.get(1, ""), 1) + _decision_markers(raw.get(3, ""), 3)
-    elif seam == "ground":
-        judgment = _decision_markers(raw.get(0, ""), 0)
     else:
         judgment = []
 
@@ -6042,9 +6099,6 @@ def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
     elif seam == "front":
         unlocks = "none"
         decide = "no decision pending — frozen; the run owns it. next decision point: verify gate"
-    elif seam == "ground":
-        unlocks = "gather the codebase -> advance to specify"
-        decide = "gather the real codebase (the section 0 GROUND map), then: add.py advance"
     else:
         unlocks = "none"
         decide = f"no decision pending — recorded gate: {gate}"
@@ -6062,8 +6116,8 @@ def render_decide(root: Path, state: dict, mslug: str, slug: str, *,
     d = decide_data(root, state, mslug, slug)
     g = _ASCII if ascii else _UNICODE
     banner = g["h"] * width
-    seam_label = {"gate": "VERIFY GATE", "front": "CONTRACT APPROVAL",
-                  "recorded": "RECORDED", "ground": "GROUND"}[d["seam"]]
+    seam_label = {"gate": "VERIFY GATE", "front": "PLAN",
+                  "recorded": "RECORDED"}[d["seam"]]
     L = [banner, f" DECIDE · {mslug or '—'} · {slug} · decision point: {seam_label}", banner]
     if d["decide"].startswith("no decision pending"):
         L.append(f" {d['decide']}")
@@ -6192,9 +6246,9 @@ def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
     tells the very agent that just ran it to run it again."""
     if phase == "verify":
         return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
-    if phase in ("ground", "specify", "scenarios"):
-        return "add.py advance --to contract   (or step-by-step: add.py advance --fill <draft>)"
-    if phase == "contract":
+    if phase in ("specify", "scenarios"):
+        return "add.py advance --to plan   (or step-by-step: add.py advance --fill <draft>)"
+    if phase == "plan":
         return "add.py advance" if contract_frozen else "add.py freeze --by <name>"
     if phase == "tests":
         return "add.py advance --fill <draft>"
@@ -6243,7 +6297,7 @@ def _next_footer(root: Path, state: dict) -> str:
             # freeze's OWN footer never re-teaches `freeze --by` on itself — and once
             # frozen, the why/driver halves flip WITH the command (the human seam is
             # behind us; advancing into tests is AI-owned, never a stale [human gate]).
-            _frozen = phase == "contract" and _task_contract_frozen(root, slug)
+            _frozen = phase == "plan" and _task_contract_frozen(root, slug)
             command = _next_command(phase, contract_frozen=_frozen)
             if _frozen:
                 return f"next: {command} — §3 frozen; cross into tests{_driver_marker(False)}"
@@ -8295,7 +8349,7 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("slug", nargs="?", default=None)
     # --to / --reason are validated in-body (not argparse choices) so the named reject
     # codes fire (reopen_target_invalid / reopen_reason_required), not a bare exit-2.
-    pr.add_argument("--to", default=None, help="target phase (ground..observe)")
+    pr.add_argument("--to", default=None, help="target phase (specify..observe)")
     pr.add_argument("--reason", default="", help="why the task is reopened (required, non-empty)")
     pr.set_defaults(func=cmd_reopen, _opt_positionals=("slug",))
 

@@ -3,7 +3,7 @@
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
 autonomy: {{autonomy}}   <!-- Multi-component repo? add a `component: <name>` line (declared in .add/components.toml) to bind this fast task to a component — its root joins §5 Scope and its green-bar/verify surface at the gate. Omit for single-component projects. -->
-phase: ground   <!-- fast lane: ground -> specify -> contract -> tests -> build -> verify -> observe -> done -->
+phase: specify   <!-- fast lane: specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done; plan = grounding + contract + build-strategy -->
 fast: true   <!-- the fast lane: a small task, collapsed flow + minimal template. Omit --fast for full rigor. -->
 <!-- skips: <csv subset of scenarios,observe — omit this line for none> -->
 
@@ -13,19 +13,9 @@ fast: true   <!-- the fast lane: a small task, collapsed flow + minimal template
 
 ---
 
-## 0 · GROUND — the real codebase
-
-Touches (files · symbols): <path:symbol — what it is / how it is keyed>
-Context (working folder): <docs · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta>
-Anchors the contract cites: <the symbols §3 will name>
-Ground SHA: <`git rev-parse --short HEAD` at ground time — any line ref reads "as of" it>
-Skip rationale: <phase> — <reason>; <phase> — <reason>
-
----
-
 ## 1 · SPECIFY — the rules
 
+> Project the expectations from the milestone Ground + this request — light, not re-invented.
 Feature: <name>
 Must:
   - <required behavior>
@@ -37,7 +27,16 @@ Assumptions: ⚠ <the one most likely wrong> — why; if wrong: <cost>   (or "no
 
 ---
 
-## 3 · CONTRACT — freeze the shape
+## 3 · PLAN — the change plan: ground · contract · build-strategy
+
+### Grounding
+Touches (files · symbols): <path:symbol — what it is / how it is keyed>
+Context (working folder): <docs · config · data the task touches — task-delta only>
+Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta>
+Anchors the contract cites: <the symbols the Contract names — it may cite ONLY anchors named here>
+Ground SHA: <`git rev-parse --short HEAD` at ground time — any line ref reads "as of" it>
+
+### Contract
 
 ```
 <the shape that freezes: signature / fields · success + each rejection's response>
@@ -45,13 +44,17 @@ Assumptions: ⚠ <the one most likely wrong> — why; if wrong: <cost>   (or "no
 
 `Least-sure flag surfaced at freeze:` <[spec|contract|test] the point most likely wrong — why; if wrong: cost>
 Status: DRAFT
-<!-- The freeze IS the one approval. Approved -> Status: FROZEN @ vN — approved by <name>.
-     Changing a frozen contract = change request back to SPECIFY. -->
+
+### Build-strategy
+Scope (may touch): `./src/`   <every file the build may write — the scope-lock source>
+Strategy & known-problem fixes: <ordered build steps · the trap each known problem must dodge · let the active persona's domain stance (or "generic") shape the approach, not just patterns>
+Approach (domain strategy): <technique · shapes · pattern · optimization stance in one line, in the task's domain vocabulary — or "obvious, correctness-first">
+<!-- The freeze IS the one approval — it freezes the whole PLAN. The Contract is HARD (tamper-guarded); Grounding + Build-strategy are SOFT. Approved -> Status: FROZEN @ vN — approved by <name>. Changing the frozen Contract = change request back to SPECIFY. -->
 
 ### AI-verify record (required when gate_mode: ai-plan-verify)
-- [ ] §0 GROUND anchors resolve in the current tree
+- [ ] §3 PLAN grounding anchors resolve in the current tree
 - [ ] §1 every Must + every Reject present, each Reject paired with an error code
-- [ ] §3 CONTRACT shape is concrete (no template placeholder text remains)
+- [ ] §3 Contract shape is concrete (no template placeholder text remains)
 - [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
 Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
@@ -64,13 +67,11 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 ---
 
-## 5 · BUILD — AI writes code
+## 5 · BUILD — AI writes the code (execution)
 
-Scope (may touch): `./src/`   <every file the build may write — declared before the §3 freeze>
-Strategy & known-problem fixes: <ordered build steps · the trap each known problem must dodge · let the active persona's domain stance (or "generic") shape the approach, not just patterns>
-Approach (domain strategy): <technique · shapes · pattern · optimization stance in one line, in the task's domain vocabulary — or "obvious, correctness-first">
+> The change plan was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope; improve on the strategy if the code teaches you better.
 Strategy actually used: <fill at verify — what you ACTUALLY did, or "as planned"; harvested into §7 Decisions>
-Code lives in: `./src/`   ·   Constraints: change no test, no contract; allow-list packages only.
+Code lives in: `./src/`   ·   Constraints: change no test, no frozen contract; stay inside the §3 Build-strategy Scope; allow-list packages only.
 
 ---
 
