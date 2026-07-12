@@ -8,7 +8,7 @@ Specify is **co-specification**: brainstorm the shape WITH the user, draft, then
 ## Co-specify in three moves
 
 1. **Diverge** — surface the decision space: the 2–3 genuine framings + the open questions you'd otherwise guess. Invite the user to add, kill, redirect. (Conversational — no new file; at prototype/poc, one sentence.)
-2. **Converge** — draft §1 answering the §0 GROUND **Issues/Risks**, then RANK where your confidence is lowest (below).
+2. **Converge** — draft §1 by PROJECTING from the milestone `## Ground` + the request; then RANK where confidence is lowest (below).
 3. **Validate** — present the ranked uncertainty first; the user confirms, corrects, or sends back.
 
 **Identity is direction, not default (UDD).** Brand color, palette, typeface are human-owned — surface them during Diverge, never assume. For a UI feature with a screen, run the design-definition loop in `design.md`.
