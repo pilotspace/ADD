@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-merge-verify",
+  "active_task": "guide-recut",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9138,10 +9138,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "guide-recut": {
+      "title": "Re-cut phase guides to the 6-phase loop",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T18:32:30+00:00",
+      "updated": "2026-07-13T18:52:57+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:34:45+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "bef4bee95ec727cf39f11673e11b0d02",
+        "tests": {
+          "add-method/tooling/test_guide_recut.py": "5dec75052622d2c4b0c3588c04fffd3e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "c0c1ba7288177c635b46b15eadcf8962"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T18:31:44+00:00",
+  "updated": "2026-07-13T18:52:57+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10403,7 +10446,7 @@
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
-    "six-phase-loop": "phase-merge-verify"
+    "six-phase-loop": "guide-recut"
   },
   "todos": [
     {

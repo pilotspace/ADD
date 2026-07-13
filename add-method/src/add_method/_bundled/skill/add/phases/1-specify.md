@@ -1,7 +1,9 @@
-# Phase 1 — Specify (the rules)
+# Phase 1 — Specify (the rules + the scenarios)
 
 Goal: state what the feature MUST do and what it must REJECT, with zero ambiguity
-for the AI to resolve by guessing. Fill **§1 SPECIFY** in TASK.md.
+for the AI to resolve by guessing — then make every rule concrete as a pass/fail
+scenario. Fill **§1 SPECIFY** and **§2 SCENARIOS** in TASK.md (one drafting phase
+owns both since the six-phase merge).
 
 Specify is **co-specification**: brainstorm the shape WITH the user, draft, then validate. If you cannot write the spec, you don't yet understand the feature — stop and ask.
 
@@ -23,6 +25,27 @@ Specify is **co-specification**: brainstorm the shape WITH the user, draft, then
 - **Assumptions — lowest-confidence first** — ranked most-likely-wrong → least. The top 1–2 carry a `⚠` flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Keep the ranking visible — a flat list of equal `[x]` ticks gets approved without reading.
 </output_format>
 
+## Scenarios (§2) — every rule made checkable
+
+Rewrite each rule as a Given/When/Then that people can read and machines can check:
+
+<output_format>
+```gherkin
+Scenario: <short name>
+  Given <starting situation>
+  When <action>
+  Then <observable result>
+  And <what must remain unchanged>   # REQUIRED for every rejection
+```
+</output_format>
+
+Write **one scenario per Must** and **one per Reject**. The `And ... unchanged`
+clause catches corrupting partial failures (a balance deducted before a check
+fails) — include it on every rejection. Then sweep for the edge cases the spec
+omits — boundary, duplicate, partial failure, concurrency, malformed input — add
+one per case that applies, or rule it out on purpose. Never settle for a vague
+result ("then it works"): every Then is a specific, observable fact.
+
 ## The lowest-confidence flag is bundle-wide
 
 The single approval is at the contract freeze, over the whole bundle — so your §1 ranking feeds the bundle-level flag the user reads there (`run.md`): *"of all I'm asking you to freeze, these 1–2 are most likely wrong."*
@@ -38,7 +61,9 @@ Steps:
   2. Produce §1 — Framings weighed, every Must, every Reject with a named error code, the
      After state, and the Assumptions RANKED lowest-confidence first.
   3. Flag the 1–2 where your confidence is lowest, each with why + cost.
-Never: resolve an ambiguity by guessing.
+  4. Produce §2 — one scenario per Must and per Reject (And-unchanged on every
+     rejection), then the edge-case sweep.
+Never: resolve an ambiguity by guessing; never a vague result — specific and observable.
 </prompt>
 
 ## Exit gate
@@ -48,14 +73,16 @@ Never: resolve an ambiguity by guessing.
 - [ ] Every rejection has a named error code; success state-change described.
 - [ ] Assumptions ordered lowest-confidence first; the 1–2 `⚠` flags carry why + cost — or an honest
       "none material" that still names the single biggest risk (never a blank "none").
+- [ ] §2: one scenario per Must and per Reject; every rejection asserts what stays unchanged.
+- [ ] §2: edge cases covered (boundary · duplicate · partial failure · …) or ruled out on purpose.
 </exit_gate>
 
 > **Persona** — load the fit `.add/personas/<slug>.md`; its `## Critical Rules` shape §1 (advisory; never lowers a gate).
-> **Advisor · Confidence** — for an unfamiliar domain, spawn a researcher (advisor.md); self-score the spec and let the lowest dimension aim your ⚠ flag (confidence.md).
+> **Advisor · Confidence** — for an unfamiliar domain spawn a researcher, for a large surface delegate a wide scenario sweep (advisor.md); self-score the spec — the lowest dimension aims your ⚠ flag, a missing edge case surfaces in the Edge-cases score first (confidence.md).
 
 ## Next
 
-`python3 .add/tooling/add.py advance` → read `phases/2-scenarios.md`.
+`python3 .add/tooling/add.py advance` → read `phases/3-plan.md`.
 Book: `docs/03-step-1-specify.md`. (UI feature? also sketch flows + every screen
 state: loading/empty/error/success; name it in the parent MILESTONE.md's Scope-hint
 vocabulary, not generic prose.)

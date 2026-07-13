@@ -70,4 +70,23 @@ and fast-lane tasks use the compact form — banner → SUMMARY → EVIDENCE →
 python3 .add/tooling/add.py gate PASS          # marks the task done
 # or: add.py gate RISK-ACCEPTED   |   add.py gate HARD-STOP (return to Build)
 ```
-Then read `phases/7-observe.md`. Book: `docs/08-step-6-verify.md`.
+
+## Observe (post-gate, §7) — feed the next loop
+
+Verify owns the loop's tail since the six-phase merge. After the gate, fill §7:
+
+1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout.
+2. **Reuse scenarios as monitors** — the §2 scenarios that defined "correct" define
+   what you alert on: overall error rate, each rejection's rate, latency of the risky op.
+3. **Draft the next spec delta** — every defect, surprise, or new need becomes a change
+   that re-enters the flow at Specify (a new task). Emit lessons tagged by the
+   competency they improve (`deltas.md`); the human consolidates (`fold.md`).
+4. **Propose a voice delta** — where your voice diverged from the human's, propose a
+   confirmable voice delta tuning `SOUL.md`, emitted `open` (`soul.md` — the human is
+   the only writer). Never auto-roll-back — recommend; a human owns production.
+
+> **Decisions (ADR)** — the gate already harvested §7's ADR block; `add.py audit` flags one never harvested.
+> **Persona** — tag `· persona:<slug> · critical-rule|success-metric|anti-pattern|ability`;
+> `fold` grows that section — a HOW-an-agent-behaves lesson belongs in a persona, not the shared pile.
+
+Loop — the artifacts are living docs the next cycle refines. Map: `self-improve.md` · book: `docs/08-step-6-verify.md` · `docs/09-the-loop.md`.

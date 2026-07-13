@@ -228,10 +228,16 @@ POOLS = [
     # after in-file compression absorbed ~100 B (declaration sentence, small-batches line, persona
     # overlay lead) — +332 B residual human-approved surface (32943 → 33275 actual). RATIO 0.80 kept
     # EXACTLY; baseline grows by surface ÷ ratio (+⌈332/0.80⌉=415). The won ground is untouched.
-    {"name": "phases",        "ratio": 0.80, "baseline": 41605,
+    # phases 41605 → 40205 @ guide-recut (six-phase-loop 3/6, contract FROZEN @ v1 — the
+    # INVERSE of the rebaseline-for-new-surface method, same signing discipline): the phase
+    # merges deleted 2-scenarios.md (1809 B) + 7-observe.md (2046 B) after their load-bearing
+    # duties moved into 1-specify.md (+1468 B) / 6-verify.md (+1267 B) — NET won ground
+    # 1120 B the ceiling locks in: baseline SHRINKS by net ÷ ratio (−⌈1120/0.80⌉=1400);
+    # ratio 0.80 kept EXACTLY.
+    {"name": "phases",        "ratio": 0.80, "baseline": 40205,
      "guides": ["phases/0-setup.md", "phases/1-specify.md",
-                "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-                "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
+                "phases/3-plan.md", "phases/4-tests.md",
+                "phases/5-build.md", "phases/6-verify.md"]},
     # reference 66345 → 70282 @ sensitivity-glossary (same "rebaseline for genuinely-new surface" method):
     # a NEW load-on-demand guide (`sensitivity.md`, 2677 B — how the AI maintains the project's extensible
     # risk-class vocabulary) joins the reference pool. RATIO 0.68 kept EXACTLY; baseline grows by new-surface
@@ -292,8 +298,8 @@ TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)       # whole tree must stay
 # Routing rows the SKILL.md phase table MUST keep (one guide per phase).
 PHASE_GUIDES = [
     "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
+    "phases/3-plan.md", "phases/4-tests.md",
+    "phases/5-build.md", "phases/6-verify.md",
 ]
 
 # Load-on-demand pointers SKILL.md must keep naming.

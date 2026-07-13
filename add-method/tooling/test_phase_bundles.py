@@ -301,7 +301,7 @@ class SkillDocBundleColumnTest(unittest.TestCase):
             cells = [c.strip() for c in ln.strip("|").split("|")]
             rows[cells[0]] = cells
         expected_bundle = {
-            "specify": "DIRECTION", "scenarios": "DIRECTION",
+            "specify": "DIRECTION",
             "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
             "verify": "VERIFY",
         }

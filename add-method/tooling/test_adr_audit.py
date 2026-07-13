@@ -31,9 +31,9 @@ PLACEHOLDER = ("<harvested at done from §1/§3/§5/§6 — do not hand-edit; on
 # the 3 git-tracked mirror trees per surface. Skill guide: canonical · .claude dogfood · bundle.
 # Book/glossary: canonical · repo-ROOT mirror (test_book_parity) · bundle — NOT .add/docs/, which is
 # a gitignored local install artifact absent in CI.
-OBSERVE_GUIDE = (ADD_METHOD / "skill/add/phases/7-observe.md",
-                 REPO / ".claude/skills/add/phases/7-observe.md",
-                 ADD_METHOD / "src/add_method/_bundled/skill/add/phases/7-observe.md")
+OBSERVE_GUIDE = (ADD_METHOD / "skill/add/phases/6-verify.md",
+                 REPO / ".claude/skills/add/phases/6-verify.md",
+                 ADD_METHOD / "src/add_method/_bundled/skill/add/phases/6-verify.md")
 BOOK_LOOP = (ADD_METHOD / "docs/09-the-loop.md",
              REPO / "09-the-loop.md",
              ADD_METHOD / "src/add_method/_bundled/docs/09-the-loop.md")

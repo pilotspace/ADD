@@ -82,13 +82,11 @@ Load **only the phase you are in** (progressive disclosure):
 | Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
 |-------|-------|----------------------------|-----------|--------|
 | setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) | – |
-| specify | `phases/1-specify.md` | §1 rules + ranked lowest-confidence flag | AI drafts (co-specify)† | DIRECTION |
-| scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | AI drafts† | DIRECTION |
+| specify | `phases/1-specify.md` | §1 rules + ranked flag + §2 Given/When/Then | AI drafts (co-specify)† | DIRECTION |
 | plan | `phases/3-plan.md` | §3 grounding + frozen shape + build-strategy | AI drafts → **human approves once** (the decision point)† | DIRECTION |
 | tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† | DIRECTION |
 | build | `phases/5-build.md` | code in `src/`, tests green | **AI** | BUILD |
-| verify | `phases/6-verify.md` | §6 checks + gate record | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |
-| observe | `phases/7-observe.md` | §7 spec delta | human + AI | VERIFY |
+| verify | `phases/6-verify.md` | §6 checks + gate record + §7 spec delta | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |
 
 † **The specification bundle (v7).** §1–§4 are one bundle; the human gives **one approval at the
 contract freeze**, lowest-confidence-first — `run.md`.

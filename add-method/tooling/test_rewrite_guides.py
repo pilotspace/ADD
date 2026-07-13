@@ -60,11 +60,9 @@ _PINNED_SAFETY = {
 # Files carrying a `Never:` prompt-field today — each must still carry one after the rewrite.
 _NEVER_FIELD_FILES = (
     _SKILL / "phases" / "1-specify.md",
-    _SKILL / "phases" / "2-scenarios.md",
     _SKILL / "phases" / "3-plan.md",
     _SKILL / "phases" / "4-tests.md",
     _SKILL / "phases" / "5-build.md",
-    _SKILL / "phases" / "7-observe.md",
     _DOCS / "appendix-b-prompts.md",
 )
 
