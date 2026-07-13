@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "scope-coverage-hint",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8828,10 +8828,136 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "init-resume-pointer": {
+      "title": "already-initialised refusal points at the resume command",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-floor",
+      "depends_on": [],
+      "created": "2026-07-13T15:53:48+00:00",
+      "updated": "2026-07-13T16:09:54+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T15:53:49+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "96a0f388105a5525d3e2dd75fb02af21",
+        "tests": {
+          "add-method/tooling/test_init_resume_pointer.py": "534faa7ced7003bbde6d2484c0d01077"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "152585aa3e2da6cf37f2397c7fb780ae"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "milestone-lane-nudge": {
+      "title": "new-milestone names the oneshot lane at the bait point",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-floor",
+      "depends_on": [],
+      "created": "2026-07-13T15:55:44+00:00",
+      "updated": "2026-07-13T16:09:55+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-13T16:04:40+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5a070bdfabb82f4574ec441a0ebb6106",
+        "tests": {
+          "add-method/tooling/test_milestone_lane_nudge.py": "0635a769da53b56a54918c6b35dbe422"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "f49bb5026beab179c46c4490b88a0051"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "scope-coverage-hint": {
+      "title": "Freeze echo flags Touches paths outside the declared scope",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-floor",
+      "depends_on": [],
+      "created": "2026-07-13T15:57:58+00:00",
+      "updated": "2026-07-13T16:09:57+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T15:57:58+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "300d41ce210018c97ac5c64ae7f6dd86",
+        "tests": {
+          "add-method/tooling/test_scope_coverage_hint.py": "5f6aa3350828f6852fbb2a5c38aac249"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "6a672e9c563f8c0543aedb2f15358e04"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T15:52:21+00:00",
+  "updated": "2026-07-13T16:09:57+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10073,7 +10199,8 @@
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
-    "ceremony-to-effort": "fold-draft-at-close"
+    "ceremony-to-effort": "fold-draft-at-close",
+    "call-floor": "scope-coverage-hint"
   },
   "todos": [
     {
