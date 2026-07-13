@@ -78,8 +78,15 @@ POOLS = [
     # `add.py search <keyword> [<keyword> ...]` as the first action — +140 B human-approved surface
     # (contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈140/0.88⌉=160).
     # The won compaction is untouched.
-    {"name": "core",          "ratio": 0.88, "baseline": 20666,
-     "guides": ["SKILL.md", "intake.md"]},
+    # core 20666 → 20906 @ skill-orient-split (same "rebaseline for human-approved new surface"
+    # method): SKILL.md (read EVERY task) splits — the verbose "Beyond the bundle" routing prose
+    # moves to the NEW on-demand guide beyond.md (which joins this pool; it carries core's moved
+    # bytes) and SKILL.md keeps a compact one-line-per-trigger index; the always-read orient core
+    # drops 12819→9498B. Net new surface = the index + the new file's header = +211 B
+    # human-approved (task skill-orient-split, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY;
+    # baseline grows by surface ÷ ratio (+⌈211/0.88⌉=240). The won compaction is untouched.
+    {"name": "core",          "ratio": 0.88, "baseline": 20906,
+     "guides": ["SKILL.md", "intake.md", "beyond.md"]},
     # orchestration 50098 → 51732 @ design-intake-beat (same "rebaseline for human-approved new surface"
     # method): design.md's UDD loop gains a NEW front beat `### 0 · design-intake` (the four design axes
     # FIDELITY·CONCEPT·LAYOUT·VISUAL DESIGN) + a hard rule — +1225 B human-approved surface (milestone

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "compound-ticks",
+  "active_task": "skill-orient-split",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8996,10 +8996,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "skill-orient-split": {
+      "title": "Split SKILL.md: lean orient core + on-demand beyond.md routing guide",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-floor",
+      "depends_on": [],
+      "created": "2026-07-13T16:34:34+00:00",
+      "updated": "2026-07-13T17:01:22+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T16:34:34+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "ecdc145a6c7557dd00597952dd97f3ee",
+        "tests": {
+          "add-method/tooling/test_skill_orient_split.py": "3765df86bfcbea64b138c66eec1934c7"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/",
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/"
+        ],
+        "snapshot_md5": "1d1ca784603501b868b8edb165a2a730"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T16:29:18+00:00",
+  "updated": "2026-07-13T17:01:22+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10242,7 +10283,7 @@
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
-    "call-floor": "compound-ticks"
+    "call-floor": "skill-orient-split"
   },
   "todos": [
     {
