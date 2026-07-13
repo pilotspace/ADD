@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "bundle-disclosure",
+  "active_task": "persona-presets",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9227,10 +9227,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-presets": {
+      "title": "Per-phase teacher-grade persona presets on the roster",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T19:03:07+00:00",
+      "updated": "2026-07-13T19:09:34+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T19:03:52+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1325f3f86bc2de21d27336d108bdf296",
+        "tests": {
+          "add-method/tooling/test_persona_presets.py": "d7f5dc87b81e92c9a9e025bada7c5b2a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          "add-method/src/add_method/_bundled/agents/",
+          ".claude/agents/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "9fa5813e1d277bae100312f22d6f0ee2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T19:02:26+00:00",
+  "updated": "2026-07-13T19:09:34+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10492,7 +10535,7 @@
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
-    "six-phase-loop": "bundle-disclosure"
+    "six-phase-loop": "persona-presets"
   },
   "todos": [
     {
