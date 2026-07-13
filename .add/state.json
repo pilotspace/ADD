@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-coverage-hint",
+  "active_task": "compound-ticks",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8954,10 +8954,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "compound-ticks": {
+      "title": "Opt-in compound ticks: freeze --cross + gate accepted from build",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-floor",
+      "depends_on": [],
+      "created": "2026-07-13T16:12:17+00:00",
+      "updated": "2026-07-13T16:29:18+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T16:12:18+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6678d764ed011d5b0e42532aca3de157",
+        "tests": {
+          "add-method/tooling/test_compound_ticks.py": "fd536b191413d6f013d51d0d96458959"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "d05c93c4544660aaaaba7c828b2f8e67"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T16:09:57+00:00",
+  "updated": "2026-07-13T16:29:18+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10200,7 +10242,7 @@
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
-    "call-floor": "scope-coverage-hint"
+    "call-floor": "compound-ticks"
   },
   "todos": [
     {
