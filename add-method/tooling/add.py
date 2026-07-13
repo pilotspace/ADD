@@ -105,6 +105,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _now, _atomic_write, _atomic_write_bytes, _atomic_write_many,  # names so patches
     find_root, _require_root, _migrate_state, _state_text_or_die,  # on add.<name>
     _die,                                                          # still resolve;
+    _register_invocation, _clear_last_fail,                        # kickoff-truth M3 dup-failure hooks
     _CONFLICT_MARKER_RE,                                            # conflict-marker re
     _load_state_for_json,                                          # --json state loader
     _md5_text, _md5_file,                                          # md5 hashing helpers
@@ -662,7 +663,11 @@ def cmd_init(args: argparse.Namespace) -> None:
         print("      the `add` skill sizes it into a milestone and drives the build with you.")
         # status-guide-fold: name the exact CLI ceremony command for a HEADLESS run
         # (no skill available) so the agent never reads `new-milestone --help`.
-        print('      or headless: add.py new-milestone <slug> --title "..." --goal "..."')
+        # kickoff-truth M1: the single-task lane leads here too — this hint prints
+        # BEFORE the kickoff block, so a milestone-first line here would re-arm the
+        # measured bait the kickoff reorder kills.
+        print('      or headless, single task: add.py new-task <slug> --title "..." --oneshot')
+        print('      or headless, multi-task:  add.py new-milestone <slug> --title "..." --goal "..."')
     # setup hygiene (both branches): the .add/ folder IS the shared project state — commit it
     # so the team shares one source of truth; its transient working files are already gitignored.
     print("tip:  commit the .add/ folder to git so your team shares the ADD state "
@@ -670,9 +675,14 @@ def cmd_init(args: argparse.Namespace) -> None:
     # first-call-ergonomics M3: a copy-pasteable, flags-included kickoff hand-off so a
     # headless agent reaches `advance --to plan` from init's OWN stdout — zero
     # `--help` reads needed for the ceremony the skill would otherwise narrate.
-    print("kickoff:")
+    # kickoff-truth M1: the single-task lane leads — the cheapest measured benchmark
+    # run skipped the milestone entirely; the milestone lines serve multi-task work.
+    print("kickoff (single task):")
+    print('  add.py new-task <slug> --title "..." --oneshot')
+    print("kickoff (multi-task milestone):")
     print('  add.py new-milestone <slug> --title "..." --goal "..."')
     print('  add.py new-task <slug> --title "..." --milestone <ms>')
+    print("then either way:")
     print("  add.py advance --to plan")
 
 
@@ -871,6 +881,17 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print("active task set. phase: specify. State the projected expectations (§1 SPECIFY); "
           "grounding + contract + build-strategy come next, together, in the plan phase.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
+    # kickoff-truth M2: the FULL remaining engine-call recipe, once, at task birth —
+    # the transcript audit measured 6-11 status/guide/--help re-orientation calls per
+    # run that this single block replaces. Lane-invariant (the freeze/gate floor is
+    # the same in every lane); the agent scripts ahead instead of rediscovering.
+    print("recipe — this task's remaining engine calls:")
+    print("  add.py advance --to plan   (write the section rules first)")
+    print("  add.py freeze --by <name>   [human gate — approves the whole plan]")
+    print("  add.py advance   (plan -> tests: write the RED suite)")
+    print("  add.py advance   (tests -> build: make it green)")
+    print("  add.py advance   (build -> verify: gather evidence)")
+    print("  add.py gate PASS   (record the verify outcome)")
 
 
 def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
@@ -8762,8 +8783,13 @@ def main(argv: list[str] | None = None) -> int:
     args, extras = parser.parse_known_args(argv)
     if extras:
         args = _rebind_optional_positionals(parser, args, extras)
+    # kickoff-truth M3: register the true invocation for the dup-failure fingerprint
+    # (explicit argv in-process, sys.argv from the CLI), and clear the sidecar on any
+    # successful exit so only CONSECUTIVE identical failures short-circuit.
+    _register_invocation(sys.argv[1:] if argv is None else list(argv))
     _maybe_nudge_update(args)        # advisory preamble; stderr-only, fail-open
     args.func(args)
+    _clear_last_fail()
     return 0
 
 

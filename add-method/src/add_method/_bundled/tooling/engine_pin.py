@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "9311ec35f6abcd5b30b68fd1d584a0bc"  # re-aimed @ relations-surface (plan-legibility: extends/relates_to non-blocking task relations via new-task flags + state; _task_relations/_milestone_relations readers; _relations_health advisory guard; cmd_check + status surface; wave DAG stays depends_on-only; +_milestone_relations docstring altitude→level slang fix). prior: 7e6ebec0… @ plan-in-report
-ENGINE_PKG_MD5 = "28212a55d53a354dc1b57ab4cddeb243"  # re-aimed @ guides-and-skill (add_engine/constants.py: PHASE_GUIDE["plan"] chapter 05-step-3-contract.md → 05-step-3-plan.md, following the book-chapter rename cascade). prior: a968f9e6… @ plan-phase-core v1
+ENGINE_MD5 = "3937d5c1282a86526aa2ec5f68e8b975"  # re-aimed @ kickoff-truth (ceremony-to-effort 1/7: lane-aware kickoff — single-task --oneshot line leads init's kickoff block + headless hint; cmd_new_task ends with the full remaining call recipe; main() registers the invocation + clears the dup-failure sidecar on success). prior: 9311ec35… @ relations-surface
+ENGINE_PKG_MD5 = "d83fc67fc7979adde37358a29d5e3f46"  # re-aimed @ kickoff-truth v2 (io_state.py: _die gains the dup-failure short-circuit — _register_invocation/_clear_last_fail/_dup_fail_hint; the sig sidecar lives in the OS tmp dir keyed by md5(root), NEVER in the .add tree — the reject-writes-nothing floor; constants.py untouched at v2). prior: 28212a55… @ guides-and-skill

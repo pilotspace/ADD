@@ -174,8 +174,60 @@ def _state_text_or_die(root: Path) -> str:
              f"`git checkout --ours/--theirs {STATE_FILE}`), then run `add.py doctor` to verify")
     return text
 
+# kickoff-truth M3 (contract v2): the dup-failure short-circuit. The 2026-07-13
+# transcript audit measured 12-21% of all engine calls as byte-identical repeats of
+# a call that had just failed the same way — the agent re-issues the command
+# unchanged instead of reading the error. The sig sidecar lives OUTSIDE the project
+# tree (OS tmp dir, keyed by md5(root path)): the engine's reject-writes-nothing
+# floor pins that a REJECTED command leaves the .add tree byte-identical, so the
+# hint state is ephemeral per-project cache, never a tree write. add.main()
+# registers each invocation and clears the sidecar on any successful exit, so only
+# CONSECUTIVE identical failures short-circuit. Fail-open everywhere: no root /
+# unreadable sidecar / any OSError -> no hint, never a block — a hint helper must
+# never change an error's outcome.
+_INVOCATION: list[str] | None = None    # set by add.main() per dispatch
+
+def _register_invocation(argv: list[str]) -> None:
+    global _INVOCATION
+    _INVOCATION = list(argv)
+
+def _last_fail_path() -> Path | None:
+    root = find_root()
+    if root is None:
+        return None
+    key = hashlib.md5(str(root.resolve()).encode("utf-8")).hexdigest()[:12]
+    return Path(tempfile.gettempdir()) / f"add-last-fail-{key}.json"
+
+def _clear_last_fail() -> None:
+    try:
+        side = _last_fail_path()
+        if side is not None:
+            side.unlink(missing_ok=True)
+    except OSError:
+        pass                            # hygiene only — success must never fail on it
+
+def _dup_fail_hint(msg: str) -> str | None:
+    try:
+        side = _last_fail_path()
+        if side is None:
+            return None
+        argv = _INVOCATION if _INVOCATION is not None else sys.argv[1:]
+        code_head = msg.split(":", 1)[0].strip()
+        sig = hashlib.md5((" ".join(argv) + "\n" + code_head).encode("utf-8")).hexdigest()
+        hint = None
+        if side.exists() and json.loads(side.read_text(encoding="utf-8")).get("sig") == sig:
+            hint = ("hint: this exact call already failed with the same error — change "
+                    "the command or input before retrying (add.py status shows the true state)")
+        side.write_text(json.dumps({"sig": sig}), encoding="utf-8")
+        return hint
+    except (OSError, ValueError):
+        return None
+
 def _die(msg: str, code: int = 1) -> None:
+    hint = _dup_fail_hint(msg)          # kickoff-truth M3 — fail-open, never raises
     print(f"add: error: {msg}", file=sys.stderr)
+    if hint:
+        print(hint, file=sys.stderr)
     raise SystemExit(code)
 
 
