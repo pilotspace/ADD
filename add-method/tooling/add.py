@@ -1069,6 +1069,48 @@ def _scope_echo(root: Path, slug: str) -> None:
             print("scope (proposed from §3 Touches): " + " ".join(f"`{p}`" for p in paths))
 
 
+def _spec_echo(root: Path, slug: str) -> None:
+    """build-entry-spec-echo: re-render WHAT to build at the tick INTO build — the §1
+    Must/Reject bullet first-lines + the §3 contract-fence head — so the builder starts
+    from the spec on the screen, not from memory. PURE read, prints only; a missing or
+    malformed section is silently absent (the _build_entry call site wraps fail-open)."""
+    bodies = _raw_phase_bodies(root, slug)
+
+    def _bullets(body: str, key: str) -> list[str]:
+        # first line of each `- ` bullet under the top-level `Key:` line; a bullet's
+        # continuation lines are skipped; the next top-level line ends the block.
+        out: list[str] = []
+        lines = body.splitlines()
+        starts = [n for n, ln in enumerate(lines) if ln.strip() == f"{key}:"]
+        if not starts:
+            return out
+        for ln in lines[starts[0] + 1:]:
+            s = ln.strip()
+            if s.startswith("- "):
+                out.append(s[2:].strip())
+            elif ln[:1].isspace() and s:
+                continue
+            else:
+                break
+        return out
+
+    musts = _bullets(bodies.get(1, ""), "Must")
+    rejects = _bullets(bodies.get(1, ""), "Reject")
+    m = re.search(r"(?ms)^```[^\n]*\n(.*?)^```", bodies.get(3, ""))
+    head = ""
+    if m:
+        head = next((ln.strip() for ln in m.group(1).splitlines() if ln.strip()), "")
+    if not (musts or rejects or head):
+        return
+    print("build to (frozen plan):")
+    for item in musts:
+        print(f"  must: {item}")
+    for item in rejects:
+        print(f"  reject: {item}")
+    if head:
+        print(f"  contract: {head}")
+
+
 def cmd_freeze(args: argparse.Namespace) -> None:
     """The §3 contract-freeze write command — the 5th engine-WRITTEN human approval (task
     freeze-actor-stamp), joining lock · gate · milestone-done · release. Flips the target
@@ -1444,6 +1486,14 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
               "than the spec's own examples can stay green through a real crash (benchmark "
               "wm2 evidence). Add one test using the contract's literal format, then "
               "re-snapshot: add.py re-cross --by <name>")
+    # build-entry spec echo (six-phase-loop): the tick INTO build re-renders WHAT to
+    # build — §1 Must/Reject + the §3 contract head — on BOTH entries (advance and the
+    # `phase build` override funnel here). TAIL of the stack, so a refused entry never
+    # echoes; fail-open, so exit code, state, and TASK.md are identical either way.
+    try:
+        _spec_echo(root, slug)
+    except Exception:
+        pass
 
 
 def cmd_phase(args: argparse.Namespace) -> None:
