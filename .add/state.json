@@ -8492,7 +8492,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T07:01:19+00:00",
+  "updated": "2026-07-13T07:03:14+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8834,14 +8834,19 @@
       "title": "Plan legibility \u2014 surface the build plan at the freeze + structured task relations",
       "goal": "Make the plan and its relationships legible to the human: the freeze report surfaces the full \u00a73 build-strategy plan-of-action (approve HOW, not just WHAT), and every task carries a structured, synced Relations surface (depends-on \u00b7 extends \u00b7 relates-to) at task and milestone altitude, with a validate/sync guard.",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-13T05:13:25+00:00",
-      "updated": "2026-07-13T05:17:41+00:00",
+      "updated": "2026-07-13T07:03:14+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-13T05:17:41+00:00",
       "confirmed_by": "tindang",
       "await_confirm": true,
       "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "done_actor": {
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"

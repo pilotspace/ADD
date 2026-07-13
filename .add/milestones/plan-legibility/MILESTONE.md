@@ -40,33 +40,37 @@ Issues/Risks (shared): `decide_data`/`render_decide` are PURE + pinned-shape —
 - state `relations` schema (`extends`/`relates_to` keys) -> owning task relations-surface
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] plan-in-report     depends-on: none   — surface the FULL §3 Build-strategy plan-of-action (batches · scope · persona · spawn) in the DECIDE/freeze report (`decide_data`+`render_decide`) + `report-template.md`, so the human approves HOW at the freeze.
-- [ ] relations-surface  depends-on: none   — structured Relations (`depends-on · extends · relates-to`) per task + milestone, surfaced at `status`/plan, with an advisory validate/sync guard for stale/dangling edges.
+- [x] plan-in-report     depends-on: none   — surface the FULL §3 Build-strategy plan-of-action (batches · scope · persona · spawn) in the DECIDE/freeze report (`decide_data`+`render_decide`) + `report-template.md`, so the human approves HOW at the freeze.
+- [x] relations-surface  depends-on: none   — structured Relations (`depends-on · extends · relates-to`) per task + milestone, surfaced at `status`/plan, with an advisory validate/sync guard for stale/dangling edges.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] At the freeze, the human sees the AI's FULL build-strategy plan-of-action (ordered batches + scope + persona/spawn) in the report — not just the contract shape        (← plan-in-report)
-- [ ] Each task declares `depends-on · extends · relates-to` (task + milestone altitude), surfaced at `status`/plan                                                          (← relations-surface)
-- [ ] A validate/sync pass FLAGS a stale or dangling relation (advisory), keeping cross-task/cross-milestone relations current                                              (← relations-surface)
+- [x] At the freeze, the human sees the AI's FULL build-strategy plan-of-action (ordered batches + scope + persona/spawn) in the report — not just the contract shape        (← plan-in-report)
+- [x] Each task declares `depends-on · extends · relates-to` (task + milestone altitude), surfaced at `status`/plan                                                          (← relations-surface)
+- [x] A validate/sync pass FLAGS a stale or dangling relation (advisory), keeping cross-task/cross-milestone relations current                                              (← relations-surface)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : `decide_data`/`render_decide` now emit a BUILD PLAN block (§3 build-strategy fields) at the front/pre-freeze seam (`_build_plan`, single-physical-line capture); state gains migration-tolerant `extends`/`relates_to` task keys + `_task_relations`/`_milestone_relations` readers + the PURE `_relations_health` guard; `cmd_status` shows `ext=`/`rel=`/`relations: N dangling · M self`; `cmd_check` resolves+flags dangling/self; templates: GLOSSARY (3 relation terms), TASK.md.tmpl (autonomy-header relations note, net-compressed under the frozen lean ceilings), MILESTONE.md.tmpl (`relations:` header). ENGINE_MD5 re-pinned; SEAMS `_declared_scope` anchor re-pinned.
+- skill   : `report-template.md` (×3 twins) gains the "BUILD PLAN is the HOW" bullet — the freeze report surfaces HOW, not just WHAT.
+- book    : untouched (deep Contract→Plan narrative + GLOSSARY term is expectations-first's T4 book-align, explicitly deferred — Out of scope).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- plan-in-report    : gate=PASS · tests=27 green (test_decide_digest incl. the dogfood field-bleed regression) · residue=none (`331306b`)
+- relations-surface : gate=PASS · tests=15 green (test_relations) · full suite 3441 green · residue=none (`ed48dc5`); a mis-declared frozen §5 scope was corrected + human-signed re-crossed (Tin Dang), §3 stayed frozen.
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
+  - EC1 (freeze shows the FULL build plan) ← plan-in-report: `render_decide` BUILD PLAN block + report-template "BUILD PLAN is the HOW" bullet (`331306b`).
+  - EC2 (task+milestone declare depends-on·extends·relates-to, surfaced) ← relations-surface: new-task flags + state keys + `status` ext=/rel= + MILESTONE.md header (`ed48dc5`).
+  - EC3 (advisory pass FLAGS stale/dangling) ← relations-surface: `_relations_health` + `cmd_check` dangling/self findings, PURE, never blocks (`ed48dc5`).
+- goal: plan + relationships are legible to the human — the freeze report now surfaces the AI's full build-strategy plan-of-action (approve HOW), and every task/milestone carries a declared, status-surfaced, guard-validated Relations surface. Proof: EC1–EC3 each map to a PASS'd task; full suite 3441 green.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. export the ship-review to a hand-off doc, e.g. `pandoc CLOSE.md -o close.docx`>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] push branch `feat/flow-reorder` and open a PR (commits `331306b` + `ed48dc5`); PR body = this Close ship-review; human reviews + merges (needs push auth).
+- [ ] this milestone is a method/engine change, not a package cut — DEFER the release (version bump / npm / PyPI) to a later release scope that bundles it with sibling flow-reorder milestones (per release.md).
+- [ ] no tag/publish for this milestone alone.
