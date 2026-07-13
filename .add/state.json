@@ -8831,7 +8831,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T10:57:39+00:00",
+  "updated": "2026-07-13T11:37:30+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10257,6 +10257,12 @@
       "id": 32,
       "text": "post-1.18 release: update --global \u2014 ~/.claude/skills/add is stale (still pre-plan-phase 0-ground/3-contract guides); consider a flow-fingerprint mismatch warning in status",
       "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 33,
+      "text": "lock-reclaim TOCTOU race: test_concurrent_stale_reclaim_survives_scheduling_delay observed peak=2 holders twice on py3.10 CI (also the older test_project_scope_lock sibling) \u2014 the reclaim window is real on slow runners; harden the ticket-race path or gate the reclaim on a holder heartbeat",
+      "created": "2026-07-13T11:37:30+00:00",
       "status": "open"
     }
   ]
