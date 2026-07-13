@@ -1,7 +1,7 @@
 # MILESTONE: Six-phase loop with bundle-owned subagents
 
 goal: Merge specify+scenarios and verify+observe (8->6 phases), disclose phase guides into the lean roster's bundle agents so the orchestrator loads only SKILL.md, add per-phase persona presets + a build-entry spec echo
-rationale: <why this scope — the confirmed intake classification (bucket + reason)>
+rationale: sub-milestone — the user's compress-steps + expert-subagent-per-step request, interview-confirmed 2026-07-14 (TRUE 8->6 merge · disclosure into bundle agents · presets · spec echo)
 stage: mvp · status: active · created: 2026-07-13T17:03:37+00:00
 release: pending
 relations: <cross-MILESTONE edges — add header lines `depends-on:` / `extends:` / `relates-to:` with milestone slugs (comma-sep); omit if none. Non-blocking except depends-on; validated by `add.py check`>
@@ -35,21 +35,21 @@ IN: engine phase-list 8->6 (specify absorbs scenarios; verify absorbs observe) +
 OUT: gate SEMANTICS (one recorded outcome, security HARD-STOP, tamper/scope guards — all unchanged) · the freeze position (plan->tests) · roster membership changes (stays 5) · stdout terseness · benchmark harness changes.
 
 ## Tasks (breadth-first; engine merges FIRST — guides/agents re-cut against the new truth)
-- [ ] phase-merge-specify   depends-on: none — scenarios fold INTO specify (§2 Given/When/Then becomes the §1 rules' scenario block; one drafting phase); engine PHASES list, section indices, advance/recipe paths, TASK.md.tmpl + fast twin; migration maps in-flight tasks (scenarios->specify) — the phase-index-vs-section bug class from expectations-first is the named trap
-- [ ] phase-merge-verify    depends-on: phase-merge-specify — observe folds INTO verify (§7 spec-delta capture becomes an optional post-gate block of §6; deltas/fold lifecycles unchanged, they read the file not the phase); gate stays the phase's one outcome; 6-phase list lands: setup · specify · plan · tests · build · verify
-- [ ] guide-recut           depends-on: phase-merge-verify — phases/*.md re-cut to 6 guides (1-specify absorbs 2-scenarios; 6-verify absorbs 7-observe); pools re-anchored (human-signed restructure, POOLS comments cite this milestone); orchestrator fast-lane read path <= 30KB finally lands
-- [ ] bundle-disclosure     depends-on: guide-recut — the orchestrator loads ONLY SKILL.md; each roster agent's prompt names + loads its bundle's guides (add-design <- specify+plan; add-build <- tests+build; add-verify <- verify); SKILL.md flow table routes to AGENTS for bundle work, guides stay readable inline for the no-spawn lane (inline remains first-class per the user's inline-over-heavy-spawns feedback)
-- [ ] persona-presets       depends-on: bundle-disclosure — per-phase teacher-grade persona preset lines in the three roster agent files (dynamic-personas infra); advisory, never lowers a gate
-- [ ] build-entry-spec-echo depends-on: phase-merge-verify — the tick INTO build (advance tests->build or freeze --cross chain) prints the §1 Must/Reject lines + frozen §3 contract summary (spec-in-context where drift starts; propose-not-impose, fail-open like the scope echo)
+- [x] phase-merge-specify   depends-on: none — scenarios fold INTO specify (§2 Given/When/Then becomes the §1 rules' scenario block; one drafting phase); engine PHASES list, section indices, advance/recipe paths, TASK.md.tmpl + fast twin; migration maps in-flight tasks (scenarios->specify) — the phase-index-vs-section bug class from expectations-first is the named trap
+- [x] phase-merge-verify    depends-on: phase-merge-specify — observe folds INTO verify (§7 spec-delta capture becomes an optional post-gate block of §6; deltas/fold lifecycles unchanged, they read the file not the phase); gate stays the phase's one outcome; 6-phase list lands: setup · specify · plan · tests · build · verify
+- [x] guide-recut           depends-on: phase-merge-verify — phases/*.md re-cut to 6 guides (1-specify absorbs 2-scenarios; 6-verify absorbs 7-observe); pools re-anchored (human-signed restructure, POOLS comments cite this milestone); orchestrator fast-lane read path <= 30KB finally lands
+- [x] bundle-disclosure     depends-on: guide-recut — the orchestrator loads ONLY SKILL.md; each roster agent's prompt names + loads its bundle's guides (add-design <- specify+plan; add-build <- tests+build; add-verify <- verify); SKILL.md flow table routes to AGENTS for bundle work, guides stay readable inline for the no-spawn lane (inline remains first-class per the user's inline-over-heavy-spawns feedback)
+- [x] persona-presets       depends-on: bundle-disclosure — per-phase teacher-grade persona preset lines in the three roster agent files (dynamic-personas infra); advisory, never lowers a gate
+- [x] build-entry-spec-echo depends-on: phase-merge-verify — the tick INTO build (advance tests->build or freeze --cross chain) prints the §1 Must/Reject lines + frozen §3 contract summary (spec-in-context where drift starts; propose-not-impose, fail-open like the scope echo)
 
 ## Exit criteria (observable)
-- [ ] the 6-phase lifecycle is test-pinned end-to-end: new-task -> specify -> plan(freeze) -> tests -> build -> verify(gate) with compound ticks intact   (<- phase-merge-*)
-- [ ] an in-flight 8-phase task migrates loud-and-safe (scenarios->specify, observe->verify) — test-pinned   (<- phase-merge-*)
-- [ ] 6 phase guides, pools green at re-anchored baselines, orchestrator fast-lane read path <= 30KB   (<- guide-recut)
-- [ ] roster agent files name + load their bundle guides; SKILL.md carries no per-phase guide bodies   (<- bundle-disclosure)
-- [ ] each of the 3 bundle agents carries per-phase persona preset lines   (<- persona-presets)
-- [ ] the build-entry echo renders Must/Reject + contract summary; bare non-build ticks byte-identical — test-pinned   (<- build-entry-spec-echo)
-- [ ] floors untouched: full fence green, ENGINE_MD5 re-pinned, 3-tree parity, gate semantics byte-identical
+- [x] the 6-phase lifecycle is test-pinned end-to-end: new-task -> specify -> plan(freeze) -> tests -> build -> verify(gate) with compound ticks intact   (<- phase-merge-*)   (verify: test_phase_merge_specify.py + test_phase_merge_verify.py AdvanceAndGateTest; fence 3554 OK)
+- [x] an in-flight 8-phase task migrates loud-and-safe (scenarios->specify, observe->verify) — test-pinned   (<- phase-merge-*)   (verify: test_phase_merge_verify.py LegacyStateTest — normalize-on-read, gate preserved)
+- [x] 6 phase guides, pools green at re-anchored baselines, orchestrator fast-lane read path <= 30KB   (<- guide-recut)   (verify: test_guide_recut.py; phases pool 41605->40205 signed; SKILL.md 9442B + 1 guide/phase)
+- [x] roster agent files name + load their bundle guides; SKILL.md carries no per-phase guide bodies   (<- bundle-disclosure)   (verify: test_bundle_disclosure.py — guide census + disclosure sentence + ceiling + x2 parity)
+- [x] each of the 3 bundle agents carries per-phase persona preset lines   (<- persona-presets)   (verify: test_persona_presets.py — preset census, routing-first survives, never-lowers-a-gate)
+- [x] the build-entry echo renders Must/Reject + contract summary; bare non-build ticks byte-identical — test-pinned   (<- build-entry-spec-echo)   (verify: test_build_entry_spec_echo.py 9 tests; self-proved live on the task's own re-cross)
+- [x] floors untouched: full fence green, ENGINE_MD5 re-pinned, 3-tree parity, gate semantics byte-identical   (verify: fence 3554/3554 OK; ENGINE_MD5 bf89b033 @ build-entry-spec-echo; twin-parity tests green; zero tests weakened across 6 tasks)
 - [ ] (paid, human-gated) WM1 re-measure after merge: fidelity >= 0.97 held, calls <= 12
 
 ## Risks
