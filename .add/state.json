@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "risk-report-render",
+  "active_task": "fold-draft-at-close",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8786,10 +8786,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fold-draft-at-close": {
+      "title": "milestone-done pre-classifies the open SPEC deltas (fold draft)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:48:42+00:00",
+      "updated": "2026-07-13T10:57:39+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:48:43+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7b7f36af7d9aa33582f0518bb2f459a8",
+        "tests": {
+          "add-method/tooling/test_fold_draft_at_close.py": "023fda7e3da37cb0b8cd7ef72d01eea7"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "861739ee54303afc2ffc3d083667d75b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T10:46:31+00:00",
+  "updated": "2026-07-13T10:57:39+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10022,7 +10064,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
-    "ceremony-to-effort": "risk-report-render"
+    "ceremony-to-effort": "fold-draft-at-close"
   },
   "todos": [
     {

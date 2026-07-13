@@ -4932,10 +4932,29 @@ def cmd_milestone_done(args: argparse.Namespace) -> None:
         print(f"  run: add.py {_FOLD_VERB}   (review first: add.py deltas)")
     # SPEC-delta nudge (project-wide): the close is also a natural prompt to RESOLVE the
     # forward hand-offs (seed/drop) so none is orphaned at the eventual compaction.
-    open_spec = len(_collect_open_spec_deltas(root))
+    open_spec_items = _collect_open_spec_deltas(root)
+    open_spec = len(open_spec_items)
     if open_spec:
         noun = "delta" if open_spec == 1 else "deltas"
         print(f"note: {open_spec} open SPEC {noun} to resolve (seed/drop) — review: add.py deltas")
+        # fold-draft-at-close: pre-classify each open SPEC delta so the close-time
+        # resolution starts from a proposal, not a blank re-read. MECHANICAL only —
+        # the engine checked whether a cited path resolves; it never judges. Stdout
+        # only (propose-not-impose) and fail-open: a draft failure never blocks the close.
+        try:
+            print(f"  {_FOLD_VERB} draft (proposed — resolving stays yours; the engine only checked paths):")
+            for d in open_spec_items:
+                toks = re.findall(r"([\w.-]+(?:/[\w.-]+)+)", d["text"] + " " + d["evidence"])
+                live = [k for k in toks if (root.parent / k).exists()]
+                if live:
+                    cls, why = "seed ", f"evidence resolves: {live[0]}"
+                elif toks:
+                    cls, why = "drop?", "evidence no longer resolves"
+                else:
+                    cls, why = "seed ", "forward hand-off by default"
+                print(f"    {cls} {d['text']}  [{d['task']}] — {why}")
+        except Exception:
+            pass
     # the engine-sourced next step (converges the old "Confirm … archive/start the next" hint)
     print(_next_footer(root, state))
 
