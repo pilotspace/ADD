@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "8aef02aed5d34c80210866852cc996da"  # re-aimed @ fold-draft-at-close (ceremony-to-effort 7/7: cmd_milestone_done's SPEC nudge grows a mechanical fold draft — seed when a cited path resolves, drop? when none does, seed-by-default when pathless; stdout only, fail-open). prior: 80b8121a… @ scope-echo-draft
+ENGINE_MD5 = "6f4e791f29efb6f3998b529ffdd89a35"  # re-aimed @ scope-coverage-hint (call-floor 3/5 batch w/ 1/5 init pointer + 2/5 lane nudge: the freeze echo notes §3 Touches paths outside the resolved scope — the too-narrow re-cross class). prior: 8aef02ae… @ fold-draft-at-close 
 ENGINE_PKG_MD5 = "d83fc67fc7979adde37358a29d5e3f46"  # re-aimed @ kickoff-truth v2 (io_state.py: _die gains the dup-failure short-circuit — _register_invocation/_clear_last_fail/_dup_fail_hint; the sig sidecar lives in the OS tmp dir keyed by md5(root), NEVER in the .add tree — the reject-writes-nothing floor; constants.py untouched at v2). prior: 28212a55… @ guides-and-skill

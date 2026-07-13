@@ -590,7 +590,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     root = base / ROOT_DIRNAME
     state_path = root / STATE_FILE
     if state_path.exists() and not args.force:
-        _die(f"already initialised at {root} (use --force to reset state)")
+        _die(f"already initialised at {root} (use --force to reset state) — resume: add.py status")
 
     (root / "tasks").mkdir(parents=True, exist_ok=True)
     # Keep the engine's transient local artifacts out of git. Never-clobber: a
@@ -1035,6 +1035,19 @@ def _scope_echo(root: Path, slug: str) -> None:
     never written — the agent/human re-drafts and re-freezes deliberately."""
     resolved = _declared_scope(root, slug)
     rootp = root.parent
+
+    def _touches_paths() -> list[str]:
+        # path-heads on the §3 Touches lines that exist in the tree (never speculative)
+        paths: list[str] = []
+        body = _raw_phase_bodies(root, slug).get(3, "")
+        for line in body.splitlines():
+            if not line.lstrip().startswith("Touches"):
+                continue
+            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
+                if tok not in paths and (rootp / tok).exists():
+                    paths.append(tok)
+        return paths
+
     missing_all = False
     if resolved is None:
         print("scope: UNDECLARED (grandfathered)")
@@ -1045,15 +1058,13 @@ def _scope_echo(root: Path, slug: str) -> None:
         for rel, ok in marks:
             print(f"scope: {rel} [{'ok' if ok else 'MISSING'}]")
         missing_all = not any(ok for _, ok in marks)
+        # scope-coverage-hint: the too-narrow class behind the measured re-cross
+        # repairs — tokens resolve [ok] yet the build's real targets sit outside them.
+        for tok in _touches_paths():
+            if not _in_scope(tok, resolved):
+                print(f"note: §3 Touches cites {tok} outside the declared scope")
     if resolved is None or not resolved or missing_all:
-        paths: list[str] = []
-        body = _raw_phase_bodies(root, slug).get(3, "")
-        for line in body.splitlines():
-            if not line.lstrip().startswith("Touches"):
-                continue
-            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
-                if tok not in paths and (rootp / tok).exists():
-                    paths.append(tok)
+        paths = _touches_paths()
         if paths:
             print("scope (proposed from §3 Touches): " + " ".join(f"`{p}`" for p in paths))
 
@@ -4468,6 +4479,9 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
             # exclusive with the note above (same predicate, opposite branch — never both).
             slugs = ", ".join(_real_persona_slugs(root))
             print(f"persona-fit: {PERSONA_FIT_HINT_TEMPLATE.format(slugs=slugs)}")
+    # milestone-lane-nudge: the WM1 bait point — a single-task request routed here costs
+    # ~10 calls of milestone ceremony. Advisory only; the command-point beats wrapper prose.
+    print("lane: single task? the oneshot lane is cheaper: add.py new-task <slug> --oneshot")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
