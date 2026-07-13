@@ -727,6 +727,10 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if milestone and not _milestone_confirmed(state, milestone):
         _die(f"milestone_unconfirmed: confirm it first — add.py milestone-confirm {milestone}")
     depends_on = _parse_deps(getattr(args, "depends_on", None))
+    # relations-surface: two NON-BLOCKING sibling relations, parsed exactly like depends_on
+    # (comma-separated slugs). They never gate the wave schedule — legibility + validate only.
+    extends = _parse_deps(getattr(args, "extends", None))
+    relates_to = _parse_deps(getattr(args, "relates_to", None))
 
     # SEED (--from-delta): resolve a prior task's FIRST open SPEC delta into THIS task.
     # validate-ALL-then-write — resolve the prior, read its open delta, and compute the
@@ -825,6 +829,12 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         "created": _now(),
         "updated": _now(),
     }
+    # relations-surface: persist the non-blocking edges only when declared (absent == [] on read,
+    # migration-tolerant like depends_on's `or []`) so old state stays byte-clean.
+    if extends:
+        state["tasks"][slug]["extends"] = extends
+    if relates_to:
+        state["tasks"][slug]["relates_to"] = relates_to
     if prior_heal is not None:
         state["tasks"][slug]["heal"] = prior_heal   # monotonic — survives the --force re-create
     if from_delta:
@@ -1136,6 +1146,63 @@ def _archived_task_slugs(state: dict) -> set[str]:
     for rec in state.get("archived", []):
         out.update(rec.get("task_slugs", []))   # .get: pre-v2 records have none
     return out
+
+
+# --- relations-surface: structured task/milestone relations + an advisory guard ------
+# Three relation types: depends_on (BLOCKING, drives the wave schedule — existing) plus two
+# NON-BLOCKING siblings, extends (builds on a prior shipped surface) and relates_to (shares
+# context). Declared, never inferred. Reads are migration-tolerant (absent key -> []).
+_MS_REL_KEYS = (("depends-on", "depends_on"), ("extends", "extends"), ("relates-to", "relates_to"))
+
+
+def _task_relations(t: dict) -> dict:
+    """A task's three relation edge-lists, migration-tolerant (absent key -> []). depends_on is
+    BLOCKING; extends/relates_to are non-blocking legibility edges (never enter the schedule DAG)."""
+    return {"depends_on": list(t.get("depends_on") or []),
+            "extends": list(t.get("extends") or []),
+            "relates_to": list(t.get("relates_to") or [])}
+
+
+def _milestone_relations(root: Path, mslug: str) -> dict:
+    """Milestone-level relations, parsed from the MILESTONE.md HEADER — the region BEFORE the
+    first '## ' section, so a per-task `depends-on:` row inside `## Tasks` is never mistaken for a
+    milestone edge. Fail-safe: a missing/garbled doc, or a milestone with no relation lines (an old
+    MILESTONE.md), reads all-empty — never raises."""
+    out = {"depends_on": [], "extends": [], "relates_to": []}
+    md = root / "milestones" / mslug / MILESTONE_FILE
+    try:
+        header = re.split(r"(?m)^## ", md.read_text(encoding="utf-8"), maxsplit=1)[0]
+    except OSError:
+        return out
+    for label, key in _MS_REL_KEYS:
+        m = re.search(rf"(?mi)^{label}:[ \t]*(.+)$", header)
+        if m:
+            val = m.group(1).strip()
+            if val and val.lower() != "none" and not val.startswith("<"):   # skip a placeholder/none
+                out[key] = _parse_deps(val)
+    return out
+
+
+def _relations_health(root: Path, state: dict) -> list[dict]:
+    """ADVISORY validate/sync pass over every task's non-blocking relations. Returns findings
+    [{slug, relation, target, kind}] — kind in {'dangling','self_relation'}. A target that is a
+    known OR archived (PASS-done) task resolves; a target that is neither (unknown or removed) is
+    dangling; a self-edge is self_relation. PURE — never writes, never blocks a gate (mirrors the
+    SHA-freshness deps line: measured, surfaced, never enforced)."""
+    tasks = state.get("tasks") or {}
+    archived = _archived_task_slugs(state)
+    findings: list[dict] = []
+    for slug, t in tasks.items():
+        rel = _task_relations(t)
+        for rtype in ("extends", "relates_to"):
+            for target in rel[rtype]:
+                if target == slug:
+                    findings.append({"slug": slug, "relation": rtype,
+                                     "target": target, "kind": "self_relation"})
+                elif target not in tasks and target not in archived:
+                    findings.append({"slug": slug, "relation": rtype,
+                                     "target": target, "kind": "dangling"})
+    return findings
 
 
 def _resolve_task(state: dict, slug: str | None) -> str:
@@ -2621,6 +2688,15 @@ def cmd_status(args: argparse.Namespace) -> None:
         # dag-plan snapshot freshness (persist-dag-plan): per-active-milestone, read-only —
         # fresh ✓ / stale / none / unreadable vs the LIVE depends_on edges. Advisory; never writes.
         print(_dag_plan_status_line(root, state, _active_ms))
+        # relations-surface: advisory relation health, mirroring the dag-plan line — silent
+        # when clean, a one-line count of dangling/self edges when not. Never writes/blocks.
+        _rel_bad = _relations_health(root, state)
+        if _rel_bad:
+            _n_self = sum(1 for f in _rel_bad if f["kind"] == "self_relation")
+            _n_dang = sum(1 for f in _rel_bad if f["kind"] == "dangling")
+            _parts = [p for p in (f"{_n_dang} dangling" if _n_dang else "",
+                                  f"{_n_self} self" if _n_self else "") if p]
+            print(f"relations: {' · '.join(_parts)} — run add.py check")
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
         print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
@@ -2811,8 +2887,12 @@ def cmd_status(args: argparse.Namespace) -> None:
         mark = "*" if slug == active else " "
         deps = t.get("depends_on") or []
         dep_s = f"  deps={','.join(deps)}" if deps else ""
+        # relations-surface: the two non-blocking edges, silent when absent (no noise)
+        ext = t.get("extends") or []
+        rel_slugs = t.get("relates_to") or []
+        rel_s = (f"  ext={','.join(ext)}" if ext else "") + (f"  rel={','.join(rel_slugs)}" if rel_slugs else "")
         ms_s = f"  [{t['milestone']}]" if t.get("milestone") else ""
-        print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}")
+        print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}{rel_s}")
     if not show_all and len(_sorted_tasks) > _STATUS_PAGE_SIZE:
         print(f"  … {len(_sorted_tasks) - _STATUS_PAGE_SIZE} more (see status --all)")
     # fold-pressure nudge: surface unfolded competency deltas so emission can't
@@ -3675,6 +3755,15 @@ def cmd_check(args: argparse.Namespace) -> None:
         for dep in t.get("depends_on") or []:
             checks.append((dep in tasks or dep in archived_slugs,
                            f"task '{slug}' dep '{dep}' resolves", "unknown task"))
+        # relations-surface: the non-blocking edges validate the SAME way (advisory monitor) —
+        # a target must resolve (known or archived) and never be a self-edge. Never a gate block.
+        for rtype in ("extends", "relates_to"):
+            for tgt in t.get(rtype) or []:
+                checks.append((tgt != slug,
+                               f"task '{slug}' {rtype.replace('_', '-')} '{tgt}' is not a self-relation",
+                               "self_relation"))
+                checks.append((tgt in tasks or tgt in archived_slugs,
+                               f"task '{slug}' {rtype.replace('_', '-')} '{tgt}' resolves", "unknown task"))
         # waiver expiry (Matrix 4): a RISK-ACCEPTED waiver whose `expires` has passed is
         # stale — the gate stored it; `check` is the standing monitor that catches the lapse.
         # Fail-closed: a missing/unparseable expires is a FAIL, never a silent pass.
@@ -8190,7 +8279,11 @@ def build_parser() -> argparse.ArgumentParser:
     pn.add_argument("--title", default=None)
     pn.add_argument("--milestone", default=None, help="attach to a milestone (default: active)")
     pn.add_argument("--depends-on", dest="depends_on", default=None,
-                    help="comma-separated task slugs this task depends on")
+                    help="comma-separated task slugs this task depends on (BLOCKING)")
+    pn.add_argument("--extends", dest="extends", default=None,
+                    help="comma-separated task slugs this task extends (non-blocking: builds on their shipped surface)")
+    pn.add_argument("--relates-to", dest="relates_to", default=None,
+                    help="comma-separated task slugs this task relates to (non-blocking: shares context)")
     pn.add_argument("--from-delta", dest="from_delta", default=None, metavar="PRIOR",
                     help="SEED PRIOR's open SPEC delta into this task (pre-fills §1 "
                          "Feature, flips the source -> [SPEC · seeded] [→ this])")

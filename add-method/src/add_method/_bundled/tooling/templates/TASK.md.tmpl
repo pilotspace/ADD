@@ -2,9 +2,9 @@
 
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
-autonomy: {{autonomy}}   <!-- level: manual < conservative < auto — lower for a high-risk task (`add.py autonomy set`). Multi-component repo? add a `component: <name>` line (.add/components.toml) to join that root to §5 Scope. -->
-phase: specify   <!-- specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done; the plan phase unites grounding + the frozen contract + the build strategy -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + a lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: {{autonomy}}   <!-- level: manual<conservative<auto — lower for high-risk (`add.py autonomy set`). Multi-component? a `component: <name>` line (.add/components.toml) joins that root to §5 Scope. Relations: `--depends-on`/`--extends`/`--relates-to` task edges (GLOSSARY; `check` validates). -->
+phase: specify   <!-- specify→scenarios→plan→tests→build→verify→observe→done; plan unites grounding + frozen contract + build strategy -->
+<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -118,7 +118,7 @@ Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
 
-<!-- The scope-lock source is the §3 Build-strategy `Scope (may touch)` line (grammar noted there). Enforcement live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
+<!-- Scope-lock source: the §3 `Scope (may touch)` line (grammar there). Live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
 
 ---
 

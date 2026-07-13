@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "plan-in-report",
+  "active_task": "relations-surface",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8451,12 +8451,12 @@
     },
     "relations-surface": {
       "title": "Structured task+milestone relations with a sync guard",
-      "phase": "plan",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "plan-legibility",
       "depends_on": [],
       "created": "2026-07-13T05:17:42+00:00",
-      "updated": "2026-07-13T05:27:52+00:00",
+      "updated": "2026-07-13T07:01:19+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-13T05:38:36+00:00",
@@ -8466,11 +8466,33 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7a99b655a20301feb29e72c3fc5250c0",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "1c08998323b4324f0b0d2b4ceaad8739"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-13T06:57:48+00:00",
+        "from_phase": "verify"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T06:23:20+00:00",
+  "updated": "2026-07-13T07:01:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9674,7 +9696,7 @@
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "guides-and-skill",
-    "plan-legibility": "plan-in-report"
+    "plan-legibility": "relations-surface"
   },
   "todos": [
     {
