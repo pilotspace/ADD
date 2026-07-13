@@ -39,7 +39,7 @@ LABELS = (
 
 # engine-parsed seams that must survive in a scaffold (reject parsed_seam_touched)
 SEAM_PATTERNS = {
-    "phase_marker": re.compile(r"^phase: ground", re.M),
+    "phase_marker": re.compile(r"^phase: specify", re.M),  # plan-phase-core: new-task now seeds specify (was ground)
     "title": re.compile(r"^# TASK: ", re.M),
     "status_draft": re.compile(r"^Status: DRAFT", re.M),
     "outcome": re.compile(r"^Outcome: <PASS \| RISK-ACCEPTED \| HARD-STOP>", re.M),
@@ -154,12 +154,14 @@ class ScaffoldCarriesFormTags(_ScaffoldBase):
         filled = text.replace("<must>", "<must>\n  - debit and credit post atomically", 1)
         self.task_md.write_text(filled, encoding="utf-8")
         bodies = {p["n"]: p["body"] for p in add.task_phases(self.root, "demo")}
-        self.assertNotEqual("(empty)", bodies[1], "a filled tagged region must count as content")
-        self.assertIn("debit and credit post atomically", bodies[1])
+        # <must> lives in §1 SPECIFY = phase index 0 (n is the ordinal now, not the §-number)
+        self.assertNotEqual("(empty)", bodies[0], "a filled tagged region must count as content")
+        self.assertIn("debit and credit post atomically", bodies[0])
 
     def test_lean_pass_single_freeze_comment(self):
         tmpl = (_TOOLING / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")
-        sec3 = tmpl.split("## 3 · CONTRACT")[1].split("## 4 · TESTS")[0]
+        # plan-phase-core: §3 is now "## 3 · PLAN" (ground+contract collapsed into it)
+        sec3 = tmpl.split("## 3 · PLAN")[1].split("## 4 · TESTS")[0]
         self.assertEqual(
             1, sec3.count("<!--"),
             "lean pass: §3 carries ONE merged instruction comment (today: three)",
@@ -188,8 +190,8 @@ class EngineSeamsUnchanged(_ScaffoldBase):
         text = self.task_md.read_text(encoding="utf-8")
         for name, pat in SEAM_PATTERNS.items():
             self.assertTrue(pat.search(text), f"parsed seam survives in scaffold: {name}")
-        add.main(["advance"])  # ground -> specify, syncs the marker into TASK.md
-        self.assertRegex(self.task_md.read_text(encoding="utf-8"), r"(?m)^phase: specify",
+        add.main(["advance"])  # specify -> scenarios, syncs the marker into TASK.md
+        self.assertRegex(self.task_md.read_text(encoding="utf-8"), r"(?m)^phase: scenarios",
                          "the phase: marker sync must keep working on the new template")
 
     def test_freeze_gate_and_declared_count_seams(self):
@@ -198,7 +200,8 @@ class EngineSeamsUnchanged(_ScaffoldBase):
                          "a fresh scaffold is DRAFT")
         stamped = text.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by tester", 1)
         self.task_md.write_text(stamped, encoding="utf-8")
-        sec3 = stamped.split("## 3 · CONTRACT")[1].split("## 4 ·")[0]
+        # plan-phase-core: §3 is now "## 3 · PLAN" (Status: lives in its ### Contract sub-block)
+        sec3 = stamped.split("## 3 · PLAN")[1].split("## 4 ·")[0]
         self.assertTrue(any(re.match(r"\s*Status:\s*FROZEN", ln) for ln in sec3.splitlines()),
                         "the freeze stamp parses exactly as before")
         tests_dir = self.root / "tasks" / "demo" / "tests"
@@ -261,7 +264,7 @@ class ScopeEdges(unittest.TestCase):
 # ── guard sensitivity: each contracted reject code fires on its fixture ──────────────
 class RejectGuards(unittest.TestCase):
     CLEAN = (
-        "# TASK: t\n\nphase: ground\n\nMust:\n<must>\n  - <required behavior>\n</must>\n"
+        "# TASK: t\n\nphase: specify\n\nMust:\n<must>\n  - <required behavior>\n</must>\n"
         "Reject:\n<reject>\n  - <bad> -> \"<code>\"\n</reject>\n"
         "After:\n<after>\n  - <state>\n</after>\n"
         "Assumptions — lowest-confidence first:\n<assumptions>\n  ⚠ <a>\n</assumptions>\n"

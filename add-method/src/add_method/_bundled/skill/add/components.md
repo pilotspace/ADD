@@ -28,12 +28,12 @@ and verify holds it to that component's green-bar.
    you run it (NO-EXEC). The fast lane carries the same `component:` affordance.
 2. **Freeze a cross-component contract.** Declare `[contract.<id>]`
    (producer + consumers). A task names its role `produces: <id>` / `consumes: <id>`.
-   The producer's freeze (contract→tests) writes the immutable snapshot
+   The producer's freeze (plan→tests) writes the immutable snapshot
    `.add/contracts/<id>.json`; the consumer pins its hash. A changed re-freeze
    flags consumers `contract_consumer_stale`; a missing/malformed snapshot
    HARD-STOPS — never build against an unfrozen shape.
 3. **One milestone, full slice.** A `consumes:` task is HELD from advancing
-   scenarios→contract (`producer_contract_unfrozen`) until the producer's snapshot
+   scenarios→plan (`producer_contract_unfrozen`) until the producer's snapshot
    exists — and `producer_contract_stale` if a live producer re-opened/drifted its
    §3 (freeze-recency). The FE stays downstream of the frozen BE, in one milestone.
 4. **Across repos — federate.** A consumer repo declares `[federation.<id>]`

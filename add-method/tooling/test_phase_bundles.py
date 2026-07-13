@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Red/green suite for phase-bundles (task: phase-bundles, milestone: three-phase-flow).
 
-CONTRACT (frozen, as briefed at BUILD): the 8 work phases (PHASES minus "done") group
-into 3 agent-owned bundles surfaced at `status`/`guide`:
+CONTRACT (frozen, as briefed at BUILD; re-pointed for plan-phase-core — ground+contract
+collapsed into ONE `plan` phase, PHASES now has 7 work phases + terminal "done"): the 7
+work phases (PHASES minus "done") group into 3 agent-owned bundles surfaced at
+`status`/`guide`:
 
   PHASE_GROUPS = {
-      "DIRECTION": ("ground", "specify", "scenarios", "contract", "tests"),
+      "DIRECTION": ("specify", "scenarios", "plan", "tests"),
       "BUILD":     ("build",),
       "VERIFY":    ("verify", "observe"),
   }
-  PHASE_AGENT (per-PHASE, 8 keys) = {
-      "ground": "add-design", "specify": "add-design", "scenarios": "add-design",
-      "contract": "add-design", "tests": "add-build", "build": "add-build",
+  PHASE_AGENT (per-PHASE, 7 keys) = {
+      "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
+      "tests": "add-build", "build": "add-build",
       "verify": "add-verify", "observe": "add-verify",
   }
 
@@ -77,8 +79,10 @@ class PhaseGroupsConstantTest(unittest.TestCase):
                          {"DIRECTION", "BUILD", "VERIFY"})
 
     def test_tuples_match_frozen_shape(self):
+        # plan-phase-core: ground+contract collapsed into `plan`; DIRECTION now names
+        # specify/scenarios/plan/tests (4 phases, was 5) — see MIGRATION_CONTEXT M2.
         self.assertEqual(engine_constants.PHASE_GROUPS["DIRECTION"],
-                         ("ground", "specify", "scenarios", "contract", "tests"))
+                         ("specify", "scenarios", "plan", "tests"))
         self.assertEqual(engine_constants.PHASE_GROUPS["BUILD"], ("build",))
         self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify", "observe"))
 
@@ -106,11 +110,12 @@ class PhaseAgentConstantTest(unittest.TestCase):
         self.assertEqual(set(engine_constants.PHASE_AGENT.keys()), set(PHASES) - {"done"})
 
     def test_values_match_shipped_roster_ownership(self):
+        # plan-phase-core: no more "ground"/"contract" keys — `plan` (the collapsed
+        # phase) is add-design owned, same as specify/scenarios were.
         pa = engine_constants.PHASE_AGENT
-        self.assertEqual(pa["ground"], "add-design")
         self.assertEqual(pa["specify"], "add-design")
         self.assertEqual(pa["scenarios"], "add-design")
-        self.assertEqual(pa["contract"], "add-design")
+        self.assertEqual(pa["plan"], "add-design")
         self.assertEqual(pa["tests"], "add-build")
         self.assertEqual(pa["build"], "add-build")
         self.assertEqual(pa["verify"], "add-verify")
@@ -131,7 +136,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
     """M3 — _phase_bundle: normal resolve / terminal None / fail-closed unmapped."""
 
     def test_resolves_direction_phases(self):
-        for phase in ("ground", "specify", "scenarios", "contract", "tests"):
+        for phase in ("specify", "scenarios", "plan", "tests"):
             self.assertEqual(engine_predicates._phase_bundle(phase), "DIRECTION", phase)
 
     def test_resolves_build_phase(self):
@@ -303,8 +308,8 @@ class SkillDocBundleColumnTest(unittest.TestCase):
             cells = [c.strip() for c in ln.strip("|").split("|")]
             rows[cells[0]] = cells
         expected_bundle = {
-            "ground": "DIRECTION", "specify": "DIRECTION", "scenarios": "DIRECTION",
-            "contract": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
+            "specify": "DIRECTION", "scenarios": "DIRECTION",
+            "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
             "verify": "VERIFY", "observe": "VERIFY",
         }
         for phase, bundle in expected_bundle.items():

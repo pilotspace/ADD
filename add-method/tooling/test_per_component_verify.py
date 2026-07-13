@@ -82,7 +82,7 @@ class _Board(unittest.TestCase):
     def _bind(self, slug, name="dashboard"):
         p = self._task_path(slug)
         t = p.read_text(encoding="utf-8")
-        t = t.replace("phase: ground", f"component: {name}\nphase: ground", 1)
+        t = t.replace("phase: specify", f"component: {name}\nphase: specify", 1)
         p.write_text(t, encoding="utf-8")
 
     def _cite_in_six(self, slug, phrase):
@@ -94,7 +94,7 @@ class _Board(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _to_verify(self, slug):
-        for _ in range(6):    # ground->specify->scenarios->contract->tests->build->verify
+        for _ in range(5):    # specify->scenarios->plan->tests->build->verify
             self._quiet(["advance", slug])
 
     def _gate(self, slug, outcome):

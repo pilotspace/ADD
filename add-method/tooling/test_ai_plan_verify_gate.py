@@ -133,9 +133,13 @@ class _Harness(unittest.TestCase):
         return add._phase_spans(self._task_md(slug).read_text(encoding="utf-8")).get(3, "")
 
     def _set_section3(self, slug, body):
+        # expectations-first: §3's heading is now "## 3 · PLAN" (ground+contract collapsed
+        # into one phase) — the whole span (Grounding/Contract/Build-strategy alike) is
+        # replaced with the fixture's drafted contract body, same as the old CONTRACT-only
+        # replace did for its (then-standalone) §3.
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
 
@@ -155,15 +159,16 @@ class _Harness(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _new_task_at_contract(self, slug="t", drafted=_DRAFT_FLAGGED, ai_record=None, **hdr):
-        """Lock, a milestone + task, jump to `contract`, replace §3 with `drafted` (+ optional
-        AI-verify record block), and declare any header fields (gate_mode/sensitivity/autonomy)."""
+        """Lock, a milestone + task, jump to `plan` (expectations-first: ground+contract
+        collapsed into this one phase), replace §3 with `drafted` (+ optional AI-verify
+        record block), and declare any header fields (gate_mode/sensitivity/autonomy)."""
         self._silent("lock", "--force")
         if "m" not in self._state().get("milestones", {}):
             self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", slug, "--title", "Feature")
         if hdr:
             self._set_header(slug, **hdr)
-        self._silent("phase", "contract", slug)
+        self._silent("phase", "plan", slug)
         if drafted is not None:
             body = drafted + (ai_record or "")
             self._set_section3(slug, body)

@@ -9,6 +9,8 @@ surfaces the human's declaration; it **never classifies**. Read live by freeze/s
 - **security** — authn/authz, secrets, crypto, attack surface. A finding here is HARD-STOP;
   the human is in the loop in EVERY tier (never advisor-gated, never auto-passed).
 - **data** — persistence, migrations, privacy of stored records, data loss.
+  Datetime, money, or timezone arithmetic also ⇒ `data` — value formats are the risk surface
+  (bench wm2: naive-timestamp tests green through the spec's own `Z`-example crash).
 - **architecture** — module boundaries, contracts, cross-cutting structure.
 - **mechanical** — rote, low-impact change (rename, move, format, doc). The only class
   a recorded advisor verdict (three §6 fields: Verdict · Residue · Binding) can gate for
@@ -30,22 +32,21 @@ Base (always apply): security · data · architecture · mechanical
 
 `freeze` then accepts a header `sensitivity:` value from **base ∪ your domain classes**;
 a token in neither is refused `sensitivity_invalid`. `status` prints the active task's
-class; `check` nudges (`sensitivity_classes_unset`, never red) until you declare some.
+class; `check` nudges (`sensitivity_classes_unset`, never red).
 
 ## The AI's job — keep it current
 
-- When a milestone or task reveals a **new kind of risk** this project carries (a regulated
-  data category, a payment rail, a tenancy boundary), ADD it as a class with a one-line
-  definition — propose it, the human confirms (it is foundation, like a glossary term).
+- When a milestone or task reveals a **new kind of risk** this project carries, ADD it as a
+  class with a one-line definition — propose it, the human confirms (it is foundation).
 - **Re-read the section each session** (it rides `GLOSSARY.md`); pick the tightest class
   when you declare a task's `sensitivity:` at freeze.
-- **Map domain → base behavior** in the definition so downstream gating is unambiguous —
-  e.g. "pii … escalates to human review" pins it as human-floor, not advisor-gatable.
+- **Map domain → base behavior** in the definition — e.g. "pii … escalates to human
+  review" pins it human-floor, not advisor-gatable.
 
 ## Hold the line
 
 - **Declared, never inferred** — the engine reads your token; it does not guess a class.
 - **Base four are universal** — domain classes add to them, never replace them; security
   stays a human floor in every tier.
-- **A comment is never a declaration** — commented-out example bullets don't count; only a
-  real `- <token>:` line under the section is a class.
+- **A comment is never a declaration** — only a real `- <token>:` line under the section
+  counts as a class.

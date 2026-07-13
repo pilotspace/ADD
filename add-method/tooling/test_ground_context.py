@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Red/green tests for ground-context-sources — broaden the §0 GROUND gather.
 
-The ground phase gathers more than code: the `0-ground.md` guide's `## Gather`
+The ground phase gathers more than code: the `3-plan.md` guide's `## Gather`
 section and the `## 0 · GROUND` TASK.md template name the working-folder context
 categories — docs/textbase · TODOs · config/manifests · data/fixtures — beyond the
 existing code Touches. Frozen shape (§3 @ v1):
-  - 0-ground.md `## Gather` gains a "Context (working folder)" bullet enumerating
+  - 3-plan.md `## Gather` gains a "Context (working folder)" bullet enumerating
     docs/textbase · TODOs · config/manifests · data/fixtures (task-delta only);
   - TASK.md.tmpl `## 0 · GROUND` gains ONE light `Context (working folder):` line
     between Touches and Honors;
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding
     measure keys on it), `## 0`/`GROUND`, the guide saying gather/codebase, and the
     add.py engine byte-identical to engine_pin (no measure edit);
-  - SYNC: 0-ground.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) stay
+  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) stay
     byte-identical.
 
 Behavior pinned, not prose phrasing. ASCII-safe asserts where possible.
@@ -33,9 +33,9 @@ _REPO = _ADD_METHOD.parent                              # repo root
 
 # The ground phase guide — 3 skill trees, must stay byte-identical.
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "0-ground.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "0-ground.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-ground.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
 ]
 
 # The TASK.md template — 3 template trees, must stay byte-identical.
@@ -73,8 +73,15 @@ def _section0(tmpl: str) -> str:
     return m.group(0) if m else ""
 
 
+def _grounding_block(tmpl: str) -> str:
+    """plan-phase-core: grounding moved from `## 0 · GROUND` into `## 3 · PLAN`'s
+    `### Grounding` sub-block (up to the next `### `/`## ` heading, i.e. `### Contract`)."""
+    m = re.search(r"### Grounding\b.*?(?=\n(?:### |## ))", tmpl, flags=re.S)
+    return m.group(0) if m else ""
+
+
 class GuideBroadensGather(unittest.TestCase):
-    """0-ground.md `## Gather` names the working-folder context categories."""
+    """3-plan.md `## Gather` names the working-folder context categories."""
 
     def test_guide_names_context_working_folder(self):
         low = _canonical_guide().lower()
@@ -101,24 +108,28 @@ class GuideBroadensGather(unittest.TestCase):
 
 
 class TemplateGainsContextLine(unittest.TestCase):
-    """TASK.md.tmpl §0 carries the light Context line; invariants preserved."""
+    """TASK.md.tmpl carries the light Context line; invariants preserved.
+
+    plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
+    `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block)."""
 
     def test_section0_has_context_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertTrue(sec0, "the template must have a `## 0 · GROUND` section")
-        self.assertIn("Context (working folder):", sec0,
-                      "§0 must gain the light `Context (working folder):` line")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertTrue(grounding, "the template must have a `### Grounding` sub-block (§3 PLAN)")
+        self.assertIn("Context (working folder):", grounding,
+                      "§3 PLAN Grounding must carry the light `Context (working folder):` line")
 
     def test_section0_preserves_anchors_line(self):
         # The grounding measure (_grounded_state) keys on this exact line.
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0,
-                      "the §0 measure line must be preserved verbatim")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding,
+                      "the §3 PLAN grounding measure line must be preserved verbatim")
 
     def test_section0_keeps_heading_tokens(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("## 0 ", sec0, "section 0 heading preserved")
-        self.assertIn("GROUND", sec0, "the §0 GROUND label preserved")
+        tmpl = _canonical_tmpl()
+        self.assertIn("## 3 · PLAN", tmpl, "the §3 PLAN heading must be preserved")
+        self.assertIn("### Grounding", _grounding_block(tmpl),
+                      "the Grounding sub-block heading must be preserved")
 
 
 class CopiesStayByteIdentical(unittest.TestCase):
@@ -126,9 +137,9 @@ class CopiesStayByteIdentical(unittest.TestCase):
 
     def test_guide_copies_byte_identical(self):
         present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 0-ground.md copies must exist")
+        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
         self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 0-ground.md copies must be byte-identical")
+                         "the 3 3-plan.md copies must be byte-identical")
 
     def test_template_copies_byte_identical(self):
         present = [p for p in TMPL_COPIES if p.exists()]
@@ -149,7 +160,7 @@ class EngineMeasureUntouched(unittest.TestCase):
 
 
 class GatherMethodHint(unittest.TestCase):
-    """0-ground.md carries the gather-METHOD hint (subagent/skim sweep + deepen)."""
+    """3-plan.md carries the gather-METHOD hint (subagent/skim sweep + deepen)."""
 
     def test_guide_recommends_subagent_sweep(self):
         low = _canonical_guide().lower()

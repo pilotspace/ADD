@@ -31,7 +31,7 @@ def _task_md_text(sec4="plan"):
         "# TASK: t", "",
         "## 1 · SPECIFY", "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
-        "## 3 · CONTRACT", "shape", "",
+        "## 3 · PLAN", "shape", "",   # plan-phase-core: §3 is now PLAN (ground+contract collapsed into it)
         "## 4 · TESTS", sec4, "",
         "## 5 · BUILD", "code", "",
         "## 6 · VERIFY", "  - [x] all tests pass", "",
@@ -96,7 +96,7 @@ class DeclaredFallbackTest(unittest.TestCase):
         self._mk_task("alpha", sec4="Tests live in: `tooling/test_real.py` · red first.")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+3†\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+3†\s")
         self.assertEqual(out.count(FOOTNOTE), 1)
         jout, _, jcode = self._run("v13", "--json")
         self.assertEqual(jcode, 0)
@@ -111,7 +111,7 @@ class DeclaredFallbackTest(unittest.TestCase):
         (d / "test_local.py").write_text(_tests_src(2), encoding="utf-8")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+2\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+2\s")
         self.assertNotIn("†", out)
         jout, _, _ = self._run("v13", "--json")
         row = json.loads(jout)["tasks"][0]
@@ -122,14 +122,14 @@ class DeclaredFallbackTest(unittest.TestCase):
         self._mk_task("alpha", sec4="plan only — no declaration line here.")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+0\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+0\s")
         self.assertNotIn("†", out)
 
     def test_missing_declared_failclosed(self):
         self._mk_task("alpha", sec4="Tests live in: `tooling/does_not_exist.py`.")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+0\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+0\s")
         self.assertNotIn("†", out)
 
     def test_sibling_shorthand_sums(self):
@@ -140,7 +140,7 @@ class DeclaredFallbackTest(unittest.TestCase):
                                     "+ `tooling/test_a.py`.")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+5†\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+5†\s")
 
     def test_directory_token(self):
         # "./" form resolves against the TASK dir; a dir token counts its *.py files
@@ -152,7 +152,7 @@ class DeclaredFallbackTest(unittest.TestCase):
         (d / "helper.txt").write_text("def test_not_python(): ...", encoding="utf-8")
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+4†\s")
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+4†\s")
 
     def test_decide_facts_truthful_frozen(self):
         self._declare("tooling/test_real.py", 3)

@@ -129,7 +129,9 @@ class _Harness(unittest.TestCase):
         """Fill the §6 Deep checks placeholder."""
         p = self._task_md(slug)
         t = p.read_text(encoding="utf-8").replace(
-            "<what read · what confirmed>", "read the diff in full; behaviour matches the contract")
+            "<what read · what confirmed>", "read the diff in full; behaviour matches the contract").replace(
+            "(spec-dialect floor): <what confirmed>",
+            "(spec-dialect floor): tests speak the spec's Z-timestamp example")
         p.write_text(t, encoding="utf-8")
 
     def _gate_task(self, slug, outcome="PASS"):

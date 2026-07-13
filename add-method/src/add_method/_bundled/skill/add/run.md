@@ -12,7 +12,7 @@ Contract · failing Tests in one pass; the human gives **one approval, at the fr
 contract** — the decision point stays human (the AI never freezes its own shape; a
 rejected part goes back to draft, backward-correction not failure). The freeze
 presentation — the bundle led **lowest-confidence first** by its ⚠ flag, the
-freeze review checklist (seven lines, ⚠-first) — lives in `phases/3-contract.md`,
+freeze review checklist (seven lines, ⚠-first) — lives in `phases/3-plan.md`,
 its one home; this rubric owns what happens AFTER the freeze.
 
 ## When the run begins — the scope-lock trigger

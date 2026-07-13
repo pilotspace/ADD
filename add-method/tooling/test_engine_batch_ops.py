@@ -38,8 +38,8 @@ class _Project(unittest.TestCase):
         _run(self.root, "lock")
         r = _run(self.root, "new-task", "widget", "--title", "Widget")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-        r = _run(self.root, "advance")  # ground -> specify
-        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        # plan-phase-core: new-task now seeds phase=specify directly (no more separate
+        # "ground" phase to advance out of), so the task is already at specify here.
         self.task_md = self.root / ".add" / "tasks" / "widget" / "TASK.md"
 
     def tearDown(self):
@@ -62,13 +62,12 @@ class FillAndAdvance(_Project):
         self.assertIn("Feature: stdin rules", self.task_md.read_text())
 
     def test_guard_refusal_rolls_back_byte_identical(self):  # M2
-        # walk to tests with plain advances (sections untouched), then attempt
-        # the tests->build crossing with --fill on an unfrozen §3.
+        # walk to plan with plain advances (sections untouched), then attempt the
+        # plan->tests crossing with --fill on an unfrozen §3 — plan-phase-core moved
+        # the freeze gate from tests->build to THIS crossing (one step earlier).
         for _ in range(2):
-            r = _run(self.root, "advance")
+            r = _run(self.root, "advance")  # specify -> scenarios -> plan
             self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-        r = _run(self.root, "advance")  # contract -> tests
-        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         before = self.task_md.read_bytes()
         draft = self.root / "d4.md"
         draft.write_text("Plan: test_widget — red first\n")
@@ -76,7 +75,7 @@ class FillAndAdvance(_Project):
         self.assertNotEqual(r.returncode, 0, "unfrozen §3 must refuse the crossing")
         self.assertEqual(self.task_md.read_bytes(), before,
                          "guard refusal must restore TASK.md byte-identical")
-        self.assertIn("phase: tests", self.task_md.read_text())
+        self.assertIn("phase: plan", self.task_md.read_text())
 
     def test_fill_with_to_rejected(self):  # R1
         draft = self.root / "d.md"

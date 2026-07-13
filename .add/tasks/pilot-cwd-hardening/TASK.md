@@ -50,7 +50,7 @@ compute_regression_rate: argv = [*_pytest_argv(), "-m", "regression", "-p", "no:
 ```
 
 `Least-sure flag surfaced at freeze:` [test] the fake-agent cwd assertion — a wrapper script echoing $PWD must be read back from the transcript, whose format (raw lines appended) could swallow it; if wrong: test flakes, cost = one rewrite of the assertion to read the fake agent's own side-effect file instead.
-Status: FROZEN @ v1 — approved under the user's standing "fix minimally + resume" round-1 precedent (unattended GO).
+Status: FROZEN @ v1 — approved by Tin Dang (via the standing "fix minimally + resume" round-1 precedent, unattended GO).
 
 ---
 

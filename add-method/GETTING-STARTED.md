@@ -293,7 +293,7 @@ Scenario: insufficient funds
 
 Then `python3 .add/tooling/add.py advance`.
 
-### Phase 3 — Contract (`.add/docs/05-step-3-contract.md`)
+### Phase 3 — Contract (`.add/docs/05-step-3-plan.md`)
 
 In **§3**, fix the external shape and **freeze** it (`Status: FROZEN @ v1`):
 

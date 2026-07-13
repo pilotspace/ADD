@@ -6,7 +6,7 @@ Source of truth: the book chapters. A misspelled/dropped label = reject, re-rend
 Exact order + essence (spelling must match):
 1. Specify — the rules
 2. Scenarios — pass/fail cases
-3. Contract — freeze the shape
+3. Plan — ground the code, freeze the contract
 4. Tests — failing-first suite (red)
 5. Build — AI writes code
 6. Verify — evidence + checks
@@ -49,4 +49,4 @@ Note: "a milestone is a version bump to the foundation, not a fresh start"
 
 ## Acronyms that get garbled — check each glyph
 DDD  SDD  UDD  TDD  ADD   (NOT ADD→ADO, SDD→SDO, etc.)
-Specify Scenarios Contract Tests Build Verify Observe  (7, in order)
+Specify Scenarios Plan Tests Build Verify Observe  (7, in order)

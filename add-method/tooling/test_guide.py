@@ -49,8 +49,7 @@ class GuideTest(unittest.TestCase):
         ), encoding="utf-8")
 
     def test_guide_specify_phase(self):
-        add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=ground
-        add.main(["advance", "feat-a"])                          # ground -> specify
+        add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=specify (plan-phase-core seed)
         out = self._guide()
         self.assertIn("phase: specify", out)
         self.assertIn("03-step-1-specify.md", out)
@@ -66,20 +65,21 @@ class GuideTest(unittest.TestCase):
 
     def test_guide_contract_points_at_freeze(self):
         # status-guide-fold: guide reuses the ONE next-step composer, so at
-        # contract it names the freeze gate — never the divergent `add.py advance`.
+        # plan (ground+contract+build-strategy collapsed) it names the freeze gate —
+        # never the divergent `add.py advance`.
         add.main(["new-task", "feat-a"])
-        add.main(["phase", "contract", "feat-a"])
+        add.main(["phase", "plan", "feat-a"])
         out = self._guide()
-        self.assertIn("add.py freeze", out, f"contract guide points at freeze: {out!r}")
+        self.assertIn("add.py freeze", out, f"plan guide points at freeze: {out!r}")
         self.assertNotIn("then   : add.py advance", out,
-                         "contract must NOT tell the agent to advance")
+                         "plan must NOT tell the agent to advance")
 
     def test_guide_front_phase_teaches_collapse(self):
         # the read-only guide teaches the SAME collapse the mutating footer does
-        add.main(["new-task", "feat-a"])                         # phase=ground
+        add.main(["new-task", "feat-a"])                         # phase=specify (plan-phase-core seed)
         out = self._guide()
-        self.assertIn("add.py advance --to contract", out,
-                      f"ground guide teaches the collapse: {out!r}")
+        self.assertIn("add.py advance --to plan", out,
+                      f"specify guide teaches the collapse: {out!r}")
 
     def test_guide_done_points_at_new_task(self):
         add.main(["new-task", "feat-a"])

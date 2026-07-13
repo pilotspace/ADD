@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """Red/green tests for the UNIVERSAL freeze gate (milestone flow-honesty, task `freeze-gate-universal`).
 
-Makes the freeze gate UNIVERSAL: `contract_not_frozen` fires for EVERY task at the tests->build
-crossing — not just `--await-confirm` / `--fast` ones — closing audit finding H1 (the decision point
-was engine-enforced for only a subset of tasks). An explicit, RECORDED `--skip-freeze` escape lets a
+Makes the freeze gate UNIVERSAL: `contract_not_frozen` fires for EVERY task — not just
+`--await-confirm` / `--fast` ones — closing audit finding H1 (the decision point was
+engine-enforced for only a subset of tasks). An explicit, RECORDED `--skip-freeze` escape lets a
 DRAFT-§3 task cross while writing a `freeze_skipped` marker the `audit` can surface (no silent skip).
-Grandfather: the gate is evaluated only at the live `nxt == "build"` crossing, so a task already at /
-after build is never retro-redded.
+
+plan-phase-core: the primary fire point is now the `plan -> tests` crossing (the §3 PLAN contract
+must be frozen before the red suite is derived from its shape) — one crossing EARLIER than the
+legacy `tests -> build` gate this milestone originally added. `_build_entry` (tests->build) still
+re-checks `contract_not_frozen` (a grandfathered/direct-state task can still reach `tests` with a
+DRAFT §3 and no marker), and a `freeze_skipped` marker recorded at plan->tests CARRIES THROUGH that
+re-check — a single skip suffices for the whole run.
+
+Grandfather: the tests->build gate is evaluated only at the live `nxt == "build"` crossing, so a
+task already at / after build is never retro-redded.
 
 Run: python3 -m unittest test_freeze_gate_universal -v
 """
@@ -99,73 +107,81 @@ class UniversalFreezeGateTest(unittest.TestCase):
                       "- [x] the gate passes through a frozen contract — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_tests(self, slug="t"):
-        for _ in range(4):   # ground -> specify -> scenarios -> contract -> tests
+    def _to_plan(self, slug="t"):
+        for _ in range(2):   # specify -> scenarios -> plan
             self._quiet(["advance", slug])
 
-    def _plain_task_at_tests(self, slug="t", ms="plain"):
+    def _plain_task_at_plan(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # NO --await-confirm
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
+        self._to_plan(slug)
 
-    def _no_milestone_task_at_tests(self, slug="loose"):
+    def _no_milestone_task_at_plan(self, slug="loose"):
         self._quiet(["new-task", slug])      # no active milestone -> milestone-less
-        self._to_tests(slug)
+        self._to_plan(slug)
 
-    def _optedin_task_at_tests(self, slug="t", ms="mvp"):
+    def _optedin_task_at_plan(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
+        self._to_plan(slug)
 
-    def _fast_task_at_tests(self, slug="f"):
+    def _fast_task_at_plan(self, slug="f"):
         self._quiet(["new-task", slug, "--fast"])
-        self._to_tests(slug)
+        self._to_plan(slug)
 
     # ── universal gate: PLAIN-milestone DRAFT §3 is now BLOCKED (inverts old behavior) ────
+    # plan-phase-core: the fire point is plan->tests now (the earliest crossing that needs
+    # the frozen shape), so this asserts refusal AT `plan`, not `tests`.
     def test_plain_milestone_unfrozen_blocks(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests", "a refused advance leaves phase=tests")
+        self.assertEqual(self._task().get("phase"), "plan", "a refused advance leaves phase=plan")
         self.assertFalse((Path(self.tmp) / ".add" / "tasks" / "t" / "scope-snapshot.json").exists(),
                          "validate-before-write: no snapshot on a refused advance")
 
     # ── universal gate: NO-milestone DRAFT §3 is now BLOCKED (inverts old behavior) ───────
     def test_no_milestone_unfrozen_blocks(self):
-        self._no_milestone_task_at_tests()
+        self._no_milestone_task_at_plan()
         self.assertIsNone(self._task("loose").get("milestone"))
         code, err = self._die_stderr(["advance", "loose"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task("loose").get("phase"), "tests")
+        self.assertEqual(self._task("loose").get("phase"), "plan")
 
     # ── happy path unchanged: FROZEN §3 advances, no skip marker ─────────────────────────
     def test_frozen_advances_without_marker(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         self._freeze()
         self._fill_build_expectations()
-        self._quiet(["advance", "t"])
+        self._quiet(["advance", "t"])   # plan -> tests (frozen, passes)
+        self._quiet(["advance", "t"])   # tests -> build (frozen, passes)
         self.assertEqual(self._task().get("phase"), "build")
         self.assertNotIn("freeze_skipped", self._task(), "a clean freeze records no skip marker")
 
     # ── escape: --skip-freeze crosses a DRAFT §3 AND records the marker ───────────────────
     def test_skip_freeze_allows_and_records(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         self._fill_build_expectations()      # clear the sibling gate; freeze is what we're skipping
-        self._quiet(["advance", "t", "--skip-freeze"])
-        self.assertEqual(self._task().get("phase"), "build")
+        self._quiet(["advance", "t", "--skip-freeze"])   # plan -> tests, DRAFT §3, escape used
+        self.assertEqual(self._task().get("phase"), "tests")
         mark = self._task().get("freeze_skipped")
         self.assertIsInstance(mark, dict, "skip is RECORDED, not silent")
         self.assertIn("by", mark)
         self.assertIn("at", mark)
-        self.assertEqual(mark.get("from_phase"), "tests")
+        self.assertEqual(mark.get("from_phase"), "plan")
+        # the marker CARRIES THROUGH the tests->build re-check — a single skip suffices
+        # for the whole run, so no --skip-freeze is needed on THIS crossing.
+        self._quiet(["advance", "t"])
+        self.assertEqual(self._task().get("phase"), "build")
+        self.assertEqual(self._task().get("freeze_skipped"), mark, "the original marker is not rewritten")
 
     # ── escape never auto-freezes §3 (never pre-stamp a human freeze) ─────────────────────
     def test_skip_freeze_does_not_auto_freeze(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         self._fill_build_expectations()
         self._quiet(["advance", "t", "--skip-freeze"])
         self.assertIn("Status: DRAFT", self._task_path().read_text(),
@@ -173,7 +189,7 @@ class UniversalFreezeGateTest(unittest.TestCase):
 
     # ── a skipped freeze is auditable ────────────────────────────────────────────────────
     def test_skip_freeze_audited(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         self._fill_build_expectations()
         self._quiet(["advance", "t", "--skip-freeze"])
         out = self._capture(["audit"])
@@ -184,7 +200,7 @@ class UniversalFreezeGateTest(unittest.TestCase):
     def test_grandfather_past_build_not_retro_redded(self):
         # simulate a pre-existing task that crossed into build before this feature existed:
         # DRAFT §3, phase already == build. Advancing build->verify must NOT hit the gate.
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
         self._fill_build_expectations()
         st = self._state()
         st["tasks"]["t"]["phase"] = "build"     # pre-existing record, DRAFT §3
@@ -197,14 +213,14 @@ class UniversalFreezeGateTest(unittest.TestCase):
 
     # ── regression: --await-confirm task still blocked (universal subsumes the old condition)
     def test_optedin_still_blocks(self):
-        self._optedin_task_at_tests()
+        self._optedin_task_at_plan()
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
 
     # ── regression: --fast task still blocked ────────────────────────────────────────────
     def test_fast_still_blocks(self):
-        self._fast_task_at_tests()
+        self._fast_task_at_plan()
         code, err = self._die_stderr(["advance", "f"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)

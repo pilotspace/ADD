@@ -44,5 +44,5 @@ Never: settle for a vague result ("then it works") — results must be specific 
 
 ## Next
 
-`python3 .add/tooling/add.py advance` → read `phases/3-contract.md`.
+`python3 .add/tooling/add.py advance` → read `phases/3-plan.md`.
 Book: `docs/04-step-2-scenarios.md`.

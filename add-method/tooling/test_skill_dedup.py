@@ -2,11 +2,11 @@
 
 CONTRACT:
   run.md's "## The specification bundle (v7)" section stops duplicating the freeze
-  presentation that phases/3-contract.md owns (the ⚠ flag grammar · the freeze-review
+  presentation that phases/3-plan.md owns (the ⚠ flag grammar · the freeze-review
   walkthrough): it keeps the one-approval fact, the "seven lines" checklist reference and
-  the lowest-confidence-first cue, and POINTS at `phases/3-contract.md` for the rest.
+  the lowest-confidence-first cue, and POINTS at `phases/3-plan.md` for the rest.
   The flag grammar `[spec|scenario|contract|test]` keeps exactly ONE guide home
-  (3-contract.md); the section shrinks under 700B; 3 run.md trees stay byte-identical;
+  (3-plan.md); the section shrinks under 700B; 3 run.md trees stay byte-identical;
   the orchestration pool only shrinks (ceiling reconciled, never rebaselined).
 Run: python3 -m unittest test_skill_dedup -v
 """
@@ -36,7 +36,7 @@ class SkillDedupTest(unittest.TestCase):
         self.sec = _section(self.text)
 
     def test_section_points_at_contract_guide(self):          # scenario 1
-        self.assertIn("phases/3-contract.md", self.sec,
+        self.assertIn("phases/3-plan.md", self.sec,
                       "the bundle section must point at its owning guide")
 
     def test_kept_tokens(self):                                # scenario 2
@@ -45,9 +45,9 @@ class SkillDedupTest(unittest.TestCase):
 
     def test_flag_grammar_single_home(self):                   # scenario 3
         self.assertNotIn(FLAG_GRAMMAR, self.text,
-                         "run.md must not duplicate the flag grammar (3-contract.md owns it)")
-        contract = (SKILL / "phases" / "3-contract.md").read_text(encoding="utf-8")
-        self.assertIn(FLAG_GRAMMAR, contract, "3-contract.md must keep the grammar's one home")
+                         "run.md must not duplicate the flag grammar (3-plan.md owns it)")
+        contract = (SKILL / "phases" / "3-plan.md").read_text(encoding="utf-8")
+        self.assertIn(FLAG_GRAMMAR, contract, "3-plan.md must keep the grammar's one home")
 
     def test_section_compressed(self):                         # scenario 4
         self.assertLessEqual(len(self.sec.encode("utf-8")), 700,

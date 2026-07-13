@@ -9,6 +9,9 @@ DOMAIN classes (the AI keeps these current as the domain is learned — see the 
 
 Base (always apply): security · data · architecture · mechanical
 
+Datetime, money, or timezone arithmetic ⇒ declare `data` (full lane) — value formats are the
+risk surface (a naive-timestamp suite stays green through an aware-timestamp crash: bench wm2).
+
 <!-- Domain classes — uncomment and add yours, one `- <token>: <definition>` bullet per line:
 - pii: personally identifiable information; any task touching it escalates to human review
 - payments: money movement; reconciliation + an audit trail are required
@@ -44,6 +47,9 @@ baseline approval: the one human gate that freezes the AI-drafted foundation, fi
 lesson learned: a single learning a loop produces, tagged by the competency it improves — the `- [DDD · open]` grammar and deltas.md/`add.py deltas` machine names stay (formerly "competency delta").
 lowest-confidence flag: the AI's ranked declaration of the 1–2 points most likely to be wrong in what a human is asked to approve — each with why + cost-if-wrong; the ⚠ glyph keeps its name as the machine marker (formerly "least-sure flag").
 decision point: a stop for human judgment — the contract-freeze approval, an escalated verify gate, intake confirmation, milestone close; the machine names seam (--json owner enum, decide key) and seam-audit (CI job) keep their names (formerly "seam").
+depends-on: a DECLARED, BLOCKING relation — a task/milestone that must be DONE before this one starts; drives the wave schedule (the only relation the scheduler reads). Declared via `new-task --depends-on` (task) or a MILESTONE.md header `depends-on:` line (milestone).
+extends: a DECLARED, NON-BLOCKING relation — this task/milestone builds on a prior one's shipped surface; a legibility edge, never gates the schedule. Declared via `new-task --extends` (task) or a MILESTONE.md header `extends:` line (milestone).
+relates-to: a DECLARED, NON-BLOCKING relation — this task/milestone shares context with another (informational); never gates the schedule. Declared via `new-task --relates-to` (task) or a MILESTONE.md header `relates-to:` line. All three relations are validated (dangling/self) by `add.py check` + `status`, never inferred.
 retrospective consolidation: gathering confirmed lessons learned at milestone close and writing them append-only into the versioned foundation — human-confirmed, never self-approved; the machine names fold.md, the folded status, and add.py deltas keep their names (formerly "the fold / fold ritual").
 specification bundle: a task's spec, scenarios, contract, and failing tests drafted as one piece and approved by a person once at the contract freeze (formerly "the one-approval front").
 foundation compaction: the retrospective shrink — collapse a foundation spec's stable, shipped, zero-residue tail into one rolled-up settled line; the AI proposes and the human confirms; summarize and point, never delete; a SEPARATE step from the retrospective consolidation; distinct from the engine `add.py compact` (which archives finished-milestone files).

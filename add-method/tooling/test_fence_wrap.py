@@ -33,7 +33,7 @@ def _task_md_text(sec3):
         "# TASK: t", "",
         "## 1 · SPECIFY", "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
-        "## 3 · CONTRACT", sec3, "",
+        "## 3 · PLAN", sec3, "",   # plan-phase-core: §3 is now PLAN (ground+contract collapsed into it)
         "## 4 · TESTS", "plan", "",
         "## 5 · BUILD", "code", "",
         "## 6 · VERIFY", "  - [x] all tests pass", "",

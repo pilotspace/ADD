@@ -64,10 +64,14 @@ PREDICATES_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "add_engine" / "predicates.py",
 )
 FAST_TMPL_TREES = (
+    # 3-tree parity (canon · repo-root dogfood · bundled) — mirrors test_plan_phase_flow.py's
+    # ADD_PY_COPIES/TMPL_COPIES convention. The 4th, add-method's OWN nested `.add/` dogfood
+    # copy, is gitignored local scratch state for add-method's self-hosted task tracking; it
+    # is not part of the shipped-artifact parity claim (its currency depends on whether that
+    # local dogfood task has itself been advanced), so it is deliberately excluded here.
     HERE / "templates" / "TASK.fast.md.tmpl",
     REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    REPO_ROOT / "add-method" / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
 )
 
 
@@ -113,6 +117,16 @@ class _Harness(unittest.TestCase):
 
     def _task_md(self, slug):
         return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+
+    def _fill_boundary(self, slug):
+        # boundary floor (fast-lane-boundary-line): the rendered fast template now
+        # scaffolds a placeholder `Boundary:` line that refuses the freeze — fill it
+        # with a real declaration, as any real task must before its freeze
+        p = self._task_md(slug)
+        t = p.read_text(encoding="utf-8")
+        t = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                   "Boundary: aware vs naive timestamp on the request payload", t, count=1)
+        p.write_text(t, encoding="utf-8")
 
     def _set_header(self, slug, **kv):
         """Insert/replace autonomy:/fast:/oneshot:/skips: header lines."""
@@ -272,14 +286,14 @@ class SkipRationaleTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class CmdAdvanceSkipMechanicTest(_Harness):
-    def test_jumps_specify_to_contract_when_scenarios_declared_eligible_reasoned(self):
+    def test_jumps_specify_to_plan_when_scenarios_declared_eligible_reasoned(self):
         self._new_fast_task("t", fast=True)
         self._silent("phase", "specify", "t")
         self._set_header("t", skips="scenarios")
         self._set_skip_rationale("t", "scenarios — collapsed into Accept")
         out = self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "contract")
-        self.assertIn("phase specify -> contract", out)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self.assertIn("phase specify -> plan", out)
         skips = self._state()["tasks"]["t"]["skips"]
         self.assertEqual(len(skips), 1)
         self.assertEqual(skips[0]["phase"], "scenarios")
@@ -327,18 +341,23 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
                 "Least-sure flag surfaced at freeze:\n"
                 "  ⚠ [contract] x — cost: y.\n"
                 "Status: DRAFT\n")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
+        self._fill_boundary(slug)
         self._silent("freeze", "--by", "Human")
 
-    def test_six_non_skippable_crossings_never_invoke_task_skip_set(self):
+    def test_five_non_skippable_crossings_never_invoke_task_skip_set(self):
+        # plan-phase-core: ground+contract collapsed into plan, so the flow is now
+        # specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done —
+        # 7 crossings total, 2 "by design" (specify->scenarios, verify->observe) and
+        # FIVE non-skippable (was six: the old ground->specify leg no longer exists —
+        # new-task now seeds specify directly).
         self._new_fast_task("t", fast=True)   # no skips: declared anywhere
-        self.assertEqual(self._advance_spy_count(), 0, "ground->specify")
         self.assertGreater(self._advance_spy_count(), 0, "specify->scenarios (by design)")
-        self.assertEqual(self._advance_spy_count(), 0, "scenarios->contract")
+        self.assertEqual(self._advance_spy_count(), 0, "scenarios->plan")
         self._set_section3_and_freeze("t")
-        self.assertEqual(self._advance_spy_count(), 0, "contract->tests")
+        self.assertEqual(self._advance_spy_count(), 0, "plan->tests")
         self.assertEqual(self._advance_spy_count(), 0, "tests->build")
         self.assertEqual(self._advance_spy_count(), 0, "build->verify")
         self.assertGreater(self._advance_spy_count(), 0, "verify->observe (by design)")
@@ -356,7 +375,7 @@ class OneshotNewTaskTest(_Harness):
         self._silent("new-task", "quick", "--title", "Feature", "--oneshot")
         text = self._task_md("quick").read_text(encoding="utf-8")
         secs = set(add._phase_spans(text))
-        self.assertEqual(secs, {0, 1, 3, 4, 5, 6})
+        self.assertEqual(secs, {1, 3, 4, 5, 6})   # §0 GROUND folded into §3 PLAN (plan-phase-core)
         self.assertRegex(text, r"(?m)^fast:\s*true")
         self.assertRegex(text, r"(?m)^oneshot:\s*true")
         self.assertRegex(text, r"(?m)^gate_mode:\s*ai-plan-verify")
@@ -482,13 +501,14 @@ class TemplateScaffoldTest(unittest.TestCase):
         self.assertIn("skips:", text)
         self.assertIn("Skip rationale:", text)
 
-    def test_full_template_byte_identical_to_before(self):
-        # the full-lane template's git-tracked content must be untouched by this task
-        import subprocess
-        out = subprocess.run(["git", "diff", "--stat", "HEAD", "--",
-                              "add-method/tooling/templates/TASK.md.tmpl"],
-                             cwd=REPO_ROOT, capture_output=True, text=True)
-        self.assertEqual(out.stdout.strip(), "", "TASK.md.tmpl must be untouched")
+    def test_full_template_carries_no_skips_machinery(self):
+        # the skip lane is fast-template-only: the full template must never gain a
+        # `skips:` header hint. (Amended @ dialect-check-and-data-vocab TESTS re-cross:
+        # the original empty-git-diff guard was task-local and could not survive any
+        # later legitimate full-template task — re-pinned to the invariant it protected.)
+        body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
+                "TASK.md.tmpl").read_text(encoding="utf-8")
+        self.assertNotIn("skips:", body, "skip machinery must stay fast-lane-only")
 
 
 # ---------------------------------------------------------------------------
@@ -581,22 +601,23 @@ class FloorCompositionTest(_Harness):
         p.write_text(t, encoding="utf-8")
         self._set_skip_rationale("risky", "scenarios — a; observe — b")
         self._silent("phase", "specify", "risky")
-        self._silent("advance", "risky")   # specify -> contract (scenarios skip fires, recorded)
-        self.assertEqual(self._state()["tasks"]["risky"]["phase"], "contract")
+        self._silent("advance", "risky")   # specify -> plan (scenarios skip fires, recorded)
+        self.assertEqual(self._state()["tasks"]["risky"]["phase"], "plan")
         self.assertEqual(len(self._state()["tasks"]["risky"]["skips"]), 1)
         # AI freeze attempt is blocked (task2's unchanged floor)
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n"
                 "\n### AI-verify record (required when gate_mode: ai-plan-verify)\n"
-                "- [x] §0 GROUND anchors resolve in the current tree\n"
+                "- [x] §3 PLAN grounding anchors resolve in the current tree\n"
                 "- [x] §1 every Must + every Reject present, each Reject paired with an error code\n"
-                "- [x] §3 CONTRACT shape is concrete (no template placeholder text remains)\n"
+                "- [x] §3 Contract shape is concrete (no template placeholder text remains)\n"
                 "- [x] Lowest-confidence flag surfaced and substantive\n"
                 "Verified by: agent:x · at: 2026-07-09T00:00:00Z\n")
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
+        self._fill_boundary("risky")
         out, code = self._run("freeze", "--ai-plan-verify", "--by", "agent:x")
         self.assertNotEqual(code, 0)
         self.assertIn("ai_freeze_blocked_sensitivity", out)
@@ -616,22 +637,21 @@ class NormalFlowUnchangedTest(_Harness):
     def test_plain_task_visits_scenarios_and_observe_every_crossing(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot
-        self._silent("advance", "t")    # ground -> specify
+        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; seeds specify
         self._silent("advance", "t")    # specify -> scenarios
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "scenarios")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        # freeze the contract to cross scenarios -> contract -> tests
-        self._silent("advance", "t")    # scenarios -> contract
+        self._silent("advance", "t")    # scenarios -> plan
+        # freeze the contract to cross plan -> tests
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n")
-        new = re.sub(r"(## 3 · CONTRACT[^\n]*\n).*?(\n---)",
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
         self._silent("freeze", "--by", "Human")
-        self._silent("advance", "t")    # contract -> tests
+        self._silent("advance", "t")    # plan -> tests
         self._silent("advance", "t")    # tests -> build
         self._silent("advance", "t")    # build -> verify
         self._silent("advance", "t")    # verify -> observe

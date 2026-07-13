@@ -144,7 +144,7 @@ class ReportTest(unittest.TestCase):
         self._rm_tests_dir("alpha")
         out, _, code = self._report("v9")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+ground\s+—\s+0\s")  # row renders, tests=0, no crash
+        self.assertRegex(out, r"alpha\s+specify\s+—\s+0\s")  # row renders, tests=0, no crash
         jout, _, _ = self._report("v9", "--json")
         self.assertEqual(_json.loads(jout)["tasks"][0]["observe"], "(unknown)")
 

@@ -43,9 +43,12 @@ assert len(TMPL_TWINS) >= 2, "twin set collapsed below canon+bundle"
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")
 
-# the contract-frozen Watch line (§3 v1) — byte-exact
+# the contract-frozen Watch line (§3 v1) — byte-exact. plan-phase-core relocated
+# Optimization stance from §5 BUILD into §3 PLAN's ### Build-strategy, so the cross-cite
+# tracks that move (still names the SAME field, just its new section).
 WATCH_LINE = ("Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency "
-              "— the §5 Optimization stance budget is a monitor here, not just an intention>")
+              "— the §3 Build-strategy Optimization stance budget is a monitor here, not just "
+              "an intention>")
 
 FACET_FILLS = {  # label -> (real value, expected ADR key)
     "Approach (domain strategy)": ("event-sourced ledger append", "approach"),
@@ -145,11 +148,16 @@ class FacetAdrHarvestTest(unittest.TestCase):
         self.assertEqual(len(lines), 4, f"placeholder facets must collapse, got: {lines}")
 
     # ── M4: the Watch line cites the stance; twins + ceiling hold ──────────────────────
+    # byte-ledger migrates forward (method-ergonomics precedent): plan-phase-core folded
+    # the old standalone §0 GROUND section into §3 PLAN's ### Grounding sub-block and added
+    # ### Build-strategy — a real, already-frozen structural growth, not a drive-by bloat —
+    # so this LOCAL fence re-baselines to the new actual size. The canonical ledger lives in
+    # test_taskmd_lean.py (a sibling batch's fence, out of this file's scope).
     def test_watch_line_cites_stance(self):
         text = CANON_TMPL.read_text(encoding="utf-8")
         self.assertIn(WATCH_LINE, text, "§7 Watch must carry the contract-exact stance cross-cite")
         self.assertEqual(len({_md5(p) for p in TMPL_TWINS}), 1, "TASK.md.tmpl twins diverged")
-        self.assertLessEqual(len(text.encode("utf-8")), 11400, "template size ceiling busted")
+        self.assertLessEqual(len(text.encode("utf-8")), 12400, "template size ceiling busted")
 
     # ── M5: honest re-pin ───────────────────────────────────────────────────────────────
     def test_engine_repin_honest(self):

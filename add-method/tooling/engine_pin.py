@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "5b0f0538c990ec1521c131780a277c98"  # re-aimed @ branch-merge 2026-07-10 (union of the local --oneshot/first-call-ergonomics chain and the remote tiny-plan-small-scope lane pushed 2026-07-08 — both features kept verbatim in cmd_new_task + argparse). prior: 147820fd… @ first-call-ergonomics v1
-ENGINE_PKG_MD5 = "5f60c0b2af321c1dcb053a5a06473a92"  # re-aimed @ fast-lane-skips v1 (add_engine/constants.py: _SKIPPABLE_PHASES; add_engine/predicates.py: _skip_lane_eligible/_skip_set_allowed). prior: 9e9eb184… @ ai-plan-verify-gate v2
+ENGINE_MD5 = "9311ec35f6abcd5b30b68fd1d584a0bc"  # re-aimed @ relations-surface (plan-legibility: extends/relates_to non-blocking task relations via new-task flags + state; _task_relations/_milestone_relations readers; _relations_health advisory guard; cmd_check + status surface; wave DAG stays depends_on-only; +_milestone_relations docstring altitude→level slang fix). prior: 7e6ebec0… @ plan-in-report
+ENGINE_PKG_MD5 = "28212a55d53a354dc1b57ab4cddeb243"  # re-aimed @ guides-and-skill (add_engine/constants.py: PHASE_GUIDE["plan"] chapter 05-step-3-contract.md → 05-step-3-plan.md, following the book-chapter rename cascade). prior: a968f9e6… @ plan-phase-core v1

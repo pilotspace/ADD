@@ -145,7 +145,7 @@ class DecideDigestTest(unittest.TestCase):
     def test_front_seam_renders_bundle_for_approval(self):
         sec1 = SEC1_FLAG + "\n  ⚠ second flag — least sure because new; if wrong: redo"
         sec3 = "the-frozen-shape-text\n\nStatus: DRAFT"
-        self._mk_task("alpha", phase="contract", sec1=sec1, sec3=sec3)
+        self._mk_task("alpha", phase="plan", sec1=sec1, sec3=sec3)
         out, _, code = self._run("v13", "alpha", "--decide")
         self.assertEqual(code, 0)
         self.assertIn("risky assumption", out)
@@ -201,7 +201,7 @@ class DecideDigestTest(unittest.TestCase):
         self.assertIsInstance(d, dict)
         self.assertEqual(set(d.keys()),
                          {"seam", "milestone", "task", "phase", "gate",
-                          "judgment", "facts", "unlocks", "decide"})
+                          "judgment", "facts", "unlocks", "decide", "plan"})
         self.assertEqual(d["seam"], "gate")
         self.assertEqual(d["task"], "alpha")
         self.assertEqual(d["judgment"][0]["marker"], "[~]")
@@ -228,9 +228,124 @@ class DecideDigestTest(unittest.TestCase):
         d = json.loads(out)
         self.assertEqual(set(d.keys()),
                          {"seam", "milestone", "task", "phase", "gate",
-                          "judgment", "facts", "unlocks", "decide"})
+                          "judgment", "facts", "unlocks", "decide", "plan"})
         self.assertIsNone(d["task"])
+        self.assertEqual(d["plan"], [])              # milestone altitude carries an empty plan
         self.assertIn("alpha", d["decide"])
+
+    # ---- BUILD PLAN block (plan-in-report): the §3 build-strategy plan-of-action ----
+    # A filled §3 Build-strategy sub-block: the plan-of-action fields the freeze surfaces.
+    _BS_FILLED = ("the-frozen-shape-text\n\n"
+                  "Scope (may touch): add.py report-template.md\n"
+                  "Strategy (ordered batches): 1. red 2. green 3. sync\n"
+                  "Persona (required): generic\n"
+                  "Spawn isolation (default): inline\n\n"
+                  "Status: DRAFT")
+
+    def test_build_plan_block_renders_at_freeze(self):
+        """M1: front seam + a filled §3 Build-strategy -> a BUILD PLAN block with the fields."""
+        self._mk_task("alpha", phase="plan", sec3=self._BS_FILLED)
+        out, _, code = self._run("v13", "alpha", "--decide", "--plain")
+        self.assertEqual(code, 0)
+        self.assertIn("BUILD PLAN", out)
+        region = out[out.index("BUILD PLAN"):]
+        for frag in ("Scope", "add.py report-template.md",
+                     "Strategy", "1. red 2. green 3. sync",
+                     "Persona", "generic", "Spawn isolation", "inline"):
+            self.assertIn(frag, region)
+        # additive — the §3 verbatim dump still renders (before the block)
+        self.assertIn("CONTRACT (§3 verbatim)", out)
+        self.assertLess(out.index("CONTRACT (§3 verbatim)"), out.index("BUILD PLAN"))
+
+    def test_build_plan_json_key_holds_filled_fields(self):
+        """M2: the JSON `plan` key is a list of {label, value} for each FILLED field."""
+        self._mk_task("alpha", phase="plan", sec3=self._BS_FILLED)
+        out, _, code = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(code, 0)
+        plan = json.loads(out)["plan"]
+        self.assertTrue(all(set(e) == {"label", "value"} for e in plan))
+        labels = [e["label"] for e in plan]
+        self.assertEqual(labels, ["Scope (may touch)", "Strategy (ordered batches)",
+                                  "Persona (required)", "Spawn isolation (default)"])
+        self.assertEqual(plan[0]["value"], "add.py report-template.md")
+
+    def test_build_plan_no_field_bleed(self):
+        """A field value must NOT swallow the next field's label/text — even when that
+        next label isn't a `Word (paren):` form (Approach→Data strategy, Spawn→Known-problem
+        fixes). Reproduces the real §3 sub-block the dogfood surfaced."""
+        sec3 = ("shape\n\n"
+                "Scope (may touch): add.py\n"
+                "Strategy (ordered batches): 1. a 2. b\n"
+                "Approach (domain strategy): reuse the extractor\n"
+                "Data strategy: two list keys\n"
+                "Pattern: additive extension\n"
+                "Optimization stance: legibility-first\n"
+                "Persona (required): generic\n"
+                "Spawn isolation (default): inline\n"
+                "Known-problem fixes: re-pin both asserts\n\n"
+                "Status: DRAFT")
+        self._mk_task("alpha", phase="plan", sec3=sec3)
+        out, _, code = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(code, 0)
+        plan = {e["label"]: e["value"] for e in json.loads(out)["plan"]}
+        self.assertEqual(plan["Approach (domain strategy)"], "reuse the extractor")
+        self.assertEqual(plan["Spawn isolation (default)"], "inline")
+        self.assertEqual(plan["Known-problem fixes"], "re-pin both asserts")
+        # the ADR facets (Data strategy · Pattern · Optimization stance) are NOT plan fields
+        for adr in ("Data strategy", "Pattern", "Optimization stance"):
+            self.assertNotIn(adr, plan)
+
+    def test_build_plan_skips_placeholder_fields(self):
+        """M3: an unfilled placeholder (`<…>`) or the bare `./src/` Scope default is skipped."""
+        sec3 = ("shape\n\n"
+                "Scope (may touch): ./src/\n"
+                "Persona (required): <name the persona>\n"
+                "Spawn isolation (default): inline\n\n"
+                "Status: DRAFT")
+        self._mk_task("alpha", phase="plan", sec3=sec3)
+        out, _, code = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(code, 0)
+        labels = [e["label"] for e in json.loads(out)["plan"]]
+        self.assertEqual(labels, ["Spawn isolation (default)"])   # only the real field survives
+
+    def test_build_plan_strips_trailing_template_hint(self):
+        """M1/M3: a trailing `   <hint>` on a filled field is stripped from the surfaced value."""
+        sec3 = ("shape\n\n"
+                "Scope (may touch): add.py   <the scope hint text>\n\n"
+                "Status: DRAFT")
+        self._mk_task("alpha", phase="plan", sec3=sec3)
+        out, _, code = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(code, 0)
+        plan = json.loads(out)["plan"]
+        self.assertEqual(plan, [{"label": "Scope (may touch)", "value": "add.py"}])
+
+    def test_build_plan_empty_omits_block(self):
+        """R1: no filled Build-strategy field -> plan == [] and no BUILD PLAN header, exit 0."""
+        self._mk_task("alpha", phase="plan", sec3="just-a-shape\n\nStatus: DRAFT")
+        out, _, code = self._run("v13", "alpha", "--decide", "--plain")
+        self.assertEqual(code, 0)
+        self.assertNotIn("BUILD PLAN", out)
+        jout, _, _ = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(json.loads(jout)["plan"], [])
+
+    def test_build_plan_absent_at_gate_seam(self):
+        """M4/R2: a filled Build-strategy at the verify (gate) seam -> no block, plan == []."""
+        self._mk_task("alpha", phase="verify", sec3=self._BS_FILLED)
+        out, _, code = self._run("v13", "alpha", "--decide", "--plain")
+        self.assertEqual(code, 0)
+        self.assertNotIn("BUILD PLAN", out)
+        jout, _, _ = self._run("v13", "alpha", "--decide", "--json")
+        self.assertEqual(json.loads(jout)["plan"], [])
+
+    def test_build_plan_render_writes_nothing(self):
+        """R3: the plan-bearing digest is PURE — no writes on the front-seam path."""
+        self._mk_task("alpha", phase="plan", sec3=self._BS_FILLED)
+        before_state, before_files = self._hash_state(), self._file_set()
+        for argv in (("v13", "alpha", "--decide"), ("v13", "alpha", "--decide", "--json")):
+            _, _, code = self._run(*argv)
+            self.assertEqual(code, 0)
+        self.assertEqual(self._hash_state(), before_state)
+        self.assertEqual(self._file_set(), before_files)
 
     def test_decide_plain_ascii_no_ansi(self):
         self._mk_task("alpha", phase="verify", sec6=SEC6_MARKER)
@@ -260,7 +375,7 @@ class DecideDigestTest(unittest.TestCase):
     def test_footer_hard_stop_wins(self):
         self._mk_task("alpha", phase="verify")
         add.main(["gate", "HARD-STOP", "alpha"])
-        self._mk_task("beta", phase="contract")      # also awaiting an approval
+        self._mk_task("beta", phase="plan")           # also awaiting an approval
         out, _, code = self._run("v13")
         self.assertEqual(code, 0)
         footer = out[out.index("DECIDE NEXT"):]
@@ -307,6 +422,16 @@ class DecideDigestTest(unittest.TestCase):
         for landmark in ("VERDICT", "EXIT CRITERIA", "LEARNINGS"):
             self.assertIn(landmark, rollup)
         self.assertLess(rollup.index("LEARNINGS"), rollup.index("DECIDE NEXT"))
+
+
+class ReportTemplateSurfaceTest(unittest.TestCase):
+    """M5: the ONE human-gate report shape (report-template.md) names the BUILD PLAN block."""
+
+    def test_report_template_documents_build_plan(self):
+        skill = Path(add.__file__).resolve().parent.parent / "skill" / "add"
+        tmpl = skill / "report-template.md"
+        self.assertTrue(tmpl.is_file(), f"missing {tmpl}")
+        self.assertIn("BUILD PLAN", tmpl.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

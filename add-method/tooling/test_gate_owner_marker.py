@@ -12,8 +12,8 @@ CONTRACT (frozen @ v1, next-step-seams 2/3):
       _driver_marker(stop) -> " [human gate]" if stop else " [you drive]"
 
   The phase × autonomy table (only the verify row moves with the dial):
-      ground/tests/build/observe -> [you drive] (always)
-      specify/scenarios/contract/done -> [human gate] (always; contract freeze stays human, run.md:21)
+      tests/build/observe -> [you drive] (always)
+      specify/scenarios/plan/done -> [human gate] (always; the plan freeze stays human, run.md:21)
       verify -> [you drive] under auto, [human gate] under conservative/manual   <- exit criterion
 
   Option F: the FROZEN machine-state-json JSON (`owner`/`stop`) is NOT touched — the marker rides
@@ -40,13 +40,13 @@ HERE = Path(__file__).resolve().parent           # add-method/tooling
 # the table the frozen §3 contract encodes — only verify moves with the dial
 _TABLE = {
     "auto": {
-        "ground": " [you drive]", "specify": " [human gate]", "scenarios": " [human gate]",
-        "contract": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "specify": " [human gate]", "scenarios": " [human gate]",
+        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
         "verify": " [you drive]", "observe": " [you drive]", "done": " [human gate]",
     },
     "conservative": {
-        "ground": " [you drive]", "specify": " [human gate]", "scenarios": " [human gate]",
-        "contract": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "specify": " [human gate]", "scenarios": " [human gate]",
+        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
         "verify": " [human gate]", "observe": " [you drive]", "done": " [human gate]",
     },
 }
@@ -148,11 +148,12 @@ class _Board(unittest.TestCase):
     def _write_task(self, slug):
         lines = [
             f"# TASK: {slug}", f"slug: {slug} · created: 2026-06-12 · stage: mvp",
-            "phase: ground", "",
-            *self._section(0, "GROUND", "Anchors the contract cites: cmd_gate"),
+            "phase: specify", "",
             *self._section(1, "SPECIFY", "Feature: f"),
             *self._section(2, "SCENARIOS", "(none)"),
-            *self._section(3, "CONTRACT", "```", "shape: x { a }", "```",
+            *self._section(3, "PLAN",
+                           "### Grounding", "Anchors the contract cites: cmd_gate",
+                           "### Contract", "```", "shape: x { a }", "```",
                            "Status: FROZEN @ v1 — approved by Tester 2026-06-12.",
                            "Least-sure flag surfaced at freeze: [contract] none material."),
             *self._section(4, "TESTS", "Coverage target: behavior", "Tests live in: `./tests/`"),
@@ -202,7 +203,7 @@ class DriverMarkerArmATest(_Board):
 
     def test_contract_freeze_stays_human_under_auto(self):
         self._task("t", "auto")
-        out, _, _ = self._run("phase", "contract", "t")
+        out, _, _ = self._run("phase", "plan", "t")
         self.assertTrue(self._footer(out).endswith(" [human gate]"),
                         f"the freeze is dial-blind human, got: {self._footer(out)!r}")
 

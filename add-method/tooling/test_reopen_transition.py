@@ -108,10 +108,10 @@ class ReopenBoard(unittest.TestCase):
         return buf.getvalue(), err.getvalue(), code
 
     def _mk_done(self, slug: str, risk_accepted: bool = False):
-        """Drive a fresh task ground -> verify -> done (PASS or RISK-ACCEPTED)."""
+        """Drive a fresh task specify -> verify -> done (PASS or RISK-ACCEPTED)."""
         self._run("new-task", slug, "--title", slug)
         self._freeze(slug)
-        for _ in range(6):                      # ground -> ... -> verify
+        for _ in range(5):                      # specify -> scenarios -> plan -> tests -> build -> verify
             self._run("advance", slug)
         if risk_accepted:
             self._run("gate", "RISK-ACCEPTED", slug, *WAIVER)
@@ -132,9 +132,10 @@ class ReopenBoard(unittest.TestCase):
                                    "--reason", "wiring check failed post-merge")
         self.assertEqual(code, 0, f"reopen should succeed; err={err!r}")
         self.assertEqual(self._task("t")["phase"], "build")
-        # PHASES tuple is unchanged: done stays a state, not removed
+        # PHASES tuple keeps "done" as a terminal state, not removed by plan-phase-core
+        # (which collapsed ground+contract into `plan`, shrinking PHASES from 9 to 8).
         self.assertEqual(add.PHASES[-1], "done")
-        self.assertEqual(len(add.PHASES), 9)
+        self.assertEqual(len(add.PHASES), 8)
 
     def test_reopen_resets_gate_to_none(self):
         self._mk_done("t")

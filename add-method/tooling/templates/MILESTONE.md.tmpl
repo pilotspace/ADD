@@ -4,6 +4,7 @@ goal: {{goal}}
 rationale: <why this scope — the confirmed intake classification (bucket + reason)>
 stage: {{stage}} · status: active · created: {{date}}
 release: pending
+relations: <cross-MILESTONE edges — add header lines `depends-on:` / `extends:` / `relates-to:` with milestone slugs (comma-sep); omit if none. Non-blocking except depends-on; validated by `add.py check`>
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,
@@ -20,6 +21,15 @@ Out: <explicitly deferred — the anti-scope-creep list>
 > defaults (cream+serif+terracotta · near-black+neon · broadsheet-hairline) and name ONE
 > deliberate signature element instead (Claude Code's `frontend-design` skill). A UI
 > feature also triggers DESIGN.md via the `add` skill's design.md.
+
+## Ground   (shared real-code context — gathered ONCE; every task's specify projects from this)
+Touches (shared files · symbols): <the code every task in this milestone lands in — gathered once, task-delta>
+Anchors: <the shared symbols tasks may cite — the floor each task's contract builds on>
+Honors (conventions): <PROJECT.md · CONVENTIONS.md · SEAMS.md rules every task honors>
+Issues/Risks (shared): <traps in the shared code that feed each task's §1 expectations>
+
+> Gather this ONCE per milestone (the drafting step in `scope.md`). Each task's `specify`
+> PROJECTS its §1 expectations from here + the specific request — light, not re-grounded per task.
 
 ## Shared decisions & glossary deltas   (living — every task must honor these)
 - <cross-cutting rule, named from GLOSSARY.md>

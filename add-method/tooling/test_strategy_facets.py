@@ -64,18 +64,19 @@ DATA_LABEL = "Data strategy:"
 PATTERN_LABEL = "Pattern:"
 STANCE_LABEL = "Optimization stance:"
 
-# the contract-frozen facet lines (§3 v1) — byte-exact
+# the contract-frozen facet lines (§3 v1, relocated into §3 PLAN's ### Build-strategy by
+# plan-phase-core) — byte-exact against templates/TASK.md.tmpl
 FULL_FACET_LINES = (
     "Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain "
-    "— an algorithm, a data model, a migration path, a prose structure, a UX flow — in the named "
-    "Persona's domain vocabulary; derive from §1 Framings weighed, not invented here>",
-    "Data strategy: <the shapes and access patterns the work realizes — data structures, schema "
-    "use, information architecture for prose/docs — must agree with the §3 Schema line>",
-    "Pattern: <the domain pattern this build follows and the §0 Honors / CONVENTIONS.md anchor "
-    "it extends>",
+    "— an algorithm, a data model, a migration path, a prose structure, a UX flow — derive from "
+    "§1 Framings weighed, not invented here>",
+    "Data strategy: <the shapes and access patterns the work realizes — must agree with the "
+    "Contract Schema line above>",
+    "Pattern: <the domain pattern this build follows and the Grounding Honors / CONVENTIONS.md "
+    "anchor it extends>",
     "Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, "
     "readability — or \"correctness-first, no budget\"; never blank; ⚠-mark the facet you trust "
-    "least; risk: high -> consult add-advisor; facets draft at tests->build; advisory, never a gate>",
+    "least; risk: high -> consult add-advisor; advisory, never a gate>",
 )
 FAST_FACET_LINE = ("Approach (domain strategy): <technique · shapes · pattern · optimization "
                    "stance in one line, in the task's domain vocabulary — or \"obvious, "
@@ -99,18 +100,22 @@ class StrategyFacetsTest(unittest.TestCase):
                          "facet order must be Strategy < Approach < Data < Pattern < Stance < Persona")
 
     # ---- M2: each hint names its upstream anchor + stays domain-generic ---------
+    # plan-phase-core: the anchors now live IN §3 (Approach cites the still-external §1;
+    # Data strategy / Pattern cite their §3 PLAN sibling sub-blocks "Contract"/"Grounding" by
+    # name rather than a section number, since both now live inside the same §3).
     def test_facet_hints_cite_upstream_anchors(self):
         self.assertIn("§1 Framings weighed", FULL_FACET_LINES[0])
-        self.assertIn("§3 Schema", FULL_FACET_LINES[1])
-        self.assertIn("§0 Honors", FULL_FACET_LINES[2])
+        self.assertIn("Contract Schema", FULL_FACET_LINES[1])
+        self.assertIn("Grounding Honors", FULL_FACET_LINES[2])
         # domain-generic: a non-code example rides next to the dev ones
         self.assertIn("prose structure", FULL_FACET_LINES[0])
-        self.assertIn("information architecture", FULL_FACET_LINES[1])
 
     # ---- M3: the stance line carries the fill discipline ------------------------
+    # plan-phase-core: Build-strategy is now filled+frozen at PLAN (with Grounding+Contract)
+    # rather than left draft through tests->build, so that token is retired with the phase.
     def test_optimization_stance_fill_discipline(self):
         stance = FULL_FACET_LINES[3]
-        for token in ("never blank", "⚠", "add-advisor", "tests->build", "advisory, never a gate"):
+        for token in ("never blank", "⚠", "add-advisor", "advisory, never a gate"):
             self.assertIn(token, stance, f"Optimization stance missing discipline token: {token}")
 
     # ---- M4: fast template collapses to exactly ONE Approach line ---------------
@@ -169,7 +174,15 @@ class StrategyFacetsTest(unittest.TestCase):
     # ---- R:nonadditive_change ----------------------------------------------------
     def test_additive_only(self):
         text = FULL_TWINS[0].read_text(encoding="utf-8")
-        for line in EXISTING_LINES + (STRATEGY_LABEL, ACTUAL_LABEL):
+        # EXISTING_LINES' own Constraints wording predates plan-phase-core (§5 Constraints now
+        # names the frozen §3 contract + the relocated §3 Build-strategy Scope it must stay
+        # inside) — re-point to the CURRENT §5 Constraints line; Safety rule / Code lives in
+        # are still byte-identical, so the additive-only check keeps its original strength.
+        preexisting = tuple(l for l in EXISTING_LINES if not l.startswith("Constraints:")) + (
+            "Constraints: do NOT change any test or the frozen §3 contract; stay inside the "
+            "§3 Build-strategy Scope; allow-list packages only; ask if unclear.",
+        )
+        for line in preexisting + (STRATEGY_LABEL, ACTUAL_LABEL):
             self.assertIn(line, text, "pre-existing §5 line changed — the add is additive")
         self.assertIn(FAST_STRATEGY_LABEL, FAST_TWINS[0].read_text(encoding="utf-8"))
 

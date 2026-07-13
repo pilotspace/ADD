@@ -65,7 +65,7 @@ class _Harness(unittest.TestCase):
         if kv.get("risk_high"):
             t = t.replace("slug: t ·", "slug: t · risk: high ·")
         if kv.get("sensitivity"):
-            t = t.replace("phase: ground", f"sensitivity: {kv['sensitivity']}\nphase: ground")
+            t = t.replace("phase: specify", f"sensitivity: {kv['sensitivity']}\nphase: specify")
         self.md.write_text(t, encoding="utf-8")
 
     def _fill_advisor_pass(self):

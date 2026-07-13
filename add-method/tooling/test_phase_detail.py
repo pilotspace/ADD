@@ -1,11 +1,37 @@
 #!/usr/bin/env python3
 """Red/green tests for `add.py report <task>` — the read-only per-task PHASE DETAIL.
 
-The drill-down renders a single task's seven phase blocks (specify→observe), each with
-its captured §N body from TASK.md + reached/current marker from state.json; the verify
-block surfaces the recorded GATE from state (authoritative, never parsed from prose). It
-is STRICTLY read-only and purely additive — the v9 milestone rollup is untouched. Run:
+The drill-down renders a single task's seven phase blocks (specify->observe — the
+plan-phase-core collapse folded ground+contract into ONE `plan` phase, so PHASES now
+carries 7 work phases + terminal "done", not 8), each with its captured §N body from
+TASK.md + reached/current marker from state.json; the verify block surfaces the
+recorded GATE from state (authoritative, never parsed from prose). It is STRICTLY
+read-only and purely additive — the v9 milestone rollup is untouched. Run:
     python3 -m unittest test_phase_detail -v
+
+KNOWN ENGINE BUG (plan-phase-core, discovered during this migration, NOT fixed here —
+out of this test-migration batch's remit; add.py/templates/engine_pin.py are frozen for
+this task). `add.task_phases()` (add.py ~line 5718-5735) now correctly loops
+`range(len(names))` over the 7 non-terminal phases (specify..observe; an earlier crash
+where it looped a stale `range(0, 8)` against the now-7-item `names` tuple, raising
+IndexError on every call, has since been fixed upstream) — but it still looks up each
+0-based phase index `n` (0=specify .. 6=observe) DIRECTLY against `_phase_spans()`'s
+dict, which keys bodies by the LITERAL 1-based `## N ·` heading number written in
+TASK.md (1=SPECIFY .. 7=OBSERVE, unchanged by the phase collapse — §3's heading number
+stayed 3, only its label moved CONTRACT->PLAN). Because `spans` has no key `0`,
+`specify`'s body always reads "(empty)"; every other phase's body reads its
+PREDECESSOR heading's content (`plan` shows `scenarios`'s text, etc.); and the
+document's actual §7 OBSERVE content is never read at all (task_phases only ever
+looks up spans[0..6]). This is a live DATA-correctness bug, not a crash — three tests
+below catch it honestly (RED): test_task_phases_pure_extraction, test_unfilled_
+phase_is_empty, and the per-block marker check in test_drill_renders_seven_phases. A
+related latent bug in the SAME family: once this offset is fixed, `render_task_detail`'s
+own hardcoded `if p["n"] == 6:` (add.py ~line 5817, the "verify: source the recorded
+gate from state" branch) would target `observe` instead of `verify` (under the OLD
+9-phase tuple, verify WAS n==6; under the NEW 8-phase tuple verify is n==5) — flagged
+for the same fix pass, not exercised by a dedicated assertion here (the existing
+test_verify_block_shows_gate_from_state only checks the GATE line's TEXT appears
+somewhere in the render, matching the original pre-migration test's own rigor level).
 """
 import hashlib
 import io
@@ -22,7 +48,9 @@ import add
 
 # A synthetic TASK.md with a known marker per phase so assertions are exact. §5 BUILD is
 # only an angle-placeholder (the (empty) case); §6 VERIFY prose deliberately omits the
-# word PASS (so a "PASS" in the render can only come from state, not the prose).
+# word PASS (so a "PASS" in the render can only come from state, not the prose). §3 is
+# now PLAN (plan-phase-core collapsed ground+contract into it) — heading number 3 is
+# unchanged, only its label moved from CONTRACT to PLAN.
 _TASK_MD = """# TASK: Alpha demo
 
 ## 1 · SPECIFY
@@ -32,8 +60,8 @@ SPEC_MARKER the rules live here.
 ## 2 · SCENARIOS
 SCEN_MARKER given / when / then.
 
-## 3 · CONTRACT
-CONTRACT_MARKER the frozen shape.
+## 3 · PLAN
+PLAN_MARKER the frozen shape.
 
 ## 4 · TESTS
 TESTS_MARKER red safety net.
@@ -94,23 +122,30 @@ class PhaseDetailTest(unittest.TestCase):
 
     # ---- scenarios --------------------------------------------------------
     def test_drill_renders_seven_phases(self):
-        add.main(["phase", "contract", "alpha"])
+        add.main(["phase", "plan", "alpha"])
         before = self._hash_state()
         out, _, code = self._report("vX", "alpha")
         self.assertEqual(code, 0)
-        names = ["1 SPECIFY", "2 SCENARIOS", "3 CONTRACT", "4 TESTS",
-                 "5 BUILD", "6 VERIFY", "7 OBSERVE"]
+        names = ["0 SPECIFY", "1 SCENARIOS", "2 PLAN", "3 TESTS",
+                 "4 BUILD", "5 VERIFY", "6 OBSERVE"]
         # all seven present, in order
         positions = [out.find(n) for n in names]
         self.assertNotIn(-1, positions, "a phase block is missing")
         self.assertEqual(positions, sorted(positions), "phase blocks out of order")
-        # §1–§3 captured content shown
-        for marker in ("SPEC_MARKER", "SCEN_MARKER", "CONTRACT_MARKER"):
-            self.assertIn(marker, out)
+        # §1–§3 captured content shown UNDER ITS OWN BLOCK (not just anywhere in the
+        # render) — this catches the plan-phase-core off-by-one where task_phases's
+        # 0-based `n` is looked up directly against _phase_spans's 1-based document
+        # heading keys, silently shifting every phase's body into its NEXT phase's
+        # block (see the module docstring's KNOWN ENGINE BUG note).
+        bounds = positions + [len(out)]
+        for i, marker in enumerate(("SPEC_MARKER", "SCEN_MARKER", "PLAN_MARKER")):
+            seg = out[bounds[i]:bounds[i + 1]]
+            self.assertIn(marker, seg, f"{marker} must render under its own block "
+                          f"({names[i]}), not shifted into the next one")
         # ascii tier under a non-tty StringIO: reached '#', current '>', pending '.'
-        self.assertIn("> 3 CONTRACT", out)   # contract is current
-        self.assertIn("# 1 SPECIFY", out)    # specify reached
-        self.assertIn(". 4 TESTS", out)      # tests pending
+        self.assertIn("> 2 PLAN", out)       # plan is current
+        self.assertIn("# 0 SPECIFY", out)    # specify reached
+        self.assertIn(". 3 TESTS", out)      # tests pending
         self.assertEqual(self._hash_state(), before)  # read-only
 
     def test_verify_block_shows_gate_from_state(self):
@@ -120,15 +155,15 @@ class PhaseDetailTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("GATE  PASS", out)          # verify block sources gate from state
         self.assertNotIn("PASS", _TASK_MD)        # guard: the fixture prose never says PASS
-        self.assertIn("# 6 VERIFY", out)          # every block reached (done)
-        self.assertIn("# 7 OBSERVE", out)
+        self.assertIn("# 5 VERIFY", out)          # every block reached (done)
+        self.assertIn("# 6 OBSERVE", out)
 
     def test_unfilled_phase_is_empty(self):
         out, _, code = self._report("vX", "alpha")
         self.assertEqual(code, 0)
         # §5 BUILD body is only a placeholder -> (empty), never a silent gap
-        build_at = out.find("5 BUILD")
-        verify_at = out.find("6 VERIFY")
+        build_at = out.find("4 BUILD")
+        verify_at = out.find("5 VERIFY")
         self.assertNotEqual(build_at, -1)
         self.assertIn("(empty)", out[build_at:verify_at])
 
@@ -146,13 +181,13 @@ class PhaseDetailTest(unittest.TestCase):
         self.assertIn("unknown_milestone", err)
 
     def test_smart_single_arg_drills_by_task(self):
-        add.main(["phase", "contract", "alpha"])
+        add.main(["phase", "plan", "alpha"])
         # 'alpha' is a task, not a milestone -> drills; identical to explicit form
         out_smart, _, c1 = self._report("alpha")
         out_explicit, _, c2 = self._report("vX", "alpha")
         self.assertEqual(c1, 0)
         self.assertEqual(c2, 0)
-        self.assertIn("1 SPECIFY", out_smart)         # it drilled, not rolled up
+        self.assertIn("0 SPECIFY", out_smart)         # it drilled, not rolled up
         self.assertEqual(out_smart, out_explicit)     # same render either way
         # a name that is neither milestone nor task -> unknown_milestone (milestone-first)
         _, err, code = self._report("ghost")
@@ -163,7 +198,7 @@ class PhaseDetailTest(unittest.TestCase):
         out, _, code = self._report("vX")   # name is a milestone -> v9 rollup
         self.assertEqual(code, 0)
         self.assertIn("VERDICT", out)               # the rollup header grid
-        self.assertNotIn("1 SPECIFY", out)          # NOT the phase detail
+        self.assertNotIn("0 SPECIFY", out)           # NOT the phase detail
 
     def test_detail_is_read_only(self):
         state = add.load_state(self._root())
@@ -178,8 +213,8 @@ class PhaseDetailTest(unittest.TestCase):
         out, _, code = self._report("vX", "alpha", "--json")
         self.assertEqual(code, 0)
         data = _json.loads(out)
-        self.assertEqual(len(data), 8)
-        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual(len(data), 7)
+        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4, 5, 6])
         for d in data:
             self.assertIn("phase", d)
             self.assertIn("body", d)
@@ -191,20 +226,20 @@ class PhaseDetailTest(unittest.TestCase):
         from unittest import mock
         with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
             phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 8)
+        self.assertEqual(len(phases), 7)
         self.assertTrue(all(p["body"] == "(empty)" for p in phases))
 
     def test_task_phases_pure_extraction(self):
         phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 8)
+        self.assertEqual(len(phases), 7)
         self.assertEqual([p["phase"] for p in phases],
-                         ["ground", "specify", "scenarios", "contract", "tests",
+                         ["specify", "scenarios", "plan", "tests",
                           "build", "verify", "observe"])
         bodies = {p["n"]: p["body"] for p in phases}
-        self.assertIn("SPEC_MARKER", bodies[1])
-        self.assertNotIn("a comment that must be stripped", bodies[1])  # HTML comment gone
-        self.assertNotIn("EXIT:", bodies[6])                            # EXIT marker gone
-        self.assertEqual(bodies[5], "(empty)")                         # placeholder-only
+        self.assertIn("SPEC_MARKER", bodies[0])
+        self.assertNotIn("a comment that must be stripped", bodies[0])  # HTML comment gone
+        self.assertNotIn("EXIT:", bodies[5])                            # EXIT marker gone
+        self.assertEqual(bodies[4], "(empty)")                         # placeholder-only
 
 
 if __name__ == "__main__":

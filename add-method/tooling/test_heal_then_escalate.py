@@ -318,7 +318,7 @@ class ForcePreservesHeal(_Board):
         self.assertEqual(self._attempts("t"), 2,
                          "the monotonic heal counter must survive a --force re-create")
         self.assertEqual(len(self._heal("t").get("history", [])), 1, "heal history preserved")
-        self.assertEqual(self._task_state("t")["phase"], "ground",
+        self.assertEqual(self._task_state("t")["phase"], "specify",  # plan-phase-core seed
                          "the rest of the record still resets on a --force overwrite")
 
     def test_force_over_fresh_task_adds_no_heal(self):

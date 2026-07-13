@@ -116,7 +116,7 @@ class AddToolTest(unittest.TestCase):
         self.assertTrue((tdir / "src").is_dir())
         st = self._state()
         self.assertEqual(st["active_task"], "transfer")
-        self.assertEqual(st["tasks"]["transfer"]["phase"], "ground")
+        self.assertEqual(st["tasks"]["transfer"]["phase"], "specify")  # plan-phase-core seed
         self.assertIn("Transfer money", (tdir / "TASK.md").read_text())
 
     def test_new_task_rejects_bad_slug(self):
@@ -131,13 +131,13 @@ class AddToolTest(unittest.TestCase):
     # --- advance / phase / marker sync ---
     def test_advance_moves_phase_and_syncs_marker(self):
         self._run("init")
-        self._run("new-task", "t")
-        self._run("advance")  # ground -> specify
+        self._run("new-task", "t")            # phase=specify (plan-phase-core seed)
+        self._run("advance")  # specify -> scenarios
         st = self._state()
-        self.assertEqual(st["tasks"]["t"]["phase"], "specify")
+        self.assertEqual(st["tasks"]["t"]["phase"], "scenarios")
         marker = [l for l in (Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
                               ).read_text().splitlines() if l.startswith("phase:")][0]
-        self.assertIn("specify", marker)
+        self.assertIn("scenarios", marker)
 
     def test_phase_explicit_set(self):
         self._run("init")

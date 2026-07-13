@@ -8,7 +8,7 @@ WITHOUT touching the engine (prose-only):
 
   * book   — docs/02-the-flow.md names ground as the phase-0 preamble (×4 synced);
              docs/appendix-c-glossary.md defines **Ground** + **Grounding map** (×4).
-  * skill  — SKILL.md's phase table lists a `ground` row → phases/0-ground.md (×3).
+  * skill  — SKILL.md's phase table lists a `plan` row → phases/3-plan.md (×3).
   * GLOSSARY— the survivor .add/GLOSSARY.md + the GLOSSARY.md.tmpl name ground (×3).
   * engine — UNTOUCHED: md5(add.py) ×3 == engine_pin (prose-only guard).
 
@@ -49,11 +49,13 @@ def _strip_mermaid(text: str) -> str:
 
 
 class FlowChapterTest(unittest.TestCase):
-    def test_flow_chapter_names_ground_preamble(self):
+    def test_flow_chapter_names_grounding_in_plan(self):
+        # plan-phase-core: grounding is no longer a §0 preamble — it is the first part of the
+        # Plan phase. The prose must still NAME grounding + the plan phase (outside the mermaid).
         prose = _strip_mermaid(FLOW.read_text(encoding="utf-8")).lower()
-        self.assertIn("preamble", prose, "ch02 prose must name the ground preamble")
-        self.assertIn("ground", prose, "ch02 prose must name 'ground' outside the mermaid")
-        # the seven-step brand is preserved (ground is the §0 preamble, not an 8th step)
+        self.assertIn("grounding", prose, "ch02 prose must name grounding")
+        self.assertIn("plan", prose, "ch02 prose must name the plan phase (grounding folds into it)")
+        # the seven-step brand is preserved (specify..observe; grounding is Plan's first part, not a step)
         self.assertIn("seven steps", FLOW.read_text(encoding="utf-8").lower())
 
     def test_flow_chapter_synced_x4(self):
@@ -75,11 +77,103 @@ class BookGlossaryTest(unittest.TestCase):
         self.assertEqual(len(digests), 1, "appendix-c-glossary.md differs across trees")
 
 
+# ---- book-plan-align (expectations-first T4): the GLOSSARY names the Plan phase, --------
+# ---- Ground is redefined as Plan's first part, and no stale phase-model prose survives. --
+
+# LIVE stale phase-model framings the expectations-first flow retired (grounding is Plan's
+# first PART, the contract is a sub-block of Plan — neither is a live phase). Emphasis is
+# stripped before matching so `*before*` still reads as "before". A historical "(formerly
+# the ground phase)" bridge is NOT forbidden — the guard targets only LIVE framing.
+_STALE_PHASE_PROSE = (
+    "phase-0 preamble",
+    "the contract phase",
+    "the ground phase",
+    "as step 0",
+    "phase before specify",
+)
+
+
+def _deemphasize(text: str) -> str:
+    return text.replace("*", "").replace("_", "").lower()
+
+
+def _stale_phase_hits(text: str) -> list[str]:
+    """LIVE stale phase-model framings in `text`, per line. A line marked as a history
+    bridge ('formerly …') is exempt — the guard targets the LIVE definition, not the past
+    (R3). Emphasis is stripped so `*before*` still reads as 'before'."""
+    hits = []
+    for line in text.splitlines():
+        low = _deemphasize(line)
+        if "formerly" in low:                 # history bridge — not a live-phase claim
+            continue
+        for stale in _STALE_PHASE_PROSE:
+            if stale in low:
+                hits.append(f"{stale!r} in: {line.strip()[:70]}")
+    return hits
+
+
+class PlanPhaseGlossaryTest(unittest.TestCase):
+    """T4: the book glossary names the unified Plan phase; Ground is its first part."""
+
+    def test_book_glossary_defines_plan(self):                      # M1
+        text = BOOK_GLOSSARY.read_text(encoding="utf-8")
+        self.assertRegex(text, r"\*\*Plan\b",
+                         "appendix-c must define a **Plan** phase term (the unified step 3)")
+        # the definition must convey the three things Plan does + the one approval
+        plan_para = next((ln for ln in text.splitlines() if ln.startswith("**Plan")), "")
+        low = plan_para.lower()
+        self.assertIn("ground", low, "the **Plan** term must name grounding as its first part")
+        self.assertTrue("freeze" in low or "frozen" in low,
+                        "the **Plan** term must name freezing the contract")
+        self.assertTrue("one" in low or "single" in low,
+                        "the **Plan** term must name the ONE human approval (the plan freeze)")
+
+    def test_ground_term_is_plan_first_part_not_phase_zero(self):   # M2
+        ground = next((ln for ln in BOOK_GLOSSARY.read_text(encoding="utf-8").splitlines()
+                       if ln.startswith("**Ground")), "")
+        self.assertTrue(ground, "appendix-c must still define a **Ground** term")
+        low = _deemphasize(ground)
+        self.assertIn("plan", low, "the **Ground** term must place grounding inside the Plan phase")
+        for stale in ("phase-0 preamble", "as step 0", "phase before specify"):
+            self.assertNotIn(stale, low,
+                             f"the **Ground** term still carries the retired framing {stale!r}")
+
+    def test_no_stale_phase_prose_in_book(self):                    # M3
+        offenders = []
+        for md in sorted((ADD_METHOD / "docs").glob("*.md")):
+            for hit in _stale_phase_hits(md.read_text(encoding="utf-8")):
+                offenders.append(f"{md.name}: {hit}")
+        self.assertEqual([], offenders,
+                         f"stale phase-model prose survives in the book: {offenders}")
+
+    def test_grep_guard_allows_legitimate_prose(self):             # R3
+        # the guard passes live-flow prose + a 'formerly …' history bridge…
+        for ok in ("Grounding is the first part of Plan.",
+                   "This was formerly the ground phase; now grounding folds into Plan.",
+                   "The contract is frozen within the Plan phase."):
+            self.assertEqual([], _stale_phase_hits(ok),
+                             f"guard false-flags legitimate prose: {ok!r}")
+        # …but still catches a LIVE stale claim (the guard is not vacuous)
+        self.assertTrue(_stale_phase_hits("Ground precedes the seven steps as step 0."),
+                        "the guard must still catch a live stale-phase claim")
+
+
+class EngineUntouchedByBookAlignTest(unittest.TestCase):
+    def test_engine_md5_unchanged(self):                           # R2
+        got = hashlib.md5((ADD_METHOD / "tooling" / "add.py").read_bytes()).hexdigest()
+        self.assertEqual(got, ENGINE_MD5,
+                         "book-plan-align is docs-only — add.py must be byte-identical to the pin")
+
+
+
 class SkillTableTest(unittest.TestCase):
-    def test_skill_phase_table_lists_ground(self):
+    def test_skill_phase_table_lists_plan(self):
+        # expectations-first (guides-and-skill): the phase table names `plan`, not `ground`/`contract`.
         text = SKILL_TREES[0].read_text(encoding="utf-8")
-        self.assertRegex(text, r"\|\s*ground\s*\|", "SKILL.md phase table needs a 'ground' row")
-        self.assertIn("phases/0-ground.md", text, "the ground row points at its guide")
+        self.assertRegex(text, r"\|\s*plan\s*\|", "SKILL.md phase table needs a 'plan' row")
+        self.assertIn("phases/3-plan.md", text, "the plan row points at its guide")
+        self.assertNotRegex(text, r"\|\s*ground\s*\|", "no stale 'ground' phase row")
+        self.assertNotRegex(text, r"\|\s*contract\s*\|", "no stale 'contract' phase row")
 
     def test_skill_synced_x3(self):
         digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in SKILL_TREES}

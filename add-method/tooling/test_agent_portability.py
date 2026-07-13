@@ -22,7 +22,7 @@ import add
 
 PHASE_FILES = {
     "specify": "1-specify.md", "scenarios": "2-scenarios.md",
-    "contract": "3-contract.md", "tests": "4-tests.md",
+    "plan": "3-plan.md", "tests": "4-tests.md",         # plan-phase-core: "contract" -> "plan"
     "build": "5-build.md", "verify": "6-verify.md", "observe": "7-observe.md",
 }
 

@@ -82,8 +82,8 @@ class BuildExpectationsGateTest(unittest.TestCase):
                       "- [x] the gate is skipped for plain milestones — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_tests(self, slug="t"):
-        for _ in range(4):   # ground -> specify -> scenarios -> contract -> tests
+    def _to_plan(self, slug="t"):
+        for _ in range(2):   # specify -> scenarios -> plan
             self._quiet(["advance", slug])
 
     def _optedin_task_at_tests(self, slug="t", ms="mvp"):
@@ -91,14 +91,16 @@ class BuildExpectationsGateTest(unittest.TestCase):
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
-        self._freeze(slug)   # opted-in tasks must freeze §3 to clear the freeze-before-build gate
+        self._to_plan(slug)
+        self._freeze(slug)   # plan-phase-core: §3 must freeze BEFORE the plan->tests crossing
+        self._quiet(["advance", slug])   # plan -> tests (frozen, passes)
 
     def _plain_task_at_tests(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
-        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
+        self._to_plan(slug)
+        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before the plan->tests crossing
+        self._quiet(["advance", slug])   # plan -> tests (frozen, passes)
 
     @staticmethod
     def _die_stderr(argv):
@@ -138,8 +140,9 @@ class BuildExpectationsGateTest(unittest.TestCase):
     def test_no_milestone_task_not_gated(self):
         self._quiet(["new-task", "loose"])   # no active milestone -> milestone-less
         self.assertIsNone(self._task("loose").get("milestone"))
-        self._to_tests("loose")
-        self._freeze("loose")  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
+        self._to_plan("loose")
+        self._freeze("loose")  # freeze-gate-universal: §3 must be FROZEN before the plan->tests crossing
+        self._quiet(["advance", "loose"])    # plan -> tests (frozen, passes)
         self._quiet(["advance", "loose"])
         self.assertEqual(self._task("loose").get("phase"), "build")
 

@@ -84,7 +84,9 @@ class _Harness(unittest.TestCase):
     def _fill_deep(self, slug):
         p = self._task_md(slug)
         p.write_text(p.read_text(encoding="utf-8").replace(
-            "<what read · what confirmed>", "read the diff in full · confirmed"),
+            "<what read · what confirmed>", "read the diff in full · confirmed").replace(
+            "(spec-dialect floor): <what confirmed>",
+            "(spec-dialect floor): tests speak the spec's Z-timestamp example"),
             encoding="utf-8")
 
     def _fill_refute(self, slug):

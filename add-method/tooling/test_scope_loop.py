@@ -34,10 +34,12 @@ OUTCOME_TOKENS = {"new-major", "sub-milestone", "task", "change-request", "split
 # Position-the-goal step raises when a goal is already delivered by an existing milestone.
 REJECT_CODES = {"not_classified", "dangling_criterion", "no_milestone", "duplicate_goal"}
 
-# The 9 MILESTONE.md.tmpl sections scope.md's drafting section must name (E1). The header
+# The 10 MILESTONE.md.tmpl sections scope.md's drafting section must name (E1). The header
 # fields goal + rationale count as named items; stage/status/created is a single header line.
+# `ground` was added by milestone-ground-seed (expectations-first): the shared real-code
+# context gathered ONCE that each task's specify projects from.
 TEMPLATE_SECTIONS = (
-    "goal", "rationale", "scope", "shared decisions", "shared", "contracts",
+    "goal", "rationale", "scope", "ground", "shared decisions", "shared", "contracts",
     "tasks", "exit criteria", "close", "release steps",
 )
 # Frozen tokens (TASK.md §3, scope-complete-position v1) — must appear verbatim in scope.md.
@@ -157,10 +159,14 @@ class ScopeLoopTest(unittest.TestCase):
             re.search(r"archive|existing milestone|milestone.{0,20}goal|relationship", low),
             "the Position-the-goal step must cross-reference the existing/archived milestone map")
 
-    def test_covers_all_nine_template_sections(self):
-        # E1a — the drafting section names all 9 MILESTONE.md.tmpl sections (incl. the three the
-        # guide was silent on: rationale, Close ship-review, Release steps).
+    def test_covers_all_ten_template_sections(self):
+        # E1a — the drafting section names all 10 MILESTONE.md.tmpl sections (incl. the three the
+        # guide was silent on: rationale, Close ship-review, Release steps — and `ground`, added
+        # by milestone-ground-seed).
         text = CANONICAL_SCOPE.read_text(encoding="utf-8").lower()
+        self.assertEqual(len(TEMPLATE_SECTIONS), 11,
+                         "TEMPLATE_SECTIONS must list the 10 milestone sections (goal+rationale "
+                         "+ 8 headings, 'shared'/'contracts' both matching one heading)")
         for sec in TEMPLATE_SECTIONS:
             self.assertIn(sec, text, f"scope.md never names the '{sec}' template section")
 

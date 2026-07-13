@@ -216,10 +216,11 @@ def _write_gemini_settings(target) -> str:
 
 
 # --- brand + feature showcase (interactive path only; fail-soft) ----------------
-# The 7 post-ground ADD phases the showcase names — grounded in the method (the
-# PROJECT.md goal + the engine's phase flow), never invented marketing. The wordmark
-# glyphs / tagline / accent are a SWAPPABLE content slot, not part of the frozen boundary.
-_LOOP = ("Specify", "Scenarios", "Contract", "Tests", "Build", "Verify", "Observe")
+# The 7 ADD phases the showcase names — grounded in the method (the PROJECT.md goal +
+# the engine's phase flow), never invented marketing. Grounding itself is folded into
+# step 3, Plan, not a separate phase. The wordmark glyphs / tagline / accent are a
+# SWAPPABLE content slot, not part of the frozen boundary.
+_LOOP = ("Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe")
 
 
 def _terminal_caps(env):

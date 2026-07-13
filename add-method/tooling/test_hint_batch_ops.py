@@ -44,25 +44,31 @@ class FooterTeachesBatchForm(unittest.TestCase):
 
     def test_walk_phases_fill_then_bare(self):
         # ONE ordered walk (no cross-test ordering dependency). advance-chain-collapse:
-        # the front drafting phases {ground,specify,scenarios} teach the COLLAPSED
-        # `advance --to contract` while keeping the per-section `--fill` alt; `contract`
+        # the front drafting phases {specify,scenarios} teach the COLLAPSED
+        # `advance --to plan` while keeping the per-section `--fill` alt; `plan`
         # points at the freeze gate (not another advance); `tests` keeps the bare --fill.
-        for expect_phase in ("ground", "specify", "scenarios", "contract", "tests"):
+        # expectations-first: the plan->tests crossing is now the freeze gate itself, so
+        # the walk crosses it with the documented --skip-freeze escape (this test only
+        # probes the FOOTER TEXT, not the freeze mechanics).
+        for expect_phase in ("specify", "scenarios", "plan", "tests"):
             out = self._footer()
-            if expect_phase in ("ground", "specify", "scenarios"):
-                self.assertIn("add.py advance --to contract", out,
+            if expect_phase in ("specify", "scenarios"):
+                self.assertIn("add.py advance --to plan", out,
                               f"{expect_phase} footer must teach the collapse:\n{out}")
                 self.assertIn("add.py advance --fill <draft>", out,
                               f"{expect_phase} footer must keep the --fill alt:\n{out}")
-            elif expect_phase == "contract":
+            elif expect_phase == "plan":
                 self.assertIn("add.py freeze", out,
-                              f"contract footer must point at the freeze gate:\n{out}")
+                              f"plan footer must point at the freeze gate:\n{out}")
                 self.assertNotIn("--to", out,
-                                 f"contract footer must not name a --to:\n{out}")
+                                 f"plan footer must not name a --to:\n{out}")
             else:  # tests
                 self.assertIn("add.py advance --fill <draft>", out,
                               f"{expect_phase} footer must teach the batch form:\n{out}")
-            _run(self.root, "advance")
+            if expect_phase == "plan":
+                _run(self.root, "advance", "--skip-freeze")
+            else:
+                _run(self.root, "advance")
         # tests->build is guarded (red suite / expectations) — the walk cannot cheaply
         # reach build, so the tests-phase branch is pinned in the ONE _next_command
         # composer source instead (status-guide-fold extracted it from _next_footer):

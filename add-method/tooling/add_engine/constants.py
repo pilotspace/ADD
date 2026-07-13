@@ -34,6 +34,7 @@ __all__ = [
     "WORKFLOW_HEADINGS",
     "_GATE_MODES",
     "_SKIPPABLE_PHASES",
+    "_DIALECT_CLASSES",
 ]
 
 ROOT_DIRNAME = ".add"
@@ -55,7 +56,7 @@ RELEASABLE_CUE = "releasable: {n} milestone(s) closed since last release"
 # a sibling of CHANGELOG.md — NOT inside .add/. The ledger IS the attribution source:
 # a milestone is "released" iff its slug appears on a `milestones:` row.
 RELEASES_FILE = "RELEASES.md"
-PHASES = ("ground", "specify", "scenarios", "contract", "tests", "build", "verify", "observe", "done")
+PHASES = ("specify", "scenarios", "plan", "tests", "build", "verify", "observe", "done")
 GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 # heal-then-escalate (verify-integrity): the bounded self-heal loop cap. A CONFIRMED cheat
 # (mechanical tripwire divergence, or an agent-reported semantic refute-read finding) returns
@@ -69,14 +70,12 @@ HEAL_CAP = 3
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).
 # Keep the action wording aligned with each phase's EXIT line in the TASK template.
 PHASE_GUIDE = {
-    "ground":    ("gather the real codebase the task touches — files, symbols, signatures, conventions, and the anchor points the contract will cite; defer to PROJECT.md/CONVENTIONS.md and gather only the task delta",
-                  "02-the-flow.md"),
-    "specify":   ("state every rule — Must / Reject (+ named code) / After; rank assumptions lowest-confidence first and flag the biggest risk",
+    "specify":   ("state every rule — Must / Reject (+ named code) / After, projected from the milestone Ground + the request; rank assumptions lowest-confidence first and flag the biggest risk",
                   "03-step-1-specify.md"),
     "scenarios": ("write one Given/When/Then per Must AND per Reject; every result observable",
                   "04-step-2-scenarios.md"),
-    "contract":  ("freeze the shape — signature, fields, error codes; names match the glossary",
-                  "05-step-3-contract.md"),
+    "plan":      ("build the change plan — ground the real code the contract will cite, freeze the contract shape (names match the glossary), and set the build strategy; this is the one human approval",
+                  "05-step-3-plan.md"),
     "tests":     ("write one failing test per scenario; run them RED for the right reason",
                   "06-step-4-tests.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",
@@ -93,31 +92,29 @@ PHASE_GUIDE = {
 # follows the book's who-does-what table (Verify is "human only"); `tests`/`build`/`observe`
 # are AI-led. A phase missing here is `unmapped_phase` (fail closed) — never defaulted.
 PHASE_OWNER = {
-    "ground": "ai",
-    "specify": "human", "scenarios": "human", "contract": "seam",
+    "specify": "human", "scenarios": "human", "plan": "seam",
     "tests": "ai", "build": "ai", "verify": "human", "observe": "ai", "done": "human",
 }
-# phase-bundles: the 8 work phases (PHASES minus the terminal "done") group into 3
+# phase-bundles: the 7 work phases (PHASES minus the terminal "done") group into 3
 # agent-owned bundles surfaced at `status`/`guide` — DIRECTION fixes the shape (through
-# the frozen contract AND the red suite — the method thesis is "fix spec/scenarios/
-# contract/failing-tests BEFORE the build"), BUILD makes it green, VERIFY earns trust
-# and feeds the next loop. A grouping OVER PHASES, never a reorder; "done" (terminal,
-# human-led) deliberately has no bundle — see PHASE_AGENT/_phase_bundle below. Union ==
-# set(PHASES) - {"done"}, pairwise disjoint (asserted by test_phase_bundles.py).
+# the frozen change plan — grounding + contract + build-strategy — AND the red suite; the
+# method thesis is "fix spec/scenarios/plan/failing-tests BEFORE the build"), BUILD makes
+# it green, VERIFY earns trust and feeds the next loop. A grouping OVER PHASES, never a
+# reorder; "done" (terminal, human-led) deliberately has no bundle — see PHASE_AGENT/
+# _phase_bundle below. Union == set(PHASES) - {"done"}, pairwise disjoint (test_phase_bundles.py).
 PHASE_GROUPS = {
-    "DIRECTION": ("ground", "specify", "scenarios", "contract", "tests"),
+    "DIRECTION": ("specify", "scenarios", "plan", "tests"),
     "BUILD": ("build",),
     "VERIFY": ("verify", "observe"),
 }
 # phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
 # `tests` bundles into DIRECTION above yet its preferred agent is still add-build, the
-# shipped roster's own boundary: add-design owns ground/specify/scenarios/contract,
-# add-build owns tests/build, add-verify owns verify/observe). A phase missing here is
-# a bug (PHASE_GROUPS' own union covers every key); `_phase_bundle` is the fail-closed
-# resolver for an unmapped/corrupted phase token, not this map directly.
+# shipped roster's own boundary: add-design owns specify/scenarios/plan, add-build owns
+# tests/build, add-verify owns verify/observe). A phase missing here is a bug (PHASE_GROUPS'
+# own union covers every key); `_phase_bundle` is the fail-closed resolver for an
+# unmapped/corrupted phase token, not this map directly.
 PHASE_AGENT = {
-    "ground": "add-design", "specify": "add-design", "scenarios": "add-design",
-    "contract": "add-design",
+    "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
     "tests": "add-build", "build": "add-build",
     "verify": "add-verify", "observe": "add-verify",
 }
@@ -208,12 +205,7 @@ _FALLBACK_TASK = """# TASK: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
-phase: ground
-
-## 0 · GROUND
-Touches (files · symbols · signatures):
-Honors (patterns / conventions):
-Anchors the contract cites:
+phase: specify
 
 ## 1 · SPECIFY
 Feature:
@@ -225,8 +217,15 @@ Assumptions — lowest-confidence first:
   ⚠ <most likely wrong> — lowest confidence because <why>; if wrong: <cost>
 
 ## 2 · SCENARIOS
-## 3 · CONTRACT
+## 3 · PLAN
+### Grounding
+Touches (files · symbols · signatures):
+Honors (patterns / conventions):
+Anchors the contract cites:
+### Contract
 Status: DRAFT
+### Build-strategy
+Scope (may touch):
 ## 4 · TESTS
 ## 5 · BUILD
 ## 6 · VERIFY
@@ -246,13 +245,8 @@ _FALLBACK_TASK_FAST = """# TASK: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
-phase: ground
+phase: specify
 fast: true
-
-## 0 · GROUND
-Touches (files · symbols):
-Anchors the contract cites:
-Ground SHA:
 
 ## 1 · SPECIFY
 Feature:
@@ -261,16 +255,24 @@ Reject:
 Accept:
 Assumptions: ⚠ <most likely wrong> — why; if wrong: <cost>
 
-## 3 · CONTRACT
+## 3 · PLAN
+### Grounding
+Touches (files · symbols):
+Anchors the contract cites:
+Ground SHA:
+### Contract
 Least-sure flag surfaced at freeze:
 Status: DRAFT
+### Build-strategy
+Scope (may touch): `./src/`
 
 ## 4 · TESTS
 Plan:
 Tests live in: `./tests/` · MUST run red before Build.
 
 ## 5 · BUILD
-Scope (may touch): `./src/`
+Strategy actually used:
+Code lives in: `./src/`
 
 ## 6 · VERIFY
 Build expectations (from §1 Accept + §3 CONTRACT):
@@ -338,8 +340,20 @@ _GATE_MODES = ("human", "ai-plan-verify")
 
 # --- skippable phases (shared: _task_skip_set reader + cmd_advance's skip pre-pass) — the
 #     fast-lane-skips closed 2-tuple: the ONLY set cmd_advance's skip pre-pass ever tests `nxt`
-#     against. ground/specify/contract/tests/build/verify can NEVER be skipped — a structural
+#     against. specify/plan/tests/build/verify can NEVER be skipped — a structural
 #     exclusion (this tuple never names them), not a runtime-checked policy. Same relative order
 #     as PHASES. Listed in __all__ (mirrors _GATE_MODES): a new trust-loosening capability is
 #     deliberately surfaced via `from add_engine.constants import *`, not tucked away. ---
 _SKIPPABLE_PHASES = ("scenarios", "observe")
+
+# --- format-dialect registry (shared: _dialect_gaps + the tests->build crossing warning +
+#     cmd_check's dialect_gap lint) — quality-floors floor 1. Closed (name, regex) pairs: a
+#     class matches only its FULL value shape, never prose fragments (a bare `2026-07-10`
+#     date must not match — the aware class requires the T separator + a zone suffix). Born
+#     from benchmark WV1 wm2: an arm's own suite stayed green on naive timestamps while the
+#     spec's own examples were Z-suffixed; the aware/naive crash shipped green. Listed in
+#     __all__ (mirrors _GATE_MODES): a new trust surface is deliberately surfaced. ---
+_DIALECT_CLASSES = (
+    ("aware-iso-timestamp",
+     r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})"),
+)

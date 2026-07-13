@@ -89,7 +89,7 @@ PHASE_FILES = {
     "2-scenarios.md": {
         "prompt": True, "output_format": True,
         "narrative": ("## Next",)},
-    "3-contract.md": {
+    "3-plan.md": {
         "prompt": True, "output_format": True,
         "narrative": ("## The freeze review checklist", "## Next")},
     "4-tests.md": {

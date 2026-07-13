@@ -4,7 +4,7 @@
 GROUND should surface the concrete problems/traps/untestable risks the AI finds in
 the REAL code while grounding, so §1 SPECIFY answers problems FOUND, not assumed.
 Frozen shape (§3 @ v1):
-  - 0-ground.md `## Gather` gains an "Issues/Risks (→ feed §1)" category (task-delta only)
+  - 3-plan.md `## Gather` gains an "Issues/Risks (→ feed §1)" category (task-delta only)
     + an `## Exit gate` checkbox for it;
   - TASK.md.tmpl `## 0 · GROUND` gains ONE `Issues/Risks (→ feed §1):` line, placed
     AFTER the `Anchors the contract cites:` line;
@@ -12,7 +12,7 @@ Frozen shape (§3 @ v1):
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding measure
     keys on it), `## 0`/`GROUND`, add.py byte-identical to engine_pin (no measure edit),
     the phases lean pool ≤ its UNCHANGED target (compaction, not a rebaseline);
-  - SYNC: 0-ground.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) byte-identical.
+  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) byte-identical.
 
 Behavior pinned, not prose phrasing. Run: python3 -m unittest test_ground_issues -v
 """
@@ -30,9 +30,9 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "0-ground.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "0-ground.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-ground.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
 ]
 SPECIFY_COPIES = [
     _ADD_METHOD / "skill" / "add" / "phases" / "1-specify.md",
@@ -53,8 +53,8 @@ ADD_PY_COPIES = [
 # the canonical skill tree, where the phases lean pool is measured
 _CANON = _ADD_METHOD / "skill" / "add"
 PHASES_POOL = [
-    "phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+    "phases/0-setup.md", "phases/1-specify.md",
+    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
     "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
 ]
 # the new field's distinguishing label (the → glyph is already established in the guides)
@@ -82,8 +82,17 @@ def _section0(tmpl: str) -> str:
     return m.group(0) if m else ""
 
 
+def _grounding_block(tmpl: str) -> str:
+    """plan-phase-core: grounding moved from a standalone `## 0 · GROUND` section into
+    the `## 3 · PLAN` section's `### Grounding` sub-block (up to the next `### `/`## `
+    heading — i.e. `### Contract`). Re-points `_section0`'s callers to the new location,
+    scoped the same way (just the grounding fields, not the whole §3 PLAN section)."""
+    m = re.search(r"### Grounding\b.*?(?=\n(?:### |## ))", tmpl, flags=re.S)
+    return m.group(0) if m else ""
+
+
 class GuideNamesIssuesCategory(unittest.TestCase):
-    """0-ground.md ## Gather names the Issues/Risks category; existing fields remain."""
+    """3-plan.md ## Gather names the Issues/Risks category; existing fields remain."""
 
     def test_guide_names_issues_risks(self):
         text = _canonical_guide()
@@ -115,29 +124,40 @@ class GuideNamesIssuesCategory(unittest.TestCase):
 
 
 class TemplateGainsIssuesLine(unittest.TestCase):
-    """TASK.md.tmpl §0 carries the Issues/Risks line, AFTER the Anchors line."""
+    """TASK.md.tmpl carries the Issues/Risks line, AFTER the Anchors line.
+
+    plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
+    `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block). The field's
+    OWN literal label narrowed from `Issues/Risks (→ feed §1):` to `Issues/Risks:`
+    (the "feed §1" phrasing moved into the field's placeholder prose, not the label) —
+    that is a genuine wording move, not a dropped fact, so the assertions below keep
+    the same STRENGTH by checking the line still names §1 + "feed" explicitly."""
 
     def test_section0_has_issues_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertTrue(sec0, "the template must have a `## 0 · GROUND` section")
-        self.assertIn(f"{FIELD} (→ feed §1):", sec0,
-                      "§0 must gain the `Issues/Risks (→ feed §1):` line")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertTrue(grounding, "the template must have a `### Grounding` sub-block (§3 PLAN)")
+        self.assertIn(f"{FIELD}:", grounding,
+                      "§3 PLAN Grounding must carry the `Issues/Risks:` line")
+        issues_line = next(ln for ln in grounding.splitlines() if ln.startswith(f"{FIELD}:"))
+        self.assertIn("§1", issues_line, "the Issues/Risks line must still say it feeds §1")
+        self.assertIn("feed", issues_line.lower(), "the Issues/Risks line must still say FEED")
 
     def test_issues_line_after_anchors(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0)
-        self.assertLess(sec0.index("Anchors the contract cites:"), sec0.index(f"{FIELD} (→ feed §1):"),
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding)
+        self.assertLess(grounding.index("Anchors the contract cites:"), grounding.index(f"{FIELD}:"),
                         "the Issues/Risks line must come AFTER the Anchors measure line")
 
     def test_section0_preserves_anchors_line(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("Anchors the contract cites:", sec0,
-                      "the §0 grounding-measure line must be preserved verbatim")
+        grounding = _grounding_block(_canonical_tmpl())
+        self.assertIn("Anchors the contract cites:", grounding,
+                      "the §3 PLAN grounding-measure line must be preserved verbatim")
 
     def test_section0_keeps_heading_tokens(self):
-        sec0 = _section0(_canonical_tmpl())
-        self.assertIn("## 0 ", sec0)
-        self.assertIn("GROUND", sec0)
+        tmpl = _canonical_tmpl()
+        self.assertIn("## 3 · PLAN", tmpl, "the §3 PLAN heading must be present")
+        self.assertIn("### Grounding", _grounding_block(tmpl),
+                      "the Grounding sub-block heading must be preserved")
 
 
 class SpecifyConsumesIssues(unittest.TestCase):
@@ -192,9 +212,9 @@ class CopiesStayByteIdentical(unittest.TestCase):
 
     def test_guide_copies_byte_identical(self):
         present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 0-ground.md copies must exist")
+        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
         self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 0-ground.md copies must be byte-identical")
+                         "the 3 3-plan.md copies must be byte-identical")
 
     def test_specify_copies_byte_identical(self):
         present = [p for p in SPECIFY_COPIES if p.exists()]

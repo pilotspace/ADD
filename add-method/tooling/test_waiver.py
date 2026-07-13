@@ -48,10 +48,10 @@ class WaiverGateTest(unittest.TestCase):
     # --- verify-phase guard, symmetric with PASS -----------------------------
     def test_risk_accepted_refused_before_verify(self):
         with self.assertRaises(SystemExit) as cm:
-            add.main(["gate", "RISK-ACCEPTED", "t", *WAIVER])  # phase is "ground"
+            add.main(["gate", "RISK-ACCEPTED", "t", *WAIVER])  # phase is "specify" (plan-phase-core seed)
         self.assertEqual(cm.exception.code, 1)
         t = self._task()
-        self.assertEqual(t["phase"], "ground", "refused gate must NOT advance phase")
+        self.assertEqual(t["phase"], "specify", "refused gate must NOT advance phase")
         self.assertEqual(t["gate"], "none", "refused gate must NOT record an outcome")
 
     # --- a waiver must be signed: all three fields ---------------------------

@@ -8,7 +8,7 @@ LAYOUT — a left-to-right process flow of six rounded cards connected by thin S
 The six cards, in this exact order, each card showing a big number, a bold word, and a small phrase under it:
   1  "Specify"   —  under it: "the rules"
   2  "Scenarios" —  under it: "pass / fail cases"
-  3  "Contract"  —  under it: "freeze the shape"
+  3  "Plan"      —  under it: "ground the code, freeze the contract"
   4  "Tests"     —  under it: "safety net (red)"
   5  "Build"     —  under it: "AI writes code"
   6  "Verify"    —  under it: "evidence + checks"

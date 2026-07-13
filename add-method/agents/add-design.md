@@ -29,4 +29,4 @@ Treat any Strategy you draft as a PREFERRED plan for whoever builds it, not a ha
 End with a structured verdict the orchestrator parses:
 `{ phase: setup|ground|specify|scenarios|contract, persona, result, bundle: { must, reject, scenarios, contract_draft }, least_sure_flag, confidence: {per-dimension 0–1}, open_questions }`.
 
-Method depth: the AIDD book in `.add/docs/` — `02-the-flow.md` · `03-step-1-specify.md` · `04-step-2-scenarios.md` · `05-step-3-contract.md` · `10-setup-and-stages.md`.
+Method depth: the AIDD book in `.add/docs/` — `02-the-flow.md` · `03-step-1-specify.md` · `04-step-2-scenarios.md` · `05-step-3-plan.md` · `10-setup-and-stages.md`.

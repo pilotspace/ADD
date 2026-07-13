@@ -135,15 +135,15 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         self.assertEqual(code, 0)
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "verify", "the NAMED task must change")
-        self.assertEqual(st["tasks"]["b"]["phase"], "ground", "the active task must NOT change")
+        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT change")
         self.assertEqual(st["active_task"], "b", "phase <slug> must not steal focus from active_task")
 
     def test_advance_routes_to_explicit_slug_not_active(self):
         code, _, _ = _run(["advance", "a"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["a"]["phase"], "specify", "advance must step the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "ground", "the active task must NOT step")
+        self.assertEqual(st["tasks"]["a"]["phase"], "scenarios", "advance must step the NAMED task")
+        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT step")
         self.assertEqual(st["active_task"], "b")
 
     def test_gate_routes_to_explicit_slug_not_active(self):
@@ -153,7 +153,7 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "done")
         self.assertEqual(st["tasks"]["a"]["gate"], "PASS", "gate must record on the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "ground", "the active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must be untouched")
         self.assertEqual(st["tasks"]["b"].get("gate", "none"), "none", "no gate may land on 'b'")
         self.assertEqual(st["active_task"], "b")
 
@@ -162,8 +162,8 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         code, _, _ = _run(["advance"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "omitted slug must step the active task")
-        self.assertEqual(st["tasks"]["a"]["phase"], "ground", "the non-active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "scenarios", "omitted slug must step the active task")
+        self.assertEqual(st["tasks"]["a"]["phase"], "specify", "the non-active task must be untouched")
 
 
 # ── wave-protocol-runtime: merge-time fork-base shift + worker commits its report ──

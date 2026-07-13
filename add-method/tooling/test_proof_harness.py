@@ -51,16 +51,16 @@ class ProofHarnessTest(unittest.TestCase):
     def test_gate_pass_refused_before_verify(self):
         # the divergence: the engine must REFUSE PASS before the task reaches verify
         with self.assertRaises(SystemExit) as cm:
-            add.main(["gate", "PASS"])               # phase is "ground"
+            add.main(["gate", "PASS"])               # phase is "specify" (plan-phase-core seed)
         self.assertEqual(cm.exception.code, 1)       # _die default; cf. check's exit 1
         st = self._state()["tasks"]["t"]
-        self.assertEqual(st["phase"], "ground", "refused gate must NOT advance phase")
+        self.assertEqual(st["phase"], "specify", "refused gate must NOT advance phase")
         self.assertEqual(st["gate"], "none", "refused gate must NOT record an outcome")
 
     # --- Matrix 3: done only when Verify reads PASS ---------------------------
     def test_gate_pass_at_verify_reaches_done(self):
-        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before tests->build crossing
-        for _ in range(6):                            # ground -> ... -> verify
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before plan->tests crossing
+        for _ in range(5):                            # specify -> scenarios -> plan -> tests -> build -> verify
             add.main(["advance"])
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         add.main(["gate", "PASS"])

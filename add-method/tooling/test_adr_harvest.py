@@ -121,7 +121,7 @@ class AdrHarvestTest(unittest.TestCase):
         p = self._path()
         decoy = "<harvested at done — DECOY inside §3, must stay byte-untouched>"
         txt = p.read_text()
-        i = txt.index("## 3 · CONTRACT")        # insert the decoy as its OWN line (ends in '>') after the §3 header
+        i = txt.index("## 3 · PLAN")        # insert the decoy as its OWN line (ends in '>') after the §3 header
         j = txt.index("\n", i)
         txt = txt[:j + 1] + "\n" + decoy + "\n" + txt[j + 1:]
         self.assertLess(txt.index(decoy), txt.index("## 7 · OBSERVE"), "decoy precedes §7")

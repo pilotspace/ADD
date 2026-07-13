@@ -102,29 +102,45 @@ class PhaseBuildGuardTest(unittest.TestCase):
                       "- [x] the gate passes through a frozen contract — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_tests(self, slug="t"):
-        for _ in range(4):   # ground -> specify -> scenarios -> contract -> tests
+    def _to_plan(self, slug="t"):
+        for _ in range(2):   # specify -> scenarios -> plan
             self._quiet(["advance", slug])
 
-    def _optedin_task_at_tests(self, slug="t", ms="mvp"):
+    def _optedin_task_at_plan(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
+        self._to_plan(slug)
 
-    def _plain_task_at_tests(self, slug="t", ms="plain"):
+    def _plain_task_at_plan(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])
         self._quiet(["new-task", slug])
-        self._to_tests(slug)
+        self._to_plan(slug)
 
-    def _fast_task_at_tests(self, slug="t"):
+    def _fast_task_at_plan(self, slug="t"):
         self._quiet(["new-task", slug, "--fast"])
-        self._to_tests(slug)
+        self._to_plan(slug)
+
+    def _force_to_tests(self, slug="t"):
+        """Admin override: force phase=tests directly, WITHOUT crossing the plan->tests freeze
+        gate — `phase <n>` for a non-build/-plan target runs no guard (test_non_build_target_
+        never_gated proves it below). Arranges the grandfather scenario a DRAFT §3 can now only
+        reach `tests` through (a pre-plan-phase-core record, or a lost/never-granted skip marker)
+        — `phase build` from here must still refuse it, proving the override is not a backdoor."""
+        self._quiet(["phase", "tests", slug])
+
+    def _to_tests_frozen(self, slug="t", unflagged=False):
+        """Reach `tests` the REAL way FROM `plan` (caller must already be at `plan`): freeze §3
+        (well-formed flag unless `unflagged`), then cross the (now real) plan->tests freeze gate
+        via `advance`."""
+        self._freeze_unflagged(slug) if unflagged else self._freeze(slug)
+        self._quiet(["advance", slug])   # plan -> tests: frozen, passes
 
     # ── scenarios ────────────────────────────────────────────────────────────────────────
     def test_optedin_unfrozen_blocks_phase_build(self):
-        self._optedin_task_at_tests()
+        self._optedin_task_at_plan()
+        self._force_to_tests()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
@@ -133,8 +149,8 @@ class PhaseBuildGuardTest(unittest.TestCase):
         self.assertNotIn("tripwire", self._task(), "no tripwire written on a refusal")
 
     def test_optedin_frozen_phase_build_arms_tripwire(self):
-        self._optedin_task_at_tests()
-        self._freeze()
+        self._optedin_task_at_plan()
+        self._to_tests_frozen()
         self._fill_build_expectations()
         self._quiet(["phase", "build", "t"])
         t = self._task()
@@ -143,8 +159,8 @@ class PhaseBuildGuardTest(unittest.TestCase):
         self.assertTrue(t.get("flag_verified"), "flag_verified stamped on a flagged freeze")
 
     def test_unflagged_freeze_blocks_phase_build(self):
-        self._optedin_task_at_tests()
-        self._freeze_unflagged()
+        self._optedin_task_at_plan()
+        self._to_tests_frozen(unflagged=True)
         self._fill_build_expectations()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
@@ -153,9 +169,10 @@ class PhaseBuildGuardTest(unittest.TestCase):
 
     # freeze-gate-universal (flow-honesty): a plain task is now freeze-gated even via the `phase
     # build` admin override, so reaching build (and arming the tripwire) requires a FROZEN §3.
+    # plan-phase-core: the freeze happens at `plan`, before the (now real) plan->tests crossing.
     def test_plain_milestone_frozen_arms_tripwire(self):
-        self._plain_task_at_tests()
-        self._freeze()                           # universal freeze gate: §3 must be frozen to reach build
+        self._plain_task_at_plan()
+        self._to_tests_frozen()                  # universal freeze gate: §3 must be frozen to reach tests
         self._quiet(["phase", "build", "t"])     # frozen §3 -> the override runs the full gate stack
         t = self._task()
         self.assertEqual(t.get("phase"), "build")
@@ -164,21 +181,23 @@ class PhaseBuildGuardTest(unittest.TestCase):
     # the override is NOT a backdoor: a plain UNFROZEN task is blocked at `phase build` too
     # (the universal gate, matching test_fast_unfrozen_blocks_phase_build for the fast case).
     def test_plain_milestone_unfrozen_blocks_phase_build(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_plan()
+        self._force_to_tests()
         code, err = self._die_stderr(["phase", "build", "t"])   # DRAFT §3 -> universal gate refuses
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
         self.assertEqual(self._task().get("phase"), "tests")
 
     def test_fast_unfrozen_blocks_phase_build(self):
-        self._fast_task_at_tests()
+        self._fast_task_at_plan()
+        self._force_to_tests()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
         self.assertEqual(self._task().get("phase"), "tests")
 
     def test_non_build_target_never_gated(self):
-        self._optedin_task_at_tests()
+        self._optedin_task_at_plan()
         self._quiet(["phase", "specify", "t"])
         self._quiet(["phase", "scenarios", "t"])
         t = self._task()
@@ -187,8 +206,8 @@ class PhaseBuildGuardTest(unittest.TestCase):
 
     def test_advance_into_build_unchanged(self):
         # parity guard: the extraction must leave `advance` into build behaving exactly as before
-        self._optedin_task_at_tests()
-        self._freeze()
+        self._optedin_task_at_plan()
+        self._to_tests_frozen()
         self._fill_build_expectations()
         self._quiet(["advance", "t"])
         t = self._task()

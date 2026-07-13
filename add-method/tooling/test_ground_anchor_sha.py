@@ -42,8 +42,8 @@ ADD_PY_COPIES = [
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
 PHASES_POOL = [
-    "phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+    "phases/0-setup.md", "phases/1-specify.md",
+    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
     "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
 ]
 
@@ -101,11 +101,16 @@ class _Board(unittest.TestCase):
 
 class GroundShaField(_Board):
     def test_new_task_has_ground_sha_field(self):                 # M1
+        # plan-phase-core: grounding (and its `Ground SHA:` field) moved from a
+        # standalone §0 BEFORE §1 SPECIFY into the §3 PLAN `### Grounding` sub-block,
+        # which now renders AFTER §1/§2 — splitting on "## 1 " no longer isolates the
+        # grounding block (it isolates only the header, since §1 comes first now).
+        # Re-pointed via add._ground_section, the engine's own grounding extractor.
         self._silent("new-task", "t1", "--title", "T")
         g = self._task_md("t1").read_text(encoding="utf-8")
-        head = g.split("## 1 ", 1)[0]                            # the §0 block only
-        self.assertIn("Ground SHA:", head,
-                      "a new task's §0 GROUND must carry a `Ground SHA:` field")
+        grounding = add._ground_section(g)
+        self.assertIn("Ground SHA:", grounding,
+                      "a new task's §3 PLAN Grounding sub-block must carry a `Ground SHA:` field")
 
 
 class CheckWarnsOnDrift(_Board):
@@ -140,11 +145,15 @@ class CheckWarnsOnDrift(_Board):
 
 class EnginePinnedAndTemplateParity(unittest.TestCase):
     def test_template_has_ground_sha_and_parity(self):           # M1, M4
+        # plan-phase-core: same re-point as test_new_task_has_ground_sha_field above —
+        # the Grounding sub-block (and its Ground SHA field) now lives in §3 PLAN,
+        # AFTER §1/§2, so a "## 1 " split no longer isolates it.
         present = [p for p in TASK_TMPL_COPIES if p.exists()]
         self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
         for p in present:
-            head = p.read_text(encoding="utf-8").split("## 1 ", 1)[0]
-            self.assertIn("Ground SHA:", head, "TASK.md.tmpl §0 must carry a `Ground SHA:` field")
+            grounding = add._ground_section(p.read_text(encoding="utf-8"))
+            self.assertIn("Ground SHA:", grounding,
+                          "TASK.md.tmpl §3 PLAN Grounding must carry a `Ground SHA:` field")
         self.assertEqual(len({_md5(p) for p in present}), 1,
                          "the 3 TASK.md.tmpl copies must be byte-identical")
 
