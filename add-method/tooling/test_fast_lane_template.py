@@ -34,7 +34,7 @@ CANON_FULL = HERE / "templates" / "TASK.md.tmpl"
 
 KEPT = {1, 3, 4, 5, 6}                # the frozen kept-section set (§0 folded into §3 PLAN)
 DROPPED = {2, 7}                     # §2 SCENARIOS, §7 OBSERVE (TASK.md SECTION numbers)
-DROPPED_IDX = {5}                    # observe (n=5); §2 SCENARIOS now folds into specify's
+DROPPED_IDX = set()                  # no whole-phase drop left: §2 folds into specify's
                                      # body (phase-merge-specify) so its absence is not empty
                                      # (plan=1, observe=5; n is the ordinal, not the §-number)
 
@@ -139,7 +139,7 @@ class HeaderAndRender(unittest.TestCase):
             (root / "tasks" / "s").mkdir(parents=True)
             (root / "tasks" / "s" / "TASK.md").write_text(self.rendered, encoding="utf-8")
             phases = add.task_phases(root, "s")
-        self.assertEqual(len(phases), 6)              # specify..observe always 6 entries now
+        self.assertEqual(len(phases), 5)              # specify..verify always 5 entries now
         bynum = {p["n"]: p["body"] for p in phases}   # keyed by PHASE INDEX (n), not §-number
         for n in DROPPED_IDX:
             self.assertEqual(bynum[n], "(empty)")     # dropped phases render empty, no crash

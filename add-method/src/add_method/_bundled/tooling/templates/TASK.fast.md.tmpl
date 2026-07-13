@@ -3,14 +3,12 @@
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
 autonomy: {{autonomy}}   <!-- Multi-component repo? add a `component: <name>` line (declared in .add/components.toml) to bind this fast task to a component — its root joins §5 Scope and its green-bar/verify surface at the gate. Omit for single-component projects. -->
-phase: specify   <!-- fast lane: specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done; plan = grounding + contract + build-strategy -->
+phase: specify   <!-- fast lane: specify -> plan -> tests -> build -> verify -> done; plan = grounding + contract + build-strategy -->
 fast: true   <!-- the fast lane: a small task, collapsed flow + minimal template. Omit --fast for full rigor. -->
-<!-- skips: <csv subset of scenarios,observe — omit this line for none>
-Skip rationale: <phase> — <reason>; <phase> — <reason>   (fill ONLY when a phase is skipped; each skipped phase names its reason — read at the skip crossing) -->
 
 > Fast lane — one small task, minimal sections, filled top-to-bottom. The trust floor still
 > holds: a FROZEN §3 contract · ≥1 red test before build · a recorded §6 gate (security = HARD-STOP).
-> The acceptance scenario collapses into §1 `Accept:`; OBSERVE is one optional line at the gate.
+> The acceptance scenario collapses into §1 `Accept:`; the observe note is one optional line at the gate.
 
 ---
 

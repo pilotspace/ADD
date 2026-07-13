@@ -58,15 +58,16 @@ class _Harness(unittest.TestCase):
 class PhaseListTest(_Harness):
     def test_phases_has_no_scenarios(self):                        # M1
         self.assertNotIn("scenarios", PHASES)
-        self.assertEqual(PHASES, ("specify", "plan", "tests", "build", "verify",
-                                  "observe", "done"))
+        # (phase-merge-verify later dropped observe too; this suite pins ITS merge —
+        # scenarios gone, specify first, plan second)
+        self.assertEqual(PHASES[:2], ("specify", "plan"))
 
     def test_maps_carry_no_scenarios_key(self):                    # M1
         for name, mapping in (("PHASE_GUIDE", PHASE_GUIDE), ("PHASE_OWNER", PHASE_OWNER),
                               ("PHASE_AGENT", PHASE_AGENT)):
             self.assertNotIn("scenarios", mapping, f"{name} still maps the retired phase")
         self.assertEqual(PHASE_GROUPS["DIRECTION"], ("specify", "plan", "tests"))
-        self.assertEqual(_SKIPPABLE_PHASES, ("observe",))
+        self.assertNotIn("scenarios", _SKIPPABLE_PHASES)
 
     def test_specify_guide_action_names_gwt(self):                 # M1
         self.assertIn("Given/When/Then", PHASE_GUIDE["specify"][0],
@@ -111,10 +112,10 @@ class LegacySkipDeclarationTest(_Harness):
         p.write_text(text, encoding="utf-8")
 
     def test_old_skip_declaration_tolerated_loud(self):            # M3 + R2 + Boundary
-        # The note fires at the crossing where the skip machinery reads the header —
-        # the observe crossing (M13 of fast-lane-skips: non-skippable crossings run
-        # ZERO skip logic; that frozen placement is preserved, so earlier advances
-        # sail through silently and nothing ever dies).
+        # Tolerated-and-ignored, noted LOUD, never a die — the frozen behavior.
+        # (phase-merge-verify retired the whole grammar and moved the note from the
+        # observe crossing — which no longer exists — to gate/completion, the one
+        # seam that still reads the header.)
         self._board()
         self._declare_skip("scenarios")
         out, code = self._run("advance")                           # specify -> plan, silent
@@ -122,20 +123,16 @@ class LegacySkipDeclarationTest(_Harness):
                          f"a retired scenarios skip declaration must never die: {out}")
         self.assertEqual(self._phase(), "plan")
         self._ok("phase", "verify", "t")
-        out, code = self._run("advance")                           # verify -> observe crossing
-        self.assertEqual(code, 0, f"the observe crossing must tolerate it too: {out}")
-        self.assertIn("merged into specify", out,
-                      "the ignored declaration must be noted loud at the skip crossing")
-        self.assertEqual(self._phase(), "observe")
+        out = self._ok("gate", "PASS", "t")
+        self.assertIn("ignored", out,
+                      "the ignored declaration must be noted loud at the gate seam")
 
-    def test_truly_bad_skip_token_still_dies(self):                # R2 (floor held)
-        self._board()
-        self._declare_skip("build")                                # never skippable
-        self._ok("phase", "verify", "t")
-        out, code = self._run("advance")                           # the observe crossing
-        self.assertNotEqual(code, 0,
-                            "a non-skippable token must keep the existing die at the "
-                            "crossing where a skip could take effect")
+    def test_truly_bad_skip_token_still_refused_by_resolver(self):  # R2 (floor held)
+        # The advance-time die retired with the grammar; the resolver keeps naming
+        # a truly bad token so no reader ever silently honors one.
+        toks, err = add._task_skip_set("skips: build\n")
+        self.assertEqual(toks, frozenset())
+        self.assertTrue(err and err.startswith("skip_not_allowed"), err)
 
 
 if __name__ == "__main__":

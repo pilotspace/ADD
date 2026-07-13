@@ -97,7 +97,7 @@ class MachineStateTest(unittest.TestCase):
             "specify": ("human", True),
             "plan": ("seam", True), "tests": ("ai", False),
             "build": ("ai", False), "verify": ("human", True),
-            "observe": ("ai", False), "done": ("human", True),
+            "done": ("human", True),
         }
         for phase, (owner, stop) in expect.items():
             self._task_at(phase)

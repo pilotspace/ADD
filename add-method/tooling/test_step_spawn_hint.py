@@ -6,7 +6,7 @@ CONTRACT (frozen @ v1):
     specify:"domain researcher + wide scenario sweep" ·
     plan:"change-plan design sweep" ·
     tests:"red-suite test-author" · build:"independent well-scoped batch" ·
-    verify:"earned-green refute-read" · observe:"lessons-mining reviewer"
+    verify:"earned-green refute-read"  (observe merged into verify)
   _spawn_hint_line(task: dict, autonomy: str) -> str | None   # PURE
     None  if phase ∉ _SPAWN_HINTS  OR  autonomy == "manual"
     else  f"spawn hint: {phase} → {_SPAWN_HINTS[phase]} (tier: {tier})"
@@ -33,7 +33,6 @@ EXPECTED = {
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
     "verify": "earned-green refute-read",
-    "observe": "lessons-mining reviewer",
 }
 
 

@@ -52,7 +52,7 @@ class ConstantsShape(unittest.TestCase):
     def test_phases_expectations_first(self):  # M1
         self.assertEqual(
             C.PHASES,
-            ("specify", "plan", "tests", "build", "verify", "observe", "done"),
+            ("specify", "plan", "tests", "build", "verify", "done"),
         )
         self.assertNotIn("ground", C.PHASES)
         self.assertNotIn("contract", C.PHASES)

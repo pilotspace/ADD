@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "b27ce845f42aa832b1338c4881f9cb27"  # re-aimed @ phase-merge-specify (six-phase-loop 1/6: scenarios PHASE merged into specify — legacy state token + retired skips: token both tolerated; sections untouched). prior: 26f78f04… @ compound-ticks 
-ENGINE_PKG_MD5 = "870a4ce0603599ca359302910df01614"  # re-aimed @ phase-merge-specify (constants.py: PHASES drops scenarios; _SKIPPABLE_PHASES=(observe,); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: d83fc67f… @ kickoff-truth v2 
+ENGINE_MD5 = "5d5e053843cf456a9c9f490267c92793"  # re-aimed @ phase-merge-verify (six-phase-loop 2/6: observe PHASE merged into verify — skip grammar retired, gate carries the fold nudge + vestigial-skips note, --fill/--section repaired to the _PHASE_SECTIONS table). prior: b27ce845… @ phase-merge-specify 
+ENGINE_PKG_MD5 = "fc40ad47544db6f5204b6197b95daf04"  # re-aimed @ phase-merge-verify (constants.py: PHASES drops observe; _SKIPPABLE_PHASES=(); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: 870a4ce0… @ phase-merge-specify 

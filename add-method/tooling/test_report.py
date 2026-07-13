@@ -215,8 +215,8 @@ class ReportTest(unittest.TestCase):
         self._done_pass("beta")
         root = add.find_root()
         out = add.render_report(root, add.load_state(root), "v9")  # ascii=False (canonical)
-        self.assertIn("●●◉○○○○", out)     # alpha at 'tests': 2 reached, current, 4 pending
-        self.assertIn("●●●●●●●", out)     # beta done -> whole track reached
+        self.assertIn("●●◉○○○", out)      # alpha at 'tests': 2 reached, current, 3 pending
+        self.assertIn("●●●●●●", out)      # beta done -> whole track reached (6 phases)
         self.assertIn("PASS", out)         # gate word (no glyph badge in column)
         self.assertIn("legend", out)       # one legend, not per-row labels
 

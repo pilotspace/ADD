@@ -122,14 +122,14 @@ class PhaseDetailTest(unittest.TestCase):
 
     # ---- the drill --------------------------------------------------------
     def test_drill_renders_seven_phases(self):
-        # phase-merge-specify: six work phases now (specify owns §1+§2)
+        # phase-merge-verify: five work phases now (specify owns §1+§2, verify §6+§7)
         add.main(["phase", "plan", "alpha"])
         before = self._hash_state()
         out, _, code = self._report("vX", "alpha")
         self.assertEqual(code, 0)
         names = ["0 SPECIFY", "1 PLAN", "2 TESTS",
-                 "3 BUILD", "4 VERIFY", "5 OBSERVE"]
-        # all six present, in order
+                 "3 BUILD", "4 VERIFY"]
+        # all five present, in order
         positions = [out.find(n) for n in names]
         self.assertNotIn(-1, positions, "a phase block is missing")
         self.assertEqual(positions, sorted(positions), "phase blocks out of order")
@@ -160,7 +160,7 @@ class PhaseDetailTest(unittest.TestCase):
         self.assertIn("GATE  PASS", out)          # verify block sources gate from state
         self.assertNotIn("PASS", _TASK_MD)        # guard: the fixture prose never says PASS
         self.assertIn("# 4 VERIFY", out)          # every block reached (done)
-        self.assertIn("# 5 OBSERVE", out)
+        self.assertIn("OBSERVE_MARKER", out)      # §7 renders under the verify block
 
     def test_unfilled_phase_is_empty(self):
         out, _, code = self._report("vX", "alpha")
@@ -217,8 +217,8 @@ class PhaseDetailTest(unittest.TestCase):
         out, _, code = self._report("vX", "alpha", "--json")
         self.assertEqual(code, 0)
         data = _json.loads(out)
-        self.assertEqual(len(data), 6)
-        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4, 5])
+        self.assertEqual(len(data), 5)
+        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4])
         for d in data:
             self.assertIn("phase", d)
             self.assertIn("body", d)
@@ -230,18 +230,19 @@ class PhaseDetailTest(unittest.TestCase):
         from unittest import mock
         with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
             phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 6)
+        self.assertEqual(len(phases), 5)
         self.assertTrue(all(p["body"] == "(empty)" for p in phases))
 
     def test_task_phases_pure_extraction(self):
         phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 6)
+        self.assertEqual(len(phases), 5)
         self.assertEqual([p["phase"] for p in phases],
                          ["specify", "plan", "tests",
-                          "build", "verify", "observe"])
+                          "build", "verify"])
         bodies = {p["n"]: p["body"] for p in phases}
         self.assertIn("SPEC_MARKER", bodies[0])
         self.assertIn("SCEN_MARKER", bodies[0])                        # specify owns §2 too
+        self.assertIn("OBSERVE_MARKER", bodies[4])                     # verify owns §7 too
         self.assertNotIn("a comment that must be stripped", bodies[0])  # HTML comment gone
         self.assertNotIn("EXIT:", bodies[4])                            # EXIT marker gone
         self.assertEqual(bodies[3], "(empty)")                         # placeholder-only

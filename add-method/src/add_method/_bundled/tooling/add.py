@@ -134,7 +134,8 @@ def _normalize_phase_tokens(state: dict) -> dict:
     tasks = state.get("tasks")
     if not isinstance(tasks, dict):
         return state
-    _legacy = {"ground": "specify", "contract": "plan", "scenarios": "specify"}
+    _legacy = {"ground": "specify", "contract": "plan", "scenarios": "specify",
+               "observe": "verify"}
     for rec in tasks.values():
         if isinstance(rec, dict) and rec.get("phase") in _legacy:
             rec["phase"] = _legacy[rec["phase"]]
@@ -1534,8 +1535,10 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
         if ln.startswith("## ") or re.match(r"^---\s*$", ln):
             _die("fill_body_unparseable: the payload contains a line-start '## ' or a bare "
                  "'---' line — these truncate the §-section scan; reword or indent them")
-    n = PHASES.index(cur) + 1  # phase ordinal → TASK.md §-number: specify→§1 … observe→§7
-                               # (§0 GROUND is gone, so the section number is ordinal + 1)
+    n = _PHASE_SECTIONS[cur][0]  # phase → its PRIMARY TASK.md §-number, via the explicit
+                                 # table (never ordinal math — the off-by-one bug class;
+                                 # specify owns §1+§2, verify owns §6+§7: --fill targets
+                                 # the first, the drafting section)
     f = root / "tasks" / slug / "TASK.md"
     try:
         original = f.read_bytes()
@@ -1594,47 +1597,12 @@ def cmd_advance(args: argparse.Namespace) -> None:
         if PHASES.index(_to) <= idx:
             _die(f"advance_to_not_forward: task '{slug}' is already at {cur}")
     nxt = PHASES[idx + 1]
-    # fast-lane-skips: observe
-    # may be jumped as a SINGLE crossing (never entered) when the task declares it, is
-    # lane-eligible (fast:true | oneshot:true | project benchmark_mode:true), and states a
-    # reason BEFORE the jump — no silent skip. Every _die below fires BEFORE the phase write
-    # further down (validate-then-write, matching every other guard in this function).
-    if nxt in _SKIPPABLE_PHASES:
-        hdr = _task_header(root, slug)
-        tokens, skip_err = _task_skip_set(hdr)
-        if skip_err:
-            _die(skip_err)          # "skip_not_allowed" — fires the first time a skippable
-                                     # phase is reached (the observe crossing), BEFORE any
-                                     # skip could be honored — fail-closed placement unchanged
-        # phase-merge-specify: a pre-merge declaration naming the retired scenarios token is
-        # tolerated-and-ignored, noted loud at the same crossing the machinery already reads it.
-        _m_sk = _SKIPS_LINE_RE.search(hdr)
-        if _m_sk and any(t.strip() in _RETIRED_SKIP_TOKENS for t in _m_sk.group(1).split(",")):
-            print("note: `skips: scenarios` — scenarios merged into specify "
-                  "(phase-merge-specify); the declaration is ignored")
-        if nxt in tokens:
-            eligible = _skip_lane_eligible(
-                state["tasks"][slug].get("fast") is True,
-                state["tasks"][slug].get("oneshot") is True,
-                _project_benchmark_mode(root))
-            skip_ok, skip_code = _skip_set_allowed(tokens, eligible)
-            if not skip_ok:
-                _die(skip_code)     # "skip_lane_required"
-            # the Skip rationale line now lives with the `skips:` declaration in the task
-            # header/preamble (§0 GROUND is gone); read hdr first, fall back to a legacy §0 body.
-            rat_src = hdr + "\n" + _raw_phase_bodies(root, slug).get(0, "")
-            reason = _skip_rationale(rat_src, nxt)
-            if not reason:
-                _die("skip_reason_missing")
-            state["tasks"][slug].setdefault("skips", []).append({
-                "phase": nxt, "reason": reason,
-                "by": identity._actor_stamp(state)["name"], "at": _now()})
-            nxt = PHASES[idx + 2]   # hop the skipped phase; always in-bounds ("observe"
-                                     # is never PHASES[-1])
-        # else: nxt not in tokens -> fall through unchanged, phase entered normally (no-op)
+    # phase-merge-verify: the skip grammar is RETIRED — _SKIPPABLE_PHASES is empty, no
+    # crossing runs skip logic (the old M13 placement, now universal). A vestigial
+    # `skips:` header declaration is read once, at gate/completion, and noted loud there.
     # build-boundary gate: pre-lock the front (specify..tests) is allowed, but crossing
-    # into build/verify/observe/done is refused until `add.py lock`.
-    if not _setup_locked(state) and nxt in ("build", "verify", "observe", "done"):
+    # into build/verify/done is refused until `add.py lock`.
+    if not _setup_locked(state) and nxt in ("build", "verify", "done"):
         _die("setup_unlocked: lock the foundation first — add.py lock")
     # intra-milestone cross-component HOLD (cross-component-milestone): a consumer of a DECLARED
     # contract may not enter §3 (scenarios->contract) until its producer froze — proven by the
@@ -1719,15 +1687,6 @@ def cmd_advance(args: argparse.Namespace) -> None:
     save_state(root, state)             # F12: durable state FIRST (source of truth) — may _die
     _sync_task_marker(root, slug, nxt)  # then mirror into TASK.md (best-effort) — no split-brain
     print(f"task '{slug}' phase {cur} -> {nxt}")
-    if nxt == "observe":
-        # OBSERVE is where this loop's lessons get captured (TASK.md §7) — suggest routing
-        # them into PROJECT.md right away (a per-task fold is engine-legal; otherwise the
-        # lessons sit unconsolidated until milestone close). Additive: fires only at this
-        # one transition, and the human still decides whether/when to run it. The verb word
-        # is interpolated via _FOLD_VERB so the domain wording-lint sees no bare slang.
-        print("  note: record the lessons this loop taught the foundation in §7 "
-              "OBSERVE, then update PROJECT.md when ready:")
-        print(f"    add.py {_FOLD_VERB} --task {slug}   (review first: add.py deltas)")
     # bundle fast-forward: keep stepping (each pass re-loads state and re-runs every
     # crossing guard) until the validated --to target is reached.
     if _to is not None and PHASES.index(nxt) < PHASES.index(_to):
@@ -1793,7 +1752,7 @@ def _task_gate_mode(hdr: str) -> str | None:
 _SKIPS_LINE_RE = re.compile(r"(?:^|·)[ \t]*skips:[ \t]*([^\s<#|]+)", re.MULTILINE)
 # phase-merge-specify: header tokens for phases that were MERGED away — a pre-merge
 # declaration naming one is ignored with a note, never a die (old boards keep working).
-_RETIRED_SKIP_TOKENS = frozenset({"scenarios"})
+_RETIRED_SKIP_TOKENS = frozenset({"scenarios", "observe"})
 
 
 def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
@@ -2039,7 +1998,6 @@ _SPAWN_HINTS = {
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
     "verify": "earned-green refute-read",
-    "observe": "lessons-mining reviewer",
 }
 
 
@@ -2236,6 +2194,18 @@ def cmd_gate(args: argparse.Namespace) -> None:
     _vfy = _task_verify(root, slug)                       # component-registry-fill: surface the verify command
     if _vfy:
         print(f"verify: {_vfy}   # run this suite — the engine does not (NO-EXEC)")
+    if completing:
+        # phase-merge-verify: gate/completion is the ONE seam that reads a vestigial
+        # `skips:` header (the grammar is retired — no crossing runs skip logic) and the
+        # new home of the fold nudge observe's crossing used to print. Both advisory,
+        # both on every completing outcome; this is the shared path the compound tick
+        # and the direct verify gate already funnel through (no double-print).
+        if _SKIPS_LINE_RE.search(_task_header(root, slug)):
+            print("  note: the skip grammar is retired — no phase can be skipped "
+                  "(six-phase-loop); the `skips:` declaration is ignored")
+        print("  note: record what to watch + the lessons this loop taught the "
+              "foundation in §7, then update PROJECT.md when ready:")
+        print(f"    add.py {_FOLD_VERB} --task {slug}   (review first: add.py deltas)")
     # the engine-sourced next step (next-footer-engine): a completing gate hands off to the
     # state arm; HARD-STOP routes to "resolve HARD-STOP …" — converging the old bespoke line.
     print(_next_footer(root, state))
@@ -2459,7 +2429,7 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     if not reason:
         _die("reopen_reason_required: reopen records WHY — supply a non-empty --reason")
     target = args.to
-    if target not in PHASES[:-1]:        # specify..observe; never "done", never an unknown name
+    if target not in PHASES[:-1]:        # specify..verify; never "done", never an unknown name
         _die(f"reopen_target_invalid: --to must be one of {', '.join(PHASES[:-1])} (got {target!r})")
     now = _now()
     entry = {"from": "done", "to": target, "reason": reason, "at": now,
@@ -2703,7 +2673,9 @@ def cmd_status(args: argparse.Namespace) -> None:
         if tok.isdigit() and int(tok) <= 7:
             n = int(tok)
         elif tok in PHASES and tok != "done":
-            n = PHASES.index(tok) + 1   # phase name → TASK.md §-number (specify→§1 … observe→§7)
+            n = _PHASE_SECTIONS[tok][0]   # phase → its PRIMARY §-number via the explicit
+                                          # table (never ordinal math); digits 0-7 above
+                                          # still reach any section directly (§2, §7)
         else:
             _die(f"section_unknown: '{_section}' is not 0-7 or a phase name "
                  f"({', '.join(p for p in PHASES if p != 'done')})")
@@ -3070,7 +3042,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 _PHASE_GUIDE_FILES = {
     "specify": "1-specify.md",
     "plan": "3-plan.md", "tests": "4-tests.md",
-    "build": "5-build.md", "verify": "6-verify.md", "observe": "7-observe.md",
+    "build": "5-build.md", "verify": "6-verify.md",
 }
 _SKILL_PHASES_DIR = Path(".claude") / "skills" / "add" / "phases"
 
@@ -3816,13 +3788,13 @@ def cmd_check(args: argparse.Namespace) -> None:
                                  "and no §4 test covering it (coverage gap) — add a scenario tag "
                                  "or a covers: line"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
-        # unknown_autonomy_level; a LIVE task (phase before done/observe) with no `autonomy:`
-        # line is implicit_autonomy — a WARN, never red. Done/observe predecessors are SKIPPED
+        # unknown_autonomy_level; a LIVE task (phase before done) with no `autonomy:`
+        # line is implicit_autonomy — a WARN, never red. Done predecessors are SKIPPED
         # (a fresh live-only predicate, NOT the audit open-front skip) so the board never floods.
         _alvl = _autonomy_level(_task_header(root, slug))
         checks.append((_alvl != "?", f"task '{slug}' autonomy level recognized",
                        "unknown_autonomy_level (token outside manual|conservative|auto)"))
-        if _alvl is None and t.get("phase") not in ("done", "observe"):
+        if _alvl is None and t.get("phase") != "done":
             warnings.append((f"task '{slug}'", "has no explicit autonomy level (implicit_autonomy) "
                              "— run `add.py autonomy set <level>` to set it"))
         # per-component-verify: a bound task whose component declares no green_bar can't be
@@ -4022,7 +3994,7 @@ def cmd_check(args: argparse.Namespace) -> None:
     # ACTIVE state only (never archived history): the audit-scan mitigation the freeze flag pinned.
     _dialect_gapped = []
     for _dg_slug in sorted(tasks):
-        if (tasks[_dg_slug] or {}).get("phase") not in ("build", "verify", "observe", "done"):
+        if (tasks[_dg_slug] or {}).get("phase") not in ("build", "verify", "done"):
             continue
         if _dialect_gaps(root, _dg_slug):
             _dialect_gapped.append(_dg_slug)
@@ -5959,18 +5931,18 @@ def _clean_phase_body(body: str) -> str:
 # renumber (§3 is the frozen contract everywhere); the phase list shrank instead, so
 # specify owns two sections. Explicit — never derive a section from a phase index.
 _PHASE_SECTIONS = {"specify": (1, 2), "plan": (3,), "tests": (4,),
-                   "build": (5,), "verify": (6,), "observe": (7,)}
+                   "build": (5,), "verify": (6, 7)}
 
 
 def task_phases(root: Path, slug: str) -> list[dict]:
     """The frozen per-task PHASE-DETAIL shape (v9-1): parse the task section blocks into
-    the non-terminal phases specify→observe. PURE — NO writes. Each entry is
+    the non-terminal phases specify→verify. PURE — NO writes. Each entry is
     { "phase": <name>, "n": <0..len(names)-1>, "body": <cleaned text | "(empty)"> }.
 
     The heading scan lives in _phase_spans (shared with the decide digest); this view
     CLEANS each body. Missing file / missing section / placeholder-only body ->
     "(empty)" (fail-closed). The bound tracks len(names) so it follows PHASES length."""
-    names = PHASES[:-1]  # specify..observe; "done" is a terminal STATE, not a section
+    names = PHASES[:-1]  # specify..verify; "done" is a terminal STATE, not a section
     f = root / "tasks" / slug / "TASK.md"
     try:
         text = f.read_text(encoding="utf-8")
@@ -6044,7 +6016,7 @@ def _detail_body(body: str, width: int) -> list[str]:
 
 def render_task_detail(root: Path, state: dict, mslug: str, slug: str, *,
                        width: int = _DEFAULT_WIDTH, ascii: bool = False) -> str:
-    """Format ONE task's seven phase blocks (specify→observe) as the read-only PHASE
+    """Format ONE task's pre-done phase blocks (specify→verify) as the read-only PHASE
     DETAIL: each block shows its number+name, a reached/current/pending marker (from the
     task's state phase), and its captured §N body (fail-closed to "(empty)"). The verify
     block additionally prints the recorded GATE from state.json — authoritative, NEVER
@@ -6062,7 +6034,7 @@ def render_task_detail(root: Path, state: dict, mslug: str, slug: str, *,
     L.append(f" PHASE {phase}    GATE {gate}")
     L.append(banner)
     for p in task_phases(root, slug):
-        i = p["n"]   # n IS the PHASES index now (specify=0 .. observe=6)
+        i = p["n"]   # n IS the PHASES index now (specify=0 .. verify=4)
         mk = (g["reached"] if (phase == "done" or i < ci)
               else g["current"] if i == ci else g["pending"])
         L.append("")
@@ -6345,13 +6317,13 @@ def _build_plan(raw3: str) -> list[dict]:
 
 def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
     """FACTS for the task-level decision-point digest (frozen shape). The decision comes
-    from STATE ONLY: recorded (gate set / observe / done) · front (specify→tests) ·
+    from STATE ONLY: recorded (gate set / done) · front (specify→tests) ·
     gate (build/verify). judgment = extracted markers, byte-verbatim. PURE."""
     tasks = state.get("tasks") or {}
     t = tasks.get(slug, {})
     phase = t.get("phase", "specify")
     gate = t.get("gate", "none")
-    if gate != "none" or phase in ("observe", "done"):
+    if gate != "none" or phase == "done":
         seam = "recorded"
     elif phase in _FRONT_PHASES:
         seam = "front"
@@ -7405,7 +7377,7 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
     """The gate-audit core: verify that human decision points left WELL-FORMED records.
     Judgment-free — checks record SHAPE (a named human at the freeze, exactly one
     gate outcome, prose ≡ state, a marked security note never auto-reviewed),
-    never re-decides an outcome. Scope: active tasks done/observe or gated; open
+    never re-decides an outcome. Scope: active tasks done or gated; open
     fronts skipped. PURE — reads only. Honest limit: shape, not engagement — a
     forged name passes; CI wiring makes forgery explicit and attributable."""
     tasks = state.get("tasks") or {}
@@ -7417,7 +7389,7 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
     for slug in sorted(tasks):
         t = tasks[slug]
         phase, gate = t.get("phase", "specify"), t.get("gate", "none")
-        if phase not in ("done", "observe") and gate == "none":
+        if phase != "done" and gate == "none":
             continue   # the front is still open — nothing recorded to audit
         checked += 1
         raw = _raw_phase_bodies(root, slug)
@@ -7462,7 +7434,7 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
         elif gate == "none":
             # F13 ungated_verdict: §6 carries a verdict the engine never gated.
             # cmd_gate is the ONLY writer of `gate` (it also marks done), so a
-            # done/observe task at gate=="none" reached its verdict without the
+            # done task at gate=="none" reached its verdict without the
             # engine — a hand-stamped §6 or an `advance` past verify. Constraint 4
             # requires a RECORDED outcome; a §6 verdict without one is not trusted.
             f(slug, "ungated_verdict",
@@ -7548,7 +7520,7 @@ def _reported_unrecorded(body_text: str) -> bool:
 
 def _guarantee_lint_notices(root: Path, state: dict) -> dict:
     """PRESENCE-ONLY, MEASURE-NOT-BLOCK lints SURFACED (never failed-on) by `add.py audit`
-    (guarantee-audit-lints). For tasks that reached verify (phase ∈ {verify, observe, done}):
+    (guarantee-audit-lints). For tasks that reached verify (phase ∈ {verify, done}):
       shallow[]          = §6 '### Deep checks' block present-but-unfilled (_section_unfilled; an
                            ABSENT block grandfathers a legacy task — never retro-flagged);
       risk_unset[]       = the header carries NO `risk:` token (an undeclared risk level at verify);
@@ -7577,7 +7549,7 @@ def _guarantee_lint_notices(root: Path, state: dict) -> dict:
     contract_report_unrecorded = []
     verify_report_unrecorded = []
     for slug in sorted(state.get("tasks") or {}):
-        if (state["tasks"][slug] or {}).get("phase") not in ("verify", "observe", "done"):
+        if (state["tasks"][slug] or {}).get("phase") not in ("verify", "done"):
             continue
         bodies = _raw_phase_bodies(root, slug)
         body3 = bodies.get(3, "")
@@ -8452,7 +8424,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="fast lane + a REQUEST for the AI-plan-verify contract-freeze gate: "
                          "scaffolds fast:true, oneshot:true, gate_mode:ai-plan-verify (task2's "
                          "_ai_freeze_allowed, unchanged, is the sole arbiter of whether it is "
-                         "ever honored) — also unlocks scenarios/observe skip declarations")
+                         "ever honored; the skip grammar itself is retired — six-phase-loop)")
     pn.add_argument("--full", action="store_true",
                     help="under a tiny milestone: opt back into the FULL TASK.md template "
                          "(tiny members default to the fast lane)")
@@ -8647,7 +8619,7 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("slug", nargs="?", default=None)
     # --to / --reason are validated in-body (not argparse choices) so the named reject
     # codes fire (reopen_target_invalid / reopen_reason_required), not a bare exit-2.
-    pr.add_argument("--to", default=None, help="target phase (specify..observe)")
+    pr.add_argument("--to", default=None, help="target phase (specify..verify)")
     pr.add_argument("--reason", default="", help="why the task is reopened (required, non-empty)")
     pr.set_defaults(func=cmd_reopen, _opt_positionals=("slug",))
 

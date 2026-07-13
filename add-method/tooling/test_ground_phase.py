@@ -109,24 +109,23 @@ class GroundLadder(unittest.TestCase):
         ), encoding="utf-8")
 
     def _mk_done(self, slug: str):
-        """Drive a fresh task specify -> observe -> done (PASS). SIX advances now
-        (specify -> plan -> tests -> build -> verify -> observe), then
-        `gate PASS` finalizes to done. (plan-phase-core: ground+contract collapsed
-        into plan, so the transition count is unchanged from before the rename —
-        verified empirically against the live engine, not assumed.)"""
+        """Drive a fresh task specify -> verify -> done (PASS). FOUR advances now
+        (specify -> plan -> tests -> build -> verify — six-phase-loop merged
+        scenarios into specify and observe into verify), then `gate PASS`
+        finalizes to done."""
         self._run("new-task", slug, "--title", slug)
         self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before plan->tests crossing
-        for _ in range(6):
+        for _ in range(4):
             self._run("advance", slug)
         self._run("gate", "PASS", slug)
         assert self._task(slug)["phase"] == "done", "fixture: task did not reach done"
 
     # ---- the ladder shape -------------------------------------------------
-    def test_phases_has_specify_first_len_7(self):
-        # new truth (plan-phase-core): ground+contract collapsed into plan; PHASES is 8.
+    def test_phases_has_specify_first_len_6(self):
+        # new truth (six-phase-loop): scenarios merged into specify, observe into verify.
         self.assertEqual(add.PHASES[0], "specify", "specify must be the first phase")
         self.assertEqual(add.PHASES[-1], "done", "done stays the terminal phase")
-        self.assertEqual(len(add.PHASES), 7, "scenarios merged into specify: PHASES is now 7")
+        self.assertEqual(len(add.PHASES), 6, "the merged lifecycle: 5 work phases + done")
 
     def test_every_phase_is_owned_plan_is_seam(self):
         # PHASE_OWNER is fail-closed (unmapped_phase) -> every phase MUST be mapped;
@@ -236,8 +235,8 @@ class GroundLadder(unittest.TestCase):
         phases = add.task_phases(self._root(), "feat")
         names = [p["phase"] for p in phases]
         self.assertEqual(names[0], "specify", "the drill-down renders specify first")
-        self.assertEqual(names[-1], "observe", "the drill-down ends at observe")
-        self.assertEqual(len(phases), 6,
+        self.assertEqual(names[-1], "verify", "the drill-down ends at verify (owns §6+§7)")
+        self.assertEqual(len(phases), 5,
                          "specify..observe is 6 phase blocks now (specify owns §1+§2)")
 
     # ---- heading scan captures section 0 ----------------------------------

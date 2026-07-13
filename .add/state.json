@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "phase-merge-specify",
+  "active_task": "phase-merge-verify",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9095,10 +9095,53 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "phase-merge-verify": {
+      "title": "Merge observe into verify: 7->6 phase list",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T17:59:25+00:00",
+      "updated": "2026-07-13T18:31:44+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:03:17+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4f385bc417fc13cb0fc013bbd4286d63",
+        "tests": {
+          "add-method/tooling/test_phase_merge_verify.py": "83fdc2d1a6dd3a37410dfe28cbfa9527"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/.add/",
+          "add-method/bin/",
+          "add-method/src/add_method/_installer.py"
+        ],
+        "snapshot_md5": "6234372f220b10a474efaf5b09eff4f3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T17:57:58+00:00",
+  "updated": "2026-07-13T18:31:44+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10360,7 +10403,7 @@
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
-    "six-phase-loop": "phase-merge-specify"
+    "six-phase-loop": "phase-merge-verify"
   },
   "todos": [
     {
