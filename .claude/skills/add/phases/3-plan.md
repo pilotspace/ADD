@@ -43,9 +43,12 @@ Then mark `Status: FROZEN @ v1 — approved by <name>`.
 ## The freeze — the one approval
 
 Present the bundle **lowest-confidence first**: the 1–2 points most likely wrong
-(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Open with the ARC per `report-template.md`,
-rendering SHAPE then the freeze APPROVE as a guided choice — **render before `FROZEN`, then record `Reported: yes`;
-never on a timeout.** See `run.md`. The approval freezes the Contract (HARD) + the Build-strategy Scope.
+(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Render from this card: banner → ARC
+(goal · done · plan, engine-sourced) → SHAPE → SUMMARY → FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT
+— rendering SHAPE then the freeze APPROVE as a guided choice; `report-template.md` holds the full
+template + examples, read it at most once per session —
+**render before `FROZEN`, then record `Reported: yes`; never on a timeout.** See `run.md`.
+The approval freezes the Contract (HARD) + the Build-strategy Scope.
 
 ## The freeze review checklist
 

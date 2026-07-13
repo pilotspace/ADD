@@ -26,7 +26,7 @@ result through passing evidence rather than a plausible-looking diff.
 
 **One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — seven step sections
 (Specify → Scenarios → Plan → Tests → Build → Verify → Observe), filled top to bottom; the tool
-tracks where you are. The **plan** phase unites grounding + the frozen contract + the build strategy.
+tracks where you are. The **plan** phase unites grounding + frozen contract + build strategy.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
@@ -40,7 +40,7 @@ Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure the engine is in the
 - It does NOT (ADD installed as a Claude Code plugin — engine + book ride in the plugin) →
   materialize once: `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill`. That drops
   `.add/tooling/` (engine) + `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block — like an
-  npm/pip install; the skill stays in the plugin, nothing duplicated.
+  npm/pip install; the skill stays in the plugin.
 
 Resume from the tool, never by re-reading the repo:
 
@@ -49,8 +49,8 @@ python3 .add/tooling/add.py status
 ```
 
 `status` names two files to read when orienting: `.add/PROJECT.md` (the foundation) and `.add/SOUL.md`
-(your **voice** — tone, style, what keeps the human's trust; read it each session — human-owned and
-self-improving via the `soul-self-improve` path). Then branch on state:
+(your **voice** — what keeps the human's trust; read each session; human-owned,
+self-improving — `soul.md`). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: if
   `.add/.intent` exists, read it — the installer's one-line first-build intent (a NOTE, never an init
@@ -64,7 +64,7 @@ self-improving via the `soul-self-improve` path). Then branch on state:
 **Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` read one §body · `gate PASS` at verify.
 **Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
 - **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is a
-  blessed standalone low-ceremony lane. Jot ideas first with `add.py todo "<text>"` (then `todo` to
+  blessed low-ceremony lane. Jot ideas with `add.py todo "<text>"` (then `todo` to
   list · `todo --done <id>`).
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; lower the autonomy level with
   `add.py autonomy set conservative|manual` for a human gate · `new-milestone --await-confirm`
@@ -104,6 +104,7 @@ so do concurrency / architecture residue and a lowered autonomy level (`conserva
 At every human decision point (intake · bundle approval · gate · milestone close) follow
 `report-template.md`: open with the banner then the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →
 FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT; show-before-ask; never pre-stamp; the question is a summary, never the artifact.
+Read `report-template.md`/`run.md` at most once per session — each phase guide carries its gate card.
 
 In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve (write them `open`; the human consolidates into `PROJECT.md`) — grammar + lifecycle in
