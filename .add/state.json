@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "book-plan-align",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8534,7 +8534,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T08:00:35+00:00",
+  "updated": "2026-07-13T08:47:10+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8898,9 +8898,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ceremony-to-effort": {
+      "title": "Ceremony-to-effort: convert evaporating ceremony into artifact turns",
+      "goal": "Convert measured evaporating ceremony into artifact effort \u2014 raise the artifact-turn ratio from ~37% toward spec-kit's ~95% band without lowering any trust floor. Target on the pinned-meter re-measure: mean add.py calls <= 12 (from 21), zero --help/duplicate-retry calls, per-task read burden <= ~30KB (from 56KB).",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T08:45:14+00:00",
+      "updated": "2026-07-13T08:47:09+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-13T08:47:09+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "plan-legibility",
+  "active_milestone": "ceremony-to-effort",
   "archived": [
     {
       "slug": "v5",
@@ -9736,7 +9753,8 @@
     "add-bench",
     "add-lean-loop",
     "expectations-first",
-    "plan-legibility"
+    "plan-legibility",
+    "ceremony-to-effort"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -9923,6 +9941,24 @@
       "id": 29,
       "text": "NEW sub-milestone 'plan-legibility' (after T3): task A = surface the \u00a73 Build-strategy plan-of-action in the DECIDE/freeze report + firm up report-template.md so the human follows WHAT the AI will do, not just the contract shape; task B = structured per-task Relations surface (depends-on \u00b7 extends \u00b7 relates-to, task AND milestone) at plan/status \u2014 consolidate today's scattered Related-intent/depends-on/SEAMS (SEAMS pointer still says retired \u00a70 GROUND).",
       "created": "2026-07-12T15:54:46+00:00",
+      "status": "open"
+    },
+    {
+      "id": 30,
+      "text": "fast task seams-symbol-pins: SEAMS.md anchors by symbol+content instead of add.py line numbers (drift repaired in 4+ consecutive milestones)",
+      "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 31,
+      "text": "fast task sync-twins: one-command propagation for the 4-5 byte-identical engine/template/skill twin trees",
+      "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 32,
+      "text": "post-1.18 release: update --global \u2014 ~/.claude/skills/add is stale (still pre-plan-phase 0-ground/3-contract guides); consider a flow-fingerprint mismatch warning in status",
+      "created": "2026-07-13T08:47:10+00:00",
       "status": "open"
     }
   ]
