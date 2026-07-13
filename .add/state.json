@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fold-draft-at-close",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8831,7 +8831,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T11:44:36+00:00",
+  "updated": "2026-07-13T15:52:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9212,9 +9212,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "call-floor": {
+      "title": "Call floor: drain the measured residual waste",
+      "goal": "Close the gap the WM1 re-measure named: mean engine calls 18.7 -> ~12 and always-loaded read burden -> <=30KB, floors untouched \u2014 every lever engine-mechanical or additive, none prose-only",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T15:52:21+00:00",
+      "updated": "2026-07-13T15:52:21+00:00"
     }
   },
-  "active_milestone": "ceremony-to-effort",
+  "active_milestone": "call-floor",
   "archived": [
     {
       "slug": "v5",
@@ -10051,7 +10059,8 @@
     "add-lean-loop",
     "expectations-first",
     "plan-legibility",
-    "ceremony-to-effort"
+    "ceremony-to-effort",
+    "call-floor"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
