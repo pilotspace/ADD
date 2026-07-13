@@ -123,9 +123,9 @@ from add_engine.accessors import (
 # --- state load/save (KEPT in add.py: write-path pinned by add._atomic_write tests) -
 
 def _normalize_phase_tokens(state: dict) -> dict:
-    """Rewrite the two legacy phase tokens on task records (expectations-first): `ground`
-    -> `specify`, `contract` -> `plan`. TOTAL · idempotent · never raises. ONLY the two
-    legacy tokens are touched — every other phase (including an already-migrated specify/plan
+    """Rewrite the legacy phase tokens on task records: `ground` -> `specify`, `contract`
+    -> `plan` (expectations-first) · `scenarios` -> `specify` (phase-merge-specify). TOTAL ·
+    idempotent · never raises. ONLY the legacy tokens are touched — every other phase (including an already-migrated specify/plan
     and unrelated tasks) is left byte-identical, so a second pass changes nothing. Normalizes
     on READ only; state is persisted (migrated) solely when a command legitimately saves —
     never an auto-write (the over-eager persist was the prior attempt's corruption)."""
@@ -134,7 +134,7 @@ def _normalize_phase_tokens(state: dict) -> dict:
     tasks = state.get("tasks")
     if not isinstance(tasks, dict):
         return state
-    _legacy = {"ground": "specify", "contract": "plan"}
+    _legacy = {"ground": "specify", "contract": "plan", "scenarios": "specify"}
     for rec in tasks.values():
         if isinstance(rec, dict) and rec.get("phase") in _legacy:
             rec["phase"] = _legacy[rec["phase"]]
@@ -1594,9 +1594,8 @@ def cmd_advance(args: argparse.Namespace) -> None:
         if PHASES.index(_to) <= idx:
             _die(f"advance_to_not_forward: task '{slug}' is already at {cur}")
     nxt = PHASES[idx + 1]
-    # fast-lane-skips: the ONLY new code the other 6 crossings ever reach is this membership
-    # test itself — a False result is a no-op, zero further bytes executed. scenarios/observe
-    # may be jumped as a SINGLE crossing (never entered) when the task declares them, is
+    # fast-lane-skips: observe
+    # may be jumped as a SINGLE crossing (never entered) when the task declares it, is
     # lane-eligible (fast:true | oneshot:true | project benchmark_mode:true), and states a
     # reason BEFORE the jump — no silent skip. Every _die below fires BEFORE the phase write
     # further down (validate-then-write, matching every other guard in this function).
@@ -1604,9 +1603,15 @@ def cmd_advance(args: argparse.Namespace) -> None:
         hdr = _task_header(root, slug)
         tokens, skip_err = _task_skip_set(hdr)
         if skip_err:
-            _die(skip_err)          # "skip_not_allowed" — fires the first time either
-                                     # skippable phase is reached, regardless of which token
-                                     # in the malformed declaration is actually bad
+            _die(skip_err)          # "skip_not_allowed" — fires the first time a skippable
+                                     # phase is reached (the observe crossing), BEFORE any
+                                     # skip could be honored — fail-closed placement unchanged
+        # phase-merge-specify: a pre-merge declaration naming the retired scenarios token is
+        # tolerated-and-ignored, noted loud at the same crossing the machinery already reads it.
+        _m_sk = _SKIPS_LINE_RE.search(hdr)
+        if _m_sk and any(t.strip() in _RETIRED_SKIP_TOKENS for t in _m_sk.group(1).split(",")):
+            print("note: `skips: scenarios` — scenarios merged into specify "
+                  "(phase-merge-specify); the declaration is ignored")
         if nxt in tokens:
             eligible = _skip_lane_eligible(
                 state["tasks"][slug].get("fast") is True,
@@ -1624,8 +1629,8 @@ def cmd_advance(args: argparse.Namespace) -> None:
             state["tasks"][slug].setdefault("skips", []).append({
                 "phase": nxt, "reason": reason,
                 "by": identity._actor_stamp(state)["name"], "at": _now()})
-            nxt = PHASES[idx + 2]   # hop the skipped phase; always in-bounds (neither
-                                     # "scenarios" nor "observe" is PHASES[-1])
+            nxt = PHASES[idx + 2]   # hop the skipped phase; always in-bounds ("observe"
+                                     # is never PHASES[-1])
         # else: nxt not in tokens -> fall through unchanged, phase entered normally (no-op)
     # build-boundary gate: pre-lock the front (specify..tests) is allowed, but crossing
     # into build/verify/observe/done is refused until `add.py lock`.
@@ -1786,6 +1791,9 @@ def _task_gate_mode(hdr: str) -> str | None:
 # fast-lane-skips: the AI-declared skip-set — same anchored declaration grammar as
 # gate_mode:/sensitivity:/autonomy: (line-start or `·`, value stops at whitespace/`<`/`#`/`|`).
 _SKIPS_LINE_RE = re.compile(r"(?:^|·)[ \t]*skips:[ \t]*([^\s<#|]+)", re.MULTILINE)
+# phase-merge-specify: header tokens for phases that were MERGED away — a pre-merge
+# declaration naming one is ignored with a note, never a die (old boards keep working).
+_RETIRED_SKIP_TOKENS = frozenset({"scenarios"})
 
 
 def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
@@ -1797,11 +1805,16 @@ def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
     comma) -> (frozenset(), "skip_not_allowed") — the WHOLE declaration is discarded on any
     single bad element, never partially honored (mirrors _ai_freeze_allowed's "?" fail-closed
     philosophy, not _task_sensitivity's "None means absent, default safely" philosophy — a
-    malformed CSV element is garbled, not absent). PURE."""
+    malformed CSV element is garbled, not absent). A RETIRED token (`scenarios`, merged into
+    specify at phase-merge-specify) is filtered out, never bad — the pre-merge declaration is
+    tolerated-and-ignored (cmd_advance prints the advisory note; this stays PURE). PURE."""
     m = _SKIPS_LINE_RE.search(hdr)
     if not m:
         return frozenset(), None
     toks = [t.strip() for t in m.group(1).split(",")]
+    toks = [t for t in toks if t not in _RETIRED_SKIP_TOKENS]
+    if not toks:
+        return frozenset(), None
     bad = [t for t in toks if t not in _SKIPPABLE_PHASES]
     if bad:
         # skip-error-ergonomics M1: the error carries its own repair — the raw
@@ -1823,7 +1836,7 @@ def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
 # than _flag_well_formed's [part]-tag grammar (no "none material" escape hatch): an irreversible
 # phase jump always needs a stated reason, or it never happens.
 _SKIP_RATIONALE_LINE_RE = re.compile(r"^[ \t]*Skip rationale:[ \t]*(.*)$", re.MULTILINE)
-_SKIP_RATIONALE_CLAUSE_RE = re.compile(r"^\s*(scenarios|observe)\s*[-—:]\s*(.+)$")
+_SKIP_RATIONALE_CLAUSE_RE = re.compile(r"^\s*(observe)\s*[-—:]\s*(.+)$")
 
 
 def _skip_rationale(raw0: str, phase: str) -> str | None:
@@ -2021,8 +2034,7 @@ def _ai_verify_checklist_complete(raw3: str) -> bool:
 # one human decision. Advisory ONLY — the engine never spawns; the line just NAMES the agent
 # shape a parallel run would use at this step.
 _SPAWN_HINTS = {
-    "specify": "domain researcher",
-    "scenarios": "wide scenario sweep",
+    "specify": "domain researcher + wide scenario sweep",
     "plan": "change-plan design sweep",
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
@@ -3056,7 +3068,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 # routed there through the CLI alone. Never a dead pointer: the path is printed
 # only if the file exists; a missing tree gets an install hint instead.
 _PHASE_GUIDE_FILES = {
-    "specify": "1-specify.md", "scenarios": "2-scenarios.md",
+    "specify": "1-specify.md",
     "plan": "3-plan.md", "tests": "4-tests.md",
     "build": "5-build.md", "verify": "6-verify.md", "observe": "7-observe.md",
 }
@@ -5943,6 +5955,13 @@ def _clean_phase_body(body: str) -> str:
     return "\n".join(lines) if meaningful else "(empty)"
 
 
+# phase-merge-specify: the TASK.md §-sections each work phase OWNS. Sections never
+# renumber (§3 is the frozen contract everywhere); the phase list shrank instead, so
+# specify owns two sections. Explicit — never derive a section from a phase index.
+_PHASE_SECTIONS = {"specify": (1, 2), "plan": (3,), "tests": (4,),
+                   "build": (5,), "verify": (6,), "observe": (7,)}
+
+
 def task_phases(root: Path, slug: str) -> list[dict]:
     """The frozen per-task PHASE-DETAIL shape (v9-1): parse the task section blocks into
     the non-terminal phases specify→observe. PURE — NO writes. Each entry is
@@ -5958,12 +5977,16 @@ def task_phases(root: Path, slug: str) -> list[dict]:
     except OSError:   # missing OR unreadable -> every phase fail-closed to "(empty)"
         return [{"phase": names[n], "n": n, "body": "(empty)"} for n in range(len(names))]
     spans = _phase_spans(text)
-    # spans is keyed by the TASK.md SECTION number (§1 SPECIFY .. §7 OBSERVE); the phase
-    # index n (0..len-1) maps to section n+1 now that §0 GROUND is gone (specify=§1). The
-    # old model had a §0, so n and the section number were aligned — they diverge by one now.
-    return [{"phase": names[n], "n": n,
-             "body": _clean_phase_body(spans[n + 1]) if (n + 1) in spans else "(empty)"}
-            for n in range(len(names))]
+    # spans is keyed by the TASK.md SECTION number (§1 SPECIFY .. §7 OBSERVE). The §-sections
+    # are the stable API and KEEP their numbers; the phase list no longer aligns 1:1 with
+    # them (phase-merge-specify: the specify phase owns §1 AND §2) — so the mapping is an
+    # explicit table, never derived from the phase index (the off-by-one bug class).
+    out = []
+    for n, name in enumerate(names):
+        parts = [_clean_phase_body(spans[s]) for s in _PHASE_SECTIONS[name] if s in spans]
+        parts = [b for b in parts if b != "(empty)"]
+        out.append({"phase": name, "n": n, "body": "\n\n".join(parts) if parts else "(empty)"})
+    return out
 
 
 def _task_title(root: Path, slug: str) -> str:
@@ -6178,7 +6201,7 @@ def render_report(root: Path, state: dict, mslug: str, *,
 # never interprets, scores, or filters — add.py stays judgment-free, the human
 # signature is the gate.
 _MARKER_PREFIXES = (("⚠", "⚠"), ("- [~]", "[~]"), ("- [ ]", "[ ]"))
-_FRONT_PHASES = ("specify", "scenarios", "plan", "tests")
+_FRONT_PHASES = ("specify", "plan", "tests")
 
 
 def _decision_markers(body: str, section: int) -> list[dict]:
@@ -6513,7 +6536,7 @@ def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
     tells the very agent that just ran it to run it again."""
     if phase == "verify":
         return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP"
-    if phase in ("specify", "scenarios"):
+    if phase == "specify":
         return "add.py advance --to plan   (or step-by-step: add.py advance --fill <draft>)"
     if phase == "plan":
         return "add.py advance" if contract_frozen else "add.py freeze --by <name>"

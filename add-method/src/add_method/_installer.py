@@ -220,7 +220,7 @@ def _write_gemini_settings(target) -> str:
 # the engine's phase flow), never invented marketing. Grounding itself is folded into
 # step 3, Plan, not a separate phase. The wordmark glyphs / tagline / accent are a
 # SWAPPABLE content slot, not part of the frozen boundary.
-_LOOP = ("Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe")
+_LOOP = ("Specify", "Plan", "Tests", "Build", "Verify", "Observe")
 
 
 def _terminal_caps(env):

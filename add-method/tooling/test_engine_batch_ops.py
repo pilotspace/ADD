@@ -54,7 +54,7 @@ class FillAndAdvance(_Project):
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = self.task_md.read_text()
         self.assertIn("Feature: widget rules", body)
-        self.assertIn("phase: scenarios", body)
+        self.assertIn("phase: plan", body)
 
     def test_fill_from_stdin(self):  # M1 (stdin form)
         r = _run(self.root, "advance", "--fill", "-", stdin_text="Feature: stdin rules\n")
@@ -65,9 +65,8 @@ class FillAndAdvance(_Project):
         # walk to plan with plain advances (sections untouched), then attempt the
         # plan->tests crossing with --fill on an unfrozen §3 — plan-phase-core moved
         # the freeze gate from tests->build to THIS crossing (one step earlier).
-        for _ in range(2):
-            r = _run(self.root, "advance")  # specify -> scenarios -> plan
-            self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        r = _run(self.root, "advance")  # specify -> plan (merged flow)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         before = self.task_md.read_bytes()
         draft = self.root / "d4.md"
         draft.write_text("Plan: test_widget — red first\n")

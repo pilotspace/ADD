@@ -181,7 +181,8 @@ class _Harness(unittest.TestCase):
 
 class SkippablePhasesConstantTest(unittest.TestCase):
     def test_value_and_all(self):
-        self.assertEqual(engine_constants._SKIPPABLE_PHASES, ("scenarios", "observe"))
+        self.assertEqual(engine_constants._SKIPPABLE_PHASES, ("observe",))
+        # phase-merge-specify: scenarios left the tuple (merged into specify)
         self.assertIn("_SKIPPABLE_PHASES", engine_constants.__all__)
 
     def test_importable_via_star_import(self):
@@ -198,13 +199,18 @@ class TaskSkipSetResolverTest(unittest.TestCase):
         self.assertEqual(add._task_skip_set("slug: t · created: x\nautonomy: auto\n"),
                          (frozenset(), None))
 
-    def test_valid_two_token_csv(self):
+    def test_retired_token_filtered_from_csv(self):
+        # phase-merge-specify: a pre-merge two-token declaration keeps its live half
         self.assertEqual(add._task_skip_set("skips: scenarios,observe\n"),
-                         (frozenset({"scenarios", "observe"}), None))
+                         (frozenset({"observe"}), None))
 
     def test_valid_single_token(self):
+        self.assertEqual(add._task_skip_set("skips: observe\n"),
+                         (frozenset({"observe"}), None))
+
+    def test_retired_only_declaration_resolves_empty(self):
         self.assertEqual(add._task_skip_set("skips: scenarios\n"),
-                         (frozenset({"scenarios"}), None))
+                         (frozenset(), None))
 
     def test_one_bad_token_refuses_whole_declaration(self):
         # skip-error-ergonomics: the error string now carries its own repair —
@@ -264,10 +270,10 @@ class SkipRationaleTest(unittest.TestCase):
             "observe — no rollout to watch\nGround SHA: abc\n")
 
     def test_extracts_each_matching_clause(self):
-        self.assertEqual(add._skip_rationale(self.RAW0, "scenarios"),
-                         "the Accept line covers it")
         self.assertEqual(add._skip_rationale(self.RAW0, "observe"),
                          "no rollout to watch")
+        # phase-merge-specify: a retired scenarios clause no longer parses as a rationale
+        self.assertIsNone(add._skip_rationale(self.RAW0, "scenarios"))
 
     def test_no_line_at_all_returns_none(self):
         self.assertIsNone(add._skip_rationale("Touches: x\nGround SHA: abc\n", "observe"))
@@ -277,8 +283,8 @@ class SkipRationaleTest(unittest.TestCase):
         self.assertIsNone(add._skip_rationale(raw0, "observe"))
 
     def test_empty_reason_text_returns_none(self):
-        raw0 = "Skip rationale: scenarios —    \n"
-        self.assertIsNone(add._skip_rationale(raw0, "scenarios"))
+        raw0 = "Skip rationale: observe —    \n"
+        self.assertIsNone(add._skip_rationale(raw0, "observe"))
 
 
 # ---------------------------------------------------------------------------
@@ -286,20 +292,21 @@ class SkipRationaleTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class CmdAdvanceSkipMechanicTest(_Harness):
-    def test_jumps_specify_to_plan_when_scenarios_declared_eligible_reasoned(self):
+    def test_retired_scenarios_declaration_ignored_with_note(self):
+        # phase-merge-specify: specify -> plan is the NATURAL crossing now; a pre-merge
+        # scenarios declaration is tolerated-and-ignored (noted at the observe crossing),
+        # and no skip is ever recorded for the retired phase.
         self._new_fast_task("t", fast=True)
         self._silent("phase", "specify", "t")
         self._set_header("t", skips="scenarios")
-        self._set_skip_rationale("t", "scenarios — collapsed into Accept")
         out = self._silent("advance", "t")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
-        self.assertIn("phase specify -> plan", out)
-        skips = self._state()["tasks"]["t"]["skips"]
-        self.assertEqual(len(skips), 1)
-        self.assertEqual(skips[0]["phase"], "scenarios")
-        self.assertEqual(skips[0]["reason"], "collapsed into Accept")
-        self.assertIn("by", skips[0])
-        self.assertIn("at", skips[0])
+        self.assertNotIn("skips", self._state()["tasks"]["t"])
+        self._silent("phase", "verify", "t")
+        out = self._silent("advance", "t")                 # the observe crossing
+        self.assertIn("merged into specify", out)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "observe")
+        self.assertNotIn("skips", self._state()["tasks"]["t"])
 
     def test_jumps_verify_to_done_when_observe_declared_eligible_reasoned(self):
         self._new_fast_task("t", fast=True)
@@ -319,7 +326,7 @@ class CmdAdvanceSkipMechanicTest(_Harness):
         self._set_header("t", skips="observe")
         self._set_skip_rationale("t", "observe — no rollout to watch")
         self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "scenarios")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 
 
@@ -348,14 +355,11 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
         self._silent("freeze", "--by", "Human")
 
     def test_five_non_skippable_crossings_never_invoke_task_skip_set(self):
-        # plan-phase-core: ground+contract collapsed into plan, so the flow is now
-        # specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done —
-        # 7 crossings total, 2 "by design" (specify->scenarios, verify->observe) and
-        # FIVE non-skippable (was six: the old ground->specify leg no longer exists —
-        # new-task now seeds specify directly).
+        # phase-merge-specify: scenarios merged into specify, so the flow is now
+        # specify -> plan -> tests -> build -> verify -> observe -> done —
+        # 6 crossings total, 1 "by design" (verify->observe) and FIVE non-skippable.
         self._new_fast_task("t", fast=True)   # no skips: declared anywhere
-        self.assertGreater(self._advance_spy_count(), 0, "specify->scenarios (by design)")
-        self.assertEqual(self._advance_spy_count(), 0, "scenarios->plan")
+        self.assertEqual(self._advance_spy_count(), 0, "specify->plan")
         self._set_section3_and_freeze("t")
         self.assertEqual(self._advance_spy_count(), 0, "plan->tests")
         self.assertEqual(self._advance_spy_count(), 0, "tests->build")
@@ -427,15 +431,15 @@ class ProjectBenchmarkModeTest(_Harness):
 class StatusGuideSurfaceTest(_Harness):
     def test_status_and_guide_show_declared_csv_and_progress(self):
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios,observe")
-        self._set_skip_rationale("t", "scenarios — collapsed into Accept")
-        self._silent("advance", "t")   # consumes the "scenarios" skip -> 1 recorded
+        self._silent("phase", "verify", "t")
+        self._set_header("t", skips="observe")
+        self._set_skip_rationale("t", "observe — no rollout to watch")
+        self._silent("advance", "t")   # consumes the "observe" skip -> 1 recorded
         out_status = self._silent("status")
         out_guide = self._silent("guide")
         for out in (out_status, out_guide):
-            self.assertIn("declared scenarios,observe", out)
-            self.assertIn("skipped so far 1/2", out)
+            self.assertIn("declared observe", out)
+            self.assertIn("skipped so far 1/1", out)
 
     def test_no_declaration_no_recorded_skip_prints_no_line(self):
         self._new_fast_task("t", fast=True)
@@ -451,7 +455,7 @@ class GateExplainSkipSetTest(_Harness):
     def test_blocked_outcome_for_ineligible_declared_task(self):
         self._silent("lock", "--force")
         self._silent("new-task", "t", "--title", "F")   # NOT fast/oneshot
-        self._set_header("t", skips="scenarios")
+        self._set_header("t", skips="observe")
         out = self._silent("gate", "--explain", "t")
         self.assertIn("skip-set: blocked (skip_lane_required)", out)
         # the existing gate_mode line (task2, absent here) never crashes / interferes
@@ -544,13 +548,13 @@ class EngineTreeParityTest(unittest.TestCase):
 class RejectPathsTest(_Harness):
     def test_malformed_token_refused_as_whole_not_partially_honored(self):
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios,build")
+        self._silent("phase", "verify", "t")
+        self._set_header("t", skips="observe,build")
         before = self._state()
         out, code = self._run("advance", "t")
         self.assertNotEqual(code, 0)
         self.assertIn("skip_not_allowed", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
         self.assertEqual(self._state(), before)
 
@@ -558,27 +562,28 @@ class RejectPathsTest(_Harness):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", "t", "--title", "F")   # NOT fast/oneshot
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios")
+        self._silent("phase", "verify", "t")
+        self._set_header("t", skips="observe")
         out, code = self._run("advance", "t")
         self.assertNotEqual(code, 0)
         self.assertIn("skip_lane_required", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
 
     def test_missing_rationale_refused(self):
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios")
+        self._silent("phase", "verify", "t")
+        self._set_header("t", skips="observe")
         out, code = self._run("advance", "t")
         self.assertNotEqual(code, 0)
         self.assertIn("skip_reason_missing", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 
     def test_unskippable_phase_name_refused_via_same_code(self):
         self._new_fast_task("t", fast=True)
         self._silent("phase", "specify", "t")
         self._set_header("t", skips="build")
+        self._silent("phase", "verify", "t")
         out, code = self._run("advance", "t")
         self.assertNotEqual(code, 0)
         self.assertIn("skip_not_allowed", out)
@@ -594,16 +599,15 @@ class FloorCompositionTest(_Harness):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", "risky", "--title", "F", "--oneshot")
-        self._set_header("risky", skips="scenarios,observe")
+        self._set_header("risky", skips="observe")
         p = self._task_md("risky")
         t = p.read_text(encoding="utf-8")
         t = re.sub(r"(?m)^(autonomy:[^\n]*)$", r"\1\nsensitivity: security", t, count=1)
         p.write_text(t, encoding="utf-8")
-        self._set_skip_rationale("risky", "scenarios — a; observe — b")
+        self._set_skip_rationale("risky", "observe — b")
         self._silent("phase", "specify", "risky")
-        self._silent("advance", "risky")   # specify -> plan (scenarios skip fires, recorded)
+        self._silent("advance", "risky")   # specify -> plan (the natural crossing now)
         self.assertEqual(self._state()["tasks"]["risky"]["phase"], "plan")
-        self.assertEqual(len(self._state()["tasks"]["risky"]["skips"]), 1)
         # AI freeze attempt is blocked (task2's unchanged floor)
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n"
@@ -623,10 +627,14 @@ class FloorCompositionTest(_Harness):
         self.assertIn("ai_freeze_blocked_sensitivity", out)
         # the human path still works, and the earlier skip record is untouched
         self._silent("freeze", "--by", "A Human")
-        st = self._state()["tasks"]["risky"]
         self.assertRegex(self._silent("status", "--section", "3"), r"Status:\s*FROZEN")
+        # the skip axis composes downstream: verify -> done consumes the observe skip
+        self._silent("phase", "verify", "risky")
+        self._silent("advance", "risky")
+        st = self._state()["tasks"]["risky"]
+        self.assertEqual(st["phase"], "done")
         self.assertEqual(len(st["skips"]), 1)
-        self.assertEqual(st["skips"][0]["phase"], "scenarios")
+        self.assertEqual(st["skips"][0]["phase"], "observe")
 
 
 # ---------------------------------------------------------------------------
@@ -638,10 +646,9 @@ class NormalFlowUnchangedTest(_Harness):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; seeds specify
-        self._silent("advance", "t")    # specify -> scenarios
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "scenarios")
+        self._silent("advance", "t")    # specify -> plan (scenarios merged into specify)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self._silent("advance", "t")    # scenarios -> plan
         # freeze the contract to cross plan -> tests
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")

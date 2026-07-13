@@ -44,15 +44,15 @@ class FooterTeachesBatchForm(unittest.TestCase):
 
     def test_walk_phases_fill_then_bare(self):
         # ONE ordered walk (no cross-test ordering dependency). advance-chain-collapse:
-        # the front drafting phases {specify,scenarios} teach the COLLAPSED
+        # the front drafting phase (specify) teaches the COLLAPSED
         # `advance --to plan` while keeping the per-section `--fill` alt; `plan`
         # points at the freeze gate (not another advance); `tests` keeps the bare --fill.
         # expectations-first: the plan->tests crossing is now the freeze gate itself, so
         # the walk crosses it with the documented --skip-freeze escape (this test only
         # probes the FOOTER TEXT, not the freeze mechanics).
-        for expect_phase in ("specify", "scenarios", "plan", "tests"):
+        for expect_phase in ("specify", "plan", "tests"):
             out = self._footer()
-            if expect_phase in ("specify", "scenarios"):
+            if expect_phase == "specify":
                 self.assertIn("add.py advance --to plan", out,
                               f"{expect_phase} footer must teach the collapse:\n{out}")
                 self.assertIn("add.py advance --fill <draft>", out,

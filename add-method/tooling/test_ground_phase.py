@@ -11,10 +11,10 @@ test_plan_phase_flow.py for the canonical, non-duplicated coverage of the same
 invariants; this file keeps its own CLI-arranged regression net). Behavior pinned,
 not words:
   - new-task seeds phase "specify"; grounding now renders inside "## 3 · PLAN";
-  - advance specify -> scenarios (index-derived); PHASES len 8, specify at index 0;
+  - advance specify -> plan (index-derived); PHASES len 7, specify at index 0;
   - PHASE_OWNER["plan"] == "seam" (the one human approval);
   - the decision digest gives a fresh task the FRONT seam (never "approve the contract"
-    prematurely — specify/scenarios/plan/tests all share the front seam now);
+    prematurely — specify/plan/tests all share the front seam now);
   - render_decide does not crash on the plan seam;
   - reopen targets are specify..observe; done is refused;
   - the phase-detail drill-down renders specify..observe (7 sections) — SEE the
@@ -110,7 +110,7 @@ class GroundLadder(unittest.TestCase):
 
     def _mk_done(self, slug: str):
         """Drive a fresh task specify -> observe -> done (PASS). SIX advances now
-        (specify -> scenarios -> plan -> tests -> build -> verify -> observe), then
+        (specify -> plan -> tests -> build -> verify -> observe), then
         `gate PASS` finalizes to done. (plan-phase-core: ground+contract collapsed
         into plan, so the transition count is unchanged from before the rename —
         verified empirically against the live engine, not assumed.)"""
@@ -122,11 +122,11 @@ class GroundLadder(unittest.TestCase):
         assert self._task(slug)["phase"] == "done", "fixture: task did not reach done"
 
     # ---- the ladder shape -------------------------------------------------
-    def test_phases_has_specify_first_len_8(self):
+    def test_phases_has_specify_first_len_7(self):
         # new truth (plan-phase-core): ground+contract collapsed into plan; PHASES is 8.
         self.assertEqual(add.PHASES[0], "specify", "specify must be the first phase")
         self.assertEqual(add.PHASES[-1], "done", "done stays the terminal phase")
-        self.assertEqual(len(add.PHASES), 8, "ground+contract folded into plan: PHASES is now 8")
+        self.assertEqual(len(add.PHASES), 7, "scenarios merged into specify: PHASES is now 7")
 
     def test_every_phase_is_owned_plan_is_seam(self):
         # PHASE_OWNER is fail-closed (unmapped_phase) -> every phase MUST be mapped;
@@ -160,18 +160,17 @@ class GroundLadder(unittest.TestCase):
         self.assertEqual(code, 0, f"first task should create; err={err!r}")
         self.assertEqual(self._task("first")["phase"], "specify")
 
-    # ---- advance specify -> scenarios ----------------------------------------
-    def test_advance_specify_to_scenarios(self):
+    # ---- advance specify -> plan ----------------------------------------
+    def test_advance_specify_to_plan(self):
         self._run("new-task", "feat", "--title", "Feat")
         self._run("advance", "feat")
-        self.assertEqual(self._task("feat")["phase"], "scenarios",
-                         "advancing from specify lands at scenarios")
+        self.assertEqual(self._task("feat")["phase"], "plan",
+                         "advancing from specify lands at plan (merged flow)")
 
     # ---- guide at plan (grounding now happens inside plan) -----------------
     def test_guide_at_plan_cues_grounding(self):
         self._run("new-task", "feat", "--title", "Feat")
-        self._run("advance", "feat")  # specify -> scenarios
-        self._run("advance", "feat")  # scenarios -> plan
+        self._run("advance", "feat")  # specify -> plan (merged flow)
         out, err, code = self._run("guide")
         low = out.lower()
         self.assertIn("plan", low, "guide must name the plan phase")
@@ -238,8 +237,8 @@ class GroundLadder(unittest.TestCase):
         names = [p["phase"] for p in phases]
         self.assertEqual(names[0], "specify", "the drill-down renders specify first")
         self.assertEqual(names[-1], "observe", "the drill-down ends at observe")
-        self.assertEqual(len(phases), 7,
-                         "specify..observe is 7 sections now (plan folds ground+contract)")
+        self.assertEqual(len(phases), 6,
+                         "specify..observe is 6 phase blocks now (specify owns §1+§2)")
 
     # ---- heading scan captures section 0 ----------------------------------
     def test_phase_spans_captures_section_0(self):

@@ -84,8 +84,7 @@ class _Board(unittest.TestCase):
         t = re.sub(r"(## 3 · PLAN.*?)```.*?```", rf"\1```\n{fence}\n```", t, count=1, flags=re.DOTALL)
         assert f"\n{fence}\n" in t, "fence did not land in §3"
         p.write_text(t, encoding="utf-8")
-        for _ in range(2):    # specify -> scenarios -> plan
-            self._quiet(["advance", slug])
+        self._quiet(["advance", slug])    # specify -> plan
 
     def _freeze(self, slug: str) -> None:
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
@@ -280,8 +279,7 @@ class OptIn(_Board):
         # the universal freeze gate sits at this crossing regardless of the contract system,
         # unrelated to the cross-component behavior under test here)
         self._quiet(["new-task", "t"])
-        for _ in range(2):    # specify -> scenarios -> plan
-            self._quiet(["advance", "t"])
+        self._quiet(["advance", "t"])    # specify -> plan
         self._freeze("t")
         out, err = self._advance("t")
         self.assertIsNone(err)
@@ -369,7 +367,7 @@ class GateConsumerStale(_Board):
         # a task with no consumes: carries no contract_pin -> the guard returns early (byte-identical)
         self._quiet(["new-task", "t"])
         self._freeze("t")                                      # freeze-gate-universal sweep
-        for _ in range(5):                                     # specify -> ... -> verify (5 hops)
+        for _ in range(4):                                     # specify -> ... -> verify (4 hops)
             self._quiet(["advance", "t"])
         self.assertEqual(self._phase("t"), "verify")
         out, err = self._gate("PASS", "t")

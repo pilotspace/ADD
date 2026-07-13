@@ -3,7 +3,7 @@
 
 Pins the collapsed `plan` phase: ground+contract fold into ONE `plan` phase (the change
 plan = grounding + frozen contract + build-strategy), the order becomes
-specify -> scenarios -> plan -> tests -> build -> verify -> observe, the single human
+specify -> plan -> tests -> build -> verify -> observe, the single human
 freeze moves to `plan`, the §3 PLAN template carries the sub-blocks, the grounding floor
 reads §3, and legacy `ground`/`contract` states still load. The cross-component contract
 system is UNTOUCHED.
@@ -52,13 +52,13 @@ class ConstantsShape(unittest.TestCase):
     def test_phases_expectations_first(self):  # M1
         self.assertEqual(
             C.PHASES,
-            ("specify", "scenarios", "plan", "tests", "build", "verify", "observe", "done"),
+            ("specify", "plan", "tests", "build", "verify", "observe", "done"),
         )
         self.assertNotIn("ground", C.PHASES)
         self.assertNotIn("contract", C.PHASES)
 
     def test_direction_bundle_names_plan(self):  # M2
-        self.assertEqual(C.PHASE_GROUPS["DIRECTION"], ("specify", "scenarios", "plan", "tests"))
+        self.assertEqual(C.PHASE_GROUPS["DIRECTION"], ("specify", "plan", "tests"))
         for name, d in (("PHASE_OWNER", C.PHASE_OWNER),
                         ("PHASE_AGENT", C.PHASE_AGENT),
                         ("PHASE_GUIDE", C.PHASE_GUIDE)):
@@ -203,8 +203,7 @@ class _CLI(unittest.TestCase):
     # M4, R3 — crossing plan->tests needs a frozen §3
     def test_plan_to_tests_needs_frozen(self):
         # advance to plan, draft a minimal frozen-able §3, then cross
-        self._run("advance")  # specify -> scenarios
-        self._run("advance")  # scenarios -> plan
+        self._run("advance")  # specify -> plan (merged flow)
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
         p = self._task_md()
         md = p.read_text()

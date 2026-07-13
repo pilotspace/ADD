@@ -3,7 +3,7 @@
 
 CONTRACT (frozen @ v1):
   _SPAWN_HINTS: dict[str,str]  phase -> idiom; done ABSENT
-    specify:"domain researcher" · scenarios:"wide scenario sweep" ·
+    specify:"domain researcher + wide scenario sweep" ·
     plan:"change-plan design sweep" ·
     tests:"red-suite test-author" · build:"independent well-scoped batch" ·
     verify:"earned-green refute-read" · observe:"lessons-mining reviewer"
@@ -28,8 +28,7 @@ import add
 
 
 EXPECTED = {
-    "specify": "domain researcher",
-    "scenarios": "wide scenario sweep",
+    "specify": "domain researcher + wide scenario sweep",
     "plan": "change-plan design sweep",
     "tests": "red-suite test-author",
     "build": "independent well-scoped batch",
@@ -91,7 +90,7 @@ class _CLI(unittest.TestCase):
     def test_status_renders_hint_for_active_specify(self):
         # fresh task t is active at specify under the default (auto) project dial
         out = self._run("status")
-        self.assertIn("spawn hint: specify → domain researcher (tier: mid)", out)
+        self.assertIn("spawn hint: specify → domain researcher + wide scenario sweep (tier: mid)", out)
 
     def test_manual_dial_suppresses_hint(self):
         self._run("autonomy", "set", "manual", "--project")

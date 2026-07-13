@@ -79,10 +79,10 @@ class PhaseGroupsConstantTest(unittest.TestCase):
                          {"DIRECTION", "BUILD", "VERIFY"})
 
     def test_tuples_match_frozen_shape(self):
-        # plan-phase-core: ground+contract collapsed into `plan`; DIRECTION now names
-        # specify/scenarios/plan/tests (4 phases, was 5) — see MIGRATION_CONTEXT M2.
+        # phase-merge-specify: scenarios merged into specify; DIRECTION now names
+        # specify/plan/tests (3 phases, was 4).
         self.assertEqual(engine_constants.PHASE_GROUPS["DIRECTION"],
-                         ("specify", "scenarios", "plan", "tests"))
+                         ("specify", "plan", "tests"))
         self.assertEqual(engine_constants.PHASE_GROUPS["BUILD"], ("build",))
         self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify", "observe"))
 
@@ -114,7 +114,6 @@ class PhaseAgentConstantTest(unittest.TestCase):
         # phase) is add-design owned, same as specify/scenarios were.
         pa = engine_constants.PHASE_AGENT
         self.assertEqual(pa["specify"], "add-design")
-        self.assertEqual(pa["scenarios"], "add-design")
         self.assertEqual(pa["plan"], "add-design")
         self.assertEqual(pa["tests"], "add-build")
         self.assertEqual(pa["build"], "add-build")
@@ -136,7 +135,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
     """M3 — _phase_bundle: normal resolve / terminal None / fail-closed unmapped."""
 
     def test_resolves_direction_phases(self):
-        for phase in ("specify", "scenarios", "plan", "tests"):
+        for phase in ("specify", "plan", "tests"):
             self.assertEqual(engine_predicates._phase_bundle(phase), "DIRECTION", phase)
 
     def test_resolves_build_phase(self):

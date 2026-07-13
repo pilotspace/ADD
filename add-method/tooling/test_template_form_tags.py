@@ -190,8 +190,8 @@ class EngineSeamsUnchanged(_ScaffoldBase):
         text = self.task_md.read_text(encoding="utf-8")
         for name, pat in SEAM_PATTERNS.items():
             self.assertTrue(pat.search(text), f"parsed seam survives in scaffold: {name}")
-        add.main(["advance"])  # specify -> scenarios, syncs the marker into TASK.md
-        self.assertRegex(self.task_md.read_text(encoding="utf-8"), r"(?m)^phase: scenarios",
+        add.main(["advance"])  # specify -> plan, syncs the marker into TASK.md
+        self.assertRegex(self.task_md.read_text(encoding="utf-8"), r"(?m)^phase: plan",
                          "the phase: marker sync must keep working on the new template")
 
     def test_freeze_gate_and_declared_count_seams(self):

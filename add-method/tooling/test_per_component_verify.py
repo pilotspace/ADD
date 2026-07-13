@@ -94,7 +94,7 @@ class _Board(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _to_verify(self, slug):
-        for _ in range(5):    # specify->scenarios->plan->tests->build->verify
+        for _ in range(4):    # specify->plan->tests->build->verify
             self._quiet(["advance", slug])
 
     def _gate(self, slug, outcome):

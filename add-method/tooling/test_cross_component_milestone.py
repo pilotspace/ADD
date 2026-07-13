@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for the intra-milestone cross-component HOLD (component-aware-add, task 4).
 
-A `consumes: <id>` task is HELD from advancing scenarios->contract while its producer's contract
+A `consumes: <id>` task is HELD from advancing specify->plan while its producer's contract
 snapshot (`.add/contracts/<id>.json`, written by task 3 on the producer's freeze) does not exist
 — so a BE producer and an FE consumer ship in ONE milestone, the FE ordered downstream of the
 frozen endpoint. Undeclared / no-role tasks cross byte-identically.
@@ -66,13 +66,13 @@ class _Board(unittest.TestCase):
     def _task_path(self, slug):
         return self.addp / "tasks" / slug / "TASK.md"
 
-    def _at_scenarios(self, slug, role_line=None):
+    def _at_specify(self, slug, role_line=None):
         self._quiet(["new-task", slug])
         if role_line:
             p = self._task_path(slug)
             p.write_text(p.read_text().replace("phase: specify", f"{role_line}\nphase: specify", 1),
                          encoding="utf-8")
-        self._quiet(["advance", slug])    # specify -> scenarios
+        # phase-merge-specify: the hold now binds the specify -> plan crossing directly
 
     def _advance(self, slug):
         out, errbuf = io.StringIO(), io.StringIO()
@@ -95,15 +95,15 @@ class _Board(unittest.TestCase):
 
 class Hold(_Board):
     def test_consumer_held_until_producer_freezes(self):
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_unfrozen", err or "")
-        self.assertEqual(self._phase("fe"), "scenarios")
+        self.assertEqual(self._phase("fe"), "specify")
 
     def test_consumer_proceeds_once_snapshot_exists(self):
         self._write_snapshot()
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"should proceed once the producer froze, got {err!r}")
         self.assertEqual(self._phase("fe"), "plan")
@@ -117,23 +117,23 @@ class Hold(_Board):
         t = t.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by T")
         t = re.sub(r"(## 3 · PLAN.*?)```.*?```", r"\1```\nBE SHAPE\n```", t, count=1, flags=re.DOTALL)
         bp.write_text(t, encoding="utf-8")
-        for _ in range(3):    # specify -> scenarios -> plan -> tests (writes snapshot)
+        for _ in range(2):    # specify -> plan -> tests (writes snapshot)
             self._quiet(["advance", "be"])
         self.assertTrue((self.addp / "contracts" / "gateway-api.json").exists())
         # now the FE can enter §3
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err)
         self.assertEqual(self._phase("fe"), "plan")
 
     def test_undeclared_contract_does_not_hold(self):
-        self._at_scenarios("fe", "consumes: nope")
+        self._at_specify("fe", "consumes: nope")
         out, err = self._advance("fe")
         self.assertIsNone(err, "an undeclared contract id must not hold")
         self.assertEqual(self._phase("fe"), "plan")
 
     def test_no_role_byte_identical(self):
-        self._at_scenarios("plain")
+        self._at_specify("plain")
         out, err = self._advance("plain")
         self.assertIsNone(err)
         self.assertEqual(self._phase("plain"), "plan")
@@ -158,7 +158,7 @@ class Recency(_Board):
         t = self._re.sub(r"(## 3 · PLAN.*?)```.*?```", rf"\1```\n{shape}\n```",
                          t, count=1, flags=self._re.DOTALL)
         bp.write_text(t, encoding="utf-8")
-        for _ in range(3):    # specify -> scenarios -> plan -> tests (writes snapshot)
+        for _ in range(2):    # specify -> plan -> tests (writes snapshot)
             self._quiet(["advance", slug])
         return bp
 
@@ -192,15 +192,15 @@ class Recency(_Board):
     def test_stale_leftover_blocks_at_advance(self):
         bp = self._make_producer()
         self._drift_producer(bp)                       # live §3 hash now != snapshot hash
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_stale", err or "")
-        self.assertEqual(self._phase("fe"), "scenarios")   # held; nothing pinned
+        self.assertEqual(self._phase("fe"), "specify")   # held; nothing pinned
 
     def test_current_snapshot_admits_at_advance(self):
         self._make_producer()                          # snapshot hash == live producer §3 hash
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"a current snapshot must admit, got {err!r}")
         self.assertEqual(self._phase("fe"), "plan")
@@ -209,7 +209,7 @@ class Recency(_Board):
         # a hand-rolled leftover snapshot with NO backing producer task -> existence-only (a
         # cross-milestone / federation consume of an earlier-frozen contract is not blocked).
         self._write_snapshot()                         # {id,producer,hash:"h1"} — no `task`, no producer
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"no live producer must be existence-only, got {err!r}")
         self.assertEqual(self._phase("fe"), "plan")
@@ -218,22 +218,22 @@ class Recency(_Board):
     def test_phase_contract_runs_stale_hold(self):
         bp = self._make_producer()
         self._drift_producer(bp)
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._phase_to("fe", "plan")
         self.assertIsNotNone(err, "phase plan must not bypass the recency hold")
         self.assertIn("producer_contract_stale", err or "")
-        self.assertEqual(self._phase("fe"), "scenarios")
+        self.assertEqual(self._phase("fe"), "specify")
 
     def test_phase_contract_enforces_absent_hold(self):
         # no snapshot at all -> the override still enforces the existence hold
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out, err = self._phase_to("fe", "plan")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_unfrozen", err or "")
-        self.assertEqual(self._phase("fe"), "scenarios")
+        self.assertEqual(self._phase("fe"), "specify")
 
     def test_phase_contract_no_role_byte_identical(self):
-        self._at_scenarios("plain")
+        self._at_specify("plain")
         out, err = self._phase_to("plain", "plan")
         self.assertIsNone(err, f"a no-role task must not hold at phase plan, got {err!r}")
         self.assertEqual(self._phase("plain"), "plan")
@@ -242,7 +242,7 @@ class Recency(_Board):
     def test_check_warns_drifted_consumer_never_red(self):
         bp = self._make_producer()
         self._drift_producer(bp)
-        self._at_scenarios("fe", "consumes: gateway-api")     # fe held at scenarios, snapshot stale
+        self._at_specify("fe", "consumes: gateway-api")     # fe held at scenarios, snapshot stale
         out = self._check()
         self.assertIn("contract_producer_stale", out)
         code = 0
@@ -259,7 +259,7 @@ class Recency(_Board):
         (self.addp / "contracts").mkdir(parents=True, exist_ok=True)
         (self.addp / "contracts" / "gateway-api.json").write_text(
             json.dumps({"id": "gateway-api", "producer": "gateway"}), encoding="utf-8")  # no hash
-        self._at_scenarios("fe", "consumes: gateway-api")
+        self._at_specify("fe", "consumes: gateway-api")
         out = self._check()
         self.assertIn("contract_snapshot_hashless", out)
         code = 0

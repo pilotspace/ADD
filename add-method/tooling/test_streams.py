@@ -142,7 +142,7 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         code, _, _ = _run(["advance", "a"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["a"]["phase"], "scenarios", "advance must step the NAMED task")
+        self.assertEqual(st["tasks"]["a"]["phase"], "plan", "advance must step the NAMED task")
         self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT step")
         self.assertEqual(st["active_task"], "b")
 
@@ -162,7 +162,7 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         code, _, _ = _run(["advance"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["b"]["phase"], "scenarios", "omitted slug must step the active task")
+        self.assertEqual(st["tasks"]["b"]["phase"], "plan", "omitted slug must step the active task")
         self.assertEqual(st["tasks"]["a"]["phase"], "specify", "the non-active task must be untouched")
 
 

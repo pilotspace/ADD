@@ -92,8 +92,10 @@ class MalformedSkipsTest(_Board):
         self._init_project()
         self._silent("new-task", "t1", "--title", "T")
         self._write_task("t1", skips_line="skips: specify,scenarios")
-        self._silent("phase", "specify", "t1")
-        out, err, code = self._run("advance", "t1")   # specify -> scenarios (skippable)
+        self._silent("phase", "verify", "t1")
+        out, err, code = self._run("advance", "t1")   # verify -> observe (the skippable
+        # crossing — phase-merge-specify: scenarios is retired/filtered, `specify` is
+        # the surviving bad token, and validation lives where a skip could take effect)
         blob = out + err
         self.assertNotEqual(code, 0, "fail-closed discard unchanged")
         self.assertIn("skip_not_allowed", blob, "the code prefix survives")

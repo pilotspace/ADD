@@ -78,7 +78,7 @@ class FastNewTaskFlagTest(unittest.TestCase):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
 
     def _to_plan(self, slug):
-        for _ in range(2):   # specify -> scenarios -> plan
+        for _ in range(1):   # specify -> plan
             self._quiet(["advance", slug])
 
     def _freeze(self, slug):

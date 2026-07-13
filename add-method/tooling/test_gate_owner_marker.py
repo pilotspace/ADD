@@ -13,7 +13,7 @@ CONTRACT (frozen @ v1, next-step-seams 2/3):
 
   The phase × autonomy table (only the verify row moves with the dial):
       tests/build/observe -> [you drive] (always)
-      specify/scenarios/plan/done -> [human gate] (always; the plan freeze stays human, run.md:21)
+      specify/plan/done -> [human gate] (always; the plan freeze stays human, run.md:21)
       verify -> [you drive] under auto, [human gate] under conservative/manual   <- exit criterion
 
   Option F: the FROZEN machine-state-json JSON (`owner`/`stop`) is NOT touched — the marker rides
@@ -40,12 +40,12 @@ HERE = Path(__file__).resolve().parent           # add-method/tooling
 # the table the frozen §3 contract encodes — only verify moves with the dial
 _TABLE = {
     "auto": {
-        "specify": " [human gate]", "scenarios": " [human gate]",
+        "specify": " [human gate]",
         "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
         "verify": " [you drive]", "observe": " [you drive]", "done": " [human gate]",
     },
     "conservative": {
-        "specify": " [human gate]", "scenarios": " [human gate]",
+        "specify": " [human gate]",
         "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
         "verify": " [human gate]", "observe": " [you drive]", "done": " [human gate]",
     },

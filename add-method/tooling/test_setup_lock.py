@@ -131,8 +131,7 @@ class SetupLockTest(unittest.TestCase):
     def test_front_advances_but_build_blocked(self):
         self._init_await()
         add.main(["new-task", "a"])                      # phase=specify (plan-phase-core seed)
-        self.assertEqual(_run(["advance", "a"])[0], 0)   # specify -> scenarios
-        self.assertEqual(_run(["advance", "a"])[0], 0)   # scenarios -> plan
+        self.assertEqual(_run(["advance", "a"])[0], 0)   # specify -> plan
         # plan-phase-core: the plan->tests crossing is now freeze-gated — freeze §3 here so
         # this test isolates the setup_unlocked block at tests->build, not contract_not_frozen.
         self._freeze("a")

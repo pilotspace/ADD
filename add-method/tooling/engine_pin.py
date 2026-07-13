@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "26f78f0480771939d4604d21f62546f6"  # re-aimed @ compound-ticks (call-floor 4/5: opt-in freeze --cross lands a plan freeze in tests; a completing gate at build auto-crosses to verify; the new-task recipe advertises the compressed lane). prior: 6f4e791f… @ scope-coverage-hint 
-ENGINE_PKG_MD5 = "d83fc67fc7979adde37358a29d5e3f46"  # re-aimed @ kickoff-truth v2 (io_state.py: _die gains the dup-failure short-circuit — _register_invocation/_clear_last_fail/_dup_fail_hint; the sig sidecar lives in the OS tmp dir keyed by md5(root), NEVER in the .add tree — the reject-writes-nothing floor; constants.py untouched at v2). prior: 28212a55… @ guides-and-skill
+ENGINE_MD5 = "b27ce845f42aa832b1338c4881f9cb27"  # re-aimed @ phase-merge-specify (six-phase-loop 1/6: scenarios PHASE merged into specify — legacy state token + retired skips: token both tolerated; sections untouched). prior: 26f78f04… @ compound-ticks 
+ENGINE_PKG_MD5 = "870a4ce0603599ca359302910df01614"  # re-aimed @ phase-merge-specify (constants.py: PHASES drops scenarios; _SKIPPABLE_PHASES=(observe,); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: d83fc67f… @ kickoff-truth v2 
