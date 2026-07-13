@@ -77,7 +77,7 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a mil
 
 ## The flow and which file to load
 
-Load **only the phase you are in** (progressive disclosure):
+Inline, load **only the phase you are in**; delegating, spawn the Bundle-column agent — it loads its own bundle guides (you read ONLY this file):
 
 | Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
 |-------|-------|----------------------------|-----------|--------|

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "guide-recut",
+  "active_task": "bundle-disclosure",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9181,10 +9181,56 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bundle-disclosure": {
+      "title": "Disclose phase guides into the bundle agents",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T18:54:40+00:00",
+      "updated": "2026-07-13T19:02:26+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:55:28+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "be05d2e5ff4c0858e5c3e8c7106edb71",
+        "tests": {
+          "add-method/tooling/test_bundle_disclosure.py": "4c7636a224273a1342c78245d124a5d6"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          "add-method/src/add_method/_bundled/agents/",
+          ".claude/agents/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "c5492e4f812ac8c567b99b3f353b4adf"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T18:52:57+00:00",
+  "updated": "2026-07-13T19:02:26+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10446,7 +10492,7 @@
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
-    "six-phase-loop": "guide-recut"
+    "six-phase-loop": "bundle-disclosure"
   },
   "todos": [
     {
