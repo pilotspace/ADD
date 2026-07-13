@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-echo-draft",
+  "active_task": "risk-report-render",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8745,10 +8745,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "risk-report-render": {
+      "title": "Right-size the gate render to the risk class",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:37:18+00:00",
+      "updated": "2026-07-13T10:46:31+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:37:18+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6c32e2f03398294f3bd2449e3e10943d",
+        "tests": {
+          "add-method/tooling/test_risk_report_render.py": "cad703e4e032fb39eb136de54b8d54ac"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/"
+        ],
+        "snapshot_md5": "f71c23a3111749960d316f39c6913684"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T10:35:27+00:00",
+  "updated": "2026-07-13T10:46:31+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9981,7 +10022,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
-    "ceremony-to-effort": "scope-echo-draft"
+    "ceremony-to-effort": "risk-report-render"
   },
   "todos": [
     {

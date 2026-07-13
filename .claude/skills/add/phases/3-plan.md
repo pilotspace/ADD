@@ -48,6 +48,7 @@ Present the bundle **lowest-confidence first**: the 1–2 points most likely wro
 — rendering SHAPE then the freeze APPROVE as a guided choice; `report-template.md` holds the full
 template + examples, read it at most once per session —
 **render before `FROZEN`, then record `Reported: yes`; never on a timeout.** See `run.md`.
+The freeze always renders the full card — never the compact form (6-verify.md's right-size rule).
 The approval freezes the Contract (HARD) + the Build-strategy Scope.
 
 ## The freeze review checklist
