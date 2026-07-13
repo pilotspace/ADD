@@ -18,6 +18,7 @@ import pathlib
 import sys
 
 from benchmark.arms.loader import ARM_NAMES, load_arm
+from benchmark.pilot import REPO_ROOT, resolve_setup_steps
 from benchmark.report import render_report
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import find_resume_point
@@ -73,6 +74,9 @@ def main(argv: list[str] | None = None) -> int:
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
             return 2
+        # todo #27: the pilot path resolves {REPO_ROOT}; this thin CLI must too,
+        # or the arm's `pip install -e {REPO_ROOT}/add-method` is unrunnable.
+        arm = resolve_setup_steps(arm, REPO_ROOT)
 
         record = execute_wm(
             arm,
@@ -97,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
             return 2
+        arm = resolve_setup_steps(arm, REPO_ROOT)   # todo #27, same as `run`
 
         last_record = None
         for wm in range(resume_wm, 7):

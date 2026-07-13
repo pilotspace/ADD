@@ -8831,7 +8831,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T11:37:30+00:00",
+  "updated": "2026-07-13T11:44:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10227,7 +10227,7 @@
       "id": 27,
       "text": "benchmark harness: run.py run/resume bypass resolve_setup_steps -> {REPO_ROOT} arm recipes fail setup (exit 2) via that entry point; only pilot.py substitutes. Move resolve_setup_steps into execute_wm (or the run.py CLI) so both entry points share the substitution. Found during the add WM1 re-measure 2026-07-09.",
       "created": "2026-07-09T11:53:20+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 28,
