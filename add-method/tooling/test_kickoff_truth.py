@@ -81,15 +81,16 @@ class KickoffLaneTest(_Harness):
 class RecipeTest(_Harness):
     """M2 — new-task hands the full remaining call recipe, every lane."""
 
-    _MARKS = ("advance --to plan", "freeze --by", "gate PASS")
+    _MARKS = ("advance --to plan", "freeze --by", "--cross", "gate PASS")
 
     def _assert_recipe(self, out, lane):
         self.assertIn("recipe", out.lower(), f"{lane}: no recipe block in new-task stdout")
         for mark in self._MARKS:
             self.assertIn(mark, out, f"{lane}: recipe is missing `{mark}`")
-        # the three post-freeze advances (plan->tests, tests->build, build->verify)
+        # the compressed lane (compound-ticks): freeze --cross absorbs plan->tests and
+        # gate-from-build absorbs build->verify, so two advances remain in the recipe
         tail = out[out.lower().index("recipe"):]
-        self.assertGreaterEqual(tail.count("add.py advance"), 3,
+        self.assertGreaterEqual(tail.count("add.py advance"), 2,
                                 f"{lane}: recipe must list every remaining advance")
 
     def test_new_task_emits_full_recipe_milestone_lane(self):
