@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "relations-surface",
+  "active_task": "book-plan-align",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8489,10 +8489,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "book-plan-align": {
+      "title": "Align book ch02 flow + diagram + GLOSSARY to the expectations-first plan phase",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "expectations-first",
+      "depends_on": [
+        "guides-and-skill"
+      ],
+      "created": "2026-07-13T07:08:01+00:00",
+      "updated": "2026-07-13T07:56:53+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T07:29:13+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "e4584d54e82c724aa5d3a57296146aa9",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/",
+          "add-method/src/add_method/_bundled/docs/",
+          "add-method/diagrams/",
+          "add-method/tooling/test_ground_prose.py",
+          "appendix-c-glossary.md",
+          "appendix-g-references.md"
+        ],
+        "snapshot_md5": "d9bf531dc2ee5e138600a4b47173c59f"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T07:03:14+00:00",
+  "updated": "2026-07-13T07:56:53+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9700,7 +9742,7 @@
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
-    "expectations-first": "guides-and-skill",
+    "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface"
   },
   "todos": [
