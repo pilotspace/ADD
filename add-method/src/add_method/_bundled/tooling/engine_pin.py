@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "3937d5c1282a86526aa2ec5f68e8b975"  # re-aimed @ kickoff-truth (ceremony-to-effort 1/7: lane-aware kickoff — single-task --oneshot line leads init's kickoff block + headless hint; cmd_new_task ends with the full remaining call recipe; main() registers the invocation + clears the dup-failure sidecar on success). prior: 9311ec35… @ relations-surface
+ENGINE_MD5 = "e2ed6599791add382f7c76f14d8d6840"  # re-aimed @ derived-stamps (ceremony-to-effort 2/7: cmd_freeze fills a placeholder-form Ground SHA: line with the real short HEAD inside the same atomic write as the Status flip — grandfathered, fail-open without git). prior: 3937d5c1… @ kickoff-truth
 ENGINE_PKG_MD5 = "d83fc67fc7979adde37358a29d5e3f46"  # re-aimed @ kickoff-truth v2 (io_state.py: _die gains the dup-failure short-circuit — _register_invocation/_clear_last_fail/_dup_fail_hint; the sig sidecar lives in the OS tmp dir keyed by md5(root), NEVER in the .add tree — the reject-writes-nothing floor; constants.py untouched at v2). prior: 28212a55… @ guides-and-skill

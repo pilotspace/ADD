@@ -1136,6 +1136,20 @@ def cmd_freeze(args: argparse.Namespace) -> None:
                              text[seg_start:seg_end], count=1)
     if n == 0:
         _die(f"contract_not_drafted: {slug}'s §3 has no 'Status: DRAFT' line to freeze")
+    # derived-stamps: a `Ground SHA:` line still carrying its `<...>` placeholder is
+    # filled with the repo's real short HEAD in this SAME atomic write, so the freeze
+    # fingerprint hashes the stamped text. Grandfather (a resolved line never matches)
+    # + fail-open (no git / git fails -> no substitution), mirroring _stamp_gate_record.
+    if re.search(r"(?m)^Ground SHA:[ \t]*<[^>\n]*>", new_seg):
+        try:
+            _r = subprocess.run(["git", "-C", str(root.parent), "rev-parse", "--short", "HEAD"],
+                                capture_output=True, text=True, timeout=10)
+            _sha = _r.stdout.strip() if _r.returncode == 0 else ""
+        except (OSError, subprocess.SubprocessError):
+            _sha = ""
+        if _sha:
+            new_seg = re.sub(r"(?m)^Ground SHA:[ \t]*<[^>\n]*>.*$",
+                             f"Ground SHA: {_sha} — stamped by freeze", new_seg, count=1)
     new_text = text[:seg_start] + new_seg + text[seg_end:]
     _atomic_write(task_md, new_text)                       # TASK.md first (audit source of truth)
     state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": ts,

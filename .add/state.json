@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "kickoff-truth",
+  "active_task": "derived-stamps",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8580,10 +8580,49 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "derived-stamps": {
+      "title": "Freeze stamps the Ground SHA placeholder (derived data, never hand-typed)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T09:27:24+00:00",
+      "updated": "2026-07-13T09:37:45+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T09:28:32+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cc76cba9bb017a48fe12833f18b3fd3f",
+        "tests": {
+          "add-method/tooling/test_derived_stamps.py": "072b5670715e7d58deadc041efecad63"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "0d7da010c20503c69b8c5a46cf8f0dcd"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T09:23:12+00:00",
+  "updated": "2026-07-13T09:37:45+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9816,7 +9855,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
-    "ceremony-to-effort": "kickoff-truth"
+    "ceremony-to-effort": "derived-stamps"
   },
   "todos": [
     {
