@@ -68,6 +68,7 @@ SHAPE   <task title, bold> — v<N>  (DRAFT — not yet frozen)
 - **Glyphs are fixed** — ✅ done · 🔄 active · ⬜ pending · ⚠ blocked/flagged; never invent new ones.
 - **Sourced from the engine, summarized by you** — pull from `add.py status`'s `tasks:`/`streams:` output; never paste it verbatim into chat.
 - **SHAPE is freeze-only** — the concrete thing being locked, so the human reviews the actual shape, not just commentary about it.
+- **BUILD PLAN is the HOW** — at a freeze, `report --decide` also renders the §3 Build-strategy plan-of-action (Scope · batches · Persona · Spawn) as a `BUILD PLAN (§3 …)` block, so the human approves how the build runs, not only the SHAPE. Placeholder fields are skipped.
 
 ## The report blocks, in order
 
@@ -82,16 +83,16 @@ APPROVE   what you need from the human (or "none — FYI") — exactly one — s
 NEXT      the recommended next actions, ranked (top ▶ highlighted, bolded) + what each unlocks
 ```
 
-1. **SUMMARY** — one line: intent + target + position. **Never optional** — even when PLAN/SHAPE already carries most of the context, SUMMARY still renders as its own line; it is never merged into or silently replaced by another block.
-2. **FLAGS** — lowest-confidence first, each with *why* and *cost if wrong*. Where TASK.md markers exist (`⚠` / `- [~]` / `- [ ]`), quote verbatim and keep document order.
+1. **SUMMARY** — one line: intent + target + position. **Never optional** — even when PLAN/SHAPE carries most of the context, SUMMARY renders as its own line, never merged into another block.
+2. **FLAGS** — lowest-confidence first, each with *why* and *cost if wrong*. Where TASK.md markers exist (`⚠` / `- [~]` / `- [ ]`), quote verbatim in document order.
 3. **DECIDED** — high-confidence autonomous calls, highest-confidence first, each with *why* it was safe. "none" when none. NEVER list a security / residue / lowered-autonomy call here.
 4. **EVIDENCE** — engine-sourced facts from `add.py` output, never re-typed.
-5. **APPROVE** — as a **guided decision**: one `▶ … (recommended)` + 1–3 described alternatives. Exactly one per report, or "none — FYI". Rendered last among the core blocks — the actual interactive ask fires only after everything above it (show-before-ask).
-6. **NEXT** — ranked next actions, top one marked `▶` with what it unlocks. Mirror the rollup's `DECIDE NEXT` for the top action; overrule it only with a stated reason. **Informational, not a second gate**.
+5. **APPROVE** — a **guided decision**: one `▶ … (recommended)` + 1–3 described alternatives. Exactly one per report, or "none — FYI". Rendered last — the interactive ask fires only after everything above it (show-before-ask).
+6. **NEXT** — ranked actions, top marked `▶` with what it unlocks. Mirror the rollup's `DECIDE NEXT` for the top; overrule only with a stated reason. **Informational, not a second gate**.
 
 ### Beyond the core blocks
 
-When a report needs more — a `RISK` ledger, a `DIFF`, a `SCOPE` map — add an extra block (SCREAMING-CASE label · one-line intent · engine-sourced where possible) AFTER EVIDENCE and BEFORE APPROVE. Add only when it carries what the core blocks don't; never pad; never drop a core block.
+When a report needs more — a `RISK` ledger, a `DIFF`, a `SCOPE` map — add an extra block (SCREAMING-CASE label · one-line intent · engine-sourced) AFTER EVIDENCE and BEFORE APPROVE. Add only when it carries what the core blocks don't; never pad; never drop a core block.
 
 ### The APPROVE block as a guided choice
 
@@ -104,27 +105,27 @@ APPROVE  <the question>
       <one-line description>
 ```
 
-- **Exactly one** option carries `▶ … (recommended)`. `confidence.md` self-score informs which; the human overrides freely.
+- **Exactly one** option carries `▶ … (recommended)`; `confidence.md` informs which, human overrides freely.
 - **1–3 real alternatives** only — no strawmen, no filler; one genuine path → show one.
-- **Every option is described** — pick and each alternative carry a one-line description.
+- **Every option is described** — pick and each alternative carry a one-liner.
 - **Human gates only** — render at `[human gate]` points; not at `[you drive]` steps.
 
-**The ask itself** — when the APPROVE block becomes an `AskUserQuestion` picker: recommended option goes first with `(Recommended)` suffix. On tools without `AskUserQuestion`, render as a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + the flag count.
+**The ask itself** — when APPROVE becomes an `AskUserQuestion` picker: recommended first with a `(Recommended)` suffix. Without `AskUserQuestion`, a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + the flag count.
 
 ## Hard rules
 
 <constraints>
 - **Summary-first.** Never bury the decision under a task list or a diff.
-- **Show before ask.** Render the artifact (digest · diff · report) before any approval question. PLAN/SHAPE counts as the artifact here too.
+- **Show before ask.** Render the artifact (digest · diff · report) before any approval question; PLAN/SHAPE counts too.
 - **Guided decision.** At a `[human gate]`, APPROVE is a guided choice — one `▶ … (recommended)` + 1–3 described alternatives; never a bare next step.
-- **Reconcile the count.** FLAGS must reconcile with `add.py report --decide`'s open-item count before the ask. Engine wins if prose disagrees — fix the data, not the sentence.
+- **Reconcile the count.** FLAGS must reconcile with `add.py report --decide`'s open-item count before the ask. Engine wins on disagreement — fix the data, not the sentence.
 - **Never pre-stamp a human decision point.** Freeze / gate / lock fields stay DRAFT or blank until the answer returns: show → ask → stamp → advance.
-- **Never dump raw engine output as the plan.** Summarize `add.py status`/`report` through PLAN/SHAPE (or prose) — the engine's full verbosity is for `add.py` itself, not the chat message wrapped around it.
+- **Never dump raw engine output as the plan.** Summarize `add.py status`/`report` through PLAN/SHAPE (or prose) — the engine's verbosity is for `add.py`, not the chat wrapped around it.
 - **One report per decision point.** After an approval, point at the frozen artifact — do not re-render the bundle.
-- **Batch, don't serialize.** N same-gate decisions ready together (intake items · ready-to-freeze contracts) render as ONE report: PLAN lists each item with its own lowest-confidence flag; APPROVE covers the batch in one ask, and any item can be held back by name.
+- **Batch, don't serialize.** N same-gate decisions ready together (intake items · ready-to-freeze contracts) render as ONE report: PLAN lists each with its own lowest-confidence flag; APPROVE covers the batch in one ask, any item held back by name.
 - **Honest scope.** "Done" means the request, not the last task: report "task 2/3", never "done" while approved scope remains.
 - **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + flag count — pointing at the report above.
-- **NEXT is not a second gate.** The single decision stays in APPROVE; NEXT is ranked recommendations only.
+- **NEXT is not a second gate.** The decision stays in APPROVE; NEXT is ranked recommendations only.
 - **DECIDED never holds a gate-class call.** Security / residue / lowered-autonomy calls escalate in APPROVE.
-- **Recorded, not just performed.** Rendering this template at a gate is recorded, not assumed — TASK.md's `Reported: yes` (§3/§6) is the mechanical trace; `add.py audit` surfaces an unrecorded one (`contract_report_unrecorded` / `verify_report_unrecorded`), a spot-audit the backstop.
+- **Recorded, not just performed.** A gate render is recorded, not assumed — TASK.md `Reported: yes` (§3/§6) is the trace; `add.py audit` surfaces an unrecorded one (`contract_report_unrecorded`/`verify_report_unrecorded`), a spot-audit the backstop.
 </constraints>

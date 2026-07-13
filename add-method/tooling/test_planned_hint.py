@@ -34,7 +34,7 @@ def _meet_exit_criteria(ms: str) -> None:
 
 HINT = "not yet scaffolded"
 FROZEN_DECIDE_KEYS = {"seam", "milestone", "task", "phase", "gate",
-                      "judgment", "facts", "unlocks", "decide"}
+                      "judgment", "facts", "unlocks", "decide", "plan"}
 
 
 class PlannedHintTest(unittest.TestCase):

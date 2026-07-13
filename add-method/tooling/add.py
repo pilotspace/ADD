@@ -6074,6 +6074,35 @@ def _flag_well_formed(raw3: str) -> bool:
     return len(residue) >= 3                  # substantive content beyond the tag(s)
 
 
+# plan-in-report: the §3 Build-strategy plan-of-action fields, in a fixed order, surfaced at
+# the freeze so the human approves HOW (not just the contract SHAPE). Each field is authored on
+# its OWN physical line in the template, so the value is captured single-line (NOT via
+# _capture_wrapped — its `Word Word:` continuation boundary doesn't recognize a label like
+# "Known-problem fixes:" and would bleed one field's value into the next). A field whose value
+# is a template placeholder (leading "<", or the bare "./src/" Scope default) is skipped; a
+# trailing "   <hint>" on a real value is stripped. PURE.
+_PLAN_FIELDS = ("Scope (may touch)", "Strategy (ordered batches)", "Approach (domain strategy)",
+                "Persona (required)", "Spawn isolation (default)", "Known-problem fixes")
+
+
+def _build_plan(raw3: str) -> list[dict]:
+    out: list[dict] = []
+    for label in _PLAN_FIELDS:
+        m = re.search(rf"(?m)^{re.escape(label)}:[ \t]*(.*)$", raw3)   # this label's line ONLY
+        if not m:
+            continue
+        val = m.group(1).strip()
+        hint = re.search(r"\s+<[^>]*>\s*$", val)      # strip a trailing "   <template hint>"
+        if hint:
+            val = val[:hint.start()].strip()
+        if not val or val.startswith("<"):            # a bare placeholder is not a plan
+            continue
+        if val.strip("`").strip().startswith("./src/"):   # the untouched Scope default
+            continue
+        out.append({"label": label, "value": val})
+    return out
+
+
 def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
     """FACTS for the task-level decision-point digest (frozen shape). The decision comes
     from STATE ONLY: recorded (gate set / observe / done) · front (specify→tests) ·
@@ -6116,9 +6145,10 @@ def decide_data(root: Path, state: dict, mslug: str, slug: str) -> dict:
     else:
         unlocks = "none"
         decide = f"no decision pending — recorded gate: {gate}"
+    plan = _build_plan(raw.get(3, "")) if (seam == "front" and not frozen) else []
     return {"seam": seam, "milestone": mslug, "task": slug, "phase": phase,
             "gate": gate, "judgment": judgment, "facts": facts,
-            "unlocks": unlocks, "decide": decide}
+            "unlocks": unlocks, "decide": decide, "plan": plan}
 
 
 def render_decide(root: Path, state: dict, mslug: str, slug: str, *,
@@ -6147,6 +6177,12 @@ def render_decide(root: Path, state: dict, mslug: str, slug: str, *,
         L.append(" CONTRACT (§3 verbatim)")
         L.extend(_raw_phase_bodies(root, slug).get(3, "").split("\n"))
         L.append(" STATUS DRAFT")
+    if d["plan"]:                          # plan-in-report: the legible plan-of-action
+        L.append("")
+        L.append(" BUILD PLAN (§3 · how the AI will build)")
+        w = max(len(e["label"]) for e in d["plan"])
+        for e in d["plan"]:
+            L.append(f"   {e['label']:<{w}} : {e['value']}")
     f = d["facts"]
     deps_txt = " ".join(f"{x['slug']}:{x['gate']}" for x in f["deps"]) or "none"
     L.append("")
@@ -8046,7 +8082,7 @@ def cmd_report(args: argparse.Namespace) -> None:
                 payload = {"seam": "milestone", "milestone": mslug, "task": None,
                            "phase": "", "gate": "none", "judgment": [],
                            "facts": {"phase": "", "gate": "none", "deps": [], "tests": 0},
-                           "unlocks": "", "decide": _decide_next(state, d)}
+                           "unlocks": "", "decide": _decide_next(state, d), "plan": []}
             print(json.dumps(payload, ensure_ascii=False, indent=2))
             return
         plain = getattr(args, "plain", False)

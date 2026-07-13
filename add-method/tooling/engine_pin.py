@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "33f46b7de23cacd5bb1febe077b87f01"  # re-aimed @ plan-phase-core v1 (expectations-first: collapse ground+contract into the plan phase; PHASES/seam/grounding/scope re-point + plan->tests freeze gate + phase-ordinal→§-number fixes: task_phases/fill/status-section, facet harvest §3, re-cross freeze, skip-rationale header). prior: 16cd7cca… @ fast-lane-boundary-line
+ENGINE_MD5 = "7e6ebec010c066734818faf6599a2571"  # re-aimed @ plan-in-report (plan-legibility: decide_data/render_decide gain a `plan` key + BUILD PLAN block surfacing the §3 build-strategy plan-of-action at the freeze; _build_plan single-line extractor — no field bleed; milestone --json payload +plan:[]). prior: 33f46b7d… @ plan-phase-core v1
 ENGINE_PKG_MD5 = "28212a55d53a354dc1b57ab4cddeb243"  # re-aimed @ guides-and-skill (add_engine/constants.py: PHASE_GUIDE["plan"] chapter 05-step-3-contract.md → 05-step-3-plan.md, following the book-chapter rename cascade). prior: a968f9e6… @ plan-phase-core v1

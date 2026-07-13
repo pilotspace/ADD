@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "guides-and-skill",
+  "active_task": "plan-in-report",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8411,10 +8411,66 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "plan-in-report": {
+      "title": "Surface the build-strategy plan-of-action in the freeze report",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "plan-legibility",
+      "depends_on": [],
+      "created": "2026-07-13T05:17:42+00:00",
+      "updated": "2026-07-13T06:23:20+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T05:38:36+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "86f10cf285b266d3feb06f7e193a8272",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".add/tasks/plan-in-report/add.py",
+          ".add/tasks/plan-in-report/report-template.md",
+          ".add/tasks/plan-in-report/engine_pin.py"
+        ],
+        "snapshot_md5": "82a7a4256d85d7987709ef43ab4211c9"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "relations-surface": {
+      "title": "Structured task+milestone relations with a sync guard",
+      "phase": "plan",
+      "gate": "none",
+      "milestone": "plan-legibility",
+      "depends_on": [],
+      "created": "2026-07-13T05:17:42+00:00",
+      "updated": "2026-07-13T05:27:52+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T05:38:36+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T04:48:30+00:00",
+  "updated": "2026-07-13T06:23:20+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8751,9 +8807,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "plan-legibility": {
+      "title": "Plan legibility \u2014 surface the build plan at the freeze + structured task relations",
+      "goal": "Make the plan and its relationships legible to the human: the freeze report surfaces the full \u00a73 build-strategy plan-of-action (approve HOW, not just WHAT), and every task carries a structured, synced Relations surface (depends-on \u00b7 extends \u00b7 relates-to) at task and milestone altitude, with a validate/sync guard.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T05:13:25+00:00",
+      "updated": "2026-07-13T05:17:41+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-13T05:17:41+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "expectations-first",
+  "active_milestone": "plan-legibility",
   "archived": [
     {
       "slug": "v5",
@@ -9588,7 +9661,8 @@
     "delta-drain",
     "add-bench",
     "add-lean-loop",
-    "expectations-first"
+    "expectations-first",
+    "plan-legibility"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -9599,7 +9673,8 @@
     "add-bench": "bench-regression-split",
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
-    "expectations-first": "guides-and-skill"
+    "expectations-first": "guides-and-skill",
+    "plan-legibility": "plan-in-report"
   },
   "todos": [
     {
