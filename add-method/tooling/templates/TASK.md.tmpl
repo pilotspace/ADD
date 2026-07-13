@@ -33,7 +33,7 @@ Assumptions — lowest-confidence first:
   - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
 </assumptions>
 
-<!-- EXIT: every rule + rejection stated; assumptions ranked lowest-confidence first, top 1–2 ⚠-flagged with why + cost (or an honest "none material" naming the biggest risk). -->
+<!-- EXIT: the specify guide's exit_gate binds (rules + ranked ⚠ assumptions). -->
 
 ---
 
@@ -51,7 +51,7 @@ Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
 
 </scenarios>
 
-<!-- EXIT: one scenario per Must AND per Reject; each result is observable. -->
+<!-- EXIT: the scenarios guide's exit_gate binds. -->
 
 ---
 
@@ -65,7 +65,7 @@ Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.m
 Anchors the contract cites: <the symbols the Contract below names — it may cite ONLY anchors named here>
 Issues/Risks: <problems · traps · untestable risks found in the real code — task-delta; these feed the rules in §1>
 Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
-Ground SHA: <`git rev-parse --short HEAD` at ground time — cite symbols, not bare line numbers; any line ref is "as of" this commit>
+Ground SHA: <stamped by freeze — leave this placeholder; cite symbols, not bare line numbers>
 
 ### Contract (freeze the shape — the HARD, tamper-guarded core)
 
@@ -91,7 +91,7 @@ Persona (required): <name the persona file under `.add/personas/` this build emb
 Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 
-<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). EXIT: frozen · every §1 rejection has a contracted response · names match GLOSSARY · the Contract cites only anchors named in Grounding · flag surfaced. -->
+<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). The plan guide's exit_gate binds: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
 
 ---
 
@@ -106,7 +106,7 @@ Plan (one test per scenario, asserting behavior not internals):
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
 
-<!-- EXIT: one test per scenario; suite red for the RIGHT reason; target recorded. -->
+<!-- EXIT: the tests guide's exit_gate binds (red for the RIGHT reason). -->
 
 ---
 
@@ -118,7 +118,7 @@ Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
 
-<!-- Scope-lock source: the §3 `Scope (may touch)` line (grammar there). Live: a completing verify gate refuses an out-of-scope build (scope_violation → self-heal); check surfaces it. EXIT: all green; coverage held; no test/contract touched; no unlisted dependency. -->
+<!-- Scope-lock source: the §3 `Scope (may touch)` line; an out-of-scope build fails the gate (scope_violation); the build guide's exit_gate binds. -->
 
 ---
 

@@ -19,7 +19,7 @@ there. Never invent a file/symbol you have not opened.
 - **Anchors the contract cites** — the specific symbols §3's Contract will name. The Contract may cite ONLY anchors here.
 - **Issues/Risks** — concrete traps/untestable risks found in the real code (feeds §1, not assumptions).
 - **Related intent** — the WHY: `PROJECT.md §` · `GLOSSARY` term(s) · originating request/milestone rationale.
-- **Ground SHA** — the commit grounded against (`git rev-parse --short HEAD`); any line ref is "as of" it.
+- **Ground SHA** — the commit grounded against, stamped by freeze into the placeholder; any line ref is "as of" it.
 
 **How:** sweep BROAD cheaply (small-model subagent / fast index / skim → compact map), then DEEPEN on
 what THIS task needs. **Grounding is complete when** every field above is filled from real assets (a `<…>` placeholder = weak).
