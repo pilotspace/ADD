@@ -54,31 +54,37 @@ Issues/Risks (shared): TASK.md.tmpl edits trip the frozen tag census + BOTH ceil
 - [ ] fold-draft-at-close depends-on: none            — milestone-done auto-DRAFTS the fold (deltas grouped, seed/drop pre-classified with one-line rationale); human still confirms the fold — no gate change.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] a fresh task's stdout hands the full lane recipe; a repeated byte-identical failing call gets the short-circuit hint — test-pinned   (← kickoff-truth)
-- [ ] a fresh task shows Ground SHA / Reported: / gate dates engine-written, agent never authors them — test-pinned   (← derived-stamps)
-- [ ] TASK.md.tmpl carries zero EXIT restatements and stays under BOTH existing ceilings; tag census green   (← template-dedup)
-- [ ] canonical happy-path read burden ≤ ~30KB (weight-audit method re-run, from 56KB)   (← gate-read-diet + template-dedup)
-- [ ] the freeze report renders the resolved scope list; a garbage declaration is visible AT the freeze   (← scope-echo-draft)
-- [ ] a sensitivity:mechanical gate renders the compact report; security/data/architecture render the full one — test-pinned   (← risk-report-render)
-- [ ] milestone-done renders a fold DRAFT (grouped, pre-classified); fold stays human-confirmed — test-pinned   (← fold-draft-at-close)
-- [ ] floors byte-equivalent in behavior: freeze · red-first · gate record · HARD-STOP; full suite green; ENGINE_MD5/PKG re-pinned; twin parity holds   (← all)
-- [ ] pinned-meter WM1 re-measure (n=3): mean add.py calls ≤ 12 · zero --help turns · zero duplicate-identical failing calls · turns/cost ≤ 77.7t/$2.97 · oracle fidelity held · scope_violation count 0   (← all; release step, paid run)
+- [x] a fresh task's stdout hands the full lane recipe; a repeated byte-identical failing call gets the short-circuit hint — test-pinned   (← kickoff-truth; verified by test_kickoff_truth 7/7 `260cdef`)
+- [x] a fresh task shows Ground SHA / Reported: / gate dates engine-written, agent never authors them — test-pinned   (← derived-stamps; verified by test_derived_stamps 4/4 `789e0cc` — and the stamp fired LIVE on tasks 4-7's own freezes)
+- [x] TASK.md.tmpl carries zero EXIT restatements and stays under BOTH existing ceilings; tag census green   (← template-dedup; verified by test_template_dedup 6/6 `2fe9cb3` — v2 note: 4 pre-existing suites pin the scope-grammar restatement as load-bearing, kept verbatim; EXIT pointers ≤120B, comments 2568/2650)
+- [ ] canonical happy-path read burden ≤ ~30KB (weight-audit method re-run, from 56KB)   (← gate-read-diet + template-dedup; PARTIAL 2026-07-13 — fast lane 37.0KB, full lane 49.1KB, big refs 0x on standard gates (were up to 64.4KB of re-reads); ≤30KB unmet — dominant residual is SKILL.md 12.8K, the flow-table trim did not ship; the binding number lands at the WM1 re-measure)
+- [x] the freeze report renders the resolved scope list; a garbage declaration is visible AT the freeze   (← scope-echo-draft; verified by test_scope_echo_draft 6/6 `dbb3a97` — echoed LIVE on tasks 6-7's freezes incl. the add-method/../.add/ climb form)
+- [x] a sensitivity:mechanical gate renders the compact report; security/data/architecture render the full one — test-pinned   (← risk-report-render; verified by test_risk_report_render 7/7 `60e8b64`)
+- [x] milestone-done renders a fold DRAFT (grouped, pre-classified); fold stays human-confirmed — test-pinned   (← fold-draft-at-close; verified by test_fold_draft_at_close 5/5 `6abd287`)
+- [x] floors byte-equivalent in behavior: freeze · red-first · gate record · HARD-STOP; full suite green; ENGINE_MD5/PKG re-pinned; twin parity holds   (← all; fence 3488/3488 OK at 7/7 — grew 3446→3488 = +42 new tests, zero weakened; ENGINE_MD5→8aef02ae, PKG→d83fc67f; parity suites green in every fence)
+- [ ] pinned-meter WM1 re-measure (n=3): mean add.py calls ≤ 12 · zero --help turns · zero duplicate-identical failing calls · turns/cost ≤ 77.7t/$2.97 · oracle fidelity held · scope_violation count 0   (← all; release step, paid run ~$10-15 — HUMAN-GATED, not yet run)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : add.py — lane-aware kickoff + full call recipe at new-task (kickoff-truth) · dup-failure short-circuit via OS-tmp sidecar (io_state.py, kickoff-truth v2) · Ground SHA stamped by freeze (derived-stamps) · _scope_echo at freeze (scope-echo-draft) · fold draft at milestone-done (fold-draft-at-close); templates — TASK.md.tmpl EXIT pointers + engine-stamp placeholders, 12055B/2568B under both ceilings (derived-stamps + template-dedup); ENGINE_MD5 e2ed6599→8aef02ae across 4 re-aims, PKG→d83fc67f @ kickoff-truth v2
+- skill   : 3-plan.md + 6-verify.md gate render cards + read-once big refs (gate-read-diet) · right-size dispatch mechanical/fast→compact, security/data/architecture+freeze→full (risk-report-render) · SKILL.md read-once rule + same-pool compression, core landed exactly 18186/18186 · fast-lane.md render sentence (reference pool, same-guide absorbed); x3 trees synced every task
+- book    : untouched (method semantics unchanged; guides carry the procedure)
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- kickoff-truth       : gate=PASS `260cdef` · tests=7 green (test_kickoff_truth) · residue=none (v2 change request: sidecar → OS tmp, byte fence clean)
+- derived-stamps      : gate=PASS `789e0cc` · tests=4 green (test_derived_stamps) · residue=none (stamp inside the tamper fingerprint, proven by M2)
+- template-dedup      : gate=PASS `2fe9cb3` · tests=6 green (test_template_dedup) · residue=none (v2: grammar restatements kept — 4 suites pin them)
+- gate-read-diet      : gate=PASS `7728f2b` · tests=7 green (test_gate_read_diet) · residue=note: SKILL.md flow-table trim did not ship (pool landed at exactly 18186/18186 — no headroom left)
+- scope-echo-draft    : gate=PASS `dbb3a97` · tests=6 green (test_scope_echo_draft) · residue=none (drop? is a question by design — exists() is rename-blind, flagged at freeze)
+- risk-report-render  : gate=PASS `60e8b64` · tests=7 green (test_risk_report_render) · residue=none
+- fold-draft-at-close : gate=PASS `6abd287` · tests=5 green (test_fold_draft_at_close) · residue=none
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — 7/9 satisfied and cited inline above; OPEN: read-burden ≤30KB (partial, 56→37-49KB) + the pinned-meter re-measure (human-gated paid run)
+- goal: convert measured evaporating ceremony into artifact effort without lowering any trust floor — the deliverable-side evidence is complete (7 gates PASS, fence 3488/3488, every floor exercised and held: byte fence, tamper tripwire, lean pools, slang/anchor guards each refuted a draft this milestone and were healed by sanctioned paths, zero tests weakened); the GOAL NUMBER (calls ≤12, ≤30KB, ≤77.7t/$2.97) binds only at the WM1 re-measure, which has not run
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
