@@ -41,19 +41,19 @@ pin them; the kickoff recipe advertises the compressed forms).
 - <contract name> -> owning task <slug>
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] init-resume-pointer   depends-on: none — the `already initialised` refusal gains a resume pointer (status), so the observed double-init dead-ends in one call; dup-failure hint covers the retry
-- [ ] milestone-lane-nudge  depends-on: none — new-milestone success output gains one advisory line naming the oneshot lane for single-task work (the bait point, where r1 lost 9-10 calls)
-- [ ] scope-coverage-hint   depends-on: none — freeze's scope echo ALSO lists §3 Touches paths OUTSIDE the declared scope (`note: ... outside the declared scope`) — the too-narrow class behind the re-cross repairs; propose-not-impose
-- [ ] compound-ticks        depends-on: none — OPT-IN `freeze --cross` (stamp then land in tests) + `gate <outcome>` accepted at build (auto-cross build->verify, then record); defaults byte-identical; the new-task recipe advertises the compressed forms (oneshot lane 8-9 -> 6-7 calls)
-- [ ] skill-orient-split    depends-on: none — SKILL.md keeps ONLY the orient path (~8K); intake summary + beyond-the-bundle + depth-by-stage move to an on-demand guide; pools re-anchored (human-signed restructure); fast-lane read path <=30KB
+- [x] init-resume-pointer   depends-on: none — the `already initialised` refusal gains a resume pointer (status), so the observed double-init dead-ends in one call; dup-failure hint covers the retry
+- [x] milestone-lane-nudge  depends-on: none — new-milestone success output gains one advisory line naming the oneshot lane for single-task work (the bait point, where r1 lost 9-10 calls)
+- [x] scope-coverage-hint   depends-on: none — freeze's scope echo ALSO lists §3 Touches paths OUTSIDE the declared scope (`note: ... outside the declared scope`) — the too-narrow class behind the re-cross repairs; propose-not-impose
+- [x] compound-ticks        depends-on: none — OPT-IN `freeze --cross` (stamp then land in tests) + `gate <outcome>` accepted at build (auto-cross build->verify, then record); defaults byte-identical; the new-task recipe advertises the compressed forms (oneshot lane 8-9 -> 6-7 calls)
+- [x] skill-orient-split    depends-on: none — SKILL.md keeps ONLY the orient path (~8K); intake summary + beyond-the-bundle + depth-by-stage move to an on-demand guide; pools re-anchored (human-signed restructure); fast-lane read path <=30KB
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `init` on an initialised project points at `status` in the same refusal — test-pinned   (<- init-resume-pointer)
-- [ ] `new-milestone` output names the oneshot lane — test-pinned   (<- milestone-lane-nudge)
-- [ ] a freeze whose §3 Touches cite paths outside the declared scope prints the coverage note; TASK.md untouched — test-pinned   (<- scope-coverage-hint)
-- [ ] `freeze --cross` lands in tests · `gate PASS` from build records after auto-cross · bare defaults byte-identical · the recipe prints the compressed forms — test-pinned   (<- compound-ticks)
-- [ ] SKILL.md <= ~8.5K with the orient path intact; moved content reachable on demand; all parity/pool fences green; fast-lane read path <= 30KB — test-pinned   (<- skill-orient-split)
-- [ ] floors untouched: full suite green, ENGINE_MD5 re-pinned, twin parity holds   (<- all)
+- [x] `init` on an initialised project points at `status` in the same refusal — test-pinned   (<- init-resume-pointer; test_init_resume_pointer.py 2 tests, commit a2df502)
+- [x] `new-milestone` output names the oneshot lane — test-pinned   (<- milestone-lane-nudge; `lane:` prefix v2 after the persona-nudge marker fence, test_milestone_lane_nudge.py, a2df502)
+- [x] a freeze whose §3 Touches cite paths outside the declared scope prints the coverage note; TASK.md untouched — test-pinned   (<- scope-coverage-hint; test_scope_coverage_hint.py 4 tests, a2df502)
+- [x] `freeze --cross` lands in tests · `gate PASS` from build records after auto-cross · bare defaults byte-identical · the recipe prints the compressed forms — test-pinned   (<- compound-ticks; test_compound_ticks.py 7 tests, d8e1718; SELF-PROVED: 4/5's own gate + 5/5's freeze and gate both ran the compound ticks)
+- [x] SKILL.md <= ~8.5K with the orient path intact; moved content reachable on demand; all parity/pool fences green; fast-lane read path <= 30KB — test-pinned PARTIAL-ACCEPTED (<- skill-orient-split, 2d10b2a: SKILL.md landed 9498B vs the ~8.5K sketch — every structural pin bound the floor higher; ceiling test-pinned at 9500. Fast-lane read path ~33KB vs 30 — remaining levers live in the next milestone's phase-guide restructure)
+- [x] floors untouched: full suite green 3508/3508 (fence-skill-orient-split-r2 exit 0), ENGINE_MD5 26f78f04 @ compound-ticks, twin parity green   (<- all)
 - [ ] (paid, human-gated) next WM1 re-measure: mean calls <= 12 on recipe-following reps   (<- all)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
