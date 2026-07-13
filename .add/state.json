@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "skill-orient-split",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9040,7 +9040,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T17:01:22+00:00",
+  "updated": "2026-07-13T17:03:37+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9429,9 +9429,21 @@
       "status": "active",
       "created": "2026-07-13T15:52:21+00:00",
       "updated": "2026-07-13T15:52:21+00:00"
+    },
+    "six-phase-loop": {
+      "title": "Six-phase loop with bundle-owned subagents",
+      "goal": "Merge specify+scenarios and verify+observe (8->6 phases), disclose phase guides into the lean roster's bundle agents so the orchestrator loads only SKILL.md, add per-phase persona presets + a build-entry spec echo",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T17:03:37+00:00",
+      "updated": "2026-07-13T17:03:37+00:00",
+      "confirmed": false,
+      "confirmed_at": null,
+      "confirmed_by": null,
+      "await_confirm": true
     }
   },
-  "active_milestone": "call-floor",
+  "active_milestone": "six-phase-loop",
   "archived": [
     {
       "slug": "v5",
@@ -10269,7 +10281,8 @@
     "expectations-first",
     "plan-legibility",
     "ceremony-to-effort",
-    "call-floor"
+    "call-floor",
+    "six-phase-loop"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
