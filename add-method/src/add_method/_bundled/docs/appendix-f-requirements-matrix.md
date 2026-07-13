@@ -95,7 +95,7 @@ Every task, regardless of milestone, produces this artifact chain. The depth var
 |------|-------------------|------------------------|--------|
 | 1 Specify | `SPEC.md` | rules + named rejections, assumptions ranked lowest-confidence first (biggest risk ⚠-flagged) | [03](./03-step-1-specify.md) |
 | 2 Scenarios | `features/<task>.feature` | one scenario per rule | [04](./04-step-2-scenarios.md) |
-| 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./05-step-3-contract.md) |
+| 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./05-step-3-plan.md) |
 | 4 Tests | `tests/<task>_*` | one test per scenario, red first | [06](./06-step-4-tests.md) |
 | 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./07-step-5-build.md) |
 | 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./08-step-6-verify.md) |

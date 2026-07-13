@@ -2,7 +2,7 @@
 """Red/green tests for report-shape-scan-audit (frozen @ v1, milestone loop-readability).
 
 PROSE-ONLY task — no engine logic change. §3 CONTRACT: the two phase guides that fire
-an actual contract-freeze (phases/3-contract.md, phases/0-setup.md) gain a minimal
+an actual contract-freeze (phases/3-plan.md, phases/0-setup.md) gain a minimal
 citation of report-template.md's SHAPE block — the one gate SHAPE's own "freeze-only"
 definition names as its use case. report-template.md itself is UNCHANGED (0 B delta):
 its "Summary-first" bullet is byte-verbatim guarded by
@@ -27,9 +27,9 @@ CANON_SKILL = _ADD_METHOD / "skill" / "add"
 DOG_SKILL = _REPO / ".claude" / "skills" / "add"
 BUNDLE_SKILL = _BUNDLE / "skill" / "add"
 
-CONTRACT_TRIO = (CANON_SKILL / "phases" / "3-contract.md",
-                 DOG_SKILL / "phases" / "3-contract.md",
-                 BUNDLE_SKILL / "phases" / "3-contract.md")
+CONTRACT_TRIO = (CANON_SKILL / "phases" / "3-plan.md",
+                 DOG_SKILL / "phases" / "3-plan.md",
+                 BUNDLE_SKILL / "phases" / "3-plan.md")
 SETUP_TRIO = (CANON_SKILL / "phases" / "0-setup.md",
               DOG_SKILL / "phases" / "0-setup.md",
               BUNDLE_SKILL / "phases" / "0-setup.md")
@@ -47,18 +47,18 @@ def _md5(p: Path) -> str:
 
 
 class ContractFreezeGateCitesShape(unittest.TestCase):
-    """M3: phases/3-contract.md cites SHAPE at the contract-freeze gate."""
+    """M3: phases/3-plan.md cites SHAPE at the contract-freeze gate."""
 
     def test_contract_gate_cites_shape(self):
         text = CONTRACT_TRIO[0].read_text(encoding="utf-8")
         self.assertIn(_CONTRACT_AFTER, text,
-                      "3-contract.md must cite SHAPE at the freeze gate")
+                      "3-plan.md must cite SHAPE at the freeze gate")
         self.assertNotIn(_CONTRACT_BEFORE, text,
                          "the pre-fix wording (no SHAPE) must not survive")
 
     def test_contract_mirrors_byte_identical(self):
         digests = {_md5(p) for p in CONTRACT_TRIO}
-        self.assertEqual(len(digests), 1, "3-contract.md's 3 mirrors must be byte-identical")
+        self.assertEqual(len(digests), 1, "3-plan.md's 3 mirrors must be byte-identical")
 
 
 class SetupGateCitesShape(unittest.TestCase):

@@ -13,7 +13,7 @@ re-spell that content. The seven gates map to seven files (three naming systems
 do NOT align — pin them here so wiring six and missing one fails loudly):
 
     baseline-lock   -> phases/0-setup.md
-    contract-freeze -> phases/3-contract.md
+    contract-freeze -> phases/3-plan.md
     verify          -> phases/6-verify.md
     intake          -> intake.md
     scope           -> scope.md
@@ -35,7 +35,7 @@ CANON_SKILL = _TOOLING.parent / "skill" / "add"
 # the seven gate -> file pairs (frozen §3); paths relative to the skill root
 GATE_FILES = {
     "baseline-lock": "phases/0-setup.md",
-    "contract-freeze": "phases/3-contract.md",
+    "contract-freeze": "phases/3-plan.md",
     "verify": "phases/6-verify.md",
     "intake": "intake.md",
     "scope": "scope.md",

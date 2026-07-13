@@ -37,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 BUNDLE = HERE.parent / "src" / "add_method" / "_bundled"
 
-CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "3-contract.md"
+CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "3-plan.md"   # freeze checklist moved into the unified plan guide
 RUN_MD = HERE.parent / "skill" / "add" / "run.md"
 CHECKLIST_HEADING = "## The freeze review checklist"
 
@@ -234,7 +234,7 @@ class FreezeChecklistTest(unittest.TestCase):
                       "run.md's freeze-checklist reference must say 'seven lines'")
 
     def test_prose_three_trees_agree(self):
-        for rel in (("skill", "add", "phases", "3-contract.md"),
+        for rel in (("skill", "add", "phases", "3-plan.md"),
                     ("skill", "add", "run.md")):
             canon = HERE.parent.joinpath(*rel)
             for twin in (REPO / ".claude" / "skills" / "add" / Path(*rel[2:]),
@@ -248,7 +248,7 @@ class FreezeChecklistTest(unittest.TestCase):
 # to one consistent four-field rubric. Guide + template only; no engine gate.
 # ---------------------------------------------------------------------------
 _SKILL = HERE.parent / "skill" / "add"
-GROUND_MD = _SKILL / "phases" / "0-ground.md"
+GROUND_MD = _SKILL / "phases" / "3-plan.md"   # grounding merged into the unified plan guide
 SCOPE_MD = _SKILL / "scope.md"
 TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
 FAST_TMPL = HERE / "templates" / "TASK.fast.md.tmpl"
@@ -265,15 +265,15 @@ class GroundHardenTest(unittest.TestCase):
 
     def test_ground_exit_gate_names_all_four_fields(self):
         gate = self._exit_gate(GROUND_MD.read_text(encoding="utf-8"))
-        self.assertTrue(gate, "0-ground.md must keep its <exit_gate> block")
+        self.assertTrue(gate, "3-plan.md must keep its <exit_gate> block")
         missing = [f for f in GROUND_FIELDS if f not in gate]
         self.assertEqual(missing, [],
-                         f"the per-task ground exit gate must name all four fields; missing {missing}")
+                         f"the plan-guide Grounding exit gate must name all four fields; missing {missing}")
 
     def test_ground_guide_has_completeness_rubric(self):
         text = GROUND_MD.read_text(encoding="utf-8").lower()
         self.assertIn("grounding is complete when", text,
-                      "0-ground.md must carry a 'grounding is complete when…' rubric")
+                      "3-plan.md must carry a 'grounding is complete when…' rubric")
 
     def test_scope_position_goal_names_four_field_rubric(self):
         sec = md_section.section(SCOPE_MD.read_text(encoding="utf-8"),
@@ -308,7 +308,7 @@ class GroundHardenTest(unittest.TestCase):
                          f"the fast §3 PLAN Grounding must name all four grounding fields (uniform); missing {missing}")
 
     def test_ground_harden_three_tree_parity(self):
-        for rel in ("phases/0-ground.md", "scope.md"):
+        for rel in ("phases/3-plan.md", "scope.md"):
             canon = (_SKILL / rel).read_bytes()
             bundled = (BUNDLE / "skill" / "add" / rel).read_bytes()
             self.assertEqual(canon, bundled, f"{rel} drifted: canonical vs _bundled")

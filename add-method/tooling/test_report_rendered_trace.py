@@ -16,7 +16,7 @@ CONTRACT — design mirrors refute_unrecorded/advisor_verdict_unrecorded EXACTLY
   cmd_audit: prints ONE grouped line per code, mirroring refute_unrecorded's exact phrasing shape.
   cmd_audit --json: additive guarantee_lints["contract_report_unrecorded"] / ["verify_report_unrecorded"].
   cmd_gate: UNCHANGED — neither key ever blocks a gate (measure-not-block).
-  Disclosure: run.md names both codes; 3-contract.md/6-verify.md each instruct recording
+  Disclosure: run.md names both codes; 3-plan.md/6-verify.md each instruct recording
     `Reported: yes` at their respective gate.
 One test per scenario. Run: python3 -m unittest test_report_rendered_trace -v
 """
@@ -36,7 +36,7 @@ TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
 RUN_MD = ADD_METHOD / "skill" / "add" / "run.md"
-CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "3-contract.md"
+CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md"
 VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
 
 
@@ -241,7 +241,7 @@ class JsonAndDisclosureTest(_Harness):
 
     def test_disclosure_in_contract_and_verify_guides(self):
         self.assertIn("Reported: yes", CONTRACT_MD.read_text(encoding="utf-8"),
-                      "3-contract.md must instruct recording Reported: yes at the freeze")
+                      "3-plan.md must instruct recording Reported: yes at the freeze")
         self.assertIn("Reported: yes", VERIFY_MD.read_text(encoding="utf-8"),
                       "6-verify.md must instruct recording Reported: yes at the gate")
 

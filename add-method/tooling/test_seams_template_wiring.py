@@ -51,9 +51,9 @@ ADDPY_TRIO = [
 ]
 
 GUIDE_COPIES = [
-    ADD_METHOD / "skill" / "add" / "phases" / "0-ground.md",
-    REPO / ".claude" / "skills" / "add" / "phases" / "0-ground.md",
-    ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-ground.md",
+    ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
+    REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
+    ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
 ]
 
 LABEL = "Seams consulted:"

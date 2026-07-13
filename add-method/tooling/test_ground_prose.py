@@ -8,7 +8,7 @@ WITHOUT touching the engine (prose-only):
 
   * book   — docs/02-the-flow.md names ground as the phase-0 preamble (×4 synced);
              docs/appendix-c-glossary.md defines **Ground** + **Grounding map** (×4).
-  * skill  — SKILL.md's phase table lists a `ground` row → phases/0-ground.md (×3).
+  * skill  — SKILL.md's phase table lists a `plan` row → phases/3-plan.md (×3).
   * GLOSSARY— the survivor .add/GLOSSARY.md + the GLOSSARY.md.tmpl name ground (×3).
   * engine — UNTOUCHED: md5(add.py) ×3 == engine_pin (prose-only guard).
 
@@ -78,10 +78,13 @@ class BookGlossaryTest(unittest.TestCase):
 
 
 class SkillTableTest(unittest.TestCase):
-    def test_skill_phase_table_lists_ground(self):
+    def test_skill_phase_table_lists_plan(self):
+        # expectations-first (guides-and-skill): the phase table names `plan`, not `ground`/`contract`.
         text = SKILL_TREES[0].read_text(encoding="utf-8")
-        self.assertRegex(text, r"\|\s*ground\s*\|", "SKILL.md phase table needs a 'ground' row")
-        self.assertIn("phases/0-ground.md", text, "the ground row points at its guide")
+        self.assertRegex(text, r"\|\s*plan\s*\|", "SKILL.md phase table needs a 'plan' row")
+        self.assertIn("phases/3-plan.md", text, "the plan row points at its guide")
+        self.assertNotRegex(text, r"\|\s*ground\s*\|", "no stale 'ground' phase row")
+        self.assertNotRegex(text, r"\|\s*contract\s*\|", "no stale 'contract' phase row")
 
     def test_skill_synced_x3(self):
         digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in SKILL_TREES}

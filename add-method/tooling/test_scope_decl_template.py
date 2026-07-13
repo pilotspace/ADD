@@ -6,7 +6,7 @@ A prose/template-only task: §5 of TASK.md.tmpl gains the `Scope (may touch):`
 allowlist + `Strategy (ordered batches):` plan lines and a grammar comment;
 phases/5-build.md teaches the discipline (declare-at-bundle · freeze-at-contract
 · honor-or-change-request · the scope-gate-enforce deferral NAMED); one line in
-phases/3-contract.md says the freeze covers them. Content anchors prove the
+phases/3-plan.md says the freeze covers them. Content anchors prove the
 words exist (the folded prose-guides-are-TDD-able convention); add.py is
 untouched — a guard asserts it, plus the template's tag census stays frozen
 (v16 vocab: no new XML tag). Run:
@@ -43,9 +43,9 @@ CANON_BUILD = ADD_METHOD / "skill" / "add" / "phases" / "5-build.md"
 DOG_BUILD = REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md"
 BUNDLE_BUILD = BUNDLE / "skill" / "add" / "phases" / "5-build.md"
 
-CANON_CONTRACT = ADD_METHOD / "skill" / "add" / "phases" / "3-contract.md"
-DOG_CONTRACT = REPO / ".claude" / "skills" / "add" / "phases" / "3-contract.md"
-BUNDLE_CONTRACT = BUNDLE / "skill" / "add" / "phases" / "3-contract.md"
+CANON_CONTRACT = ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md"
+DOG_CONTRACT = REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md"
+BUNDLE_CONTRACT = BUNDLE / "skill" / "add" / "phases" / "3-plan.md"
 
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")

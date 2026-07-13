@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "33f46b7de23cacd5bb1febe077b87f01"  # re-aimed @ plan-phase-core v1 (expectations-first: collapse ground+contract into the plan phase; PHASES/seam/grounding/scope re-point + plan->tests freeze gate + phase-ordinal→§-number fixes: task_phases/fill/status-section, facet harvest §3, re-cross freeze, skip-rationale header). prior: 16cd7cca… @ fast-lane-boundary-line
-ENGINE_PKG_MD5 = "a968f9e6713cffd9656e72c2fa5e8849"  # re-aimed @ plan-phase-core v1 (add_engine/constants.py: PHASES/PHASE_GROUPS/PHASE_OWNER/PHASE_AGENT/PHASE_GUIDE + fallback templates incl. fast §5 BUILD). prior: 710a009f… @ spec-dialect-floor
+ENGINE_PKG_MD5 = "28212a55d53a354dc1b57ab4cddeb243"  # re-aimed @ guides-and-skill (add_engine/constants.py: PHASE_GUIDE["plan"] chapter 05-step-3-contract.md → 05-step-3-plan.md, following the book-chapter rename cascade). prior: a968f9e6… @ plan-phase-core v1

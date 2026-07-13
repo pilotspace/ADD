@@ -1,6 +1,6 @@
 # 06 · Step 4 — Tests
 
-[← 05 Step 3 Contract](./05-step-3-contract.md) · [Contents](./README.md) · Next: [07 Step 5 Build →](./07-step-5-build.md)
+[← 05 Step 3 Contract](./05-step-3-plan.md) · [Contents](./README.md) · Next: [07 Step 5 Build →](./07-step-5-build.md)
 
 > **Purpose:** turn the scenarios and contract into automated tests, and confirm they fail before any code exists.
 > **Produces:** a failing (red) automated test suite.
@@ -23,7 +23,7 @@ After generating the tests, you run them — and they must **fail**, because no 
 ## What to test
 
 - **One test per scenario** — every scenario from [Step 2](./04-step-2-scenarios.md) becomes an executable test.
-- **Contract conformance** — tests that pin the shapes and error responses from [Step 3](./05-step-3-contract.md).
+- **Contract conformance** — tests that pin the shapes and error responses from [Step 3](./05-step-3-plan.md).
 - **Edge cases from the spec** — the boundary values implied by the "Reject" rules.
 - **Behavior, not internals** — tests assert what the feature does (the observable result), never how it is implemented, so the code can be regenerated freely beneath them.
 

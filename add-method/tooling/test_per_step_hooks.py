@@ -20,7 +20,7 @@ _PHASES = _TOOLING.parent / "skill" / "add" / "phases"
 _SKILL = _TOOLING.parent / "skill" / "add" / "SKILL.md"
 
 _PHASE_FILES = (
-    "0-ground.md", "1-specify.md", "2-scenarios.md", "3-contract.md",
+    "1-specify.md", "2-scenarios.md", "3-plan.md",
     "4-tests.md", "5-build.md", "6-verify.md", "7-observe.md",
 )
 _MARKER = "Advisor · Confidence"
@@ -71,9 +71,10 @@ class TestPerStepHooks(unittest.TestCase):
         self.assertIn("confidence.md", self.skill, "SKILL.md must cross-ref confidence.md")
 
     def test_wording_surface_count_unchanged(self) -> None:
-        self.assertEqual(len(_wl.surface_files()), 32,
+        self.assertEqual(len(_wl.surface_files()), 31,
                          "editing guides must not change the wording-lint surface count "
-                         "(32: +fast-lane.md @ fast-lane, +components.md @ component-method-docs, "
+                         "(31: 0-ground.md + 3-contract.md merged into 3-plan.md @ guides-and-skill, net -1; "
+                         "+fast-lane.md @ fast-lane, +components.md @ component-method-docs, "
                          "+sensitivity.md @ sensitivity-glossary, +self-improve.md @ self-improving-guide)")
 
 

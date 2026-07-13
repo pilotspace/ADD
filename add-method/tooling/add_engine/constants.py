@@ -75,7 +75,7 @@ PHASE_GUIDE = {
     "scenarios": ("write one Given/When/Then per Must AND per Reject; every result observable",
                   "04-step-2-scenarios.md"),
     "plan":      ("build the change plan — ground the real code the contract will cite, freeze the contract shape (names match the glossary), and set the build strategy; this is the one human approval",
-                  "05-step-3-contract.md"),
+                  "05-step-3-plan.md"),
     "tests":     ("write one failing test per scenario; run them RED for the right reason",
                   "06-step-4-tests.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",

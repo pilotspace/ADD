@@ -167,7 +167,7 @@ POOLS = [
     # EXACTLY; baseline grows by surface ÷ ratio (+⌈433/0.80⌉=542). The won ground is untouched.
     # phases 40065 → 40280 @ ground-trust (ground-issues + ground-related-intent, Tin-approved): §0 GROUND
     # gains two genuinely-new gather fields — "Issues/Risks (→ feed §1)" (problems found in real code feed
-    # SPECIFY) and "Related intent" (links the task to PROJECT/GLOSSARY/origin) — across 0-ground.md +
+    # SPECIFY) and "Related intent" (links the task to PROJECT/GLOSSARY/origin) — across the plan guide 3-plan.md +
     # 1-specify.md, after compacting the reclaimable prose. +172 B residual human-approved surface. RATIO
     # 0.80 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈172/0.80⌉=215). The won ground is untouched.
     # phases 40280 → 40339 @ merge-reconciliation (PR #120 / feat/persona-distillation-depth × this branch,
@@ -222,8 +222,8 @@ POOLS = [
     # overlay lead) — +332 B residual human-approved surface (32943 → 33275 actual). RATIO 0.80 kept
     # EXACTLY; baseline grows by surface ÷ ratio (+⌈332/0.80⌉=415). The won ground is untouched.
     {"name": "phases",        "ratio": 0.80, "baseline": 41605,
-     "guides": ["phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
-                "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+     "guides": ["phases/0-setup.md", "phases/1-specify.md",
+                "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
                 "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md"]},
     # reference 66345 → 70282 @ sensitivity-glossary (same "rebaseline for genuinely-new surface" method):
     # a NEW load-on-demand guide (`sensitivity.md`, 2677 B — how the AI maintains the project's extensible
@@ -284,8 +284,8 @@ TREE_TARGET_BYTES = int(TREE_BASELINE_BYTES * 0.75)       # whole tree must stay
 
 # Routing rows the SKILL.md phase table MUST keep (one guide per phase).
 PHASE_GUIDES = [
-    "phases/0-setup.md", "phases/0-ground.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+    "phases/0-setup.md", "phases/1-specify.md",
+    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
     "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
 ]
 

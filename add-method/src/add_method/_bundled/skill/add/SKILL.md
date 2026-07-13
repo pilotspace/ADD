@@ -3,7 +3,7 @@ name: add
 description: >-
   ADD (AI-Driven Development) — a minimal, state-tracked workflow: the AI writes
   the code, the human owns direction and verification. Drives every feature through
-  one lean TASK.md: Specify → Scenarios → Contract → Tests → Build → Verify → Observe,
+  one lean TASK.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
   red/green TDD built in. Use whenever a repo has `.add/`, or the user says "add",
   "start a task", "next phase", "specify this feature", "ADD method", "AI-driven
   development", or wants spec/tests-first discipline over vague-prompt coding. Also
@@ -24,8 +24,9 @@ You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
 result through passing evidence rather than a plausible-looking diff.
 
-**One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — a §0 ground
-preamble plus seven step sections, filled top to bottom; the tool tracks where you are.
+**One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — seven step sections
+(Specify → Scenarios → Plan → Tests → Build → Verify → Observe), filled top to bottom; the tool
+tracks where you are. The **plan** phase unites grounding + the frozen contract + the build strategy.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
@@ -86,10 +87,9 @@ Load the phase guide **only for the phase you are in** (progressive disclosure):
 | Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
 |-------|-------|----------------------------|-----------|--------|
 | setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) | – |
-| ground | `phases/0-ground.md` | §0 GROUND map (real files · symbols · the anchors §3 cites) | **AI** (the §0 preamble — no new gate) | DIRECTION |
 | specify | `phases/1-specify.md` | §1 rules + ranked lowest-confidence flag | AI drafts (co-specify)† | DIRECTION |
 | scenarios | `phases/2-scenarios.md` | §2 Given/When/Then | AI drafts† | DIRECTION |
-| contract | `phases/3-contract.md` | §3 frozen shape | AI drafts → **human approves once** (the decision point)† | DIRECTION |
+| plan | `phases/3-plan.md` | §3 grounding + frozen shape + build-strategy | AI drafts → **human approves once** (the decision point)† | DIRECTION |
 | tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† | DIRECTION |
 | build | `phases/5-build.md` | code in `src/`, tests green | **AI** | BUILD |
 | verify | `phases/6-verify.md` | §6 checks + gate record | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |

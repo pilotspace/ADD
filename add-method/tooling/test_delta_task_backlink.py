@@ -34,8 +34,8 @@ ADD_PY_COPIES = [
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
 PHASES_POOL = [
-    "phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+    "phases/0-setup.md", "phases/1-specify.md",
+    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
     "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
 ]
 _REL_LINE = re.compile(r"(?m)^Related intent:\s*(.+?)\s*$")

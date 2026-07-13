@@ -308,8 +308,8 @@ class SkillDocBundleColumnTest(unittest.TestCase):
             cells = [c.strip() for c in ln.strip("|").split("|")]
             rows[cells[0]] = cells
         expected_bundle = {
-            "ground": "DIRECTION", "specify": "DIRECTION", "scenarios": "DIRECTION",
-            "contract": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
+            "specify": "DIRECTION", "scenarios": "DIRECTION",
+            "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
             "verify": "VERIFY", "observe": "VERIFY",
         }
         for phase, bundle in expected_bundle.items():

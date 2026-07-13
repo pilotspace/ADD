@@ -36,7 +36,7 @@
 
 **Gate** — a checkpoint with an explicit pass/fail exit. Its outcome is `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`.
 
-**Ground (phase-0 preamble)** — the per-task phase *before* Specify in which the AI gathers the real current codebase the task touches — files, symbols, signatures, patterns, conventions — into a lean **grounding map**, surfacing the **anchors** the frozen contract will cite. It is AI-owned and adds no approval (the one approval stays at the contract freeze); it precedes the seven steps as step 0 so the contract, tests, and build are grounded in the code as it actually is, not in assumption. Lives in the `add` skill's `phases/0-ground.md`.
+**Ground (phase-0 preamble)** — the per-task phase *before* Specify in which the AI gathers the real current codebase the task touches — files, symbols, signatures, patterns, conventions — into a lean **grounding map**, surfacing the **anchors** the frozen contract will cite. It is AI-owned and adds no approval (the one approval stays at the contract freeze); it precedes the seven steps as step 0 so the contract, tests, and build are grounded in the code as it actually is, not in assumption. Lives in the `add` skill's `phases/3-plan.md`.
 
 **Grounding map / anchors** — the §0 GROUND artifact: the real files, symbols, and conventions a task touches, plus the **anchors** — the symbols the frozen contract names. Task-specific delta only: it defers to `PROJECT.md` / `CONVENTIONS.md` for architecture and never re-runs the setup brownfield scan. `add.py status` / `check` surface whether the active task's contract is grounded (measure, never block — the contract-freeze checklist asks the human to confirm it).
 

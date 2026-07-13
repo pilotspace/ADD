@@ -261,12 +261,12 @@ class AuditMarkerTest(_Board):
 # Prose accord — the freeze guide must state the enforcement, synced ×3
 # ============================================================================
 class ProseAccordTest(unittest.TestCase):
-    REL = ("skill", "add", "phases", "3-contract.md")
+    REL = ("skill", "add", "phases", "3-plan.md")
 
     def test_contract_guide_states_guard(self):
         canon = HERE.parent.joinpath(*self.REL)
         self.assertIn(GUIDE_ANCHOR, canon.read_text(encoding="utf-8"), canon)
-        dogfood = REPO / ".claude" / "skills" / "add" / "phases" / "3-contract.md"
+        dogfood = REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md"
         for twin in (dogfood, BUNDLE.joinpath(*self.REL)):
             self.assertEqual(canon.read_bytes(), twin.read_bytes(),
                              f"divergence: {twin}")

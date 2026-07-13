@@ -61,7 +61,7 @@ _PINNED_SAFETY = {
 _NEVER_FIELD_FILES = (
     _SKILL / "phases" / "1-specify.md",
     _SKILL / "phases" / "2-scenarios.md",
-    _SKILL / "phases" / "3-contract.md",
+    _SKILL / "phases" / "3-plan.md",
     _SKILL / "phases" / "4-tests.md",
     _SKILL / "phases" / "5-build.md",
     _SKILL / "phases" / "7-observe.md",

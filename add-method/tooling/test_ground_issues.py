@@ -4,7 +4,7 @@
 GROUND should surface the concrete problems/traps/untestable risks the AI finds in
 the REAL code while grounding, so §1 SPECIFY answers problems FOUND, not assumed.
 Frozen shape (§3 @ v1):
-  - 0-ground.md `## Gather` gains an "Issues/Risks (→ feed §1)" category (task-delta only)
+  - 3-plan.md `## Gather` gains an "Issues/Risks (→ feed §1)" category (task-delta only)
     + an `## Exit gate` checkbox for it;
   - TASK.md.tmpl `## 0 · GROUND` gains ONE `Issues/Risks (→ feed §1):` line, placed
     AFTER the `Anchors the contract cites:` line;
@@ -12,7 +12,7 @@ Frozen shape (§3 @ v1):
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding measure
     keys on it), `## 0`/`GROUND`, add.py byte-identical to engine_pin (no measure edit),
     the phases lean pool ≤ its UNCHANGED target (compaction, not a rebaseline);
-  - SYNC: 0-ground.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) byte-identical.
+  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) byte-identical.
 
 Behavior pinned, not prose phrasing. Run: python3 -m unittest test_ground_issues -v
 """
@@ -30,9 +30,9 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "0-ground.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "0-ground.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-ground.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
 ]
 SPECIFY_COPIES = [
     _ADD_METHOD / "skill" / "add" / "phases" / "1-specify.md",
@@ -53,8 +53,8 @@ ADD_PY_COPIES = [
 # the canonical skill tree, where the phases lean pool is measured
 _CANON = _ADD_METHOD / "skill" / "add"
 PHASES_POOL = [
-    "phases/0-ground.md", "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-contract.md", "phases/4-tests.md",
+    "phases/0-setup.md", "phases/1-specify.md",
+    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
     "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
 ]
 # the new field's distinguishing label (the → glyph is already established in the guides)
@@ -92,7 +92,7 @@ def _grounding_block(tmpl: str) -> str:
 
 
 class GuideNamesIssuesCategory(unittest.TestCase):
-    """0-ground.md ## Gather names the Issues/Risks category; existing fields remain."""
+    """3-plan.md ## Gather names the Issues/Risks category; existing fields remain."""
 
     def test_guide_names_issues_risks(self):
         text = _canonical_guide()
@@ -212,9 +212,9 @@ class CopiesStayByteIdentical(unittest.TestCase):
 
     def test_guide_copies_byte_identical(self):
         present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 0-ground.md copies must exist")
+        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
         self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 0-ground.md copies must be byte-identical")
+                         "the 3 3-plan.md copies must be byte-identical")
 
     def test_specify_copies_byte_identical(self):
         present = [p for p in SPECIFY_COPIES if p.exists()]

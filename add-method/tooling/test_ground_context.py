@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Red/green tests for ground-context-sources — broaden the §0 GROUND gather.
 
-The ground phase gathers more than code: the `0-ground.md` guide's `## Gather`
+The ground phase gathers more than code: the `3-plan.md` guide's `## Gather`
 section and the `## 0 · GROUND` TASK.md template name the working-folder context
 categories — docs/textbase · TODOs · config/manifests · data/fixtures — beyond the
 existing code Touches. Frozen shape (§3 @ v1):
-  - 0-ground.md `## Gather` gains a "Context (working folder)" bullet enumerating
+  - 3-plan.md `## Gather` gains a "Context (working folder)" bullet enumerating
     docs/textbase · TODOs · config/manifests · data/fixtures (task-delta only);
   - TASK.md.tmpl `## 0 · GROUND` gains ONE light `Context (working folder):` line
     between Touches and Honors;
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding
     measure keys on it), `## 0`/`GROUND`, the guide saying gather/codebase, and the
     add.py engine byte-identical to engine_pin (no measure edit);
-  - SYNC: 0-ground.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) stay
+  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) stay
     byte-identical.
 
 Behavior pinned, not prose phrasing. ASCII-safe asserts where possible.
@@ -33,9 +33,9 @@ _REPO = _ADD_METHOD.parent                              # repo root
 
 # The ground phase guide — 3 skill trees, must stay byte-identical.
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "0-ground.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "0-ground.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-ground.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
 ]
 
 # The TASK.md template — 3 template trees, must stay byte-identical.
@@ -81,7 +81,7 @@ def _grounding_block(tmpl: str) -> str:
 
 
 class GuideBroadensGather(unittest.TestCase):
-    """0-ground.md `## Gather` names the working-folder context categories."""
+    """3-plan.md `## Gather` names the working-folder context categories."""
 
     def test_guide_names_context_working_folder(self):
         low = _canonical_guide().lower()
@@ -137,9 +137,9 @@ class CopiesStayByteIdentical(unittest.TestCase):
 
     def test_guide_copies_byte_identical(self):
         present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 0-ground.md copies must exist")
+        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
         self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 0-ground.md copies must be byte-identical")
+                         "the 3 3-plan.md copies must be byte-identical")
 
     def test_template_copies_byte_identical(self):
         present = [p for p in TMPL_COPIES if p.exists()]
@@ -160,7 +160,7 @@ class EngineMeasureUntouched(unittest.TestCase):
 
 
 class GatherMethodHint(unittest.TestCase):
-    """0-ground.md carries the gather-METHOD hint (subagent/skim sweep + deepen)."""
+    """3-plan.md carries the gather-METHOD hint (subagent/skim sweep + deepen)."""
 
     def test_guide_recommends_subagent_sweep(self):
         low = _canonical_guide().lower()

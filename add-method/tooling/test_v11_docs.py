@@ -54,7 +54,7 @@ class OneApprovalFrontTest(unittest.TestCase):
         self.assertIn("v6–v7", raw, "the dynamic-run header must be bumped past bare v6")
 
     def test_step_chapters_name_the_bundle(self):
-        for ch in ("04-step-2-scenarios.md", "05-step-3-contract.md", "06-step-4-tests.md"):
+        for ch in ("04-step-2-scenarios.md", "05-step-3-plan.md", "06-step-4-tests.md"):
             low = _read(DOCS / ch).lower()
             self.assertIn("bundle", low, f"{ch} must mention the one-approval bundle")
             self.assertTrue("one approval" in low or "one-approval" in low,

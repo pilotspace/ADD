@@ -193,7 +193,7 @@ class ReportTemplateRippleMarkerTest(unittest.TestCase):
         for rel in (
             "SKILL.md",
             "phases/0-setup.md",
-            "phases/3-contract.md",
+            "phases/3-plan.md",
             "phases/6-verify.md",
         ):
             path = CANON_SKILL / rel

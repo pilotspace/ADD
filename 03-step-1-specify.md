@@ -114,7 +114,7 @@ If you cannot state a rule clearly, the feature is not ready to build. Stop, tak
 
 ## The one approval, and where the flag really lands
 
-In the one-approval flow, you do not approve the spec alone — you approve the whole frozen bundle (spec, scenarios, contract, tests) once, at the contract freeze. So the lowest-confidence flag is **bundle-wide**: at that single decision point the AI leads with *"of everything I'm asking you to freeze, these one or two points are most likely wrong"* — and a flag may point at an uncovered scenario or the contract shape, not only a spec assumption. The ranking you do here in Specify is the first input into that one gate. See [05 Contract](./05-step-3-contract.md) and the `add` skill's `run.md`.
+In the one-approval flow, you do not approve the spec alone — you approve the whole frozen bundle (spec, scenarios, contract, tests) once, at the contract freeze. So the lowest-confidence flag is **bundle-wide**: at that single decision point the AI leads with *"of everything I'm asking you to freeze, these one or two points are most likely wrong"* — and a flag may point at an uncovered scenario or the contract shape, not only a spec assumption. The ranking you do here in Specify is the first input into that one gate. See [05 Contract](./05-step-3-plan.md) and the `add` skill's `run.md`.
 
 ---
 

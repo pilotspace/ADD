@@ -1,7 +1,7 @@
 # Fast lane — less ceremony, same floor
 
-The fast lane is the **collapsed, opt-in task path for small work**. Same flow — ground → specify →
-contract → tests → build → verify — with fewer sections and the bundle approved in one pass. It
+The fast lane is the **collapsed, opt-in task path for small work**. Same flow — specify → scenarios →
+plan → tests → build → verify — with fewer sections and the bundle approved in one pass. It
 **collapses** the ceremony; it never drops the floor. The human opts in (`--fast`); the engine never
 guesses that a task is small.
 
