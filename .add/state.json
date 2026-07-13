@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "gate-read-diet",
+  "active_task": "scope-echo-draft",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8703,10 +8703,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "scope-echo-draft": {
+      "title": "Freeze echoes resolved scope; proposes a Scope line from \u00a73 Touches",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:17:00+00:00",
+      "updated": "2026-07-13T10:35:27+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:17:00+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d63f0e2152357eb67d2a3a0de3b0551c",
+        "tests": {
+          "add-method/tooling/test_scope_echo_draft.py": "3183fe6223ed1ba6ffce5521b212ec2a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "a72353a7154e57b0d1cede6c3e5dc433"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T10:14:44+00:00",
+  "updated": "2026-07-13T10:35:27+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9939,7 +9981,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
-    "ceremony-to-effort": "gate-read-diet"
+    "ceremony-to-effort": "scope-echo-draft"
   },
   "todos": [
     {

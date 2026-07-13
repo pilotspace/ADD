@@ -1026,6 +1026,38 @@ def _next_freeze_version(state: dict, slug: str) -> str:
     return f"v{int(m.group(1)) + 1}" if m else "v1"
 
 
+def _scope_echo(root: Path, slug: str) -> None:
+    """scope-echo-draft: render the RESOLVED §3 scope declaration at the freeze — the
+    approval already happening — so the scope-token grammar's silent mis-resolution
+    class (three tasks independently rediscovered it; the shared-rules ledger has the
+    full grammar) becomes a zero-call read. Pure read, propose-not-impose: when the declaration is UNDECLARED /
+    garbage / entirely MISSING, a Scope line composed from §3 Touches paths is PRINTED,
+    never written — the agent/human re-drafts and re-freezes deliberately."""
+    resolved = _declared_scope(root, slug)
+    rootp = root.parent
+    missing_all = False
+    if resolved is None:
+        print("scope: UNDECLARED (grandfathered)")
+    elif not resolved:
+        print("scope: every token dropped — a garbage declaration grants NO cover")
+    else:
+        marks = [(rel, (rootp / rel).exists()) for rel in resolved]
+        for rel, ok in marks:
+            print(f"scope: {rel} [{'ok' if ok else 'MISSING'}]")
+        missing_all = not any(ok for _, ok in marks)
+    if resolved is None or not resolved or missing_all:
+        paths: list[str] = []
+        body = _raw_phase_bodies(root, slug).get(3, "")
+        for line in body.splitlines():
+            if not line.lstrip().startswith("Touches"):
+                continue
+            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
+                if tok not in paths and (rootp / tok).exists():
+                    paths.append(tok)
+        if paths:
+            print("scope (proposed from §3 Touches): " + " ".join(f"`{p}`" for p in paths))
+
+
 def cmd_freeze(args: argparse.Namespace) -> None:
     """The §3 contract-freeze write command — the 5th engine-WRITTEN human approval (task
     freeze-actor-stamp), joining lock · gate · milestone-done · release. Flips the target
@@ -1160,6 +1192,10 @@ def cmd_freeze(args: argparse.Namespace) -> None:
                                                        "shape": True, "flag": True}
     save_state(root, state)
     print(f"froze §3 of {slug} @ {ver} — approved by {who}")
+    try:                                # scope-echo-draft: fail-open, never blocks a freeze
+        _scope_echo(root, slug)
+    except Exception:
+        pass
     print(_next_footer(root, state))
 
 
