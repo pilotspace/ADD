@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "harness-workspace-isolation",
+  "active_task": "status-ancestor-warn",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9723,10 +9723,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "status-ancestor-warn": {
+      "title": "status/init warns when it resolved an ANCESTOR project (nested dir with no local .add/)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T15:02:08+00:00",
+      "updated": "2026-07-14T15:20:26+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T15:12:51+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "32a6c9aab6d54a44b7bc9afc1b8507ce",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_status_ancestor_warn.py"
+        ],
+        "snapshot_md5": "a9d87669862aba5e9c54237761896c1a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T15:00:52+00:00",
+  "updated": "2026-07-14T15:20:26+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11031,7 +11076,7 @@
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
     "call-residuals": "help-habit-kill",
-    "orientation-honesty": "harness-workspace-isolation"
+    "orientation-honesty": "status-ancestor-warn"
   },
   "todos": [
     {

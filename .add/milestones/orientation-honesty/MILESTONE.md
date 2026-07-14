@@ -36,7 +36,7 @@ Issues/Risks (shared): the `--help`/next-command hint must stay a HINT, never a 
 
 ## Exit criteria (observable; map each to the task that delivers it)
 - [ ] In a fresh workspace nested under an ancestor `.add/`, the WM runner's agent resolves the workspace's OWN (absent-then-init'd) project — no root-walk to the parent — verified by a benchmark isolation test        (← harness-workspace-isolation)
-- [ ] `status`/`init` run in a dir with no `.add/` but an ancestor `.add/` above prints the ancestor-resolved warning naming the resolved path + the `init` remedy        (← status-ancestor-warn)
+- [ ] `status` (full path) run in a dir with no local `.add/` but an ancestor `.add/` above prints an ancestor-resolved note naming the resolved path + the `init` remedy (stderr; `--json`/`--brief` stay silent). Scoped to the read command where the confusion fired — `init` creates at cwd, resolving no ancestor        (← status-ancestor-warn)
 - [ ] `status` and `advance` output contains the exact next command with its required flags (e.g. `add.py freeze --by "<name>" --cross`), copy-pasteable — pinned by a test asserting the flagged form        (← next-command-hints)
 - [ ] `advance` output carries the destination phase's key guide hint, so orientation needs no separate `guide` call — pinned by a test        (← guide-fold)
 - [ ] a `scope_violation` return-to-build prints the declared-vs-resolved paths AND a paste-ready `re-cross` line — pinned by a test        (← scope-violation-explain)

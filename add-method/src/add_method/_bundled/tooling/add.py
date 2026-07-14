@@ -2728,6 +2728,22 @@ def _sorted_by_updated(items: dict) -> list:
     return sorted(items.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)
 
 
+def _ancestor_note() -> str | None:
+    """A one-line stderr note when `status` resolved an ANCESTOR project — cwd has
+    no .add/ of its own but find_root walked up to one. Hands the exact `init` to
+    scope a project HERE (the _require_root skip-error precedent). None (silent) when
+    cwd owns a project or no project is reachable (the init flow owns that message)."""
+    cwd = Path.cwd().resolve()
+    if (cwd / ROOT_DIRNAME / STATE_FILE).exists():
+        return None
+    root = find_root()
+    if root is None:
+        return None
+    return (f"note: no .add/ here — using the ancestor project at {root.parent}; "
+            'run `add.py init --name "<project>" --stage <prototype|poc|mvp|production>` '
+            "to scope a project to this directory")
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     _section = getattr(args, "section", None)
     if _section is not None:
@@ -2812,6 +2828,13 @@ def cmd_status(args: argparse.Namespace) -> None:
         return
     root = _require_root()
     state = load_state(root)
+    # status-ancestor-warn: when cwd has no .add/ of its own but find_root walked up
+    # to an ANCESTOR project, say so + hand the exact `init` to scope here — a nested
+    # agent otherwise spends commands grepping find_root internals ("why is the project
+    # the parent's?"). Full-status path only; stderr so --json/--brief/pipes stay clean.
+    _anc = _ancestor_note()
+    if _anc:
+        print(_anc, file=sys.stderr)
     active = _active_task(state)
     tasks = state.get("tasks", {})
     # Compute once: True when setup is present AND locked is False (the lock-gate window).
