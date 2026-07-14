@@ -2822,6 +2822,17 @@ def cmd_status(args: argparse.Namespace) -> None:
     # re-runs `init` (the double-init call lever). Plain-status path only; the
     # --brief/--json/--section views returned above are unaffected.
     print("project exists — do not re-init (use --force to reset)")
+    # status-orientation-diet: lead the plain view with a resume glance card so a SINGLE
+    # status read carries phase + next verb + the resume file — the resume block already
+    # exists but sits at line ~67 of the dump, driving the measured 3-4x/rep re-reads.
+    # Additive (every line below stays put); reuses _next_footer (the ONE next-verb
+    # composer, also used by --brief); distinct "now" label so it never collides with the
+    # bottom "resume  :" block. Guarded on an active task — no card on setup/no-task paths.
+    _now_active = _active_task(state)
+    if _now_active and _now_active in (state.get("tasks") or {}):
+        _now_ph = (state["tasks"][_now_active] or {}).get("phase", "?")
+        print(f"now     : '{_now_active}' · phase={_now_ph} · {_next_footer(root, state)}")
+        print(f"          TASK.md: .add/tasks/{_now_active}/TASK.md   ·   re-orient: add.py status --brief")
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
