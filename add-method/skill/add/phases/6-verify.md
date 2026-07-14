@@ -44,7 +44,11 @@ A green suite proves tests pass — not that the build EARNED them. Three judgme
 
 ## Record exactly one outcome (no silent pass)
 
-Present this gate via `report-template.md`'s ARC, render APPROVE, and reconcile FLAGS with `add.py report --decide`'s open-item count. **Human-led: render before `gate` and record `Reported: yes` in §6, never self-stamp.**
+Render this gate from the card: banner → ARC → SUMMARY → FLAGS → EVIDENCE → APPROVE → NEXT
+(`report-template.md` = the full template + examples, read at most once per session), and reconcile FLAGS
+with `add.py report --decide`'s open-item count. Right-size the render to the risk: `sensitivity: mechanical`
+and fast-lane tasks use the compact form — banner → SUMMARY → EVIDENCE → APPROVE; `security` / `data` /
+`architecture` always get the full card. **Human-led: render before `gate` and record `Reported: yes` in §6, never self-stamp.**
 
 | Outcome | When |
 |---------|------|

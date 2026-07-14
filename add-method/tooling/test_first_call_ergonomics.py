@@ -229,7 +229,12 @@ class InitKickoffTest(unittest.TestCase):
         with redirect_stdout(buf):
             add.main(["init", "--name", "X", "--stage", "mvp"])
         out = buf.getvalue()
-        self.assertIn("kickoff:", out)
+        # kickoff-truth v1 STRENGTHENED this pin: the hand-off is now lane-aware —
+        # the single-task lane leads (the cheapest measured benchmark run skipped
+        # the milestone), the multi-task milestone lines follow, same command set.
+        self.assertIn("kickoff (single task):", out)
+        self.assertIn("--oneshot", out)
+        self.assertIn("kickoff (multi-task milestone):", out)
         self.assertIn("new-milestone", out)
         self.assertIn("--title", out)
         self.assertIn("--goal", out)

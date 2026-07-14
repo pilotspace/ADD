@@ -105,6 +105,7 @@ from add_engine.io_state import (  # re-exported as module globals: callers use 
     _now, _atomic_write, _atomic_write_bytes, _atomic_write_many,  # names so patches
     find_root, _require_root, _migrate_state, _state_text_or_die,  # on add.<name>
     _die,                                                          # still resolve;
+    _register_invocation, _clear_last_fail,                        # kickoff-truth M3 dup-failure hooks
     _CONFLICT_MARKER_RE,                                            # conflict-marker re
     _load_state_for_json,                                          # --json state loader
     _md5_text, _md5_file,                                          # md5 hashing helpers
@@ -662,7 +663,11 @@ def cmd_init(args: argparse.Namespace) -> None:
         print("      the `add` skill sizes it into a milestone and drives the build with you.")
         # status-guide-fold: name the exact CLI ceremony command for a HEADLESS run
         # (no skill available) so the agent never reads `new-milestone --help`.
-        print('      or headless: add.py new-milestone <slug> --title "..." --goal "..."')
+        # kickoff-truth M1: the single-task lane leads here too — this hint prints
+        # BEFORE the kickoff block, so a milestone-first line here would re-arm the
+        # measured bait the kickoff reorder kills.
+        print('      or headless, single task: add.py new-task <slug> --title "..." --oneshot')
+        print('      or headless, multi-task:  add.py new-milestone <slug> --title "..." --goal "..."')
     # setup hygiene (both branches): the .add/ folder IS the shared project state — commit it
     # so the team shares one source of truth; its transient working files are already gitignored.
     print("tip:  commit the .add/ folder to git so your team shares the ADD state "
@@ -670,9 +675,14 @@ def cmd_init(args: argparse.Namespace) -> None:
     # first-call-ergonomics M3: a copy-pasteable, flags-included kickoff hand-off so a
     # headless agent reaches `advance --to plan` from init's OWN stdout — zero
     # `--help` reads needed for the ceremony the skill would otherwise narrate.
-    print("kickoff:")
+    # kickoff-truth M1: the single-task lane leads — the cheapest measured benchmark
+    # run skipped the milestone entirely; the milestone lines serve multi-task work.
+    print("kickoff (single task):")
+    print('  add.py new-task <slug> --title "..." --oneshot')
+    print("kickoff (multi-task milestone):")
     print('  add.py new-milestone <slug> --title "..." --goal "..."')
     print('  add.py new-task <slug> --title "..." --milestone <ms>')
+    print("then either way:")
     print("  add.py advance --to plan")
 
 
@@ -871,6 +881,17 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print("active task set. phase: specify. State the projected expectations (§1 SPECIFY); "
           "grounding + contract + build-strategy come next, together, in the plan phase.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
+    # kickoff-truth M2: the FULL remaining engine-call recipe, once, at task birth —
+    # the transcript audit measured 6-11 status/guide/--help re-orientation calls per
+    # run that this single block replaces. Lane-invariant (the freeze/gate floor is
+    # the same in every lane); the agent scripts ahead instead of rediscovering.
+    print("recipe — this task's remaining engine calls:")
+    print("  add.py advance --to plan   (write the section rules first)")
+    print("  add.py freeze --by <name>   [human gate — approves the whole plan]")
+    print("  add.py advance   (plan -> tests: write the RED suite)")
+    print("  add.py advance   (tests -> build: make it green)")
+    print("  add.py advance   (build -> verify: gather evidence)")
+    print("  add.py gate PASS   (record the verify outcome)")
 
 
 def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
@@ -1005,6 +1026,38 @@ def _next_freeze_version(state: dict, slug: str) -> str:
     return f"v{int(m.group(1)) + 1}" if m else "v1"
 
 
+def _scope_echo(root: Path, slug: str) -> None:
+    """scope-echo-draft: render the RESOLVED §3 scope declaration at the freeze — the
+    approval already happening — so the scope-token grammar's silent mis-resolution
+    class (three tasks independently rediscovered it; the shared-rules ledger has the
+    full grammar) becomes a zero-call read. Pure read, propose-not-impose: when the declaration is UNDECLARED /
+    garbage / entirely MISSING, a Scope line composed from §3 Touches paths is PRINTED,
+    never written — the agent/human re-drafts and re-freezes deliberately."""
+    resolved = _declared_scope(root, slug)
+    rootp = root.parent
+    missing_all = False
+    if resolved is None:
+        print("scope: UNDECLARED (grandfathered)")
+    elif not resolved:
+        print("scope: every token dropped — a garbage declaration grants NO cover")
+    else:
+        marks = [(rel, (rootp / rel).exists()) for rel in resolved]
+        for rel, ok in marks:
+            print(f"scope: {rel} [{'ok' if ok else 'MISSING'}]")
+        missing_all = not any(ok for _, ok in marks)
+    if resolved is None or not resolved or missing_all:
+        paths: list[str] = []
+        body = _raw_phase_bodies(root, slug).get(3, "")
+        for line in body.splitlines():
+            if not line.lstrip().startswith("Touches"):
+                continue
+            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
+                if tok not in paths and (rootp / tok).exists():
+                    paths.append(tok)
+        if paths:
+            print("scope (proposed from §3 Touches): " + " ".join(f"`{p}`" for p in paths))
+
+
 def cmd_freeze(args: argparse.Namespace) -> None:
     """The §3 contract-freeze write command — the 5th engine-WRITTEN human approval (task
     freeze-actor-stamp), joining lock · gate · milestone-done · release. Flips the target
@@ -1115,6 +1168,20 @@ def cmd_freeze(args: argparse.Namespace) -> None:
                              text[seg_start:seg_end], count=1)
     if n == 0:
         _die(f"contract_not_drafted: {slug}'s §3 has no 'Status: DRAFT' line to freeze")
+    # derived-stamps: a `Ground SHA:` line still carrying its `<...>` placeholder is
+    # filled with the repo's real short HEAD in this SAME atomic write, so the freeze
+    # fingerprint hashes the stamped text. Grandfather (a resolved line never matches)
+    # + fail-open (no git / git fails -> no substitution), mirroring _stamp_gate_record.
+    if re.search(r"(?m)^Ground SHA:[ \t]*<[^>\n]*>", new_seg):
+        try:
+            _r = subprocess.run(["git", "-C", str(root.parent), "rev-parse", "--short", "HEAD"],
+                                capture_output=True, text=True, timeout=10)
+            _sha = _r.stdout.strip() if _r.returncode == 0 else ""
+        except (OSError, subprocess.SubprocessError):
+            _sha = ""
+        if _sha:
+            new_seg = re.sub(r"(?m)^Ground SHA:[ \t]*<[^>\n]*>.*$",
+                             f"Ground SHA: {_sha} — stamped by freeze", new_seg, count=1)
     new_text = text[:seg_start] + new_seg + text[seg_end:]
     _atomic_write(task_md, new_text)                       # TASK.md first (audit source of truth)
     state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": ts,
@@ -1125,6 +1192,10 @@ def cmd_freeze(args: argparse.Namespace) -> None:
                                                        "shape": True, "flag": True}
     save_state(root, state)
     print(f"froze §3 of {slug} @ {ver} — approved by {who}")
+    try:                                # scope-echo-draft: fail-open, never blocks a freeze
+        _scope_echo(root, slug)
+    except Exception:
+        pass
     print(_next_footer(root, state))
 
 
@@ -4861,10 +4932,29 @@ def cmd_milestone_done(args: argparse.Namespace) -> None:
         print(f"  run: add.py {_FOLD_VERB}   (review first: add.py deltas)")
     # SPEC-delta nudge (project-wide): the close is also a natural prompt to RESOLVE the
     # forward hand-offs (seed/drop) so none is orphaned at the eventual compaction.
-    open_spec = len(_collect_open_spec_deltas(root))
+    open_spec_items = _collect_open_spec_deltas(root)
+    open_spec = len(open_spec_items)
     if open_spec:
         noun = "delta" if open_spec == 1 else "deltas"
         print(f"note: {open_spec} open SPEC {noun} to resolve (seed/drop) — review: add.py deltas")
+        # fold-draft-at-close: pre-classify each open SPEC delta so the close-time
+        # resolution starts from a proposal, not a blank re-read. MECHANICAL only —
+        # the engine checked whether a cited path resolves; it never judges. Stdout
+        # only (propose-not-impose) and fail-open: a draft failure never blocks the close.
+        try:
+            print(f"  {_FOLD_VERB} draft (proposed — resolving stays yours; the engine only checked paths):")
+            for d in open_spec_items:
+                toks = re.findall(r"([\w.-]+(?:/[\w.-]+)+)", d["text"] + " " + d["evidence"])
+                live = [k for k in toks if (root.parent / k).exists()]
+                if live:
+                    cls, why = "seed ", f"evidence resolves: {live[0]}"
+                elif toks:
+                    cls, why = "drop?", "evidence no longer resolves"
+                else:
+                    cls, why = "seed ", "forward hand-off by default"
+                print(f"    {cls} {d['text']}  [{d['task']}] — {why}")
+        except Exception:
+            pass
     # the engine-sourced next step (converges the old "Confirm … archive/start the next" hint)
     print(_next_footer(root, state))
 
@@ -8762,8 +8852,13 @@ def main(argv: list[str] | None = None) -> int:
     args, extras = parser.parse_known_args(argv)
     if extras:
         args = _rebind_optional_positionals(parser, args, extras)
+    # kickoff-truth M3: register the true invocation for the dup-failure fingerprint
+    # (explicit argv in-process, sys.argv from the CLI), and clear the sidecar on any
+    # successful exit so only CONSECUTIVE identical failures short-circuit.
+    _register_invocation(sys.argv[1:] if argv is None else list(argv))
     _maybe_nudge_update(args)        # advisory preamble; stderr-only, fail-open
     args.func(args)
+    _clear_last_fail()
     return 0
 
 

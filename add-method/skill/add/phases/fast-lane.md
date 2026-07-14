@@ -9,19 +9,19 @@ guesses that a task is small.
 
 Pick it for a **small, low-risk, roughly single-file change**. Stay on the full lane when the work
 wants its scenarios enumerated — a milestone or release, an architecture or security change, anything
-cross-cutting, or anything you are not yet sure is small. In doubt, run the full lane.
+cross-cutting, or anything not surely small. In doubt, run the full lane.
 
 ## How
 
 1. `add.py new-task <slug> --fast` scaffolds the minimal `TASK.fast.md` (sections {0,1,3,4,5,6};
-   §2 SCENARIOS and §7 OBSERVE dropped — §1's Accept line carries the behavior a scenario would).
+   §2 SCENARIOS and §7 OBSERVE dropped — §1's Accept line carries the scenario's behavior).
 2. Ground, draft §1 + §3, and **freeze the contract as one batched approval** — the single decision
    point, led by the lowest-confidence flag.
 3. Write a **red** test (§4), run it failing for the right reason.
 4. Build (§5) to green, then record the **verify gate** (§6).
 
-Both human gates (freeze, verify) render `report-template.md` too — the fast lane collapses
-sections, never the report.
+Both gates still render — the freeze the full card (3-plan.md); the fast verify gate the
+compact form: banner → SUMMARY → EVIDENCE → APPROVE (6-verify.md).
 
 ## Floor kept, only collapsed
 

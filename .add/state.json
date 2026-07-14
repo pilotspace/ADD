@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "book-plan-align",
+  "active_task": "fold-draft-at-close",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -8531,10 +8531,307 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "kickoff-truth": {
+      "title": "Kickoff truth: lane-aware kickoff + full call recipe + dup-failure short-circuit",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T08:51:25+00:00",
+      "updated": "2026-07-13T09:23:12+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-13T09:14:10+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "adde27dac6e3aa31c786c3032b388c74",
+        "tests": {
+          "add-method/tooling/test_kickoff_truth.py": "d914a80bdce3f6142f98e49f3f731883"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "d4e376d7b281bd1c30bd6e3b59fe456f"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-13T09:22:31+00:00",
+            "reason": "tamper_detected:contract_tampered",
+            "source": "tamper"
+          }
+        ]
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "derived-stamps": {
+      "title": "Freeze stamps the Ground SHA placeholder (derived data, never hand-typed)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T09:27:24+00:00",
+      "updated": "2026-07-13T09:37:45+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T09:28:32+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cc76cba9bb017a48fe12833f18b3fd3f",
+        "tests": {
+          "add-method/tooling/test_derived_stamps.py": "072b5670715e7d58deadc041efecad63"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "0d7da010c20503c69b8c5a46cf8f0dcd"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "template-dedup": {
+      "title": "Template comment dedup: EXIT pointers + engine-stamp comments",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T09:39:23+00:00",
+      "updated": "2026-07-13T09:56:42+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-13T09:49:53+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c8f5aaf45bbccd36f1628ff717434ef7",
+        "tests": {
+          "add-method/tooling/test_template_dedup.py": "c0ff9404c3de497e6d812039394d24d0"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/"
+        ],
+        "snapshot_md5": "f5a3783ddc030b8e2928bb9ddab05175"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "gate-read-diet": {
+      "title": "Gate render cards: phase guides self-suffice; big references read-once",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T09:58:42+00:00",
+      "updated": "2026-07-13T10:14:44+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T09:58:42+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "214c71b8835f57c97da0c4a3ee88a2d8",
+        "tests": {
+          "add-method/tooling/test_gate_read_diet.py": "a6db4abd6b493a2e899b29529ddc52c0"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".claude/skills/"
+        ],
+        "snapshot_md5": "1550b1a035e0876ca7c8bf5a1ad64776"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "scope-echo-draft": {
+      "title": "Freeze echoes resolved scope; proposes a Scope line from \u00a73 Touches",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:17:00+00:00",
+      "updated": "2026-07-13T10:35:27+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:17:00+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d63f0e2152357eb67d2a3a0de3b0551c",
+        "tests": {
+          "add-method/tooling/test_scope_echo_draft.py": "3183fe6223ed1ba6ffce5521b212ec2a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "a72353a7154e57b0d1cede6c3e5dc433"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "risk-report-render": {
+      "title": "Right-size the gate render to the risk class",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:37:18+00:00",
+      "updated": "2026-07-13T10:46:31+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:37:18+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6c32e2f03398294f3bd2449e3e10943d",
+        "tests": {
+          "add-method/tooling/test_risk_report_render.py": "cad703e4e032fb39eb136de54b8d54ac"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/"
+        ],
+        "snapshot_md5": "f71c23a3111749960d316f39c6913684"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "fold-draft-at-close": {
+      "title": "milestone-done pre-classifies the open SPEC deltas (fold draft)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "ceremony-to-effort",
+      "depends_on": [],
+      "created": "2026-07-13T10:48:42+00:00",
+      "updated": "2026-07-13T10:57:39+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T10:48:43+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7b7f36af7d9aa33582f0518bb2f459a8",
+        "tests": {
+          "add-method/tooling/test_fold_draft_at_close.py": "023fda7e3da37cb0b8cd7ef72d01eea7"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "861739ee54303afc2ffc3d083667d75b"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T08:00:35+00:00",
+  "updated": "2026-07-13T11:44:36+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -8898,9 +9195,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "ceremony-to-effort": {
+      "title": "Ceremony-to-effort: convert evaporating ceremony into artifact turns",
+      "goal": "Convert measured evaporating ceremony into artifact effort \u2014 raise the artifact-turn ratio from ~37% toward spec-kit's ~95% band without lowering any trust floor. Target on the pinned-meter re-measure: mean add.py calls <= 12 (from 21), zero --help/duplicate-retry calls, per-task read burden <= ~30KB (from 56KB).",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T08:45:14+00:00",
+      "updated": "2026-07-13T08:47:09+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-13T08:47:09+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "plan-legibility",
+  "active_milestone": "ceremony-to-effort",
   "archived": [
     {
       "slug": "v5",
@@ -9736,7 +10050,8 @@
     "add-bench",
     "add-lean-loop",
     "expectations-first",
-    "plan-legibility"
+    "plan-legibility",
+    "ceremony-to-effort"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -9748,7 +10063,8 @@
     "add-lean-loop": "persona-nudge-quiet",
     "add-bench-2": "tiny-plan-small-scope",
     "expectations-first": "book-plan-align",
-    "plan-legibility": "relations-surface"
+    "plan-legibility": "relations-surface",
+    "ceremony-to-effort": "fold-draft-at-close"
   },
   "todos": [
     {
@@ -9911,7 +10227,7 @@
       "id": 27,
       "text": "benchmark harness: run.py run/resume bypass resolve_setup_steps -> {REPO_ROOT} arm recipes fail setup (exit 2) via that entry point; only pilot.py substitutes. Move resolve_setup_steps into execute_wm (or the run.py CLI) so both entry points share the substitution. Found during the add WM1 re-measure 2026-07-09.",
       "created": "2026-07-09T11:53:20+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 28,
@@ -9923,6 +10239,30 @@
       "id": 29,
       "text": "NEW sub-milestone 'plan-legibility' (after T3): task A = surface the \u00a73 Build-strategy plan-of-action in the DECIDE/freeze report + firm up report-template.md so the human follows WHAT the AI will do, not just the contract shape; task B = structured per-task Relations surface (depends-on \u00b7 extends \u00b7 relates-to, task AND milestone) at plan/status \u2014 consolidate today's scattered Related-intent/depends-on/SEAMS (SEAMS pointer still says retired \u00a70 GROUND).",
       "created": "2026-07-12T15:54:46+00:00",
+      "status": "open"
+    },
+    {
+      "id": 30,
+      "text": "fast task seams-symbol-pins: SEAMS.md anchors by symbol+content instead of add.py line numbers (drift repaired in 4+ consecutive milestones)",
+      "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 31,
+      "text": "fast task sync-twins: one-command propagation for the 4-5 byte-identical engine/template/skill twin trees",
+      "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 32,
+      "text": "post-1.18 release: update --global \u2014 ~/.claude/skills/add is stale (still pre-plan-phase 0-ground/3-contract guides); consider a flow-fingerprint mismatch warning in status",
+      "created": "2026-07-13T08:47:10+00:00",
+      "status": "open"
+    },
+    {
+      "id": 33,
+      "text": "lock-reclaim TOCTOU race: test_concurrent_stale_reclaim_survives_scheduling_delay observed peak=2 holders twice on py3.10 CI (also the older test_project_scope_lock sibling) \u2014 the reclaim window is real on slow runners; harden the ticket-race path or gate the reclaim on a holder heartbeat",
+      "created": "2026-07-13T11:37:30+00:00",
       "status": "open"
     }
   ]

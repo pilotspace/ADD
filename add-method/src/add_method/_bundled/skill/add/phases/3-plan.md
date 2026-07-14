@@ -19,7 +19,7 @@ there. Never invent a file/symbol you have not opened.
 - **Anchors the contract cites** — the specific symbols §3's Contract will name. The Contract may cite ONLY anchors here.
 - **Issues/Risks** — concrete traps/untestable risks found in the real code (feeds §1, not assumptions).
 - **Related intent** — the WHY: `PROJECT.md §` · `GLOSSARY` term(s) · originating request/milestone rationale.
-- **Ground SHA** — the commit grounded against (`git rev-parse --short HEAD`); any line ref is "as of" it.
+- **Ground SHA** — the commit grounded against, stamped by freeze into the placeholder; any line ref is "as of" it.
 
 **How:** sweep BROAD cheaply (small-model subagent / fast index / skim → compact map), then DEEPEN on
 what THIS task needs. **Grounding is complete when** every field above is filled from real assets (a `<…>` placeholder = weak).
@@ -43,9 +43,13 @@ Then mark `Status: FROZEN @ v1 — approved by <name>`.
 ## The freeze — the one approval
 
 Present the bundle **lowest-confidence first**: the 1–2 points most likely wrong
-(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Open with the ARC per `report-template.md`,
-rendering SHAPE then the freeze APPROVE as a guided choice — **render before `FROZEN`, then record `Reported: yes`;
-never on a timeout.** See `run.md`. The approval freezes the Contract (HARD) + the Build-strategy Scope.
+(`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Render from this card: banner → ARC
+(goal · done · plan, engine-sourced) → SHAPE → SUMMARY → FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT
+— rendering SHAPE then the freeze APPROVE as a guided choice; `report-template.md` holds the full
+template + examples, read it at most once per session —
+**render before `FROZEN`, then record `Reported: yes`; never on a timeout.** See `run.md`.
+The freeze always renders the full card — never the compact form (6-verify.md's right-size rule).
+The approval freezes the Contract (HARD) + the Build-strategy Scope.
 
 ## The freeze review checklist
 
