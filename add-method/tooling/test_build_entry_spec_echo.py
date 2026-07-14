@@ -213,9 +213,16 @@ class PurityAndParityTest(_Harness):
 
     def test_engine_twins_carry_the_echo(self):                    # sync x3 (twin parity on add.py)
         canon = hashlib.md5((PKG_ROOT / "tooling" / "add.py").read_bytes()).hexdigest()
+        # the git-TRACKED twin binds unconditionally; the two dogfood twins are
+        # gitignored and absent on a fresh checkout — exists()-skip tolerance
+        # (fresh-checkout precedent ba09498; gitignored-twins lesson, facets milestone)
+        bundled = PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "add.py"
+        self.assertEqual(hashlib.md5(bundled.read_bytes()).hexdigest(), canon,
+                         f"engine twin drifted: {bundled}")
         for twin in (REPO_ROOT / ".add" / "tooling" / "add.py",
-                     PKG_ROOT / ".add" / "tooling" / "add.py",
-                     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "add.py"):
+                     PKG_ROOT / ".add" / "tooling" / "add.py"):
+            if not twin.exists():
+                continue
             self.assertEqual(hashlib.md5(twin.read_bytes()).hexdigest(), canon,
                              f"engine twin drifted: {twin}")
 
