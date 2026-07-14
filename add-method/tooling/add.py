@@ -1362,6 +1362,29 @@ def _relations_health(root: Path, state: dict) -> list[dict]:
     return findings
 
 
+def _milestone_relations_health(root: Path, state: dict) -> list[dict]:
+    """ADVISORY validate pass over every milestone's relation edges — the milestone twin of
+    _relations_health. Returns [{mslug, relation, target, kind}], kind in {'dangling',
+    'self_relation'}: a depends_on/extends/relates_to target that is not a known milestone is
+    dangling; a self-edge is self_relation. Milestone edges are cross-milestone LEGIBILITY only
+    (never a build DAG, never blocking) so all three edge kinds are validated here — unlike the
+    task twin, whose depends_on IS the schedule DAG and is checked there. PURE: reads MILESTONE.md
+    headers via _milestone_relations, never writes, never blocks a gate."""
+    milestones = state.get("milestones") or {}
+    findings: list[dict] = []
+    for mslug in milestones:
+        rel = _milestone_relations(root, mslug)
+        for rtype in ("depends_on", "extends", "relates_to"):
+            for target in rel[rtype]:
+                if target == mslug:
+                    findings.append({"mslug": mslug, "relation": rtype,
+                                     "target": target, "kind": "self_relation"})
+                elif target not in milestones:
+                    findings.append({"mslug": mslug, "relation": rtype,
+                                     "target": target, "kind": "dangling"})
+    return findings
+
+
 def _resolve_task(state: dict, slug: str | None) -> str:
     slug = slug or _active_task(state)
     if not slug:
@@ -1369,6 +1392,28 @@ def _resolve_task(state: dict, slug: str | None) -> str:
     if slug not in state["tasks"]:
         _die(f"unknown task '{slug}'")
     return slug
+
+
+def _resolve_milestone(state: dict, slug: str) -> str:
+    """The milestone twin of _resolve_task: return `slug` if it names a milestone,
+    else `_die("unknown_milestone")` (the exact bare code the callers used inline).
+    Only the byte-identical bare-form sites route through here — sites that raise a
+    fuller `unknown_milestone: '<x>' is not…` message keep their own wording."""
+    if slug not in state.get("milestones", {}):
+        _die("unknown_milestone")
+    return slug
+
+
+def _snapshot_hash(path: Path) -> str | None:
+    """Read a JSON snapshot file and return its "hash" value, or None if the file is
+    missing / non-JSON / not a dict / hash-less. ONE reader for what were 5 inline
+    `json.loads(<p>.read_text("utf-8")).get("hash")` + try/except copies whose caught
+    tuples had drifted apart — unified here to the broadest safe set. Never raises
+    (fail-open: an unreadable pin reads as absent, the caller decides)."""
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("hash")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
 
 
 def _dialect_gaps(root: Path, slug: str) -> list:
@@ -1742,10 +1787,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
         _cons = _task_consumes(root, slug)
         if _cons:
             sp = _contract_snapshot(root, _cons)
-            try:
-                pinned = json.loads(sp.read_text(encoding="utf-8")).get("hash")
-            except (OSError, ValueError, AttributeError):
-                pinned = None
+            pinned = _snapshot_hash(sp)
             if not pinned:        # absent / unreadable / valid-JSON-but-no-hash all fail loud
                 _die(f"contract_snapshot_missing: no readable hashed .add/contracts/{_cons}.json — the "
                      f"producer of '{_cons}' must freeze its contract first "
@@ -2907,6 +2949,15 @@ def cmd_status(args: argparse.Namespace) -> None:
             _parts = [p for p in (f"{_n_dang} dangling" if _n_dang else "",
                                   f"{_n_self} self" if _n_self else "") if p]
             print(f"relations: {' · '.join(_parts)} — run add.py check")
+        # milestone-relations health (wire-milestone-relations): the milestone twin of the
+        # task relations: line above — one advisory count, silent when clean, human branch only.
+        _msrel_bad = _milestone_relations_health(root, state)
+        if _msrel_bad:
+            _ms_self = sum(1 for f in _msrel_bad if f["kind"] == "self_relation")
+            _ms_dang = sum(1 for f in _msrel_bad if f["kind"] == "dangling")
+            _ms_parts = [p for p in (f"{_ms_dang} dangling" if _ms_dang else "",
+                                     f"{_ms_self} self" if _ms_self else "") if p]
+            print(f"milestone-relations: {' · '.join(_ms_parts)} — run add.py check")
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
         print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
@@ -3845,6 +3896,11 @@ def cmd_check(args: argparse.Namespace) -> None:
     tasks = state.get("tasks") if isinstance(state.get("tasks"), dict) else {}
     milestones = state.get("milestones") if isinstance(state.get("milestones"), dict) else {}
     archived_slugs = _archived_task_slugs(state)   # archived deps still resolve
+    # hoist the registry reads to ONCE per invocation (components.toml is read-only
+    # during a check) — the per-task loop below reuses these locals instead of
+    # re-reading + re-parsing the TOML for every bound task (mirrors cmd_components).
+    _comps = _components(root)
+    _cons = _contracts(root)
     warnings: list[tuple[str, str]] = []  # (name, reason) — nudges that NEVER feed `failed`
     infos: list[tuple[str, str]] = []     # (name, reason) — affirmations; NEVER feed `warned`/`failed`
     for slug, t in tasks.items():
@@ -3891,9 +3947,8 @@ def cmd_check(args: argparse.Namespace) -> None:
         # is the same resolver `cmd_ready` trusts (archived ⇒ was PASS-done), so a healthy
         # completed-then-archived seed stays silent.
         if _task_text is not None:
-            _arch = _archived_task_slugs(state)
             for _ptr in _seeded_delta_pointers(_task_text):
-                if _ptr not in tasks and _ptr not in _arch:
+                if _ptr not in tasks and _ptr not in archived_slugs:
                     warnings.append((f"task '{slug}'", f"seeded SPEC delta points at '{_ptr}' which no "
                                      "longer exists (dangling lineage) — re-point or drop the delta"))
         # rule-id-coverage: a §1 Must/Reject ID with no §2 scenario tag and no §4 `covers:`
@@ -3919,8 +3974,8 @@ def cmd_check(args: argparse.Namespace) -> None:
                              "— run `add.py autonomy set <level>` to set it"))
         # per-component-verify: a bound task whose component declares no green_bar can't be
         # gated on a bar — surface it (WARN, never red). Unbound / "?" -> silent.
-        _tc = _task_component(root, slug)
-        if _tc and _tc != "?" and not (_components(root).get(_tc) or {}).get("green_bar"):
+        _tc = _task_component(root, slug, _comps)
+        if _tc and _tc != "?" and not (_comps.get(_tc) or {}).get("green_bar"):
             warnings.append((f"task '{slug}'", f"component_green_bar_unset — bound component '{_tc}' "
                              "declares no green_bar; the per-component gate cannot check a bar"))
         # cross-component-contract: a consumer whose pinned hash drifted from the live snapshot
@@ -3928,10 +3983,7 @@ def cmd_check(args: argparse.Namespace) -> None:
         # snapshot ⇒ no finding here; the missing-snapshot HARD-STOP lives at the advance crossing).
         _pin = t.get("contract_pin")
         if _pin:
-            try:
-                _live = json.loads(_contract_snapshot(root, _pin["id"]).read_text(encoding="utf-8")).get("hash")
-            except (OSError, ValueError, KeyError, TypeError, AttributeError):
-                _live = None
+            _live = _snapshot_hash(_contract_snapshot(root, _pin["id"]))
             if _live is None:                # missing / corrupt / hash-less ⇒ SURFACE, never mask
                 warnings.append((f"task '{slug}'", f"contract_snapshot_unreadable — pinned contract "
                                  f"'{_pin.get('id')}' snapshot is missing or corrupt; re-publish the "
@@ -3944,13 +3996,10 @@ def cmd_check(args: argparse.Namespace) -> None:
         # since the snapshot — surfaced EARLY (never red) before the consumer re-enters §3, the
         # check twin of the producer_contract_stale advance HARD-STOP. Degrade-safe.
         _ccons = _task_consumes(root, slug)
-        if _ccons and _ccons in _contracts(root):
+        if _ccons and _ccons in _cons:
             _csnap = _contract_snapshot(root, _ccons)
             if _csnap.exists():
-                try:
-                    _chash = json.loads(_csnap.read_text(encoding="utf-8")).get("hash")
-                except (OSError, ValueError, AttributeError):
-                    _chash = None
+                _chash = _snapshot_hash(_csnap)
                 if _chash is None:
                     # cross-component-recency R1: a present-but-hash-less snapshot degrades the
                     # recency check to existence-only (frozen behavior) — SURFACE the blind spot
@@ -4223,6 +4272,18 @@ def cmd_check(args: argparse.Namespace) -> None:
                              "guideline file(s) cite the agent roster but no `.claude/agents/"
                              "add-*.md` files are installed — run `add.py update` (or re-run the "
                              "CLI installer) to materialize them"))
+
+    # milestone-relations health (wire-milestone-relations): surface a milestone whose
+    # depends-on/extends/relates-to header edge names an unknown milestone (dangling) or
+    # itself (self). ADVISORY — feeds `warnings`, NEVER `checks`/`failed` (a cross-milestone
+    # legibility edge never blocks). The status one-liner counts the same findings.
+    for _mf in _milestone_relations_health(root, state):
+        _rlabel = _mf["relation"].replace("_", "-")
+        if _mf["kind"] == "self_relation":
+            warnings.append((f"milestone '{_mf['mslug']}'", f"{_rlabel} names itself (self_relation)"))
+        else:
+            warnings.append((f"milestone '{_mf['mslug']}'",
+                             f"{_rlabel} '{_mf['target']}' which is not a milestone (dangling)"))
 
     passed = sum(1 for ok, _, _ in checks if ok)
     failed = len(checks) - passed
@@ -4619,9 +4680,7 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     The engine never self-confirms. Validate-then-write; re-confirm is an idempotent note."""
     root = _require_root()
     state = load_state(root)
-    slug = args.slug
-    if slug not in state.get("milestones", {}):
-        _die("unknown_milestone")
+    slug = _resolve_milestone(state, args.slug)
     m = state["milestones"][slug]
     if m.get("confirmed") is True:
         print(f"milestone '{slug}' already confirmed (by {m.get('confirmed_by', '?')}).")
@@ -5020,9 +5079,7 @@ def cmd_dag_plan(args: argparse.Namespace) -> None:
 def cmd_milestone_done(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
-    slug = args.slug
-    if slug not in state.get("milestones", {}):
-        _die("unknown_milestone")
+    slug = _resolve_milestone(state, args.slug)
     members = {s: t for s, t in state.get("tasks", {}).items() if t.get("milestone") == slug}
     blockers = [s for s, t in members.items() if not _task_done(t)]
     if not members:
@@ -5105,10 +5162,8 @@ def cmd_archive_milestone(args: argparse.Namespace) -> None:
     """Light archive: collapse a DONE milestone out of active state (files stay)."""
     root = _require_root()
     state = load_state(root)
-    slug = args.slug
     # validate before any mutation — a reject must leave state.json byte-for-byte unchanged
-    if slug not in state.get("milestones", {}):
-        _die("unknown_milestone")
+    slug = _resolve_milestone(state, args.slug)
     ms = state["milestones"][slug]
     if ms.get("status") != "done":
         _die("milestone_not_done")        # run `add.py milestone-done` first; never lose live work
@@ -5272,9 +5327,7 @@ def cmd_activate(args: argparse.Namespace) -> None:
     in parallel. Idempotent (re-activating just refocuses). Validates before mutating."""
     root = _require_root()
     state = load_state(root)
-    slug = args.slug
-    if slug not in state.get("milestones", {}):
-        _die("unknown_milestone")
+    slug = _resolve_milestone(state, args.slug)
     if state["milestones"][slug].get("status") == "done":
         _die("milestone_done")
     # PROMOTE a queued milestone: activating it flips queued→active (human-gated promotion —
@@ -5499,15 +5552,19 @@ def _component_root(root: Path, name: str) -> str | None:
         return None
 
 
-def _task_component(root: Path, slug: str):
+def _task_component(root: Path, slug: str, comps: dict | None = None):
     """The component a task binds to via its `component:` header token (anchored like
     autonomy). None = no line / unfilled `<…>` placeholder; "?" = a real token absent
-    from the registry; otherwise the component name. PURE."""
+    from the registry; otherwise the component name. PURE. `comps` lets a caller in a
+    loop (cmd_check) pass the once-read registry so the TOML is not re-parsed per task;
+    omitted -> read it here (byte-identical to the historic behaviour)."""
     m = _COMPONENT_LINE_RE.search(_task_header(root, slug))
     if not m:
         return None
     tok = m.group(1).strip()
-    return tok if tok in _components(root) else "?"
+    if comps is None:
+        comps = _components(root)
+    return tok if tok in comps else "?"
 
 
 def _task_green_bar(root: Path, slug: str) -> str | None:
@@ -5556,13 +5613,14 @@ def _component_findings(root: Path) -> list[tuple[str, str]]:
                 continue
             if not _confined(root.parent / spec["root"], rootp):
                 findings.append(("component_root_outside", f"[component.{name}] root {spec['root']!r} escapes the project"))
-    known = set(_components(root))
+    _reg = _components(root)                  # read once; reused for both the known-set and the per-task bind
+    known = set(_reg)
     try:
         task_dirs = sorted(p for p in (root / "tasks").iterdir() if p.is_dir())
     except OSError:
         task_dirs = []                       # unreadable tasks/ degrades safe — never crash a read
     for d in task_dirs:
-        tc = _task_component(root, d.name)
+        tc = _task_component(root, d.name, _reg)
         if tc is not None and tc not in known:      # "?" or a stale name
             findings.append(("component_unknown", f"task {d.name} binds an unregistered component"))
     return findings
@@ -5629,10 +5687,7 @@ def _consumer_contract_hold(root: Path, state: dict, slug: str) -> None:
         _die(f"producer_contract_unfrozen: the producer '{cmap[cid].get('producer', '?')}' of "
              f"contract '{cid}' must freeze its contract before you write §3 — wait for "
              f".add/contracts/{cid}.json")
-    try:
-        snap_hash = json.loads(snap.read_text(encoding="utf-8")).get("hash")
-    except (OSError, ValueError, AttributeError):
-        snap_hash = None
+    snap_hash = _snapshot_hash(snap)
     if _producer_snapshot_stale(root, cid, snap_hash):
         _die(f"producer_contract_stale: the live producer of contract '{cid}' changed or re-opened "
              f"its §3 since the landed .add/contracts/{cid}.json — re-cross the producer "
@@ -5930,10 +5985,10 @@ def _consumer_stale_guard(root: Path, state: dict, slug: str) -> None:
     pin = state["tasks"][slug].get("contract_pin")
     if not pin:
         return
-    try:
-        live = json.loads(_contract_snapshot(root, pin["id"]).read_text(encoding="utf-8")).get("hash")
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        return  # unreadable -> surfaced by cmd_check, not confirmable as stale here
+    # unreadable/hash-less snapshot -> live is None -> the guard below is a no-op
+    # (surfaced by cmd_check, not confirmable as stale here). Byte-identical to the
+    # old except->return: nothing runs after the `if`.
+    live = _snapshot_hash(_contract_snapshot(root, pin["id"]))
     if live is not None and live != pin.get("hash"):
         _die(f"contract_consumer_stale: task '{slug}' pinned contract '{pin['id']}' changed shape "
              "since the pin (the producer re-froze) — re-pin by re-crossing contract->tests after "

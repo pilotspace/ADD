@@ -14,6 +14,11 @@ from pathlib import Path
 from add_engine.constants import _DELTA_RE, _EVIDENCE_RE, _SPEC_DELTA_RE
 from add_engine.components import _confined
 
+# The ONE canonical §-heading scanner (`^##\s*<n>\s*·`). Static pattern hoisted to
+# module load — _phase_spans is on the busiest task-doc read path (check/status/gate),
+# so it never re-compiles per call. Behaviour byte-identical.
+_HEADING_RE = re.compile(r"^##\s*(\d+)\s*·")
+
 
 def _task_header(root: Path, slug: str) -> str:
     """The TASK.md header region — where declared tokens (risk · autonomy)
@@ -164,7 +169,7 @@ def _phase_spans(text: str) -> dict[int, str]:
     KNOWN LIMIT: a §body containing a line-start `## ` or bare `---` truncates early —
     today's TASK.md bodies don't (box-chars ─═, `### ` sub-heads)."""
     lines = text.splitlines()
-    head = re.compile(r"^##\s*(\d+)\s*·")
+    head = _HEADING_RE
     starts: dict[int, int] = {}
     for idx, ln in enumerate(lines):
         m = head.match(ln)

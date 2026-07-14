@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5723` (`_declared_scope`)   <!-- re-pinned 2026-07-14 guide-fold: 5711→5723 (cmd_advance grew the guide-fold print + its comment above it; the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class) -->
+Anchor: `add-method/tooling/add.py:5778` (`_declared_scope`)   <!-- re-pinned 2026-07-14 wire-milestone-relations: 5734→5778 (add.py grew _milestone_relations_health + the cmd_check/cmd_status wiring above the anchor; the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class) -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,
@@ -73,8 +73,8 @@ Citations: 3 tasks, named not grep-derived (generic phrases like "bare token" ov
 
 ## phase-body-extraction
 Name: `_raw_phase_bodies` / `_phase_spans` phase-body extraction
-Anchor: `add-method/tooling/add_engine/taskdoc.py:159` (`_phase_spans`) ·
-  `add-method/tooling/add_engine/taskdoc.py:185` (`_raw_phase_bodies`)
+Anchor: `add-method/tooling/add_engine/taskdoc.py:164` (`_phase_spans`) ·
+  `add-method/tooling/add_engine/taskdoc.py:190` (`_raw_phase_bodies`)   <!-- re-pinned 2026-07-14 hygiene-bundle: 159→164 / 185→190 (the static _HEADING_RE const hoisted above _phase_spans shifted both down 5) -->
 Contract: `_phase_spans` is the ONE canonical §1–§7 heading scanner
   (`^##\s*(\d+)\s*·`, case/locale-proof): a body runs from its heading to the next
   line-starting `## ` or bare `---`, RAW/byte-faithful (no cleanup) because the
