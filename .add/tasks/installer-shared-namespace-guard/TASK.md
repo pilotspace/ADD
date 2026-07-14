@@ -99,4 +99,5 @@ Build expectations (from §1 Accept + §3 CONTRACT): after update, .claude/agent
 ### GATE RECORD
 Outcome: PASS
 Reviewed by: Tin Dang · date: 2026-07-14
+[SPEC · open] `update --global` propagation never refreshes the roster: agents are absent from _GLOBAL_TREES/GLOBAL_TREES, so the home mirror soft-skips them — user agents SAFE (verified live: my-precious.md survived, stale add-verify.md kept its local edit), but a roster refresh needs a project-level `update`. Candidate follow-up: add agents to the global mirror, routed through the shared lander. Also observed: the opt-in --global-data snapshot excludes .claude/agents (a MANAGED dest), so user agents are not backed up by it. (evidence: global-audit live run 2026-07-14)
 
