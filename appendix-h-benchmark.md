@@ -16,10 +16,12 @@ appendix is the honest scoreboard. Two things make these numbers worth reading:
 2. **Honest-outcome clause.** Findings that cut against ADD print unchanged.
    The cost gap is real and stated first.
 
-## The scoreboard (WV1 — greenfield evolution, corrected rescore, n=1 rep)
+## The scoreboard (same meter, same day, n=1 rep)
 
-Three milestones, same workspace evolving, four arms. Source:
-`benchmark/results/2026-07-wv1-rep0.md`.
+Three milestones, same workspace evolving. The primary table is a fresh run of all
+three flows on one day, one meter, one workload
+(`2026-07-14-v2-sameday.md`) — so they compare without vintage skew. Vanilla carries
+its 2026-07-10 WV1 figure (`2026-07-wv1-rep0.md`), the last time it was run.
 
 The "pass" column is `oracle_pass_rate` — the v2 meter's *deterministic* fidelity
 of record (the milestone's own probe suite run against the built app; no LLM in the
@@ -27,25 +29,24 @@ scoring path).
 
 | arm | WM1 pass/reg | WM2 pass/reg | WM3 pass/reg | rep cost | tokens |
 |---|---|---|---|---|---|
-| **ADD** (main) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $13.94 | 29.3M |
-| **ADD** (lean branch) | 1.00 / 0 | **0.80** / 0 | 1.00 / 0 | $9.30 | 19.7M |
-| GitHub **spec-kit** (v0.12.5) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $3.43 | 5.7M |
-| **vanilla** Claude Code | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $3.07 | 4.3M |
-| **GSD** (get-shit-done-cc 1.42.3)§ | 1.00 / 0 | **0.80** / 0 | 1.00 / 0 | $3.01 | 3.70M |
+| **ADD** (current main) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $9.11 | 18.19M |
+| GitHub **spec-kit** (v0.12.5) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $4.20 | 6.03M |
+| **GSD** (get-shit-done-cc 1.42.3) | 1.00 / 0 | **0.80** / 0 | 1.00 / 0 | $3.01 | 3.70M |
+| **vanilla** Claude Code † | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $3.07 | 4.3M |
 
-§ GSD was measured separately (`2026-07-gsd-v2-rep0.md`, 2026-07-14) on the *same*
-pinned meter and workload, so it drops into the same table. Full detail in the GSD
-section below.
+† vanilla not re-run this round; 2026-07-10 WV1 figure carried forward.
 
 **The honest headline: on a friendly workload at n=1, cost separates and trust
 does not.** Every arm held its oracle. If your project is a weekend prototype,
-spec-kit, vanilla, or GSD is genuinely cheaper (all ≈ $3) — ADD's own `prototype`
-stage says the same thing (run light, code is throwaway). The ceremony gap is
-3–4.6× on this workload, consistent across releases. Adjusted for the trust vector (own-suite
-evidence weighted by weakened-test adjudication), the campaign's scoring report
-put cost *per trusted feature* at spec-kit $1.14 · vanilla $1.53 · ADD branch
-$4.65 · ADD main $13.94 — ADD's premium is real, and it buys enforcement, not
-output.
+spec-kit, vanilla, or GSD is genuinely cheaper — ADD's own `prototype` stage says
+the same thing (run light, code is throwaway). ADD costs 2.2× spec-kit and 3.0× GSD
+here, the same ordering the 2026-07-10 WV1 campaign found. Two honest notes on the
+cost gap: **(1)** current ADD is ~$9, not the ~$14 the older WV1 `add-main` control
+showed — that control was pinned before the lean / ceremony-to-effort / six-phase
+reductions merged, and this same-day run measures the merged main. **(2)** adjusted
+for the trust vector (own-suite evidence weighted by weakened-test adjudication), the
+WV1 scoring report put cost *per trusted feature* at spec-kit $1.14 · vanilla $1.53 ·
+ADD $4.65 — ADD's premium is real, and it buys enforcement, not output.
 
 ## The hostile change (WV2 — gaming resistance)
 
@@ -75,13 +76,16 @@ the amendment has a natural scoped form. The difference is *what guarantees it*:
 
 ## Where ADD measurably leads
 
-- **Fidelity that stays put while the spec evolves.** ADD (main) is the only
-  arm that held 1.00/1.00/1.00 across the evolving milestones in WV1, and the
-  2026-07-14 re-measure held 0.98 × 3 reps with zero regressions and oracle
-  pass 1.0. The one ADD fidelity miss all campaign (branch WM2, 0.80) was
-  root-caused to tests speaking a *friendlier input dialect* than the spec's
-  own examples — and became a shipped floor (the spec-dialect check) the next
-  release. The failure mode is now detected mechanically, for every future task.
+- **Fidelity that stays put while the spec evolves — and stays green under an
+  *audited* floor.** ADD held oracle 1.00/1.00/1.00 across the evolving milestones
+  in the same-day run (so did spec-kit and vanilla on clean state — on a friendly
+  workload, fidelity does not separate the flows, and this appendix says so). What
+  is ADD-specific is *how* that green is earned: the 2026-07-14 loop re-measure held
+  0.98 × 3 reps with zero regressions under the frozen-contract + tamper-tripwire
+  discipline, and the one ADD fidelity miss all campaign (an earlier branch WM2,
+  0.80) was root-caused to tests speaking a *friendlier input dialect* than the
+  spec's own examples — then became a shipped floor (the spec-dialect check). The
+  failure mode is now detected mechanically, for every future task.
 - **Stored-data robustness.** At WM3 the apps inherit bookings written under the
   WM2 schema. ADD (main) was the only arm that **migrated its stored data**;
   vanilla handled the legacy rows without migrating; ADD (branch) and spec-kit
@@ -110,9 +114,9 @@ scoreboard above, and corrects the record:
 - **Functionally it holds up.** Oracle pass 1.00 / 0.80 / 1.00 — one probe short at
   WM2, full recovery at WM3, zero regression on clean state. The same *shape* as the
   ADD lean branch, and on par with spec-kit / vanilla.
-- **It is cheap.** $3.01 total / 3.70M tokens, right in the spec-kit ($3.43) /
-  vanilla ($3.07) tier and 3–4.6× below ADD. GSD's planning-doc weight did not
-  translate into a cost penalty at this workload size.
+- **It is cheap.** $3.01 total / 3.70M tokens — the cheapest arm in the same-day
+  run, below spec-kit ($4.20) and 3.0× below ADD ($9.11). GSD's planning-doc weight
+  did not translate into a cost penalty at this workload size.
 - **The old v1 "WM2 fidelity 0.50" does not reproduce as a functional miss.** On v2
   the deterministic oracle passes WM2 at 0.80 (one probe), not a collapse — the 0.50
   was an unpinned-judge artifact of the retired meter. This correction cuts in GSD's
