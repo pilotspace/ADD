@@ -21,18 +21,27 @@ appendix is the honest scoreboard. Two things make these numbers worth reading:
 Three milestones, same workspace evolving, four arms. Source:
 `benchmark/results/2026-07-wv1-rep0.md`.
 
+The "pass" column is `oracle_pass_rate` — the v2 meter's *deterministic* fidelity
+of record (the milestone's own probe suite run against the built app; no LLM in the
+scoring path).
+
 | arm | WM1 pass/reg | WM2 pass/reg | WM3 pass/reg | rep cost | tokens |
 |---|---|---|---|---|---|
 | **ADD** (main) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $13.94 | 29.3M |
 | **ADD** (lean branch) | 1.00 / 0 | **0.80** / 0 | 1.00 / 0 | $9.30 | 19.7M |
 | GitHub **spec-kit** (v0.12.5) | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $3.43 | 5.7M |
 | **vanilla** Claude Code | 1.00 / 0 | 1.00 / 0 | 1.00 / 0 | $3.07 | 4.3M |
+| **GSD** (get-shit-done-cc 1.42.3)§ | 1.00 / 0 | **0.80** / 0 | 1.00 / 0 | $3.01 | 3.70M |
+
+§ GSD was measured separately (`2026-07-gsd-v2-rep0.md`, 2026-07-14) on the *same*
+pinned meter and workload, so it drops into the same table. Full detail in the GSD
+section below.
 
 **The honest headline: on a friendly workload at n=1, cost separates and trust
-does not.** Every arm held every floor. If your project is a weekend prototype,
-spec-kit or vanilla is genuinely cheaper — ADD's own `prototype` stage says the
-same thing (run light, code is throwaway). The ceremony gap is 2.7–4.5× on this
-workload, consistent across releases. Adjusted for the trust vector (own-suite
+does not.** Every arm held its oracle. If your project is a weekend prototype,
+spec-kit, vanilla, or GSD is genuinely cheaper (all ≈ $3) — ADD's own `prototype`
+stage says the same thing (run light, code is throwaway). The ceremony gap is
+3–4.6× on this workload, consistent across releases. Adjusted for the trust vector (own-suite
 evidence weighted by weakened-test adjudication), the campaign's scoring report
 put cost *per trusted feature* at spec-kit $1.14 · vanilla $1.53 · ADD branch
 $4.65 · ADD main $13.94 — ADD's premium is real, and it buys enforcement, not
@@ -90,26 +99,39 @@ the amendment has a natural scoped form. The difference is *what guarantees it*:
   time-to-first-edit and context-rot metrics exist because the method treats
   "the agent forgot" as a defect class, not weather.
 
-## GSD (v1 meter only — indicative, not comparable)
+## GSD on the fixed v2 meter (re-run 2026-07-14)
 
-GSD was measured on the earlier v1 meter (whose judge was later found
-untrustworthy and whose WM3 regression numbers were probe-pollution artifacts),
-and has not been re-run under the fixed v2 meter:
+GSD (`get-shit-done-cc` 1.42.3) was originally measured only on the retired v1
+meter, whose LLM judge proved untrustworthy — so it sat outside the comparable
+tables. It has now been **re-run on the fixed v2 meter** (`2026-07-gsd-v2-rep0.md`),
+same model, effort, and workload as the other arms. The result moves it *into* the
+scoreboard above, and corrects the record:
 
-| arm | WM1 fid | WM2 fid | WM3 fid | cost/WM |
-|---|---|---|---|---|
-| GSD | 0.97 | **0.50** | 0.95 | $1.19–1.82 |
+- **Functionally it holds up.** Oracle pass 1.00 / 0.80 / 1.00 — one probe short at
+  WM2, full recovery at WM3, zero regression on clean state. The same *shape* as the
+  ADD lean branch, and on par with spec-kit / vanilla.
+- **It is cheap.** $3.01 total / 3.70M tokens, right in the spec-kit ($3.43) /
+  vanilla ($3.07) tier and 3–4.6× below ADD. GSD's planning-doc weight did not
+  translate into a cost penalty at this workload size.
+- **The old v1 "WM2 fidelity 0.50" does not reproduce as a functional miss.** On v2
+  the deterministic oracle passes WM2 at 0.80 (one probe), not a collapse — the 0.50
+  was an unpinned-judge artifact of the retired meter. This correction cuts in GSD's
+  favor, and is stated as such.
 
-The WM2 fidelity collapse is the one distinctive signal: GSD's documentation
-weight front-loads planning artifacts, and on the evolving milestone the build
-drifted from the spec mid-track. Treat as direction, not conclusion, until a
-v2-meter re-run — that honesty cuts both ways.
+One honest wrinkle worth showing rather than hiding: the v2 run's *deprecated* LLM
+judge scored GSD's WM2 and WM3 fidelity at **0.00 despite the oracle passing** (WM3
+oracle 1.00 = every probe green). A working app scoring judge-0.00 is implausible —
+it is the same judge-untrustworthiness this appendix opened with, reproduced sharply
+here (the single-float judge parse-fails to 0.00 as the evolved app grows). It is
+exactly *why* every cross-arm fidelity claim in this appendix rests on the
+deterministic `oracle_pass_rate`, never the judge. GSD's real signal is the oracle
+line: 1.00 / 0.80 / 1.00.
 
 ## How to choose (the same advice ADD's stages encode)
 
 | situation | measured recommendation |
 |---|---|
-| throwaway prototype, demo, spike | vanilla / spec-kit — 3× cheaper, floors don't bind |
+| throwaway prototype, demo, spike | vanilla / spec-kit / GSD — ≈3–4.6× cheaper, floors don't bind |
 | spec evolves, data persists, users exist | ADD — the only flow whose trust floors are enforced rather than assumed, at $3.17/WM1 and falling |
 | hostile or ambiguous change requests | ADD — frozen contract + tamper tripwire make the honest path the only green path |
 | compliance / security surface | ADD — security findings HARD-STOP mechanically; no other measured flow has an un-forceable floor |
