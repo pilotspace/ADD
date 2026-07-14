@@ -1072,9 +1072,16 @@ def _scope_echo(root: Path, slug: str) -> None:
         missing_all = not any(ok for _, ok in marks)
         # scope-coverage-hint: the too-narrow class behind the measured re-cross
         # repairs — tokens resolve [ok] yet the build's real targets sit outside them.
-        for tok in _touches_paths():
-            if not _in_scope(tok, resolved):
-                print(f"note: §3 Touches cites {tok} outside the declared scope")
+        uncovered = [tok for tok in _touches_paths() if not _in_scope(tok, resolved)]
+        for tok in uncovered:
+            print(f"note: §3 Touches cites {tok} outside the declared scope")
+        # scope-first-draft: escalate the per-token notes to ONE paste-ready corrected
+        # line — declared tokens + the uncovered Touches paths — so the fix is a copy,
+        # not a re-derive (turns a post-freeze re-cross repair into a freeze-time edit).
+        if uncovered:
+            merged = list(resolved) + [u for u in uncovered if u not in resolved]
+            print("scope (paste-ready — declared misses §3 Touches): Scope (may touch): "
+                  + " ".join(merged))
     if resolved is None or not resolved or missing_all:
         paths = _touches_paths()
         if paths:

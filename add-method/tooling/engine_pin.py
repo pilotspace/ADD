@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "ee4ef9577fa20c4a804752bcfe3e9f76"  # re-aimed @ init-idempotent-nudge (call-residuals: cmd_init re-init is an exit-0 no-op resume pointer, not a refusal; cmd_status default view opens with a "do not re-init" line — kills the double-init call lever). prior: bf89b033… @ build-entry-spec-echo
+ENGINE_MD5 = "3b438d30e0a6de007b9cfd8e4e0210fe"  # re-aimed @ scope-first-draft (call-residuals: _scope_echo escalates the per-token "note:" lines to ONE paste-ready "Scope (may touch): …" line merging declared tokens + uncovered §3 Touches — turns a post-freeze re-cross repair into a freeze-time copy-paste). prior: ee4ef957… @ init-idempotent-nudge
 ENGINE_PKG_MD5 = "fc40ad47544db6f5204b6197b95daf04"  # re-aimed @ phase-merge-verify (constants.py: PHASES drops observe; _SKIPPABLE_PHASES=(); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: 870a4ce0… @ phase-merge-specify 
