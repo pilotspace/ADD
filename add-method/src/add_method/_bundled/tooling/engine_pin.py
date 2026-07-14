@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "9476543399d46916313f38ffb01f9142"  # re-aimed @ status-ancestor-warn (orientation-honesty: cmd_status prints a one-line stderr note + exact `init` cmd when it resolved an ANCESTOR project — a nested agent stops grepping find_root internals). prior: 9267a41f… @ help-habit-kill
+ENGINE_MD5 = "a88bc24c7f1171f3e373c15fb1bf40ac"  # re-aimed @ orient-map (orientation-honesty: bare add.py + --help LEAD with a concise flow map (status/init/new-task/advance/freeze/gate) then the full list — kills the 1/rep initial --help orientation dump). prior: 9476543399… @ status-ancestor-warn
 ENGINE_PKG_MD5 = "955023db4358bd3f80a22078bc365361"  # re-aimed @ harness-workspace-isolation (io_state.find_root: opt-in ADD_ROOT_CEILING env bounds the upward walk so a nested workspace resolves its own project, not an ancestor). prior: fc40ad47… @ phase-merge-verify

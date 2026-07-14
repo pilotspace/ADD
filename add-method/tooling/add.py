@@ -8435,6 +8435,19 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(out)
 
 
+_FLOW_MAP = (
+    "ADD — spec-and-tests-first; you drive, the human owns direction.\n"
+    "start here: add.py status   — where you are + your exact next command\n"
+    "flow:  init → new-task → advance → freeze → gate\n"
+    '  add.py init --name "<project>" --stage mvp     start a project in this directory\n'
+    '  add.py new-task <slug> --title "..."           a task   [--fast lean · --oneshot single-task]\n'
+    "  add.py advance                                 cross to the next phase (status names the exact form)\n"
+    '  add.py freeze --by "<name>" --cross            approve the frozen §3 contract (the one human gate)\n'
+    "  add.py gate PASS                               record the verify outcome\n"
+    "a command's flags: add.py <command> -h\n"
+)
+
+
 class _AddArgParser(argparse.ArgumentParser):
     """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
     ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
@@ -8442,9 +8455,25 @@ class _AddArgParser(argparse.ArgumentParser):
     + an "invalid choice" message) with a concise "unknown command 'X' — did you mean
     '<near>'?" plus a pointer to `add.py status`. Every other parse error — a subcommand's
     own invalid choice, a missing positional, unrecognized arguments — delegates to
-    argparse's default, so those surfaces stay byte-identical."""
+    argparse's default, so those surfaces stay byte-identical.
+
+    orient-map: the top parser's `--help` (and a bare `add.py` with no subcommand) LEAD
+    with the flow map above instead of the alphabet-soup dump — the agent's first
+    orientation is one cheap read. Both are guarded to the TOP parser (`prog == 'add.py'`):
+    a subcommand's own `--help`/errors (prog "add.py <cmd>") stay byte-identical argparse."""
+
+    def format_help(self) -> str:
+        # top parser: map LEADS, the full argparse command list still follows (nothing lost;
+        # `add.py --help | head` now surfaces orientation, not the 50-choice usage line).
+        if self.prog == "add.py":
+            return _FLOW_MAP + "\n" + super().format_help()
+        return super().format_help()
 
     def error(self, message: str):
+        if self.prog == "add.py" and "the following arguments are required" in message:
+            # bare `add.py` (no subcommand): orient, don't dump the raw usage.
+            sys.stderr.write(_FLOW_MAP + "\nrun: add.py status\n")
+            raise SystemExit(2)
         m = re.search(r"invalid choice: '([^']*)'", message)
         if m is not None and self.prog == "add.py":
             import difflib
