@@ -3,7 +3,7 @@
 goal: let the AI drive a clear, small/medium, or benchmark task through ADD's 8 phases as 3 agent-owned bundles — auto-verifying the DIRECTION gate and skipping only the optional ceremony (scenarios · observe) — while the frozen-contract · red-suite · recorded-gate · security-HARD-STOP floor holds in every mode
 rationale: sub-milestone of the lean / risk-proportional-ceremony line (user-signaled 2026-07-09). EXTENDS `fast-lane` (the existing collapse-never-skip minimal lane — make it faster by skipping the non-important steps for oneshot/small/medium tasks) and `advisor-gated-autonomy` (which only lets `mechanical` sensitivity be advisor-gated — this raises the AI gate to the DIRECTION/contract boundary with a security/data/architecture→human floor). OVERLAPS `flag-first-freeze` (the freeze + autonomy dial). The benchmark measured the big-milestone premium as turn-fragmentation + done-phase ceremony, not the spec phases; this cuts the human-wait and optional ceremony where risk is low, never the floor.
 stage: mvp · status: active · created: 2026-07-08T17:51:23+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

@@ -4,15 +4,55 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [1.18.0] — 2026-07-07
+## [1.18.0] — 2026-07-14
 
-Minor: two milestones — **build-strategy-facets** (§5 build strategy becomes
-four domain-generic facet lines with fast-lane collapse, plus per-facet ADR
-harvest) and **delta-drain** (all 4 open SPEC deltas resolved into shipped
-behavior, leaving zero open SPEC deltas). All additive; no gate weakened,
-nothing removed or renamed.
+Minor: eleven milestones, expanded from the original July-7 two-milestone cut
+(unpublished — the 1.17.0-amend precedent) to attribute everything merged
+since. Headline: **six-phase-loop** — the lifecycle merges 8 phases into 6
+(specify absorbs scenarios; verify absorbs observe), phase guides disclose
+into the roster's bundle subagents, and the tick into build re-renders the
+frozen spec. Also: **expectations-first** (plan phase; ONE freeze),
+**plan-legibility**, **quality-floors**, **risk-proportional-ceremony**,
+**three-phase-flow**, **add-bench** + **add-bench-v2** (the trust benchmark
+that measured it all), **add-lean-loop**, plus the original
+**build-strategy-facets** and **delta-drain**. The ceremony-to-effort and
+call-floor features (compound ticks · scope echo · kickoff truth · skill
+orient split) ship here too; their milestones remain open on measurement
+criteria. No gate weakened; a security finding still HARD-STOPs.
+
+### Changed (the headline)
+- **The loop is six phases**: `specify → plan → tests → build → verify → done`.
+  Scenarios live inside SPECIFY (§2 unchanged as a section); the observe duties
+  live inside VERIFY (§7 unchanged). Legacy phase tokens (`ground`, `contract`,
+  `scenarios`, `observe`) normalize on read — in-flight boards migrate loud and
+  safe; the skip grammar is retired (nothing is skippable; vestigial `skips:`
+  headers are noted at gate, never fatal) (six-phase-loop).
+- **Guides re-cut to 6 files**; delegating spawns a bundle agent that loads its
+  own phase guides — the orchestrator reads only SKILL.md; the inline lane stays
+  first-class (six-phase-loop).
+- The specification bundle approves at ONE freeze on the plan phase
+  (expectations-first); the freeze report renders the BUILD PLAN block and the
+  resolved scope echo (plan-legibility, ceremony-to-effort).
 
 ### Added
+- **Build-entry spec echo** — the tests→build tick prints the §1 Must/Reject
+  rules + the frozen §3 contract head, so the builder starts from the spec on
+  the screen, not from memory; fail-open, both entry paths (six-phase-loop).
+- **Per-phase persona presets** — teacher-grade expert stances per owned phase
+  in the roster agents; project-persona routing stays first; a preset never
+  lowers a gate (six-phase-loop).
+- **Compound ticks** — `freeze --cross` lands in tests; `gate` records from
+  build (one call fewer per crossing); init prints the resume pointer
+  (call-floor).
+- **Quality floors** — spec-dialect warn at build entry · fast-lane
+  `Boundary:` freeze-refusal · §6 DIALECT check line (quality-floors).
+- **The trust benchmark** — arms × workload-milestones harness with
+  deterministic oracles, tamper/regression meters, and the
+  cost-per-trusted-feature verdict (add-bench, add-bench-v2).
+- **AI-plan-verify gate + phase bundles** (three-phase-flow) · message-layer
+  error ergonomics, −24% turns at equal rigor (risk-proportional-ceremony).
+
+### Added (from the original July-7 cut)
 - **Faceted §5 build strategy** — four domain-generic facet lines drafted at
   the tests→build cross: `Approach` (domain strategy) · `Data strategy` ·
   `Pattern` · `Optimization stance`; the fast lane collapses them to one line
@@ -30,6 +70,12 @@ nothing removed or renamed.
 ### Changed
 - §5 build strategy guidance, phase guides, and the TASK.md/TASK.fast.md
   templates teach and carry the facet block (build-strategy-facets).
+
+### Fixed
+- **Installer data loss** — `.claude/agents` is a shared namespace: init/update
+  now land only ADD's own roster files per-file (atomic), removal is
+  explicit-tombstone-only — the user's own subagents survive every install and
+  update (loose task installer-shared-namespace-guard, PR #151).
 
 ### Disclosed waivers (non-security, signed)
 - `reclaim-ticket-race` — lock-reclaim TOCTOU flake; owner Tin Dang, expires 2026-08-04.

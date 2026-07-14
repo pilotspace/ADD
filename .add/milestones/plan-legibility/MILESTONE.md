@@ -3,7 +3,7 @@
 goal: Make the plan and its relationships legible to the human: the freeze report surfaces the full §3 build-strategy plan-of-action (approve HOW, not just WHAT), and every task carries a structured, synced Relations surface (depends-on · extends · relates-to) at task and milestone altitude, with a validate/sync guard.
 rationale: sub-milestone (human-confirmed 2026-07-13) — a legibility follow-on to expectations-first: the plan phase now unifies ground+contract+build-strategy, but the AI's build plan-of-action is NOT surfaced at the one freeze (the human approves WHAT, not HOW), and task relations are scattered (milestone `depends-on`, §3 Related-intent, SEAMS pointers) with no sync. Sequenced BEFORE expectations-first's T4 (book-align), per the human.
 stage: mvp · status: active · created: 2026-07-13T05:13:25+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

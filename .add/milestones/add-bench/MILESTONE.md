@@ -3,7 +3,7 @@
 goal: a reproducible, automated benchmark under `benchmark/` proving (or falsifying) ADD's long-term-project claim — five method arms (ADD · vanilla Claude Code · plan-mode-first · GSD · GitHub spec-kit) each build the same longitudinal greenfield workload (task/booking REST API + CLI, 3 sequential milestones) headlessly, and the harness auto-scores regression rate, spec fidelity, tokens/cost, context-rot slope, and time-to-first-edit into one arm-vs-arm pilot report
 rationale: new-major — an automated benchmark harness is a new product theme no active milestone's goal covers (all prior milestones ship the method/engine/book; only archived book chapters *reference* GSD/spec-kit). Confirmed at intake 2026-07-07.
 stage: mvp · status: active · created: 2026-07-07T09:14:41+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

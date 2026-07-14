@@ -3,7 +3,7 @@
 goal: Reorder the task flow to expectations-first — specify/scenarios become light projections of a milestone-level Ground (gathered once) + the request; grounding, the frozen contract, and build strategy unify into one 'plan' phase carrying the single human freeze. Fewer stops, no re-grounding per task, grounding floor preserved.
 rationale: sub-milestone (method redesign of the core lifecycle). Origin: human analysis 2026-07-12 — the current `ground → specify` order is inverted (grounding serves the HOW, not the WHAT; the WHAT flows down from the milestone). Replaces the abandoned `plan-phase-merge` branch, which only merged ground→specify and mis-modelled where grounding belongs.
 stage: mvp · status: active · created: 2026-07-12T08:16:14+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`.

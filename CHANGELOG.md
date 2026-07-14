@@ -1,9 +1,18 @@
 # Changelog
 
-## 1.18.0 — 2026-07-07
+## 1.18.0 — 2026-07-14
 
-- Drain the 4 open SPEC deltas — 0 carried · 0 key decision(s)
 - Faceted §5 build strategy — 0 carried · 0 key decision(s)
+- Drain the 4 open SPEC deltas — 0 carried · 0 key decision(s)
+- Add Bench — 8 carried · 0 key decision(s)
+- Add Lean Loop — 0 carried · 0 key decision(s)
+- Expectations-first flow: plan phase — 0 carried · 0 key decision(s)
+- Plan legibility — surface the build plan at the freeze + structured task relations — 0 carried · 0 key decision(s)
+- Six-phase loop with bundle-owned subagents — 0 carried · 0 key decision(s)
+- Add Bench V2 — 10 carried · 0 key decision(s)
+- Three Phase Flow — 1 carried · 0 key decision(s)
+- Risk Proportional Ceremony — 2 carried · 0 key decision(s)
+- Quality floors for lean ADD — 0 carried · 0 key decision(s)
 
 ## 1.17.0 — 2026-07-06
 
