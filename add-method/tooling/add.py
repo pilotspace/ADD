@@ -8412,8 +8412,35 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(out)
 
 
+class _AddArgParser(argparse.ArgumentParser):
+    """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
+    ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
+    re-read (the measured 1/rep call lever). Intercept ONLY that case (`prog == 'add.py'`
+    + an "invalid choice" message) with a concise "unknown command 'X' — did you mean
+    '<near>'?" plus a pointer to `add.py status`. Every other parse error — a subcommand's
+    own invalid choice, a missing positional, unrecognized arguments — delegates to
+    argparse's default, so those surfaces stay byte-identical."""
+
+    def error(self, message: str):
+        m = re.search(r"invalid choice: '([^']*)'", message)
+        if m is not None and self.prog == "add.py":
+            import difflib
+            bad = m.group(1)
+            choices: list[str] = []
+            for action in self._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    choices = list(action.choices)
+                    break
+            near = difflib.get_close_matches(bad, choices, n=1)
+            hint = f" — did you mean '{near[0]}'?" if near else ""
+            sys.stderr.write(f"add.py: unknown command '{bad}'{hint}\n")
+            sys.stderr.write("see where you are + all commands: add.py status\n")
+            raise SystemExit(2)
+        super().error(message)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="add.py", description="ADD scaffolder + state tracker")
+    p = _AddArgParser(prog="add.py", description="ADD scaffolder + state tracker")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     pi = sub.add_parser("init", help="create a .add/ project here")

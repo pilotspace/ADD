@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c0c972e2ace3e8434906e2b480191da5"  # re-aimed @ status-orientation-diet (call-residuals: cmd_status plain view leads with a "now" resume glance card — active slug · phase · next verb · TASK.md path — reusing _next_footer, so a single status read orients without the measured 3-4x/rep re-reads). prior: 3b438d30… @ scope-first-draft
+ENGINE_MD5 = "9267a41fdfd15185175146cc36c84a9d"  # re-aimed @ help-habit-kill (call-residuals: _AddArgParser.error intercepts the top-level unknown-command case with a concise "unknown command 'X' — did you mean '<near>'?" + an "add.py status" pointer instead of the ~50-choice usage dump — kills the 1/rep --help reflex). prior: c0c972e2… @ status-orientation-diet
 ENGINE_PKG_MD5 = "fc40ad47544db6f5204b6197b95daf04"  # re-aimed @ phase-merge-verify (constants.py: PHASES drops observe; _SKIPPABLE_PHASES=(); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: 870a4ce0… @ phase-merge-specify 

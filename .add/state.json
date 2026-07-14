@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "status-orientation-diet",
+  "active_task": "help-habit-kill",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9616,10 +9616,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "help-habit-kill": {
+      "title": "unknown subcommand \u2192 concise close-match + resume pointer, no 50-choice dump",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-residuals",
+      "depends_on": [],
+      "created": "2026-07-14T13:53:33+00:00",
+      "updated": "2026-07-14T14:05:37+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T13:55:27+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c5aeefb7091dddd186124ad96edccc3a",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/tooling/test_help_habit_kill.py"
+        ],
+        "snapshot_md5": "9ce320655dd39844c52f83cccb44b534"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T13:52:36+00:00",
+  "updated": "2026-07-14T14:05:37+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10905,7 +10947,7 @@
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
-    "call-residuals": "status-orientation-diet"
+    "call-residuals": "help-habit-kill"
   },
   "todos": [
     {
