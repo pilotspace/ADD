@@ -4,6 +4,37 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [1.18.0] — 2026-07-07
+
+Minor: two milestones — **build-strategy-facets** (§5 build strategy becomes
+four domain-generic facet lines with fast-lane collapse, plus per-facet ADR
+harvest) and **delta-drain** (all 4 open SPEC deltas resolved into shipped
+behavior, leaving zero open SPEC deltas). All additive; no gate weakened,
+nothing removed or renamed.
+
+### Added
+- **Faceted §5 build strategy** — four domain-generic facet lines drafted at
+  the tests→build cross: `Approach` (domain strategy) · `Data strategy` ·
+  `Pattern` · `Optimization stance`; the fast lane collapses them to one line
+  (build-strategy-facets).
+- **per-facet ADR harvest** — each §5 facet lands in §7 Decisions (ADR) as its
+  own actor-tagged line at done (build-strategy-facets).
+- **compact-foundation `--propose`** — a read-only preview of the compaction a
+  run would take; inspect before any byte moves (delta-drain).
+- **`verify` flow value for personas** — personas route to the verify surface
+  directly; the streams.md worker-contract `<persona>` block names the flow
+  preference (delta-drain).
+- **persona roster line** — `status`/`check` render an engine-built roster with
+  flows, never hand-maintained (delta-drain).
+
+### Changed
+- §5 build strategy guidance, phase guides, and the TASK.md/TASK.fast.md
+  templates teach and carry the facet block (build-strategy-facets).
+
+### Disclosed waivers (non-security, signed)
+- `reclaim-ticket-race` — lock-reclaim TOCTOU flake; owner Tin Dang, expires 2026-08-04.
+- `js-reclaim-lock-heartbeat` — JS lock-heartbeat race; owner Tin Dang, expires 2026-08-04.
+
 ## [1.17.0] — 2026-07-06
 
 Minor: four milestones — **method-ergonomics** (every recurring gate rule becomes

@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 1.17.0 release readiness (method-ergonomics + persona-domain-fit +
-dynamic-personas + self-improving-loop).
+"""Red/green tests for the 1.18.0 release readiness (build-strategy-facets + delta-drain).
 
-Minor cut: four milestones (method-ergonomics — engine-presented forms replace
-recalled ceremony: gate --explain · advance --to · re-cross · worktree-prep ·
-verify-record rollup · archived-delta verbs · batched intake · leaner template/
-guides; persona-domain-fit — the domain-fit nudge; dynamic-personas — flow:
-routing + teacher-grade load performance; self-improving-loop — fold grows
-the persona schema, status surfaces the loop's own debt, self-improve.md)
-+ twelve loose tasks. All additive; no gate weakened, nothing removed or
-renamed. dynamic-personas + self-improving-loop merged via PR #137 AFTER the
-initial cut (PR #136) — an in-place amendment to the still-unpublished
-1.17.0 entry, not a version bump (no tag has been pushed for 1.17.0 yet).
+Minor cut: two milestones — **build-strategy-facets** (§5 build strategy becomes
+four domain-generic facet lines — Approach · Data strategy · Pattern ·
+Optimization stance — with fast-lane collapse, plus per-facet ADR harvest into
+§7) and **delta-drain** (the 4 open SPEC deltas each resolved into shipped
+behavior: `compact-foundation --propose` read-only preview · a dedicated
+`verify` persona flow value · the streams.md worker-contract `<persona>` block
+names the flow preference · an engine-built persona roster line in
+status/check). All additive; no gate weakened, nothing removed or renamed.
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 1.17.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 1.18.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
 Run:
-    python3 -m unittest test_release_1_17_0 -v
+    python3 -m unittest test_release_1_18_0 -v
 """
 import hashlib
 import json
@@ -33,21 +30,20 @@ CHANGELOG = PKG / "CHANGELOG.md"
 CI_YML = REPO / ".github" / "workflows" / "ci.yml"
 PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
-VERSION = "1.17.0"
-PRIOR_VERSIONS = ("1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0",
-                  "1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0",
-                  "1.2.0", "1.1.0", "1.0.0")
+VERSION = "1.18.0"
+PRIOR_VERSIONS = ("1.17.0", "1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0",
+                  "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
+                  "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
 from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
-# the headline changes the 1.17.0 notes must name
-FEATURE_ANCHORS = ("gate --explain", "worktree-prep", "re-cross",
-                   "Batched intake", "domain-fit", "flow:` routing",
-                   "Fold grows the current persona schema",
-                   "Loop-surfacing status cues", "self-improve.md")
+# the headline changes the 1.18.0 notes must name
+FEATURE_ANCHORS = ("Approach", "Data strategy", "Optimization stance",
+                   "per-facet ADR harvest", "compact-foundation `--propose`",
+                   "`verify` flow", "persona roster line")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_1_17_0_entry(self):
+    def test_changelog_has_1_18_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -56,7 +52,7 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"1.17.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"1.18.0 entry must name: {anchor}")
 
     def test_changelog_ships_in_both_channels(self):
         files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
@@ -95,11 +91,26 @@ class WorkflowHygieneTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    # NOTE: 1.17.0 is superseded by 1.18.0 — the live-version-agreement assertions
-    # (versions/plugin/runtime == VERSION) moved to test_release_1_18_0.py (the
-    # forward-migration the release-gate pattern demands; the 1.16.0 -> 1.16.1
-    # precedent). This file keeps only lineage + shipped-doc + parity checks,
-    # which stay true across bumps.
+    def test_versions_agree_at_1_18_0(self):
+        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
+        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+        self.assertEqual((pkg, py), (VERSION, VERSION),
+                         "publish.yml's guard would fail this release closed")
+
+    def test_plugin_version_agrees(self):
+        plugin = json.loads(
+            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.assertEqual(plugin, VERSION,
+                         "the Claude Code plugin manifest must match the shipped version")
+
+    def test_runtime_version_agrees(self):
+        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
+        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
+        self.assertEqual(runtime, VERSION,
+                         "add_method.__version__ must match the shipped version")
+
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,

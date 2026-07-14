@@ -3,7 +3,7 @@
 goal: the build phase carries a structured, domain-anchored implementation strategy — algorithm approach, data strategy, dev pattern, and optimization stance are declared facets (not one overloaded line), each anchored upstream (§0/§1/§3), harvested per-facet into the §7 Decisions (ADR) block, and cross-cited by §7 Watch
 rationale: intake bucket=one-task-gap → micro-milestone (2026-07-07): senior review of TASK.md.tmpl found §5's single `Strategy (ordered batches)` line conflates build order · architecture pattern · issue advice · persona stance, so builds skip the domain implementation decision (algorithm/data/pattern/optimization); no active milestone's goal covers method-template structure
 stage: mvp · status: active · created: 2026-07-07T03:57:31+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,
