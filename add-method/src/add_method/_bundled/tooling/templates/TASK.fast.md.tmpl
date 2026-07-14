@@ -29,7 +29,7 @@ Assumptions: ⚠ <the one most likely wrong> — why; if wrong: <cost>   (or "no
 ## 3 · PLAN — the change plan: ground · contract · build-strategy
 
 ### Grounding
-Touches (files · symbols): <path:symbol — what it is / how it is keyed>
+Touches (files · symbols): <path:symbol — the symbols you'll edit + how each is keyed; name symbols, not the full file list — §5 Scope owns the write-set>
 Context (working folder): <docs · config · data the task touches — task-delta only>
 Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta>
 Anchors the contract cites: <the symbols the Contract names — it may cite ONLY anchors named here>
@@ -45,7 +45,7 @@ Ground SHA: <stamped by freeze — leave this placeholder; any line ref reads "a
 Status: DRAFT
 
 ### Build-strategy
-Scope (may touch): `./src/`   <every file the build may write — the scope-lock source>
+Scope (may touch): `./src/`   <the file write-set, the single source of truth (§3 Touches names symbols, this names files); every file the build may write; scope-lock source>
 Strategy & known-problem fixes: <ordered build steps · the trap each known problem must dodge · let the active persona's domain stance (or "generic") shape the approach, not just patterns>
 Approach (domain strategy): <technique · shapes · pattern · optimization stance in one line, in the task's domain vocabulary — or "obvious, correctness-first">
 <!-- The freeze IS the one approval — it freezes the whole PLAN. The Contract is HARD (tamper-guarded); Grounding + Build-strategy are SOFT. Approved -> Status: FROZEN @ vN — approved by <name>. Changing the frozen Contract = change request back to SPECIFY. -->

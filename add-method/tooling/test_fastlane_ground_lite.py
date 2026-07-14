@@ -11,6 +11,7 @@ Run: python3 -m unittest test_fastlane_ground_lite -v
 import contextlib
 import io
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -81,18 +82,20 @@ class ScaffoldAndBehaviorTest(unittest.TestCase):
     def test_scaffold_contains_field(self):                      # scenario 3
         self.assertIn("Ground SHA:", _ground_block(self.md.read_text(encoding="utf-8")))
 
+    # template-touches-scope-dedup: match the Touches line by label + any <…> placeholder
+    # (the dedup reworded the placeholder value), so these stay green across future rewords.
+    _TOUCHES_PLACEHOLDER = re.compile(r"Touches \(files · symbols\): <[^\n]*>")
+    _TOUCHES_LINEREF = "Touches (files · symbols): add.py l.42 — the audit printer"
+
     def test_warn_fires_on_lineref_placeholder_sha(self):        # scenario 4
-        t = self.md.read_text(encoding="utf-8").replace(
-            "Touches (files · symbols): <path:symbol — what it is / how it is keyed>",
-            "Touches (files · symbols): add.py l.42 — the audit printer")
+        t = self._TOUCHES_PLACEHOLDER.sub(
+            self._TOUCHES_LINEREF, self.md.read_text(encoding="utf-8"))
         self.md.write_text(t, encoding="utf-8")
         self.assertIn("cites line numbers", self._check_out())
 
     def test_warn_clears_when_sha_filled(self):                  # scenario 5
-        t = self.md.read_text(encoding="utf-8").replace(
-            "Touches (files · symbols): <path:symbol — what it is / how it is keyed>",
-            "Touches (files · symbols): add.py l.42 — the audit printer")
-        import re
+        t = self._TOUCHES_PLACEHOLDER.sub(
+            self._TOUCHES_LINEREF, self.md.read_text(encoding="utf-8"))
         t = re.sub(r"Ground SHA: <[^>\n]*>", "Ground SHA: abc1234", t)
         self.md.write_text(t, encoding="utf-8")
         self.assertNotIn("cites line numbers", self._check_out())

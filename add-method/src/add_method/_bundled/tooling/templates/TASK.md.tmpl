@@ -58,7 +58,7 @@ Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
 ## 3 · PLAN — the change plan: ground · contract · build-strategy ▸ docs/05-step-3-plan.md
 
 ### Grounding (the real code the contract will cite — gather BEFORE you freeze)
-Touches (files · symbols · signatures): <path:symbol — what it is / how it is keyed>
+Touches (files · symbols · signatures): <path:symbol — the symbols/anchors you'll edit + how each is keyed; name symbols, not the full file list — §5 Scope owns the write-set>
 Context (working folder): <docs · todos · config · data the task touches — task-delta only>
 Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
 Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
@@ -81,7 +81,7 @@ Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
 
 ### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
-Scope (may touch): `./src/`   <fill before the freeze — every file the build may write; this is the scope-lock source>
+Scope (may touch): `./src/`   <fill before the freeze — the file write-set, the single source of truth (§3 Touches names symbols, this names files); every file the build may write; scope-lock source>
 Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; let the named Persona's domain stance shape the approach, not just architecture patterns>
 Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — derive from §1 Framings weighed, not invented here>
 Data strategy: <the shapes and access patterns the work realizes — must agree with the Contract Schema line above>

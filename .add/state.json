@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "scope-first-draft",
+  "active_task": "template-touches-scope-dedup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9472,10 +9472,51 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "template-touches-scope-dedup": {
+      "title": "templates dedup: \u00a73 Touches names symbols, \u00a75 Scope owns the file write-set",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-residuals",
+      "depends_on": [],
+      "created": "2026-07-14T12:05:57+00:00",
+      "updated": "2026-07-14T12:20:53+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T12:11:30+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "8cf394016a210500452e7e51b97fb08e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.md.tmpl",
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/test_template_touches_scope_dedup.py",
+          "add-method/tooling/test_fastlane_ground_lite.py"
+        ],
+        "snapshot_md5": "b7f5f106059c82c625382e3c54cc48e6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T12:03:17+00:00",
+  "updated": "2026-07-14T12:20:53+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10761,7 +10802,7 @@
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
-    "call-residuals": "scope-first-draft"
+    "call-residuals": "template-touches-scope-dedup"
   },
   "todos": [
     {
