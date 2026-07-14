@@ -50,7 +50,7 @@ OUT: gate SEMANTICS (one recorded outcome, security HARD-STOP, tamper/scope guar
 - [x] each of the 3 bundle agents carries per-phase persona preset lines   (<- persona-presets)   (verify: test_persona_presets.py — preset census, routing-first survives, never-lowers-a-gate)
 - [x] the build-entry echo renders Must/Reject + contract summary; bare non-build ticks byte-identical — test-pinned   (<- build-entry-spec-echo)   (verify: test_build_entry_spec_echo.py 9 tests; self-proved live on the task's own re-cross)
 - [x] floors untouched: full fence green, ENGINE_MD5 re-pinned, 3-tree parity, gate semantics byte-identical   (verify: fence 3554/3554 OK; ENGINE_MD5 bf89b033 @ build-entry-spec-echo; twin-parity tests green; zero tests weakened across 6 tasks)
-- [ ] (paid, human-gated) WM1 re-measure after merge: fidelity >= 0.97 held, calls <= 12
+- [x] (paid, human-gated) WM1 re-measure after merge: fidelity >= 0.97 held, calls <= 12   (verify: benchmark/results/2026-07-sixphase-remeasure.md — fidelity MET 0.98x3/0 regr/oracle 1.0; calls UNMET 20.7 mean, HUMAN-ACCEPTED-PARTIAL at close 2026-07-14 by Tin Dang — residuals are message-layer (double-init - re-cross - status re-reads - help), moved to the follow-on milestone)
 
 ## Risks
 - The expectations-first migration class: phase-index vs §-section off-by-one (named trap in every merge task) · ~3500 fixtures pin phase sequences — merges are the two biggest test-ripple tasks this repo has attempted since flow-reorder · gate tamper tripwire fires if migration touches frozen §3s (recover via re-cross --by, precedent recorded).

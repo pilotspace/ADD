@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "build-entry-spec-echo",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9329,7 +9329,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T19:25:16+00:00",
+  "updated": "2026-07-14T04:33:38+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9723,9 +9723,9 @@
       "title": "Six-phase loop with bundle-owned subagents",
       "goal": "Merge specify+scenarios and verify+observe (8->6 phases), disclose phase guides into the lean roster's bundle agents so the orchestrator loads only SKILL.md, add per-phase persona presets + a build-entry spec echo",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-13T17:03:37+00:00",
-      "updated": "2026-07-13T17:10:12+00:00",
+      "updated": "2026-07-14T04:33:21+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-13T17:10:12+00:00",
       "confirmed_by": "tindang",
@@ -9734,10 +9734,27 @@
         "name": "Tin Dang",
         "email": "tindang.ht97@gmail.com",
         "source": "git"
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
+    },
+    "call-residuals": {
+      "title": "Call Residuals",
+      "goal": "",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-14T04:33:38+00:00",
+      "updated": "2026-07-14T04:33:38+00:00",
+      "confirmed": false,
+      "confirmed_at": null,
+      "confirmed_by": null,
+      "await_confirm": true
     }
   },
-  "active_milestone": "six-phase-loop",
+  "active_milestone": "call-residuals",
   "archived": [
     {
       "slug": "v5",
@@ -10576,7 +10593,8 @@
     "plan-legibility",
     "ceremony-to-effort",
     "call-floor",
-    "six-phase-loop"
+    "six-phase-loop",
+    "call-residuals"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
