@@ -1,11 +1,11 @@
 # Releases
 
-## 1.18.0 — 2026-07-07
-milestones: delta-drain, build-strategy-facets
-loose tasks: none
+## 1.18.0 — 2026-07-14
+milestones: build-strategy-facets, delta-drain, add-bench, add-lean-loop, expectations-first, plan-legibility, six-phase-loop, add-bench-v2, three-phase-flow, risk-proportional-ceremony, quality-floors
+loose tasks: prune-benchmark-deadweight
 waivers: reclaim-ticket-race, js-reclaim-lock-heartbeat
 actor: Tin Dang <tindang.ht97@gmail.com> (git)
-evidence: test_release_1_18_0.py 11/11 green · add.py check green · milestones build-strategy-facets(#139) + delta-drain(#140) merged to main
+evidence: expanded cut (1.17.0-amend precedent): 11 milestones — six-phase-loop(#148/#149 stack) + expectations-first/plan-legibility/quality-floors(#145) + add-bench/add-bench-v2(#142) + three-phase-flow/risk-proportional-ceremony + add-lean-loop + build-strategy-facets(#139)/delta-drain(#140) — plus loose installer-shared-namespace-guard(#151); ceremony-to-effort + call-floor features included, milestones open on measurement criteria; 10 open SPEC deltas ride forced (fold review pending, human-owned); fence 3570 OK · release tests green · WM1 re-measure fid 0.98x3/0 regr
 
 ## 1.17.0 — 2026-07-07
 milestones: persona-domain-fit, method-ergonomics, dynamic-personas, self-improving-loop

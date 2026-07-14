@@ -3,7 +3,7 @@
 goal: cut ADD's big-milestone cost premium (1.8x dollars / 2x wall-clock vs spec-kit) toward ~1.3x by scaling ceremony to task risk — never by lowering the trust floor (frozen contract, red suite, recorded gate hold in every lane)
 rationale: sub-milestone (user-signaled after the add-bench WM4-6 verdict): the benchmark proved the premium is turn fragmentation + suite-run churn + done-phase ceremony on big milestones — not the spec phases (~3%) — and that ceremony pays only where risk lives; scale it to risk.
 stage: mvp · status: active · created: 2026-07-08T08:28:21+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,

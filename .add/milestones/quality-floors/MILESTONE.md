@@ -2,7 +2,7 @@
 
 goal: convert the WV1 wm2 miss (own tests spoke a friendlier input dialect than the spec's own examples → aware/naive datetime crash shipped green) into narrow, ~zero-turn floors — the lean lane keeps its −27–33% cost while the failure CLASS is closed; quality is bought with mechanical floors, never with re-added ceremony
 stage: mvp · status: active · created: 2026-07-10T17:12:27+00:00 · lane: tiny
-release: pending
+release: 1.18.0
 
 > Tiny plan — small scope, one approval. Keep it to a handful of lines; if it
 > outgrows this shape, recreate without --tiny (the full SDD scaffold).

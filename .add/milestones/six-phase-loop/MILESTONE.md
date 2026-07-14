@@ -3,7 +3,7 @@
 goal: Merge specify+scenarios and verify+observe (8->6 phases), disclose phase guides into the lean roster's bundle agents so the orchestrator loads only SKILL.md, add per-phase persona presets + a build-entry spec echo
 rationale: sub-milestone — the user's compress-steps + expert-subagent-per-step request, interview-confirmed 2026-07-14 (TRUE 8->6 merge · disclosure into bundle agents · presets · spec echo)
 stage: mvp · status: active · created: 2026-07-13T17:03:37+00:00
-release: pending
+release: 1.18.0
 relations: <cross-MILESTONE edges — add header lines `depends-on:` / `extends:` / `relates-to:` with milestone slugs (comma-sep); omit if none. Non-blocking except depends-on; validated by `add.py check`>
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and

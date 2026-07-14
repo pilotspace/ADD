@@ -3,7 +3,7 @@
 goal: measure ADD's actual value proposition — regression safety, gaming resistance, resumability, direction-mining, security floors, traceability — on the pinned meter, deterministically scored, and report cost-per-TRUSTED-feature alongside v1's raw cost; if a competing flow also holds the floors, report that honestly
 rationale: sub-milestone — v1 (add-bench) only measured simple-greenfield WM1 cost, spec-kit's optimal case (~3.3× cheaper, confirmed fair, `benchmark/results/2026-07-sonnet-campaign.md`); none of the trust dimensions ADD's ceremony pays for have ever been run on the fixed meter, and the v1 LLM fidelity judge is proven untrustworthy. Design confirmed by human 2026-07-10 (`benchmark/v2/DESIGN.md`, commit 26b2084).
 stage: mvp · status: active · created: 2026-07-10T02:03:19+00:00
-release: pending
+release: 1.18.0
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
 > exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,
