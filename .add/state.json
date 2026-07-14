@@ -9326,10 +9326,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "installer-shared-namespace-guard": {
+      "title": "Installer: .claude/agents is a shared namespace \u2014 never clean-replace it whole",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-14T05:19:59+00:00",
+      "updated": "2026-07-14T05:38:57+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T05:21:55+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "67f269a177c87328091886ba51da9ea4",
+        "tests": {
+          "add-method/tooling/test_installer_shared_namespace.py": "66d3417d56dad26dbf0de369c7dbd9c8"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/bin/cli.js",
+          "add-method/src/add_method/_installer.py",
+          "add-method/tooling/"
+        ],
+        "snapshot_md5": "98ebf94ca83d7cc9f2919d99ffe40f03"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T04:33:38+00:00",
+  "updated": "2026-07-14T05:39:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10609,7 +10649,7 @@
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
-    "six-phase-loop": "build-entry-spec-echo"
+    "six-phase-loop": "installer-shared-namespace-guard"
   },
   "todos": [
     {
@@ -10808,6 +10848,12 @@
       "id": 33,
       "text": "lock-reclaim TOCTOU race: test_concurrent_stale_reclaim_survives_scheduling_delay observed peak=2 holders twice on py3.10 CI (also the older test_project_scope_lock sibling) \u2014 the reclaim window is real on slow runners; harden the ticket-race path or gate the reclaim on a holder heartbeat",
       "created": "2026-07-13T11:37:30+00:00",
+      "status": "open"
+    },
+    {
+      "id": 34,
+      "text": "bench meter: the judge rubric's 'single float and nothing else' protocol caps spec_fidelity at ~0.98 (LLM hedging artifact \u2014 the SAME sonnet judge forced to itemize MET/UNMET with evidence scored sixphase-r1 1.0, all requirements MET); meter v3 candidate = itemize-then-float rubric, but changing it breaks comparability with every archived round",
+      "created": "2026-07-14T04:38:54+00:00",
       "status": "open"
     }
   ]
