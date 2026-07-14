@@ -78,9 +78,12 @@ FULL_FACET_LINES = (
     "readability — or \"correctness-first, no budget\"; never blank; ⚠-mark the facet you trust "
     "least; risk: high -> consult add-advisor; advisory, never a gate>",
 )
-FAST_FACET_LINE = ("Approach (domain strategy): <technique · shapes · pattern · optimization "
-                   "stance in one line, in the task's domain vocabulary — or \"obvious, "
-                   "correctness-first\">")
+# template-hint-dedup: the fast §5 Approach hint migrated from a stance-restating one-liner
+# to a ≤6-word technique TAG ("NOT a restatement of the Strategy above") — still ONE collapsed
+# line in the same §5 position (the facets feature's fast-collapse invariant holds).
+FAST_FACET_LINE = ("Approach (domain strategy): <a ≤6-word domain-technique TAG — e.g. "
+                   "\"fail-open derived render\" · \"early-return idempotence\"; NOT a "
+                   "restatement of the Strategy above — or \"obvious, correctness-first\">")
 
 
 def _md5(p: Path) -> str:

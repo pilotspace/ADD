@@ -591,7 +591,19 @@ def cmd_init(args: argparse.Namespace) -> None:
     root = base / ROOT_DIRNAME
     state_path = root / STATE_FILE
     if state_path.exists() and not args.force:
-        _die(f"already initialised at {root} (use --force to reset state) — resume: add.py status")
+        # idempotent init (init-idempotent-nudge): a re-init is a LOUD NO-OP, not a
+        # refusal — exit 0 so a second init costs the agent no recovery call, and
+        # write NOTHING (return before any seed). --force still resets (falls
+        # through below). The message still names the resume command.
+        msg = f"already initialised at {root} — resume: add.py status"
+        try:
+            _active = _active_task(load_state(root))
+            if _active:
+                msg += f" (active task: {_active})"
+        except Exception:
+            pass
+        print(f"add: {msg}")
+        return
 
     (root / "tasks").mkdir(parents=True, exist_ok=True)
     # Keep the engine's transient local artifacts out of git. Never-clobber: a
@@ -1060,9 +1072,16 @@ def _scope_echo(root: Path, slug: str) -> None:
         missing_all = not any(ok for _, ok in marks)
         # scope-coverage-hint: the too-narrow class behind the measured re-cross
         # repairs — tokens resolve [ok] yet the build's real targets sit outside them.
-        for tok in _touches_paths():
-            if not _in_scope(tok, resolved):
-                print(f"note: §3 Touches cites {tok} outside the declared scope")
+        uncovered = [tok for tok in _touches_paths() if not _in_scope(tok, resolved)]
+        for tok in uncovered:
+            print(f"note: §3 Touches cites {tok} outside the declared scope")
+        # scope-first-draft: escalate the per-token notes to ONE paste-ready corrected
+        # line — declared tokens + the uncovered Touches paths — so the fix is a copy,
+        # not a re-derive (turns a post-freeze re-cross repair into a freeze-time edit).
+        if uncovered:
+            merged = list(resolved) + [u for u in uncovered if u not in resolved]
+            print("scope (paste-ready — declared misses §3 Touches): Scope (may touch): "
+                  + " ".join(merged))
     if resolved is None or not resolved or missing_all:
         paths = _touches_paths()
         if paths:
@@ -2798,6 +2817,22 @@ def cmd_status(args: argparse.Namespace) -> None:
     # Compute once: True when setup is present AND locked is False (the lock-gate window).
     # Reuses the canonical helper — do NOT write a parallel predicate.
     unlocked = not _setup_locked(state)
+    # init-idempotent-nudge: reaching here means _require_root passed, i.e. state.json
+    # is present — open with the do-not-init nudge so an agent re-orienting never
+    # re-runs `init` (the double-init call lever). Plain-status path only; the
+    # --brief/--json/--section views returned above are unaffected.
+    print("project exists — do not re-init (use --force to reset)")
+    # status-orientation-diet: lead the plain view with a resume glance card so a SINGLE
+    # status read carries phase + next verb + the resume file — the resume block already
+    # exists but sits at line ~67 of the dump, driving the measured 3-4x/rep re-reads.
+    # Additive (every line below stays put); reuses _next_footer (the ONE next-verb
+    # composer, also used by --brief); distinct "now" label so it never collides with the
+    # bottom "resume  :" block. Guarded on an active task — no card on setup/no-task paths.
+    _now_active = _active_task(state)
+    if _now_active and _now_active in (state.get("tasks") or {}):
+        _now_ph = (state["tasks"][_now_active] or {}).get("phase", "?")
+        print(f"now     : '{_now_active}' · phase={_now_ph} · {_next_footer(root, state)}")
+        print(f"          TASK.md: .add/tasks/{_now_active}/TASK.md   ·   re-orient: add.py status --brief")
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
@@ -8377,8 +8412,35 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(out)
 
 
+class _AddArgParser(argparse.ArgumentParser):
+    """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
+    ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
+    re-read (the measured 1/rep call lever). Intercept ONLY that case (`prog == 'add.py'`
+    + an "invalid choice" message) with a concise "unknown command 'X' — did you mean
+    '<near>'?" plus a pointer to `add.py status`. Every other parse error — a subcommand's
+    own invalid choice, a missing positional, unrecognized arguments — delegates to
+    argparse's default, so those surfaces stay byte-identical."""
+
+    def error(self, message: str):
+        m = re.search(r"invalid choice: '([^']*)'", message)
+        if m is not None and self.prog == "add.py":
+            import difflib
+            bad = m.group(1)
+            choices: list[str] = []
+            for action in self._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    choices = list(action.choices)
+                    break
+            near = difflib.get_close_matches(bad, choices, n=1)
+            hint = f" — did you mean '{near[0]}'?" if near else ""
+            sys.stderr.write(f"add.py: unknown command '{bad}'{hint}\n")
+            sys.stderr.write("see where you are + all commands: add.py status\n")
+            raise SystemExit(2)
+        super().error(message)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="add.py", description="ADD scaffolder + state tracker")
+    p = _AddArgParser(prog="add.py", description="ADD scaffolder + state tracker")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     pi = sub.add_parser("init", help="create a .add/ project here")

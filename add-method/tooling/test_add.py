@@ -49,10 +49,18 @@ class AddToolTest(unittest.TestCase):
         self.assertEqual(st["stage"], "mvp")
         self.assertIsNone(st["active_task"])
 
-    def test_init_refuses_clobber_without_force(self):
+    def test_reinit_is_noop_without_force(self):
+        # init-idempotent-nudge (call-residuals): a re-init WITHOUT --force is now a
+        # LOUD NO-OP (exit 0, writes nothing), not a SystemExit refusal — superseding
+        # the earlier clobber-refusal contract. Full contract in
+        # test_init_idempotent_nudge.py.
         self._run("init")
-        with self.assertRaises(SystemExit):
-            self._run("init")
+        before = {p: p.read_bytes()
+                  for p in (Path(self.tmp) / ".add").rglob("*") if p.is_file()}
+        self._run("init")   # must NOT raise SystemExit
+        after = {p: p.read_bytes()
+                 for p in (Path(self.tmp) / ".add").rglob("*") if p.is_file()}
+        self.assertEqual(before, after, "a no-op re-init must write nothing")
 
     # --- gitignore scaffold (keep transient engine artifacts out of git) ---
     def test_init_scaffolds_gitignore(self):
