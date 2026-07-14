@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "guide-fold",
+  "active_task": "hygiene-bundle",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9857,10 +9857,59 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "hygiene-bundle": {
+      "title": "cmd_check TOML/dead-recompute hoist + 5x snapshot-hash helper + static-regex hoist + milestone-resolve DRY",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-hygiene",
+      "depends_on": [],
+      "created": "2026-07-14T16:16:51+00:00",
+      "updated": "2026-07-14T16:41:56+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T16:20:55+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "eb8449bcc852122dcfc69922ca914db8",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/add_engine/taskdoc.py",
+          ".add/tooling/add_engine/taskdoc.py",
+          "add-method/.add/tooling/add_engine/taskdoc.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/taskdoc.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_hygiene_bundle.py"
+        ],
+        "snapshot_md5": "21cb3c9d509902aec138eefcef5331f0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T15:49:13+00:00",
+  "updated": "2026-07-14T16:41:56+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10305,9 +10354,17 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "engine-hygiene": {
+      "title": "Engine hygiene: perf/dedup cleanup + wire milestone-relations",
+      "goal": "Land the value-dense engine cleanup a read-only sweep found \u2014 behavior-preserving perf hoists + duplication removal (cmd_check TOML re-reads/dead recompute, 5x snapshot-hash helper with unified exceptions, static-regex hoist, milestone-resolve DRY) and finish-wiring the never-surfaced _milestone_relations feature \u2014 with the existing ~3600-test fence as the safety net",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-14T16:16:45+00:00",
+      "updated": "2026-07-14T16:16:45+00:00"
     }
   },
-  "active_milestone": "orientation-honesty",
+  "active_milestone": "engine-hygiene",
   "archived": [
     {
       "slug": "v5",
@@ -11148,7 +11205,8 @@
     "call-floor",
     "six-phase-loop",
     "call-residuals",
-    "orientation-honesty"
+    "orientation-honesty",
+    "engine-hygiene"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -11165,7 +11223,8 @@
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
     "call-residuals": "help-habit-kill",
-    "orientation-honesty": "guide-fold"
+    "orientation-honesty": "guide-fold",
+    "engine-hygiene": "hygiene-bundle"
   },
   "todos": [
     {
