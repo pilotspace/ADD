@@ -28,34 +28,40 @@ Issues/Risks (shared): the `--help`/next-command hint must stay a HINT, never a 
 - harness workspace-isolation contract -> owning task `harness-workspace-isolation` (the runner boundary that stops root-walk at the workspace; freeze first — the other tasks assume the honest baseline)
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] harness-workspace-isolation   depends-on: none   — the WM runner isolates the workspace from any ancestor `.add/` (root-walk boundary / tmpdir-style setup) so the agent's first `status`/`init` resolves the workspace, not AIDD-Book's parent project; kills the 7-13 startup-confusion cmds/rep at the source. FULL flow (benchmark-enforcement change).
-- [ ] status-ancestor-warn         depends-on: none   — `status`/`init` prints a loud one-line warning when it resolved an ANCESTOR project ("no `.add/` here; using project at <path> — run `init` to scope here"); real-world value for nested/monorepo dirs + defense-in-depth behind the harness fix. Message-layer.
-- [ ] next-command-hints           depends-on: none   — LEVER B: `status`/`advance` emit the fully-formed NEXT command WITH its flags (paste-ready), so the agent stops running `<cmd> --help` before first use (5.0 calls/rep, the biggest call lever). Stays a hint, never a gate. Message-layer.
-- [ ] guide-fold                   depends-on: none   — LEVER E: `advance` output carries the current phase guide's key hint so the agent stops re-running `add.py guide` for orientation (1-2 calls/rep). Message-layer.
-- [ ] scope-violation-explain      depends-on: none   — LEVER C: the `scope_violation`/return-to-build message explains the resolution rule (declared vs resolved paths) AND emits a paste-ready `re-cross --by "<you>"`, so the agent stops grepping `_in_scope`/`_declared_scope` internals to recover (5-11 spelunking cmds/rep). Message-layer, gate-preserving.
+- [x] harness-workspace-isolation   depends-on: none   — the WM runner isolates the workspace from any ancestor `.add/` (root-walk boundary via opt-in `ADD_ROOT_CEILING`) so the agent's first `status`/`init` resolves the workspace, not AIDD-Book's parent project; kills the 7-13 startup-confusion cmds/rep at the source. FULL flow. **DONE `a87ed1e`** (ENGINE_PKG_MD5→955023db).
+- [x] status-ancestor-warn         depends-on: none   — `status`/`init` prints a loud one-line warning when it resolved an ANCESTOR project; real-world value for nested/monorepo dirs + defense-in-depth behind the harness fix. Message-layer. **DONE `1d9a211`** (ENGINE_MD5→9476543399).
+- [x] orient-map (was next-command-hints / LEVER B)  depends-on: none   — PIVOTED: lever B (next-command-with-flags) was found ~80% already shipped by prior tasks (first-call-ergonomics / skip-error-ergonomics / engine-hint-batch-ops — the sixphase agent already ran the flagged `freeze`/`new-task` forms). The true residual was the bare `add.py`/`--help` 50-choice dump → `_FLOW_MAP` leads the top-parser help + the no-subcommand error. **DONE `0798bd2`** (ENGINE_MD5→a88bc24c).
+- [x] guide-fold                   depends-on: none   — LEVER E: a completing `advance` folds in the LANDED phase's guide chapter (`guide: .add/docs/<chapter>` + "no re-run `add.py guide`" cue) above the footer; non-duplicative (footer already carries command+why). **DONE `91b3371`** (ENGINE_MD5→c8e0a3e5; SEAMS 5711→5723).
+- [~] scope-violation-explain      depends-on: none   — LEVER C: **NOT BUILT — found ALREADY SHIPPED** by the prior scope-gate-repair-path work. M1 (freeze-time prevention, `add.py:1487`) warns on the template-default §5 + names `re-cross --by`; M2 (gate-time repair, `add.py:5907`) explains the full resolution rule + emits the paste-ready `add.py re-cross --by <name>` + the revert alternative. The code comment at 5902-5905 records this exact fix already killed "the live-benchmark agent source-diving for ~10 turns to discover re-cross" — the precise pain this lever scoped. Human decision 2026-07-14: close at 4 tasks, no redundant 5th.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] In a fresh workspace nested under an ancestor `.add/`, the WM runner's agent resolves the workspace's OWN (absent-then-init'd) project — no root-walk to the parent — verified by a benchmark isolation test        (← harness-workspace-isolation)
-- [ ] `status` (full path) run in a dir with no local `.add/` but an ancestor `.add/` above prints an ancestor-resolved note naming the resolved path + the `init` remedy (stderr; `--json`/`--brief` stay silent). Scoped to the read command where the confusion fired — `init` creates at cwd, resolving no ancestor        (← status-ancestor-warn)
-- [ ] `status` and `advance` output contains the exact next command with its required flags (e.g. `add.py freeze --by "<name>" --cross`), copy-pasteable — pinned by a test asserting the flagged form        (← next-command-hints)
-- [ ] `advance` output carries the destination phase's key guide hint, so orientation needs no separate `guide` call — pinned by a test        (← guide-fold)
-- [ ] a `scope_violation` return-to-build prints the declared-vs-resolved paths AND a paste-ready `re-cross` line — pinned by a test        (← scope-violation-explain)
-- [ ] (paid, human-gated) WM1 re-measure IN THE ISOLATED HARNESS: calls <= 12 mean, fidelity >= 0.97 held, `--help` flag-probes <= 1/rep, zero startup root-walk confusion in transcripts
+- [x] In a fresh workspace nested under an ancestor `.add/`, the WM runner's agent resolves the workspace's OWN (absent-then-init'd) project — no root-walk to the parent — verified by a benchmark isolation test        (← harness-workspace-isolation: `benchmark/tests/test_workspace_isolation.py`)
+- [x] `status` (full path) run in a dir with no local `.add/` but an ancestor `.add/` above prints an ancestor-resolved note naming the resolved path + the `init` remedy (stderr; `--json`/`--brief` stay silent)        (← status-ancestor-warn: `test_status_ancestor_warn.py`)
+- [x] bare `add.py`/`--help` LEAD with the concise flow map (status/init/new-task/advance/freeze/gate) then the full list, instead of the 50-choice dump — pinned by a test (REPLACES the lever-B criterion; lever B's flagged next-command form was already shipped pre-milestone)        (← orient-map: `test_orient_map.py`)
+- [x] a completing `advance` carries the LANDED phase's guide chapter above the footer, so orientation needs no separate `guide` call — pinned by a test        (← guide-fold: `test_guide_fold.py`)
+- [x] a `scope_violation` return-to-build explains the resolution rule AND emits a paste-ready `re-cross --by` line — ALREADY SHIPPED by scope-gate-repair-path M1+M2 (`add.py:1487`, `add.py:5907`); pinned by the existing scope-gate tests        (← scope-violation-explain: pre-shipped, not re-built)
+- [ ] (paid, human-gated) WM1 re-measure IN THE ISOLATED HARNESS: calls <= 12 mean, fidelity >= 0.97 held, `--help` flag-probes <= 1/rep, zero startup root-walk confusion in transcripts        (← DEFERRED: the human-gated spend, run after this PR merges)
 
 ## Close — ship review   (AI fills when every task is done)
 > Whole-milestone, cross-task review the AI fills in. Evidence behind the EXISTING engine gate.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py status/advance/scope_violation surfaces + benchmark/runner isolation — fill at close>
-- skill   : <untouched unless a guide hint needs a doc mirror — fill at close>
-- book    : <untouched — fill at close>
+- tooling : `add_engine/io_state.py` `find_root` gained opt-in `ADD_ROOT_CEILING` (bounded upward walk); `add.py` gained `_ancestor_note` (status ancestor warn), `_FLOW_MAP` + `_AddArgParser.format_help`/`error` (orient-map), the guide-fold print in `cmd_advance`. ×4 twins synced; ENGINE_PKG_MD5→955023db, ENGINE_MD5→c8e0a3e5; SEAMS `_declared_scope` 5688→5711→5723. Lever C (scope_violation explain) untouched — already shipped.
+- benchmark : `runner/core.py` `_invoke_once` sets `ADD_ROOT_CEILING=<cwd>` so each WM workspace resolves its own project, not AIDD-Book's parent — the honest baseline.
+- skill   : untouched (no guide hint needed a doc mirror; guide-fold points at existing chapters).
+- book    : untouched.
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS> · tests=<n green> · residue=<none>
+- harness-workspace-isolation : gate=PASS · tests=green (test_findroot_ceiling + benchmark/tests/test_workspace_isolation) · residue=none
+- status-ancestor-warn        : gate=PASS · tests=green (test_status_ancestor_warn) · residue=none
+- orient-map                  : gate=PASS · tests=green (test_orient_map, 4 asserts) · residue=none
+- guide-fold                  : gate=PASS · tests=green (test_guide_fold, 4 asserts; full fence 3611 pass, the lone bundle-parity fail was a gitignored .pyc from the run) · residue=none
+- scope-violation-explain     : PRE-SHIPPED (scope-gate-repair-path M1+M2) · no new code · human-accepted 2026-07-14
 
 ### Goal met?
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: reach an honest WM1 <=12 — the isolated-harness re-measure line is the proof.
+- [x] each built Exit criterion is satisfied by a Cross-task evidence row (cited above); lever C's criterion is met by pre-shipped code (scope-gate-repair-path M1+M2)
+- [ ] goal: reach an honest WM1 <=12 — the isolated-harness re-measure line is the proof — DEFERRED to the human-gated paid re-measure after this PR merges.
+- Human decision 2026-07-14: close the BUILD at 4 tasks (lever C redundant); the milestone GOAL stays open on the deferred paid re-measure.
 
 ## Release steps   (AI-DEFINED — engine records, human gate)
 - [ ] open a PR from the Close ship-review above; the human reviews + merges
