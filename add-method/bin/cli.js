@@ -414,7 +414,7 @@ async function loadClack() {
 // itself is folded into step 3, Plan, not a separate phase). Fail-soft: any draw error is
 // swallowed so a banner can never abort the install. No color is emitted (default accent:
 // none); the glyphs / tagline / accent are a SWAPPABLE content slot.
-const BRAND_LOOP = ["Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe"];
+const BRAND_LOOP = ["Specify", "Plan", "Tests", "Build", "Verify"];
 
 function terminalCaps(env, stream) {
   const width = Number(env.COLUMNS) || (stream && stream.columns) || 80;

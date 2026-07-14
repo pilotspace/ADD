@@ -96,14 +96,16 @@ class GateAuditTest(unittest.TestCase):
         ])
         (self._root() / "tasks" / slug / "TASK.md").write_text(body, encoding="utf-8")
 
-    def _mk_ungated(self, slug, sec6=None, phase="observe"):
-        """A task pushed to done/observe via the admin `phase` override — NO engine
-        gate, so state.gate stays 'none' — whose §6 we then control byte-exactly.
-        This is the F13 shape: a §6 verdict the engine never recorded."""
+    def _mk_ungated(self, slug, sec6=None):
+        """A task walked to done WITHOUT a gate (phase-merge-verify: verify -> done is
+        a bare advance; `gate` is the only recorder) — state.gate stays 'none' — whose
+        §6 we then control byte-exactly. The F13 shape: a §6 verdict the engine never
+        recorded."""
         buf, err = io.StringIO(), io.StringIO()
         with redirect_stdout(buf), redirect_stderr(err):
             add.main(["new-task", slug, "--title", slug])   # active task; gate stays 'none'
-            add.main(["phase", phase, slug])                # admin override — no gate recorded
+            add.main(["phase", "verify", slug])             # admin override — no gate recorded
+            add.main(["advance", slug])                     # verify -> done, still ungated
         body = "\n".join([
             f"# TASK: {slug}", "",
             # a well-formed done task declares its risk + sensitivity level — keeps the board clean

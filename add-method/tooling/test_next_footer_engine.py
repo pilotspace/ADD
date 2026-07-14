@@ -173,13 +173,11 @@ class FooterArmATest(_Board):
 
     def test_advance_footer_is_phase_command(self):
         self._silent("new-task", "foo")                  # active, specify
-        out, _, _ = self._run("advance", "foo")          # specify -> scenarios
+        out, _, _ = self._run("advance", "foo")          # specify -> plan (merged flow)
         footer = self._footer(out)
-        self.assertTrue(footer.startswith("next: add.py advance"),
-                        f"a front phase points at advance, got: {footer!r}")
-        self.assertIn("write one Given/When/Then", footer,
-                      "the why is the scenarios-phase PHASE_GUIDE copy")
-        self.assertIn("phase specify -> scenarios", out,
+        self.assertTrue(footer.startswith("next: add.py"),
+                        f"a front phase points at the engine, got: {footer!r}")
+        self.assertIn("phase specify -> plan", out,
                       "the footer is ADDITIVE — the verb's result line survives")
 
     def test_advance_into_verify_footer_is_gate(self):
@@ -271,8 +269,7 @@ class FooterMarkerTest(_Board):
         # through the frozen §3 into `tests` (owner ai) under the default `auto` rung
         # to exercise the AI-drives branch.
         self._silent("new-task", "foo")
-        self._silent("advance", "foo")                    # specify -> scenarios
-        self._silent("advance", "foo")                     # scenarios -> plan
+        self._silent("advance", "foo")                    # specify -> plan (merged flow)
         self._freeze("foo")
         out, _, _ = self._run("advance", "foo")            # plan -> tests (frozen)
         footer = self._footer(out)
@@ -303,7 +300,7 @@ class FooterSweepTest(_Board):
         covered["new-milestone"] = self._run("new-milestone", "m2", "--title", "M2", "--goal", "g")[0]
         covered["new-task"] = self._run("new-task", "t1")[0]          # active t1 (m2), ground
         covered["advance"] = self._run("advance", "t1")[0]            # ground -> specify
-        covered["phase"] = self._run("phase", "scenarios", "t1")[0]
+        covered["phase"] = self._run("phase", "plan", "t1")[0]
         self._silent("new-task", "t2")                               # active t2
         covered["use"] = self._run("use", "t1")[0]                   # active t1
         covered["set-milestone"] = self._run("set-milestone", "t2", "m2")[0]
@@ -363,17 +360,17 @@ class FooterCollapseHintTest(_Board):
         self.assertIn("add.py advance --fill <draft>", footer,
                       f"specify footer keeps the --fill alt, got: {footer!r}")
 
-    def test_scenarios_footer_teaches_collapse(self):         # M1 + M2 @ scenarios
+    def test_merged_first_advance_lands_at_freeze_hint(self):  # M1 @ merged flow
+        # phase-merge-specify: the first advance lands AT plan — the footer already
+        # points at the freeze (the collapse hint's home is the specify footer above).
         self._silent("new-task", "foo")
-        out, _, _ = self._run("advance", "foo")               # specify -> scenarios
+        out, _, _ = self._run("advance", "foo")               # specify -> plan
         footer = self._footer(out)
-        self.assertIn("add.py advance --to plan", footer, footer)
-        self.assertIn("add.py advance --fill <draft>", footer, footer)
+        self.assertIn("add.py freeze", footer, footer)
 
     def test_contract_footer_points_at_freeze(self):          # M3
         self._silent("new-task", "foo")
-        self._silent("advance", "foo")                        # -> scenarios
-        out, _, _ = self._run("advance", "foo")               # -> plan
+        out, _, _ = self._run("advance", "foo")               # -> plan (merged flow)
         footer = self._footer(out)
         self.assertIn("add.py freeze", footer,
                       f"plan footer names the freeze gate, got: {footer!r}")
@@ -385,8 +382,7 @@ class FooterCollapseHintTest(_Board):
     def test_no_front_footer_names_a_to_past_contract(self):  # M4
         self._silent("new-task", "foo")
         footers = [self._footer(self._run("new-task", "bar")[0])]   # bar @ specify
-        for _ in range(2):                                    # scenarios, plan
-            footers.append(self._footer(self._run("advance", "bar")[0]))
+        footers.append(self._footer(self._run("advance", "bar")[0]))  # -> plan
         for f in footers:
             for bad in ("--to tests", "--to build", "--to verify", "--to observe", "--to done"):
                 self.assertNotIn(bad, f, f"no front footer may name {bad!r}: {f!r}")
@@ -422,8 +418,7 @@ class FooterFoldTest(_Board):
 
     def test_plain_status_carries_next_command_inline(self):   # M2
         self._silent("new-task", "foo")                         # -> specify
-        self._silent("advance", "foo")                          # -> scenarios
-        self._silent("advance", "foo")                          # -> plan
+        self._silent("advance", "foo")                          # -> plan (merged flow)
         out, _, _ = self._run("status")                         # plain full status
         self.assertIn("add.py freeze", out,
                       f"plain status must name the next command inline: {out}")

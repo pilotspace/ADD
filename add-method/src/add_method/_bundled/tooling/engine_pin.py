@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "26f78f0480771939d4604d21f62546f6"  # re-aimed @ compound-ticks (call-floor 4/5: opt-in freeze --cross lands a plan freeze in tests; a completing gate at build auto-crosses to verify; the new-task recipe advertises the compressed lane). prior: 6f4e791f… @ scope-coverage-hint 
-ENGINE_PKG_MD5 = "d83fc67fc7979adde37358a29d5e3f46"  # re-aimed @ kickoff-truth v2 (io_state.py: _die gains the dup-failure short-circuit — _register_invocation/_clear_last_fail/_dup_fail_hint; the sig sidecar lives in the OS tmp dir keyed by md5(root), NEVER in the .add tree — the reject-writes-nothing floor; constants.py untouched at v2). prior: 28212a55… @ guides-and-skill
+ENGINE_MD5 = "bf89b03351ae87d72fb3a2dc5f5729af"  # re-aimed @ build-entry-spec-echo (six-phase-loop 6/6: _spec_echo pure-read helper + fail-open tail call in _build_entry — the tick INTO build re-renders §1 Must/Reject + the §3 contract head). prior: 5d5e0538… @ phase-merge-verify 
+ENGINE_PKG_MD5 = "fc40ad47544db6f5204b6197b95daf04"  # re-aimed @ phase-merge-verify (constants.py: PHASES drops observe; _SKIPPABLE_PHASES=(); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: 870a4ce0… @ phase-merge-specify 

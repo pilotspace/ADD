@@ -89,19 +89,21 @@ class _Board(unittest.TestCase):
 class MalformedSkipsTest(_Board):
 
     def test_malformed_skips_names_repair(self):
+        # phase-merge-verify retired the grammar: no crossing dies on a declaration
+        # anymore. The ERGONOMIC floor survives in the resolver — its error string
+        # still names the bad token and echoes the raw declaration for any reader.
+        err = add._task_skip_set("skips: specify,scenarios\n")[1]
+        self.assertTrue(err and err.startswith("skip_not_allowed"), err)
+        self.assertIn("specify", err, "the bad token is named")
+        self.assertIn("skips: specify,scenarios", err, "the raw declaration is echoed")
+        # ...and the crossing itself never dies now
         self._init_project()
         self._silent("new-task", "t1", "--title", "T")
         self._write_task("t1", skips_line="skips: specify,scenarios")
-        self._silent("phase", "specify", "t1")
-        out, err, code = self._run("advance", "t1")   # specify -> scenarios (skippable)
-        blob = out + err
-        self.assertNotEqual(code, 0, "fail-closed discard unchanged")
-        self.assertIn("skip_not_allowed", blob, "the code prefix survives")
-        self.assertIn("specify", blob, "the bad token is named")
-        self.assertIn("skips: specify,scenarios", blob, "the raw declaration is echoed")
-        for allowed in sorted(add._SKIPPABLE_PHASES):
-            self.assertIn(allowed, blob, f"the allowed set names {allowed}")
-        self.assertIn("remove", blob.lower(), "the fix (correct-or-remove) is stated")
+        self._silent("phase", "verify", "t1")
+        out, err2, code = self._run("advance", "t1")   # verify -> done, tolerated
+        self.assertEqual(code, 0, f"the retired grammar must never die at advance: {out + err2}")
+        self.assertIn("remove", err.lower(), "the fix (correct-or-remove) is stated")
 
     def test_valid_skip_unaffected(self):
         # UNDECLARED (no skips line) crossing — the universal default stays silent

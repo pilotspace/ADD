@@ -1,6 +1,6 @@
 """test_per_step_hooks — guards the Advisor+Confidence hook woven into every phase guide.
 
-Each of the 8 phase guides (0-ground … 7-observe) must carry ONE thin, phase-appropriate
+Each phase guide (0-setup … 6-verify, the recut 6-phase loop) must carry ONE thin, phase-appropriate
 blockquote hook — marked `Advisor · Confidence` — that names BOTH advisor.md and confidence.md,
 so an agent self-scores and knows when to delegate in the idiom of the phase it is in. SKILL.md
 must cross-ref both docs so they are discoverable. The hooks must be mutually distinct (not
@@ -20,8 +20,8 @@ _PHASES = _TOOLING.parent / "skill" / "add" / "phases"
 _SKILL = _TOOLING.parent / "skill" / "add" / "SKILL.md"
 
 _PHASE_FILES = (
-    "1-specify.md", "2-scenarios.md", "3-plan.md",
-    "4-tests.md", "5-build.md", "6-verify.md", "7-observe.md",
+    "1-specify.md", "3-plan.md",
+    "4-tests.md", "5-build.md", "6-verify.md",
 )
 _MARKER = "Advisor · Confidence"
 
@@ -71,10 +71,11 @@ class TestPerStepHooks(unittest.TestCase):
         self.assertIn("confidence.md", self.skill, "SKILL.md must cross-ref confidence.md")
 
     def test_wording_surface_count_unchanged(self) -> None:
-        self.assertEqual(len(_wl.surface_files()), 32,
+        self.assertEqual(len(_wl.surface_files()), 30,
                          "editing guides must not change the wording-lint surface count "
-                         "(32: +beyond.md @ skill-orient-split; "
+                         "(30: +beyond.md @ skill-orient-split; "
                          "0-ground.md + 3-contract.md merged into 3-plan.md @ guides-and-skill, net -1; "
+                         "2-scenarios.md + 7-observe.md deleted @ guide-recut, net -2; "
                          "+fast-lane.md @ fast-lane, +components.md @ component-method-docs, "
                          "+sensitivity.md @ sensitivity-glossary, +self-improve.md @ self-improving-guide)")
 

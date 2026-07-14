@@ -166,7 +166,7 @@ class TestLiveSurfaceGreen(unittest.TestCase):
         self.assertEqual([f for f in live if f.code == "banned_idiom_present"], [])
 
     def test_surface_files_cover_the_contract(self) -> None:
-        """The surface is skill/add (30 files: +beyond.md @ skill-orient-split, +loop.md @ v20, +graduate.md @ v22, +confidence.md +advisor.md @ advisor-context, +compact-foundation.md @ foundation-compaction, +soul.md @ soul-self-improve, +design.md @ udd-design-loop, +release.md @ release-altitude, +phases/fast-lane.md @ fast-lane, +components.md @ component-method-docs) + docs/appendix-b-prompts.md, per §3."""
+        """The surface is skill/add (29 files: +beyond.md @ skill-orient-split, +loop.md @ v20, +graduate.md @ v22, +confidence.md +advisor.md @ advisor-context, +compact-foundation.md @ foundation-compaction, +soul.md @ soul-self-improve, +design.md @ udd-design-loop, +release.md @ release-altitude, +phases/fast-lane.md @ fast-lane, +components.md @ component-method-docs) + docs/appendix-b-prompts.md, per §3."""
         files = wl.surface_files()
         names = {p.name for p in files}
         self.assertIn("SKILL.md", names)
@@ -183,8 +183,9 @@ class TestLiveSurfaceGreen(unittest.TestCase):
         self.assertIn("sensitivity.md", names)
         self.assertIn("appendix-b-prompts.md", names)
         self.assertIn("self-improve.md", names)
-        self.assertEqual(len(files), 32, f"expected 31 skill files + appendix-b, got {len(files)} "
-                         "(guides-and-skill merged 0-ground.md + 3-contract.md into 3-plan.md, net -1)")
+        self.assertEqual(len(files), 30, f"expected 29 skill files + appendix-b, got {len(files)} "
+                         "(guide-recut deleted 2-scenarios.md + 7-observe.md — duties absorbed "
+                         "into 1-specify.md / 6-verify.md, net -2)")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "skill-orient-split",
+  "active_task": "build-entry-spec-echo",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9037,10 +9037,299 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "phase-merge-specify": {
+      "title": "Merge scenarios into specify: 8->7 phase list",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T17:12:47+00:00",
+      "updated": "2026-07-13T17:57:58+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T17:12:47+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "897c5770316a68758bda603d91689732",
+        "tests": {
+          "add-method/tooling/test_phase_merge_specify.py": "676a663952ad6fee509f7f358600ef07"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/.add/",
+          "add-method/bin/",
+          "add-method/src/add_method/_installer.py"
+        ],
+        "snapshot_md5": "31ff7c2501425f61e601e0b2eb10db01"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-13T17:57:37+00:00",
+            "reason": "scope_violation: task 'phase-merge-specify' touched outside its declared \u00a75 Scope \u2014 add-method/bin/cli.js \u00b7 add-method/src/add_method/_installer.py (2 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-13T17:57:57+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "phase-merge-verify": {
+      "title": "Merge observe into verify: 7->6 phase list",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T17:59:25+00:00",
+      "updated": "2026-07-13T18:31:44+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:03:17+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4f385bc417fc13cb0fc013bbd4286d63",
+        "tests": {
+          "add-method/tooling/test_phase_merge_verify.py": "83fdc2d1a6dd3a37410dfe28cbfa9527"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/.add/",
+          "add-method/bin/",
+          "add-method/src/add_method/_installer.py"
+        ],
+        "snapshot_md5": "6234372f220b10a474efaf5b09eff4f3"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "guide-recut": {
+      "title": "Re-cut phase guides to the 6-phase loop",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T18:32:30+00:00",
+      "updated": "2026-07-13T18:52:57+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:34:45+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "bef4bee95ec727cf39f11673e11b0d02",
+        "tests": {
+          "add-method/tooling/test_guide_recut.py": "5dec75052622d2c4b0c3588c04fffd3e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "c0c1ba7288177c635b46b15eadcf8962"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "bundle-disclosure": {
+      "title": "Disclose phase guides into the bundle agents",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T18:54:40+00:00",
+      "updated": "2026-07-13T19:02:26+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T18:55:28+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "be05d2e5ff4c0858e5c3e8c7106edb71",
+        "tests": {
+          "add-method/tooling/test_bundle_disclosure.py": "4c7636a224273a1342c78245d124a5d6"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          "add-method/src/add_method/_bundled/agents/",
+          ".claude/agents/",
+          "add-method/skill/",
+          "add-method/src/add_method/_bundled/skill/",
+          ".claude/skills/add/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "c5492e4f812ac8c567b99b3f353b4adf"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "persona-presets": {
+      "title": "Per-phase teacher-grade persona presets on the roster",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T19:03:07+00:00",
+      "updated": "2026-07-13T19:09:34+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T19:03:52+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "1325f3f86bc2de21d27336d108bdf296",
+        "tests": {
+          "add-method/tooling/test_persona_presets.py": "d7f5dc87b81e92c9a9e025bada7c5b2a"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/agents/",
+          "add-method/src/add_method/_bundled/agents/",
+          ".claude/agents/",
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "9fa5813e1d277bae100312f22d6f0ee2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "build-entry-spec-echo": {
+      "title": "Build-entry spec echo: Must/Reject + contract summary at the tests->build tick",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "six-phase-loop",
+      "depends_on": [],
+      "created": "2026-07-13T19:09:58+00:00",
+      "updated": "2026-07-13T19:25:16+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-13T19:14:39+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "7a68ac1a2d9e1ca5cd38f47932f6e858",
+        "tests": {
+          "add-method/tooling/test_build_entry_spec_echo.py": "a6080bfd778a1c825bce598745680e31"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          "add-method/.add/"
+        ],
+        "snapshot_md5": "c17eeecad97e540b1bbe3ae4f543add2"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-13T19:24:02+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/add.py,build_tampered:add-method/tooling/engine_pin.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-13T19:25:15+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-13T17:01:22+00:00",
+  "updated": "2026-07-13T19:25:16+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -9429,9 +9718,26 @@
       "status": "active",
       "created": "2026-07-13T15:52:21+00:00",
       "updated": "2026-07-13T15:52:21+00:00"
+    },
+    "six-phase-loop": {
+      "title": "Six-phase loop with bundle-owned subagents",
+      "goal": "Merge specify+scenarios and verify+observe (8->6 phases), disclose phase guides into the lean roster's bundle agents so the orchestrator loads only SKILL.md, add per-phase persona presets + a build-entry spec echo",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-13T17:03:37+00:00",
+      "updated": "2026-07-13T17:10:12+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-13T17:10:12+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "call-floor",
+  "active_milestone": "six-phase-loop",
   "archived": [
     {
       "slug": "v5",
@@ -10269,7 +10575,8 @@
     "expectations-first",
     "plan-legibility",
     "ceremony-to-effort",
-    "call-floor"
+    "call-floor",
+    "six-phase-loop"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -10283,7 +10590,8 @@
     "expectations-first": "book-plan-align",
     "plan-legibility": "relations-surface",
     "ceremony-to-effort": "fold-draft-at-close",
-    "call-floor": "skill-orient-split"
+    "call-floor": "skill-orient-split",
+    "six-phase-loop": "build-entry-spec-echo"
   },
   "todos": [
     {

@@ -120,26 +120,26 @@ class FoldNudgeTest(unittest.TestCase):
         self.assertIn("add.py deltas", out, "must still point at the review command")
 
     # --- observe transition: suggest folding into PROJECT.md DURING implement -----
-    def test_advance_into_observe_suggests_fold(self):
-        """Advancing a task INTO observe - the phase that captures competency
-        deltas - suggests folding them into PROJECT.md (add.py fold --task <slug>)."""
+    def test_gate_completion_suggests_fold(self):
+        """phase-merge-verify moved the nudge: gate/completion — where the loop's
+        lessons are captured now (§7 renders under verify) — suggests folding
+        them into PROJECT.md (add.py fold --task <slug>)."""
         add.main(["new-task", "a"])             # fresh project is grandfathered-locked
-        add.main(["phase", "verify", "a"])      # escape hatch to the edge of observe
-        code, out, _ = _run(["advance", "a"])   # verify -> observe
+        add.main(["phase", "verify", "a"])      # to the gate
+        code, out, _ = _run(["gate", "PASS", "a"])
         self.assertEqual(code, 0)
-        self.assertIn("observe", out)
         self.assertIn("add.py fold --task a", out,
-                      "entering observe must suggest the per-task fold")
+                      "a completing gate must suggest the per-task fold")
         self.assertIn("PROJECT.md", out, "the suggestion names the foundation it updates")
 
-    def test_advance_into_non_observe_silent_on_fold(self):
-        """The fold suggestion fires ONLY at the observe transition - advancing
-        into any other phase stays silent on folding (additive, no noise)."""
-        add.main(["new-task", "a"])             # at ground
-        code, out, _ = _run(["advance", "a"])   # ground -> specify
+    def test_advance_crossings_silent_on_fold(self):
+        """The fold suggestion fires ONLY at gate/completion — advancing
+        into any phase stays silent on folding (additive, no noise)."""
+        add.main(["new-task", "a"])             # at specify
+        code, out, _ = _run(["advance", "a"])   # specify -> plan
         self.assertEqual(code, 0)
         self.assertNotIn("add.py fold", out,
-                         "non-observe transitions must not suggest folding")
+                         "advance crossings must not suggest folding")
 
 
 if __name__ == "__main__":

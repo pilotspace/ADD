@@ -2,7 +2,7 @@
 """Red-first tests for onboarding-brand (installer-smarts task 1).
 
 Contract FROZEN @ v1: an ADD logo banner + a feature showcase (a value line + the
-7-step Specify->Observe loop) render on the INTERACTIVE installer path only, fail-soft
+5-step Specify->Verify loop) render on the INTERACTIVE installer path only, fail-soft
 (any render error falls through to the prompts, never aborts), while the NON-interactive
 path stays byte-identical to today. Both twins (npm cli.js / pip _installer.py) render
 the same DECISIONS; pip is condensed (stdlib), npm fuller (clack).
@@ -26,13 +26,13 @@ from test_installer_prompts import (
 
 INSTALLER_PY = PKG_ROOT / "src" / "add_method" / "_installer.py"
 
-# The 7 ADD phases the showcase loop must name (grounded in the method, never invented;
+# The 6 ADD phases the showcase loop must name (grounded in the method, never invented;
 # grounding itself is folded into Plan, not a separate step). Build/Tests are excluded
 # from the OUTPUT markers below because the plain installer prose already says "build" —
 # these five are showcase-only words that never appear in normal installer output, so
 # they cleanly separate the two paths.
-LOOP_STEPS = ("Specify", "Scenarios", "Plan", "Tests", "Build", "Verify", "Observe")
-SHOWCASE_MARKERS = ("Specify", "Scenarios", "Plan", "Verify", "Observe")
+LOOP_STEPS = ("Specify", "Plan", "Tests", "Build", "Verify")
+SHOWCASE_MARKERS = ("Specify", "Plan", "Build", "Verify")
 
 
 def _markers_present(text):
@@ -55,10 +55,11 @@ class FaithfulShowcaseTest(unittest.TestCase):
         for s in LOOP_STEPS:
             self.assertIn(s.lower(), phases,
                           f"showcase step {s!r} must be a real ADD phase (grounded, not invented)")
-        # exactly the 7 steps before the terminal "done", in order (no separate ground
-        # phase — grounding is folded into step 3, Plan)
-        self.assertEqual([s.lower() for s in LOOP_STEPS], phases[0:7],
-                         "the showcase must be the 7 pre-done phases in order")
+        # exactly the 5 steps before the terminal "done", in order (ground/scenarios/
+        # observe all folded: grounding into Plan, scenarios into Specify, observe
+        # into Verify — six-phase-loop)
+        self.assertEqual([s.lower() for s in LOOP_STEPS], phases[0:5],
+                         "the showcase must be the 5 pre-done phases in order")
 
 
 # --- the banner is actually wired into BOTH twins (decision-equivalent) -----------

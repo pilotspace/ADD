@@ -83,8 +83,7 @@ class BuildExpectationsGateTest(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _to_plan(self, slug="t"):
-        for _ in range(2):   # specify -> scenarios -> plan
-            self._quiet(["advance", slug])
+        self._quiet(["advance", slug])   # specify -> plan
 
     def _optedin_task_at_tests(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])

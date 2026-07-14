@@ -56,7 +56,7 @@ RELEASABLE_CUE = "releasable: {n} milestone(s) closed since last release"
 # a sibling of CHANGELOG.md — NOT inside .add/. The ledger IS the attribution source:
 # a milestone is "released" iff its slug appears on a `milestones:` row.
 RELEASES_FILE = "RELEASES.md"
-PHASES = ("specify", "scenarios", "plan", "tests", "build", "verify", "observe", "done")
+PHASES = ("specify", "plan", "tests", "build", "verify", "done")
 GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 # heal-then-escalate (verify-integrity): the bounded self-heal loop cap. A CONFIRMED cheat
 # (mechanical tripwire divergence, or an agent-reported semantic refute-read finding) returns
@@ -70,32 +70,28 @@ HEAL_CAP = 3
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).
 # Keep the action wording aligned with each phase's EXIT line in the TASK template.
 PHASE_GUIDE = {
-    "specify":   ("state every rule — Must / Reject (+ named code) / After, projected from the milestone Ground + the request; rank assumptions lowest-confidence first and flag the biggest risk",
+    "specify":   ("state every rule — Must / Reject (+ named code) / After, projected from the milestone Ground + the request; rank assumptions lowest-confidence first and flag the biggest risk; then write one Given/When/Then per Must AND per Reject (§2) — every result observable",
                   "03-step-1-specify.md"),
-    "scenarios": ("write one Given/When/Then per Must AND per Reject; every result observable",
-                  "04-step-2-scenarios.md"),
     "plan":      ("build the change plan — ground the real code the contract will cite, freeze the contract shape (names match the glossary), and set the build strategy; this is the one human approval",
                   "05-step-3-plan.md"),
     "tests":     ("write one failing test per scenario; run them RED for the right reason",
                   "06-step-4-tests.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",
                   "07-step-5-build.md"),
-    "verify":    ("run the suite + non-functional checks, then record the gate",
+    "verify":    ("run the suite + non-functional checks, then record the gate; then note what to watch + the spec delta for the next loop (§7)",
                   "08-step-6-verify.md"),
-    "observe":   ("note what to watch + the spec delta for the next loop",
-                  "09-the-loop.md"),
     "done":      ("this task is done — pick the next feature",
                   "02-the-flow.md"),
 }
 # Phase -> who owns it, for the `--json` autonomy signal. An autonomous harness may run a
 # phase only when owner=="ai" (stop is false); every other phase is a checkpoint. The map
-# follows the book's who-does-what table (Verify is "human only"); `tests`/`build`/`observe`
+# follows the book's who-does-what table (Verify is "human only"); `tests`/`build`
 # are AI-led. A phase missing here is `unmapped_phase` (fail closed) — never defaulted.
 PHASE_OWNER = {
-    "specify": "human", "scenarios": "human", "plan": "seam",
-    "tests": "ai", "build": "ai", "verify": "human", "observe": "ai", "done": "human",
+    "specify": "human", "plan": "seam",
+    "tests": "ai", "build": "ai", "verify": "human", "done": "human",
 }
-# phase-bundles: the 7 work phases (PHASES minus the terminal "done") group into 3
+# phase-bundles: the work phases (PHASES minus the terminal "done") group into 3
 # agent-owned bundles surfaced at `status`/`guide` — DIRECTION fixes the shape (through
 # the frozen change plan — grounding + contract + build-strategy — AND the red suite; the
 # method thesis is "fix spec/scenarios/plan/failing-tests BEFORE the build"), BUILD makes
@@ -103,20 +99,20 @@ PHASE_OWNER = {
 # reorder; "done" (terminal, human-led) deliberately has no bundle — see PHASE_AGENT/
 # _phase_bundle below. Union == set(PHASES) - {"done"}, pairwise disjoint (test_phase_bundles.py).
 PHASE_GROUPS = {
-    "DIRECTION": ("specify", "scenarios", "plan", "tests"),
+    "DIRECTION": ("specify", "plan", "tests"),
     "BUILD": ("build",),
-    "VERIFY": ("verify", "observe"),
+    "VERIFY": ("verify",),
 }
 # phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
 # `tests` bundles into DIRECTION above yet its preferred agent is still add-build, the
-# shipped roster's own boundary: add-design owns specify/scenarios/plan, add-build owns
-# tests/build, add-verify owns verify/observe). A phase missing here is a bug (PHASE_GROUPS'
+# shipped roster's own boundary: add-design owns specify/plan, add-build owns
+# tests/build, add-verify owns verify). A phase missing here is a bug (PHASE_GROUPS'
 # own union covers every key); `_phase_bundle` is the fail-closed resolver for an
 # unmapped/corrupted phase token, not this map directly.
 PHASE_AGENT = {
-    "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
+    "specify": "add-design", "plan": "add-design",
     "tests": "add-build", "build": "add-build",
-    "verify": "add-verify", "observe": "add-verify",
+    "verify": "add-verify",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 
@@ -339,12 +335,14 @@ _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
 _GATE_MODES = ("human", "ai-plan-verify")
 
 # --- skippable phases (shared: _task_skip_set reader + cmd_advance's skip pre-pass) — the
-#     fast-lane-skips closed 2-tuple: the ONLY set cmd_advance's skip pre-pass ever tests `nxt`
-#     against. specify/plan/tests/build/verify can NEVER be skipped — a structural
+#     fast-lane-skips closed tuple: the ONLY set cmd_advance's skip pre-pass ever tests `nxt`
+#     against (scenarios left it at phase-merge-specify: merged into specify, the retired
+#     header token is tolerated-and-ignored). specify/plan/tests/build/verify can NEVER be
+#     skipped — a structural
 #     exclusion (this tuple never names them), not a runtime-checked policy. Same relative order
 #     as PHASES. Listed in __all__ (mirrors _GATE_MODES): a new trust-loosening capability is
 #     deliberately surfaced via `from add_engine.constants import *`, not tucked away. ---
-_SKIPPABLE_PHASES = ("scenarios", "observe")
+_SKIPPABLE_PHASES = ()
 
 # --- format-dialect registry (shared: _dialect_gaps + the tests->build crossing warning +
 #     cmd_check's dialect_gap lint) — quality-floors floor 1. Closed (name, regex) pairs: a

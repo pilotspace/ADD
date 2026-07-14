@@ -194,7 +194,7 @@ class AdvanceGuardTest(_Board):
 
     # -- scope: the guard fires ONLY at the build boundary --
     def test_below_build_boundary_unchecked(self):
-        # a frozen §3 with NO flag, advancing specify->scenarios->plan->tests, is never
+        # a frozen §3 with NO flag, advancing specify->plan->tests, is never
         # checked for the flag — the unflagged_freeze guard lives ONLY in `_build_entry`
         # (the tests->build crossing). The now-earlier plan->tests freeze gate (plan-phase-
         # core) only checks `_contract_frozen` (true here, via GOOD3), never the flag, so
@@ -203,9 +203,7 @@ class AdvanceGuardTest(_Board):
         with redirect_stdout(buf), redirect_stderr(err):
             add.main(["new-task", "beta", "--title", "beta"])   # stays at specify
         self._task_md("beta").write_text(self._body("beta", flag=""), encoding="utf-8")
-        out, err, code = self._advance("beta")                   # specify -> scenarios
-        self.assertEqual(code, 0, out + err)
-        out, err, code = self._advance("beta")                   # scenarios -> plan
+        out, err, code = self._advance("beta")                   # specify -> plan
         self.assertEqual(code, 0, out + err)
         out, err, code = self._advance("beta")                   # plan -> tests (frozen, no flag check here)
         self.assertEqual(code, 0, out + err)

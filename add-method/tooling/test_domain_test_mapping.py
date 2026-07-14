@@ -25,8 +25,8 @@ TREES = (
 # 41190 → 41605 @ strategy-facet-block (contract FROZEN @ v1, M6-signed rebaseline — see the
 # ledger entry in test_skill_lean.py): the duplicate migrates FORWARD in lockstep; the
 # domain-form addition this file guards remains absorbed (its own net ≤0B claim unchanged).
-POOL_GUIDES = ["0-setup.md", "1-specify.md", "2-scenarios.md", "3-plan.md",
-               "4-tests.md", "5-build.md", "6-verify.md", "7-observe.md"]
+POOL_GUIDES = ["0-setup.md", "1-specify.md", "3-plan.md",
+               "4-tests.md", "5-build.md", "6-verify.md"]
 POOL_CEILING = int(41605 * 0.80)
 
 

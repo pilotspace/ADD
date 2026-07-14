@@ -94,10 +94,10 @@ class MachineStateTest(unittest.TestCase):
     def test_owner_map_stops_at_human_and_seam(self):
         # plan-phase-core: ground+contract collapsed into `plan` — it stays the seam owner.
         expect = {
-            "specify": ("human", True), "scenarios": ("human", True),
+            "specify": ("human", True),
             "plan": ("seam", True), "tests": ("ai", False),
             "build": ("ai", False), "verify": ("human", True),
-            "observe": ("ai", False), "done": ("human", True),
+            "done": ("human", True),
         }
         for phase, (owner, stop) in expect.items():
             self._task_at(phase)

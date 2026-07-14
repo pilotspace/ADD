@@ -20,7 +20,7 @@ dict, which keys bodies by the LITERAL 1-based `## N ·` heading number written 
 TASK.md (1=SPECIFY .. 7=OBSERVE, unchanged by the phase collapse — §3's heading number
 stayed 3, only its label moved CONTRACT->PLAN). Because `spans` has no key `0`,
 `specify`'s body always reads "(empty)"; every other phase's body reads its
-PREDECESSOR heading's content (`plan` shows `scenarios`'s text, etc.); and the
+PREDECESSOR heading's content; and the
 document's actual §7 OBSERVE content is never read at all (task_phases only ever
 looks up spans[0..6]). This is a live DATA-correctness bug, not a crash — three tests
 below catch it honestly (RED): test_task_phases_pure_extraction, test_unfilled_
@@ -120,15 +120,16 @@ class PhaseDetailTest(unittest.TestCase):
         add.main(["phase", "verify", slug])
         add.main(["gate", "PASS", slug])
 
-    # ---- scenarios --------------------------------------------------------
+    # ---- the drill --------------------------------------------------------
     def test_drill_renders_seven_phases(self):
+        # phase-merge-verify: five work phases now (specify owns §1+§2, verify §6+§7)
         add.main(["phase", "plan", "alpha"])
         before = self._hash_state()
         out, _, code = self._report("vX", "alpha")
         self.assertEqual(code, 0)
-        names = ["0 SPECIFY", "1 SCENARIOS", "2 PLAN", "3 TESTS",
-                 "4 BUILD", "5 VERIFY", "6 OBSERVE"]
-        # all seven present, in order
+        names = ["0 SPECIFY", "1 PLAN", "2 TESTS",
+                 "3 BUILD", "4 VERIFY"]
+        # all five present, in order
         positions = [out.find(n) for n in names]
         self.assertNotIn(-1, positions, "a phase block is missing")
         self.assertEqual(positions, sorted(positions), "phase blocks out of order")
@@ -138,14 +139,17 @@ class PhaseDetailTest(unittest.TestCase):
         # heading keys, silently shifting every phase's body into its NEXT phase's
         # block (see the module docstring's KNOWN ENGINE BUG note).
         bounds = positions + [len(out)]
-        for i, marker in enumerate(("SPEC_MARKER", "SCEN_MARKER", "PLAN_MARKER")):
+        # phase-merge-specify: specify owns §1 AND §2 — both markers under its block
+        expected = {0: ("SPEC_MARKER", "SCEN_MARKER"), 1: ("PLAN_MARKER",)}
+        for i, markers in expected.items():
             seg = out[bounds[i]:bounds[i + 1]]
-            self.assertIn(marker, seg, f"{marker} must render under its own block "
-                          f"({names[i]}), not shifted into the next one")
+            for marker in markers:
+                self.assertIn(marker, seg, f"{marker} must render under its own block "
+                              f"({names[i]}), not shifted into the next one")
         # ascii tier under a non-tty StringIO: reached '#', current '>', pending '.'
-        self.assertIn("> 2 PLAN", out)       # plan is current
+        self.assertIn("> 1 PLAN", out)       # plan is current
         self.assertIn("# 0 SPECIFY", out)    # specify reached
-        self.assertIn(". 3 TESTS", out)      # tests pending
+        self.assertIn(". 2 TESTS", out)      # tests pending
         self.assertEqual(self._hash_state(), before)  # read-only
 
     def test_verify_block_shows_gate_from_state(self):
@@ -155,15 +159,15 @@ class PhaseDetailTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("GATE  PASS", out)          # verify block sources gate from state
         self.assertNotIn("PASS", _TASK_MD)        # guard: the fixture prose never says PASS
-        self.assertIn("# 5 VERIFY", out)          # every block reached (done)
-        self.assertIn("# 6 OBSERVE", out)
+        self.assertIn("# 4 VERIFY", out)          # every block reached (done)
+        self.assertIn("OBSERVE_MARKER", out)      # §7 renders under the verify block
 
     def test_unfilled_phase_is_empty(self):
         out, _, code = self._report("vX", "alpha")
         self.assertEqual(code, 0)
         # §5 BUILD body is only a placeholder -> (empty), never a silent gap
-        build_at = out.find("4 BUILD")
-        verify_at = out.find("5 VERIFY")
+        build_at = out.find("3 BUILD")
+        verify_at = out.find("4 VERIFY")
         self.assertNotEqual(build_at, -1)
         self.assertIn("(empty)", out[build_at:verify_at])
 
@@ -213,8 +217,8 @@ class PhaseDetailTest(unittest.TestCase):
         out, _, code = self._report("vX", "alpha", "--json")
         self.assertEqual(code, 0)
         data = _json.loads(out)
-        self.assertEqual(len(data), 7)
-        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4, 5, 6])
+        self.assertEqual(len(data), 5)
+        self.assertEqual([d["n"] for d in data], [0, 1, 2, 3, 4])
         for d in data:
             self.assertIn("phase", d)
             self.assertIn("body", d)
@@ -226,20 +230,22 @@ class PhaseDetailTest(unittest.TestCase):
         from unittest import mock
         with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
             phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 7)
+        self.assertEqual(len(phases), 5)
         self.assertTrue(all(p["body"] == "(empty)" for p in phases))
 
     def test_task_phases_pure_extraction(self):
         phases = add.task_phases(self._root(), "alpha")
-        self.assertEqual(len(phases), 7)
+        self.assertEqual(len(phases), 5)
         self.assertEqual([p["phase"] for p in phases],
-                         ["specify", "scenarios", "plan", "tests",
-                          "build", "verify", "observe"])
+                         ["specify", "plan", "tests",
+                          "build", "verify"])
         bodies = {p["n"]: p["body"] for p in phases}
         self.assertIn("SPEC_MARKER", bodies[0])
+        self.assertIn("SCEN_MARKER", bodies[0])                        # specify owns §2 too
+        self.assertIn("OBSERVE_MARKER", bodies[4])                     # verify owns §7 too
         self.assertNotIn("a comment that must be stripped", bodies[0])  # HTML comment gone
-        self.assertNotIn("EXIT:", bodies[5])                            # EXIT marker gone
-        self.assertEqual(bodies[4], "(empty)")                         # placeholder-only
+        self.assertNotIn("EXIT:", bodies[4])                            # EXIT marker gone
+        self.assertEqual(bodies[3], "(empty)")                         # placeholder-only
 
 
 if __name__ == "__main__":

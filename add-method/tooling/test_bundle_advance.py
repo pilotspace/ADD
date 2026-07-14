@@ -85,7 +85,7 @@ class _Harness(unittest.TestCase):
         (tests_dir / "test_red.py").write_text("def test_x():\n    assert False\n",
                                                encoding="utf-8")
         self._freeze(slug)
-        for _ in range(4):                       # specify→scenarios→plan→tests→build
+        for _ in range(3):                       # specify→plan→tests→build
             self._silent("advance", slug)
         self.assertEqual(self._phase(slug), "build")
 
@@ -125,7 +125,7 @@ class AdvanceToTest(_Harness):
     def test_plain_advance_unchanged(self):                      # scenario 5 (additive)
         self._silent("new-task", "t", "--title", "F")
         self._silent("advance", "t")
-        self.assertEqual(self._phase("t"), "scenarios")
+        self.assertEqual(self._phase("t"), "plan")
 
 
 class RecrossTest(_Harness):

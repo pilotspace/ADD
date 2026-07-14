@@ -3,7 +3,7 @@
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
 autonomy: {{autonomy}}   <!-- level: manual<conservative<auto — lower for high-risk (`add.py autonomy set`). Multi-component? a `component: <name>` line (.add/components.toml) joins that root to §5 Scope. Relations: `--depends-on`/`--extends`/`--relates-to` task edges (GLOSSARY; `check` validates). -->
-phase: specify   <!-- specify→scenarios→plan→tests→build→verify→observe→done; plan unites grounding + frozen contract + build strategy -->
+phase: specify   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
 <!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.

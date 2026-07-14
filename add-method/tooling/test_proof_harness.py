@@ -60,7 +60,7 @@ class ProofHarnessTest(unittest.TestCase):
     # --- Matrix 3: done only when Verify reads PASS ---------------------------
     def test_gate_pass_at_verify_reaches_done(self):
         self._freeze()  # freeze-gate-universal: §3 must be FROZEN before plan->tests crossing
-        for _ in range(5):                            # specify -> scenarios -> plan -> tests -> build -> verify
+        for _ in range(4):                            # specify -> plan -> tests -> build -> verify
             add.main(["advance"])
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         add.main(["gate", "PASS"])

@@ -53,6 +53,6 @@ The rewrite is surgical: refine or append the bullet the delta names; never sile
 
 ## Where it plugs in
 
-- **Emit**: `phases/7-observe.md` proposes voice deltas beside competency/spec deltas.
+- **Emit**: `6-verify.md`'s Observe block proposes voice deltas beside competency/spec deltas.
 - **Target**: `SOUL.md` — "## Voice deltas" ledger holds confirmed history.
 - **Kin**: `deltas.md` + `fold.md` (same propose→confirm→write discipline). No `add.py` command writes the voice.

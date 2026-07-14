@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
-"""Red/green tests for fast-lane-skips (task: fast-lane-skips, milestone: three-phase-flow).
+"""Tests for the RETIRED fast-lane skip grammar (fast-lane-skips shipped it; the two
+six-phase-loop merges retired it — first scenarios, then observe left PHASES, and with
+them _SKIPPABLE_PHASES emptied). What survives, pinned here:
 
-CONTRACT (frozen @ v1, §3 of .add/tasks/fast-lane-skips/TASK.md): a per-task, AI-declared
-skip-set (subset of `{scenarios, observe}`) that lets `cmd_advance` jump those two phases as a
-REAL engine-level crossing (never entered) — gated by lane eligibility (`fast:true` |
-`oneshot:true` | project `benchmark_mode:true`), fail-closed on any out-of-set token, and never
-honored without a stated per-phase reason (§0 "Skip rationale:") recorded BEFORE the jump. Every
-actual skip is recorded in `state["tasks"][slug]["skips"]`. Composed with, never entangled in,
-task2's (`ai-plan-verify-gate`) `gate_mode: ai-plan-verify` contract-auto-freeze mechanism via a
-new `--oneshot` flag that declares both at once.
-
-  add_engine/constants.py  _SKIPPABLE_PHASES = ("scenarios", "observe")        — joins __all__
-  add.py                   _SKIPS_LINE_RE / _task_skip_set(hdr)                — mirrors _task_gate_mode
-  add_engine/predicates.py _skip_lane_eligible(fast, oneshot, benchmark_mode)  — mirrors _ai_freeze_allowed
-  add_engine/predicates.py _skip_set_allowed(skip_tokens, eligible)
-  add.py                   _skip_rationale(raw0, phase)
-  add.py                   _project_benchmark_mode(root)                      — mirrors _project_autonomy_token
-  add.py cmd_advance       skip pre-pass (`if nxt in _SKIPPABLE_PHASES:`)
-  add.py cmd_new_task      --oneshot (sibling of --fast)
-  add.py cmd_status/guide  additive "skips   : ..." line
-  add.py _gate_explain     additive "skip-set: ..." line
-  add.py cmd_audit         skip_rationale_missing_post_hoc residual glint (MEASURE-NOT-BLOCK)
-  templates/TASK.fast.md.tmpl  scaffold: commented `skips:` header hint + §0 placeholder line
-
-The normal flow (no fast/oneshot/benchmark, no skips:) is BYTE-IDENTICAL to before this task.
+  _SKIPPABLE_PHASES = ()          — nothing is skippable; no crossing runs skip logic
+  _task_skip_set                  — resolver kept for read-tolerance: retired tokens filter
+                                    to the empty set; a truly bad token still errs
+  cmd_gate (completion)           — the ONE seam that reads a vestigial `skips:` header:
+                                    one loud advisory note, never a die
+  status/guide + audit            — historic boards with RECORDED skips keep their surface
+                                    (the line renders; a deleted rationale still audits)
+  templates                       — NEITHER template scaffolds the skip grammar anymore
+  --oneshot / benchmark_mode      — the lane flags live on (unrelated to skipping)
 
 Run: cd add-method/tooling && python3 -m unittest test_fast_lane_skips -v
 """
@@ -181,7 +169,8 @@ class _Harness(unittest.TestCase):
 
 class SkippablePhasesConstantTest(unittest.TestCase):
     def test_value_and_all(self):
-        self.assertEqual(engine_constants._SKIPPABLE_PHASES, ("scenarios", "observe"))
+        self.assertEqual(engine_constants._SKIPPABLE_PHASES, ())
+        # phase-merge-verify: observe left the tuple too — nothing is skippable
         self.assertIn("_SKIPPABLE_PHASES", engine_constants.__all__)
 
     def test_importable_via_star_import(self):
@@ -198,13 +187,18 @@ class TaskSkipSetResolverTest(unittest.TestCase):
         self.assertEqual(add._task_skip_set("slug: t · created: x\nautonomy: auto\n"),
                          (frozenset(), None))
 
-    def test_valid_two_token_csv(self):
+    def test_retired_token_filtered_from_csv(self):
+        # phase-merge-verify: BOTH pre-merge tokens are retired — the set is empty
         self.assertEqual(add._task_skip_set("skips: scenarios,observe\n"),
-                         (frozenset({"scenarios", "observe"}), None))
+                         (frozenset(), None))
 
-    def test_valid_single_token(self):
+    def test_observe_token_retired_resolves_empty(self):
+        self.assertEqual(add._task_skip_set("skips: observe\n"),
+                         (frozenset(), None))
+
+    def test_retired_only_declaration_resolves_empty(self):
         self.assertEqual(add._task_skip_set("skips: scenarios\n"),
-                         (frozenset({"scenarios"}), None))
+                         (frozenset(), None))
 
     def test_one_bad_token_refuses_whole_declaration(self):
         # skip-error-ergonomics: the error string now carries its own repair —
@@ -264,10 +258,10 @@ class SkipRationaleTest(unittest.TestCase):
             "observe — no rollout to watch\nGround SHA: abc\n")
 
     def test_extracts_each_matching_clause(self):
-        self.assertEqual(add._skip_rationale(self.RAW0, "scenarios"),
-                         "the Accept line covers it")
         self.assertEqual(add._skip_rationale(self.RAW0, "observe"),
                          "no rollout to watch")
+        # phase-merge-specify: a retired scenarios clause no longer parses as a rationale
+        self.assertIsNone(add._skip_rationale(self.RAW0, "scenarios"))
 
     def test_no_line_at_all_returns_none(self):
         self.assertIsNone(add._skip_rationale("Touches: x\nGround SHA: abc\n", "observe"))
@@ -277,8 +271,8 @@ class SkipRationaleTest(unittest.TestCase):
         self.assertIsNone(add._skip_rationale(raw0, "observe"))
 
     def test_empty_reason_text_returns_none(self):
-        raw0 = "Skip rationale: scenarios —    \n"
-        self.assertIsNone(add._skip_rationale(raw0, "scenarios"))
+        raw0 = "Skip rationale: observe —    \n"
+        self.assertIsNone(add._skip_rationale(raw0, "observe"))
 
 
 # ---------------------------------------------------------------------------
@@ -286,45 +280,35 @@ class SkipRationaleTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class CmdAdvanceSkipMechanicTest(_Harness):
-    def test_jumps_specify_to_plan_when_scenarios_declared_eligible_reasoned(self):
+    def test_retired_declaration_never_touches_a_crossing(self):
+        # phase-merge-verify: NO crossing runs skip logic; a vestigial declaration
+        # (either retired token) is invisible to advance and records nothing.
         self._new_fast_task("t", fast=True)
         self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios")
-        self._set_skip_rationale("t", "scenarios — collapsed into Accept")
-        out = self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
-        self.assertIn("phase specify -> plan", out)
-        skips = self._state()["tasks"]["t"]["skips"]
-        self.assertEqual(len(skips), 1)
-        self.assertEqual(skips[0]["phase"], "scenarios")
-        self.assertEqual(skips[0]["reason"], "collapsed into Accept")
-        self.assertIn("by", skips[0])
-        self.assertIn("at", skips[0])
-
-    def test_jumps_verify_to_done_when_observe_declared_eligible_reasoned(self):
-        self._new_fast_task("t", fast=True)
-        self._silent("phase", "verify", "t")
-        self._set_header("t", skips="observe")
-        self._set_skip_rationale("t", "observe — no rollout to watch")
-        out = self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
-        self.assertIn("phase verify -> done", out)
-        skips = self._state()["tasks"]["t"]["skips"]
-        self.assertEqual(len(skips), 1)
-        self.assertEqual(skips[0]["phase"], "observe")
-
-    def test_ordinary_path_when_phase_not_in_declared_skip_set(self):
-        self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="observe")
-        self._set_skip_rationale("t", "observe — no rollout to watch")
+        self._set_header("t", skips="scenarios,observe")
         self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "scenarios")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self.assertNotIn("skips", self._state()["tasks"]["t"])
+        self._silent("phase", "verify", "t")
+        out = self._silent("advance", "t")                 # verify -> done, silent
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
+        self.assertNotIn("skips", self._state()["tasks"]["t"])
+        self.assertNotIn("note:", out, "crossings stay silent — the note lives at gate")
+
+    def test_vestigial_declaration_noted_loud_at_gate(self):
+        # the ONE seam that reads the header: gate/completion (where the ADR
+        # harvest + fold nudge already live).
+        self._new_fast_task("t", fast=True)
+        self._set_header("t", skips="observe")
+        self._silent("phase", "verify", "t")
+        out = self._silent("gate", "PASS", "t")
+        self.assertIn("retired", out)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 
 
 # ---------------------------------------------------------------------------
-# M6 / M13 — the 6 non-skippable crossings execute none of this task's new logic
+# M6 / M13 (generalized by phase-merge-verify) — EVERY crossing runs zero skip logic
 # ---------------------------------------------------------------------------
 
 class NonSkippableCrossingsUntouchedTest(_Harness):
@@ -347,21 +331,18 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
         self._fill_boundary(slug)
         self._silent("freeze", "--by", "Human")
 
-    def test_five_non_skippable_crossings_never_invoke_task_skip_set(self):
-        # plan-phase-core: ground+contract collapsed into plan, so the flow is now
-        # specify -> scenarios -> plan -> tests -> build -> verify -> observe -> done —
-        # 7 crossings total, 2 "by design" (specify->scenarios, verify->observe) and
-        # FIVE non-skippable (was six: the old ground->specify leg no longer exists —
-        # new-task now seeds specify directly).
+    def test_every_crossing_never_invokes_task_skip_set(self):
+        # phase-merge-verify: observe merged into verify and the skip grammar retired,
+        # so the flow is specify -> plan -> tests -> build -> verify -> done —
+        # 5 crossings total, ALL of them run ZERO skip logic (the old M13 pin,
+        # now universal; the header is read once, at gate, not here).
         self._new_fast_task("t", fast=True)   # no skips: declared anywhere
-        self.assertGreater(self._advance_spy_count(), 0, "specify->scenarios (by design)")
-        self.assertEqual(self._advance_spy_count(), 0, "scenarios->plan")
+        self.assertEqual(self._advance_spy_count(), 0, "specify->plan")
         self._set_section3_and_freeze("t")
         self.assertEqual(self._advance_spy_count(), 0, "plan->tests")
         self.assertEqual(self._advance_spy_count(), 0, "tests->build")
         self.assertEqual(self._advance_spy_count(), 0, "build->verify")
-        self.assertGreater(self._advance_spy_count(), 0, "verify->observe (by design)")
-        self.assertEqual(self._advance_spy_count(), 0, "observe->done")
+        self.assertEqual(self._advance_spy_count(), 0, "verify->done")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
 
 
@@ -425,17 +406,19 @@ class ProjectBenchmarkModeTest(_Harness):
 # ---------------------------------------------------------------------------
 
 class StatusGuideSurfaceTest(_Harness):
-    def test_status_and_guide_show_declared_csv_and_progress(self):
+    def test_historic_recorded_skip_keeps_its_status_surface(self):
+        # No live path records a skip anymore; a HISTORIC board (pre-merge) may
+        # still carry one — its status/guide line must keep rendering (read-tolerance).
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios,observe")
-        self._set_skip_rationale("t", "scenarios — collapsed into Accept")
-        self._silent("advance", "t")   # consumes the "scenarios" skip -> 1 recorded
+        sp = self.tmp / ".add" / "state.json"
+        raw = json.loads(sp.read_text(encoding="utf-8"))
+        raw["tasks"]["t"]["skips"] = [{"phase": "observe", "reason": "historic",
+                                       "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
+        sp.write_text(json.dumps(raw), encoding="utf-8")
         out_status = self._silent("status")
         out_guide = self._silent("guide")
         for out in (out_status, out_guide):
-            self.assertIn("declared scenarios,observe", out)
-            self.assertIn("skipped so far 1/2", out)
+            self.assertIn("skipped so far 1/", out)
 
     def test_no_declaration_no_recorded_skip_prints_no_line(self):
         self._new_fast_task("t", fast=True)
@@ -448,13 +431,15 @@ class StatusGuideSurfaceTest(_Harness):
 # ---------------------------------------------------------------------------
 
 class GateExplainSkipSetTest(_Harness):
-    def test_blocked_outcome_for_ineligible_declared_task(self):
+    def test_vestigial_declaration_prints_no_skip_set_line(self):
+        # a retired-token declaration resolves to the empty set — gate-explain
+        # shows no skip-set line (there is no live skip mechanism to explain)
         self._silent("lock", "--force")
         self._silent("new-task", "t", "--title", "F")   # NOT fast/oneshot
-        self._set_header("t", skips="scenarios")
+        self._set_header("t", skips="observe")
         out = self._silent("gate", "--explain", "t")
-        self.assertIn("skip-set: blocked (skip_lane_required)", out)
-        # the existing gate_mode line (task2, absent here) never crashes / interferes
+        self.assertNotIn("skip-set:", out)
+        # the surrounding explain surface never crashes / interferes
         self.assertIn("advisor-gate-relax:", out)
 
     def test_no_declaration_prints_no_skip_set_line(self):
@@ -470,11 +455,17 @@ class GateExplainSkipSetTest(_Harness):
 
 class AuditSkipRationaleMissingPostHocTest(_Harness):
     def _skipped_task(self, slug="t"):
+        # HISTORIC board simulation: no live path records a skip anymore, but the
+        # audit glint must keep guarding boards that recorded one pre-merge.
         self._new_fast_task(slug, fast=True)
         self._silent("phase", "verify", slug)
         self._set_header(slug, skips="observe")
         self._set_skip_rationale(slug, "observe — no rollout to watch")
-        self._silent("advance", slug)   # verify -> done, records the skip
+        sp = self.tmp / ".add" / "state.json"
+        raw = json.loads(sp.read_text(encoding="utf-8"))
+        raw["tasks"][slug]["skips"] = [{"phase": "observe", "reason": "no rollout to watch",
+                                        "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
+        sp.write_text(json.dumps(raw), encoding="utf-8")
         self._silent("gate", "HARD-STOP", slug)   # recordable from any phase
 
     def test_intact_rationale_not_flagged(self):
@@ -496,19 +487,18 @@ class AuditSkipRationaleMissingPostHocTest(_Harness):
 # ---------------------------------------------------------------------------
 
 class TemplateScaffoldTest(unittest.TestCase):
-    def test_fast_template_has_skips_hint_and_rationale_placeholder(self):
+    def test_fast_template_carries_no_skips_machinery(self):
+        # phase-merge-verify: the grammar is retired — the fast template no longer
+        # scaffolds the `skips:` hint or the rationale placeholder.
         text = (HERE / "templates" / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
-        self.assertIn("skips:", text)
-        self.assertIn("Skip rationale:", text)
+        self.assertNotIn("skips:", text)
+        self.assertNotIn("Skip rationale:", text)
 
     def test_full_template_carries_no_skips_machinery(self):
-        # the skip lane is fast-template-only: the full template must never gain a
-        # `skips:` header hint. (Amended @ dialect-check-and-data-vocab TESTS re-cross:
-        # the original empty-git-diff guard was task-local and could not survive any
-        # later legitimate full-template task — re-pinned to the invariant it protected.)
+        # (pre-dates the retirement: the full template NEVER carried the grammar)
         body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
                 "TASK.md.tmpl").read_text(encoding="utf-8")
-        self.assertNotIn("skips:", body, "skip machinery must stay fast-lane-only")
+        self.assertNotIn("skips:", body)
 
 
 # ---------------------------------------------------------------------------
@@ -542,46 +532,26 @@ class EngineTreeParityTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class RejectPathsTest(_Harness):
-    def test_malformed_token_refused_as_whole_not_partially_honored(self):
+    # The advance-time refusals died with the grammar; what survives is (a) the
+    # resolver still names a truly bad token (TaskSkipSetResolverTest above) and
+    # (b) NO declaration — malformed, ineligible, or unskippable — can block or
+    # alter a crossing anymore; the loud surface is the single gate note.
+    def test_malformed_declaration_cannot_block_a_crossing(self):
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios,build")
-        before = self._state()
+        self._silent("phase", "verify", "t")
+        self._set_header("t", skips="observe,build")
         out, code = self._run("advance", "t")
-        self.assertNotEqual(code, 0)
-        self.assertIn("skip_not_allowed", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
-        self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self.assertEqual(self._state(), before)
-
-    def test_lane_ineligible_declaration_refused(self):
-        self._silent("lock", "--force")
-        self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "t", "--title", "F")   # NOT fast/oneshot
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios")
-        out, code = self._run("advance", "t")
-        self.assertNotEqual(code, 0)
-        self.assertIn("skip_lane_required", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
-
-    def test_missing_rationale_refused(self):
-        self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
-        self._set_header("t", skips="scenarios")
-        out, code = self._run("advance", "t")
-        self.assertNotEqual(code, 0)
-        self.assertIn("skip_reason_missing", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
+        self.assertEqual(code, 0, f"the retired grammar must never die at advance: {out}")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 
-    def test_unskippable_phase_name_refused_via_same_code(self):
+    def test_unskippable_token_noted_at_gate_not_died(self):
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
         self._set_header("t", skips="build")
-        out, code = self._run("advance", "t")
-        self.assertNotEqual(code, 0)
-        self.assertIn("skip_not_allowed", out)
+        self._silent("phase", "verify", "t")
+        out = self._silent("gate", "PASS", "t")
+        self.assertIn("retired", out)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
 
 
 # ---------------------------------------------------------------------------
@@ -590,20 +560,18 @@ class RejectPathsTest(_Harness):
 # ---------------------------------------------------------------------------
 
 class FloorCompositionTest(_Harness):
-    def test_oneshot_security_task_skip_fires_but_freeze_stays_human(self):
+    def test_oneshot_security_task_freeze_stays_human(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", "risky", "--title", "F", "--oneshot")
-        self._set_header("risky", skips="scenarios,observe")
+        self._set_header("risky", skips="observe")   # vestigial — must change nothing
         p = self._task_md("risky")
         t = p.read_text(encoding="utf-8")
         t = re.sub(r"(?m)^(autonomy:[^\n]*)$", r"\1\nsensitivity: security", t, count=1)
         p.write_text(t, encoding="utf-8")
-        self._set_skip_rationale("risky", "scenarios — a; observe — b")
         self._silent("phase", "specify", "risky")
-        self._silent("advance", "risky")   # specify -> plan (scenarios skip fires, recorded)
+        self._silent("advance", "risky")   # specify -> plan (the natural crossing now)
         self.assertEqual(self._state()["tasks"]["risky"]["phase"], "plan")
-        self.assertEqual(len(self._state()["tasks"]["risky"]["skips"]), 1)
         # AI freeze attempt is blocked (task2's unchanged floor)
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n"
@@ -621,12 +589,15 @@ class FloorCompositionTest(_Harness):
         out, code = self._run("freeze", "--ai-plan-verify", "--by", "agent:x")
         self.assertNotEqual(code, 0)
         self.assertIn("ai_freeze_blocked_sensitivity", out)
-        # the human path still works, and the earlier skip record is untouched
+        # the human path still works; downstream verify -> done is the natural
+        # last crossing now — no skip fires, none is recorded
         self._silent("freeze", "--by", "A Human")
-        st = self._state()["tasks"]["risky"]
         self.assertRegex(self._silent("status", "--section", "3"), r"Status:\s*FROZEN")
-        self.assertEqual(len(st["skips"]), 1)
-        self.assertEqual(st["skips"][0]["phase"], "scenarios")
+        self._silent("phase", "verify", "risky")
+        self._silent("advance", "risky")
+        st = self._state()["tasks"]["risky"]
+        self.assertEqual(st["phase"], "done")
+        self.assertNotIn("skips", st)
 
 
 # ---------------------------------------------------------------------------
@@ -634,14 +605,13 @@ class FloorCompositionTest(_Harness):
 # ---------------------------------------------------------------------------
 
 class NormalFlowUnchangedTest(_Harness):
-    def test_plain_task_visits_scenarios_and_observe_every_crossing(self):
+    def test_plain_task_visits_every_phase_every_crossing(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
         self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; seeds specify
-        self._silent("advance", "t")    # specify -> scenarios
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "scenarios")
+        self._silent("advance", "t")    # specify -> plan (scenarios merged into specify)
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self._silent("advance", "t")    # scenarios -> plan
         # freeze the contract to cross plan -> tests
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")
@@ -654,10 +624,9 @@ class NormalFlowUnchangedTest(_Harness):
         self._silent("advance", "t")    # plan -> tests
         self._silent("advance", "t")    # tests -> build
         self._silent("advance", "t")    # build -> verify
-        self._silent("advance", "t")    # verify -> observe
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "observe")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self._silent("advance", "t")    # observe -> done
+        self._silent("advance", "t")    # verify -> done (observe merged into verify)
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 

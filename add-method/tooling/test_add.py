@@ -132,12 +132,12 @@ class AddToolTest(unittest.TestCase):
     def test_advance_moves_phase_and_syncs_marker(self):
         self._run("init")
         self._run("new-task", "t")            # phase=specify (plan-phase-core seed)
-        self._run("advance")  # specify -> scenarios
+        self._run("advance")  # specify -> plan (phase-merge-specify: scenarios folded in)
         st = self._state()
-        self.assertEqual(st["tasks"]["t"]["phase"], "scenarios")
+        self.assertEqual(st["tasks"]["t"]["phase"], "plan")
         marker = [l for l in (Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
                               ).read_text().splitlines() if l.startswith("phase:")][0]
-        self.assertIn("scenarios", marker)
+        self.assertIn("plan", marker)
 
     def test_phase_explicit_set(self):
         self._run("init")

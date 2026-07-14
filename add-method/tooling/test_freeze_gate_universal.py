@@ -108,8 +108,7 @@ class UniversalFreezeGateTest(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _to_plan(self, slug="t"):
-        for _ in range(2):   # specify -> scenarios -> plan
-            self._quiet(["advance", slug])
+        self._quiet(["advance", slug])   # specify -> plan
 
     def _plain_task_at_plan(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # NO --await-confirm

@@ -43,8 +43,8 @@ ADD_PY_COPIES = [
 _CANON_SKILL = HERE.parent / "skill" / "add"
 PHASES_POOL = [
     "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
+    "phases/3-plan.md", "phases/4-tests.md",
+    "phases/5-build.md", "phases/6-verify.md",
 ]
 
 
@@ -176,8 +176,13 @@ class EnginePinnedAndTemplateParity(unittest.TestCase):
         # forward-migrated (never git-mv'd) to 40339 by the later merge-reconciliation task (PR #120 ×
         # this branch, human-approved) that kept PR #120's persona-template-depth phase-guide prose;
         # see test_skill_lean.py's own comment trail for that rebaseline's accounting.
-        self.assertGreaterEqual(phases["baseline"], 40280,
-                                "the phases baseline only ever grows (human-approved rebaselines)")
+        # floor forward-migrated 40280 → 40205 @ guide-recut (six-phase-loop 3/6, contract
+        # FROZEN @ v1): the phase merges DELETED two guides (net won 1120 B), the first
+        # legitimate shrink — "only ever grows" held while the guide set was fixed; the new
+        # invariant is "never shrinks EXCEPT by a signed deletion accounting" (see
+        # test_skill_lean.py's POOLS comment trail for this shrink's arithmetic).
+        self.assertGreaterEqual(phases["baseline"], 40205,
+                                "the phases baseline moves only by signed rebaselines")
 
 
 if __name__ == "__main__":

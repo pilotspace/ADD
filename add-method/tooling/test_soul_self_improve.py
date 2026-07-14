@@ -4,7 +4,7 @@ v13-onboarding-polish 6/6).
 
 A new skill doc `soul.md` defines the VOICE DELTA loop — grammar, the open→confirmed
 lifecycle, the human-is-only-writer rule, the routing into SOUL.md's sections, and the
-reject codes — mirroring deltas.md + fold.md but folding into SOUL.md. phases/7-observe.md
+reject codes — mirroring deltas.md + fold.md but folding into SOUL.md. phases/6-verify.md
 emits a voice delta; SKILL.md + SOUL.md.tmpl point at the loop. Docs-only, no engine change.
 
 Run: python3 -m unittest test_soul_self_improve -v
@@ -70,9 +70,10 @@ class SoulSelfImprove(unittest.TestCase):
                       "soul.md must name an unroutable-voice-delta reject code")
 
     def test_observe_emits_voice_delta(self):
-        obs = _read(CANONICAL, "phases/7-observe.md")
+        # guide-recut: the Observe duties live in 6-verify.md's post-gate block now
+        obs = _read(CANONICAL, "phases/6-verify.md")
         self.assertIn("voice delta", obs.lower(),
-                      "7-observe.md must gain a voice-delta emit step")
+                      "6-verify.md must carry the voice-delta emit step")
         self.assertIn("soul.md", obs, "the emit step must point at soul.md")
 
     def test_skill_points_at_soul_md(self):
@@ -86,7 +87,7 @@ class SoulSelfImprove(unittest.TestCase):
         self.assertIn("soul.md", body[i:], "the Voice deltas section must point at soul.md")
 
     def test_three_trees_identical(self):
-        for rel in ("soul.md", "phases/7-observe.md", "SKILL.md"):
+        for rel in ("soul.md", "phases/6-verify.md", "SKILL.md"):
             digests = {_md5(t / rel) for t in (CANONICAL, BUNDLED, DOGFOOD)}
             self.assertEqual(len(digests), 1, f"{rel} diverged across the 3 skill trees")
 

@@ -4,7 +4,7 @@ CONTRACT (frozen @ v1):
   `skill/add/self-improve.md` (NEW, unpooled — tree census only) maps the four
   self-improving artifacts (foundation · personas · SOUL.md · next scope) with each one's
   emit grammar and consolidator, routes all 5 domains, names how the 8 steps feed observe,
-  and POINTS at the mechanics guides without duplicating their rules. 7-observe.md points
+  and POINTS at the mechanics guides without duplicating their rules. 6-verify.md points
   at it. Whole-tree + phases budgets hold; 3 skill trees stay byte-identical.
 Run: python3 -m unittest test_self_improving_guide -v
 """
@@ -62,8 +62,9 @@ class MapPointsNeverDuplicates(unittest.TestCase):
 
 class ObservePointsAtMap(unittest.TestCase):
     def test_observe_next_points_here(self):                       # M4
-        t = (TREES[0] / "phases" / "7-observe.md").read_text(encoding="utf-8")
-        self.assertIn("self-improve.md", t, "7-observe.md must point at the map")
+        # guide-recut: the Observe duties live in 6-verify.md's post-gate block now
+        t = (TREES[0] / "phases" / "6-verify.md").read_text(encoding="utf-8")
+        self.assertIn("self-improve.md", t, "6-verify.md must point at the map")
 
 
 class BudgetsAndParity(unittest.TestCase):
@@ -77,7 +78,7 @@ class BudgetsAndParity(unittest.TestCase):
         self.assertLessEqual(n, int(pool["baseline"] * pool["ratio"]), "phases pool bust")
 
     def test_three_tree_parity(self):                              # R3
-        for name in ("self-improve.md", "phases/7-observe.md"):
+        for name in ("self-improve.md", "phases/6-verify.md"):
             digests = {hashlib.md5((tree / name).read_bytes()).hexdigest()
                        for tree in TREES}
             self.assertEqual(len(digests), 1, f"{name} drifted across skill trees")

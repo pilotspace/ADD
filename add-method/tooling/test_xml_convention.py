@@ -86,9 +86,6 @@ PHASE_FILES = {
             "## 5 · After the lock",
             "## Next",
         )},
-    "2-scenarios.md": {
-        "prompt": True, "output_format": True,
-        "narrative": ("## Next",)},
     "3-plan.md": {
         "prompt": True, "output_format": True,
         "narrative": ("## The freeze review checklist", "## Next")},
@@ -106,9 +103,6 @@ PHASE_FILES = {
             "## Part four — was the green earned?",
             "## Record exactly one outcome (no silent pass)",
         )},
-    "7-observe.md": {
-        "prompt": True, "output_format": False,
-        "narrative": ("## Do", "## Next")},
 }
 
 

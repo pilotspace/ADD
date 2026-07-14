@@ -9,12 +9,12 @@ work phases (PHASES minus "done") group into 3 agent-owned bundles surfaced at
   PHASE_GROUPS = {
       "DIRECTION": ("specify", "scenarios", "plan", "tests"),
       "BUILD":     ("build",),
-      "VERIFY":    ("verify", "observe"),
+      "VERIFY":    ("verify",),
   }
   PHASE_AGENT (per-PHASE, 7 keys) = {
       "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
       "tests": "add-build", "build": "add-build",
-      "verify": "add-verify", "observe": "add-verify",
+      "verify": "add-verify",
   }
 
 `_phase_bundle(phase)` resolves a phase to its bundle name; None for the terminal
@@ -79,12 +79,12 @@ class PhaseGroupsConstantTest(unittest.TestCase):
                          {"DIRECTION", "BUILD", "VERIFY"})
 
     def test_tuples_match_frozen_shape(self):
-        # plan-phase-core: ground+contract collapsed into `plan`; DIRECTION now names
-        # specify/scenarios/plan/tests (4 phases, was 5) — see MIGRATION_CONTEXT M2.
+        # phase-merge-specify: scenarios merged into specify; DIRECTION now names
+        # specify/plan/tests (3 phases, was 4).
         self.assertEqual(engine_constants.PHASE_GROUPS["DIRECTION"],
-                         ("specify", "scenarios", "plan", "tests"))
+                         ("specify", "plan", "tests"))
         self.assertEqual(engine_constants.PHASE_GROUPS["BUILD"], ("build",))
-        self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify", "observe"))
+        self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify",))
 
     def test_union_and_pairwise_disjoint(self):
         groups = engine_constants.PHASE_GROUPS
@@ -114,12 +114,10 @@ class PhaseAgentConstantTest(unittest.TestCase):
         # phase) is add-design owned, same as specify/scenarios were.
         pa = engine_constants.PHASE_AGENT
         self.assertEqual(pa["specify"], "add-design")
-        self.assertEqual(pa["scenarios"], "add-design")
         self.assertEqual(pa["plan"], "add-design")
         self.assertEqual(pa["tests"], "add-build")
         self.assertEqual(pa["build"], "add-build")
         self.assertEqual(pa["verify"], "add-verify")
-        self.assertEqual(pa["observe"], "add-verify")
 
     def test_values_are_roster_slugs_only(self):
         self.assertTrue(set(engine_constants.PHASE_AGENT.values())
@@ -136,7 +134,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
     """M3 — _phase_bundle: normal resolve / terminal None / fail-closed unmapped."""
 
     def test_resolves_direction_phases(self):
-        for phase in ("specify", "scenarios", "plan", "tests"):
+        for phase in ("specify", "plan", "tests"):
             self.assertEqual(engine_predicates._phase_bundle(phase), "DIRECTION", phase)
 
     def test_resolves_build_phase(self):
@@ -144,7 +142,6 @@ class PhaseBundleResolverTest(unittest.TestCase):
 
     def test_resolves_verify_phases(self):
         self.assertEqual(engine_predicates._phase_bundle("verify"), "VERIFY")
-        self.assertEqual(engine_predicates._phase_bundle("observe"), "VERIFY")
 
     def test_done_returns_none_no_exception(self):
         self.assertIsNone(engine_predicates._phase_bundle("done"))
@@ -198,7 +195,6 @@ class StatusPlainBundleLineTest(CliFixture):
     def test_status_silent_at_done(self):
         self._set_phase("build")
         self._set_phase("verify")
-        self._set_phase("observe")
         self._set_phase("done")
         _, out, _ = _run(["status"])
         self.assertFalse(any(ln.strip().startswith("bundle") for ln in out.splitlines()), out)
@@ -231,7 +227,6 @@ class GuidePlainBundleLineTest(CliFixture):
     def test_guide_silent_at_done(self):
         self._set_phase("build")
         self._set_phase("verify")
-        self._set_phase("observe")
         self._set_phase("done")
         _, out, _ = _run(["guide"])
         self.assertFalse(any(ln.strip().startswith("bundle") for ln in out.splitlines()), out)
@@ -262,7 +257,6 @@ class StatusJsonBundleFieldTest(CliFixture):
     def test_bundle_null_at_done(self):
         self._set_phase("build")
         self._set_phase("verify")
-        self._set_phase("observe")
         self._set_phase("done")
         _, out, _ = _run(["status", "--json", "--task", "feat"])
         data = json.loads(out)
@@ -283,7 +277,6 @@ class GuideJsonBundleFieldTest(CliFixture):
     def test_bundle_null_at_done(self):
         self._set_phase("build")
         self._set_phase("verify")
-        self._set_phase("observe")
         self._set_phase("done")
         _, out, _ = _run(["guide", "--json"])
         data = json.loads(out)
@@ -308,9 +301,9 @@ class SkillDocBundleColumnTest(unittest.TestCase):
             cells = [c.strip() for c in ln.strip("|").split("|")]
             rows[cells[0]] = cells
         expected_bundle = {
-            "specify": "DIRECTION", "scenarios": "DIRECTION",
+            "specify": "DIRECTION",
             "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
-            "verify": "VERIFY", "observe": "VERIFY",
+            "verify": "VERIFY",
         }
         for phase, bundle in expected_bundle.items():
             self.assertIn(phase, rows, f"phase row '{phase}' missing")
