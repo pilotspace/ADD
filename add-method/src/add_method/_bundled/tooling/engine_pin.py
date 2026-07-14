@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c3d61a86b33c712bc6e0e88f1fc42930"  # re-aimed @ hygiene-bundle (engine-hygiene: _snapshot_hash + _resolve_milestone helpers, cmd_check registry-read hoist + dead _arch drop; behavior-preserving). prior: c8e0a3e5… @ guide-fold
+ENGINE_MD5 = "d7079f8d9622da309286cec9951f8b91"  # re-aimed @ wire-milestone-relations (engine-hygiene: _milestone_relations_health wired into cmd_check warns + cmd_status one-liner — the milestone twin of _relations_health). prior: c3d61a86… @ hygiene-bundle
 ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation

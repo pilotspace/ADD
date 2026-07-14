@@ -1362,6 +1362,29 @@ def _relations_health(root: Path, state: dict) -> list[dict]:
     return findings
 
 
+def _milestone_relations_health(root: Path, state: dict) -> list[dict]:
+    """ADVISORY validate pass over every milestone's relation edges — the milestone twin of
+    _relations_health. Returns [{mslug, relation, target, kind}], kind in {'dangling',
+    'self_relation'}: a depends_on/extends/relates_to target that is not a known milestone is
+    dangling; a self-edge is self_relation. Milestone edges are cross-milestone LEGIBILITY only
+    (never a build DAG, never blocking) so all three edge kinds are validated here — unlike the
+    task twin, whose depends_on IS the schedule DAG and is checked there. PURE: reads MILESTONE.md
+    headers via _milestone_relations, never writes, never blocks a gate."""
+    milestones = state.get("milestones") or {}
+    findings: list[dict] = []
+    for mslug in milestones:
+        rel = _milestone_relations(root, mslug)
+        for rtype in ("depends_on", "extends", "relates_to"):
+            for target in rel[rtype]:
+                if target == mslug:
+                    findings.append({"mslug": mslug, "relation": rtype,
+                                     "target": target, "kind": "self_relation"})
+                elif target not in milestones:
+                    findings.append({"mslug": mslug, "relation": rtype,
+                                     "target": target, "kind": "dangling"})
+    return findings
+
+
 def _resolve_task(state: dict, slug: str | None) -> str:
     slug = slug or _active_task(state)
     if not slug:
@@ -2926,6 +2949,15 @@ def cmd_status(args: argparse.Namespace) -> None:
             _parts = [p for p in (f"{_n_dang} dangling" if _n_dang else "",
                                   f"{_n_self} self" if _n_self else "") if p]
             print(f"relations: {' · '.join(_parts)} — run add.py check")
+        # milestone-relations health (wire-milestone-relations): the milestone twin of the
+        # task relations: line above — one advisory count, silent when clean, human branch only.
+        _msrel_bad = _milestone_relations_health(root, state)
+        if _msrel_bad:
+            _ms_self = sum(1 for f in _msrel_bad if f["kind"] == "self_relation")
+            _ms_dang = sum(1 for f in _msrel_bad if f["kind"] == "dangling")
+            _ms_parts = [p for p in (f"{_ms_dang} dangling" if _ms_dang else "",
+                                     f"{_ms_self} self" if _ms_self else "") if p]
+            print(f"milestone-relations: {' · '.join(_ms_parts)} — run add.py check")
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
         print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
@@ -4240,6 +4272,18 @@ def cmd_check(args: argparse.Namespace) -> None:
                              "guideline file(s) cite the agent roster but no `.claude/agents/"
                              "add-*.md` files are installed — run `add.py update` (or re-run the "
                              "CLI installer) to materialize them"))
+
+    # milestone-relations health (wire-milestone-relations): surface a milestone whose
+    # depends-on/extends/relates-to header edge names an unknown milestone (dangling) or
+    # itself (self). ADVISORY — feeds `warnings`, NEVER `checks`/`failed` (a cross-milestone
+    # legibility edge never blocks). The status one-liner counts the same findings.
+    for _mf in _milestone_relations_health(root, state):
+        _rlabel = _mf["relation"].replace("_", "-")
+        if _mf["kind"] == "self_relation":
+            warnings.append((f"milestone '{_mf['mslug']}'", f"{_rlabel} names itself (self_relation)"))
+        else:
+            warnings.append((f"milestone '{_mf['mslug']}'",
+                             f"{_rlabel} '{_mf['target']}' which is not a milestone (dangling)"))
 
     passed = sum(1 for ok, _, _ in checks if ok)
     failed = len(checks) - passed

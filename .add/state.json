@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "hygiene-bundle",
+  "active_task": "wire-milestone-relations",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9906,10 +9906,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "wire-milestone-relations": {
+      "title": "wire _milestone_relations into cmd_check/status \u2014 dangling/self milestone-edge health (mirrors _relations_health)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-hygiene",
+      "depends_on": [],
+      "created": "2026-07-14T16:44:46+00:00",
+      "updated": "2026-07-14T16:54:49+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T16:46:48+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "b203d7801087dd97d33518a784f5c15e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_wire_milestone_relations.py"
+        ],
+        "snapshot_md5": "16707166c4bc4b9d7035ddd1c5662aeb"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T16:41:56+00:00",
+  "updated": "2026-07-14T16:54:49+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11224,7 +11269,7 @@
     "six-phase-loop": "installer-shared-namespace-guard",
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
-    "engine-hygiene": "hygiene-bundle"
+    "engine-hygiene": "wire-milestone-relations"
   },
   "todos": [
     {
