@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Red/green tests for the init resume pointer (task init-resume-pointer, frozen v1):
+"""Red/green tests for the init resume pointer (task init-resume-pointer, frozen v1
+— SUPERSEDED by init-idempotent-nudge, call-residuals, frozen §3 v1):
 the WM1 re-measure showed every rep re-running `init` on an already-initialised
-project (+2 calls/rep). The refusal now names the resume command in the same
-message; it stays a refusal (nonzero exit, no tree write).
+project (+2–4 calls/rep). The message still names the resume command, but the
+re-init is now an exit-0 NO-OP (was a nonzero refusal): a re-init should not cost
+the agent a recovery call. It still writes nothing to the tree. `--force` still
+resets. (The full new contract — incl. the status "do not re-init" line — is
+pinned in test_init_idempotent_nudge.py.)
 
 Run: python3 -m unittest test_init_resume_pointer -v
 """
@@ -40,17 +44,17 @@ class _Harness(unittest.TestCase):
 
 
 class ResumePointerTest(_Harness):
-    def test_refusal_names_resume(self):                           # M1+M2
+    def test_reinit_names_resume(self):                            # M1+M2 (superseded contract)
         out, code = self._run("init", "--name", "demo", "--stage", "mvp")
         self.assertEqual(code, 0, out)
         before = self._snapshot()
         out, code = self._run("init", "--name", "demo", "--stage", "mvp")
-        self.assertNotEqual(code, 0, "the second init must still refuse")
+        self.assertEqual(code, 0, "a re-init is now an exit-0 no-op (init-idempotent-nudge)")
         self.assertIn("already initialised", out, "the existing message head survives")
         self.assertIn("resume: add.py status", out,
-                      "the refusal must name the resume command")
+                      "the no-op must name the resume command")
         self.assertEqual(before, self._snapshot(),
-                         "a refused init must write nothing")
+                         "a no-op re-init must write nothing")
 
     def test_force_still_resets(self):                             # R1
         self._run("init", "--name", "demo", "--stage", "mvp")

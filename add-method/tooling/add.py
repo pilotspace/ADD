@@ -591,7 +591,19 @@ def cmd_init(args: argparse.Namespace) -> None:
     root = base / ROOT_DIRNAME
     state_path = root / STATE_FILE
     if state_path.exists() and not args.force:
-        _die(f"already initialised at {root} (use --force to reset state) — resume: add.py status")
+        # idempotent init (init-idempotent-nudge): a re-init is a LOUD NO-OP, not a
+        # refusal — exit 0 so a second init costs the agent no recovery call, and
+        # write NOTHING (return before any seed). --force still resets (falls
+        # through below). The message still names the resume command.
+        msg = f"already initialised at {root} — resume: add.py status"
+        try:
+            _active = _active_task(load_state(root))
+            if _active:
+                msg += f" (active task: {_active})"
+        except Exception:
+            pass
+        print(f"add: {msg}")
+        return
 
     (root / "tasks").mkdir(parents=True, exist_ok=True)
     # Keep the engine's transient local artifacts out of git. Never-clobber: a
@@ -2798,6 +2810,11 @@ def cmd_status(args: argparse.Namespace) -> None:
     # Compute once: True when setup is present AND locked is False (the lock-gate window).
     # Reuses the canonical helper — do NOT write a parallel predicate.
     unlocked = not _setup_locked(state)
+    # init-idempotent-nudge: reaching here means _require_root passed, i.e. state.json
+    # is present — open with the do-not-init nudge so an agent re-orienting never
+    # re-runs `init` (the double-init call lever). Plain-status path only; the
+    # --brief/--json/--section views returned above are unaffected.
+    print("project exists — do not re-init (use --force to reset)")
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.

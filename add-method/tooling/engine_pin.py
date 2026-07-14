@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "bf89b03351ae87d72fb3a2dc5f5729af"  # re-aimed @ build-entry-spec-echo (six-phase-loop 6/6: _spec_echo pure-read helper + fail-open tail call in _build_entry — the tick INTO build re-renders §1 Must/Reject + the §3 contract head). prior: 5d5e0538… @ phase-merge-verify 
+ENGINE_MD5 = "ee4ef9577fa20c4a804752bcfe3e9f76"  # re-aimed @ init-idempotent-nudge (call-residuals: cmd_init re-init is an exit-0 no-op resume pointer, not a refusal; cmd_status default view opens with a "do not re-init" line — kills the double-init call lever). prior: bf89b033… @ build-entry-spec-echo
 ENGINE_PKG_MD5 = "fc40ad47544db6f5204b6197b95daf04"  # re-aimed @ phase-merge-verify (constants.py: PHASES drops observe; _SKIPPABLE_PHASES=(); PHASE_GUIDE/OWNER/GROUPS/AGENT follow). prior: 870a4ce0… @ phase-merge-specify 
