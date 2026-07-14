@@ -1761,6 +1761,18 @@ def cmd_advance(args: argparse.Namespace) -> None:
     if _to is not None and PHASES.index(nxt) < PHASES.index(_to):
         cmd_advance(args)
         return
+    # guide-fold (orientation-honesty): the completing advance carries the LANDED
+    # phase's chapter — the ONE `add.py guide` line the footer lacks (the footer
+    # already gives command + short why) — so the agent reads the chapter inline
+    # and never re-runs `add.py guide`. Suppressed at 'done' (Arm B owns that
+    # juncture) and on bundle fast-forward intermediates (they return above). The
+    # `.get` guard is fail-soft: a corrupt/unmapped landed phase folds nothing,
+    # never a KeyError on an already-saved advance (the footer's own ethos).
+    if nxt != "done":
+        _entry = PHASE_GUIDE.get(nxt)
+        if _entry is not None:
+            print(f"guide: .add/docs/{_entry[1]} — the phase chapter "
+                  "(this + the next line ARE `add.py guide`; no separate call)")
     print(_next_footer(root, state))
 
 

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "orient-map",
+  "active_task": "guide-fold",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9812,10 +9812,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "guide-fold": {
+      "title": "advance folds the guide's chapter pointer + says no need to re-run guide",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T15:33:58+00:00",
+      "updated": "2026-07-14T15:49:13+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T15:39:31+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "74373c45716739a83c3d9534875ed87e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_guide_fold.py"
+        ],
+        "snapshot_md5": "b28b212e79dd2585f2fd13d0b497ab43"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T15:31:38+00:00",
+  "updated": "2026-07-14T15:49:13+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11120,7 +11165,7 @@
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
     "call-residuals": "help-habit-kill",
-    "orientation-honesty": "orient-map"
+    "orientation-honesty": "guide-fold"
   },
   "todos": [
     {
