@@ -590,7 +590,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     root = base / ROOT_DIRNAME
     state_path = root / STATE_FILE
     if state_path.exists() and not args.force:
-        _die(f"already initialised at {root} (use --force to reset state)")
+        _die(f"already initialised at {root} (use --force to reset state) — resume: add.py status")
 
     (root / "tasks").mkdir(parents=True, exist_ok=True)
     # Keep the engine's transient local artifacts out of git. Never-clobber: a
@@ -887,11 +887,10 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # the same in every lane); the agent scripts ahead instead of rediscovering.
     print("recipe — this task's remaining engine calls:")
     print("  add.py advance --to plan   (write the section rules first)")
-    print("  add.py freeze --by <name>   [human gate — approves the whole plan]")
-    print("  add.py advance   (plan -> tests: write the RED suite)")
-    print("  add.py advance   (tests -> build: make it green)")
-    print("  add.py advance   (build -> verify: gather evidence)")
-    print("  add.py gate PASS   (record the verify outcome)")
+    print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
+          "--cross lands in tests]")
+    print("  add.py advance   (after the RED suite: tests -> build, make it green)")
+    print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
 
 
 def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
@@ -1035,6 +1034,19 @@ def _scope_echo(root: Path, slug: str) -> None:
     never written — the agent/human re-drafts and re-freezes deliberately."""
     resolved = _declared_scope(root, slug)
     rootp = root.parent
+
+    def _touches_paths() -> list[str]:
+        # path-heads on the §3 Touches lines that exist in the tree (never speculative)
+        paths: list[str] = []
+        body = _raw_phase_bodies(root, slug).get(3, "")
+        for line in body.splitlines():
+            if not line.lstrip().startswith("Touches"):
+                continue
+            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
+                if tok not in paths and (rootp / tok).exists():
+                    paths.append(tok)
+        return paths
+
     missing_all = False
     if resolved is None:
         print("scope: UNDECLARED (grandfathered)")
@@ -1045,15 +1057,13 @@ def _scope_echo(root: Path, slug: str) -> None:
         for rel, ok in marks:
             print(f"scope: {rel} [{'ok' if ok else 'MISSING'}]")
         missing_all = not any(ok for _, ok in marks)
+        # scope-coverage-hint: the too-narrow class behind the measured re-cross
+        # repairs — tokens resolve [ok] yet the build's real targets sit outside them.
+        for tok in _touches_paths():
+            if not _in_scope(tok, resolved):
+                print(f"note: §3 Touches cites {tok} outside the declared scope")
     if resolved is None or not resolved or missing_all:
-        paths: list[str] = []
-        body = _raw_phase_bodies(root, slug).get(3, "")
-        for line in body.splitlines():
-            if not line.lstrip().startswith("Touches"):
-                continue
-            for tok in re.findall(r"([\w.-]+(?:/[\w.-]+)+):", line):
-                if tok not in paths and (rootp / tok).exists():
-                    paths.append(tok)
+        paths = _touches_paths()
         if paths:
             print("scope (proposed from §3 Touches): " + " ".join(f"`{p}`" for p in paths))
 
@@ -1196,6 +1206,20 @@ def cmd_freeze(args: argparse.Namespace) -> None:
         _scope_echo(root, slug)
     except Exception:
         pass
+    # compound-ticks: `--cross` compresses the pure freeze->tests tick into this same
+    # call — OPT-IN (the bare freeze is byte-identical), and only a freeze that STAMPED
+    # at the plan phase crosses (the already-frozen no-op returned above; a change-request
+    # re-freeze mid-build reaches here at a non-plan phase and gets the note instead).
+    if getattr(args, "cross", False):
+        cur = state["tasks"][slug]["phase"]
+        if cur == "plan":
+            state["tasks"][slug]["phase"] = "tests"
+            state["tasks"][slug]["updated"] = _now()
+            save_state(root, state)                       # durable state FIRST
+            _sync_task_marker(root, slug, "tests")        # then the TASK.md mirror
+            print("crossed into tests — write one failing test per scenario (compound tick)")
+        else:
+            print(f"--cross: only a plan-phase freeze crosses (task is at '{cur}' — no-op)")
     print(_next_footer(root, state))
 
 
@@ -2108,6 +2132,17 @@ def cmd_gate(args: argparse.Namespace) -> None:
     completing = args.outcome in ("PASS", "RISK-ACCEPTED")
     if completing:
         current = state["tasks"][slug]["phase"]
+        # compound-ticks: a completing verdict at BUILD auto-crosses build->verify in
+        # the same call (the tick between them is pure — no work happens on it), then
+        # runs every completion check below unchanged. Phases before build keep their
+        # refusal verbatim; HARD-STOP never reaches this branch (recordable anywhere).
+        if current == "build":
+            state["tasks"][slug]["phase"] = "verify"
+            state["tasks"][slug]["updated"] = _now()
+            save_state(root, state)                       # durable state FIRST
+            _sync_task_marker(root, slug, "verify")       # then the TASK.md mirror
+            print(f"crossed build -> verify (compound tick) — recording {args.outcome}")
+            current = "verify"
         if _phase_index(current) < _phase_index("verify"):
             code = ("gate_pass_before_verify" if args.outcome == "PASS"
                     else "gate_risk_accepted_before_verify")
@@ -4468,6 +4503,9 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
             # exclusive with the note above (same predicate, opposite branch — never both).
             slugs = ", ".join(_real_persona_slugs(root))
             print(f"persona-fit: {PERSONA_FIT_HINT_TEMPLATE.format(slugs=slugs)}")
+    # milestone-lane-nudge: the WM1 bait point — a single-task request routed here costs
+    # ~10 calls of milestone ceremony. Advisory only; the command-point beats wrapper prose.
+    print("lane: single task? the oneshot lane is cheaper: add.py new-task <slug> --oneshot")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
@@ -8330,6 +8368,9 @@ def build_parser() -> argparse.ArgumentParser:
                      help="task to freeze (default: the active task)")
     pfz.add_argument("--by", default=None, help="approver name (default: the resolved actor); "
                      "REQUIRED (an agent id) with --ai-plan-verify")
+    pfz.add_argument("--cross", action="store_true",
+                     help="compound tick: after a plan-phase freeze stamps, land in tests "
+                          "in the same call (opt-in; a non-plan or refused freeze never crosses)")
     pfz.add_argument("--ai-plan-verify", action="store_true", dest="ai_plan_verify",
                      help="AI-plan-verify-gate: let an AI agent (--by AGENT_ID) perform this "
                           "freeze in place of a human — refused unless gate_mode: ai-plan-verify, "
