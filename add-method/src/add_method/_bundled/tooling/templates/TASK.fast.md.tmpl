@@ -47,7 +47,7 @@ Status: DRAFT
 ### Build-strategy
 Scope (may touch): `./src/`   <the file write-set, the single source of truth (§3 Touches names symbols, this names files); every file the build may write; scope-lock source>
 Strategy & known-problem fixes: <ordered build steps · the trap each known problem must dodge · let the active persona's domain stance (or "generic") shape the approach, not just patterns>
-Approach (domain strategy): <technique · shapes · pattern · optimization stance in one line, in the task's domain vocabulary — or "obvious, correctness-first">
+Approach (domain strategy): <a ≤6-word domain-technique TAG — e.g. "fail-open derived render" · "early-return idempotence"; NOT a restatement of the Strategy above — or "obvious, correctness-first">
 <!-- The freeze IS the one approval — it freezes the whole PLAN. The Contract is HARD (tamper-guarded); Grounding + Build-strategy are SOFT. Approved -> Status: FROZEN @ vN — approved by <name>. Changing the frozen Contract = change request back to SPECIFY. -->
 
 ### AI-verify record (required when gate_mode: ai-plan-verify)
@@ -69,7 +69,7 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 ## 5 · BUILD — AI writes the code (execution)
 
 > The change plan was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope; improve on the strategy if the code teaches you better.
-Strategy actually used: <fill at verify — what you ACTUALLY did, or "as planned"; harvested into §7 Decisions>
+Strategy actually used: <fill at verify — "as planned", or ONLY what diverged from §3 Strategy (don't re-narrate it); harvested into §7 Decisions>
 Code lives in: `./src/`   ·   Constraints: change no test, no frozen contract; stay inside the §3 Build-strategy Scope; allow-list packages only.
 
 ---
@@ -81,7 +81,7 @@ Code lives in: `./src/`   ·   Constraints: change no test, no frozen contract; 
 - [ ] input dialect held — tests speak the spec's example formats (spec-dialect floor)
 - [ ] no exposed secrets, injection openings, or unexpected dependencies (security = HARD-STOP)
 
-Build expectations (from §1 Accept + §3 CONTRACT): <the observable outcome a correct build must produce — confirmed by <how / where>>
+Build expectations (from §1 Accept + §3 CONTRACT): <the CONCRETE observable a correct build produces — a printed line / exit code / file byte you can SEE, NOT a paraphrase of §1 Accept — confirmed by <how / where>>
 
 ### GATE RECORD
 Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>

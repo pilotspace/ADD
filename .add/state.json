@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "template-touches-scope-dedup",
+  "active_task": "template-hint-dedup",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9513,10 +9513,56 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "template-hint-dedup": {
+      "title": "template hints demand distinct content: kill \u00a75/\u00a76/exit-criteria restatement",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "call-residuals",
+      "depends_on": [],
+      "created": "2026-07-14T12:43:57+00:00",
+      "updated": "2026-07-14T13:03:12+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T12:46:29+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "597c4434274b7de7e860e48f91e8962e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/TASK.fast.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/tooling/test_template_hint_dedup.py",
+          "add-method/tooling/test_strategy_facets.py"
+        ],
+        "snapshot_md5": "93ae9adf15dc0e629986b007accb0e42"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-14T12:56:25+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T12:20:53+00:00",
+  "updated": "2026-07-14T13:03:12+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10802,7 +10848,7 @@
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
-    "call-residuals": "template-touches-scope-dedup"
+    "call-residuals": "template-hint-dedup"
   },
   "todos": [
     {
