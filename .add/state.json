@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "help-habit-kill",
+  "active_task": "guide-fold",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9658,10 +9658,209 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "harness-workspace-isolation": {
+      "title": "WM runner isolates the workspace from any ancestor .add/ (bounded root-walk)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T14:40:08+00:00",
+      "updated": "2026-07-14T15:00:52+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T14:48:08+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "47ee5d59373cc3c817d1901c0583aa9a",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add_engine/io_state.py",
+          ".add/tooling/add_engine/io_state.py",
+          "add-method/.add/tooling/add_engine/io_state.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/io_state.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "benchmark/runner/core.py",
+          "add-method/tooling/test_findroot_ceiling.py",
+          "benchmark/tests/test_workspace_isolation.py"
+        ],
+        "snapshot_md5": "5bc356691856491cbe1ede433036c6c8"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-14T14:58:08+00:00",
+            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared \u00a75 Scope \u2014 add-method/src/pilotspace_add.egg-info/SOURCES.txt \u00b7 tmp/harness-workspace-isolation-commit.txt (2 total)",
+            "source": "scope"
+          },
+          {
+            "at": "2026-07-14T14:58:50+00:00",
+            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared \u00a75 Scope \u2014 add-method/src/pilotspace_add.egg-info/SOURCES.txt (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-14T15:00:46+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "status-ancestor-warn": {
+      "title": "status/init warns when it resolved an ANCESTOR project (nested dir with no local .add/)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T15:02:08+00:00",
+      "updated": "2026-07-14T15:20:26+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T15:12:51+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "32a6c9aab6d54a44b7bc9afc1b8507ce",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_status_ancestor_warn.py"
+        ],
+        "snapshot_md5": "a9d87669862aba5e9c54237761896c1a"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "orient-map": {
+      "title": "bare add.py / --help lead with a concise flow map, not the 50-choice dump",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T15:21:50+00:00",
+      "updated": "2026-07-14T15:31:38+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T15:22:59+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "dd970f5636c061a91b4afe86048917e6",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_orient_map.py"
+        ],
+        "snapshot_md5": "48e9f49fb4eb0b453b1e90dab7a289af"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "guide-fold": {
+      "title": "advance folds the guide's chapter pointer + says no need to re-run guide",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "orientation-honesty",
+      "depends_on": [],
+      "created": "2026-07-14T15:33:58+00:00",
+      "updated": "2026-07-14T15:49:13+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-14T15:39:31+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "74373c45716739a83c3d9534875ed87e",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          ".add/tooling/add.py",
+          "add-method/.add/tooling/add.py",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_guide_fold.py"
+        ],
+        "snapshot_md5": "b28b212e79dd2585f2fd13d0b497ab43"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T14:05:37+00:00",
+  "updated": "2026-07-14T15:49:13+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10089,9 +10288,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "orientation-honesty": {
+      "title": "Honest WM1 <=12: isolate the harness + make surfaces self-explaining",
+      "goal": "",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-14T14:33:51+00:00",
+      "updated": "2026-07-14T14:38:01+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-14T14:38:01+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "call-residuals",
+  "active_milestone": "orientation-honesty",
   "archived": [
     {
       "slug": "v5",
@@ -10931,7 +11147,8 @@
     "ceremony-to-effort",
     "call-floor",
     "six-phase-loop",
-    "call-residuals"
+    "call-residuals",
+    "orientation-honesty"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -10947,7 +11164,8 @@
     "ceremony-to-effort": "fold-draft-at-close",
     "call-floor": "skill-orient-split",
     "six-phase-loop": "installer-shared-namespace-guard",
-    "call-residuals": "help-habit-kill"
+    "call-residuals": "help-habit-kill",
+    "orientation-honesty": "guide-fold"
   },
   "todos": [
     {

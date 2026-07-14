@@ -117,11 +117,22 @@ def _atomic_write_many(writes: list[tuple[Path, str]]) -> None:
 # --- root finding + state load/save + the shared error primitive ------------
 
 def find_root(start: Path | None = None) -> Path | None:
-    """Walk up from cwd to find a .add/ project root."""
+    """Walk up from cwd to find a .add/ project root.
+
+    Opt-in boundary: when `ADD_ROOT_CEILING` is set, the walk stops at that dir
+    (inclusive) and never ascends above it — so a workspace nested under an
+    ancestor project resolves ONLY its own root (or None before init), never the
+    parent's. Unset (every normal invocation) is the legacy walk to fs-root,
+    byte-identical. Both paths are resolved so a symlinked ceiling still matches.
+    """
     cur = (start or Path.cwd()).resolve()
+    _ceil = os.environ.get("ADD_ROOT_CEILING")
+    ceil = Path(_ceil).resolve() if _ceil else None
     for d in (cur, *cur.parents):
         if (d / ROOT_DIRNAME / STATE_FILE).exists():
             return d / ROOT_DIRNAME
+        if ceil is not None and d == ceil:
+            break
     return None
 
 def _require_root() -> Path:

@@ -75,6 +75,10 @@ def _invoke_once(
     proc = subprocess.Popen(
         argv,
         cwd=str(cwd),  # the agent starts inside its sandbox, never the pilot's cwd
+        # Scope the engine's root-walk to the workspace (harness-workspace-isolation):
+        # a run dir nested under the repo's own .add/ would otherwise resolve the
+        # PARENT project on the agent's first pre-init `status`, inflating startup.
+        env={**os.environ, "ADD_ROOT_CEILING": str(cwd)},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,

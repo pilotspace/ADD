@@ -1761,6 +1761,18 @@ def cmd_advance(args: argparse.Namespace) -> None:
     if _to is not None and PHASES.index(nxt) < PHASES.index(_to):
         cmd_advance(args)
         return
+    # guide-fold (orientation-honesty): the completing advance carries the LANDED
+    # phase's chapter — the ONE `add.py guide` line the footer lacks (the footer
+    # already gives command + short why) — so the agent reads the chapter inline
+    # and never re-runs `add.py guide`. Suppressed at 'done' (Arm B owns that
+    # juncture) and on bundle fast-forward intermediates (they return above). The
+    # `.get` guard is fail-soft: a corrupt/unmapped landed phase folds nothing,
+    # never a KeyError on an already-saved advance (the footer's own ethos).
+    if nxt != "done":
+        _entry = PHASE_GUIDE.get(nxt)
+        if _entry is not None:
+            print(f"guide: .add/docs/{_entry[1]} — the phase chapter "
+                  "(this + the next line ARE `add.py guide`; no separate call)")
     print(_next_footer(root, state))
 
 
@@ -2728,6 +2740,22 @@ def _sorted_by_updated(items: dict) -> list:
     return sorted(items.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)
 
 
+def _ancestor_note() -> str | None:
+    """A one-line stderr note when `status` resolved an ANCESTOR project — cwd has
+    no .add/ of its own but find_root walked up to one. Hands the exact `init` to
+    scope a project HERE (the _require_root skip-error precedent). None (silent) when
+    cwd owns a project or no project is reachable (the init flow owns that message)."""
+    cwd = Path.cwd().resolve()
+    if (cwd / ROOT_DIRNAME / STATE_FILE).exists():
+        return None
+    root = find_root()
+    if root is None:
+        return None
+    return (f"note: no .add/ here — using the ancestor project at {root.parent}; "
+            'run `add.py init --name "<project>" --stage <prototype|poc|mvp|production>` '
+            "to scope a project to this directory")
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     _section = getattr(args, "section", None)
     if _section is not None:
@@ -2812,6 +2840,13 @@ def cmd_status(args: argparse.Namespace) -> None:
         return
     root = _require_root()
     state = load_state(root)
+    # status-ancestor-warn: when cwd has no .add/ of its own but find_root walked up
+    # to an ANCESTOR project, say so + hand the exact `init` to scope here — a nested
+    # agent otherwise spends commands grepping find_root internals ("why is the project
+    # the parent's?"). Full-status path only; stderr so --json/--brief/pipes stay clean.
+    _anc = _ancestor_note()
+    if _anc:
+        print(_anc, file=sys.stderr)
     active = _active_task(state)
     tasks = state.get("tasks", {})
     # Compute once: True when setup is present AND locked is False (the lock-gate window).
@@ -8412,6 +8447,19 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(out)
 
 
+_FLOW_MAP = (
+    "ADD — spec-and-tests-first; you drive, the human owns direction.\n"
+    "start here: add.py status   — where you are + your exact next command\n"
+    "flow:  init → new-task → advance → freeze → gate\n"
+    '  add.py init --name "<project>" --stage mvp     start a project in this directory\n'
+    '  add.py new-task <slug> --title "..."           a task   [--fast lean · --oneshot single-task]\n'
+    "  add.py advance                                 cross to the next phase (status names the exact form)\n"
+    '  add.py freeze --by "<name>" --cross            approve the frozen §3 contract (the one human gate)\n'
+    "  add.py gate PASS                               record the verify outcome\n"
+    "a command's flags: add.py <command> -h\n"
+)
+
+
 class _AddArgParser(argparse.ArgumentParser):
     """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
     ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
@@ -8419,9 +8467,25 @@ class _AddArgParser(argparse.ArgumentParser):
     + an "invalid choice" message) with a concise "unknown command 'X' — did you mean
     '<near>'?" plus a pointer to `add.py status`. Every other parse error — a subcommand's
     own invalid choice, a missing positional, unrecognized arguments — delegates to
-    argparse's default, so those surfaces stay byte-identical."""
+    argparse's default, so those surfaces stay byte-identical.
+
+    orient-map: the top parser's `--help` (and a bare `add.py` with no subcommand) LEAD
+    with the flow map above instead of the alphabet-soup dump — the agent's first
+    orientation is one cheap read. Both are guarded to the TOP parser (`prog == 'add.py'`):
+    a subcommand's own `--help`/errors (prog "add.py <cmd>") stay byte-identical argparse."""
+
+    def format_help(self) -> str:
+        # top parser: map LEADS, the full argparse command list still follows (nothing lost;
+        # `add.py --help | head` now surfaces orientation, not the 50-choice usage line).
+        if self.prog == "add.py":
+            return _FLOW_MAP + "\n" + super().format_help()
+        return super().format_help()
 
     def error(self, message: str):
+        if self.prog == "add.py" and "the following arguments are required" in message:
+            # bare `add.py` (no subcommand): orient, don't dump the raw usage.
+            sys.stderr.write(_FLOW_MAP + "\nrun: add.py status\n")
+            raise SystemExit(2)
         m = re.search(r"invalid choice: '([^']*)'", message)
         if m is not None and self.prog == "add.py":
             import difflib
