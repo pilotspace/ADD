@@ -136,19 +136,31 @@ class PythonInstallerBehavior(unittest.TestCase):
         self.assertTrue(installed.is_file(), "install() must materialize agents/ -> .claude/agents")
         self.assertEqual(installed.read_text(), "---\nname: add-build\n---\nbuild agent v-new\n")
 
-    def test_update_clean_replaces_agents(self):
+    def test_update_preserves_undeclared_agents(self):
+        # SUPERSEDED PIN (installer-shared-namespace-guard, frozen v1): .claude/agents is a
+        # SHARED namespace — the user's own subagents live there, so update lands the shipped
+        # files per-file and removes ONLY explicit _RETIRED_AGENTS tombstones. The old pin
+        # ("update must clean-replace agents/, sweep orphans") demanded the data-loss bug:
+        # any undeclared file — the user's included — was deleted. Strengthened, not weakened:
+        # survival is asserted for BOTH an add- prefixed undeclared file (no name heuristic)
+        # and the shipped files' refresh, and the tombstone path is pinned separately in
+        # test_installer_shared_namespace.py.
         bundled = _make_bundled_with_agents(self.tmp / "pkg")
         proj = self.tmp / "proj"
         proj.mkdir()
         with contextlib.redirect_stdout(io.StringIO()):
             _installer.install(target=str(proj), bundled=str(bundled), yes=True, non_interactive=True)
-        # upstream renames/removes an agent file; update must clean-replace, no orphan survives
         stale = proj / ".claude" / "agents" / "add-stale.md"
-        stale.write_text("# removed upstream — must be swept\n")
+        stale.write_text("# undeclared — must SURVIVE (tombstone-only removal)\n")
         with contextlib.redirect_stdout(io.StringIO()):
             code = _installer.update(target=str(proj), bundled=str(bundled), version="2.0.0")
         self.assertEqual(code, 0)
-        self.assertFalse(stale.exists(), "update must clean-replace agents/ (sweep orphans)")
+        self.assertTrue(stale.exists(),
+                        "an undeclared file in the shared namespace survives update — "
+                        "removal is tombstone-only, never a sweep or a name heuristic")
+        self.assertEqual((proj / ".claude" / "agents" / "add-build.md").read_text(),
+                         "---\nname: add-build\n---\nbuild agent v-new\n",
+                         "shipped roster files still refresh")
 
     def test_missing_agents_in_bundled_soft_skips(self):
         """A bundled source predating this fix (no agents/ at all) must NOT abort install —

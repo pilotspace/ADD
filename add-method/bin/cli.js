@@ -763,6 +763,16 @@ const MANAGED = [
 // _installer.py:OPTIONAL. Design-for-failure. `agents` joins here (roster-install-drift): the
 // phase-agent roster is a spawn-acceleration enhancement, not core runtime.
 const OPTIONAL = new Set(["personas-teacher", "agents"]);
+// SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
+// TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
+// whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
+// data-loss bug), so these trees route to sharedFileReplace: per-file atomic landings of
+// the shipped files + removal of ONLY the explicit tombstones below. Twin of
+// _installer.py:_SHARED / _RETIRED_AGENTS.
+const SHARED = new Set(["agents"]);
+// Roster names retired upstream — the ONLY names the shared lander may remove (never a
+// pattern/prefix heuristic: a USER file named add-anything.md must survive). Empty today.
+const RETIRED_AGENTS = [];
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable
@@ -962,6 +972,36 @@ function managedStatus(target) {
   return status;
 }
 
+// installer-shared-namespace-guard: land a SHARED-namespace managed tree per FILE.
+// `.claude/agents` belongs to the user as much as to ADD — only the shipped files are
+// written (temp-sibling + atomic rename each, so a crash never leaves a torn file) and
+// only the explicit RETIRED_AGENTS tombstones are removed; every other destination file
+// is never opened. Returns the same { restored, refreshed } roll-up shape as
+// cleanReplaceTree so the reconcile reporting is agnostic. Mirror of
+// _installer.py:_shared_file_replace.
+function sharedFileReplace(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  let restored = 0, refreshed = 0;
+  const entries = fs.readdirSync(src).filter((n) => fs.statSync(path.join(src, n)).isFile()).sort();
+  for (const name of entries) {
+    const target = path.join(dest, name);
+    const existed = fs.existsSync(target);
+    const tmp = path.join(dest, name + ".add-tmp-" + Math.random().toString(36).slice(2, 10));
+    try {
+      fs.copyFileSync(path.join(src, name), tmp);
+      fs.renameSync(tmp, target);   // atomic overwrite (same directory)
+    } catch (e) {
+      fs.rmSync(tmp, { force: true });   // dest entry untouched or already whole
+      throw e;
+    }
+    if (existed) refreshed++; else restored++;
+  }
+  for (const name of RETIRED_AGENTS) {
+    fs.rmSync(path.join(dest, name), { force: true });   // absent tombstone — never fatal
+  }
+  return { restored: restored, refreshed: refreshed };
+}
+
 // reconcile: restore-missing + refresh-present (sweep orphans) across the managed trees,
 // reporting per-tree status. Honors --no-skill (the plugin provides the skill). Touches
 // ONLY managed trees — never user data. Prechecks ALL sources first (design-for-failure:
@@ -979,7 +1019,9 @@ function reconcile(args, target, srcRoot) {
   const status = managedStatus(target);
   let restored = 0, refreshed = 0;
   for (const [sub, destParts, stripTests] of trees) {
-    const roll = cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
+    const roll = SHARED.has(sub)
+      ? sharedFileReplace(path.join(srcRoot, sub), path.join(target, ...destParts))
+      : cleanReplaceTree(path.join(srcRoot, sub), path.join(target, ...destParts), stripTests);
     restored += roll.restored;
     refreshed += roll.refreshed;
     const dest = destParts.join("/");

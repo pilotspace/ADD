@@ -45,6 +45,15 @@ MANAGED = (
 # enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
 # predating this fix must still install its core cleanly.
 OPTIONAL = frozenset({"personas-teacher", "agents"})
+# SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
+# TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
+# whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
+# data-loss bug), so these trees route to _shared_file_replace: per-file atomic landings
+# of the shipped files + removal of ONLY the explicit tombstones below. Mirrored in cli.js.
+_SHARED = frozenset({"agents"})
+# Roster names retired upstream — the ONLY names the shared lander may remove (never a
+# pattern/prefix heuristic: a USER file named add-anything.md must survive). Empty today.
+_RETIRED_AGENTS = ()
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,
@@ -1440,6 +1449,37 @@ _TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling", "
                "personas-teacher": "personas"}
 
 
+def _shared_file_replace(src: Path, dest: Path) -> dict:
+    """installer-shared-namespace-guard: land a SHARED-namespace managed tree per FILE.
+    `.claude/agents` belongs to the user as much as to ADD — only the shipped files are
+    written (temp-sibling + atomic os.replace each, so a crash never leaves a torn file)
+    and only the explicit _RETIRED_AGENTS tombstones are removed; every other destination
+    file is never opened. Returns the same {"restored", "refreshed"} roll-up shape as
+    _clean_replace so the _reconcile reporting is agnostic. Mirror of cli.js:sharedFileReplace."""
+    dest.mkdir(parents=True, exist_ok=True)
+    restored = refreshed = 0
+    for f in sorted(p for p in src.iterdir() if p.is_file()):
+        target = dest / f.name
+        existed = target.exists()
+        tmp = dest / f"{f.name}.add-tmp-{uuid.uuid4().hex[:8]}"
+        try:
+            shutil.copyfile(f, tmp)
+            os.replace(str(tmp), str(target))   # atomic on POSIX + Windows (same filesystem)
+        except BaseException:
+            tmp.unlink(missing_ok=True)          # dest entry untouched or already whole
+            raise
+        if existed:
+            refreshed += 1
+        else:
+            restored += 1
+    for name in _RETIRED_AGENTS:
+        try:
+            (dest / name).unlink()
+        except OSError:
+            pass                                  # absent (or unremovable) tombstone — never fatal
+    return {"restored": restored, "refreshed": refreshed}
+
+
 def _managed_status(target_path: Path) -> dict:
     """Per managed tree: 'missing' (dest absent OR empty) or 'present'."""
     status = {}
@@ -1463,7 +1503,10 @@ def _reconcile(target_path: Path, bundled_root: Path) -> dict:
     for sub, dest_rel, strip in MANAGED:
         if sub in OPTIONAL and not (bundled_root / sub).exists():
             continue   # optional enhancement absent from this package — nothing to materialize
-        roll = _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
+        if sub in _SHARED:
+            roll = _shared_file_replace(bundled_root / sub, target_path / dest_rel)
+        else:
+            roll = _clean_replace(bundled_root / sub, target_path / dest_rel, strip_tests=strip)
         restored += roll["restored"]
         refreshed += roll["refreshed"]
         if status[sub] == "missing":
