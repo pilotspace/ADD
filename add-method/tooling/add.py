@@ -8515,6 +8515,24 @@ _FLOW_MAP = (
 )
 
 
+def _compact_commands(parser: argparse.ArgumentParser) -> str:
+    """help-diet: a COMPACT one-block list of every subcommand NAME (no per-command
+    help paragraph), wrapped, with the per-command flags pointer. Keeps discoverability
+    while cutting the top `--help` from ~121 lines to a handful."""
+    import textwrap
+    names: list[str] = []
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for name in action.choices:            # dict preserves add_parser() order
+                if name not in names:              # dedupe any aliases, keep order
+                    names.append(name)
+            break
+    block = textwrap.fill("  ".join(names), width=78,
+                          initial_indent="  ", subsequent_indent="  ",
+                          break_on_hyphens=False, break_long_words=False)
+    return ("commands (flags: add.py <command> -h):\n" + block + "\n")
+
+
 class _AddArgParser(argparse.ArgumentParser):
     """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
     ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
@@ -8530,10 +8548,12 @@ class _AddArgParser(argparse.ArgumentParser):
     a subcommand's own `--help`/errors (prog "add.py <cmd>") stay byte-identical argparse."""
 
     def format_help(self) -> str:
-        # top parser: map LEADS, the full argparse command list still follows (nothing lost;
-        # `add.py --help | head` now surfaces orientation, not the 50-choice usage line).
+        # help-diet: top parser leads with the flow map, then a COMPACT command-NAME list
+        # (not argparse's ~111-line per-command dump) — every name stays discoverable, but the
+        # re-read cache-weight drops (the dump was 17% of an ADD run's engine_output, one early
+        # call). A subcommand's own help (prog "add.py <cmd>") stays byte-identical argparse.
         if self.prog == "add.py":
-            return _FLOW_MAP + "\n" + super().format_help()
+            return _FLOW_MAP + "\n" + _compact_commands(self)
         return super().format_help()
 
     def error(self, message: str):

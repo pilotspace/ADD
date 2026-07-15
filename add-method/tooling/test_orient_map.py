@@ -30,12 +30,17 @@ def _parse(argv):
 
 
 class OrientMapTest(unittest.TestCase):
-    def test_top_help_leads_with_map_then_full_list(self):
+    def test_top_help_leads_with_map_then_compact_list(self):
+        # help-diet (engine-minimalism) superseded the "FULL argparse list follows" behavior:
+        # the map still LEADS, every command NAME stays discoverable, but the list is now COMPACT
+        # (no per-command help paragraph, <=45 lines) to cut re-read cache-weight.
         fh = build_parser().format_help()
         self.assertTrue(fh.lstrip().startswith(_MAP_HEAD), "top --help must LEAD with the flow map")
         self.assertIn("add.py status", fh, "the map names status as the start")
         self.assertIn("freeze --by", fh, "the map hands freeze with its flag")
-        self.assertIn("new-milestone", fh, "the FULL argparse command list still appears below the map")
+        self.assertIn("new-milestone", fh, "every command NAME still appears (discoverability held)")
+        self.assertLessEqual(fh.count("\n") + 1, 45, "the command list is now compact (<=45 lines)")
+        self.assertNotIn("scaffold a milestone (SDD", fh, "no per-command help paragraph (compact names)")
 
     def test_bare_addpy_prints_map_to_stderr(self):
         code, out, err = _parse([])
