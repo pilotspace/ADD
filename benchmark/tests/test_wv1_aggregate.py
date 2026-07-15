@@ -11,7 +11,7 @@ from benchmark.schema.run_record import RunRecord
 
 _V1_METRICS = {
     "regression_rate": 0.0,
-    "spec_fidelity": 0.9,
+    "requirement_coverage": 0.9,
     "tokens_total": 1000.0,
     "cost_usd": 1.0,
     "context_rot_slope": 0.0,
@@ -60,7 +60,7 @@ def test_aggregate_mixed_records_n_missing():
     records = [
         _record(2, 0, {**_V1_METRICS, "oracle_pass_rate": 0.8}),
         _record(2, 1, {**_V1_METRICS, "oracle_pass_rate": 1.0}),
-        _record(2, 2, dict(_V1_METRICS)),  # archived v1 record — no optional keys
+        _record(2, 2, dict(_V1_METRICS)),  # no oracle_pass_rate -> aggregator discloses n_missing
     ]
     entry = aggregate_reps(records)[("add", 2)]
     assert entry["pass_rate"]["mean"] == pytest.approx(0.9)

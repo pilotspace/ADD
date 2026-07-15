@@ -11,9 +11,12 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import pathlib
+import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -21,11 +24,46 @@ import urllib.request
 STARTUP_TIMEOUT_S = 10.0
 POLL_INTERVAL_S = 0.2
 
+# Dirs never needed to boot `python -m app` (stdlib entry contract) — excluded
+# from the isolation copy so it stays fast (a per-arm .venv is large/slow).
+_ISOLATION_EXCLUDE = ("__pycache__", ".venv", ".git", "node_modules", ".add")
+
 
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
+
+
+@contextlib.contextmanager
+def isolated_workspace(workspace):
+    """Yield a fresh temp copy of `workspace` with the app's persistent store
+    RESET, so scoring is reproducible on archived builds and never mutates the
+    source (hermetic-scoring §3 CONTRACT @ v1).
+
+    The copy excludes the heavy dirs the stdlib `python -m app` entry contract
+    never needs (`.venv`/`.git`/`__pycache__`/`node_modules`/`.add`), and every
+    root-level `*.json` in the copy — the booking store, whatever its name
+    (`bookings.json`, `bookings_data.json`, ...) — is removed so the app boots
+    empty. The temp dir is always removed on exit; the SOURCE is never written.
+
+    Fail-closed: a missing/uncopyable source yields an empty temp dir the app
+    cannot boot from (callers see the ordinary unreachable-app red), never a raise.
+    """
+    src = pathlib.Path(workspace)
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="bench-iso-"))
+    copy = tmp / "workspace"
+    try:
+        try:
+            shutil.copytree(src, copy, ignore=shutil.ignore_patterns(*_ISOLATION_EXCLUDE))
+        except Exception:
+            copy.mkdir(parents=True, exist_ok=True)  # fail-closed: empty, unbootable
+        for store in copy.glob("*.json"):  # root-level store, name-agnostic
+            with contextlib.suppress(Exception):
+                store.unlink()
+        yield copy
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 @contextlib.contextmanager

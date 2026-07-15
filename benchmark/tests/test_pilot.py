@@ -1,4 +1,4 @@
-"""Scenarios: pilot orchestration — resolve_setup_steps, attest_record,
+"""Scenarios: pilot orchestration — resolve_setup_steps,
 run_pilot (M4-M10, R3-R7) — fully hermetic via the fake-agent/fake-judge
 seam, zero live `claude` calls (grep-checked: this module never invokes the
 live claude binary)."""
@@ -108,7 +108,8 @@ def _seed_record(runs_root: pathlib.Path, arm: str, wm: int, **overrides) -> Non
         status="done",
         metrics={
             "regression_rate": 0.0,
-            "spec_fidelity": 0.0,
+            "requirement_coverage": 0.0,
+            "oracle_pass_rate": 0.0,
             "tokens_total": 0.0,
             "cost_usd": 0.0,
             "context_rot_slope": 0.0,
@@ -175,64 +176,9 @@ def test_add_arm_setup_succeeds_in_bare_sandbox(tmp_path):
     assert record.status != "failed" or "setup" not in record.artifacts.get("attempts", "")
 
 
-# --------------------------------------------------------------------------
-# M4, R3-R5 — attest_record
-# --------------------------------------------------------------------------
-
-
-def test_attest_then_report_drops_unaudited(tmp_path):
-    from benchmark import report as report_mod
-
-    runs_root = tmp_path / "runs"
-    _seed_record(runs_root, "add", 1, metrics={
-        "regression_rate": 0.0,
-        "spec_fidelity": 0.82,
-        "tokens_total": 100.0,
-        "cost_usd": 0.1,
-        "context_rot_slope": 0.0,
-        "time_to_first_edit": 1.0,
-    })
-
-    before = report_mod.render_report(runs_root, arms=["add"], wms=[1])
-    assert "(unaudited)" in before
-
-    updated = pilot_mod.attest_record("add", 1, "matches PROMPT.md requirements", runs_root=runs_root)
-    assert updated.artifacts["spec_fidelity_audit"] == "spot-checked: matches PROMPT.md requirements"
-
-    after = report_mod.render_report(runs_root, arms=["add"], wms=[1])
-    assert "(unaudited)" not in after
-    assert "0.82" in after
-
-
-def test_attest_record_not_found(tmp_path):
-    runs_root = tmp_path / "runs"
-    with pytest.raises(BenchError, match="record_not_found"):
-        pilot_mod.attest_record("add", 2, "x", runs_root=runs_root)
-    assert not (runs_root / "add" / "wm2" / "record.json").exists()
-
-
-def test_attest_record_not_done(tmp_path):
-    runs_root = tmp_path / "runs"
-    _seed_record(runs_root, "add", 1, status="failed")
-    record_path = runs_root / "add" / "wm1" / "record.json"
-    before_bytes = record_path.read_bytes()
-
-    with pytest.raises(BenchError, match="record_not_done"):
-        pilot_mod.attest_record("add", 1, "x", runs_root=runs_root)
-
-    assert record_path.read_bytes() == before_bytes
-
-
-def test_attest_record_not_scored(tmp_path):
-    runs_root = tmp_path / "runs"
-    _seed_record(runs_root, "add", 1, status="done")  # spec_fidelity default 0.0 placeholder
-    record_path = runs_root / "add" / "wm1" / "record.json"
-    before_bytes = record_path.read_bytes()
-
-    with pytest.raises(BenchError, match="record_not_scored"):
-        pilot_mod.attest_record("add", 1, "x", runs_root=runs_root)
-
-    assert record_path.read_bytes() == before_bytes
+# (honest-fidelity-meter) the `attest_record` spot-check writer + its
+# `pilot.py attest` CLI were RETIRED alongside the spec_fidelity_audit report
+# hook: deterministic requirement_coverage has no subjective score to attest.
 
 
 # --------------------------------------------------------------------------
@@ -338,7 +284,8 @@ def test_run_pilot_resumes_without_reinvoking(tmp_path, monkeypatch):
             wm,
             metrics={
                 "regression_rate": 0.0 if wm != 3 else 0.1,
-                "spec_fidelity": 0.8,
+                "requirement_coverage": 0.8,
+                "oracle_pass_rate": 1.0,
                 "tokens_total": 10.0,
                 "cost_usd": 0.01,
                 "context_rot_slope": 0.0,
@@ -376,37 +323,8 @@ def test_run_pilot_rejects_unknown_arm(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# CLI surface: `pilot.py attest` / `pilot.py run-all`
+# CLI surface: `pilot.py run-all`
 # --------------------------------------------------------------------------
-
-
-def test_cli_attest_success_and_rejection(tmp_path, capsys):
-    runs_root = tmp_path / "runs"
-    _seed_record(
-        runs_root,
-        "add",
-        1,
-        metrics={
-            "regression_rate": 0.0,
-            "spec_fidelity": 0.9,
-            "tokens_total": 10.0,
-            "cost_usd": 0.01,
-            "context_rot_slope": 0.0,
-            "time_to_first_edit": 1.0,
-        },
-    )
-
-    rc = pilot_mod.main(["attest", "--arm", "add", "--wm", "1", "--note", "x", "--runs-root", str(runs_root)])
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "spot-checked: x" in out
-
-    rc2 = pilot_mod.main(
-        ["attest", "--arm", "add", "--wm", "2", "--note", "x", "--runs-root", str(runs_root)]
-    )
-    assert rc2 == 2
-    err = capsys.readouterr().err
-    assert "record_not_found" in err
 
 
 def test_cli_run_all_rejects_unknown_arm(tmp_path, capsys):
@@ -434,7 +352,8 @@ def _rec(arm: str, wm: int, *, tokens: float, cost: float, fidelity: float) -> "
             status="done",
             metrics={
                 "regression_rate": 0.0,
-                "spec_fidelity": fidelity,
+                "requirement_coverage": fidelity,
+                "oracle_pass_rate": 1.0,
                 "tokens_total": tokens,
                 "cost_usd": cost,
                 "context_rot_slope": 0.0,

@@ -189,8 +189,10 @@ class MachineStateTest(unittest.TestCase):
             slug = f"t{i:02d}"
             add.main(["new-task", slug, "--title", "Feature"])
             self._set_updated("tasks", slug, f"2026-01-{i+1:02d}T00:00:00+00:00")
+        # status-lean-default: the task ROWS (and thus the pagination "… N more" note)
+        # now gate behind --all; bare status shows a `tasks : <N> (status --all)` count line.
         _, out, _ = _run(["status"])
-        self.assertIn("2 more (see status --all)", out)
+        self.assertIn("tasks   : 12 (status --all)", out)
 
     def test_status_text_mode_all_flag_shows_everything(self):
         for i in range(12):

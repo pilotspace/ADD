@@ -55,7 +55,8 @@ def _make_record(
     tokens_total: float = 4200.0,
     cost_usd: float = 0.31,
     time_to_first_edit: float = 12.5,
-    spec_fidelity: float = 0.0,
+    requirement_coverage: float = 0.0,
+    oracle_pass_rate: float = 0.0,
     regression_rate: float = 0.0,
     context_rot_slope: float = 0.0,
     token_source: str | None = None,
@@ -84,7 +85,8 @@ def _make_record(
             "status": status,
             "metrics": {
                 "regression_rate": regression_rate,
-                "spec_fidelity": spec_fidelity,
+                "requirement_coverage": requirement_coverage,
+                "oracle_pass_rate": oracle_pass_rate,
                 "tokens_total": tokens_total,
                 "cost_usd": cost_usd,
                 "context_rot_slope": context_rot_slope,
@@ -283,31 +285,33 @@ def test_unparseable_token_source_surfaced_not_masked(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# M3 - spec_fidelity via injected fake judge
+# fidelity of record is requirement_coverage (deterministic) — NOT the LLM judge
 # --------------------------------------------------------------------------
 
 
-def test_spec_fidelity_via_fake_judge(tmp_path, monkeypatch):
+def test_requirement_coverage_metric_not_from_judge(tmp_path, monkeypatch):
+    """The fidelity metric is deterministic requirement_coverage — the LLM judge
+    is OFF the metric path (score never calls either judge entrypoint). The
+    deterministic coverage probes DO use subprocess to boot the app / run the
+    CLI, so the pin is on the judge FUNCTIONS, not the global subprocess."""
     runs_root = tmp_path / "runs"
     record_path = _make_record(tmp_path, runs_root, "add", 1)
-    judge_cmd = _fake_judge(tmp_path, "0.82")
 
-    calls = []
-    real_run = subprocess.run
+    judge_calls = []
 
-    def _spy_run(argv, **kwargs):
-        calls.append(argv)
-        return real_run(argv, **kwargs)
+    def _boom(*args, **kwargs):
+        judge_calls.append(args)
+        raise AssertionError("judge invoked on the metric path")
 
-    monkeypatch.setattr(score_mod.judge.subprocess, "run", _spy_run)
+    monkeypatch.setattr(score_mod.judge, "judge_fidelity_median", _boom)
+    monkeypatch.setattr(score_mod.judge, "judge_fidelity", _boom)
 
-    score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
+    score_mod.score_record("add", 1, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
-    assert written["metrics"]["spec_fidelity"] == 0.82
-    assert calls, "judge subprocess.run was never invoked"
-    for argv in calls:
-        assert "claude" not in argv
+    assert "requirement_coverage" in written["metrics"]
+    assert "spec_fidelity" not in written["metrics"]
+    assert judge_calls == [], "score must not call a judge function on the metric path"
 
 
 # --------------------------------------------------------------------------
@@ -317,9 +321,9 @@ def test_spec_fidelity_via_fake_judge(tmp_path, monkeypatch):
 
 def test_regression_rate_computed_at_wm3(tmp_path):
     runs_root = tmp_path / "runs"
-    _make_record(tmp_path, runs_root, "add", 1, status="done", spec_fidelity=0.9)
-    _make_record(tmp_path, runs_root, "add", 2, status="done", spec_fidelity=0.75)
-    record_path = _make_record(tmp_path, runs_root, "add", 3, spec_fidelity=0.0)
+    _make_record(tmp_path, runs_root, "add", 1, status="done", requirement_coverage=0.9)
+    _make_record(tmp_path, runs_root, "add", 2, status="done", requirement_coverage=0.75)
+    record_path = _make_record(tmp_path, runs_root, "add", 3, requirement_coverage=0.0)
 
     workspace_dir = runs_root / "add" / "wm3" / "workspace"
     _write_fixture_app(workspace_dir)
@@ -338,9 +342,9 @@ def test_regression_rate_computed_at_wm3(tmp_path):
 
 def test_regression_rate_counts_must_survive_failures(tmp_path):
     runs_root = tmp_path / "runs"
-    _make_record(tmp_path, runs_root, "add", 1, status="done", spec_fidelity=0.9)
-    _make_record(tmp_path, runs_root, "add", 2, status="done", spec_fidelity=0.75)
-    record_path = _make_record(tmp_path, runs_root, "add", 3, spec_fidelity=0.0)
+    _make_record(tmp_path, runs_root, "add", 1, status="done", requirement_coverage=0.9)
+    _make_record(tmp_path, runs_root, "add", 2, status="done", requirement_coverage=0.75)
+    record_path = _make_record(tmp_path, runs_root, "add", 3, requirement_coverage=0.0)
 
     workspace_dir = runs_root / "add" / "wm3" / "workspace"
     workspace_dir.mkdir(parents=True, exist_ok=True)
@@ -381,17 +385,22 @@ def test_regression_rate_zero_before_wm3(tmp_path, monkeypatch):
 # --------------------------------------------------------------------------
 
 
-def test_context_rot_slope_computed_at_wm3(tmp_path):
+def test_context_rot_slope_computed_at_wm3(tmp_path, monkeypatch):
     runs_root = tmp_path / "runs"
-    _make_record(tmp_path, runs_root, "add", 1, status="done", spec_fidelity=0.9)
-    _make_record(tmp_path, runs_root, "add", 2, status="done", spec_fidelity=0.75)
-    record_path = _make_record(tmp_path, runs_root, "add", 3, spec_fidelity=0.0)
+    _make_record(tmp_path, runs_root, "add", 1, status="done", requirement_coverage=0.9)
+    _make_record(tmp_path, runs_root, "add", 2, status="done", requirement_coverage=0.75)
+    record_path = _make_record(tmp_path, runs_root, "add", 3, requirement_coverage=0.0)
 
     workspace_dir = runs_root / "add" / "wm3" / "workspace"
     _write_fixture_app(workspace_dir)
-    judge_cmd = _fake_judge(tmp_path, "0.6")
+    # wm3 coverage pinned so the 3-point trend is exactly [0.9, 0.75, 0.6] and
+    # the slope wiring is tested independent of the fixture's exact probe count
+    # (wm3's 4-row checklist could only ever yield a multiple of 0.25). score_record
+    # derives coverage from compute_coverage_detail -> a 3-of-5 detail yields 0.6.
+    monkeypatch.setattr(score_mod, "compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": f"r{i}", "covered": i < 3} for i in range(5)])
 
-    score_mod.score_record("add", 3, judge_cmd=judge_cmd, runs_root=runs_root)
+    score_mod.score_record("add", 3, runs_root=runs_root)
 
     written = json.loads(record_path.read_text())
     assert written["metrics"]["context_rot_slope"] == pytest.approx(-0.15)
@@ -430,9 +439,52 @@ def test_scored_record_still_validates(tmp_path):
     score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
 
     reloaded = validate(json.loads(record_path.read_text()))
-    # v2-meter-fixes M1/M6: the deterministic fidelity of record is always
-    # written; tests_weakened stays absent here (no snapshots in this fixture).
-    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS) | {"oracle_pass_rate"}
+    # v3: requirement_coverage + oracle_pass_rate are both REQUIRED now;
+    # tests_weakened stays absent here (no snapshots in this fixture).
+    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS)
+    assert "requirement_coverage" in reloaded.metrics
+    assert "spec_fidelity" not in reloaded.metrics
+
+
+def test_score_rereads_archived_spec_fidelity_target(tmp_path, monkeypatch):
+    """An archived v1/v2 record carries the retired spec_fidelity and NO
+    requirement_coverage — strict validate() rejects it, but RE-SCORING is
+    exactly how it migrates forward. score_record must read the TARGET record
+    leniently, recompute every metric, and rewrite it in the v3 schema (this is
+    what makes `run.py score` on every existing runs/*/wm* record work)."""
+    runs_root = tmp_path / "runs"
+    wm_dir = runs_root / "add" / "wm1"
+    workspace_dir = wm_dir / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (wm_dir / "transcript.jsonl").write_text("")
+    (wm_dir / "oracle_report.json").write_text(
+        json.dumps({"app_check": {"app_reachable": True}, "isolation_clean": True})
+    )
+    # an OLD-schema record written RAW (bypasses validate): spec_fidelity, no coverage
+    old = {
+        "arm": "add", "wm": 1, "rep": 0, "status": "done",
+        "metrics": {"regression_rate": 0.0, "spec_fidelity": 0.95,
+                    "tokens_total": 4200.0, "cost_usd": 0.31,
+                    "context_rot_slope": 0.0, "time_to_first_edit": 12.5},
+        "artifacts": {"workspace": str(workspace_dir),
+                      "transcript": str(wm_dir / "transcript.jsonl"),
+                      "oracle_report": str(wm_dir / "oracle_report.json")},
+    }
+    record_path = wm_dir / "record.json"
+    record_path.write_text(json.dumps(old))
+
+    # deterministic seams — the read-migration is the subject, not probe values
+    monkeypatch.setattr(score_mod, "compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}])
+    monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
+
+    scored = score_mod.score_record("add", 1, runs_root=runs_root)
+
+    assert scored.metrics["requirement_coverage"] == 1.0
+    assert "spec_fidelity" not in scored.metrics
+    # persisted in the v3 schema — reloads clean through strict validate
+    reloaded = validate(json.loads(record_path.read_text()))
+    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS)
 
 
 # --------------------------------------------------------------------------
@@ -528,20 +580,22 @@ def test_unknown_arm(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# R6 - judge output is not a parseable float
+# v3: a bad/unavailable judge no longer breaks scoring — it is OFF the metric path
 # --------------------------------------------------------------------------
 
 
-def test_unparseable_judge_output(tmp_path):
+def test_bad_judge_does_not_break_scoring(tmp_path):
+    """A non-numeric judge output used to fail the score; now the judge is off the
+    metric path, so scoring succeeds and records deterministic requirement_coverage."""
     runs_root = tmp_path / "runs"
     record_path = _make_record(tmp_path, runs_root, "add", 1)
-    before = record_path.read_bytes()
     judge_cmd = _fake_judge(tmp_path, "not-a-number")
 
-    with pytest.raises(score_mod.BenchError, match="unparseable_judge_output"):
-        score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
-
-    assert record_path.read_bytes() == before
+    record = score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
+    assert "requirement_coverage" in record.metrics
+    assert "spec_fidelity" not in record.metrics
+    # a valid float in [0,1] was recorded despite the unparseable judge output
+    assert 0.0 <= record.metrics["requirement_coverage"] <= 1.0
 
 
 # --------------------------------------------------------------------------
@@ -551,8 +605,8 @@ def test_unparseable_judge_output(tmp_path):
 
 def test_regression_run_failed(tmp_path, monkeypatch):
     runs_root = tmp_path / "runs"
-    _make_record(tmp_path, runs_root, "add", 1, status="done", spec_fidelity=0.9)
-    _make_record(tmp_path, runs_root, "add", 2, status="done", spec_fidelity=0.75)
+    _make_record(tmp_path, runs_root, "add", 1, status="done", requirement_coverage=0.9)
+    _make_record(tmp_path, runs_root, "add", 2, status="done", requirement_coverage=0.75)
     record_path = _make_record(tmp_path, runs_root, "add", 3)
     before = record_path.read_bytes()
 

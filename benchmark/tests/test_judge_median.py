@@ -1,6 +1,13 @@
 """Median-of-N judging (bench-judge-median fast task): variance-resistant
-spec_fidelity via judge_fidelity_median + auditable raw scores persisted in
-artifacts["judge_scores"]."""
+judging via judge_fidelity_median + auditable raw scores.
+
+`judge_fidelity_median` itself is unchanged and still tested here. What CHANGED
+at honest-fidelity-meter: the judge LEFT the score_record metric path entirely
+(fidelity is now deterministic requirement_coverage). Task judge-advisory then
+re-added the judge as an advisory, source-aware `code_quality_annotation`
+artifact (never a metric) — so the integration test pins that the annotation
+lands in `artifacts`, never in `metrics`, and the old `judge_scores` sentinel
+is gone."""
 from __future__ import annotations
 
 import json
@@ -54,19 +61,67 @@ def test_two_failures_raise(tmp_path):
         judge_fidelity_median(tmp_path, 1, {}, judge_cmd=cmd, n=3)
 
 
-def test_score_record_persists_judge_scores(tmp_path):
+def test_score_record_annotates_judge_out_of_metric_path(tmp_path, monkeypatch):
+    """The judge no longer feeds any metric: score_record records deterministic
+    requirement_coverage and no spec_fidelity, and the judge's output lands in
+    `artifacts["code_quality_annotation"]` (never in metrics); the old
+    `judge_scores` deferral sentinel is gone."""
     ws = tmp_path / "runs" / "vanilla" / "wm1" / "workspace"
     ws.mkdir(parents=True)
     record = {
         "arm": "vanilla", "wm": 1, "rep": 0, "status": "done",
-        "metrics": {"regression_rate": 0.0, "spec_fidelity": 0.0,
-                    "tokens_total": 10.0, "cost_usd": 0.1,
+        "metrics": {"regression_rate": 0.0, "requirement_coverage": 0.0,
+                    "oracle_pass_rate": 0.0, "tokens_total": 10.0, "cost_usd": 0.1,
                     "context_rot_slope": 0.0, "time_to_first_edit": 1.0},
         "artifacts": {"workspace": str(ws), "transcript": "", "oracle_report": "",
                       "attempts": "attempt 1: done"},
     }
     (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
+
+    # deterministic seams — no live pytest / app boot in this wiring test.
+    # score_record derives coverage from compute_coverage_detail (coverage-detail):
+    # a 1-of-2-covered detail -> requirement_coverage 0.5.
+    monkeypatch.setattr("benchmark.score.compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}, {"id": "b", "covered": False}])
+    monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
+
     cmd = _stateful_judge(tmp_path, ["0.9", "0.5", "0.9"])
     scored = score_record("vanilla", 1, judge_cmd=cmd, runs_root=tmp_path / "runs")
-    assert scored.metrics["spec_fidelity"] == 0.9
-    assert scored.artifacts["judge_scores"] == "0.9;0.5;0.9"
+
+    assert scored.metrics["requirement_coverage"] == 0.5
+    assert "spec_fidelity" not in scored.metrics
+    assert "judge_scores" not in scored.artifacts
+    assert "code_quality_annotation" in scored.artifacts
+    assert "code_quality_annotation" not in scored.metrics
+    # judge_cmd supplied + would-succeed -> the annotation is that judge's stdout
+    assert scored.artifacts["code_quality_annotation"] == "0.9"
+
+
+def test_score_record_purges_stale_judge_scores_sentinel(tmp_path, monkeypatch):
+    """A record persisted BEFORE judge-advisory carries the superseded
+    `judge_scores` deferral sentinel in its artifacts. Re-scoring must PURGE it
+    (the frozen contract: "the judge_scores deferred sentinel is REMOVED") — a
+    re-scored record never carries both keys."""
+    ws = tmp_path / "runs" / "vanilla" / "wm1" / "workspace"
+    ws.mkdir(parents=True)
+    record = {
+        "arm": "vanilla", "wm": 1, "rep": 0, "status": "done",
+        "metrics": {"regression_rate": 0.0, "requirement_coverage": 1.0,
+                    "oracle_pass_rate": 1.0, "tokens_total": 10.0, "cost_usd": 0.1,
+                    "context_rot_slope": 0.0, "time_to_first_edit": 1.0},
+        "artifacts": {"workspace": str(ws), "transcript": "", "oracle_report": "",
+                      # the stale sentinel a pre-judge-advisory scoring left behind:
+                      "judge_scores": "deferred: see code_quality_annotation (task judge-advisory)"},
+    }
+    (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
+
+    monkeypatch.setattr("benchmark.score.compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}])
+    monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
+
+    scored = score_record("vanilla", 1, runs_root=tmp_path / "runs")  # no judge_cmd
+
+    assert "judge_scores" not in scored.artifacts  # purged
+    assert scored.artifacts["code_quality_annotation"].startswith("unavailable")

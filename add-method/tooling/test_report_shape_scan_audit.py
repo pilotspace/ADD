@@ -85,12 +85,15 @@ class ReportTemplateUnchanged(unittest.TestCase):
     class keeps proving no OTHER, unrecorded drift occurs."""
 
     def test_report_template_byte_count_unchanged(self):
-        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9626,
+        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9623,
                          "report-template.md drifted beyond its recorded, deliberate additions "
                          "(9298 @ report-shape-scan-audit + 290 B @ report-template-recorded-loop "
                          "+ 39 B @ intake-freeze-batch: the Batch-don't-serialize hard rule "
                          "+ the BUILD-PLAN-is-the-HOW bullet @ plan-in-report, net −1 B of "
-                         "same-guide compression that keeps the reference pool under budget)")
+                         "same-guide compression, then −3 B @ status-lean-default: the m-goal "
+                         "line points at `status --all` (the full m-goal prose gates behind "
+                         "--all) offset by same-guide compression to keep the reference pool "
+                         "under budget)")
 
     def test_guarded_bullet_untouched(self):
         text = REPORT_TMPL.read_text(encoding="utf-8")

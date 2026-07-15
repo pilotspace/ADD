@@ -75,7 +75,7 @@ class StreamsRenderTest(_Board):
     def test_two_active_render_as_streams(self):
         self._craft(["m1", "m2"], {"m1": "t1", "m2": "t2"}, "m2",
                     phases={"t1": "verify", "t2": "build"})
-        out = self._status()
+        out = self._status("--all")   # per-stream rows gate behind --all (status-lean-default)
         self.assertIn("streams : 2 active milestones", out)
         lines = out.splitlines()
         m2_line = next(l for l in lines if l.lstrip().startswith("▸") and " m2 " in l)
@@ -88,14 +88,14 @@ class StreamsRenderTest(_Board):
 
     def test_primary_listed_first(self):
         self._craft(["m1", "m2"], {"m1": "t1", "m2": "t2"}, "m2")
-        body = self._status().split("streams :", 1)[1]
+        body = self._status("--all").split("streams :", 1)[1]   # rows: --all
         self.assertLess(body.index(" m2 "), body.index(" m1 "),
                         "the primary stream is listed before the others")
 
     def test_single_active_no_streams_block(self):
         # collapse to one active milestone (the migrated single-active shape)
         self._craft(["m1"], {"m1": "t1"}, "m1")
-        out = self._status()
+        out = self._status("--all")   # milestone rollup rows gate behind --all
         self.assertIn("active  :", out)
         self.assertNotIn("streams :", out)
         # N=1 rollup-mark byte-identity: the new `mslug in active_milestones` predicate must
@@ -120,14 +120,14 @@ class StreamsRenderTest(_Board):
 
     def test_stream_without_active_task_shows_none(self):
         self._craft(["m1", "m2"], {"m2": "t2"}, "m2")   # m1 has no active task
-        out = self._status()
+        out = self._status("--all")   # per-stream rows: --all
         m1_line = next(l for l in out.splitlines() if " m1 " in l and "task=" in l)
         self.assertIn("task=(none)", m1_line)
         self.assertIn("phase=-", m1_line)
 
     def test_rollup_marks_every_active_member(self):
         self._craft(["m1", "m2"], {"m1": "t1", "m2": "t2"}, "m2")
-        out = self._status()
+        out = self._status("--all")   # milestone rollup rows gate behind --all
         rollup = out.split("milestones:", 1)[1].split("active  :", 1)[0]
         m1_roll = next(l for l in rollup.splitlines() if l.strip().endswith("status=active") and " m1 " in l)
         m2_roll = next(l for l in rollup.splitlines() if l.strip().endswith("status=active") and " m2 " in l)

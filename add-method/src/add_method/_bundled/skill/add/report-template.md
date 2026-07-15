@@ -29,7 +29,7 @@ ARC  goal: <the milestone / project goal this decision serves>
      plan: <this gate → the next step → the goal>
 ```
 
-- **goal** — read from `m-goal` in `add.py status`; never re-typed from memory.
+- **goal** — read from `m-goal` in `add.py status --all`; never from memory.
 - **done** — proven progress only: exit-criteria met/total, tasks done, what this gate proves. An honest fact, never a hope.
 - **plan** — this gate → the next step → the goal, mirroring the rollup's `DECIDE NEXT` line.
 

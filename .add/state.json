@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "wire-milestone-relations",
+  "active_task": "status-lean-default",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9951,10 +9951,268 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "coverage-scorer": {
+      "title": "Deterministic requirement_coverage scorer + frozen metric-set swap (ships WM1 checklist)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T03:00:28+00:00",
+      "updated": "2026-07-15T04:04:26+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T03:04:48+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "4c29b4153bdc4665ed3933cd301d0cb8",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/schema/run_record.py",
+          "benchmark/score.py",
+          "benchmark/report.py",
+          "benchmark/workload/",
+          "benchmark/runner/core.py",
+          "benchmark/pilot.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "0898d078a306b9604e04933ea0e27d5a"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T04:01:21+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "hermetic-scoring": {
+      "title": "Hermetic scoring \u2014 isolate the app store per boot so coverage/oracle are reproducible on archived builds",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T04:24:27+00:00",
+      "updated": "2026-07-15T04:31:17+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T04:25:57+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c36fd4689d8043550ec9e7dca841ed04",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/score.py",
+          "benchmark/workload/_oracle_lib.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "3a192137d32d98fa9cb3e1896895a7c5"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "judge-advisory": {
+      "title": "Demote the LLM judge to a source-aware, non-gating code_quality_annotation artifact",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T04:36:37+00:00",
+      "updated": "2026-07-15T04:44:51+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T04:40:38+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "f2cbd173fe91678079f1b44966be2997",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/judge.py",
+          "benchmark/score.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "46a4a6dc6cce3fa9b5396e48a043f9e2"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "coverage-detail": {
+      "title": "Emit a per-WM coverage_detail artifact \u2014 which checklist requirement each WM covered (non-gating)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T05:38:01+00:00",
+      "updated": "2026-07-15T05:47:39+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T05:40:01+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "cb75d9e057495b8bbcd2f5271b44a868",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/score.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "4325dd9fcf2decf96d772157f37b70e5"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T05:46:37+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "report-diagnostics": {
+      "title": "Surface coverage_detail + code_quality_annotation in report.py's per-WM view (read-only, non-gating)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T05:53:15+00:00",
+      "updated": "2026-07-15T06:00:25+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T05:54:25+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9cd89127494a0c19201b0c9d5049caca",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/report.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "d6214b948e631b8caec0aff66bf5d1f0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "status-lean-default": {
+      "title": "lean bare status default: gate goal/m-goal prose + personas roster + milestone/task/stream lists behind --all, add count lines",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T08:41:37+00:00",
+      "updated": "2026-07-15T09:10:21+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T08:45:05+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c9c14a2942c50c461e32519e15f672a0",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/skill/add/report-template.md",
+          "add-method/src/add_method/_bundled/skill/add/report-template.md",
+          ".claude/skills/add/report-template.md",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_status_lean_default.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_report_shape_scan_audit.py",
+          "add-method/tooling/test_machine_state.py",
+          "add-method/tooling/test_parallel_status_view.py",
+          "add-method/tooling/test_per_stream_owner.py",
+          "add-method/tooling/test_project_goal.py",
+          "add-method/tooling/test_relations.py",
+          "add-method/tooling/test_roster_status_line.py",
+          "add-method/tooling/test_ux_stale_followups.py"
+        ],
+        "snapshot_md5": "966cb5126ef16afc02f1642234381af6"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T09:09:20+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-14T16:54:49+00:00",
+  "updated": "2026-07-15T09:10:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10407,9 +10665,26 @@
       "status": "active",
       "created": "2026-07-14T16:16:45+00:00",
       "updated": "2026-07-14T16:16:45+00:00"
+    },
+    "honest-fidelity-meter": {
+      "title": "Honest fidelity meter: deterministic requirement_coverage replaces artifact-blind spec_fidelity",
+      "goal": "Replace the artifact-blind LLM spec_fidelity metric with a deterministic requirement_coverage meter (frozen per-requirement checklists + probes across all 6 WMs), promote oracle_pass_rate to the headline, and demote the LLM judge to an advisory source-aware code_quality_annotation",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-15T02:56:10+00:00",
+      "updated": "2026-07-15T03:00:28+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-15T03:00:28+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "engine-hygiene",
+  "active_milestone": "honest-fidelity-meter",
   "archived": [
     {
       "slug": "v5",
@@ -11235,6 +11510,26 @@
         "fast-lane-boundary-line"
       ],
       "archived": "2026-07-11"
+    },
+    {
+      "slug": "token-anatomy",
+      "title": "Ceremony token anatomy \u2014 attribute ADD's cache-read cost by category",
+      "tasks": 2,
+      "task_slugs": [
+        "anatomy-core",
+        "anatomy-report"
+      ],
+      "archived": "2026-07-15"
+    },
+    {
+      "slug": "engine-minimalism",
+      "title": "Engine output diet \u2014 cut add.py's re-read cache weight",
+      "tasks": 2,
+      "task_slugs": [
+        "help-diet",
+        "status-brief-adoption"
+      ],
+      "archived": "2026-07-15"
     }
   ],
   "active_milestones": [
@@ -11251,7 +11546,8 @@
     "six-phase-loop",
     "call-residuals",
     "orientation-honesty",
-    "engine-hygiene"
+    "engine-hygiene",
+    "honest-fidelity-meter"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -11269,7 +11565,8 @@
     "six-phase-loop": "installer-shared-namespace-guard",
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
-    "engine-hygiene": "wire-milestone-relations"
+    "engine-hygiene": "wire-milestone-relations",
+    "honest-fidelity-meter": "status-lean-default"
   },
   "todos": [
     {

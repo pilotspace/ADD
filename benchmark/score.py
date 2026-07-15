@@ -94,23 +94,29 @@ def _run_oracle_suites(
     never conflated with a normal test failure, which is signal, not error.
     `marker_expr` (pytest -m) lets a caller deselect probes that don't belong
     to its metric — e.g. wm3's regression re-exports out of the fidelity run."""
+    from benchmark.workload._oracle_lib import isolated_workspace  # lazy: avoids import cycle
+
     marker_args = ["-m", marker_expr] if marker_expr else []
-    proc = subprocess.run(
-        [
-            *_pytest_argv(),
-            "-p",
-            "no:cacheprovider",
-            "--tb=no",
-            "-q",
-            *marker_args,
-            *[str(p) for p in oracle_paths],
-        ],
-        cwd=str(REPO_ROOT),
-        env={**os.environ, "BENCH_WORKSPACE": str(workspace)},
-        capture_output=True,
-        text=True,
-        timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
-    )
+    # HERMETIC (hermetic-scoring): the oracle/regression probes boot the app via
+    # BENCH_WORKSPACE — point it at a store-reset copy so their bookings never
+    # mutate the source and oracle_pass_rate is reproducible on archived builds.
+    with isolated_workspace(workspace) as iso_ws:
+        proc = subprocess.run(
+            [
+                *_pytest_argv(),
+                "-p",
+                "no:cacheprovider",
+                "--tb=no",
+                "-q",
+                *marker_args,
+                *[str(p) for p in oracle_paths],
+            ],
+            cwd=str(REPO_ROOT),
+            env={**os.environ, "BENCH_WORKSPACE": str(iso_ws)},
+            capture_output=True,
+            text=True,
+            timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
+        )
     if proc.returncode not in (0, 1):
         raise BenchError(
             f"{error_code}: pytest exited {proc.returncode}\n"
@@ -154,6 +160,126 @@ def compute_oracle_pass_rate(workspace: pathlib.Path, wm: int, family: str = "wm
         marker_expr="not regression and not legacy_shape",
     )
     return (total - bad) / total
+
+
+def validate_checklist(rows: object) -> None:
+    """A frozen requirement checklist is a non-empty list of rows, each a mapping
+    carrying `id`, `description`, and a callable `probe` — a row missing any of
+    these (R2) raises BenchError("invalid_checklist: ...") before any scoring."""
+    if not isinstance(rows, list) or not rows:
+        raise BenchError("invalid_checklist: REQUIREMENTS must be a non-empty list")
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict) or not all(k in row for k in ("id", "description", "probe")):
+            raise BenchError(f"invalid_checklist: row {i} must carry id, description, probe")
+        if not callable(row["probe"]):
+            raise BenchError(f"invalid_checklist: row {i} probe must be callable")
+
+
+def _load_checklist(wm: int, family: str = "wm") -> list[dict]:
+    """Import `workload/{family}{wm}/checklist.py` and return its validated
+    `REQUIREMENTS` list. Raises `missing_checklist` if the module is absent,
+    `invalid_checklist` (via validate_checklist) if a row is malformed."""
+    mod_path = REPO_ROOT / "benchmark" / "workload" / f"{family}{wm}" / "checklist.py"
+    if not mod_path.exists():
+        raise BenchError(f"missing_checklist: {mod_path} does not exist")
+    spec = importlib.util.spec_from_file_location(f"_checklist_{family}{wm}", mod_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    rows = getattr(module, "REQUIREMENTS", None)
+    validate_checklist(rows)
+    return rows
+
+
+def compute_coverage_detail(workspace: pathlib.Path, wm: int, family: str = "wm") -> list[dict]:
+    """The per-requirement breakdown behind `requirement_coverage` (coverage-detail):
+    run the WM's FROZEN checklist against the built app and return one
+    `{"id","covered"}` row per requirement, in checklist order — so a coverage score
+    is self-explaining (a 0.0 says WHICH requirements failed, not just that it did).
+
+    ONE hermetic boot (hermetic-scoring): probe writes land in a store-reset throwaway
+    copy, so the source is never mutated and repeated scorings are reproducible.
+    Fail-closed (M3): an unbootable app / a raising probe leaves that row `covered:False`
+    — never propagates the probe's exception. Raises only on a malformed checklist (R2)."""
+    from benchmark.workload._oracle_lib import isolated_workspace, running_app  # lazy: avoids import cycle
+
+    rows = _load_checklist(wm, family)  # R2: malformed checklist raises here, before the boot
+    detail = [{"id": row["id"], "covered": False} for row in rows]
+    try:
+        with isolated_workspace(workspace) as iso_ws:
+            with running_app(str(iso_ws)) as base:
+                for i, row in enumerate(rows):
+                    try:
+                        if row["probe"](base, iso_ws):
+                            detail[i]["covered"] = True
+                    except Exception:
+                        pass  # fail-closed: a raising probe = requirement NOT covered
+    except Exception:
+        pass  # unbootable workspace: detail stays all-False, never a scorer crash
+    return detail
+
+
+def _coverage_from_detail(detail: list[dict]) -> float:
+    """Aggregate a coverage-detail into covered/total in [0,1] — the single source of
+    truth shared by `compute_requirement_coverage` and `score_record`, so the float and
+    the emitted detail can never disagree. Raises on a value ∉ [0,1] (R3)."""
+    total = len(detail)
+    value = sum(1 for d in detail if d["covered"]) / total
+    if not (0.0 <= value <= 1.0):
+        raise BenchError(f"invalid_coverage: {value!r} out of [0.0, 1.0]")
+    return value
+
+
+def compute_requirement_coverage(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
+    """The DETERMINISTIC fidelity of record (honest-fidelity-meter): covered/total in
+    [0,1] from the WM's FROZEN checklist run against the built app. Every PROMPT.md
+    requirement is one probe — so an app that boots but omits a requirement (CLI, field
+    validation) scores below 1.0, unlike oracle_pass_rate which is blind to un-probed
+    requirements. NO LLM in the path — identical workspace yields the identical value.
+    Derived from `compute_coverage_detail` so the score and its breakdown always agree."""
+    return _coverage_from_detail(compute_coverage_detail(workspace, wm, family))
+
+
+def _read_prior_metrics_lenient(
+    root: pathlib.Path, arm_name: str, wm: int, family: str = "wm"
+) -> dict:
+    """Read a prior WM's record.json metrics WITHOUT strict validate() — a legacy
+    record carries only `spec_fidelity` (no `requirement_coverage`) and would be
+    rejected by the v3 schema, but the slope prior-read must still see its value.
+    Enforces the same absent/not-done guard as read_prior_wm_record."""
+    path = _record_path(root, arm_name, wm, family)
+    if not path.exists():
+        raise BenchError(f"missing_prior_wm_record: {path} does not exist")
+    data = json.loads(path.read_text())
+    if data.get("status") != "done":
+        raise BenchError(f"missing_prior_wm_record: {path} status={data.get('status')!r} (must be 'done')")
+    return data.get("metrics", {})
+
+
+def _read_target_record_lenient(record_path: pathlib.Path) -> RunRecord:
+    """Read the record being scored WITHOUT strict validate(), constructing the
+    RunRecord dataclass directly. An archived v1/v2 record carries the retired
+    `spec_fidelity` (no `requirement_coverage`) and would be rejected by the v3
+    schema — yet RE-SCORING is precisely how it migrates forward: score_record
+    recomputes every metric and re-validates the full dict before writing, so
+    the target read need not (and must not) pre-validate. Malformed shapes still
+    fail loud (KeyError/TypeError surface as a clear error, never a silent skip)."""
+    data = json.loads(record_path.read_text())
+    return RunRecord(
+        arm=str(data["arm"]),
+        wm=int(data["wm"]),
+        rep=int(data["rep"]),
+        status=str(data["status"]),
+        metrics=dict(data["metrics"]),
+        artifacts=dict(data["artifacts"]),
+    )
+
+
+def _prior_fidelity_value(metrics: dict) -> float:
+    """The slope-trajectory value of a prior WM: its deterministic
+    `requirement_coverage`, or (archived-record shim, M4) its legacy
+    `spec_fidelity` when coverage is absent; 0.0 if neither exists."""
+    v = metrics.get("requirement_coverage", metrics.get("spec_fidelity", 0.0))
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else 0.0
 
 
 def compute_regression_rate_v2(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
@@ -255,7 +381,10 @@ def score_record(
     if not record_path.exists():
         raise BenchError(f"record_not_found: {record_path}")
 
-    record = RunRecord.from_json(record_path.read_text())
+    # Lenient target read: an archived v1/v2 record carries the retired
+    # spec_fidelity and would fail strict validate() — re-scoring migrates it
+    # forward (recompute + re-validate before write, below).
+    record = _read_target_record_lenient(record_path)
     if record.status != "done":
         raise BenchError(f"record_not_done: status={record.status!r} (nothing to score)")
 
@@ -266,8 +395,8 @@ def score_record(
     prior_fidelities: list[float] = []
     if wm >= 3:
         for prior_wm in range(1, wm):
-            prior = read_prior_wm_record(arm_name, prior_wm, runs_root=root, family=family)
-            prior_fidelities.append(prior.metrics["spec_fidelity"])
+            prior_metrics = _read_prior_metrics_lenient(root, arm_name, prior_wm, family)
+            prior_fidelities.append(_prior_fidelity_value(prior_metrics))
 
     metrics = dict(record.metrics)
     artifacts = dict(record.artifacts)
@@ -292,12 +421,20 @@ def score_record(
         if oracle_report_path.exists():
             oracle_report = json.loads(oracle_report_path.read_text())
 
-    # M3: spec_fidelity always recomputed via the injectable judge seam —
-    # median-of-3 to damp single-call variance, raw scores kept auditable.
-    spec_fidelity, judge_scores = judge.judge_fidelity_median(
-        workspace, wm, oracle_report, judge_cmd=judge_cmd
+    # Deterministic fidelity of record (honest-fidelity-meter): requirement_coverage
+    # from the WM's frozen checklist — the ONLY fidelity signal, NO LLM in the path.
+    # The LLM judge is back only as an advisory, source-aware `code_quality_annotation`
+    # artifact (never a metric): claude-less by default (judge_cmd None -> "unavailable",
+    # no subprocess), best-effort when a judge_cmd is supplied.
+    # ONE hermetic boot yields both the aggregate and its per-requirement breakdown
+    # (coverage-detail) — derived from the same detail so they can never disagree.
+    coverage_detail = compute_coverage_detail(workspace, wm, family)
+    requirement_coverage = _coverage_from_detail(coverage_detail)
+    artifacts["coverage_detail"] = json.dumps(coverage_detail, separators=(",", ":"))
+    artifacts.pop("judge_scores", None)  # purge the superseded pre-judge-advisory sentinel
+    artifacts["code_quality_annotation"] = judge.code_quality_annotation(
+        workspace, wm, judge_cmd=judge_cmd
     )
-    artifacts["judge_scores"] = ";".join(str(s) for s in judge_scores)
 
     transcript_str = artifacts.get("transcript", "")
     artifacts["engine_calls"] = str(
@@ -308,10 +445,10 @@ def score_record(
     )
 
     if wm >= 3:
-        # context_rot_slope over the FULL spec_fidelity trajectory at every
-        # WM>=3 (v1 semantics, judge-fed, kept as a secondary trend signal).
-        context_rot_slope = compute_context_rot_slope([*prior_fidelities, spec_fidelity])
-        artifacts.update(_fidelity_artifacts(prior_fidelities, spec_fidelity))
+        # context_rot_slope over the FULL requirement_coverage trajectory at every
+        # WM>=3 — now a deterministic coverage-degradation signal (was judge-fed).
+        context_rot_slope = compute_context_rot_slope([*prior_fidelities, requirement_coverage])
+        artifacts.update(_fidelity_artifacts(prior_fidelities, requirement_coverage))
     else:
         context_rot_slope = 0.0
 
@@ -321,12 +458,12 @@ def score_record(
     regression_rate = compute_regression_rate_v2(workspace, wm, family)
     artifacts["regression_source"] = "v2-earlier-oracles"
 
-    metrics["spec_fidelity"] = spec_fidelity
+    metrics.pop("spec_fidelity", None)  # v3: the retired LLM metric never survives into a scored record
+    metrics["requirement_coverage"] = requirement_coverage
     metrics["regression_rate"] = regression_rate
     metrics["context_rot_slope"] = context_rot_slope
 
-    # v2 deterministic fidelity of record (M1) — always computed; the judge
-    # float above stays as a SECONDARY, v1-comparable annotator.
+    # black-box behavioral floor (now REQUIRED) — always computed.
     metrics["oracle_pass_rate"] = compute_oracle_pass_rate(workspace, wm, family)
 
     # v2 mechanical tamper count (M4/M7) — only when the snapshot pair for

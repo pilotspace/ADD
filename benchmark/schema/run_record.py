@@ -10,23 +10,31 @@ import dataclasses
 import json
 from typing import Any
 
-# Exactly these 5 metric names — no more, no fewer (frozen in MILESTONE.md).
+# Exactly these 7 metric names — no more, no fewer (frozen in MILESTONE.md).
+# Schema v3 (honest-fidelity-meter): the artifact-blind LLM `spec_fidelity` is
+# RETIRED for the deterministic `requirement_coverage` (workload/wm{n}/checklist.py
+# probes run against the built app), and `oracle_pass_rate` is PROMOTED from
+# optional to required (the black-box behavioral floor). A record still carrying
+# `spec_fidelity` (and no `requirement_coverage`) is now REJECTED — it is a legacy
+# record that must be re-scored; the WM3+ slope prior-read reads such records
+# leniently (score._read_prior_metrics_lenient), never through validate().
 REQUIRED_METRICS = frozenset(
     {
         "regression_rate",
-        "spec_fidelity",
+        "requirement_coverage",
         "tokens_total",
         "cost_usd",
         "context_rot_slope",
         "time_to_first_edit",
+        "oracle_pass_rate",
     }
 )
 
-# Schema v2 (v2-meter-fixes TASK.md §3 CONTRACT @ v1): ADDITIVE-OPTIONAL keys —
-# a metrics dict may carry any SUBSET of these on top of the required six, so
-# every archived v1 record still validates byte-unchanged. Unknown keys stay
-# rejected: additive is not open-ended.
-OPTIONAL_METRICS = frozenset({"oracle_pass_rate", "tests_weakened"})
+# ADDITIVE-OPTIONAL keys — a metrics dict may carry any SUBSET of these on top of
+# the required set. Unknown keys stay rejected: additive is not open-ended.
+# `spec_fidelity` has LEFT the schema entirely (v3) — it is neither required nor
+# optional, so any live record carrying it fails validate().
+OPTIONAL_METRICS = frozenset({"tests_weakened"})
 
 REQUIRED_ARTIFACTS = frozenset({"workspace", "transcript", "oracle_report"})
 

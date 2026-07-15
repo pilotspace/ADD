@@ -78,7 +78,7 @@ class ProjectGoalTest(unittest.TestCase):
     def test_status_prints_project_goal(self):
         self._set_goal(GOAL_LINE)
         add.main(["new-task", "feat-a", "--title", "Feat A"])
-        out = self._status()
+        out = self._status("--all")   # goal/m-goal prose gate behind --all (status-lean-default)
         self.assertIn(GOAL_LINE, out)
         self.assertIn("project :", out)            # additive — existing lines untouched
         self.assertIn("stage   :", out)
@@ -88,7 +88,7 @@ class ProjectGoalTest(unittest.TestCase):
         self._set_goal(GOAL_LINE)
         add.main(["new-milestone", "v1", "--goal", "deepen verify"])
         add.main(["new-task", "feat-a", "--milestone", "v1"])
-        out = self._status()
+        out = self._status("--all")   # m-goal prose: --all
         self.assertIn("deepen verify", out)        # the active milestone goal renders
         self.assertIn("v1", out)                    # attributed to its slug
         self.assertIn(GOAL_LINE, out)               # project GOAL still present (both together)
@@ -106,7 +106,7 @@ class ProjectGoalTest(unittest.TestCase):
     def test_status_goal_unset_hint_not_blank(self):
         self._strip_goal()
         add.main(["new-task", "feat-a"])
-        out = self._status()
+        out = self._status("--all")   # goal sentinel now on the --all goal line
         self.assertIn("(unset", out)                                   # the hint, not a blank
         self.assertIn("add a 'goal:' line to PROJECT.md", out)         # actionable
         self.assertIn("active  :", out)                                # rest of status still printed
@@ -116,7 +116,7 @@ class ProjectGoalTest(unittest.TestCase):
         add.main(["new-milestone", "v1", "--goal", "deepen verify"])
         add.main(["new-task", "feat-a", "--milestone", "v1"])
         (self.add_dir / "milestones" / "v1" / "MILESTONE.md").unlink()  # goal source gone
-        out = self._status()
+        out = self._status("--all")   # m-goal degrade on the --all line
         self.assertIn("(unknown)", out)             # m-goal degrades gracefully
         self.assertIn(GOAL_LINE, out)               # project GOAL still prints (one source never blanks the other)
 

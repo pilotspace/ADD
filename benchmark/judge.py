@@ -18,6 +18,13 @@ from benchmark.schema.run_record import BenchError
 BENCHMARK_ROOT = pathlib.Path(__file__).resolve().parent
 JUDGE_TIMEOUT_S = 120.0
 
+# code_quality_annotation source bound: the app's built code is fed to the judge,
+# capped so a large tree can't blow the prompt (advisory only — a shallow note is
+# an acceptable degradation, a runaway prompt is not).
+_SOURCE_GLOB = "app/**/*.py"
+_MAX_SOURCE_FILES = 20
+_MAX_SOURCE_CHARS = 40_000
+
 
 def default_judge_cmd(rubric_prompt: str) -> list[str]:
     """The real `claude -p <rubric>` rubric-scoring invocation — model PINNED
@@ -54,6 +61,71 @@ def build_rubric_prompt(wm: int, oracle_report: dict) -> str:
         f"Oracle isolation_clean: {isolation_clean!r}\n\n"
         "Respond with a single float in [0.0, 1.0] and nothing else."
     )
+
+
+def build_code_quality_prompt(wm: int, workspace: str | pathlib.Path) -> str:
+    """Source-aware rubric grounding for the advisory `code_quality_annotation`:
+    the WM's PROMPT.md requirements PLUS the built app's actual source
+    (`app/**/*.py` under the workspace, capped at _MAX_SOURCE_FILES files /
+    _MAX_SOURCE_CHARS total). Fixes the retired spec_fidelity rubric's
+    artifact-blindness — that one read only PROMPT.md + oracle booleans, never
+    the code."""
+    prompt_text = _prompt_path(wm).read_text()
+    ws = pathlib.Path(workspace)
+    chunks: list[str] = []
+    budget = _MAX_SOURCE_CHARS
+    for src in sorted(ws.glob(_SOURCE_GLOB))[:_MAX_SOURCE_FILES]:
+        if budget <= 0:
+            break
+        try:
+            body = src.read_text(errors="replace")[:budget]
+        except OSError:
+            continue
+        chunks.append(f"# --- {src.relative_to(ws)} ---\n{body}")
+        budget -= len(body)
+    source = "\n\n".join(chunks) if chunks else "(no app source found)"
+    return (
+        f"Give a SHORT advisory code-quality note (NOT a score) for workload milestone {wm}.\n\n"
+        f"Requirements (PROMPT.md):\n{prompt_text}\n\n"
+        f"Built app source:\n{source}\n\n"
+        "Respond with 1-3 sentences on clarity, idiom and structure. Do not output a number."
+    )
+
+
+def code_quality_annotation(
+    workspace: str | pathlib.Path,
+    wm: int,
+    *,
+    judge_cmd: Sequence[str] | None = None,
+) -> str:
+    """Advisory, NON-GATING, source-aware code-quality note — an `artifacts`
+    string, never a `metrics` key (the honest-fidelity-meter law: NO LLM in the
+    metric path).
+
+    CLAUDE-LESS BY DEFAULT: with no `judge_cmd` (the deterministic re-score path)
+    this returns "unavailable: ..." and spawns NO subprocess — it never falls
+    through to the live `claude` argv. BEST-EFFORT otherwise: any subprocess
+    failure or empty output degrades to "unavailable: <reason>"; it NEVER raises
+    and NEVER returns a score.
+    """
+    if not judge_cmd:
+        return "unavailable: no judge configured (deterministic scoring)"
+    prompt = build_code_quality_prompt(wm, workspace)
+    argv = [*judge_cmd, prompt]
+    try:
+        proc = subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=JUDGE_TIMEOUT_S,
+            cwd=str(workspace) if pathlib.Path(workspace).exists() else None,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"unavailable: judge invocation failed: {exc}"
+    out = (proc.stdout or "").strip()
+    if not out:
+        return f"unavailable: empty judge output (stderr={proc.stderr!r})"
+    return out
 
 
 def judge_fidelity(

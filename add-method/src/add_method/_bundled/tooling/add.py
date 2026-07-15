@@ -2926,10 +2926,17 @@ def cmd_status(args: argparse.Namespace) -> None:
     # project GOAL + active-milestone goal (v20) — the loop's orientation anchor, read
     # LIVE from PROJECT.md / MILESTONE.md (never state.json). Additive: every existing
     # line stays put. A missing source degrades to a sentinel — one never blanks the other.
-    print(f"goal    : {_project_goal(root)}")
+    # lean default (status-lean-default): the full goal/m-goal PROSE moves behind --all
+    # (the `context: .add/PROJECT.md` pointer below already names where the goal lives); the
+    # bare view keeps a one-line m-goal pointer + the goal-ready health line.
+    if show_all:
+        print(f"goal    : {_project_goal(root)}")
     _active_ms = _active_milestone(state)
     if _active_ms:
-        print(f"m-goal  : {_milestone_doc(root, _active_ms)[1]}   (← {_active_ms})")
+        if show_all:
+            print(f"m-goal  : {_milestone_doc(root, _active_ms)[1]}   (← {_active_ms})")
+        else:
+            print(f"m-goal  : (← {_active_ms}, full text: status --all)")
         # goal-ready (task goal-auto-ready-gate): is the active milestone's goal AUTO-READY
         # — every exit criterion citing a verifier `(verify: …)` so the engine can self-verify
         # the result against it? Read LIVE from MILESTONE.md; surfaced every session so the
@@ -2978,9 +2985,15 @@ def cmd_status(args: argparse.Namespace) -> None:
         # persona roster (roster-status-line): one frontmatter-sourced line per REAL persona
         # (slug · flow · vibe) so a selector never needs whole-roster body reads. Existence-
         # gated: a persona-less project's output is byte-identical; advisory, never a gate.
-        print("personas:")
-        for _slug, _flow, _vibe in _persona_roster(root):
-            print(f"  - {_slug} [{_flow}] — {_vibe}")
+        # lean default (status-lean-default): the roster BODY moves behind --all; the bare
+        # view keeps a `personas: <N> (status --all)` count/pointer.
+        _roster = list(_persona_roster(root))
+        if show_all:
+            print("personas:")
+            for _slug, _flow, _vibe in _roster:
+                print(f"  - {_slug} [{_flow}] — {_vibe}")
+        else:
+            print(f"personas: {len(_roster)} (status --all)")
     # wave resume hint — a live ledger outranks memory (streams.md "Wave ledger").
     # Existence-only: no open/read/parse, so the hint adds no IO failure path; a
     # non-file at the path is not a ledger. One line PER live ledger — more than
@@ -2994,17 +3007,21 @@ def cmd_status(args: argparse.Namespace) -> None:
     milestones = state.get("milestones") or {}
     active_ms = _active_milestone(state)
     if milestones:
-        print("milestones:")
         _sorted_ms = _sorted_by_updated(milestones)
-        _page_ms = _sorted_ms if show_all else _sorted_ms[:_STATUS_PAGE_SIZE]
-        for mslug, m in _page_ms:
-            members = [t for t in tasks.values() if t.get("milestone") == mslug]
-            done = sum(1 for t in members if _task_done(t))
-            mark = "*" if mslug in (state.get("active_milestones") or []) else " "
-            print(f"  {mark} {mslug:<20} {done}/{len(members)} tasks done"
-                  f"   status={m.get('status', 'active')}")
-        if not show_all and len(_sorted_ms) > _STATUS_PAGE_SIZE:
-            print(f"  … {len(_sorted_ms) - _STATUS_PAGE_SIZE} more (see status --all)")
+        # lean default (status-lean-default): the per-milestone ROWS move behind --all; the
+        # bare view keeps a `milestones: <N active> · <A> archived (status --all)` count line.
+        if show_all:
+            print("milestones:")
+            for mslug, m in _sorted_ms:
+                members = [t for t in tasks.values() if t.get("milestone") == mslug]
+                done = sum(1 for t in members if _task_done(t))
+                mark = "*" if mslug in (state.get("active_milestones") or []) else " "
+                print(f"  {mark} {mslug:<20} {done}/{len(members)} tasks done"
+                      f"   status={m.get('status', 'active')}")
+        else:
+            _n_arch = sum(1 for m in milestones.values() if m.get("status") == "archived")
+            _n_active = len(milestones) - _n_arch
+            print(f"milestones: {_n_active} active · {_n_arch} archived (status --all)")
         # graduation cue (v22): project-global + read-only. Fires only when every milestone
         # is done AND the human's PROJECT.md stage-goal-criteria are all checked — additive
         # (a new line solely when ready; the non-ready output is byte-identical to before).
@@ -3061,8 +3078,11 @@ def cmd_status(args: argparse.Namespace) -> None:
         _primary = _active_milestone(state)
         _order = ([_primary] if _primary in _ams else []) + [m for m in _ams if m != _primary]
         _atasks = state.get("active_tasks") or {}
-        print(f"streams : {len(_ams)} active milestones")
-        for _m in _order:
+        # lean default (status-lean-default): keep the `streams : <N> active milestones`
+        # header; the per-stream detail rows move behind --all.
+        print(f"streams : {len(_ams)} active milestones"
+              + ("" if show_all else " (per-stream rows: status --all)"))
+        for _m in (_order if show_all else []):
             _tk = _atasks.get(_m)
             _ph = (tasks.get(_tk) or {}).get("phase", "-") if _tk else "-"
             _mk = "▸" if _m == _primary else " "
@@ -3141,21 +3161,23 @@ def cmd_status(args: argparse.Namespace) -> None:
             print("          build — the `add` skill sizes it into a milestone and drives the")
             print('          build with you. Escape hatch: add.py new-task <slug> --title "..."')
         return
-    print("tasks   :")
-    _sorted_tasks = _sorted_by_updated(tasks)
-    _page_tasks = _sorted_tasks if show_all else _sorted_tasks[:_STATUS_PAGE_SIZE]
-    for slug, t in _page_tasks:
-        mark = "*" if slug == active else " "
-        deps = t.get("depends_on") or []
-        dep_s = f"  deps={','.join(deps)}" if deps else ""
-        # relations-surface: the two non-blocking edges, silent when absent (no noise)
-        ext = t.get("extends") or []
-        rel_slugs = t.get("relates_to") or []
-        rel_s = (f"  ext={','.join(ext)}" if ext else "") + (f"  rel={','.join(rel_slugs)}" if rel_slugs else "")
-        ms_s = f"  [{t['milestone']}]" if t.get("milestone") else ""
-        print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}{rel_s}")
-    if not show_all and len(_sorted_tasks) > _STATUS_PAGE_SIZE:
-        print(f"  … {len(_sorted_tasks) - _STATUS_PAGE_SIZE} more (see status --all)")
+    # lean default (status-lean-default): the per-task ROWS move behind --all; the bare
+    # view keeps a `tasks   : <N> (status --all)` count line. The `active :` line above
+    # already names the current task, so the resume point is never hidden.
+    if show_all:
+        print("tasks   :")
+        for slug, t in _sorted_by_updated(tasks):
+            mark = "*" if slug == active else " "
+            deps = t.get("depends_on") or []
+            dep_s = f"  deps={','.join(deps)}" if deps else ""
+            # relations-surface: the two non-blocking edges, silent when absent (no noise)
+            ext = t.get("extends") or []
+            rel_slugs = t.get("relates_to") or []
+            rel_s = (f"  ext={','.join(ext)}" if ext else "") + (f"  rel={','.join(rel_slugs)}" if rel_slugs else "")
+            ms_s = f"  [{t['milestone']}]" if t.get("milestone") else ""
+            print(f"  {mark} {slug:<24} phase={t['phase']:<10} gate={t['gate']}{ms_s}{dep_s}{rel_s}")
+    else:
+        print(f"tasks   : {len(tasks)} (status --all)")
     # fold-pressure nudge: surface unfolded competency deltas so emission can't
     # silently outrun the human fold (read-only; v11). Silent when none are open.
     open_deltas = sum(len(v) for v in _collect_open_deltas(root).values())
@@ -8515,6 +8537,24 @@ _FLOW_MAP = (
 )
 
 
+def _compact_commands(parser: argparse.ArgumentParser) -> str:
+    """help-diet: a COMPACT one-block list of every subcommand NAME (no per-command
+    help paragraph), wrapped, with the per-command flags pointer. Keeps discoverability
+    while cutting the top `--help` from ~121 lines to a handful."""
+    import textwrap
+    names: list[str] = []
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for name in action.choices:            # dict preserves add_parser() order
+                if name not in names:              # dedupe any aliases, keep order
+                    names.append(name)
+            break
+    block = textwrap.fill("  ".join(names), width=78,
+                          initial_indent="  ", subsequent_indent="  ",
+                          break_on_hyphens=False, break_long_words=False)
+    return ("commands (flags: add.py <command> -h):\n" + block + "\n")
+
+
 class _AddArgParser(argparse.ArgumentParser):
     """help-habit-kill: on an unknown TOP-LEVEL command, argparse dumps the full
     ~50-choice usage — unreadable at a glance, so the agent's reflex is `--help` or a
@@ -8530,10 +8570,12 @@ class _AddArgParser(argparse.ArgumentParser):
     a subcommand's own `--help`/errors (prog "add.py <cmd>") stay byte-identical argparse."""
 
     def format_help(self) -> str:
-        # top parser: map LEADS, the full argparse command list still follows (nothing lost;
-        # `add.py --help | head` now surfaces orientation, not the 50-choice usage line).
+        # help-diet: top parser leads with the flow map, then a COMPACT command-NAME list
+        # (not argparse's ~111-line per-command dump) — every name stays discoverable, but the
+        # re-read cache-weight drops (the dump was 17% of an ADD run's engine_output, one early
+        # call). A subcommand's own help (prog "add.py <cmd>") stays byte-identical argparse.
         if self.prog == "add.py":
-            return _FLOW_MAP + "\n" + super().format_help()
+            return _FLOW_MAP + "\n" + _compact_commands(self)
         return super().format_help()
 
     def error(self, message: str):

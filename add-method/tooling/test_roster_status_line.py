@@ -76,14 +76,14 @@ class RosterStatusLineTest(unittest.TestCase):
     # ── M1 + Accept: status renders slug · flow · vibe ────────────────────────────
     def test_status_renders_roster(self):
         self._seed()
-        out = self._run(["status"])
+        out = self._run(["status", "--all"])   # roster body gates behind --all (status-lean-default)
         self.assertIn("personas:", out)
         self.assertIn("- aa-test [verify, advisor] — Trust evidence, not inspection.", out)
 
     def test_roster_sorted_by_slug(self):
         self._seed("zz-late", flow="build")
         self._seed("aa-early", flow="design")
-        out = self._run(["status"])
+        out = self._run(["status", "--all"])   # roster body: --all
         self.assertLess(out.index("aa-early"), out.index("zz-late"), "roster must sort by slug")
 
     # ── M2: check renders one INFO roster row ─────────────────────────────────────
@@ -101,13 +101,13 @@ class RosterStatusLineTest(unittest.TestCase):
     # ── M4: fail-soft — frontmatter-less file degrades to [?] ─────────────────────
     def test_frontmatterless_degrades(self):
         (self.pdir / "bare.md").write_text("just prose, no frontmatter\n", encoding="utf-8")
-        out = self._run(["status"])
+        out = self._run(["status", "--all"])   # roster body: --all
         self.assertIn("- bare [?] —", out, "a parse miss must degrade to '?', not raise")
 
     # ── M5: vibe truncation at 70 ─────────────────────────────────────────────────
     def test_vibe_truncated_to_70(self):
         self._seed(vibe="v" * 100, flow="build")
-        line = next(ln for ln in self._run(["status"]).splitlines() if "- aa-test" in ln)
+        line = next(ln for ln in self._run(["status", "--all"]).splitlines() if "- aa-test" in ln)   # roster body: --all
         self.assertIn("v" * 70 + "…", line)
         self.assertNotIn("v" * 71, line)
 

@@ -68,7 +68,8 @@ def _fake_judge(tmp_path: pathlib.Path, value: str) -> list[str]:
 
 _BASE_METRICS = {
     "regression_rate": 0.0,
-    "spec_fidelity": 0.5,
+    "requirement_coverage": 0.5,
+    "oracle_pass_rate": 1.0,
     "tokens_total": 4200.0,
     "cost_usd": 0.31,
     "context_rot_slope": 0.0,
@@ -334,13 +335,24 @@ def test_injected_judge_cmd_unchanged(tmp_path):
 # --------------------------------------------------------------------------
 
 
-def test_v1_records_still_validate():
+def test_spec_fidelity_swap_is_breaking():
+    # the new metric set (requirement_coverage + oracle_pass_rate, no
+    # spec_fidelity) validates.
     record = validate(_record_dict(dict(_BASE_METRICS)))
     assert record.metrics == _BASE_METRICS
-    # every archived v1 record on disk still loads byte-unchanged
-    archived = sorted((REPO_ROOT / "benchmark" / "runs").rglob("record.json"))
-    for path in archived:
-        validate(json.loads(path.read_text()))
+    # the swap is a DELIBERATE breaking replace, not additive-optional: a
+    # record carrying the retired spec_fidelity key (and lacking the new
+    # required metrics) is rejected by strict validate. Archived on-disk v1
+    # records are migrated forward by the rescore pass; until then the
+    # lenient reader (test_requirement_coverage: slope-shim) handles them.
+    v1 = {
+        k: v
+        for k, v in _BASE_METRICS.items()
+        if k not in ("requirement_coverage", "oracle_pass_rate")
+    }
+    v1["spec_fidelity"] = 0.9
+    with pytest.raises(BenchError, match="invalid_run_record"):
+        validate(_record_dict(v1))
 
 
 def test_optional_keys_accepted():
@@ -406,15 +418,21 @@ def test_score_record_writes_v2_metrics(tmp_path, monkeypatch):
         seen_families.append(family)
         return 0.125
 
+    def fake_detail(ws, wm, family="wm"):
+        # score_record derives coverage from the detail: 1-of-2 covered -> 0.5
+        return [{"id": "a", "covered": True}, {"id": "b", "covered": False}]
+
     monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", fake_pass_rate)
     monkeypatch.setattr(score_mod, "compute_regression_rate_v2", fake_regression)
+    monkeypatch.setattr(score_mod, "compute_coverage_detail", fake_detail)
 
     scored = score_mod.score_record("add", 2, judge_cmd=_fake_judge(tmp_path, "0.9"), runs_root=runs_root)
 
     assert scored.metrics["oracle_pass_rate"] == 0.75
     assert scored.metrics["tests_weakened"] == 0.0
     assert scored.metrics["regression_rate"] == 0.125
-    assert scored.metrics["spec_fidelity"] == 0.9  # kept, judge-sourced, secondary
+    assert scored.metrics["requirement_coverage"] == 0.5  # deterministic primary
+    assert "spec_fidelity" not in scored.metrics  # judge demoted to code_quality_annotation
     assert scored.artifacts["regression_source"] == "v2-earlier-oracles"
     assert seen_families == ["wm", "wm"], "family default must flow through both seams"
     # the written record round-trips through validate

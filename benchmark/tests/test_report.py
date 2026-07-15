@@ -18,7 +18,8 @@ def _record(
     wm: int,
     *,
     status: str = "done",
-    spec_fidelity: float = 0.82,
+    requirement_coverage: float = 0.82,
+    oracle_pass_rate: float = 1.0,
     regression_rate: float = 0.0,
     context_rot_slope: float = 0.0,
     tokens_total: float = 4200.0,
@@ -40,7 +41,8 @@ def _record(
             "status": status,
             "metrics": {
                 "regression_rate": regression_rate,
-                "spec_fidelity": spec_fidelity,
+                "requirement_coverage": requirement_coverage,
+                "oracle_pass_rate": oracle_pass_rate,
                 "tokens_total": tokens_total,
                 "cost_usd": cost_usd,
                 "context_rot_slope": context_rot_slope,
@@ -54,7 +56,7 @@ def _record(
 def _seed_full_grid(runs_root: pathlib.Path) -> None:
     for arm in ARM_NAMES:
         for wm in (1, 2, 3):
-            record = _record(arm, wm, extra_artifacts={"spec_fidelity_audit": "spot-checked: seed"})
+            record = _record(arm, wm)
             write_record_atomic(runs_root / arm / f"wm{wm}" / "record.json", record)
 
 
@@ -109,15 +111,9 @@ def test_report_wm1_wm2_na_annotation(tmp_path):
     assert "0.00" not in text
 
 
-def test_report_unaudited_suffix(tmp_path):
-    runs_root = tmp_path / "runs"
-    record = _record("add", 1, spec_fidelity=0.82)  # no spec_fidelity_audit key
-    write_record_atomic(runs_root / "add" / "wm1" / "record.json", record)
-
-    text = report_mod.render_report(runs_root, arms=["add"], wms=[1])
-
-    assert "(unaudited)" in text
-    assert "0.82" in text
+# (honest-fidelity-meter) the spec_fidelity_audit / "(unaudited)" annotation
+# was DROPPED: requirement_coverage is deterministic (probes against the built
+# app), so there is no subjective per-record score for a human to attest.
 
 
 def test_report_rejects_unknown_arm(tmp_path):
@@ -140,3 +136,52 @@ def test_report_rejects_invalid_wm(tmp_path, capsys):
     assert rc == 2
     out = capsys.readouterr()
     assert "invalid_wm" in out.err
+
+
+# --------------------------------------------------------------------------
+# report-diagnostics: surface coverage_detail + code_quality_annotation
+# --------------------------------------------------------------------------
+
+import json as _json
+
+
+def test_report_diagnostics_shows_uncovered_and_annotation(tmp_path):
+    runs_root = tmp_path / "runs"
+    _seed_full_grid(runs_root)
+    # gsd/wm2 missed exactly the cancellation-window requirement (the real signal)
+    detail = [
+        {"id": "R-auth-401", "covered": True},
+        {"id": "R-ownership-403", "covered": True},
+        {"id": "R-double-booking-409", "covered": True},
+        {"id": "R-cancellation-window-422", "covered": False},
+        {"id": "R-tenant-isolation", "covered": True},
+    ]
+    rec = _record("gsd", 2, requirement_coverage=0.8, extra_artifacts={
+        "coverage_detail": _json.dumps(detail),
+        "code_quality_annotation": "idiomatic but omits the cancellation window rule",
+    })
+    write_record_atomic(runs_root / "gsd" / "wm2" / "record.json", rec)
+
+    text = report_mod.render_report(runs_root)
+
+    # the diagnostics table header (distinctive — never appears in an evidence path)
+    assert "| arm | coverage | uncovered | code quality |" in text
+    assert "R-cancellation-window-422" in text          # the uncovered requirement is named
+    assert "omits the cancellation window" in text      # the annotation text is surfaced
+    assert "4/5" in text                                 # coverage breakdown
+
+
+def test_report_diagnostics_tolerates_missing_and_malformed(tmp_path):
+    runs_root = tmp_path / "runs"
+    _seed_full_grid(runs_root)  # base records carry NO coverage_detail
+    # one record with a MALFORMED coverage_detail string
+    bad = _record("add", 2, extra_artifacts={"coverage_detail": "{not valid json"})
+    write_record_atomic(runs_root / "add" / "wm2" / "record.json", bad)
+
+    text = report_mod.render_report(runs_root)  # must NOT raise
+
+    # the section renders (distinctive header) despite absent/malformed artifacts
+    assert "| arm | coverage | uncovered | code quality |" in text
+    # the malformed add/wm2 coverage cell degrades to the em-dash placeholder, not a crash
+    diag_wm2 = text.split("### WM2 diagnostics")[1].split("###")[0]
+    assert "| add | — |" in diag_wm2
