@@ -109,6 +109,28 @@ class RecipeTest(_Harness):
         out = self._ok("new-task", "t-fast", "--title", "T", "--fast", "--milestone", "m")
         self._assert_recipe(out, "--fast lane")
 
+    def test_later_task_recipe_is_compact_not_re_annotated(self):
+        # recipe-dedup (engine-output-trim): the FIRST task of a project teaches the
+        # annotated flow; a LATER task in the same project names the SAME flow compactly
+        # — the agent already read the per-step prose once. The flow floor still holds
+        # (all marks + both advances, asserted by _assert_recipe on BOTH), so there is
+        # no rediscovery/--help backfire — only the repeated annotation prose is dropped.
+        self._init()
+        self._ok("lock", "--force")
+        first = self._ok("new-task", "t1", "--title", "T", "--oneshot")
+        second = self._ok("new-task", "t2", "--title", "T", "--oneshot")
+        self._assert_recipe(first, "first task")   # full flow named
+        self._assert_recipe(second, "later task")  # full flow STILL named (no backfire)
+        self.assertIn("write the section rules first", first,
+                      "the first task must carry the teaching annotations")
+        self.assertNotIn("write the section rules first", second,
+                         "a later task must not repeat the per-step annotations")
+
+        def _recipe_span(o):
+            return len(o[o.lower().index("recipe"):])
+        self.assertLess(_recipe_span(second), _recipe_span(first),
+                        "the deduped later recipe must be shorter than the annotated first")
+
 
 class DupFailureTest(_Harness):
     """M3 — consecutive byte-identical failures short-circuit; nothing else does."""

@@ -894,16 +894,27 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print("active task set. phase: specify. State the projected expectations (§1 SPECIFY); "
           "grounding + contract + build-strategy come next, together, in the plan phase.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
-    # kickoff-truth M2: the FULL remaining engine-call recipe, once, at task birth —
-    # the transcript audit measured 6-11 status/guide/--help re-orientation calls per
-    # run that this single block replaces. Lane-invariant (the freeze/gate floor is
-    # the same in every lane); the agent scripts ahead instead of rediscovering.
-    print("recipe — this task's remaining engine calls:")
-    print("  add.py advance --to plan   (write the section rules first)")
-    print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
-          "--cross lands in tests]")
-    print("  add.py advance   (after the RED suite: tests -> build, make it green)")
-    print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
+    # kickoff-truth M2: the remaining engine-call recipe at task birth — the transcript
+    # audit measured 6-11 status/guide/--help re-orientation calls per run that this
+    # block replaces. Lane-invariant (the freeze/gate floor is the same in every lane);
+    # the agent scripts ahead instead of rediscovering.
+    #
+    # recipe-dedup (engine-output-trim): the FULL annotated recipe teaches what each
+    # remaining call MEANS — needed ONCE, at the project's first task. A LATER task in
+    # the same project names the SAME flow COMPACTLY: the agent already read the prose,
+    # so re-printing ~330B of identical annotations every task only re-enters cache. The
+    # compact form keeps EVERY command + both advances (the flow floor _assert_recipe
+    # pins), so there is no rediscovery/--help backfire — only the repeated prose drops.
+    if len(state.get("tasks") or {}) <= 1:
+        print("recipe — this task's remaining engine calls:")
+        print("  add.py advance --to plan   (write the section rules first)")
+        print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
+              "--cross lands in tests]")
+        print("  add.py advance   (after the RED suite: tests -> build, make it green)")
+        print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
+    else:
+        print("recipe — remaining calls: add.py advance --to plan · "
+              "add.py freeze --by <name> --cross · add.py advance · add.py gate PASS")
 
 
 def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:
@@ -2798,7 +2809,100 @@ def _ancestor_note() -> str | None:
             "to scope a project to this directory")
 
 
+_FOUNDATION_CORE = ("## Domain", "## Spec")   # near-always-needed direction context — kept full
+_FOUNDATION_DECISIONS_HEAD = "## Key Decisions"
+_FOUNDATION_DECISIONS_KEEP = 3               # newest-first: the recent head at orient; stale tail on demand
+
+
+def _foundation_selector(heading: str) -> str:
+    """A short, stable selector for a `## ` heading — the title phrase before the first
+    qualifier punctuation. `## Users (UDD) — …` → `Users`; `## Key Decisions (…` → `Key
+    Decisions`. Used for both the pull hint and matching a `--foundation <SECTION>` query."""
+    t = heading[3:].strip()
+    for cut in ("(", " — ", " / ", " - "):
+        i = t.find(cut)
+        if i != -1:
+            t = t[:i]
+    return t.strip()
+
+
+def _foundation_pull(sel: str) -> str:
+    return f'_(collapsed — pull: `add.py status --foundation "{sel}"`)_\n\n'
+
+
+def _foundation_skeleton(text: str) -> str:
+    """The progressive-disclosure foundation MAP for orientation (foundation-slice,
+    context/turn lever): PROJECT.md is a cross-milestone read at orient and re-read every
+    turn. Disclose the SKELETON — the preamble (title + `invariants:`, the run/entry
+    contracts that bind EVERY task) + Domain + Spec IN FULL (near-always-needed direction),
+    every OTHER section COLLAPSED to its heading + an on-demand `--foundation "<section>"`
+    pull; the newest Key Decisions kept, the stale tail pulled. The agent fleshes out a
+    section only when its phase needs it — the same progressive disclosure as the phase
+    guides. PURE. Fail-open: a foundation with no `## ` sections returns verbatim (never
+    blank it). Invariants are never collapsed, so the contracts that bind every task always
+    survive the map."""
+    lines = text.splitlines(keepends=True)
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    if not heads:
+        return text
+    out = list(lines[:heads[0]])                       # preamble — invariants live here
+    bounds = heads + [len(lines)]
+    for k, start in enumerate(heads):
+        head = lines[start]
+        body = lines[start:bounds[k + 1]]
+        if head.startswith(_FOUNDATION_CORE):
+            out.extend(body)                            # Domain · Spec — full
+        elif head.startswith(_FOUNDATION_DECISIONS_HEAD):
+            out.append(head)
+            kept = [l for l in body[1:] if l.strip()][:_FOUNDATION_DECISIONS_KEEP]
+            out.extend(kept)
+            out.append(f'_(+tail — pull: `add.py status --foundation "{_foundation_selector(head)}"`)_\n\n')
+        else:
+            out.append(head)                            # heading is the signpost; body on demand
+            out.append(_foundation_pull(_foundation_selector(head)))
+    return "".join(out)
+
+
+def _foundation_pick(text: str, query: str):
+    """Return ONE section (heading + body, FULL) whose heading matches `query`
+    (case-insensitive substring of the heading or its selector), or None if no match —
+    the on-demand flesh for the progressive `--foundation` map."""
+    lines = text.splitlines(keepends=True)
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    bounds = heads + [len(lines)]
+    q = query.strip().lower()
+    for k, start in enumerate(heads):
+        head = lines[start]
+        if q in head.lower() or q in _foundation_selector(head).lower():
+            return "".join(lines[start:bounds[k + 1]])
+    return None
+
+
 def cmd_status(args: argparse.Namespace) -> None:
+    fnd = getattr(args, "foundation", None)
+    if fnd is not None:
+        # --foundation (foundation-slice, progressive disclosure): bare prints the MAP
+        # (invariants + Domain + Spec full, other sections collapsed to a pull hint); a
+        # SECTION value pulls that one section body on demand; --all prints the whole
+        # foundation. Raw body only (no banner/footer), mirroring --section. Fail-closed
+        # on a missing foundation — never a silent empty read.
+        root = _require_root()
+        pmd = root / "PROJECT.md"
+        if not pmd.exists():
+            _die("foundation_missing: no .add/PROJECT.md to read")
+        text = pmd.read_text(encoding="utf-8")
+        if getattr(args, "all", False):
+            print(text, end="")
+        elif fnd == "":
+            print(_foundation_skeleton(text), end="")
+        else:
+            body = _foundation_pick(text, fnd)
+            if body is None:
+                names = ", ".join(_foundation_selector(l) for l in text.splitlines()
+                                  if l.startswith("## ")) or "(none)"
+                _die(f"foundation_section_unknown: '{fnd}' — sections: {names}")
+            print(body, end="")
+        return
     _section = getattr(args, "section", None)
     if _section is not None:
         # --section (progressive-task-context): print ONE raw §body of the
@@ -3213,18 +3317,15 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print(f"          {_hl} — {_nxt}")
                 print(f"          (the loop: .add/docs/{_chap})")
         else:
-            print(f"\nresume  : task '{active}' is at phase '{ph}'.")
-            # status-guide-fold: name the EXACT next command inline (the ONE
-            # _next_command composer) so an agent reading plain status can proceed
-            # without a separate `guide` round-trip. first-call-ergonomics M1: thread
-            # the live frozen-ness so a post-freeze status never re-teaches freeze.
-            _frozen = ph == "plan" and _task_contract_frozen(root, active)
-            print(f"          next: {_next_command(ph, contract_frozen=_frozen)}")
-            # engine-hint-context-ops: teach the cheap context ops at the moment of
-            # use — a whole-TASK.md read every re-orient is the context-tax driver.
-            print(f"          read its live section: add.py status --section {ph}"
-                  "  (whole TASK.md only if needed)")
-            print("          re-orient next turn: add.py status --brief")
+            # resume-card-dedup (advance-fold follow-through): the top 'now' card
+            # already carries slug · phase · the EXACT next verb (via _next_footer,
+            # frozen-ness threaded) · re-orient. The bottom block used to RESTATE all
+            # of that — a ~230B doubling that re-enters cache on every later turn. Keep
+            # ONLY the context ops it uniquely teaches (engine-hint-context-ops): the
+            # per-section read + the cheap re-orient (the whole-TASK.md context-tax
+            # drivers). The next verb lives once now — in the card.
+            print(f"\nresume  : add.py status --section {ph}  ·  add.py status --brief"
+                  "   (read one section / cheap re-orient — whole TASK.md only if needed)")
 
 
 # Agent-portability (v14): `guide` names the PHASE PLAYBOOK file — the same
@@ -6711,6 +6812,12 @@ def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
         return "add.py advance" if contract_frozen else "add.py freeze --by <name>"
     if phase == "tests":
         return "add.py advance --fill <draft>"
+    if phase == "build":
+        # advance-fold (ceremony-turn-cut): a green build steers STRAIGHT to the completing
+        # gate — `gate PASS` compound-ticks build->verify in ONE call (cmd_gate), so a separate
+        # `advance` here is a pure-bookkeeping turn (~85k cache-read) we drop. Trust floor intact:
+        # the gate runs the full verify completion checks; build->verify carries no human seam.
+        return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP   (from build — compound-crosses to verify)"
     return "add.py advance"
 
 
@@ -8920,6 +9027,10 @@ def build_parser() -> argparse.ArgumentParser:
     pst.add_argument("--section", default=None, metavar="N|PHASE",
                      help="print ONE raw §body (0-7 or a phase name) of the active task — "
                           "read a section, not the whole TASK.md")
+    pst.add_argument("--foundation", nargs="?", const="", default=None, metavar="SECTION",
+                     help="scoped PROJECT.md read (progressive disclosure): bare = the map "
+                          "(invariants + Domain + Spec full, other sections collapsed to a pull "
+                          "hint); SECTION = pull one section body on demand; --all = the whole foundation")
     pst.set_defaults(func=cmd_status)
 
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")

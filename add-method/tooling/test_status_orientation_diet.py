@@ -86,5 +86,34 @@ class GlanceCardTest(_Harness):
         self.assertNotIn("now     :", out, "no active task → no glance card")
 
 
+class ResumeBlockDedupTest(_Harness):
+    """resume-card-dedup (advance-fold follow-through): the diet added the top 'now'
+    card but left the bottom 'resume :' block RESTATING the same slug·phase·next·
+    re-orient. That byte-doubling re-enters cache on every later turn. The bottom
+    block must keep ONLY the context ops it uniquely teaches (--section / --brief);
+    the next-verb lives once, in the card."""
+
+    def test_next_command_stated_once_not_twice(self):
+        out = self._run("status")
+        # the specify-phase next verb is `advance --to plan`; the card carries it via
+        # _next_footer, so the resume block must not print it a second time.
+        n = out.count("advance --to plan")
+        self.assertEqual(n, 1, f"next-command must appear once (card only), got {n}:\n{out}")
+
+    def test_resume_keeps_unique_context_ops_drops_restated_prose(self):
+        out = self._run("status")
+        # unique ops survive (the context-tax drivers engine-hint-context-ops added)
+        self.assertIn("status --section specify", out, "per-section read op must survive")
+        self.assertIn("status --brief", out, "cheap re-orient op must survive")
+        # restated prose is gone — the card already carries phase= and the next verb
+        self.assertNotIn("is at phase", out, "resume must not restate phase (card has phase=)")
+
+    def test_done_branch_still_present(self):
+        # the done-task resume branch carries UNIQUE loop-steering (not in the card) — keep it.
+        src = (Path(add.__file__)).read_text()
+        self.assertIn("resume  : task '{active}' is done", src,
+                      "done-task resume branch must stay (unique loop-steering)")
+
+
 if __name__ == "__main__":
     unittest.main()

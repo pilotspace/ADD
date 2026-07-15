@@ -55,7 +55,7 @@ Never: change a test or the contract; use a package off the allow-list; or push 
 
 ## Next
 
-`python3 .add/tooling/add.py advance` → read `phases/6-verify.md`.
+`python3 .add/tooling/add.py gate PASS` (from build — compound-crosses to verify in one call) → read `phases/6-verify.md`.
 Book: `docs/07-step-5-build.md`.
 
 > Under `autonomy: auto` Build and Verify run together as one evidence-auto-gated run. See `run.md`.
