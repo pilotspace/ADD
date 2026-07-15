@@ -1,11 +1,11 @@
 # Releases
 
 ## 1.18.0 — 2026-07-14
-milestones: build-strategy-facets, delta-drain, add-bench, add-lean-loop, expectations-first, plan-legibility, six-phase-loop, add-bench-v2, three-phase-flow, risk-proportional-ceremony, quality-floors
+milestones: build-strategy-facets, delta-drain, add-bench, add-lean-loop, expectations-first, plan-legibility, six-phase-loop, add-bench-v2, three-phase-flow, risk-proportional-ceremony, quality-floors, honest-fidelity-meter, token-anatomy, engine-minimalism, ceremony-turn-cut, engine-output-trim
 loose tasks: prune-benchmark-deadweight
 waivers: reclaim-ticket-race, js-reclaim-lock-heartbeat
 actor: Tin Dang <tindang.ht97@gmail.com> (git)
-evidence: expanded cut (1.17.0-amend precedent): 11 milestones — six-phase-loop(#148/#149 stack) + expectations-first/plan-legibility/quality-floors(#145) + add-bench/add-bench-v2(#142) + three-phase-flow/risk-proportional-ceremony + add-lean-loop + build-strategy-facets(#139)/delta-drain(#140) — plus loose installer-shared-namespace-guard(#151); ceremony-to-effort + call-floor features included, milestones open on measurement criteria; 10 open SPEC deltas ride forced (fold review pending, human-owned); fence 3570 OK · release tests green · WM1 re-measure fid 0.98x3/0 regr
+evidence: expanded cut (1.17.0-amend precedent): 16 milestones — six-phase-loop(#148/#149 stack) + expectations-first/plan-legibility/quality-floors(#145) + add-bench/add-bench-v2(#142) + three-phase-flow/risk-proportional-ceremony + add-lean-loop + build-strategy-facets(#139)/delta-drain(#140) — plus loose installer-shared-namespace-guard(#151); ceremony-to-effort + call-floor features included, milestones open on measurement criteria. Then the engine-minimalism / context-cost thread: honest-fidelity-meter (deterministic requirement_coverage + hermetic scoring, LLM judge demoted to non-gating annotation) · token-anatomy (cache-read cost by category) · engine-minimalism(#158: --help 121→19, status --brief orient, lean bare status behind --all) · ceremony-turn-cut/advance-fold(#159: green build → gate PASS, redundant pre-gate advance folded) · engine-output-trim(#161: resume-card + recipe dedup, trust-the-footer, foundation-slice progressive `status --foundation` map, −59% on a 55KB foundation). No gate weakened; a security finding still HARD-STOPs. Full engine suite 3654 green (5 env-only pty/npm sandbox failures); ENGINE_MD5 4e655960; open SPEC deltas ride forced (fold review pending, human-owned)
 
 ## 1.17.0 — 2026-07-07
 milestones: persona-domain-fit, method-ergonomics, dynamic-personas, self-improving-loop

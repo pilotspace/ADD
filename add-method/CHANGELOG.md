@@ -18,7 +18,10 @@ that measured it all), **add-lean-loop**, plus the original
 **build-strategy-facets** and **delta-drain**. The ceremony-to-effort and
 call-floor features (compound ticks · scope echo · kickoff truth · skill
 orient split) ship here too; their milestones remain open on measurement
-criteria. No gate weakened; a security finding still HARD-STOPs.
+criteria. Folded in after the July-14 cut: the **engine-minimalism /
+context-cost thread** — a progressive foundation read, a lean default `status`,
+and one fewer ceremony turn per crossing — measured by **token-anatomy** and
+**honest-fidelity-meter**. No gate weakened; a security finding still HARD-STOPs.
 
 ### Changed (the headline)
 - **The loop is six phases**: `specify → plan → tests → build → verify → done`.
@@ -76,6 +79,34 @@ criteria. No gate weakened; a security finding still HARD-STOPs.
   now land only ADD's own roster files per-file (atomic), removal is
   explicit-tombstone-only — the user's own subagents survive every install and
   update (loose task installer-shared-namespace-guard, PR #151).
+
+### Added (engine-minimalism — the context-cost thread)
+- **Progressive foundation read** — `status --foundation` prints a MAP (the preamble +
+  `invariants:` + Domain + Spec in full; every other section collapsed to its heading +
+  an on-demand `add.py status --foundation "<section>"` pull), so the cross-milestone
+  foundation that is re-read every turn is a slice, not the whole file; a named section
+  fleshes out on demand and `--all` restores the whole foundation (foundation-slice, −59%
+  on a 55KB foundation). Invariants never collapse — the contracts that bind every task
+  always survive the map.
+- **Lean default `status`** — bare `status` prints the resume essentials; five heavy
+  blocks gate behind `--all`; `status --brief` is the mid-task resume; `status --section
+  <n>` reads one TASK.md §body instead of the whole growing file (engine-minimalism).
+- **`--help` diet** — the top-level help drops from 121 lines to 19 (engine-minimalism).
+
+### Changed (engine-minimalism)
+- **One fewer ceremony turn per crossing** — a green build steers straight to `gate PASS`;
+  the redundant pre-gate `advance` is folded away (ceremony-turn-cut / advance-fold).
+- **Leaner per-turn engine output** — bare `status` stops restating the 'now' card in its
+  resume block; `new-task` teaches the full annotated recipe once per project, compact
+  thereafter; the skill re-orients from each verb's `next:` footer instead of re-running
+  `status` (engine-output-trim, status-brief-adoption, trust-the-footer).
+
+### Added (measurement — not shipped in the package)
+- **Token anatomy** attributes a benchmark run's cache-read cost by category; a
+  deterministic **`requirement_coverage`** meter replaces the artifact-blind spec-fidelity
+  judge (now a source-aware, non-gating annotation); scoring is hermetic per boot
+  (token-anatomy, honest-fidelity-meter). Dev harness under `benchmark/` — not in the
+  npm/PyPI tarball.
 
 ### Disclosed waivers (non-security, signed)
 - `reclaim-ticket-race` — lock-reclaim TOCTOU flake; owner Tin Dang, expires 2026-08-04.
