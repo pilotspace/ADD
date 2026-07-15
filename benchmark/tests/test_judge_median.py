@@ -3,9 +3,11 @@ judging via judge_fidelity_median + auditable raw scores.
 
 `judge_fidelity_median` itself is unchanged and still tested here. What CHANGED
 at honest-fidelity-meter: the judge LEFT the score_record metric path entirely
-(fidelity is now deterministic requirement_coverage), so the integration test
-pins the DEFERRAL — task judge-advisory re-adds the judge as an advisory,
-source-aware `code_quality_annotation` artifact (never a metric)."""
+(fidelity is now deterministic requirement_coverage). Task judge-advisory then
+re-added the judge as an advisory, source-aware `code_quality_annotation`
+artifact (never a metric) — so the integration test pins that the annotation
+lands in `artifacts`, never in `metrics`, and the old `judge_scores` sentinel
+is gone."""
 from __future__ import annotations
 
 import json
@@ -59,10 +61,11 @@ def test_two_failures_raise(tmp_path):
         judge_fidelity_median(tmp_path, 1, {}, judge_cmd=cmd, n=3)
 
 
-def test_score_record_defers_judge_out_of_metric_path(tmp_path, monkeypatch):
+def test_score_record_annotates_judge_out_of_metric_path(tmp_path, monkeypatch):
     """The judge no longer feeds any metric: score_record records deterministic
-    requirement_coverage, no spec_fidelity, and a deferred judge_scores sentinel
-    even when a (would-succeed) judge_cmd is supplied."""
+    requirement_coverage and no spec_fidelity, and the judge's output lands in
+    `artifacts["code_quality_annotation"]` (never in metrics); the old
+    `judge_scores` deferral sentinel is gone."""
     ws = tmp_path / "runs" / "vanilla" / "wm1" / "workspace"
     ws.mkdir(parents=True)
     record = {
@@ -85,4 +88,8 @@ def test_score_record_defers_judge_out_of_metric_path(tmp_path, monkeypatch):
 
     assert scored.metrics["requirement_coverage"] == 0.5
     assert "spec_fidelity" not in scored.metrics
-    assert scored.artifacts["judge_scores"].startswith("deferred:")
+    assert "judge_scores" not in scored.artifacts
+    assert "code_quality_annotation" in scored.artifacts
+    assert "code_quality_annotation" not in scored.metrics
+    # judge_cmd supplied + would-succeed -> the annotation is that judge's stdout
+    assert scored.artifacts["code_quality_annotation"] == "0.9"

@@ -410,10 +410,13 @@ def score_record(
 
     # Deterministic fidelity of record (honest-fidelity-meter): requirement_coverage
     # from the WM's frozen checklist — the ONLY fidelity signal, NO LLM in the path.
-    # The LLM judge has LEFT the metric path entirely; task judge-advisory re-adds it
-    # as an advisory, source-aware `code_quality_annotation` artifact (never a metric).
+    # The LLM judge is back only as an advisory, source-aware `code_quality_annotation`
+    # artifact (never a metric): claude-less by default (judge_cmd None -> "unavailable",
+    # no subprocess), best-effort when a judge_cmd is supplied.
     requirement_coverage = compute_requirement_coverage(workspace, wm, family)
-    artifacts["judge_scores"] = "deferred: see code_quality_annotation (task judge-advisory)"
+    artifacts["code_quality_annotation"] = judge.code_quality_annotation(
+        workspace, wm, judge_cmd=judge_cmd
+    )
 
     transcript_str = artifacts.get("transcript", "")
     artifacts["engine_calls"] = str(
