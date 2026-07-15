@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "help-diet",
+  "active_task": "status-brief-adoption",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10208,10 +10208,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "status-brief-adoption": {
+      "title": "switch SKILL orient call to status --brief; retain PROJECT.md+SOUL.md prose",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "engine-minimalism",
+      "depends_on": [],
+      "created": "2026-07-15T07:41:28+00:00",
+      "updated": "2026-07-15T07:55:19+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T07:42:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "3d4c8a1879f0f6b7d424f164f50d93fa",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/tooling/test_status_brief_orient.py"
+        ],
+        "snapshot_md5": "dd96a224d9abf0461b3a7205baace7de"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T07:55:17+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T07:34:03+00:00",
+  "updated": "2026-07-15T07:55:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11574,7 +11618,7 @@
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "report-diagnostics",
-    "engine-minimalism": "help-diet"
+    "engine-minimalism": "status-brief-adoption"
   },
   "todos": [
     {

@@ -44,10 +44,10 @@ Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure it is in the project
 Resume from the tool, never re-read the repo:
 
 ```bash
-python3 .add/tooling/add.py status
+python3 .add/tooling/add.py status --brief
 ```
 
-`status` names two orient files: `.add/PROJECT.md` (the foundation) and `.add/SOUL.md`
+Then read the two orient files: `.add/PROJECT.md` (the foundation) and `.add/SOUL.md`
 (your **voice** — read each session; human-owned, self-improving — `soul.md`). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
