@@ -6711,6 +6711,12 @@ def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
         return "add.py advance" if contract_frozen else "add.py freeze --by <name>"
     if phase == "tests":
         return "add.py advance --fill <draft>"
+    if phase == "build":
+        # advance-fold (ceremony-turn-cut): a green build steers STRAIGHT to the completing
+        # gate — `gate PASS` compound-ticks build->verify in ONE call (cmd_gate), so a separate
+        # `advance` here is a pure-bookkeeping turn (~85k cache-read) we drop. Trust floor intact:
+        # the gate runs the full verify completion checks; build->verify carries no human seam.
+        return "add.py gate PASS | RISK-ACCEPTED | HARD-STOP   (from build — compound-crosses to verify)"
     return "add.py advance"
 
 

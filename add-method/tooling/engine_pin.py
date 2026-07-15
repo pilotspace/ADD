@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a773d868899bb5dc2b162fc6a4bef8d6"  # re-aimed @ status-lean-default (engine-minimalism: bare `status` gates goal/m-goal prose + personas roster + milestone/task rows + per-stream detail behind --all — count/pointer lines instead). prior: 1dd8c1b1… @ help-diet
+ENGINE_MD5 = "8438237d6187843e7de720725c816a64"  # re-aimed @ advance-fold (ceremony-turn-cut: _next_command build-phase steer → `gate PASS` compound-crosses build→verify, drops the redundant pre-gate advance turn). prior: a773d868… @ status-lean-default
 ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation
