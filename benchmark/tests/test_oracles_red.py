@@ -16,7 +16,7 @@ def _oracle_dir(wm: int, family: str = "wm") -> pathlib.Path:
 # (family, index) — the wm longitudinal track plus the hv hard cross-domain track.
 @pytest.mark.parametrize(
     "family,wm",
-    [("wm", 1), ("wm", 2), ("wm", 3), ("hv", 1), ("hv", 2)],
+    [("wm", 1), ("wm", 2), ("wm", 3), ("hv", 1), ("hv", 2), ("hv", 3)],
 )
 def test_oracles_red_on_empty_workspace(family, wm):
     oracle_dir = _oracle_dir(wm, family)
