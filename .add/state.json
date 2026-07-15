@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "report-diagnostics",
+  "active_task": "anatomy-core",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10152,10 +10152,47 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "anatomy-core": {
+      "title": "token_anatomy(transcript) \u2014 attribute cache-read tokens by category (method-doc\u00b7engine\u00b7build\u00b7conversation)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "token-anatomy",
+      "depends_on": [],
+      "created": "2026-07-15T06:33:53+00:00",
+      "updated": "2026-07-15T06:42:54+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T06:35:42+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "fcd390a0e8a74598c4fb75ab6208a161",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/anatomy.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "1d1a44a5c6f8e34fd13ebda9a6ea201e"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T06:00:25+00:00",
+  "updated": "2026-07-15T06:42:54+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10625,9 +10662,27 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "token-anatomy": {
+      "title": "Ceremony token anatomy \u2014 attribute ADD's cache-read cost by category",
+      "goal": "A deterministic per-turn, per-category token-anatomy harness over run transcripts (method-docs \u00b7 engine-output \u00b7 build-work \u00b7 conversation-history) that quantifies which surfaces drive ADD's cache-read cost, so ceremony optimization targets real drivers with data, not guesses",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-15T06:32:08+00:00",
+      "updated": "2026-07-15T06:33:53+00:00",
+      "tiny": true,
+      "confirmed": true,
+      "confirmed_at": "2026-07-15T06:33:53+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "honest-fidelity-meter",
+  "active_milestone": "token-anatomy",
   "archived": [
     {
       "slug": "v5",
@@ -11470,7 +11525,8 @@
     "call-residuals",
     "orientation-honesty",
     "engine-hygiene",
-    "honest-fidelity-meter"
+    "honest-fidelity-meter",
+    "token-anatomy"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
@@ -11489,7 +11545,8 @@
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
-    "honest-fidelity-meter": "report-diagnostics"
+    "honest-fidelity-meter": "report-diagnostics",
+    "token-anatomy": "anatomy-core"
   },
   "todos": [
     {
