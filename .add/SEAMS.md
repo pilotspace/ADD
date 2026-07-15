@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5800` (`_declared_scope`)   <!-- re-pinned 2026-07-15 status-lean-default: 5778→5800 (cmd_status grew the lean-default gates — goal/m-goal/personas/milestone/task/stream blocks behind --all — above the anchor; the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class) -->
+Anchor: `add-method/tooling/add.py:5797` (`_declared_scope`)   <!-- re-pinned 2026-07-15 resume-card-dedup: 5800→5797 (cmd_status SHRANK — the bottom resume block dropped its 3 restated lines above the anchor; the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class). prior: 5778→5800 @ status-lean-default (lean-default gates grew cmd_status above the anchor) -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

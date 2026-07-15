@@ -3213,18 +3213,15 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print(f"          {_hl} — {_nxt}")
                 print(f"          (the loop: .add/docs/{_chap})")
         else:
-            print(f"\nresume  : task '{active}' is at phase '{ph}'.")
-            # status-guide-fold: name the EXACT next command inline (the ONE
-            # _next_command composer) so an agent reading plain status can proceed
-            # without a separate `guide` round-trip. first-call-ergonomics M1: thread
-            # the live frozen-ness so a post-freeze status never re-teaches freeze.
-            _frozen = ph == "plan" and _task_contract_frozen(root, active)
-            print(f"          next: {_next_command(ph, contract_frozen=_frozen)}")
-            # engine-hint-context-ops: teach the cheap context ops at the moment of
-            # use — a whole-TASK.md read every re-orient is the context-tax driver.
-            print(f"          read its live section: add.py status --section {ph}"
-                  "  (whole TASK.md only if needed)")
-            print("          re-orient next turn: add.py status --brief")
+            # resume-card-dedup (advance-fold follow-through): the top 'now' card
+            # already carries slug · phase · the EXACT next verb (via _next_footer,
+            # frozen-ness threaded) · re-orient. The bottom block used to RESTATE all
+            # of that — a ~230B doubling that re-enters cache on every later turn. Keep
+            # ONLY the context ops it uniquely teaches (engine-hint-context-ops): the
+            # per-section read + the cheap re-orient (the whole-TASK.md context-tax
+            # drivers). The next verb lives once now — in the card.
+            print(f"\nresume  : add.py status --section {ph}  ·  add.py status --brief"
+                  "   (read one section / cheap re-orient — whole TASK.md only if needed)")
 
 
 # Agent-portability (v14): `guide` names the PHASE PLAYBOOK file — the same
