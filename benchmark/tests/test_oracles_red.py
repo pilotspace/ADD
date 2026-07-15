@@ -9,13 +9,17 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def _oracle_dir(wm: int) -> pathlib.Path:
-    return ROOT / "workload" / f"wm{wm}" / "oracle"
+def _oracle_dir(wm: int, family: str = "wm") -> pathlib.Path:
+    return ROOT / "workload" / f"{family}{wm}" / "oracle"
 
 
-@pytest.mark.parametrize("wm", [1, 2, 3])
-def test_oracles_red_on_empty_workspace(wm):
-    oracle_dir = _oracle_dir(wm)
+# (family, index) — the wm longitudinal track plus the hv hard cross-domain track.
+@pytest.mark.parametrize(
+    "family,wm",
+    [("wm", 1), ("wm", 2), ("wm", 3), ("hv", 1)],
+)
+def test_oracles_red_on_empty_workspace(family, wm):
+    oracle_dir = _oracle_dir(wm, family)
     if not oracle_dir.exists():
         pytest.fail(f"missing oracle dir {oracle_dir}")
     with tempfile.TemporaryDirectory() as empty_ws:
