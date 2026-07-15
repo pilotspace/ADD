@@ -93,3 +93,31 @@ def test_score_record_annotates_judge_out_of_metric_path(tmp_path, monkeypatch):
     assert "code_quality_annotation" not in scored.metrics
     # judge_cmd supplied + would-succeed -> the annotation is that judge's stdout
     assert scored.artifacts["code_quality_annotation"] == "0.9"
+
+
+def test_score_record_purges_stale_judge_scores_sentinel(tmp_path, monkeypatch):
+    """A record persisted BEFORE judge-advisory carries the superseded
+    `judge_scores` deferral sentinel in its artifacts. Re-scoring must PURGE it
+    (the frozen contract: "the judge_scores deferred sentinel is REMOVED") — a
+    re-scored record never carries both keys."""
+    ws = tmp_path / "runs" / "vanilla" / "wm1" / "workspace"
+    ws.mkdir(parents=True)
+    record = {
+        "arm": "vanilla", "wm": 1, "rep": 0, "status": "done",
+        "metrics": {"regression_rate": 0.0, "requirement_coverage": 1.0,
+                    "oracle_pass_rate": 1.0, "tokens_total": 10.0, "cost_usd": 0.1,
+                    "context_rot_slope": 0.0, "time_to_first_edit": 1.0},
+        "artifacts": {"workspace": str(ws), "transcript": "", "oracle_report": "",
+                      # the stale sentinel a pre-judge-advisory scoring left behind:
+                      "judge_scores": "deferred: see code_quality_annotation (task judge-advisory)"},
+    }
+    (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
+
+    monkeypatch.setattr("benchmark.score.compute_requirement_coverage", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
+
+    scored = score_record("vanilla", 1, runs_root=tmp_path / "runs")  # no judge_cmd
+
+    assert "judge_scores" not in scored.artifacts  # purged
+    assert scored.artifacts["code_quality_annotation"].startswith("unavailable")

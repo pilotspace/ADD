@@ -414,6 +414,7 @@ def score_record(
     # artifact (never a metric): claude-less by default (judge_cmd None -> "unavailable",
     # no subprocess), best-effort when a judge_cmd is supplied.
     requirement_coverage = compute_requirement_coverage(workspace, wm, family)
+    artifacts.pop("judge_scores", None)  # purge the superseded pre-judge-advisory sentinel
     artifacts["code_quality_annotation"] = judge.code_quality_annotation(
         workspace, wm, judge_cmd=judge_cmd
     )
