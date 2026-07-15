@@ -94,7 +94,7 @@ class StreamOwnerTest(_Harness):
         self._milestone("m2")
         self._activate("m1", "m2")
         before = self.state.read_text(encoding="utf-8")
-        code, out, err = self._run("status")
+        code, out, err = self._run("status", "--all")   # per-stream rows gate behind --all
         self.assertEqual(code, 0, err)
         m1_line = next((l for l in self._stream_lines(out) if "m1" in l), "")
         self.assertIn("owner:", m1_line)
@@ -105,7 +105,7 @@ class StreamOwnerTest(_Harness):
         self._milestone("m1")
         self._milestone("m2")
         self._activate("m1", "m2")
-        code, out, err = self._run("status")
+        code, out, err = self._run("status", "--all")   # per-stream rows: --all
         self.assertEqual(code, 0, err)
         block = self._stream_lines(out)
         self.assertTrue(block, "streams block should render with 2 active milestones")

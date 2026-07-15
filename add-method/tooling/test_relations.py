@@ -85,7 +85,7 @@ class RelationsTest(unittest.TestCase):
     def test_status_shows_task_relations(self):
         self._mk("alpha")
         self._mk("beta", extends="alpha", relates="alpha")
-        out, _, code = self._run("status")
+        out, _, code = self._run("status", "--all")   # task rows gate behind --all
         self.assertEqual(code, 0)
         # beta's row names its extends/relates-to
         beta_line = next(l for l in out.splitlines() if l.strip().startswith(("*", " ")) and "beta" in l)

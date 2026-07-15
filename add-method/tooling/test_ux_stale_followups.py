@@ -71,8 +71,8 @@ class _Base(unittest.TestCase):
             code = e.code if isinstance(e.code, int) else 1
         return buf.getvalue(), err.getvalue(), code
 
-    def _status(self) -> str:
-        return self._run("status")[0]
+    def _status(self, *flags) -> str:
+        return self._run("status", *flags)[0]
 
     def _guide(self, *a) -> str:
         return self._run("guide", *a)[0]
@@ -145,7 +145,7 @@ class FreshInitGoalTest(_Base):
 
     def test_fresh_init_status_shows_sentinel(self):
         self._silent("new-task", "feat-a", "--title", "A")
-        out = self._status()
+        out = self._status("--all")   # goal sentinel on the --all goal line (status-lean-default)
         self.assertIn(add.GOAL_UNSET, out)
         self.assertNotIn(PLACEHOLDER, out)
 
@@ -158,14 +158,14 @@ class FreshInitGoalTest(_Base):
     def test_human_goal_renders_verbatim(self):       # regression pin (green throughout)
         self._set_goal("ship the thing")
         self._silent("new-task", "feat-a")
-        out = self._status()
+        out = self._status("--all")   # goal prose: --all
         self.assertIn("ship the thing", out)
         self.assertNotIn(add.GOAL_UNSET, out)
 
     def test_stripped_goal_shows_sentinel(self):      # regression pin (existing degrade)
         self._strip_goal()
         self._silent("new-task", "feat-a")
-        out, _, code = self._run("status")
+        out, _, code = self._run("status", "--all")   # goal sentinel: --all
         self.assertEqual(code, 0)
         self.assertIn(add.GOAL_UNSET, out)
 

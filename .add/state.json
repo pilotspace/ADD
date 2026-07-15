@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "report-diagnostics",
+  "active_task": "status-lean-default",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10152,10 +10152,67 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "status-lean-default": {
+      "title": "lean bare status default: gate goal/m-goal prose + personas roster + milestone/task/stream lists behind --all, add count lines",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T08:41:37+00:00",
+      "updated": "2026-07-15T09:10:21+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T08:45:05+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c9c14a2942c50c461e32519e15f672a0",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/skill/add/report-template.md",
+          "add-method/src/add_method/_bundled/skill/add/report-template.md",
+          ".claude/skills/add/report-template.md",
+          "add-method/src/add_method/_bundled/tooling/add.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_status_lean_default.py",
+          ".add/SEAMS.md",
+          "add-method/tooling/test_report_shape_scan_audit.py",
+          "add-method/tooling/test_machine_state.py",
+          "add-method/tooling/test_parallel_status_view.py",
+          "add-method/tooling/test_per_stream_owner.py",
+          "add-method/tooling/test_project_goal.py",
+          "add-method/tooling/test_relations.py",
+          "add-method/tooling/test_roster_status_line.py",
+          "add-method/tooling/test_ux_stale_followups.py"
+        ],
+        "snapshot_md5": "966cb5126ef16afc02f1642234381af6"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T09:09:20+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T07:59:53+00:00",
+  "updated": "2026-07-15T09:10:21+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11509,7 +11566,7 @@
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
-    "honest-fidelity-meter": "report-diagnostics"
+    "honest-fidelity-meter": "status-lean-default"
   },
   "todos": [
     {
