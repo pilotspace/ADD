@@ -40,15 +40,18 @@ Issues/Risks (shared): trimming an output line that a TEST or the SKILL/guide fl
 - `add.py --help` top-level output shape (what stays vs moves behind per-command `-h`) -> owning task `help-diet` — the largest single trim; keep every subcommand discoverable.
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] help-diet              depends-on: none            — trim `add.py --help` top-level output to essentials + a "per-command: add.py <cmd> -h" pointer; no command lost from discoverability (17% of engine weight, one early call). EDITS add.py → repin.
-- [ ] status-brief-adoption  depends-on: none            — switch SKILL.md + phase guides + agents from bare `status` to `status --brief` at the orient + mid-loop call sites; RETAIN the "read PROJECT.md + SOUL.md" instruction in the skill prose. DOC-only, engine default untouched, no repin (29.8%).
-- [ ] orient-diet            depends-on: none            — trim `new-task` created-echo + `init` banner/recipe dumps to the load-bearing next-step lines (~15%). EDITS add.py → repin.
+- [x] help-diet              depends-on: none            — trim `add.py --help` top-level output to essentials + a "per-command: add.py <cmd> -h" pointer; no command lost from discoverability (17% of engine weight, one early call). EDITS add.py → repin. SHIPPED: 121→19 lines.
+- [x] status-brief-adoption  depends-on: none            — switch the SKILL orient call from bare `status` to `status --brief`; RETAIN the "read PROJECT.md + SOUL.md" instruction in the skill prose. DOC-only, no repin (29.8%). SHIPPED.
+- [~] orient-diet            depends-on: none            — DROPPED. The `new-task` recipe + `init` kickoff blocks are DELIBERATE call-reducers (kickoff-truth M2 "replaces 6-11 status/guide/--help re-orientation calls per run"; first-call-ergonomics M3). Trimming them saves ~40k residency-weight but costs 6-11 extra CALLS (each a ~99k-context turn = +600k-1M cache-read). The anatomy's own factor analysis (turns 3.3× ≫ context/turn 1.5×) proves the trim is NET-NEGATIVE on total cache-read. Never created as a task.
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `add.py --help` output drops from 120 lines to ≤ ~45, still lists every subcommand (or a discoverable pointer), tested by a line-count + subcommand-presence assertion   (← help-diet)
-- [ ] SKILL.md + phase guides + agents call `status --brief` (not bare `status`) at orient/mid-loop sites; the "read PROJECT.md + SOUL.md" orient instruction is retained in prose; bare-status ENGINE output is unchanged (existing status-census tests stay green)   (← status-brief-adoption)
-- [ ] `add.py new-task` / `init` echo trimmed to their load-bearing next-step lines (measurable char drop), guidance preserved   (← orient-diet)
-- [ ] combined static output size of the targeted surfaces drops ≥40% vs baseline; full `add-method` test suite green; ENGINE_PKG_MD5 + SEAMS.md repinned for the two add.py-editing tasks   (← all three)
+- [x] `add.py --help` output drops from 121 lines to ≤ ~45 (SHIPPED 19), still lists every subcommand, tested by a line-count + subcommand-presence assertion   (← help-diet)
+- [x] the SKILL orient call is `status --brief` (not bare `status`); the "read PROJECT.md + SOUL.md" orient instruction is retained in prose; bare-status ENGINE output is unchanged (all status-census tests green)   (← status-brief-adoption)
+- [~] ~~`new-task`/`init` echo trimmed~~ — DROPPED: the anatomy proved these outputs are call-reducers whose trim raises total cache-read (net-negative)   (← orient-diet, refuted)
+- [x] full `add-method` test suite green (3633); ENGINE_MD5 repinned d7079f8d→1dd8c1b1 for help-diet (add.py); status-brief-adoption doc-only (no repin)   (← shipped tasks)
+
+## Close — finding
+The measure-first premise held: engine_output (38% of cache-read) IS the ceremony driver, and `--help` (17%) + the orient `status` call (30%) were genuine byte-fat now trimmed. But orient-diet's target (new-task/init recipe dumps) was REFUTED by the same anatomy — those bytes buy call-reduction, and calls (turns, 3.3× factor) dominate bytes (context/turn, 1.5× factor). NET RESULT: the two removable, no-regret levers shipped; the one that traded calls-for-bytes was correctly dropped. `[SPEC·open]`: a future "total cache-read" optimizer must weight a byte-trim against any CALL it induces — the two axes are not additive, turns win.
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
