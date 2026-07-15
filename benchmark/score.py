@@ -94,23 +94,29 @@ def _run_oracle_suites(
     never conflated with a normal test failure, which is signal, not error.
     `marker_expr` (pytest -m) lets a caller deselect probes that don't belong
     to its metric — e.g. wm3's regression re-exports out of the fidelity run."""
+    from benchmark.workload._oracle_lib import isolated_workspace  # lazy: avoids import cycle
+
     marker_args = ["-m", marker_expr] if marker_expr else []
-    proc = subprocess.run(
-        [
-            *_pytest_argv(),
-            "-p",
-            "no:cacheprovider",
-            "--tb=no",
-            "-q",
-            *marker_args,
-            *[str(p) for p in oracle_paths],
-        ],
-        cwd=str(REPO_ROOT),
-        env={**os.environ, "BENCH_WORKSPACE": str(workspace)},
-        capture_output=True,
-        text=True,
-        timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
-    )
+    # HERMETIC (hermetic-scoring): the oracle/regression probes boot the app via
+    # BENCH_WORKSPACE — point it at a store-reset copy so their bookings never
+    # mutate the source and oracle_pass_rate is reproducible on archived builds.
+    with isolated_workspace(workspace) as iso_ws:
+        proc = subprocess.run(
+            [
+                *_pytest_argv(),
+                "-p",
+                "no:cacheprovider",
+                "--tb=no",
+                "-q",
+                *marker_args,
+                *[str(p) for p in oracle_paths],
+            ],
+            cwd=str(REPO_ROOT),
+            env={**os.environ, "BENCH_WORKSPACE": str(iso_ws)},
+            capture_output=True,
+            text=True,
+            timeout=REGRESSION_SUBPROCESS_TIMEOUT_S,
+        )
     if proc.returncode not in (0, 1):
         raise BenchError(
             f"{error_code}: pytest exited {proc.returncode}\n"
@@ -195,19 +201,23 @@ def compute_requirement_coverage(workspace: pathlib.Path, wm: int, family: str =
     (M3): an unbootable app or a raising probe counts its requirement NOT covered;
     the scorer always returns a fraction, never propagates the probe's exception.
     Raises only on a guard breach: a malformed checklist (R2) or a value ∉ [0,1] (R3)."""
-    from benchmark.workload._oracle_lib import running_app  # lazy: avoids import cycle
+    from benchmark.workload._oracle_lib import isolated_workspace, running_app  # lazy: avoids import cycle
 
     rows = _load_checklist(wm, family)
     total = len(rows)
     covered = 0
     try:
-        with running_app(str(workspace)) as base:
-            for row in rows:
-                try:
-                    if row["probe"](base, pathlib.Path(workspace)):
-                        covered += 1
-                except Exception:
-                    pass  # fail-closed: a raising probe = requirement NOT covered
+        # HERMETIC (hermetic-scoring): boot a store-reset copy so probe writes
+        # land in a throwaway dir — the source is never mutated and repeated
+        # scorings of the same archived workspace are reproducible.
+        with isolated_workspace(workspace) as iso_ws:
+            with running_app(str(iso_ws)) as base:
+                for row in rows:
+                    try:
+                        if row["probe"](base, iso_ws):
+                            covered += 1
+                    except Exception:
+                        pass  # fail-closed: a raising probe = requirement NOT covered
     except Exception:
         covered = 0  # unbootable workspace: nothing covered, never a scorer crash
     value = covered / total

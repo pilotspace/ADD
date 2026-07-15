@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "coverage-scorer",
+  "active_task": "hermetic-scoring",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -9997,10 +9997,48 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "hermetic-scoring": {
+      "title": "Hermetic scoring \u2014 isolate the app store per boot so coverage/oracle are reproducible on archived builds",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T04:24:27+00:00",
+      "updated": "2026-07-15T04:31:17+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T04:25:57+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "c36fd4689d8043550ec9e7dca841ed04",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/score.py",
+          "benchmark/workload/_oracle_lib.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "3a192137d32d98fa9cb3e1896895a7c5"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T04:04:26+00:00",
+  "updated": "2026-07-15T04:31:17+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11334,7 +11372,7 @@
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
-    "honest-fidelity-meter": "coverage-scorer"
+    "honest-fidelity-meter": "hermetic-scoring"
   },
   "todos": [
     {
