@@ -41,14 +41,14 @@ Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure it is in the project
   `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine) +
   `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
 
-Resume from the tool (a COLD start), never re-read the repo — mid-flow, trust each verb's
-`next:` footer; don't re-`status` to re-orient:
+Resume from the tool (COLD start), never re-read the repo — mid-flow, trust each verb's
+`next:` footer:
 
 ```bash
 python3 .add/tooling/add.py status --brief
 ```
 
-Then read `.add/PROJECT.md` (foundation) + `.add/SOUL.md` (**voice**, each session — `soul.md`). Then branch on state:
+Then read the foundation map `add.py status --foundation` (one section: `--foundation "Users"` · `--all` full) + `.add/SOUL.md` (**voice** — `soul.md`). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then

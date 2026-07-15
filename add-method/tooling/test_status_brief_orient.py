@@ -40,10 +40,14 @@ class StatusBriefOrientTest(unittest.TestCase):
                              f"the bare orient `status` must be replaced in {tree}")
 
     def test_orient_prose_still_names_both_files(self):
-        # R1 orient_floor_lost guard: --brief does NOT name the files, so the PROSE must.
+        # R1 orient_floor_lost guard: --brief does NOT name the files, so the PROSE must
+        # point the agent at BOTH the foundation and the voice. The foundation is reached
+        # either by its raw path (`PROJECT.md`) or via the scoped `status --foundation`
+        # slice that serves it (foundation-slice) — both satisfy the floor.
         for tree in SKILL_TREES:
             block = _orient_block(tree.read_text())
-            self.assertIn("PROJECT.md", block, f"orient prose must still name PROJECT.md in {tree}")
+            self.assertTrue("PROJECT.md" in block or "status --foundation" in block,
+                            f"orient prose must point at the foundation in {tree}")
             self.assertIn("SOUL.md", block, f"orient prose must still name SOUL.md in {tree}")
 
     def test_both_skill_trees_byte_identical(self):

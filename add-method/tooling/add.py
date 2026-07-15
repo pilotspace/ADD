@@ -2809,7 +2809,100 @@ def _ancestor_note() -> str | None:
             "to scope a project to this directory")
 
 
+_FOUNDATION_CORE = ("## Domain", "## Spec")   # near-always-needed direction context — kept full
+_FOUNDATION_DECISIONS_HEAD = "## Key Decisions"
+_FOUNDATION_DECISIONS_KEEP = 3               # newest-first: the recent head at orient; stale tail on demand
+
+
+def _foundation_selector(heading: str) -> str:
+    """A short, stable selector for a `## ` heading — the title phrase before the first
+    qualifier punctuation. `## Users (UDD) — …` → `Users`; `## Key Decisions (…` → `Key
+    Decisions`. Used for both the pull hint and matching a `--foundation <SECTION>` query."""
+    t = heading[3:].strip()
+    for cut in ("(", " — ", " / ", " - "):
+        i = t.find(cut)
+        if i != -1:
+            t = t[:i]
+    return t.strip()
+
+
+def _foundation_pull(sel: str) -> str:
+    return f'_(collapsed — pull: `add.py status --foundation "{sel}"`)_\n\n'
+
+
+def _foundation_skeleton(text: str) -> str:
+    """The progressive-disclosure foundation MAP for orientation (foundation-slice,
+    context/turn lever): PROJECT.md is a cross-milestone read at orient and re-read every
+    turn. Disclose the SKELETON — the preamble (title + `invariants:`, the run/entry
+    contracts that bind EVERY task) + Domain + Spec IN FULL (near-always-needed direction),
+    every OTHER section COLLAPSED to its heading + an on-demand `--foundation "<section>"`
+    pull; the newest Key Decisions kept, the stale tail pulled. The agent fleshes out a
+    section only when its phase needs it — the same progressive disclosure as the phase
+    guides. PURE. Fail-open: a foundation with no `## ` sections returns verbatim (never
+    blank it). Invariants are never collapsed, so the contracts that bind every task always
+    survive the map."""
+    lines = text.splitlines(keepends=True)
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    if not heads:
+        return text
+    out = list(lines[:heads[0]])                       # preamble — invariants live here
+    bounds = heads + [len(lines)]
+    for k, start in enumerate(heads):
+        head = lines[start]
+        body = lines[start:bounds[k + 1]]
+        if head.startswith(_FOUNDATION_CORE):
+            out.extend(body)                            # Domain · Spec — full
+        elif head.startswith(_FOUNDATION_DECISIONS_HEAD):
+            out.append(head)
+            kept = [l for l in body[1:] if l.strip()][:_FOUNDATION_DECISIONS_KEEP]
+            out.extend(kept)
+            out.append(f'_(+tail — pull: `add.py status --foundation "{_foundation_selector(head)}"`)_\n\n')
+        else:
+            out.append(head)                            # heading is the signpost; body on demand
+            out.append(_foundation_pull(_foundation_selector(head)))
+    return "".join(out)
+
+
+def _foundation_pick(text: str, query: str):
+    """Return ONE section (heading + body, FULL) whose heading matches `query`
+    (case-insensitive substring of the heading or its selector), or None if no match —
+    the on-demand flesh for the progressive `--foundation` map."""
+    lines = text.splitlines(keepends=True)
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    bounds = heads + [len(lines)]
+    q = query.strip().lower()
+    for k, start in enumerate(heads):
+        head = lines[start]
+        if q in head.lower() or q in _foundation_selector(head).lower():
+            return "".join(lines[start:bounds[k + 1]])
+    return None
+
+
 def cmd_status(args: argparse.Namespace) -> None:
+    fnd = getattr(args, "foundation", None)
+    if fnd is not None:
+        # --foundation (foundation-slice, progressive disclosure): bare prints the MAP
+        # (invariants + Domain + Spec full, other sections collapsed to a pull hint); a
+        # SECTION value pulls that one section body on demand; --all prints the whole
+        # foundation. Raw body only (no banner/footer), mirroring --section. Fail-closed
+        # on a missing foundation — never a silent empty read.
+        root = _require_root()
+        pmd = root / "PROJECT.md"
+        if not pmd.exists():
+            _die("foundation_missing: no .add/PROJECT.md to read")
+        text = pmd.read_text(encoding="utf-8")
+        if getattr(args, "all", False):
+            print(text, end="")
+        elif fnd == "":
+            print(_foundation_skeleton(text), end="")
+        else:
+            body = _foundation_pick(text, fnd)
+            if body is None:
+                names = ", ".join(_foundation_selector(l) for l in text.splitlines()
+                                  if l.startswith("## ")) or "(none)"
+                _die(f"foundation_section_unknown: '{fnd}' — sections: {names}")
+            print(body, end="")
+        return
     _section = getattr(args, "section", None)
     if _section is not None:
         # --section (progressive-task-context): print ONE raw §body of the
@@ -8934,6 +9027,10 @@ def build_parser() -> argparse.ArgumentParser:
     pst.add_argument("--section", default=None, metavar="N|PHASE",
                      help="print ONE raw §body (0-7 or a phase name) of the active task — "
                           "read a section, not the whole TASK.md")
+    pst.add_argument("--foundation", nargs="?", const="", default=None, metavar="SECTION",
+                     help="scoped PROJECT.md read (progressive disclosure): bare = the map "
+                          "(invariants + Domain + Spec full, other sections collapsed to a pull "
+                          "hint); SECTION = pull one section body on demand; --all = the whole foundation")
     pst.set_defaults(func=cmd_status)
 
     pck = sub.add_parser("check", help="read-only integrity check of the .add project")

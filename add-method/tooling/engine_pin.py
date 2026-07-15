@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "159eb2b98600e8544a47324603a96052"  # re-aimed @ recipe-dedup (engine-output-trim: new-task prints the FULL annotated call recipe only at the project's FIRST task; a later task names the same flow compactly — all commands kept, repeated prose dropped; −234B/task after the first). prior: bc1f4afe… @ resume-card-dedup
+ENGINE_MD5 = "4e65596032185cb3d88f764d425b4eb4"  # re-aimed @ foundation-slice-progressive (engine-output-trim: `status --foundation` is a progressive-disclosure MAP — invariants+Domain+Spec full, other sections collapsed to an on-demand `--foundation "<section>"` pull that fleshes out one section; −59% on the 55KB dogfood foundation, re-read every turn; `--all` for the full read). prior: a9ec7dd8… @ foundation-slice
 ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation
