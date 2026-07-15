@@ -894,16 +894,27 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print("active task set. phase: specify. State the projected expectations (§1 SPECIFY); "
           "grounding + contract + build-strategy come next, together, in the plan phase.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
-    # kickoff-truth M2: the FULL remaining engine-call recipe, once, at task birth —
-    # the transcript audit measured 6-11 status/guide/--help re-orientation calls per
-    # run that this single block replaces. Lane-invariant (the freeze/gate floor is
-    # the same in every lane); the agent scripts ahead instead of rediscovering.
-    print("recipe — this task's remaining engine calls:")
-    print("  add.py advance --to plan   (write the section rules first)")
-    print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
-          "--cross lands in tests]")
-    print("  add.py advance   (after the RED suite: tests -> build, make it green)")
-    print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
+    # kickoff-truth M2: the remaining engine-call recipe at task birth — the transcript
+    # audit measured 6-11 status/guide/--help re-orientation calls per run that this
+    # block replaces. Lane-invariant (the freeze/gate floor is the same in every lane);
+    # the agent scripts ahead instead of rediscovering.
+    #
+    # recipe-dedup (engine-output-trim): the FULL annotated recipe teaches what each
+    # remaining call MEANS — needed ONCE, at the project's first task. A LATER task in
+    # the same project names the SAME flow COMPACTLY: the agent already read the prose,
+    # so re-printing ~330B of identical annotations every task only re-enters cache. The
+    # compact form keeps EVERY command + both advances (the flow floor _assert_recipe
+    # pins), so there is no rediscovery/--help backfire — only the repeated prose drops.
+    if len(state.get("tasks") or {}) <= 1:
+        print("recipe — this task's remaining engine calls:")
+        print("  add.py advance --to plan   (write the section rules first)")
+        print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
+              "--cross lands in tests]")
+        print("  add.py advance   (after the RED suite: tests -> build, make it green)")
+        print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
+    else:
+        print("recipe — remaining calls: add.py advance --to plan · "
+              "add.py freeze --by <name> --cross · add.py advance · add.py gate PASS")
 
 
 def _delta_task_md(root: Path, state: dict, raw_slug: str | None) -> tuple[str, Path, bool]:

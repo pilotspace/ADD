@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "bc1f4afe88eb964f7797a2619190ff09"  # re-aimed @ resume-card-dedup (engine-output-trim: bare `status` drops the bottom resume block's RESTATED slug·phase·next·re-orient — the top 'now' card already carries them — keeping only the unique --section/--brief context ops; −151B/status, re-read every turn). prior: 8438237d… @ advance-fold
+ENGINE_MD5 = "159eb2b98600e8544a47324603a96052"  # re-aimed @ recipe-dedup (engine-output-trim: new-task prints the FULL annotated call recipe only at the project's FIRST task; a later task names the same flow compactly — all commands kept, repeated prose dropped; −234B/task after the first). prior: bc1f4afe… @ resume-card-dedup
 ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation
