@@ -269,6 +269,22 @@ def test_validates_tokens_cost_first_edit_unchanged(tmp_path):
     assert written["metrics"]["time_to_first_edit"] == 12.5
 
 
+def test_score_record_marks_record_scored(tmp_path):
+    """The scored-guard marker: a record that has been through score_record carries
+    `scored: 1.0`, so is_scored()/require_scored() can tell it apart from an
+    execute_wm placeholder whose oracle/coverage 0.0s are unscored."""
+    runs_root = tmp_path / "runs"
+    record_path = _make_record(tmp_path, runs_root, "add", 1)
+    judge_cmd = _fake_judge(tmp_path, "0.5")
+
+    updated = score_mod.score_record("add", 1, judge_cmd=judge_cmd, runs_root=runs_root)
+
+    written = json.loads(record_path.read_text())
+    assert written["metrics"]["scored"] == 1.0
+    assert score_mod.is_scored(updated) is True
+    assert score_mod.require_scored(updated) is updated
+
+
 def test_unparseable_token_source_surfaced_not_masked(tmp_path):
     runs_root = tmp_path / "runs"
     record_path = _make_record(
@@ -440,8 +456,9 @@ def test_scored_record_still_validates(tmp_path):
 
     reloaded = validate(json.loads(record_path.read_text()))
     # v3: requirement_coverage + oracle_pass_rate are both REQUIRED now;
-    # tests_weakened stays absent here (no snapshots in this fixture).
-    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS)
+    # tests_weakened stays absent here (no snapshots in this fixture). The
+    # scored-guard marker `scored` is the one OPTIONAL key a scored record carries.
+    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS) | {"scored"}
     assert "requirement_coverage" in reloaded.metrics
     assert "spec_fidelity" not in reloaded.metrics
 
@@ -484,7 +501,7 @@ def test_score_rereads_archived_spec_fidelity_target(tmp_path, monkeypatch):
     assert "spec_fidelity" not in scored.metrics
     # persisted in the v3 schema — reloads clean through strict validate
     reloaded = validate(json.loads(record_path.read_text()))
-    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS)
+    assert set(reloaded.metrics.keys()) == set(REQUIRED_METRICS) | {"scored"}
 
 
 # --------------------------------------------------------------------------

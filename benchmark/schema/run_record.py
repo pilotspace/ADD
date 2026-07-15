@@ -34,7 +34,10 @@ REQUIRED_METRICS = frozenset(
 # the required set. Unknown keys stay rejected: additive is not open-ended.
 # `spec_fidelity` has LEFT the schema entirely (v3) — it is neither required nor
 # optional, so any live record carrying it fails validate().
-OPTIONAL_METRICS = frozenset({"tests_weakened"})
+# `scored` is the scored-guard marker (score.is_scored/require_scored): score_record
+# emits `scored: 1.0`; execute_wm leaves it ABSENT, so an unscored placeholder record
+# (oracle/coverage 0.0) can never be silently misread as a real score.
+OPTIONAL_METRICS = frozenset({"tests_weakened", "scored"})
 
 REQUIRED_ARTIFACTS = frozenset({"workspace", "transcript", "oracle_report"})
 

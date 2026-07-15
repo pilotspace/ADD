@@ -33,6 +33,37 @@ _FAIL_RE = re.compile(r"(\d+) failed")
 _ERROR_RE = re.compile(r"(\d+) error")
 
 
+def is_scored(record_or_metrics) -> bool:
+    """True iff a record's oracle_pass_rate/requirement_coverage are REAL values
+    computed by `score_record` — not the `execute_wm` 0.0 placeholders.
+
+    The signal is the `scored` marker metric: score_record emits `scored: 1.0`;
+    execute_wm never writes it. Accepts a RunRecord OR a bare metrics mapping.
+    """
+    metrics = getattr(record_or_metrics, "metrics", record_or_metrics)
+    try:
+        return float(metrics.get("scored", 0.0)) >= 1.0
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
+def require_scored(record: RunRecord) -> RunRecord:
+    """Return `record` if it is scored, else raise BenchError("unscored_record: ...").
+
+    Guards the exact trap that produced a false "the build failed" reading: a caller
+    that ran `execute_wm` directly (skipping the pilot's score_record step) and read
+    the 0.0 oracle/coverage placeholders as real. Use before treating a record's
+    oracle_pass_rate/requirement_coverage as meaningful.
+    """
+    if not is_scored(record):
+        raise BenchError(
+            "unscored_record: oracle_pass_rate/requirement_coverage are execute_wm "
+            "placeholders (0.0), not real scores — run score_record (or the pilot, "
+            "which calls it after execute_wm) before reading them."
+        )
+    return record
+
+
 def _record_path(runs_root: pathlib.Path, arm_name: str, wm: int, family: str = "wm") -> pathlib.Path:
     return runs_root / arm_name / f"{family}{wm}" / "record.json"
 
@@ -476,6 +507,11 @@ def score_record(
         metrics["tests_weakened"] = 0.0  # by definition at the first WM
     elif wm >= 2 and snap_current.is_dir() and snap_prior.is_dir():
         metrics["tests_weakened"] = float(tamper.compute_tests_weakened(arm_root, wm, family))
+
+    # scored-guard marker: this record's oracle_pass_rate/requirement_coverage are now
+    # REAL (computed above), not execute_wm's 0.0 placeholders. is_scored/require_scored
+    # read this so a bare execute_wm record can never be misread as a failed build.
+    metrics["scored"] = 1.0
 
     updated = validate(
         {
