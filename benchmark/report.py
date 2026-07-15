@@ -5,6 +5,7 @@ record (renders "not run"); re-runnable, no live agent/judge call.
 """
 from __future__ import annotations
 
+import json
 import pathlib
 from typing import Sequence
 
@@ -57,6 +58,47 @@ def _render_cell(arm: str, wm: int, metric: str, record: RunRecord | None, runs_
     return f"{value_text} — {evidence}"
 
 
+EMDASH = "—"
+
+
+def _diagnostics_cells(record: RunRecord | None) -> tuple[str, str, str]:
+    """(coverage, uncovered, code quality) for one record — display-only, read from
+    `artifacts` (never a metric). Fault-tolerant (M2/R1): a missing record, an absent
+    key, or a malformed `coverage_detail` JSON degrades to em-dash, never raises."""
+    if record is None:
+        return EMDASH, EMDASH, EMDASH
+
+    coverage, uncovered = EMDASH, EMDASH
+    raw = record.artifacts.get("coverage_detail")
+    if raw:
+        try:
+            rows = json.loads(raw)
+            ids = [str(r["id"]) for r in rows]
+            missed = [str(r["id"]) for r in rows if not r["covered"]]
+            coverage = f"{len(ids) - len(missed)}/{len(ids)}"
+            uncovered = ", ".join(missed) if missed else "none"
+        except (ValueError, TypeError, KeyError):
+            coverage, uncovered = EMDASH, EMDASH  # malformed -> degrade, never raise
+
+    note = record.artifacts.get("code_quality_annotation") or ""
+    quality = " ".join(note.split())[:60] if note else EMDASH
+    return coverage, uncovered, quality
+
+
+def _render_diagnostics(runs_root: pathlib.Path, wm: int, arms: Sequence[str]) -> str:
+    """Per-WM DIAGNOSTICS table surfacing the two advisory artifacts
+    (`coverage_detail`, `code_quality_annotation`) beside the metric tables — so a
+    sub-1.0 coverage score is readable at a glance. Display-only; adds no metric."""
+    header = "| arm | coverage | uncovered | code quality |"
+    sep = "| --- | --- | --- | --- |"
+    lines = [f"### WM{wm} diagnostics", "", header, sep]
+    for arm in arms:
+        coverage, uncovered, quality = _diagnostics_cells(_load_record(runs_root, arm, wm))
+        lines.append(f"| {arm} | {coverage} | {uncovered} | {quality} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_wm_table(
     runs_root: pathlib.Path, wm: int, arms: Sequence[str]
 ) -> str:
@@ -101,6 +143,7 @@ def render_report(
         sections.append(_render_headline_table(root, arms))
     for wm in wms:
         sections.append(_render_wm_table(root, wm, arms))
+        sections.append(_render_diagnostics(root, wm, arms))
     return "\n".join(sections)
 
 

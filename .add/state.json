@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "coverage-detail",
+  "active_task": "report-diagnostics",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10115,10 +10115,47 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "report-diagnostics": {
+      "title": "Surface coverage_detail + code_quality_annotation in report.py's per-WM view (read-only, non-gating)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "honest-fidelity-meter",
+      "depends_on": [],
+      "created": "2026-07-15T05:53:15+00:00",
+      "updated": "2026-07-15T06:00:25+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T05:54:25+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "9cd89127494a0c19201b0c9d5049caca",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/report.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "d6214b948e631b8caec0aff66bf5d1f0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T05:47:39+00:00",
+  "updated": "2026-07-15T06:00:25+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11452,7 +11489,7 @@
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
-    "honest-fidelity-meter": "coverage-detail"
+    "honest-fidelity-meter": "report-diagnostics"
   },
   "todos": [
     {
