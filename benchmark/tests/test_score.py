@@ -395,8 +395,10 @@ def test_context_rot_slope_computed_at_wm3(tmp_path, monkeypatch):
     _write_fixture_app(workspace_dir)
     # wm3 coverage pinned so the 3-point trend is exactly [0.9, 0.75, 0.6] and
     # the slope wiring is tested independent of the fixture's exact probe count
-    # (wm3's 4-row checklist could only ever yield a multiple of 0.25).
-    monkeypatch.setattr(score_mod, "compute_requirement_coverage", lambda ws, wm, family="wm": 0.6)
+    # (wm3's 4-row checklist could only ever yield a multiple of 0.25). score_record
+    # derives coverage from compute_coverage_detail -> a 3-of-5 detail yields 0.6.
+    monkeypatch.setattr(score_mod, "compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": f"r{i}", "covered": i < 3} for i in range(5)])
 
     score_mod.score_record("add", 3, runs_root=runs_root)
 
@@ -472,7 +474,8 @@ def test_score_rereads_archived_spec_fidelity_target(tmp_path, monkeypatch):
     record_path.write_text(json.dumps(old))
 
     # deterministic seams — the read-migration is the subject, not probe values
-    monkeypatch.setattr(score_mod, "compute_requirement_coverage", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr(score_mod, "compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}])
     monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
 
     scored = score_mod.score_record("add", 1, runs_root=runs_root)

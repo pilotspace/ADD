@@ -79,7 +79,10 @@ def test_score_record_annotates_judge_out_of_metric_path(tmp_path, monkeypatch):
     (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
 
     # deterministic seams — no live pytest / app boot in this wiring test.
-    monkeypatch.setattr("benchmark.score.compute_requirement_coverage", lambda ws, wm, family="wm": 0.5)
+    # score_record derives coverage from compute_coverage_detail (coverage-detail):
+    # a 1-of-2-covered detail -> requirement_coverage 0.5.
+    monkeypatch.setattr("benchmark.score.compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}, {"id": "b", "covered": False}])
     monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
     monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
 
@@ -113,7 +116,8 @@ def test_score_record_purges_stale_judge_scores_sentinel(tmp_path, monkeypatch):
     }
     (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
 
-    monkeypatch.setattr("benchmark.score.compute_requirement_coverage", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_coverage_detail",
+                        lambda ws, wm, family="wm": [{"id": "a", "covered": True}])
     monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
     monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
 

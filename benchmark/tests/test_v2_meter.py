@@ -418,12 +418,13 @@ def test_score_record_writes_v2_metrics(tmp_path, monkeypatch):
         seen_families.append(family)
         return 0.125
 
-    def fake_coverage(ws, wm, family="wm"):
-        return 0.5
+    def fake_detail(ws, wm, family="wm"):
+        # score_record derives coverage from the detail: 1-of-2 covered -> 0.5
+        return [{"id": "a", "covered": True}, {"id": "b", "covered": False}]
 
     monkeypatch.setattr(score_mod, "compute_oracle_pass_rate", fake_pass_rate)
     monkeypatch.setattr(score_mod, "compute_regression_rate_v2", fake_regression)
-    monkeypatch.setattr(score_mod, "compute_requirement_coverage", fake_coverage)
+    monkeypatch.setattr(score_mod, "compute_coverage_detail", fake_detail)
 
     scored = score_mod.score_record("add", 2, judge_cmd=_fake_judge(tmp_path, "0.9"), runs_root=runs_root)
 

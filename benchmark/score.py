@@ -190,40 +190,53 @@ def _load_checklist(wm: int, family: str = "wm") -> list[dict]:
     return rows
 
 
-def compute_requirement_coverage(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
-    """The DETERMINISTIC fidelity of record (honest-fidelity-meter): run the WM's
-    FROZEN requirement checklist against the built app and return covered/total in
-    [0,1]. Every PROMPT.md requirement is one row with a real probe — so an app
-    that boots but omits a requirement (CLI, field validation) scores below 1.0,
-    unlike oracle_pass_rate which is blind to un-probed requirements.
+def compute_coverage_detail(workspace: pathlib.Path, wm: int, family: str = "wm") -> list[dict]:
+    """The per-requirement breakdown behind `requirement_coverage` (coverage-detail):
+    run the WM's FROZEN checklist against the built app and return one
+    `{"id","covered"}` row per requirement, in checklist order — so a coverage score
+    is self-explaining (a 0.0 says WHICH requirements failed, not just that it did).
 
-    NO LLM in the path — identical workspace yields the identical value. Fail-closed
-    (M3): an unbootable app or a raising probe counts its requirement NOT covered;
-    the scorer always returns a fraction, never propagates the probe's exception.
-    Raises only on a guard breach: a malformed checklist (R2) or a value ∉ [0,1] (R3)."""
+    ONE hermetic boot (hermetic-scoring): probe writes land in a store-reset throwaway
+    copy, so the source is never mutated and repeated scorings are reproducible.
+    Fail-closed (M3): an unbootable app / a raising probe leaves that row `covered:False`
+    — never propagates the probe's exception. Raises only on a malformed checklist (R2)."""
     from benchmark.workload._oracle_lib import isolated_workspace, running_app  # lazy: avoids import cycle
 
-    rows = _load_checklist(wm, family)
-    total = len(rows)
-    covered = 0
+    rows = _load_checklist(wm, family)  # R2: malformed checklist raises here, before the boot
+    detail = [{"id": row["id"], "covered": False} for row in rows]
     try:
-        # HERMETIC (hermetic-scoring): boot a store-reset copy so probe writes
-        # land in a throwaway dir — the source is never mutated and repeated
-        # scorings of the same archived workspace are reproducible.
         with isolated_workspace(workspace) as iso_ws:
             with running_app(str(iso_ws)) as base:
-                for row in rows:
+                for i, row in enumerate(rows):
                     try:
                         if row["probe"](base, iso_ws):
-                            covered += 1
+                            detail[i]["covered"] = True
                     except Exception:
                         pass  # fail-closed: a raising probe = requirement NOT covered
     except Exception:
-        covered = 0  # unbootable workspace: nothing covered, never a scorer crash
-    value = covered / total
+        pass  # unbootable workspace: detail stays all-False, never a scorer crash
+    return detail
+
+
+def _coverage_from_detail(detail: list[dict]) -> float:
+    """Aggregate a coverage-detail into covered/total in [0,1] — the single source of
+    truth shared by `compute_requirement_coverage` and `score_record`, so the float and
+    the emitted detail can never disagree. Raises on a value ∉ [0,1] (R3)."""
+    total = len(detail)
+    value = sum(1 for d in detail if d["covered"]) / total
     if not (0.0 <= value <= 1.0):
         raise BenchError(f"invalid_coverage: {value!r} out of [0.0, 1.0]")
     return value
+
+
+def compute_requirement_coverage(workspace: pathlib.Path, wm: int, family: str = "wm") -> float:
+    """The DETERMINISTIC fidelity of record (honest-fidelity-meter): covered/total in
+    [0,1] from the WM's FROZEN checklist run against the built app. Every PROMPT.md
+    requirement is one probe — so an app that boots but omits a requirement (CLI, field
+    validation) scores below 1.0, unlike oracle_pass_rate which is blind to un-probed
+    requirements. NO LLM in the path — identical workspace yields the identical value.
+    Derived from `compute_coverage_detail` so the score and its breakdown always agree."""
+    return _coverage_from_detail(compute_coverage_detail(workspace, wm, family))
 
 
 def _read_prior_metrics_lenient(
@@ -413,7 +426,11 @@ def score_record(
     # The LLM judge is back only as an advisory, source-aware `code_quality_annotation`
     # artifact (never a metric): claude-less by default (judge_cmd None -> "unavailable",
     # no subprocess), best-effort when a judge_cmd is supplied.
-    requirement_coverage = compute_requirement_coverage(workspace, wm, family)
+    # ONE hermetic boot yields both the aggregate and its per-requirement breakdown
+    # (coverage-detail) — derived from the same detail so they can never disagree.
+    coverage_detail = compute_coverage_detail(workspace, wm, family)
+    requirement_coverage = _coverage_from_detail(coverage_detail)
+    artifacts["coverage_detail"] = json.dumps(coverage_detail, separators=(",", ":"))
     artifacts.pop("judge_scores", None)  # purge the superseded pre-judge-advisory sentinel
     artifacts["code_quality_annotation"] = judge.code_quality_annotation(
         workspace, wm, judge_cmd=judge_cmd
