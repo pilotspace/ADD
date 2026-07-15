@@ -12,7 +12,8 @@ VALID = {
     "status": "done",
     "metrics": {
         "regression_rate": 0.0,
-        "spec_fidelity": 0.9,
+        "requirement_coverage": 0.9,
+        "oracle_pass_rate": 1.0,
         "tokens_total": 12345,
         "cost_usd": 0.42,
         "context_rot_slope": 0.01,

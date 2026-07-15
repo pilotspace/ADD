@@ -1,6 +1,11 @@
 """Median-of-N judging (bench-judge-median fast task): variance-resistant
-spec_fidelity via judge_fidelity_median + auditable raw scores persisted in
-artifacts["judge_scores"]."""
+judging via judge_fidelity_median + auditable raw scores.
+
+`judge_fidelity_median` itself is unchanged and still tested here. What CHANGED
+at honest-fidelity-meter: the judge LEFT the score_record metric path entirely
+(fidelity is now deterministic requirement_coverage), so the integration test
+pins the DEFERRAL — task judge-advisory re-adds the judge as an advisory,
+source-aware `code_quality_annotation` artifact (never a metric)."""
 from __future__ import annotations
 
 import json
@@ -54,19 +59,30 @@ def test_two_failures_raise(tmp_path):
         judge_fidelity_median(tmp_path, 1, {}, judge_cmd=cmd, n=3)
 
 
-def test_score_record_persists_judge_scores(tmp_path):
+def test_score_record_defers_judge_out_of_metric_path(tmp_path, monkeypatch):
+    """The judge no longer feeds any metric: score_record records deterministic
+    requirement_coverage, no spec_fidelity, and a deferred judge_scores sentinel
+    even when a (would-succeed) judge_cmd is supplied."""
     ws = tmp_path / "runs" / "vanilla" / "wm1" / "workspace"
     ws.mkdir(parents=True)
     record = {
         "arm": "vanilla", "wm": 1, "rep": 0, "status": "done",
-        "metrics": {"regression_rate": 0.0, "spec_fidelity": 0.0,
-                    "tokens_total": 10.0, "cost_usd": 0.1,
+        "metrics": {"regression_rate": 0.0, "requirement_coverage": 0.0,
+                    "oracle_pass_rate": 0.0, "tokens_total": 10.0, "cost_usd": 0.1,
                     "context_rot_slope": 0.0, "time_to_first_edit": 1.0},
         "artifacts": {"workspace": str(ws), "transcript": "", "oracle_report": "",
                       "attempts": "attempt 1: done"},
     }
     (tmp_path / "runs" / "vanilla" / "wm1" / "record.json").write_text(json.dumps(record))
+
+    # deterministic seams — no live pytest / app boot in this wiring test.
+    monkeypatch.setattr("benchmark.score.compute_requirement_coverage", lambda ws, wm, family="wm": 0.5)
+    monkeypatch.setattr("benchmark.score.compute_oracle_pass_rate", lambda ws, wm, family="wm": 1.0)
+    monkeypatch.setattr("benchmark.score.compute_regression_rate_v2", lambda ws, wm, family="wm": 0.0)
+
     cmd = _stateful_judge(tmp_path, ["0.9", "0.5", "0.9"])
     scored = score_record("vanilla", 1, judge_cmd=cmd, runs_root=tmp_path / "runs")
-    assert scored.metrics["spec_fidelity"] == 0.9
-    assert scored.artifacts["judge_scores"] == "0.9;0.5;0.9"
+
+    assert scored.metrics["requirement_coverage"] == 0.5
+    assert "spec_fidelity" not in scored.metrics
+    assert scored.artifacts["judge_scores"].startswith("deferred:")

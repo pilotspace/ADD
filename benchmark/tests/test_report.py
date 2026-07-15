@@ -18,7 +18,8 @@ def _record(
     wm: int,
     *,
     status: str = "done",
-    spec_fidelity: float = 0.82,
+    requirement_coverage: float = 0.82,
+    oracle_pass_rate: float = 1.0,
     regression_rate: float = 0.0,
     context_rot_slope: float = 0.0,
     tokens_total: float = 4200.0,
@@ -40,7 +41,8 @@ def _record(
             "status": status,
             "metrics": {
                 "regression_rate": regression_rate,
-                "spec_fidelity": spec_fidelity,
+                "requirement_coverage": requirement_coverage,
+                "oracle_pass_rate": oracle_pass_rate,
                 "tokens_total": tokens_total,
                 "cost_usd": cost_usd,
                 "context_rot_slope": context_rot_slope,
@@ -54,7 +56,7 @@ def _record(
 def _seed_full_grid(runs_root: pathlib.Path) -> None:
     for arm in ARM_NAMES:
         for wm in (1, 2, 3):
-            record = _record(arm, wm, extra_artifacts={"spec_fidelity_audit": "spot-checked: seed"})
+            record = _record(arm, wm)
             write_record_atomic(runs_root / arm / f"wm{wm}" / "record.json", record)
 
 
@@ -109,15 +111,9 @@ def test_report_wm1_wm2_na_annotation(tmp_path):
     assert "0.00" not in text
 
 
-def test_report_unaudited_suffix(tmp_path):
-    runs_root = tmp_path / "runs"
-    record = _record("add", 1, spec_fidelity=0.82)  # no spec_fidelity_audit key
-    write_record_atomic(runs_root / "add" / "wm1" / "record.json", record)
-
-    text = report_mod.render_report(runs_root, arms=["add"], wms=[1])
-
-    assert "(unaudited)" in text
-    assert "0.82" in text
+# (honest-fidelity-meter) the spec_fidelity_audit / "(unaudited)" annotation
+# was DROPPED: requirement_coverage is deterministic (probes against the built
+# app), so there is no subjective per-record score for a human to attest.
 
 
 def test_report_rejects_unknown_arm(tmp_path):

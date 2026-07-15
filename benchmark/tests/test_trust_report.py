@@ -133,7 +133,7 @@ def _fixture_archive(tmp_path: pathlib.Path) -> pathlib.Path:
     pass_rate miss at step 2 — enough to exercise trusted + untrusted paths."""
     root = tmp_path / "rep0"
     base_metrics = {
-        "spec_fidelity": 0.9, "regression_rate": 0.0, "tokens_total": 1000.0,
+        "requirement_coverage": 0.9, "regression_rate": 0.0, "tokens_total": 1000.0,
         "cost_usd": 2.0, "context_rot_slope": 0.0, "time_to_first_edit": 10.0,
         "oracle_pass_rate": 1.0, "tests_weakened": 0.0,
     }

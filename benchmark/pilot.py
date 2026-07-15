@@ -1,7 +1,10 @@
 """pilot — sequences the full 5-arm x 3-WM live pilot, provisioning +
-run + score, honoring resume; and `attest_record`, the human-in-the-loop
-spot-check writer for spec_fidelity (bench-pilot-report TASK.md §3
-CONTRACT @ v1).
+run + score, honoring resume (bench-pilot-report TASK.md §3 CONTRACT @ v1).
+
+The human-in-the-loop `attest_record` spot-check writer for the LLM
+`spec_fidelity` was RETIRED at honest-fidelity-meter: fidelity is now the
+deterministic `requirement_coverage` (probes against the built app), so
+there is no subjective per-record score left to audit.
 
 Reuses `execute_wm`/`score_record`/`find_resume_point`/`write_record_atomic`
 verbatim (imported, not reimplemented) — this module is pure orchestration
@@ -20,7 +23,7 @@ from typing import Sequence
 from benchmark.arms.loader import ARM_NAMES, Arm, load_arm
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, find_resume_point, write_record_atomic
-from benchmark.schema.run_record import BenchError, RunRecord, validate
+from benchmark.schema.run_record import BenchError, RunRecord
 from benchmark.score import score_record
 from benchmark.tamper import snapshot_tests
 
@@ -46,52 +49,6 @@ def resolve_setup_steps(arm: Arm, repo_root: pathlib.Path) -> Arm:
 
     resolved_steps = [line.replace(REPO_ROOT_TOKEN, str(repo_root)) for line in arm.setup_steps]
     return dataclasses.replace(arm, setup_steps=resolved_steps)
-
-
-def _record_path(runs_root: pathlib.Path, arm_name: str, wm: int) -> pathlib.Path:
-    return runs_root / arm_name / f"wm{wm}" / "record.json"
-
-
-def attest_record(
-    arm_name: str, wm: int, note: str, *, runs_root: pathlib.Path | None = None
-) -> RunRecord:
-    """Human-in-the-loop spot-check writer: reads record.json, raises
-    BenchError("record_not_found"/"record_not_done"/"record_not_scored")
-    per the Reject list, else writes
-    artifacts["spec_fidelity_audit"] = "spot-checked: <note>" via
-    write_record_atomic (reused verbatim) and returns the updated RunRecord.
-
-    Mirrors score_record's exact guard-clause-before-any-I/O shape: read the
-    full record, validate eligibility, mutate only the one field in an
-    in-memory copy, re-validate the complete dict, write once.
-    """
-    root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
-    record_path = _record_path(root, arm_name, wm)
-    if not record_path.exists():
-        raise BenchError(f"record_not_found: {record_path}")
-
-    record = RunRecord.from_json(record_path.read_text())
-    if record.status != "done":
-        raise BenchError(f"record_not_done: status={record.status!r} (nothing to attest)")
-
-    if record.metrics.get("spec_fidelity") == 0.0:
-        raise BenchError("record_not_scored: metrics['spec_fidelity'] is still the unscored 0.0 placeholder")
-
-    artifacts = dict(record.artifacts)
-    artifacts["spec_fidelity_audit"] = f"spot-checked: {note}"
-
-    updated = validate(
-        {
-            "arm": record.arm,
-            "wm": record.wm,
-            "rep": record.rep,
-            "status": record.status,
-            "metrics": dict(record.metrics),
-            "artifacts": artifacts,
-        }
-    )
-    write_record_atomic(record_path, updated)
-    return updated
 
 
 def run_pilot(
@@ -172,7 +129,7 @@ def run_pilot(
 _REP_METRICS = (
     ("tokens", "tokens_total"),
     ("cost", "cost_usd"),
-    ("fidelity", "spec_fidelity"),
+    ("fidelity", "requirement_coverage"),
     # v2-wv1-longitudinal M2: the v2 trust metrics. regression_rate is a
     # required key; oracle_pass_rate/tests_weakened are OPTIONAL (schema v2) —
     # aggregation tolerates records that don't carry them (n_missing below).
@@ -258,7 +215,7 @@ def run_reps(
 
 
 # --------------------------------------------------------------------------
-# thin argparse CLI: `pilot.py run-all` / `pilot.py attest`
+# thin argparse CLI: `pilot.py run-all`
 # --------------------------------------------------------------------------
 
 
@@ -278,12 +235,6 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--runs-root", default=None)
     run_all_p.add_argument("--repo-root", default=None)
     run_all_p.add_argument("--family", default="wm", choices=("wm", "hv"))
-
-    attest_p = sub.add_parser("attest")
-    attest_p.add_argument("--arm", required=True)
-    attest_p.add_argument("--wm", type=int, required=True)
-    attest_p.add_argument("--note", required=True)
-    attest_p.add_argument("--runs-root", default=None)
 
     return parser
 
@@ -337,16 +288,6 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         for record in records:
             print(record.to_json())
-        return 0
-
-    if args.command == "attest":
-        runs_root = pathlib.Path(args.runs_root) if args.runs_root else None
-        try:
-            record = attest_record(args.arm, args.wm, args.note, runs_root=runs_root)
-        except BenchError as exc:
-            print(str(exc), file=sys.stderr)
-            return 2
-        print(record.to_json())
         return 0
 
     parser.error("unknown command")

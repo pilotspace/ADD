@@ -394,7 +394,8 @@ def execute_wm(
             "status": status,
             "metrics": {
                 "regression_rate": 0.0,
-                "spec_fidelity": 0.0,
+                "requirement_coverage": 0.0,  # placeholder; score_record computes the real value
+                "oracle_pass_rate": 0.0,      # placeholder; score_record computes the real value
                 "tokens_total": float(tokens_total),
                 "cost_usd": cost_usd,
                 "context_rot_slope": 0.0,
@@ -410,7 +411,8 @@ def execute_wm(
 def _zero_metrics() -> dict[str, float]:
     return {
         "regression_rate": 0.0,
-        "spec_fidelity": 0.0,
+        "requirement_coverage": 0.0,
+        "oracle_pass_rate": 0.0,
         "tokens_total": 0.0,
         "cost_usd": 0.0,
         "context_rot_slope": 0.0,

@@ -15,11 +15,13 @@ from benchmark.schema.run_record import REQUIRED_METRICS, BenchError, RunRecord
 # Headline metrics shown in the WM3 summary table + column order for the
 # per-WM detail tables (human-decided at freeze: headline-first ordering).
 METRIC_COLUMNS = (
-    "spec_fidelity",
+    "requirement_coverage",
+    "oracle_pass_rate",
     "regression_rate",
     "context_rot_slope",
     "tokens_total",
     "cost_usd",
+    "time_to_first_edit",
 )
 NOT_RUN = "not run"
 NA_BY_DEFINITION = "N/A (by definition)"
@@ -50,8 +52,6 @@ def _render_cell(arm: str, wm: int, metric: str, record: RunRecord | None, runs_
     else:
         value = record.metrics[metric]
         value_text = f"{value:.2f}"
-        if metric == "spec_fidelity" and "spec_fidelity_audit" not in record.artifacts:
-            value_text = f"{value_text} (unaudited)"
 
     evidence = _evidence_link(runs_root, arm, wm, record)
     return f"{value_text} — {evidence}"
