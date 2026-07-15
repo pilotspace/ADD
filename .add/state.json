@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "anatomy-core",
+  "active_task": "anatomy-report",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10189,10 +10189,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "anatomy-report": {
+      "title": "render token anatomy as markdown + cross-arm ceremony compare + python -m benchmark.anatomy CLI",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "token-anatomy",
+      "depends_on": [],
+      "created": "2026-07-15T06:43:38+00:00",
+      "updated": "2026-07-15T06:49:55+00:00",
+      "fast": true,
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-15T06:45:38+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5b4314966fd323d25d0a7ab656a4df51",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "benchmark/anatomy.py",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "dc52c3e3ad9da700664cbb1cec6ad999"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-15T06:47:57+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T06:42:54+00:00",
+  "updated": "2026-07-15T06:49:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11546,7 +11588,7 @@
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "report-diagnostics",
-    "token-anatomy": "anatomy-core"
+    "token-anatomy": "anatomy-report"
   },
   "todos": [
     {

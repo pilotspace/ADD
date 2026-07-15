@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 
 from benchmark.schema.run_record import BenchError
+
+EMDASH = "—"
 
 _CATS = ("method_doc", "engine_output", "build_work", "conversation")
 
@@ -150,3 +153,92 @@ def token_anatomy(transcript_path: str | pathlib.Path) -> dict:
         "attributed_pct": attributed_pct,
         "residual_pct": 1.0 - attributed_pct,
     }
+
+
+# --- reporting (anatomy-report §3 CONTRACT @ v1) -------------------------------
+
+def _pct(part: int, total: int) -> float:
+    """Percent-of-total, one decimal; 0.0 when the total is zero (no divide-by-0)."""
+    return round(part / total * 100, 1) if total else 0.0
+
+
+def _ceremony_pct(cats: dict, total: int) -> float:
+    """The REMOVABLE-overhead share: method-doc reads + engine (`add.py`) output.
+    This is the number that is ~0 for spec-kit/gsd and large for ADD."""
+    return _pct(cats["method_doc"] + cats["engine_output"], total)
+
+
+def render_anatomy(transcript_path: str | pathlib.Path) -> str:
+    """Markdown block for one transcript, derived SOLELY from `token_anatomy`
+    (no recompute — one source of truth for the numbers). See module doc."""
+    a = token_anatomy(transcript_path)
+    total = a["total_cache_read"]
+    lines = [f"**token anatomy** — turns {a['turns']} · total_cache_read {total:,}"]
+    for c in _CATS:
+        tokens = a["categories"][c]
+        lines.append(f"- {c}: {tokens:,} ({_pct(tokens, total)}%)")
+    lines.append(f"- ceremony (method_doc+engine_output): {_ceremony_pct(a['categories'], total)}%")
+    return "\n".join(lines)
+
+
+_COLS = ("arm", "turns", "total", "ceremony%",
+         "method_doc%", "engine_output%", "build_work%", "conversation%")
+
+
+def compare_arms(label_to_path: dict) -> str:
+    """Cross-arm markdown table, one row per input arm (INPUT ORDER preserved),
+    with a `ceremony%` column isolating ADD's removable overhead. Fail-OPEN: an
+    arm whose transcript is missing/broken renders an em-dash row, never raises —
+    the compare survives a partial run set. See module doc."""
+    rows = ["| " + " | ".join(_COLS) + " |",
+            "|" + "|".join("---" for _ in _COLS) + "|"]
+    for label, path in label_to_path.items():
+        try:
+            a = token_anatomy(path)
+        except BenchError:
+            rows.append("| " + " | ".join([label] + [EMDASH] * (len(_COLS) - 1)) + " |")
+            continue
+        total, cats = a["total_cache_read"], a["categories"]
+        cells = [label, str(a["turns"]), f"{total:,}", f"{_ceremony_pct(cats, total)}"]
+        cells += [f"{_pct(cats[c], total)}" for c in _CATS]
+        rows.append("| " + " | ".join(cells) + " |")
+    return "\n".join(rows)
+
+
+def _resolve_transcript(arg: str | pathlib.Path) -> pathlib.Path:
+    """CLI args are run DIRECTORIES (`runs/<arm>/wm<n>`); the file lands at
+    `<dir>/transcript.jsonl`. A `*.jsonl` arg is used as-is."""
+    p = pathlib.Path(arg)
+    if p.suffix == ".jsonl":
+        return p
+    return p / "transcript.jsonl"
+
+
+def _label(arg: str | pathlib.Path) -> str:
+    """The `<arm>/<wm>` tail of a run path (fallback: the path stem)."""
+    p = pathlib.Path(arg)
+    parts = [x for x in p.parts if x not in ("", "/")]
+    # drop a trailing transcript.jsonl so a file arg labels like its dir
+    if parts and parts[-1].endswith(".jsonl"):
+        parts = parts[:-1]
+    if len(parts) >= 2:
+        return "/".join(parts[-2:])
+    return parts[-1] if parts else p.stem
+
+
+def main(argv: list[str]) -> int:
+    """`python -m benchmark.anatomy <path> [<path> ...]` — one path renders, two+
+    compare, zero prints usage (exit 2). A single missing path fails loud."""
+    if not argv:
+        print("usage: python -m benchmark.anatomy <run-dir-or-transcript> [<run-dir> ...]",
+              file=sys.stderr)
+        return 2
+    if len(argv) == 1:
+        print(render_anatomy(_resolve_transcript(argv[0])))
+        return 0
+    print(compare_arms({_label(a): _resolve_transcript(a) for a in argv}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
