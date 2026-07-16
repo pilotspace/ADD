@@ -10372,7 +10372,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T06:52:20+00:00",
+  "updated": "2026-07-16T09:46:41+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10871,6 +10871,14 @@
       "confirmed_at": null,
       "confirmed_by": null,
       "await_confirm": true
+    },
+    "persona-gepa-loop": {
+      "title": "Persona Gepa Loop",
+      "goal": "",
+      "stage": "mvp",
+      "status": "queued",
+      "created": "2026-07-16T09:46:41+00:00",
+      "updated": "2026-07-16T09:46:41+00:00"
     }
   },
   "active_milestone": "thin-engine-loop",
