@@ -2623,7 +2623,7 @@
     },
     "cross-platform-inode-reuse-stress": {
       "title": "Cross-Platform Inode-Reuse Stress Test",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": null,
       "depends_on": [],
@@ -10212,7 +10212,7 @@
     },
     "strategy-section": {
       "title": "add a drafted-blank ## Strategy slot to MILESTONE.md.tmpl + engine handling",
-      "phase": "tests",
+      "phase": "direction",
       "gate": "none",
       "milestone": "strategy-intake",
       "depends_on": [],
@@ -10372,12 +10372,12 @@
     },
     "phase-collapse-3": {
       "title": "Engine: collapse 6 phases to 3 (direction\u00b7build\u00b7verify), freeze/gate compound-cross, back-compat read map",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "thin-engine-loop",
       "depends_on": [],
       "created": "2026-07-16T09:51:28+00:00",
-      "updated": "2026-07-16T10:08:00+00:00",
+      "updated": "2026-07-16T12:04:55+00:00",
       "sensitivity": "architecture",
       "freeze": {
         "version": "v1",
@@ -10391,35 +10391,40 @@
       },
       "flag_verified": true,
       "tripwire": {
-        "contract_md5": "47f31b48664c51ce16e3ab700da1fd74",
+        "contract_md5": "1499450c57cd6e129f06e0abdc37dabe",
         "tests": {
           "add-method/tooling/test_phase_collapse.py": "370f220c234275231e963a2d8cd030b0"
         }
       },
       "scope": {
         "declared": [
-          "add-method/tooling/add.py",
-          "add-method/tooling/add_engine/constants.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/tooling/test_phase_collapse.py",
-          "add-method/tooling/test_advance_fold_build_gate.py",
-          "add-method/tooling/test_first_call_ergonomics.py",
-          "add-method/tooling/test_hint_batch_ops.py",
-          "add-method/tooling/test_guide.py",
-          "add-method/tooling/test_kickoff_truth.py",
-          "add-method/tooling/test_next_footer_engine.py",
-          "add-method/tooling/test_status_orientation_diet.py",
-          "add-method/tooling/test_thin_engine_call_floor.py",
-          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/",
+          "add-method/.add/tooling/",
+          "add-method/docs/02-the-flow.md",
+          "add-method/docs/appendix-c-glossary.md",
+          "add-method/diagrams/CHECKLIST.md",
+          "02-the-flow.md",
           ".add/SEAMS.md",
+          ".add/docs/",
           "tmp/"
         ],
-        "snapshot_md5": "516a1aea3780adc648ffaf0e3a2ecab1"
+        "snapshot_md5": "d510ccf519357eaceb66ee675073466f"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-16T12:04:48+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "template-unify": {
       "title": "One TASK.md.tmpl under 3 phase banners; delete TASK.fast.md.tmpl; --fast = full minus _FAST_SECTIONS",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [
@@ -10430,7 +10435,7 @@
     },
     "skill-loop-fold": {
       "title": "SKILL.md narrates the 3-beat loop; phases/ 7\u21923 on-demand references; zero mandatory guide reads",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [
@@ -10442,7 +10447,7 @@
     },
     "persona-routes-depth": {
       "title": "Persona proposes route (full|fast|oneshot) + depth at new-task; human ratifies at the freeze",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [
@@ -10453,7 +10458,7 @@
     },
     "engine-kernel-trim": {
       "title": "Usage-mined strike-list + dedup: minimal kernel, stdlib-only, perf floor held",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [
@@ -10464,7 +10469,7 @@
     },
     "call-census-proof": {
       "title": "add-bench call census: median \u22643 add.py calls per task, fidelity floor held",
-      "phase": "specify",
+      "phase": "direction",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [
@@ -10477,7 +10482,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T10:08:00+00:00",
+  "updated": "2026-07-16T12:04:55+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

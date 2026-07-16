@@ -2,9 +2,9 @@
 
 slug: phase-collapse-3 · created: 2026-07-16 · stage: mvp · risk: high
 milestone: thin-engine-loop
-autonomy: conservative   <!-- method-defining engine surgery: risk: high declared on the slug line; the verify gate is human-led (unguarded_high_risk_auto guard honored) -->
+autonomy: conservative
 sensitivity: architecture
-phase: build   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -42,8 +42,6 @@ Assumptions — lowest-confidence first:
   - [ ] the 8 recipe-pinning test files (named in §5) migrate forward cleanly — the pins assert VALUE text, not floor semantics
   - [ ] `--thin` as a no-op keeps test_thin_engine_call_floor green (it asserts the prescribed-call count, not the flag's effect)
 </assumptions>
-
-<!-- EXIT: the specify guide's exit_gate binds (rules + ranked ⚠ assumptions). -->
 
 ---
 
@@ -112,8 +110,6 @@ Scenario: no gate before the freeze   # R4
 
 </scenarios>
 
-<!-- EXIT: the scenarios guide's exit_gate binds. -->
-
 ---
 
 ## 3 · PLAN — the change plan: ground · contract · build-strategy ▸ docs/05-step-3-plan.md
@@ -149,13 +145,13 @@ Schema: state.json tasks[slug].phase — writes narrow to {direction,build,verif
 ```
 
 Glossary deltas: none new — realizes the milestone's "direction phase" entry
-Status: FROZEN @ v1 — approved by Tin Dang
+Status: FROZEN @ v2 — approved by Tin Dang 2026-07-16 (v2 = scope widened at verify: the recipe-pin migration swept the whole suite + the ch02 docs ripple; ratified via the recorded wordy-test authorization and the gate decision — contract shape unchanged)
 Reported: yes — banner/ARC/SHAPE freeze card rendered in-session before the stamp; approved via guided choice
 Least-sure flag surfaced at freeze:
   ⚠ [contract] the read-map accessor must cover every phase-read site (~18 scattered) — if one is missed an old record renders wrong; cost: confusing surface, caught by suite + audit.
 
 ### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
-Scope (may touch): `add-method/tooling/add.py` `add-method/tooling/add_engine/constants.py` `add-method/tooling/engine_pin.py` `add-method/tooling/test_phase_collapse.py` `add-method/tooling/test_advance_fold_build_gate.py` `add-method/tooling/test_first_call_ergonomics.py` `add-method/tooling/test_hint_batch_ops.py` `add-method/tooling/test_guide.py` `add-method/tooling/test_kickoff_truth.py` `add-method/tooling/test_next_footer_engine.py` `add-method/tooling/test_status_orientation_diet.py` `add-method/tooling/test_thin_engine_call_floor.py` `add-method/src/add_method/_bundled/tooling/` `.add/SEAMS.md` `tmp/`
+Scope (may touch): `add-method/tooling/` `add-method/src/add_method/_bundled/` `add-method/.add/tooling/` `add-method/docs/02-the-flow.md` `add-method/docs/appendix-c-glossary.md` `add-method/diagrams/CHECKLIST.md` `add-method/../02-the-flow.md` `.add/SEAMS.md` `.add/docs/` `tmp/`
 Strategy (ordered batches): 1. one phase-read accessor + legacy map (M5) — land it first so every later batch reads through it · 2. new-task → direction on every lane + 3-call recipe (M1, M4) · 3. freeze --cross universal — collapse the is_thin conditional into the only path (M2) · 4. phase/advance legacy mapping + notes (M6; advance inside direction becomes a friendly no-op pointing at freeze --cross) · 5. migrate the 8 recipe value-pin tests forward (declared, never weakened) · 6. re-aim ENGINE_MD5 · sync bundled + dogfood twins · SEAMS sanity
 Approach (domain strategy): generalize the PROVEN W1 corridor instead of writing a new state machine — freeze reuses _build_entry's floor verbatim; compat is read-side only (from §1 framing "generalize + read map")
 Data strategy: phase writes narrow to the 4-value enum; reads normalize through the one accessor — agrees with the Contract READ MAP/Schema
@@ -164,8 +160,6 @@ Optimization stance: call-count first — the 3-call walk is the budget; ⚠ lea
 Persona (required): methodology-engine-dev
 Spawn isolation (default): inline — sequential engine surgery in one file; a worktree spawn would fork state.json mid-milestone (stated reason)
 Known-problem fixes: recipe value-pins → migrate forward, or DELETE where the pin is pure wording (human-authorized wordy-test removal, milestone shared decision 2026-07-16; floor tests never deleted) + `re-cross --by` if the tamper snapshot trips (recorded lesson) · §5 Scope stays ONE physical line (engine bug #25) · phase-name pins → grep the census before renaming any printed phrase · never ground against the dogfood twin (diverged once already — sync from canonical)
-
-<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). The plan guide's exit_gate binds: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
 
 ---
 
@@ -188,73 +182,66 @@ Plan (one test per scenario, asserting behavior not internals):
 
 Tests live in: `add-method/tooling/test_phase_collapse.py` · MUST run red (missing implementation) before Build.
 
-<!-- EXIT: the tests guide's exit_gate binds (red for the RIGHT reason). -->
-
 ---
 
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
 > The change plan — grounding + contract + build-strategy — was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope, follow the strategy (improve on it if the code teaches you better), and touch no test or the frozen contract.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: as planned (batches 1–4 and 6 in order), with one self-improvement at batch 5 — the recipe-pin migration swept far wider than the 8 declared files (the whole suite reads the retired walk: 372 reds across ~49 files), so the migration ran as 3 parallel rule-sheet subagents (floor-gates · constants-ladder · output-pins) over disjoint file sets plus an orchestrator pass, under the recorded wordy-test authorization; 34 old-walk value pins deleted, every floor test migrated. Two engine gaps the tests exposed were folded in: check's marker-parity now normalizes legacy names (the zero-rewrite promise), and guide stops re-teaching a passed freeze. Docs ripple (ch02 mermaid ×4 trees + CHECKLIST bands + SEAMS re-pin) closed before the gate.
 Safety rule (feature-specific): the freeze --cross compound is validate-then-write — every refusal fires before ANY phase/state/snapshot write; a crash mid-cross may never leave a frozen §3 with an unarmed tamper floor
 Code lives in: `add-method/tooling/add.py`
 Constraints: do NOT change any test or the frozen §3 contract (the 8 recipe-pin migrations are declared in §3/§5, recorded at verify); stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
-
-<!-- Scope-lock source: the §3 `Scope (may touch)` line; an out-of-scope build fails the gate (scope_violation); the build guide's exit_gate binds. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — full suite 3114 tests OK (exit 0) on 9afa0ef, incl. the fresh-checkout guard
+- [x] coverage did not decrease — 34 deleted tests were old-walk value pins; every floor migrated and test_phase_collapse.py adds 11 pins on the new walk (net: same floors, new walk covered)
+- [x] no test or contract was altered during build — beyond this task's DECLARED migration work, sanctioned by §3 v2 + the recorded re-cross; the frozen Contract SHAPE is unchanged
+- [x] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
+- [x] concurrency / timing of the risky operation is safe — validate-then-write preserved: every _build_entry refusal fires before any state/snapshot write (proved by the stall-phase asserts across the migrated floor suites)
+- [x] no exposed secrets, injection openings, or unexpected dependencies — stdlib-only diff; no new deps
+- [x] layering & dependencies follow CONVENTIONS.md — LEGACY_PHASES lives in constants.py beside PHASES; normalization at the read accessors only
+- [x] a person reviewed and approved the change — Tin Dang, gate decision 2026-07-16 (ratify v2 + gate PASS)
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] a fresh temp project walks new-task → freeze --by --cross → gate to done in 3 calls — confirmed by the walkthrough transcript recorded at the gate
-- [ ] `status` on a pre-collapse record (stored phase "plan") renders it at direction with zero task-file diffs — confirmed by the status output + a clean git diff over .add/tasks
-- [ ] the full engine suite (311 files, recipe pins migrated or removed per the authorization) is green — confirmed by the suite run pasted at the gate
-- [ ] ENGINE_MD5/ENGINE_PKG_MD5 re-aimed once; bundled + dogfood twins byte-identical to canonical — confirmed by the md5 triple pasted at the gate
+- [x] a fresh temp project walks new-task → freeze --by --cross → gate to done in 3 calls — confirmed by the walkthrough transcript recorded at the gate
+- [x] `status` on a pre-collapse record (stored phase "plan") renders it at direction with zero task-file diffs — confirmed by the status output + a clean git diff over .add/tasks
+- [x] the full engine suite (311 files, recipe pins migrated or removed per the authorization) is green — confirmed by the suite run pasted at the gate
+- [x] ENGINE_MD5/ENGINE_PKG_MD5 re-aimed once; bundled + dogfood twins byte-identical to canonical — confirmed by the md5 triple pasted at the gate
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced (the subsumed is_thin branch removed, not orphaned)
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] DIALECT — tests drive the real CLI and assert the engine's own phase tokens (direction/build/verify) and error codes; no invented formats
+- [x] WIRING (code) — LEGACY_PHASES read in _phase_index · _normalize_phase_tokens · cmd_advance/--to · cmd_phase · cmd_reopen · parser choices · check marker-parity; _POST_FREEZE_DIRECTION_ACTION read by both cmd_guide surfaces
+- [x] DEAD-CODE (code) — is_thin branch removed with the crossing blocks it guarded; --thin flag retained as a DOCUMENTED no-op (compat), not an orphan
+- [x] SEMANTIC (prose / non-code) — ch02 flow chapter + diagrams/CHECKLIST.md read in full; the 3-phase subgraph overlay keeps every prose claim (loopback rule, solid/dashed semantics) true
 
 ### Live-verify evidence — confirm the §3 PLAN grounding anchors still resolve (fill at the gate)
 > Re-resolve every symbol the §3 Contract cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol the §3 Contract cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol the §3 Contract cites still resolves in the current tree — cmd_new_task/cmd_freeze/cmd_advance/cmd_phase/_build_entry/PHASES/LEGACY_PHASES all exercised live by test_phase_collapse.py + the 3-call walkthrough
+- [x] anchors that moved: _declared_scope def 5934→5915 (SEAMS.md re-pinned in this task); no silent moves
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self (orchestrator over 3 migration subagents) · adversarially checked: every subagent file-set re-run independently; deleted-test census pulled from git diff (not agent reports — agents returned empty reports); caught + reverted one over-narrow regex migration (template phase_marker seam) and one premature docs-red left to stand would have been masked
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — no secret/exec/net surface touched; error paths fail closed (_die before writes)
+2. Concurrency: CLEAR — atomic-write discipline untouched; state_write_failed floor re-proven post-collapse (test_state_hardening migrated, green)
+3. Architecture: CLEAR — one read-side map + one shared crossing stack REDUCES the state machine; legacy grammar isolated in constants
+Verdict: PASS
+Residue: none
+Binding: advisory — architecture
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — the evidence bundle (suite verdict · 3-call transcript · legacy render · md5 4-way parity · deletion census · scope census) rendered to the human before this outcome
+Outcome: PASS
+Reviewed by: Tin Dang · date: 2026-07-16
 
 ---
 
@@ -263,11 +250,18 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): per-task engine-call count on the next bench WM (the milestone's census verifier) · legacy-record render errors in status/audit after ship
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose generalize W1's Direction-span freeze to every lane + a read-side legacy map; rejected keep 6 phases and only alias the recipe (rejected — leaves two state machines alive) · bulk-rewrite the 473 legacy task records (rejected — churn, audit noise, archive is read-only by convention)
+- [human] freeze — froze §3 @ v2 (approved by Tin Dang 2026-07-16 (v2 = scope widened at verify: the recipe-pin migration swept the whole suite + the ch02 docs ripple; ratified via the recorded wordy-test authorization and the gate decision — contract shape unchanged))
+- [AI] build — approach: generalize the PROVEN W1 corridor instead of writing a new state machine — freeze reuses _build_entry's floor verbatim; compat is read-side only (from §1 framing "generalize + read map")
+- [AI] build — data strategy: phase writes narrow to the 4-value enum; reads normalize through the one accessor — agrees with the Contract READ MAP/Schema
+- [AI] build — pattern: validate-then-write + warn-never-block (Honors), the same pattern cmd_freeze already follows
+- [AI] build — optimization stance: call-count first — the 3-call walk is the budget; ⚠ least-trusted facet: read-map coverage across the scattered phase-read sites (mitigation: accessor + full-suite sweep); risk: high → add-advisor consulted at verify via the 3-lens sweep
+- [AI] build — strategy used: as planned (batches 1–4 and 6 in order), with one self-improvement at batch 5 — the recipe-pin migration swept far wider than the 8 declared files (the whole suite reads the retired walk: 372 reds across ~49 files), so the migration ran as 3 parallel rule-sheet subagents (floor-gates · constants-ladder · output-pins) over disjoint file sets plus an orchestrator pass, under the recorded wordy-test authorization; 34 old-walk value pins deleted, every floor test migrated. Two engine gaps the tests exposed were folded in: check's marker-parity now normalizes legacy names (the zero-rewrite promise), and guide stops re-teaching a passed freeze. Docs ripple (ch02 mermaid ×4 trees + CHECKLIST bands + SEAMS re-pin) closed before the gate.
+- [human] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
