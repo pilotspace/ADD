@@ -110,9 +110,9 @@ writer) — `soul.md`.
 
 One trigger = one guide — full prose: `beyond.md`; load only when a trigger fires:
 
-- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default execution mode) ·
+- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default mode) ·
   self-score `confidence.md`
-- small low-risk task → fast lane `phases/fast-lane.md` · UI feature → UDD loop `design.md`
+- small low-risk task → fast lane `phases/fast-lane.md` · UI/experience surface → UDD loop `design.md`
 - milestone goal unmet at `milestone-done` → `loop.md`
 - status cues: `MVP covered` → `graduate.md` · closed-milestone cut → `release.md`
 - monorepo green-bars → `components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-owns-gates",
+  "active_task": "udd-experience-pillar",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10293,10 +10293,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "udd-experience-pillar": {
+      "title": "redefine UDD from UI-design into experience-driven development (UI + gate/interaction UX)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "strategy-intake",
+      "depends_on": [],
+      "created": "2026-07-16T04:02:05+00:00",
+      "updated": "2026-07-16T04:21:19+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-16T04:10:06+00:00",
+        "approved_by": "tindang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "5ab6028164449fe126ea42fd68eead2b",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/design.md",
+          "add-method/skill/add/SKILL.md",
+          ".claude/skills/add/design.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/design.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          "add-method/tooling/test_design_intake_beat.py",
+          "add-method/tooling/test_udd_experience_pillar.py"
+        ],
+        "snapshot_md5": "5baefc84c4bca86c1a15235c173472db"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T03:49:04+00:00",
+  "updated": "2026-07-16T04:21:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11669,7 +11711,7 @@
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
-    "strategy-intake": "persona-owns-gates"
+    "strategy-intake": "udd-experience-pillar"
   },
   "todos": [
     {

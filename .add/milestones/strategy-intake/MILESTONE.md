@@ -28,6 +28,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - **STRIKEABLE CARVE-OUT — the one hard floor:** security is ALWAYS HARD-STOP, un-forceable — kept HARD against the "floors become persona judgment" choice because it is written into the method constitution (release readiness floor is un-`--force`-able) and the operating rules forbid authoring a security auto-pass. The human may strike this line to dissolve it too; until struck, it binds every task.
 - the milestone strategy is SOFT (preferred plan); the loop/builder may deviate and records what it did — mirrors strategy-soft-not-hard for §5
 - a persona is ADVISORY on direction: it frames + paces, the human still decides at whatever gate the persona surfaces
+- UDD-redefine decisions (2026-07-16, user-chosen): (1) AXES — add a FIFTH axis INTERACTION (cadence · when/how to seek the human · turn-rhythm) alongside the four visual axes; the four originals stay (owner: udd-experience-pillar). (2) HOME — report-template.md FOLDS into the UDD doc family (rename/merge; re-point the 8 phase guides + ~14 tests) (owner: gate-experience-udd). (3) LOOP — the gate uses a LIGHTWEIGHT text-mode UDD variant (no wireframe/screen-capture beat; persona designs via the axes + a confirm) (owner: gate-experience-udd)
 
 ## Shared / risky contracts (freeze these first)
 - the `## Strategy` section schema -> owning task strategy-section   (FROZEN @ v1 — every task cites its shape)
@@ -37,7 +38,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
 - [x] persona-owns-gates      depends-on: none                                    — DONE (gate PASS): retired the fixed report-template section list; personas own gate structure + cadence; report-template.md is persona-adaptive PRINCIPLES carrying the four floors + the security carve-out. The contract the rest cites
 - [ ] strategy-section        depends-on: none                                    — FROZEN @ v1: drafted-blank `## Strategy` slot in MILESTONE.md.tmpl; the persona records the optimized task plan here
-- [ ] udd-experience-pillar   depends-on: none                                    — redefine UDD from UI-design into experience-driven development: design.md + the UDD chapter + SKILL.md's UDD trigger cover UI AND interaction/gate UX; generalize the four design axes to any experience surface (text/CLI included)
+- [x] udd-experience-pillar   depends-on: none                                    — DONE (gate PASS): design.md reframed experience-driven (a UI feature OR any human-facing experience surface — screen · interactive flow · human gate); the design-intake beat gained a FIFTH axis INTERACTION (cadence · seek · turn-rhythm); SKILL.md's trigger names experience surfaces; 3 trees byte-identical, SKILL.md 9490<9500. DESIGN.md.tmpl+glossary INTERACTION field deferred (§7 SPEC·open)
 - [ ] gate-experience-udd     depends-on: udd-experience-pillar, persona-owns-gates — host the persona-owned gate report as a UDD text-mode UX artifact; the persona designs the gate experience through the UDD lens; report-template.md points up to UDD as its home
 - [ ] persona-at-intake       depends-on: none                                    — extend add-persona selection + `persona:` routing to the intake/scope surface; intake.md/scope.md load the fitting persona before shaping
 - [ ] strategy-guide          depends-on: strategy-section, persona-owns-gates, persona-at-intake — new strategy.md: the persona-framed discuss→optimize→converge PM loop to ~95% confidence, using the persona-owned gate
@@ -47,7 +48,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] Gate reports are persona-owned — structure + cadence adapt per project; no fixed template section list; the four floors are met in the persona's voice and security stays HARD-STOP  (← persona-owns-gates, DONE)
 - [ ] A MILESTONE.md carries a `## Strategy` slot the persona fills risk-proportionally               (← strategy-section)
-- [ ] UDD is redefined as experience-driven development — the pillar (design.md + chapter + SKILL.md trigger + the four axes) covers UI AND interaction/gate UX  (← udd-experience-pillar)
+- [x] UDD is redefined as experience-driven development — the pillar (design.md + SKILL.md trigger + the FIVE axes incl. INTERACTION) covers UI AND interaction/gate UX  (← udd-experience-pillar, DONE)
 - [ ] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd)
 - [ ] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake)
 - [ ] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide)
