@@ -94,9 +94,9 @@ contract freeze**, lowest-confidence-first — `run.md`.
 evidence (*auto-resolved* — an explicit PASS, not a skip). **Security always escalates** (HARD-STOP);
 so do concurrency / architecture residue and a lowered autonomy level — `run.md`.
 
-At every human decision point (intake · bundle approval · gate · milestone close) follow
-`report-template.md`: open with the banner then the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →
-FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT; show-before-ask; never pre-stamp; the question is a summary, never the artifact.
+At every human decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report —
+`report-template.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-confidence-first) ·
+evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP).
 Read `report-template.md`/`run.md` at most once per session — each phase guide carries its gate card.
 
 In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)

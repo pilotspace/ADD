@@ -10231,12 +10231,12 @@
     },
     "persona-owns-gates": {
       "title": "retire the fixed report-template \u2014 personas own gate structure + cadence",
-      "phase": "tests",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "strategy-intake",
       "depends_on": [],
       "created": "2026-07-16T03:12:38+00:00",
-      "updated": "2026-07-16T03:18:19+00:00",
+      "updated": "2026-07-16T03:49:04+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-16T03:18:19+00:00",
@@ -10246,11 +10246,57 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "d4e6d7f991238a185b601031c160b9ff",
+        "tests": {
+          "add-method/tooling/test_persona_owned_gates.py": "74552e0acb7f42bea8277cc8d7705889"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/report-template.md",
+          "add-method/skill/add/SKILL.md",
+          ".claude/skills/add/report-template.md",
+          ".claude/skills/add/SKILL.md",
+          "add-method/src/add_method/_bundled/skill/add/report-template.md",
+          "add-method/src/add_method/_bundled/skill/add/SKILL.md",
+          "add-method/tooling/test_persona_owned_gates.py",
+          "add-method/tooling/test_report_shape_scan_audit.py",
+          "add-method/tooling/test_xml_convention.py"
+        ],
+        "snapshot_md5": "7d662cb72cb0c8575a089e2d340e3959"
+      },
+      "heal": {
+        "attempts": 2,
+        "history": [
+          {
+            "at": "2026-07-16T03:46:25+00:00",
+            "reason": "tamper_detected:contract_tampered",
+            "source": "tamper"
+          },
+          {
+            "at": "2026-07-16T03:48:15+00:00",
+            "reason": "scope_violation: task 'persona-owns-gates' touched outside its declared \u00a75 Scope \u2014 add-method/tooling/test_report_shape_scan_audit.py (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "recross": {
+        "by": "tindang",
+        "at": "2026-07-16T03:48:56+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T03:18:19+00:00",
+  "updated": "2026-07-16T03:49:04+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

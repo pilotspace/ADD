@@ -4,6 +4,8 @@ The engine renders artifacts (`report`, `report --decide`, `status`); this file 
 
 Use it every time you report at or near a human gate.
 
+**The fitting persona owns the gate report** — these are PRINCIPLES, not a fixed template: CONVEY the content below, but the persona owns structure, order, and cadence per project. The layout shown is a sensible DEFAULT; the four floors (below) it may never drop.
+
 ## The decision banner — rendered first, above everything
 
 Every report at a human gate opens with a banner line, so a human scanning a long chat can spot "this needs my input" without reading prose:
@@ -62,17 +64,15 @@ SHAPE   <task title, bold> — v<N>  (DRAFT — not yet frozen)
   <error case / reject token>  <what triggers it>
 ```
 
-- **Collapse done to a count.** Never enumerate finished tasks by name.
-- **Cap live items at ~5–7**, dependency-ordered; footer `+N more queued`.
-- **One line per item** — slug + what it does or blocks on; never restate the whole TASK.md.
-- **Glyphs are fixed** — ✅ done · 🔄 active · ⬜ pending · ⚠ blocked/flagged; never invent new ones.
-- **Sourced from the engine, summarized by you** — pull from `add.py status`'s `tasks:`/`streams:` output; never paste it verbatim into chat.
-- **SHAPE is freeze-only** — the concrete thing being locked, so the human reviews the actual shape, not just commentary about it.
-- **BUILD PLAN is the HOW** — at a freeze, `report --decide` also renders the §3 Build-strategy plan-of-action (Scope · batches · Persona · Spawn) as a `BUILD PLAN (§3 …)` block, so the human approves how the build runs, not only the SHAPE. Placeholder fields are skipped.
+- **Collapse done to a count** (never enumerate finished); **cap live items ~5–7**, dependency-ordered, footer `+N more queued`; one line each — never restate the TASK.md.
+- **Glyphs fixed** — ✅ done · 🔄 active · ⬜ pending · ⚠ blocked/flagged; never invent new ones.
+- **Sourced from `add.py status`, summarized by you** — never pasted raw into chat.
+- **SHAPE is freeze-only** — the concrete shape being locked, so the human reviews it, not commentary.
+- **BUILD PLAN is the HOW** — at a freeze `report --decide` also renders the §3 Build-strategy (Scope · batches · Persona · Spawn) as a `BUILD PLAN (§3 …)` block, so the human approves how the build runs, not only the SHAPE; placeholders skipped.
 
-## The report blocks, in order
+## The report blocks — what to convey (you own the order)
 
-Render every block (write "none" rather than dropping one); add MORE when needed.
+A gate report CONVEYS these; the persona owns the order and may merge, reorder, or trim to fit the project — conveying each (write "none" rather than silently dropping one), never dropping a floor. A sensible default order follows, not a mandate; add MORE when needed.
 
 ```
 SUMMARY   one line: intent + target + where we are + what we done
@@ -83,12 +83,7 @@ APPROVE   what you need from the human (or "none — FYI") — exactly one — s
 NEXT      the recommended next actions, ranked (top ▶ highlighted, bolded) + what each unlocks
 ```
 
-1. **SUMMARY** — one line: intent + target + position. **Never optional** — even when PLAN/SHAPE carries most of the context, SUMMARY renders as its own line, never merged into another block.
-2. **FLAGS** — lowest-confidence first, each with *why* and *cost if wrong*. Where TASK.md markers exist (`⚠` / `- [~]` / `- [ ]`), quote verbatim in document order.
-3. **DECIDED** — high-confidence autonomous calls, highest-confidence first, each with *why* it was safe. "none" when none. NEVER list a security / residue / lowered-autonomy call here.
-4. **EVIDENCE** — engine-sourced facts from `add.py` output, never re-typed.
-5. **APPROVE** — a **guided decision**: one `▶ … (recommended)` + 1–3 described alternatives. Exactly one per report, or "none — FYI". Rendered last — the interactive ask fires only after everything above it (show-before-ask).
-6. **NEXT** — ranked actions, top marked `▶` with what it unlocks. Mirror the rollup's `DECIDE NEXT` for the top; overrule only with a stated reason. **Informational, not a second gate**.
+- **SUMMARY** never optional — one line even when PLAN/SHAPE carries the context. **FLAGS** lowest-confidence-first (why + cost-if-wrong; quote TASK.md `⚠` / `- [~]` / `- [ ]` verbatim). **DECIDED** highest-confidence-first ("none" when none; never a security / residue / lowered-autonomy call). **EVIDENCE** engine-sourced, never re-typed. **APPROVE** the guided ask, last, after show-before-ask. **NEXT** ranked recommendations, not a second gate.
 
 ### Beyond the core blocks
 
@@ -105,12 +100,13 @@ APPROVE  <the question>
       <one-line description>
 ```
 
-- **Exactly one** option carries `▶ … (recommended)`; `confidence.md` informs which, human overrides freely.
-- **1–3 real alternatives** only — no strawmen, no filler; one genuine path → show one.
-- **Every option is described** — pick and each alternative carry a one-liner.
-- **Human gates only** — render at `[human gate]` points; not at `[you drive]` steps.
+- **Exactly one** `▶ … (recommended)` (per `confidence.md`; human overrides) + **1–3 real alternatives**, each described — no strawmen. **Human gates only** (`[human gate]`, not `[you drive]`). As an `AskUserQuestion` picker: recommended first with `(Recommended)`; else a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + flag count.
 
-**The ask itself** — when APPROVE becomes an `AskUserQuestion` picker: recommended first with a `(Recommended)` suffix. Without `AskUserQuestion`, a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + the flag count.
+## The four floors — the persona owns the form, never these
+
+Whatever shape the persona renders per project, it MUST hold all four:
+- **show-before-ask** · **one-approval-at-the-freeze** · **never-pre-stamp** a human decision point
+- **security = HARD-STOP** — the one **un-persona-negotiable** floor: a security finding is never persona-softened (the human alone may strike this carve-out). The "## Hard rules" below detail how they play out.
 
 ## Hard rules
 

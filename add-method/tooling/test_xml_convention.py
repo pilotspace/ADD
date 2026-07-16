@@ -258,7 +258,7 @@ ENGINE_FILES = {
     "report-template.md": {
         "tags": {"constraints"},
         "narrative": (
-            "## The report blocks, in order",                          # holds the digest ``` fence
+            "## The report blocks — what to convey (you own the order)",  # holds the digest ``` fence; persona owns order (task: persona-owns-gates)
         )},
     "setup-review.md": {
         "tags": {"constraints"},
