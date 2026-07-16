@@ -44,10 +44,6 @@ FULL_TWINS = _existing(HERE / "templates" / "TASK.md.tmpl",
                        REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
                        ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
                        BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
-FAST_TWINS = _existing(HERE / "templates" / "TASK.fast.md.tmpl",
-                       REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-                       ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-                       BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl")
 BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "5-build.md",
                 REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md",
                 BUNDLE / "skill" / "add" / "phases" / "5-build.md")
@@ -80,9 +76,7 @@ FULL_FACET_LINES = (
 # template-hint-dedup: the fast §5 Approach hint migrated from a stance-restating one-liner
 # to a ≤6-word technique TAG ("NOT a restatement of the Strategy above") — still ONE collapsed
 # line in the same §5 position (the facets feature's fast-collapse invariant holds).
-FAST_FACET_LINE = ("Approach (domain strategy): <a ≤6-word domain-technique TAG — e.g. "
-                   "\"fail-open derived render\" · \"early-return idempotence\"; NOT a "
-                   "restatement of the Strategy above — or \"obvious, correctness-first\">")
+# template-unify: the fast render shares the FULL facet lines (one template)
 
 
 def _md5(p: Path) -> str:
@@ -120,22 +114,13 @@ class StrategyFacetsTest(unittest.TestCase):
         for token in ("never blank", "⚠", "add-advisor", "advisory, never a gate"):
             self.assertIn(token, stance, f"Optimization stance missing discipline token: {token}")
 
-    # ---- M4: fast template collapses to exactly ONE Approach line ---------------
-    def test_fast_template_single_collapsed_line(self):
-        text = FAST_TWINS[0].read_text(encoding="utf-8")
-        self.assertIn(FAST_FACET_LINE, text, "fast §5 missing the collapsed Approach line")
-        self.assertEqual(text.count(APPROACH_LABEL), 1, "fast §5 must carry exactly one Approach line")
-        for label in (DATA_LABEL, STANCE_LABEL):
-            self.assertNotIn(label, text, f"fast §5 must NOT carry the {label} facet (collapse)")
-        self.assertLess(text.index(FAST_STRATEGY_LABEL), text.index(FAST_FACET_LINE),
-                        "collapsed Approach must sit BELOW the fast strategy line")
-        self.assertLess(text.index(FAST_FACET_LINE), text.index(ACTUAL_LABEL),
-                        "collapsed Approach must sit ABOVE Strategy actually used")
+    # template-unify: M4's collapsed fast Approach line is retired — the fast lane
+    # derives from the one template and carries the FULL facet lines
+    # (test_scaffold_carries_facets pins the live fast scaffold).
 
     # ---- M5: twins in md5 lockstep ----------------------------------------------
     def test_template_twins_lockstep(self):
         self.assertEqual(len({_md5(p) for p in FULL_TWINS}), 1, "TASK.md.tmpl twins diverged")
-        self.assertEqual(len({_md5(p) for p in FAST_TWINS}), 1, "TASK.fast.md.tmpl twins diverged")
 
     # ---- M6: the build guide teaches the facets, trio identical -----------------
     def test_build_guide_teaches_facets(self):
@@ -180,11 +165,10 @@ class StrategyFacetsTest(unittest.TestCase):
         )
         for line in preexisting + (STRATEGY_LABEL, ACTUAL_LABEL):
             self.assertIn(line, text, "pre-existing §5 line changed — the add is additive")
-        self.assertIn(FAST_STRATEGY_LABEL, FAST_TWINS[0].read_text(encoding="utf-8"))
 
     # ---- R:scope_token_leak ------------------------------------------------------
     def test_no_backtick_in_facet_lines(self):
-        for line in FULL_FACET_LINES + (FAST_FACET_LINE,):
+        for line in FULL_FACET_LINES:
             self.assertNotIn("`", line, "a backtick in a §5 line can parse as a scope token")
 
     # ---- R:engine_touched --------------------------------------------------------
@@ -212,7 +196,8 @@ class StrategyFacetsTest(unittest.TestCase):
             fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
             for line in FULL_FACET_LINES:
                 self.assertIn(line, full, "full scaffold missing a facet line")
-            self.assertIn(FAST_FACET_LINE, fast, "fast scaffold missing the collapsed Approach line")
+            for line in FULL_FACET_LINES:
+                self.assertIn(line, fast, "fast scaffold missing a facet line (uniform §3)")
         finally:
             os.chdir(cwd)
 

@@ -2,9 +2,9 @@
 
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
-autonomy: {{autonomy}}   <!-- level: manual<conservative<auto — lower for high-risk (`add.py autonomy set`). Multi-component? a `component: <name>` line (.add/components.toml) joins that root to §5 Scope. Relations: `--depends-on`/`--extends`/`--relates-to` task edges (GLOSSARY; `check` validates). -->
-phase: specify   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: {{autonomy}}   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line (.add/components.toml) joins that root to §5 Scope; task edges: `--depends-on`/`--extends`/`--relates-to` -->
+phase: direction   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · scenarios · change plan · red suite) to the ONE freeze -->
+<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy (`unguarded_high_risk_auto` refuses an unguarded completion). -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -27,6 +27,7 @@ After:
 <after>
   - <state that is true once it succeeds>
 </after>
+Boundary: <one format-variant per external input shape the tests must speak — e.g. aware vs naive timestamp · or "none — no external input">
 Assumptions — lowest-confidence first:
 <assumptions>
   ⚠ <the one assumption most likely to be wrong> — lowest confidence because <why>; if wrong: <cost>
@@ -91,7 +92,7 @@ Persona (required): <name the persona file under `.add/personas/` this build emb
 Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
 Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
 
-<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). The plan guide's exit_gate binds: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
+<!-- The freeze IS the one approval — it freezes the whole PLAN, led by the bundle's lowest-confidence flag. Contract = HARD (tamper-guarded); Grounding + Build-strategy = SOFT (the builder improves, recording actual at verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). Exit: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
 
 ---
 
@@ -170,7 +171,7 @@ Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
 Reviewed by: <name> · date: <date>
 
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured, never engine-blocked; a human spot-audit backstops anything unrecorded. -->
 
 ---
 

@@ -60,7 +60,7 @@ Then read the foundation map `add.py status --foundation` (one section: `--found
 
 **Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
 **Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
-- **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is
+- **fast** — `new-task --fast`: lean derived render, freeze-gated; a milestone-free `--fast` task is
   the blessed low-ceremony lane. Jot ideas: `add.py todo "<text>"` · `todo` lists · `todo --done <id>`.
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; `add.py autonomy set
   conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates

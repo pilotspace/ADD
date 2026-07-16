@@ -99,6 +99,8 @@ class _Harness(unittest.TestCase):
             # replace only the ### Contract sub-block body, leaving Grounding/Build-strategy intact.
             new = re.sub(r"(### Contract[^\n]*\n).*?(\n### Build-strategy)",
                          lambda m: m.group(1) + drafted + m.group(2), text, count=1, flags=re.S)
+            new = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                         "Boundary: none — no external input", new, count=1)
             p.write_text(new, encoding="utf-8")
 
     def _set_sensitivity(self, slug, token):

@@ -1,7 +1,6 @@
-<!-- PROMPT.persona.md.tmpl — the ONE canonical, portable, persona-aware worker prompt. Render it
-     per stream (substitute the {{...}} slots). NO runner-specific tokens live in the BODY — only
-     the thin per-runner spawn differs (see "## Adapter stubs" below). It mirrors the streams.md
-     worker contract; the engine renders it LOCALLY (no network, no process launch). -->
+<!-- The ONE portable persona-aware worker prompt — render per stream ({{...}} slots). NO
+     runner-specific tokens in the BODY; only the spawn differs (## Adapter stubs). Mirrors the
+     streams.md worker contract; rendered LOCALLY. -->
 
 # Worker prompt — task {{TASK_SLUG}} ({{MILESTONE}})
 
@@ -26,9 +25,8 @@ Boundary:
   a discovered scope/contract gap · a concurrency/architecture risk the tests cannot exercise.
 
 ## Adapter stubs
-ONE body above; only the spawn differs per runner. Honesty: only **Claude Code** is verified
-in-repo; every other row is an *illustrative* shape — confirm exact syntax with the `find-docs`
-skill before relying on it.
+ONE body above; only the spawn differs per runner. Only **Claude Code** is verified in-repo;
+every other row is an *illustrative* shape — confirm exact syntax before relying on it.
 
 | Runner | Spawn the worker with the rendered prompt body |
 |--------|------------------------------------------------|

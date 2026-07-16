@@ -22,7 +22,7 @@ from pathlib import Path
 import add
 
 FULL = {1, 2, 3, 4, 5, 6, 7}
-KEPT = {1, 3, 4, 5, 6}
+KEPT = {1, 2, 3, 4, 5, 6}   # template-unify: fast = full minus §7 (+§6 deep-check blocks)
 
 
 class FastNewTaskFlagTest(unittest.TestCase):
@@ -81,9 +81,10 @@ class FastNewTaskFlagTest(unittest.TestCase):
         """Freeze the fast task's §3 with a well-formed least-sure flag."""
         p = self._task_path(slug)
         t = p.read_text()
-        t = t.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by Tester 2026-06-23.")
-        t = t.replace("<[spec|contract|test] the point most likely wrong — why; if wrong: cost>",
-                      "[contract] the field rename may break a caller — cost: a follow-up migration")
+        t = t.replace("Status: DRAFT",
+                      "Status: FROZEN @ v1 — approved by Tester 2026-06-23.\n"
+                      "Least-sure flag surfaced at freeze: [contract] the field rename may "
+                      "break a caller — cost: a follow-up migration")
         p.write_text(t, encoding="utf-8")
 
     # ── scenario 1: --fast scaffolds the minimal template + records the marker ────────────

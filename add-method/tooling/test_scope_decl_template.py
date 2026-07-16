@@ -35,9 +35,7 @@ DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
 BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
 
 # fast-lane template trio (build-strategy-solutions ADD-2)
-CANON_FAST = HERE / "templates" / "TASK.fast.md.tmpl"
-DOG_FAST = REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl"
-BUNDLE_FAST = BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl"
+# template-unify: the fast lane derives from CANON_TMPL — no fast template files
 
 CANON_BUILD = ADD_METHOD / "skill" / "add" / "phases" / "5-build.md"
 DOG_BUILD = REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md"
@@ -53,7 +51,7 @@ ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
 SCOPE_LABEL = "Scope (may touch):"
 STRATEGY_LABEL = "Strategy (ordered batches):"
 KNOWN_FIX_LABEL = "Known-problem fixes:"             # ADD-1 (full §5)
-FAST_STRATEGY_LABEL = "Strategy & known-problem fixes:"  # ADD-2 (fast §5)
+FAST_STRATEGY_LABEL = "Strategy (ordered batches):"  # template-unify: the fast render shares the full labels
 SAFETY_LINE = "Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>"
 ACTUAL_LABEL = "Strategy actually used:"             # strategy-actual-writeback (full + fast §5) — the §7 ADR harvest key
 SECTION_HEADING = "## Declaring the scope of impact"
@@ -177,15 +175,9 @@ class ScopeDeclTemplateTest(unittest.TestCase):
             self.assertIn(line, text, "pre-existing §5 line changed - the add is additive")
 
     # ---- ADD-2: fast §5 gains a single strategy & known-problem fixes line --------
-    def test_fast_template_strategy_line(self):
-        text = CANON_FAST.read_text(encoding="utf-8")
-        self.assertIn(FAST_STRATEGY_LABEL, text, "fast §5 missing the strategy line")
-        self.assertLess(text.index(SCOPE_LABEL), text.index(FAST_STRATEGY_LABEL),
-                        "the fast strategy line must sit BELOW Scope")
-
-    def test_fast_template_mirrors(self):
-        self.assertEqual(_md5(CANON_FAST), _md5(DOG_FAST), "fast template: dogfood diverged")
-        self.assertEqual(_md5(CANON_FAST), _md5(BUNDLE_FAST), "fast template: bundle diverged")
+    # template-unify: the fast-template-file pins retired — the fast render is a
+    # derived strict subset of CANON_TMPL (test_template_unify); the scaffold
+    # test below still pins the fast lane's rendered labels end-to-end.
 
     # ---- ADD-1/2: a fresh scaffold carries the new lines (full + fast) ------------
     def test_scaffold_carries_strategy_solutions(self):
@@ -223,23 +215,13 @@ class ScopeDeclTemplateTest(unittest.TestCase):
         for line in EXISTING_LINES:
             self.assertIn(line, text, "pre-existing §5 line changed - the add is additive")
 
-    def test_fast_template_actual_strategy_line(self):
-        text = CANON_FAST.read_text(encoding="utf-8")
-        self.assertIn(ACTUAL_LABEL, text, "fast §5 missing the Strategy-actually-used line")
-        self.assertLess(text.index(FAST_STRATEGY_LABEL), text.index(ACTUAL_LABEL),
-                        "Strategy-actually-used must sit BELOW the fast strategy line")
-
-    def test_actual_strategy_label_identical_across_templates(self):
-        # one stable harvest key -> label_drift if the two templates diverge
+    def test_actual_strategy_label_survives_the_fast_strip(self):
+        # one stable harvest key — template-unify: the fast render derives from the one
+        # template, so the label can no longer drift; pin that the strip keeps it.
         full = CANON_TMPL.read_text(encoding="utf-8")
-        fast = CANON_FAST.read_text(encoding="utf-8")
         self.assertIn(ACTUAL_LABEL, full)
-        self.assertIn(ACTUAL_LABEL, fast)
-        # the label prefix is one byte-identical string in both files
-        self.assertEqual(
-            full[full.index(ACTUAL_LABEL):full.index(ACTUAL_LABEL) + len(ACTUAL_LABEL)],
-            fast[fast.index(ACTUAL_LABEL):fast.index(ACTUAL_LABEL) + len(ACTUAL_LABEL)],
-            "the Strategy-actually-used label drifted between the full and fast templates")
+        self.assertIn(ACTUAL_LABEL, add._strip_fast_sections(full),
+                      "the fast render must keep the Strategy-actually-used harvest label")
 
 
 if __name__ == "__main__":

@@ -252,7 +252,7 @@ _SKILL = HERE.parent / "skill" / "add"
 GROUND_MD = _SKILL / "phases" / "3-plan.md"   # grounding merged into the unified plan guide
 SCOPE_MD = _SKILL / "scope.md"
 TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
-FAST_TMPL = HERE / "templates" / "TASK.fast.md.tmpl"
+# template-unify: the fast lane derives from TASK.md.tmpl (no fast template file)
 GROUND_FIELDS = ("Touches", "Context", "Honors", "Anchors")
 
 
@@ -301,9 +301,11 @@ class GroundHardenTest(unittest.TestCase):
         # §1 ⚠ flag RESOLVED at freeze: human chose uniform grounding — the fast §0 also
         # NAMES the four fields (compactly; it need not carry the full prose rubric).
         #
-        # plan-phase-core: same re-point as above, fast-template Grounding sub-block.
-        sec = add._ground_section(FAST_TMPL.read_text(encoding="utf-8"))
-        self.assertTrue(sec, "TASK.fast.md.tmpl must carry a `### Grounding` sub-block")
+        # template-unify: the fast lane derives from the one template — pin the
+        # DERIVED render so a strip regression here would surface, not hide.
+        sec = add._ground_section(add._strip_fast_sections(
+            (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")))
+        self.assertTrue(sec, "the fast render must keep the `### Grounding` sub-block")
         missing = [f for f in GROUND_FIELDS if f not in sec]
         self.assertEqual(missing, [],
                          f"the fast §3 PLAN Grounding must name all four grounding fields (uniform); missing {missing}")

@@ -126,14 +126,13 @@ class _Board(unittest.TestCase):
         return self._run("freeze", slug, "--by", "Tester", *extra)
 
 
-# ── M1: the fast template scaffold carries the line ─────────────────────────
+# ── M1: the ONE template scaffolds the line (template-unify: both lanes) ─────
 class TemplateScaffoldTest(unittest.TestCase):
-    def test_fast_template_carries_boundary_line_after_accept(self):
-        body = (TEMPLATES / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
+    def test_template_carries_boundary_line_in_section1(self):
+        body = (TEMPLATES / "TASK.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("\nBoundary: <", body, "§1 must scaffold a Boundary: line")
-        acc = body.find("\nAccept: ")
-        bnd = body.find("\nBoundary: ")
-        self.assertGreater(bnd, acc, "Boundary: rides directly after Accept:")
+        self.assertLess(body.find("\nBoundary: "), body.find("## 2 ·"),
+                        "the Boundary: line lives in §1")
         line = re.search(r"(?m)^Boundary: .*$", body).group(0)
         self.assertIn("format-variant", line)
         self.assertIn("none — no external input", line)

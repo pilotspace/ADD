@@ -357,7 +357,7 @@ class OneshotNewTaskTest(_Harness):
         self._silent("new-task", "quick", "--title", "Feature", "--oneshot")
         text = self._task_md("quick").read_text(encoding="utf-8")
         secs = set(add._phase_spans(text))
-        self.assertEqual(secs, {1, 3, 4, 5, 6})   # §0 GROUND folded into §3 PLAN (plan-phase-core)
+        self.assertEqual(secs, {1, 2, 3, 4, 5, 6})   # template-unify: fast = full minus §7
         self.assertRegex(text, r"(?m)^fast:\s*true")
         self.assertRegex(text, r"(?m)^oneshot:\s*true")
         self.assertRegex(text, r"(?m)^gate_mode:\s*ai-plan-verify")
@@ -489,9 +489,10 @@ class AuditSkipRationaleMissingPostHocTest(_Harness):
 
 class TemplateScaffoldTest(unittest.TestCase):
     def test_fast_template_carries_no_skips_machinery(self):
-        # phase-merge-verify: the grammar is retired — the fast template no longer
-        # scaffolds the `skips:` hint or the rationale placeholder.
-        text = (HERE / "templates" / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
+        # phase-merge-verify: the grammar is retired. template-unify: the fast lane
+        # derives from the ONE template, so the derived render is the pinned surface.
+        text = add._strip_fast_sections(
+            (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8"))
         self.assertNotIn("skips:", text)
         self.assertNotIn("Skip rationale:", text)
 
@@ -522,10 +523,11 @@ class EngineTreeParityTest(unittest.TestCase):
         self.assertGreaterEqual(len(present), 2)
         self.assertEqual(len({_md5(p) for p in present}), 1)
 
-    def test_fast_template_trees_byte_identical(self):
-        present = [p for p in FAST_TMPL_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
+    def test_fast_template_gone_from_every_tree(self):
+        # template-unify: the fast lane derives from TASK.md.tmpl — no tree may
+        # resurrect the deleted TASK.fast.md.tmpl
+        for p in FAST_TMPL_TREES:
+            self.assertFalse(p.exists(), f"TASK.fast.md.tmpl must stay deleted: {p}")
 
 
 # ---------------------------------------------------------------------------
@@ -618,6 +620,9 @@ class NormalFlowUnchangedTest(_Harness):
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n")
         new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        # template-unify M6: the full scaffold now carries the §1 Boundary line — fill
+        # it (the boundary_unfilled floor fires on both lanes at freeze)
+        new = re.sub(r"(?m)^Boundary: <[^\n]*$", "Boundary: none — no external input", new)
         p.write_text(new, encoding="utf-8")
         self._silent("freeze", "--by", "Human")
         self._silent("advance", "t")    # direction -> build

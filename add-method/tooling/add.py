@@ -34,7 +34,7 @@ except ModuleNotFoundError:   # < 3.11: the registry is unsupported → degrade 
 from add_engine.constants import *  # noqa: F401,F403  (public constants via __all__)
 from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _GITIGNORE_BODY, _GUIDE_BEGIN, _GUIDE_END,
-    _RULE_REF_LINE, _FALLBACK_TASK, _FALLBACK_TASK_FAST,
+    _RULE_REF_LINE, _FALLBACK_TASK, _FAST_SECTIONS,
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
@@ -169,10 +169,11 @@ def _templates_dir() -> Path:
 def _render_template(name: str, **subs: str) -> str:
     """Load templates/<name>.tmpl and substitute {{key}} tokens.
 
-    Falls back to a built-in minimal template for TASK.md and the fast-lane TASK.fast.md.
+    Falls back to a built-in minimal template for TASK.md (template-unify: the fast
+    lane is a derived render of that same template, never a second file).
     """
     tmpl = _templates_dir() / f"{name}.tmpl"
-    _fallbacks = {"TASK.md": _FALLBACK_TASK, "TASK.fast.md": _FALLBACK_TASK_FAST}
+    _fallbacks = {"TASK.md": _FALLBACK_TASK}
     if tmpl.exists():
         text = tmpl.read_text(encoding="utf-8")
     elif name in _fallbacks:
@@ -183,6 +184,50 @@ def _render_template(name: str, **subs: str) -> str:
     for key, val in subs.items():
         text = text.replace("{{" + key + "}}", val)
     return text
+
+
+def _strip_fast_sections(text: str) -> str:
+    """template-unify: the fast render = the full render minus exactly the
+    _FAST_SECTIONS heading blocks — a strict line-subset by construction.
+    A key's block runs from its heading line to the line before the next heading
+    of the same-or-higher level (### stops at ###/##, ## at ##) or EOF; the
+    `---` separator immediately above a dropped block is absorbed with it."""
+    def _level(line: str) -> int:
+        return 2 if line.startswith("## ") else (3 if line.startswith("### ") else 0)
+
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if any(line.startswith(key) for key in _FAST_SECTIONS):
+            lvl = _level(line)
+            j = i + 1
+            while j < len(lines) and not (0 < _level(lines[j]) <= lvl):
+                j += 1
+            while out and not out[-1].strip():
+                out.pop()
+            if out and out[-1].strip() == "---":
+                out.pop()
+                while out and not out[-1].strip():
+                    out.pop()
+            out.append("")
+            i = j
+            continue
+        out.append(line)
+        i += 1
+    return "\n".join(out).rstrip("\n") + "\n"
+
+
+# The §3 block an --oneshot scaffold carries so the AI-plan-verify freeze floor
+# (_ai_verify_checklist_complete) has its checklist to read — spliced by cmd_new_task.
+_AI_VERIFY_RECORD_BLOCK = """### AI-verify record (required when gate_mode: ai-plan-verify)
+- [ ] §3 PLAN grounding anchors resolve in the current tree
+- [ ] §1 every Must + every Reject present, each Reject paired with an error code
+- [ ] §3 Contract shape is concrete (no template placeholder text remains)
+- [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
+Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
+"""
 
 
 # --- TASK.md milestone backlink (task-milestone-backlink) --------------------
@@ -804,16 +849,28 @@ def cmd_new_task(args: argparse.Namespace) -> None:
                 "security", "data", "architecture"):
             fast = True
     rendered = _render_template(
-        "TASK.fast.md" if fast else "TASK.md",
+        "TASK.md",
         title=title, slug=slug, date=date.today().isoformat(),
         stage=state["stage"], autonomy=autonomy,
         milestone=_milestone_backlink_value(milestone))
+    if fast:
+        # template-unify: the fast lane is a DERIVED render of the one template —
+        # strip the _FAST_SECTIONS blocks, then splice the lane header beneath the
+        # phase marker (bare `fast: true`, so the scaffold stays a strict line-subset
+        # of the full render plus this one splice).
+        rendered = _strip_fast_sections(rendered)
+        rendered = re.sub(r"(?m)^(phase:[^\n]*)$",
+                          lambda m: m.group(1) + "\nfast: true", rendered, count=1)
     if oneshot:
-        # splice directly beneath the rendered "fast: true" line (regex sub, count=1,
-        # preserving that line's own trailing HTML comment) — mirrors the §1 Feature /
-        # §0 Related-intent pre-fill idiom above.
+        # splice directly beneath the spliced "fast: true" line (regex sub, count=1) —
+        # mirrors the §1 Feature / §0 Related-intent pre-fill idiom below.
         rendered = re.sub(r"(?m)^(fast:\s*true\b[^\n]*)$",
                           lambda m: m.group(1) + "\noneshot: true\ngate_mode: ai-plan-verify",
+                          rendered, count=1)
+        # the AI-plan-verify freeze floor reads this block inside the §3 span
+        # (_ai_verify_checklist_complete) — spliced at §3's tail, before the §4 break.
+        rendered = re.sub(r"(?m)^---\n\n## 4 ·",
+                          _AI_VERIFY_RECORD_BLOCK + "\n---\n\n## 4 ·",
                           rendered, count=1)
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
@@ -8811,7 +8868,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "contains SUBSTR (case-insensitive) instead of the first")
     pn.add_argument("--force", action="store_true", help="overwrite TASK.md if present")
     pn.add_argument("--fast", action="store_true",
-                    help="opt into the fast lane: scaffold the minimal TASK.fast.md template + "
+                    help="opt into the fast lane: render the one TASK.md template minus its "
+                         "deep-check/observe blocks (_FAST_SECTIONS) + "
                          "hold the task to the freeze floor under any milestone")
     pn.add_argument("--oneshot", action="store_true",
                     help="fast lane + a REQUEST for the AI-plan-verify contract-freeze gate: "

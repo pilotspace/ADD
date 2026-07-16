@@ -225,6 +225,7 @@ Assumptions — lowest-confidence first:
 Touches (files · symbols · signatures):
 Honors (patterns / conventions):
 Anchors the contract cites:
+Ground SHA:
 ### Contract
 Status: DRAFT
 ### Build-strategy
@@ -240,49 +241,17 @@ Outcome:
 """
 
 
-# Fast-lane fallback: the minimal TASK.md variant (sections {0,1,3,4,5,6}; §2 + §7 dropped).
-# Mirrors templates/TASK.fast.md.tmpl's section set (circuit-breaker parity); a deleted
-# templates/ never hard-fails the fast lane. Keeps the trust floor: §3 freeze-flag + Status,
-# §6 GATE RECORD/Outcome, §0 Anchors, §4 red-before-build, §5 Scope.
-_FALLBACK_TASK_FAST = """# TASK: {title}
-
-slug: {slug} · created: {date} · stage: {stage}
-autonomy: auto
-phase: direction
-fast: true
-
-## 1 · SPECIFY
-Feature:
-Must:
-Reject:
-Accept:
-Assumptions: ⚠ <most likely wrong> — why; if wrong: <cost>
-
-## 3 · PLAN
-### Grounding
-Touches (files · symbols):
-Anchors the contract cites:
-Ground SHA:
-### Contract
-Least-sure flag surfaced at freeze:
-Status: DRAFT
-### Build-strategy
-Scope (may touch): `./src/`
-
-## 4 · TESTS
-Plan:
-Tests live in: `./tests/` · MUST run red before Build.
-
-## 5 · BUILD
-Strategy actually used:
-Code lives in: `./src/`
-
-## 6 · VERIFY
-Build expectations (from §1 Accept + §3 CONTRACT):
-### GATE RECORD
-Outcome:
-Reviewed by:
-"""
+# template-unify: ONE TASK.md.tmpl serves every lane. The fast render is the full render
+# minus exactly these heading blocks (subset by construction — never a second template
+# file). Each key drops its heading line through the line before the next heading of the
+# same-or-higher level; add.py:_strip_fast_sections owns the mechanics.
+_FAST_SECTIONS = (
+    "## 7 · OBSERVE",
+    "### Deep checks",
+    "### Live-verify evidence",
+    "### Refute-read verdict",
+    "### Advisor 3-lens verdict",
+)
 
 _DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETRO.md)
 

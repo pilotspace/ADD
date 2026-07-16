@@ -141,6 +141,8 @@ class _Harness(unittest.TestCase):
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        new = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                     "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
 
     def _set_header(self, slug, **kv):

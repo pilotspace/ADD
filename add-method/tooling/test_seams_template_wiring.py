@@ -39,10 +39,7 @@ DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
 BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
 TMPL_COPIES = [CANON_TMPL, DOG_TMPL, BUNDLE_TMPL]
 
-CANON_FAST = HERE / "templates" / "TASK.fast.md.tmpl"
-DOG_FAST = REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl"
-BUNDLE_FAST = BUNDLE / "tooling" / "templates" / "TASK.fast.md.tmpl"
-FAST_COPIES = [CANON_FAST, DOG_FAST, BUNDLE_FAST]
+# template-unify: no fast template files — the fast lane derives from the one template
 
 ADDPY_TRIO = [
     ADD_METHOD / "tooling" / "add.py",
@@ -288,17 +285,14 @@ class GrepClParsingTest(unittest.TestCase):
 
 
 class FastTemplateUntouchedTest(unittest.TestCase):
-    """M6 / Scenario: the fast-lane template and guides are untouched."""
+    """template-unify SUPERSEDES the old fast_lane_scope_creep rejection: the fast lane
+    now derives from the ONE template with UNIFORM §3 Grounding, so the Seams line is
+    present on both lanes by design (optional — the engine gate stays unchanged)."""
 
-    def test_fast_lane_trees_byte_identical_to_each_other(self):
-        digests = {_md5(p) for p in FAST_COPIES}
-        self.assertEqual(len(digests), 1, "TASK.fast.md.tmpl trio diverged")
-
-    def test_fast_lane_has_no_seams_consulted_line(self):
-        for p in FAST_COPIES:
-            text = p.read_text(encoding="utf-8")
-            self.assertNotIn(LABEL, text,
-                              f"fast_lane_scope_creep: {LABEL!r} leaked into {p}")
+    def test_fast_render_keeps_the_optional_seams_line(self):
+        full = (CANON_TMPL).read_text(encoding="utf-8")
+        self.assertIn(LABEL, add._strip_fast_sections(full),
+                      "uniform grounding: the derived fast render keeps the optional Seams line")
 
     def test_guides_have_no_seams_consulted_line(self):
         # this task's scope is the FULL template only — guides are untouched
@@ -343,9 +337,8 @@ class RejectionContractsTest(unittest.TestCase):
         digests = [_md5(p) for p in TMPL_COPIES]
         self.assertEqual(len(set(digests)), 1, f"template_drift: {digests}")
 
-    def test_reject_fast_lane_scope_creep(self):                       # R:fast_lane_scope_creep
-        for p in FAST_COPIES:
-            self.assertNotIn(LABEL, p.read_text(encoding="utf-8"))
+    # template-unify: fast_lane_scope_creep retired — uniform grounding puts the
+    # optional Seams line on both lanes (FastTemplateUntouchedTest above).
 
 
 class EdgeCasesTest(unittest.TestCase):

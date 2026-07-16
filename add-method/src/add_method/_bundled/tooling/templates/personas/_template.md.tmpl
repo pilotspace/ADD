@@ -15,42 +15,26 @@ folded: <OPTIONAL — consolidation history, newest first, e.g. `v2 @ 2026-07-07
  a retrospective consolidates confirmed deltas into this file, so drift is auditable>
 source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/personas-teacher/engineering/engineering-software-architect.md` (provenance; omit if hand-authored)>
 ---
-<!-- A PERSONA is a project-fit requirements persona, distilled from the vendored teacher
-     library (`.add/personas-teacher/`) to the parts ADD can act on. The AI authors one file
-     per persona this project needs (frontend, backend, reviewer, …) from PROJECT.md +
-     the teacher; the engine only seeds + validates this schema (presence-based). This
-     `_template.md` is the schema reference — copy it to `<slug>.md` and fill it.
+<!-- A PERSONA is a project-fit requirements persona distilled from the teacher library
+     (`.add/personas-teacher/`) to the parts ADD can act on. Copy this schema reference to
+     `<slug>.md` and fill it; the engine seeds + validates presence-based.
 
      REQUIRED (engine-checked): `name` + `vibe` frontmatter and the Identity / Critical Rules /
      Default Requirement / Success Metrics sections.
-     RECOMMENDED (not engine-checked, but expected on every persona for consistency): `flow:`,
-     `use-when:`, and `not-when:` frontmatter and the `## Abilities` section — a persona with no
-     stated flow, selection cues, or abilities is hard for the design/build/advisor surfaces
-     (and the add-persona selector) to actually pick up and use.
-     OPTIONAL (recommended for a faithful distillation): `source:` frontmatter, and the
-     `## Anti-patterns` + `## Playbook` sections. The engine never requires the optional
-     parts; absence is conformant.
+     RECOMMENDED: `flow:` · `use-when:` · `not-when:` frontmatter and `## Abilities` — without
+     them the design/build/advisor surfaces (and the add-persona selector) can't pick it up.
+     OPTIONAL: `source:` frontmatter, `## Anti-patterns` + `## Playbook`; absence is conformant.
 
-     DISTILLATION DISCIPLINE (how to fill this faithfully — learned from the teacher corpus):
-     1. SCOPE = stance, not voice. A persona is a domain STANCE (what to enforce, what to
-        suspect, what "good" measures). TONE/voice belongs to SOUL.md — never duplicate it here.
-     2. KEEP the teacher's own rules. Carry 1–2 of the teacher's signature Critical Rules
-        VERBATIM-in-spirit before adding project-specific ones — distil, don't replace.
-     3. TAG provenance honestly. In `## Playbook`, mark each item teacher-derived vs
-        ADD-native. Never credit home-grown project scaffolding to the teacher.
-     4. METRICS are rules, not snapshots. Prefer an invariant ("suite matches the last
-        green run") over a volatile literal ("2491/0") that rots as the project grows.
-     5. NAME the flow. State which apply-surface(s) actually load this persona — a persona
-        that fits none of design/build/advisor is dead weight nobody will ever pick up.
-     6. ABILITIES are checkable skills, not aspirations. Anchor each to a real file, tool, or
-        command this project already has — the same anchoring discipline as Critical Rules
-        and Success Metrics, applied to "what this persona can concretely do."
-     7. SWEEP for leftover placeholders. The engine's schema check is presence-based (headers +
-        frontmatter keys only) — a half-filled copy with bare `<…>` placeholders still passes it.
-        Before committing, confirm no bare `<…>` remains outside a backtick code span.
-     8. DRAW the sibling boundary. `use-when:` should enumerate concrete triggers (files, phases,
-        change types), and `not-when:` should name the sibling persona that owns the near-miss —
-        overlapping personas with no stated boundary make selection a coin flip. -->
+     DISTILLATION DISCIPLINE:
+     1. SCOPE = stance, not voice — tone belongs to SOUL.md, never duplicate it here.
+     2. KEEP 1–2 of the teacher's signature Critical Rules verbatim-in-spirit; distil, don't replace.
+     3. TAG Playbook provenance honestly: teacher-derived vs ADD-native.
+     4. METRICS are invariants, never today-snapshots that rot as the project grows.
+     5. NAME the flow — a persona no apply-surface loads is dead weight.
+     6. ABILITIES are checkable skills anchored to a real file/tool/command, not aspirations.
+     7. SWEEP for bare `<…>` placeholders — the presence-based check won't catch them.
+     8. DRAW the sibling boundary: `use-when:` enumerates triggers; `not-when:` names the
+        sibling that owns the near-miss. -->
 
 ## Identity
 <who this persona is — role, domain depth, and the EARNED perspective it brings (what it has

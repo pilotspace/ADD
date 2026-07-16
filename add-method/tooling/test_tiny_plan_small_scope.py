@@ -104,8 +104,9 @@ class TinyMemberTasks(TinyPlanBase):
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = (pathlib.Path(self.root) / ".add" / "tasks" / "fix-exit-codes"
                 / "TASK.md").read_text()
-        self.assertIn("fast", body.splitlines()[2].lower() + body[:400].lower(),
-                      "tiny member task must scaffold the fast-lane template")
+        # template-unify: the lane marker is the spliced `fast: true` header line
+        self.assertRegex(body, r"(?m)^fast: true",
+                         "tiny member task must scaffold the fast lane")
 
     def test_full_flag_opts_back(self):
         self._tiny_confirmed()

@@ -34,10 +34,9 @@ class TemplateDialectLineTest(unittest.TestCase):
         self.assertIn("spec-dialect floor", block)
         self.assertIn("same value formats", block)
 
-    def test_fast_template_carries_dialect_line(self):
-        body = (TEMPLATES / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
-        self.assertIn("input dialect held", body)
-        self.assertIn("spec-dialect floor", body)
+    # template-unify: the fast lane derives from the one template and drops the §6
+    # Deep-checks block; the input-dialect floor is held by the freeze-checked §1
+    # Boundary line on BOTH lanes (test_fast_boundary_line, test_template_unify).
 
 
 class GlossaryGuidanceTest(unittest.TestCase):

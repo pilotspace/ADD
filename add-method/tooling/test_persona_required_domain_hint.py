@@ -10,6 +10,8 @@ python3 -m unittest test_persona_required_domain_hint -v
 """
 import hashlib
 import unittest
+
+import add
 from pathlib import Path
 
 TOOLING = Path(__file__).resolve().parent
@@ -21,16 +23,9 @@ TEMPLATE_TREES = (
     REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
 )
-FAST_TREES = (
-    PKG_ROOT / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-)
 CANON_TMPL = TEMPLATE_TREES[0]
-CANON_FAST = FAST_TREES[0]
 
 STRATEGY_LABEL = "Strategy (ordered batches):"
-FAST_STRATEGY_LABEL = "Strategy & known-problem fixes:"
 
 # the v16/v18 frozen tag census of TASK.md.tmpl (mirrors test_scope_decl_template.FROZEN_TAGS —
 # duplicated here, not imported, so this test independently proves no new tag was introduced)
@@ -78,13 +73,13 @@ class PersonaRequiredTest(unittest.TestCase):
 
 
 class FastStrategyDomainHintTest(unittest.TestCase):
-    def setUp(self):
-        self.text = CANON_FAST.read_text(encoding="utf-8")
-
-    def test_fast_strategy_line_gains_domain_hint(self):
-        self.assertIn(FAST_STRATEGY_LABEL, self.text, "fast Strategy label must be unchanged")
-        strategy_line = self.text[self.text.index(FAST_STRATEGY_LABEL):]
-        strategy_line = strategy_line.split(">", 1)[0]
+    # template-unify: the fast render derives from the one template — the hint is the
+    # SAME Strategy line; pin that the strip keeps it.
+    def test_fast_render_keeps_domain_hint(self):
+        full = CANON_TMPL.read_text(encoding="utf-8")
+        fast = add._strip_fast_sections(full)
+        self.assertIn(STRATEGY_LABEL, fast, "the fast render must keep the Strategy line")
+        strategy_line = fast[fast.index(STRATEGY_LABEL):].split(">", 1)[0]
         self.assertIn("persona", strategy_line.lower(),
                       "the fast Strategy placeholder must reference the active persona")
         self.assertIn("domain stance", strategy_line.lower(),
@@ -103,10 +98,6 @@ class MirrorsAndEnginePinTest(unittest.TestCase):
     def test_full_template_mirrors(self):
         digests = {_md5(p) for p in TEMPLATE_TREES}
         self.assertEqual(len(digests), 1, "TASK.md.tmpl diverged across the 3 engine trees")
-
-    def test_fast_template_mirrors(self):
-        digests = {_md5(p) for p in FAST_TREES}
-        self.assertEqual(len(digests), 1, "TASK.fast.md.tmpl diverged across the 3 engine trees")
 
     def test_engine_pin_unchanged(self):
         import engine_pin

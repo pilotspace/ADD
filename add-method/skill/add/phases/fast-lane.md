@@ -13,8 +13,9 @@ cross-cutting, or anything not surely small. In doubt, run the full lane.
 
 ## How
 
-1. `add.py new-task <slug> --fast` scaffolds the minimal `TASK.fast.md` (sections {0,1,3,4,5,6};
-   §2 SCENARIOS and §7 OBSERVE dropped — §1's Accept line carries the scenario's behavior).
+1. `add.py new-task <slug> --fast` renders the ONE `TASK.md` template minus its `_FAST_SECTIONS`
+   blocks (§7 OBSERVE + §6's Deep-checks/Live-verify/Refute-read/Advisor) — a strict subset;
+   §2 SCENARIOS stays, so the fast lane still enumerates its pass/fail case.
 2. Ground, draft §1 + §3, and **freeze the contract as one batched approval** — the single decision
    point, led by the lowest-confidence flag.
 3. Write a **red** test (§4), run it failing for the right reason.

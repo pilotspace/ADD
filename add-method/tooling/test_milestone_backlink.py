@@ -160,14 +160,8 @@ class EnginePinnedAndTreesAligned(unittest.TestCase):
         self.assertEqual(len({_md5(p) for p in present}), 1,
                          "the 3 TASK.md.tmpl copies must be byte-identical")
 
-    def test_fast_template_has_milestone_field_and_is_parity(self):   # M2 (fast lane)
-        present = [p for p in FAST_TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 TASK.fast.md.tmpl copies must exist")
-        for p in present:
-            self.assertIn("milestone:", p.read_text(encoding="utf-8"),
-                          "TASK.fast.md.tmpl must carry a `milestone:` header field")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 TASK.fast.md.tmpl copies must be byte-identical")
+    # template-unify: TASK.fast.md.tmpl is deleted — the fast lane derives from
+    # TASK.md.tmpl, whose milestone: field the test above already pins.
 
     def test_engine_byte_identical_to_pin(self):                 # M5, R:engine_pin_drift
         present = [p for p in ADD_PY_COPIES if p.exists()]
