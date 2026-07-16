@@ -47,31 +47,35 @@ def _md5(p: Path) -> str:
 
 
 class ConstantsShape(unittest.TestCase):
-    """M1, M2 — the phase tuple + bundles name `plan`, never ground/contract."""
+    """M1, M2 — the phase tuple + bundles name `direction`, never the pre-collapse
+    sub-phase names (phase-collapse-3: specify/plan/tests/ground/contract/scenarios/
+    observe all folded away)."""
 
     def test_phases_expectations_first(self):  # M1
         self.assertEqual(
             C.PHASES,
-            ("specify", "plan", "tests", "build", "verify", "done"),
+            ("direction", "build", "verify", "done"),
         )
-        self.assertNotIn("ground", C.PHASES)
-        self.assertNotIn("contract", C.PHASES)
+        for retired in ("ground", "contract", "specify", "plan", "scenarios", "tests", "observe"):
+            self.assertNotIn(retired, C.PHASES)
 
-    def test_direction_bundle_names_plan(self):  # M2
-        self.assertEqual(C.PHASE_GROUPS["DIRECTION"], ("specify", "plan", "tests"))
+    def test_direction_bundle_names_direction(self):  # M2
+        self.assertEqual(C.PHASE_GROUPS["DIRECTION"], ("direction",))
         for name, d in (("PHASE_OWNER", C.PHASE_OWNER),
                         ("PHASE_AGENT", C.PHASE_AGENT),
                         ("PHASE_GUIDE", C.PHASE_GUIDE)):
-            self.assertIn("plan", d, f"{name} must carry a `plan` key")
-            self.assertNotIn("ground", d, f"{name} must drop `ground`")
-            self.assertNotIn("contract", d, f"{name} must drop `contract`")
+            self.assertIn("direction", d, f"{name} must carry a `direction` key")
+            for retired in ("ground", "contract", "specify", "plan", "scenarios", "tests"):
+                self.assertNotIn(retired, d, f"{name} must drop `{retired}`")
 
-    def test_plan_is_the_freeze_seam_owner(self):  # M4
-        self.assertEqual(C.PHASE_OWNER["plan"], "seam")
+    def test_direction_is_the_freeze_seam_owner(self):  # M4
+        self.assertEqual(C.PHASE_OWNER["direction"], "seam")
 
-    def test_front_phases_names_plan(self):  # M9
-        self.assertIn("plan", add._FRONT_PHASES)
+    def test_front_phases_names_direction(self):  # M9
+        self.assertIn("direction", add._FRONT_PHASES)
         self.assertNotIn("contract", add._FRONT_PHASES)
+        self.assertEqual(len(add._FRONT_PHASES), 1,
+                         "the whole front collapsed into ONE phase")
 
 
 class GroundingFloorReadsPlan(unittest.TestCase):
@@ -155,13 +159,13 @@ class _CLI(unittest.TestCase):
     def _task_md(self):
         return (self._root() / "tasks" / "t" / "TASK.md")
 
-    # M3 — a fresh task opens at specify
-    def test_new_task_seeds_specify(self):
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "specify")
+    # M3 — a fresh task opens at direction
+    def test_new_task_seeds_direction(self):
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
         marker = [l for l in self._task_md().read_text().splitlines() if l.startswith("phase:")][0]
         # assert the phase VALUE (left of the descriptive comment), not the whole line —
         # the comment legitimately says "grounding", so a bare substring check is wrong.
-        self.assertEqual(marker.split("<!--", 1)[0].strip(), "phase: specify")
+        self.assertEqual(marker.split("<!--", 1)[0].strip(), "phase: direction")
 
     # M5 — the rendered template carries the §3 PLAN sub-blocks; no §0 GROUND
     def test_template_renders_plan_subblocks(self):
@@ -185,6 +189,8 @@ class _CLI(unittest.TestCase):
         self.assertNotIn("GROUND", txt)
 
     # M10, R2 — legacy ground/contract phase records still load + migrate, idempotently
+    # (phase-collapse-3: BOTH legacy tokens now map to the SAME collapsed home, "direction" —
+    # there is no longer a "ground"->specify vs "contract"->plan distinction to preserve.)
     def test_legacy_ground_contract_states_load(self):
         st = self._state()
         st["tasks"]["t"]["phase"] = "ground"
@@ -193,18 +199,18 @@ class _CLI(unittest.TestCase):
         (self._root() / "state.json").write_text(json.dumps(st))
         # load must not crash and must migrate the two legacy tokens
         state = add.load_state(self._root())
-        self.assertEqual(state["tasks"]["t"]["phase"], "specify")
-        self.assertEqual(state["tasks"]["u"]["phase"], "plan")
+        self.assertEqual(state["tasks"]["t"]["phase"], "direction")
+        self.assertEqual(state["tasks"]["u"]["phase"], "direction")
         # idempotent: a second load changes nothing further
         again = add.load_state(self._root())
-        self.assertEqual(again["tasks"]["t"]["phase"], "specify")
-        self.assertEqual(again["tasks"]["u"]["phase"], "plan")
+        self.assertEqual(again["tasks"]["t"]["phase"], "direction")
+        self.assertEqual(again["tasks"]["u"]["phase"], "direction")
 
-    # M4, R3 — crossing plan->tests needs a frozen §3
-    def test_plan_to_tests_needs_frozen(self):
-        # advance to plan, draft a minimal frozen-able §3, then cross
-        self._run("advance")  # specify -> plan (merged flow)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+    # M4, R3 — crossing direction->build needs a frozen §3 (phase-collapse-3: there is no
+    # longer a separate "plan" phase to advance into first — a fresh task is already at
+    # direction, and `advance` itself now attempts the direction->build crossing).
+    def test_direction_to_build_needs_frozen(self):
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
         p = self._task_md()
         md = p.read_text()
         # replace the §3 contract fence placeholder with a real drafted shape
@@ -212,10 +218,10 @@ class _CLI(unittest.TestCase):
             "Status: DRAFT",
             "Status: DRAFT\nLeast-sure flag surfaced at freeze: [contract] fixture — cost: none")
         p.write_text(md)
-        # DRAFT: crossing into tests without --skip-freeze is refused
+        # DRAFT: crossing into build without --skip-freeze is refused
         out = self._run("advance")
         self.assertIn("contract_not_frozen", out)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
 
 
 if __name__ == "__main__":

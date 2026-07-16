@@ -67,12 +67,19 @@ class _Board(unittest.TestCase):
         return self.addp / "tasks" / slug / "TASK.md"
 
     def _at_specify(self, slug, role_line=None):
+        # phase-collapse-3: the task sits at direction; the hold binds the ONE
+        # direction -> build crossing. §3 is stamped FROZEN + flagged so the freeze
+        # gate and flag check (earlier in the same _build_entry stack) pass and the
+        # cross-component hold is the behavior under test.
         self._quiet(["new-task", slug])
+        p = self._task_path(slug)
+        t = p.read_text()
         if role_line:
-            p = self._task_path(slug)
-            p.write_text(p.read_text().replace("phase: specify", f"{role_line}\nphase: specify", 1),
-                         encoding="utf-8")
-        # phase-merge-specify: the hold now binds the specify -> plan crossing directly
+            t = t.replace("phase: direction", f"{role_line}\nphase: direction", 1)
+        t = t.replace("Status: DRAFT",
+                      "Status: FROZEN @ v1 — approved by T\n"
+                      "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none")
+        p.write_text(t, encoding="utf-8")
 
     def _advance(self, slug):
         out, errbuf = io.StringIO(), io.StringIO()
@@ -99,67 +106,75 @@ class Hold(_Board):
         out, err = self._advance("fe")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_unfrozen", err or "")
-        self.assertEqual(self._phase("fe"), "specify")
+        self.assertEqual(self._phase("fe"), "direction")
 
     def test_consumer_proceeds_once_snapshot_exists(self):
         self._write_snapshot()
         self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"should proceed once the producer froze, got {err!r}")
-        self.assertEqual(self._phase("fe"), "plan")
+        self.assertEqual(self._phase("fe"), "build")
 
     def test_full_stack_slice_one_milestone(self):
-        # BE producer drives through its freeze (task 3 writes the snapshot), THEN FE proceeds.
+        # BE producer drives through its freeze (its crossing writes the snapshot), THEN FE proceeds.
         self._quiet(["new-task", "be"])
         bp = self._task_path("be")
         import re
-        t = bp.read_text().replace("phase: specify", "produces: gateway-api\nphase: specify", 1)
-        t = t.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by T")
+        t = bp.read_text().replace("phase: direction", "produces: gateway-api\nphase: direction", 1)
+        t = t.replace("Status: DRAFT",
+                      "Status: FROZEN @ v1 — approved by T\n"
+                      "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none")
         t = re.sub(r"(## 3 · PLAN.*?)```.*?```", r"\1```\nBE SHAPE\n```", t, count=1, flags=re.DOTALL)
         bp.write_text(t, encoding="utf-8")
-        for _ in range(2):    # specify -> plan -> tests (writes snapshot)
-            self._quiet(["advance", "be"])
+        self._quiet(["advance", "be"])    # direction -> build (writes snapshot)
         self.assertTrue((self.addp / "contracts" / "gateway-api.json").exists())
-        # now the FE can enter §3
+        # now the FE can cross
         self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err)
-        self.assertEqual(self._phase("fe"), "plan")
+        self.assertEqual(self._phase("fe"), "build")
 
     def test_undeclared_contract_does_not_hold(self):
+        # an id absent from components.toml never triggers the registry HOLD — it is the
+        # consumer PIN that fail-louds on any `consumes:` with no landed snapshot (frozen
+        # behavior: the old engine's pin at the tests crossing was equally unconditional —
+        # never build against a guessed shape).
         self._at_specify("fe", "consumes: nope")
         out, err = self._advance("fe")
-        self.assertIsNone(err, "an undeclared contract id must not hold")
-        self.assertEqual(self._phase("fe"), "plan")
+        self.assertIsNotNone(err)
+        self.assertNotIn("producer_contract_", err or "", "the registry hold must not fire")
+        self.assertIn("contract_snapshot_missing", err or "")
+        self.assertEqual(self._phase("fe"), "direction")
 
     def test_no_role_byte_identical(self):
         self._at_specify("plain")
         out, err = self._advance("plain")
         self.assertIsNone(err)
-        self.assertEqual(self._phase("plain"), "plan")
+        self.assertEqual(self._phase("plain"), "build")
 
 
 class Recency(_Board):
     """cross-component-recency: snapshot EXISTENCE is necessary but not sufficient. When a LIVE
     producer task backs the contract, its current FROZEN §3 body-hash must equal the landed
-    snapshot — else a consumer entering §3 (via `advance` OR the `phase plan` override) HARD-
-    STOPs `producer_contract_stale`. No live producer (archived / federation) -> existence-only."""
+    snapshot — else a consumer crossing into build (via `advance` OR the `phase build` override)
+    HARD-STOPs `producer_contract_stale`. No live producer (archived / federation) -> existence-only."""
 
     import re as _re
 
     def _make_producer(self, slug="be", cid="gateway-api", shape="BE SHAPE v1"):
-        """Create a producer task, freeze §3 with `shape`, drive it specify->tests so the
-        plan->tests crossing writes a REAL snapshot (hash = body-hash of `shape`)."""
+        """Create a producer task, freeze §3 with `shape`, drive it across direction->build —
+        the crossing writes a REAL snapshot (hash = body-hash of `shape`)."""
         self._quiet(["new-task", slug])
         bp = self._task_path(slug)
         t = bp.read_text()
-        t = t.replace("phase: specify", f"produces: {cid}\nphase: specify", 1)
-        t = t.replace("Status: DRAFT", "Status: FROZEN @ v1 — approved by T")
+        t = t.replace("phase: direction", f"produces: {cid}\nphase: direction", 1)
+        t = t.replace("Status: DRAFT",
+                      "Status: FROZEN @ v1 — approved by T\n"
+                      "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none")
         t = self._re.sub(r"(## 3 · PLAN.*?)```.*?```", rf"\1```\n{shape}\n```",
                          t, count=1, flags=self._re.DOTALL)
         bp.write_text(t, encoding="utf-8")
-        for _ in range(2):    # specify -> plan -> tests (writes snapshot)
-            self._quiet(["advance", slug])
+        self._quiet(["advance", slug])    # direction -> build (writes snapshot)
         return bp
 
     def _drift_producer(self, bp, shape="DRIFTED SHAPE v2"):
@@ -196,14 +211,14 @@ class Recency(_Board):
         out, err = self._advance("fe")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_stale", err or "")
-        self.assertEqual(self._phase("fe"), "specify")   # held; nothing pinned
+        self.assertEqual(self._phase("fe"), "direction")   # held; nothing pinned
 
     def test_current_snapshot_admits_at_advance(self):
         self._make_producer()                          # snapshot hash == live producer §3 hash
         self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"a current snapshot must admit, got {err!r}")
-        self.assertEqual(self._phase("fe"), "plan")
+        self.assertEqual(self._phase("fe"), "build")
 
     def test_no_live_producer_is_existence_only(self):
         # a hand-rolled leftover snapshot with NO backing producer task -> existence-only (a
@@ -212,31 +227,31 @@ class Recency(_Board):
         self._at_specify("fe", "consumes: gateway-api")
         out, err = self._advance("fe")
         self.assertIsNone(err, f"no live producer must be existence-only, got {err!r}")
-        self.assertEqual(self._phase("fe"), "plan")
+        self.assertEqual(self._phase("fe"), "build")
 
-    # ── phase-plan override (the closed bypass) ─────────────────────────────────────────
+    # ── phase-build override (the closed bypass) ─────────────────────────────────────────
     def test_phase_contract_runs_stale_hold(self):
         bp = self._make_producer()
         self._drift_producer(bp)
         self._at_specify("fe", "consumes: gateway-api")
-        out, err = self._phase_to("fe", "plan")
-        self.assertIsNotNone(err, "phase plan must not bypass the recency hold")
+        out, err = self._phase_to("fe", "build")
+        self.assertIsNotNone(err, "phase build must not bypass the recency hold")
         self.assertIn("producer_contract_stale", err or "")
-        self.assertEqual(self._phase("fe"), "specify")
+        self.assertEqual(self._phase("fe"), "direction")
 
     def test_phase_contract_enforces_absent_hold(self):
         # no snapshot at all -> the override still enforces the existence hold
         self._at_specify("fe", "consumes: gateway-api")
-        out, err = self._phase_to("fe", "plan")
+        out, err = self._phase_to("fe", "build")
         self.assertIsNotNone(err)
         self.assertIn("producer_contract_unfrozen", err or "")
-        self.assertEqual(self._phase("fe"), "specify")
+        self.assertEqual(self._phase("fe"), "direction")
 
     def test_phase_contract_no_role_byte_identical(self):
         self._at_specify("plain")
-        out, err = self._phase_to("plain", "plan")
-        self.assertIsNone(err, f"a no-role task must not hold at phase plan, got {err!r}")
-        self.assertEqual(self._phase("plain"), "plan")
+        out, err = self._phase_to("plain", "build")
+        self.assertIsNone(err, f"a no-role task must not hold at phase build, got {err!r}")
+        self.assertEqual(self._phase("plain"), "build")
 
     # ── check WARN (measure-not-block) ──────────────────────────────────────────────────
     def test_check_warns_drifted_consumer_never_red(self):

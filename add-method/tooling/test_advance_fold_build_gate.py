@@ -34,11 +34,11 @@ class AdvanceFoldBuildGateTest(unittest.TestCase):
         self.assertIn("gate PASS", add._next_command("verify"))
 
     def test_earlier_phase_verbs_unchanged(self):
-        # the fold touches ONLY the build fallthrough — front phases keep their exact steer
-        self.assertIn("advance --to plan", add._next_command("specify"))
-        self.assertIn("freeze --by", add._next_command("plan"))
-        self.assertIn("add.py advance", add._next_command("plan", contract_frozen=True))
-        self.assertIn("advance --fill", add._next_command("tests"))
+        # the fold touches ONLY the build fallthrough — the direction span keeps its steer
+        # (phase-collapse-3: unfrozen names the freeze --cross approval, frozen the advance)
+        self.assertIn("freeze --by", add._next_command("direction"))
+        self.assertIn("--cross", add._next_command("direction"))
+        self.assertIn("add.py advance", add._next_command("direction", contract_frozen=True))
 
     def test_build_guides_steer_to_gate_across_three_trees(self):
         for g in BUILD_GUIDES:

@@ -124,7 +124,7 @@ class AddToolTest(unittest.TestCase):
         self.assertTrue((tdir / "src").is_dir())
         st = self._state()
         self.assertEqual(st["active_task"], "transfer")
-        self.assertEqual(st["tasks"]["transfer"]["phase"], "specify")  # plan-phase-core seed
+        self.assertEqual(st["tasks"]["transfer"]["phase"], "direction")  # phase-collapse-3 seed
         self.assertIn("Transfer money", (tdir / "TASK.md").read_text())
 
     def test_new_task_rejects_bad_slug(self):
@@ -139,13 +139,14 @@ class AddToolTest(unittest.TestCase):
     # --- advance / phase / marker sync ---
     def test_advance_moves_phase_and_syncs_marker(self):
         self._run("init")
-        self._run("new-task", "t")            # phase=specify (plan-phase-core seed)
-        self._run("advance")  # specify -> plan (phase-merge-specify: scenarios folded in)
+        self._run("new-task", "t")            # phase=direction (phase-collapse-3 seed)
+        self._freeze()                        # the ONE crossing runs the freeze gate
+        self._run("advance")  # direction -> build (the full _build_entry stack)
         st = self._state()
-        self.assertEqual(st["tasks"]["t"]["phase"], "plan")
+        self.assertEqual(st["tasks"]["t"]["phase"], "build")
         marker = [l for l in (Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
                               ).read_text().splitlines() if l.startswith("phase:")][0]
-        self.assertIn("plan", marker)
+        self.assertIn("build", marker)
 
     def test_phase_explicit_set(self):
         self._run("init")

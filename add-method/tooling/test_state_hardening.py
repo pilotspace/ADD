@@ -170,10 +170,18 @@ class StateHardeningTest(unittest.TestCase):
                          "a failed atomic state write must leave state.json byte-unchanged")
 
     def test_advance_state_write_failure_named(self):
-        add.main(["new-task", "t"])                    # at ground
+        add.main(["new-task", "t"])                    # at direction (phase-collapse-3 seed)
+        # freeze + flag OUTSIDE the mock so the crossing's gate stack passes and the
+        # advance actually reaches its save_state — the write failure is the test subject
+        p = self.state_path.parent / "tasks" / "t" / "TASK.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by T\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none"),
+            encoding="utf-8")
         before = self.state_path.read_bytes()
         with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
-            code, _, err = _run(["advance", "t"])      # ground -> specify, no snapshots
+            code, _, err = _run(["advance", "t"])      # direction -> build
         self.assertEqual(code, 1)
         self.assertIn("state_write_failed", err)
         self.assertEqual(self.state_path.read_bytes(), before,

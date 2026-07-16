@@ -17,6 +17,7 @@ __all__ = [
     "RELEASABLE_CUE",
     "RELEASES_FILE",
     "PHASES",
+    "LEGACY_PHASES",
     "GATES",
     "HEAL_CAP",
     "PHASE_GUIDE",
@@ -56,7 +57,17 @@ RELEASABLE_CUE = "releasable: {n} milestone(s) closed since last release"
 # a sibling of CHANGELOG.md — NOT inside .add/. The ledger IS the attribution source:
 # a milestone is "released" iff its slug appears on a `milestones:` row.
 RELEASES_FILE = "RELEASES.md"
-PHASES = ("specify", "plan", "tests", "build", "verify", "done")
+PHASES = ("direction", "build", "verify", "done")
+# phase-collapse-3 (thin-engine-loop W2): the 6-phase walk collapsed to 3 work phases.
+# `direction` is the whole front span (the old specify+plan+tests — §1–§4 drafted
+# top-to-bottom, ONE freeze approval crosses it into build). Legacy tokens normalize to
+# their 3-phase home at READ time (load_state) — 473 pre-collapse task records are never
+# bulk-rewritten; the map below is the single source both load_state and _phase_index use.
+LEGACY_PHASES = {
+    "ground": "direction", "specify": "direction", "scenarios": "direction",
+    "contract": "direction", "plan": "direction", "tests": "direction",
+    "observe": "verify",
+}
 GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 # heal-then-escalate (verify-integrity): the bounded self-heal loop cap. A CONFIRMED cheat
 # (mechanical tripwire divergence, or an agent-reported semantic refute-read finding) returns
@@ -70,12 +81,8 @@ HEAL_CAP = 3
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).
 # Keep the action wording aligned with each phase's EXIT line in the TASK template.
 PHASE_GUIDE = {
-    "specify":   ("state every rule — Must / Reject (+ named code) / After, projected from the milestone Ground + the request; rank assumptions lowest-confidence first and flag the biggest risk; then write one Given/When/Then per Must AND per Reject (§2) — every result observable",
+    "direction": ("draft the Direction bundle top-to-bottom — §1 rules (Must / Reject + named codes / After, assumptions ranked lowest-confidence first) · §2 one scenario per rule · §3 the change PLAN: ground the real code, draft the contract, and DESCRIBE what this task will do (scope · ordered batches · approach — the plan-of-action the freeze report shows the human) · §4 red suite failing for the right reason; then the ONE approval: freeze --by <name> --cross",
                   "03-step-1-specify.md"),
-    "plan":      ("build the change plan — ground the real code the contract will cite, freeze the contract shape (names match the glossary), and set the build strategy; this is the one human approval",
-                  "05-step-3-plan.md"),
-    "tests":     ("write one failing test per scenario; run them RED for the right reason",
-                  "06-step-4-tests.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",
                   "07-step-5-build.md"),
     "verify":    ("run the suite + non-functional checks, then record the gate; then note what to watch + the spec delta for the next loop (§7)",
@@ -88,8 +95,8 @@ PHASE_GUIDE = {
 # follows the book's who-does-what table (Verify is "human only"); `tests`/`build`
 # are AI-led. A phase missing here is `unmapped_phase` (fail closed) — never defaulted.
 PHASE_OWNER = {
-    "specify": "human", "plan": "seam",
-    "tests": "ai", "build": "ai", "verify": "human", "done": "human",
+    "direction": "seam",
+    "build": "ai", "verify": "human", "done": "human",
 }
 # phase-bundles: the work phases (PHASES minus the terminal "done") group into 3
 # agent-owned bundles surfaced at `status`/`guide` — DIRECTION fixes the shape (through
@@ -99,7 +106,7 @@ PHASE_OWNER = {
 # reorder; "done" (terminal, human-led) deliberately has no bundle — see PHASE_AGENT/
 # _phase_bundle below. Union == set(PHASES) - {"done"}, pairwise disjoint (test_phase_bundles.py).
 PHASE_GROUPS = {
-    "DIRECTION": ("specify", "plan", "tests"),
+    "DIRECTION": ("direction",),
     "BUILD": ("build",),
     "VERIFY": ("verify",),
 }
@@ -110,8 +117,8 @@ PHASE_GROUPS = {
 # own union covers every key); `_phase_bundle` is the fail-closed resolver for an
 # unmapped/corrupted phase token, not this map directly.
 PHASE_AGENT = {
-    "specify": "add-design", "plan": "add-design",
-    "tests": "add-build", "build": "add-build",
+    "direction": "add-design",
+    "build": "add-build",
     "verify": "add-verify",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
@@ -201,7 +208,7 @@ _FALLBACK_TASK = """# TASK: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
-phase: specify
+phase: direction
 
 ## 1 · SPECIFY
 Feature:
@@ -241,7 +248,7 @@ _FALLBACK_TASK_FAST = """# TASK: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
-phase: specify
+phase: direction
 fast: true
 
 ## 1 · SPECIFY

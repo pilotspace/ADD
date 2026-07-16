@@ -70,6 +70,16 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
     def _state(self):
         return json.loads(self.state_path.read_text(encoding="utf-8"))
 
+    def _freeze(self, slug):
+        """Stamp §3 FROZEN + a well-formed flag so `advance` (no admin override) can
+        actually cross the slug's direction->build gate. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def test_active_task_is_b_after_setup(self):
         # premise check: the LAST-created task is active, so naming 'a' is the non-trivial path
         self.assertEqual(self._state()["active_task"], "b")
@@ -79,15 +89,16 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         self.assertEqual(code, 0)
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "verify", "the NAMED task must change")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT change")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must NOT change")
         self.assertEqual(st["active_task"], "b", "phase <slug> must not steal focus from active_task")
 
     def test_advance_routes_to_explicit_slug_not_active(self):
+        self._freeze("a")                        # a bare advance now needs a frozen §3 to cross
         code, _, _ = _run(["advance", "a"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["a"]["phase"], "plan", "advance must step the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT step")
+        self.assertEqual(st["tasks"]["a"]["phase"], "build", "advance must step the NAMED task")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must NOT step")
         self.assertEqual(st["active_task"], "b")
 
     def test_gate_routes_to_explicit_slug_not_active(self):
@@ -97,17 +108,18 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "done")
         self.assertEqual(st["tasks"]["a"]["gate"], "PASS", "gate must record on the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must be untouched")
         self.assertEqual(st["tasks"]["b"].get("gate", "none"), "none", "no gate may land on 'b'")
         self.assertEqual(st["active_task"], "b")
 
     def test_omitted_slug_falls_back_to_active_task(self):
         # the documented fallback (and the race premise): no slug => act on active_task ('b')
+        self._freeze("b")                        # a bare advance now needs a frozen §3 to cross
         code, _, _ = _run(["advance"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["b"]["phase"], "plan", "omitted slug must step the active task")
-        self.assertEqual(st["tasks"]["a"]["phase"], "specify", "the non-active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "build", "omitted slug must step the active task")
+        self.assertEqual(st["tasks"]["a"]["phase"], "direction", "the non-active task must be untouched")
 
 
 # ── wave-protocol-runtime: merge-time fork-base shift + worker commits its report ──

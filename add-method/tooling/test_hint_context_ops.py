@@ -44,7 +44,7 @@ class ResumeTeachesContextOps(unittest.TestCase):
     def test_resume_names_section_and_brief(self):
         out = _run(self.root, "status").stdout
         resume = out.split("resume", 1)[1]
-        self.assertIn("status --section specify", resume,
+        self.assertIn("status --section direction", resume,
                       f"resume must teach the per-section read:\n{out}")
         self.assertIn("status --brief", resume,
                       f"resume must teach the cheap re-orient:\n{out}")

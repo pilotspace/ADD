@@ -82,24 +82,20 @@ class BuildExpectationsGateTest(unittest.TestCase):
                       "- [x] the gate is skipped for plain milestones — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_plan(self, slug="t"):
-        self._quiet(["advance", slug])   # specify -> plan
-
-    def _optedin_task_at_tests(self, slug="t", ms="mvp"):
+    # phase-collapse-3: a fresh task is BORN at `direction` — freeze §3 there, straight into
+    # the ONE direction->build crossing (which runs the freeze gate THEN this build-expectations
+    # gate, in that order — no separate "reach tests" hop left).
+    def _optedin_task_at_direction(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
-        self._freeze(slug)   # plan-phase-core: §3 must freeze BEFORE the plan->tests crossing
-        self._quiet(["advance", slug])   # plan -> tests (frozen, passes)
+        self._freeze(slug)   # §3 must freeze BEFORE the direction->build crossing
 
-    def _plain_task_at_tests(self, slug="t", ms="plain"):
+    def _plain_task_at_direction(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
-        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before the plan->tests crossing
-        self._quiet(["advance", slug])   # plan -> tests (frozen, passes)
+        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before the crossing
 
     @staticmethod
     def _die_stderr(argv):
@@ -114,24 +110,24 @@ class BuildExpectationsGateTest(unittest.TestCase):
 
     # ── opted-in + unfilled §6 -> blocked ────────────────────────────────────────────────
     def test_optedin_unfilled_blocks_build(self):
-        self._optedin_task_at_tests()
+        self._optedin_task_at_direction()
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("build_expectations_unfilled", err)
-        self.assertEqual(self._task().get("phase"), "tests", "a refused advance leaves phase=tests")
+        self.assertEqual(self._task().get("phase"), "direction", "a refused advance leaves phase=direction")
         self.assertFalse((Path(self.tmp) / ".add" / "tasks" / "t" / "scope-snapshot.json").exists(),
                          "validate-then-write: no scope snapshot on a refused advance")
 
     # ── opted-in + filled §6 -> advances ─────────────────────────────────────────────────
     def test_optedin_filled_advances(self):
-        self._optedin_task_at_tests()
+        self._optedin_task_at_direction()
         self._fill_build_expectations()
         self._quiet(["advance", "t"])
         self.assertEqual(self._task().get("phase"), "build")
 
     # ── plain (no-key) milestone -> never gated ──────────────────────────────────────────
     def test_plain_milestone_task_not_gated(self):
-        self._plain_task_at_tests()
+        self._plain_task_at_direction()
         self._quiet(["advance", "t"])   # §6 placeholder, but milestone not opted-in
         self.assertEqual(self._task().get("phase"), "build")
 
@@ -139,10 +135,8 @@ class BuildExpectationsGateTest(unittest.TestCase):
     def test_no_milestone_task_not_gated(self):
         self._quiet(["new-task", "loose"])   # no active milestone -> milestone-less
         self.assertIsNone(self._task("loose").get("milestone"))
-        self._to_plan("loose")
-        self._freeze("loose")  # freeze-gate-universal: §3 must be FROZEN before the plan->tests crossing
-        self._quiet(["advance", "loose"])    # plan -> tests (frozen, passes)
-        self._quiet(["advance", "loose"])
+        self._freeze("loose")  # freeze-gate-universal: §3 must be FROZEN before the crossing
+        self._quiet(["advance", "loose"])    # direction -> build (the ONE crossing)
         self.assertEqual(self._task("loose").get("phase"), "build")
 
     # ── the extended predicate over a ### sub-section ─────────────────────────────────────

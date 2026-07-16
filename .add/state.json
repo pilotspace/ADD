@@ -10372,13 +10372,50 @@
     },
     "phase-collapse-3": {
       "title": "Engine: collapse 6 phases to 3 (direction\u00b7build\u00b7verify), freeze/gate compound-cross, back-compat read map",
-      "phase": "plan",
+      "phase": "build",
       "gate": "none",
       "milestone": "thin-engine-loop",
       "depends_on": [],
       "created": "2026-07-16T09:51:28+00:00",
-      "updated": "2026-07-16T10:03:37+00:00",
-      "sensitivity": "architecture"
+      "updated": "2026-07-16T10:08:00+00:00",
+      "sensitivity": "architecture",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-16T10:06:39+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "47f31b48664c51ce16e3ab700da1fd74",
+        "tests": {
+          "add-method/tooling/test_phase_collapse.py": "370f220c234275231e963a2d8cd030b0"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add.py",
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          "add-method/tooling/test_phase_collapse.py",
+          "add-method/tooling/test_advance_fold_build_gate.py",
+          "add-method/tooling/test_first_call_ergonomics.py",
+          "add-method/tooling/test_hint_batch_ops.py",
+          "add-method/tooling/test_guide.py",
+          "add-method/tooling/test_kickoff_truth.py",
+          "add-method/tooling/test_next_footer_engine.py",
+          "add-method/tooling/test_status_orientation_diet.py",
+          "add-method/tooling/test_thin_engine_call_floor.py",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/SEAMS.md",
+          "tmp/"
+        ],
+        "snapshot_md5": "516a1aea3780adc648ffaf0e3a2ecab1"
+      }
     },
     "template-unify": {
       "title": "One TASK.md.tmpl under 3 phase banners; delete TASK.fast.md.tmpl; --fast = full minus _FAST_SECTIONS",
@@ -10440,7 +10477,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T10:03:37+00:00",
+  "updated": "2026-07-16T10:08:00+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",

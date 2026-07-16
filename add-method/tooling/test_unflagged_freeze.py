@@ -102,13 +102,12 @@ class _Board(unittest.TestCase):
             "## 7 · OBSERVE", "watch", "",
         ])
 
-    def _mk_at_tests(self, slug: str, flag: str, frozen: bool = True):
-        """Create a task, write a controlled §3, and position it at `tests` —
-        primed for the tests->build advance under guard."""
+    def _mk_at_direction(self, slug: str, flag: str, frozen: bool = True):
+        """Create a task and write a controlled §3 — a fresh task is BORN at `direction`
+        (phase-collapse-3), primed for the direction->build advance under guard."""
         buf, err = io.StringIO(), io.StringIO()
         with redirect_stdout(buf), redirect_stderr(err):
             add.main(["new-task", slug, "--title", slug])
-            add.main(["phase", "tests", slug])
         self._task_md(slug).write_text(self._body(slug, flag, frozen), encoding="utf-8")
 
     def _advance(self, slug: str):
@@ -146,8 +145,8 @@ class AdvanceGuardTest(_Board):
         self.assertNotEqual(code, 0, "a frozen+unflagged build crossing must refuse")
         self.assertIn("unflagged_freeze", out + err)
         st = self._state()
-        self.assertEqual(st["tasks"][slug]["phase"], "tests",
-                         "refusal must leave the phase at tests")
+        self.assertEqual(st["tasks"][slug]["phase"], "direction",
+                         "refusal must leave the phase at direction")
         self.assertNotIn("flag_verified", st["tasks"][slug],
                          "a refused crossing must not stamp the marker")
         self.assertEqual(self._state_sha(), before,
@@ -163,51 +162,52 @@ class AdvanceGuardTest(_Board):
 
     # -- refusals --
     def test_refuses_absent_flag(self):
-        self._mk_at_tests("alpha", flag="")          # the 45-record failure mode
+        self._mk_at_direction("alpha", flag="")          # the 45-record failure mode
         self._assert_refused("alpha")
 
     def test_refuses_bare_none(self):
-        self._mk_at_tests("alpha", flag=FLAG_BARE_NONE)
+        self._mk_at_direction("alpha", flag=FLAG_BARE_NONE)
         self._assert_refused("alpha")
 
     def test_refuses_untagged(self):
-        self._mk_at_tests("alpha", flag=FLAG_UNTAGGED)   # content, but no [part] tag
+        self._mk_at_direction("alpha", flag=FLAG_UNTAGGED)   # content, but no [part] tag
         self._assert_refused("alpha")
 
     # -- passes --
     def test_allows_wellformed(self):
-        self._mk_at_tests("alpha", flag=FLAG_GOOD)
+        self._mk_at_direction("alpha", flag=FLAG_GOOD)
         self._assert_allowed("alpha")
 
     def test_allows_multiline(self):
-        self._mk_at_tests("alpha", flag=FLAG_MULTILINE)
+        self._mk_at_direction("alpha", flag=FLAG_MULTILINE)
         self._assert_allowed("alpha")
 
     def test_allows_slash_tag(self):
         # the freeze flag's own risk: the grammar must accept [spec/contract]
-        self._mk_at_tests("alpha", flag=FLAG_SLASH)
+        self._mk_at_direction("alpha", flag=FLAG_SLASH)
         self._assert_allowed("alpha")
 
     def test_allows_none_escape(self):
-        self._mk_at_tests("alpha", flag=FLAG_NONE_ESCAPE)
+        self._mk_at_direction("alpha", flag=FLAG_NONE_ESCAPE)
         self._assert_allowed("alpha")
 
-    # -- scope: the guard fires ONLY at the build boundary --
-    def test_below_build_boundary_unchecked(self):
-        # a frozen §3 with NO flag, advancing specify->plan->tests, is never
-        # checked for the flag — the unflagged_freeze guard lives ONLY in `_build_entry`
-        # (the tests->build crossing). The now-earlier plan->tests freeze gate (plan-phase-
-        # core) only checks `_contract_frozen` (true here, via GOOD3), never the flag, so
-        # this fixture legitimately rides all the way to `tests` without tripping either.
+    # -- scope: the guard is bounded by the freeze gate that precedes it --
+    def test_freeze_precedes_flag_check(self):
+        # phase-collapse-3 folded the whole front into ONE phase (`direction`), so there is
+        # no separate "below the build boundary" hop left to prove the flag check doesn't
+        # fire early on (a fresh task's only next crossing IS the guarded one). What still
+        # holds: inside `_build_entry` the freeze gate runs BEFORE the flag check — an
+        # UNFROZEN (DRAFT) §3 with no flag refuses on `contract_not_frozen`, never
+        # `unflagged_freeze`, proving the flag check's scope stays bounded to a FROZEN §3.
         buf, err = io.StringIO(), io.StringIO()
         with redirect_stdout(buf), redirect_stderr(err):
-            add.main(["new-task", "beta", "--title", "beta"])   # stays at specify
-        self._task_md("beta").write_text(self._body("beta", flag=""), encoding="utf-8")
-        out, err, code = self._advance("beta")                   # specify -> plan
-        self.assertEqual(code, 0, out + err)
-        out, err, code = self._advance("beta")                   # plan -> tests (frozen, no flag check here)
-        self.assertEqual(code, 0, out + err)
-        self.assertEqual(self._state()["tasks"]["beta"]["phase"], "tests")
+            add.main(["new-task", "beta", "--title", "beta"])   # stays at direction
+        self._task_md("beta").write_text(self._body("beta", flag="", frozen=False), encoding="utf-8")
+        out, err, code = self._advance("beta")                   # direction -> build
+        self.assertNotEqual(code, 0, out + err)
+        self.assertIn("contract_not_frozen", out + err)
+        self.assertNotIn("unflagged_freeze", out + err)
+        self.assertEqual(self._state()["tasks"]["beta"]["phase"], "direction")
 
 
 # ============================================================================

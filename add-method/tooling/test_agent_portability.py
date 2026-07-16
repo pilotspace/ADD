@@ -21,8 +21,9 @@ from pathlib import Path
 import add
 
 PHASE_FILES = {
-    "specify": "1-specify.md",
-    "plan": "3-plan.md", "tests": "4-tests.md",         # plan-phase-core: "contract" -> "plan"
+    # phase-collapse-3: the direction span points at the specify playbook until
+    # skill-loop-fold re-cuts phases/ to the 3-phase shape
+    "direction": "1-specify.md",
     "build": "5-build.md", "verify": "6-verify.md",
 }
 
@@ -101,15 +102,15 @@ class GuideLineTest(_Project):
 
     def test_json_guide_key_additive(self):
         self._install_skill_tree()
-        self._to_phase("tests")
+        self._to_phase("direction")
         out, _, code = _run(["guide", "--json"])
         self.assertEqual(code, 0)
         d = json.loads(out)
-        self.assertEqual(d["guide"], ".claude/skills/add/phases/4-tests.md")
+        self.assertEqual(d["guide"], ".claude/skills/add/phases/1-specify.md")
         for k in ("task", "phase", "owner", "stop", "next_step", "chapter", "gate"):
             self.assertIn(k, d, "frozen v1 keys must remain")
         # tree absent -> null, never a dead path
-        (self.tmp / ".claude" / "skills" / "add" / "phases" / "4-tests.md").unlink()
+        (self.tmp / ".claude" / "skills" / "add" / "phases" / "1-specify.md").unlink()
         out, _, _ = _run(["guide", "--json"])
         self.assertIsNone(json.loads(out)["guide"])
 
@@ -181,8 +182,8 @@ class ProtocolWalkTest(_Project):
         m = re.search(r"^guide  : (\S+)$", out, re.M)
         self.assertIsNotNone(m, f"guide must name the playbook:\n{out}")
         playbook = (self.tmp / m.group(1)).read_text(encoding="utf-8")
-        self.assertIn("Specify", playbook,
-                      "the walk must land on the Specify phase guide")
+        self.assertIn("Direction", playbook,
+                      "the walk must land on the direction-span phase guide")
 
 
 if __name__ == "__main__":

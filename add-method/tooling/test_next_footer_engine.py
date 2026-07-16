@@ -172,12 +172,13 @@ class _Board(unittest.TestCase):
 class FooterArmATest(_Board):
 
     def test_advance_footer_is_phase_command(self):
-        self._silent("new-task", "foo")                  # active, specify
-        out, _, _ = self._run("advance", "foo")          # specify -> plan (merged flow)
+        self._silent("new-task", "foo")                  # active, direction
+        self._freeze("foo")                              # freeze-gate-universal sweep
+        out, _, _ = self._run("advance", "foo")          # direction -> build (the one crossing)
         footer = self._footer(out)
         self.assertTrue(footer.startswith("next: add.py"),
                         f"a front phase points at the engine, got: {footer!r}")
-        self.assertIn("phase specify -> plan", out,
+        self.assertIn("phase direction -> build", out,
                       "the footer is ADDITIVE — the verb's result line survives")
 
     def test_advance_into_verify_footer_is_gate(self):
@@ -194,10 +195,10 @@ class FooterArmATest(_Board):
         out, _, _ = self._run("new-task", "foo")
         nxt = self._next_lines(out)
         self.assertEqual(len(nxt), 1, f"exactly one next: line, got {nxt!r}")
-        self.assertTrue(nxt[0].startswith("next: add.py advance"),
-                        "a fresh task at specify points at advance")
-        self.assertIn("state every rule", nxt[0],
-                      "the why is the specify-phase PHASE_GUIDE copy")
+        self.assertTrue(nxt[0].startswith("next: add.py freeze --by <name> --cross"),
+                        "a fresh task at direction points at freeze --cross")
+        self.assertIn("draft the Direction bundle", nxt[0],
+                      "the why is the direction-phase PHASE_GUIDE copy")
         self.assertNotIn("then: add.py advance", out,
                          "the old ad-hoc tail converges onto the footer (no double-print)")
 
@@ -265,13 +266,12 @@ class FooterMarkerTest(_Board):
 
     def test_marker_slot_filled(self):
         # gate-owner-marker filled the slot next-footer-engine reserved. `new-task foo`
-        # now lands at specify (owner human — the front phases are human-owned), so arm
-        # through the frozen §3 into `tests` (owner ai) under the default `auto` rung
+        # now lands at direction (owner seam — the front phase is seam-owned), so arm
+        # through the frozen §3 into `build` (owner ai) under the default `auto` rung
         # to exercise the AI-drives branch.
         self._silent("new-task", "foo")
-        self._silent("advance", "foo")                    # specify -> plan (merged flow)
         self._freeze("foo")
-        out, _, _ = self._run("advance", "foo")            # plan -> tests (frozen)
+        out, _, _ = self._run("advance", "foo")            # direction -> build (frozen)
         footer = self._footer(out)
         self.assertTrue(footer.endswith(" [you drive]"),
                         f"the reserved slot now names the driver, got: {footer!r}")
@@ -298,8 +298,8 @@ class FooterSweepTest(_Board):
 
         # --- lightweight verbs in the main board (v1 active) ---
         covered["new-milestone"] = self._run("new-milestone", "m2", "--title", "M2", "--goal", "g")[0]
-        covered["new-task"] = self._run("new-task", "t1")[0]          # active t1 (m2), ground
-        covered["advance"] = self._run("advance", "t1")[0]            # ground -> specify
+        covered["new-task"] = self._run("new-task", "t1")[0]          # active t1 (m2), direction
+        covered["advance"] = self._run("advance", "t1", "--to", "plan")[0]  # legacy no-op (already at direction)
         covered["phase"] = self._run("phase", "plan", "t1")[0]
         self._silent("new-task", "t2")                               # active t2
         covered["use"] = self._run("use", "t1")[0]                   # active t1
@@ -352,37 +352,27 @@ class FooterCollapseHintTest(_Board):
     (M2), points at the freeze gate AT plan (M3), and never names a `--to`
     target past plan (M4). Render-blind: reads the printed footer only."""
 
-    def test_specify_footer_teaches_collapse(self):           # M1 + M2 @ specify
-        out, _, _ = self._run("new-task", "foo")              # fresh task @ specify
-        footer = self._footer(out)
-        self.assertIn("add.py advance --to plan", footer,
-                      f"specify footer teaches the collapse, got: {footer!r}")
-        self.assertIn("add.py advance --fill <draft>", footer,
-                      f"specify footer keeps the --fill alt, got: {footer!r}")
+    # test_specify_footer_teaches_collapse and test_merged_first_advance_lands_at_freeze_hint
+    # DELETED (rule W, authorized 2026-07-16): both pinned the exact hint-wording of a
+    # transitional "teach the --to plan shortcut" moment from the prior thin-engine-loop W1
+    # milestone, atop the OLD 6-phase engine's partial front. Under phase-collapse-3 the
+    # front is already ONE phase (direction) — there is no longer a multi-step front to
+    # "collapse into" via a taught shortcut, and a bare `advance` on a fresh unfrozen task
+    # now REFUSES (contract_not_frozen) rather than landing at an intermediate "plan" phase.
+    # The dead premise carries no behavioral content beyond what test_new_task_footer_
+    # replaces_tail_no_double already covers (the fresh-task footer literally IS
+    # `add.py freeze --by <name> --cross`).
 
-    def test_merged_first_advance_lands_at_freeze_hint(self):  # M1 @ merged flow
-        # phase-merge-specify: the first advance lands AT plan — the footer already
-        # points at the freeze (the collapse hint's home is the specify footer above).
-        self._silent("new-task", "foo")
-        out, _, _ = self._run("advance", "foo")               # specify -> plan
-        footer = self._footer(out)
-        self.assertIn("add.py freeze", footer, footer)
-
-    def test_contract_footer_points_at_freeze(self):          # M3
-        self._silent("new-task", "foo")
-        out, _, _ = self._run("advance", "foo")               # -> plan (merged flow)
-        footer = self._footer(out)
-        self.assertIn("add.py freeze", footer,
-                      f"plan footer names the freeze gate, got: {footer!r}")
-        self.assertNotIn("advance", footer,
-                         f"plan footer must NOT re-suggest advance, got: {footer!r}")
-        self.assertNotIn("--to", footer,
-                         f"plan footer must NOT name a --to, got: {footer!r}")
+    # test_contract_footer_points_at_freeze DELETED (rule W, same justification as above):
+    # its premise was `advance foo` landing at an intermediate "plan" phase, which no longer
+    # exists; rewritten to a valid call it becomes a byte-for-byte duplicate of
+    # test_new_task_footer_replaces_tail_no_double (both assert the fresh-direction-task
+    # footer is `add.py freeze --by <name> --cross`, no `advance`, no `--to`).
 
     def test_no_front_footer_names_a_to_past_contract(self):  # M4
         self._silent("new-task", "foo")
-        footers = [self._footer(self._run("new-task", "bar")[0])]   # bar @ specify
-        footers.append(self._footer(self._run("advance", "bar")[0]))  # -> plan
+        footers = [self._footer(self._run("new-task", "bar")[0])]              # bar @ direction
+        footers.append(self._footer(self._run("advance", "bar", "--to", "plan")[0]))  # legacy no-op
         for f in footers:
             for bad in ("--to tests", "--to build", "--to verify", "--to observe", "--to done"):
                 self.assertNotIn(bad, f, f"no front footer may name {bad!r}: {f!r}")
@@ -417,8 +407,7 @@ class FooterFoldTest(_Board):
                       f"empty-milestone next-step must name --title: {footer!r}")
 
     def test_plain_status_carries_next_command_inline(self):   # M2
-        self._silent("new-task", "foo")                         # -> specify
-        self._silent("advance", "foo")                          # -> plan (merged flow)
+        self._silent("new-task", "foo")                         # -> direction
         out, _, _ = self._run("status")                         # plain full status
         self.assertIn("add.py freeze", out,
                       f"plain status must name the next command inline: {out}")

@@ -240,7 +240,9 @@ class InitKickoffTest(unittest.TestCase):
         self.assertIn("--goal", out)
         self.assertIn("new-task", out)
         self.assertIn("--milestone", out)
-        self.assertIn("advance --to plan", out)
+        # phase-collapse-3: the handoff teaches the 3-call walk, not a --to bundle step
+        self.assertIn("freeze --by <name> --cross", out)
+        self.assertIn("gate PASS", out)
 
 
 # ── R1: the floor guards stay loud errors ────────────────────────────────────

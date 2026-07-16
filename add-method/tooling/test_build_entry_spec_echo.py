@@ -99,19 +99,18 @@ class _Harness(unittest.TestCase):
         state = json.loads((self.tmp / ".add" / "state.json").read_text(encoding="utf-8"))
         return state["tasks"][slug]["phase"]
 
-    def _to_tests(self):
-        """Drive t specify -> tests behind a frozen fixture §3."""
+    def _at_direction_frozen(self):
+        """Fill + freeze t's fixture §3 — a fresh task is BORN at `direction`
+        (phase-collapse-3), primed for the ONE direction->build crossing."""
         self._fill_spec()
         self._freeze()
-        self._ok("advance", "t")   # specify -> plan
-        self._ok("advance", "t")   # plan -> tests (freeze gate holds: §3 frozen)
 
 
 class EchoAtAdvanceTest(_Harness):
     def test_advance_into_build_echoes_spec(self):                 # M1 + M2 + Accept
         self._board()
-        self._to_tests()
-        out = self._ok("advance", "t")                             # tests -> build: the tick
+        self._at_direction_frozen()
+        out = self._ok("advance", "t")                             # direction -> build: the tick
         self.assertEqual(self._phase(), "build")
         self.assertIn("build to (frozen plan):", out)
         self.assertIn("must: first must behavior", out)
@@ -123,7 +122,7 @@ class EchoAtAdvanceTest(_Harness):
 
     def test_echo_lines_render_in_order(self):                     # M1 (shape: header, must, reject, contract)
         self._board()
-        self._to_tests()
+        self._at_direction_frozen()
         out = self._ok("advance", "t")
         idx = [out.index("build to (frozen plan):"),
                out.index("must: first must behavior"),
@@ -148,7 +147,7 @@ class EchoAtPhaseOverrideTest(_Harness):
 class FailOpenTest(_Harness):
     def test_helper_raise_never_blocks_the_tick(self):             # M3 + R1 (least-sure flag's behavioral form)
         self._board()
-        self._to_tests()
+        self._at_direction_frozen()
         real = add._spec_echo
 
         def _boom(*a, **k):

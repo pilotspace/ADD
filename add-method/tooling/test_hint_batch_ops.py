@@ -43,40 +43,20 @@ class FooterTeachesBatchForm(unittest.TestCase):
         return (r.stdout + r.stderr)
 
     def test_walk_phases_fill_then_bare(self):
-        # ONE ordered walk (no cross-test ordering dependency). advance-chain-collapse:
-        # the front drafting phase (specify) teaches the COLLAPSED
-        # `advance --to plan` while keeping the per-section `--fill` alt; `plan`
-        # points at the freeze gate (not another advance); `tests` keeps the bare --fill.
-        # expectations-first: the plan->tests crossing is now the freeze gate itself, so
-        # the walk crosses it with the documented --skip-freeze escape (this test only
-        # probes the FOOTER TEXT, not the freeze mechanics).
-        for expect_phase in ("specify", "plan", "tests"):
-            out = self._footer()
-            if expect_phase == "specify":
-                self.assertIn("add.py advance --to plan", out,
-                              f"{expect_phase} footer must teach the collapse:\n{out}")
-                self.assertIn("add.py advance --fill <draft>", out,
-                              f"{expect_phase} footer must keep the --fill alt:\n{out}")
-            elif expect_phase == "plan":
-                self.assertIn("add.py freeze", out,
-                              f"plan footer must point at the freeze gate:\n{out}")
-                self.assertNotIn("--to", out,
-                                 f"plan footer must not name a --to:\n{out}")
-            else:  # tests
-                self.assertIn("add.py advance --fill <draft>", out,
-                              f"{expect_phase} footer must teach the batch form:\n{out}")
-            if expect_phase == "plan":
-                _run(self.root, "advance", "--skip-freeze")
-            else:
-                _run(self.root, "advance")
-        # tests->build is guarded (red suite / expectations) — the walk cannot cheaply
-        # reach build, so the tests-phase branch is pinned in the ONE _next_command
-        # composer source instead (status-guide-fold extracted it from _next_footer):
+        # phase-collapse-3: the front is ONE direction span — the footer teaches the
+        # 3-call walk's one approval (`freeze --by <name> --cross`), never a `--to`
+        # bundle step, and the frozen/unfrozen fork is pinned in the ONE
+        # _next_command composer source (status-guide-fold) all three surfaces reuse.
+        out = self._footer()
+        self.assertIn("add.py freeze --by <name> --cross", out,
+                      f"direction footer must teach the one-approval crossing:\n{out}")
+        self.assertNotIn("--to", out,
+                         f"direction footer must not name a --to:\n{out}")
         src = ADD_PY.read_text()
         composer = src.split("def _next_command", 1)[1].split("def _next_footer", 1)[0]
-        self.assertIn('if phase == "tests":', composer)
-        self.assertIn('return "add.py advance --fill <draft>"', composer,
-                      "the tests phase keeps the per-section --fill hint")
+        self.assertIn('if phase == "direction":', composer)
+        self.assertIn('return ("add.py advance" if contract_frozen', composer,
+                      "the direction branch distinguishes a frozen §3 from an unfrozen one")
 
 
 if __name__ == "__main__":

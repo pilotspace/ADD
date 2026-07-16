@@ -162,6 +162,21 @@ class _Harness(unittest.TestCase):
             argv.append("--fast")
         self._silent(*argv)
 
+    def _set_section3_and_freeze(self, slug):
+        # phase-collapse-3: a fresh task is BORN at `direction` — draft + freeze §3
+        # right there, straight into the ONE direction->build crossing.
+        p = self._task_md(slug)
+        text = p.read_text(encoding="utf-8")
+        body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
+                "Least-sure flag surfaced at freeze:\n"
+                "  ⚠ [contract] x — cost: y.\n"
+                "Status: DRAFT\n")
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
+                     lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        p.write_text(new, encoding="utf-8")
+        self._fill_boundary(slug)
+        self._silent("freeze", "--by", "Human")
+
 
 # ---------------------------------------------------------------------------
 # M1 — _SKIPPABLE_PHASES closed 2-tuple, importable, listed in __all__
@@ -281,14 +296,16 @@ class SkipRationaleTest(unittest.TestCase):
 
 class CmdAdvanceSkipMechanicTest(_Harness):
     def test_retired_declaration_never_touches_a_crossing(self):
-        # phase-merge-verify: NO crossing runs skip logic; a vestigial declaration
-        # (either retired token) is invisible to advance and records nothing.
+        # phase-collapse-3: NO crossing runs skip logic; a vestigial declaration (either
+        # retired token) is invisible to advance and records nothing, across all 3 remaining
+        # crossings (direction->build, build->verify, verify->done).
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
         self._set_header("t", skips="scenarios,observe")
-        self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self._set_section3_and_freeze("t")
+        out = self._silent("advance", "t")                 # direction -> build, silent
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "build")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
+        self.assertNotIn("note:", out, "crossings stay silent — the note lives at gate")
         self._silent("phase", "verify", "t")
         out = self._silent("advance", "t")                 # verify -> done, silent
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
@@ -318,29 +335,13 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
             self._silent("advance", slug)
             return spy.call_count
 
-    def _set_section3_and_freeze(self, slug):
-        p = self._task_md(slug)
-        text = p.read_text(encoding="utf-8")
-        body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
-                "Least-sure flag surfaced at freeze:\n"
-                "  ⚠ [contract] x — cost: y.\n"
-                "Status: DRAFT\n")
-        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
-                     lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
-        p.write_text(new, encoding="utf-8")
-        self._fill_boundary(slug)
-        self._silent("freeze", "--by", "Human")
-
     def test_every_crossing_never_invokes_task_skip_set(self):
-        # phase-merge-verify: observe merged into verify and the skip grammar retired,
-        # so the flow is specify -> plan -> tests -> build -> verify -> done —
-        # 5 crossings total, ALL of them run ZERO skip logic (the old M13 pin,
-        # now universal; the header is read once, at gate, not here).
+        # phase-collapse-3: the front collapsed into ONE phase (`direction`), so the flow is
+        # direction -> build -> verify -> done — 3 crossings total, ALL of them run ZERO skip
+        # logic (the old M13 pin, now universal; the header is read once, at gate, not here).
         self._new_fast_task("t", fast=True)   # no skips: declared anywhere
-        self.assertEqual(self._advance_spy_count(), 0, "specify->plan")
         self._set_section3_and_freeze("t")
-        self.assertEqual(self._advance_spy_count(), 0, "plan->tests")
-        self.assertEqual(self._advance_spy_count(), 0, "tests->build")
+        self.assertEqual(self._advance_spy_count(), 0, "direction->build")
         self.assertEqual(self._advance_spy_count(), 0, "build->verify")
         self.assertEqual(self._advance_spy_count(), 0, "verify->done")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
@@ -569,9 +570,8 @@ class FloorCompositionTest(_Harness):
         t = p.read_text(encoding="utf-8")
         t = re.sub(r"(?m)^(autonomy:[^\n]*)$", r"\1\nsensitivity: security", t, count=1)
         p.write_text(t, encoding="utf-8")
-        self._silent("phase", "specify", "risky")
-        self._silent("advance", "risky")   # specify -> plan (the natural crossing now)
-        self.assertEqual(self._state()["tasks"]["risky"]["phase"], "plan")
+        # phase-collapse-3: the task is BORN at `direction` — no bookkeeping crossing is
+        # needed before drafting §3.
         # AI freeze attempt is blocked (task2's unchanged floor)
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n"
@@ -608,11 +608,10 @@ class NormalFlowUnchangedTest(_Harness):
     def test_plain_task_visits_every_phase_every_crossing(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; seeds specify
-        self._silent("advance", "t")    # specify -> plan (scenarios merged into specify)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; born at direction
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        # freeze the contract to cross plan -> tests
+        # freeze the contract to cross direction -> build (the ONE crossing)
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
@@ -621,12 +620,11 @@ class NormalFlowUnchangedTest(_Harness):
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
         p.write_text(new, encoding="utf-8")
         self._silent("freeze", "--by", "Human")
-        self._silent("advance", "t")    # plan -> tests
-        self._silent("advance", "t")    # tests -> build
+        self._silent("advance", "t")    # direction -> build
         self._silent("advance", "t")    # build -> verify
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self._silent("advance", "t")    # verify -> done (observe merged into verify)
+        self._silent("advance", "t")    # verify -> done
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 

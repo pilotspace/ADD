@@ -144,7 +144,7 @@ class ReportTest(unittest.TestCase):
         self._rm_tests_dir("alpha")
         out, _, code = self._report("v9")
         self.assertEqual(code, 0)
-        self.assertRegex(out, r"alpha\s+specify\s+—\s+0\s")  # row renders, tests=0, no crash
+        self.assertRegex(out, r"alpha\s+direction\s+—\s+0\s")  # row renders, tests=0, no crash
         jout, _, _ = self._report("v9", "--json")
         self.assertEqual(_json.loads(jout)["tasks"][0]["observe"], "(unknown)")
 
@@ -205,18 +205,18 @@ class ReportTest(unittest.TestCase):
         self.assertEqual(self._hash_state(), before)  # zero writes
 
     def test_phase_track_compact(self):
-        # v3: compact 8-cell track (no per-cell labels). Asserted on the canonical
-        # Unicode render (what RETRO.md gets); cmd_report downshifts to ASCII when
-        # stdout can't do Unicode (e.g. a pipe), which is tested separately.
+        # v3 (phase-collapse-3: track is now 4 cells — direction/build/verify/done).
+        # Asserted on the canonical Unicode render (what RETRO.md gets); cmd_report
+        # downshifts to ASCII when stdout can't do Unicode (e.g. a pipe), tested separately.
         add.main(["new-milestone", "v9", "--goal", "g"])
         add.main(["new-task", "alpha"])
-        add.main(["phase", "tests", "alpha"])  # index 3 -> ◉ at cell 4
+        add.main(["phase", "tests", "alpha"])  # legacy alias -> direction, index 0 -> ◉ at cell 1
         add.main(["new-task", "beta"])
         self._done_pass("beta")
         root = add.find_root()
         out = add.render_report(root, add.load_state(root), "v9")  # ascii=False (canonical)
-        self.assertIn("●●◉○○○", out)      # alpha at 'tests': 2 reached, current, 3 pending
-        self.assertIn("●●●●●●", out)      # beta done -> whole track reached (6 phases)
+        self.assertIn("◉○○○", out)        # alpha at 'direction': current, 3 pending
+        self.assertIn("●●●●", out)        # beta done -> whole track reached (4 phases)
         self.assertIn("PASS", out)         # gate word (no glyph badge in column)
         self.assertIn("legend", out)       # one legend, not per-row labels
 

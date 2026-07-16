@@ -95,17 +95,12 @@ class WaveLedgerClauseTest(unittest.TestCase):
         self.assertIn("never from", self.sec,
                       "the resume rule must say: re-orient from the live ledger, never from memory")
 
-    # -- additive guarantee -----------------------------------------------------------
-    def test_existing_streams_guards_still_green(self):
-        import test_streams
-        suite = unittest.defaultTestLoader.loadTestsFromTestCase(
-            test_streams.StreamsSafetyClausesTest)
-        result = unittest.TestResult()
-        suite.run(result)
-        self.assertTrue(
-            result.wasSuccessful(),
-            "the Wave ledger section is ADDITIVE — a pre-existing streams.md safety clause "
-            f"regressed: {[f[1].splitlines()[-1] for f in result.failures + result.errors]}")
+    # -- additive guarantee: RETIRED. Its target (StreamsSafetyClausesTest, the streams.md
+    # prose-clause guard) was deliberately gutted by the human-approved md ceremony-cut
+    # (d264c38) — this meta-test dangled on a deleted class ever since. The surviving
+    # streams behavior guards (slug routing, wave protocol runtime, worker strategy pull)
+    # run in test_streams.py directly. Removed under the wordy-test authorization
+    # (thin-engine-loop MILESTONE.md, 2026-07-16).
 
 
 if __name__ == "__main__":

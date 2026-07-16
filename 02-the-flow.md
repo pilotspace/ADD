@@ -14,12 +14,19 @@ AIDD is one repeatable flow of **seven steps**: six build the feature — Specif
 
 ```mermaid
 flowchart LR
-  S1["1 Specify<br/>the rules"] --> S2["2 Scenarios<br/>pass/fail cases"]
-  S2 --> S3["3 Plan<br/>ground the code, freeze the contract"]
-  S3 --> S4["4 Tests<br/>failing-first (red)"]
-  S4 --> S5["5 Build<br/>AI writes code"]
-  S5 --> S6["6 Verify<br/>evidence + checks"]
-  S6 --> OBS["Observe<br/>in production"]
+  subgraph DIR["Phase 1 · Direction — drafted by AI, ONE human freeze approves it all"]
+    S1["Specify<br/>the rules"] --> S2["Scenarios<br/>pass/fail cases"]
+    S2 --> S3["Plan<br/>ground the code, freeze the contract"]
+    S3 --> S4["Tests<br/>failing-first (red)"]
+  end
+  subgraph BLD["Phase 2 · Build"]
+    S5["Build<br/>AI writes code"]
+  end
+  subgraph VER["Phase 3 · Verify"]
+    S6["Verify<br/>evidence + checks"] --> OBS["Observe<br/>in production"]
+  end
+  S4 --> S5
+  S5 --> S6
   S5 -. "red / green engine" .-> S4
   S6 -. "evidence fails → back to Build" .-> S5
   S5 -. "a missing rule → back to Specify" .-> S1
@@ -31,6 +38,8 @@ flowchart LR
   class S3,S4 decision;
   class S5,S6 machine;
 ```
+
+> **Three phases, seven beats.** The engine walks three phases — **direction** (Specify · Scenarios · Plan · Tests, one span ending at the single freeze approval), **build**, and **verify** (which owns Observe) — so the whole loop costs three calls: `new-task` → `freeze --by <name> --cross` → `gate PASS`. The seven beats above are the *inside* of those phases, not extra stops.
 
 > **Solid arrows are the primary flow** — you never start a phase before its input exists (forward-skip forbidden). **Dashed arrows are backward correction** — any phase may return to an earlier one to repair its artifact (the long loop, Observe → Specify, is the same rule at milestone scale). The tight Tests ⇄ Build cycle is the per-feature red/green engine.
 

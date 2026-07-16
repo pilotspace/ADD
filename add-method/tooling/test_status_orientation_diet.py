@@ -95,15 +95,15 @@ class ResumeBlockDedupTest(_Harness):
 
     def test_next_command_stated_once_not_twice(self):
         out = self._run("status")
-        # the specify-phase next verb is `advance --to plan`; the card carries it via
-        # _next_footer, so the resume block must not print it a second time.
-        n = out.count("advance --to plan")
+        # phase-collapse-3: the direction-phase next verb is `freeze --by <name> --cross`;
+        # the card carries it via _next_footer, so the resume block must not restate it.
+        n = out.count("add.py freeze --by <name> --cross")
         self.assertEqual(n, 1, f"next-command must appear once (card only), got {n}:\n{out}")
 
     def test_resume_keeps_unique_context_ops_drops_restated_prose(self):
         out = self._run("status")
         # unique ops survive (the context-tax drivers engine-hint-context-ops added)
-        self.assertIn("status --section specify", out, "per-section read op must survive")
+        self.assertIn("status --section direction", out, "per-section read op must survive")
         self.assertIn("status --brief", out, "cheap re-orient op must survive")
         # restated prose is gone — the card already carries phase= and the next verb
         self.assertNotIn("is at phase", out, "resume must not restate phase (card has phase=)")

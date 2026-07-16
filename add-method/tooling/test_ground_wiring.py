@@ -229,9 +229,10 @@ class FreezeChecklistTest(unittest.TestCase):
     def test_count_word_is_seven(self):
         self.assertIn("seven", self._section(), "the count word must read 'seven'")
 
-    def test_run_md_says_seven_lines(self):
-        self.assertIn("seven lines", RUN_MD.read_text(encoding="utf-8"),
-                      "run.md's freeze-checklist reference must say 'seven lines'")
+    # test_run_md_says_seven_lines: RETIRED. A pure prose-wording pin whose target phrase
+    # was deliberately cut from run.md by the human-approved md ceremony-cut (d264c38);
+    # the freeze presentation's real home (phases/3-plan.md) is pinned by its own tests.
+    # Removed under the wordy-test authorization (thin-engine-loop MILESTONE.md, 2026-07-16).
 
     def test_prose_three_trees_agree(self):
         for rel in (("skill", "add", "phases", "3-plan.md"),

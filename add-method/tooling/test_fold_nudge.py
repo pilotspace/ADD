@@ -135,8 +135,14 @@ class FoldNudgeTest(unittest.TestCase):
     def test_advance_crossings_silent_on_fold(self):
         """The fold suggestion fires ONLY at gate/completion — advancing
         into any phase stays silent on folding (additive, no noise)."""
-        add.main(["new-task", "a"])             # at specify
-        code, out, _ = _run(["advance", "a"])   # specify -> plan
+        add.main(["new-task", "a"])             # at direction (phase-collapse-3 seed)
+        p = Path(add.find_root()) / "tasks" / "a" / "TASK.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by T\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none"),
+            encoding="utf-8")                   # pass the crossing's freeze + flag floor
+        code, out, _ = _run(["advance", "a"])   # direction -> build
         self.assertEqual(code, 0)
         self.assertNotIn("add.py fold", out,
                          "advance crossings must not suggest folding")

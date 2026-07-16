@@ -78,11 +78,12 @@ LIFECYCLE = [
     ["activate", "mvp"],                        # multi-active SET writer: mvp already active -> idempotent refocus (reads/writes state, never docs/)
     ["deactivate", "mvp"],                      # multi-active SET writer: drop mvp from the active set (pops its task entry; reads/writes state, never docs/)
     ["use", "t"],                              # re-focus t -> milestone-aware use re-activates mvp + restores active_task for the rest of the run
-    ["phase", "specify", "t"],
-    ["advance", "t"], ["advance", "t"],
-    ["advance", "t"], ["advance", "t"],        # specify -> plan -> tests -> build -> verify
-                                               # (phase-merge-specify: scenarios folded into specify,
-                                               # so verify is 4 hops from specify, not 5)
+    ["phase", "specify", "t"],                 # legacy token, mapped to "direction" (a no-op:
+                                               # t is already there)
+    ["advance", "t"], ["advance", "t"],        # direction -> build -> verify
+                                               # (phase-collapse-3: the whole front span collapsed
+                                               # into ONE `direction` phase, so verify is 2 hops
+                                               # from direction, not 4)
     ["heal", "t", "--reason", "lifecycle: a reported earned-green cheat"],  # bounded self-heal:
                                                # the semantic entry — returns t to build (exit 3,
                                                # tolerated), exercised under the read-spy (reads

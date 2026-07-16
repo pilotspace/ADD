@@ -77,10 +77,6 @@ class FastNewTaskFlagTest(unittest.TestCase):
     def _plain_milestone(self, ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
 
-    def _to_plan(self, slug):
-        for _ in range(1):   # specify -> plan
-            self._quiet(["advance", slug])
-
     def _freeze(self, slug):
         """Freeze the fast task's §3 with a well-formed least-sure flag."""
         p = self._task_path(slug)
@@ -108,13 +104,12 @@ class FastNewTaskFlagTest(unittest.TestCase):
     # ── scenario 3: the floor holds — a fast task under a PLAIN milestone is freeze-gated ─
     def test_fast_floor_holds_under_plain_milestone(self):
         self._plain_milestone()
-        self._quiet(["new-task", "quick", "--fast"])     # DRAFT §3
-        self._to_plan("quick")
-        code, err = self._die_stderr(["advance", "quick"])   # plan -> tests: freeze gate now fires here
+        self._quiet(["new-task", "quick", "--fast"])     # DRAFT §3, born at direction
+        code, err = self._die_stderr(["advance", "quick"])   # direction -> build: freeze gate fires here
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err,
                       "fast ⇒ freeze-gated even though the milestone did not opt in")
-        self.assertEqual(self._task("quick").get("phase"), "plan", "refused advance stays at plan")
+        self.assertEqual(self._task("quick").get("phase"), "direction", "refused advance stays at direction")
 
     # ── a NON-fast task under a plain milestone is NOW freeze-gated too ───────────────────
     # INVERTED by freeze-gate-universal (flow-honesty): the freeze gate is no longer fast/opt-in
@@ -123,21 +118,17 @@ class FastNewTaskFlagTest(unittest.TestCase):
     def test_plain_task_now_freeze_gated(self):
         self._plain_milestone()
         self._quiet(["new-task", "normal"])              # DRAFT §3, not fast
-        self._to_plan("normal")
-        code, err = self._die_stderr(["advance", "normal"])   # universal gate refuses at plan -> tests
+        code, err = self._die_stderr(["advance", "normal"])   # universal gate refuses at direction -> build
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task("normal").get("phase"), "plan")
+        self.assertEqual(self._task("normal").get("phase"), "direction")
 
     # ── scenario 4: a fast task completes through the same gates ──────────────────────────
     def test_fast_task_completes_through_gates(self):
         self._plain_milestone()
         self._quiet(["new-task", "quick", "--fast"])
-        self._to_plan("quick")
-        self._freeze("quick")                            # freeze BEFORE crossing plan -> tests
-        self._quiet(["advance", "quick"])                # plan -> tests (freeze satisfied)
-        self.assertEqual(self._task("quick").get("phase"), "tests")
-        self._quiet(["advance", "quick"])                # tests -> build
+        self._freeze("quick")                            # freeze BEFORE the direction->build crossing
+        self._quiet(["advance", "quick"])                # direction -> build (freeze satisfied)
         self.assertEqual(self._task("quick").get("phase"), "build")
         self._quiet(["advance", "quick"])                # build -> verify
         self._quiet(["gate", "PASS"])

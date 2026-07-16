@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """Red/green tests for the freeze-before-build gate (milestone fast-lane, task `freeze-before-build-gate`).
 
-Makes the "collapse-never-skip" floor REAL: a task may NOT cross tests->build while its §3 contract
-is unfrozen. The guard sits at the `nxt == "build"` crossing in `_build_entry`, BEFORE the existing
-build-expectations gate. As of `freeze-gate-universal` (flow-honesty) the gate is UNIVERSAL — it
-fires for EVERY task, not just `--await-confirm` / `--fast` ones; the recorded `--skip-freeze` escape
-is the only bypass (see test_freeze_gate_universal). Scenarios 3 & 4 below were INVERTED accordingly.
+Makes the "collapse-never-skip" floor REAL: a task may NOT cross direction->build while its §3
+contract is unfrozen. The guard sits at the `nxt == "build"` crossing in `_build_entry`, BEFORE the
+existing build-expectations gate. As of `freeze-gate-universal` (flow-honesty) the gate is
+UNIVERSAL — it fires for EVERY task, not just `--await-confirm` / `--fast` ones; the recorded
+`--skip-freeze` escape is the only bypass (see test_freeze_gate_universal). Scenarios 3 & 4 below
+were INVERTED accordingly.
+
+phase-collapse-3: the front (specify · plan · tests) collapsed into ONE phase `direction`, so a
+fresh task with a DRAFT §3 is BORN sitting exactly where this gate fires — no bookkeeping hop is
+needed to force it there.
 
 Run: python3 -m unittest test_freeze_before_build_gate -v
 """
@@ -91,77 +96,59 @@ class FreezeBeforeBuildGateTest(unittest.TestCase):
                       "- [x] the gate passes through a frozen contract — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_plan(self, slug="t"):
-        self._quiet(["advance", slug])   # specify -> plan
-
-    def _optedin_task_at_plan(self, slug="t", ms="mvp"):
+    # phase-collapse-3: a fresh task is BORN at `direction` — no bookkeeping hop is needed to
+    # reach the freeze seam.
+    def _optedin_task_at_direction(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
 
-    def _plain_task_at_plan(self, slug="t", ms="plain"):
+    def _plain_task_at_direction(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])   # no --await-confirm
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
 
-    def _force_to_tests(self, slug="t"):
-        """Admin override: force phase=tests directly, WITHOUT crossing the (plan-phase-core)
-        plan->tests freeze gate — `phase <n>` for a non-build/-plan target runs no guard.
-        Arranges the grandfather scenario this file's OWN target crossing (tests->build, inside
-        `_build_entry`) must still catch: a pre-plan-phase-core record, or a lost/never-granted
-        skip marker, sitting at `tests` with a DRAFT §3. The plan->tests front door itself is
-        covered in test_freeze_gate_universal."""
-        self._quiet(["phase", "tests", slug])
-
-    # ── scenario 1: opted-in + DRAFT §3 -> refused, stays at tests ───────────────────────
+    # ── scenario 1: opted-in + DRAFT §3 -> refused, stays at direction ───────────────────
     def test_optedin_unfrozen_blocks_build(self):
-        self._optedin_task_at_plan()
-        self._force_to_tests()
+        self._optedin_task_at_direction()
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests", "a refused advance leaves phase=tests")
+        self.assertEqual(self._task().get("phase"), "direction", "a refused advance leaves phase=direction")
         self.assertFalse((Path(self.tmp) / ".add" / "tasks" / "t" / "scope-snapshot.json").exists(),
                          "validate-then-write: no scope snapshot on a refused advance")
 
     # ── scenario 2: opted-in + FROZEN §3 -> advances to build ────────────────────────────
     def test_optedin_frozen_advances(self):
-        self._optedin_task_at_plan()
+        self._optedin_task_at_direction()
         self._freeze()
         self._fill_build_expectations()   # clear the sibling build-expectations gate too
-        self._quiet(["advance", "t"])     # plan -> tests (frozen, passes)
-        self._quiet(["advance", "t"])     # tests -> build
+        self._quiet(["advance", "t"])     # direction -> build (frozen, passes; the ONE crossing)
         self.assertEqual(self._task().get("phase"), "build")
 
     # ── scenario 3: plain (no-key) milestone + DRAFT §3 -> now BLOCKED (universal gate) ───
     # INVERTED by `freeze-gate-universal` (flow-honesty): the gate is no longer opt-in, so a
-    # plain-milestone DRAFT §3 is refused at tests->build (full coverage in test_freeze_gate_universal,
-    # which also covers the plan-phase-core FRONT-door refusal at plan->tests).
+    # plain-milestone DRAFT §3 is refused at direction->build (full coverage in
+    # test_freeze_gate_universal).
     def test_plain_milestone_unfrozen_blocks(self):
-        self._plain_task_at_plan()
-        self._force_to_tests()
+        self._plain_task_at_direction()
         code, err = self._die_stderr(["advance", "t"])   # DRAFT §3 — universal gate refuses
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests")
+        self.assertEqual(self._task().get("phase"), "direction")
 
     # ── scenario 4: no milestone + DRAFT §3 -> now BLOCKED (universal gate) ───────────────
     def test_no_milestone_unfrozen_blocks(self):
         self._quiet(["new-task", "loose"])   # no active milestone -> milestone-less
         self.assertIsNone(self._task("loose").get("milestone"))
-        self._to_plan("loose")
-        self._force_to_tests("loose")
         code, err = self._die_stderr(["advance", "loose"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task("loose").get("phase"), "tests")
+        self.assertEqual(self._task("loose").get("phase"), "direction")
 
     # ── scenario 5: freeze precedes build-expectations (DRAFT §3 + empty §6) ──────────────
     def test_freeze_precedes_build_expectations(self):
-        self._optedin_task_at_plan()
-        self._force_to_tests()             # DRAFT §3 AND placeholder §6
+        self._optedin_task_at_direction()          # DRAFT §3 AND placeholder §6
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
@@ -170,10 +157,9 @@ class FreezeBeforeBuildGateTest(unittest.TestCase):
 
     # ── precedence proof in reverse: frozen §3 + empty §6 -> build-expectations now fires ─
     def test_frozen_then_build_expectations_gate_takes_over(self):
-        self._optedin_task_at_plan()
+        self._optedin_task_at_direction()
         self._freeze()                     # §3 frozen, but §6 left as placeholder
-        self._quiet(["advance", "t"])      # plan -> tests (frozen, passes)
-        code, err = self._die_stderr(["advance", "t"])
+        code, err = self._die_stderr(["advance", "t"])   # direction -> build (the ONE crossing)
         self.assertEqual(code, 1)
         self.assertIn("build_expectations_unfilled", err,
                       "once §3 is frozen the NEXT gate (build-expectations) takes over")

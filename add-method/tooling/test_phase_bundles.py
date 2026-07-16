@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """Red/green suite for phase-bundles (task: phase-bundles, milestone: three-phase-flow).
 
-CONTRACT (frozen, as briefed at BUILD; re-pointed for plan-phase-core — ground+contract
-collapsed into ONE `plan` phase, PHASES now has 7 work phases + terminal "done"): the 7
-work phases (PHASES minus "done") group into 3 agent-owned bundles surfaced at
-`status`/`guide`:
+CONTRACT (frozen, as briefed at BUILD; re-pointed for phase-collapse-3 — the whole front
+span (specify+scenarios+plan+tests) collapsed into ONE `direction` phase, PHASES now has
+3 work phases + terminal "done"): the 3 work phases (PHASES minus "done") group into 3
+agent-owned bundles surfaced at `status`/`guide`:
 
   PHASE_GROUPS = {
-      "DIRECTION": ("specify", "scenarios", "plan", "tests"),
+      "DIRECTION": ("direction",),
       "BUILD":     ("build",),
       "VERIFY":    ("verify",),
   }
-  PHASE_AGENT (per-PHASE, 7 keys) = {
-      "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
-      "tests": "add-build", "build": "add-build",
+  PHASE_AGENT (per-PHASE, 3 keys) = {
+      "direction": "add-design",
+      "build": "add-build",
       "verify": "add-verify",
   }
 
@@ -79,10 +79,10 @@ class PhaseGroupsConstantTest(unittest.TestCase):
                          {"DIRECTION", "BUILD", "VERIFY"})
 
     def test_tuples_match_frozen_shape(self):
-        # phase-merge-specify: scenarios merged into specify; DIRECTION now names
-        # specify/plan/tests (3 phases, was 4).
+        # phase-collapse-3: the whole front span collapsed into ONE `direction` phase;
+        # DIRECTION now names just (direction,), 1 phase (was 3).
         self.assertEqual(engine_constants.PHASE_GROUPS["DIRECTION"],
-                         ("specify", "plan", "tests"))
+                         ("direction",))
         self.assertEqual(engine_constants.PHASE_GROUPS["BUILD"], ("build",))
         self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify",))
 
@@ -110,12 +110,10 @@ class PhaseAgentConstantTest(unittest.TestCase):
         self.assertEqual(set(engine_constants.PHASE_AGENT.keys()), set(PHASES) - {"done"})
 
     def test_values_match_shipped_roster_ownership(self):
-        # plan-phase-core: no more "ground"/"contract" keys — `plan` (the collapsed
-        # phase) is add-design owned, same as specify/scenarios were.
+        # phase-collapse-3: no more "specify"/"scenarios"/"plan"/"tests" keys — the
+        # whole front span is add-design owned as ONE `direction` phase.
         pa = engine_constants.PHASE_AGENT
-        self.assertEqual(pa["specify"], "add-design")
-        self.assertEqual(pa["plan"], "add-design")
-        self.assertEqual(pa["tests"], "add-build")
+        self.assertEqual(pa["direction"], "add-design")
         self.assertEqual(pa["build"], "add-build")
         self.assertEqual(pa["verify"], "add-verify")
 
@@ -134,7 +132,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
     """M3 — _phase_bundle: normal resolve / terminal None / fail-closed unmapped."""
 
     def test_resolves_direction_phases(self):
-        for phase in ("specify", "plan", "tests"):
+        for phase in ("direction",):
             self.assertEqual(engine_predicates._phase_bundle(phase), "DIRECTION", phase)
 
     def test_resolves_build_phase(self):
@@ -155,7 +153,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
 
     def test_exposed_on_add_module(self):
         self.assertTrue(hasattr(add, "_phase_bundle"))
-        self.assertEqual(add._phase_bundle("tests"), "DIRECTION")
+        self.assertEqual(add._phase_bundle("direction"), "DIRECTION")
 
 
 class CliFixture(unittest.TestCase):
@@ -184,13 +182,15 @@ class StatusPlainBundleLineTest(CliFixture):
     """M4 — status prints the active bundle + preferred agent; silent at done/no-task."""
 
     def test_status_prints_bundle_for_non_done_task(self):
-        self._set_phase("tests")
+        # phase-collapse-3: a fresh task is already at "direction" — the whole front
+        # span is now ONE phase, so DIRECTION's preferred agent is add-design (not the
+        # add-build a pre-collapse "tests" sub-phase preferred).
         _, out, _ = _run(["status"])
         self.assertIn("DIRECTION", out)
-        self.assertIn("add-build", out)
+        self.assertIn("add-design", out)
         bundle_lines = [ln for ln in out.splitlines() if ln.strip().startswith("bundle")]
         self.assertEqual(len(bundle_lines), 1, out)
-        self.assertIn("prefer: add-build agent", bundle_lines[0])
+        self.assertIn("prefer: add-design agent", bundle_lines[0])
 
     def test_status_silent_at_done(self):
         self._set_phase("build")

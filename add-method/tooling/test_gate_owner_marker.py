@@ -39,14 +39,14 @@ HERE = Path(__file__).resolve().parent           # add-method/tooling
 
 # the table the frozen §3 contract encodes — only verify moves with the dial
 _TABLE = {
+    # direction ends at the freeze seam (owner: seam -> the human approves §1–§4),
+    # so the whole direction span reads [human gate]; build/verify follow autonomy.
     "auto": {
-        "specify": " [human gate]",
-        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "direction": " [human gate]", "build": " [you drive]",
         "verify": " [you drive]", "done": " [human gate]",
     },
     "conservative": {
-        "specify": " [human gate]",
-        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "direction": " [human gate]", "build": " [you drive]",
         "verify": " [human gate]", "done": " [human gate]",
     },
 }

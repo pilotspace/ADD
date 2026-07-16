@@ -85,13 +85,13 @@ class _Harness(unittest.TestCase):
 
 
 class FreezeCrossTest(_Harness):
-    def test_cross_lands_in_tests(self):                           # M1 + Accept
+    def test_cross_lands_in_build(self):                           # M1 + Accept
         self._planned_board()
         out = self._ok("freeze", "--by", "Tester", "--cross")
         self.assertIn("froze §3 of t @ v1", out)
-        self.assertIn("crossed into tests", out)
-        self.assertEqual(self._phase(), "tests",
-                         "--cross must land a plan-phase freeze in tests")
+        self.assertIn("crossed into build", out)
+        self.assertEqual(self._phase(), "build",
+                         "--cross must land a direction-phase freeze in build")
 
     def test_bare_freeze_unchanged(self):                          # M1 (default)
         self._planned_board()
@@ -99,7 +99,7 @@ class FreezeCrossTest(_Harness):
         self.assertNotIn("crossed", out, "the bare freeze must not cross")
         self.assertNotIn("--cross", out.replace("freeze --by", ""),
                          "the bare freeze output must not advertise the flag")
-        self.assertEqual(self._phase(), "plan", "the bare freeze stays at plan")
+        self.assertEqual(self._phase(), "direction", "the bare freeze stays at direction")
 
     def test_cross_on_refused_freeze_no_crossing(self):            # R1
         self._planned_board()
@@ -108,19 +108,19 @@ class FreezeCrossTest(_Harness):
         self.assertIn("already frozen", out)
         self.assertNotIn("crossed", out,
                          "a freeze that did not stamp must never cross")
-        self.assertEqual(self._phase(), "plan")
+        self.assertEqual(self._phase(), "direction")
 
-    def test_cross_nonplan_note(self):                             # R2 + Boundary
+    def test_cross_nonbuild_note(self):                            # R2 + Boundary
         p = self._planned_board()
-        self._ok("freeze", "--by", "Tester", "--cross")            # now at tests
+        self._ok("freeze", "--by", "Tester", "--cross")            # now at build
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(?m)^Status: FROZEN @ v1.*$", "Status: DRAFT", text, count=1)
         self.assertNotEqual(new, text, "change-request DRAFT flip failed")
         p.write_text(new, encoding="utf-8")
-        out = self._ok("freeze", "--by", "Tester", "--cross")      # v2, phase != plan
+        out = self._ok("freeze", "--by", "Tester", "--cross")      # v2, phase != direction
         self.assertIn("froze §3 of t @ v2", out)
-        self.assertIn("only a plan-phase freeze crosses", out)
-        self.assertEqual(self._phase(), "tests", "a non-plan --cross must not move the phase")
+        self.assertIn("only a direction-phase freeze crosses", out)
+        self.assertEqual(self._phase(), "build", "a non-direction --cross must not move the phase")
 
 
 class GateFromBuildTest(_Harness):
@@ -135,12 +135,12 @@ class GateFromBuildTest(_Harness):
 
     def test_gate_refused_before_build(self):                      # R3 (verbatim refusal)
         self._planned_board()
-        self._ok("freeze", "--by", "Tester", "--cross")            # at tests
+        self._ok("freeze", "--by", "Tester")                       # bare freeze — stays at direction
         out, code = self._run("gate", "PASS", "t")
-        self.assertNotEqual(code, 0, "gate PASS from tests must still refuse")
+        self.assertNotEqual(code, 0, "gate PASS before build must still refuse")
         self.assertIn("gate_pass_before_verify", out)
         self.assertNotIn("crossed", out)
-        self.assertEqual(self._phase(), "tests")
+        self.assertEqual(self._phase(), "direction")
 
 
 class RecipeCrossTest(_Harness):

@@ -96,12 +96,13 @@ class _Board(unittest.TestCase):
 class GuideFoldTest(_Board):
 
     def test_advance_folds_landed_phase_chapter(self):
-        self._silent("new-task", "foo")                  # active @ specify
-        out, _, _ = self._run("advance", "foo")          # specify -> plan (merged flow)
+        self._silent("new-task", "foo")                  # active @ direction
+        self._freeze("foo")                              # freeze-gate-universal sweep
+        out, _, _ = self._run("advance", "foo")          # direction -> build (the ONE crossing)
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"exactly one guide-fold line, got: {folds!r}\n{out}")
-        self.assertIn(".add/docs/05-step-3-plan.md", folds[0],
-                      "the fold carries the LANDED phase's chapter (plan)")
+        self.assertIn(".add/docs/07-step-5-build.md", folds[0],
+                      "the fold carries the LANDED phase's chapter (build)")
         self.assertIn("add.py guide", folds[0],
                       "the fold names `add.py guide` as the thing not to re-run")
         # the footer is untouched — still exactly one next: line, still below the fold
@@ -111,15 +112,15 @@ class GuideFoldTest(_Board):
                         "the fold prints ABOVE the next: footer")
 
     def test_fold_tracks_the_phase_it_lands_in(self):
-        # a second landing folds a DIFFERENT chapter — plan -> tests folds tests' chapter
+        # a second landing folds a DIFFERENT chapter — build -> verify folds verify's chapter
         self._silent("new-task", "bar")
-        self._silent("advance", "bar")                   # specify -> plan
         self._freeze("bar")
-        out, _, _ = self._run("advance", "bar")          # plan -> tests (frozen cross)
+        self._silent("advance", "bar")                   # direction -> build
+        out, _, _ = self._run("advance", "bar")          # build -> verify
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"one fold, got {folds!r}\n{out}")
-        self.assertIn(".add/docs/06-step-4-tests.md", folds[0],
-                      "landing in tests folds tests' chapter, not plan's")
+        self.assertIn(".add/docs/08-step-6-verify.md", folds[0],
+                      "landing in verify folds verify's chapter, not build's")
 
     def test_landing_in_done_folds_nothing(self):
         # arm a task through to build, then advance build->verify and gate PASS (-> done)

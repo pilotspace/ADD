@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5934` (`_declared_scope`)   <!-- re-pinned 2026-07-16 thin-engine-loop: 5901→5934 (--thin lane: freeze --cross thin branch + new-task thin marker + thin recipe added above cmd_status, net +33 lines); prior foundation-slice-progressive: 5857→5901 (_foundation_skeleton/_pick/_selector replaced flat _foundation_slice, +44); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 5808→5857 @ foundation-slice -->
+Anchor: `add-method/tooling/add.py:5915` (`_declared_scope`)   <!-- re-pinned 2026-07-16 phase-collapse-3: 5934→5915 (6→3 phase collapse: the retired plan/tests crossing blocks deleted from cmd_advance, marker-parity legacy normalization + post-freeze guide action added — net −19 lines above the def); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 5901→5934 @ thin-engine-loop W1 -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

@@ -132,10 +132,10 @@ class ReopenBoard(unittest.TestCase):
                                    "--reason", "wiring check failed post-merge")
         self.assertEqual(code, 0, f"reopen should succeed; err={err!r}")
         self.assertEqual(self._task("t")["phase"], "build")
-        # PHASES tuple keeps "done" as a terminal state (six-phase-loop shrank the
-        # list to 6: scenarios merged into specify, observe into verify).
+        # PHASES tuple keeps "done" as a terminal state (phase-collapse-3 shrank the
+        # list to 4: specify/plan/tests merged into direction, observe into verify).
         self.assertEqual(add.PHASES[-1], "done")
-        self.assertEqual(len(add.PHASES), 6)
+        self.assertEqual(len(add.PHASES), 4)
 
     def test_reopen_resets_gate_to_none(self):
         self._mk_done("t")

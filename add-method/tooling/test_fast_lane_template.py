@@ -139,7 +139,7 @@ class HeaderAndRender(unittest.TestCase):
             (root / "tasks" / "s").mkdir(parents=True)
             (root / "tasks" / "s" / "TASK.md").write_text(self.rendered, encoding="utf-8")
             phases = add.task_phases(root, "s")
-        self.assertEqual(len(phases), 5)              # specify..verify always 5 entries now
+        self.assertEqual(len(phases), 3)              # direction·build·verify (phase-collapse-3)
         bynum = {p["n"]: p["body"] for p in phases}   # keyed by PHASE INDEX (n), not §-number
         for n in DROPPED_IDX:
             self.assertEqual(bynum[n], "(empty)")     # dropped phases render empty, no crash

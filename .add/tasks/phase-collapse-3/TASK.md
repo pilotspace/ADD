@@ -4,7 +4,7 @@ slug: phase-collapse-3 · created: 2026-07-16 · stage: mvp · risk: high
 milestone: thin-engine-loop
 autonomy: conservative   <!-- method-defining engine surgery: risk: high declared on the slug line; the verify gate is human-led (unguarded_high_risk_auto guard honored) -->
 sensitivity: architecture
-phase: plan   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
+phase: build   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -126,7 +126,7 @@ Seams consulted: none line-anchored (SEAMS.md checked — symbol-pinned entries 
 Anchors the contract cites: constants.PHASES · cmd_new_task · cmd_freeze · cmd_gate · _legacy · _PHASE_SECTIONS · _FRONT_PHASES · _build_entry · _sync_task_marker · engine_pin.ENGINE_MD5 · engine_pin.ENGINE_PKG_MD5
 Issues/Risks: phase reads are scattered (~18 sites) — normalization MUST be one accessor applied at read, or a missed site renders wrong · 8 test files value-pin the 5-call recipe/`advance --to plan` text (named in §5 scope) — migrate forward, never weaken · W1's `--thin` branch is subsumed — the flag stays as a no-op so W1's census test and any script keep working · the §5 Scope line must stay ONE physical line (engine bug #25: wrapped scope silently truncates)
 Related intent: milestone thin-engine-loop goal (≤3 calls · 6→3 · loop-in-SKILL) · glossary "direction phase" · GLOSSARY "route" (persona-routes-depth builds on this enum)
-Ground SHA: <stamped by freeze — leave this placeholder; cite symbols, not bare line numbers>
+Ground SHA: 21a6ef7 — stamped by freeze
 
 ### Contract (freeze the shape — the HARD, tamper-guarded core)
 
@@ -149,8 +149,10 @@ Schema: state.json tasks[slug].phase — writes narrow to {direction,build,verif
 ```
 
 Glossary deltas: none new — realizes the milestone's "direction phase" entry
-Status: DRAFT
-Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
+Status: FROZEN @ v1 — approved by Tin Dang
+Reported: yes — banner/ARC/SHAPE freeze card rendered in-session before the stamp; approved via guided choice
+Least-sure flag surfaced at freeze:
+  ⚠ [contract] the read-map accessor must cover every phase-read site (~18 scattered) — if one is missed an old record renders wrong; cost: confusing surface, caught by suite + audit.
 
 ### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
 Scope (may touch): `add-method/tooling/add.py` `add-method/tooling/add_engine/constants.py` `add-method/tooling/engine_pin.py` `add-method/tooling/test_phase_collapse.py` `add-method/tooling/test_advance_fold_build_gate.py` `add-method/tooling/test_first_call_ergonomics.py` `add-method/tooling/test_hint_batch_ops.py` `add-method/tooling/test_guide.py` `add-method/tooling/test_kickoff_truth.py` `add-method/tooling/test_next_footer_engine.py` `add-method/tooling/test_status_orientation_diet.py` `add-method/tooling/test_thin_engine_call_floor.py` `add-method/src/add_method/_bundled/tooling/` `.add/SEAMS.md` `tmp/`
@@ -215,10 +217,10 @@ Constraints: do NOT change any test or the frozen §3 contract (the 8 recipe-pin
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] a fresh temp project walks new-task → freeze --by --cross → gate to done in 3 calls, transcript visible — confirmed by <run transcript>
-- [ ] `status` on a pre-collapse record (stored phase "plan") renders it at direction with zero file diffs — confirmed by <status output + git diff>
-- [ ] the full engine suite (311 files incl. the 8 migrated pins) is green — confirmed by <suite run>
-- [ ] ENGINE_MD5 re-aimed once; bundled + dogfood twins byte-identical to canonical — confirmed by <md5 triple>
+- [ ] a fresh temp project walks new-task → freeze --by --cross → gate to done in 3 calls — confirmed by the walkthrough transcript recorded at the gate
+- [ ] `status` on a pre-collapse record (stored phase "plan") renders it at direction with zero task-file diffs — confirmed by the status output + a clean git diff over .add/tasks
+- [ ] the full engine suite (311 files, recipe pins migrated or removed per the authorization) is green — confirmed by the suite run pasted at the gate
+- [ ] ENGINE_MD5/ENGINE_PKG_MD5 re-aimed once; bundled + dogfood twins byte-identical to canonical — confirmed by the md5 triple pasted at the gate
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
 - [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
