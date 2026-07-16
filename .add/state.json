@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "strategy-section",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10209,10 +10209,29 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "strategy-section": {
+      "title": "add a drafted-blank ## Strategy slot to MILESTONE.md.tmpl + engine handling",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": "strategy-intake",
+      "depends_on": [],
+      "created": "2026-07-16T02:57:26+00:00",
+      "updated": "2026-07-16T03:03:42+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-16T03:03:42+00:00",
+        "approved_by": "tindang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T02:55:19+00:00",
+  "updated": "2026-07-16T03:03:42+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11584,7 +11603,8 @@
     "call-residuals": "help-habit-kill",
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
-    "honest-fidelity-meter": "status-lean-default"
+    "honest-fidelity-meter": "status-lean-default",
+    "strategy-intake": "strategy-section"
   },
   "todos": [
     {
