@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "strategy-section",
+  "active_task": "persona-owns-gates",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10228,10 +10228,29 @@
           "source": "git"
         }
       }
+    },
+    "persona-owns-gates": {
+      "title": "retire the fixed report-template \u2014 personas own gate structure + cadence",
+      "phase": "tests",
+      "gate": "none",
+      "milestone": "strategy-intake",
+      "depends_on": [],
+      "created": "2026-07-16T03:12:38+00:00",
+      "updated": "2026-07-16T03:18:19+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-16T03:18:19+00:00",
+        "approved_by": "tindang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T03:03:42+00:00",
+  "updated": "2026-07-16T03:18:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -11604,7 +11623,7 @@
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
-    "strategy-intake": "strategy-section"
+    "strategy-intake": "persona-owns-gates"
   },
   "todos": [
     {
