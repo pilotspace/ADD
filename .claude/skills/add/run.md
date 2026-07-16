@@ -9,11 +9,8 @@ Scenarios · Contract) still owns *direction*. The engine stays judgment-free: t
 
 v7 compresses the old three-approval flow to **one**: the AI drafts Spec · Scenarios ·
 Contract · failing Tests in one pass; the human gives **one approval, at the frozen
-contract** — the decision point stays human (the AI never freezes its own shape; a
-rejected part goes back to draft, backward-correction not failure). The freeze
-presentation — the bundle led **lowest-confidence first** by its ⚠ flag, the
-freeze review checklist (seven lines, ⚠-first) — lives in `phases/3-plan.md`,
-its one home; this rubric owns what happens AFTER the freeze.
+contract** (a rejected part goes back to draft — backward-correction, not failure). The
+freeze presentation lives in `phases/3-plan.md`, its one home; this rubric owns AFTER the freeze.
 
 ## When the run begins — the scope-lock trigger
 
@@ -114,9 +111,6 @@ autonomy: manual | conservative | auto
   only backstop for a missed finding.
 - **conservative** — the deliberate *lowering*: the run converges but STOPS at the verify gate.
 - **manual** — the strict floor: the human owns the verify gate; the engine never auto-resolves.
-
-> **v7 reversal (recorded).** Earlier the default was `conservative`; v7 flips it to `auto` as
-> the default. The level is still **per-scope** and is lowered wherever risk demands.
 
 **The high-risk guard.** On a **high-risk or method-defining scope** `auto` must be lowered to
 `conservative` or `manual`; leaving it at `auto` is the reject code **`unguarded_high_risk_auto`**.
