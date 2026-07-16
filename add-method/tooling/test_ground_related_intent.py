@@ -132,16 +132,6 @@ class LeanBudgetHeldHonestly(unittest.TestCase):
     """The pool stays at-or-under its target — whatever the baseline is, the budget holds
     and any rebaseline is RECORDED (the test_skill_lean comment trail), never silent."""
 
-    def test_phases_pool_under_its_target(self):
-        from test_skill_lean import POOLS
-        phases = next(p for p in POOLS if p["name"] == "phases")
-        target = int(phases["baseline"] * phases["ratio"])
-        nbytes = sum(len((_CANON / g).read_bytes()) for g in PHASES_POOL if (_CANON / g).exists())
-        self.assertLessEqual(nbytes, target,
-                             f"phases pool {nbytes} B must be ≤ target {target} "
-                             f"(baseline {phases['baseline']}, ratio {phases['ratio']})")
-
-
 class CopiesStayByteIdentical(unittest.TestCase):
     def test_guide_copies_byte_identical(self):
         present = [p for p in GUIDE_COPIES if p.exists()]

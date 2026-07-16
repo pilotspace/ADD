@@ -17,7 +17,6 @@ import unittest
 from pathlib import Path
 
 import engine_pin
-import test_skill_lean
 from add_engine.constants import PERSONA_FLOW_VALUES
 from add_engine.predicates import _persona_quality_warnings
 
@@ -118,12 +117,6 @@ class VerifyFlowValueTest(unittest.TestCase):
                           f"{p} persona bullet must name flow: verify")
             digests.add(_md5(p))
         self.assertEqual(len(digests), 1, "6-verify.md trees diverged")
-
-    def test_phases_pool_fence_held(self):
-        pool = next(p for p in test_skill_lean.POOLS if p["name"] == "phases")
-        self.assertLessEqual(test_skill_lean._pool_bytes(pool),
-                             int(pool["baseline"] * pool["ratio"]),
-                             "phases pool over its fence — compress 6-verify.md in-file")
 
     # ── M6: the reader exists — tdd-verifier declares the value ───────────────────
     def test_tdd_verifier_declares_verify(self):

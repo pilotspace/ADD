@@ -164,26 +164,5 @@ class EnginePinnedAndTemplateParity(unittest.TestCase):
         self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
                          "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
-    def test_phases_pool_within_budget(self):                    # M4, R:lean_pool_rebaselined
-        from test_skill_lean import POOLS
-        phases = next(p for p in POOLS if p["name"] == "phases")
-        target = int(phases["baseline"] * phases["ratio"])
-        nbytes = sum(len((_CANON_SKILL / g).read_bytes())
-                     for g in PHASES_POOL if (_CANON_SKILL / g).exists())
-        self.assertLessEqual(nbytes, target,
-                             f"phases pool {nbytes} B must stay ≤ {target} (compact, don't rebaseline)")
-        # this task (ground-anchor-sha) itself did NOT rebaseline the pool — it shipped under 40280.
-        # forward-migrated (never git-mv'd) to 40339 by the later merge-reconciliation task (PR #120 ×
-        # this branch, human-approved) that kept PR #120's persona-template-depth phase-guide prose;
-        # see test_skill_lean.py's own comment trail for that rebaseline's accounting.
-        # floor forward-migrated 40280 → 40205 @ guide-recut (six-phase-loop 3/6, contract
-        # FROZEN @ v1): the phase merges DELETED two guides (net won 1120 B), the first
-        # legitimate shrink — "only ever grows" held while the guide set was fixed; the new
-        # invariant is "never shrinks EXCEPT by a signed deletion accounting" (see
-        # test_skill_lean.py's POOLS comment trail for this shrink's arithmetic).
-        self.assertGreaterEqual(phases["baseline"], 40205,
-                                "the phases baseline moves only by signed rebaselines")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

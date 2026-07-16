@@ -29,7 +29,36 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-from test_agent_roster import AGENTS, AGENT_PHASES, AGENT_TREES, _agent_path, _frontmatter
+
+# Roster data (inlined — formerly shared from the retired test_agent_roster prose guard).
+_PKG_ROOT = Path(__file__).resolve().parent.parent      # add-method/
+_REPO_ROOT = _PKG_ROOT.parent                            # AIDD-Book/
+AGENTS = ("design", "build", "verify", "persona", "advisor")
+AGENT_PHASES = {
+    "design": ("setup", "ground", "specify", "scenarios", "contract"),
+    "build": ("tests", "build"),
+    "verify": ("verify", "observe"),
+    "persona": (),
+    "advisor": (),
+}
+AGENT_TREES = (_PKG_ROOT / "agents", _REPO_ROOT / ".claude" / "agents")
+
+
+def _agent_path(tree: Path, agent: str) -> Path:
+    return tree / f"add-{agent}.md"
+
+
+def _frontmatter(text: str) -> dict:
+    """Parse the leading YAML-ish frontmatter (key: value) between the first two '---' fences."""
+    if not text.startswith("---"):
+        return {}
+    _, fm, _body = text.split("---", 2)
+    out = {}
+    for line in fm.strip().splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            out[k.strip()] = v.strip()
+    return out
 
 # the tier the roster must show per role — DERIVED from each agent's own description
 # ("Recommended tier — <tier>"), never hard-coded here (re-tiering the source moves this).

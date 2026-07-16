@@ -23,7 +23,6 @@ from pathlib import Path
 
 import add
 import engine_pin
-import test_skill_lean
 from test_scope_decl_template import (EXISTING_LINES, FROZEN_TAGS, ACTUAL_LABEL,
                                       FAST_STRATEGY_LABEL, STRATEGY_LABEL)
 
@@ -149,12 +148,6 @@ class StrategyFacetsTest(unittest.TestCase):
         self.assertEqual(len(digests), 1, "5-build.md trees diverged")
 
     # ---- M6: the phases lean fence holds (same math as test_skill_lean) ---------
-    def test_phases_pool_fence_held(self):
-        pool = next(p for p in test_skill_lean.POOLS if p["name"] == "phases")
-        nbytes = test_skill_lean._pool_bytes(pool)
-        self.assertLessEqual(nbytes, int(pool["baseline"] * pool["ratio"]),
-                             "phases pool over its fence — compress 5-build.md, don't rebaseline silently")
-
     # ---- M7: the book chapter gains the strategy-choice passage -----------------
     def test_book_chapter_strategy_passage(self):
         digests = set()

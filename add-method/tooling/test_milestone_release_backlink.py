@@ -160,15 +160,5 @@ class EnginePinnedAndTemplateParity(unittest.TestCase):
         self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
                          "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
-    def test_phases_pool_untouched_within_budget(self):         # M4
-        from test_skill_lean import POOLS
-        phases = next(p for p in POOLS if p["name"] == "phases")
-        target = int(phases["baseline"] * phases["ratio"])
-        nbytes = sum(len((_CANON_SKILL / g).read_bytes())
-                     for g in PHASES_POOL if (_CANON_SKILL / g).exists())
-        self.assertLessEqual(nbytes, target,
-                             f"phases pool {nbytes} B must stay ≤ {target} (no phase-guide prose)")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

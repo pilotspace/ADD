@@ -37,14 +37,14 @@ Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`
 Name: Engine / skill / bundle / book tree parity convention
 Anchor: `add-method/tooling/test_engine_repin_parity.py:40` (`ENGINE_COPIES`) ·
   `add-method/tooling/test_tree_parity.py:21` (`CANON_SKILL`) ·
-  `add-method/tooling/test_bundle_parity.py` · `add-method/tooling/test_book_parity.py`
-Contract: Four independent parity guards hold the byte-identical-twin invariant:
+  `add-method/tooling/test_bundle_parity.py`
+Contract: Three independent parity guards hold the byte-identical-twin invariant:
   test_engine_repin_parity (the 3 add.py/add_engine copies), test_tree_parity (canonical
-  skill vs `.claude/skills/add/` dogfood), test_bundle_parity (whole `_bundled/` package vs
-  canonical, plus zero-test/zero-bytecode), and test_book_parity (book canonical vs repo-root
-  chapters, with `.add/docs/` as a 4th gitignored, non-git-tracked copy). Any engine, skill,
-  template, or book edit must propagate to every one of its own twins before the gate —
-  hand-editing one tree in isolation is the recurring trap all four suites exist to catch.
+  skill vs `.claude/skills/add/` dogfood), and test_bundle_parity (whole `_bundled/` package
+  vs canonical, plus zero-test/zero-bytecode). Book-tree parity is no longer test-guarded —
+  test_book_parity was retired in the engine-only test teardown (keep only tests that exercise
+  add.py). Any engine, skill, or template edit must propagate to every one of its own twins
+  before the gate — hand-editing one tree in isolation is the recurring trap these suites exist to catch.
 Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
   `grep -rl "byte-identical" --include=TASK.md .add/tasks` · as of `c152945` — a broad
   proxy count, not a precise invocation count. Anchor re-verified at build time against the
