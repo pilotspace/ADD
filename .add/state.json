@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "status-lean-default",
+  "active_task": null,
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10212,7 +10212,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-15T09:10:21+00:00",
+  "updated": "2026-07-16T02:55:19+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10682,9 +10682,26 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "strategy-intake": {
+      "title": "persona-led strategy session before a milestone is born",
+      "goal": "Before a milestone is committed, the skill shapes it through a persona-led, risk-proportional strategy discussion that optimizes its task plan with the user.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-16T02:53:49+00:00",
+      "updated": "2026-07-16T02:55:19+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-16T02:55:19+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_milestone": "honest-fidelity-meter",
+  "active_milestone": "strategy-intake",
   "archived": [
     {
       "slug": "v5",
@@ -11547,7 +11564,8 @@
     "call-residuals",
     "orientation-honesty",
     "engine-hygiene",
-    "honest-fidelity-meter"
+    "honest-fidelity-meter",
+    "strategy-intake"
   ],
   "active_tasks": {
     "flow-simplification": "phase-review",
