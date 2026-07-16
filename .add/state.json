@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": null,
+  "active_task": "phase-collapse-3",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -10369,10 +10369,78 @@
         ],
         "snapshot_md5": "28ba2a37c8ceb49f2a9cd753ef6bb36f"
       }
+    },
+    "phase-collapse-3": {
+      "title": "Engine: collapse 6 phases to 3 (direction\u00b7build\u00b7verify), freeze/gate compound-cross, back-compat read map",
+      "phase": "plan",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [],
+      "created": "2026-07-16T09:51:28+00:00",
+      "updated": "2026-07-16T10:03:37+00:00",
+      "sensitivity": "architecture"
+    },
+    "template-unify": {
+      "title": "One TASK.md.tmpl under 3 phase banners; delete TASK.fast.md.tmpl; --fast = full minus _FAST_SECTIONS",
+      "phase": "specify",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [
+        "phase-collapse-3"
+      ],
+      "created": "2026-07-16T09:51:28+00:00",
+      "updated": "2026-07-16T09:51:28+00:00"
+    },
+    "skill-loop-fold": {
+      "title": "SKILL.md narrates the 3-beat loop; phases/ 7\u21923 on-demand references; zero mandatory guide reads",
+      "phase": "specify",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [
+        "phase-collapse-3",
+        "template-unify"
+      ],
+      "created": "2026-07-16T09:51:29+00:00",
+      "updated": "2026-07-16T09:51:29+00:00"
+    },
+    "persona-routes-depth": {
+      "title": "Persona proposes route (full|fast|oneshot) + depth at new-task; human ratifies at the freeze",
+      "phase": "specify",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [
+        "template-unify"
+      ],
+      "created": "2026-07-16T09:51:29+00:00",
+      "updated": "2026-07-16T09:51:29+00:00"
+    },
+    "engine-kernel-trim": {
+      "title": "Usage-mined strike-list + dedup: minimal kernel, stdlib-only, perf floor held",
+      "phase": "specify",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [
+        "phase-collapse-3"
+      ],
+      "created": "2026-07-16T09:51:29+00:00",
+      "updated": "2026-07-16T09:51:29+00:00"
+    },
+    "call-census-proof": {
+      "title": "add-bench call census: median \u22643 add.py calls per task, fidelity floor held",
+      "phase": "specify",
+      "gate": "none",
+      "milestone": "thin-engine-loop",
+      "depends_on": [
+        "skill-loop-fold",
+        "persona-routes-depth",
+        "engine-kernel-trim"
+      ],
+      "created": "2026-07-16T09:51:29+00:00",
+      "updated": "2026-07-16T09:51:29+00:00"
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-16T09:46:41+00:00",
+  "updated": "2026-07-16T10:03:37+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -10866,11 +10934,16 @@
       "stage": "mvp",
       "status": "active",
       "created": "2026-07-16T06:52:20+00:00",
-      "updated": "2026-07-16T06:52:20+00:00",
-      "confirmed": false,
-      "confirmed_at": null,
-      "confirmed_by": null,
-      "await_confirm": true
+      "updated": "2026-07-16T09:51:28+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-16T09:51:28+00:00",
+      "confirmed_by": "tindang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "persona-gepa-loop": {
       "title": "Persona Gepa Loop",
@@ -11766,7 +11839,8 @@
     "orientation-honesty": "guide-fold",
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
-    "strategy-intake": "gate-experience-udd"
+    "strategy-intake": "gate-experience-udd",
+    "thin-engine-loop": "phase-collapse-3"
   },
   "todos": [
     {
