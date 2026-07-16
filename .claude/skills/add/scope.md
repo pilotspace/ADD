@@ -66,7 +66,3 @@ Propose only a well-formed draft — an incomplete one lets a milestone reach ta
 - `no_milestone` — intake routed to `task` or `change-request`; create NO milestone.
 - `duplicate_goal` — the goal is already delivered by an existing milestone (live or in `.add/archive/`). Route as `task` or `change-request`, create nothing.
 </reject_codes>
-
-## Worked example
-
-Request: *"open the Interface & Intake milestone"* → intake classified it `sub-milestone` of v4 → scope drafting produced **`.add/milestones/v4-1/MILESTONE.md`**: goal *make ADD harness-drivable and self-scoping*; tasks (breadth-first) `machine-state-json` · `versioning-policy` · `scope-loop`; each exit criterion maps to its slug.

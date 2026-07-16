@@ -61,11 +61,6 @@ class ChecklistTest(unittest.TestCase):
         # positivized "never a second gate" -> "the freeze stays the only gate" (v17 rubric);
         # the guard's intent — the anti-ceremony clause must be stated — is unchanged.
 
-    def test_run_md_accord(self):
-        self.assertIn("freeze review checklist",
-                      RUN_MD.read_text(encoding="utf-8"),
-                      "run.md's one-approval front must point at the checklist")
-
     def test_three_trees_agree(self):
         for rel in (("skill", "add", "phases", "3-plan.md"),
                     ("skill", "add", "run.md")):

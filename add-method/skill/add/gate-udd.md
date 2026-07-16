@@ -37,11 +37,6 @@ The arc is required at every human gate: **baseline-lock · contract-freeze · v
 
 Its facts are engine-sourced (goal = `m-goal` · done = exit-criteria + tasks done · plan = `DECIDE NEXT`); if your arc and `add.py` disagree, the engine wins.
 
-### Per-gate examples
-
-- **verify** — `goal:` ship the arc · `done:` tests 6/6 green · `plan:` PASS → every gate → goal.
-- **contract-freeze** — `done:` bundle drafted, flag surfaced · `plan:` freeze §3 → build → goal.
-
 ## PLAN / SHAPE — when there's more than one step, or a shape to freeze
 
 Render one of these (never both) right after the ARC, whenever the message needs to show more than a single fact — a multi-task breakdown, a roadmap, mid-milestone orientation, or (at a contract freeze) the shape itself:

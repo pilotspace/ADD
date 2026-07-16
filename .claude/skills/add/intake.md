@@ -78,12 +78,3 @@ Don't create only the first and lose the rest. Instead:
 
 NOT `split_required` (that is for a request spanning **different buckets**); a roadmap is
 several milestones of the **same line**, created queued.
-
-## Worked examples (from this project's own history)
-
-| request | bucket | rationale |
-|---------|--------|-----------|
-| give ADD a hosted web dashboard | new-major | a new product theme → a fresh major line (v5) |
-| add the build corridor + tests-red-before-build | sub-milestone | a slice of the live v4 theme, too big for one task → v4-2 |
-| expose owner/stop as --json | task | fits the active v4-1 (intake interface) scope → one task |
-| guide --json phase/gate should be nullable | change-request | changes a FROZEN contract → reopen its CONTRACT, never a new milestone |
