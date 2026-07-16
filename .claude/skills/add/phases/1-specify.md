@@ -39,16 +39,15 @@ Scenario: <short name>
 ```
 </output_format>
 
-Write **one scenario per Must** and **one per Reject**. The `And ... unchanged`
-clause catches corrupting partial failures (a balance deducted before a check
-fails) — include it on every rejection. Then sweep for the edge cases the spec
-omits — boundary, duplicate, partial failure, concurrency, malformed input — add
-one per case that applies, or rule it out on purpose. Never settle for a vague
-result ("then it works"): every Then is a specific, observable fact.
+Write **one scenario per Must** and **one per Reject**; the `And ... unchanged`
+clause (on every rejection) catches corrupting partial failures. Then sweep the
+edge cases — boundary · duplicate · partial failure · concurrency · malformed
+input — add one per applicable case, or rule it out on purpose. Every Then is a
+specific, observable fact, never "then it works".
 
 ## The lowest-confidence flag is bundle-wide
 
-The single approval is at the contract freeze, over the whole bundle — so your §1 ranking feeds the bundle-level flag the user reads there (`run.md`): *"of all I'm asking you to freeze, these 1–2 are most likely wrong."*
+The single approval is at the contract freeze, over the whole bundle — your §1 ranking feeds the bundle-level flag the user reads there (`run.md`).
 
 ## AI prompt
 

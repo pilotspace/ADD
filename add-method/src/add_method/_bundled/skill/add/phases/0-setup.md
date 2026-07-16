@@ -24,8 +24,8 @@ The code answers what a greenfield interview would ask — **read it instead of 
 
 ## 2b · Greenfield — the 4-lens interview (kept): co-specify at foundation level
 
-An empty repo has no code, so run the short interview — the **co-specify at foundation level** move
-(diverge → converge → validate, as §1 does in `phases/1-specify.md`), lifted to the foundation. Ask one load-bearing question per lens, draft, rank lowest-confidence-first, show the top flag:
+An empty repo has no code — run the short interview: **co-specify at foundation level**
+(diverge → converge → validate, as §1 does in `phases/1-specify.md`). Ask one load-bearing question per lens, draft, rank lowest-confidence-first, show the top flag:
 
 | Lens | The one question that unblocks the section |
 |------|--------------------------------------------|
