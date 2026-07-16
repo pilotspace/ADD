@@ -795,7 +795,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # request is ever honored is entirely governed by task2's own, unchanged,
     # _ai_freeze_allowed — this task adds zero new code to that floor.
     oneshot = bool(getattr(args, "oneshot", False))
-    fast = bool(getattr(args, "fast", False)) or oneshot
+    thin = bool(getattr(args, "thin", False))                 # thin-engine-loop W1: Direction-span-freeze lane
+    fast = bool(getattr(args, "fast", False)) or oneshot or thin
     # tiny-milestone default lane (tiny-plan-small-scope): member tasks of a tiny
     # milestone scaffold the fast template WITHOUT a per-task --fast; `--full` opts back,
     # and a base-class sensitivity (security|data|architecture) ALWAYS gets the full
@@ -866,6 +867,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         state["tasks"][slug]["fast"] = True                 # durable lane marker (absent == not-fast)
     if oneshot:
         state["tasks"][slug]["oneshot"] = True               # durable lane marker (absent == not-oneshot)
+    if thin:
+        state["tasks"][slug]["thin"] = True                  # thin-engine-loop W1: Direction-span-freeze lane marker
     if sensitivity:
         state["tasks"][slug]["sensitivity"] = sensitivity   # declared at creation (tiny-plan-small-scope)
     _set_active_task(state, slug, milestone)
@@ -905,7 +908,18 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # so re-printing ~330B of identical annotations every task only re-enters cache. The
     # compact form keeps EVERY command + both advances (the flow floor _assert_recipe
     # pins), so there is no rediscovery/--help backfire — only the repeated prose drops.
-    if len(state.get("tasks") or {}) <= 1:
+    if thin:
+        # thin-engine-loop W1 — the thin lane collapses BOTH bookkeeping advances: the
+        # Direction bundle (spec+plan+§4 tests) freezes in ONE call that crosses to build.
+        if len(state.get("tasks") or {}) <= 1:
+            print("recipe — this task's remaining engine calls (thin lane):")
+            print("  add.py freeze --by <name> --cross   [approval — freezes the Direction "
+                  "bundle (spec+plan+tests) and crosses straight to build]")
+            print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
+        else:
+            print("recipe — remaining calls (thin): add.py freeze --by <name> --cross · "
+                  "add.py gate PASS")
+    elif len(state.get("tasks") or {}) <= 1:
         print("recipe — this task's remaining engine calls:")
         print("  add.py advance --to plan   (write the section rules first)")
         print("  add.py freeze --by <name> --cross   [human gate — approves the whole plan; "
@@ -1161,6 +1175,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     text = task_md.read_text(encoding="utf-8")
     raw3 = _phase_spans(text).get(3, "")
     phase = (state["tasks"].get(slug) or {}).get("phase", "specify")
+    is_thin = bool((state["tasks"].get(slug) or {}).get("thin"))
     # --- validate (no writes); error precedence: frozen -> not-drafted -> unflagged ---
     if _contract_frozen(raw3):
         # first-call-ergonomics M2: an EXACT already-frozen retry is a READ-only exit-0
@@ -1171,7 +1186,11 @@ def cmd_freeze(args: argparse.Namespace) -> None:
         print(f"already frozen @ {ver} — a shape change is a change request back to SPECIFY")
         print(_next_footer(root, state))
         return
-    if _phase_index(phase) < _phase_index("plan") or _CONTRACT_TEMPLATE_RE.search(raw3):
+    # thin-engine-loop W1: a oneshot task freezes its whole Direction bundle (spec+plan+
+    # §4 tests) at once, so it may freeze straight from `specify`; the default lane still
+    # requires reaching `plan` (the contract phase) first.
+    _min_freeze_phase = "specify" if is_thin else "plan"
+    if _phase_index(phase) < _phase_index(_min_freeze_phase) or _CONTRACT_TEMPLATE_RE.search(raw3):
         _die(f"contract_not_drafted: {slug}'s §3 is not a drafted contract yet — reach the "
              f"`contract` phase and replace the template before freezing")
     if not _flag_well_formed(raw3):
@@ -1285,7 +1304,21 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     # re-freeze mid-build reaches here at a non-plan phase and gets the note instead).
     if getattr(args, "cross", False):
         cur = state["tasks"][slug]["phase"]
-        if cur == "plan":
+        if is_thin and cur in ("specify", "plan"):
+            # thin-engine-loop W1 — Direction-span freeze: the oneshot bundle (spec+plan+
+            # §4 tests) is drafted pre-freeze, so ONE freeze crosses the whole front
+            # (specify+plan+tests) into build, reusing _build_entry's floor machinery
+            # (freeze gate + tamper tripwire + §5 scope snapshot) — never a parallel path.
+            # This collapses the two pure-bookkeeping advances (`advance --to plan` and the
+            # tests->build advance); the human seam (freeze here) + verify seam (gate next) stay.
+            state["tasks"][slug]["phase"] = "tests"       # transit marker for _build_entry
+            _build_entry(root, state, slug)               # snapshots; §3 was just FROZEN above
+            state["tasks"][slug]["phase"] = "build"
+            state["tasks"][slug]["updated"] = _now()
+            save_state(root, state)                       # durable state FIRST
+            _sync_task_marker(root, slug, "build")        # then the TASK.md mirror
+            print("Direction-span freeze — spec+plan+tests crossed into build in one call (thin lane)")
+        elif cur == "plan":
             state["tasks"][slug]["phase"] = "tests"
             state["tasks"][slug]["updated"] = _now()
             save_state(root, state)                       # durable state FIRST
@@ -8805,6 +8838,11 @@ def build_parser() -> argparse.ArgumentParser:
                          "scaffolds fast:true, oneshot:true, gate_mode:ai-plan-verify (task2's "
                          "_ai_freeze_allowed, unchanged, is the sole arbiter of whether it is "
                          "ever honored; the skip grammar itself is retired — six-phase-loop)")
+    pn.add_argument("--thin", action="store_true",
+                    help="thin lane (thin-engine-loop): the Direction bundle (spec+plan+§4 "
+                         "tests) is drafted pre-freeze, so ONE `freeze --cross` crosses "
+                         "spec+plan+tests into build — collapsing the two bookkeeping advances "
+                         "(3 engine calls: new-task · freeze · gate). Implies the fast template.")
     pn.add_argument("--full", action="store_true",
                     help="under a tiny milestone: opt back into the FULL TASK.md template "
                          "(tiny members default to the fast lane)")

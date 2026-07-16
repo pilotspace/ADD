@@ -67,7 +67,7 @@ POOLS = [
     # `sensitivity.md` pointer (the project-extensible risk-class vocabulary) — +427 B human-approved
     # surface (milestone advisor-gated-autonomy, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline
     # grows by surface ÷ ratio (+⌈427/0.88⌉=486). The won compaction is untouched.
-    # core 20490 → 20506 @ report-plan-approve (same method): SKILL.md's report-template pipeline
+    # core 20490 → 20506 @ report-plan-approve (same method): SKILL.md's gate-udd pipeline
     # sentence gains "PLAN/SHAPE →" + "→ APPROVE" (the DECISION→APPROVE rename + reorder) — +14 B
     # human-approved surface (fast task, contract FROZEN @ v1). RATIO 0.88 kept EXACTLY; baseline grows
     # by surface ÷ ratio (+⌈14/0.88⌉=16). The won compaction is untouched.
@@ -198,7 +198,7 @@ POOLS = [
     # kept EXACTLY; baseline grows by surface ÷ ratio (+⌈290/0.80⌉=363). The won ground is untouched.
     # phases 40801 → 40931 @ report-rendered-trace (direct chat-directed edit, no formal task/frozen
     # contract — human present live, same class as verify-traceability-doc above): a forensic audit of
-    # a separate ADD project's session transcript found report-template.md cited-but-never-rendered at
+    # a separate ADD project's session transcript found gate-udd.md cited-but-never-rendered at
     # every human gate; this task adds a mechanical, `add.py audit`-checkable trace alongside the prose
     # imperative from the prior report-gate-imperative task. 0-setup.md's persona-seeding line is also
     # reworded here (the same audit found "(both optional)" misread as covering the whole authoring
@@ -246,7 +246,7 @@ POOLS = [
     # class names the three §6 advisor-verdict fields (Verdict · Residue · Binding) the engine reads for
     # `advisor-gate-relax` — +52 B human-approved surface. RATIO 0.68 kept EXACTLY; baseline grows by surface
     # ÷ ratio (+⌈52/0.68⌉=77). The won ground is untouched.
-    # reference 70359 → 75224 @ report-plan-approve (same method): report-template.md gains the decision
+    # reference 70359 → 75224 @ report-plan-approve (same method): gate-udd.md gains the decision
     # banner (PLAN · title · gate → APPROVE? + a 📄 path line), the PLAN/SHAPE block pair, and the
     # DECISION→APPROVE rename+reorder — +3308 B human-approved surface (fast task, contract FROZEN @ v1).
     # RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio (+⌈3308/0.68⌉=4865). The won ground on
@@ -267,22 +267,22 @@ POOLS = [
     # (+⌈74/0.68⌉=109). The won ground on every other reference guide is untouched.
     # reference 75423 → 75850 @ report-template-recorded-loop (direct chat-directed edit, no formal
     # task/frozen contract — human present live, same class as uiux-hint-adoption above): a forensic
-    # transcript audit found report-template.md cited-but-never-rendered at every human gate in a
+    # transcript audit found gate-udd.md cited-but-never-rendered at every human gate in a
     # separate ADD project; the SAME session's report-rendered-trace task built a mechanical trace
     # (TASK.md §3/§6 `Reported: yes`, surfaced by `add.py audit`) — this closes the loop by having
-    # report-template.md's own <constraints> name that trace as a new "Recorded, not just performed"
+    # gate-udd.md's own <constraints> name that trace as a new "Recorded, not just performed"
     # bullet, so the template that must be rendered also states how its rendering gets recorded.
     # +290 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈290/0.68⌉=427). The won ground on every other reference guide is untouched.
     # reference 76121 → 76302 @ fastlane-report-hint (direct chat-directed edit, no formal task/frozen
     # contract — human present live, same class as report-template-recorded-loop above): a live fast-lane
-    # task's own verify gate was reported with a raw ask instead of report-template.md — the human caught
+    # task's own verify gate was reported with a raw ask instead of gate-udd.md — the human caught
     # it and traced the root cause to phases/fast-lane.md itself: unlike the main flow table, it never
-    # named report-template.md at its freeze/verify steps. Fixed with one trailing sentence naming both
+    # named gate-udd.md at its freeze/verify steps. Fixed with one trailing sentence naming both
     # gates. +123 B human-directed surface. RATIO 0.68 kept EXACTLY; baseline grows by surface ÷ ratio
     # (+⌈123/0.68⌉=181). The won ground on every other reference guide is untouched.
     {"name": "reference",     "ratio": 0.68, "baseline": 76302,
-     "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "report-template.md",
+     "guides": ["scope.md", "deltas.md", "fold.md", "release.md", "gate-udd.md",
                 "graduate.md", "soul.md", "setup-review.md", "adopt.md", "confidence.md",
                 "compact-foundation.md", "phases/fast-lane.md", "components.md", "sensitivity.md"]},
 ]
@@ -306,7 +306,7 @@ PHASE_GUIDES = [
 ON_DEMAND_POINTERS = [
     "advisor.md", "compact-foundation.md", "confidence.md", "deltas.md",
     "design.md", "fold.md", "graduate.md", "intake.md", "loop.md",
-    "release.md", "report-template.md", "run.md", "scope.md", "soul.md",
+    "release.md", "gate-udd.md", "run.md", "scope.md", "soul.md",
     "streams.md", "components.md", "sensitivity.md",
 ]
 

@@ -3,8 +3,8 @@
 
 PROSE-ONLY task — no engine logic change. §3 CONTRACT: the two phase guides that fire
 an actual contract-freeze (phases/3-plan.md, phases/0-setup.md) gain a minimal
-citation of report-template.md's SHAPE block — the one gate SHAPE's own "freeze-only"
-definition names as its use case. report-template.md itself is UNCHANGED (0 B delta):
+citation of gate-udd.md's SHAPE block — the one gate SHAPE's own "freeze-only"
+definition names as its use case. gate-udd.md itself is UNCHANGED (0 B delta):
 its "Summary-first" bullet is byte-verbatim guarded by
 test_question_summary_layer.py::test_existing_constraints_verbatim, and the other
 candidate fix is redundant with SKILL.md's own compact pipeline map.
@@ -33,7 +33,7 @@ CONTRACT_TRIO = (CANON_SKILL / "phases" / "3-plan.md",
 SETUP_TRIO = (CANON_SKILL / "phases" / "0-setup.md",
               DOG_SKILL / "phases" / "0-setup.md",
               BUNDLE_SKILL / "phases" / "0-setup.md")
-REPORT_TMPL = CANON_SKILL / "report-template.md"
+REPORT_TMPL = CANON_SKILL / "gate-udd.md"
 
 # the exact BEFORE fragments (verified byte-for-byte against the live files at ground time)
 _CONTRACT_BEFORE = ("rendering the freeze APPROVE as a guided choice")
@@ -77,7 +77,7 @@ class SetupGateCitesShape(unittest.TestCase):
 
 
 class ReportTemplateUnchanged(unittest.TestCase):
-    """R1/R2: report-shape-scan-audit itself left report-template.md at 0 B delta (9298 B) — the
+    """R1/R2: report-shape-scan-audit itself left gate-udd.md at 0 B delta (9298 B) — the
     guarded bullet and the considered-but-redundant fix both stayed untouched BY THAT TASK. A later,
     separate direct chat-directed edit (report-template-recorded-loop) deliberately appended one new
     <constraints> bullet (+290 B) closing the loop with the report-rendered-trace `Reported:` field —
@@ -85,8 +85,8 @@ class ReportTemplateUnchanged(unittest.TestCase):
     class keeps proving no OTHER, unrecorded drift occurs."""
 
     def test_report_template_byte_count_unchanged(self):
-        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9514,
-                         "report-template.md drifted beyond its recorded, deliberate additions "
+        self.assertEqual(len(REPORT_TMPL.read_bytes()), 9586,
+                         "gate-udd.md drifted beyond its recorded, deliberate additions "
                          "(9298 @ report-shape-scan-audit + 290 B @ report-template-recorded-loop "
                          "+ 39 B @ intake-freeze-batch: the Batch-don't-serialize hard rule "
                          "+ the BUILD-PLAN-is-the-HOW bullet @ plan-in-report, net −1 B of "
@@ -94,7 +94,11 @@ class ReportTemplateUnchanged(unittest.TestCase):
                          "line points at `status --all`, then −109 B @ persona-owns-gates: the "
                          "fixed report-blocks MANDATE retired to persona-owned PRINCIPLES + a "
                          "four-floors block, net −109 B after same-guide compression of the "
-                         "now-optional prescriptive prose — keeping the reference pool under budget)")
+                         "now-optional prescriptive prose — keeping the reference pool under budget, "
+                         "then +72 B @ gate-experience-udd: the gate guide RENAMED to gate-udd.md "
+                         "+ a lean text-mode-UDD-gate-surface reframe cross-linking design.md, plus the "
+                         "restored question-summary needles ('the flag count', the '**The ask itself**' "
+                         "tie-in) reconciling persona-owns-gates' incomplete migration)")
 
     def test_guarded_bullet_untouched(self):
         text = REPORT_TMPL.read_text(encoding="utf-8")

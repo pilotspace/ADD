@@ -1,14 +1,14 @@
 """question-summary-layer §4 suite — the question is a summary, never the artifact.
 
 Four RED targets (the build drives these green):
-  - test_rule_bullet_present     : report-template.md <constraints> carries the frozen
+  - test_rule_bullet_present     : gate-udd.md <constraints> carries the frozen
     bullet — rule name + both layers' needles (positional "immediately before the ask",
     compositional "two lines at most", and "the flag count").
   - test_ask_itself_tie_in       : the "**The ask itself**" tie-in sits in the
     five-blocks section.
   - test_skill_anchor_names_rule : SKILL.md's template-anchor line names the rule.
   - test_one_home_only           : the rule's needle phrase lives in EXACTLY
-    {report-template.md, SKILL.md} across skill/add/**/*.md — red now (0 homes),
+    {gate-udd.md, SKILL.md} across skill/add/**/*.md — red now (0 homes),
     green only at exactly 2. Guards the contract's `rule_sprinkled` rejection
     permanently: a third home (or a deleted home) goes red.
 
@@ -29,7 +29,7 @@ _TOOLING = Path(__file__).resolve().parent
 sys.path.insert(0, str(_TOOLING))
 
 _SKILL = _TOOLING.parent / "skill" / "add"
-_TEMPLATE = _SKILL / "report-template.md"
+_TEMPLATE = _SKILL / "gate-udd.md"
 _SKILL_MD = _SKILL / "SKILL.md"
 
 # The frozen hunk-A needles (contract §3, verbatim fragments — guard-dense: one per claim).
@@ -58,7 +58,7 @@ class QuestionSummaryLayer(unittest.TestCase):
         for needle in (_RULE_TITLE, _NEEDLE_POSITIONAL,
                        _NEEDLE_COMPOSITIONAL, _NEEDLE_FLAG_COUNT):
             self.assertIn(needle, text,
-                          f"report-template.md is missing the frozen needle: {needle!r}")
+                          f"gate-udd.md is missing the frozen needle: {needle!r}")
 
     def test_ask_itself_tie_in(self) -> None:
         text = _TEMPLATE.read_text(encoding="utf-8")
@@ -76,7 +76,7 @@ class QuestionSummaryLayer(unittest.TestCase):
             for p in _SKILL.rglob("*.md")
             if _HOME_NEEDLE in p.read_text(encoding="utf-8").lower()
         )
-        self.assertEqual(homes, ["SKILL.md", "report-template.md"],
+        self.assertEqual(homes, ["SKILL.md", "gate-udd.md"],
                          f"the rule must live in exactly two homes, found: {homes}")
 
     def test_existing_constraints_verbatim(self) -> None:

@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "4e65596032185cb3d88f764d425b4eb4"  # re-aimed @ foundation-slice-progressive (engine-output-trim: `status --foundation` is a progressive-disclosure MAP — invariants+Domain+Spec full, other sections collapsed to an on-demand `--foundation "<section>"` pull that fleshes out one section; −59% on the 55KB dogfood foundation, re-read every turn; `--all` for the full read). prior: a9ec7dd8… @ foundation-slice
+ENGINE_MD5 = "ee9631f9d089c30d70fdb91b6ac99278"  # re-aimed @ thin-engine-loop W1 (phase-collapse-6-to-3: a new opt-in `--thin` lane freezes the whole Direction bundle (spec+plan+§4 tests) in ONE `freeze --cross` that crosses straight to build via _build_entry's SAME floor machinery — collapsing the two pure-bookkeeping advances into a 3-call flow (new-task · freeze · gate). oneshot/fast/default lanes byte-unchanged; floor intact — tripwire+flag+scope snapshots still captured). prior: 4e655960… @ foundation-slice-progressive
 ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation

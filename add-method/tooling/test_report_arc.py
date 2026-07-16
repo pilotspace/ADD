@@ -2,7 +2,7 @@
 """Marker guard for the decision arc (task: report-arc, milestone v23;
 extended by task: report-plan-approve).
 
-report-template.md gains an ARC block — three labelled lines goal:/done:/plan:
+gate-udd.md gains an ARC block — three labelled lines goal:/done:/plan:
 rendered ABOVE the five existing blocks — that every human gate carries, so the
 human confirms with full sight of the work's arc (the goal it serves, what's
 proven, the plan ahead) rather than a local snapshot.
@@ -26,7 +26,7 @@ from pathlib import Path
 
 _TOOLING = Path(__file__).resolve().parent
 CANON_SKILL = _TOOLING.parent / "skill" / "add"
-TEMPLATE = CANON_SKILL / "report-template.md"
+TEMPLATE = CANON_SKILL / "gate-udd.md"
 SKILL = CANON_SKILL / "SKILL.md"
 
 # the seven human gates the arc is required at (frozen §3)
@@ -46,7 +46,7 @@ class ReportArcMarkerTest(unittest.TestCase):
         self.text = TEMPLATE.read_text(encoding="utf-8")
 
     def test_arc_block_has_three_labels_in_order(self):
-        self.assertIn("ARC", self.text, "report-template.md must define an ARC block")
+        self.assertIn("ARC", self.text, "gate-udd.md must define an ARC block")
         for label in ("goal:", "done:", "plan:"):
             self.assertIn(
                 label, self.text, f"the ARC block must carry the label {label!r}"
@@ -60,7 +60,7 @@ class ReportArcMarkerTest(unittest.TestCase):
 
     def test_arc_renders_above_the_five_blocks(self):
         # ARC first, above SUMMARY; the unchanged five blocks all remain present.
-        self.assertIn("ARC", self.text, "report-template.md must define an ARC block")
+        self.assertIn("ARC", self.text, "gate-udd.md must define an ARC block")
         self.assertIn("SUMMARY", self.text, "the SUMMARY block must remain present")
         self.assertLess(
             self.text.index("ARC"),
@@ -104,13 +104,13 @@ class ReportArcMarkerTest(unittest.TestCase):
 
     def test_skill_pointer_names_the_arc(self):
         skill = SKILL.read_text(encoding="utf-8")
-        i = skill.find("report-template")
-        self.assertNotEqual(i, -1, "SKILL.md must point at report-template.md")
+        i = skill.find("gate-udd")
+        self.assertNotEqual(i, -1, "SKILL.md must point at gate-udd.md")
         window = skill[max(0, i - 200) : i + 400]
         self.assertIn(
             "ARC",
             window,
-            "SKILL.md's report-template pointer must name the ARC block",
+            "SKILL.md's gate-udd pointer must name the ARC block",
         )
 
 

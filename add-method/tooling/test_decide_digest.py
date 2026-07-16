@@ -236,7 +236,7 @@ class DecideDigestTest(unittest.TestCase):
     # ---- BUILD PLAN block (plan-in-report): the §3 build-strategy plan-of-action ----
     # A filled §3 Build-strategy sub-block: the plan-of-action fields the freeze surfaces.
     _BS_FILLED = ("the-frozen-shape-text\n\n"
-                  "Scope (may touch): add.py report-template.md\n"
+                  "Scope (may touch): add.py gate-udd.md\n"
                   "Strategy (ordered batches): 1. red 2. green 3. sync\n"
                   "Persona (required): generic\n"
                   "Spawn isolation (default): inline\n\n"
@@ -249,7 +249,7 @@ class DecideDigestTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("BUILD PLAN", out)
         region = out[out.index("BUILD PLAN"):]
-        for frag in ("Scope", "add.py report-template.md",
+        for frag in ("Scope", "add.py gate-udd.md",
                      "Strategy", "1. red 2. green 3. sync",
                      "Persona", "generic", "Spawn isolation", "inline"):
             self.assertIn(frag, region)
@@ -267,7 +267,7 @@ class DecideDigestTest(unittest.TestCase):
         labels = [e["label"] for e in plan]
         self.assertEqual(labels, ["Scope (may touch)", "Strategy (ordered batches)",
                                   "Persona (required)", "Spawn isolation (default)"])
-        self.assertEqual(plan[0]["value"], "add.py report-template.md")
+        self.assertEqual(plan[0]["value"], "add.py gate-udd.md")
 
     def test_build_plan_no_field_bleed(self):
         """A field value must NOT swallow the next field's label/text — even when that
@@ -425,11 +425,11 @@ class DecideDigestTest(unittest.TestCase):
 
 
 class ReportTemplateSurfaceTest(unittest.TestCase):
-    """M5: the ONE human-gate report shape (report-template.md) names the BUILD PLAN block."""
+    """M5: the ONE human-gate report shape (gate-udd.md) names the BUILD PLAN block."""
 
     def test_report_template_documents_build_plan(self):
         skill = Path(add.__file__).resolve().parent.parent / "skill" / "add"
-        tmpl = skill / "report-template.md"
+        tmpl = skill / "gate-udd.md"
         self.assertTrue(tmpl.is_file(), f"missing {tmpl}")
         self.assertIn("BUILD PLAN", tmpl.read_text(encoding="utf-8"))
 

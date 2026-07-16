@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Marker guard for the decision arc in the book (task: arc-book-align, milestone v23).
 
-Tasks 1–2 shipped the decision arc into the skill: report-template.md renders it,
+Tasks 1–2 shipped the decision arc into the skill: gate-udd.md renders it,
 all seven gate guides cue it. This task makes the METHOD'S OWN PROSE explain it —
 a GLOSSARY term + one chapter mention — so a reader meets the arc as a defined
 concept, not only as skill machinery (exit-criterion 3: the book + GLOSSARY

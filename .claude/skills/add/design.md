@@ -1,14 +1,13 @@
 # Design — the design-definition loop (UDD)
 
 When a **UI feature** — or any human-facing **experience surface** (a screen · an interactive flow ·
-a **human gate**) — reaches specify, design it before you build it. UDD is experience-driven
-development, not UI-only: this loop takes the surface from the **domain** to something the human
-has **seen and confirmed** — a real captured image — *before* any implementation. Loaded on
-demand; the engine never runs it for you.
+a **human gate**) — reaches specify, design it first. UDD is experience-driven, not
+UI-only: it takes the surface from the **domain** to something the human has **seen and confirmed**
+— a real captured image — *before* any build. Loaded on demand; the engine never runs it for you.
 
 Design before code is the UDD half of the method. It fills the existing token + component
 foundation — `tokens.json` (`udd-tokens.md`), `catalog.json` + `prototypes/<name>.json`
-(`udd-catalog.md`) — for a feature and earns the human's sign-off before build.
+(`udd-catalog.md`) — and earns the human's sign-off before build.
 
 ## The loop — five beats
 
@@ -68,6 +67,10 @@ as a confirmable **checklist** beside the captured image — **both dimensions**
 **validated by user evidence, not assumed**). Each item traces to a success-metric
 the human confirms; it is **evidence, never an auto-pass** — a persona **never lowers a gate**
 (ADD principle 2). **No UI personas**? A **generic design-confirm**, never blocked; UI-less skips it.
+
+### Text-mode gate variant
+A **human gate** runs the loop in **text mode** — intake the **INTERACTION** axis (cadence ·
+when/how to seek the human) → design the report per `gate-udd.md` → **confirm**; no capture beat.
 
 ## Tool-agnostic capture
 

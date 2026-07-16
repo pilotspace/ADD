@@ -45,7 +45,7 @@ Then mark `Status: FROZEN @ v1 — approved by <name>`.
 Present the bundle **lowest-confidence first**: the 1–2 points most likely wrong
 (`⚠ [spec|scenario|contract|test] … — because …; if wrong: …`). Render from this card: banner → ARC
 (goal · done · plan, engine-sourced) → SHAPE → SUMMARY → FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT
-— rendering SHAPE then the freeze APPROVE as a guided choice; `report-template.md` holds the full
+— rendering SHAPE then the freeze APPROVE as a guided choice; `gate-udd.md` holds the full
 template + examples, read it at most once per session —
 **render before `FROZEN`, then record `Reported: yes`; never on a timeout.** See `run.md`.
 The freeze always renders the full card — never the compact form (6-verify.md's right-size rule).

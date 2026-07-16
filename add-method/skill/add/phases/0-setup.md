@@ -77,7 +77,7 @@ Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
-Open the report with the ARC per `report-template.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes; ambient agreement is not a confirmation. **Never self-stamp a timeout — hold, or re-ask.** On that recorded confirmation, you run the lock:
+Open the report with the ARC per `gate-udd.md`, render SHAPE then APPROVE as a guided choice, then present `SETUP-REVIEW.md` lowest-confidence-first. They confirm **once** — an explicit yes; ambient agreement is not a confirmation. **Never self-stamp a timeout — hold, or re-ask.** On that recorded confirmation, you run the lock:
 
 ```bash
 python3 .add/tooling/add.py lock --by "<name>"

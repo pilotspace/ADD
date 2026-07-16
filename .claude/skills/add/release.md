@@ -24,7 +24,7 @@ One arc, seven steps: **cue → gather → draft notes → readiness floor → h
 1. **Gather** — run `add.py release-report` (`--json` to branch on it). It clusters the cut's evidence: closed milestones since last release · consolidated deltas · open RISK-ACCEPTED waivers · open security HARD-STOP (blocker) · §2 scenarios to take live as monitors. Gathers, never judges.
 2. **Draft notes** — write a [Keep a Changelog](https://keepachangelog.com/) entry from the consolidated deltas + each milestone's goal. Group Added / Changed / Fixed. Propose the **semver bump** (breaking→MAJOR, feature→MINOR, fix-only→PATCH) for human confirmation.
 3. **Readiness floor** — the engine enforces: suite green, zero open security HARD-STOP, every RISK-ACCEPTED waiver signed and disclosed in the notes.
-4. **Human confirms** — present via `report-template.md`, opening with the ARC (goal · done · plan). Render as a guided choice (per `report-template.md`). Never pre-stamp; show-before-ask.
+4. **Human confirms** — present via `gate-udd.md`, opening with the ARC (goal · done · plan). Render as a guided choice (per `gate-udd.md`). Never pre-stamp; show-before-ask.
 5. **Cut** — only now run `add.py release <version> --notes <file>`. The engine records: CHANGELOG entry, append-only `RELEASES.md` row (newest-first: date · version · milestones · waivers · evidence), milestone attribution.
 6. **Ship** — the **human** runs the tag / publish / deploy (`git tag`, `npm publish`, deploy pipeline). Engine never performs it.
 7. **Watch** — §2 scenarios become live monitors. A regression re-enters at Specify as a **change request** → PATCH hotfix release.

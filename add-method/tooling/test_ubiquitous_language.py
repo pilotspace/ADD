@@ -229,7 +229,7 @@ class MachineTokensTest(unittest.TestCase):
                              f"CLI verb '{verb}' renamed or removed — machine_token_renamed")
         skill = PKG / "skill" / "add"
         for fname in ("SKILL.md", "intake.md", "run.md", "scope.md", "fold.md", "deltas.md",
-                      "streams.md", "adopt.md", "setup-review.md", "report-template.md"):
+                      "streams.md", "adopt.md", "setup-review.md", "gate-udd.md"):
             self.assertTrue((skill / fname).exists(),
                             f"skill file '{fname}' renamed/removed — machine_token_renamed")
         for fname, code in (("intake.md", "ask_human"), ("fold.md", "unconfirmed_fold"),

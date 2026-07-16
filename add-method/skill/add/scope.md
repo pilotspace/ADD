@@ -34,7 +34,7 @@ Diverge seeds (pick the live ones):
 - **Done-looks-like** — how do we SEE each outcome without reading code?
 - **First slice** — which task unblocks the rest?
 
-Rank assumptions lowest-confidence first; top 1–2 get the flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Present via `report-template.md` — open with the ARC (goal · done · plan), render as a guided choice.
+Rank assumptions lowest-confidence first; top 1–2 get the flag: `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`. Present via `gate-udd.md` — open with the ARC (goal · done · plan), render as a guided choice.
 
 ## Drafting a good MILESTONE.md (section by section)
 

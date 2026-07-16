@@ -32,7 +32,7 @@ file). gate_outcomes are a fixed vocab; named_codes are backticked snake_case re
 - SKILL.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved
 - run.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved, unguarded_high_risk_auto
 - streams.md: PASS, RISK-ACCEPTED, HARD-STOP, ESCALATE, auto-resolved, unguarded_high_risk_auto, active_task
-- report-template.md: PASS
+- gate-udd.md: PASS
 - phases/6-verify.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved, unescalated_security_note
 - adopt.md: already_locked
 - phases/0-setup.md: already_locked, setup_unlocked

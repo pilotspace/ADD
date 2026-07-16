@@ -3,7 +3,7 @@
 frozen v1): a `sensitivity: mechanical` or fast-lane task's verify gate renders a
 compact form (banner - SUMMARY - EVIDENCE - APPROVE); the full card is reserved for
 security / data / architecture and every freeze. Prose-only, message layer — the
-dispatch lives in the phase guides (single home; report-template.md untouched).
+dispatch lives in the phase guides (single home; gate-udd.md untouched).
 
   M1 — 6-verify.md's gate card carries the dispatch: mechanical + fast -> compact;
        security / data / architecture -> full card.
@@ -11,7 +11,7 @@ dispatch lives in the phase guides (single home; report-template.md untouched).
   M3 — 3-plan.md reserves the freeze for the full card ("never the compact form").
   M4 — fast-lane.md matches: freeze full, fast verify gate compact.
   R1 — the report-gate imperatives survive verbatim in both gate guides.
-  R2 — single home: the dispatch phrase stays out of report-template.md.
+  R2 — single home: the dispatch phrase stays out of gate-udd.md.
   R3 — the phases pool stays within its 33284B target.
 
 One test per §1 Must/Reject. Run: python3 -m unittest test_risk_report_render -v
@@ -23,7 +23,7 @@ _SKILL = Path(__file__).resolve().parent.parent / "skill" / "add"
 _PLAN = _SKILL / "phases" / "3-plan.md"
 _VERIFY = _SKILL / "phases" / "6-verify.md"
 _FAST = _SKILL / "phases" / "fast-lane.md"
-_TEMPLATE = _SKILL / "report-template.md"
+_TEMPLATE = _SKILL / "gate-udd.md"
 
 _PHASES_POOL_TARGET = 33284
 

@@ -1,15 +1,15 @@
 # Advisor — spawning one subagent to follow your plan
 
 The **advisor** strategy: spawn a *single* subagent to execute one piece of your plan, then merge
-its verdict back. It is the single-subagent companion to `streams.md` (which pipelines *many* tasks
-in parallel worktrees) — you delegate *one* well-scoped piece and stay in the loop. The engine never
+its verdict back. The single-subagent companion to `streams.md` (which pipelines *many* tasks in
+parallel worktrees) — you delegate *one* well-scoped piece and stay in the loop. The engine never
 spawns; this is your call per step.
 
 ## When to spawn — and when not
 
-Spawn when the piece is **separable and worth the round-trip**: a broad sweep; an independent adversarial review (the `6-verify` refute-read — fresh context, not graded by the author); a well-scoped batch; or context-offload to a small verdict.
+Spawn when the piece is **separable and worth the round-trip**: a broad sweep; an independent adversarial review (the `6-verify` refute-read — fresh context, not author-graded); a well-scoped batch; or context-offload to a small verdict.
 
-Do **not** spawn for narrow, cheap work — pay the round-trip only when the piece is big or independent enough. When in doubt, do it in-context.
+Don't spawn for narrow, cheap work — pay the round-trip only when the piece is big or independent enough. When in doubt, do it in-context.
 
 **Prefer the named roster.** Check first whether the piece fits one of ADD's five phase specialists — `add-design` (setup–contract) · `add-build` (tests·build) · `add-verify` (verify·observe) · `add-persona` (fit-persona selection) · `add-advisor` (a consultative second opinion) — before an ad-hoc spawn; each already carries the worker contract below.
 

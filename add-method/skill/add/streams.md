@@ -1,21 +1,20 @@
 # Parallel streams — pipelining independent tasks
 
-Load this when a milestone has more than one task and you want to run them concurrently.
-**Default:** `sequential + auto` is the project default at setup (`phases/0-setup.md` "Run
-mode") — one task at a time, but Verify still auto-PASSes on evidence. Parallel streaming is an
-**opt-in** for a milestone with genuinely independent tasks: `add.py streams set parallel
---project`, then read on. A project that raised its gate to `conservative`/`manual` still treats
-this rubric as the same opt-in escape hatch.
+Load this when a milestone has more than one task to run concurrently.
+**Default:** `sequential + auto` at setup (`phases/0-setup.md` "Run mode") — one task at a
+time, Verify still auto-PASSes on evidence. Parallel streaming is **opt-in** for genuinely
+independent tasks: `add.py streams set parallel --project`, then read on. A gate raised to
+`conservative`/`manual` treats this rubric as the same opt-in escape hatch.
 
-It changes **no `add.py` code and no phase semantics**. It is a way *you, the orchestrator*,
-drive several tasks at once by reading the dependency DAG `add.py status` already prints and
-spawning one worker per ready task.
+It changes **no `add.py` code and no phase semantics** — it is how *you, the orchestrator*,
+drive several tasks at once from the dependency DAG `add.py status` already prints, spawning
+one worker per ready task.
 
-## The honest frame — this is pipelining, not N× speed
+## The honest frame — pipelining, not N× speed
 
 With **one human reviewer** you cannot beat `review_time × N_tasks` (decision points are serial).
-The win: the reviewer is **never blocked waiting on a build** — builds for B·C·D run behind *their*
-frozen contracts while the human reviews A. Build latency hides under human latency.
+The win: the reviewer never blocks on a build — B·C·D build behind *their* frozen contracts while
+the human reviews A. Build latency hides under human latency.
 
 ## The two queues
 
@@ -35,9 +34,9 @@ Both from one `add.py status` — no new state:
 
 ## The DAG strategy — let the engine schedule the waves (`add.py waves`)
 
-Do **not** eyeball the READY-QUEUE by hand once a milestone has more than a couple of tasks.
-`add.py waves` (read-only) groups not-done tasks into **topological waves**, names the **critical
-path**, and emits an advisory **tier hint**:
+Don't eyeball the READY-QUEUE by hand past a couple of tasks. `add.py waves` (read-only) groups
+not-done tasks into **topological waves**, names the **critical path**, and emits an advisory
+**tier hint**:
 
 ```
 $ add.py waves
@@ -49,15 +48,14 @@ tier hint: top → dag-scheduler, setup-run-mode; mid → the rest
 ```
 
 - **Wave = a fan-out batch.** Every task in a wave has all in-milestone deps PASS, so the whole
-  wave is spawnable at once — worktree isolation is the default for any spawn.
-  Finish a wave, gate tasks PASS, then `add.py waves` again — the next wave is unblocked.
+  wave is spawnable at once — worktree isolation the default for any spawn. Finish a wave, gate
+  tasks PASS, then `add.py waves` again — the next wave is unblocked.
 - **Run the widest wave first** to hide the most build latency under human review latency.
 - **Spend your strongest model on the critical path.** Critical-path tasks gate the most
-  downstream work; off-path tasks take **mid**. The tier hint is advisory — override when you
-  know a task is harder than its position suggests.
-- **Prefer the named roster per worker** — `add-build` for a tests/build-phase worker, `add-design`
-  for design-phase, `add-verify` for verify-phase (full roster + when-to-spawn in advisor.md) — over
-  a generic ad-hoc spawn.
+  downstream work; off-path tasks take **mid**. The tier hint is advisory — override when a task
+  is harder than its position suggests.
+- **Prefer the named roster per worker** — `add-build` for a tests/build worker, `add-design` for
+  design, `add-verify` for verify (full roster + when-to-spawn in advisor.md) — over an ad-hoc spawn.
 - **`--json`** (`{ milestone, waves, critical_path, critical_path_len, tiers, blocked }`) feeds
   a runner that spawns programmatically. `blocked` lists tasks whose dep cannot be satisfied
   within this milestone; a `dependency_cycle` is refused with the offending members named.
@@ -80,41 +78,39 @@ floor never drops to zero (`run.md:22`). Do not engineer around it.
 <constraints>
 - **You (orchestrator)** own all shared writes: `MILESTONE.md`, and every `add.py advance <slug>` /
   `add.py gate <outcome> <slug>` call. Always pass the explicit `<slug>` — **name the task every time** —
-  omitting it falls back to `active_task`, which races once >1 stream is live.
-  Workers never run these.
-- **A worker** owns only its own `.add/tasks/<slug>/` — it builds `src/`, drives tests green,
-  gathers evidence, and writes `SUMMARY.md` + OBSERVE deltas. It touches **no sibling stream and
-  no shared file** — never write shared state (state.json, MILESTONE.md, a sibling's files).
+  omitting it falls back to `active_task`, which races once >1 stream is live. Workers never run these.
+- **A worker** owns only its `.add/tasks/<slug>/` — builds `src/`, drives tests green, gathers
+  evidence, writes `SUMMARY.md` + OBSERVE deltas. It touches **no sibling stream, no shared
+  file** — never write shared state (state.json, MILESTONE.md, a sibling's files).
 - **Isolation**: `isolation="worktree"` is the default for any agent-spawned step, not only a
-  wave — a shared-tree spawn needs a stated reason. The worktree is discarded on failure; the task
-  resets to its last-good phase.
+  wave — a shared-tree spawn needs a stated reason. Discarded on failure; the task resets to its
+  last-good phase.
 </constraints>
 
 ## Design for failure (required)
 
 - **Fresh worktree base (verify base == HEAD)** — cut each worktree from current `HEAD` **after**
-  committing the frozen bundle; confirm `git -C <worktree> rev-parse HEAD` equals the orchestrator's
+  committing the frozen bundle; confirm `git -C <worktree> rev-parse HEAD` == the orchestrator's
   `HEAD` (drifted → `git merge` first). On a pool runner (e.g. Claude Code) the check **shifts** to
   the worker's **step-0** (sync + re-echo `rev-parse HEAD`), verified at **merge-time**. The engine
   gates this (`engine-merge-base-enforcement`): `add.py wave-verify` before the first merge-back
   refuses a mismatched/pending echo (`unverified_fork_base`) or off-template ledger
-  (`wave_ledger_malformed`); `add.py check` is the standing monitor.
-- **Materialize gitignored engine content** — `git worktree add` checks out TRACKED files only;
-  `.add/tooling` (engine) and `.add/docs` (book) are gitignored and will be ABSENT even when the
-  worktree's HEAD matches. `add.py worktree-prep <slug>` mechanizes the recipe: cuts the
-  worktree, copies both trees in, and echoes the fork base for the ledger — one step.
+  (`wave_ledger_malformed`); `add.py check` stands monitor.
+- **Materialize gitignored engine content** — `git worktree add` checks out TRACKED files only, so
+  `.add/tooling` (engine) + `.add/docs` (book) are ABSENT even when HEAD matches. `add.py
+  worktree-prep <slug>` mechanizes it: cut the worktree, copy both trees in, echo the fork base — one step.
 - **Lease + timeout** — record which worker holds which task (wave ledger); a dead worker releases
   its claim back to READY.
-- **Failure isolates** — a worker's STOP-and-escalate blocks only its own task; siblings run on, the
+- **Failure isolates** — a worker's STOP-and-escalate blocks only its task; siblings run on, the
   escalation joins the REVIEW-QUEUE.
-- **Circuit-breaker** — if N workers fail in a wave, stop fanning out and fall back to sequential.
+- **Circuit-breaker** — if N workers fail in a wave, stop fanning out, fall back to sequential.
   Repeated failure means the scope was wrong, not the parallelism.
 
 ## Wave ledger — the wave's resume point
 
 **The file** — `.add/milestones/<m>/WAVE.md`, orchestrator-owned. ONE live wave per milestone;
-opening a second while one is live is refused (`wave_already_live`). **Workers never read
-WAVE.md** — the orchestrator copies relevant decisions into each worker's PROMPT.md at spawn.
+opening a second is refused (`wave_already_live`). **Workers never read WAVE.md** — the
+orchestrator copies relevant decisions into each PROMPT.md at spawn.
 
 ```markdown
 # WAVE.md — transient wave ledger (orchestrator-owned · one live wave per milestone)
@@ -134,8 +130,8 @@ base: <orchestrator HEAD at spawn — the sha every fork must equal>
 ```
 
 **Evidence cells, not ticks.** The fork-base cell holds the PASTED output of
-`git -C <worktree> rev-parse HEAD` and must equal `base:`. Filling the row requires running the
-command — words-exist ≠ method-works. Spawning a worker whose roster row lacks that evidence is
+`git -C <worktree> rev-parse HEAD` and must equal `base:` — filling the row means running the
+command; words-exist ≠ method-works. A worker whose roster row lacks that evidence is
 refused (`unverified_fork_base`). On a pool runner the cell holds the worker's **step-0**
 post-sync echo (still `== base:`) and the refusal **shifts to merge-time**.
 
@@ -144,8 +140,8 @@ close, absorb the evidence digest — base · roster fork-base · merge order ·
 outcome — into `MILESTONE.md` as an append-only `## Wave log` block, then remove the file.
 Removing WAVE.md before the digest is absorbed is refused (`digest_not_absorbed`).
 
-**Resume rule.** On session start, a live WAVE.md is the wave's resume point: re-orient from the
-file — roster, bases, decisions, merge order — never from conversational memory.
+**Resume rule.** On session start, a live WAVE.md is the resume point: re-orient from it —
+roster, bases, decisions, merge order — never from memory.
 
 ## Merge is serial — integration Verify
 
@@ -237,20 +233,20 @@ Do NOT touch add.py or any shared file — the orchestrator gates on your verdic
 
 ## Choosing the model — vendor-neutral tiers
 
-ADD picks a **tier** from the scope's nature; the adapter maps the tier to the runner's model id.
+ADD picks a **tier** from the scope's nature; the adapter maps it to the runner's model id.
 
 | Tier | When | Claude Code | Any other runner |
 |------|------|-------------|------------------|
 | **mid** | ordinary, well-tested scope; clear contract | `sonnet` | the runner's balanced model |
 | **top** | complex / ambiguous / cross-cutting / broad scope of impact | `opus` | the runner's strongest reasoning model |
 
-Two rules sit **above** model choice: **high-risk ⇒ a lowered rung (`conservative` or `manual`),
-regardless of model** — a stronger model does not buy back the human gate. And **security residue
+Two rules sit **above** model choice: **high-risk ⇒ a lowered rung (`conservative`/`manual`),
+regardless of model** — a stronger model never buys back the human gate. And **security residue
 always escalates** — no tier auto-passes it.
 
 ## The spawn adapter — one thin mapping per runner
 
-ADD needs six capabilities from any runner. **Isolation ADD owns itself** (a git worktree,
+ADD needs six capabilities from any runner. **Isolation ADD owns** (a git worktree,
 default for any spawn), so streams stay portable even without a native sandbox.
 
 | ADD needs | Abstract | Claude Code (verified reference) | Any CLI agent — Codex · opencode · pi-mono · … |
@@ -263,8 +259,8 @@ default for any spawn), so streams stay portable even without a native sandbox.
 | return a verdict | structured | final message (optionally a schema) | stdout JSON the orchestrator parses |
 
 > **Honesty:** only the Claude Code column is verified. The CLI forms for Codex/opencode/pi-mono
-> are *illustrative shapes* — confirm exact syntax with the `find-docs` skill.
+> are *illustrative* — confirm exact syntax with the `find-docs` skill.
 
 When workers return, **you** record each outcome with the explicit slug — `add.py advance <slug>`
 as evidence lands, `add.py gate PASS|RISK-ACCEPTED|HARD-STOP <slug>` at verify — then re-read
-`status` to refill the READY-QUEUE. The worker proposes; the orchestrator records.
+`status` to refill the READY-QUEUE. Worker proposes; orchestrator records.

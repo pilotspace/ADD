@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Red/green tests for gate render cards (task gate-read-diet, frozen contract v1):
-the weight audit (2026-07-13) measured report-template.md (9.6KB, 3 call sites) +
+the weight audit (2026-07-13) measured gate-udd.md (9.6KB, 3 call sites) +
 run.md (8.9KB, 4 call sites) re-read per gate/session — the two heaviest
 task-agnostic reads after SKILL.md. The fix: each gate's phase guide carries the
 render SKELETON inline (a card), the big files demote to read-at-most-once
@@ -13,7 +13,7 @@ references. Skeleton + pointer — details keep ONE home (template-dedup discipl
        no SHAPE/DECIDED) + the kept reconcile sentence.
   M3 — SKILL.md states the read-once rule naming BOTH big references.
   M4 — the report-gate imperatives survive verbatim in both guides.
-  R1 — the arc_gate_wiring pins survive (report-template + ARC per guide).
+  R1 — the arc_gate_wiring pins survive (gate-udd + ARC per guide).
   R2 — the phases pool stays within its 33284B target (compress-to-absorb).
 
 One test per §1 Must/Reject. Run: python3 -m unittest test_gate_read_diet -v
@@ -46,7 +46,7 @@ class FreezeCardTest(unittest.TestCase):
                         "DECIDED", "EVIDENCE", "APPROVE", "NEXT"],
                  "3-plan.md freeze card", self)
         self.assertIn("at most once", card,
-                      "the card must demote report-template.md to a read-once reference")
+                      "the card must demote gate-udd.md to a read-once reference")
 
     def test_freeze_imperative_survives(self):                     # M4
         text = _PLAN.read_text(encoding="utf-8")
@@ -62,7 +62,7 @@ class VerifyCardTest(unittest.TestCase):
                         "EVIDENCE", "APPROVE", "NEXT"],
                  "6-verify.md gate card", self)
         self.assertIn("at most once", card,
-                      "the card must demote report-template.md to a read-once reference")
+                      "the card must demote gate-udd.md to a read-once reference")
         # the reconcile sentence is KEPT (contract Must)
         self.assertIn("reconcile FLAGS", card)
         self.assertIn("report --decide", card)
@@ -80,7 +80,7 @@ class ReadOnceRuleTest(unittest.TestCase):
         # the rule names both heavy references
         idx = text.index("at most once per session")
         window = text[max(0, idx - 400):idx + 400]
-        self.assertIn("report-template.md", window)
+        self.assertIn("gate-udd.md", window)
         self.assertIn("run.md", window)
 
 
@@ -88,7 +88,7 @@ class GuardTest(unittest.TestCase):
     def test_wiring_pins_survive(self):                            # R1
         for path in (_PLAN, _VERIFY):
             text = path.read_text(encoding="utf-8")
-            self.assertIn("report-template", text, f"{path.name}: arc_gate_wiring pin lost")
+            self.assertIn("gate-udd", text, f"{path.name}: arc_gate_wiring pin lost")
             self.assertIn("ARC", text, f"{path.name}: arc_gate_wiring pin lost")
 
     def test_phases_pool_within_target(self):                      # R2

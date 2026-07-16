@@ -2,9 +2,9 @@
 """Red/green tests for skill-banner-cue (frozen @ v1, milestone loop-readability).
 
 PROSE-ONLY task — no engine logic change. §3 CONTRACT: SKILL.md's always-loaded compact
-pipeline sentence (already citing SHAPE) gains a minimal citation of report-template.md's
+pipeline sentence (already citing SHAPE) gains a minimal citation of gate-udd.md's
 decision banner ("rendered first, above everything") — the element that renders even
-before the ARC. intake.md and report-template.md are explicitly OUT of scope (0 B delta).
+before the ARC. intake.md and gate-udd.md are explicitly OUT of scope (0 B delta).
 
 Mirrors §2 SCENARIOS M1/M2/M3/R2 (mechanically-checkable; R1 is covered by the existing
 targeted regression batch, not a dedicated test here).
@@ -27,8 +27,11 @@ SKILL_TRIO = (CANON_SKILL_MD, DOG_SKILL_MD, BUNDLE_SKILL_MD)
 
 INTAKE_MD = _ADD_METHOD / "skill" / "add" / "intake.md"
 
+# M1 needle migrated @ gate-experience-udd: persona-owns-gates retired the fixed report SEQUENCE
+# (the old "PLAN/SHAPE → SUMMARY → …" mandate) for persona-owned PRINCIPLES, so the cue now checks
+# only that SKILL.md's report line names the BANNER ahead of the ARC — the M1 intent — not a sequence.
 _BEFORE = "open with the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →"
-_AFTER = "open with the banner then the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →"
+_AFTER = "the gate report (banner then the ARC)"
 
 _INTAKE_BYTES_BEFORE_TASK = len(INTAKE_MD.read_bytes())
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for the mechanical report-rendered trace (direct chat-directed task
 `report-rendered-trace`, motivated by a forensic transcript audit of a separate ADD project
-where report-template.md was cited-but-never-rendered at every human gate).
+where gate-udd.md was cited-but-never-rendered at every human gate).
 
 CONTRACT — design mirrors refute_unrecorded/advisor_verdict_unrecorded EXACTLY, MEASURE-NOT-BLOCK:
   templates/TASK.md.tmpl §3 gains a `Reported: <…>` line right after `Status: DRAFT`.

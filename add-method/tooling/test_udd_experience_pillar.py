@@ -6,7 +6,7 @@ broadens to a UI feature OR any human-facing experience surface (a screen · an 
 a human gate), and the design-intake beat gains a FIFTH axis — INTERACTION (cadence ·
 when/how to seek the human · turn-rhythm) — alongside the four originals (which stay, frozen
 names). SKILL.md's UDD trigger names experience surfaces, not UI features only. The human
-gate is NAMED an in-scope UDD surface. report-template.md is NOT folded here (that is
+gate is NAMED an in-scope UDD surface. gate-udd.md is NOT folded here (that is
 gate-experience-udd). The DESIGN.md.tmpl + glossary INTERACTION field is a deferred
 completion (this task is the conceptual foundation).
 

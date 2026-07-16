@@ -42,9 +42,9 @@ one human confirm covering the batch — never N sequential asks. Mixed buckets 
 
 ## What you emit (the proposal)
 
-Present the proposal via `report-template.md` — open with the ARC (goal · done · plan): the goal this
+Present the proposal via `gate-udd.md` — open with the ARC (goal · done · plan): the goal this
 request serves, what is already covered, and the plan the chosen bucket sets up. Render it as a guided
-choice — the recommended bucket + its described alternatives (per `report-template.md`). For every
+choice — the recommended bucket + its described alternatives (per `gate-udd.md`). For every
 request, emit ONE of:
 
 - **a classification** — `{ bucket, rationale, command }` — `rationale` names WHY (the theme, the

@@ -1,8 +1,6 @@
-# Chat reports — the decision-point template (for the AI, not for add.py)
+# Gate reports — the text-mode UDD gate surface (for the AI, not add.py)
 
-The engine renders artifacts (`report`, `report --decide`, `status`); this file governs the CHAT MESSAGE you wrap around them.
-
-Use it every time you report at or near a human gate.
+The engine renders artifacts (`report`, `report --decide`, `status`); this file governs the CHAT MESSAGE you wrap around them. Use it at every human gate; its UDD-family design home is `design.md`.
 
 **The fitting persona owns the gate report** — these are PRINCIPLES, not a fixed template: CONVEY the content below, but the persona owns structure, order, and cadence per project. The layout shown is a sensible DEFAULT; the four floors (below) it may never drop.
 
@@ -83,7 +81,7 @@ APPROVE   what you need from the human (or "none — FYI") — exactly one — s
 NEXT      the recommended next actions, ranked (top ▶ highlighted, bolded) + what each unlocks
 ```
 
-- **SUMMARY** never optional — one line even when PLAN/SHAPE carries the context. **FLAGS** lowest-confidence-first (why + cost-if-wrong; quote TASK.md `⚠` / `- [~]` / `- [ ]` verbatim). **DECIDED** highest-confidence-first ("none" when none; never a security / residue / lowered-autonomy call). **EVIDENCE** engine-sourced, never re-typed. **APPROVE** the guided ask, last, after show-before-ask. **NEXT** ranked recommendations, not a second gate.
+- **SUMMARY** never optional — one line even when PLAN/SHAPE carries the context. **FLAGS** lowest-confidence-first (why + cost-if-wrong; quote TASK.md `⚠` / `- [~]` / `- [ ]` verbatim). **DECIDED** highest-confidence-first ("none" when none; never a security / residue / lowered-autonomy call). **EVIDENCE** engine-sourced, never re-typed. **APPROVE** the guided ask, last, after show-before-ask. **NEXT** ranked recommendations, not a second gate. **The ask itself** is a summary, never the artifact.
 
 ### Beyond the core blocks
 
@@ -120,7 +118,7 @@ Whatever shape the persona renders per project, it MUST hold all four:
 - **One report per decision point.** After an approval, point at the frozen artifact — do not re-render the bundle.
 - **Batch, don't serialize.** N same-gate decisions ready together (intake items · ready-to-freeze contracts) render as ONE report: PLAN lists each with its own lowest-confidence flag; APPROVE covers the batch in one ask, any item held back by name.
 - **Honest scope.** "Done" means the request, not the last task: report "task 2/3", never "done" while approved scope remains.
-- **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + flag count — pointing at the report above.
+- **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + the flag count — pointing at the report above.
 - **NEXT is not a second gate.** The decision stays in APPROVE; NEXT is ranked recommendations only.
 - **DECIDED never holds a gate-class call.** Security / residue / lowered-autonomy calls escalate in APPROVE.
 - **Recorded, not just performed.** A gate render is recorded, not assumed — TASK.md `Reported: yes` (§3/§6) is the trace; `add.py audit` surfaces an unrecorded one (`contract_report_unrecorded`/`verify_report_unrecorded`), a spot-audit the backstop.

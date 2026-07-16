@@ -174,7 +174,7 @@ class TestXmlConventionPhaseGuides(unittest.TestCase):
 # ─── task engine-docs-xml: the 10 engine docs ─────────────────────────────────────────────────
 # Engine docs carry ONLY <constraints> + <reject_codes> — the two tags the frozen TAG→FIRST-USE map
 # reserved for the engine layer (this is their first use). <output_format> is intentionally ABSENT:
-# every engine-doc output-shape is a CODE FENCE (deltas' grammar, report-template's five-block digest,
+# every engine-doc output-shape is a CODE FENCE (deltas' grammar, gate-udd's five-block digest,
 # setup-review's template), left as markdown per the convention's fence-exemption — <output_format>
 # already earns its use in task 2's phase-guide "## Produce" prose. streams.md's worker-contract ```xml
 # fence is UNTOUCHED (pre-existing worker scaffolding inside a fence): the vocab check strips code
@@ -255,7 +255,7 @@ ENGINE_FILES = {
             "## The signal — and arming the gate",
             "## Where it ends — the baseline approval",
         )},
-    "report-template.md": {
+    "gate-udd.md": {
         "tags": {"constraints"},
         "narrative": (
             "## The report blocks — what to convey (you own the order)",  # holds the digest ``` fence; persona owns order (task: persona-owns-gates)

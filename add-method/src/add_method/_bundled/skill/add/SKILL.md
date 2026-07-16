@@ -94,10 +94,10 @@ contract freeze**, lowest-confidence-first — `run.md`.
 evidence (*auto-resolved* — an explicit PASS, not a skip). **Security always escalates** (HARD-STOP);
 so do concurrency / architecture residue and a lowered autonomy level — `run.md`.
 
-At every human decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report —
-`report-template.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-confidence-first) ·
-evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP).
-Read `report-template.md`/`run.md` at most once per session — each phase guide carries its gate card.
+At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
+`gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·
+evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP) — the question is a summary, never the artifact.
+Read `gate-udd.md`/`run.md` at most once per session.
 
 In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve (written `open`; the human consolidates into `PROJECT.md`) — grammar + lifecycle in
@@ -110,7 +110,7 @@ writer) — `soul.md`.
 
 One trigger = one guide — full prose: `beyond.md`; load only when a trigger fires:
 
-- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default mode) ·
+- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default execution mode) ·
   self-score `confidence.md`
 - small low-risk task → fast lane `phases/fast-lane.md` · UI/experience surface → UDD loop `design.md`
 - milestone goal unmet at `milestone-done` → `loop.md`

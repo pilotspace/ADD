@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Marker guard for persona-owned gates (task: persona-owns-gates, milestone strategy-intake).
 
-report-template.md is retired from a FIXED, mandated ordered section list into
+gate-udd.md is retired from a FIXED, mandated ordered section list into
 persona-owned PRINCIPLES: a gate report must CONVEY a required content set, but the
 fitting persona owns structure, order, emphasis, length and cadence — adapted per
 project. A sensible DEFAULT layout may remain (the persona's baseline); what is
@@ -26,7 +26,7 @@ _REPO = _TOOLING.parent.parent
 CANON = _TOOLING.parent / "skill" / "add"
 BUNDLED = _TOOLING.parent / "src" / "add_method" / "_bundled" / "skill" / "add"
 DOGFOOD = _REPO / ".claude" / "skills" / "add"
-TEMPLATE = CANON / "report-template.md"
+TEMPLATE = CANON / "gate-udd.md"
 SKILL = CANON / "SKILL.md"
 
 
@@ -42,7 +42,7 @@ class PersonaOwnsStructureTest(unittest.TestCase):
             "persona owns" in self.low
             or "persona-owned" in self.low
             or "you own the form" in self.low,
-            "report-template.md must hand report structure/order/cadence to the persona",
+            "gate-udd.md must hand report structure/order/cadence to the persona",
         )
 
     def test_no_fixed_ordered_section_list_is_mandated(self):
@@ -62,7 +62,7 @@ class PersonaOwnsStructureTest(unittest.TestCase):
         self.assertIn(
             "convey",
             self.low,
-            "report-template.md must frame the report blocks as content to CONVEY",
+            "gate-udd.md must frame the report blocks as content to CONVEY",
         )
         for token in ("arc", "flags", "evidence"):
             self.assertIn(
@@ -143,7 +143,7 @@ class SkillNamesPrinciplesTest(unittest.TestCase):
 
     def test_skill_report_line_names_principles_not_fixed_sequence(self):
         skill = SKILL.read_text(encoding="utf-8")
-        self.assertIn("report-template", skill, "SKILL.md must point at report-template.md")
+        self.assertIn("gate-udd", skill, "SKILL.md must point at gate-udd.md")
         self.assertNotIn(
             "FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT",
             skill,
@@ -156,7 +156,7 @@ class SkillNamesPrinciplesTest(unittest.TestCase):
         )
 
     def test_three_skill_trees_byte_identical(self):
-        for rel in ("report-template.md", "SKILL.md"):
+        for rel in ("gate-udd.md", "SKILL.md"):
             a = hashlib.md5((CANON / rel).read_bytes()).hexdigest()
             b = hashlib.md5((BUNDLED / rel).read_bytes()).hexdigest()
             c = hashlib.md5((DOGFOOD / rel).read_bytes()).hexdigest()
