@@ -33,7 +33,7 @@ class _Harness(unittest.TestCase):
         self._silent("init", "--name", "demo", "--stage", "mvp")
         self._silent("lock", "--force")
         self._silent("new-task", "t", "--title", "F")
-        self.md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        self.md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
 
     def tearDown(self):
         os.chdir(self._cwd)

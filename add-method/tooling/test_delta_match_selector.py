@@ -50,14 +50,14 @@ class _Project(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def _task_md(self, slug):
-        return (self.root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        return (self.root / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
 
     def _mk(self, slug):
         _run(["new-task", slug, "--title", "Feature"])
 
     def _set_spec(self, slug, *open_texts):
         """Plant one open SPEC delta per text in slug's §7 OBSERVE."""
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         idx = s.index("## 7 · OBSERVE")
         head_end = s.index("\n", idx) + 1

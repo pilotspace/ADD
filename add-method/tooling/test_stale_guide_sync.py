@@ -2,13 +2,13 @@
 """Red/green tests for stale-guide-sync (milestone flow-honesty, task 7/7, M5).
 
 CONTRACT (frozen @ v1) — PROSE-ONLY, engine BYTE-FROZEN:
-  - 5-build.md + TASK.md.tmpl: the stale `scope-gate-enforce` deferral is GONE; the gate is
+  - 5-build.md + PLAN.md.tmpl: the stale `scope-gate-enforce` deferral is GONE; the gate is
     described as ENFORCED at the verify gate (scope_violation -> self-heal).
   - run.md owns the ONE canonical 8-item auto-PASS precondition list; book ch.08 names the SAME
     items (adds completeness-critic + deep-check + recorded refute-read); 6-verify points to run.md.
   - run.md + 6-verify.md note `add.py audit` surfaces shallow_deep_check + risk_unset + refute_unrecorded.
   - book ch.08 carries the never-marked-security-finding disclosure (book<->skill parity).
-  - book ch.03/04 cross-ref the TASK.md §1/§2 they fill.
+  - book ch.03/04 cross-ref the PLAN.md §1/§2 they fill.
   - the engine pin + the package digest byte-UNCHANGED; edited files byte-identical across mirror trees.
 Run: python3 -m unittest test_stale_guide_sync -v
 """
@@ -29,7 +29,7 @@ BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 BUILD_MD = SKILL / "phases" / "build.md"
 RUN_MD = SKILL / "run.md"
 VERIFY_MD = SKILL / "phases" / "verify.md"
-TMPL = TOOLING / "templates" / "TASK.md.tmpl"
+TMPL = TOOLING / "templates" / "PLAN.md.tmpl"
 CH03 = DOCS / "03-step-1-specify.md"
 CH04 = DOCS / "04-step-2-scenarios.md"
 CH08 = DOCS / "08-step-6-verify.md"
@@ -87,10 +87,10 @@ class AuditAndDisclosureTest(unittest.TestCase):
 class BookCrossRefTest(unittest.TestCase):
     def test_book_chapters_crossref_task(self):
         c3 = _read(CH03)
-        self.assertIn("TASK.md", c3)
+        self.assertIn("PLAN.md", c3)
         self.assertIn("§1", c3)
         c4 = _read(CH04)
-        self.assertIn("TASK.md", c4)
+        self.assertIn("PLAN.md", c4)
         self.assertIn("§2", c4)
 
 

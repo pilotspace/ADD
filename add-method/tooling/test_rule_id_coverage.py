@@ -33,9 +33,9 @@ ADD_PY_COPIES = [
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
 TEMPLATE_COPIES = [
-    HERE / "templates" / "TASK.md.tmpl",
-    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    HERE / "templates" / "PLAN.md.tmpl",
+    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 
 _SEC1 = (
@@ -84,14 +84,14 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _set_section(self, slug: str, n: int, body: str):
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
         pattern = re.compile(rf"(?ms)(^##\s*{n}\s*·[^\n]*\n)(.*?)(?=^##\s*\d+\s*·|\Z)")
         new_text, count = pattern.subn(lambda m: m.group(1) + body + "\n", text, count=1)
-        assert count == 1, f"section {n} heading not found in {slug}'s TASK.md"
+        assert count == 1, f"section {n} heading not found in {slug}'s PLAN.md"
         p.write_text(new_text, encoding="utf-8")
 
     def _make_task(self, slug: str, sec1: str, sec2: str, sec4: str = ""):
@@ -182,7 +182,7 @@ class MalformedTaskDegradesSafely(_Board):
     def test_check_does_not_crash_on_malformed_task(self):        # R:check_crashes_on_malformed_task
         task_dir = self._task_md("broken").parent
         task_dir.mkdir(parents=True, exist_ok=True)
-        self._task_md("broken").write_text("not a real TASK.md at all", encoding="utf-8")
+        self._task_md("broken").write_text("not a real PLAN.md at all", encoding="utf-8")
         sp = self.tmp / ".add" / "state.json"
         st = json.loads(sp.read_text(encoding="utf-8"))
         st["tasks"]["broken"] = {"phase": "ground"}

@@ -71,11 +71,11 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _write_task(self, slug: str, contract_body: str):
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-07-10 · stage: mvp",
             "phase: ground",
             "",

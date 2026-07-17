@@ -13,9 +13,9 @@ Trim policy: each annotation carries only the CURRENT re-aim plus a one-line
 `prior: <hash>… @ <task>` pointer to the immediately-preceding re-aim — never
 a deeper chain. `git log -p` on this file is the real, complete audit trail;
 the comment is a quick-glance anchor, not an append-only ledger. A task's own
-prose (its TASK.md) is the place to record the full rationale for a re-aim —
+prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "46b3057d70bd15304659a63ceabb8ac4"  # re-aimed @ engine-kernel-trim (ADD 2.0 M5: 54→30 verbs — the platform pillars (streams/waves/DAG · components/federation · release/graduation · audit · fold/compact · team verbs · SPEC-delta trio · doctor/worktree-prep) died; add.py 9,558→6,596 lines; their playbooks live in the seed personas). prior: 11fe18db… @ specs-5dd
-ENGINE_PKG_MD5 = "1f2abc63c0aced8aa8cf47b87d7b2044"  # re-aimed @ engine-kernel-trim (ADD 2.0 M5: release.py deleted; components.py slimmed to the two generic scope utilities; constants.py drops the graduation/release cues). prior: cd2d7e81… @ specs-5dd
+ENGINE_MD5 = "07750e20aa7a09f7403f9ea375ab48dc"  # re-aimed @ migrate-verb (ADD 2.0 M6a: task doc TASK.md → PLAN.md engine-wide + new one-shot `migrate` verb, 30→31). prior: 46b3057d… @ engine-kernel-trim
+ENGINE_PKG_MD5 = "0c8b1abadfed44b273298b1c65e19d09"  # re-aimed @ migrate-verb (ADD 2.0 M6a: the TASK.md → PLAN.md rename ripples through the package's doc-path literals). prior: 1f2abc63… @ engine-kernel-trim

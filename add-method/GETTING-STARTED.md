@@ -169,7 +169,7 @@ Confirm your project is internally consistent at any time:
 python3 .add/tooling/add.py check
 ```
 
-It verifies state is valid, every task has its TASK.md, and markers match. Exit
+It verifies state is valid, every task has its PLAN.md, and markers match. Exit
 code 0 means healthy — handy as a CI gate.
 
 ---
@@ -182,7 +182,7 @@ each one produces and step in manually whenever you want to. You never *have* to
 these — they are the agent's hands, and yours when you take the wheel.
 
 The rhythm is always: **fill the section → run `python3 .add/tooling/add.py advance`.**
-The tool keeps the `phase:` marker at the top of TASK.md in sync.
+The tool keeps the `phase:` marker at the top of PLAN.md in sync.
 
 ### Before the phases — initialise and scaffold
 
@@ -199,7 +199,7 @@ python3 .add/tooling/add.py new-task transfer --title "Transfer money between my
 > any build. Plain `init` skips that gate, which is fine here: by hand, the
 > human IS the one driving every step.
 
-This scaffolds `.add/tasks/transfer/TASK.md` — **one file holding all seven phase
+This scaffolds `.add/tasks/transfer/PLAN.md` — **one file holding all seven phase
 sections** — plus empty `tests/` and `src/` folders, and makes it the active task
 at phase `specify`. Open it in your editor; you'll fill it top to bottom.
 

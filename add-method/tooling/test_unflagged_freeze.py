@@ -74,7 +74,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -83,7 +83,7 @@ class _Board(unittest.TestCase):
         return hashlib.sha256((self._root() / "state.json").read_bytes()).hexdigest()
 
     def _body(self, slug: str, flag: str, frozen: bool = True) -> str:
-        """A full TASK.md whose §3 we control: the FROZEN stamp (optional) plus
+        """A full PLAN.md whose §3 we control: the FROZEN stamp (optional) plus
         an optional flag unit appended after it. plan-phase-core: §3 is now the
         collapsed `## 3 · PLAN` (rule 6 — fenced shape first, under `### Contract`,
         then `Status:`); the numeral (not the title) is what the engine's
@@ -92,7 +92,7 @@ class _Board(unittest.TestCase):
         if flag:
             sec3 = f"{sec3}\n{flag}"
         return "\n".join([
-            f"# TASK: {slug}", "",
+            f"# PLAN: {slug}", "",
             "## 1 · SPECIFY", "Feature: f", "",
             "## 2 · SCENARIOS", "(none)", "",
             "## 3 · PLAN", "### Contract", "```\nshape\n```", "", sec3, "",

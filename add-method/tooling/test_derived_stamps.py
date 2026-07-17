@@ -76,7 +76,7 @@ class _Harness(unittest.TestCase):
         self._ok("lock", "--force")
         self._ok("new-task", "t", "--title", "T", "--oneshot")
         self._ok("advance", "--to", "plan")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _DRAFT.lstrip("\n") + "\n",
                      text, count=1)

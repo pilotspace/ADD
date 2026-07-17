@@ -83,7 +83,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -116,7 +116,7 @@ class _Board(unittest.TestCase):
 
     def _write_task(self, slug: str):
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-06-12 · stage: mvp",
             "phase: specify",
             "",

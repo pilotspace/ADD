@@ -2,7 +2,7 @@
 """Red/green tests for `new-task --fast` + the fast-lane trust floor (task fast-new-task-flag,
 milestone fast-lane).
 
-`--fast` opts a task into the fast lane: it scaffolds the minimal TASK.fast.md template, records a
+`--fast` opts a task into the fast lane: it scaffolds the minimal PLAN.fast.md template, records a
 durable `state["tasks"][slug]["fast"] = True` marker, and — the v2 contract — WIRES the task into
 the freeze-before-build gate so a fast task is held to the freeze floor under ANY milestone (the gate
 firing gains a fast arm: `_optin OR task.fast is True`). Without `--fast`, new-task is byte-identical
@@ -69,7 +69,7 @@ class FastNewTaskFlagTest(unittest.TestCase):
         return self._state()["tasks"][slug]
 
     def _task_path(self, slug):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _sections(self, slug):
         return set(add._phase_spans(self._task_path(slug).read_text()))

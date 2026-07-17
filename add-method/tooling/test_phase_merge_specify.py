@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for phase-merge-specify (six-phase-loop 1/6, frozen v1): the
 scenarios PHASE folds into specify — one drafting phase produces §1 AND §2; the
-TASK.md §-section shape is untouched (sections are the stable API). Legacy state
+PLAN.md §-section shape is untouched (sections are the stable API). Legacy state
 tokens normalize on read (expectations-first precedent); a pre-merge header skip
 declaration naming scenarios is tolerated loud, never a die.
 
@@ -53,7 +53,7 @@ class _Harness(unittest.TestCase):
     def _freeze(self, slug="t"):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         direction->build. freeze-gate-universal sweep."""
-        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text(encoding="utf-8").replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-07-14.\n"
@@ -133,7 +133,7 @@ class LegacyStateTest(_Harness):
 
 class LegacySkipDeclarationTest(_Harness):
     def _declare_skip(self, token):
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         m = re.search(r"(?m)^phase:.*$", text)
         self.assertIsNotNone(m, "no phase marker line to anchor the skip header")

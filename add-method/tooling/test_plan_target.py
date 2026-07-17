@@ -4,7 +4,7 @@
 CONTRACT: the §3 PLAN is ADD 2.0's core artifact — it carries a MEASURABLE
 Target the verify evidence must hit, and the gate records whether it was hit.
 
-- TASK.md.tmpl §3 carries a `Target (measurable):` line (numbers, not
+- PLAN.md.tmpl §3 carries a `Target (measurable):` line (numbers, not
   adjectives) — measure-not-block: freeze never refuses on it.
 - `gate <outcome> --target-hit yes|partial|no` records the judgment in state
   (tasks[slug]["target_hit"]) and in the route-outcome trace line
@@ -12,7 +12,7 @@ Target the verify evidence must hit, and the gate records whether it was hit.
 - An invalid --target-hit value is refused BEFORE any write
   (target_hit_invalid).
 - Shard tolerance: AI-architected shard files inside `.add/tasks/<slug>/`
-  (beyond TASK.md) are the AI's free architecture — they never trip the §5
+  (beyond PLAN.md) are the AI's free architecture — they never trip the §5
   scope guard (the .add tree is outside the scope walk by construction; this
   pins that as a 2.0 contract, not an accident).
 
@@ -33,7 +33,7 @@ from pathlib import Path
 import add
 
 TOOLING = Path(__file__).resolve().parent
-TMPL = TOOLING / "templates" / "TASK.md.tmpl"
+TMPL = TOOLING / "templates" / "PLAN.md.tmpl"
 
 _SEC3 = """### Grounding
 Touches (files · symbols): pkg/api/handler.py:handle — the endpoint
@@ -90,7 +90,7 @@ class _Harness(unittest.TestCase):
         self._ok("lock", "--force")
         self._ok("new-task", "t", "--title", "T", "--oneshot")
         self._ok("advance", "--to", "plan")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
@@ -117,7 +117,7 @@ class TemplateTargetTest(unittest.TestCase):
     def test_template_has_target_line(self):
         text = TMPL.read_text(encoding="utf-8")
         self.assertIn("Target (measurable):", text,
-                      "TASK.md.tmpl §3 must carry a 'Target (measurable):' line")
+                      "PLAN.md.tmpl §3 must carry a 'Target (measurable):' line")
         sec3_end = text.index("## 4 ·")
         self.assertLess(text.index("Target (measurable):"), sec3_end,
                         "the Target line belongs to the §3 PLAN, before §4")

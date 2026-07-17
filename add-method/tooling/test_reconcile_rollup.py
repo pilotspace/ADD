@@ -15,7 +15,7 @@ Hermetic: a bundled fixture (skill/tooling/docs with known file counts) + tmp ta
 npm twin is exercised by a node subprocess. RED until _clean_replace returns counts and
 _reconcile returns/logs the rollup — red for the right reason (missing implementation).
 
-project-scope-atomic-reconcile (TASK.md v1) extends this file with a crash-safe stage-then-
+project-scope-atomic-reconcile (PLAN.md v1) extends this file with a crash-safe stage-then-
 swap redesign of _clean_replace/cleanReplaceTree: StageCommitUnitTest (§2 scenarios 1-9, 11 —
 missing/present dest, strip-on-staged, mid-copy + commit-land failure rollback, stale
 tmp/backup self-heal), CrossTwinStagedCommitTest (§2 scenario 10 — python+node parity),
@@ -241,13 +241,13 @@ class ParityRollupTest(_Base):
                          "cli.js headline carries the same parenthetical")
 
 
-# --- project-scope-atomic-reconcile: crash-safe stage-then-swap (TASK.md v1) ------------
+# --- project-scope-atomic-reconcile: crash-safe stage-then-swap (PLAN.md v1) ------------
 
 def _partial_copytree_then_raise(n_files):
     """A shutil.copytree replacement that really copies the first n_files (sorted,
     deterministic) leaf files from src into dst — dst is expected to already exist as an
     empty dir, matching how the real staging call is made — then raises, simulating a real
-    crash/disk-full/permission-denied partway through a directory copy (TASK.md §1 Issue #1)."""
+    crash/disk-full/permission-denied partway through a directory copy (PLAN.md §1 Issue #1)."""
     def _fn(src, dst, *a, **kw):
         srcp, dstp = Path(src), Path(dst)
         dstp.mkdir(parents=True, exist_ok=True)
@@ -261,7 +261,7 @@ def _partial_copytree_then_raise(n_files):
 
 
 class StageCommitUnitTest(unittest.TestCase):
-    """_clean_replace: TASK.md §2 scenarios 1-9, 11. Each dest lives in its OWN dedicated
+    """_clean_replace: PLAN.md §2 scenarios 1-9, 11. Each dest lives in its OWN dedicated
     `area` dir (never a sibling of src) so `_siblings_of` only ever reveals a GENUINE scratch
     sibling (staging/backup), never an unrelated fixture. scn1/2/9/11 restate the pre-existing
     happy-path contract (M8: unchanged) and are expected GREEN even pre-build — the

@@ -38,7 +38,7 @@ class _Project(unittest.TestCase):
         # direction with just a §1 fill (it would refuse contract_not_frozen). §1 is
         # written directly instead — this fixture only needs the body present, not a
         # completed crossing.
-        task_md = self.root / ".add" / "tasks" / "widget" / "TASK.md"
+        task_md = self.root / ".add" / "tasks" / "widget" / "PLAN.md"
         task_md.write_text(
             task_md.read_text().replace(
                 "Feature: <name>",
@@ -71,7 +71,7 @@ class SectionRead(_Project):
             self.assertIn("section_unknown", r.stderr + r.stdout)
 
     def test_missing_section_rejected(self):  # R3
-        task_md = self.root / ".add" / "tasks" / "widget" / "TASK.md"
+        task_md = self.root / ".add" / "tasks" / "widget" / "PLAN.md"
         task_md.write_text(task_md.read_text().replace("## 2 · SCENARIOS", "## X · SCENARIOS"))
         r = _run(self.root, "status", "--section", "2")
         self.assertNotEqual(r.returncode, 0)

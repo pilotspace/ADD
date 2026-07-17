@@ -1,6 +1,6 @@
 """add_engine.search — keyword/substring search over the milestone/task corpus
 (context-search, search-index task). A flat, keyword-only index over document
-prose — title/goal/rationale (MILESTONE.md) or title/Feature (TASK.md) lines,
+prose — title/goal/rationale (MILESTONE.md) or title/Feature (PLAN.md) lines,
 never full body, never graph/backlink traversal, never a persisted cache:
 rebuilt fresh on every call (the milestone's own "rebuild-on-demand is enough"
 scope decision). Deliberately distinct from a graph-query command over the
@@ -69,7 +69,7 @@ def _milestone_fields(text: str) -> dict[str, str]:
 
 
 def _task_fields(text: str) -> dict[str, str]:
-    """{'title', 'feature'} from raw TASK.md text — H1 title + §1 `Feature:`
+    """{'title', 'feature'} from raw PLAN.md text — H1 title + §1 `Feature:`
     line, continuation-folded; an unfilled `<name>`-style placeholder value
     -> '' (never treated as matchable content). Dict INSERTION ORDER (title,
     feature) is the snippet priority `_keyword_hit` reads. PURE; NO-EXEC."""
@@ -77,7 +77,7 @@ def _task_fields(text: str) -> dict[str, str]:
     if _PLACEHOLDER_RE.match(feature.strip()):
         feature = ""
     return {
-        "title": _line_field(text, "# TASK:"),
+        "title": _line_field(text, "# PLAN:"),
         "feature": feature,
     }
 
@@ -108,13 +108,13 @@ def _iter_corpus(root: Path) -> Iterator[tuple[Path, str, bool]]:
     """Yield (path, kind, archived) over the 4 frozen corpus roots, in fixed
     order: active milestones, active tasks, archived milestones, archived
     tasks (nested under the owning milestone's compact bundle — never a flat
-    `archive/*/TASK.md`). A missing root dir yields nothing — `Path.glob` on
+    `archive/*/PLAN.md`). A missing root dir yields nothing — `Path.glob` on
     an absent directory is empty, never an OSError."""
     for pattern, kind, archived in (
         (f"milestones/*/{MILESTONE_FILE}", "milestone", False),
-        ("tasks/*/TASK.md", "task", False),
+        ("tasks/*/PLAN.md", "task", False),
         (f"archive/*/{MILESTONE_FILE}", "milestone", True),
-        ("archive/*/tasks/*/TASK.md", "task", True),
+        ("archive/*/tasks/*/PLAN.md", "task", True),
     ):
         for p in sorted(root.glob(pattern)):
             yield p, kind, archived

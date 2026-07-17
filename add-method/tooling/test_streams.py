@@ -73,7 +73,7 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
     def _freeze(self, slug):
         """Stamp §3 FROZEN + a well-formed flag so `advance` (no admin override) can
         actually cross the slug's direction->build gate. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text(encoding="utf-8").replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"

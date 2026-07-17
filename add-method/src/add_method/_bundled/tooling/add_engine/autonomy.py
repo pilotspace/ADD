@@ -19,7 +19,7 @@ _STREAMS_LINE_RE = re.compile(r"(?:^|·)[ \t]*streams:[ \t]*([^\s<#|]+)", re.MUL
 
 
 def _autonomy_level(hdr: str):
-    """The declared autonomy rung from a TASK.md header region (HTML comments
+    """The declared autonomy rung from a PLAN.md header region (HTML comments
     already stripped by _task_header). Returns a member of _AUTONOMY_LEVELS, or
     None when no `autonomy:` line is present (UNSET — an unfilled `<…>` placeholder,
     whose value the regex declines, counts as unset), or "?" when a REAL token outside

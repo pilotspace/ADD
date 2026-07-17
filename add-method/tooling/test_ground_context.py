@@ -2,17 +2,17 @@
 """Red/green tests for ground-context-sources — broaden the §0 GROUND gather.
 
 The ground phase gathers more than code: the `3-plan.md` guide's `## Gather`
-section and the `## 0 · GROUND` TASK.md template name the working-folder context
+section and the `## 0 · GROUND` PLAN.md template name the working-folder context
 categories — docs/textbase · TODOs · config/manifests · data/fixtures — beyond the
 existing code Touches. Frozen shape (§3 @ v1):
   - 3-plan.md `## Gather` gains a "Context (working folder)" bullet enumerating
     docs/textbase · TODOs · config/manifests · data/fixtures (task-delta only);
-  - TASK.md.tmpl `## 0 · GROUND` gains ONE light `Context (working folder):` line
+  - PLAN.md.tmpl `## 0 · GROUND` gains ONE light `Context (working folder):` line
     between Touches and Honors;
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding
     measure keys on it), `## 0`/`GROUND`, the guide saying gather/codebase, and the
     add.py engine byte-identical to engine_pin (no measure edit);
-  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) stay
+  - SYNC: 3-plan.md ×3 (skill trees) and PLAN.md.tmpl ×3 (template trees) stay
     byte-identical.
 
 Behavior pinned, not prose phrasing. ASCII-safe asserts where possible.
@@ -38,11 +38,11 @@ GUIDE_COPIES = [
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 
-# The TASK.md template — 3 template trees, must stay byte-identical.
+# The PLAN.md template — 3 template trees, must stay byte-identical.
 TMPL_COPIES = [
-    _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl",
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 
 ADD_PY_COPIES = [
@@ -108,7 +108,7 @@ class GuideBroadensGather(unittest.TestCase):
 
 
 class TemplateGainsContextLine(unittest.TestCase):
-    """TASK.md.tmpl carries the light Context line; invariants preserved.
+    """PLAN.md.tmpl carries the light Context line; invariants preserved.
 
     plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
     `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block)."""

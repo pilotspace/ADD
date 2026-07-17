@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for the mechanized high-risk guard (task high-risk-signal, v14).
 
-run.md's guard becomes engine-enforced for the DECLARED case: a TASK.md header
+run.md's guard becomes engine-enforced for the DECLARED case: a PLAN.md header
 carrying `risk: high` without `autonomy: conservative` is a pure token
 contradiction — `gate` refuses to complete it (state untouched) and `audit`
 flags `unguarded_high_risk_auto` on records. Judgment of WHAT is high-risk
@@ -56,7 +56,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _mk_verify_task(self, slug: str, header_extra: str = ""):
         """A task advanced to verify, with optional tokens appended to its
@@ -172,7 +172,7 @@ class ProseAccordTest(unittest.TestCase):
         self._assert_triplet(("skill", "add", "run.md"), RUN_MD_ANCHOR)
 
     def test_template_documents_risk_token(self):
-        self._assert_triplet(("tooling", "templates", "TASK.md.tmpl"), TMPL_ANCHOR)
+        self._assert_triplet(("tooling", "templates", "PLAN.md.tmpl"), TMPL_ANCHOR)
 
 
 if __name__ == "__main__":

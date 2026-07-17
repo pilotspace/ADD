@@ -85,7 +85,7 @@ class GroundLadder(unittest.TestCase):
         return self._state()["tasks"][slug]
 
     def _task_md(self, slug: str) -> str:
-        return (self._root() / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        return (self._root() / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
 
     def _run(self, *argv):
         """Run an add.main call; return (stdout, stderr, exit-code)."""
@@ -101,7 +101,7 @@ class GroundLadder(unittest.TestCase):
     def _freeze(self, slug: str):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = self._root() / "tasks" / slug / "TASK.md"
+        p = self._root() / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -144,7 +144,7 @@ class GroundLadder(unittest.TestCase):
     # test_phase_collapse.py::DirectionIsTheBirthPhase.test_default_lane_starts_at_direction.
 
     # test_new_task_renders_section_0 DELETED: its entire premise (a standalone
-    # "## 0 · GROUND" section in the rendered TASK.md) is gone — grounding now
+    # "## 0 · GROUND" section in the rendered PLAN.md) is gone — grounding now
     # renders inside "## 3 · PLAN" as the "### Grounding" sub-block, alongside
     # "### Contract"/"### Build-strategy". That exact behavior (no "## 0 · GROUND",
     # "## 3 · PLAN" present, all three sub-blocks present) is already pinned,
@@ -231,7 +231,7 @@ class GroundLadder(unittest.TestCase):
 
     # ---- heading scan captures section 0 ----------------------------------
     def test_phase_spans_captures_section_0(self):
-        text = ("# TASK: x\n\n## 0 · GROUND\nthe map\n\n"
+        text = ("# PLAN: x\n\n## 0 · GROUND\nthe map\n\n"
                 "## 1 · SPECIFY\nthe rules\n\n## 2 · SCENARIOS\ncases\n")
         spans = add._phase_spans(text)
         self.assertIn(0, spans, "## 0 must be captured (bound widened to include 0)")

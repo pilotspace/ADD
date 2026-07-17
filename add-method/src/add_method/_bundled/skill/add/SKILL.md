@@ -3,7 +3,7 @@ name: add
 description: >-
   ADD (AI-Driven Development) — a minimal, state-tracked workflow: the AI writes
   the code, the human owns direction and verification. Drives every feature through
-  one lean TASK.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
+  one lean PLAN.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
   red/green TDD built in. Use whenever a repo has `.add/`, or the user says "add",
   "start a task", "next phase", "specify this feature", "ADD method", "AI-driven
   development", or wants spec/tests-first discipline over vague-prompt coding. Also
@@ -24,7 +24,7 @@ You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
 result through passing evidence, not a plausible-looking diff.
 
-**One plan = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — the engine-known
+**One plan = one task.** Each feature is one `.add/tasks/<slug>/PLAN.md` — the engine-known
 spine; its §3 PLAN (grounding · contract · scope · measurable Target) is the core artifact.
 Shard free context files beside it in the task folder — the AI owns that architecture.
 
@@ -54,7 +54,7 @@ Then read the foundation map `add.py status --foundation` (`--all` full) + `.add
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
   YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and drive the setup span of
   `phases/direction.md` — foundation + first bundle to the human baseline `lock`.
-- **A task is active** → open its `.add/tasks/<active>/TASK.md`, read the `phase:` marker, work that
+- **A task is active** → open its `.add/tasks/<active>/PLAN.md`, read the `phase:` marker, work that
   beat per the loop below.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
@@ -84,7 +84,7 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a mil
 
 Every task is three beats, three engine calls, ONE human decision point:
 
-1. **DIRECTION** — draft the whole bundle top-to-bottom in TASK.md: §1 rules + ranked ⚠ flag (co-specify) ·
+1. **DIRECTION** — draft the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
    (run it — red for the RIGHT reason) · §6 Build expectations. Then the ONE approval, presented
    lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`

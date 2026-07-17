@@ -7,13 +7,13 @@ Frozen contract §3 @ v1:
   - `add.py check` maps each returned name to a never-red WARN `missing_capture` on the EXISTING
     `warnings` array — never feeds `failed`, read-only, exit-1-iff-failed preserved; silent-when-absent.
   - the convention is DOCUMENTED in design.md (×3 skill trees) + udd-wireframe.md (×2 template trees):
-    captures live at `.add/design/captures/<name>.<ext>`, attached/mentioned in the feature's TASK.md,
+    captures live at `.add/design/captures/<name>.<ext>`, attached/mentioned in the feature's PLAN.md,
     `@json-render/image` (Satori → PNG/SVG) the recommended default, engine never renders.
-  - DEMONSTRATED: a captured image is referenced from this task's TASK.md (exit-criterion 4).
+  - DEMONSTRATED: a captured image is referenced from this task's PLAN.md (exit-criterion 4).
   - ship discipline: 3 add.py copies byte-identical + the engine pin == md5(add.py).
 
 RED before build: AttributeError (_missing_captures missing) · cmd_check emits no missing_capture ·
-the doc lines + the TASK.md capture reference absent.
+the doc lines + the PLAN.md capture reference absent.
 """
 import contextlib
 import hashlib
@@ -32,7 +32,7 @@ _TOOLING = Path(__file__).resolve().parent
 _REPO = _TOOLING.parent.parent                       # AIDD-Book/
 _DESIGN_MD = _TOOLING.parent / "skill" / "add" / "design.md"
 _WIREFRAME_MD = _TOOLING / "templates" / "udd-wireframe.md"
-_TASK_MD = _REPO / ".add" / "tasks" / "capture-evidence" / "TASK.md"
+_TASK_MD = _REPO / ".add" / "tasks" / "capture-evidence" / "PLAN.md"
 
 # the 3 add.py copies that must stay byte-identical (mirrors test_argv_portability)
 _ADDPY = (
@@ -204,7 +204,7 @@ class CaptureConventionDocTest(unittest.TestCase):
         for p in (_DESIGN_MD, _WIREFRAME_MD):
             t = _text(p)
             self.assertIn(".add/design/captures", t, f"{p.name} must name the capture location")
-            self.assertIn("TASK.md", t, f"{p.name} must say the capture is attached to TASK.md")
+            self.assertIn("PLAN.md", t, f"{p.name} must say the capture is attached to PLAN.md")
             self.assertIn("@json-render/image", t, f"{p.name} must name the @json-render/image default")
         self.assertIn("never render", _text(_DESIGN_MD).lower(),
                       "design.md must keep the engine render-free")

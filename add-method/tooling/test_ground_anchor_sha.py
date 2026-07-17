@@ -5,10 +5,10 @@
 the engine SEEDS a `Ground SHA:` field in §0 (the AI fills it with `git rev-parse --short HEAD`,
 honoring NO-EXEC) and `add.py check` WARNs (exit 0) when a §0 cites bare line numbers (`l.NNN`)
 without one, so drift is detectable instead of silent. Frozen shape (§3 @ v1):
-  - TASK.md.tmpl §0 gains a literal `Ground SHA:` field (FULL template only; fast lane omits it);
+  - PLAN.md.tmpl §0 gains a literal `Ground SHA:` field (FULL template only; fast lane omits it);
   - `_read_ground_sha(text)` reads it (None if absent or a `<placeholder>`); `_ground_cites_line_ref`
     probes the §0 block for the `l.\\d+` idiom; cmd_check WARNs when it cites + has no SHA;
-  - INVARIANTS: add.py ×3 == re-pinned the engine pin; TASK.md.tmpl ×3 byte-identical; phases pool ≤ target.
+  - INVARIANTS: add.py ×3 == re-pinned the engine pin; PLAN.md.tmpl ×3 byte-identical; phases pool ≤ target.
 
 Run: cd add-method/tooling && python3 -m unittest test_ground_anchor_sha -v
 """
@@ -31,9 +31,9 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 
 TASK_TMPL_COPIES = [
-    HERE / "templates" / "TASK.md.tmpl",
-    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    HERE / "templates" / "PLAN.md.tmpl",
+    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 ADD_PY_COPIES = [
     HERE / "add.py",
@@ -78,7 +78,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _patch_ground(self, slug: str, *, line_ref: bool, sha: str | None):
         """Rewrite the task's §0 Touches line to (optionally) cite l.NNN, and set/clear the SHA."""
@@ -141,11 +141,11 @@ class CheckWarnsOnDrift(_Board):
 class EnginePinnedAndTemplateParity(unittest.TestCase):
     def test_template_has_ground_sha(self):           # M1, M4
         present = [p for p in TASK_TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
+        self.assertEqual(len(present), 3, "all 3 PLAN.md.tmpl copies must exist")
         for p in present:
             grounding = add._ground_section(p.read_text(encoding="utf-8"))
             self.assertIn("Ground SHA:", grounding,
-                          "TASK.md.tmpl §3 PLAN Grounding must carry a `Ground SHA:` field")
+                          "PLAN.md.tmpl §3 PLAN Grounding must carry a `Ground SHA:` field")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

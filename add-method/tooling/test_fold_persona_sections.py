@@ -85,7 +85,7 @@ class _FoldBase(unittest.TestCase):
         return buf.getvalue() + err.getvalue()
 
     def _plant(self, line):
-        md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         t = md.read_text(encoding="utf-8")
         marker = "### Competency deltas\n"
         i = t.index(marker) + len(marker)

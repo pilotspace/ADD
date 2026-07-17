@@ -24,7 +24,7 @@ SKILL_GUIDE = HERE.parent / "skill" / "add" / "phases" / "verify.md"  # skill-fo
 
 class TemplateDialectLineTest(unittest.TestCase):
     def test_full_template_deep_checks_carries_dialect_line(self):
-        body = (TEMPLATES / "TASK.md.tmpl").read_text(encoding="utf-8")
+        body = (TEMPLATES / "PLAN.md.tmpl").read_text(encoding="utf-8")
         idx = body.find("### Deep checks")
         self.assertNotEqual(idx, -1)
         nxt = body.find("###", idx + 3)

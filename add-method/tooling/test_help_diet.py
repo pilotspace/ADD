@@ -39,7 +39,7 @@ class HelpDietTest(unittest.TestCase):
     def test_no_per_command_help_paragraph(self):
         # the FULL dump carried each command's help sentence; the compact list drops them.
         fh = self._top_help()
-        self.assertNotIn("scaffold a new task (TASK.md", fh,
+        self.assertNotIn("scaffold a new task (PLAN.md", fh,
                          "the per-command help paragraph must be gone (compact names only)")
         self.assertNotIn("record a verify gate outcome", fh)
 

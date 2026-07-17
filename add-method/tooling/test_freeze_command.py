@@ -68,7 +68,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _new_task_at_plan(self, slug="t", drafted=_DRAFT_FLAGGED):
         """Lock, a milestone + task, jump to `plan` (plan-phase-core: ground+contract

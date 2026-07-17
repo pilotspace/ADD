@@ -23,9 +23,9 @@ SKILL_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add",
 )
 TEMPLATE_TREES = (
-    PKG_ROOT / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    PKG_ROOT / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO_ROOT / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 )
 CANON = SKILL_TREES[0]
 
@@ -52,7 +52,7 @@ class OrchestratorBuildPersonaTest(unittest.TestCase):
         body = TEMPLATE_TREES[0].read_text(encoding="utf-8")
         section = body.split("### Build-strategy", 1)[1].split("## 4 ·", 1)[0]
         self.assertIn(".add/personas/", section,
-                      "TASK.md.tmpl §3 Build-strategy must name a .add/personas/<slug>.md persona hook")
+                      "PLAN.md.tmpl §3 Build-strategy must name a .add/personas/<slug>.md persona hook")
         self.assertIn("persona", section.lower(), "§3 Build-strategy must mention the persona hook")
 
     def test_overlay_never_rewrites_soul(self):

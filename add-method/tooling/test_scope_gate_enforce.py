@@ -102,7 +102,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -117,14 +117,14 @@ class _Board(unittest.TestCase):
     _CONTRACT_BODY = "shape: scope gate { declared, snapshot_md5 }"
 
     def _write_task(self, slug: str, *, scope_line=None):
-        """A full TASK.md with a FROZEN, flagged §3 (no unflagged_freeze death), a §4
+        """A full PLAN.md with a FROZEN, flagged §3 (no unflagged_freeze death), a §4
         declaring `./tests/`, and a §5 whose Scope line is the test's lever."""
         five = ["Strategy (ordered batches): 1. build", "Safety rule (feature-specific): none",
                 "Code lives in: `./src/`"]
         if scope_line is not None:
             five.insert(0, scope_line)
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-06-12 · stage: mvp",
             "phase: ground",
             "",

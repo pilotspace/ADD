@@ -66,7 +66,7 @@ class _Harness(unittest.TestCase):
         return self._state()["tasks"][slug]["phase"]
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _freeze(self, slug):
         p = self._task_md(slug)

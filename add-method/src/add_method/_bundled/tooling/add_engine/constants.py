@@ -220,7 +220,7 @@ _RULE_REF_LINE = "- ADD (AI-Driven Development) Workflows rules: ./.claude/rules
 
 # Minimal embedded fallback so the tool still works if templates/ is missing
 # (circuit breaker: never hard-fail just because a template file was deleted).
-_FALLBACK_TASK = """# TASK: {title}
+_FALLBACK_TASK = """# PLAN: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
@@ -257,7 +257,7 @@ Outcome:
 """
 
 
-# template-unify: ONE TASK.md.tmpl serves every lane. The fast render is the full render
+# template-unify: ONE PLAN.md.tmpl serves every lane. The fast render is the full render
 # minus exactly these heading blocks (subset by construction — never a second template
 # file). Each key drops its heading line through the line before the next heading of the
 # same-or-higher level; add.py:_strip_fast_sections owns the mechanics.

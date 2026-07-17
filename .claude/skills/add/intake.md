@@ -81,7 +81,7 @@ request, emit ONE of:
 </reject_codes>
 
 When confirmed, record the `rationale` in the artifact you create or affect — the new MILESTONE.md
-goal/body, the new TASK.md, or a note in the affected TASK.md — never in state.json.
+goal/body, the new PLAN.md, or a note in the affected PLAN.md — never in state.json.
 
 ## Roadmap — a request that is several milestones
 

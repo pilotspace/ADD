@@ -55,7 +55,7 @@ class FoldNudgeTest(unittest.TestCase):
         os.chdir(self._cwd)
 
     def _add_delta(self, slug, line):
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         marker = "### Competency deltas"
         idx = text.index(marker) + len(marker)
@@ -137,7 +137,7 @@ class FoldNudgeTest(unittest.TestCase):
         """The fold suggestion fires ONLY at gate/completion — advancing
         into any phase stays silent on folding (additive, no noise)."""
         add.main(["new-task", "a"])             # at direction (phase-collapse-3 seed)
-        p = Path(add.find_root()) / "tasks" / "a" / "TASK.md"
+        p = Path(add.find_root()) / "tasks" / "a" / "PLAN.md"
         p.write_text(p.read_text(encoding="utf-8").replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by T\n"

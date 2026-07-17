@@ -99,7 +99,7 @@ Every task, regardless of milestone, produces this artifact chain. The depth var
 | 4 Tests | `tests/<task>_*` | one test per scenario, red first | [06](./06-step-4-tests.md) |
 | 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./07-step-5-build.md) |
 | 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./08-step-6-verify.md) |
-| 7 Observe | `TASK.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + lessons learned captured | [09](./09-the-loop.md) |
+| 7 Observe | `PLAN.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + lessons learned captured | [09](./09-the-loop.md) |
 
 A task is **done** when the build's documents exist and the Verify record reads `PASS` (or a signed `RISK-ACCEPTED`); the seventh step — **Observe** (§7) — then runs in production and feeds the next loop's Specify. See the master shippable checklist in [Appendix E](./appendix-e-checklists.md).
 
@@ -129,7 +129,7 @@ The tests are the source of truth; this table is their index. If a row here is e
 **Sweep findings (minimalism-and-coverage audit, v2):** the audit walked Matrices 1–3 for claims the engine *could* enforce but did not yet prove.
 
 - **Proved and added** (rows above): the *Minimal* pillar's headline — "the Story is never auto-loaded" (principle 9) — was written but unproven; it is now pinned behaviorally (the engine runs the whole lifecycle with no `docs/` present, and a read-spy over *every* subcommand confirms none reads a chapter at runtime). And waiver **expiry**, which Matrix 4 already promised the state captured "for a later `check` to expire," is now enforced.
-- **Recorded, deliberately *not* enforced:** Matrix 3 says a task is done only when "all six documents exist." The engine checks that `TASK.md` *exists* and that its phase marker matches state — it does **not** parse the file to confirm each of the seven sections is filled. Teaching it to grade section completeness would push the engine toward reading and judging the Story it is supposed to keep off the runtime path — an anti-minimal move. The reviewer owns section completeness at the Verify gate (the human-led half of the method); the engine owns the cheap structural invariants. This is a chosen boundary, not an oversight.
+- **Recorded, deliberately *not* enforced:** Matrix 3 says a task is done only when "all six documents exist." The engine checks that `PLAN.md` *exists* and that its phase marker matches state — it does **not** parse the file to confirm each of the seven sections is filled. Teaching it to grade section completeness would push the engine toward reading and judging the Story it is supposed to keep off the runtime path — an anti-minimal move. The reviewer owns section completeness at the Verify gate (the human-led half of the method); the engine owns the cheap structural invariants. This is a chosen boundary, not an oversight.
 - **Lean check:** the audit confirmed `state.json` carries no redundant per-task fields — `title`, `phase`, `gate`, `milestone`, `depends_on`, the two timestamps, and a `waiver` only once one is signed; nothing to trim. A clean bill is a finding too.
 
 ---

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""extract-taskdoc (engine-modularization 15/N) — the 11 TASK.md structural-reader fns
+"""extract-taskdoc (engine-modularization 15/N) — the 11 PLAN.md structural-reader fns
 moved from add.py into a NEW add_engine/taskdoc.py, with the 3 SHARED delta regexes
 (`_DELTA_RE`·`_EVIDENCE_RE`·`_SPEC_DELTA_RE`) relocated to constants.py (single source for
 the moved readers AND the staying deltas-web lint).

@@ -184,7 +184,7 @@ class RelationsTest(unittest.TestCase):
 
     def test_templates_name_where_relations_declared(self):
         tdir = Path(add.__file__).resolve().parent / "templates"
-        task_t = (tdir / "TASK.md.tmpl").read_text(encoding="utf-8")
+        task_t = (tdir / "PLAN.md.tmpl").read_text(encoding="utf-8")
         ms_t = (tdir / "MILESTONE.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("--extends", task_t)        # task relations declared via new-task flags
         self.assertIn("relations:", ms_t)         # milestone relations declared in the header

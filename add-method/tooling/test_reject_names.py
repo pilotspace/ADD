@@ -86,7 +86,7 @@ class _Harness(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug):
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self):
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))

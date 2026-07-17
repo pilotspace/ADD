@@ -75,7 +75,7 @@ class PhaseBuildGuardTest(unittest.TestCase):
         return Path(self.tmp) / ".add" / "milestones" / slug / "MILESTONE.md"
 
     def _task_path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _fill_contracts(self, ms):
         p = self._ms_path(ms)

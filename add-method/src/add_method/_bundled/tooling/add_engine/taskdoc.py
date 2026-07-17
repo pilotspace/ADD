@@ -1,4 +1,4 @@
-"""add_engine.taskdoc — TASK.md structural readers (engine-modularization 15/N).
+"""add_engine.taskdoc — PLAN.md structural readers (engine-modularization 15/N).
 
 Header, prose, test-count, phase-span, raw phase bodies, and the §7 spec-delta entries —
 the pure parsers that read a task document's shape. A closed, unpatched cluster
@@ -21,10 +21,10 @@ _HEADING_RE = re.compile(r"^##\s*(\d+)\s*·")
 
 
 def _task_header(root: Path, slug: str) -> str:
-    """The TASK.md header region — where declared tokens (risk · autonomy)
+    """The PLAN.md header region — where declared tokens (risk · autonomy)
     live — with HTML comments stripped. Missing file -> '' (no tokens)."""
     try:
-        text = (root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        text = (root / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
     except OSError:
         return ""
     return re.sub(r"<!--.*?-->", "", text.split("\n## ", 1)[0], flags=re.S)
@@ -102,11 +102,11 @@ def _tests_info(root: Path, slug: str) -> tuple[int, bool]:
     return (declared, True) if declared > 0 else (0, False)
 
 def _task_prose(root: Path, slug: str) -> tuple[str, list[str]]:
-    """(observe_delta, [delta lines]) from the task's TASK.md §7 — captured at FULL
+    """(observe_delta, [delta lines]) from the task's PLAN.md §7 — captured at FULL
     fidelity: both fields wrap across physical lines in real files, so continuation
     lines are JOINED. Scoped to the OBSERVE section so we read the FIELD, not §1 prose
     that names it. Fail-closed to '(unknown)' on a missing file / `<...>` placeholder."""
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     if not f.exists():
         return "(unknown)", []
     text = f.read_text(encoding="utf-8")
@@ -162,12 +162,12 @@ def _task_prose(root: Path, slug: str) -> tuple[str, list[str]]:
     return observe, deltas
 
 def _phase_spans(text: str) -> dict[int, str]:
-    """Split a TASK.md into RAW §1–§7 bodies keyed by section number — the ONE
+    """Split a PLAN.md into RAW §1–§7 bodies keyed by section number — the ONE
     canonical heading scan (`^##\\s*<n>\\s*·`, case/locale-proof); a body runs from
     its heading to the next `## `/`---`/EOF. RAW = byte-faithful lines, no cleaning:
     the decision-marker extractor (decide-digest) depends on byte-verbatim text.
     KNOWN LIMIT: a §body containing a line-start `## ` or bare `---` truncates early —
-    today's TASK.md bodies don't (box-chars ─═, `### ` sub-heads)."""
+    today's PLAN.md bodies don't (box-chars ─═, `### ` sub-heads)."""
     lines = text.splitlines()
     head = _HEADING_RE
     starts: dict[int, int] = {}
@@ -189,8 +189,8 @@ def _phase_spans(text: str) -> dict[int, str]:
 
 def _raw_phase_bodies(root: Path, slug: str) -> dict[int, str]:
     """RAW §bodies for one task (byte-faithful, for marker extraction). PURE.
-    Missing/unreadable TASK.md -> {} (fail-closed, like task_phases)."""
-    f = root / "tasks" / slug / "TASK.md"
+    Missing/unreadable PLAN.md -> {} (fail-closed, like task_phases)."""
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         return _phase_spans(f.read_text(encoding="utf-8"))
     except OSError:

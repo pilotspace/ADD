@@ -4,8 +4,8 @@
 where gate-udd.md was cited-but-never-rendered at every human gate).
 
 CONTRACT — design mirrors refute_unrecorded/advisor_verdict_unrecorded EXACTLY, MEASURE-NOT-BLOCK:
-  templates/TASK.md.tmpl §3 gains a `Reported: <…>` line right after `Status: DRAFT`.
-  templates/TASK.md.tmpl §6 gains a `Reported: <…>` line as the first line of `### GATE RECORD`,
+  templates/PLAN.md.tmpl §3 gains a `Reported: <…>` line right after `Status: DRAFT`.
+  templates/PLAN.md.tmpl §6 gains a `Reported: <…>` line as the first line of `### GATE RECORD`,
     before `Outcome:`.
   _guarantee_lint_notices(root, state) gains two keys:
     contract_report_unrecorded[] = §3 body's `Reported:` line PRESENT-but-unfilled
@@ -74,7 +74,7 @@ class _Harness(unittest.TestCase):
         return code, out.getvalue()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _verify_task(self, slug):
         """A fresh task driven to verify — §3/§6 both carry the template's unfilled Reported: line."""

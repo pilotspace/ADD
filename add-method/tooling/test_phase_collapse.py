@@ -77,7 +77,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _draft_s3(self, slug, body=_DRAFT_FLAGGED):
         """Replace the scaffolded §3 body with a real drafted contract, and satisfy the
@@ -102,7 +102,7 @@ class DirectionIsTheBirthPhase(_Harness):
                          "every lane must be born at the direction span")
         marker = self._task_md("t").read_text(encoding="utf-8")
         self.assertRegex(marker, r"(?m)^phase:\s*direction\b",
-                         "the TASK.md marker must mirror state at scaffold")
+                         "the PLAN.md marker must mirror state at scaffold")
 
     def test_every_lane_prescribes_three_calls(self):                      # M4
         for slug, flags in (("a", []), ("b", ["--fast"]), ("c", ["--oneshot"])):

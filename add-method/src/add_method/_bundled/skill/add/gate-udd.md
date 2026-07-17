@@ -11,11 +11,11 @@ Every report at a human gate opens with a banner line, so a human scanning a lon
 ```
 ════════════════════════════════════════════════════════════════
  PLAN · <task/milestone title, bold> · <gate name> → APPROVE?
- 📄 <task's TASK.md path>  ·  <milestone's MILESTONE.md path>
+ 📄 <task's PLAN.md path>  ·  <milestone's MILESTONE.md path>
 ════════════════════════════════════════════════════════════════
 ```
 
-- The title is the real H1 from TASK.md/MILESTONE.md, **bolded** — not the bare slug.
+- The title is the real H1 from PLAN.md/MILESTONE.md, **bolded** — not the bare slug.
 - The path line names the actual file(s) so the human can open them directly; omit the milestone half for a milestone-free/fast task.
 - Any `§`-numbered section named anywhere in the report (SHAPE, FLAGS, APPROVE, NEXT) is **bolded** — e.g. `**§3 CONTRACT**` — so a scanning eye finds exactly which part of the file is in play.
 
@@ -57,7 +57,7 @@ SHAPE   <task title, bold> — v<N>  (DRAFT — not yet frozen)
   <error case / reject token>  <what triggers it>
 ```
 
-- **Collapse done to a count** (never enumerate finished); **cap live items ~5–7**, dependency-ordered, footer `+N more queued`; one line each — never restate the TASK.md.
+- **Collapse done to a count** (never enumerate finished); **cap live items ~5–7**, dependency-ordered, footer `+N more queued`; one line each — never restate the PLAN.md.
 - **Glyphs fixed** — ✅ done · 🔄 active · ⬜ pending · ⚠ blocked/flagged; never invent new ones.
 - **Sourced from `add.py status`, summarized by you** — never pasted raw into chat.
 - **SHAPE is freeze-only** — the concrete shape being locked, so the human reviews it, not commentary.
@@ -76,7 +76,7 @@ APPROVE   what you need from the human (or "none — FYI") — exactly one — s
 NEXT      the recommended next actions, ranked (top ▶ highlighted, bolded) + what each unlocks
 ```
 
-- **SUMMARY** never optional — one line even when PLAN/SHAPE carries the context. **FLAGS** lowest-confidence-first (why + cost-if-wrong; quote TASK.md `⚠` / `- [~]` / `- [ ]` verbatim). **DECIDED** highest-confidence-first ("none" when none; never a security / residue / lowered-autonomy call). **EVIDENCE** engine-sourced, never re-typed. **APPROVE** the guided ask, last, after show-before-ask. **NEXT** ranked recommendations, not a second gate. **The ask itself** is a summary, never the artifact.
+- **SUMMARY** never optional — one line even when PLAN/SHAPE carries the context. **FLAGS** lowest-confidence-first (why + cost-if-wrong; quote PLAN.md `⚠` / `- [~]` / `- [ ]` verbatim). **DECIDED** highest-confidence-first ("none" when none; never a security / residue / lowered-autonomy call). **EVIDENCE** engine-sourced, never re-typed. **APPROVE** the guided ask, last, after show-before-ask. **NEXT** ranked recommendations, not a second gate. **The ask itself** is a summary, never the artifact.
 
 ### Beyond the core blocks
 
@@ -116,5 +116,5 @@ Whatever shape the persona renders per project, it MUST hold all four:
 - **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + the flag count — pointing at the report above.
 - **NEXT is not a second gate.** The decision stays in APPROVE; NEXT is ranked recommendations only.
 - **DECIDED never holds a gate-class call.** Security / residue / lowered-autonomy calls escalate in APPROVE.
-- **Recorded, not just performed.** A gate render is recorded, not assumed — TASK.md `Reported: yes` (§3/§6) is the trace; a human spot-audit is the backstop for a missed render.
+- **Recorded, not just performed.** A gate render is recorded, not assumed — PLAN.md `Reported: yes` (§3/§6) is the trace; a human spot-audit is the backstop for a missed render.
 </constraints>

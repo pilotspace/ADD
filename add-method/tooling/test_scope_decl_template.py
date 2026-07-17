@@ -2,7 +2,7 @@
 """Red/green tests for the §5 scope-of-impact declaration (task scope-decl-template,
 milestone build-scope-lock).
 
-A prose/template-only task: §5 of TASK.md.tmpl gains the `Scope (may touch):`
+A prose/template-only task: §5 of PLAN.md.tmpl gains the `Scope (may touch):`
 allowlist + `Strategy (ordered batches):` plan lines and a grammar comment;
 phases/build.md teaches the discipline (declare-at-bundle · freeze-at-contract
 · honor-or-change-request · the scope-gate-enforce deferral NAMED); one line in
@@ -30,9 +30,9 @@ ADD_METHOD = HERE.parent
 REPO = ADD_METHOD.parent
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
-DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
-BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
+CANON_TMPL = HERE / "templates" / "PLAN.md.tmpl"
+DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl"
+BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl"
 
 # fast-lane template trio (build-strategy-solutions ADD-2)
 # template-unify: the fast lane derives from CANON_TMPL — no fast template files
@@ -64,7 +64,7 @@ EXISTING_LINES = (
     "Constraints: do NOT change any test or the frozen §3 contract; stay inside the "
     "§3 Build-strategy Scope; allow-list packages only; ask if unclear.",
 )
-# the v16/v18 frozen tag census of TASK.md.tmpl — a NEW tag is an amendment, never a drive-by
+# the v16/v18 frozen tag census of PLAN.md.tmpl — a NEW tag is an amendment, never a drive-by
 FROZEN_TAGS = ['action', 'after', 'alternative', 'assumptions', 'chosen', 'code',
                'cost', 'date', 'error_code', 'fields', 'link', 'must', 'name',
                'path', 'reject', 'scenario', 'scenarios', 'sensitivity',
@@ -90,7 +90,7 @@ class ScopeDeclTemplateTest(unittest.TestCase):
                 add.main(["init", "--name", "demo"])
                 add.main(["lock", "--force"])
                 add.main(["new-task", "alpha", "--title", "alpha"])
-            text = (tmp / ".add" / "tasks" / "alpha" / "TASK.md").read_text(
+            text = (tmp / ".add" / "tasks" / "alpha" / "PLAN.md").read_text(
                 encoding="utf-8")
             self.assertIn(SCOPE_LABEL, text)
             self.assertIn(STRATEGY_LABEL, text)
@@ -176,8 +176,8 @@ class ScopeDeclTemplateTest(unittest.TestCase):
                 add.main(["lock", "--force"])
                 add.main(["new-task", "fullx", "--title", "fullx"])
                 add.main(["new-task", "fastx", "--title", "fastx", "--fast"])
-            full = (tmp / ".add" / "tasks" / "fullx" / "TASK.md").read_text(encoding="utf-8")
-            fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
+            full = (tmp / ".add" / "tasks" / "fullx" / "PLAN.md").read_text(encoding="utf-8")
+            fast = (tmp / ".add" / "tasks" / "fastx" / "PLAN.md").read_text(encoding="utf-8")
             self.assertIn(KNOWN_FIX_LABEL, full, "full scaffold missing Known-problem fixes")
             self.assertIn(FAST_STRATEGY_LABEL, fast, "fast scaffold missing the strategy line")
             self.assertIn(ACTUAL_LABEL, full, "full scaffold missing the Strategy-actually-used field")

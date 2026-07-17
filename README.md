@@ -112,15 +112,15 @@ State lives on disk, not in the chat — the agent reports exactly where the pro
 
 **Curious how it works end to end?** Three pictures, zoomed out one level at a time.
 
-**One task · eight steps · one file.** Every feature is a single **`TASK.md`** that fills in section by section as it moves around the loop — each step produces exactly one durable artifact. The contract freeze is the *one* human approval; the agent drives the rest. (The artifacts are what you keep — the code is disposable.)
+**One task · eight steps · one file.** Every feature is a single **`PLAN.md`** that fills in section by section as it moves around the loop — each step produces exactly one durable artifact. The contract freeze is the *one* human approval; the agent drives the rest. (The artifacts are what you keep — the code is disposable.)
 
 ![Foundation Domain Documents](add-foundation.png)
 
-![How one TASK.md grows — eight steps circle a single TASK.md file; each step writes its own section, from §0 grounding map through §3 frozen contract (the one approval) to §7 deltas; a red⇄green engine runs between Tests and Build, and Observe loops back to the next Specify](add-task-growth-wheel.png)
+![How one PLAN.md grows — eight steps circle a single PLAN.md file; each step writes its own section, from §0 grounding map through §3 frozen contract (the one approval) to §7 deltas; a red⇄green engine runs between Tests and Build, and Observe loops back to the next Specify](add-task-growth-wheel.png)
 
 **Tasks compound into milestones; milestones grow the project.**
 
-![MILESTONE.md and TASK.md lifecycle — a milestone decomposes breadth-first into a task DAG of TASK.md files run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons into PROJECT.md and CONVENTIONS.md, which loop back to ground the next milestone](add-milestone-task-lifecycle.png)
+![MILESTONE.md and PLAN.md lifecycle — a milestone decomposes breadth-first into a task DAG of PLAN.md files run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons into PROJECT.md and CONVENTIONS.md, which loop back to ground the next milestone](add-milestone-task-lifecycle.png)
 
 ---
 

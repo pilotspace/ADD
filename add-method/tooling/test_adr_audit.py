@@ -68,7 +68,7 @@ class AdrAuditTest(unittest.TestCase):
         return json.loads((Path(self.tmp) / ".add" / "state.json").read_text())
 
     def _path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _gated_task(self, slug="t"):
         """A scaffolded full task, gated PASS (the harvest runs at gate -> §7 harvested)."""

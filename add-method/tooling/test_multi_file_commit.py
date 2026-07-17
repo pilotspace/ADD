@@ -148,11 +148,11 @@ class _Project(unittest.TestCase):
         return out.getvalue() + err.getvalue()
 
     def _task_md(self, slug):
-        return (self.root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        return (self.root / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
 
     def _set_spec(self, slug, text):
         """Plant one open SPEC delta in slug's §7 OBSERVE (mirrors test_seed_and_drop)."""
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         idx = s.index("## 7 · OBSERVE")
         head_end = s.index("\n", idx) + 1
@@ -161,7 +161,7 @@ class _Project(unittest.TestCase):
 
     # fold scaffolding (mirrors test_fold_command) --------------------------------
     def _plant_comp(self, slug, tag, text, ev="e"):
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         i = s.index("### Competency deltas") + len("### Competency deltas")
         p.write_text(s[:i] + f"\n- [{tag} · open] {text} (evidence: {ev})\n" + s[i:],
@@ -204,20 +204,20 @@ class AdoptionTest(_Project):
             self._silent("new-task", "followup", "--from-delta", "prior")
         self.assertEqual(spy.call_count, 1, "from-delta seed must commit both files via one call")
         writes = spy.call_args.args[0]
-        self.assertEqual(len(writes), 2, "the new TASK.md + the consumed source TASK.md")
+        self.assertEqual(len(writes), 2, "the new PLAN.md + the consumed source PLAN.md")
 class SeedAtomicityTest(_Project):
     def test_seed_all_or_nothing_on_commit_failure(self):
         self._silent("new-task", "prior")
         self._set_spec("prior", "a deferred idea")
         prior_before = self._task_md("prior")
-        followup_md = self.root / "tasks" / "followup" / "TASK.md"
-        # fail on the source-delta (prior TASK.md) move-IN -> the new followup TASK.md must roll back too
-        prior_md = self.root / "tasks" / "prior" / "TASK.md"
+        followup_md = self.root / "tasks" / "followup" / "PLAN.md"
+        # fail on the source-delta (prior PLAN.md) move-IN -> the new followup PLAN.md must roll back too
+        prior_md = self.root / "tasks" / "prior" / "PLAN.md"
         with mock.patch("add.os.replace", side_effect=_flaky_replace([prior_md])):
             with self.assertRaises(OSError):
                 self._silent("new-task", "followup", "--from-delta", "prior")
         self.assertEqual(self._task_md("prior"), prior_before, "source delta must NOT be half-flipped")
-        self.assertFalse(followup_md.exists(), "the new TASK.md must not be left behind on a failed seed")
+        self.assertFalse(followup_md.exists(), "the new PLAN.md must not be left behind on a failed seed")
 
 
 if __name__ == "__main__":

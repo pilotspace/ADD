@@ -400,7 +400,7 @@ class ParityHardenTest(_Base):
 # --- stale-lock self-heal (global-lock-followups M1) ------------------------
 
 class StaleLockSelfHealTest(_Base):
-    """M1: a wedged .update.lock self-heals via mtime-AGE (never PID-liveness — see TASK.md §0
+    """M1: a wedged .update.lock self-heals via mtime-AGE (never PID-liveness — see PLAN.md §0
     Honors on the Windows os.kill(pid,0) hazard); a live lock's fail-fast stays unchanged."""
 
     def _write_lock(self, *, age_seconds, content=""):
@@ -528,7 +528,7 @@ class StaleLockSelfHealTest(_Base):
         one), but a heartbeat thread cannot survive whole-PROCESS scheduling starvation any more
         than the holder it protects can, so the test's own stale_after override is ALSO widened
         (test-only, prod default is 600s) to keep realistic margin against CI noise — belt AND
-        suspenders, not an either/or (see TASK.md §1 Reject R1 for why a bigger constant ALONE,
+        suspenders, not an either/or (see PLAN.md §1 Reject R1 for why a bigger constant ALONE,
         without the heartbeat, was already rejected as a non-fix)."""
         self._write_lock(age_seconds=10)
         env = self._env()

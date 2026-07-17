@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Red/green tests for task-milestone-backlink — the engine-written TASK.md `milestone:` header.
+"""Red/green tests for task-milestone-backlink — the engine-written PLAN.md `milestone:` header.
 
 The task↔milestone link stops being implicit in state.json and becomes a SELF-DESCRIBING
 header backlink the ENGINE writes and maintains, so the file names its own parent and the
 link can't silently drift. Frozen shape (§3 @ v1):
   - new-task writes a `milestone:` header line = the resolved parent slug (or "(none)" when
-    milestone-free); via a {{milestone}} token in TASK.md.tmpl + the cmd_new_task render call;
+    milestone-free); via a {{milestone}} token in PLAN.md.tmpl + the cmd_new_task render call;
   - set-milestone REWRITES that line on a move/detach (insert if a grandfathered file lacks it),
     so state and file stay in lockstep;
   - check emits a WARN (never red) when a PRESENT `milestone:` line disagrees with state; a task
     with NO line (grandfathered/archived) is never flagged;
-  - INVARIANTS: every add.py == the engine pin (re-pinned this milestone); TASK.md.tmpl
+  - INVARIANTS: every add.py == the engine pin (re-pinned this milestone); PLAN.md.tmpl
     ×3 byte-identical; the phases lean pool stays within budget (no phase-guide prose).
 
 Behavior pinned, not prose. Run: cd add-method/tooling && python3 -m unittest test_milestone_backlink -v
@@ -34,14 +34,14 @@ HERE = Path(__file__).resolve().parent          # add-method/tooling
 REPO = HERE.parent.parent                        # repo root
 
 TMPL_COPIES = [
-    HERE / "templates" / "TASK.md.tmpl",
-    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    HERE / "templates" / "PLAN.md.tmpl",
+    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 FAST_TMPL_COPIES = [
-    HERE / "templates" / "TASK.fast.md.tmpl",
-    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+    HERE / "templates" / "PLAN.fast.md.tmpl",
+    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
 ]
 ADD_PY_COPIES = [
     HERE / "add.py",
@@ -84,7 +84,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _header(self, slug: str) -> str:
         return self._task_md(slug).read_text(encoding="utf-8").split("\n## ", 1)[0]
@@ -148,10 +148,10 @@ class CheckSurfacesDrift(_Board):
 class EnginePinnedAndTreesAligned(unittest.TestCase):
     def test_template_has_milestone_field(self):   # M5
         present = [p for p in TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
+        self.assertEqual(len(present), 3, "all 3 PLAN.md.tmpl copies must exist")
         for p in present:
             self.assertIn("milestone:", p.read_text(encoding="utf-8"),
-                          "TASK.md.tmpl must carry a `milestone:` header field")
+                          "PLAN.md.tmpl must carry a `milestone:` header field")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

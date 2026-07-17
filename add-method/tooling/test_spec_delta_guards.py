@@ -59,7 +59,7 @@ class SpecDeltaGuardsTest(unittest.TestCase):
     # --- helpers -------------------------------------------------------------
     def _plant_spec(self, slug, text="x"):
         """Inject one grammar-valid OPEN SPEC delta into slug's §7 block."""
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         i = s.index("### Spec delta") + len("### Spec delta")
         p.write_text(s[:i] + f"\n- [SPEC · open] {text} (evidence: e)\n" + s[i:],

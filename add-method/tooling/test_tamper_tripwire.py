@@ -71,7 +71,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -83,14 +83,14 @@ class _Board(unittest.TestCase):
     _CONTRACT_BODY = "shape: tripwire { contract_md5, tests:{path:md5} }"
 
     def _write_task(self, slug: str, *, frozen=True, contract_extra=""):
-        """A full TASK.md with a FROZEN, well-formed §3 (so tests->build does not
+        """A full PLAN.md with a FROZEN, well-formed §3 (so tests->build does not
         die on unflagged_freeze) and a §4 declaring `./tests/`."""
         status = ("Status: FROZEN @ v1 — approved by Tester 2026-06-11."
                   if frozen else "Status: DRAFT")
         flag = ("Least-sure flag surfaced at freeze: [contract] the snapshot lives "
                 "in agent-writable state.json — accepted as an honest ceiling.")
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-06-11 · stage: mvp",
             "phase: ground",          # kept in sync by the CLI (_sync_task_marker)
             "",

@@ -21,8 +21,10 @@ Contract: Any change to `add-method/tooling/add.py` re-aims ENGINE_MD5; any chan
   byte-identity and pin-currency — test-corpus-slim consolidated the per-suite pin
   copies into that ONE sweep — but it never chooses the digest for you; skipping the
   re-pin after a real engine edit is this project's single most common self-heal.
-Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`) — method:
-  `grep -rl "ENGINE_MD5\|ENGINE_PKG_MD5" --include=TASK.md .add/tasks` · as of `c152945`.
+Citations: 251 files / 1217 mentions in `.add/tasks/` (+18/68 in `.add/archive/`) — method:
+  `grep -rl "ENGINE_MD5\|ENGINE_PKG_MD5" --include=PLAN.md .add/tasks` · as of `a7ef15e`
+  (migrate-verb re-aimed the method's `--include` from TASK.md after `add.py migrate`
+  renamed every board doc — the counts were refreshed in the same change).
   Anchor re-verified at build time against the current tree (`test_engine_repin_parity.py`
   unchanged since Ground SHA `c152945`) — `test_three_engines_byte_identical_and_current`
   resolves at `:54`, not the `:57` cited when this entry was drafted; disclosed here rather

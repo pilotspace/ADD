@@ -77,10 +77,10 @@ class _Board(unittest.TestCase):
                 code = e.code if isinstance(e.code, int) else (0 if e.code is None else 1)
         return code, out.getvalue()
 
-    # ── TASK.md helpers ────────────────────────────────────────────────────
+    # ── PLAN.md helpers ────────────────────────────────────────────────────
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _mk_verify_task(self, slug: str, *, risk: str = "high",
                         sensitivity: str | None = None, autonomy: str | None = None):
@@ -114,7 +114,7 @@ class _Board(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _drop_advisor(self, slug: str):
-        """Remove the entire advisor block from §6 (simulates a legacy TASK.md)."""
+        """Remove the entire advisor block from §6 (simulates a legacy PLAN.md)."""
         p = self._task_md(slug)
         t = re.sub(
             r"### Advisor 3-lens verdict.*?(?=\n### GATE RECORD)",

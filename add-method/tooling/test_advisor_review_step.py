@@ -3,7 +3,7 @@
 (milestone advisor-gated-autonomy, task `advisor-review-step`).
 
 CONTRACT (frozen @ v1) — MEASURE-NOT-BLOCK (no hard gate):
-  templates/TASK.md.tmpl §6 gains a `### Advisor 3-lens verdict` block AFTER the
+  templates/PLAN.md.tmpl §6 gains a `### Advisor 3-lens verdict` block AFTER the
     `### Refute-read verdict` block and BEFORE `### GATE RECORD`.
     The block carries `<…>`-placeholder lines for Advisor, 1-3 lens results,
     Verdict, Residue, Binding.
@@ -68,7 +68,7 @@ class _Harness(unittest.TestCase):
         return code, out.getvalue()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _verify_task(self, slug):
         """A fresh task driven to verify — its §6 carries the template's unfilled advisor block."""
@@ -103,7 +103,7 @@ class _Harness(unittest.TestCase):
         p.write_text(t, encoding="utf-8")
 
     def _drop_advisor(self, slug):
-        """Remove the entire advisor block (simulates a legacy TASK.md without it)."""
+        """Remove the entire advisor block (simulates a legacy PLAN.md without it)."""
         p = self._task_md(slug)
         t = re.sub(
             r"### Advisor 3-lens verdict.*?(?=\n### GATE RECORD)",

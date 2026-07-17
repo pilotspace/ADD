@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for gate-record write-back (milestone flow-enforcement, task 3).
 
-`add.py gate <outcome>` stamps the resolved outcome + reviewer + date into the TASK.md §6
+`add.py gate <outcome>` stamps the resolved outcome + reviewer + date into the PLAN.md §6
 `### GATE RECORD`, so the file and state.json never silently diverge (closes Finding C).
 ALL tasks (NO opt-in — the write is additive, it never refuses, so it cannot break the
 census the way the two refusal seams could). GRANDFATHER is the safety: only a line still
@@ -49,7 +49,7 @@ class GateRecordWritebackTest(unittest.TestCase):
         return self._state()["tasks"][slug]
 
     def _task_path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _gate_record(self, slug="t"):
         """The §6 `### GATE RECORD` block text (up to the next header / hr / EOF)."""

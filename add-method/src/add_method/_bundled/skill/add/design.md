@@ -48,7 +48,7 @@ Render the screen as a **self-contained HTML mock** (component library via CDN, 
 `tokens.json`, composed from the per-component kit, realistic **mock** data). **Capture** a real
 image (headless screenshot), present it for **design-confirm** — show-before-ask, **before build**.
 On confirm: record layout to `prototypes/<name>.json` + `catalog.json`, save image to
-`.add/design/captures/<name>.<ext>`, mention it in the feature's `TASK.md`.
+`.add/design/captures/<name>.<ext>`, mention it in the feature's `PLAN.md`.
 
 **Persona evidence checklist.** Before design-confirm, load the `flow: design` personas
 (`.add/personas/*` frontmatter, else description-match) and render their `## Success Metrics` as a
@@ -66,7 +66,7 @@ report per `gate-udd.md` → **confirm**; no capture beat.
 Render/capture however you like (headless browser, `html2image`, a screenshot service); the default
 is the self-contained HTML mock above, captured headless. For a json-render project, the default is
 **`@json-render/image`** (Satori → PNG/SVG, no browser). The engine never renders — the loop stays
-tool-agnostic. Captures live at **`.add/design/captures/<name>.<ext>`**, mentioned in `TASK.md`;
+tool-agnostic. Captures live at **`.add/design/captures/<name>.<ext>`**, mentioned in `PLAN.md`;
 `add.py check` raises a never-red `missing_capture` WARN for any prototype lacking one.
 
 The loop **binds** the UDD contracts **read-only** — `tokens.json` / `catalog.json` /

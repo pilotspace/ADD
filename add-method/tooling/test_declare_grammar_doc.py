@@ -23,9 +23,9 @@ ADD_METHOD = HERE.parent
 REPO = ADD_METHOD.parent
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
-DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
-BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
+CANON_TMPL = HERE / "templates" / "PLAN.md.tmpl"
+DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl"
+BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl"
 
 CANON_GUIDE = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
 DOG_GUIDE = REPO / ".claude" / "skills" / "add" / "phases" / "direction.md"
@@ -68,7 +68,7 @@ class DeclareGrammarDocTest(unittest.TestCase):
                 add.main(["init", "--name", "demo"])
                 add.main(["new-milestone", "v1", "--title", "T", "--goal", "g"])
                 add.main(["new-task", "alpha", "--title", "alpha"])
-            generated = (tmp / ".add" / "tasks" / "alpha" / "TASK.md").read_text(
+            generated = (tmp / ".add" / "tasks" / "alpha" / "PLAN.md").read_text(
                 encoding="utf-8")
             self.assertIn(COMMENT_ANCHOR, generated)         # comment is copied through
         finally:

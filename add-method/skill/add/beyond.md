@@ -10,7 +10,7 @@ prose. Load it (or the one guide you need) only when a trigger fires.
   default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
   the advisor spawn (`phases/verify.md`). Self-score a draft (0–1 across six dimensions, refine if
   any < 0.9) — the confidence self-score (`phases/direction.md`). Both advisory; the engine never spawns.
-- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` renders TASK.md
+- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` renders PLAN.md
   minus the deep-verify/observe sections (a derived subset of the ONE template), bundle approved in
   one freeze — routing lives in SKILL.md flag mode. Floor held (frozen contract · red test · verify
   gate; freeze-gated under any milestone). Collapse, never skip; opt-in.

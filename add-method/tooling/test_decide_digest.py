@@ -4,7 +4,7 @@ rollup's DECIDE NEXT footer (task decide-digest, milestone v13).
 
 The digest detects a task's seam FROM STATE ONLY (recorded / front / gate), extracts
 decision markers (`⚠` / `- [~]` / `- [ ]` + deeper-indented continuations) BYTE-VERBATIM
-from TASK.md §bodies, and renders decisive-facts-first: NEEDS YOUR JUDGMENT → ENGINE
+from PLAN.md §bodies, and renders decisive-facts-first: NEEDS YOUR JUDGMENT → ENGINE
 FACTS → UNLOCKS → DECIDE. Every --decide path is PURE (no writes). The milestone rollup
 always ends with one DECIDE NEXT line (HARD-STOP → fold+archive → seam-blocked task →
 run-in-progress). Asserts behavior via stdout/exit/state — never internals. Run:
@@ -41,9 +41,9 @@ SEC1_FLAG = "  ⚠ risky assumption — least sure because prose drifts; if wron
 
 
 def _task_md_text(sec1="", sec3="", sec6=""):
-    """A minimal TASK.md with the seven numbered headings and controlled §bodies."""
+    """A minimal PLAN.md with the seven numbered headings and controlled §bodies."""
     return "\n".join([
-        "# TASK: t", "",
+        "# PLAN: t", "",
         "## 1 · SPECIFY", sec1 or "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
         "## 3 · CONTRACT", sec3 or "shape", "",
@@ -95,7 +95,7 @@ class DecideDigestTest(unittest.TestCase):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep.
         _task_md_text does not include 'Status: DRAFT', so append before ## 4 · TESTS."""
-        p = self._root() / "tasks" / slug / "TASK.md"
+        p = self._root() / "tasks" / slug / "PLAN.md"
         txt = p.read_text(encoding="utf-8")
         if "Status: DRAFT" in txt:
             txt = txt.replace(
@@ -117,7 +117,7 @@ class DecideDigestTest(unittest.TestCase):
         if deps:
             argv += ["--depends-on", deps]
         add.main(argv)
-        (self._root() / "tasks" / slug / "TASK.md").write_text(
+        (self._root() / "tasks" / slug / "PLAN.md").write_text(
             _task_md_text(sec1, sec3, sec6), encoding="utf-8")
         if phase:
             add.main(["phase", phase, slug])

@@ -57,9 +57,9 @@ FAST_TMPL_TREES = (
     # copy, is gitignored local scratch state for add-method's self-hosted task tracking; it
     # is not part of the shipped-artifact parity claim (its currency depends on whether that
     # local dogfood task has itself been advanced), so it is deliberately excluded here.
-    HERE / "templates" / "TASK.fast.md.tmpl",
-    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+    HERE / "templates" / "PLAN.fast.md.tmpl",
+    REPO_ROOT / ".add" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
 )
 
 
@@ -104,7 +104,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _fill_boundary(self, slug):
         # boundary floor (fast-lane-boundary-line): the rendered fast template now
@@ -421,14 +421,14 @@ class TemplateScaffoldTest(unittest.TestCase):
         # phase-merge-verify: the grammar is retired. template-unify: the fast lane
         # derives from the ONE template, so the derived render is the pinned surface.
         text = add._strip_fast_sections(
-            (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8"))
+            (HERE / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8"))
         self.assertNotIn("skips:", text)
         self.assertNotIn("Skip rationale:", text)
 
     def test_full_template_carries_no_skips_machinery(self):
         # (pre-dates the retirement: the full template NEVER carried the grammar)
         body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
-                "TASK.md.tmpl").read_text(encoding="utf-8")
+                "PLAN.md.tmpl").read_text(encoding="utf-8")
         self.assertNotIn("skips:", body)
 
 
@@ -440,10 +440,10 @@ class EngineTreeParityTest(unittest.TestCase):
 
 
     def test_fast_template_gone_from_every_tree(self):
-        # template-unify: the fast lane derives from TASK.md.tmpl — no tree may
-        # resurrect the deleted TASK.fast.md.tmpl
+        # template-unify: the fast lane derives from PLAN.md.tmpl — no tree may
+        # resurrect the deleted PLAN.fast.md.tmpl
         for p in FAST_TMPL_TREES:
-            self.assertFalse(p.exists(), f"TASK.fast.md.tmpl must stay deleted: {p}")
+            self.assertFalse(p.exists(), f"PLAN.fast.md.tmpl must stay deleted: {p}")
 
 
 # ---------------------------------------------------------------------------

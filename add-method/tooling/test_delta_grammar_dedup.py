@@ -63,7 +63,7 @@ class DeltaGrammarDedupTest(unittest.TestCase):
         """Create task `slug` and replace its §7 OBSERVE delta block with `observe_lines`."""
         if slug not in (add.load_state(add.find_root()).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         marker = "### Competency deltas"
         idx = text.index(marker) + len(marker)

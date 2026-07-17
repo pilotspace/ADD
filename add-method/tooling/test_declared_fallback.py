@@ -26,9 +26,9 @@ FOOTNOTE = "† counted at the §4-declared path"
 
 
 def _task_md_text(sec4="plan"):
-    """A minimal TASK.md with the seven numbered headings and a controlled §4."""
+    """A minimal PLAN.md with the seven numbered headings and a controlled §4."""
     return "\n".join([
-        "# TASK: t", "",
+        "# PLAN: t", "",
         "## 1 · SPECIFY", "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
         "## 3 · PLAN", "shape", "",   # plan-phase-core: §3 is now PLAN (ground+contract collapsed into it)
@@ -79,7 +79,7 @@ class DeclaredFallbackTest(unittest.TestCase):
 
     def _mk_task(self, slug, sec4="plan", phase=None):
         add.main(["new-task", slug, "--title", slug])
-        (self._root() / "tasks" / slug / "TASK.md").write_text(
+        (self._root() / "tasks" / slug / "PLAN.md").write_text(
             _task_md_text(sec4), encoding="utf-8")
         if phase:
             add.main(["phase", phase, slug])

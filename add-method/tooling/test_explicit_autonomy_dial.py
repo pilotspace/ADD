@@ -62,13 +62,13 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _body(self, slug: str, risk=None, autonomy=None, frozen: bool = True) -> str:
         meta = f"slug: {slug} · created: 2026-06-10 · stage: mvp"
         if risk:
             meta += f" · risk: {risk}"
-        head = [f"# TASK: {slug}", "", meta]
+        head = [f"# PLAN: {slug}", "", meta]
         if autonomy is not None:
             head.append(f"autonomy: {autonomy}")
         head.append("phase: specify")  # plan-phase-core seed; must match new-task's state phase

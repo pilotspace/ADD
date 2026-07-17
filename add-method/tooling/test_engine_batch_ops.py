@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """engine-batch-ops (add-lean-loop task 1): `advance --fill` writes the current
-phase's TASK.md section AND advances in one call — all-or-nothing (a guard
-refusal restores TASK.md byte-identical) — and `status --brief` prints only
+phase's PLAN.md section AND advances in one call — all-or-nothing (a guard
+refusal restores PLAN.md byte-identical) — and `status --brief` prints only
 the resume essentials.
 
 Run:
@@ -40,7 +40,7 @@ class _Project(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         # phase-collapse-3: new-task now seeds phase=direction directly (specify · plan ·
         # tests are ONE span), so the task is already at direction here.
-        self.task_md = self.root / ".add" / "tasks" / "widget" / "TASK.md"
+        self.task_md = self.root / ".add" / "tasks" / "widget" / "PLAN.md"
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -85,7 +85,7 @@ class FillAndAdvance(_Project):
         r = _run(self.root, "advance", "--fill", str(draft))
         self.assertNotEqual(r.returncode, 0, "unfrozen §3 must refuse the crossing")
         self.assertEqual(self.task_md.read_bytes(), before,
-                         "guard refusal must restore TASK.md byte-identical")
+                         "guard refusal must restore PLAN.md byte-identical")
         self.assertIn("phase: direction", self.task_md.read_text())
 
     def test_fill_with_to_rejected(self):  # R1

@@ -53,7 +53,7 @@ class _Base(unittest.TestCase):
         return buf.getvalue() + err.getvalue()
 
     def _plant_carried(self):
-        md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         t = md.read_text(encoding="utf-8")
         marker = "### Spec delta\n"
         i = t.index(marker) + len(marker)

@@ -14,7 +14,7 @@ Line schema (keys always present, null when unknown):
 - lane/routed_by come from the state route record (stamped at freeze).
 - persona is parsed from a `persona:<slug>` routed-by prefix; human-routed
   or unrouted -> null.
-- kind is read LIVE from the TASK.md header `kind:` line at gate time.
+- kind is read LIVE from the PLAN.md header `kind:` line at gate time.
 - HARD-STOP traces too — every outcome is a data point, not only PASS.
 
 Run: python3 -m unittest test_route_trace -v
@@ -90,7 +90,7 @@ class _Harness(unittest.TestCase):
         self._ok("lock", "--force")
         self._ok("new-task", "t", "--title", "T", "--oneshot")
         self._ok("advance", "--to", "plan")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")

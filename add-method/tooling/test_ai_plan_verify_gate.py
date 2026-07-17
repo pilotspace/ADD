@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for ai-plan-verify-gate (task: ai-plan-verify-gate, milestone: three-phase-flow).
 
-CONTRACT (frozen @ v1, §3 of .add/tasks/ai-plan-verify-gate/TASK.md): a two-way DIRECTION-freeze
+CONTRACT (frozen @ v1, §3 of .add/tasks/ai-plan-verify-gate/PLAN.md): a two-way DIRECTION-freeze
 gate `gate_mode: human | ai-plan-verify`. When a task declares `gate_mode: ai-plan-verify`, its
 EFFECTIVE autonomy is `auto`, and its sensitivity is NOT `security`/`data`/`architecture` (a
 malformed "?" token also refused) — an AI agent may perform the §3 contract freeze via
@@ -127,7 +127,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _section3(self, slug):
         return add._phase_spans(self._task_md(slug).read_text(encoding="utf-8")).get(3, "")

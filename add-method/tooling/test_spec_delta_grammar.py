@@ -50,11 +50,11 @@ class SpecDeltaGrammarTest(unittest.TestCase):
 
     # --- helpers -------------------------------------------------------------
     def _task(self, slug):
-        """Create task `slug` (if new); return its TASK.md path."""
+        """Create task `slug` (if new); return its PLAN.md path."""
         root = add.find_root()
         if slug not in (add.load_state(root).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _write_observe(self, slug, body):
         """Replace everything after the '## 7 · OBSERVE' heading line with `body`.
@@ -183,9 +183,9 @@ class SpecDeltaGrammarTest(unittest.TestCase):
         )
 
     def test_template_canonical_and_fallback_agree(self):  # Must (template parity)
-        # The canonical TASK.md.tmpl and the embedded _FALLBACK_TASK must both carry
+        # The canonical PLAN.md.tmpl and the embedded _FALLBACK_TASK must both carry
         # the new block (so the tool behaves identically when templates/ is missing).
-        tmpl = (Path(add.__file__).parent / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")
+        tmpl = (Path(add.__file__).parent / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("### Spec delta", tmpl)
         self.assertNotIn("Spec delta for the next loop:", tmpl)
         self.assertIn("### Spec delta", add._FALLBACK_TASK)

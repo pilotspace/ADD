@@ -83,7 +83,7 @@ LIFECYCLE = [
     ["heal", "t", "--reason", "lifecycle: a reported earned-green cheat"],  # bounded self-heal:
                                                # the semantic entry — returns t to build (exit 3,
                                                # tolerated), exercised under the read-spy (reads
-                                               # state/TASK.md, never docs/)
+                                               # state/PLAN.md, never docs/)
     ["advance", "t"],                          # heal returned t to build; advance back to verify
     ["gate", "PASS", "t"],
     ["reopen", "t", "--to", "verify", "--reason", "census"],  # done -> verify (recorded, gate reset)
@@ -98,15 +98,18 @@ LIFECYCLE = [
                                                # state + the specs template, never docs/; exit 0)
     ["freeze", "t"],                           # §3 contract-freeze write-seam: task t's §3 is still
                                                # the unfilled template here -> refuses contract_not_drafted
-                                               # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
+                                               # (expected nonzero, tolerated; reads PLAN.md/state, never docs/)
     ["re-cross", "t", "--by", "Tester"],       # post-freeze re-cross verb: t is done at this slot,
                                                # not build/verify -> refuses recross_wrong_phase
-                                               # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
+                                               # (expected nonzero, tolerated; reads PLAN.md/state, never docs/)
     ["search", "mvp"],                          # read-only keyword/substring corpus scan
                                                # (context-search, search-index): scans
-                                               # MILESTONE.md/TASK.md title/goal/rationale
+                                               # MILESTONE.md/PLAN.md title/goal/rationale
                                                # or title/Feature lines only, never docs/;
                                                # always exit 0 (matches or "no matches for:")
+    ["migrate"],                               # 1.x -> 2.0 one-shot: this 2.0 board is already
+                                               # migrated -> loud no-op, exit 0 (reads state +
+                                               # tasks/specs dirs, never docs/)
     ["project"],                               # read-only: prints PROJECT.md, reads no docs/ chapter
     ["sync-guidelines"],
     ["milestone-done", "mvp"],
@@ -121,7 +124,7 @@ _EXERCISED_IN_SETUP = {"init"}
 # exit 0 — it returns to build (exit 3) or escalates (exit 1). The lifecycle exercises it
 # (proving it reads no docs/ chapter) and tolerates its expected non-zero exit.
 # freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
-# refuses (contract_not_drafted) — exercised under the read-spy (reads TASK.md/state, never docs/).
+# refuses (contract_not_drafted) — exercised under the read-spy (reads PLAN.md/state, never docs/).
 # re-cross likewise refuses (recross_wrong_phase): t is done at its lifecycle slot.
 _NONZERO_OK = {"heal", "freeze", "re-cross"}
 
@@ -141,7 +144,7 @@ class MinimalPillarTest(unittest.TestCase):
     def _freeze(self, slug):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"

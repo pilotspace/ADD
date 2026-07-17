@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Red/green tests for strip-scaffold-at-done (drift-guard M3/2) — tidy a closed TASK.md.
+"""Red/green tests for strip-scaffold-at-done (drift-guard M3/2) — tidy a closed PLAN.md.
 
-A live TASK.md carries `<!-- … -->` instruction comments that guide the active phase; once the
+A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 task is `done` they are dead weight (PR40 audit). Frozen shape (§3 @ v1):
   - `_strip_live_scaffold(text)` removes `<!-- … -->` spans OUTSIDE fenced code blocks (```…```
     pass through byte-exact — the frozen §3 is never mutated), trims the trailing whitespace a
@@ -70,7 +70,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _ready_to_gate(self, slug="t1"):
         self._silent("new-task", slug, "--title", "T")
@@ -94,12 +94,12 @@ class CompletingGateStrips(_Board):
     def test_pass_strips_instruction_comments(self):             # M1
         self._ready_to_gate("t1")
         p = self._task_md("t1")
-        self.assertIn("<!--", p.read_text(encoding="utf-8"), "precondition: a live TASK.md has comments")
+        self.assertIn("<!--", p.read_text(encoding="utf-8"), "precondition: a live PLAN.md has comments")
         self._silent("gate", "PASS", "t1")
         txt = p.read_text(encoding="utf-8")
         self.assertNotIn("<!--", txt, "a completing gate must strip the `<!-- -->` instruction comments")
         self.assertIn("## 1 ", txt, "authored content (section headings) must remain")
-        self.assertIn("# TASK:", txt)
+        self.assertIn("# PLAN:", txt)
 
     def test_fenced_block_left_untouched(self):                  # M2, R:strip_corrupts_content
         self._ready_to_gate("t1")

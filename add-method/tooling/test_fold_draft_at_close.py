@@ -89,7 +89,7 @@ class _Harness(unittest.TestCase):
             ms.write_text(re.sub(r"(?m)^\s*- \[ \].*\n?", "", body), encoding="utf-8")
         self._ok("new-task", "t", "--title", "T", "--milestone", "m")
         self._ok("advance", "--to", "plan")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")

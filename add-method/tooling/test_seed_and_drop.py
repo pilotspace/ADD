@@ -56,10 +56,10 @@ class SeedAndDropTest(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug):
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _mk(self, slug):
-        """Create task `slug` (idempotent); return its TASK.md path."""
+        """Create task `slug` (idempotent); return its PLAN.md path."""
         root = add.find_root()
         if slug not in (add.load_state(root).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])

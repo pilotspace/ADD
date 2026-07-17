@@ -77,7 +77,7 @@ class _Harness(unittest.TestCase):
         p.write_text(text, encoding="utf-8")
 
     def _task_md(self, slug):
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _new_task_at_contract(self, slug="t"):
         self._silent("lock", "--force")

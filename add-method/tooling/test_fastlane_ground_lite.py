@@ -1,11 +1,11 @@
 """fastlane-ground-lite (method-ergonomics): the fast lane's §0 carries the drift anchor.
 
 CONTRACT — supersedes ground-anchor-sha's "fast lane omits it" scope note (recorded change).
-template-unify migration: the fast lane is now a derived render of the ONE TASK.md.tmpl,
+template-unify migration: the fast lane is now a derived render of the ONE PLAN.md.tmpl,
 so the field pins point at that template + the shared _FALLBACK_TASK:
-  templates/TASK.md.tmpl §3 Grounding carries the `Ground SHA:` line (all template trees);
+  templates/PLAN.md.tmpl §3 Grounding carries the `Ground SHA:` line (all template trees);
   _FALLBACK_TASK carries the same field (circuit-breaker parity of the FIELD, not bytes);
-  a scaffolded `new-task --fast` TASK.md contains it;
+  a scaffolded `new-task --fast` PLAN.md contains it;
   behavior unchanged: check WARNs on a §0 citing l.NNN with a placeholder SHA, silent when filled
   (the field exists so a fast task can actually clear the WARN without hand-adding the line).
 Run: python3 -m unittest test_fastlane_ground_lite -v
@@ -26,9 +26,9 @@ TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
 FAST_TREES = (
-    TOOLING / "templates" / "TASK.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    TOOLING / "templates" / "PLAN.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 )
 
 
@@ -57,7 +57,7 @@ class ScaffoldAndBehaviorTest(unittest.TestCase):
         self._silent("init", "--name", "demo", "--stage", "mvp")
         self._silent("lock", "--force")
         self._silent("new-task", "t", "--fast", "--title", "F")
-        self.md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"   # fast renders into TASK.md
+        self.md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"   # fast renders into PLAN.md
 
     def tearDown(self):
         os.chdir(self._cwd)

@@ -89,8 +89,8 @@ class MilestoneArchiveTest(unittest.TestCase):
         self.assertTrue((self.tmp / ".add" / "milestones" / "m1" / "MILESTONE.md").exists(),
                         "light archive must keep the MILESTONE.md on disk")
         for t in members:
-            self.assertTrue((self.tmp / ".add" / "tasks" / t / "TASK.md").exists(),
-                            f"light archive must keep {t}/TASK.md on disk")
+            self.assertTrue((self.tmp / ".add" / "tasks" / t / "PLAN.md").exists(),
+                            f"light archive must keep {t}/PLAN.md on disk")
 
     def test_status_shows_archived_rollup(self):
         self._make_done_milestone("m1", 2)

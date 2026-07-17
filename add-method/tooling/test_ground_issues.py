@@ -6,13 +6,13 @@ the REAL code while grounding, so §1 SPECIFY answers problems FOUND, not assume
 Frozen shape (§3 @ v1):
   - 3-plan.md `## Gather` gains an "Issues/Risks (→ feed §1)" category (task-delta only)
     + an `## Exit gate` checkbox for it;
-  - TASK.md.tmpl `## 0 · GROUND` gains ONE `Issues/Risks (→ feed §1):` line, placed
+  - PLAN.md.tmpl `## 0 · GROUND` gains ONE `Issues/Risks (→ feed §1):` line, placed
     AFTER the `Anchors the contract cites:` line;
   - 1-specify.md CONSUMES it — §1 builds on the §0 Issues/Risks;
   - INVARIANTS preserved: the `Anchors the contract cites:` line (the grounding measure
     keys on it), `## 0`/`GROUND`, add.py byte-identical to engine_pin (no measure edit),
     the phases lean pool ≤ its UNCHANGED target (compaction, not a rebaseline);
-  - SYNC: 3-plan.md ×3 (skill trees) and TASK.md.tmpl ×3 (template trees) byte-identical.
+  - SYNC: 3-plan.md ×3 (skill trees) and PLAN.md.tmpl ×3 (template trees) byte-identical.
 
 Behavior pinned, not prose phrasing. Run: python3 -m unittest test_ground_issues -v
 """
@@ -40,9 +40,9 @@ SPECIFY_COPIES = [
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 TMPL_COPIES = [
-    _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl",
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
@@ -121,7 +121,7 @@ class GuideNamesIssuesCategory(unittest.TestCase):
 
 
 class TemplateGainsIssuesLine(unittest.TestCase):
-    """TASK.md.tmpl carries the Issues/Risks line, AFTER the Anchors line.
+    """PLAN.md.tmpl carries the Issues/Risks line, AFTER the Anchors line.
 
     plan-phase-core: re-pointed from the removed `## 0 · GROUND` section to the
     `## 3 · PLAN` section's `### Grounding` sub-block (_grounding_block). The field's

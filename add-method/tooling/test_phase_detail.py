@@ -4,7 +4,7 @@
 The drill-down renders a single task's THREE phase blocks (direction->verify —
 phase-collapse-3 folded the whole front span (specify+scenarios+plan+tests) into ONE
 `direction` phase, so PHASES now carries 3 work phases + terminal "done"), each with
-its captured §N body from TASK.md + reached/current marker from state.json; the
+its captured §N body from PLAN.md + reached/current marker from state.json; the
 verify block surfaces the recorded GATE from state (authoritative, never parsed from
 prose). `_PHASE_SECTIONS` is the EXPLICIT table `task_phases` reads (never phase-index
 ordinal math): `direction` owns §1-§4 (all four bodies concatenated under its one
@@ -25,12 +25,12 @@ from pathlib import Path
 import add
 
 
-# A synthetic TASK.md with a known marker per phase so assertions are exact. §5 BUILD is
+# A synthetic PLAN.md with a known marker per phase so assertions are exact. §5 BUILD is
 # only an angle-placeholder (the (empty) case); §6 VERIFY prose deliberately omits the
 # word PASS (so a "PASS" in the render can only come from state, not the prose). §3 is
 # now PLAN (plan-phase-core collapsed ground+contract into it) — heading number 3 is
 # unchanged, only its label moved from CONTRACT to PLAN.
-_TASK_MD = """# TASK: Alpha demo
+_TASK_MD = """# PLAN: Alpha demo
 
 ## 1 · SPECIFY
 SPEC_MARKER the rules live here.
@@ -83,7 +83,7 @@ class PhaseDetailTest(unittest.TestCase):
         return hashlib.sha256(self._state_file().read_bytes()).hexdigest()
 
     def _task_md(self, slug) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _report(self, *args):
         buf, err = io.StringIO(), io.StringIO()
@@ -198,7 +198,7 @@ class PhaseDetailTest(unittest.TestCase):
         self.assertEqual(self._hash_state(), before)  # read-only
 
     def test_unreadable_file_failclosed(self):
-        # design-for-failure: an existing-but-unreadable TASK.md must NOT crash —
+        # design-for-failure: an existing-but-unreadable PLAN.md must NOT crash —
         # every phase fails closed to "(empty)", never a bare traceback.
         from unittest import mock
         with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):

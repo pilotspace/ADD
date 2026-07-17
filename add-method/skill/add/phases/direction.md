@@ -228,7 +228,7 @@ The human's one minute, aimed. Walk these seven before saying yes:
 - **Cases** — does every Must and Reject have an observable §2 scenario?
 - **Shape** — glossary names, error codes, additive vs breaking: is THIS the shape to freeze?
 - **Grounded** — does the Contract cite anchors that exist in the Grounding map? `status`/`check` surface this.
-- **Risk** — high-risk or method-defining? Require `risk: high · autonomy: conservative` in the TASK.md header.
+- **Risk** — high-risk or method-defining? Require `risk: high · autonomy: conservative` in the PLAN.md header.
 - **Tests** — will §4 go red for the right reason, asserting behavior rather than internals?
 
 Reject any line → the bundle goes back to draft; the freeze stays the only gate.

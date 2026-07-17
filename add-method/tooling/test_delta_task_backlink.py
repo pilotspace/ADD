@@ -71,7 +71,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _related_intent(self, slug: str):
         m = _REL_LINE.search(self._task_md(slug).read_text(encoding="utf-8"))

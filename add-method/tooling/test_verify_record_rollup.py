@@ -72,7 +72,7 @@ class _Harness(unittest.TestCase):
         return code, out.getvalue()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _verify_task(self, slug):
         self._silent("new-task", slug, "--title", "Feature")

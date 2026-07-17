@@ -54,7 +54,7 @@ class GlanceCardTest(_Harness):
         self.assertIn("now     :", out, "plain status must emit a 'now' glance card")
         self.assertIn("orient", out, "the card must name the active task")
         self.assertRegex(out, r"now     :.*phase=", "the card must carry phase=")
-        self.assertIn(".add/tasks/orient/TASK.md", out, "the card must name the resume file")
+        self.assertIn(".add/tasks/orient/PLAN.md", out, "the card must name the resume file")
 
     def test_card_appears_before_project_line(self):
         out = self._run("status")

@@ -103,7 +103,7 @@ class MilestoneTierTest(unittest.TestCase):
         st.pop("active_milestone", None)
         st["tasks"]["legacy"] = {"title": "Legacy", "phase": "specify", "gate": "none"}
         (Path(self.tmp) / ".add" / "tasks" / "legacy").mkdir(parents=True, exist_ok=True)
-        (Path(self.tmp) / ".add" / "tasks" / "legacy" / "TASK.md").write_text("phase: specify\n")
+        (Path(self.tmp) / ".add" / "tasks" / "legacy" / "PLAN.md").write_text("phase: specify\n")
         sp.write_text(json.dumps(st))
         # status and check must not crash on a minimal, old-style task
         self._run_capture("status")

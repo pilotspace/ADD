@@ -1,7 +1,7 @@
 # Verify — evidence + non-functional review (gate + the observe tail)
 
 Goal: establish trust and record an outcome. Passing tests are necessary, not
-sufficient. Fill **§6** in TASK.md including the GATE RECORD.
+sufficient. Fill **§6** in PLAN.md including the GATE RECORD.
 
 > **Who resolves this gate depends on the `autonomy:` header.** Under `autonomy: auto` (the default)
 > a run auto-PASSes on complete evidence with **no residue** (security · concurrency · architecture),

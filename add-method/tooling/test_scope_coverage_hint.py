@@ -70,7 +70,7 @@ class _Harness(unittest.TestCase):
         (self.tmp / "pkg" / "api" / "handler.py").write_text("x = 1\n", encoding="utf-8")
         (self.tmp / "lib").mkdir()
         (self.tmp / "lib" / "util.py").write_text("y = 2\n", encoding="utf-8")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         sec3 = _SEC3
         if drop_scope_line:

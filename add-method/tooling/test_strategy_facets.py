@@ -2,7 +2,7 @@
 """Red/green tests for the faceted §5 build strategy block (task strategy-facet-block,
 milestone build-strategy-facets, contract FROZEN @ v1).
 
-A prose/template-only task: full TASK.md.tmpl §5 gains four ADDITIVE, domain-generic
+A prose/template-only task: full PLAN.md.tmpl §5 gains four ADDITIVE, domain-generic
 facet lines — Approach (domain strategy) · Data strategy · Pattern · Optimization
 stance — between the Strategy (ordered batches) line and the Persona line; the fast
 template collapses to ONE Approach line (collapse, never skip); phases/build.md and
@@ -40,10 +40,10 @@ def _existing(*paths):
     assert len(present) >= 2, f"twin set collapsed below canon+bundle: {paths}"
     return present
 
-FULL_TWINS = _existing(HERE / "templates" / "TASK.md.tmpl",
-                       REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-                       ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-                       BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
+FULL_TWINS = _existing(HERE / "templates" / "PLAN.md.tmpl",
+                       REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+                       ADD_METHOD / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+                       BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl")
 BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "build.md",
                 REPO / ".claude" / "skills" / "add" / "phases" / "build.md",
                 BUNDLE / "skill" / "add" / "phases" / "build.md")
@@ -60,7 +60,7 @@ PATTERN_LABEL = "Pattern:"
 STANCE_LABEL = "Optimization stance:"
 
 # the contract-frozen facet lines (§3 v1, relocated into §3 PLAN's ### Build-strategy by
-# plan-phase-core) — byte-exact against templates/TASK.md.tmpl
+# plan-phase-core) — byte-exact against templates/PLAN.md.tmpl
 FULL_FACET_LINES = (
     "Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain "
     "— an algorithm, a data model, a migration path, a prose structure, a UX flow — derive from "
@@ -148,7 +148,7 @@ class StrategyFacetsTest(unittest.TestCase):
     # ---- R:comment_ceiling -------------------------------------------------------
     def test_comment_ceiling_held(self):
         count = FULL_TWINS[0].read_text(encoding="utf-8").count("<!--")
-        self.assertLess(count, 12, "TASK.md.tmpl gained a comment — facet guidance lives in line hints")
+        self.assertLess(count, 12, "PLAN.md.tmpl gained a comment — facet guidance lives in line hints")
 
     # ---- R:nonadditive_change ----------------------------------------------------
     def test_additive_only(self):
@@ -185,8 +185,8 @@ class StrategyFacetsTest(unittest.TestCase):
                 add.main(["lock", "--force"])
                 add.main(["new-task", "fullx", "--title", "fullx"])
                 add.main(["new-task", "fastx", "--title", "fastx", "--fast"])
-            full = (tmp / ".add" / "tasks" / "fullx" / "TASK.md").read_text(encoding="utf-8")
-            fast = (tmp / ".add" / "tasks" / "fastx" / "TASK.md").read_text(encoding="utf-8")
+            full = (tmp / ".add" / "tasks" / "fullx" / "PLAN.md").read_text(encoding="utf-8")
+            fast = (tmp / ".add" / "tasks" / "fastx" / "PLAN.md").read_text(encoding="utf-8")
             for line in FULL_FACET_LINES:
                 self.assertIn(line, full, "full scaffold missing a facet line")
             for line in FULL_FACET_LINES:

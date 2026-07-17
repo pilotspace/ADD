@@ -73,7 +73,7 @@ Heavy doc-first methods burn your time writing documents and lose the thread
 across sessions (context rot). ADD fixes both:
 
 - **One file per feature.** Spec, scenarios, contract, test-plan, and gate record
-  all live inline in a single `TASK.md`. No sprawling doc tree.
+  all live inline in a single `PLAN.md`. No sprawling doc tree.
 - **State on disk, not in chat.** A Python tool tracks where you are in
   `.add/state.json`, so a fresh session resumes with one command instead of
   re-reading the repo.

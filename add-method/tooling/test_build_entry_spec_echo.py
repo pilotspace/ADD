@@ -75,7 +75,7 @@ class _Harness(unittest.TestCase):
         self._ok("new-task", "t", "--title", "T", "--oneshot")
 
     def _task_md(self, slug="t"):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _fill_spec(self, slug="t", sec1=_SEC1, sec3=_SEC3):
         """Replace §1 and §3 bodies wholesale with known fixture content."""

@@ -31,7 +31,7 @@ class _Harness(unittest.TestCase):
         self._silent("init", "--name", "demo", "--stage", "mvp")
         self._silent("new-task", "t", "--fast", "--title", "x")
         self.root = self.tmp / ".add"
-        self.task_md = self.root / "tasks" / "t" / "TASK.md"
+        self.task_md = self.root / "tasks" / "t" / "PLAN.md"
 
     def _silent(self, *argv):
         out, err = io.StringIO(), io.StringIO()
@@ -105,7 +105,7 @@ class PasteReadyLineTest(_Harness):
         before = self.task_md.read_bytes()
         self._echo()
         self.assertEqual(before, self.task_md.read_bytes(),
-                         "propose-not-impose: the echo must never write TASK.md")
+                         "propose-not-impose: the echo must never write PLAN.md")
 
 
 if __name__ == "__main__":

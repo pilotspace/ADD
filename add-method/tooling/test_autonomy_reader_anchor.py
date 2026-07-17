@@ -24,24 +24,24 @@ import add
 class AutonomyReaderAnchorTest(unittest.TestCase):
 
     def test_line_form_reads(self):
-        hdr = "# TASK: x\n\nslug: x · stage: mvp\nautonomy: conservative\nphase: specify\n"
+        hdr = "# PLAN: x\n\nslug: x · stage: mvp\nautonomy: conservative\nphase: specify\n"
         self.assertEqual(add._autonomy_level(hdr), "conservative")
 
     def test_inline_form_reads(self):
         # the `·`-separated inline form on the slug line is the deliberately-supported shape
-        hdr = "# TASK: x\n\nslug: x · stage: mvp · autonomy: manual\nphase: specify\n"
+        hdr = "# PLAN: x\n\nslug: x · stage: mvp · autonomy: manual\nphase: specify\n"
         self.assertEqual(add._autonomy_level(hdr), "manual")
 
     def test_title_substring_is_not_a_declaration(self):
         # the H1 title legitimately contains "autonomy: auto"; the real decl is conservative
-        hdr = ("# TASK: Project seeds autonomy: auto by default at init\n\n"
+        hdr = ("# PLAN: Project seeds autonomy: auto by default at init\n\n"
                "slug: x · stage: mvp\nautonomy: conservative\nphase: specify\n")
         self.assertEqual(add._autonomy_level(hdr), "conservative",
                          "a title substring must NOT be read as the declaration")
 
     def test_prose_substring_before_decl_is_not_a_declaration(self):
         # quoted prose mentioning the ladder precedes the real decl; the decl must win
-        hdr = ("# TASK: x\n\n> note: prefer autonomy: manual for risky work\n"
+        hdr = ("# PLAN: x\n\n> note: prefer autonomy: manual for risky work\n"
                "slug: x · stage: mvp\nautonomy: auto\nphase: specify\n")
         self.assertEqual(add._autonomy_level(hdr), "auto",
                          "prose mentioning a rung must NOT be read as the declaration")
@@ -49,7 +49,7 @@ class AutonomyReaderAnchorTest(unittest.TestCase):
     def test_guard_reliability_title_cannot_fake_lowered(self):
         # a real `auto` decl + a title containing "autonomy: conservative":
         # the reader must return auto and the guard must NOT see it as lowered.
-        hdr = ("# TASK: about autonomy: conservative tradeoffs\n\n"
+        hdr = ("# PLAN: about autonomy: conservative tradeoffs\n\n"
                "slug: x · stage: mvp\nautonomy: auto\nphase: verify\n")
         self.assertEqual(add._autonomy_level(hdr), "auto")
         self.assertFalse(add._autonomy_lowered(hdr),
@@ -57,7 +57,7 @@ class AutonomyReaderAnchorTest(unittest.TestCase):
 
     def test_unset_when_no_declaration_line(self):
         # a title-only mention with no decl line reads UNSET (None), not the title value
-        hdr = "# TASK: notes on autonomy: manual\n\nslug: x · stage: mvp\nphase: specify\n"
+        hdr = "# PLAN: notes on autonomy: manual\n\nslug: x · stage: mvp\nphase: specify\n"
         self.assertIsNone(add._autonomy_level(hdr))
 
 
@@ -70,7 +70,7 @@ class RiskReaderAnchorTest(unittest.TestCase):
         self.assertTrue(bool(add._RISK_HIGH_RE.search("slug: x · risk: high · autonomy: manual\n")))
 
     def test_title_substring_is_not_a_declaration(self):
-        hdr = "# TASK: how to handle risk: high tasks\n\nslug: x\nautonomy: auto\nphase: specify\n"
+        hdr = "# PLAN: how to handle risk: high tasks\n\nslug: x\nautonomy: auto\nphase: specify\n"
         self.assertFalse(bool(add._RISK_HIGH_RE.search(hdr)),
                          "a title about risk must NOT flip the risk guard on")
 

@@ -3,7 +3,7 @@
 (milestone flow-honesty, task `self-grading-refute-record`, M4).
 
 CONTRACT (frozen @ v1) — design C, MEASURE-NOT-BLOCK (no hard gate):
-  templates/TASK.md.tmpl §6 gains a `### Refute-read verdict` block (after Deep checks, before
+  templates/PLAN.md.tmpl §6 gains a `### Refute-read verdict` block (after Deep checks, before
     GATE RECORD) with `<…>`-placeholder `Verdict:` + `By:` lines.
   _guarantee_lint_notices(root, state) gains key  refute_unrecorded: [slug...]
     scope: tasks with phase in {verify, observe, done} whose §6 block is PRESENT-but-unfilled
@@ -72,7 +72,7 @@ class _Harness(unittest.TestCase):
         return code, out.getvalue()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _verify_task(self, slug):
         """A fresh task driven to verify — its §6 carries the template's unfilled refute block."""

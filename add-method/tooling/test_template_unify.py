@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """template-unify red suite (task template-unify, thin-engine-loop W3).
 
-ONE TASK.md.tmpl serves every lane: TASK.fast.md.tmpl is deleted from all
+ONE PLAN.md.tmpl serves every lane: PLAN.fast.md.tmpl is deleted from all
 template trees; `--fast` renders the full template minus exactly the
 `_FAST_SECTIONS` heading blocks (subset by construction) plus a spliced
 `fast: true` header; `--oneshot` adds its two headers + the spliced §3
@@ -10,7 +10,7 @@ measurably smaller, machine-read lines intact (byte ledger pinned here).
 
 Red-for-the-right-reason today (pre-build):
   - fast renders from a DIFFERENT template file -> subset/drop-set red
-  - TASK.fast.md.tmpl + _FALLBACK_TASK_FAST still exist -> file-gone red
+  - PLAN.fast.md.tmpl + _FALLBACK_TASK_FAST still exist -> file-gone red
   - the full template's marker is `phase: specify` -> native-marker red
   - the full template has no §1 Boundary: line -> boundary-both-lanes red
   - family templates are exactly the pre-task sizes -> byte-ledger red
@@ -85,7 +85,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), err.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _scaffold(self, slug: str, *flags) -> str:
         self._silent("new-task", slug, "--title", "probe", *flags)
@@ -96,7 +96,7 @@ class _Board(unittest.TestCase):
         """A minimal freeze-ready board fixture; boxes toggle the AI-verify floor."""
         spec1 = ["Feature: f", "Must:", "  - m",
                  "Accept: Given g, When w, Then t", boundary_line]
-        header = [f"# TASK: {slug}",
+        header = [f"# PLAN: {slug}",
                   f"slug: {slug} · created: 2026-07-16 · stage: mvp"]
         if fast or oneshot:
             header.append("fast: true")
@@ -138,8 +138,8 @@ class FastTemplateGoneTest(unittest.TestCase):
         for tree in TEMPLATE_TREES:
             if not tree.is_dir():
                 continue  # fresh-checkout tolerance — a missing twin is not a failure
-            self.assertFalse((tree / "TASK.fast.md.tmpl").exists(),
-                             f"TASK.fast.md.tmpl must be deleted from {tree}")
+            self.assertFalse((tree / "PLAN.fast.md.tmpl").exists(),
+                             f"PLAN.fast.md.tmpl must be deleted from {tree}")
 
     def test_fast_fallback_literal_gone_from_engine(self):
         src = (HERE / "add.py").read_text(encoding="utf-8")
@@ -150,7 +150,7 @@ class FastTemplateGoneTest(unittest.TestCase):
 # ── M5 + M6: the one template is natively 3-phase and carries the Boundary ──
 class TemplateShapeTest(unittest.TestCase):
     def setUp(self):
-        self.tmpl = (TEMPLATES / "TASK.md.tmpl").read_text(encoding="utf-8")
+        self.tmpl = (TEMPLATES / "PLAN.md.tmpl").read_text(encoding="utf-8")
 
     def test_native_direction_marker(self):
         self.assertRegex(self.tmpl, r"(?m)^phase: direction\b",
@@ -251,15 +251,15 @@ class BoundaryBothLanesTest(_Board):
 # ── M4: the family lean-pass — smaller files, machine-read lines intact ──────
 class FamilyByteLedgerTest(unittest.TestCase):
     # pre-task sizes recorded 2026-07-16 (the lean-pass must strictly shrink each,
-    # even though TASK.md.tmpl GAINS the Boundary: line)
+    # even though PLAN.md.tmpl GAINS the Boundary: line)
     LEDGER = {
-        "TASK.md.tmpl": 12209,
+        "PLAN.md.tmpl": 12209,
         "MILESTONE.md.tmpl": 4211,
         "PROMPT.persona.md.tmpl": 3225,
         "personas/_template.md.tmpl": 6922,
     }
     ANCHORS = {
-        "TASK.md.tmpl": ("<must>", "<reject>", "<scenarios>", "<test_plan>",
+        "PLAN.md.tmpl": ("<must>", "<reject>", "<scenarios>", "<test_plan>",
                          "Status: DRAFT", "### GATE RECORD",
                          "Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>",
                          "Scope (may touch):"),

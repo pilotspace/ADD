@@ -99,7 +99,7 @@ block (`deltas.md` grammar). File each into its living spec (`add.py delta-appen
 
 <constraints>
 How much a run may auto-gate is a **per-scope setting** (principle 5). A task declares it in its
-`TASK.md` header — this is not an add.py flag; it is a rubric convention:
+`PLAN.md` header — this is not an add.py flag; it is a rubric convention:
 
 ```
 autonomy: manual | conservative | auto
@@ -114,7 +114,7 @@ autonomy: manual | conservative | auto
 
 **The high-risk guard.** On a **high-risk or method-defining scope** `auto` must be lowered to
 `conservative` or `manual`; leaving it at `auto` is the reject code **`unguarded_high_risk_auto`**.
-The scope declares **`risk: high`** in the `TASK.md` header (the engine never classifies scope).
+The scope declares **`risk: high`** in the `PLAN.md` header (the engine never classifies scope).
 Since v14 the guard is mechanical for the declared case:
 the engine refuses the declared combination — `add.py gate` will not complete (`PASS`/`RISK-ACCEPTED`)
 a task whose header carries `risk: high` without a lowered level (`HARD-STOP` always records).

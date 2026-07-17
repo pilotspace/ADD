@@ -32,13 +32,13 @@ ADD_METHOD = HERE.parent
 REPO = ADD_METHOD.parent
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
+CANON_TMPL = HERE / "templates" / "PLAN.md.tmpl"
 # fresh-checkout skip-tolerance (ba09498 precedent): gitignored dogfood twins may be absent
 # on a clean clone — assert lockstep over the twins that exist (canon + bundle always do)
 TMPL_TWINS = tuple(p for p in (CANON_TMPL,
-                               REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-                               ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-                               BUNDLE / "tooling" / "templates" / "TASK.md.tmpl") if p.exists())
+                               REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+                               ADD_METHOD / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+                               BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl") if p.exists())
 assert len(TMPL_TWINS) >= 2, "twin set collapsed below canon+bundle"
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")
@@ -81,7 +81,7 @@ class FacetAdrHarvestTest(unittest.TestCase):
             add.main(argv)
 
     def _path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _adr_block(self, slug="t"):
         t = self._path(slug).read_text()
@@ -156,7 +156,7 @@ class FacetAdrHarvestTest(unittest.TestCase):
     def test_watch_line_cites_stance(self):
         text = CANON_TMPL.read_text(encoding="utf-8")
         self.assertIn(WATCH_LINE, text, "§7 Watch must carry the contract-exact stance cross-cite")
-        self.assertEqual(len({_md5(p) for p in TMPL_TWINS}), 1, "TASK.md.tmpl twins diverged")
+        self.assertEqual(len({_md5(p) for p in TMPL_TWINS}), 1, "PLAN.md.tmpl twins diverged")
         self.assertLessEqual(len(text.encode("utf-8")), 12400, "template size ceiling busted")
 
     # ── M5: honest re-pin ───────────────────────────────────────────────────────────────

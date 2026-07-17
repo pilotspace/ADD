@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Red/green tests for the project-level autonomy default (task init-auto-default).
 
-The autonomy posture stops being a constant buried in the TASK.md template and
+The autonomy posture stops being a constant buried in the PLAN.md template and
 becomes EXPLICIT + project-scoped + INHERITABLE:
 
   * init      — writes a header line `autonomy: auto` into PROJECT.md.
-  * new-task  — seeds the new TASK.md `autonomy:` line from the project's DECLARED
+  * new-task  — seeds the new PLAN.md `autonomy:` line from the project's DECLARED
                 default (inherit), not a hardcoded constant. Fail-SAFE read:
                   declared & recognized -> that rung
                   no `autonomy:` line   -> "auto"          (v7: absent = auto)
@@ -61,7 +61,7 @@ class _Board(unittest.TestCase):
         return self._root() / "PROJECT.md"
 
     def _task_header(self, slug: str) -> str:
-        text = (self._root() / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        text = (self._root() / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
         return text.split("\n## ", 1)[0]
 
     def _set_project_autonomy(self, level):
@@ -176,11 +176,11 @@ class TemplateParityTest(unittest.TestCase):
     def test_templates_carry_autonomy_3_trees(self):
         for tree in TEMPLATE_TREES:
             proj = (REPO / tree / "PROJECT.md.tmpl").read_text(encoding="utf-8")
-            task = (REPO / tree / "TASK.md.tmpl").read_text(encoding="utf-8")
+            task = (REPO / tree / "PLAN.md.tmpl").read_text(encoding="utf-8")
             self.assertIn("autonomy: auto", proj,
                           f"{tree}/PROJECT.md.tmpl must declare `autonomy: auto`")
             self.assertIn("{{autonomy}}", task,
-                          f"{tree}/TASK.md.tmpl must inherit via the {{{{autonomy}}}} token")
+                          f"{tree}/PLAN.md.tmpl must inherit via the {{{{autonomy}}}} token")
 
 
 if __name__ == "__main__":

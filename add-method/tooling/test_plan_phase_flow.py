@@ -36,9 +36,9 @@ ADD_PY_COPIES = [
     _REPO / ".add" / "tooling" / "add.py",
 ]
 TMPL_COPIES = [
-    _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 
 
@@ -129,7 +129,7 @@ class _CLI(unittest.TestCase):
         return json.loads((self._root() / "state.json").read_text())
 
     def _task_md(self):
-        return (self._root() / "tasks" / "t" / "TASK.md")
+        return (self._root() / "tasks" / "t" / "PLAN.md")
 
     # M3 — a fresh task opens at direction
     def test_new_task_seeds_direction(self):

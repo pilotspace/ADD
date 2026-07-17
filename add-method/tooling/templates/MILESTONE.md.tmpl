@@ -6,7 +6,7 @@ stage: {{stage}} · status: active · created: {{date}}
 relations: <cross-MILESTONE edges — `depends-on:` / `extends:` / `relates-to:` header lines, comma-sep slugs; omit if none; `add.py check` validates>
 
 > SDD living doc for this milestone. Keep it THIN: breadth, shared decisions, and
-> exit criteria only — per-task detail lives in each `.add/tasks/<slug>/TASK.md`,
+> exit criteria only — per-task detail lives in each `.add/tasks/<slug>/PLAN.md`,
 > written just-in-time. Update this doc whenever a task reveals a milestone gap.
 
 ## Scope
@@ -33,7 +33,7 @@ Issues/Risks (shared): <traps in the shared code that feed each task's §1 expec
 ## Shared / risky contracts (freeze these first)
 - <contract name> -> owning task <slug>
 
-## Tasks (breadth-first decomposition; detail lives in each TASK.md)
+## Tasks (breadth-first decomposition; detail lives in each PLAN.md)
 - [ ] <slug>   depends-on: none     — <one line>
 - [ ] <slug>   depends-on: <slug>   — <one line>
 

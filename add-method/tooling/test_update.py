@@ -46,7 +46,7 @@ def _make_bundled(root: Path) -> Path:
     (root / "skill" / "add" / "phases" / "direction.md").write_text("specify v-new\n")
     (root / "tooling" / "templates").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py v-new\n")
-    (root / "tooling" / "templates" / "TASK.md.tmpl").write_text("task tmpl v-new\n")
+    (root / "tooling" / "templates" / "PLAN.md.tmpl").write_text("task tmpl v-new\n")
     (root / "tooling" / "test_add.py").write_text("# dev-only test — must NOT ship\n")
     (root / "docs").mkdir(parents=True)
     (root / "docs" / "00-introduction.md").write_text("intro v-new\n")

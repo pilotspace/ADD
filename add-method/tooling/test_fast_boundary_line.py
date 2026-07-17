@@ -74,13 +74,13 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _write_task(self, slug: str, boundary_line: str | None, *, oneshot=False):
         spec1 = ["Feature: f", "Must:", "  - m", "Accept: Given g, When w, Then t"]
         if boundary_line is not None:
             spec1.append(boundary_line)
-        header = [f"# TASK: {slug}",
+        header = [f"# PLAN: {slug}",
                   f"slug: {slug} · created: 2026-07-11 · stage: mvp",
                   "fast: true"]
         if oneshot:
@@ -129,7 +129,7 @@ class _Board(unittest.TestCase):
 # ── M1: the ONE template scaffolds the line (template-unify: both lanes) ─────
 class TemplateScaffoldTest(unittest.TestCase):
     def test_template_carries_boundary_line_in_section1(self):
-        body = (TEMPLATES / "TASK.md.tmpl").read_text(encoding="utf-8")
+        body = (TEMPLATES / "PLAN.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("\nBoundary: <", body, "§1 must scaffold a Boundary: line")
         self.assertLess(body.find("\nBoundary: "), body.find("## 2 ·"),
                         "the Boundary: line lives in §1")

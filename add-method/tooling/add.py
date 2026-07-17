@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ADD — minimal scaffolder + state tracker for AI-Driven Development.
 
-One file = one task. This tool generates the per-task TASK.md (which Claude fills
+One file = one task. This tool generates the per-task PLAN.md (which Claude fills
 in step by step) and maintains .add/state.json so any fresh session can resume
 with `add.py status` instead of re-reading the whole repo. That is the anti-
 context-rot core of the ADD method.
@@ -67,7 +67,7 @@ from add_engine.version import (
 
 # kernel-trim (ADD 2.0 M5): the release verbs died — add_engine/release.py retired with them.
 
-# --- TASK.md structural readers (moved to add_engine/taskdoc.py) ------------
+# --- PLAN.md structural readers (moved to add_engine/taskdoc.py) ------------
 from add_engine.taskdoc import (
     _task_header, _count_test_defs, _primary_test_files, _tests_count,
     _declared_test_files, _declared_tests_count, _tests_info, _task_prose,
@@ -120,7 +120,7 @@ def _normalize_phase_tokens(state: dict) -> dict:
     record is byte-identical, so a second pass changes nothing. Normalizes on READ only;
     state is persisted (migrated) solely when a command legitimately saves — never an
     auto-write (the over-eager persist was the prior attempt's corruption). Task FILES
-    (TASK.md, archive) are never rewritten by this."""
+    (PLAN.md, archive) are never rewritten by this."""
     if not isinstance(state, dict):
         return state
     tasks = state.get("tasks")
@@ -164,11 +164,11 @@ def _templates_dir() -> Path:
 def _render_template(name: str, **subs: str) -> str:
     """Load templates/<name>.tmpl and substitute {{key}} tokens.
 
-    Falls back to a built-in minimal template for TASK.md (template-unify: the fast
+    Falls back to a built-in minimal template for PLAN.md (template-unify: the fast
     lane is a derived render of that same template, never a second file).
     """
     tmpl = _templates_dir() / f"{name}.tmpl"
-    _fallbacks = {"TASK.md": _FALLBACK_TASK}
+    _fallbacks = {"PLAN.md": _FALLBACK_TASK}
     if tmpl.exists():
         text = tmpl.read_text(encoding="utf-8")
     elif name in _fallbacks:
@@ -249,8 +249,8 @@ Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 """
 
 
-# --- TASK.md milestone backlink (task-milestone-backlink) --------------------
-# The task↔milestone link is mirrored into the TASK.md header so the file names its
+# --- PLAN.md milestone backlink (task-milestone-backlink) --------------------
+# The task↔milestone link is mirrored into the PLAN.md header so the file names its
 # own parent. The engine WRITES it (new-task) and MAINTAINS it (set-milestone); a
 # milestone-free task reads the "(none)" sentinel, never blank. Keeping it engine-owned
 # is what makes it drift-proof — `check` flags a hand-edited line that disagrees.
@@ -265,7 +265,7 @@ def _milestone_backlink_value(milestone) -> str:
 
 
 def _set_milestone_line(text: str, value: str) -> str:
-    """Rewrite (or insert) the TASK.md header `milestone:` backlink — idempotent.
+    """Rewrite (or insert) the PLAN.md header `milestone:` backlink — idempotent.
 
     A grandfathered file lacking the line gets it inserted right after `slug:`; with no
     slug line either, the text is returned unchanged (degrade-safe — never corrupts a doc).
@@ -280,7 +280,7 @@ def _set_milestone_line(text: str, value: str) -> str:
 
 
 def _read_milestone_line(text: str):
-    """The current `milestone:` backlink value in a TASK.md header, or None if absent."""
+    """The current `milestone:` backlink value in a PLAN.md header, or None if absent."""
     m = _MILESTONE_LINE_RE.search(text)
     return m.group(0)[len("milestone:"):].strip() if m else None
 
@@ -299,7 +299,7 @@ _LINE_REF_RE = re.compile(r"l\.\d+")
 
 
 def _ground_section(text: str) -> str:
-    """The grounding block of a TASK.md — the §3 PLAN `### Grounding` sub-block, from the
+    """The grounding block of a PLAN.md — the §3 PLAN `### Grounding` sub-block, from the
     `### Grounding` heading to the next `### ` / `## ` heading (expectations-first: grounding
     moved from a standalone §0 into the plan phase). Legacy `## 0 GROUND` still resolves."""
     m = re.search(r"(?m)^### Grounding\b", text) or re.search(r"(?m)^## 0\b", text)
@@ -341,8 +341,8 @@ def _seeded_delta_pointers(text: str) -> list[str]:
     return out
 
 
-# --- tidy a closed TASK.md (strip-scaffold-at-done) --------------------------
-# A live TASK.md carries `<!-- … -->` instruction comments that guide the active phase; once the
+# --- tidy a closed PLAN.md (strip-scaffold-at-done) --------------------------
+# A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 # task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
 # Content-safe: fenced code blocks (```…```, incl. the frozen §3) pass through BYTE-EXACT — only
 # comments OUTSIDE a fence are removed; idempotent.
@@ -352,7 +352,7 @@ _BLANK_RUN_RE = re.compile(r"\n{3,}")
 
 
 def _strip_live_scaffold(text: str) -> str:
-    """Remove `<!-- … -->` instruction comments from a TASK.md — fences untouched, idempotent.
+    """Remove `<!-- … -->` instruction comments from a PLAN.md — fences untouched, idempotent.
 
     Splits on fenced code blocks AND an inline single-backtick span that IS itself a whole
     `` `<!--...-->` `` (literal comment syntax quoted as an example in prose) so neither is
@@ -408,7 +408,7 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
     (hand-filled) line is byte-untouched. No GATE RECORD block / no placeholder line / an
     unreadable file -> silent no-op, the file stays byte-identical. Called AFTER save_state —
     state is the source of truth; the file only mirrors it, so a write fault never loses a verdict."""
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         text = f.read_text(encoding="utf-8")
     except OSError:
@@ -437,7 +437,7 @@ def _stamp_gate_record(root: Path, state: dict, slug: str, outcome: str) -> None
 
 def _capture_wrapped(label: str, body: str):
     """Capture a `<label>: value` field that may WRAP onto continuation lines (a human writing
-    prose in a TASK.md field routinely wraps past one line). Matches the label's first line, then
+    prose in a PLAN.md field routinely wraps past one line). Matches the label's first line, then
     consumes subsequent physical lines while each is non-blank AND does not itself start a new
     field label — `Word Word:` or `Word Word (parenthetical):` (the real template places labels
     like `Safety rule (feature-specific):`/`Persona (optional):` immediately after a wrapped field
@@ -472,7 +472,7 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
     so a "<harvested at done…>" line elsewhere — e.g. a §3 contract that ILLUSTRATES this very
     feature — is never touched (a file-wide first-match would corrupt the frozen contract; caught
     by dogfooding adr-harvest on itself)."""
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         text = f.read_text(encoding="utf-8")
     except OSError:
@@ -742,9 +742,9 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if not slug.replace("-", "").replace("_", "").isalnum():
         _die("slug must be alphanumeric with - or _ only")
     tdir = root / "tasks" / slug
-    task_md = tdir / "TASK.md"
+    task_md = tdir / "PLAN.md"
     if task_md.exists() and not args.force:
-        _die(f"task '{slug}' already exists (use --force to overwrite TASK.md)")
+        _die(f"task '{slug}' already exists (use --force to overwrite PLAN.md)")
 
     # link to a milestone (explicit, or the active one) — validate before any write
     milestone = getattr(args, "milestone", None) or _active_milestone(state)
@@ -765,7 +765,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # SEED (--from-delta): resolve a prior task's FIRST open SPEC delta into THIS task.
     # validate-ALL-then-write — resolve the prior, read its open delta, and compute the
     # seeded flip NOW (before any write); the slug-free check above has already passed, so
-    # the only writes below are the new TASK.md, then the prior flip, then state.
+    # the only writes below are the new PLAN.md, then the prior flip, then state.
     from_delta = getattr(args, "from_delta", None)
     match = getattr(args, "match", None)
     if match and not from_delta:                            # --match targets the PRIOR's delta
@@ -774,7 +774,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     feature_override = prior_md = flipped_prior = None
     if from_delta:
         prior = _resolve_task(state, from_delta)            # unknown prior -> _die
-        prior_md = root / "tasks" / prior / "TASK.md"
+        prior_md = root / "tasks" / prior / "PLAN.md"
         prior_text = prior_md.read_text(encoding="utf-8")
         status, idx, delta_text = _select_spec_delta(prior_text, match)
         if status == "no_open":
@@ -816,7 +816,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
                 "security", "data", "architecture"):
             fast = True
     rendered = _render_template(
-        "TASK.md",
+        "PLAN.md",
         title=title, slug=slug, date=date.today().isoformat(),
         stage=state["stage"], autonomy=autonomy,
         milestone=_milestone_backlink_value(milestone))
@@ -859,7 +859,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     seed_writes: list[tuple[Path, str]] = [(task_md, rendered)]
     if flipped_prior is not None:                           # consume the source delta -> seeded
         seed_writes.append((prior_md, flipped_prior))
-    _atomic_write_many(seed_writes)                         # new TASK.md + consumed source as one commit
+    _atomic_write_many(seed_writes)                         # new PLAN.md + consumed source as one commit
     if _project_autonomy_token(root) == "?":
         print("warning: garbled_project_autonomy — PROJECT.md declares an unrecognized "
               f"autonomy token; new task seeded fail-safe '{autonomy}' "
@@ -1067,7 +1067,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     actor on the task's state record (mirrors cmd_lock's `setup.actor`), so the audit trail
     has no hole at freeze. The human RUNS it as their approval — never pre-stamped.
 
-    validate-then-write: every refusal fires before any write. Writes TASK.md first, then
+    validate-then-write: every refusal fires before any write. Writes PLAN.md first, then
     state; a crash between degrades to today's legacy text-only freeze (never corrupt state),
     design-for-failure."""
     root = _require_root()
@@ -1076,7 +1076,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not raw_slug and not _active_task(state):
         _die("no_active_task: no task given and no active task is set")
     slug = _resolve_task(state, raw_slug)                  # unknown slug -> _die
-    task_md = root / "tasks" / slug / "TASK.md"
+    task_md = root / "tasks" / slug / "PLAN.md"
     text = task_md.read_text(encoding="utf-8")
     raw3 = _phase_spans(text).get(3, "")
     phase = (state["tasks"].get(slug) or {}).get("phase", "direction")
@@ -1084,7 +1084,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if _contract_frozen(raw3):
         # first-call-ergonomics M2: an EXACT already-frozen retry is a READ-only exit-0
         # no-op, not a hard error — it restates the frozen version and redirects a real
-        # shape change to a change request, and touches zero bytes of TASK.md/state.json.
+        # shape change to a change request, and touches zero bytes of PLAN.md/state.json.
         ver_m = re.search(r"FROZEN @ (v\d+)", raw3)
         ver = ver_m.group(1) if ver_m else "?"
         print(f"already frozen @ {ver} — a shape change is a change request back to SPECIFY")
@@ -1157,7 +1157,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     # its `## 3 ·` heading to the next `## `/`---`/EOF (same boundary as _phase_spans).
     h3 = re.search(r"(?m)^##\s*3\s*·.*$", text)
     if not h3:
-        _die(f"contract_not_drafted: {slug}'s TASK.md has no §3 CONTRACT section")
+        _die(f"contract_not_drafted: {slug}'s PLAN.md has no §3 CONTRACT section")
     seg_start = h3.end()
     nxt = re.search(r"(?m)^(?:##\s|---\s*$)", text[seg_start:])
     seg_end = seg_start + (nxt.start() if nxt else len(text) - seg_start)
@@ -1188,7 +1188,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
             new_seg = re.sub(r"(?m)^Ground SHA:[ \t]*<[^>\n]*>.*$",
                              f"Ground SHA: {_sha} — stamped by freeze", new_seg, count=1)
     new_text = text[:seg_start] + new_seg + text[seg_end:]
-    _atomic_write(task_md, new_text)                       # TASK.md first (audit source of truth)
+    _atomic_write(task_md, new_text)                       # PLAN.md first (audit source of truth)
     state["tasks"][slug]["freeze"] = {"version": ver, "frozen_at": ts,
                                       "approved_by": who, "actor": identity._actor_stamp(state)}
     if ai_plan_verify:
@@ -1215,7 +1215,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
             state["tasks"][slug]["phase"] = "build"
             state["tasks"][slug]["updated"] = _now()
             save_state(root, state)                       # durable state FIRST
-            _sync_task_marker(root, slug, "build")        # then the TASK.md mirror
+            _sync_task_marker(root, slug, "build")        # then the PLAN.md mirror
             print("Direction-span freeze — §1–§4 crossed into build in one call")
         else:
             print(f"--cross: only a direction-phase freeze crosses (task is at '{cur}' — no-op)")
@@ -1345,7 +1345,7 @@ def _resolve_milestone(state: dict, slug: str) -> str:
 
 def _dialect_gaps(root: Path, slug: str) -> list:
     """spec-dialect-floor (quality-floors): the dialect classes the frozen §3 speaks that NO
-    declared §4 test file does. PURE — reads TASK.md + declared test files, writes nothing.
+    declared §4 test file does. PURE — reads PLAN.md + declared test files, writes nothing.
     Fail-open by design: no §3 match, no declared test files, or unreadable files -> [] —
     the floor warns where it can SEE a gap and never invents one (wm2 evidence: the gap it
     exists to catch is a suite speaking a friendlier input dialect than the spec's own
@@ -1403,7 +1403,7 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
         already_skipped = (not require_frozen) and bool(state["tasks"][slug].get("freeze_skipped"))
         if not skip_freeze and not already_skipped:
             _die("contract_not_frozen: freeze §3 before crossing into build — approve "
-                 f"the contract in {slug}'s TASK.md (Status: FROZEN @ vN), or pass "
+                 f"the contract in {slug}'s PLAN.md (Status: FROZEN @ vN), or pass "
                  "--skip-freeze to cross with a recorded skip")
         if not already_skipped:
             state["tasks"][slug]["freeze_skipped"] = {
@@ -1417,7 +1417,7 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
     if _optin:
         if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
             _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
-                 f"of {slug}'s TASK.md before crossing into build")
+                 f"of {slug}'s PLAN.md before crossing into build")
     if _contract_frozen(raw3):
         if not _flag_well_formed(raw3):
             _die("unflagged_freeze: a frozen §3 must surface a well-formed "
@@ -1484,7 +1484,7 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
     # build-entry spec echo (six-phase-loop): the tick INTO build re-renders WHAT to
     # build — §1 Must/Reject + the §3 contract head — on BOTH entries (advance and the
     # `phase build` override funnel here). TAIL of the stack, so a refused entry never
-    # echoes; fail-open, so exit code, state, and TASK.md are identical either way.
+    # echoes; fail-open, so exit code, state, and PLAN.md are identical either way.
     try:
         _spec_echo(root, slug)
     except Exception:
@@ -1519,7 +1519,7 @@ def cmd_phase(args: argparse.Namespace) -> None:
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
-    _sync_task_marker(root, slug, args.phase)  # then mirror into TASK.md (best-effort) — no split-brain
+    _sync_task_marker(root, slug, args.phase)  # then mirror into PLAN.md (best-effort) — no split-brain
     print(f"task '{slug}' phase -> {args.phase}")
     print(_next_footer(root, state))
 
@@ -1549,7 +1549,7 @@ def cmd_recross(args: argparse.Namespace) -> None:
     state["tasks"][slug]["phase"] = "build"
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                  # durable state FIRST (source of truth)
-    _sync_task_marker(root, slug, "build")   # then mirror into TASK.md — no split-brain
+    _sync_task_marker(root, slug, "build")   # then mirror into PLAN.md — no split-brain
     print(f"task '{slug}' re-crossed tests->build — tripwire + scope re-snapshotted "
           f"(approved by {args.by.strip()})")
     print(_next_footer(root, state))
@@ -1558,7 +1558,7 @@ def cmd_recross(args: argparse.Namespace) -> None:
 def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: str) -> None:
     """`advance --fill` (engine-batch-ops): draft the CURRENT phase's §body and
     advance in ONE call — the round-trip batching the add-lean-loop milestone
-    exists for. ALL-OR-NOTHING (human-chosen at freeze): the original TASK.md
+    exists for. ALL-OR-NOTHING (human-chosen at freeze): the original PLAN.md
     bytes are snapshotted, the fill is written, and the UNCHANGED advance guard
     stack runs; any refusal (every _die exit path — SystemExit included)
     restores the snapshot byte-identical and re-raises, so no path leaves a
@@ -1587,11 +1587,11 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
         if ln.startswith("## ") or re.match(r"^---\s*$", ln):
             _die("fill_body_unparseable: the payload contains a line-start '## ' or a bare "
                  "'---' line — these truncate the §-section scan; reword or indent them")
-    n = _PHASE_SECTIONS[cur][0]  # phase → its PRIMARY TASK.md §-number, via the explicit
+    n = _PHASE_SECTIONS[cur][0]  # phase → its PRIMARY PLAN.md §-number, via the explicit
                                  # table (never ordinal math — the off-by-one bug class;
                                  # specify owns §1+§2, verify owns §6+§7: --fill targets
                                  # the first, the drafting section)
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         original = f.read_bytes()
     except OSError as exc:
@@ -1678,7 +1678,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
     state["tasks"][slug]["phase"] = nxt
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)             # F12: durable state FIRST (source of truth) — may _die
-    _sync_task_marker(root, slug, nxt)  # then mirror into TASK.md (best-effort) — no split-brain
+    _sync_task_marker(root, slug, nxt)  # then mirror into PLAN.md (best-effort) — no split-brain
     print(f"task '{slug}' phase {cur} -> {nxt}")
     # bundle fast-forward: keep stepping (each pass re-loads state and re-runs every
     # crossing guard) until the validated --to target is reached.
@@ -1701,7 +1701,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
 
 
 # The mechanized high-risk guard (run.md, v14; widened by explicit-autonomy-dial):
-# judging WHAT is high-risk stays human — a scope declares `risk: high` in its TASK.md
+# judging WHAT is high-risk stays human — a scope declares `risk: high` in its PLAN.md
 # header at the freeze. The engine then enforces the pure token contradiction: risk: high
 # WITHOUT a lowered autonomy rung (manual or conservative) is unguarded, and completion is
 # refused. Tokens are read from the header region (text before the first section heading)
@@ -1734,7 +1734,7 @@ def _route_record(header: str) -> dict:
 _TASK_KIND_RE = re.compile(r"(?m)^kind:[ \t]*([A-Za-z-]+)[ \t]*$")
 
 def _task_kind(hdr: str):
-    """The declared task kind from a TASK.md header region, lowercased, or None when
+    """The declared task kind from a PLAN.md header region, lowercased, or None when
     absent (measure-not-block: recorded verbatim; audit/quality lint the vocabulary).
     PURE — the engine never infers a kind."""
     m = _TASK_KIND_RE.search(hdr)
@@ -1746,7 +1746,7 @@ def _task_kind(hdr: str):
 _SENSITIVITY_RE = re.compile(r"(?:^|·)[ \t]*sensitivity:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 def _task_sensitivity(hdr: str, valid=None):
-    """The declared sensitivity from a TASK.md header region (HTML comments already stripped by
+    """The declared sensitivity from a PLAN.md header region (HTML comments already stripped by
     _task_header). A member of `valid`, None when no `sensitivity:` line is present, or "?" when a
     REAL token outside `valid` was written. `valid` defaults to _SENSITIVITY_VALUES (the universal
     base — back-compat); callers that honor a project's GLOSSARY domain classes pass
@@ -1768,7 +1768,7 @@ _GATE_MODE_RE = re.compile(r"(?:^|·)[ \t]*gate_mode:[ \t]*([^\s<#|]+)", re.MULT
 
 
 def _task_gate_mode(hdr: str) -> str | None:
-    """The declared gate mode from a TASK.md header region (HTML comments already stripped by
+    """The declared gate mode from a PLAN.md header region (HTML comments already stripped by
     _task_header). A member of _GATE_MODES, None when no `gate_mode:` line is present (absent —
     every caller treats this as "human", the fail-closed default; a NEW trust-loosening capability
     never silently activates), or "?" when a REAL token outside _GATE_MODES was written. PURE —
@@ -1789,7 +1789,7 @@ _RETIRED_SKIP_TOKENS = frozenset({"scenarios", "observe"})
 
 
 def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
-    """The declared skip-set from a TASK.md header region (HTML comments already stripped by
+    """The declared skip-set from a PLAN.md header region (HTML comments already stripped by
     _task_header). No `skips:` line -> (frozenset(), None) — the universal, byte-identical
     default. A present line's captured token comma-split, every element a member of
     _SKIPPABLE_PHASES -> (frozenset(elements), None). ANY split element outside
@@ -1820,7 +1820,7 @@ def _task_skip_set(hdr: str) -> tuple[frozenset[str], str | None]:
             f"{', '.join(repr(t) for t in bad)} cannot be skipped; only "
             f"{allowed} may be skipped (fast/oneshot/benchmark lanes, with a "
             "stated Skip rationale). Correct or remove the `skips:` line in the "
-            "TASK.md header, then re-run add.py advance")
+            "PLAN.md header, then re-run add.py advance")
     return frozenset(toks), None
 
 
@@ -2107,7 +2107,7 @@ def _append_route_trace(root: Path, state: dict, slug: str, outcome: str) -> Non
         try:
             kind = _task_kind(_task_header(root, slug))
         except Exception:
-            kind = None                              # a missing TASK.md never blocks
+            kind = None                              # a missing PLAN.md never blocks
         age = None
         created = t.get("created")
         if created:
@@ -2167,7 +2167,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
             state["tasks"][slug]["phase"] = "verify"
             state["tasks"][slug]["updated"] = _now()
             save_state(root, state)                       # durable state FIRST
-            _sync_task_marker(root, slug, "verify")       # then the TASK.md mirror
+            _sync_task_marker(root, slug, "verify")       # then the PLAN.md mirror
             print(f"crossed build -> verify (compound tick) — recording {args.outcome}")
             current = "verify"
         if _phase_index(current) < _phase_index("verify"):
@@ -2219,11 +2219,11 @@ def cmd_gate(args: argparse.Namespace) -> None:
     save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
     _append_route_trace(root, state, slug, args.outcome)   # persona-perf telemetry — degrade-safe, never blocks
     if completing:
-        _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
+        _sync_task_marker(root, slug, "done")             # then mirror the phase into PLAN.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
     _stamp_adr_record(root, state, slug)                  # adr-at-observe: harvest §7 Decisions (ADR) — AFTER §6 is mirrored
     if completing:                                         # strip-scaffold-at-done: tidy the now-closed
-        _tf = root / "tasks" / slug / "TASK.md"           # TASK.md LAST (after the stampers) — drop the
+        _tf = root / "tasks" / slug / "PLAN.md"           # PLAN.md LAST (after the stampers) — drop the
         try:                                              # live-phase `<!-- -->` comments; fences untouched.
             _tt = _tf.read_text(encoding="utf-8")
             _st = _strip_live_scaffold(_tt)
@@ -2323,7 +2323,7 @@ def cmd_autonomy(args: argparse.Namespace) -> None:
         print(f"project autonomy -> {level}")
         return
     slug = _resolve_task(state, args.a2)                     # reused -> "unknown task '<slug>'"
-    task_md = root / "tasks" / slug / "TASK.md"
+    task_md = root / "tasks" / slug / "PLAN.md"
     if _RISK_HIGH_RE.search(_task_header(root, slug)) and level not in ("manual", "conservative"):
         _die(f"unguarded_high_risk_auto: task '{slug}' declares risk: high — autonomy must stay "
              f"lowered (manual|conservative); refusing '{level}' (a human must own a high-risk gate)")
@@ -2411,7 +2411,7 @@ def cmd_reopen(args: argparse.Namespace) -> None:
     t["gate"] = "none"
     t["updated"] = now
     save_state(root, state)                # F12: durable state FIRST (source of truth) — may _die
-    _sync_task_marker(root, slug, target)  # then mirror into TASK.md (best-effort) — no split-brain
+    _sync_task_marker(root, slug, target)  # then mirror into PLAN.md (best-effort) — no split-brain
     print(f"task '{slug}' reopened: done -> {target} (reason recorded); gate reset to none")
     print(_next_footer(root, state))
 
@@ -2665,7 +2665,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     if _section is not None:
         # --section (progressive-task-context): print ONE raw §body of the
         # active task — the agent mid-task reads tens of lines, not the whole
-        # growing TASK.md. Raw body only: no banner, no footer. Wins over
+        # growing PLAN.md. Raw body only: no banner, no footer. Wins over
         # --brief/--json when combined (documented precedence, not an error).
         root = _require_root()
         state = load_state(root)
@@ -2682,7 +2682,7 @@ def cmd_status(args: argparse.Namespace) -> None:
                  f"({', '.join(p for p in PHASES if p != 'done')})")
         bodies = _raw_phase_bodies(root, slug)
         if n not in bodies:
-            _die(f"section_missing: no '## {n} ·' heading in tasks/{slug}/TASK.md")
+            _die(f"section_missing: no '## {n} ·' heading in tasks/{slug}/PLAN.md")
         print(bodies[n])
         return
     if getattr(args, "brief", False):
@@ -2768,7 +2768,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     if _now_active and _now_active in (state.get("tasks") or {}):
         _now_ph = (state["tasks"][_now_active] or {}).get("phase", "?")
         print(f"now     : '{_now_active}' · phase={_now_ph} · {_next_footer(root, state)}")
-        print(f"          TASK.md: .add/tasks/{_now_active}/TASK.md   ·   re-orient: add.py status --brief")
+        print(f"          PLAN.md: .add/tasks/{_now_active}/PLAN.md   ·   re-orient: add.py status --brief")
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
@@ -3030,10 +3030,10 @@ def cmd_status(args: argparse.Namespace) -> None:
             # frozen-ness threaded) · re-orient. The bottom block used to RESTATE all
             # of that — a ~230B doubling that re-enters cache on every later turn. Keep
             # ONLY the context ops it uniquely teaches (engine-hint-context-ops): the
-            # per-section read + the cheap re-orient (the whole-TASK.md context-tax
+            # per-section read + the cheap re-orient (the whole-PLAN.md context-tax
             # drivers). The next verb lives once now — in the card.
             print(f"\nresume  : add.py status --section {ph}  ·  add.py status --brief"
-                  "   (read one section / cheap re-orient — whole TASK.md only if needed)")
+                  "   (read one section / cheap re-orient — whole PLAN.md only if needed)")
 
 
 # Agent-portability (v14): `guide` names the PHASE PLAYBOOK file — the same
@@ -3066,7 +3066,7 @@ _POST_FREEZE_DIRECTION_ACTION = (
 def cmd_guide(args: argparse.Namespace) -> None:
     """Answer "what do I do next?" for the active (or named) task.
 
-    Strictly read-only: load_state only — never save_state, never writes a TASK.md.
+    Strictly read-only: load_state only — never save_state, never writes a PLAN.md.
     """
     if getattr(args, "json", False):
         json_root, state = _load_state_for_json()
@@ -3167,8 +3167,8 @@ def cmd_guide(args: argparse.Namespace) -> None:
 
 
 def _read_task_phase(root: Path, slug: str) -> str | None:
-    """Read the `phase:` marker from a task's TASK.md, or None if absent."""
-    task_md = root / "tasks" / slug / "TASK.md"
+    """Read the `phase:` marker from a task's PLAN.md, or None if absent."""
+    task_md = root / "tasks" / slug / "PLAN.md"
     if not task_md.exists():
         return None
     for line in task_md.read_text(encoding="utf-8").splitlines():
@@ -3652,8 +3652,8 @@ def cmd_check(args: argparse.Namespace) -> None:
     warnings: list[tuple[str, str]] = []  # (name, reason) — nudges that NEVER feed `failed`
     infos: list[tuple[str, str]] = []     # (name, reason) — affirmations; NEVER feed `warned`/`failed`
     for slug, t in tasks.items():
-        task_md = root / "tasks" / slug / "TASK.md"
-        checks.append((task_md.exists(), f"task '{slug}' has TASK.md", "file missing"))
+        task_md = root / "tasks" / slug / "PLAN.md"
+        checks.append((task_md.exists(), f"task '{slug}' has PLAN.md", "file missing"))
         marker, want = _read_task_phase(root, slug), t.get("phase")
         # a legacy marker name (specify/plan/tests/…) matches its collapsed phase —
         # LEGACY_PHASES is read-side only; task files are never rewritten to the new names
@@ -3675,11 +3675,11 @@ def cmd_check(args: argparse.Namespace) -> None:
             # the intake flow — NOT a failure. Names structure, never the act of intake.
             warnings.append((f"task '{slug}'", "is outside a milestone — size it via the /add "
                                                "intake flow (or attach with --milestone)"))
-        # backlink-drift (task-milestone-backlink): the TASK.md `milestone:` header mirrors state.
+        # backlink-drift (task-milestone-backlink): the PLAN.md `milestone:` header mirrors state.
         # WARN (never red, warn-never-block) when a PRESENT line disagrees; an ABSENT line is a
         # grandfathered task — silent, never retro-red. Degrade-safe: an unreadable file skips here.
         try:
-            _task_text = (root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+            _task_text = (root / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
         except OSError:
             _task_text = None
         _bl = _read_milestone_line(_task_text) if _task_text is not None else None
@@ -4289,10 +4289,10 @@ def cmd_set_milestone(args: argparse.Namespace) -> None:
     state["tasks"][task]["milestone"] = new
     state["tasks"][task]["updated"] = _now()
     save_state(root, state)
-    # keep the TASK.md `milestone:` backlink in lockstep with state (task-milestone-backlink):
+    # keep the PLAN.md `milestone:` backlink in lockstep with state (task-milestone-backlink):
     # rewrite the header line (insert it if a grandfathered file lacks it). Degrade-safe — a
-    # missing/unreadable TASK.md never blocks the move (state is already the source of truth).
-    task_md = root / "tasks" / task / "TASK.md"
+    # missing/unreadable PLAN.md never blocks the move (state is already the source of truth).
+    task_md = root / "tasks" / task / "PLAN.md"
     try:
         _txt = task_md.read_text(encoding="utf-8")
         _new_txt = _set_milestone_line(_txt, _milestone_backlink_value(new))
@@ -4391,8 +4391,8 @@ def _find_cycle(tasks: dict) -> list[str] | None:
 
 
 def _sync_task_marker(root: Path, slug: str, phase: str) -> None:
-    """Keep the `phase:` line inside TASK.md in sync with state.json."""
-    task_md = root / "tasks" / slug / "TASK.md"
+    """Keep the `phase:` line inside PLAN.md in sync with state.json."""
+    task_md = root / "tasks" / slug / "PLAN.md"
     if not task_md.exists():
         return
     lines = task_md.read_text(encoding="utf-8").splitlines()
@@ -4417,7 +4417,7 @@ def _sync_task_marker(root: Path, slug: str, phase: str) -> None:
 # rollup footer (exit-criteria · waivers · carried deltas). render_report() is
 # PURE — it performs NO writes — so v9's retro-artifact can persist the SAME
 # string to RETRO.md. Structured fields (phase/gate/waiver/status) come from
-# state.json; prose (observe delta, deltas) is parsed from each TASK.md and
+# state.json; prose (observe delta, deltas) is parsed from each PLAN.md and
 # fails CLOSED to `(unknown)` rather than omitting silently.
 
 # Two glyph tiers. Alignment is correct only with ASCII in column-positioned
@@ -4819,7 +4819,7 @@ def report_data(root: Path, state: dict, mslug: str) -> dict:
         "tasks": task_rows,
         "waivers": waivers,
         "deltas": all_deltas,
-        # additive (v13-1): MILESTONE.md-planned slugs with no TASK.md yet —
+        # additive (v13-1): MILESTONE.md-planned slugs with no PLAN.md yet —
         # the plan-vs-state diff DECIDE NEXT was blind to; [] when none
         "planned_unscaffolded": _planned_unscaffolded(root, mslug),
     }
@@ -4841,7 +4841,7 @@ def _clean_phase_body(body: str) -> str:
     return "\n".join(lines) if meaningful else "(empty)"
 
 
-# phase-merge-specify: the TASK.md §-sections each work phase OWNS. Sections never
+# phase-merge-specify: the PLAN.md §-sections each work phase OWNS. Sections never
 # renumber (§3 is the frozen contract everywhere); the phase list shrank instead, so
 # specify owns two sections. Explicit — never derive a section from a phase index.
 _PHASE_SECTIONS = {"direction": (1, 2, 3, 4),
@@ -4857,13 +4857,13 @@ def task_phases(root: Path, slug: str) -> list[dict]:
     CLEANS each body. Missing file / missing section / placeholder-only body ->
     "(empty)" (fail-closed). The bound tracks len(names) so it follows PHASES length."""
     names = PHASES[:-1]  # specify..verify; "done" is a terminal STATE, not a section
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         text = f.read_text(encoding="utf-8")
     except OSError:   # missing OR unreadable -> every phase fail-closed to "(empty)"
         return [{"phase": names[n], "n": n, "body": "(empty)"} for n in range(len(names))]
     spans = _phase_spans(text)
-    # spans is keyed by the TASK.md SECTION number (§1 SPECIFY .. §7 OBSERVE). The §-sections
+    # spans is keyed by the PLAN.md SECTION number (§1 SPECIFY .. §7 OBSERVE). The §-sections
     # are the stable API and KEEP their numbers; the phase list no longer aligns 1:1 with
     # them (phase-merge-specify: the specify phase owns §1 AND §2) — so the mapping is an
     # explicit table, never derived from the phase index (the off-by-one bug class).
@@ -4876,9 +4876,9 @@ def task_phases(root: Path, slug: str) -> list[dict]:
 
 
 def _task_title(root: Path, slug: str) -> str:
-    """The task's display title from TASK.md line 1 `# TASK: <title>` (fail-soft: the
+    """The task's display title from PLAN.md line 1 `# PLAN: <title>` (fail-soft: the
     slug if the file or the header line is missing)."""
-    f = root / "tasks" / slug / "TASK.md"
+    f = root / "tasks" / slug / "PLAN.md"
     try:
         text = f.read_text(encoding="utf-8")
     except OSError:   # missing OR unreadable -> fail-soft to the slug
@@ -5321,7 +5321,7 @@ def render_decide(root: Path, state: dict, mslug: str, slug: str, *,
 
 
 def _planned_unscaffolded(root: Path, mslug: str) -> list[str]:
-    """Slugs MILESTONE.md plans (rows `- [ ] <slug> …`) that have no TASK.md yet —
+    """Slugs MILESTONE.md plans (rows `- [ ] <slug> …`) that have no PLAN.md yet —
     the plan-vs-state diff. Only valid-slug first-tokens match (a template
     placeholder like <slug> never does); file order, deduped; fail-closed []."""
     md = root / "milestones" / mslug / "MILESTONE.md"
@@ -5335,7 +5335,7 @@ def _planned_unscaffolded(root: Path, mslug: str) -> list[str]:
             continue
         for m in re.finditer(r"^- \[[ x~]\] ([A-Za-z0-9_-]+)\b", sec, re.M):
             slug = m.group(1)
-            if slug not in out and not (root / "tasks" / slug / "TASK.md").is_file():
+            if slug not in out and not (root / "tasks" / slug / "PLAN.md").is_file():
                 out.append(slug)
     return out
 
@@ -5437,9 +5437,9 @@ def _next_command(phase: str, *, contract_frozen: bool = False) -> str:
 
 
 def _task_contract_frozen(root: Path, slug: str) -> bool:
-    """Whether `slug`'s §3 CONTRACT is FROZEN right now, read fresh from its TASK.md —
+    """Whether `slug`'s §3 CONTRACT is FROZEN right now, read fresh from its PLAN.md —
     the ONE frozen-ness read the 3 next-command surfaces (footer/status/guide) share
-    (first-call-ergonomics, M1). Fail-closed: a missing/unreadable TASK.md reads as
+    (first-call-ergonomics, M1). Fail-closed: a missing/unreadable PLAN.md reads as
     NOT frozen via `_raw_phase_bodies`'s own OSError guard, never a crash."""
     return _contract_frozen(_raw_phase_bodies(root, slug).get(3, ""))
 
@@ -5567,7 +5567,7 @@ def _lint_task_deltas(root: Path, slug: str) -> tuple[bool, str] | None:
       '(evidence:' present — evidence is required on an OPEN entry of ANY tag.
     - Fail-closed: an unparseable attempt FAILS (never silently passes).
     """
-    task_md = root / "tasks" / slug / "TASK.md"
+    task_md = root / "tasks" / slug / "PLAN.md"
     if not task_md.exists():
         return None
     try:
@@ -5638,7 +5638,7 @@ def _lint_task_deltas(root: Path, slug: str) -> tuple[bool, str] | None:
 
 
 def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
-    """Scan every .add/tasks/*/TASK.md for open lessons learned.
+    """Scan every .add/tasks/*/PLAN.md for open lessons learned.
 
     Returns a dict keyed by competency in canonical order; each value is a list
     of {task, text, evidence} dicts. READ-ONLY — never mutates any file."""
@@ -5646,7 +5646,7 @@ def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
     tasks_dir = root / "tasks"
     if not tasks_dir.is_dir():
         return by_comp
-    for task_md in sorted(tasks_dir.glob("*/TASK.md")):
+    for task_md in sorted(tasks_dir.glob("*/PLAN.md")):
         slug = task_md.parent.name
         try:
             text = task_md.read_text(encoding="utf-8")
@@ -5698,7 +5698,7 @@ def _collect_open_deltas(root: Path) -> dict[str, list[dict]]:
 
 
 def _collect_spec_deltas(root: Path, status: str = "open") -> list[dict]:
-    """Scan every .add/tasks/*/TASK.md "### Spec delta" block for SPEC deltas of `status`.
+    """Scan every .add/tasks/*/PLAN.md "### Spec delta" block for SPEC deltas of `status`.
 
     Returns a FLAT list of {task, text, evidence} dicts (SPEC is one tag, never bucketed by
     competency). A SPEC delta is a forward hand-off that resolves into a TASK (seeded), is
@@ -5708,7 +5708,7 @@ def _collect_spec_deltas(root: Path, status: str = "open") -> list[dict]:
     tasks_dir = root / "tasks"
     if not tasks_dir.is_dir():
         return out
-    for task_md in sorted(tasks_dir.glob("*/TASK.md")):
+    for task_md in sorted(tasks_dir.glob("*/PLAN.md")):
         slug = task_md.parent.name
         try:
             text = task_md.read_text(encoding="utf-8")
@@ -5909,7 +5909,7 @@ _REPORTED_LINE_RE = re.compile(r"(?m)^Reported:[ \t]*(.*)$")
 def cmd_deltas(args: argparse.Namespace) -> None:
     """Read-only: report open competency lessons AND open SPEC deltas, SEPARATELY.
 
-    Scans every .add/tasks/*/TASK.md: '### Competency deltas' → open lessons grouped by competency
+    Scans every .add/tasks/*/PLAN.md: '### Competency deltas' → open lessons grouped by competency
     (DDD·SDD·UDD·TDD·ADD), and '### Spec delta' → open forward hand-offs in their own section (a SPEC
     delta resolves into a task, never consolidates). kernel-trim: the carried-lifecycle retrieval
     (--carried/--all) died with the drop/carry/reopen verbs — a `carried` status token in an
@@ -5994,6 +5994,50 @@ def cmd_delta_append(args: argparse.Namespace) -> None:
     _atomic_write(spec_path, body)
     stamp = f" (task:{slug})" if slug else ""
     print(f"delta-append [{dd}] -> .add/specs/{SPEC_DDS[dd][0]}{stamp}")
+
+
+def cmd_migrate(args: argparse.Namespace) -> None:
+    """One-shot 1.x -> 2.0 board conversion (ADD 2.0 M6).
+
+    Two mechanical moves, both idempotent (a second run is a loud no-op):
+      1. rename every task doc TASK.md -> PLAN.md — live tasks
+         (.add/tasks/<slug>/) AND archived ones (.add/archive/<ms>/tasks/<slug>/),
+         so the engine's PLAN.md readers see the whole history uniformly;
+      2. seed any missing living 5-DD spec under .add/specs/ (same
+         _seed_spec_file init uses — never clobbers an existing spec).
+    A slug carrying BOTH files is ambiguous state — refuse (migrate_conflict)
+    before renaming anything, tree untouched (validate-all-then-write)."""
+    root = _require_root()
+    state = load_state(root)
+    task_dirs = sorted((root / "tasks").glob("*/")) if (root / "tasks").is_dir() else []
+    task_dirs += sorted((root / "archive").glob("*/tasks/*/")) if (root / "archive").is_dir() else []
+    renames: list[Path] = []
+    for d in task_dirs:
+        old, new = d / "TASK.md", d / "PLAN.md"
+        if old.exists() and new.exists():
+            _die(f"migrate_conflict: {d.relative_to(root.parent)} carries BOTH TASK.md and "
+                 "PLAN.md — resolve by hand (keep one), then re-run; nothing was renamed")
+        if old.exists():
+            renames.append(old)
+    for old in renames:
+        old.rename(old.with_name("PLAN.md"))
+    today = date.today().isoformat()
+    seeded = []
+    for dd in SPEC_DDS:
+        p = root / "specs" / SPEC_DDS[dd][0]
+        if not p.exists():
+            _seed_spec_file(root, dd, project=state.get("project") or root.parent.name,
+                            stage=state.get("stage") or "mvp", date_str=today)
+            if p.exists():
+                seeded.append(SPEC_DDS[dd][0])
+    if not renames and not seeded:
+        print("already 2.0 — nothing to migrate (task docs are PLAN.md; the 5 living specs exist)")
+        return
+    if renames:
+        print(f"migrated {len(renames)} task doc(s) TASK.md -> PLAN.md")
+    if seeded:
+        print(f"seeded {len(seeded)} living spec(s): {', '.join(seeded)}")
+    print("next: add.py status — re-orient on the 2.0 board")
 
 
 def cmd_project(args: argparse.Namespace) -> None:
@@ -6219,7 +6263,7 @@ def build_parser() -> argparse.ArgumentParser:
                           "a complete §3 'AI-verify record' checklist")
     pfz.set_defaults(func=cmd_freeze)
 
-    pn = sub.add_parser("new-task", help="scaffold a new task (TASK.md + tests/ + src/)")
+    pn = sub.add_parser("new-task", help="scaffold a new task (PLAN.md + tests/ + src/)")
     pn.add_argument("slug")
     pn.add_argument("--title", default=None)
     pn.add_argument("--milestone", default=None, help="attach to a milestone (default: active)")
@@ -6235,9 +6279,9 @@ def build_parser() -> argparse.ArgumentParser:
     pn.add_argument("--match", default=None, metavar="SUBSTR",
                     help="with --from-delta: target the UNIQUE open SPEC delta whose text "
                          "contains SUBSTR (case-insensitive) instead of the first")
-    pn.add_argument("--force", action="store_true", help="overwrite TASK.md if present")
+    pn.add_argument("--force", action="store_true", help="overwrite PLAN.md if present")
     pn.add_argument("--fast", action="store_true",
-                    help="opt into the fast lane: render the one TASK.md template minus its "
+                    help="opt into the fast lane: render the one PLAN.md template minus its "
                          "deep-check/observe blocks (_FAST_SECTIONS) + "
                          "hold the task to the freeze floor under any milestone")
     pn.add_argument("--oneshot", action="store_true",
@@ -6251,7 +6295,7 @@ def build_parser() -> argparse.ArgumentParser:
                          "spec+plan+tests into build — collapsing the two bookkeeping advances "
                          "(3 engine calls: new-task · freeze · gate). Implies the fast template.")
     pn.add_argument("--full", action="store_true",
-                    help="under a tiny milestone: opt back into the FULL TASK.md template "
+                    help="under a tiny milestone: opt back into the FULL PLAN.md template "
                          "(tiny members default to the fast lane)")
     pn.add_argument("--sensitivity", default=None, metavar="CLASS",
                     help="declare the task's risk class at creation (base: security|data|"
@@ -6268,6 +6312,12 @@ def build_parser() -> argparse.ArgumentParser:
     pdap.add_argument("--task", default=None, metavar="SLUG",
                       help="stamp this task slug (default: the active task; none -> no stamp)")
     pdap.set_defaults(func=cmd_delta_append)
+
+    pmig = sub.add_parser("migrate",
+                          help="one-shot 1.x -> 2.0 board conversion: rename task docs "
+                               "TASK.md -> PLAN.md (live + archived) and seed any missing "
+                               "living 5-DD spec (idempotent)")
+    pmig.set_defaults(func=cmd_migrate)
 
     pm = sub.add_parser("new-milestone", help="scaffold a milestone (SDD living doc)")
     pm.add_argument("slug")
@@ -6342,9 +6392,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="legacy fast-forward (the direction span is one phase now); "
                          "legacy tokens map to their 3-phase home")
     pa.add_argument("--fill", default=None, metavar="PATH",
-                    help="draft the CURRENT phase's TASK.md section from PATH (or '-' for stdin) "
+                    help="draft the CURRENT phase's PLAN.md section from PATH (or '-' for stdin) "
                          "and advance in one call; all-or-nothing — a refused crossing restores "
-                         "TASK.md byte-identical (incompatible with --to)")
+                         "PLAN.md byte-identical (incompatible with --to)")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
 
     prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
@@ -6416,7 +6466,7 @@ def build_parser() -> argparse.ArgumentParser:
                      help="resume essentials only: the active task's slug · phase + the next: hint")
     pst.add_argument("--section", default=None, metavar="N|PHASE",
                      help="print ONE raw §body (0-7 or a phase name) of the active task — "
-                          "read a section, not the whole TASK.md")
+                          "read a section, not the whole PLAN.md")
     pst.add_argument("--foundation", nargs="?", const="", default=None, metavar="SECTION",
                      help="scoped PROJECT.md read (progressive disclosure): bare = the map "
                           "(invariants + Domain + Spec full, other sections collapsed to a pull "

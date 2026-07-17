@@ -40,7 +40,7 @@ _REPO = _ADD_METHOD.parent                              # repo root
 GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 BOOK = _ADD_METHOD / "docs" / "08-step-6-verify.md"
 RUN_MD = _ADD_METHOD / "skill" / "add" / "run.md"
-TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl"
+TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl"
 GLOSSARY_TMPL = _ADD_METHOD / "tooling" / "templates" / "GLOSSARY.md.tmpl"
 LIVING_GLOSSARY = _REPO / ".add" / "GLOSSARY.md"
 ADD_PY = _ADD_METHOD / "tooling" / "add.py"
@@ -60,8 +60,8 @@ BOOK_TREES = [
 ]
 TMPL_TREES = [
     TASK_TMPL,                                                                   # canonical
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",                  # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",  # bundle
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",                  # dogfood
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",  # bundle
 ]
 
 # Contiguous ASCII substrings of the frozen canonical wording. Each must appear

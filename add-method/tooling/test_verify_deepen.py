@@ -8,7 +8,7 @@ A gate must prove the work is real, not merely plausible:
 
 The requirement is stated IDENTICALLY in the skill guide (phases/verify.md),
 the book (docs/08-step-6-verify.md), and run.md's automated-quality-gate list,
-and carried as an additive "Deep checks" block in the section-6 TASK.md template.
+and carried as an additive "Deep checks" block in the section-6 PLAN.md template.
 This is rubric + template only: add.py is byte-unchanged (engine stays
 judgment-free; the resolver, not the engine, judges code-vs-prose).
 
@@ -34,12 +34,12 @@ GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 RUN_MD = _ADD_METHOD / "skill" / "add" / "run.md"
 BOOK = _ADD_METHOD / "docs" / "08-step-6-verify.md"
 # Template + glossary (canonical), and the engine the lean scope must NOT touch.
-TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl"
+TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl"
 GLOSSARY_TMPL = _ADD_METHOD / "tooling" / "templates" / "GLOSSARY.md.tmpl"
 ADD_PY = _ADD_METHOD / "tooling" / "add.py"
 # Mirror copies (for the focused template-parity guard).
-DOGFOOD_TMPL = _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
-BUNDLE_TMPL = _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl"
+DOGFOOD_TMPL = _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl"
+BUNDLE_TMPL = _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl"
 LIVING_GLOSSARY = _REPO / ".add" / "GLOSSARY.md"
 
 # Contiguous ASCII substrings of the frozen canonical wording. Each must appear

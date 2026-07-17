@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Red/green tests for seams-template-wiring (milestone `seams`): wire the already-shipped
-`.add/SEAMS.md` citation grammar (frozen by `seams-doc`) into `TASK.md.tmpl`'s §0 GROUND as one
+`.add/SEAMS.md` citation grammar (frozen by `seams-doc`) into `PLAN.md.tmpl`'s §0 GROUND as one
 new OPTIONAL line, `Seams consulted:`, placed between `Honors (patterns / conventions):` and
 `Anchors the contract cites:`, byte-identical across the 3 FULL-template trees. Frozen shape
 (§3 @ v1):
@@ -8,7 +8,7 @@ new OPTIONAL line, `Seams consulted:`, placed between `Honors (patterns / conven
     bracket content never a bare `[a-z_]+`-only token, zero `<!--`/`-->` sequences;
   - the line is optional — absence/unfilled never gates/warns; add.py stays byte-identical to
     the engine pin (no engine edit this task);
-  - TASK.fast.md.tmpl and every guide file are UNCHANGED (out of scope).
+  - PLAN.fast.md.tmpl and every guide file are UNCHANGED (out of scope).
 
 Behavior pinned, not prose phrasing. Run: cd add-method/tooling && python3 -m unittest
 test_seams_template_wiring -v
@@ -34,9 +34,9 @@ ADD_METHOD = HERE.parent
 REPO = ADD_METHOD.parent
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
-DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
-BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
+CANON_TMPL = HERE / "templates" / "PLAN.md.tmpl"
+DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl"
+BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl"
 TMPL_COPIES = [CANON_TMPL, DOG_TMPL, BUNDLE_TMPL]
 
 # template-unify: no fast template files — the fast lane derives from the one template
@@ -165,7 +165,7 @@ class SeamsLineIsOptionalTest(unittest.TestCase):
         _run_cli(["init", "--name", "demo"])
         _run_cli(["lock", "--force"])
         _run_cli(["new-task", "alpha", "--title", "alpha"])
-        text = (tmp / ".add" / "tasks" / "alpha" / "TASK.md").read_text(encoding="utf-8")
+        text = (tmp / ".add" / "tasks" / "alpha" / "PLAN.md").read_text(encoding="utf-8")
         self.assertIn(LABEL, text, "fresh scaffold must carry the Seams consulted line")
 
     def test_check_and_status_raise_nothing_about_unfilled_seam(self):
@@ -341,7 +341,7 @@ class EdgeCasesTest(unittest.TestCase):
         _run_cli(["init", "--name", "demo"])
         _run_cli(["lock", "--force"])
         _run_cli(["new-task", "alpha", "--title", "alpha"])
-        task_path = tmp / ".add" / "tasks" / "alpha" / "TASK.md"
+        task_path = tmp / ".add" / "tasks" / "alpha" / "PLAN.md"
         text = task_path.read_text(encoding="utf-8")
         # simulate a task scaffolded BEFORE this milestone: strip the Seams consulted line
         stripped = "\n".join(

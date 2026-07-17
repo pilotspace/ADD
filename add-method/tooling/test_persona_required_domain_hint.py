@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Doc-truth tests for persona-required-domain-hint. CONTRACT frozen @ v1.
 
-TASK.md.tmpl's §5 Persona field flips from optional ("absent = generic") to required (the field
+PLAN.md.tmpl's §5 Persona field flips from optional ("absent = generic") to required (the field
 must be filled — `generic` is the accepted explicit fallback, not a silent absence). Both
-TASK.md.tmpl and TASK.fast.md.tmpl gain a domain-strategy hint in their Strategy line: let the
+PLAN.md.tmpl and PLAN.fast.md.tmpl gain a domain-strategy hint in their Strategy line: let the
 persona's domain stance shape the chosen implementation approach, not just architecture/pattern
 choice. Prose-only — no engine change, no new gate, no new XML tag. Run:
 python3 -m unittest test_persona_required_domain_hint -v
@@ -19,15 +19,15 @@ PKG_ROOT = TOOLING.parent
 REPO_ROOT = PKG_ROOT.parent
 
 TEMPLATE_TREES = (
-    PKG_ROOT / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    PKG_ROOT / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO_ROOT / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 )
 CANON_TMPL = TEMPLATE_TREES[0]
 
 STRATEGY_LABEL = "Strategy (ordered batches):"
 
-# the v16/v18 frozen tag census of TASK.md.tmpl (mirrors test_scope_decl_template.FROZEN_TAGS —
+# the v16/v18 frozen tag census of PLAN.md.tmpl (mirrors test_scope_decl_template.FROZEN_TAGS —
 # duplicated here, not imported, so this test independently proves no new tag was introduced)
 FROZEN_TAGS = ['action', 'after', 'alternative', 'assumptions', 'chosen', 'code',
                'cost', 'date', 'error_code', 'fields', 'link', 'must', 'name',
@@ -52,7 +52,7 @@ class PersonaRequiredTest(unittest.TestCase):
 
     def test_persona_line_is_required(self):
         self.assertIn("Persona (required):", self.section5,
-                      "TASK.md.tmpl §5 Persona line must read '(required)'")
+                      "PLAN.md.tmpl §5 Persona line must read '(required)'")
         self.assertNotIn("Persona (optional):", self.section5,
                          "the old '(optional)' wording must not survive")
         self.assertNotIn("absent = generic", self.section5,
@@ -97,7 +97,7 @@ class NoNewFrozenTagTest(unittest.TestCase):
 class MirrorsAndEnginePinTest(unittest.TestCase):
     def test_full_template_mirrors(self):
         digests = {_md5(p) for p in TEMPLATE_TREES}
-        self.assertEqual(len(digests), 1, "TASK.md.tmpl diverged across the 3 engine trees")
+        self.assertEqual(len(digests), 1, "PLAN.md.tmpl diverged across the 3 engine trees")
 
 
 if __name__ == "__main__":

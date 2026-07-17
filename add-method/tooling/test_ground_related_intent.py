@@ -7,12 +7,12 @@ project's purpose, not re-derived. Frozen shape (§3 @ v1):
     term(s) · the originating request/milestone rationale (the "conversation", a LEAN
     pointer — no new artifact); distinct from Honors (intent/why, not conventions);
   - 3-plan.md `## Exit gate` gains a checkbox for it;
-  - TASK.md.tmpl `## 0 · GROUND` gains ONE `Related intent:` line, AFTER the
+  - PLAN.md.tmpl `## 0 · GROUND` gains ONE `Related intent:` line, AFTER the
     `Issues/Risks (→ feed §1):` line;
   - INVARIANTS preserved: `Anchors the contract cites:` line, `## 0`/`GROUND`, add.py
     byte-identical to engine_pin; the phases lean budget held HONESTLY (compaction, or a
     RECORDED human-approved rebaseline — never a silent baseline bump);
-  - SYNC: 3-plan.md ×3 and TASK.md.tmpl ×3 byte-identical.
+  - SYNC: 3-plan.md ×3 and PLAN.md.tmpl ×3 byte-identical.
 
 Run: python3 -m unittest test_ground_related_intent -v
 """
@@ -35,9 +35,9 @@ GUIDE_COPIES = [
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 TMPL_COPIES = [
-    _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
+    _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl",
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",

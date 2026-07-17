@@ -116,7 +116,7 @@ life of the product, owned above any single milestone.
 |------|----------|----------|-------|
 | **Project** (foundation) | `.add/PROJECT.md` + living-doc files | whole product | domain, spec stance, users, decisions |
 | **Milestone** | `.add/milestones/<slug>/MILESTONE.md` | one depth-bounded goal | scope, shared contracts, exit criteria |
-| **Task** | `.add/tasks/<slug>/TASK.md` | one feature | the seven-step artifacts |
+| **Task** | `.add/tasks/<slug>/PLAN.md` | one feature | the seven-step artifacts |
 
 A milestone is a *version bump* to the foundation, not a fresh start: when it
 closes, consolidate what it validated into `PROJECT.md` (a decision, a settled domain

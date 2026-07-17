@@ -51,7 +51,7 @@ class GroundedStateTest(unittest.TestCase):
     """_grounded_state over raw §body dicts (the shape _raw_phase_bodies returns)."""
 
     def _raw(self, *, section0: str | None, status3: str = "DRAFT") -> dict[int, str]:
-        text = "# TASK: t\n\nphase: contract\n\n"
+        text = "# PLAN: t\n\nphase: contract\n\n"
         if section0 is not None:
             text += f"## 0 · GROUND — the real codebase\n\n{section0}\n\n"
         text += f"## 3 · CONTRACT\n\nStatus: {status3}\n"
@@ -100,7 +100,7 @@ class _Board(unittest.TestCase):
 
     def _make_active_task(self, slug="feat", *, anchors=REAL_ANCHORS,
                           frozen=False, phase="contract", legacy=False) -> Path:
-        """Write a marker-consistent TASK.md with a controlled §0 / §3 and set it active."""
+        """Write a marker-consistent PLAN.md with a controlled §0 / §3 and set it active."""
         root = self._root()
         tdir = root / "tasks" / slug
         tdir.mkdir(parents=True, exist_ok=True)
@@ -111,7 +111,7 @@ class _Board(unittest.TestCase):
         )
         status = "FROZEN @ v1 — approved by t · 2026-06-11" if frozen else "DRAFT"
         body = (
-            f"# TASK: {slug}\n\n"
+            f"# PLAN: {slug}\n\n"
             f"slug: {slug} · created: 2026-06-10 · stage: mvp\n"
             "autonomy: conservative\n"
             f"phase: {phase}\n\n"
@@ -120,7 +120,7 @@ class _Board(unittest.TestCase):
             "```\nshape\n```\n\n"
             f"Status: {status}\n"
         )
-        (tdir / "TASK.md").write_text(body, encoding="utf-8")
+        (tdir / "PLAN.md").write_text(body, encoding="utf-8")
         st = add.load_state(root)
         st["tasks"][slug] = {"phase": phase, "gate": "none"}
         st["active_task"] = slug
@@ -241,8 +241,8 @@ class FreezeChecklistTest(unittest.TestCase):
 _SKILL = HERE.parent / "skill" / "add"
 GROUND_MD = _SKILL / "phases" / "direction.md"   # grounding merged into the unified plan guide
 SCOPE_MD = _SKILL / "phases" / "direction.md"   # skill-fold-8: scope.md folded here
-TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
-# template-unify: the fast lane derives from TASK.md.tmpl (no fast template file)
+TASK_TMPL = HERE / "templates" / "PLAN.md.tmpl"
+# template-unify: the fast lane derives from PLAN.md.tmpl (no fast template file)
 GROUND_FIELDS = ("Touches", "Context", "Honors", "Anchors")
 
 
@@ -284,9 +284,9 @@ class GroundHardenTest(unittest.TestCase):
         # `_ground_section` extractor (add.py) so the assertion stays scoped to just the
         # grounding fields (not the whole §3 PLAN section, which would make this vacuous).
         sec = add._ground_section(TASK_TMPL.read_text(encoding="utf-8"))
-        self.assertTrue(sec, "TASK.md.tmpl must carry a `### Grounding` sub-block")
+        self.assertTrue(sec, "PLAN.md.tmpl must carry a `### Grounding` sub-block")
         for f in GROUND_FIELDS:
-            self.assertIn(f, sec, f"TASK.md.tmpl §3 PLAN Grounding must keep the {f} field")
+            self.assertIn(f, sec, f"PLAN.md.tmpl §3 PLAN Grounding must keep the {f} field")
 
     def test_fast_template_section0_names_four_fields(self):
         # §1 ⚠ flag RESOLVED at freeze: human chose uniform grounding — the fast §0 also
@@ -295,7 +295,7 @@ class GroundHardenTest(unittest.TestCase):
         # template-unify: the fast lane derives from the one template — pin the
         # DERIVED render so a strip regression here would surface, not hide.
         sec = add._ground_section(add._strip_fast_sections(
-            (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")))
+            (HERE / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8")))
         self.assertTrue(sec, "the fast render must keep the `### Grounding` sub-block")
         missing = [f for f in GROUND_FIELDS if f not in sec]
         self.assertEqual(missing, [],

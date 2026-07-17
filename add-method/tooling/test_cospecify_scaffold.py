@@ -2,7 +2,7 @@
 """Regression guard: the new-task scaffold must emit the co-specification §1 shape.
 
 This pins the surface that the docs-only reform could not reach on its own: a
-real `add.py new-task` materializes `TASK.md` from `templates/TASK.md.tmpl` (or
+real `add.py new-task` materializes `PLAN.md` from `templates/PLAN.md.tmpl` (or
 the embedded `_FALLBACK_TASK` circuit breaker). Before co-specification this
 section was a flat `Assumptions (confirm before building)` list — the very shape
 that produced walls of pre-ticked `[x] confirmed` assumptions. These tests fail
@@ -37,11 +37,11 @@ class CospecifyScaffoldTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self._cwd)
 
-    # --- the real end-to-end path that produced the smoking-gun TASK.md -------
+    # --- the real end-to-end path that produced the smoking-gun PLAN.md -------
     def test_new_task_scaffolds_cospecification_spec(self):
         add.main(["init"])
         add.main(["new-task", "demo", "--title", "Demo feature"])
-        text = (Path(self.tmp) / ".add" / "tasks" / "demo" / "TASK.md").read_text(
+        text = (Path(self.tmp) / ".add" / "tasks" / "demo" / "PLAN.md").read_text(
             encoding="utf-8"
         )
         # new shape present

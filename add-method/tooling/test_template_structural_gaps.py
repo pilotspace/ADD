@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Red/green tests for template-structural-gaps (milestone traceability-ids) — 3 additive
-TASK.md.tmpl gaps surfaced by a cross-project TASK.md quality review: a `Glossary deltas:` line
+PLAN.md.tmpl gaps surfaced by a cross-project PLAN.md quality review: a `Glossary deltas:` line
 in §3 CONTRACT, a scenario-ID back-reference slot in §2 SCENARIOS, and a `### Live-verify
 evidence` block in §6 VERIFY. Frozen shape (§3 @ v1) — see
-.add/tasks/template-structural-gaps/TASK.md.
+.add/tasks/template-structural-gaps/PLAN.md.
 
 Run: cd add-method/tooling && python3 -m unittest test_template_structural_gaps -v
 """
@@ -19,9 +19,9 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 
 TASK_TMPL_COPIES = [
-    HERE / "templates" / "TASK.md.tmpl",
-    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
-    REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
+    HERE / "templates" / "PLAN.md.tmpl",
+    HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
+    REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
 ]
 
 FORM_TAGS = {"must", "reject", "after", "assumptions", "scenarios", "test_plan"}

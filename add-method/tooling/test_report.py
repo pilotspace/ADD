@@ -3,7 +3,7 @@
 
 report renders a milestone digest (banner header · per-task phase track · rollup) to
 stdout, sourcing phase/gate/waiver from state.json and prose (observe delta, competency
-deltas) from each TASK.md. It is STRICTLY read-only: writes nothing, never mutates
+deltas) from each PLAN.md. It is STRICTLY read-only: writes nothing, never mutates
 state.json. The same render_report() string is what v9's retro-artifact persists to
 RETRO.md, so it must be pure + deterministic. Run:
     python3 -m unittest test_report -v
@@ -69,7 +69,7 @@ class ReportTest(unittest.TestCase):
         add.main(["gate", "PASS", slug])
 
     def _task_md(self, slug) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _set_observe(self, slug, text):
         # observe now derives from the §7 "### Spec delta" block (first open entry).

@@ -23,9 +23,9 @@ import add
 
 HERE = Path(__file__).resolve().parent
 ADD_METHOD = HERE.parent
-CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
-DOG_TMPL = ADD_METHOD.parent / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
-BUNDLE_TMPL = ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl"
+CANON_TMPL = HERE / "templates" / "PLAN.md.tmpl"
+DOG_TMPL = ADD_METHOD.parent / ".add" / "tooling" / "templates" / "PLAN.md.tmpl"
+BUNDLE_TMPL = ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl"
 
 ADR_HEADER = "### Decisions (ADR)"
 
@@ -60,7 +60,7 @@ class AdrHarvestTest(unittest.TestCase):
         return self._state()["tasks"][slug]
 
     def _path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _adr_block(self, slug="t"):
         t = self._path(slug).read_text()
@@ -290,7 +290,7 @@ class AdrHarvestTest(unittest.TestCase):
     # ── the full template carries the §7 block + placeholder, 3-tree parity ──────────────
     def test_template_carries_adr_block(self):
         text = CANON_TMPL.read_text(encoding="utf-8")
-        self.assertIn(ADR_HEADER, text, "TASK.md.tmpl §7 missing the Decisions (ADR) block")
+        self.assertIn(ADR_HEADER, text, "PLAN.md.tmpl §7 missing the Decisions (ADR) block")
         # placed after "Watch", before "### Spec delta"
         self.assertLess(text.index("Watch (reuse scenarios"), text.index(ADR_HEADER))
         self.assertLess(text.index(ADR_HEADER), text.index("### Spec delta"))

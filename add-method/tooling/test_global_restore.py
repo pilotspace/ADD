@@ -267,7 +267,7 @@ class PersistStageCommitTest(_Base):
 
     def test_persist_two_interleaved_calls_land_one_full_valid_snapshot(self):   # Reject: concurrent runs (out of scope)
         """Two logical callers race on the SAME target with no lock -- a disclosed, deliberate
-        non-goal (TASK.md Reject: two lock-less callers get no arbitration guarantee). This
+        non-goal (PLAN.md Reject: two lock-less callers get no arbitration guarantee). This
         deterministically interleaves a second, COMPLETE _persist_data call inside the first's
         staging window (a copyfile hook). Self-heal is unaware a sibling call is still
         in-flight and may sweep its live staging dir -- an accepted consequence of the
