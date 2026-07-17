@@ -28,6 +28,7 @@ __all__ = [
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
     "PERSONA_FLOW_VALUES",
+    "TASK_KINDS",
     "PERSONA_HINT",
     "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
@@ -133,6 +134,13 @@ PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Req
 # single source the quality predicate reads (a value outside this set is loaded by NO surface,
 # so a typo would otherwise fail silently). Findings are WARN-only (measure-not-block).
 PERSONA_FLOW_VALUES = ("design", "build", "advisor", "verify")
+# persona-task-kinds (ADD 2.0 M1 persona-core): the closed task-kind taxonomy — the join key
+# between a persona's routing claim (`task-kinds:` frontmatter) and a task's declared kind
+# (`kind:` header line). Route-outcome traces record it, the persona scoreboard groups by it.
+# Closed on purpose: a free-text kind can't be scored across tasks. Measure-not-block —
+# an unknown kind is a named WARN (quality predicate Finding C), never a refusal.
+TASK_KINDS = ("feature", "refactor", "test", "docs", "ui",
+              "security", "data", "infra", "release", "integration")
 
 # persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.

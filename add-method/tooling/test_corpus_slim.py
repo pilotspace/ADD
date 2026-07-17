@@ -32,8 +32,10 @@ FLOOR_DEF_COUNTS = {
     "test_unflagged_freeze.py": 13,
 }
 
-# ENGINE_MD5 value at this task's freeze — the engine is NOT edited here
-ENGINE_MD5_AT_FREEZE = "ec9a57303adce545a2a2ba64329747c2"
+# (retired) ENGINE_MD5_AT_FREEZE guarded that the test-corpus-slim TASK itself never
+# edited the engine; the task gated PASS, so the guard expired — a task-scoped pin kept
+# alive would re-break on every legitimate later engine change (persona-task-kinds was
+# the first). The durable engine pin lives in engine_pin.py + test_tree_parity.
 
 
 def _test_files():
@@ -110,11 +112,6 @@ class FloorsTest(unittest.TestCase):
             self.assertGreaterEqual(
                 found, count,
                 f"floor_struck: {fname} dropped below its pinned {count} tests ({found})")
-
-    def test_engine_not_repinned(self):
-        import engine_pin
-        self.assertEqual(engine_pin.ENGINE_MD5, ENGINE_MD5_AT_FREEZE,
-                         "test-only task — the engine must not change (no repin)")
 
 
 if __name__ == "__main__":

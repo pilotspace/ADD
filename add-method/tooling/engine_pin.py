@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "ec9a57303adce545a2a2ba64329747c2"  # re-aimed @ persona-routes-depth (thin-engine-loop W5: _ROUTE_LINE_RE/_route_record — freeze records the persona-proposed lane; audit gains route_unrecorded/route_lane_mismatch, grandfathered). prior: 34990170… @ skill-loop-fold
-ENGINE_PKG_MD5 = "ed7bf3e1c9e6e7fdf53833dc2914c290"  # re-aimed @ template-unify (constants.py: _FAST_SECTIONS replaces _FALLBACK_TASK_FAST; _FALLBACK_TASK gains Ground SHA). prior: 89a75e5d… @ phase-collapse-3
+ENGINE_MD5 = "26d1db26d19e9330cdff0d6d0cdd747d"  # re-aimed @ persona-task-kinds (ADD 2.0 M1: _TASK_KIND_RE/_task_kind header reader + _append_route_trace — every gate outcome appends a route-outcome JSONL trace, the persona scoreboard's evidence stream). prior: ec9a5730… @ persona-routes-depth
+ENGINE_PKG_MD5 = "991ce1315c39abb7404f954826ee1d95"  # re-aimed @ persona-task-kinds (constants.py gains TASK_KINDS closed taxonomy; predicates.py _persona_quality_warnings gains Finding C — task-kinds outside the taxonomy is a named WARN). prior: ed7bf3e1… @ template-unify

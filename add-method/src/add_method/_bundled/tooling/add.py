@@ -1916,6 +1916,19 @@ def _route_record(header: str) -> dict:
         return {"lane": m.group(1), "by": m.group(2).strip()}
     return {"lane": "unrouted", "by": None}
 
+# persona-task-kinds (ADD 2.0 M1): the header kind declaration — the task's slot in the
+# closed constants.TASK_KINDS taxonomy, the join key persona performance is scored by.
+# Same anchored line grammar family as route:/sensitivity: (a title/prose substring is
+# never a declaration). Read LIVE at gate time for the route-outcome trace.
+_TASK_KIND_RE = re.compile(r"(?m)^kind:[ \t]*([A-Za-z-]+)[ \t]*$")
+
+def _task_kind(hdr: str):
+    """The declared task kind from a TASK.md header region, lowercased, or None when
+    absent (measure-not-block: recorded verbatim; audit/quality lint the vocabulary).
+    PURE — the engine never infers a kind."""
+    m = _TASK_KIND_RE.search(hdr)
+    return m.group(1).lower() if m else None
+
 # sensitivity taxonomy (risk-sensitivity-taxonomy): the risk-CLASS the human declares in the
 # TASK header at freeze — same anchored declaration grammar as risk:/autonomy: (line-start or
 # `·`, value stops at whitespace/`<`/`#`/`|`), so a title/prose substring is never a declaration.
@@ -2288,6 +2301,47 @@ def _gate_explain(root: Path, state: dict, slug: str) -> None:
     print("  floor: a security finding is always HARD-STOP — never auto-passed, on every path")
 
 
+def _append_route_trace(root: Path, state: dict, slug: str, outcome: str) -> None:
+    """persona-perf telemetry (ADD 2.0 M1 persona-core): ONE JSON line per recorded gate
+    outcome, appended to `.add/traces/route-outcomes.jsonl` — the evidence stream the
+    persona scoreboard and the GEPA fold read. Engine-derivable fields only; degrade-safe:
+    state is the source of truth, the trace is telemetry — a failed write NEVER blocks the
+    verdict (call sits after save_state)."""
+    try:
+        t = state["tasks"][slug]
+        route = t.get("route") or {}
+        lane, by = route.get("lane"), route.get("by")
+        if lane in (None, "unrouted") and t.get("oneshot"):
+            lane = "oneshot"                         # effective lane: the durable marker
+        m = re.search(r"persona:([\w-]+)", by or "")
+        try:
+            kind = _task_kind(_task_header(root, slug))
+        except Exception:
+            kind = None                              # a missing TASK.md never blocks
+        age = None
+        created = t.get("created")
+        if created:
+            try:
+                age = round((datetime.fromisoformat(_now())
+                             - datetime.fromisoformat(created)).total_seconds() / 3600, 2)
+            except ValueError:
+                pass
+        line = {
+            "ts": _now(), "task": slug, "milestone": t.get("milestone"),
+            "kind": kind, "lane": lane, "routed_by": by,
+            "persona": m.group(1) if m else None, "outcome": outcome,
+            "heals": (t.get("heal") or {}).get("attempts", 0),
+            "recross": bool(t.get("recross")), "age_hours": age,
+            "actor": (t.get("gate_actor") or {}).get("name"),
+        }
+        tdir = root / "traces"
+        tdir.mkdir(parents=True, exist_ok=True)
+        with (tdir / "route-outcomes.jsonl").open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(line, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
 def cmd_gate(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -2381,6 +2435,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
     state["tasks"][slug]["gate_actor"] = identity._actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
+    _append_route_trace(root, state, slug, args.outcome)   # persona-perf telemetry — degrade-safe, never blocks
     if completing:
         _sync_task_marker(root, slug, "done")             # then mirror the phase into TASK.md — no split-brain
     _stamp_gate_record(root, state, slug, args.outcome)   # mirror the verdict into §6 (Finding C)
