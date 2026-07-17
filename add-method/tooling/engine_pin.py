@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "8eaca350a6a8d091a4e2ab417c0306a3"  # re-aimed @ template-unify (thin-engine-loop W3: ONE TASK.md.tmpl serves every lane — _strip_fast_sections derives the fast render (full minus _FAST_SECTIONS, strict line-subset) + splices fast/oneshot headers and the §3 AI-verify record; TASK.fast.md.tmpl + _FALLBACK_TASK_FAST deleted; _FALLBACK_TASK gains Ground SHA). prior: 6f688c41… @ phase-collapse-3
+ENGINE_MD5 = "349901707a3bf40561508386963446bb"  # re-aimed @ skill-loop-fold (thin-engine-loop W4: _PHASE_GUIDE_FILES re-aims to the merged 3-file phases/ shape — direction.md/build.md/verify.md; §3 v2 sanctioned). prior: 8eaca350… @ template-unify
 ENGINE_PKG_MD5 = "ed7bf3e1c9e6e7fdf53833dc2914c290"  # re-aimed @ template-unify (constants.py: _FAST_SECTIONS replaces _FALLBACK_TASK_FAST; _FALLBACK_TASK gains Ground SHA). prior: 89a75e5d… @ phase-collapse-3

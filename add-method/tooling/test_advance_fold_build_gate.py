@@ -17,9 +17,9 @@ _TOOLING = pathlib.Path(__file__).resolve().parent          # add-method/tooling
 _ADDROOT = _TOOLING.parent                                  # add-method
 _REPO = _ADDROOT.parent                                     # repo root
 BUILD_GUIDES = [
-    _ADDROOT / "skill" / "add" / "phases" / "5-build.md",
-    _ADDROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "5-build.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md",
+    _ADDROOT / "skill" / "add" / "phases" / "build.md",
+    _ADDROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "build.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "build.md",
 ]
 
 

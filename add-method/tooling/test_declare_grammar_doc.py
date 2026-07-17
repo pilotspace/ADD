@@ -27,9 +27,9 @@ CANON_TMPL = HERE / "templates" / "TASK.md.tmpl"
 DOG_TMPL = REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl"
 BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
 
-CANON_GUIDE = ADD_METHOD / "skill" / "add" / "phases" / "4-tests.md"
-DOG_GUIDE = REPO / ".claude" / "skills" / "add" / "phases" / "4-tests.md"
-BUNDLE_GUIDE = BUNDLE / "skill" / "add" / "phases" / "4-tests.md"
+CANON_GUIDE = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
+DOG_GUIDE = REPO / ".claude" / "skills" / "add" / "phases" / "direction.md"
+BUNDLE_GUIDE = BUNDLE / "skill" / "add" / "phases" / "direction.md"
 
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")
@@ -81,9 +81,9 @@ class DeclareGrammarDocTest(unittest.TestCase):
         for rule in ("FIRST", "backticked", "task dir", "project root",
                      "sibling", "non-recursive", "dedup", "†"):
             self.assertIn(rule, text, f"guide misses resolution rule: {rule}")
-        # placed between Produce and AI prompt
-        self.assertLess(text.index("## Produce"), text.index(SECTION_HEADING))
-        self.assertLess(text.index(SECTION_HEADING), text.index("## AI prompt"))
+        # skill-loop-fold: the old ## Produce / ## AI prompt frame folded into
+        # direction.md's Tests span — the grammar section now closes that span.
+        self.assertLess(text.index("## Tests"), text.index(SECTION_HEADING))
 
     # ---- scenario: three trees agree ----------------------------------------
     def test_grammar_doc_tree_parity(self):

@@ -55,9 +55,9 @@ def _glossary_trees():
 
 def _setup_trees():
     return _existing(
-        _ADD_METHOD / "skill" / "add" / "phases" / "0-setup.md",
-        _REPO / ".claude" / "skills" / "add" / "phases" / "0-setup.md",
-        _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-setup.md",
+        _ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+        _REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+        _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
     )
 
 

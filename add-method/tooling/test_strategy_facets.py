@@ -5,7 +5,7 @@ milestone build-strategy-facets, contract FROZEN @ v1).
 A prose/template-only task: full TASK.md.tmpl §5 gains four ADDITIVE, domain-generic
 facet lines — Approach (domain strategy) · Data strategy · Pattern · Optimization
 stance — between the Strategy (ordered batches) line and the Persona line; the fast
-template collapses to ONE Approach line (collapse, never skip); phases/5-build.md and
+template collapses to ONE Approach line (collapse, never skip); phases/build.md and
 the 07-step-5-build.md chapter teach the facets; the engine is untouched. Placeholders
 carry spaces (frozen tag census unchanged), no new HTML comment (ceiling <12), no
 backtick in any new §5 line (scope-token grammar unaffected). Run:
@@ -44,9 +44,9 @@ FULL_TWINS = _existing(HERE / "templates" / "TASK.md.tmpl",
                        REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
                        ADD_METHOD / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
                        BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")
-BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "5-build.md",
-                REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md",
-                BUNDLE / "skill" / "add" / "phases" / "5-build.md")
+BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "build.md",
+                REPO / ".claude" / "skills" / "add" / "phases" / "build.md",
+                BUNDLE / "skill" / "add" / "phases" / "build.md")
 CHAPTERS = (ADD_METHOD / "docs" / "07-step-5-build.md",
             REPO / "07-step-5-build.md",
             BUNDLE / "docs" / "07-step-5-build.md")

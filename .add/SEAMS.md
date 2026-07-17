@@ -54,7 +54,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5972` (`_declared_scope`)   <!-- re-pinned 2026-07-17 template-unify: 5915→5972 (_strip_fast_sections + _AI_VERIFY_RECORD_BLOCK added above the def — net +57 lines); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 5934→5915 @ phase-collapse-3 -->
+Anchor: `add-method/tooling/add.py:5971` (`_declared_scope`)   <!-- re-pinned 2026-07-17 skill-loop-fold: 5972→5971 (_PHASE_GUIDE_FILES comment shrank a line); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 5915→5972 @ template-unify -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

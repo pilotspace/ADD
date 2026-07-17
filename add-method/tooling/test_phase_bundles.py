@@ -290,24 +290,15 @@ class SkillDocBundleColumnTest(unittest.TestCase):
     SKILL = HERE.parent / "skill" / "add" / "SKILL.md"
 
     def test_phase_table_has_bundle_column_populated(self):
+        # skill-loop-fold: the phase table is retired — SKILL.md narrates the three
+        # bundles INLINE. Same intent: every old phase is owned by a named bundle.
         text = self.SKILL.read_text(encoding="utf-8")
-        lines = text.splitlines()
-        header_idx = next(i for i, ln in enumerate(lines) if ln.startswith("| Phase"))
-        self.assertIn("Bundle", lines[header_idx])
-        rows = {}
-        for ln in lines[header_idx + 2:]:
-            if not ln.startswith("|"):
-                break
-            cells = [c.strip() for c in ln.strip("|").split("|")]
-            rows[cells[0]] = cells
-        expected_bundle = {
-            "specify": "DIRECTION",
-            "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
-            "verify": "VERIFY",
-        }
-        for phase, bundle in expected_bundle.items():
-            self.assertIn(phase, rows, f"phase row '{phase}' missing")
-            self.assertIn(bundle, rows[phase], f"row '{phase}' missing bundle '{bundle}': {rows[phase]}")
+        for beat in ("**DIRECTION**", "**BUILD**", "**VERIFY**"):
+            self.assertIn(beat, text, f"SKILL.md must narrate the {beat} bundle inline")
+        direction = text.split("**DIRECTION**", 1)[1].split("**BUILD**", 1)[0]
+        for span in ("§1", "§2", "§3", "§4"):
+            self.assertIn(span, direction,
+                          f"the DIRECTION bundle must own the {span} span of the old phases")
 
     def test_agent_call_preferred_documented_as_default(self):
         text = self.SKILL.read_text(encoding="utf-8")

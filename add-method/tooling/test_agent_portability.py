@@ -21,10 +21,9 @@ from pathlib import Path
 import add
 
 PHASE_FILES = {
-    # phase-collapse-3: the direction span points at the specify playbook until
-    # skill-loop-fold re-cuts phases/ to the 3-phase shape
-    "direction": "1-specify.md",
-    "build": "5-build.md", "verify": "6-verify.md",
+    # skill-loop-fold: one reference file per beat — the merged 3-file phases/ shape
+    "direction": "direction.md",
+    "build": "build.md", "verify": "verify.md",
 }
 
 
@@ -106,11 +105,11 @@ class GuideLineTest(_Project):
         out, _, code = _run(["guide", "--json"])
         self.assertEqual(code, 0)
         d = json.loads(out)
-        self.assertEqual(d["guide"], ".claude/skills/add/phases/1-specify.md")
+        self.assertEqual(d["guide"], ".claude/skills/add/phases/direction.md")
         for k in ("task", "phase", "owner", "stop", "next_step", "chapter", "gate"):
             self.assertIn(k, d, "frozen v1 keys must remain")
         # tree absent -> null, never a dead path
-        (self.tmp / ".claude" / "skills" / "add" / "phases" / "1-specify.md").unlink()
+        (self.tmp / ".claude" / "skills" / "add" / "phases" / "direction.md").unlink()
         out, _, _ = _run(["guide", "--json"])
         self.assertIsNone(json.loads(out)["guide"])
 

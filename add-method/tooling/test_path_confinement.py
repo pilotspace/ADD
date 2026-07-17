@@ -156,7 +156,7 @@ class PathConfinementTest(unittest.TestCase):
     # ---- prose accord (anchors, red until build) ----------------------------
     def test_prose_clause_present(self):
         tmpl = (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")
-        guide = (HERE.parent / "skill" / "add" / "phases" / "4-tests.md").read_text(
+        guide = (HERE.parent / "skill" / "add" / "phases" / "direction.md").read_text(
             encoding="utf-8")
         self.assertIn(CLAUSE, tmpl)
         self.assertIn(CLAUSE, guide)
@@ -164,9 +164,9 @@ class PathConfinementTest(unittest.TestCase):
             (HERE / "templates" / "TASK.md.tmpl",
              (REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
               BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")),
-            (HERE.parent / "skill" / "add" / "phases" / "4-tests.md",
-             (REPO / ".claude" / "skills" / "add" / "phases" / "4-tests.md",
-              BUNDLE / "skill" / "add" / "phases" / "4-tests.md")),
+            (HERE.parent / "skill" / "add" / "phases" / "direction.md",
+             (REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+              BUNDLE / "skill" / "add" / "phases" / "direction.md")),
         ):
             for twin in twins:
                 self.assertEqual(canon.read_bytes(), twin.read_bytes(),

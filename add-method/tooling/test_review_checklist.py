@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for the freeze review checklist (task review-checklist, v14).
 
-The seam guide (phases/3-plan.md) presents a SEVEN-item checklist that aims
+The seam guide (phases/direction.md) presents a SEVEN-item checklist that aims
 the human's one approval — ⚠-first, with an explicit high-risk declaration
 prompt and a grounding check — without re-adding ceremony: ≤16 lines, never a
 second gate, engine byte-identical. Run:
@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 BUNDLE = HERE.parent / "src" / "add_method" / "_bundled"
 
-CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "3-plan.md"
+CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "direction.md"
 RUN_MD = HERE.parent / "skill" / "add" / "run.md"
 
 HEADING = "## The freeze review checklist"
@@ -62,7 +62,7 @@ class ChecklistTest(unittest.TestCase):
         # the guard's intent — the anti-ceremony clause must be stated — is unchanged.
 
     def test_three_trees_agree(self):
-        for rel in (("skill", "add", "phases", "3-plan.md"),
+        for rel in (("skill", "add", "phases", "direction.md"),
                     ("skill", "add", "run.md")):
             canon = HERE.parent.joinpath(*rel)
             for twin in (REPO / ".claude" / "skills" / "add" / Path(*rel[2:]),

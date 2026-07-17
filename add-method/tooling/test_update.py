@@ -43,7 +43,7 @@ def _make_bundled(root: Path) -> Path:
     """A synthetic packaged source: skill/add · tooling (with a test_*.py to prove stripping) · docs."""
     (root / "skill" / "add" / "phases").mkdir(parents=True)
     (root / "skill" / "add" / "SKILL.md").write_text("skill v-new\n")
-    (root / "skill" / "add" / "phases" / "1-specify.md").write_text("specify v-new\n")
+    (root / "skill" / "add" / "phases" / "direction.md").write_text("specify v-new\n")
     (root / "tooling" / "templates").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py v-new\n")
     (root / "tooling" / "templates" / "TASK.md.tmpl").write_text("task tmpl v-new\n")

@@ -23,11 +23,11 @@ from pathlib import Path
 
 PKG_ROOT = Path(__file__).resolve().parent.parent          # add-method/
 REPO_ROOT = PKG_ROOT.parent
-SETUP_CANONICAL = PKG_ROOT / "skill" / "add" / "phases" / "0-setup.md"
+SETUP_CANONICAL = PKG_ROOT / "skill" / "add" / "phases" / "direction.md"
 SETUP_TRIPLET = (
     SETUP_CANONICAL,
-    REPO_ROOT / ".claude" / "skills" / "add" / "phases" / "0-setup.md",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-setup.md",
+    REPO_ROOT / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 )
 
 from engine_pin import ENGINE_MD5
@@ -39,9 +39,11 @@ ENGINE_PATHS = (
 
 # anchors the cospecify suite already pins — the §4 reword must not disturb them
 COSPECIFY_ANCHORS = (
+    # skill-loop-fold: the onward specify-guide pointer is retired — the specify
+    # depth now lives in this same file (the Rules/scenarios co-specification span)
     "co-specify at foundation level",
     "Domain (DDD)", "Spec (SDD)", "Users (UDD)",
-    "phases/1-specify.md",
+    "co-specification",
 )
 
 

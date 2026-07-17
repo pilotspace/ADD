@@ -36,8 +36,8 @@ TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
 RUN_MD = ADD_METHOD / "skill" / "add" / "run.md"
-CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md"
-VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
+VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 
 
 class _Harness(unittest.TestCase):

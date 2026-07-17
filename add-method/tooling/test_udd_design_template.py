@@ -9,7 +9,7 @@ Frozen contract §3 @ v1: a DESIGN.md template wired into 0-setup.
     pre-fills a concrete value. Foundation points to the named-set SAMPLES; Screens
     indexes prototypes/<name>.json (seeded with prototype.sample.json); Render points
     to udd-catalog.md's recipe.
-  - PROSE: phases/0-setup.md names DESIGN.md as a living doc to draft.
+  - PROSE: phases/direction.md names DESIGN.md as a living doc to draft.
   - PARITY: DESIGN.md.tmpl canonical↔bundle (+ dogfood copy); 0-setup.md ×3.
 
 Five named reds (the DESIGN.md guards; udd-check-lint does NOT lint this prose):
@@ -167,8 +167,8 @@ class InitDraftsDesignTest(unittest.TestCase):
 
 class SetupProseTest(unittest.TestCase):
     def test_0setup_names_design_md(self):
-        """phases/0-setup.md names DESIGN.md as a living doc setup drafts."""
-        text = (_CANON_SKILL / "phases" / "0-setup.md").read_text(encoding="utf-8")
+        """phases/direction.md names DESIGN.md as a living doc setup drafts."""
+        text = (_CANON_SKILL / "phases" / "direction.md").read_text(encoding="utf-8")
         self.assertIn("DESIGN.md", text, "0-setup must name DESIGN.md as a doc to draft")
 
 
@@ -181,8 +181,8 @@ class DesignArtifactParityTest(unittest.TestCase):
         self.assertEqual(canon, (_DOGFOOD_TOOLING / rel).read_bytes(), f"{rel}: canonical ≠ dogfood")
 
     def test_0setup_mirrored(self):
-        """mirror_drift: phases/0-setup.md byte-identical across the ×3 skill mirrors."""
-        rel = "phases/0-setup.md"
+        """mirror_drift: phases/direction.md byte-identical across the ×3 skill mirrors."""
+        rel = "phases/direction.md"
         canon = (_CANON_SKILL / rel).read_bytes()
         self.assertEqual(canon, (_BUNDLE_SKILL / rel).read_bytes(), f"{rel}: canonical ≠ bundled")
         self.assertEqual(canon, (_DOGFOOD_SKILL / rel).read_bytes(), f"{rel}: canonical ≠ dogfood")

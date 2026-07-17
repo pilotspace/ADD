@@ -2,7 +2,7 @@
 """Doc-truth tests for orchestrator-build-persona (persona-learning-loop 7/7). CONTRACT frozen @ v1.
 
 While building, the orchestrating agent may adopt a project persona as a DOMAIN identity overlay
-LAYERED on SOUL.md — phases/5-build.md documents loading the active `.add/personas/<slug>.md`
+LAYERED on SOUL.md — phases/build.md documents loading the active `.add/personas/<slug>.md`
 (SOUL = voice/trust · persona = domain stance), and the TASK template's §5 Strategy carries an
 OPTIONAL persona hook naming the persona the build embodies. SOUL.md stays human-owned (the overlay
 never rewrites it) and the persona is advisory (never lowers a gate). The engine never reads the
@@ -31,7 +31,7 @@ CANON = SKILL_TREES[0]
 
 
 def _build_guide(tree: Path) -> str:
-    return (tree / "phases" / "5-build.md").read_text(encoding="utf-8")
+    return (tree / "phases" / "build.md").read_text(encoding="utf-8")
 
 
 class OrchestratorBuildPersonaTest(unittest.TestCase):

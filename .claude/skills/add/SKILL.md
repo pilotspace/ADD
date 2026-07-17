@@ -52,10 +52,10 @@ Then read the foundation map `add.py status --foundation` (one section: `--found
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
-  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and read `phases/0-setup.md`
-  to draft the foundation + §1–§3 to the human baseline approval.
-- **A task is active** → open its `.add/tasks/<active>/TASK.md`, read the `phase:` marker, load the
-  matching `phases/<n>-<phase>.md`. Work *only* that phase.
+  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and drive the setup span of
+  `phases/direction.md` — foundation + first bundle to the human baseline `lock`.
+- **A task is active** → open its `.add/tasks/<active>/TASK.md`, read the `phase:` marker, work that
+  beat per the loop below.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
 **Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
@@ -73,26 +73,27 @@ Classify a raw request BEFORE any scope: read `intake.md`, place it in one bucke
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
 `MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks) — read `scope.md` — then
 `new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed). For
-`task`/`change-request`: `add.py new-task` then the first phase guide.
+`task`/`change-request`: `add.py new-task`, then beat 1 above.
 
-## The flow and which file to load
+## The 3-beat loop (inline — this file IS the loop; references load on demand)
 
-Inline, load **only the phase you are in**; delegating, spawn the Bundle-column agent — it loads its own bundle guides (you read ONLY this file):
+Every task is three beats, three engine calls, ONE human decision point:
 
-| Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
-|-------|-------|----------------------------|-----------|--------|
-| setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) | – |
-| specify | `phases/1-specify.md` | §1 rules + ranked flag + §2 Given/When/Then | AI drafts (co-specify)† | DIRECTION |
-| plan | `phases/3-plan.md` | §3 grounding + frozen shape + build-strategy | AI drafts → **human approves once** (the decision point)† | DIRECTION |
-| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† | DIRECTION |
-| build | `phases/5-build.md` | code in `src/`, tests green | **AI** | BUILD |
-| verify | `phases/6-verify.md` | §6 checks + gate record + §7 spec delta | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |
+1. **DIRECTION** — draft the whole bundle top-to-bottom in TASK.md: §1 rules + ranked ⚠ flag (co-specify) ·
+   §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope) · §4 red suite
+   (run it — red for the RIGHT reason) · §6 Build expectations. Then the ONE approval, presented
+   lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`
+   IS this approval).
+2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
+   inside the §3 Scope.
+3. **VERIFY** — confirm evidence · 3 lenses (**security always HARD-STOP**) · earned-green
+   refute-read · then `add.py gate PASS` (from build it compound-crosses; under `autonomy: auto` a
+   run auto-PASSes on complete no-residue evidence — *auto-resolved*, an explicit PASS, never a
+   skip; residue or lowered autonomy → human — `run.md`).
 
-† **The specification bundle (v7).** §1–§4 are one bundle; the human gives **one approval at the
-contract freeze**, lowest-confidence-first — `run.md`.
-‡ **Verify auto-gate (v6–v7).** Under `autonomy: auto` (default) a run may auto-PASS on complete
-evidence (*auto-resolved* — an explicit PASS, not a skip). **Security always escalates** (HARD-STOP);
-so do concurrency / architecture residue and a lowered autonomy level — `run.md`.
+Stuck or deep? References, on demand — never a mandatory read: `phases/direction.md` ·
+`phases/build.md` · `phases/verify.md`. Delegating? Spawn the roster agent for the beat; it loads
+its own references (you read ONLY this file).
 
 At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
 `gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·
@@ -112,7 +113,7 @@ One trigger = one guide — full prose: `beyond.md`; load only when a trigger fi
 
 - §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default execution mode) ·
   self-score `confidence.md`
-- small low-risk task → fast lane `phases/fast-lane.md` · UI/experience surface → UDD loop `design.md`
+- UI/experience surface → UDD loop `design.md` (the fast lane is flag-mode above — no extra guide)
 - milestone goal unmet at `milestone-done` → `loop.md`
 - status cues: `MVP covered` → `graduate.md` · closed-milestone cut → `release.md`
 - monorepo green-bars → `components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·
@@ -132,14 +133,13 @@ One trigger = one guide — full prose: `beyond.md`; load only when a trigger fi
 5. **Ask, don't guess.** If a requirement is unclear, stop and ask the user.
 </constraints>
 
-## Advancing
-
-Exit gate met → advance (also syncs the TASK.md marker):
+## Advancing — the 3-call walk
 
 ```bash
-python3 .add/tooling/add.py advance            # next phase of the active task
-python3 .add/tooling/add.py gate PASS          # at verify: records PASS, marks done
-python3 .add/tooling/add.py use <slug>         # switch the active task
+python3 .add/tooling/add.py new-task <slug> --title "..."   # born at direction
+python3 .add/tooling/add.py freeze --by "<name>" --cross    # the ONE approval -> build
+python3 .add/tooling/add.py gate PASS                       # verify recorded, task done
+# add.py advance = step-wise alternative · add.py use <slug> = switch tasks
 ```
 
 ## Depth by stage

@@ -26,9 +26,9 @@ SKILL = ADD_METHOD / "skill" / "add"
 DOCS = ADD_METHOD / "docs"
 BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
-BUILD_MD = SKILL / "phases" / "5-build.md"
+BUILD_MD = SKILL / "phases" / "build.md"
 RUN_MD = SKILL / "run.md"
-VERIFY_MD = SKILL / "phases" / "6-verify.md"
+VERIFY_MD = SKILL / "phases" / "verify.md"
 TMPL = TOOLING / "templates" / "TASK.md.tmpl"
 CH03 = DOCS / "03-step-1-specify.md"
 CH04 = DOCS / "04-step-2-scenarios.md"
@@ -115,11 +115,11 @@ class EngineFrozenTest(unittest.TestCase):
 
 class ParityTest(unittest.TestCase):
     CASES = [
-        (SKILL / "phases" / "5-build.md", REPO / ".claude/skills/add/phases/5-build.md",
-         BUNDLE / "skill/add/phases/5-build.md"),
+        (SKILL / "phases" / "build.md", REPO / ".claude/skills/add/phases/build.md",
+         BUNDLE / "skill/add/phases/build.md"),
         (RUN_MD, REPO / ".claude/skills/add/run.md", BUNDLE / "skill/add/run.md"),
-        (VERIFY_MD, REPO / ".claude/skills/add/phases/6-verify.md",
-         BUNDLE / "skill/add/phases/6-verify.md"),
+        (VERIFY_MD, REPO / ".claude/skills/add/phases/verify.md",
+         BUNDLE / "skill/add/phases/verify.md"),
         (CH08, REPO / "08-step-6-verify.md", BUNDLE / "docs/08-step-6-verify.md"),
         (CH03, REPO / "03-step-1-specify.md", BUNDLE / "docs/03-step-1-specify.md"),
         (CH04, REPO / "04-step-2-scenarios.md", BUNDLE / "docs/04-step-2-scenarios.md"),

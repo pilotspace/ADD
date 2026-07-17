@@ -30,4 +30,4 @@ End with a structured verdict the calling agent or orchestrator parses:
 
 Personas GROW after drafting: recommend the calling agent tag behavioral lessons `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability>` at observe — `add.py fold` routes each into that section, never clobbering.
 
-Method depth: the AIDD book in `.add/docs/` — `0-setup.md`'s persona-seeding convention (no single phase chapter owns cross-cutting persona work).
+Method depth: the AIDD book in `.add/docs/` — `phases/direction.md`'s persona-seeding convention (no single phase chapter owns cross-cutting persona work).

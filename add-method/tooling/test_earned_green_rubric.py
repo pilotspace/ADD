@@ -13,7 +13,7 @@ autonomy:auto is recommended; the engine never spawns one) prompted to argue
 
 This is PROSE + TEMPLATE only (the verify-deepen precedent): add.py is byte-unchanged
 (the engine stays judgment-free; the resolver, not the engine, judges earned-vs-gamed).
-The rubric is stated IDENTICALLY in the guide (phases/6-verify.md) and the book
+The rubric is stated IDENTICALLY in the guide (phases/verify.md) and the book
 (docs/08-step-6-verify.md), carried as one additive §6 template line, and the two new
 terms are defined in the living glossary. ENFORCEMENT (the auto-gate wiring + the
 <=3-attempt self-heal loop) is task 3 (heal-then-escalate) — NOT here.
@@ -37,7 +37,7 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 # ── the surfaces (canonical copies) ───────────────────────────────────────────
-GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 BOOK = _ADD_METHOD / "docs" / "08-step-6-verify.md"
 RUN_MD = _ADD_METHOD / "skill" / "add" / "run.md"
 TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl"
@@ -48,8 +48,8 @@ ADD_PY = _ADD_METHOD / "tooling" / "add.py"
 # ── the mirror trees (every copy — drift in any is a finding) ─────────────────
 GUIDE_TREES = [
     GUIDE,                                                                       # canonical
-    _REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",            # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "6-verify.md",  # bundle
+    _REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",            # dogfood
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "verify.md",  # bundle
 ]
 ROOT_BOOK = _REPO / "08-step-6-verify.md"
 BOOK_TREES = [

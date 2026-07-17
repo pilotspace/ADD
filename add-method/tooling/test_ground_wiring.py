@@ -37,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 BUNDLE = HERE.parent / "src" / "add_method" / "_bundled"
 
-CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "3-plan.md"   # freeze checklist moved into the unified plan guide
+CONTRACT_MD = HERE.parent / "skill" / "add" / "phases" / "direction.md"   # freeze checklist moved into the unified plan guide
 RUN_MD = HERE.parent / "skill" / "add" / "run.md"
 CHECKLIST_HEADING = "## The freeze review checklist"
 
@@ -231,11 +231,11 @@ class FreezeChecklistTest(unittest.TestCase):
 
     # test_run_md_says_seven_lines: RETIRED. A pure prose-wording pin whose target phrase
     # was deliberately cut from run.md by the human-approved md ceremony-cut (d264c38);
-    # the freeze presentation's real home (phases/3-plan.md) is pinned by its own tests.
+    # the freeze presentation's real home (phases/direction.md) is pinned by its own tests.
     # Removed under the wordy-test authorization (thin-engine-loop MILESTONE.md, 2026-07-16).
 
     def test_prose_three_trees_agree(self):
-        for rel in (("skill", "add", "phases", "3-plan.md"),
+        for rel in (("skill", "add", "phases", "direction.md"),
                     ("skill", "add", "run.md")):
             canon = HERE.parent.joinpath(*rel)
             for twin in (REPO / ".claude" / "skills" / "add" / Path(*rel[2:]),
@@ -249,7 +249,7 @@ class FreezeChecklistTest(unittest.TestCase):
 # to one consistent four-field rubric. Guide + template only; no engine gate.
 # ---------------------------------------------------------------------------
 _SKILL = HERE.parent / "skill" / "add"
-GROUND_MD = _SKILL / "phases" / "3-plan.md"   # grounding merged into the unified plan guide
+GROUND_MD = _SKILL / "phases" / "direction.md"   # grounding merged into the unified plan guide
 SCOPE_MD = _SKILL / "scope.md"
 TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
 # template-unify: the fast lane derives from TASK.md.tmpl (no fast template file)
@@ -260,16 +260,17 @@ class GroundHardenTest(unittest.TestCase):
     """The four-field grounding rubric is demanded at both altitudes (per-task §0 guide
     + milestone-level scope.md), and the §0 template conveys required-not-optional."""
 
-    def _exit_gate(self, text: str) -> str:
-        m = re.search(r"<exit_gate>(.*?)</exit_gate>", text, re.DOTALL)
-        return m.group(1) if m else ""
+    def _exit_gates(self, text: str) -> list[str]:
+        # skill-loop-fold: direction.md folds the whole front span, so it carries
+        # one <exit_gate> per beat — the plan-span gate is the one naming Grounding.
+        return re.findall(r"<exit_gate>(.*?)</exit_gate>", text, re.DOTALL)
 
     def test_ground_exit_gate_names_all_four_fields(self):
-        gate = self._exit_gate(GROUND_MD.read_text(encoding="utf-8"))
-        self.assertTrue(gate, "3-plan.md must keep its <exit_gate> block")
-        missing = [f for f in GROUND_FIELDS if f not in gate]
-        self.assertEqual(missing, [],
-                         f"the plan-guide Grounding exit gate must name all four fields; missing {missing}")
+        gates = self._exit_gates(GROUND_MD.read_text(encoding="utf-8"))
+        self.assertTrue(gates, "direction.md must keep its <exit_gate> blocks")
+        self.assertTrue(
+            any(all(f in g for f in GROUND_FIELDS) for g in gates),
+            f"a plan-span exit gate must name all four Grounding fields {GROUND_FIELDS}")
 
     def test_ground_guide_has_completeness_rubric(self):
         text = GROUND_MD.read_text(encoding="utf-8").lower()
@@ -311,7 +312,7 @@ class GroundHardenTest(unittest.TestCase):
                          f"the fast §3 PLAN Grounding must name all four grounding fields (uniform); missing {missing}")
 
     def test_ground_harden_three_tree_parity(self):
-        for rel in ("phases/3-plan.md", "scope.md"):
+        for rel in ("phases/direction.md", "scope.md"):
             canon = (_SKILL / rel).read_bytes()
             bundled = (BUNDLE / "skill" / "add" / rel).read_bytes()
             self.assertEqual(canon, bundled, f"{rel} drifted: canonical vs _bundled")

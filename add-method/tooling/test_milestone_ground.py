@@ -9,7 +9,7 @@ the engine digest must NOT change.
 
   * template — MILESTONE.md.tmpl (×3 trees) carries `## Ground` right after `## Scope`,
                before `## Shared decisions`, with four milestone-altitude field labels.
-  * guide    — phases/1-specify.md (×3 skill trees) cues projecting §1 from the
+  * guide    — phases/direction.md (×3 skill trees) cues projecting §1 from the
                milestone Ground + the request.
   * drafting — scope.md (×3) names the Ground section among the MILESTONE.md sections.
   * engine   — UNTOUCHED: md5(add.py) == engine_pin.ENGINE_MD5 (prose-only guard).
@@ -35,9 +35,9 @@ MILE_TMPL_COPIES = [
     BUNDLE / "tooling" / "templates" / "MILESTONE.md.tmpl",
 ]
 SPECIFY_GUIDE_COPIES = [
-    ADD_METHOD / "skill" / "add" / "phases" / "1-specify.md",
-    REPO / ".claude" / "skills" / "add" / "phases" / "1-specify.md",
-    BUNDLE / "skill" / "add" / "phases" / "1-specify.md",
+    ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    BUNDLE / "skill" / "add" / "phases" / "direction.md",
 ]
 SCOPE_GUIDE_COPIES = [
     ADD_METHOD / "skill" / "add" / "scope.md",
@@ -121,7 +121,7 @@ class SpecifyGuideCueTest(unittest.TestCase):
         present = [p for p in SPECIFY_GUIDE_COPIES if p.exists()]
         self.assertTrue(CANON_SPECIFY.exists(), "canonical 1-specify.md missing")
         self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 phases/1-specify.md copies must be byte-identical")
+                         "the 3 phases/direction.md copies must be byte-identical")
 
 
 class ScopeGuideDraftsGroundTest(unittest.TestCase):

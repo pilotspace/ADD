@@ -8,7 +8,7 @@ WITHOUT touching the engine (prose-only):
 
   * book   — docs/02-the-flow.md names ground as the phase-0 preamble (×4 synced);
              docs/appendix-c-glossary.md defines **Ground** + **Grounding map** (×4).
-  * skill  — SKILL.md's phase table lists a `plan` row → phases/3-plan.md (×3).
+  * skill  — SKILL.md's phase table lists a `plan` row → phases/direction.md (×3).
   * GLOSSARY— the survivor .add/GLOSSARY.md + the GLOSSARY.md.tmpl name ground (×3).
   * engine — UNTOUCHED: md5(add.py) ×3 == engine_pin (prose-only guard).
 
@@ -168,10 +168,10 @@ class EngineUntouchedByBookAlignTest(unittest.TestCase):
 
 class SkillTableTest(unittest.TestCase):
     def test_skill_phase_table_lists_plan(self):
-        # expectations-first (guides-and-skill): the phase table names `plan`, not `ground`/`contract`.
+        # skill-loop-fold: the phase table is gone — SKILL.md narrates the 3-beat
+        # loop inline; plan/ground/contract live in the direction beat's reference.
         text = SKILL_TREES[0].read_text(encoding="utf-8")
-        self.assertRegex(text, r"\|\s*plan\s*\|", "SKILL.md phase table needs a 'plan' row")
-        self.assertIn("phases/3-plan.md", text, "the plan row points at its guide")
+        self.assertIn("phases/direction.md", text, "the direction beat names its reference")
         self.assertNotRegex(text, r"\|\s*ground\s*\|", "no stale 'ground' phase row")
         self.assertNotRegex(text, r"\|\s*contract\s*\|", "no stale 'contract' phase row")
 

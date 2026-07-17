@@ -17,7 +17,7 @@ import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
 ADD_PY = HERE / "add.py"
-SETUP_GUIDE = HERE.parent / "skill" / "add" / "phases" / "0-setup.md"
+SETUP_GUIDE = HERE.parent / "skill" / "add" / "phases" / "direction.md"
 
 LIVING = "living: fill on first touch"
 
@@ -63,8 +63,8 @@ class SkillTreesStayIdentical(unittest.TestCase):
         import hashlib
         repo = HERE.parent.parent
         trees = (SETUP_GUIDE,
-                 repo / ".claude" / "skills" / "add" / "phases" / "0-setup.md",
-                 HERE.parent / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-setup.md")
+                 repo / ".claude" / "skills" / "add" / "phases" / "direction.md",
+                 HERE.parent / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md")
         digests = {hashlib.md5(t.read_bytes()).hexdigest() for t in trees if t.exists()}
         self.assertEqual(1, len(digests), "0-setup.md trees diverged")
 
@@ -91,8 +91,9 @@ class NeverDeferInvariants(unittest.TestCase):
         text = SETUP_GUIDE.read_text()
         self.assertIn("Pin invariants first", text)
         self.assertIn("run/entry contract", text)
-        self.assertIn("§0", text.split("Pin invariants first", 1)[1][:400],
-                      "guide must say every task §0 re-states the invariants")
+        # skill-loop-fold: the ground preamble lives in §3 Grounding (plan-phase-core)
+        self.assertIn("§3", text.split("Pin invariants first", 1)[1][:400],
+                      "guide must say every task §3 Grounding re-states the invariants")
 
     def test_claude_block_carries_invariants(self):
         """Escalation (lean-r2 wm3 rationalization): the sync-guidelines block —

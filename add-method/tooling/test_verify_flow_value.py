@@ -44,9 +44,9 @@ DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
 AGENT_TWINS = (ADD_METHOD / "agents" / "add-verify.md",
                REPO / ".claude" / "agents" / "add-verify.md",
                BUNDLE / "agents" / "add-verify.md")
-GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md",
-               REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",
-               BUNDLE / "skill" / "add" / "phases" / "6-verify.md")
+GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md",
+               REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
+               BUNDLE / "skill" / "add" / "phases" / "verify.md")
 TDD_VERIFIER = REPO / ".add" / "personas" / "tdd-verifier.md"
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")

@@ -263,11 +263,11 @@ class GateAuditTest(unittest.TestCase):
 
     # ---- prose accord ------------------------------------------------------------
     def test_guide_states_marker_convention(self):
-        canon = HERE.parent / "skill" / "add" / "phases" / "6-verify.md"
+        canon = HERE.parent / "skill" / "add" / "phases" / "verify.md"
         text = canon.read_text(encoding="utf-8")
         self.assertIn(GUIDE_ANCHOR, text)
-        for twin in (REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",
-                     BUNDLE / "skill" / "add" / "phases" / "6-verify.md"):
+        for twin in (REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
+                     BUNDLE / "skill" / "add" / "phases" / "verify.md"):
             self.assertEqual(canon.read_bytes(), twin.read_bytes(), f"divergence: {twin}")
 
 

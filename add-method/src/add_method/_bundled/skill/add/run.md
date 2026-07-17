@@ -10,7 +10,7 @@ Scenarios · Contract) still owns *direction*. The engine stays judgment-free: t
 v7 compresses the old three-approval flow to **one**: the AI drafts Spec · Scenarios ·
 Contract · failing Tests in one pass; the human gives **one approval, at the frozen
 contract** (a rejected part goes back to draft — backward-correction, not failure). The
-freeze presentation lives in `phases/3-plan.md`, its one home; this rubric owns AFTER the freeze.
+freeze presentation lives in `phases/direction.md`, its one home; this rubric owns AFTER the freeze.
 
 ## When the run begins — the scope-lock trigger
 

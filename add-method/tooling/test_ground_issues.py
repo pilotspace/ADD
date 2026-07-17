@@ -30,14 +30,14 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 SPECIFY_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "1-specify.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "1-specify.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "1-specify.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 TMPL_COPIES = [
     _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
@@ -116,11 +116,13 @@ class GuideNamesIssuesCategory(unittest.TestCase):
             self.assertIn(anchor, text, f"the guide must keep the {anchor} field")
 
     def test_exit_gate_covers_issues(self):
-        # the ## Exit gate must gain a checkbox for the new field
-        text = _canonical_guide()
-        gate = text.split("## Exit gate", 1)
-        self.assertEqual(len(gate), 2, "the guide must keep its ## Exit gate")
-        self.assertIn(FIELD, gate[1], "the exit gate must list the Issues/Risks field")
+        # an <exit_gate> block must carry a checkbox for the field (skill-loop-fold:
+        # direction.md holds one gate per beat; the plan-span gate names Grounding)
+        gates = re.findall(r"<exit_gate>(.*?)</exit_gate>",
+                           _canonical_guide(), re.DOTALL)
+        self.assertTrue(gates, "the guide must keep its <exit_gate> blocks")
+        self.assertTrue(any(FIELD in g for g in gates),
+                        "an exit gate must list the Issues/Risks field")
 
 
 class TemplateGainsIssuesLine(unittest.TestCase):
@@ -171,7 +173,7 @@ class SpecifyConsumesIssues(unittest.TestCase):
     def test_specify_keeps_cospecify_and_gate(self):
         text = _canonical_specify()
         self.assertIn("Co-specify", text, "the three-moves co-specify must remain")
-        self.assertIn("Exit gate", text, "the specify exit gate must remain")
+        self.assertIn("<exit_gate>", text, "the specify exit gate must remain")
 
 
 class EngineMeasureUntouched(unittest.TestCase):

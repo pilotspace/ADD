@@ -334,9 +334,9 @@ class BuildExpectationsBlock(unittest.TestCase):
         _REPO / "add-method" / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
     )
     VERIFY_GUIDE = (
-        _REPO / "add-method" / "skill" / "add" / "phases" / "6-verify.md",
-        _REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",
-        _REPO / "add-method" / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "6-verify.md",
+        _REPO / "add-method" / "skill" / "add" / "phases" / "verify.md",
+        _REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
+        _REPO / "add-method" / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "verify.md",
     )
 
     def _section6(self) -> str:
@@ -378,7 +378,7 @@ class BuildExpectationsBlock(unittest.TestCase):
                       "the guide cues confirming each expectation at the gate")
 
     def test_template_and_guide_parity_three_trees(self):
-        for group, label in ((self.TASK_TMPL, "TASK.md.tmpl"), (self.VERIFY_GUIDE, "6-verify.md")):
+        for group, label in ((self.TASK_TMPL, "TASK.md.tmpl"), (self.VERIFY_GUIDE, "verify.md")):
             present = [p for p in group if p.exists()]
             if len(present) < 2:
                 self.skipTest(f"{label}: fewer than 2 trees present (fresh package)")

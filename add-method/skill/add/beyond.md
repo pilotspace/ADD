@@ -10,9 +10,10 @@ prose. Load it (or the one guide you need) only when a trigger fires.
   default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
   `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9) — `confidence.md`.
   Both advisory; the engine never spawns.
-- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
-  `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
-  red test · verify gate; freeze-gated under any milestone). Collapse, never skip; opt-in.
+- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` renders TASK.md
+  minus the deep-verify/observe sections (a derived subset of the ONE template), bundle approved in
+  one freeze — routing lives in SKILL.md flag mode. Floor held (frozen contract · red test · verify
+  gate; freeze-gated under any milestone). Collapse, never skip; opt-in.
 - **UI feature** at specify → the **design-definition loop** (UDD): intake the design axes → review the
   domain → research and reuse components → wireframe → a captured screen the human confirms **before** build — `design.md`.
   Tool-agnostic; the engine never renders.

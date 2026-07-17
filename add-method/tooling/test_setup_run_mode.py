@@ -2,7 +2,7 @@
 """Content + parity guard for the setup "Run mode" step (task setup-run-mode,
 v13-onboarding-polish 2/6).
 
-phases/0-setup.md must gain a "## Run mode" step that (a) shows an autonomy×streams
+phases/direction.md carries a "**Run mode**" step (skill-loop-fold: bold para, not a heading) that (a) shows an autonomy×streams
 comparison table, (b) proposes parallel+auto as the DEFAULT confirm-to-keep, (c) cites
 `add.py waves` + the autonomy dial and preserves the one-approval-per-contract floor,
 (d) records the choice in PROJECT.md Key Decisions; and streams.md must name parallel+auto
@@ -33,7 +33,7 @@ CANONICAL = ADD_METHOD / "skill" / "add"
 BUNDLED = ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add"
 DOGFOOD = REPO / ".claude" / "skills" / "add"
 
-SETUP = "phases/0-setup.md"
+SETUP = "phases/direction.md"
 STREAMS = "streams.md"
 
 
@@ -48,9 +48,9 @@ def _md5(p: Path) -> str:
 class RunModeStep(unittest.TestCase):
     def setUp(self):
         self.setup = _read(CANONICAL, SETUP)
-        # the "## Run mode" section text (heading -> next "## " or EOF)
-        self.assertIn("## Run mode", self.setup, "setup guide must gain a '## Run mode' step")
-        start = self.setup.index("## Run mode")
+        # the "**Run mode**" step text (marker -> next "## " or EOF)
+        self.assertIn("**Run mode**", self.setup, "setup guide must keep its '**Run mode**' step")
+        start = self.setup.index("**Run mode**")
         nxt = self.setup.find("\n## ", start + 1)
         self.section = self.setup[start: nxt if nxt != -1 else len(self.setup)]
 
@@ -186,10 +186,10 @@ class InitRunMode(unittest.TestCase):
     # 5. setup guide names both persist commands
     # ------------------------------------------------------------------
     def test_setup_step_names_both_persist_cmds(self):
-        """phases/0-setup.md Run mode section must cite both persist commands."""
-        text = (CANONICAL / "phases" / "0-setup.md").read_text(encoding="utf-8")
-        self.assertIn("## Run mode", text)
-        start = text.index("## Run mode")
+        """phases/direction.md Run mode section must cite both persist commands."""
+        text = (CANONICAL / "phases" / "direction.md").read_text(encoding="utf-8")
+        self.assertIn("**Run mode**", text)
+        start = text.index("**Run mode**")
         nxt = text.find("\n## ", start + 1)
         section = text[start: nxt if nxt != -1 else len(text)]
         self.assertIn("autonomy set", section,

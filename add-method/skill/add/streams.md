@@ -1,7 +1,7 @@
 # Parallel streams — pipelining independent tasks
 
 Load this when a milestone has more than one task to run concurrently.
-**Default:** `sequential + auto` at setup (`phases/0-setup.md` "Run mode") — one task at a
+**Default:** `sequential + auto` at setup (`phases/direction.md` "Run mode") — one task at a
 time, Verify still auto-PASSes on evidence. Parallel streaming is **opt-in** for genuinely
 independent tasks: `add.py streams set parallel --project`, then read on. A gate raised to
 `conservative`/`manual` treats this rubric as the same opt-in escape hatch.

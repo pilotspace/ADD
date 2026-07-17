@@ -3388,10 +3388,9 @@ def cmd_status(args: argparse.Namespace) -> None:
 # routed there through the CLI alone. Never a dead pointer: the path is printed
 # only if the file exists; a missing tree gets an install hint instead.
 _PHASE_GUIDE_FILES = {
-    # phase-collapse-3: `direction` spans the old 1/3/4 playbooks; it points at the span's
-    # entry file until skill-loop-fold ships the merged direction.md (then this re-aims).
-    "direction": "1-specify.md",
-    "build": "5-build.md", "verify": "6-verify.md",
+    # skill-loop-fold: one reference file per beat — the merged 3-file phases/ shape.
+    "direction": "direction.md",
+    "build": "build.md", "verify": "verify.md",
 }
 _SKILL_PHASES_DIR = Path(".claude") / "skills" / "add" / "phases"
 

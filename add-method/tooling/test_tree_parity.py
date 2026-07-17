@@ -4,7 +4,7 @@ the canonical `add-method/skill/add/` (packaged + installed by cli.js) and the d
 `.claude/skills/add/` (what this repo runs on itself).
 
 Parity was previously asserted file-by-file, ad hoc (glossary, run.md, SKILL.md), which let
-`phases/0-setup.md` drift silently — no test named it. This walks the WHOLE tree and asserts
+`phases/direction.md` drift silently — no test named it. This walks the WHOLE tree and asserts
 every file has a byte-identical twin in BOTH directions (no divergence, no orphan either side),
 so no skill file can drift unguarded again.
 

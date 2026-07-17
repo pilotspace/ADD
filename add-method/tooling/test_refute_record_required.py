@@ -11,7 +11,7 @@ CONTRACT (frozen @ v1) — design C, MEASURE-NOT-BLOCK (no hard gate):
   cmd_audit: prints ONE grouped "refute_unrecorded — N task(s): <slugs>"; EXIT CODE unchanged (0).
   cmd_audit --json: additive guarantee_lints["refute_unrecorded"] = [...].
   cmd_gate: UNCHANGED — an unfilled block NEVER blocks a gate; NO `refute_record_missing` reject.
-  Disclosure: run.md + phases/6-verify.md + book 08-step-6-verify.md name the auto mandate +
+  Disclosure: run.md + phases/verify.md + book 08-step-6-verify.md name the auto mandate +
     `refute_unrecorded` + the human spot-audit backstop.
 One test per scenario. Run: python3 -m unittest test_refute_record_required -v
 """
@@ -31,7 +31,7 @@ TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
 RUN_MD = ADD_METHOD / "skill" / "add" / "run.md"
-VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 BOOK_CH8 = ADD_METHOD / "docs" / "08-step-6-verify.md"
 MILESTONE = REPO / ".add" / "milestones" / "flow-honesty" / "MILESTONE.md"
 

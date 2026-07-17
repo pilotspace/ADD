@@ -11,7 +11,7 @@ CONTRACT — ADDITIVE, MEASURE-NOT-BLOCK, append-frozen lint vocabulary:
   cmd_audit --json: additive guarantee_lints["verify_record_incomplete"].
   Exit code unchanged (a notice, never a finding). Clean-line conjunction unchanged (derived key
   is empty exactly when its members are).
-  Guides: phases/4-tests.md (BOTH skill twins) instructs pre-declaring the §6 Build-expectations
+  Guides: phases/direction.md (BOTH skill twins) instructs pre-declaring the §6 Build-expectations
   block at TESTS time, before build.
 One test per scenario. Run: python3 -m unittest test_verify_record_rollup -v
 """
@@ -30,8 +30,8 @@ import add
 TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
-SKILL_TESTS_MD = ADD_METHOD / "skill" / "add" / "phases" / "4-tests.md"
-DOGFOOD_TESTS_MD = REPO / ".claude" / "skills" / "add" / "phases" / "4-tests.md"
+SKILL_TESTS_MD = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
+DOGFOOD_TESTS_MD = REPO / ".claude" / "skills" / "add" / "phases" / "direction.md"
 
 ROLLUP = "verify_record_incomplete"
 MEMBER_CODES = ("shallow_deep_check", "refute_unrecorded",

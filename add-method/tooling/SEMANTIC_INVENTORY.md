@@ -33,9 +33,9 @@ file). gate_outcomes are a fixed vocab; named_codes are backticked snake_case re
 - run.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved, unguarded_high_risk_auto
 - streams.md: PASS, RISK-ACCEPTED, HARD-STOP, ESCALATE, auto-resolved, unguarded_high_risk_auto, active_task
 - gate-udd.md: PASS
-- phases/6-verify.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved, unescalated_security_note
+- phases/verify.md: PASS, RISK-ACCEPTED, HARD-STOP, auto-resolved, unescalated_security_note
 - adopt.md: already_locked
-- phases/0-setup.md: already_locked, setup_unlocked
+- phases/direction.md: already_locked, setup_unlocked
 - deltas.md: no_evidence, not_found, unknown_competency, unknown_status
 - fold.md: no_open_deltas, unconfirmed_fold, unroutable_delta
 - intake.md: ask_human, frozen_scope, split_required
@@ -52,7 +52,7 @@ outcomes; all 7 verified green at freeze (window line-counts noted).
 - never-auto-pass-security @ run.md | anchors: auto-pass, security, never | neg: unless, except
 - never-weaken-test @ SKILL.md | anchors: weaken, never, test | neg: unless, except
 - never-self-fold @ fold.md | anchors: self-approve, never | neg:
-- never-prompt-field @ phases/1-specify.md | anchors: Never: | neg:
+- never-prompt-field @ phases/direction.md | anchors: Never: | neg:
 - auto-pass-conjunction @ run.md | anchors: Auto-PASS, test, coverage, weaken, contract | neg:
 - unguarded-high-risk @ run.md | anchors: risk: high, conservative, refus | neg:
 

@@ -197,7 +197,7 @@ class ParityAndDocTest(unittest.TestCase):
         # from PROJECT.md + the LOCAL vendored teacher library (.add/personas-teacher/),
         # covered by the baseline approval. (de-branded — the upstream is vendored locally.)
         for tree in SKILL_TREES:
-            txt = (tree / "phases" / "0-setup.md").read_text(encoding="utf-8").lower()
+            txt = (tree / "phases" / "direction.md").read_text(encoding="utf-8").lower()
             self.assertIn("persona", txt, f"0-setup.md in {tree} must document persona authoring")
             self.assertIn("author", txt,
                           f"0-setup.md in {tree} must describe AUTHORING personas (not just mention them)")

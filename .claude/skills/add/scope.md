@@ -19,13 +19,13 @@
 
 Before drafting the goal sentence, position the request in what already exists — distinct from intake's classification, not redundant with it.
 
-1. **Ground in current assets.** Read the goal against what exists — it must reflect what the project already is. Ground as rigorously as a task's §3 plan Grounding (`phases/3-plan.md`), using the **same four fields** at milestone scope — **Touches** (subsystems/files spanned) · **Context** (docs · config · data) · **Honors** (`PROJECT.md`/`CONVENTIONS.md` invariants) · **Anchors** (contracts/symbols tasks cite) — each named from real assets, not assumed. Touches spanning >1 app root (BE+FE, or multiple independently-testable dirs)? weigh `.add/components.toml` (`components.md`) now. **Record this grounding as the milestone's `## Ground` section** — the shared context, gathered ONCE, each task's `specify` projects its §1 from.
+1. **Ground in current assets.** Read the goal against what exists — it must reflect what the project already is. Ground as rigorously as a task's §3 plan Grounding (`phases/direction.md`), using the **same four fields** at milestone scope — **Touches** (subsystems/files spanned) · **Context** (docs · config · data) · **Honors** (`PROJECT.md`/`CONVENTIONS.md` invariants) · **Anchors** (contracts/symbols tasks cite) — each named from real assets, not assumed. Touches spanning >1 app root (BE+FE, or multiple independently-testable dirs)? weigh `.add/components.toml` (`components.md`) now. **Record this grounding as the milestone's `## Ground` section** — the shared context, gathered ONCE, each task's `specify` projects its §1 from.
 2. **Relate to the milestone map.** Run `add.py search <keyword> [<keyword> ...]` first — then read every existing goal — `.add/milestones/*/MILESTONE.md` and `.add/archive/*` — and name THIS request's relationship: *extends* X · *depends-on* Y · *overlaps* Z. Record in the `rationale` line.
 3. **If the goal is already delivered** by an existing milestone, reject `duplicate_goal` and route as `task` or `change-request`.
 
 ## Brainstorm before you draft — co-specify at milestone level
 
-Don't draft from thin input. Run the three-move co-specify (`phases/1-specify.md`) — Diverge → Converge → Validate — raised to milestone scope. Ask only what moves the goal, the In/Out line, or the task list.
+Don't draft from thin input. Run the three-move co-specify (`phases/direction.md`) — Diverge → Converge → Validate — raised to milestone scope. Ask only what moves the goal, the In/Out line, or the task list.
 
 Diverge seeds (pick the live ones):
 - **Outcome** — done means a user can do *what* they can't today?

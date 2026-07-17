@@ -1,4 +1,4 @@
-# Phase 6 — Verify (evidence + non-functional review)
+# Verify — evidence + non-functional review (gate + the observe tail)
 
 Goal: establish trust and record an outcome. Passing tests are necessary, not
 sufficient. Fill **§6** in TASK.md including the GATE RECORD.

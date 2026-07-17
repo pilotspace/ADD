@@ -30,9 +30,9 @@ _ADD_METHOD = _TOOLING.parent
 _REPO = _ADD_METHOD.parent
 
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 TMPL_COPIES = [
     _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl",
@@ -84,7 +84,7 @@ class GuideNamesRelatedIntent(unittest.TestCase):
 
     def test_guide_links_foundation(self):
         # must point at PROJECT + GLOSSARY (the foundation intent), not just any prose
-        gathered = _guide().split("### 1 · Grounding", 1)[-1].split("\n## ", 1)[0]
+        gathered = _guide().split("### Grounding", 1)[-1].split("\n## ", 1)[0]
         self.assertIn("PROJECT", gathered, "Related intent must link PROJECT.md")
         self.assertIn("GLOSSARY", gathered, "Related intent must link GLOSSARY")
 
@@ -94,9 +94,11 @@ class GuideNamesRelatedIntent(unittest.TestCase):
             self.assertIn(anchor, text, f"the guide must keep the {anchor} field")
 
     def test_exit_gate_covers_related_intent(self):
-        gate = _guide().split("## Exit gate", 1)
-        self.assertEqual(len(gate), 2, "the guide must keep its ## Exit gate")
-        self.assertIn(FIELD, gate[1], "the exit gate must list the Related-intent field")
+        # skill-loop-fold: direction.md carries one <exit_gate> per beat
+        gates = re.findall(r"<exit_gate>(.*?)</exit_gate>", _guide(), re.DOTALL)
+        self.assertTrue(gates, "the guide must keep its <exit_gate> blocks")
+        self.assertTrue(any(FIELD in g for g in gates),
+                        "an exit gate must list the Related-intent field")
 
 
 class TemplateGainsRelatedIntentLine(unittest.TestCase):

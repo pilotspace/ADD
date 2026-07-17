@@ -4,9 +4,9 @@ milestone build-scope-lock).
 
 A prose/template-only task: §5 of TASK.md.tmpl gains the `Scope (may touch):`
 allowlist + `Strategy (ordered batches):` plan lines and a grammar comment;
-phases/5-build.md teaches the discipline (declare-at-bundle · freeze-at-contract
+phases/build.md teaches the discipline (declare-at-bundle · freeze-at-contract
 · honor-or-change-request · the scope-gate-enforce deferral NAMED); one line in
-phases/3-plan.md says the freeze covers them. Content anchors prove the
+phases/direction.md says the freeze covers them. Content anchors prove the
 words exist (the folded prose-guides-are-TDD-able convention); add.py is
 untouched — a guard asserts it, plus the template's tag census stays frozen
 (v16 vocab: no new XML tag). Run:
@@ -37,13 +37,13 @@ BUNDLE_TMPL = BUNDLE / "tooling" / "templates" / "TASK.md.tmpl"
 # fast-lane template trio (build-strategy-solutions ADD-2)
 # template-unify: the fast lane derives from CANON_TMPL — no fast template files
 
-CANON_BUILD = ADD_METHOD / "skill" / "add" / "phases" / "5-build.md"
-DOG_BUILD = REPO / ".claude" / "skills" / "add" / "phases" / "5-build.md"
-BUNDLE_BUILD = BUNDLE / "skill" / "add" / "phases" / "5-build.md"
+CANON_BUILD = ADD_METHOD / "skill" / "add" / "phases" / "build.md"
+DOG_BUILD = REPO / ".claude" / "skills" / "add" / "phases" / "build.md"
+BUNDLE_BUILD = BUNDLE / "skill" / "add" / "phases" / "build.md"
 
-CANON_CONTRACT = ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md"
-DOG_CONTRACT = REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md"
-BUNDLE_CONTRACT = BUNDLE / "skill" / "add" / "phases" / "3-plan.md"
+CANON_CONTRACT = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
+DOG_CONTRACT = REPO / ".claude" / "skills" / "add" / "phases" / "direction.md"
+BUNDLE_CONTRACT = BUNDLE / "skill" / "add" / "phases" / "direction.md"
 
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")

@@ -33,9 +33,9 @@ _REPO = _ADD_METHOD.parent                              # repo root
 
 # The ground phase guide — 3 skill trees, must stay byte-identical.
 GUIDE_COPIES = [
-    _ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md",
-    _REPO / ".claude" / "skills" / "add" / "phases" / "3-plan.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "3-plan.md",
+    _ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    _REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 ]
 
 # The TASK.md template — 3 template trees, must stay byte-identical.

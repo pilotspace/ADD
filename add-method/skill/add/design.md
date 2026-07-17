@@ -92,6 +92,6 @@ values stay **human-owned** (`udd-tokens.md`).
   never an auto-pass.
 </constraints>
 
-> Used at specify for a UI feature: `phases/0-setup.md` scaffolds `DESIGN.md`, and
-> `phases/1-specify.md` points here when the feature has a screen — run the four beats, then
+> Used at specify for a UI feature: `phases/direction.md`'s setup span scaffolds `DESIGN.md`, and
+> its Rules span points here when the feature has a screen — run the four beats, then
 > carry the confirmed layout into the contract.

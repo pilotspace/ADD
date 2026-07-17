@@ -6,7 +6,7 @@ A gate must prove the work is real, not merely plausible:
     referenced (wiring) and that no new dead/unused code was introduced;
   - for a task that produced prose/non-code: a recorded semantic no-skim read.
 
-The requirement is stated IDENTICALLY in the skill guide (phases/6-verify.md),
+The requirement is stated IDENTICALLY in the skill guide (phases/verify.md),
 the book (docs/08-step-6-verify.md), and run.md's automated-quality-gate list,
 and carried as an additive "Deep checks" block in the section-6 TASK.md template.
 This is rubric + template only: add.py is byte-unchanged (engine stays
@@ -30,7 +30,7 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 # The three prose surfaces the rubric must state identically (canonical copies).
-GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 RUN_MD = _ADD_METHOD / "skill" / "add" / "run.md"
 BOOK = _ADD_METHOD / "docs" / "08-step-6-verify.md"
 # Template + glossary (canonical), and the engine the lean scope must NOT touch.

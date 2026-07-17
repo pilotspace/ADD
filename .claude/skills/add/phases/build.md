@@ -1,6 +1,6 @@
-# Phase 5 — Build (AI writes the code)
+# Build — AI writes the code (the beat you drive to green)
 
-Goal: implement the feature so EVERY failing test passes — without changing any
+Objective: implement the feature so EVERY failing test passes — without changing any
 test or the contract. This is the only phase the AI leads; §1–§4 removed all
 ambiguity. Write code into `.add/tasks/<slug>/src/`.
 
@@ -28,18 +28,6 @@ Load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md`
 **Never weaken or delete a test to make it pass, and never edit the frozen
 contract.** A genuine need to change either is a change request back to Specify. Honor the §5 safety rule (e.g. atomic balance update).
 
-## AI prompt
-
-<prompt>
-Role: implement the feature so EVERY failing test passes — the build phase.
-Read first: §1 · §3 · §4 · CONVENTIONS.
-Objective: every §4 test green, one small batch at a time.
-Steps:
-  1. Make EVERY failing test pass, honoring the §5 safety rule.
-  2. Report which tests pass and exactly what changed.
-Never: change a test or the contract; use a package off the allow-list; or push past unclear instead of asking.
-</prompt>
-
 ## Exit gate
 
 <exit_gate>
@@ -55,7 +43,7 @@ Never: change a test or the contract; use a package off the allow-list; or push 
 
 ## Next
 
-`python3 .add/tooling/add.py gate PASS` (from build — compound-crosses to verify in one call) → read `phases/6-verify.md`.
+`python3 .add/tooling/add.py gate PASS` (from build — compound-crosses to verify in one call) → `phases/verify.md` on demand.
 Book: `docs/07-step-5-build.md`.
 
 > Under `autonomy: auto` Build and Verify run together as one evidence-auto-gated run. See `run.md`.
