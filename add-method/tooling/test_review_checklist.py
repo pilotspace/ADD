@@ -22,7 +22,6 @@ RUN_MD = HERE.parent / "skill" / "add" / "run.md"
 
 HEADING = "## The freeze review checklist"
 # the engine must not change in this prose-only task (scope-creep guard)
-from engine_pin import ENGINE_MD5
 
 
 def _section() -> str | None:
@@ -60,21 +59,6 @@ class ChecklistTest(unittest.TestCase):
         # needle updated by ratified CR-2 (rewrite-guides, 2026-06-07): the clause was
         # positivized "never a second gate" -> "the freeze stays the only gate" (v17 rubric);
         # the guard's intent — the anti-ceremony clause must be stated — is unchanged.
-
-    def test_three_trees_agree(self):
-        for rel in (("skill", "add", "phases", "direction.md"),
-                    ("skill", "add", "run.md")):
-            canon = HERE.parent.joinpath(*rel)
-            for twin in (REPO / ".claude" / "skills" / "add" / Path(*rel[2:]),
-                         BUNDLE.joinpath(*rel)):
-                self.assertEqual(canon.read_bytes(), twin.read_bytes(),
-                                 f"divergence: {twin}")
-
-    def test_engine_untouched(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"prose-only task must not touch the engine: {p}")
 
 
 if __name__ == "__main__":

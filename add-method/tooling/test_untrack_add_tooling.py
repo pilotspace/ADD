@@ -78,15 +78,12 @@ class CiMaterializes(unittest.TestCase):
 
 
 class PinTestsToleratesAbsence(unittest.TestCase):
-    def test_argv_portability_soft_skips(self):                    # M4, R:pin_test_hard_fails_on_absence
-        txt = (HERE / "test_argv_portability.py").read_text(encoding="utf-8")
+    def test_canonical_sweep_soft_skips(self):                     # M4, R:pin_test_hard_fails_on_absence
+        # test-corpus-slim: the per-suite pin copies were consolidated into the
+        # canonical sweep — the absence-tolerance guard re-aims at it.
+        txt = (HERE / "test_tree_parity.py").read_text(encoding="utf-8")
         self.assertIn(".exists()", txt,
-                      "test_argv_portability.py must filter ADD_PY_COPIES by existence")
-
-    def test_merge_base_enforcement_soft_skips(self):               # M4, R:pin_test_hard_fails_on_absence
-        txt = (HERE / "test_merge_base_enforcement.py").read_text(encoding="utf-8")
-        self.assertIn(".exists()", txt,
-                      "test_merge_base_enforcement.py must filter ADD_PY_COPIES by existence")
+                      "test_tree_parity.py must filter absent (gitignored) twins by existence")
 
 
 if __name__ == "__main__":

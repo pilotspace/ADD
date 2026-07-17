@@ -23,7 +23,6 @@ PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
 VERSION = "1.7.3"
 PRIOR_VERSIONS = ("1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
-from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline capabilities the release notes must name (multi-agent-installer:
 # six+ new agent profiles + the Gemini settings.json wiring)
@@ -86,12 +85,6 @@ class ReleaseShapeTest(unittest.TestCase):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
-
-    def test_engine_untouched(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"the release task must not touch the engine: {p}")
 
 
 if __name__ == "__main__":

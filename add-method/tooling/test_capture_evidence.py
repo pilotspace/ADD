@@ -10,7 +10,7 @@ Frozen contract §3 @ v1:
     captures live at `.add/design/captures/<name>.<ext>`, attached/mentioned in the feature's TASK.md,
     `@json-render/image` (Satori → PNG/SVG) the recommended default, engine never renders.
   - DEMONSTRATED: a captured image is referenced from this task's TASK.md (exit-criterion 4).
-  - ship discipline: 3 add.py copies byte-identical + engine_pin.ENGINE_MD5 == md5(add.py).
+  - ship discipline: 3 add.py copies byte-identical + the engine pin == md5(add.py).
 
 RED before build: AttributeError (_missing_captures missing) · cmd_check emits no missing_capture ·
 the doc lines + the TASK.md capture reference absent.
@@ -227,14 +227,6 @@ class CaptureConventionDocTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # ship discipline — 3 copies byte-identical + the pin re-aimed
 # ---------------------------------------------------------------------------
-class EnginePinSyncTest(unittest.TestCase):
-    def test_copies_byte_identical_and_pinned(self):
-        digests = {_md5(p) for p in _ADDPY if p.exists()}
-        self.assertEqual(len(_ADDPY), 3)
-        self.assertTrue(all(p.exists() for p in _ADDPY), "all 3 add.py copies must exist")
-        self.assertEqual(len(digests), 1, "the 3 add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "engine_pin.ENGINE_MD5 must be re-aimed to md5(add.py)")
 
 
 if __name__ == "__main__":

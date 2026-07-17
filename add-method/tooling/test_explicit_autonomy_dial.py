@@ -241,11 +241,6 @@ class DocsAccordTest(unittest.TestCase):
                 self.assertEqual(canon, (t / fname).read_bytes(),
                                  f"divergence (synced): {t / fname}")
 
-    def test_autonomy_book_docs_name_three_rungs_synced(self):
-        # the §1 Must names appendix-c · 10-setup · 11-governance explicitly
-        for fname in self.AUTONOMY_DOCS:
-            self._assert_names_rungs(self.DOC_TREES[0] / fname, f"docs/{fname}")
-            self._assert_synced(self.DOC_TREES, fname)
 
     def test_glossary_survivor_names_three_rungs(self):
         # the living-doc GLOSSARY the human reads on the board

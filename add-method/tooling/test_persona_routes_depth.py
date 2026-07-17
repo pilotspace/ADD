@@ -160,14 +160,6 @@ class DoctrineTest(unittest.TestCase):
         self.assertRegex(text, r"(?i)propos", "flag mode must teach the persona PROPOSES the route")
         self.assertRegex(text, r"(?i)ratif", "flag mode must teach the human/freeze RATIFIES it")
 
-    def test_skill_ceiling_and_lockstep(self):
-        digests = set()
-        for p in SKILL_TREES:
-            if not p.exists():
-                continue
-            self.assertLessEqual(p.stat().st_size, 9500, f"{p} over the 9500B ceiling")
-            digests.add(hashlib.md5(p.read_bytes()).hexdigest())
-        self.assertEqual(len(digests), 1, "SKILL.md trees diverged")
 
     def test_no_new_freeze_refusal(self):
         # FLOOR: measure-not-block — the freeze path must never gain a route refusal

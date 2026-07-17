@@ -32,11 +32,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 TEMPLATE_COPIES = [
     HERE / "templates" / "TASK.md.tmpl",
     HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",
@@ -222,14 +217,6 @@ class RuleCoverageGapsPure(unittest.TestCase):
         )
         self.assertEqual(_rule_coverage_gaps(sec1, sec2, ""), [])
 
-
-class EnginePinnedAndPoolUntouched(unittest.TestCase):
-    def test_engine_byte_identical_to_pin(self):                   # M7, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                          "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

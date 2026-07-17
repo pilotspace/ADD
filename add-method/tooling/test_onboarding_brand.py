@@ -166,15 +166,6 @@ class BrandSeamsHeldTest(unittest.TestCase):
         self.assertIn('import("@clack/prompts")', src,
                       "clack must still be loaded via a dynamic import() (lazy)")
 
-    def test_engine_untouched_by_the_render(self):
-        import hashlib
-        from engine_pin import ENGINE_MD5
-        for p in (PKG_ROOT / "tooling" / "add.py",
-                  REPO_ROOT / ".add" / "tooling" / "add.py",
-                  PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"{p} changed — the brand render never edits the engine")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

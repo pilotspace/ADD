@@ -130,17 +130,6 @@ class LoopGuideAndParity(unittest.TestCase):
         total = sum((skill / g).stat().st_size for g in guides)
         self.assertLessEqual(total, 41300, "the dedup RECLAIM floor must hold")
 
-    def test_engine_and_loop_parity(self):                         # R3
-        for group in (
-            [ADD_METHOD / "tooling" / "add.py", REPO / ".add" / "tooling" / "add.py",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py"],
-            [ADD_METHOD / "skill" / "add" / "loop.md",
-             REPO / ".claude" / "skills" / "add" / "loop.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "loop.md"],
-        ):
-            digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in group}
-            self.assertEqual(len(digests), 1, f"twin drift: {group[0].name}")
-
 
 if __name__ == "__main__":
     unittest.main()

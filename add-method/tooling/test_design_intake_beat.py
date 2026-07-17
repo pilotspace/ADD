@@ -166,23 +166,5 @@ class DesignIntakeBookTest(unittest.TestCase):
             self.assertIn(axis, text, f"appendix-c-glossary.md must define the '{axis}' axis term")
 
 
-class DesignIntakeParityTest(unittest.TestCase):
-    # Scenario: every surface is mirrored byte-identical
-    def test_design_guide_mirrored(self) -> None:
-        canon = _DESIGN.read_bytes()
-        self.assertEqual(canon, (_BUNDLE_SKILL / "design.md").read_bytes(),
-                         "design.md: canonical ≠ bundled (mirror_drift)")
-        self.assertEqual(canon, (_DOGFOOD_SKILL / "design.md").read_bytes(),
-                         "design.md: canonical ≠ dogfood (mirror_drift)")
-
-    def test_design_template_mirrored(self) -> None:
-        rel = "templates/DESIGN.md.tmpl"
-        canon = (_TOOLING / rel).read_bytes()
-        self.assertEqual(canon, (_BUNDLE_TOOLING / rel).read_bytes(),
-                         f"{rel}: canonical ≠ bundled (mirror_drift)")
-        self.assertEqual(canon, (_DOGFOOD_TOOLING / rel).read_bytes(),
-                         f"{rel}: canonical ≠ dogfood (mirror_drift)")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

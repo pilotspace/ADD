@@ -306,21 +306,5 @@ class SkillDocBundleColumnTest(unittest.TestCase):
         self.assertRegex(text, re.compile(r"default execution mode", re.IGNORECASE))
 
 
-class EngineThreeTreeParityTest(unittest.TestCase):
-    """M9 — the three engine trees stay byte-identical for constants.py/predicates.py/add.py."""
-
-    def test_constants_py_byte_identical(self):
-        digests = {_md5(t / "add_engine" / "constants.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add_engine/constants.py diverged across the 3 trees")
-
-    def test_predicates_py_byte_identical(self):
-        digests = {_md5(t / "add_engine" / "predicates.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add_engine/predicates.py diverged across the 3 trees")
-
-    def test_add_py_byte_identical(self):
-        digests = {_md5(t / "add.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add.py diverged across the 3 trees")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

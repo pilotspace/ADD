@@ -174,13 +174,6 @@ class PredicateTest(unittest.TestCase):
 
 class ParityAndDocTest(unittest.TestCase):
     # scenario: the seed change is byte-identical across all three engine/template trees
-    def test_persona_template_3tree_parity(self):
-        bodies = []
-        for tree in ENGINE_TREES:
-            p = tree / PERSONA_TMPL_REL
-            self.assertTrue(p.exists(), f"persona template missing in {tree}")
-            bodies.append(p.read_bytes())
-        self.assertEqual(len(set(bodies)), 1, "persona template must be byte-identical across trees")
 
     def test_setup_files_entry_in_all_trees(self):
         # SETUP_FILES (constants) must carry the path-bearing personas entry in every engine tree

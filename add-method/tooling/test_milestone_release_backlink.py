@@ -7,7 +7,7 @@ task-milestone-backlink one scope-level up. Frozen shape (§3 @ v1):
   - MILESTONE.md.tmpl gains a literal `release: pending` header line (after `stage: … created:`);
   - `add.py release <v>` rewrites/inserts each BUNDLED milestone's `release:` line to <v>, and the
     stamp writes RIDE cmd_release's existing all-or-nothing _atomic_write_many batch (rollback-safe);
-  - INVARIANTS: every add.py == engine_pin.ENGINE_MD5 (re-pinned); MILESTONE.md.tmpl ×3 byte-identical;
+  - INVARIANTS: every add.py == the engine pin (re-pinned); MILESTONE.md.tmpl ×3 byte-identical;
     the phases lean pool stays within budget (no phase-guide prose).
 
 Run: cd add-method/tooling && python3 -m unittest test_milestone_release_backlink -v
@@ -43,11 +43,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 _REL_LINE = re.compile(r"(?m)^release:\s*(.+?)\s*$")
 
 
@@ -144,21 +139,12 @@ class StampRidesAtomicBatch(_Board):
 
 
 class EnginePinnedAndTemplateParity(unittest.TestCase):
-    def test_template_has_release_field_and_is_parity(self):    # M1, M4
+    def test_template_has_release_field(self):    # M1, M4
         present = [p for p in MILE_TMPL_COPIES if p.exists()]
         self.assertEqual(len(present), 3, "all 3 MILESTONE.md.tmpl copies must exist")
         for p in present:
             self.assertIn("release:", p.read_text(encoding="utf-8"),
                           "MILESTONE.md.tmpl must carry a `release:` header field")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 MILESTONE.md.tmpl copies must be byte-identical")
-
-    def test_engine_byte_identical_to_pin(self):                # M4, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

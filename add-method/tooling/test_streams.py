@@ -166,13 +166,6 @@ class WaveProtocolRuntimeTest(unittest.TestCase):
         self.assertIn("base == head", self.low,
                       "the concrete pre-spawn check (worker base == orchestrator HEAD) must remain")
 
-    def test_three_streams_copies_byte_identical(self):      # Scenario 3 / Must 3 · Reject 2
-        present = [p for p in _STREAMS_TREES if p.exists()]
-        self.assertEqual(len(present), 3,
-                         f"all 3 streams.md copies must exist: {[str(p) for p in _STREAMS_TREES]}")
-        hashes = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
-        self.assertEqual(len(hashes), 1, f"streams.md mirror_drift across the 3 copies: {hashes}")
-
 
 class WorkerStrategyPullTest(unittest.TestCase):
     """streams-strategy-pull: streams.md's worker-contract fence carries a <strategy> block that

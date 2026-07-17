@@ -8,7 +8,7 @@ without one, so drift is detectable instead of silent. Frozen shape (§3 @ v1):
   - TASK.md.tmpl §0 gains a literal `Ground SHA:` field (FULL template only; fast lane omits it);
   - `_read_ground_sha(text)` reads it (None if absent or a `<placeholder>`); `_ground_cites_line_ref`
     probes the §0 block for the `l.\\d+` idiom; cmd_check WARNs when it cites + has no SHA;
-  - INVARIANTS: add.py ×3 == re-pinned ENGINE_MD5; TASK.md.tmpl ×3 byte-identical; phases pool ≤ target.
+  - INVARIANTS: add.py ×3 == re-pinned the engine pin; TASK.md.tmpl ×3 byte-identical; phases pool ≤ target.
 
 Run: cd add-method/tooling && python3 -m unittest test_ground_anchor_sha -v
 """
@@ -41,11 +41,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md",
-]
 
 
 def _md5(p: Path) -> str:
@@ -144,25 +139,13 @@ class CheckWarnsOnDrift(_Board):
 
 
 class EnginePinnedAndTemplateParity(unittest.TestCase):
-    def test_template_has_ground_sha_and_parity(self):           # M1, M4
-        # plan-phase-core: same re-point as test_new_task_has_ground_sha_field above —
-        # the Grounding sub-block (and its Ground SHA field) now lives in §3 PLAN,
-        # AFTER §1/§2, so a "## 1 " split no longer isolates it.
+    def test_template_has_ground_sha(self):           # M1, M4
         present = [p for p in TASK_TMPL_COPIES if p.exists()]
         self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
         for p in present:
             grounding = add._ground_section(p.read_text(encoding="utf-8"))
             self.assertIn("Ground SHA:", grounding,
                           "TASK.md.tmpl §3 PLAN Grounding must carry a `Ground SHA:` field")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 TASK.md.tmpl copies must be byte-identical")
-
-    def test_engine_byte_identical_to_pin(self):                 # M4, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

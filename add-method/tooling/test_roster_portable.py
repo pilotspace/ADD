@@ -168,10 +168,6 @@ class RosterContentTest(_Synced):
             for phase in (AGENT_PHASES[agent][:1] + AGENT_PHASES[agent][-1:]):
                 self.assertIn(phase, line, f"{agent} line missing derived phase {phase!r}")
 
-    def test_roster_text_identical_across_tools(self):                  # M6
-        ra, rc = _roster(self.agents_block()), _roster(self.claude_block())
-        self.assertTrue(ra, "AGENTS.md carries no roster section")
-        self.assertEqual(ra, rc, "roster text must be byte-identical across tools")
 
     def test_block_stays_lean(self):                                    # M7
         block = self.agents_block()
@@ -181,6 +177,11 @@ class RosterContentTest(_Synced):
         self.assertLessEqual(len(lines), 12, f"roster must stay compact, got {len(lines)} lines")
         for anchor in ("## ADD — how to work in this repo", "add.py status", "PROJECT.md"):
             self.assertIn(anchor, block, f"block lost a pinned anchor: {anchor!r}")
+
+    def test_roster_text_identical_across_tools(self):                  # M6
+        ra, rc = _roster(self.agents_block()), _roster(self.claude_block())
+        self.assertTrue(ra, "AGENTS.md carries no roster section")
+        self.assertEqual(ra, rc, "roster text must be byte-identical across tools")
 
 
 class RosterAgnosticTest(_Synced):

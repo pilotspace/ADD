@@ -31,7 +31,6 @@ from pathlib import Path
 
 import add
 import md_section
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -234,15 +233,6 @@ class FreezeChecklistTest(unittest.TestCase):
     # the freeze presentation's real home (phases/direction.md) is pinned by its own tests.
     # Removed under the wordy-test authorization (thin-engine-loop MILESTONE.md, 2026-07-16).
 
-    def test_prose_three_trees_agree(self):
-        for rel in (("skill", "add", "phases", "direction.md"),
-                    ("skill", "add", "run.md")):
-            canon = HERE.parent.joinpath(*rel)
-            for twin in (REPO / ".claude" / "skills" / "add" / Path(*rel[2:]),
-                         BUNDLE.joinpath(*rel)):
-                self.assertEqual(canon.read_bytes(), twin.read_bytes(),
-                                 f"divergence (synced ×3): {twin}")
-
 
 # ---------------------------------------------------------------------------
 # ground-phase-harden — enrich BOTH grounding seams (per-task §0 + milestone-level)
@@ -310,20 +300,6 @@ class GroundHardenTest(unittest.TestCase):
         missing = [f for f in GROUND_FIELDS if f not in sec]
         self.assertEqual(missing, [],
                          f"the fast §3 PLAN Grounding must name all four grounding fields (uniform); missing {missing}")
-
-    def test_ground_harden_three_tree_parity(self):
-        for rel in ("phases/direction.md", "scope.md"):
-            canon = (_SKILL / rel).read_bytes()
-            bundled = (BUNDLE / "skill" / "add" / rel).read_bytes()
-            self.assertEqual(canon, bundled, f"{rel} drifted: canonical vs _bundled")
-
-
-class EngineParityTest(unittest.TestCase):
-    def test_engine_byte_identical(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"engine tree drifted from the pin: {p}")
 
 
 if __name__ == "__main__":

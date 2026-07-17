@@ -37,7 +37,6 @@ VERSION = "1.17.0"
 PRIOR_VERSIONS = ("1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0",
                   "1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0",
                   "1.2.0", "1.1.0", "1.0.0")
-from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline changes the 1.17.0 notes must name
 FEATURE_ANCHORS = ("gate --explain", "worktree-prep", "re-cross",
@@ -104,12 +103,6 @@ class ReleaseShapeTest(unittest.TestCase):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
-
-    def test_engine_trees_parity(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"engine trees must stay byte-identical + pinned: {p}")
 
 
 if __name__ == "__main__":

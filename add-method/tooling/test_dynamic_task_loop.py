@@ -31,7 +31,6 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-import engine_pin
 
 _TOOLING = Path(__file__).resolve().parent              # add-method/tooling
 _ADD_METHOD = _TOOLING.parent                           # add-method
@@ -52,7 +51,7 @@ BOOK_LOOP_COPIES = [
     _REPO / ".add" / "docs" / "09-the-loop.md",
 ]
 
-# add.py copies the shared pin guards (must stay byte-identical and == ENGINE_MD5).
+# add.py copies the shared pin guards (must stay byte-identical and == the engine pin).
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
@@ -232,12 +231,6 @@ class LoopBoard(unittest.TestCase):
                             f"{p.name} must state the milestone holds until criteria met")
 
     # ---- engine re-anchor -------------------------------------------------
-    def test_engine_repinned(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-aimed engine_pin.ENGINE_MD5")
 
 
 if __name__ == "__main__":

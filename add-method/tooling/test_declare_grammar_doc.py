@@ -86,11 +86,6 @@ class DeclareGrammarDocTest(unittest.TestCase):
         self.assertLess(text.index("## Tests"), text.index(SECTION_HEADING))
 
     # ---- scenario: three trees agree ----------------------------------------
-    def test_grammar_doc_tree_parity(self):
-        self.assertEqual(_md5(CANON_TMPL), _md5(DOG_TMPL), "template: dogfood diverged")
-        self.assertEqual(_md5(CANON_TMPL), _md5(BUNDLE_TMPL), "template: bundle diverged")
-        self.assertEqual(_md5(CANON_GUIDE), _md5(DOG_GUIDE), "guide: dogfood diverged")
-        self.assertEqual(_md5(CANON_GUIDE), _md5(BUNDLE_GUIDE), "guide: bundle diverged")
 
     # ---- scenario: engine untouched (green-by-design regression guard) -----
     def test_engine_untouched(self):

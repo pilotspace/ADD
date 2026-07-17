@@ -211,16 +211,6 @@ class CompactRejects(_ArchivedMilestoneBase):
 
 
 # ── guard: the engine ships byte-identical in all three trees ────────────────────────
-class EngineTripletParity(unittest.TestCase):
-    def test_engine_triplet_parity(self):
-        canon = _TOOLING / "add.py"
-        dogfood = _REPO / ".add" / "tooling" / "add.py"
-        bundled = (_REPO / "add-method" / "src" / "add_method" / "_bundled"
-                   / "tooling" / "add.py")
-        if not dogfood.exists():  # installed-package context — parity is vacuous
-            self.skipTest("dogfood tree absent")
-        self.assertEqual(canon.read_bytes(), dogfood.read_bytes())
-        self.assertEqual(canon.read_bytes(), bundled.read_bytes())
 
 
 if __name__ == "__main__":

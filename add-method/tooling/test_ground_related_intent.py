@@ -45,11 +45,6 @@ ADD_PY_COPIES = [
     _REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON = _ADD_METHOD / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 FIELD = "Related intent"
 
 
@@ -121,31 +116,9 @@ class TemplateGainsRelatedIntentLine(unittest.TestCase):
                       "the §3 PLAN grounding-measure line must be preserved verbatim")
 
 
-class EngineMeasureUntouched(unittest.TestCase):
-    def test_engine_byte_identical_to_pin(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match engine_pin.ENGINE_MD5 (no measure edit)")
-
-
 class LeanBudgetHeldHonestly(unittest.TestCase):
     """The pool stays at-or-under its target — whatever the baseline is, the budget holds
     and any rebaseline is RECORDED (the test_skill_lean comment trail), never silent."""
-
-class CopiesStayByteIdentical(unittest.TestCase):
-    def test_guide_copies_byte_identical(self):
-        present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 3-plan.md copies must be byte-identical")
-
-    def test_template_copies_byte_identical(self):
-        present = [p for p in TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 TASK.md.tmpl copies must be byte-identical")
 
 
 if __name__ == "__main__":

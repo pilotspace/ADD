@@ -56,67 +56,12 @@ def _rel_files(root: Path) -> dict[Path, str]:
 class BundleParityTest(unittest.TestCase):
 
     # --- skill tree is byte-identical to canonical --------------------------
-    def test_skill_tree_byte_identical(self):
-        canon = _rel_files(CANON_SKILL)
-        bundle = _rel_files(BUNDLE_SKILL)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "skill file sets differ between canonical and bundle:\n"
-            f"  only in canonical: {sorted(str(p) for p in canon.keys() - bundle.keys())}\n"
-            f"  only in bundle:    {sorted(str(p) for p in bundle.keys() - canon.keys())}",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "skill file(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
 
     # --- add.py is byte-identical to canonical ------------------------------
-    def test_add_py_byte_identical(self):
-        self.assertTrue(CANON_TOOLING_PY.exists(), f"missing canonical: {CANON_TOOLING_PY}")
-        self.assertTrue(BUNDLE_TOOLING_PY.exists(), f"missing bundle: {BUNDLE_TOOLING_PY}")
-        self.assertEqual(
-            _md5(CANON_TOOLING_PY), _md5(BUNDLE_TOOLING_PY),
-            "tooling/add.py differs between canonical and bundle. "
-            "Re-run: python3 scripts/prepare_bundle.py",
-        )
 
     # --- templates/ is byte-identical to canonical -------------------------
-    def test_templates_byte_identical(self):
-        canon = _rel_files(CANON_TEMPLATES)
-        bundle = _rel_files(BUNDLE_TEMPLATES)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "templates file sets differ between canonical and bundle.",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "template(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
 
     # --- docs tree is byte-identical to canonical --------------------------
-    def test_docs_tree_byte_identical(self):
-        canon = _rel_files(CANON_DOCS)
-        bundle = _rel_files(BUNDLE_DOCS)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "docs file sets differ between canonical and bundle.",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "docs file(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
 
     # --- teacher tree is byte-identical to canonical -----------------------
     def test_teacher_tree_byte_identical(self):

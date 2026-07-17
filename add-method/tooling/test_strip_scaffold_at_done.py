@@ -7,7 +7,7 @@ task is `done` they are dead weight (PR40 audit). Frozen shape (§3 @ v1):
     pass through byte-exact — the frozen §3 is never mutated), trims the trailing whitespace a
     removal leaves, collapses 3+ blank lines; idempotent;
   - cmd_gate calls it as the LAST step of a COMPLETING gate (PASS/RISK-ACCEPTED), atomic + degrade-safe;
-  - INVARIANTS: add.py ×3 == re-pinned ENGINE_MD5; phases pool untouched.
+  - INVARIANTS: add.py ×3 == re-pinned the engine pin; phases pool untouched.
 
 Run: cd add-method/tooling && python3 -m unittest test_strip_scaffold_at_done -v
 """
@@ -33,11 +33,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 
 
 def _md5(p: Path) -> str:
@@ -176,14 +171,6 @@ class StripHelperProperties(unittest.TestCase):
                           "a real comment after a stray backtick must still be stripped")
         self.assertIn("kept line", out)
 
-
-class EnginePinnedAndPoolUntouched(unittest.TestCase):
-    def test_engine_byte_identical_to_pin(self):                 # M4, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

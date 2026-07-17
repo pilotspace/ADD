@@ -113,22 +113,6 @@ class ContractHardStrategySoft(unittest.TestCase):
         self.assertNotEqual(add._contract_body_hash(shape), h)
 
 
-class TreeParityAndPins(unittest.TestCase):
-    """M12 — the three engine trees stay byte-identical and match the pin."""
-
-    def test_add_py_byte_identical_and_pinned(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 add.py copies must exist")
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "the 3 add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5)
-
-    def test_template_copies_byte_identical(self):
-        present = [p for p in TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
-
-
 class _CLI(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()

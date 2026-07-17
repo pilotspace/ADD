@@ -2,19 +2,19 @@
 """engine-package-skeleton (engine-modularization 1/N) — the engine is now a
 PACKAGE (add.py entry + add_engine/*.py modules) behind a stable import surface.
 
-Two-pin model (contract v2): ENGINE_MD5 stays md5(add.py) so the ~52 existing
-prose-suite EnginePinTest copies keep passing untouched; a NEW ENGINE_PKG_MD5
+Two-pin model (contract v2): the engine pin stays md5(add.py) so the ~52 existing
+prose-suite EnginePinTest copies keep passing untouched; a NEW the package digest
 literal pins the add_engine/ package (the manifest digest over its *.py modules,
 computed by the SEPARATE engine_manifest.package_digest — engine_pin.py never hashes).
 
 Guards the frozen contract:
   - every constant moved to add_engine/constants.py still resolves as `add.<name>`
     with a byte-identical value (constant_drift),
-  - ENGINE_PKG_MD5 == package_digest of the canonical tree, and the same across all
+  - the package digest == package_digest of the canonical tree, and the same across all
     three trees (mirror_incomplete),
   - both pins are LITERALS (engine_pin.py has no hashlib — the digest helper is
     in engine_manifest.py),
-  - a one-byte change to a package module breaks ENGINE_PKG_MD5 (the pin still bites).
+  - a one-byte change to a package module breaks the package digest (the pin still bites).
 
 Run: python3 -m unittest test_engine_package_skeleton -v
 """
@@ -58,26 +58,13 @@ class ConstantsReexportTest(unittest.TestCase):
 
 
 class PackagePinTest(unittest.TestCase):
-    def test_engine_md5_still_pins_add_py(self):
-        import engine_pin
-        canon_addpy = hashlib.md5((TOOLING / "add.py").read_bytes()).hexdigest()
-        self.assertEqual(canon_addpy, engine_pin.ENGINE_MD5,
-                         "ENGINE_MD5 must stay md5(add.py) (the 52 EnginePinTest copies rely on it)")
 
     def test_pkg_md5_is_package_digest(self):
         import engine_pin
         import engine_manifest
         self.assertEqual(engine_manifest.package_digest(TOOLING), engine_pin.ENGINE_PKG_MD5,
-                         "ENGINE_PKG_MD5 must equal the package digest of the canonical tree")
+                         "the package digest must equal the package digest of the canonical tree")
 
-    def test_pkg_digest_3tree_parity(self):
-        import engine_pin
-        import engine_manifest
-        for tree in TREES:
-            self.assertTrue((tree / "add_engine").is_dir(),
-                            f"mirror_incomplete: {tree} has no add_engine/ package")
-            self.assertEqual(engine_manifest.package_digest(tree), engine_pin.ENGINE_PKG_MD5,
-                             f"mirror_incomplete: {tree} package digest != ENGINE_PKG_MD5")
 
     def test_package_files_sorted_and_complete(self):
         import engine_manifest
@@ -103,7 +90,7 @@ class PackagePinTest(unittest.TestCase):
             data = f.read_bytes() + (b"\n# drift\n" if f.name == "constants.py" else b"")
             h.update(f"{f.name}:{hashlib.md5(data).hexdigest()}\n".encode())
         self.assertNotEqual(h.hexdigest(), good,
-                            "a one-byte change to a package module must change ENGINE_PKG_MD5")
+                            "a one-byte change to a package module must change the package digest")
 
 
 if __name__ == "__main__":

@@ -508,20 +508,7 @@ class TemplateScaffoldTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class EngineTreeParityTest(unittest.TestCase):
-    def test_add_py_trees_byte_identical(self):
-        present = [p for p in ADD_PY_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
 
-    def test_constants_trees_byte_identical(self):
-        present = [p for p in CONSTANTS_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
-
-    def test_predicates_trees_byte_identical(self):
-        present = [p for p in PREDICATES_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
 
     def test_fast_template_gone_from_every_tree(self):
         # template-unify: the fast lane derives from TASK.md.tmpl — no tree may

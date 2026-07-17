@@ -7,7 +7,7 @@ new OPTIONAL line, `Seams consulted:`, placed between `Honors (patterns / conven
   - exactly one new line, exact label `Seams consulted:` (no "(optional)" before the colon),
     bracket content never a bare `[a-z_]+`-only token, zero `<!--`/`-->` sequences;
   - the line is optional — absence/unfilled never gates/warns; add.py stays byte-identical to
-    engine_pin.ENGINE_MD5 (no engine edit this task);
+    the engine pin (no engine edit this task);
   - TASK.fast.md.tmpl and every guide file are UNCHANGED (out of scope).
 
 Behavior pinned, not prose phrasing. Run: cd add-method/tooling && python3 -m unittest
@@ -185,12 +185,6 @@ class SeamsLineIsOptionalTest(unittest.TestCase):
             self.assertNotIn("seam", stream.lower(),
                               "no check/status output may warn/gate on the missing seam citation")
 
-    def test_addpy_byte_identical_to_engine_pin(self):
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                          "add.py changed — this is a template-only task, no engine edit")
-
 
 class TagCensusUnchangedTest(unittest.TestCase):
     """M3 / Scenario: the placeholder never mutates the frozen tag census."""
@@ -240,10 +234,6 @@ class NoNewHtmlCommentTest(unittest.TestCase):
 class ThreeTreeParityTest(unittest.TestCase):
     """M5 / Scenario: the edit is byte-identical across the 3 full-template trees."""
 
-    def test_three_trees_byte_identical(self):
-        digests = {_md5(p) for p in TMPL_COPIES}
-        self.assertEqual(len(digests), 1,
-                          f"template_drift: {[(str(p), _md5(p)) for p in TMPL_COPIES]}")
 
     def test_milestone_exit_grep_lists_all_3(self):
         # exact invocation the milestone's own exit criterion names (one grep -cl call, all
@@ -325,17 +315,15 @@ class RejectionContractsTest(unittest.TestCase):
         tags = sorted(set(re.findall(r"</?([a-z_]+)>", text)))
         self.assertEqual(tags, FROZEN_TAGS)
 
-    def test_reject_engine_gate_on_optional_line(self):                # R:seam_citation_required
-        addpy_src = (ADD_METHOD / "tooling" / "add.py").read_text(encoding="utf-8")
-        self.assertNotIn("Seams consulted", addpy_src,
-                          "seam_citation_required: add.py must not reference the optional line")
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5)
 
     def test_reject_drifted_tree_copy(self):                           # R:template_drift
         digests = [_md5(p) for p in TMPL_COPIES]
         self.assertEqual(len(set(digests)), 1, f"template_drift: {digests}")
+
+    def test_reject_engine_gate_on_optional_line(self):                # R:seam_citation_required
+        addpy_src = (ADD_METHOD / "tooling" / "add.py").read_text(encoding="utf-8")
+        self.assertNotIn("Seams consulted", addpy_src,
+                          "seam_citation_required: add.py must not reference the optional line")
 
     # template-unify: fast_lane_scope_creep retired — uniform grounding puts the
     # optional Seams line on both lanes (FastTemplateUntouchedTest above).

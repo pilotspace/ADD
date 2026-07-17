@@ -15,7 +15,6 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -134,13 +133,6 @@ class DoctorReferentialTest(_Harness):
         code, out, err = self._run("doctor")
         self.assertEqual(code, 0, out + err)            # no referential violation in this shape
         self.assertNotIn("Traceback", err)              # never an uncaught crash
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

@@ -75,15 +75,6 @@ class PackagingShipsAgents(unittest.TestCase):
         self.assertIn("agents/", pkg.get("files", []),
                      "package.json's files allowlist must ship agents/")
 
-    def test_bundled_agents_dir_byte_identical_to_canonical(self):
-        self.assertTrue(BUNDLED_AGENTS.is_dir(),
-                        "src/add_method/_bundled/agents/ must exist for the Python wheel to ship it")
-        for name in AGENT_NAMES:
-            canon, bundled = CANON_AGENTS / name, BUNDLED_AGENTS / name
-            self.assertTrue(bundled.is_file(), f"missing bundled agent: {bundled}")
-            self.assertEqual(_md5(canon), _md5(bundled),
-                             f"{name} must be byte-identical between add-method/agents/ and _bundled/agents/")
-
 
 class PythonInstallerManifest(unittest.TestCase):
     def test_managed_has_agents_entry(self):

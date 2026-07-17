@@ -41,7 +41,7 @@ _TOOLING = Path(__file__).resolve().parent              # add-method/tooling
 _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
-# add.py copies the shared pin guards (must stay byte-identical and == ENGINE_MD5).
+# add.py copies the shared pin guards (must stay byte-identical and == the engine pin).
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
@@ -340,18 +340,14 @@ class WaveBoard(unittest.TestCase):
                 self.assertIn("wave_ledger_malformed", out)
         self.assertEqual(p.read_bytes(), before, "refusal must not mutate")
 
-    # ---- census + scope guard ----------------------------------------------
-    def test_census_and_pin(self):
+    def test_wave_verify_census(self):
         covered = {argv[0] for argv in test_min_pillar.LIFECYCLE}
         self.assertIn("wave-verify", covered,
                       "the new verb must be census-classified (closed census)")
         self.assertIn("wave-verify", test_min_pillar._NONZERO_OK,
                       "wave-verify is a refusal verb on the no-wave lifecycle board")
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-aimed engine_pin.ENGINE_MD5")
+
+    # ---- census + scope guard ----------------------------------------------
 
 
 if __name__ == "__main__":

@@ -15,7 +15,6 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -148,13 +147,6 @@ class AllJsonTest(_Harness):
         self.assertEqual(slugs, {"t1", "t2"})
         for r in obj["tasks"]:
             self.assertEqual(set(r), {"slug", "milestone", "phase", "role"})
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

@@ -112,11 +112,5 @@ class TagClassUnchangedTest(unittest.TestCase):
             self.assertEqual(_paired_tags(text), FORM_TAGS, f"tag set drifted in {p}")
 
 
-class ThreeTreeParityTest(unittest.TestCase):
-    def test_byte_identical_across_three_trees(self):
-        texts = {p.read_text(encoding="utf-8") for p in TASK_TMPL_COPIES}
-        self.assertEqual(len(texts), 1, "TASK.md.tmpl diverges across the 3 parity trees")
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -300,11 +300,6 @@ class AdrHarvestTest(unittest.TestCase):
         self.assertEqual(_md5(CANON_TMPL), _md5(BUNDLE_TMPL), "full template: bundle diverged")
 
     # ── only add.py + templates change: the package pin holds ────────────────────────────
-    def test_pkg_pin_holds(self):
-        import engine_manifest
-        import engine_pin
-        self.assertEqual(engine_manifest.package_digest(HERE), engine_pin.ENGINE_PKG_MD5,
-                         "add_engine/*.py digest must be unchanged (only add.py re-pins ENGINE_MD5)")
 
 
 if __name__ == "__main__":

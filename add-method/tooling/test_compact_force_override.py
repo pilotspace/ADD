@@ -20,7 +20,6 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -145,13 +144,6 @@ class ForceOverrideTest(_ArchivedBase):
         self.assertNotEqual(code, 0)
         self.assertIn("open_deltas_unfolded", err)
         self.assertEqual(pre, _snapshot(self.root))
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

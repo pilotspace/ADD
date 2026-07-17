@@ -87,15 +87,6 @@ class FlowDiagramProofTest(unittest.TestCase):
                         "mid-flow backward-correction edge (loopback_not_drawn)")
 
     # --- no surface drifts: the doc trees agree byte-for-byte -----------------
-    def test_flow_chapter_identical_across_trees(self):
-        present = [p for p in FLOW_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2, "expected at least root + shipped copy")
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
-        self.assertEqual(
-            len(digests), 1,
-            "02-the-flow.md differs across trees: "
-            + ", ".join(f"{p.name}@{p.parent.name}={hashlib.md5(p.read_bytes()).hexdigest()[:8]}"
-                        for p in present))
 
 
 if __name__ == "__main__":

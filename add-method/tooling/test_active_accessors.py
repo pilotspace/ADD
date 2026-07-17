@@ -12,7 +12,6 @@ import unittest
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -92,13 +91,6 @@ class RoutingTest(unittest.TestCase):
                 and n.func.attr == "get" and n.args
                 and isinstance(n.args[0], ast.Constant) and n.args[0].value == "active_task"]
         self.assertEqual(raw + gets, [], "cmd_check must read active_task via _active_task, not raw")
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1, "the 3 add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

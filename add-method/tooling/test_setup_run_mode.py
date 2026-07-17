@@ -99,11 +99,6 @@ class RunModeStep(unittest.TestCase):
         self.assertNotIn("opt-out", streams,
                          "the stale opt-out framing must not survive the default flip")
 
-    def test_three_trees_byte_identical(self):
-        for rel in (SETUP, STREAMS):
-            digests = {_md5(t / rel) for t in (CANONICAL, BUNDLED, DOGFOOD)}
-            self.assertEqual(len(digests), 1, f"{rel} diverged across the 3 skill trees")
-
 
 class InitRunMode(unittest.TestCase):
     """Engine tests: add.py init --run-mode {auto,conservative}.

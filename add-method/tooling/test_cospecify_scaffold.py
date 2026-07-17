@@ -105,20 +105,6 @@ class CospecifyScaffoldTest(unittest.TestCase):
         )
 
     # --- propagation discipline: the two tooling trees stay byte-identical ----
-    def test_tooling_trees_byte_identical(self):
-        root = Path(add.__file__).resolve().parents[2]  # .../AIDD-Book
-        pairs = [
-            ("add-method/tooling/templates/TASK.md.tmpl", ".add/tooling/templates/TASK.md.tmpl"),
-            ("add-method/tooling/add.py", ".add/tooling/add.py"),
-        ]
-        for canon, dogfood in pairs:
-            cb, db = (root / canon), (root / dogfood)
-            if not db.exists():
-                self.skipTest(f"dogfood mirror absent: {dogfood}")
-            self.assertEqual(
-                cb.read_bytes(), db.read_bytes(),
-                f"tooling trees drifted: {canon} != {dogfood} — propagate with cp",
-            )
 
 
 if __name__ == "__main__":

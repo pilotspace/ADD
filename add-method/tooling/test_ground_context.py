@@ -132,33 +132,6 @@ class TemplateGainsContextLine(unittest.TestCase):
                       "the Grounding sub-block heading must be preserved")
 
 
-class CopiesStayByteIdentical(unittest.TestCase):
-    """The ×3 guide and ×3 template copies stay md5-identical (dogfood parity)."""
-
-    def test_guide_copies_byte_identical(self):
-        present = [p for p in GUIDE_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 skill 3-plan.md copies must exist")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 3-plan.md copies must be byte-identical")
-
-    def test_template_copies_byte_identical(self):
-        present = [p for p in TMPL_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "all 3 TASK.md.tmpl copies must exist")
-        self.assertEqual(len({_md5(p) for p in present}), 1,
-                         "the 3 TASK.md.tmpl copies must be byte-identical")
-
-
-class EngineMeasureUntouched(unittest.TestCase):
-    """The grounding measure is out of scope — add.py must not change."""
-
-    def test_engine_byte_identical_to_pin(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match engine_pin.ENGINE_MD5 (no measure edit this task)")
-
-
 class GatherMethodHint(unittest.TestCase):
     """3-plan.md carries the gather-METHOD hint (subagent/skim sweep + deepen)."""
 

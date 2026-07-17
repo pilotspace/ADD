@@ -100,11 +100,6 @@ class InjectionPointTest(unittest.TestCase):
                              f"the template render path must stay NO-EXEC (found {forbidden!r})")
 
     # scenario: the change is byte-identical across the trees
-    def test_subagent_prompt_parity(self):
-        tmpls = {_tmpl(t) for t in ENGINE_TREES}
-        self.assertEqual(len(tmpls), 1, "the PROMPT template must be byte-identical across engine trees")
-        streams = {_streams(t) for t in SKILL_TREES}
-        self.assertEqual(len(streams), 1, "streams.md must be byte-identical across skill trees")
 
 
 if __name__ == "__main__":

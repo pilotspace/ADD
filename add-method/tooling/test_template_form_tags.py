@@ -245,12 +245,6 @@ class ScopeEdges(unittest.TestCase):
             self.assertEqual(set(), paired & FORM_TAGS,
                              f"form tags never in skill guides: {guide.relative_to(skill)}")
 
-    def test_template_tree_parity_all_seven(self):
-        dogfood = _REPO / ".add" / "tooling" / "templates"
-        if not dogfood.exists():
-            self.skipTest("dogfood mirror absent (fresh package)")
-        self.assertEqual([], tree_parity_offenses(),
-                         "all 7 .tmpl files byte-identical across both tooling trees")
 
     def test_amendment_is_a_frozen_artifact(self):
         task = _dogfood_task("xml-prompt-structure")
@@ -376,14 +370,6 @@ class BuildExpectationsBlock(unittest.TestCase):
                         "the guide cues filling the expectations before build")
         self.assertIn("confirm", guide,
                       "the guide cues confirming each expectation at the gate")
-
-    def test_template_and_guide_parity_three_trees(self):
-        for group, label in ((self.TASK_TMPL, "TASK.md.tmpl"), (self.VERIFY_GUIDE, "verify.md")):
-            present = [p for p in group if p.exists()]
-            if len(present) < 2:
-                self.skipTest(f"{label}: fewer than 2 trees present (fresh package)")
-            blobs = {p.read_bytes() for p in present}
-            self.assertEqual(1, len(blobs), f"{label} diverged across its parity trees")
 
 
 if __name__ == "__main__":

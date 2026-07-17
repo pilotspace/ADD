@@ -155,26 +155,5 @@ class ProseNamesAllFour(unittest.TestCase):
                           f"{name} must recommend persona-targeting behavioral lessons")
 
 
-class ParityHolds(unittest.TestCase):
-    def test_engine_guide_book_agent_parity(self):                 # R3
-        sets = [
-            [ADD_METHOD / "tooling" / "add.py", REPO / ".add" / "tooling" / "add.py",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py"],
-            [ADD_METHOD / "skill" / "add" / "deltas.md",
-             REPO / ".claude" / "skills" / "add" / "deltas.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "deltas.md"],
-            [ADD_METHOD / "skill" / "add" / "fold.md",
-             REPO / ".claude" / "skills" / "add" / "fold.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "fold.md"],
-            [ADD_METHOD / "docs" / "18-personas.md", REPO / "18-personas.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "18-personas.md"],
-            [ADD_METHOD / "agents" / "add-verify.md", REPO / ".claude" / "agents" / "add-verify.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "agents" / "add-verify.md"],
-        ]
-        for group in sets:
-            digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in group}
-            self.assertEqual(len(digests), 1, f"twin drift: {group[0].name}")
-
-
 if __name__ == "__main__":
     unittest.main()

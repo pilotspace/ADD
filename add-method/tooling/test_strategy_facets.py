@@ -119,8 +119,6 @@ class StrategyFacetsTest(unittest.TestCase):
     # (test_scaffold_carries_facets pins the live fast scaffold).
 
     # ---- M5: twins in md5 lockstep ----------------------------------------------
-    def test_template_twins_lockstep(self):
-        self.assertEqual(len({_md5(p) for p in FULL_TWINS}), 1, "TASK.md.tmpl twins diverged")
 
     # ---- M6: the build guide teaches the facets, trio identical -----------------
     def test_build_guide_teaches_facets(self):
@@ -172,11 +170,6 @@ class StrategyFacetsTest(unittest.TestCase):
             self.assertNotIn("`", line, "a backtick in a §5 line can parse as a scope token")
 
     # ---- R:engine_touched --------------------------------------------------------
-    def test_engine_untouched(self):
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py changed — this is a prose/template-only task")
 
     # ---- After-1: a fresh scaffold carries the facets (full + fast) --------------
     def test_scaffold_carries_facets(self):

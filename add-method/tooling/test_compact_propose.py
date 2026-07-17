@@ -109,11 +109,6 @@ class CompactProposeTest(unittest.TestCase):
         self.assertEqual(_md5(self._spec("PROJECT.md")), before)
 
     # ── honest re-pin ─────────────────────────────────────────────────────────────
-    def test_engine_repin_honest(self):
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "ENGINE_MD5 must equal the BUILT add.py (re-pin honestly)")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "persona-routes-depth",
+  "active_task": "test-corpus-slim",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -11234,10 +11234,58 @@
       ],
       "created": "2026-07-16T09:51:29+00:00",
       "updated": "2026-07-16T09:51:29+00:00"
+    },
+    "test-corpus-slim": {
+      "title": "Consolidate duplicated parity/engine-pin tests into one canonical sweep",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "thin-engine-loop",
+      "depends_on": [],
+      "created": "2026-07-17T04:13:28+00:00",
+      "updated": "2026-07-17T05:43:50+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-17T04:24:35+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "full",
+        "by": "persona:tdd-verifier \u2014 wide test deletion needs the full bundle; every strike ratified at the freeze"
+      },
+      "tripwire": {
+        "contract_md5": "fc05404b420e9fc3a6dc9e28cb6ad4b4",
+        "tests": {
+          "add-method/tooling/test_corpus_slim.py": "a411efc89471750a1a7e192be28939da"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "tmp/",
+          ".add/SEAMS.md"
+        ],
+        "snapshot_md5": "5e8be0af5571e53aa52e0d200f79fad8"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-17T05:12:17+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-17T04:02:58+00:00",
+  "updated": "2026-07-17T05:43:50+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -12637,7 +12685,7 @@
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
     "strategy-intake": "gate-experience-udd",
-    "thin-engine-loop": "persona-routes-depth"
+    "thin-engine-loop": "test-corpus-slim"
   },
   "todos": [
     {

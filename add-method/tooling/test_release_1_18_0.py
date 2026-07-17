@@ -34,7 +34,6 @@ VERSION = "1.18.0"
 PRIOR_VERSIONS = ("1.17.0", "1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0",
                   "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
                   "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
-from engine_pin import ENGINE_MD5
 CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline changes the 1.18.0 notes must name
 FEATURE_ANCHORS = ("Approach", "Data strategy", "Optimization stance",
@@ -98,12 +97,6 @@ class ReleaseShapeTest(unittest.TestCase):
         self.assertEqual((pkg, py), (VERSION, VERSION),
                          "publish.yml's guard would fail this release closed")
 
-    def test_plugin_version_agrees(self):
-        plugin = json.loads(
-            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-        )["version"]
-        self.assertEqual(plugin, VERSION,
-                         "the Claude Code plugin manifest must match the shipped version")
 
     def test_runtime_version_agrees(self):
         init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
@@ -116,11 +109,12 @@ class ReleaseShapeTest(unittest.TestCase):
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
 
-    def test_engine_trees_parity(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"engine trees must stay byte-identical + pinned: {p}")
+    def test_plugin_version_matches(self):
+        plugin = json.loads(
+            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.assertEqual(plugin, VERSION,
+                         "the Claude Code plugin manifest must match the shipped version")
 
 
 if __name__ == "__main__":

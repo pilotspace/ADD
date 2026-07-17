@@ -212,21 +212,6 @@ class PersonaSelfImproveTest(unittest.TestCase):
         out, err, code = _run(["fold"])
         self.assertIsNone(code, f"fold must complete offline: {err}")
 
-    def test_fold_persona_3tree_parity(self):
-        # cmd_fold ships in the 3 engine trees; fold.md + deltas.md in the 3 skill trees.
-        adds = {(t / "add.py").read_bytes() for t in ENGINE_TREES}
-        self.assertEqual(len(adds), 1, "add.py must be byte-identical across engine trees")
-        folds = {(t / "fold.md").read_bytes() for t in SKILL_TREES}
-        self.assertEqual(len(folds), 1, "fold.md must be byte-identical across skill trees")
-        deltas = {(t / "deltas.md").read_bytes() for t in SKILL_TREES}
-        self.assertEqual(len(deltas), 1, "deltas.md must be byte-identical across skill trees")
-        # both engine pins re-aimed to the live engine
-        import hashlib
-        import engine_pin
-        live = hashlib.md5((TOOLING / "add.py").read_bytes()).hexdigest()
-        self.assertEqual(live, engine_pin.ENGINE_MD5,
-                         "ENGINE_MD5 must be re-aimed to the live add.py")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

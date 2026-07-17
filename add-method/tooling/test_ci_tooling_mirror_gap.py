@@ -156,12 +156,10 @@ class PublishGuardJobMaterializes(unittest.TestCase):
 
 class SeamAuditUntouched(unittest.TestCase):
     def test_seam_audit_job_untouched(self):                       # M4, R:seam_audit_regressed
-        diff = subprocess.run(
-            ["git", "diff", "HEAD", "--", "add-method/tooling/test_untrack_add_tooling.py"],
-            cwd=REPO, capture_output=True, text=True, check=False,
-        )
-        self.assertEqual(diff.stdout.strip(), "",
-                          "test_untrack_add_tooling.py must not be touched by this build")
+        # test-corpus-slim: the "untouched by this build" git-diff assert was a
+        # build-scoped tripwire — vacuous at HEAD once that build committed, and a
+        # false-red for any later task legitimately editing the file. The CI-shape
+        # guards below are the durable half.
         block = _job_block(CI_YML.read_text(encoding="utf-8"), "seam-audit")
         audit_pos = block.find("python3 .add/tooling/add.py audit")
         self.assertGreaterEqual(audit_pos, 0,

@@ -16,7 +16,6 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -172,13 +171,6 @@ class WrapperIdentityTest(_Sched):
         for m in ("m1", "m2"):
             self.assertEqual(add._wave_schedule(st, m),
                              add._wave_schedule_merged(st, [m]))
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

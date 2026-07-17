@@ -116,14 +116,5 @@ class ByteBudgetsTest(unittest.TestCase):
                         f"phases/ pool must shrink below its pre-task {PRE_TASK_POOL}B (now {pool}B)")
 
 
-class TreeLockstepTest(unittest.TestCase):
-    def test_three_tree_lockstep(self):
-        for name in NEW_FILES:
-            digests = {_md5(t / "phases" / name) for t in _trees()
-                       if (t / "phases" / name).exists()}
-            self.assertEqual(len(digests), 1,
-                             f"phases/{name} must be byte-identical across the skill trees")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -85,11 +85,6 @@ class ActiveSelectionTest(unittest.TestCase):
 
 
 class PinTest(unittest.TestCase):
-    def test_engine_md5_still_pins_add_py(self):
-        import engine_pin
-        got = hashlib.md5((TOOLING / "add.py").read_bytes()).hexdigest()
-        self.assertEqual(got, engine_pin.ENGINE_MD5,
-                         "ENGINE_MD5 must stay md5(add.py), re-aimed after the shrink")
 
     def test_pkg_digest_includes_accessors_3tree(self):
         import engine_pin
@@ -98,7 +93,7 @@ class PinTest(unittest.TestCase):
         self.assertIn("accessors.py", names, "accessors.py must join the package manifest")
         for tree in TREES:
             self.assertEqual(engine_manifest.package_digest(tree), engine_pin.ENGINE_PKG_MD5,
-                             f"mirror_incomplete: {tree} package digest != ENGINE_PKG_MD5")
+                             f"mirror_incomplete: {tree} package digest != the package digest")
 
     def test_pins_are_literals(self):
         src = (TOOLING / "engine_pin.py").read_text(encoding="utf-8")

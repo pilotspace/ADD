@@ -16,7 +16,7 @@ Behavior pinned (not words):
     ("unrecognized arguments"): slot already bound, or ANY flag-like extra
     (a typo'd flag's value must NEVER be mis-bound as a slug - the safety rule);
   - every optional-slug verb's working shape is unchanged (regression sweep);
-  - the engine re-anchors: md5(add.py) == engine_pin.ENGINE_MD5 across the x3 copies.
+  - the engine re-anchors: md5(add.py) == the engine pin across the x3 copies.
 
 Arrange-through-CLI-contracts: the board is built with the real `add.main` calls,
 so the tests exercise the engine's input contracts, not its internals.
@@ -43,7 +43,7 @@ _TOOLING = Path(__file__).resolve().parent              # add-method/tooling
 _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
-# add.py copies the shared pin guards (must stay byte-identical and == ENGINE_MD5).
+# add.py copies the shared pin guards (must stay byte-identical and == the engine pin).
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
@@ -188,12 +188,6 @@ class ArgvBoard(unittest.TestCase):
         self.assertEqual(self._task("d")["phase"], "build")
 
     # ---- scope guard -------------------------------------------------------
-    def test_engine_pin_reaimed_x3(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-aimed engine_pin.ENGINE_MD5")
 
 
 if __name__ == "__main__":

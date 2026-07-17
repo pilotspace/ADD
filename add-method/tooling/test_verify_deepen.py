@@ -131,12 +131,6 @@ class VerifyDeepenTest(unittest.TestCase):
         for line in SIX_EXISTING:
             self.assertIn(line, text, f"seam_broken: existing section-6 line vanished: {line!r}")
 
-    def test_template_triplet_identical(self):
-        copies = [p for p in (DOGFOOD_TMPL, TASK_TMPL, BUNDLE_TMPL) if p.exists()]
-        if len(copies) < 2:
-            self.skipTest("fewer than two template trees present (bare package)")
-        self.assertEqual(len({_md5(p) for p in copies}), 1,
-                         "TASK.md.tmpl copies diverged across trees")
 
     # --- glossary term ------------------------------------------------------
     def test_glossary_defines_deep_verify(self):
@@ -153,26 +147,20 @@ class VerifyDeepenTest(unittest.TestCase):
         self.assertGreater(checked, 0, "no glossary present to check")
 
     # --- the lean-scope guard: the engine is byte-unchanged -----------------
-    def test_engine_unchanged(self):
-        self.assertEqual(
-            _md5(ADD_PY), engine_pin.ENGINE_MD5,
-            "verify-deepen is rubric+template only - add.py must stay byte-identical "
-            "to the pinned engine (no engine logic in this task)",
-        )
-        src = ADD_PY.read_text(encoding="utf-8")
-        # NOTE: guarantee-audit-lints (flow-honesty M3) added a PRESENCE-ONLY `shallow_deep_check`
-        # audit notice that NAMES the "### Deep checks" block to surface an unfilled one. The engine
-        # may now reference the block HEADING for that lint — but the original invariant holds where
-        # it matters: the engine embeds NONE of the deep-check CONTENT tokens (WIRING/DEAD-CODE/
-        # SEMANTIC) and renders no verdict — presence via _section_unfilled, never judgment.
-        self.assertNotIn("WIRING", src, "no deep-verify CONTENT token belongs in the engine")
-        self.assertNotIn("DEAD-CODE", src, "no deep-verify CONTENT token belongs in the engine")
 
     # --- the rubric names the shallow-verify reject (verify_shallow) --------
     def test_verify_shallow_named(self):
         guide = GUIDE.read_text(encoding="utf-8").lower()
         self.assertIn("shallow verify", guide,
                       "the guide must name an unfilled deep-check block as a shallow verify, not a pass")
+
+    def test_deep_check_content_stays_out_of_engine(self):
+        src = ADD_PY.read_text(encoding="utf-8")
+        # the engine may NAME the "### Deep checks" block for the presence-only
+        # shallow_deep_check lint — but embeds NONE of the deep-check CONTENT
+        # tokens and renders no verdict (presence via _section_unfilled, never judgment).
+        self.assertNotIn("WIRING", src, "no deep-verify CONTENT token belongs in the engine")
+        self.assertNotIn("DEAD-CODE", src, "no deep-verify CONTENT token belongs in the engine")
 
 
 if __name__ == "__main__":

@@ -414,12 +414,6 @@ class FooterFoldTest(_Board):
 
 
 # ── the discipline: ×3 parity + pin re-aimed at this task ────────────────────
-class EnginePinTest(unittest.TestCase):
-    def test_mirrors_and_pin(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "engine_pin.ENGINE_MD5 must track the live engine")
 
 
 if __name__ == "__main__":

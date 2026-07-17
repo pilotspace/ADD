@@ -223,7 +223,7 @@ Watch (reuse scenarios as monitors): guide-file reads per ordinary task (thin-en
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 - [SPEC · seeded] fast-lane routing now lives in SKILL.md flag mode — glossaries (×4 book trees + .add/GLOSSARY.md) rewritten off TASK.fast.md/fast-lane.md (evidence: wording sweep this task)
-- [SPEC · open] freeze-flag label affordance — unified render still doesn't pre-seed the least-sure flag LABEL (carried from template-unify §7)
+- [SPEC · open] freeze-flag label affordance — unified render still doesn't pre-seed the least-sure flag LABEL (carried from template-unify §7) (evidence: TASK.md.tmpl freeze block renders no flag-label placeholder — template-unify §7 delta)
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.

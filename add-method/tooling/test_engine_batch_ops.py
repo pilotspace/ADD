@@ -144,16 +144,5 @@ class BriefStatus(_Project):
                            "plain status keeps the full orient dump")
 
 
-class TreesStayIdentical(unittest.TestCase):
-    def test_three_trees_byte_identical(self):
-        import hashlib
-        repo = HERE.parent.parent
-        trees = (HERE / "add.py",
-                 repo / ".add" / "tooling" / "add.py",
-                 HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "add.py")
-        digests = {hashlib.md5(t.read_bytes()).hexdigest() for t in trees}
-        self.assertEqual(1, len(digests), "engine trees diverged")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

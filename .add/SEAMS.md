@@ -11,15 +11,16 @@
 Name: ENGINE_MD5 / ENGINE_PKG_MD5 re-pin checklist
 Anchor: `add-method/tooling/engine_pin.py:20` (`ENGINE_MD5`) ·
   `add-method/tooling/engine_pin.py:21` (`ENGINE_PKG_MD5`) ·
-  `add-method/tooling/test_engine_repin_parity.py:54` (`test_three_engines_byte_identical_and_current`)
+  `add-method/tooling/test_tree_parity.py:125` (`test_engine_pin_holds`)
 Contract: Any change to `add-method/tooling/add.py` re-aims ENGINE_MD5; any change under
   `add_engine/` re-aims ENGINE_PKG_MD5 — both hard-coded literals (never runtime-computed,
   or a pin could never detect its own drift), each carrying a prepended changelog comment
   naming the task and prior digest. The new digest propagates byte-identically to all 3
-  engine trees before the next gate; test_engine_repin_parity.py's ENGINE_COPIES +
-  test_three_engines_byte_identical_and_current mechanically enforce byte-identity and
-  pin-currency, but never choose the digest for you — skipping the re-pin after a real
-  engine edit is this project's single most common self-heal.
+  engine trees before the next gate; the canonical sweep's test_tree_parity.py
+  (test_engine_pin_holds + the tooling file-set/md5 walk) mechanically enforces
+  byte-identity and pin-currency — test-corpus-slim consolidated the per-suite pin
+  copies into that ONE sweep — but it never chooses the digest for you; skipping the
+  re-pin after a real engine edit is this project's single most common self-heal.
 Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`) — method:
   `grep -rl "ENGINE_MD5\|ENGINE_PKG_MD5" --include=TASK.md .add/tasks` · as of `c152945`.
   Anchor re-verified at build time against the current tree (`test_engine_repin_parity.py`
@@ -35,16 +36,16 @@ Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`
 
 ## three-tree-parity
 Name: Engine / skill / bundle / book tree parity convention
-Anchor: `add-method/tooling/test_engine_repin_parity.py:40` (`ENGINE_COPIES`) ·
-  `add-method/tooling/test_tree_parity.py:21` (`CANON_SKILL`) ·
-  `add-method/tooling/test_bundle_parity.py`
-Contract: Three independent parity guards hold the byte-identical-twin invariant:
-  test_engine_repin_parity (the 3 add.py/add_engine copies), test_tree_parity (canonical
-  skill vs `.claude/skills/add/` dogfood), and test_bundle_parity (whole `_bundled/` package
-  vs canonical, plus zero-test/zero-bytecode). Book-tree parity is no longer test-guarded —
-  test_book_parity was retired in the engine-only test teardown (keep only tests that exercise
-  add.py). Any engine, skill, or template edit must propagate to every one of its own twins
-  before the gate — hand-editing one tree in isolation is the recurring trap these suites exist to catch.
+Anchor: `add-method/tooling/test_tree_parity.py:39` (`CANON_SKILL`) ·
+  `add-method/tooling/test_tree_parity.py:46` (`TOOLING_TREES`)
+Contract: ONE canonical sweep holds the byte-identical-twin invariant: test_tree_parity.py
+  compares the skill trees (canonical · `_bundled` · `.claude/skills/add/` dogfood), the
+  roster agents, the tooling trees (add.py · engine_pin.py · add_engine/*.py · templates),
+  and the book trees + repo-root chapter mirrors — file-set both directions plus md5.
+  test-corpus-slim consolidated the former per-suite guards (test_engine_repin_parity's
+  copies, test_bundle_parity's tree walks, ~180 per-task parity pins) under it. Any engine,
+  skill, or template edit must propagate to every one of its own twins before the gate —
+  hand-editing one tree in isolation is the recurring trap this sweep exists to catch.
 Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
   `grep -rl "byte-identical" --include=TASK.md .add/tasks` · as of `c152945` — a broad
   proxy count, not a precise invocation count. Anchor re-verified at build time against the

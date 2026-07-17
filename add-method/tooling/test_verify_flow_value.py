@@ -65,8 +65,6 @@ class VerifyFlowValueTest(unittest.TestCase):
     def test_constant_is_the_frozen_4_tuple(self):
         self.assertEqual(PERSONA_FLOW_VALUES, ("design", "build", "advisor", "verify"))
 
-    def test_constants_twins_lockstep(self):
-        self.assertEqual(len({_md5(p) for p in CONSTANTS_TWINS}), 1, "constants.py twins diverged")
 
     # ── Accept: flow: verify earns no quality warning ─────────────────────────────
     def test_flow_verify_is_warning_free(self):
@@ -127,11 +125,6 @@ class VerifyFlowValueTest(unittest.TestCase):
                       "tdd-verifier must adopt the new value (no dead wiring)")
 
     # ── pin honesty: add.py untouched by this task ────────────────────────────────
-    def test_engine_addpy_untouched(self):
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must not move in this task (constants-only engine change)")
 
 
 if __name__ == "__main__":

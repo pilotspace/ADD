@@ -172,21 +172,5 @@ class SetupProseTest(unittest.TestCase):
         self.assertIn("DESIGN.md", text, "0-setup must name DESIGN.md as a doc to draft")
 
 
-class DesignArtifactParityTest(unittest.TestCase):
-    def test_design_template_mirrored(self):
-        """mirror_drift: DESIGN.md.tmpl byte-identical canonical↔bundle (+ dogfood)."""
-        rel = "templates/DESIGN.md.tmpl"
-        canon = (_TOOLING / rel).read_bytes()
-        self.assertEqual(canon, (_BUNDLE_TOOLING / rel).read_bytes(), f"{rel}: canonical ≠ bundled")
-        self.assertEqual(canon, (_DOGFOOD_TOOLING / rel).read_bytes(), f"{rel}: canonical ≠ dogfood")
-
-    def test_0setup_mirrored(self):
-        """mirror_drift: phases/direction.md byte-identical across the ×3 skill mirrors."""
-        rel = "phases/direction.md"
-        canon = (_CANON_SKILL / rel).read_bytes()
-        self.assertEqual(canon, (_BUNDLE_SKILL / rel).read_bytes(), f"{rel}: canonical ≠ bundled")
-        self.assertEqual(canon, (_DOGFOOD_SKILL / rel).read_bytes(), f"{rel}: canonical ≠ dogfood")
-
-
 if __name__ == "__main__":
     unittest.main()

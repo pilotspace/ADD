@@ -58,17 +58,6 @@ class SetupGuideSeedsAndDefers(unittest.TestCase):
         self.assertIn("RED", gate)
 
 
-class SkillTreesStayIdentical(unittest.TestCase):
-    def test_setup_guide_parity(self):
-        import hashlib
-        repo = HERE.parent.parent
-        trees = (SETUP_GUIDE,
-                 repo / ".claude" / "skills" / "add" / "phases" / "direction.md",
-                 HERE.parent / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md")
-        digests = {hashlib.md5(t.read_bytes()).hexdigest() for t in trees if t.exists()}
-        self.assertEqual(1, len(digests), "0-setup.md trees diverged")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

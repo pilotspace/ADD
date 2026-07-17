@@ -24,7 +24,6 @@ from pathlib import Path
 from unittest import mock
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -263,13 +262,6 @@ class SeedAtomicityTest(_Project):
                 self._silent("new-task", "followup", "--from-delta", "prior")
         self.assertEqual(self._task_md("prior"), prior_before, "source delta must NOT be half-flipped")
         self.assertFalse(followup_md.exists(), "the new TASK.md must not be left behind on a failed seed")
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1, "the 3 add.py copies diverged")
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":
