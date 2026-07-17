@@ -240,7 +240,7 @@ class FreezeChecklistTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 _SKILL = HERE.parent / "skill" / "add"
 GROUND_MD = _SKILL / "phases" / "direction.md"   # grounding merged into the unified plan guide
-SCOPE_MD = _SKILL / "scope.md"
+SCOPE_MD = _SKILL / "phases" / "direction.md"   # skill-fold-8: scope.md folded here
 TASK_TMPL = HERE / "templates" / "TASK.md.tmpl"
 # template-unify: the fast lane derives from TASK.md.tmpl (no fast template file)
 GROUND_FIELDS = ("Touches", "Context", "Honors", "Anchors")

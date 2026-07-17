@@ -203,7 +203,7 @@ class WorkerStrategyPullTest(unittest.TestCase):
 
     def test_block_byte_identical_to_advisor(self):
         # the two spawn homes must carry the SAME <strategy> block (no drift -> block_drift)
-        adv = (SKILL / "advisor.md").read_text(encoding="utf-8")
+        adv = (SKILL / "phases" / "verify.md").read_text(encoding="utf-8")  # skill-fold-8: advisor.md folded here
         pat = r"\n<strategy>\n.*?\n</strategy>"
         s_block = re.search(pat, self.text, re.DOTALL)
         a_block = re.search(pat, adv, re.DOTALL)

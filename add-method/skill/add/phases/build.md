@@ -21,7 +21,7 @@ Enforced: a completing verify gate refuses an out-of-scope build (`scope_violati
 
 ## Persona overlay (optional)
 
-Load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md` (SOUL = voice/trust; persona = domain **stance**) — name it in §5; its domain supplies the facet vocabulary. SOUL.md is **human-owned**: the overlay never rewrites it (`soul.md`). Advisory — it never lowers a gate; security still **HARD-STOPs**.
+Load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md` (SOUL = voice/trust; persona = domain **stance**) — name it in §5; its domain supplies the facet vocabulary. SOUL.md is **human-owned**: the overlay never rewrites it (voice deltas: `deltas.md`). Advisory — it never lowers a gate; security still **HARD-STOPs**.
 
 ## The cardinal rule
 
@@ -39,7 +39,7 @@ contract.** A genuine need to change either is a change request back to Specify.
 - [ ] Change small enough to review in full.
 </exit_gate>
 
-> **Advisor · Confidence** — delegate a well-scoped batch (advisor.md); self-score before presenting green, refine while cheap (confidence.md).
+> **Advisor · Confidence** — delegate a well-scoped batch (the advisor spawn, `phases/verify.md`); self-score before presenting green, refine while cheap (the confidence self-score, `phases/direction.md`).
 
 ## Next
 
@@ -49,3 +49,23 @@ Book: `docs/07-step-5-build.md`.
 > Under `autonomy: auto` Build and Verify run together as one evidence-auto-gated run. See `run.md`.
 >
 > **Honest redo.** A confirmed cheat returns the task HERE — revert the tampered file or de-overfit src, then advance again (the bounded self-heal loop, `run.md`; capped, then HARD-STOPs to the human). Never weaken a test or edit the frozen contract to pass.
+
+## The self-improving map — every loop feeds four artifacts
+
+You emit `open`; the human confirms; the engine transcribes — **nothing self-approves**. Emission
+lives in observe (§7); every earlier step feeds it: ground surprises → §1 · the freeze's ⚠ flag →
+the next spec · a red-suite gap → a TDD lesson · build's strategy-actually-used → the ADR block ·
+verify residue → a SPEC delta.
+
+| what improves | grammar (closes `(evidence: …)`) | consolidator |
+|---|---|---|
+| foundation — `PROJECT.md`/`CONVENTIONS.md` | `[DDD\|SDD\|UDD\|TDD\|ADD · open] lesson` | `add.py fold` → `fold.md` |
+| personas — the agents' stances | `… · persona:<slug> · critical-rule\|success-metric\|anti-pattern\|ability` | same `fold` run |
+| `SOUL.md` — your voice | a voice delta, `open` | human rewrite (`deltas.md`) |
+| the next scope | `[SPEC · open]` → seeded · dropped · carried | `loop.md` → `new-task` |
+
+Routing: `DDD`→§Domain · `SDD`→§Spec · `UDD`→§Users · `TDD`/`ADD`→§Method learnings — and
+in-flight into the living specs via `add.py delta-append <dd>` (grammar: `deltas.md`). A
+HOW-an-agent-behaves lesson → a persona, not the shared pile. Convergence: `fold` prepends
+newest-first; the settled tail rolls via `compact-foundation.md`; `status` counts the debt
+(`carried:` · `compaction:`). Self-score before emitting (the confidence six dimensions; < 0.9 → refine).

@@ -64,3 +64,24 @@ emit (OBSERVE)        human review
 ```
 
 At the next update the human consolidated DDD+TDD (→ `folded`) and rejected ADD. Sharper foundation; nothing lost.
+
+## Voice deltas — SOUL.md converges to the human
+
+`SOUL.md` (Tone · Communication style · Trust) is the AI's voice — a proposed starter,
+**human-owned**. Emit voice deltas beside the lessons learned in observe, grounded ONLY in the
+working session — their wordings, their corrections, their flow — never their private files:
+
+```
+- [VOICE · <status>] <observation about the voice> (evidence: <in-session pointer>)
+```
+
+`<status>` = `open` | `confirmed` | `declined`; evidence is required (a correction, a re-ask, a
+visible preference) — none → drop it. The loop: **emit** `open` (show-before-ask) → the human
+**confirms or declines** each → on a confirm, rewrite the routed SOUL.md section surgically
+(how I *sound* → `## Tone` · how I *structure* → `## Communication style` · what keeps *trust* →
+`## Trust`) and record the line `confirmed` at the top of `## Voice deltas` (newest-first,
+append-only; declined stays in place). **The human's confirm is the only writer.** Rejects:
+`unconfirmed_voice_rewrite` (a SOUL.md write without a recorded confirm — stop, get the confirm) ·
+`no_open_voice_deltas` (nothing open — a no-op, touch nothing) · `unroutable_voice_delta` (maps
+to no section — fix the delta or widen the routing before writing). No `add.py` command writes
+the voice.

@@ -39,9 +39,9 @@ SPECIFY_GUIDE_COPIES = [
     BUNDLE / "skill" / "add" / "phases" / "direction.md",
 ]
 SCOPE_GUIDE_COPIES = [
-    ADD_METHOD / "skill" / "add" / "scope.md",
-    REPO / ".claude" / "skills" / "add" / "scope.md",
-    BUNDLE / "skill" / "add" / "scope.md",
+    ADD_METHOD / "skill" / "add" / "phases" / "direction.md",
+    REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    BUNDLE / "skill" / "add" / "phases" / "direction.md",
 ]
 CANON_TMPL = MILE_TMPL_COPIES[0]
 CANON_SPECIFY = SPECIFY_GUIDE_COPIES[0]

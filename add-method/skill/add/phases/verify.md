@@ -64,7 +64,8 @@ and fast-lane tasks use the compact form — banner → SUMMARY → EVIDENCE →
 </exit_gate>
 
 > **Persona** — refute-read under the fit `flow: verify` persona / Code-Reviewer lens (advisory; security still HARD-STOPs).
-> **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (advisor.md); score it before recording the gate (confidence.md).
+> **Advisor · Confidence** — the earned-green refute-read is the canonical adversarial spawn (the
+> advisor spawn, below); score it with the confidence self-score (`phases/direction.md`) before recording the gate.
 
 ```bash
 python3 .add/tooling/add.py gate PASS          # marks the task done
@@ -82,11 +83,84 @@ Verify owns the loop's tail since the six-phase merge. After the gate, fill §7:
    that re-enters the flow at Specify (a new task). Emit lessons tagged by the
    competency they improve (`deltas.md`); the human consolidates (`fold.md`).
 4. **Propose a voice delta** — where your voice diverged from the human's, propose a
-   confirmable voice delta tuning `SOUL.md`, emitted `open` (`soul.md` — the human is
-   the only writer). Never auto-roll-back — recommend; a human owns production.
+   confirmable voice delta tuning `SOUL.md`, emitted `open` (grammar + routing: `deltas.md` —
+   the human is the only writer). Never auto-roll-back — recommend; a human owns production.
 
 > **Decisions (ADR)** — the gate already harvested §7's ADR block; `add.py audit` flags one never harvested.
 > **Persona** — tag `· persona:<slug> · critical-rule|success-metric|anti-pattern|ability`;
 > `fold` grows that section — a HOW-an-agent-behaves lesson belongs in a persona, not the shared pile.
 
-Loop — the artifacts are living docs the next cycle refines. Map: `self-improve.md` · book: `docs/08-step-6-verify.md` · `docs/09-the-loop.md`.
+Loop — the artifacts are living docs the next cycle refines. Map: the self-improving map
+(`phases/build.md`) · book: `docs/08-step-6-verify.md` · `docs/09-the-loop.md`.
+
+## The advisor spawn — delegate one piece, never the loop
+
+Spawn a *single* subagent for one well-scoped piece of your plan (many-task pipelines:
+`streams.md`); the engine never spawns — your call per step. Spawn when the piece is separable
+and worth the round-trip: a broad sweep, an independent adversarial review (the refute-read —
+fresh context, never author-graded), a batch, a context-offload; not for narrow cheap work —
+in doubt, do it in-context. **Prefer the named roster**: the ONE `add` agent — the spawn names
+the mode (direction · build · verify · persona · advise) — over an ad-hoc spawn; it carries the
+worker contract and loads the beat guide + best-fit persona itself. Tier: **mid** ordinary,
+**top** complex/cross-cutting (tier→model map: `streams.md`); a stronger model never buys back
+a gate. **Refute-read persona** — a **Code-Reviewer**; findings carry severity: 🔴 blocker ·
+🟡 concern · 💭 note. A persona is advisory: it never lowers a gate (a security finding still
+HARD-STOPs).
+
+The plan-following prompt (reuses `streams.md`'s worker-contract tags):
+
+```xml
+<objective>
+Execute THIS piece of the orchestrator's plan: {{PIECE}}. You own only this piece — not the
+surrounding decisions. Return a verdict; do not record state.
+</objective>
+
+<persona>
+SELECT the persona by frontmatter — flow: match first, then domain; read ONE body —
+and load `.add/personas/{{PERSONA_SLUG}}.md` —
+Identity→your stance · Critical Rules→constraints · Success Metrics→done-bar.
+No match → a {{DOMAIN}} engineer, correctness over speed; never blocks.
+Work step by step: load the context files + the persona; do the work in small steps honoring
+the orchestrator's plan; self-score on the confidence six dimensions — any < 0.9 → refine
+before returning.
+</persona>
+
+<strategy>
+The task's §5 plan — the Strategy (ordered batches) order and the Known-problem fixes — is
+your PREFERRED starting path, not a hard rule. Improve on it when a better strategy emerges
+as you build; on done, report the strategy you ACTUALLY used so the orchestrator can update
+§5 for the audit trail.
+</strategy>
+
+<context_files>
+the plan / task files the piece needs (read-only unless the piece says otherwise)
+</context_files>
+
+<return>
+End with a structured verdict the orchestrator parses and RECORDS:
+{ piece, persona, result, evidence, confidence: {per-dimension 0–1}, open_questions }.
+`persona` names the slug you adopted (or `generic`). Do NOT run add.py or write any shared
+state — you propose, the orchestrator records.
+</return>
+```
+
+**Delegate, don't abdicate**: the subagent PROPOSES, the orchestrator RECORDS — a worker never
+runs add.py or writes shared state; delegation never lowers a gate — a SECURITY finding still
+HARD-STOPs and high-risk scope still escalates, whoever did the work; a low returned self-score
+means refine or re-spawn, never a pass.
+
+## Sensitivity — the risk-class vocabulary
+
+A task declares its risk-CLASS with a `sensitivity:` header line — *what kind* of risk, distinct
+from `risk:` (*how much*). The engine validates + surfaces it (freeze/status/check); it **never
+classifies**. Base four, method-universal: **security** (authn/authz, secrets, crypto, attack
+surface — HARD-STOP, human in the loop in EVERY tier) · **data** (persistence, migrations,
+privacy, loss; Datetime, money, or timezone arithmetic also ⇒ `data` —
+value formats are the risk surface, bench wm2's naive-timestamp green) · **architecture** (module boundaries,
+contracts, cross-cutting structure) · **mechanical** (rote, low-impact — the only class a
+recorded advisor verdict can gate for auto-completion, `advisor-gate-relax`). EXTEND per project
+in `GLOSSARY.md`'s `## Sensitivity classes` (`- <token>: <definition>` bullets); freeze accepts
+base ∪ domain — else `sensitivity_invalid`. Keep it current: a new KIND of risk → propose a
+class, the human confirms; map domain → base behavior in the definition ("pii … escalates to
+human review" = human-floor, not advisor-gatable). Declared, never inferred · the base four are
+never replaced · a comment is never a declaration.

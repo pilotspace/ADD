@@ -26,7 +26,7 @@ CANON = SKILL_TREES[0]
 
 
 def _advisor(tree: Path) -> str:
-    return (tree / "advisor.md").read_text(encoding="utf-8")
+    return (tree / "phases" / "verify.md").read_text(encoding="utf-8")  # skill-fold-8: advisor.md folded here
 
 
 class AdvisorPersonaSelectTest(unittest.TestCase):

@@ -196,7 +196,8 @@ class CompanionGuidesTest(unittest.TestCase):
     """v2: every OTHER shipped guide carrying the lock fence is agent-run too —
     the adversarial verify found the same human-types gap in both of these."""
 
-    COMPANIONS = ("setup-review.md", "adopt.md")
+    # skill-fold-8: setup-review.md folded into adopt.md — one companion carries both fences
+    COMPANIONS = ("adopt.md",)
 
     def _text(self, name: str) -> str:
         return (PKG_ROOT / "skill" / "add" / name).read_text(encoding="utf-8")
@@ -213,7 +214,7 @@ class CompanionGuidesTest(unittest.TestCase):
                           f"{name}: the lock must be agent-run on the human's word")
 
     def test_sign_row_is_chat_confirm(self):
-        low = self._text("setup-review.md").lower()
+        low = self._text("adopt.md").lower()
         self.assertNotIn("sign: reviewed the above →", low,
                          "the Sign: template row must not present the command "
                          "as the human's action item")

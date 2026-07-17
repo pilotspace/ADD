@@ -8,8 +8,8 @@ prose. Load it (or the one guide you need) only when a trigger fires.
   contracts — `streams.md`. Delegate one piece of your plan to a subagent — the named roster
   (the ONE `add` agent — mode: direction/build/verify/persona/advise) is agent-call-preferred, the
   default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
-  `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9) — `confidence.md`.
-  Both advisory; the engine never spawns.
+  the advisor spawn (`phases/verify.md`). Self-score a draft (0–1 across six dimensions, refine if
+  any < 0.9) — the confidence self-score (`phases/direction.md`). Both advisory; the engine never spawns.
 - **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` renders TASK.md
   minus the deep-verify/observe sections (a derived subset of the ONE template), bundle approved in
   one freeze — routing lives in SKILL.md flag mode. Floor held (frozen contract · red test · verify
@@ -30,10 +30,11 @@ prose. Load it (or the one guide you need) only when a trigger fires.
 - **Monorepo / multi-repo** — a milestone spans more than one green bar (a BE + its FE) → the
   **component pillar**: declare components in `.add/components.toml`, gate each task on its component's
   green-bar, freeze cross-component contracts (`produces:`/`consumes:`), hold the FE until the BE
-  freezes, `federate pull` across repos — `components.md`. Opt-in; no components = today.
+  freezes, `federate pull` across repos — book chapter `docs/17-components.md` + the
+  platform-engineer seed persona. Opt-in; no components = today.
 - **Project-fit personas** — the **persona loop** seeds `.add/personas/<slug>.md`, grows them via
   observe→delta→consolidate, applies them in design/streams/advisor/build (advisory; never lowers a gate) — `docs/18-personas.md`.
 - **Risk-class of a task** — declare `sensitivity:` in the TASK header (base `security|data|architecture|
   mechanical`, always valid). EXTEND it with your project's domain classes in `GLOSSARY.md`'s `## Sensitivity
   classes` section; freeze/status/check read base ∪ project. The AI keeps the domain vocabulary current —
-  `sensitivity.md`. Security is a human floor in every tier; only `mechanical` is advisor-gatable — see `advisor-gate-relax` in `run.md`.
+  the Sensitivity section (`phases/verify.md`). Security is a human floor in every tier; only `mechanical` is advisor-gatable — see `advisor-gate-relax` in `run.md`.

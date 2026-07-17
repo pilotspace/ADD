@@ -125,10 +125,12 @@ class LoopGuideAndParity(unittest.TestCase):
                       "loop.md's gather step must include the carried backlog")
 
     def test_pool_holds_dedup_floor(self):                         # R3
-        guides = ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]
+        # skill-fold-8: advisor.md folded into phases/verify.md and left this pool —
+        # the floor drops by advisor's bytes at the fold (4939), never re-widened.
+        guides = ["run.md", "streams.md", "loop.md", "design.md"]
         skill = ADD_METHOD / "skill" / "add"
         total = sum((skill / g).stat().st_size for g in guides)
-        self.assertLessEqual(total, 41300, "the dedup RECLAIM floor must hold")
+        self.assertLessEqual(total, 36361, "the dedup RECLAIM floor must hold")
 
 
 if __name__ == "__main__":

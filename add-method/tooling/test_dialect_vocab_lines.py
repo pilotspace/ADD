@@ -19,7 +19,7 @@ import add
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE / "templates"
 REPO = HERE.parents[1]
-SKILL_GUIDE = HERE.parent / "skill" / "add" / "sensitivity.md"
+SKILL_GUIDE = HERE.parent / "skill" / "add" / "phases" / "verify.md"  # skill-fold-8: sensitivity.md folded here
 
 
 class TemplateDialectLineTest(unittest.TestCase):

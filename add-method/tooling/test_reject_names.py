@@ -232,7 +232,7 @@ class ProseFramingTest(unittest.TestCase):
         self.assertIn("goal_not_auto_ready", gov, "the code string itself is UNCHANGED")
 
     def test_scope_md_opt_in_not_invariant(self):              # Must (scope.md relabel)
-        scope = (ADD_METHOD / "skill" / "add" / "scope.md").read_text(encoding="utf-8")
+        scope = (ADD_METHOD / "skill" / "add" / "phases" / "direction.md").read_text(encoding="utf-8")
         self.assertNotIn("Confirm before create is the invariant", scope)
         self.assertIn("Confirm before create is the convention", scope)
         self.assertIn("--await-confirm", scope)

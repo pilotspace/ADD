@@ -48,7 +48,7 @@ Resume from the tool, never re-read the repo — mid-flow, trust each verb's
 python3 .add/tooling/add.py status --brief
 ```
 
-Then read the foundation map `add.py status --foundation` (`--all` full) + `.add/SOUL.md` (**voice** — `soul.md`). Then branch on state:
+Then read the foundation map `add.py status --foundation` (`--all` full) + `.add/SOUL.md` (**voice**). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
@@ -76,7 +76,7 @@ Classify a raw request BEFORE any scope: read `intake.md`. Too small for scope �
 one bucket — `new-major` ·
 `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`; the human
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
-`MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks) — read `scope.md` — then
+`MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks — `phases/direction.md`), then
 `new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed). For
 `task`/`change-request`: `add.py new-task`, then beat 1 above.
 
@@ -103,7 +103,7 @@ its own references (you read ONLY this file).
 At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
 `gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·
 evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP) — the question is a summary, never the artifact.
-Read `gate-udd.md`/`run.md` at most once per session.
+Read each at most once per session.
 
 Emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its living spec in
@@ -111,19 +111,19 @@ they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its li
 At milestone close the retrospective consolidation gathers confirmed deltas into a versioned
 foundation — `fold.md`; then compact each spec's stable tail — `compact-foundation.md`. Observe also
 tunes your voice: a confirmable delta the human confirms rewrites `SOUL.md` (the human is the only
-writer) — `soul.md`.
+writer) — `deltas.md`.
 
 ## Beyond the bundle — load on demand
 
 One trigger = one guide — full prose: `beyond.md`; load only when a trigger fires:
 
-- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default execution mode) ·
-  self-score `confidence.md`
+- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster (agent-call-preferred,
+  the default execution mode) → `phases/verify.md` · self-score → `phases/direction.md`
 - UI/experience surface → UDD loop `design.md` (the fast lane is flag-mode above — no extra guide)
 - milestone goal unmet at `milestone-done` → `loop.md`
 - status cues: `MVP covered` → `graduate.md` · closed-milestone cut → `release.md`
-- monorepo green-bars → `components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·
-  `sensitivity:` risk classes + `advisor-gate-relax` → `sensitivity.md`
+- monorepo green-bars → `docs/17-components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·
+  `sensitivity:` risk classes + `advisor-gate-relax` → `phases/verify.md`
 
 ## Non-negotiable rules (from the method)
 

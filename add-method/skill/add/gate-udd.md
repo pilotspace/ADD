@@ -93,7 +93,7 @@ APPROVE  <the question>
       <one-line description>
 ```
 
-- **Exactly one** `▶ … (recommended)` (per `confidence.md`; human overrides) + **1–3 real alternatives**, each described — no strawmen. **Human gates only** (`[human gate]`, not `[you drive]`). As an `AskUserQuestion` picker: recommended first with `(Recommended)`; else a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + flag count.
+- **Exactly one** `▶ … (recommended)` (per the confidence self-score, `phases/direction.md`; human overrides) + **1–3 real alternatives**, each described — no strawmen. **Human gates only** (`[human gate]`, not `[you drive]`). As an `AskUserQuestion` picker: recommended first with `(Recommended)`; else a numbered/`▶` menu. The question is a summary, never the artifact — intent + what "yes" means + flag count.
 
 ## The four floors — the persona owns the form, never these
 

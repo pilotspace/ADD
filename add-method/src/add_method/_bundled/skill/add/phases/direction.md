@@ -47,12 +47,12 @@ gate); capture each surfaced decision as an ADR in `PROJECT.md` **Key Decisions*
    enough at setup; author per-role personas from the local teacher library
    (`.add/personas-teacher/`) when a task first embodies the role.
 3. **Propose, then size it.** Float a kickoff suggestion (goal · flow · scenarios) for the first
-   milestone; on the human's reaction draft `MILESTONE.md` (read `scope.md`).
+   milestone; on the human's reaction draft `MILESTONE.md` (Milestone scope drafting, below).
 4. **Create the first task and draft its bundle §1–§4** (`new-task` is allowed pre-lock; the red
    suite must FAIL before build). Leave §3 `Status: DRAFT` — the lock is its approval; the engine
    refuses build until you `lock` (`setup_unlocked`).
-5. **Write `.add/SETUP-REVIEW.md`** per `setup-review.md`: every drafted decision,
-   **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
+5. **Write `.add/SETUP-REVIEW.md`** per `adopt.md`'s Setup review section: every drafted
+   decision, **lowest-confidence-first**, tagged `guessed` | `evidence-grounded`.
 
 **Run mode** — propose before the lock, confirm-to-keep, record in PROJECT.md Key Decisions:
 
@@ -83,6 +83,46 @@ stamp its §3 `Status: FROZEN @ v1`, build is open.
 - [ ] First task created; §1–§4 drafted — the red suite runs RED before build opens; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
 - [ ] Human confirmed the baseline approval and `add.py lock --by` ran with their name.
 </exit_gate>
+
+---
+
+## Milestone scope drafting — a classified request into a versioned MILESTONE.md
+
+Intake CLASSIFIES (`intake.md`); scope drafting turns a milestone bucket into a confirmed
+`MILESTONE.md` — the template is the SHAPE, this rubric is HOW to fill it.
+`new-major`/`sub-milestone` → draft ONE MILESTONE.md · `split_required` → draft ALL N as one
+batch pass · `task`/`change-request` → no milestone (route per intake).
+**Confirm before create is the convention** — one drafting pass, nothing written until the human confirms; enforced only
+by the opt-in gate: `new-milestone <slug> --await-confirm` seeds it unconfirmed and HOLDS
+`new-task` (`milestone_unconfirmed`) until you show the filled draft and run
+`milestone-confirm <slug>`.
+
+## Position the goal — ground in assets, relate to the milestone map
+
+Do this FIRST:
+
+1. **Ground in current assets** — the same four fields as §3 Grounding, raised to milestone
+   scope: **Touches** (subsystems/files spanned) · **Context** (docs · config · data) ·
+   **Honors** (`PROJECT.md`/`CONVENTIONS.md` invariants) · **Anchors** (contracts/symbols tasks
+   cite) — each named from real assets, never assumed. Record it as the milestone's `## Ground`
+   section — shared context gathered ONCE; each task's specify PROJECTS its §1 from it. Touches
+   spanning >1 app root (BE+FE)? weigh `.add/components.toml` now.
+2. **Relate to the map** — run `add.py search <keyword> ...` first, then read every live +
+   archived goal (`.add/milestones/*` · `.add/archive/*`); name THIS request's relationship —
+   *extends* X · *depends-on* Y · *overlaps* Z — in the `rationale` line.
+3. **Already delivered** by an existing milestone → reject `duplicate_goal`; route as `task` or
+   `change-request`.
+
+**Draft the sections well**: goal = ONE outcome sentence (no "and" — that is two milestones) ·
+rationale = bucket + WHY + the relationship (never in state.json) · Scope In/Out = an explicit
+deferral list (an empty Out means scope is not thought through) · shared decisions/contracts
+name the owning task · tasks breadth-first (`slug · depends-on · one line`, each one-file-sized) ·
+exit criteria observable, EVERY criterion maps to a declared task slug · `Close — ship review` +
+`Release steps` stay drafted-blank (filled at `milestone-done`/release). Brainstorm via the
+three-move co-specify (below) raised to milestone scope; rank assumptions lowest-confidence
+first (top 1–2 get the ⚠ flag); present per `gate-udd.md` as a guided choice. A draft is
+well-formed only when those boxes hold — fix before proposing.
+Rejects: `not_classified` · `dangling_criterion` · `no_milestone` · `duplicate_goal`.
 
 ---
 
@@ -222,7 +262,20 @@ absolute paths, and symlink escapes are never read.
 > **Persona / Advisor / Confidence** — load the fit `.add/personas/<slug>.md` (its Critical Rules
 > shape §1, its Success Metrics shape the red suite; advisory, never lowers a gate). Canonical
 > spawns: a researcher for an unfamiliar domain, a broad ground sweep, a second opinion on a risky
-> shape, a test-author for a wide suite (`advisor.md`); self-score the bundle — the lowest dimension
-> aims your ⚠ flag (`confidence.md`).
+> shape, a test-author for a wide suite (the advisor spawn — `phases/verify.md`); self-score the
+> bundle below — the lowest dimension aims your ⚠ flag.
+
+## The confidence self-score
+
+Before presenting ANY drafted artifact (spec · contract · bundle · subagent verdict), self-score
+it 0–1 on six dimensions: **Completeness** (every rule/scenario/rejection covered?) · **Clarity**
+(understood without you in the room?) · **Practicality** (implementable against the real code?) ·
+**Optimization** (correctness/simplicity/cost balanced — no gold-plating, no corner cut?) ·
+**Edge cases** (failure modes, concurrency, empty/oversized inputs named?) · **Self-evaluation**
+(does it carry its own refine step?). Any dimension **< 0.9** → refine, then re-score. The lowest
+dimension is what you surface ⚠-first at the freeze; persistently low on risky scope →
+*recommend* lowering autonomy (the level stays the human's call).
+The hard rule: **advisory, never a gate** — it never auto-passes a verify, never substitutes for evidence or the human
+decision point, and a self-asserted score is never recorded as something the human "agreed to".
 
 Book: `docs/03-step-1-specify.md` · `docs/05-step-3-plan.md` · `docs/06-step-4-tests.md` · `docs/10-setup-and-stages.md`.
