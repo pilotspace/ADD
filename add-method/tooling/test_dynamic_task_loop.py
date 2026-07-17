@@ -44,11 +44,9 @@ SKILL_LOOP = _REPO / ".claude" / "skills" / "add" / "loop.md"
 # The book loop chapter the goal-gate statement must reach (3 tracked + 1 gitignored
 # runtime copy under .add/docs/). Byte-identity across copies is owned by the parity
 # guards; here we assert the CONTENT reached every copy.
-BOOK_LOOP_COPIES = [
+BOOK_LOOP_COPIES = [                       # book-stops-shipping (2.0 M6b): canonical + root mirror only
     _REPO / "09-the-loop.md",
     _ADD_METHOD / "docs" / "09-the-loop.md",
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "09-the-loop.md",
-    _REPO / ".add" / "docs" / "09-the-loop.md",
 ]
 
 # add.py copies the shared pin guards (must stay byte-identical and == the engine pin).
@@ -223,7 +221,7 @@ class LoopBoard(unittest.TestCase):
 
     def test_book_loop_chapter_names_gate(self):
         present = [p for p in BOOK_LOOP_COPIES if p.exists()]
-        self.assertGreaterEqual(len(present), 3, "the 3 tracked book copies must exist")
+        self.assertGreaterEqual(len(present), 2, "the 2 tracked book copies must exist")
         for p in present:
             t = p.read_text(encoding="utf-8").lower()
             self.assertIn("exit criteri", t, f"{p.name} must name the goal-gate")

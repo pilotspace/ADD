@@ -29,17 +29,15 @@ PLACEHOLDER = ("<harvested at done from §1/§3/§5/§6 — do not hand-edit; on
                "per decision, refilled only while this placeholder stands>")
 
 # the 3 git-tracked mirror trees per surface. Skill guide: canonical · .claude dogfood · bundle.
-# Book/glossary: canonical · repo-ROOT mirror (test_book_parity) · bundle — NOT .add/docs/, which is
-# a gitignored local install artifact absent in CI.
+# Book/glossary: canonical · repo-ROOT mirror (test_book_parity) — the bundle and .add/docs
+# copies died with book-stops-shipping (2.0 M6b).
 OBSERVE_GUIDE = (ADD_METHOD / "skill/add/phases/verify.md",
                  REPO / ".claude/skills/add/phases/verify.md",
                  ADD_METHOD / "src/add_method/_bundled/skill/add/phases/verify.md")
 BOOK_LOOP = (ADD_METHOD / "docs/09-the-loop.md",
-             REPO / "09-the-loop.md",
-             ADD_METHOD / "src/add_method/_bundled/docs/09-the-loop.md")
+             REPO / "09-the-loop.md")   # book-stops-shipping (2.0 M6b): no bundled copy
 GLOSSARY = (ADD_METHOD / "docs/appendix-c-glossary.md",
-            REPO / "appendix-c-glossary.md",
-            ADD_METHOD / "src/add_method/_bundled/docs/appendix-c-glossary.md")
+            REPO / "appendix-c-glossary.md")   # book-stops-shipping: no bundled copy
 
 
 def _md5(p):

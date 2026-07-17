@@ -97,10 +97,10 @@ class NodeInstallerSharedNamespaceTest(_Harness):
         for f in sorted(AGENTS_SRC.glob("*.md")):
             self.assertTrue((agents / f.name).exists(), f"roster missing: {f.name}")
 
-    def test_non_shared_tree_still_sweeps_orphans(self):       # M4 (docs keeps clean-replace)
+    def test_non_shared_tree_still_sweeps_orphans(self):       # M4 (tooling keeps clean-replace)
         r = _run_node(["init"], cwd=self.tmp)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        orphan = self.tmp / ".add" / "docs" / "zz-orphan.md"
+        orphan = self.tmp / ".add" / "tooling" / "zz-orphan.md"
         orphan.write_text("upstream-removed leftover", encoding="utf-8")
         r2 = _run_node(["update"], cwd=self.tmp)
         self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)

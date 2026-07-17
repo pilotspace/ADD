@@ -40,9 +40,8 @@ SKILL_TREES = [
     REPO / ".claude" / "skills" / "add",
     ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add",
 ]
-BOOK_TREES = [
+BOOK_TREES = [                             # book-stops-shipping (2.0 M6b): no bundled copy
     ADD_METHOD / "docs",
-    ADD_METHOD / "src" / "add_method" / "_bundled" / "docs",
     REPO,                                              # the repo-root book mirror
 ]
 BOOK_FILES = ["16-releasing.md", "11-governance.md", "appendix-c-glossary.md"]

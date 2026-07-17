@@ -166,7 +166,7 @@ class StatusSurfaceTest(_Board):
 # ============================================================================
 class DocsAccordTest(unittest.TestCase):
     TERM = "auto-ready goal"
-    DOC_TREES = (REPO / "add-method" / "docs", REPO / ".add" / "docs", BUNDLE / "docs")
+    DOC_TREES = (REPO / "add-method" / "docs",)   # book-stops-shipping (2.0 M6b): canonical only
     BOOK_DOCS = ("appendix-c-glossary.md", "11-governance.md")
     TMPL_TREES = (REPO / "add-method" / "tooling" / "templates",
                   REPO / ".add" / "tooling" / "templates",

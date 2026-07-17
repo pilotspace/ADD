@@ -52,14 +52,14 @@ class GuideTest(unittest.TestCase):
         add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=direction (phase-collapse-3)
         out = self._guide()
         self.assertIn("phase: direction", out)
-        self.assertIn("03-step-1-specify.md", out)
+        self.assertIn("03-step-1-specify/", out)
         self.assertIn("add.py freeze", out)
 
     def test_guide_verify_points_at_gate(self):
         add.main(["new-task", "feat-a"])
         add.main(["phase", "verify", "feat-a"])
         out = self._guide()
-        self.assertIn("08-step-6-verify.md", out)
+        self.assertIn("08-step-6-verify/", out)
         self.assertIn("add.py gate", out)
         self.assertNotIn("advance", out, "verify must point at the gate, not advance")
 
@@ -100,7 +100,7 @@ class GuideTest(unittest.TestCase):
         add.main(["new-task", "feat-b"])             # active becomes feat-b (specify)
         out = self._guide("feat-a")                  # explicit slug overrides active
         self.assertIn("phase: build", out)
-        self.assertIn("07-step-5-build.md", out)
+        self.assertIn("07-step-5-build/", out)
 
     def test_guide_unknown_slug_errors(self):
         add.main(["new-task", "feat-a"])

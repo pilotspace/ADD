@@ -126,7 +126,7 @@ class LoopAwareOrient(unittest.TestCase):
         out, _, _ = self._run("status")
         low = out.lower()
         self.assertIn("goal not met", low)
-        self.assertIn("09-the-loop.md", out)
+        self.assertIn("09-the-loop/", out)
         self.assertNotIn("start the next feature", out)
 
     def test_status_goal_met_points_to_milestone_done(self):
@@ -146,21 +146,21 @@ class LoopAwareOrient(unittest.TestCase):
         self._mk_done("t")
         self._set_criteria("unmet")
         out, _, _ = self._run("guide")
-        self.assertIn("09-the-loop.md", out)
-        self.assertNotIn("02-the-flow.md", out)
+        self.assertIn("09-the-loop/", out)
+        self.assertNotIn("02-the-flow", out)
 
     def test_guide_json_loop_juncture_chapter(self):
         self._mk_done("t")
         self._set_criteria("unmet")
         out, _, _ = self._run("guide", "--json")
         obj = json.loads(out)
-        self.assertTrue(obj["chapter"].endswith("/09-the-loop.md"), obj["chapter"])
+        self.assertTrue(obj["chapter"].endswith("/09-the-loop/"), obj["chapter"])
 
     def test_guide_no_criteria_keeps_flow_chapter(self):
         self._mk_done("t")
         self._set_criteria("none")
         out, _, _ = self._run("guide")
-        self.assertIn("02-the-flow.md", out)
+        self.assertIn("02-the-flow/", out)
 
     # ---- doc accord -------------------------------------------------------
     def test_loop_md_cue_matches_engine(self):

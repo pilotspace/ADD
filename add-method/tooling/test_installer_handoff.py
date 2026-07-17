@@ -70,8 +70,8 @@ def _assert_brain_landed(tc, root: Path, out: str):
                   "skill tree missing after flagless install")
     tc.assertTrue((root / ".add" / "tooling" / "add.py").exists(),
                   "tooling missing after flagless install")
-    tc.assertTrue(any((root / ".add" / "docs").glob("*.md")),
-                  "book missing after flagless install")
+    tc.assertFalse((root / ".add" / "docs").exists(),
+                   "book-stops-shipping (2.0 M6b): the installer must not drop .add/docs")
     tc.assertFalse((root / ".add" / "state.json").exists(),
                    "installer must NEVER run init — no state.json")
     low = out.lower()

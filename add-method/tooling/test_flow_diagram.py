@@ -19,8 +19,7 @@ import add
 ROOT = Path(__file__).resolve().parents[2]          # tooling -> add-method -> repo root
 FLOW_TREES = [
     ROOT / "02-the-flow.md",                         # repo-root book (flat)
-    ROOT / "add-method" / "docs" / "02-the-flow.md", # shipped npm copy
-    ROOT / ".add" / "docs" / "02-the-flow.md",       # dogfood install (gitignored)
+    ROOT / "add-method" / "docs" / "02-the-flow.md", # canonical (book-stops-shipping: no other copies)
 ]
 CHAPTER = ROOT / "add-method" / "docs" / "02-the-flow.md"   # the tested content source
 CHECKLIST = ROOT / "add-method" / "diagrams" / "CHECKLIST.md"  # the reusable pipeline

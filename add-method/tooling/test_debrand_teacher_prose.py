@@ -39,18 +39,14 @@ def _chapter_trees():
     return _existing(
         _ADD_METHOD / "docs" / "18-personas.md",
         _REPO / "18-personas.md",
-        _REPO / ".add" / "docs" / "18-personas.md",
-        _ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "18-personas.md",
-    )
+    )   # book-stops-shipping (2.0 M6b): no bundled/dogfood copies
 
 
 def _glossary_trees():
     return _existing(
         _ADD_METHOD / "docs" / "appendix-c-glossary.md",
         _REPO / "appendix-c-glossary.md",
-        _REPO / ".add" / "docs" / "appendix-c-glossary.md",
-        _ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "appendix-c-glossary.md",
-    )
+    )   # book-stops-shipping (2.0 M6b): no bundled/dogfood copies
 
 
 def _setup_trees():

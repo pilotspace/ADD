@@ -11,7 +11,7 @@ Surfaces swept (a diverged or orphan file reds exactly this suite):
   agents   add-method/agents/add-*.md ↔ _bundled/agents ↔ .claude/agents
   tooling  add.py · engine_pin.py · add_engine/*.py · templates/** — 4-way
            (canonical · _bundled · REPO/.add · add-method/.add)
-  docs     add-method/docs/*.md ↔ _bundled/docs ↔ repo-root chapter mirrors
+  docs     add-method/docs/*.md ↔ repo-root chapter mirrors (bundle/dogfood: NEVER ship)
   pins     md5(add.py) == ENGINE_MD5 · package_digest == ENGINE_PKG_MD5 (ONCE)
 
 Skip policy — never vacuous: the canonical and _bundled trees are git-tracked
@@ -47,8 +47,8 @@ TOOLING_TREES = (_TOOLING, _BUNDLE / "tooling",
                  _REPO / ".add" / "tooling", _ADD_METHOD / ".add" / "tooling")
 
 DOCS_CANON = _ADD_METHOD / "docs"
-DOCS_BUNDLE = _BUNDLE / "docs"
-DOCS_DOGFOOD = _REPO / ".add" / "docs"
+DOCS_BUNDLE = _BUNDLE / "docs"          # book-stops-shipping (2.0 M6b): must NOT exist
+DOCS_DOGFOOD = _REPO / ".add" / "docs"  # book-stops-shipping (2.0 M6b): must NOT exist
 
 
 def _md5(p: Path) -> str:
@@ -131,21 +131,24 @@ class ToolingParityTest(unittest.TestCase):
 
 
 class DocsParityTest(unittest.TestCase):
+    def test_book_never_ships(self):
+        # book-stops-shipping (2.0 M6b): the book's ONLY home is the canonical
+        # tree (published via mkdocs) — the bundle and the dogfood install carry
+        # no docs/ copy, so a package can never regrow the shipped book silently.
+        self.assertFalse(DOCS_BUNDLE.exists(), "the bundle must not ship the book")
+        self.assertFalse(DOCS_DOGFOOD.exists(), "the dogfood install must not carry .add/docs")
+
     def test_book_trees_byte_identical(self):
-        for tracked in (DOCS_CANON, DOCS_BUNDLE):
-            self.assertTrue(tracked.is_dir(), f"git-tracked docs tree missing: {tracked}")
+        self.assertTrue(DOCS_CANON.is_dir(), f"canonical docs tree missing: {DOCS_CANON}")
         canon = {p.name for p in DOCS_CANON.glob("*.md")}
-        bundle = {p.name for p in DOCS_BUNDLE.glob("*.md")}
-        self.assertEqual(sorted(canon), sorted(bundle), "book chapter sets diverged")
+        self.assertTrue(canon, "the canonical book must hold chapters")
         for name in sorted(canon):
-            digests = {_md5(DOCS_CANON / name), _md5(DOCS_BUNDLE / name)}
+            digests = {_md5(DOCS_CANON / name)}
             # repo-root mirrors exist only for chapter-shaped names (NN-… /
             # appendix-…) — a generic name like README.md at root is the
-            # PROJECT's own file, never a mirror; dogfood docs exists-skip
-            extras = [DOCS_DOGFOOD / name]
+            # PROJECT's own file, never a mirror
             if re.match(r"\d{2}-|appendix-", name):
-                extras.append(_REPO / name)
-            for extra in extras:
+                extra = _REPO / name
                 if extra.exists():
                     digests.add(_md5(extra))
             self.assertEqual(len(digests), 1, f"book chapter diverged across trees: {name}")

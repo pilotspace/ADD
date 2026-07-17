@@ -40,8 +40,6 @@ def _make_bundled(root: Path) -> Path:
     (root / "tooling").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py\n")
     (root / "tooling" / "test_add.py").write_text("# dev-only\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro\n")
     return root
 
 
@@ -82,7 +80,6 @@ class GlobalInstallTest(unittest.TestCase):
     def test_global_install_populates_home(self):                 # G2
         self.assertEqual(self._install(self.proj), 0)
         self.assertTrue((self.home / "tooling" / "add.py").exists())
-        self.assertTrue(any((self.home / "docs").glob("*.md")))
         self.assertFalse((self.home / "tooling" / "test_add.py").exists(),
                          "installed tooling must strip test_*.py")
         self.assertTrue((self.userhome / ".claude" / "skills" / "add" / "SKILL.md").exists(),
@@ -115,19 +112,18 @@ class GlobalInstallTest(unittest.TestCase):
         self._install(self.proj)
         self._install(proj2)
         # gut a managed tree in proj1; update --global must heal it from the home
-        shutil.rmtree(self.proj / ".add" / "docs")
+        shutil.rmtree(self.proj / ".add" / "tooling")
         code = _installer.update(target=str(self.proj), bundled=str(self.bundled),
                                  version="9.9.9", env=self._env(), as_global=True)
         self.assertEqual(code, 0)
-        self.assertTrue((self.proj / ".add" / "docs" / "00-introduction.md").exists(),
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(),
                         "update --global must propagate to registered project 1")
         self.assertTrue((proj2 / ".add" / "tooling" / "add.py").exists(),
                         "registered project 2 stays intact/refreshed")
         # the home mirror is the propagation SOURCE — it must hold a complete managed layer
-        # (skill/add+tooling+docs) for reconcile(p, source=<home>) to have anything to read.
+        # (skill/add+tooling) for reconcile(p, source=<home>) to have anything to read.
         self.assertTrue((self.home / "skill" / "add" / "SKILL.md").exists()
-                        and (self.home / "tooling" / "add.py").exists()
-                        and any((self.home / "docs").glob("*.md")),
+                        and (self.home / "tooling" / "add.py").exists(),
                         "the home must remain a complete mirror after update --global")
 
     def test_update_global_prunes_missing(self):                  # G4
@@ -206,11 +202,11 @@ class NpmGlobalTest(unittest.TestCase):
             env = self._env(home, userhome)
             self.assertEqual(subprocess.run([NODE, str(CLI_JS), "init", "--global", "--yes"],
                              cwd=proj, capture_output=True, text=True, timeout=120, env=env).returncode, 0)
-            shutil.rmtree(proj / ".add" / "docs")
+            shutil.rmtree(proj / ".add" / "tooling")
             res = subprocess.run([NODE, str(CLI_JS), "update", "--global"], cwd=proj,
                                  capture_output=True, text=True, timeout=120, env=env)
             self.assertEqual(res.returncode, 0, res.stderr)
-            self.assertTrue(any((proj / ".add" / "docs").glob("*.md")),
+            self.assertTrue((proj / ".add" / "tooling" / "add.py").exists(),
                             "update --global must propagate to the registered project")
 
 

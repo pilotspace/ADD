@@ -24,7 +24,6 @@
     "!tooling/add_engine/__pycache__",
     "!**/*.pyc",
     "tooling/templates/",
-    "docs/",
     "personas-teacher/",
     "THIRD_PARTY_NOTICES.md",
     "README.md",

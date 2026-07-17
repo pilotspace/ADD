@@ -6,10 +6,9 @@
  *
  *   npx @pilotspace/add init [targetDir] [--force] [--stage <stage>] [--name <name>] [--yes|--non-interactive]
  *
- * Installs the ADD skill + tooling + book into a target project:
+ * Installs the ADD skill + tooling into a target project:
  *   <target>/.claude/skills/add/   (the skill Claude loads)
  *   <target>/.add/tooling/         (add.py scaffolder + state tracker)
- *   <target>/.add/docs/            (the AIDD book — the trust layer)
  * It DROPS FILES ONLY — it does NOT run `add.py init`. Initialisation is deferred to
  * the AI (via `/add`, which runs `init --await-lock` to arm the v12 lock-down gate) or
  * to a CLI user. A pre-run plain init would grandfather-lock the gate before `/add` runs
@@ -58,9 +57,9 @@ function parseArgs(argv) {
     // non-interactive selector the interactive() gate honors (CI/pipes do this too).
     else if (a === "--yes" || a === "-y") args.yes = true;
     else if (a === "--non-interactive") args.nonInteractive = true;
-    // --no-skill: drop the engine + book ONLY, not the skill. The Claude Code plugin
+    // --no-skill: drop the engine ONLY, not the skill. The Claude Code plugin
     // already provides the `add` skill, so a plugin bootstrap uses this to materialize
-    // .add/tooling/ + .add/docs/ into the project without a duplicate .claude/skills/add.
+    // .add/tooling/ into the project without a duplicate .claude/skills/add.
     else if (a === "--no-skill") args.noSkill = true;
     // --rule-file: write the ADD block to .claude/rules/add-workflows.md + reference it from
     // CLAUDE.md instead of inlining (auto-on for ccsk projects with a .ccsk/ dir).
@@ -217,7 +216,7 @@ function agentPointerBlock(profile) {
     GUIDE_BEGIN + "\n" +
     "## ADD — how to work in this repo\n" +
     "\n" +
-    "This project uses **ADD (AI-Driven Development)**. The engine + book are installed.\n" +
+    "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n" +
     "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n" +
     "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n" +
     "\n" +
@@ -482,7 +481,7 @@ async function runClackPreamble(clack, target, detected, askScope) {
     initialValue: target, defaultValue: target,
   });
   if (clack.isCancel(chosen)) return { cancelled: true, target: target };
-  const ok = await clack.confirm({ message: "Write the ADD skill + tooling + book here?" });
+  const ok = await clack.confirm({ message: "Write the ADD skill + tooling here?" });
   if (clack.isCancel(ok) || !ok) return { cancelled: true, target: target };
   // global-first SCOPE step (after the target confirm, before agent-detect) — recommended
   // global home, explicit pick; skipped when --global already chose. global stays ADDITIVE.
@@ -672,7 +671,7 @@ function dropFiles(args, target, profile, intent) {
   // NO step 4: the installer DROPS FILES ONLY. Initialisation is deferred to the AI
   // (via `/add`) or a CLI user — a pre-run plain `add.py init` would grandfather-lock
   // the v12 lock-down gate before `/add` runs (see file header). So no Python is run here.
-  log("\nDone. " + (args.noSkill ? "The engine + book are" : "The `add` skill + tooling are") +
+  log("\nDone. " + (args.noSkill ? "The engine is" : "The `add` skill + tooling are") +
       " installed (no project state yet — that's intentional).");
   if (profile.id === "generic") {
     // the generic onramp line — kept literal so the conversational-only handoff is stable
@@ -754,7 +753,6 @@ const MANAGED = [
   ["skill/add", [".claude", "skills", "add"], false],
   ["agents", [".claude", "agents"], false],
   ["tooling", [".add", "tooling"], true],
-  ["docs", [".add", "docs"], false],
   ["personas-teacher", [".add", "personas-teacher"], false],
 ];
 // Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
@@ -961,7 +959,7 @@ function cleanReplaceTree(src, dest, stripTests) {
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs", "personas-teacher": "personas" };
+const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "personas-teacher": "personas" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {
@@ -1037,7 +1035,7 @@ function reconcile(args, target, srcRoot) {
   return { restored: restored, refreshed: refreshed, trees: status };
 }
 
-// --- global home: an OPT-IN shared install (engine+book+skill) updated for all projects ----
+// --- global home: an OPT-IN shared install (engine+skill) updated for all projects ----
 // Resolution is PURE + total (never throws); the home MIRRORS the bundled managed layer so
 // `update --global` propagation reuses reconcile() unchanged. Mirror of _installer.py.
 function resolveGlobalHome(env) {
@@ -1079,12 +1077,11 @@ function writeRegistry(home, paths) {
   fs.renameSync(tmp, target);   // atomic on the same filesystem (POSIX + Windows)
 }
 
-// The home mirrors the bundled layout (skill/add + tooling + docs at the SAME relative paths
+// The home mirrors the bundled layout (skill/add + tooling at the SAME relative paths
 // the package ships) so reconcile(args, project, home) reuses MANAGED unchanged.
 const GLOBAL_TREES = [
   ["skill/add", ["skill", "add"], false],
   ["tooling", ["tooling"], true],
-  ["docs", ["docs"], false],
   ["personas-teacher", ["personas-teacher"], false],
 ];
 
@@ -1107,7 +1104,7 @@ function reconcileGlobal(home, claudeDir, noSkill) {
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------
 // Strictly additive; copies ONLY user-data (managed trees + transient excluded), clean-replaced,
 // one-way (project->home). Mirror of _installer.py (identical key + include/exclude rule).
-const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE];   // managed trees + meta + both locks
+const DATA_EXCLUDE = ["tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE];   // managed trees + meta + both locks ("docs" = legacy 1.x tree: still never user-data)
 
 // data_key twin: <sanitized-basename>-<sha1(abspath_utf8)[:12]>. Pure · total · separator-free.
 function dataKey(projectAbspath) {
@@ -1933,13 +1930,13 @@ async function main() {
     case "help":
     case "--help":
       log("usage: npx @pilotspace/add <init|update|prune-data> [targetDir] [--force] [--check] [--no-skill] [--global] [--yes|--non-interactive]");
-      log("  init    install the ADD skill + tooling + book into a project");
-      log("          (--no-skill drops the engine + book only — used by the Claude Code plugin)");
+      log("  init    install the ADD skill + tooling into a project");
+      log("          (--no-skill drops the engine only — used by the Claude Code plugin)");
       log("          (--global ALSO installs to a shared home [ADD_HOME|XDG_DATA_HOME/add|~/.add] + registers the project)");
       log("          (--global-data implies --global + persists this project's user-data under <home>/data/<key>)");
       log("          (--from-global-data rehydrates this project's user-data FROM the shared home on a fresh clone)");
       log("          (interactive in a real terminal; --yes / --non-interactive force the plain path)");
-      log("  update  re-materialize skill/tooling/docs to this package version (preserves your state)");
+      log("  update  re-materialize skill/tooling to this package version (preserves your state)");
       log("          (--global refreshes the shared home + propagates to every registered project)");
       log("  prune-data  remove orphaned per-project snapshots from the shared home (dry-run; --force deletes)");
       break;

@@ -22,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if cmd in ("help", "--help", "-h"):
         print("usage: pilotspace-add <init|update> [targetDir] [--force] [--check] [--global]")
-        print("  init    install the ADD skill + tooling + book into a project")
+        print("  init    install the ADD skill + tooling into a project")
         print("          (--global ALSO installs to a shared home [ADD_HOME|XDG_DATA_HOME/add|"
               "~/.add] + registers the project)")
         print("  update  re-materialize skill/tooling/docs to this package version "

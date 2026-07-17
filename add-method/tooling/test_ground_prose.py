@@ -27,9 +27,8 @@ BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
 
 def _doc_trees(fname: str) -> list[Path]:
-    """The 4 book copies: root · canonical (add-method/docs) · bundle · dogfood (.add/docs)."""
-    return [REPO / fname, ADD_METHOD / "docs" / fname,
-            BUNDLE / "docs" / fname, REPO / ".add" / "docs" / fname]
+    """The 2 book copies: root · canonical (book-stops-shipping, 2.0 M6b)."""
+    return [REPO / fname, ADD_METHOD / "docs" / fname]
 
 
 FLOW = ADD_METHOD / "docs" / "02-the-flow.md"            # canonical content source

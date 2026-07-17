@@ -1695,7 +1695,7 @@ def cmd_advance(args: argparse.Namespace) -> None:
     if nxt != "done":
         _entry = PHASE_GUIDE.get(nxt)
         if _entry is not None:
-            print(f"guide: .add/docs/{_entry[1]} — the phase chapter "
+            print(f"guide: {book_url(_entry[1])} — the phase chapter "
                   "(this + the next line ARE `add.py guide`; no separate call)")
     print(_next_footer(root, state))
 
@@ -3023,7 +3023,7 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print("          start the next feature: add.py new-task <slug>")
             else:
                 print(f"          {_hl} — {_nxt}")
-                print(f"          (the loop: .add/docs/{_chap})")
+                print(f"          (the loop: {book_url(_chap)})")
         else:
             # resume-card-dedup (advance-fold follow-through): the top 'now' card
             # already carries slug · phase · the EXACT next verb (via _next_footer,
@@ -3074,7 +3074,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
         if not slug:
             print(json.dumps({"task": None, "phase": None, "owner": "human", "stop": True,
                               "next_step": "start your first feature -> add.py new-task <slug>",
-                              "chapter": ".add/docs/02-the-flow.md", "gate": None,
+                              "chapter": book_url("02-the-flow.md"), "gate": None,
                               "guide": None, "bundle": None}))
             return
         t = (state.get("tasks") or {}).get(slug)
@@ -3093,7 +3093,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
             action = _POST_FREEZE_DIRECTION_ACTION
         print(json.dumps({"task": slug, "phase": phase, "owner": owner,
                           "stop": owner != "ai", "next_step": action,
-                          "chapter": f".add/docs/{chapter}", "gate": t.get("gate"),
+                          "chapter": book_url(chapter), "gate": t.get("gate"),
                           "guide": _phase_guide_path(json_root.parent, phase),
                           "bundle": _phase_bundle(phase)}))
         return
@@ -3103,7 +3103,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
     if not slug:
         print("active : (none)")
         print('next   : start your first feature -> add.py new-task <slug> --title "..."')
-        print("read   : .add/docs/02-the-flow.md")
+        print(f"read   : {book_url('02-the-flow.md')}")
         return
     if slug not in state.get("tasks", {}):
         _die(f"unknown task '{slug}'")
@@ -3127,7 +3127,7 @@ def cmd_guide(args: argparse.Namespace) -> None:
     print(f"active : {slug}  (phase: {phase})")
     print(f"goal   : {_project_goal(root)}")   # v20 — the next-step surface still shows what the work is FOR
     print(f"next   : {action}{marker}")
-    print(f"read   : .add/docs/{chapter}")
+    print(f"read   : {book_url(chapter)}")
     gp = _phase_guide_path(root.parent, phase)
     if gp is not None:
         print(f"guide  : {gp}")

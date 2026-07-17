@@ -2,7 +2,7 @@
 """prepare_bundle.py — regenerate src/add_method/_bundled/ from the canonical trees.
 
 This script is the single source of truth for what ships in the Python package.
-Run it whenever skill/, tooling/add.py, tooling/templates/, or docs/ change:
+Run it whenever skill/, tooling/add.py, or tooling/templates/ change:
 
     python3 scripts/prepare_bundle.py
 
@@ -14,7 +14,6 @@ What is copied:
   skill/add/              -> _bundled/skill/add/
   tooling/add.py          -> _bundled/tooling/add.py
   tooling/templates/      -> _bundled/tooling/templates/
-  docs/                   -> _bundled/docs/
   personas-teacher/       -> _bundled/personas-teacher/   (vendored teacher snapshot)
   ../THIRD_PARTY_NOTICES.md -> ./THIRD_PARTY_NOTICES.md + _bundled/THIRD_PARTY_NOTICES.md
 
@@ -34,7 +33,6 @@ BUNDLE_ROOT = REPO_ROOT / "src" / "add_method" / "_bundled"
 
 SKILL_SRC = REPO_ROOT / "skill" / "add"
 TOOLING_SRC = REPO_ROOT / "tooling"
-DOCS_SRC = REPO_ROOT / "docs"
 TEACHER_SRC = REPO_ROOT / "personas-teacher"             # vendored teacher snapshot (verbatim)
 # THIRD_PARTY_NOTICES.md is a repo-LEVEL legal doc; its canonical lives one level up,
 # outside the package root, so it is propagated INTO both package roots as parity-guarded
@@ -96,18 +94,13 @@ def main() -> None:
     _copy_tree(TOOLING_SRC / "templates", tooling_dest / "templates")
     print("  copied tooling/add.py + add_engine/ + templates/")
 
-    # 3. docs/
-    docs_dest = BUNDLE_ROOT / "docs"
-    _copy_tree(DOCS_SRC, docs_dest)
-    print(f"  copied docs/  ({len(list(docs_dest.rglob('*')))} items)")
-
-    # 4. personas-teacher/  (vendored teacher snapshot — verbatim, no test/junk strip needed
+    # 3. personas-teacher/  (vendored teacher snapshot — verbatim, no test/junk strip needed
     #    since it carries none; ship it whole so the persona phase reads it off-build)
     teacher_dest = BUNDLE_ROOT / "personas-teacher"
     _copy_tree(TEACHER_SRC, teacher_dest)
     print(f"  copied personas-teacher/  ({len(list(teacher_dest.rglob('*')))} items)")
 
-    # 5. THIRD_PARTY_NOTICES.md — propagate the repo-level MIT attribution into BOTH
+    # 4. THIRD_PARTY_NOTICES.md — propagate the repo-level MIT attribution into BOTH
     #    package roots (npm root + the pip bundle) as byte-identical twins of the canonical.
     if not NOTICES_CANON.exists():
         print(f"error: missing {NOTICES_CANON}", file=sys.stderr)

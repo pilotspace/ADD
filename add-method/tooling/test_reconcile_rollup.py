@@ -11,7 +11,7 @@ FROZEN @ v1: a reconcile REPORTS a file-level "N restored · M refreshed" roll-u
   - update() folds the rollup into its headline. A partially-gutted PRESENT tree shows
     restored>0 even though the tree-level status calls it "refreshed".
 
-Hermetic: a bundled fixture (skill/tooling/docs with known file counts) + tmp targets; the
+Hermetic: a bundled fixture (skill/tooling with known file counts) + tmp targets; the
 npm twin is exercised by a node subprocess. RED until _clean_replace returns counts and
 _reconcile returns/logs the rollup — red for the right reason (missing implementation).
 
@@ -49,7 +49,7 @@ CLI_JS = _ADD_METHOD / "bin" / "cli.js"
 
 
 def _make_bundled(root: Path) -> Path:
-    """A managed-layer fixture with KNOWN file counts: skill=1, tooling=3, docs=2 (total 6)."""
+    """A managed-layer fixture with KNOWN file counts: skill=1, tooling=3 (total 4)."""
     (root / "skill" / "add").mkdir(parents=True)
     (root / "skill" / "add" / "SKILL.md").write_text("skill\n")
     (root / "tooling").mkdir(parents=True)
@@ -57,13 +57,10 @@ def _make_bundled(root: Path) -> Path:
     (root / "tooling" / "add_engine").mkdir()
     (root / "tooling" / "add_engine" / "__init__.py").write_text("# pkg\n")
     (root / "tooling" / "add_engine" / "core.py").write_text("# core\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro\n")
-    (root / "docs" / "01-flow.md").write_text("flow\n")
     return root
 
 
-TOTAL_MANAGED = 6   # skill(1) + tooling(3) + docs(2)
+TOTAL_MANAGED = 4   # skill(1) + tooling(3)
 
 
 class _Base(unittest.TestCase):

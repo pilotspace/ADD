@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "07750e20aa7a09f7403f9ea375ab48dc"  # re-aimed @ migrate-verb (ADD 2.0 M6a: task doc TASK.md → PLAN.md engine-wide + new one-shot `migrate` verb, 30→31). prior: 46b3057d… @ engine-kernel-trim
-ENGINE_PKG_MD5 = "0c8b1abadfed44b273298b1c65e19d09"  # re-aimed @ migrate-verb (ADD 2.0 M6a: the TASK.md → PLAN.md rename ripples through the package's doc-path literals). prior: 1f2abc63… @ engine-kernel-trim
+ENGINE_MD5 = "5486b8c230dcd060dac678800c12afc3"  # re-aimed @ book-stops-shipping (ADD 2.0 M6b: chapter pointers deep-link BOOK_URL; the book never installs). prior: 07750e20… @ migrate-verb
+ENGINE_PKG_MD5 = "557f500fbd493fa5087848d8b881e3c0"  # re-aimed @ book-stops-shipping (ADD 2.0 M6b: constants gains BOOK_URL/book_url; guidelines block re-aims the Book pointer). prior: 0c8b1aba… @ migrate-verb

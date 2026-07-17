@@ -34,12 +34,12 @@ Shard free context files beside it in the task folder — the AI owns that archi
 
 ## Always start here (orient — do not skip)
 
-Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure it is in the project:
+Engine: `.add/tooling/add.py`. Ensure it is in the project:
 
 - It exists → go to `status` below.
 - It does NOT (a plugin install) → materialize once:
-  `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine) +
-  `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
+  `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine)
+  + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
 
 Resume from the tool, never re-read the repo — mid-flow, trust each verb's
 `next:` footer:
@@ -158,5 +158,6 @@ The steps never change; their depth does (stage from `add.py status`):
 
 ## The method rationale
 
-The full method (the *why*) is the AIDD book in `.add/docs/`. Read it only when a
+The full method (the *why*) is the AIDD book — https://pilotspace.github.io/ADD/
+(the `docs/…` chapters the guides cite). Read it only when a
 decision is genuinely unclear — never duplicate it here.

@@ -3,7 +3,7 @@
 
 A COMPLETING `advance` that lands an agent INTO a working phase folds the landed
 phase's guide chapter — the ONE `add.py guide` line the `next:` footer lacks (the
-footer already carries command + short why) — as a `guide: .add/docs/<chapter>`
+footer already carries command + short why) — as a `guide: <book-site chapter URL>`
 line right ABOVE the footer, plus a "don't re-run `add.py guide`" cue. This kills
 the re-run-guide orientation habit WITHOUT duplicating the footer. Landing in
 `done` folds nothing (Arm B owns that juncture); a bundle fast-forward folds only
@@ -86,7 +86,7 @@ class _Board(unittest.TestCase):
     @staticmethod
     def _fold_lines(out: str) -> list[str]:
         return [ln.strip() for ln in out.splitlines()
-                if ln.strip().startswith("guide:") and ".add/docs/" in ln]
+                if ln.strip().startswith("guide:") and "pilotspace.github.io/ADD/" in ln]
 
     @staticmethod
     def _next_lines(out: str) -> list[str]:
@@ -101,7 +101,7 @@ class GuideFoldTest(_Board):
         out, _, _ = self._run("advance", "foo")          # direction -> build (the ONE crossing)
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"exactly one guide-fold line, got: {folds!r}\n{out}")
-        self.assertIn(".add/docs/07-step-5-build.md", folds[0],
+        self.assertIn("/07-step-5-build/", folds[0],
                       "the fold carries the LANDED phase's chapter (build)")
         self.assertIn("add.py guide", folds[0],
                       "the fold names `add.py guide` as the thing not to re-run")
@@ -119,7 +119,7 @@ class GuideFoldTest(_Board):
         out, _, _ = self._run("advance", "bar")          # build -> verify
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"one fold, got {folds!r}\n{out}")
-        self.assertIn(".add/docs/08-step-6-verify.md", folds[0],
+        self.assertIn("/08-step-6-verify/", folds[0],
                       "landing in verify folds verify's chapter, not build's")
 
     def test_landing_in_done_folds_nothing(self):

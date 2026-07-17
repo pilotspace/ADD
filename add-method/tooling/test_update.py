@@ -3,11 +3,11 @@
 
 The gap this closes: the launchers (bin/cli.js · _installer.py) only had `init`, which
 DROPS FILES. To pull a new ADD version into an existing project you had to re-install,
-and `init`'s tooling/docs copy MERGES (never removes), so a file deleted in a new version
+and `init`'s tooling copy MERGES (never removes), so a file deleted in a new version
 lingered forever. `update` is the discoverable, version-aware, state-safe path.
 
 CONTRACT (frozen @ v1):
-  - `update` re-materializes the three MANAGED trees (skill · tooling · docs) by
+  - `update` re-materializes the MANAGED trees (skill · tooling) by
     CLEAN-REPLACE, so a file removed upstream leaves no orphan behind.
   - It NEVER touches user data: state.json, PROJECT.md, milestones/, tasks/, archive/.
   - It writes a version stamp (.add/.add-version) and is IDEMPOTENT: same version twice
@@ -40,7 +40,7 @@ CLI_JS = _ADD_METHOD / "bin" / "cli.js"
 
 
 def _make_bundled(root: Path) -> Path:
-    """A synthetic packaged source: skill/add · tooling (with a test_*.py to prove stripping) · docs."""
+    """A synthetic packaged source: skill/add · tooling (with a test_*.py to prove stripping)."""
     (root / "skill" / "add" / "phases").mkdir(parents=True)
     (root / "skill" / "add" / "SKILL.md").write_text("skill v-new\n")
     (root / "skill" / "add" / "phases" / "direction.md").write_text("specify v-new\n")
@@ -48,8 +48,6 @@ def _make_bundled(root: Path) -> Path:
     (root / "tooling" / "add.py").write_text("# add.py v-new\n")
     (root / "tooling" / "templates" / "PLAN.md.tmpl").write_text("task tmpl v-new\n")
     (root / "tooling" / "test_add.py").write_text("# dev-only test — must NOT ship\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro v-new\n")
     return root
 
 
@@ -59,8 +57,8 @@ def _make_project(root: Path) -> Path:
     (add / "tooling").mkdir(parents=True)
     (add / "tooling" / "add.py").write_text("# add.py v-OLD\n")
     (add / "tooling" / "OLD_ORPHAN.py").write_text("# removed upstream — must be swept\n")
-    (add / "docs").mkdir(parents=True)
-    (add / "docs" / "zz-removed-chapter.md").write_text("deleted upstream — must be swept\n")
+    (add / "docs").mkdir(parents=True)   # legacy 1.x book tree — no longer managed (2.0 M6b)
+    (add / "docs" / "zz-legacy-chapter.md").write_text("legacy 1.x book — update leaves it alone\n")
     (root / ".claude" / "skills" / "add").mkdir(parents=True)
     (root / ".claude" / "skills" / "add" / "SKILL.md").write_text("skill v-OLD\n")
     # user data — sacred
@@ -93,7 +91,8 @@ class UpdateBehaviorTest(unittest.TestCase):
         self.assertEqual(self._update(), 0)
         self.assertFalse((self.proj / ".add" / "tooling" / "OLD_ORPHAN.py").exists(),
                          "a file removed upstream must not survive update (orphan)")
-        self.assertFalse((self.proj / ".add" / "docs" / "zz-removed-chapter.md").exists())
+        self.assertTrue((self.proj / ".add" / "docs" / "zz-legacy-chapter.md").exists(),
+                        "book-stops-shipping: a legacy .add/docs tree is user-space now — never swept")
         # and the new content landed
         self.assertEqual((self.proj / ".add" / "tooling" / "add.py").read_text(), "# add.py v-new\n")
         self.assertEqual((self.proj / ".claude" / "skills" / "add" / "SKILL.md").read_text(),

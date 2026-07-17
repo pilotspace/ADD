@@ -40,8 +40,6 @@ def _make_bundled(root: Path) -> Path:
     (root / "tooling" / "templates").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py v-new\n")
     (root / "tooling" / "test_add.py").write_text("# dev-only — must NOT ship\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro v-new\n")
     return root
 
 
@@ -50,8 +48,6 @@ def _make_project(root: Path) -> Path:
     add = root / ".add"
     (add / "tooling").mkdir(parents=True)
     (add / "tooling" / "add.py").write_text("# add.py v-OLD\n")
-    (add / "docs").mkdir(parents=True)
-    (add / "docs" / "00-introduction.md").write_text("intro v-OLD\n")
     (root / ".claude" / "skills" / "add").mkdir(parents=True)
     (root / ".claude" / "skills" / "add" / "SKILL.md").write_text("skill v-OLD\n")
     (add / "state.json").write_text(json.dumps({"project": "demo", "stage": "mvp"}) + "\n")
@@ -82,12 +78,12 @@ class PipReconcileTest(unittest.TestCase):
                          "demo", "user data must be untouched")
 
     def test_init_refreshes_present_and_sweeps_orphan_pip(self):          # H1
-        (self.proj / ".add" / "docs" / "zz-orphan.md").write_text("removed upstream\n")
+        (self.proj / ".add" / "tooling" / "zz-orphan.md").write_text("removed upstream\n")
         self.assertEqual(self._install(), 0)
-        self.assertFalse((self.proj / ".add" / "docs" / "zz-orphan.md").exists(),
+        self.assertFalse((self.proj / ".add" / "tooling" / "zz-orphan.md").exists(),
                          "init must clean-replace a present tree and sweep orphans")
-        self.assertEqual((self.proj / ".add" / "docs" / "00-introduction.md").read_text(),
-                         "intro v-new\n")
+        self.assertEqual((self.proj / ".add" / "tooling" / "add.py").read_text(),
+                         "# add.py v-new\n")
 
     def test_init_reports_status_pip(self):                               # H2
         shutil.rmtree(self.proj / ".claude" / "skills" / "add")
@@ -100,11 +96,11 @@ class PipReconcileTest(unittest.TestCase):
 
     def test_update_heals_missing_at_same_version_pip(self):              # H3
         _installer._write_stamp(self.proj / ".add", "9.9.9")
-        shutil.rmtree(self.proj / ".add" / "docs")
+        shutil.rmtree(self.proj / ".add" / "tooling")
         code = _installer.update(target=str(self.proj), bundled=str(self.bundled),
                                  version="9.9.9")
         self.assertEqual(code, 0)
-        self.assertTrue((self.proj / ".add" / "docs" / "00-introduction.md").exists(),
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(),
                         "update must HEAL a missing tree even at the same version")
 
     def test_update_noop_when_nothing_missing_pip(self):                  # H4
@@ -134,11 +130,11 @@ class PipReconcileTest(unittest.TestCase):
                          "installed tooling must strip test_*.py")
 
     def test_missing_source_fails_closed_pip(self):                       # Reject missing_source
-        shutil.rmtree(self.bundled / "docs")
-        before = (self.proj / ".add" / "docs" / "00-introduction.md").read_text()
+        shutil.rmtree(self.bundled / "tooling")
+        before = (self.proj / ".add" / "tooling" / "add.py").read_text()
         code = self._install()
         self.assertNotEqual(code, 0, "a missing packaged source must fail closed")
-        self.assertEqual((self.proj / ".add" / "docs" / "00-introduction.md").read_text(),
+        self.assertEqual((self.proj / ".add" / "tooling" / "add.py").read_text(),
                          before, "a failed precheck must leave the target untouched")
 
 
@@ -168,13 +164,16 @@ class NpmReconcileTest(unittest.TestCase):
             pkg = json.loads((_ADD_METHOD / "package.json").read_text())["version"]
             (Path(tmp) / ".add" / ".add-version").write_text(
                 json.dumps({"version": pkg, "channel": "npm"}) + "\n")
-            shutil.rmtree(Path(tmp) / ".add" / "docs")
+            # a real project has state.json (the human ran init) — write it BEFORE removing
+            # tooling, because .add/tooling doubles as update's project-detection marker
+            (Path(tmp) / ".add" / "state.json").write_text('{"project": "demo"}\n')
+            shutil.rmtree(Path(tmp) / ".add" / "tooling")
             env = dict(os.environ); env.pop("CI", None)
             res = subprocess.run([NODE, str(CLI_JS), "update"], cwd=tmp,
                                  capture_output=True, text=True, timeout=120, env=env)
             self.assertEqual(res.returncode, 0, res.stderr)
-            self.assertTrue(any((Path(tmp) / ".add" / "docs").glob("*.md")),
-                            "update must heal a missing docs tree at the same version")
+            self.assertTrue((Path(tmp) / ".add" / "tooling" / "add.py").exists(),
+                            "update must heal a missing tooling tree at the same version")
 
 
 class ParityVocabTest(unittest.TestCase):

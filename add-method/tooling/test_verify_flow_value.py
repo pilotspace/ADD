@@ -39,8 +39,7 @@ TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl"
                            ADD_METHOD / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
                            BUNDLE / "tooling" / "templates" / "personas" / "_template.md.tmpl")
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
-              REPO / "18-personas.md",
-              BUNDLE / "docs" / "18-personas.md")
+              REPO / "18-personas.md")   # book-stops-shipping (2.0 M6b): no bundled copy
 # roster-distill (ADD 2.0 M1): the verify specialist is the ONE `add` agent (verify mode)
 AGENT_TWINS = (ADD_METHOD / "agents" / "add.md",
                REPO / ".claude" / "agents" / "add.md",

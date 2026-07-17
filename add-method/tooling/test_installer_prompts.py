@@ -72,7 +72,7 @@ def _brain_landed(root: Path) -> bool:
     return (
         (root / ".claude" / "skills" / "add" / "SKILL.md").exists()
         and (root / ".add" / "tooling" / "add.py").exists()
-        and any((root / ".add" / "docs").glob("*.md"))
+        and not (root / ".add" / "docs").exists()   # book-stops-shipping (2.0 M6b)
         and not (root / ".add" / "state.json").exists()
     )
 

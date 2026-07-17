@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 
 __all__ = [
+    "BOOK_URL",
+    "book_url",
     "ROOT_DIRNAME",
     "STATE_FILE",
     "MILESTONE_FILE",
@@ -66,6 +68,18 @@ GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 # green is never auto-passed; the loop is never unbounded).
 HEAL_CAP = 3
 
+
+
+# The AIDD book's published home (book-stops-shipping, ADD 2.0 M6b): the book no
+# longer installs into projects as .add/docs/ — every engine chapter pointer deep-
+# links here instead. mkdocs pretty-URLs: docs/<stem>.md renders at <BOOK_URL>/<stem>/.
+BOOK_URL = "https://pilotspace.github.io/ADD"
+
+
+def book_url(chapter: str) -> str:
+    """Deep link for a book chapter filename ('02-the-flow.md' -> …/02-the-flow/)."""
+    stem = chapter[:-3] if chapter.endswith(".md") else chapter
+    return f"{BOOK_URL}/{stem}/"
 
 
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).

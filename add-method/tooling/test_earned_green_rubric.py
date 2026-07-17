@@ -55,9 +55,7 @@ ROOT_BOOK = _REPO / "08-step-6-verify.md"
 BOOK_TREES = [
     ROOT_BOOK,                                                                   # root
     BOOK,                                                                        # canonical
-    _REPO / ".add" / "docs" / "08-step-6-verify.md",                            # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "08-step-6-verify.md",  # bundle
-]
+]   # book-stops-shipping (2.0 M6b): no bundled/dogfood copies
 TMPL_TREES = [
     TASK_TMPL,                                                                   # canonical
     _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",                  # dogfood

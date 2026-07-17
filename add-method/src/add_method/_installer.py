@@ -9,7 +9,7 @@ Designed for failure:
 - Verifies bundled sources exist before touching target.
 - Never clobbers an existing skill (skip-if-exists unless --force).
 - Uses shutil.copytree with dirs_exist_ok=True so a re-install refreshes
-  tooling/docs without destroying the existing project structure.
+  tooling without destroying the existing project structure.
 """
 from __future__ import annotations
 
@@ -34,13 +34,12 @@ MANAGED = (
     ("skill/add", ".claude/skills/add", False),
     ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
-    ("docs", ".add/docs", False),
     ("personas-teacher", ".add/personas-teacher", False),
 )
 # Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
 # but a malformed/older package missing one must NOT abort the whole install — the core
-# (skill/tooling/docs) still lands, and the optional tree is soft-skipped. Design-for-failure.
+# (skill/tooling) still lands, and the optional tree is soft-skipped. Design-for-failure.
 # `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
 # enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
 # predating this fix must still install its core cleanly.
@@ -444,7 +443,7 @@ def _agent_pointer_block(profile: dict) -> str:
         f"{_GUIDE_BEGIN}\n"
         "## ADD — how to work in this repo\n"
         "\n"
-        "This project uses **ADD (AI-Driven Development)**. The engine + book are installed.\n"
+        "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n"
         "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n"
         "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n"
         "\n"
@@ -621,7 +620,7 @@ def _write_rule_file_pointer(target, profile: dict) -> str:
     return "ok"
 
 
-# --- global home: an OPT-IN shared install of the managed layer (engine+book+skill) ----
+# --- global home: an OPT-IN shared install of the managed layer (engine+skill) ----
 # Resolution is PURE + total (never throws); the home MIRRORS the bundled managed layer so
 # `update --global` propagation reuses the SAME MANAGED map. Mirrored by behaviour in cli.js.
 def resolve_global_home(env=None) -> Path:
@@ -681,13 +680,12 @@ def _write_registry(home: Path, paths) -> None:
     os.replace(str(tmp), str(target))   # atomic on POSIX + Windows (same filesystem)
 
 
-# The home MIRRORS the bundled managed layer (skill/add + tooling + docs at the SAME relative
+# The home MIRRORS the bundled managed layer (skill/add + tooling at the SAME relative
 # paths the package ships) so `_reconcile(project, source=<home>)` reuses MANAGED unchanged.
 # (bundled subpath, dest relative to <home>, strip dev-only test_*.py)
 _GLOBAL_TREES = (
     ("skill/add", "skill/add", False),
     ("tooling", "tooling", True),
-    ("docs", "docs", False),
     ("personas-teacher", "personas-teacher", False),
 )
 
@@ -711,7 +709,7 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
 LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
 PROJECT_LOCK_FILE = ".install.lock"                                # the project-scope install()/update() lock (never user-data)
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks ("docs" = legacy 1.x tree: still never user-data)
 
 
 def data_key(project_abspath) -> str:
@@ -1449,7 +1447,7 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
-_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs",
+_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling",
                "personas-teacher": "personas"}
 
 
@@ -2115,7 +2113,7 @@ def update(
     as_global: bool = False,
     lock_timeout: float | None = None,
 ) -> int:
-    """Re-materialize the managed layer (skill · tooling · docs) from the installed
+    """Re-materialize the managed layer (skill · tooling) from the installed
     package into an EXISTING .add/ project, preserving ALL user data. Idempotent;
     clean-replaces so no orphan files survive a version bump. 0 on success/no-op, 1 on error.
 

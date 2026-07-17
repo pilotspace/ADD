@@ -48,8 +48,7 @@ BUILD_GUIDES = (ADD_METHOD / "skill" / "add" / "phases" / "build.md",
                 REPO / ".claude" / "skills" / "add" / "phases" / "build.md",
                 BUNDLE / "skill" / "add" / "phases" / "build.md")
 CHAPTERS = (ADD_METHOD / "docs" / "07-step-5-build.md",
-            REPO / "07-step-5-build.md",
-            BUNDLE / "docs" / "07-step-5-build.md")
+            REPO / "07-step-5-build.md")   # book-stops-shipping (2.0 M6b): no bundled copy
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")
 

@@ -22,8 +22,7 @@ GLOSSARY = "appendix-c-glossary.md"
 BOOK_TREES = (
     PKG_ROOT / "docs",
     REPO_ROOT,
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "docs",
-)
+)   # book-stops-shipping (2.0 M6b): no bundled copy
 SKILL_TREES = (
     PKG_ROOT / "skill" / "add",
     REPO_ROOT / ".claude" / "skills" / "add",

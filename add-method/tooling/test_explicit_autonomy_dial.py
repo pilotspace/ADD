@@ -216,7 +216,7 @@ class DocsAccordTest(unittest.TestCase):
     RUNGS = ("manual", "conservative", "auto")
 
     # canonical add-method/ tree first; the synced twins must stay byte-identical
-    DOC_TREES = (REPO / "add-method" / "docs", REPO / ".add" / "docs", BUNDLE / "docs")
+    DOC_TREES = (REPO / "add-method" / "docs",)   # book-stops-shipping (2.0 M6b): canonical only
     AUTONOMY_DOCS = ("appendix-c-glossary.md", "10-setup-and-stages.md", "11-governance.md")
     TMPL_TREES = (REPO / "add-method" / "tooling" / "templates",
                   REPO / ".add" / "tooling" / "templates",
