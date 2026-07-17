@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "skill-loop-fold",
+  "active_task": "persona-routes-depth",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -11168,14 +11168,48 @@
     },
     "persona-routes-depth": {
       "title": "Persona proposes route (full|fast|oneshot) + depth at new-task; human ratifies at the freeze",
-      "phase": "direction",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "thin-engine-loop",
       "depends_on": [
         "template-unify"
       ],
       "created": "2026-07-16T09:51:29+00:00",
-      "updated": "2026-07-16T09:51:29+00:00"
+      "updated": "2026-07-17T04:02:58+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-17T03:44:53+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "tripwire": {
+        "contract_md5": "6d262c168d57df9b1eebbc59dbc92d82",
+        "tests": {
+          "add-method/tooling/test_persona_routes_depth.py": "8119a9379f00069ae0d8c13909bb053f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/src/add_method/_bundled/",
+          ".add/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/skill/",
+          ".claude/skills/",
+          "tmp/"
+        ],
+        "snapshot_md5": "c4ec1364cdda805fc5c9dd5d38bdc5ee"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     },
     "engine-kernel-trim": {
       "title": "Usage-mined strike-list + dedup: minimal kernel, stdlib-only, perf floor held",
@@ -11203,7 +11237,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-17T03:17:03+00:00",
+  "updated": "2026-07-17T04:02:58+00:00",
   "milestones": {
     "v1-1": {
       "title": "v1.1 \u2014 adoption & ergonomics",
@@ -12603,7 +12637,7 @@
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
     "strategy-intake": "gate-experience-udd",
-    "thin-engine-loop": "skill-loop-fold"
+    "thin-engine-loop": "persona-routes-depth"
   },
   "todos": [
     {

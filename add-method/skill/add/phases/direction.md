@@ -166,7 +166,9 @@ Present the bundle **lowest-confidence first**. Render from the card: banner →
 SUMMARY → FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT (`gate-udd.md` = template + examples, read at
 most once per session) — **render before `FROZEN`, then record `Reported: yes`; never on a
 timeout** (`run.md`). The freeze always renders the full card. The approval freezes the Contract
-(HARD) + the Build-strategy Scope; then `Status: FROZEN @ v1 — approved by <name>`.
+(HARD) + the Build-strategy Scope; then `Status: FROZEN @ v1 — approved by <name>`. The freeze also
+ratifies the header `route:` line — the persona's lane proposal — recording it to state
+(`route_unrecorded` is audit-measured, never a refusal).
 
 <exit_gate>
 - [ ] **Grounding** — Touches · Context · Honors · Anchors named from the code; Issues/Risks · Related intent · Ground SHA recorded (or an honest none).

@@ -59,9 +59,12 @@ Then read the foundation map `add.py status --foundation` (one section: `--found
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
 **Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
-**Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
+**Flag mode** — the fitting persona proposes; the human ratifies (flag + freeze), never auto-applied.
+- **route** — propose the lane in the TASK header: `route: <full|fast|oneshot> · routed-by:
+  <persona:<slug> | human> — <why>`; the freeze records the ratified lane (audit measures a
+  missing record — never blocks).
 - **fast** — `new-task --fast`: lean derived render, freeze-gated; a milestone-free `--fast` task is
-  the blessed low-ceremony lane. Jot ideas: `add.py todo "<text>"` · `todo` lists · `todo --done <id>`.
+  the blessed low-ceremony lane.
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; `add.py autonomy set
   conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates
   a milestone's tasks.

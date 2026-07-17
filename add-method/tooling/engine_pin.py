@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "349901707a3bf40561508386963446bb"  # re-aimed @ skill-loop-fold (thin-engine-loop W4: _PHASE_GUIDE_FILES re-aims to the merged 3-file phases/ shape — direction.md/build.md/verify.md; §3 v2 sanctioned). prior: 8eaca350… @ template-unify
+ENGINE_MD5 = "ec9a57303adce545a2a2ba64329747c2"  # re-aimed @ persona-routes-depth (thin-engine-loop W5: _ROUTE_LINE_RE/_route_record — freeze records the persona-proposed lane; audit gains route_unrecorded/route_lane_mismatch, grandfathered). prior: 34990170… @ skill-loop-fold
 ENGINE_PKG_MD5 = "ed7bf3e1c9e6e7fdf53833dc2914c290"  # re-aimed @ template-unify (constants.py: _FAST_SECTIONS replaces _FALLBACK_TASK_FAST; _FALLBACK_TASK gains Ground SHA). prior: 89a75e5d… @ phase-collapse-3

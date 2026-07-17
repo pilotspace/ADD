@@ -1583,6 +1583,10 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
                  "+ substantive content; bare 'none' only as 'none material — "
                  "biggest risk: X') before crossing into build")
         state["tasks"][slug]["flag_verified"] = True
+    # persona-routes-depth: record the header route proposal — the freeze IS the
+    # ratify. UNCONDITIONAL overwrite (a re-cross re-records); measure-not-block —
+    # "unrouted" is a valid record, audit surfaces it (route_unrecorded).
+    state["tasks"][slug]["route"] = _route_record(_task_header(root, slug))
     # tamper tripwire (verify-integrity): snapshot the red test files + the frozen
     # §3 md5s so the verify gate can prove the green was EARNED, not edited into
     # place. UNCONDITIONAL overwrite — a legit change-request that re-crosses
@@ -1896,6 +1900,21 @@ def cmd_advance(args: argparse.Namespace) -> None:
 # "risk: high" / "autonomy: <x>" is never mistaken for a declaration (a title substring must
 # not be able to fool the guard either way).
 _RISK_HIGH_RE = re.compile(r"(?:^|·)[ \t]*risk:[ \t]*high\b", re.MULTILINE)
+# persona-routes-depth: the header route line — the persona's lane proposal
+# (`route: <full|fast|oneshot> · routed-by: <who> — <why>`), parsed at the
+# freeze/re-cross which RECORDS it (measure-not-block; audit lints the record).
+_ROUTE_LINE_RE = re.compile(r"(?m)^route:\s*(\S+)\s*·\s*routed-by:\s*(\S[^\n]*)$")
+_ROUTE_LANES = ("full", "fast", "oneshot")
+
+
+def _route_record(header: str) -> dict:
+    """The header route proposal as a state record: {lane, by}. An absent or
+    malformed line (unknown lane token) records lane "unrouted" with by=None —
+    the freeze NEVER refuses on route (audit measures: route_unrecorded)."""
+    m = _ROUTE_LINE_RE.search(header)
+    if m and m.group(1) in _ROUTE_LANES:
+        return {"lane": m.group(1), "by": m.group(2).strip()}
+    return {"lane": "unrouted", "by": None}
 
 # sensitivity taxonomy (risk-sensitivity-taxonomy): the risk-CLASS the human declares in the
 # TASK header at freeze — same anchored declaration grammar as risk:/autonomy: (line-start or
@@ -7779,6 +7798,27 @@ def _audit_findings(root: Path, state: dict) -> tuple[int, list[dict]]:
             f(slug, "unflagged_freeze",
               "flag_verified record lost its well-formed "
               "'Least-sure flag surfaced at freeze:' unit")
+        # persona-routes-depth: route lints — measure-not-block, grandfathered by
+        # key ABSENCE (a pre-feature record has no route key and is never retro-red).
+        _route = t.get("route")
+        if _route is not None:
+            if _route.get("lane") == "unrouted":
+                f(slug, "route_unrecorded",
+                  "the freeze recorded no ratified route — add the header "
+                  "'route: <full|fast|oneshot> · routed-by: …' line and re-cross")
+            elif _route_record(_task_header(root, slug)).get("lane") == "unrouted":
+                # tamper glint (mirrors unflagged_freeze): a ratified record whose
+                # header line was deleted/mangled post-freeze — state is the witness
+                f(slug, "route_unrecorded",
+                  f"state records ratified route '{_route.get('lane')}' but the "
+                  "current header has no well-formed route line")
+            else:
+                _actual = ("oneshot" if t.get("oneshot") is True
+                           else "fast" if t.get("fast") is True else "full")
+                if _route.get("lane") != _actual:
+                    f(slug, "route_lane_mismatch",
+                      f"header ratified route '{_route.get('lane')}' but the task's "
+                      f"actual lane is '{_actual}'")
         # ai-plan-verify-gate residual glint: symmetric to unflagged_freeze above — a
         # hand-edit that deletes/mangles the AI-verify evidence post-freeze goes undetected
         # otherwise. MEASURE-NOT-BLOCK, a human spot-audit backstop (never engine-blocking).
