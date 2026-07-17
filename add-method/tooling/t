@@ -1,0 +1,52 @@
+#!/bin/sh
+# t — fast test runner for the ADD engine corpus (dev-only; NOT shipped — see
+# package.json `files` allowlist).
+#
+#   ./t                  fast lane: parallel, slow-IO suites excluded (~seconds)
+#   ./t test_gate*.py    fast lane, targeted
+#   ./t --full           the WHOLE corpus, parallel (pre-commit / pre-PR bar)
+#   ./t --serial         unittest fallback (no uv/xdist needed) — CI parity
+#
+# Parallelism rides an ephemeral uv env (pytest + pytest-xdist, worksteal
+# distribution — durations are uneven: two ~10s lock-scheduling sims vs a
+# ~85ms median). The fast lane excludes the slow IO families (npm installer /
+# global-home / packaging / pty / js-lock heartbeat) — those still bind in
+# --full and CI; the fast lane is an ITERATION loop, never the merge bar.
+set -e
+cd "$(dirname "$0")"
+
+# slow-IO families excluded from the fast lane (evidence: pytest --durations,
+# 2026-07-17 — each spawns npm/node/pty/sleep-heavy subprocesses).
+# test_ci_tooling_mirror_gap is THE wall-clock floor: its fresh-checkout test-job
+# meta-test runs ~145s (a suite inside the suite) — CI-mirror territory, --full only.
+SLOW_IGNORES="--ignore=test_ci_tooling_mirror_gap.py \
+  --ignore=test_project_scope_lock.py \
+  --ignore=test_global_update_harden.py \
+  --ignore=test_js_reclaim_lock_heartbeat.py \
+  --ignore=test_pty_clack.py \
+  --ignore=test_agent_detect.py \
+  --ignore=test_ship_clean.py \
+  --ignore=test_skill_onramp.py \
+  --ignore=test_global_install.py \
+  --ignore=test_global_data.py \
+  --ignore=test_global_restore.py \
+  --ignore=test_heal_reconcile.py \
+  --ignore=test_reconcile_rollup.py \
+  --ignore=test_installer_shared_namespace.py \
+  --ignore=test_packaging.py \
+  --ignore=test_gemini_settings.py \
+  --ignore=test_onboarding_brand.py \
+  --ignore=test_update_global_gitignore_seed.py"
+
+case "$1" in
+  --serial)
+    shift
+    exec python3 -m unittest discover -s . -p "${1:-test_*.py}" ;;
+  --full)
+    shift
+    exec uv run --no-project --with pytest --with pytest-xdist \
+      python3 -m pytest -q -p no:cacheprovider -n auto --dist worksteal "$@" ;;
+  *)
+    exec uv run --no-project --with pytest --with pytest-xdist \
+      python3 -m pytest -q -p no:cacheprovider -n auto --dist worksteal $SLOW_IGNORES "$@" ;;
+esac
