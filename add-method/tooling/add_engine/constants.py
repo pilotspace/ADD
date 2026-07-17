@@ -13,9 +13,6 @@ __all__ = [
     "MILESTONE_FILE",
     "GOAL_UNSET",
     "STAGES",
-    "GRADUATION_CUE",
-    "RELEASABLE_CUE",
-    "RELEASES_FILE",
     "PHASES",
     "LEGACY_PHASES",
     "GATES",
@@ -48,17 +45,8 @@ MILESTONE_FILE = "MILESTONE.md"
 # this sentinel so the read-only orientation surfaces never blank or crash.
 GOAL_UNSET = "(unset — add a 'goal:' line to PROJECT.md)"
 STAGES = ("prototype", "poc", "mvp", "production")
-# v22 stage-graduation: the read-only cue `status` shows when the MVP is covered.
-# Worded as the ACTION (never a file) so it stands before graduate.md exists.
-GRADUATION_CUE = "MVP covered → propose graduation"
-# release-altitude: the read-only cue `status` shows when ≥1 closed milestone is
-# unreleased. The 5th scope level (release.md). `{n}` is filled at print time; the
-# wording matches SKILL.md's "Beyond the bundle" cross-ref byte-for-byte.
-RELEASABLE_CUE = "releasable: {n} milestone(s) closed since last release"
-# the append-only release ledger lives at the PROJECT ROOT (the dir containing .add/),
-# a sibling of CHANGELOG.md — NOT inside .add/. The ledger IS the attribution source:
-# a milestone is "released" iff its slug appears on a `milestones:` row.
-RELEASES_FILE = "RELEASES.md"
+# kernel-trim (ADD 2.0 M5): GRADUATION_CUE / RELEASABLE_CUE / RELEASES_FILE died with the
+# graduate/release verbs — the release-manager persona owns that judgment now.
 PHASES = ("direction", "build", "verify", "done")
 # phase-collapse-3 (thin-engine-loop W2): the 6-phase walk collapsed to 3 work phases.
 # `direction` is the whole front span (the old specify+plan+tests — §1–§4 drafted

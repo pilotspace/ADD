@@ -65,11 +65,7 @@ LIFECYCLE = [
                                                # state, never docs/)
     ["new-task", "t", "--title", "Feature"],   # auto-linked to mvp
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
-    ["streams"],                               # read-only run-mode streams view (persist-run-mode): reads PROJECT.md, never docs/
     ["todo", "a captured idea"],               # backlog capture (todo-capture): appends state["todos"], never docs/
-    ["whoami"],                                # read-only actor resolve (git config -> OS user; reads state, never docs/)
-    ["assign", "t"],                            # ownership writer: set owner+assignee on t to self (reads/writes state, never docs/)
-    ["unassign", "t"],                          # ownership writer: clear owner+assignee on t (reads/writes state, never docs/)
     ["status"],
     ["guide"],
     ["stage", "mvp"],
@@ -89,39 +85,14 @@ LIFECYCLE = [
                                                # tolerated), exercised under the read-spy (reads
                                                # state/TASK.md, never docs/)
     ["advance", "t"],                          # heal returned t to build; advance back to verify
-    ["audit"],                                 # read-only seam audit (no recorded seams yet ->
-                                               # clean exit 0; reads TASK.md/state, never docs/)
     ["gate", "PASS", "t"],
     ["reopen", "t", "--to", "verify", "--reason", "census"],  # done -> verify (recorded, gate reset)
     ["gate", "PASS", "t"],                                    # re-complete so milestone-done stays valid
     ["status"],
     ["check"],
-    ["doctor"],                                # read-only state.json integrity diagnosis (reads
-                                               # state only, never docs/; healthy board -> exit 0)
-    ["mine"],                                  # read-only per-actor lens across active milestones
-                                               # (reads state only, never docs/; empty -> exit 0)
-    ["wave-verify"],                           # merge-time fork-base gate: read-only; no WAVE.md
-                                               # on this board -> wave_not_found (expected nonzero,
-                                               # tolerated below; reads WAVE.md/state, never docs/)
-    ["ready"],
-    ["waves"],                                 # read-only DAG schedule of the active milestone
-                                               # (reads state only, never docs/; mvp is active so exit 0)
-    ["dag-plan"],                              # record-only DAG-plan snapshot of the active milestone
-                                               # (persist-dag-plan): reads state, writes the dag-plan.json
-                                               # under the milestone dir, never docs/; mvp active -> exit 0
     ["guide", "t"],
     ["report"], ["report", "mvp"],             # read-only dashboard (reads MILESTONE/TASK, not docs/)
     ["deltas"],                                # read-only: open competency deltas report
-    ["compact-foundation", "--propose"],       # read-only: settled-line preview (delta-drain)
-    ["drop-delta", "t"],                       # SPEC-delta dismiss verb: task t holds no open
-                                               # SPEC delta here -> refuses no_open_spec_delta
-                                               # (expected nonzero, tolerated; reads TASK.md, never docs/)
-    ["carry-delta", "t", "--reason", "x"],     # SPEC-delta defer verb: task t holds no open SPEC
-                                               # delta here -> refuses no_open_spec_delta
-                                               # (expected nonzero, tolerated; reads TASK.md, never docs/)
-    ["reopen-delta", "t"],                      # SPEC-delta re-activate verb: task t holds no carried
-                                               # SPEC delta here -> refuses no_carried_spec_delta
-                                               # (expected nonzero, tolerated; reads TASK.md, never docs/)
     ["delta-append", "add", "spy lesson"],     # specs-5dd kernel verb: appends one [open] line to
                                                # .add/specs/method.md (seeding it on demand — reads
                                                # state + the specs template, never docs/; exit 0)
@@ -131,34 +102,15 @@ LIFECYCLE = [
     ["re-cross", "t", "--by", "Tester"],       # post-freeze re-cross verb: t is done at this slot,
                                                # not build/verify -> refuses recross_wrong_phase
                                                # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
-    ["worktree-prep", "t"],                    # spawn-isolation prep: this board is not a git repo
-                                               # -> refuses worktree_prep_no_git (expected nonzero,
-                                               # tolerated; reads state + runs git only, never docs/)
-    ["fold"],                                  # consolidation verb: this board has no open competency
-                                               # lesson -> refuses no_open_deltas (expected nonzero,
-                                               # tolerated; reads TASK/PROJECT/CONVENTIONS, never docs/)
-    ["federate", "pull", "x"],                 # multi-repo pull verb: this board declares no
-                                               # [federation.x] -> refuses federation_unknown (expected
-                                               # nonzero, tolerated; reads components.toml, never docs/)
-    ["components"],                             # registry reader/validator: this board has no
-                                               # components.toml -> friendly single-component no-op,
-                                               # exit 0 (reads components.toml, never docs/)
     ["search", "mvp"],                          # read-only keyword/substring corpus scan
                                                # (context-search, search-index): scans
                                                # MILESTONE.md/TASK.md title/goal/rationale
                                                # or title/Feature lines only, never docs/;
                                                # always exit 0 (matches or "no matches for:")
-    ["graduation-report"], ["graduation-report", "--json"],  # read-only harvest (reads TASK/RETRO/state, never docs/)
-    ["release-report"], ["release-report", "--json"],  # read-only release inventory (reads state/RELEASES.md/TASK, never docs/)
-    ["release", "0.0.0"],                      # guarded record-only cut: no milestone is closed yet
-                                               # here -> refuses release_no_closed_milestone (expected
-                                               # nonzero, tolerated below; reads state/RELEASES.md, never docs/)
     ["project"],                               # read-only: prints PROJECT.md, reads no docs/ chapter
     ["sync-guidelines"],
     ["milestone-done", "mvp"],
     ["archive-milestone", "mvp"],              # mvp is done by now -> archivable
-    ["compact", "mvp"],                        # heavy archive: moves the archived files
-                                               # (reads TASK.md/state for the delta scan, never docs/)
 ]
 
 # init runs in setUp (it refuses to re-run on an existing project), so it is exercised
@@ -168,20 +120,10 @@ _EXERCISED_IN_SETUP = {"init"}
 # heal is a loop/refusal verb (heal-then-escalate): a CONFIRMED cheat never completes with
 # exit 0 — it returns to build (exit 3) or escalates (exit 1). The lifecycle exercises it
 # (proving it reads no docs/ chapter) and tolerates its expected non-zero exit.
-# wave-verify is likewise a refusal verb on this board: no WAVE.md exists, so the
-# merge-time gate refuses (wave_not_found) — exercised under the read-spy, nonzero tolerated.
-# release is guarded: no closed-unreleased milestone exists at its lifecycle slot, so it refuses
-# (release_no_closed_milestone) — exercised under the read-spy (reads state/RELEASES.md, never docs/).
-# drop-delta is a refusal verb on this board: task t holds no open SPEC delta, so it refuses
-# (no_open_spec_delta) — exercised under the read-spy (reads TASK.md/state, never docs/).
-# fold is likewise a refusal verb here: no open competency lesson exists, so it refuses
-# (no_open_deltas) — exercised under the read-spy (reads TASK/PROJECT/CONVENTIONS, never docs/).
-# federate is a refusal verb on this board: no [federation.x] is declared, so `federate pull x`
-# refuses (federation_unknown) — exercised under the read-spy (reads components.toml, never docs/).
 # freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
 # refuses (contract_not_drafted) — exercised under the read-spy (reads TASK.md/state, never docs/).
-_NONZERO_OK = {"heal", "wave-verify", "release", "drop-delta", "carry-delta", "reopen-delta",
-               "fold", "federate", "freeze", "re-cross", "worktree-prep"}
+# re-cross likewise refuses (recross_wrong_phase): t is done at its lifecycle slot.
+_NONZERO_OK = {"heal", "freeze", "re-cross"}
 
 
 class MinimalPillarTest(unittest.TestCase):

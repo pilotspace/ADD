@@ -172,15 +172,6 @@ class UniversalFreezeGateTest(unittest.TestCase):
         self.assertIn("Status: DRAFT", self._task_path().read_text(),
                       "the escape crosses but leaves §3 DRAFT — it never freezes on the human's behalf")
 
-    # ── a skipped freeze is auditable ────────────────────────────────────────────────────
-    def test_skip_freeze_audited(self):
-        self._plain_task_at_direction()
-        self._fill_build_expectations()
-        self._quiet(["advance", "t", "--skip-freeze"])
-        out = self._capture(["audit"])
-        self.assertIn("freeze_skipped", out)
-        self.assertIn("t", out)
-
     # ── grandfather: a task already AT build is never retro-redded ───────────────────────
     def test_grandfather_past_build_not_retro_redded(self):
         # simulate a pre-existing task that crossed into build before this feature existed:

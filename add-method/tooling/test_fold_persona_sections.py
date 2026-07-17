@@ -94,56 +94,14 @@ class _FoldBase(unittest.TestCase):
 
     def _persona(self):
         return (self.tmp / ".add" / "personas" / "probe.md").read_text(encoding="utf-8")
-
-
-class NewHintsFold(_FoldBase):
-    def test_anti_pattern_hint_folds(self):                        # M1
-        self._plant("  - [ADD · open · persona:probe · anti-pattern] "
-                    "a green that was never red -> rerun from red (evidence: e)")
-        self._run("fold")
-        body = self._persona()
-        section = body.split("## Anti-patterns", 1)[1].split("\n## ", 1)[0]
-        self.assertIn("never red", section, "the lesson must land in ## Anti-patterns")
-        self.assertLess(section.index("never red"), section.index("existing anti-pattern"),
-                        "prepend newest-first")
-        self.assertIn("existing anti-pattern", section, "never clobber")
-
-    def test_ability_hint_folds(self):                             # M2
-        self._plant("  - [TDD · open · persona:probe · ability] "
-                    "can mutation-probe a green suite (evidence: e)")
-        self._run("fold")
-        section = self._persona().split("## Abilities", 1)[1].split("\n## ", 1)[0]
-        self.assertIn("mutation-probe", section)
-        self.assertIn("existing ability", section)
-
-
-class FailClosedUnchanged(_FoldBase):
-    def test_unknown_hint_still_rejects(self):                     # R1
-        self._plant("  - [ADD · open · persona:probe · default-requirement] "
-                    "bad hint (evidence: e)")
-        before = self._persona()
-        out = self._run("fold", expect_die=True)
-        self.assertIn("persona_section_unroutable", out)
-        self.assertEqual(before, self._persona(), "nothing written on reject")
-
-    def test_missing_section_fail_closed(self):                    # R2
-        p = self.tmp / ".add" / "personas" / "probe.md"
-        p.write_text(self._persona().replace("## Anti-patterns\n- existing anti-pattern.\n\n", ""),
-                     encoding="utf-8")
-        self._plant("  - [ADD · open · persona:probe · anti-pattern] x (evidence: e)")
-        out = self._run("fold", expect_die=True)
-        self.assertIn("persona_section_unroutable", out)
-
-
 class ProseNamesAllFour(unittest.TestCase):
     def test_guides_and_book(self):                                # M3
+        # kernel-trim (ADD 2.0 M5): fold.md died — deltas.md is the grammar's one home
         deltas = (ADD_METHOD / "skill" / "add" / "deltas.md").read_text(encoding="utf-8")
-        fold = (ADD_METHOD / "skill" / "add" / "fold.md").read_text(encoding="utf-8")
         observe = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md").read_text(encoding="utf-8")
         book = (ADD_METHOD / "docs" / "18-personas.md").read_text(encoding="utf-8")
         for hint in ("critical-rule", "success-metric", "anti-pattern", "ability"):
             self.assertIn(hint, deltas, f"deltas.md grammar misses {hint}")
-            self.assertIn(hint, fold, f"fold.md misses {hint}")
         self.assertIn("anti-pattern", observe, "6-verify.md persona footnote misses the new hints (guide-recut moved it)")
         self.assertIn("Anti-patterns", book, "18-personas.md must name the grown sections")
         self.assertIn("Abilities", book)

@@ -18,8 +18,8 @@ deliberate act that releases the gate.
 The gate fires only when criteria exist. A milestone with no exit-criteria checkboxes closes as
 before — write criteria into `MILESTONE.md` to hold the milestone open.
 
-`milestone-done` is the only way a milestone reaches `done`; `archive-milestone` and `compact`
-both refuse a milestone not done. The one gate is enough — no quiet way around it.
+`milestone-done` is the only way a milestone reaches `done`; `archive-milestone`
+refuses a milestone not done. The one gate is enough — no quiet way around it.
 
 ## The loop
 
@@ -27,7 +27,7 @@ Every task done but not the goal? `add.py status` shows
 `goal not met (m/n exit criteria)`. That's the cue:
 
 1. **Gather** the carried inventory:
-   - open lessons — `add.py deltas` (§7 deltas still `open`) + the deferred pile — `add.py deltas --carried`;
+   - open lessons — `add.py deltas` (§7 deltas still `open`);
    - the planned-but-unscaffolded tasks — the plan-vs-state line in `add.py status`;
    - any reopened task — one a deepened verify returned to the flow (see below).
 2. **Propose** the next tasks: for each carried item worth doing now, draft a one-line task
@@ -43,12 +43,11 @@ Every task done but not the goal? `add.py status` shows
      and the **Goal met?** map — each exit criterion tied to its evidence.
      This is the whole-milestone cross-task evidence the human READS — evidence, not a gate.
    - **Check the boxes** — read that evidence, then check the exit-criteria boxes in `MILESTONE.md`
-     (the single affirmation), and `add.py milestone-done <slug>` succeeds (then consolidate open
-     deltas and archive — the `milestone-done → fold → compact → archive` lifecycle, per
-     `fold.md` · `compact-foundation.md`).
+     (the single affirmation), and `add.py milestone-done <slug>` succeeds (then file the open
+     deltas into their living specs — `add.py delta-append` — and archive).
    - **Define the release steps** — write the milestone's `## Release steps` (merge is one small
-     step among them; PR, asset export, tag/publish are others). These **feed** the release scope
-     (`release.md` runs the cut); loop.md never re-specifies it.
+     step among them; PR, asset export, tag/publish are others). The human owns the cut;
+     loop.md never re-specifies it.
    Present the close via `gate-udd.md` — open with the ARC (goal · done · plan),
    render as a guided choice — **before `milestone-done`/`archive-milestone` run, not after.**
 

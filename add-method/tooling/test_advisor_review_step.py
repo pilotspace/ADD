@@ -139,107 +139,6 @@ class _Harness(unittest.TestCase):
             "(spec-dialect floor): <what confirmed>",
             "(spec-dialect floor): tests speak the spec's Z-timestamp example")
         p.write_text(t, encoding="utf-8")
-
-
-# ---------------------------------------------------------------------------
-# Scenario (b) — present-but-unfilled → flagged, exit 0
-# ---------------------------------------------------------------------------
-
-class AdvisorVerdictUnrecordedNoticeTest(_Harness):
-    def test_audit_surfaces_unrecorded(self):                  # scenario b
-        self._verify_task("t")
-        code, out = self._run("audit")
-        self.assertIn("advisor_verdict_unrecorded", out)
-        self.assertIn("t", out)
-        self.assertEqual(code, 0, "a notice, not a finding")
-
-    def test_recorded_verdict_clears_notice(self):             # scenario a — filled → not flagged
-        self._verify_task("t")
-        self._fill_advisor("t")
-        _, out = self._run("audit")
-        m = re.search(r"advisor_verdict_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"a recorded verdict must clear the notice:\n{out}")
-
-    def test_absent_block_grandfathers(self):                  # scenario f — legacy task
-        self._verify_task("t")
-        self._drop_advisor("t")
-        code, out = self._run("audit")
-        m = re.search(r"advisor_verdict_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        "absent block is never retro-flagged")
-        self.assertEqual(code, 0)
-
-    def test_one_grouped_line(self):                           # grouped like refute_unrecorded
-        for s in ("a", "b", "c"):
-            self._verify_task(s)
-        _, out = self._run("audit")
-        self.assertEqual(out.count("advisor_verdict_unrecorded"), 1,
-                         "exactly ONE grouped line")
-        m = re.search(r"advisor_verdict_unrecorded — (\d+) task\(s\)[^\n]*", out)
-        self.assertIsNotNone(m, f"a grouped 'N task(s)' line expected:\n{out}")
-        self.assertEqual(int(m.group(1)), 3)
-
-    def test_not_at_verify_is_silent(self):                    # pre-verify → not flagged
-        self._silent("new-task", "g", "--title", "X")         # stays at ground
-        _, out = self._run("audit")
-        self.assertNotIn("advisor_verdict_unrecorded", out)
-
-
-# ---------------------------------------------------------------------------
-# Scenario (c) — Security HARD-STOP shape → counts as filled (not flagged)
-# ---------------------------------------------------------------------------
-
-class HardStopVerdictTest(_Harness):
-    def test_security_hard_stop_not_flagged(self):             # scenario c
-        self._verify_task("t")
-        self._fill_advisor(
-            "t",
-            security="HARD-STOP: SQL injection in query builder",
-            concurrency="",            # left blank per HARD-STOP rule
-            architecture="",
-            verdict="HARD-STOP",
-            residue="SQL injection risk in query builder",
-            binding="advisory — low",
-        )
-        _, out = self._run("audit")
-        m = re.search(r"advisor_verdict_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"a HARD-STOP shape is filled — must not be flagged:\n{out}")
-
-
-# ---------------------------------------------------------------------------
-# Scenario (d) — Binding "yes — mechanical" → filled, not flagged
-# ---------------------------------------------------------------------------
-
-class MechanicalBindingTest(_Harness):
-    def test_mechanical_binding_not_flagged(self):             # scenario d
-        self._verify_task("t")
-        self._fill_advisor("t", binding="yes — mechanical", verdict="PASS")
-        _, out = self._run("audit")
-        m = re.search(r"advisor_verdict_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"mechanical binding is filled — must not be flagged:\n{out}")
-
-
-# ---------------------------------------------------------------------------
-# Scenario (e) — Binding "advisory — architecture" → filled, not flagged
-# ---------------------------------------------------------------------------
-
-class AdvisoryBindingTest(_Harness):
-    def test_advisory_binding_not_flagged(self):               # scenario e
-        self._verify_task("t")
-        self._fill_advisor("t", binding="advisory — architecture", verdict="PASS")
-        _, out = self._run("audit")
-        m = re.search(r"advisor_verdict_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"advisory binding is filled — must not be flagged:\n{out}")
-
-
-# ---------------------------------------------------------------------------
-# MEASURE-NOT-BLOCK — gate is never blocked, exit code stays 0
-# ---------------------------------------------------------------------------
-
 class MeasureNotBlockTest(_Harness):
     def test_gate_never_blocked_by_unrecorded(self):           # gate unaffected
         self._verify_task("t")
@@ -256,17 +155,6 @@ class MeasureNotBlockTest(_Harness):
         src = (TOOLING / "add.py").read_text(encoding="utf-8")
         self.assertNotIn("advisor_verdict_missing", src,
                          "design is measure-not-block: no hard-gate reject code may ship")
-
-    def test_audit_exit_zero_with_notice(self):                # notice never raises exit
-        self._verify_task("t")
-        code, _ = self._run("audit")
-        self.assertEqual(code, 0)
-
-
-# ---------------------------------------------------------------------------
-# Template placement — must appear after Refute-read and before GATE RECORD
-# ---------------------------------------------------------------------------
-
 class TemplatePlacementTest(_Harness):
     def test_template_carries_advisor_block(self):             # block exists with placeholders
         p = self._verify_task("t")
@@ -289,60 +177,5 @@ class TemplatePlacementTest(_Harness):
                         "Advisor block must sit AFTER Refute-read verdict")
         self.assertLess(i_advisor, i_gate,
                         "Advisor block must sit BEFORE GATE RECORD")
-
-
-# ---------------------------------------------------------------------------
-# Scenario (g) — clean line only when advisor_verdict_unrecorded is ALSO empty
-# ---------------------------------------------------------------------------
-
-class CleanLineGuardTest(_Harness):
-    def test_clean_line_suppressed_when_advisor_unrecorded(self): # scenario g
-        self._verify_task("t")
-        # also fill other notices so only advisor_verdict_unrecorded fires
-        self._also_fill_refute("t")
-        _, out = self._run("audit")
-        self.assertNotIn("audit: clean", out,
-                         "clean line must NOT print when advisor_verdict_unrecorded fires")
-        self.assertIn("advisor_verdict_unrecorded", out)
-
-    def test_clean_line_appears_when_advisor_also_empty(self):    # clean when all clear
-        # Provision a FULLY clean task: header dims set, deep-checks + refute + advisor
-        # all filled, so every glint list is empty and "audit: clean" must print with
-        # the new advisor_verdict_unrecorded guard in the conjunction.
-        self._verify_task("t")
-        self._set_header_dims("t", risk="low", sensitivity="architecture")
-        self._fill_deep_checks("t")
-        self._also_fill_refute("t")
-        self._fill_advisor("t")
-        self._fill_reported("t")
-        code, out = self._run("audit")
-        self.assertEqual(code, 0)
-        self.assertIn("audit: clean", out,
-                      f"a fully-clean task must print the clean line (new guard included):\n{out}")
-        self.assertNotIn("advisor_verdict_unrecorded", out,
-                         "no advisor notice on a filled block")
-
-
-# ---------------------------------------------------------------------------
-# JSON output
-# ---------------------------------------------------------------------------
-
-class JsonOutputTest(_Harness):
-    def test_audit_json_has_advisor_key(self):                 # json shape
-        self._verify_task("t")
-        _, out = self._run("audit", "--json")
-        data = json.loads(out)
-        self.assertIn("advisor_verdict_unrecorded", data["guarantee_lints"])
-        self.assertIn("t", data["guarantee_lints"]["advisor_verdict_unrecorded"])
-
-    def test_advisor_key_not_in_findings(self):                # NEVER a finding
-        self._verify_task("t")
-        _, out = self._run("audit", "--json")
-        data = json.loads(out)
-        finding_codes = [f["code"] for f in data.get("findings", [])]
-        self.assertNotIn("advisor_verdict_unrecorded", finding_codes,
-                         "advisor_verdict_unrecorded is a glint, never a finding")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

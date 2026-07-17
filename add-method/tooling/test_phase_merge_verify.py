@@ -104,8 +104,8 @@ class AdvanceAndGateTest(_Harness):
         self._to_verify()
         out = self._ok("gate", "PASS", "t")
         self.assertEqual(self._phase(), "done")
-        self.assertIn("fold", out,
-                      "gate completion must carry the fold nudge observe used to print")
+        self.assertIn("delta-append", out,
+                      "gate completion must carry the living-spec delta nudge")
 
     def test_phase_cmd_observe_maps_to_verify(self):                # R1 (retargeted:
         # phase-collapse-3's LEGACY_PHASES recognizes "observe" as a legacy alias —

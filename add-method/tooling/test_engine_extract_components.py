@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""extract-components (engine-modularization 11/N) — the 7 component/federation reader
-fns (`_confined`·`_components`·`_cite_region`·`_contracts`·`_federation`·
-`_contract_snapshot`·`_in_scope`) moved from add.py into a NEW add_engine/components.py.
-
-Closed cluster (transitive-closure AST = zero outbound), none patched -> plain re-export.
-components.py replicates add.py's degrade-safe `tomllib` guard (py3.10 import safety).
+"""extract-components (engine-modularization 11/N; kernel-trim (ADD 2.0 M5)) — the
+components pillar died with its verbs; only the two GENERIC scope utilities
+(`_confined`·`_in_scope`) survive in add_engine/components.py, re-exported by add.py.
 Run: python3 -m unittest test_engine_extract_components -v
 """
 import hashlib
@@ -24,8 +21,7 @@ TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling",
 )
 
-MOVED = ("_confined", "_components", "_cite_region", "_contracts",
-         "_federation", "_contract_snapshot", "_in_scope")
+MOVED = ("_confined", "_in_scope")
 
 
 class ReexportTest(unittest.TestCase):
@@ -48,25 +44,11 @@ class ReexportTest(unittest.TestCase):
             self.assertNotIn(f"\ndef {name}(", src, f"dead-code: add.py still defines {name}")
 
 
-class OptInInvariantTest(unittest.TestCase):
-    def test_no_registry_returns_empty(self):
-        import add
-        tmp = Path(tempfile.mkdtemp(prefix="add-comp-")).resolve()
-        try:
-            # no components.toml in tmp -> the registry reader degrades to {} (opt-in)
-            self.assertEqual(add._components(tmp), {},
-                             "no components.toml must yield {} (the opt-in/byte-identical invariant)")
-        finally:
-            import shutil
-            shutil.rmtree(tmp, ignore_errors=True)
-
-
 class NoCycleTest(unittest.TestCase):
     def test_components_imports_without_add(self):
         # also exercises the tomllib guard path (import must not crash)
         code = ("import add_engine.components as c; "
-                "assert all(hasattr(c, n) for n in ['_components','_contracts','_federation']); "
-                "assert hasattr(c, 'tomllib')")
+                "assert all(hasattr(c, n) for n in ['_confined','_in_scope'])")
         r = subprocess.run([sys.executable, "-c", code], cwd=str(TOOLING),
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, f"cycle/import/guard error: {r.stderr.strip()}")

@@ -174,51 +174,6 @@ code 0 means healthy — handy as a CI gate.
 
 ---
 
-## Enforce the decision points in CI
-
-`add.py audit` re-verifies every recorded human gate on your board — a named
-human at each contract freeze, exactly one gate outcome per done task, a human
-reviewer wherever the security line carries a note. It exits non-zero naming
-the task and the finding, which makes it a CI gate: enforcement runs on a
-machine the agent does not control, so the agent can never stamp its own work
-green (*never self-gate*).
-
-Drop this workflow into `.github/workflows/seam-audit.yml`:
-
-```yaml
-name: seam-audit
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-permissions:
-  contents: read
-
-jobs:
-  seam-audit:
-    name: Decision-point audit (recorded human gates)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Audit recorded decision points
-        run: python3 .add/tooling/add.py audit
-```
-
-The command is the same one you can run locally — the installer already placed
-`add.py` at `.add/tooling/add.py`, and the audit is read-only (it never edits
-your board). A red `seam-audit` job means a decision record is malformed or a
-security note was left to the auto-gate; fix the record (or escalate the gate
-to a human), never the auditor.
-
----
-
 ## Under the hood — the seven phases by hand (escape hatch)
 
 Everything above is what the agent drives for you through the one-approval flow. This

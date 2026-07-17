@@ -78,28 +78,15 @@ class RunModeStep(unittest.TestCase):
         self.assertIn("parallel", low, "parallel must still be named, as the opt-in path")
 
     def test_cites_waves_and_autonomy(self):
-        self.assertIn("add.py waves", self.section, "must cite the scheduler")
+        # kernel-trim (ADD 2.0 M5): the waves scheduler died — the posture persists
+        # via `init --run-mode`, read from PROJECT.md.
+        self.assertIn("init --run-mode", self.section, "must cite the posture persist path")
         self.assertIn("autonomy", self.section.lower(), "must cite the autonomy dial")
         # the one-approval floor must be explicit so 'auto' is not read as 'no gate'
         self.assertIn("contract", self.section.lower())
 
     def test_records_in_project_key_decisions(self):
         self.assertIn("Key Decisions", self.section, "the choice must be recorded in PROJECT.md Key Decisions")
-
-    def test_streams_names_new_default(self):
-        # sequential-auto-default: streams.md must now name `sequential + auto` as the project
-        # default and reframe parallel streaming as an explicit opt-in (was: parallel+auto
-        # default/opt-out) — real usage showed parallel/multi-agent spawning is rarely used.
-        streams = _read(CANONICAL, STREAMS).lower()
-        self.assertIn("default", streams)
-        self.assertIn("sequential", streams)
-        self.assertTrue("parallel" in streams and "auto" in streams)
-        self.assertIn("opt-in", streams,
-                      "streams.md must name parallel streaming as opt-in, not the default")
-        self.assertNotIn("opt-out", streams,
-                         "the stale opt-out framing must not survive the default flip")
-
-
 class InitRunMode(unittest.TestCase):
     """Engine tests: add.py init --run-mode {auto,conservative}.
 
@@ -191,22 +178,7 @@ class InitRunMode(unittest.TestCase):
                       "Run mode section must name 'autonomy set'")
         self.assertIn("--project", section,
                       "Run mode section must include --project flag")
-        self.assertIn("streams set", section,
-                      "Run mode section must name 'streams set' (the streams persist command)")
-
-    # ------------------------------------------------------------------
-    # 6. streams.md keeps required vocab
-    # ------------------------------------------------------------------
-    def test_streams_md_keeps_vocab(self):
-        """streams.md must retain 'parallel', 'auto', and 'default'/'opt-out'."""
-        text = (CANONICAL / "streams.md").read_text(encoding="utf-8").lower()
-        self.assertIn("parallel", text)
-        self.assertIn("auto", text)
-        self.assertTrue(
-            "default" in text or "opt-out" in text,
-            "streams.md must name parallel+auto as the project default or opt-out",
-        )
-
-
+        self.assertIn("init --run-mode", section,
+                      "Run mode section must name the posture persist path")
 if __name__ == "__main__":
     unittest.main()

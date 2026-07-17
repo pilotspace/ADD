@@ -1,10 +1,10 @@
 # Lessons learned — how each loop sharpens the foundation
 
-A **lesson learned** is a single learning a task produces, tagged by which of ADD's five competencies it improves. Write deltas in **OBSERVE**; later `fold.md` consolidates confirmed ones into a versioned `PROJECT.md` — how `DDD · SDD · UDD · TDD · ADD` stop being write-once and converge.
+A **lesson learned** is a single learning a task produces, tagged by which of ADD's five competencies it improves. Write deltas in **OBSERVE** and file each into its living spec (`add.py delta-append`) — how `DDD · SDD · UDD · TDD · ADD` stop being write-once and converge.
 
 You **emit** deltas as `open`; only the **human** moves one to `folded` or `rejected`. You never self-approve a consolidation.
 
-**Emit in-flight, not batched**: the moment a lesson is learned — any phase, any task — file it with `add.py delta-append <dd> "<lesson>"` (`ddd|sdd|udd|tdd|add`). The verb prepends one `[open · <date>]` line (newest first, active task stamped) into the lesson's **living spec** under `.add/specs/` — `domain.md · system.md · experience.md · quality.md · method.md`, seeded at init and on demand for pre-2.0 projects. The task's §7 Competency-deltas block stays the per-task record; the living spec is where the lessons accumulate across tasks between folds.
+**Emit in-flight, not batched**: the moment a lesson is learned — any phase, any task — file it with `add.py delta-append <dd> "<lesson>"` (`ddd|sdd|udd|tdd|add`). The verb prepends one `[open · <date>]` line (newest first, active task stamped) into the lesson's **living spec** under `.add/specs/` — `domain.md · system.md · experience.md · quality.md · method.md`, seeded at init and on demand for pre-2.0 projects. The task's §7 Competency-deltas block stays the per-task record; the living spec is where the lessons accumulate across tasks.
 
 ## The grammar (frozen)
 
@@ -18,7 +18,7 @@ Each delta begins on its own **tag line**; the learning may wrap:
 - `<status>` — `open` | `folded` | `rejected`. A **newly emitted delta is `open`**.
 - `<learning>` — the insight; the tag line comes **first**, `(evidence: …)` **closes** the delta.
 - `(evidence: …)` — **required**, non-empty: a failing scenario, a production signal, a review note. No evidence → it is an opinion, not a delta.
-- **persona target (optional)** — a competency lesson MAY add `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability>` in brackets, e.g. `- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)`. At `add.py fold` it lands in `.add/personas/<slug>.md` under that section (newest-first, never clobbering) instead of `PROJECT.md` (`fold.md`).
+- **persona target (optional)** — a competency lesson MAY add `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability>` in brackets, e.g. `- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)`. The persona loop lands it in `.add/personas/<slug>.md` under that section (newest-first, never clobbering) instead of the shared specs.
 
 A long learning may wrap — `add.py check` joins continuation lines into **one** delta:
 

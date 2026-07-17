@@ -116,5 +116,5 @@ Whatever shape the persona renders per project, it MUST hold all four:
 - **The question is a summary, never the artifact.** A compact SUMMARY · FLAGS block sits in chat immediately before the ask; the question text itself is two lines at most — intent + what "yes" means + the flag count — pointing at the report above.
 - **NEXT is not a second gate.** The decision stays in APPROVE; NEXT is ranked recommendations only.
 - **DECIDED never holds a gate-class call.** Security / residue / lowered-autonomy calls escalate in APPROVE.
-- **Recorded, not just performed.** A gate render is recorded, not assumed — TASK.md `Reported: yes` (§3/§6) is the trace; `add.py audit` surfaces an unrecorded one (`contract_report_unrecorded`/`verify_report_unrecorded`), a spot-audit the backstop.
+- **Recorded, not just performed.** A gate render is recorded, not assumed — TASK.md `Reported: yes` (§3/§6) is the trace; a human spot-audit is the backstop for a missed render.
 </constraints>

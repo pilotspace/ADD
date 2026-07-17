@@ -126,66 +126,6 @@ class _Harness(unittest.TestCase):
     def _releases(self):
         p = self.tmp / "RELEASES.md"
         return p.read_text(encoding="utf-8") if p.exists() else ""
-
-
-class ReleaseFloorNamingTest(_Harness):
-    def test_release_floor_uses_new_code(self):                # Must + Reject (rename)
-        self._loose_done("loose1")
-        self._build_in_flight("bif")
-        cl_before, rel_before = self._changelog(), self._releases()
-        code, out = self._run("release", "0.1.0")              # no --force
-        self.assertNotEqual(code, 0)
-        self.assertIn("release_build_in_flight", out)
-        self.assertNotIn("release_tests_red", out)
-        self.assertEqual(self._changelog(), cl_before, "CHANGELOG byte-unchanged on reject")
-        self.assertEqual(self._releases(), rel_before, "RELEASES byte-unchanged on reject")
-
-    def test_release_floor_still_forceable(self):              # After (condition unchanged)
-        self._loose_done("loose1")
-        self._build_in_flight("bif")
-        code, out = self._run("release", "0.1.0", "--force")
-        self.assertEqual(code, 0, f"--force must still cut past the build-in-flight floor: {out}")
-        self.assertIn("loose1", self._releases())
-
-
-class SpecDeltaVocabTest(_Harness):
-    def test_carry_ambiguous_uses_match_code(self):            # Reject (ambiguous reconciled)
-        self._set_spec("t", "tune the cache", "drop the cache")
-        before = self._task_md("t").read_bytes()
-        code, out = self._run("carry-delta", "t", "--match", "cache", "--reason", "later")
-        self.assertNotEqual(code, 0)
-        self.assertIn("ambiguous_spec_match", out)
-        self.assertNotIn("ambiguous_spec_delta", out)
-        self.assertEqual(self._task_md("t").read_bytes(), before, "no write on reject")
-
-    def test_carry_match_miss_is_distinct(self):               # Reject (the one behavior refinement)
-        self._set_spec("t", "tune the cache")                  # one OPEN delta exists
-        before = self._task_md("t").read_bytes()
-        code, out = self._run("carry-delta", "t", "--match", "zzz", "--reason", "later")
-        self.assertNotEqual(code, 0)
-        self.assertIn("no_matching_spec_delta", out)
-        self.assertNotIn("no_open_spec_delta", out, "a --match miss is distinct from no-open")
-        self.assertEqual(self._task_md("t").read_bytes(), before)
-
-    def test_carry_no_open_unchanged(self):                    # Reject (no_open kept)
-        self._mk("t")                                          # fresh task, zero OPEN deltas
-        before = self._task_md("t").read_bytes()
-        code, out = self._run("carry-delta", "t", "--reason", "x")
-        self.assertNotEqual(code, 0)
-        self.assertIn("no_open_spec_delta", out)
-        self.assertEqual(self._task_md("t").read_bytes(), before)
-
-    def test_reopen_ambiguous_uses_match_code(self):           # Reject (reopen reconciled)
-        self._set_spec("t", "drain the queue", "fill the queue")
-        self._silent("carry-delta", "t", "--all", "--reason", "later")   # both -> carried
-        before = self._task_md("t").read_bytes()
-        code, out = self._run("reopen-delta", "t", "--match", "queue")
-        self.assertNotEqual(code, 0)
-        self.assertIn("ambiguous_spec_match", out)
-        self.assertNotIn("ambiguous_spec_delta", out)
-        self.assertEqual(self._task_md("t").read_bytes(), before)
-
-
 class RepoHygieneTest(unittest.TestCase):
     """Grep the LIVE trees — engine emit sites + guide + book — for the retired codes.
     Historical records (CHANGELOG, .add/tasks/*, .add/archive/*, engine_pin genealogy) are

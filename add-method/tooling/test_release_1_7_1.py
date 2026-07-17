@@ -22,7 +22,6 @@ PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
 VERSION = "1.7.1"
 PRIOR_VERSIONS = ("1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
-CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline capabilities the release notes must name (installer-smarts: intent
 # handoff via .add/.intent; installer-soul-seed: SOUL.md seeding; verify-expectations:
 # Build-expectations block; scope-drafting-quality: scope drafting quality guard)
@@ -56,12 +55,6 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/checkout@v4", text, wf.name)
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
-
-    def test_audit_line_survives_bumps(self):
-        self.assertIn(CANONICAL_AUDIT, CI_YML.read_text(encoding="utf-8"),
-                      "the seam-audit command must stay byte-identical")
-
-
 class ReleaseShapeTest(unittest.TestCase):
     # Version-agreement asserts retired at 1.7.2 — the live version sources now
     # track the latest release; test_release_1_7_2.py owns the version-pin checks.

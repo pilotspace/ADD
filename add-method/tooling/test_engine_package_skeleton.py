@@ -33,8 +33,10 @@ TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling",
 )
 
+# kernel-trim (ADD 2.0 M5): GRADUATION_CUE/RELEASABLE_CUE/RELEASES_FILE died with
+# the graduation/release pillar; SPEC_DDS joined at specs-5dd.
 PUBLIC = ("ROOT_DIRNAME", "STATE_FILE", "MILESTONE_FILE", "GOAL_UNSET", "STAGES",
-          "GRADUATION_CUE", "RELEASABLE_CUE", "RELEASES_FILE", "PHASES", "GATES",
+          "PHASES", "GATES", "SPEC_DDS",
           "HEAL_CAP", "PHASE_GUIDE", "PHASE_OWNER", "SETUP_FILES", "GUIDELINE_FILES",
           "RULES_FILE_REL", "WORKFLOW_HEADINGS")
 PRIVATE = ("_GITIGNORE_BODY", "_GUIDE_BEGIN", "_GUIDE_END", "_RULE_REF_LINE",

@@ -129,19 +129,5 @@ class GateRecordWritebackTest(unittest.TestCase):
         self.assertEqual(norm(p.read_text()), before, "no GATE RECORD block -> write-back adds nothing")
         self.assertNotIn("### GATE RECORD", p.read_text(), "no GATE RECORD block was fabricated")
         self.assertEqual(self._task().get("gate"), "PASS")
-
-    # ── write-back closes the audit divergence ───────────────────────────────────────────
-    def test_writeback_closes_audit_divergence(self):
-        self._task_at_verify()
-        self._quiet(["gate", "PASS"])
-        _checked, findings = add._audit_findings(
-            Path(self.tmp) / ".add", self._state())
-        # scope to the divergence THIS task closes (the scaffold's unstamped §3 is a separate concern)
-        diverge = [f for f in findings if f["task"] == "t"
-                   and f["code"] in ("malformed_gate_record", "gate_record_mismatch")]
-        self.assertEqual(diverge, [], f"write-back closes the §6↔state divergence; got {diverge}")
-        self.assertEqual(self._record_line("Outcome:"), "Outcome: PASS")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -64,17 +64,12 @@ _REQUIRED_MATERIALIZE_LINES = [
 
 class CiMaterializes(unittest.TestCase):
     def test_ci_materializes_before_untouched_audit(self):         # M3
+        # kernel-trim (ADD 2.0 M5): the seam-audit job died with the audit verb;
+        # the materialize step (the dogfood mirror CI still depends on) survives.
         txt = (REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-        self.assertIn("python3 .add/tooling/add.py audit", txt,
-                      "the seam-audit run: line is a tested, shipped invariant "
-                      "(test_audit_ci.py CANONICAL) — it must stay byte-identical")
-        audit_pos = txt.index("python3 .add/tooling/add.py audit")
         for line in _REQUIRED_MATERIALIZE_LINES:
-            pos = txt.find(line)
-            self.assertGreaterEqual(pos, 0,
-                                     f"ci.yml materialize step must copy: {line!r}")
-            self.assertLess(pos, audit_pos,
-                             f"materialize line must run BEFORE the audit step: {line!r}")
+            self.assertIn(line, txt,
+                          f"ci.yml materialize step must copy: {line!r}")
 
 
 class PinTestsToleratesAbsence(unittest.TestCase):

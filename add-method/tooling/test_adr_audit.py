@@ -87,58 +87,6 @@ class AdrAuditTest(unittest.TestCase):
                      r"\1" + PLACEHOLDER + r"\2", p.read_text(), flags=re.S)
         p.write_text(txt, encoding="utf-8")
 
-    # ── the lint fires on a gated task whose §7 block was never harvested ─────────────────
-    def test_lint_fires_on_unharvested_block(self):
-        self._gated_task()
-        self._reset_adr_to_placeholder()              # simulate a record that never harvested
-        self.assertTrue(self._adr_findings("t"), "adr_record_missing fires on an unharvested §7 block")
-
-    def test_unharvested_is_a_real_finding_not_a_soft_surface(self):
-        # the design call: adr_record_missing rides in findings[] (drives exit 1), NOT in the
-        # measure-not-block guarantee_lints[] bucket (exit 0). --json isolates that distinction.
-        self._gated_task()
-        self._reset_adr_to_placeholder()
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), contextlib.suppress(SystemExit):
-            add.main(["audit", "--json"])
-        data = json.loads(buf.getvalue())
-        self.assertIn("adr_record_missing", [f["code"] for f in data["findings"]],
-                      "adr_record_missing is a real finding (drives the exit-1 CI gate)")
-        self.assertNotIn("adr_record_missing", json.dumps(data.get("guarantee_lints", {})),
-                         "it is NOT a measure-not-block surface")
-
-    # ── a harvested block passes; audit is pure ──────────────────────────────────────────
-    def test_harvested_block_passes_and_audit_is_pure(self):
-        self._gated_task()
-        before = _md5(self._path())
-        self.assertEqual(self._adr_findings("t"), [], "a harvested §7 block raises no finding")
-        with contextlib.redirect_stdout(io.StringIO()):
-            with contextlib.suppress(SystemExit):
-                add.main(["audit"])
-        self.assertEqual(_md5(self._path()), before, "audit is a pure read — the file is unchanged")
-
-    # ── a legacy task with no §7 ADR block is grandfathered ──────────────────────────────
-    def test_legacy_no_block_grandfathered(self):
-        self._quiet(["new-task", "u"])
-        p = self._path("u")                            # strip the §7 ADR block (pre-feature scaffold)
-        txt = re.sub(r"### Decisions \(ADR\)\n.*?\n\n(### Spec delta)", r"\1", p.read_text(), flags=re.S)
-        p.write_text(txt, encoding="utf-8")
-        self.assertNotIn("### Decisions (ADR)", p.read_text())
-        self._quiet(["phase", "verify", "u"])
-        self._quiet(["gate", "PASS", "u"])
-        self.assertEqual(self._adr_findings("u"), [], "a §7 with no ADR block is legacy — never flagged")
-
-    # ── harvested prose quoting the placeholder is not a false positive ──────────────────
-    def test_substring_in_prose_no_false_positive(self):
-        self._gated_task()
-        p = self._path()                               # add a harvested line that CONTAINS the substring
-        txt = p.read_text().replace(
-            "### Decisions (ADR)\n",
-            "### Decisions (ADR)\n- [AI] build — strategy used: quoted the <harvested at done> token\n", 1)
-        p.write_text(txt, encoding="utf-8")
-        self.assertIn("<harvested at done", p.read_text())   # substring present...
-        self.assertEqual(self._adr_findings("t"), [], "...but no bare placeholder line -> no finding")
-
     # ── the record is documented + byte-identical across the 3 trees of each surface ─────
     def test_docs_carry_adr_term(self):
         for name, trio in (("observe guide", OBSERVE_GUIDE), ("book loop", BOOK_LOOP), ("glossary", GLOSSARY)):

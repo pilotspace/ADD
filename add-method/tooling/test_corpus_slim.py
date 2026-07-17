@@ -22,14 +22,15 @@ PARITY_NAME = re.compile(
 SWEEP = HERE / "test_tree_parity.py"
 
 # the seven floor suites — counts may only grow (floor_struck otherwise)
+# kernel-trim (ADD 2.0 M5): test_gate_audit died with the audit verb; the audit-side
+# floors in the surviving suites dropped with their excised classes — floors re-pinned.
 FLOOR_DEF_COUNTS = {
     "test_freeze_command.py": 9,
-    "test_gate_audit.py": 18,
     "test_project_scope_lock.py": 31,
     "test_security_escalation_disclosure.py": 5,
     "test_advisor_gate_relax.py": 29,
-    "test_ai_plan_verify_gate.py": 44,
-    "test_unflagged_freeze.py": 13,
+    "test_ai_plan_verify_gate.py": 39,
+    "test_unflagged_freeze.py": 9,
 }
 
 # (retired) ENGINE_MD5_AT_FREEZE guarded that the test-corpus-slim TASK itself never

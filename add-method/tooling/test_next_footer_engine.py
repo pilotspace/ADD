@@ -39,7 +39,7 @@ ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
 COMPLETING_VERBS = {
     "init", "lock", "new-milestone", "new-task", "advance", "phase", "use",
     "reopen", "gate", "set-milestone", "milestone-done", "stage",
-    "archive-milestone", "compact",
+    "archive-milestone",
 }
 
 
@@ -319,7 +319,6 @@ class FooterSweepTest(_Board):
         self._mark_exit_met("md")
         covered["milestone-done"] = self._run("milestone-done", "md")[0]
         covered["archive-milestone"] = self._run("archive-milestone", "md")[0]
-        covered["compact"] = self._run("compact", "md")[0]
 
         # --- init + lock in fresh dirs ---
         _, covered["init"] = self._fresh()

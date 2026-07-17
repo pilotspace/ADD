@@ -64,65 +64,6 @@ class _Project(unittest.TestCase):
         lines = "".join(f"- [SPEC · open] {t} (evidence: ev)\n" for t in open_texts)
         body = f"\n### Spec delta\n{lines}\n### Competency deltas\n"
         p.write_text(s[:head_end] + body, encoding="utf-8")
-
-
-class DropMatchTest(_Project):
-    def test_drop_match_targets_specific(self):
-        self._mk("t"); self._set_spec("t", "alpha thing", "beta thing")
-        code, out, err = _run(["drop-delta", "t", "--match", "beta"])
-        self.assertEqual(code, 0, err)
-        md = self._task_md("t")
-        self.assertIn("[SPEC · dropped] beta thing", md)
-        self.assertIn("[SPEC · open] alpha thing", md)
-
-    def test_match_case_insensitive(self):
-        self._mk("t"); self._set_spec("t", "Rate Limit retries")
-        code, out, err = _run(["drop-delta", "t", "--match", "rate limit"])
-        self.assertEqual(code, 0, err)
-        self.assertIn("[SPEC · dropped] Rate Limit retries", self._task_md("t"))
-
-    def test_no_match_first_open_byte_identical(self):
-        self._mk("t"); self._set_spec("t", "alpha", "beta")
-        code, out, err = _run(["drop-delta", "t"])           # no --match
-        self.assertEqual(code, 0, err)
-        md = self._task_md("t")
-        self.assertIn("[SPEC · dropped] alpha", md)          # first open
-        self.assertIn("[SPEC · open] beta", md)
-
-    def test_no_matching_rejects(self):
-        self._mk("t"); self._set_spec("t", "alpha")
-        before = self._task_md("t")
-        code, out, err = _run(["drop-delta", "t", "--match", "zzz"])
-        self.assertNotEqual(code, 0)
-        self.assertIn("no_matching_spec_delta", out + err)
-        self.assertEqual(self._task_md("t"), before)         # byte-unchanged
-
-    def test_ambiguous_rejects(self):
-        self._mk("t"); self._set_spec("t", "alpha one", "alpha two")
-        before = self._task_md("t")
-        code, out, err = _run(["drop-delta", "t", "--match", "alpha"])
-        self.assertNotEqual(code, 0)
-        self.assertIn("ambiguous_spec_match", out + err)
-        self.assertEqual(self._task_md("t"), before)
-
-    def test_match_excludes_evidence_even_when_unclosed(self):
-        # a malformed delta (unclosed evidence paren) must NOT let --match hit the evidence text
-        self._mk("t")
-        p = self.root / "tasks" / "t" / "TASK.md"
-        s = p.read_text(encoding="utf-8")
-        idx = s.index("## 7 · OBSERVE"); he = s.index("\n", idx) + 1
-        p.write_text(s[:he] + "\n### Spec delta\n- [SPEC · open] fix logic (evidence: SPECIALKEY\n\n"
-                     "### Competency deltas\n", encoding="utf-8")
-        before = p.read_text(encoding="utf-8")
-        code, out, err = _run(["drop-delta", "t", "--match", "SPECIALKEY"])   # only in the evidence
-        self.assertNotEqual(code, 0)
-        self.assertIn("no_matching_spec_delta", out + err)
-        self.assertEqual(p.read_text(encoding="utf-8"), before)
-        # but the real text IS matchable
-        code, out, err = _run(["drop-delta", "t", "--match", "fix logic"])
-        self.assertEqual(code, 0, err)
-
-
 class SeedMatchTest(_Project):
     def test_seed_match_targets_and_prefills(self):
         self._mk("prior"); self._set_spec("prior", "rate limit", "retry budget")

@@ -152,32 +152,5 @@ class StageGuardNoProjectTest(unittest.TestCase):
 def _depth_section(text: str) -> str:
     m = re.search(r"##+\s*Depth by stage.*?(?=\n##\s|\Z)", text, re.S)
     return m.group(0) if m else ""
-
-
-class GraduateDocsTest(unittest.TestCase):
-    """Existence/marker checks for the prose orchestration deliverable (canonical tree;
-    tree/bundle parity guards the other two copies)."""
-
-    def test_graduate_md_documents_orchestration(self):
-        self.assertTrue(GRADUATE_MD.exists(), f"missing canonical guide: {GRADUATE_MD}")
-        low = GRADUATE_MD.read_text(encoding="utf-8").lower()
-        for marker in ["graduation-report", "new-milestone", "stage production"]:
-            self.assertIn(marker, low, f"graduate.md must name the step `{marker}`")
-        self.assertIn("propose graduation", low, "graduate.md must reference the status cue")
-        self.assertIn("interview", low, "graduate.md must describe the co-specify interview")
-        self.assertTrue(any(k in low for k in ("final step", "last step")),
-                        "graduate.md must state the flip is the FINAL step")
-        self.assertTrue(any(k in low for k in ("auto-flip", "auto flip", "never auto", "no auto")),
-                        "graduate.md must state the engine never auto-flips")
-
-    def test_skill_routes_to_graduate(self):
-        text = SKILL_MD.read_text(encoding="utf-8")
-        self.assertIn("graduate.md", text, "SKILL.md must route to graduate.md")
-        depth = _depth_section(text).lower()
-        self.assertTrue(depth, "SKILL.md must keep a 'Depth by stage' section")
-        self.assertIn("graduat", depth,
-                      "the Depth-by-stage production line must point at the orchestration (graduate.md)")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

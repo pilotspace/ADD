@@ -50,6 +50,18 @@ class _Harness(unittest.TestCase):
                 raise AssertionError(f"{argv} exited {e.code}: {buf.getvalue()}")
         return buf.getvalue()
 
+    def _own(self, slug, owner=None, assignee=None):
+        """kernel-trim (ADD 2.0 M5): the `assign` setter died; the owner/assignee READ
+        surface survives — write the actor dicts directly (the shape _parse_actor_arg made)."""
+        sp = self.tmp / ".add" / "state.json"
+        st = json.loads(sp.read_text())
+        rec = st["tasks"].get(slug) or st["milestones"][slug]
+        if owner:
+            rec["owner"] = owner
+        if assignee:
+            rec["assignee"] = assignee
+        sp.write_text(json.dumps(st, indent=2))
+
     def _report_data(self):
         root = add.find_root()
         return add.report_data(root, add.load_state(root), "m")
@@ -57,7 +69,7 @@ class _Harness(unittest.TestCase):
 
 class ReportSurfaceTest(_Harness):
     def test_report_surfaces_task_owner_assignee(self):
-        self._silent("assign", "t", "--owner", "Bob <bob@y.io>", "--assignee", "Cy")
+        self._own("t", owner={"name": "Bob", "email": "bob@y.io", "source": "assigned"}, assignee={"name": "Cy", "email": None, "source": "assigned"})
         d = self._report_data()
         row = next(r for r in d["tasks"] if r["slug"] == "t")
         self.assertEqual(row["owner"]["name"], "Bob")
@@ -68,7 +80,7 @@ class ReportSurfaceTest(_Harness):
         self.assertIn("Cy", out)
 
     def test_report_surfaces_milestone_owner(self):
-        self._silent("assign", "m", "--owner", "Bob <bob@y.io>")
+        self._own("m", owner={"name": "Bob", "email": "bob@y.io", "source": "assigned"})
         d = self._report_data()
         self.assertEqual(d["milestone"]["owner"]["name"], "Bob")
         out = self._silent("report", "m")
@@ -84,7 +96,7 @@ class ReportSurfaceTest(_Harness):
 
 class StatusSurfaceTest(_Harness):
     def test_status_shows_active_owned_line(self):
-        self._silent("assign", "t", "--owner", "Bob <bob@y.io>", "--assignee", "Cy")
+        self._own("t", owner={"name": "Bob", "email": "bob@y.io", "source": "assigned"}, assignee={"name": "Cy", "email": None, "source": "assigned"})
         out = self._silent("status")
         owned = [l for l in out.splitlines() if l.startswith("owned   :")]
         self.assertEqual(len(owned), 1, "one owned line for the active assigned task")
@@ -96,7 +108,7 @@ class StatusSurfaceTest(_Harness):
         self.assertEqual([l for l in out.splitlines() if l.startswith("owned   :")], [])
 
     def test_status_json_per_task_ownership(self):
-        self._silent("assign", "t", "--owner", "Bob <bob@y.io>")
+        self._own("t", owner={"name": "Bob", "email": "bob@y.io", "source": "assigned"})
         out = self._silent("status", "--json")
         obj = json.loads(out)
         entry = next(e for e in obj["tasks"] if e["slug"] == "t")

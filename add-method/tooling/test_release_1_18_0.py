@@ -34,7 +34,6 @@ VERSION = "1.18.0"
 PRIOR_VERSIONS = ("1.17.0", "1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0",
                   "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
                   "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
-CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline changes the 1.18.0 notes must name
 FEATURE_ANCHORS = ("Approach", "Data strategy", "Optimization stance",
                    "per-facet ADR harvest", "compact-foundation `--propose`",
@@ -83,12 +82,6 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/checkout@v4", text, wf.name)
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
-
-    def test_audit_line_survives_bumps(self):
-        self.assertIn(CANONICAL_AUDIT, CI_YML.read_text(encoding="utf-8"),
-                      "the seam-audit command must stay byte-identical")
-
-
 class ReleaseShapeTest(unittest.TestCase):
     def test_versions_agree_at_1_18_0(self):
         pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]

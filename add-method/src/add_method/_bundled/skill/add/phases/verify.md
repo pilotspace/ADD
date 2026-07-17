@@ -19,7 +19,7 @@ Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes deri
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during build.
 - [ ] Every §6 Build expectation is confirmed by real evidence (not just a green test).
-- [ ] §1 rules trace to §2/§4 — an untraced rule is a coverage gap (`add.py audit`'s `rule_coverage_gap`; `check` has detail).
+- [ ] §1 rules trace to §2/§4 — an untraced rule is a coverage gap (`add.py check` warns on it).
 - [ ] every §3-cited symbol still resolves in the CURRENT tree, not just Ground SHA (§6 Live-verify evidence catches a stale/moved anchor here, not later).
 
 If any is false, stop and return to Build.
@@ -27,10 +27,10 @@ If any is false, stop and return to Build.
 ## Part two — check what tests miss
 
 - **Concurrency/timing** — correct when two run at once? (Tests run serially and miss races.)
-- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so `add.py audit` can see it (`unescalated_security_note`). **But that check sees only what you wrote down:** it fires on a *marked* note auto-gated to PASS — a finding you never marked is **invisible**, escalated to no one. Under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
+- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so a reviewer can see it. **But that trail holds only what you wrote down:** a finding you never marked is **invisible**, escalated to no one. Under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
 - **Architecture** — respects layering/dependency rules in CONVENTIONS.md?
 
-Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. `add.py audit` flags an unfilled block `advisor_verdict_unrecorded`, a companion to `refute_unrecorded`.
+Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. An unfilled block is an unrecorded verdict, not a PASS.
 
 ## Part three — the deep check (do not skim)
 
@@ -40,7 +40,7 @@ Record in the §6 **Deep checks** block — an unfilled one is a **shallow verif
 
 ## Part four — was the green earned?
 
-A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (green against an empty implementation), and real logic stubbed away — all invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md). Under `auto`, **record the verdict** in §6's `### Refute-read verdict` block — `add.py audit` flags an unrecorded `refute_unrecorded`, one of three measure-not-block shape lints it surfaces (also `shallow_deep_check` + `risk_unset`).
+A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (green against an empty implementation), and real logic stubbed away — all invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md). Under `auto`, **record the verdict** in §6's `### Refute-read verdict` block — an unrecorded verdict leaves the auto-PASS untraceable (the human spot-audit is the backstop).
 
 ## Record exactly one outcome (no silent pass)
 
@@ -81,33 +81,33 @@ Verify owns the loop's tail since the six-phase merge. After the gate, fill §7:
    what you alert on: overall error rate, each rejection's rate, latency of the risky op.
 3. **Draft the next spec delta** — every defect, surprise, or new need becomes a change
    that re-enters the flow at Specify (a new task). Emit lessons tagged by the
-   competency they improve (`deltas.md`); the human consolidates (`fold.md`).
+   competency they improve (`deltas.md`); file each into its living spec (`delta-append`).
 4. **Propose a voice delta** — where your voice diverged from the human's, propose a
    confirmable voice delta tuning `SOUL.md`, emitted `open` (grammar + routing: `deltas.md` —
    the human is the only writer). Never auto-roll-back — recommend; a human owns production.
 
-> **Decisions (ADR)** — the gate already harvested §7's ADR block; `add.py audit` flags one never harvested.
+> **Decisions (ADR)** — the gate already harvested §7's ADR block into the milestone record.
 > **Persona** — tag `· persona:<slug> · critical-rule|success-metric|anti-pattern|ability`;
-> `fold` grows that section — a HOW-an-agent-behaves lesson belongs in a persona, not the shared pile.
+> a HOW-an-agent-behaves lesson belongs in that persona file, not the shared pile.
 
 Loop — the artifacts are living docs the next cycle refines. Map: the self-improving map
 (`phases/build.md`) · book: `docs/08-step-6-verify.md` · `docs/09-the-loop.md`.
 
 ## The advisor spawn — delegate one piece, never the loop
 
-Spawn a *single* subagent for one well-scoped piece of your plan (many-task pipelines:
-`streams.md`); the engine never spawns — your call per step. Spawn when the piece is separable
-and worth the round-trip: a broad sweep, an independent adversarial review (the refute-read —
-fresh context, never author-graded), a batch, a context-offload; not for narrow cheap work —
-in doubt, do it in-context. **Prefer the named roster**: the ONE `add` agent — the spawn names
-the mode (direction · build · verify · persona · advise) — over an ad-hoc spawn; it carries the
-worker contract and loads the beat guide + best-fit persona itself. Tier: **mid** ordinary,
-**top** complex/cross-cutting (tier→model map: `streams.md`); a stronger model never buys back
-a gate. **Refute-read persona** — a **Code-Reviewer**; findings carry severity: 🔴 blocker ·
-🟡 concern · 💭 note. A persona is advisory: it never lowers a gate (a security finding still
-HARD-STOPs).
+Spawn a *single* subagent for one well-scoped piece of your plan (many-task pipelines: the
+stream-orchestrator persona); the engine never spawns — your call per step. Spawn when the piece
+is separable and worth the round-trip: a broad sweep, an independent adversarial review (the
+refute-read — fresh context, never author-graded), a batch, a context-offload; not for narrow
+cheap work — in doubt, do it in-context. **Prefer the named roster**: the ONE `add` agent — the
+spawn names the mode (direction · build · verify · persona · advise) — over an ad-hoc spawn; it
+carries the worker contract and loads the beat guide + best-fit persona itself. Tier: **mid**
+ordinary, **top** complex/cross-cutting (the roster contract in `agents/add.md` maps tiers to
+models); a stronger model never buys back a gate. **Refute-read persona** — a **Code-Reviewer**;
+findings carry severity: 🔴 blocker · 🟡 concern · 💭 note. A persona is advisory: it never
+lowers a gate (a security finding still HARD-STOPs).
 
-The plan-following prompt (reuses `streams.md`'s worker-contract tags):
+The plan-following prompt (the worker-contract tags — canonical here):
 
 ```xml
 <objective>

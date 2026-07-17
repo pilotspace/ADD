@@ -61,8 +61,8 @@ gate); capture each surfaced decision as an ADR in `PROJECT.md` **Key Decisions*
 | **sequential · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | one task at a time |
 | **sequential · manual/conservative** | contract freeze **and** every Verify | one task; safest |
 
-Raise the gate: `add.py autonomy set conservative --project` · parallel streams per milestone:
-`add.py streams set parallel --project` + `add.py waves`. Floor: **one human approval per contract**.
+Raise the gate: `add.py autonomy set conservative --project` · parallel streams are a project
+posture (`init --run-mode`), read from `PROJECT.md`. Floor: **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 

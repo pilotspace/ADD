@@ -93,65 +93,6 @@ class FreezeRecordsRouteTest(_RouteHarness):
         rec = self._route_rec("t")
         self.assertEqual((rec or {}).get("lane"), "unrouted",
                          "an unknown lane token records 'unrouted', never a refusal")
-
-
-class AuditRouteLintsTest(_RouteHarness):
-    def _findings(self):
-        state = self._state()
-        _, findings = add._audit_findings(self.tmp / ".add", state)
-        return findings
-
-    def _gate_done(self, slug="t"):
-        self._silent("gate", "PASS")
-
-    def test_audit_route_unrecorded(self):
-        self._new_task_at_plan("t")
-        self._freeze_cross("t")          # no route line -> lane "unrouted"
-        self._gate_done("t")
-        codes = {f["code"] for f in self._findings() if f["task"] == "t"}
-        self.assertIn("route_unrecorded", codes,
-                      "a post-feature record left unrouted must be measured")
-
-    def test_audit_route_lane_mismatch(self):
-        self._silent("lock", "--force")
-        self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "t", "--title", "Feature", "--fast")
-        self._silent("phase", "plan", "t")
-        self._set_section3("t", _DRAFT_FLAGGED)
-        self._add_route_line("t", "route: full · routed-by: human — misfiled")
-        self._freeze_cross("t")
-        self._gate_done("t")
-        codes = {f["code"] for f in self._findings() if f["task"] == "t"}
-        self.assertIn("route_lane_mismatch", codes,
-                      "route: full recorded on a --fast task must be measured")
-
-    def test_audit_route_deleted_after_freeze(self):
-        self._new_task_at_plan("t")
-        self._add_route_line("t", ROUTE_LINE)
-        self._freeze_cross("t")
-        self._gate_done("t")
-        p = self._task_md("t")
-        p.write_text(re.sub(r"(?m)^route:[^\n]*\n", "",
-                            p.read_text(encoding="utf-8")), encoding="utf-8")
-        # the state key is the witness; the vanished line is measured, never blocked
-        codes = {f["code"] for f in self._findings() if f["task"] == "t"}
-        self.assertIn("route_unrecorded", codes)
-
-    def test_audit_grandfather_never_retro_reds(self):
-        # FLOOR: a record frozen before this feature (no route key) fires nothing
-        self._new_task_at_plan("t")
-        self._freeze_cross("t")
-        self._gate_done("t")
-        state_path = self.tmp / ".add" / "state.json"
-        import json
-        state = json.loads(state_path.read_text())
-        state["tasks"]["t"].pop("route", None)   # simulate a pre-feature record
-        _, findings = add._audit_findings(self.tmp / ".add", state)
-        codes = {f["code"] for f in findings if f["task"] == "t"}
-        self.assertFalse(codes & {"route_unrecorded", "route_lane_mismatch"},
-                         "no route key (pre-feature record) must never be retro-redded")
-
-
 class DoctrineTest(unittest.TestCase):
     def test_skill_doctrine_propose_ratify(self):
         text = SKILL_TREES[0].read_text(encoding="utf-8")

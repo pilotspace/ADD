@@ -88,33 +88,6 @@ class _Board(unittest.TestCase):
         """Prepend a raw streams: line to PROJECT.md (arrange a posture WITHOUT the command under test)."""
         p = self._project_md()
         p.write_text(f"# project\n{line}\n\n{p.read_text(encoding='utf-8')}", encoding="utf-8")
-
-
-# ── set: the idempotent single-line writer ───────────────────────────────────
-class StreamsSetTest(_Board):
-
-    def test_streams_set_persists(self):
-        state_before = self._state_json().read_bytes()
-        out, err, code = self._run("streams", "set", "sequential")
-        self.assertEqual(code, 0, err)
-        lines = self._streams_lines(self._project_md())
-        self.assertEqual(len(lines), 1, f"exactly one streams: line, got {lines}")
-        self.assertEqual(self._streams_value(self._project_md()), "sequential")
-        self.assertEqual(self._state_json().read_bytes(), state_before,
-                         "a streams set must not touch state.json")
-
-    def test_streams_set_idempotent_keeps_comment(self):
-        self._write_streams_line("streams: parallel   <!-- run mode -->")
-        out, err, code = self._run("streams", "set", "sequential")
-        self.assertEqual(code, 0, err)
-        lines = self._streams_lines(self._project_md())
-        self.assertEqual(len(lines), 1, "re-running set never appends a second streams: line")
-        self.assertEqual(self._streams_value(self._project_md()), "sequential",
-                         "the value actually applied (proves the command ran)")
-        self.assertIn("<!-- run mode -->", lines[0], "trailing comment preserved")
-
-
-# ── status: the combined run-mode surface ────────────────────────────────────
 class StatusRunModeTest(_Board):
 
     def test_status_shows_combined_run_mode(self):
@@ -147,18 +120,5 @@ class ProjectStreamsResolverTest(_Board):
                      + p.read_text(encoding="utf-8"), encoding="utf-8")
         self.assertEqual(add._project_streams(self._root()), "parallel",
                          "no real declaration line -> default parallel, not the prose substring")
-
-
-# ── the named reject ─────────────────────────────────────────────────────────
-class StreamsRejectTest(_Board):
-
-    def test_streams_set_invalid_rejected(self):
-        before = self._project_md().read_bytes()
-        out, err, code = self._run("streams", "set", "turbo")
-        self.assertNotEqual(code, 0)
-        self.assertIn("streams_posture_invalid", out + err)
-        self.assertEqual(self._project_md().read_bytes(), before, "a bad posture writes nothing")
-
-
 if __name__ == "__main__":
     unittest.main()

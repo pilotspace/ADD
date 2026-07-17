@@ -17,7 +17,7 @@ from add import build_parser
 _MAP_HEAD = "ADD — spec-and-tests-first"
 # a spread of subcommands across the alphabet — all must stay discoverable
 _SAMPLE = ["init", "new-task", "advance", "freeze", "gate", "status",
-           "milestone-done", "new-milestone", "release", "federate"]
+           "milestone-done", "new-milestone", "delta-append", "re-cross"]
 
 
 class HelpDietTest(unittest.TestCase):

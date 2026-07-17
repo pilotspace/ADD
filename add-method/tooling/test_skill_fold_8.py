@@ -35,7 +35,10 @@ SKILL_TREES = (
     REPO / "add-method" / "src" / "add_method" / "_bundled" / "skill" / "add",
 )
 DELETED = ("scope.md", "confidence.md", "advisor.md", "sensitivity.md",
-           "self-improve.md", "soul.md", "setup-review.md", "components.md")
+           "self-improve.md", "soul.md", "setup-review.md", "components.md",
+           # kernel-trim (ADD 2.0 M5): the platform guides died with their verbs —
+           # the playbooks live in the seed personas now
+           "streams.md", "release.md", "graduate.md", "fold.md", "compact-foundation.md")
 
 # one representative teaching per fold, pinned in its NEW home
 ANCHORS = {
@@ -63,6 +66,11 @@ ANCHORS = {
         "SETUP-REVIEW.md",                    # setup-review.md: the artifact
         "confirm in chat",                    # setup-review.md: the sign row
         "lowest-confidence-first",            # setup-review.md: the ordering rule
+    ),
+    "beyond.md": (
+        "stream-orchestrator persona",        # streams.md: the playbook's new owner
+        "release-manager persona",            # release.md: the cut playbook's owner
+        "platform-engineer seed persona",     # components: the monorepo playbook's owner
     ),
 }
 

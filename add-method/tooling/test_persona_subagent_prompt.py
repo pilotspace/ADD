@@ -45,9 +45,9 @@ def _tmpl(tree: Path) -> str:
     return (tree / TMPL_REL).read_text(encoding="utf-8")
 
 
-def _streams(tree: Path) -> str:
-    # streams.md is a SKILL guide — it lives in the skill trees, never the engine (tooling) tree
-    return (tree / "streams.md").read_text(encoding="utf-8")
+def _worker_contract(tree: Path) -> str:
+    # kernel-trim (ADD 2.0 M5): the worker contract's canonical home is phases/verify.md
+    return (tree / "phases" / "verify.md").read_text(encoding="utf-8")
 
 
 CANON_SKILL = SKILL_TREES[0]
@@ -60,9 +60,9 @@ class InjectionPointTest(unittest.TestCase):
         self.assertIn("{{PERSONA_SLUG}}", body, "the template must carry a {{PERSONA_SLUG}} slot")
         for section in ("## Identity", "## Critical Rules", "## Success Metrics"):
             self.assertIn(section, body, f"the injection mapping must name the persona '{section}'")
-        # the streams.md worker contract documents the injection point too
-        self.assertIn("{{PERSONA_SLUG}}", _streams(CANON_SKILL),
-                      "streams.md worker contract must reference the {{PERSONA_SLUG}} slot")
+        # the verify.md worker contract documents the injection point too
+        self.assertIn("{{PERSONA_SLUG}}", _worker_contract(CANON_SKILL),
+                      "the worker contract must reference the {{PERSONA_SLUG}} slot")
 
     # scenario: one canonical portable body, no runner tokens (in the BODY, before the stubs section)
     def test_portable_body_no_runner_tokens(self):
@@ -92,7 +92,7 @@ class InjectionPointTest(unittest.TestCase):
 
     # scenario: degrade-safe when no persona is matched
     def test_degrade_no_persona_generic(self):
-        low = (_tmpl(TOOLING) + _streams(CANON_SKILL)).lower()
+        low = (_tmpl(TOOLING) + _worker_contract(CANON_SKILL)).lower()
         self.assertIn("no persona", low,
                       "must document the no-persona degrade path (generic persona, never blocks)")
 

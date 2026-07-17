@@ -101,18 +101,6 @@ class ContractHardStrategySoft(unittest.TestCase):
     _S3 = ("### Grounding\nAnchors the contract cites: `PHASES`\n"
            "### Contract\n```\nCONTRACT SHAPE v1\n```\n"
            "### Build-strategy\nStrategy: do the thing\n")
-
-    def test_prose_change_does_not_tamper(self):
-        h = add._contract_body_hash(self._S3)
-        prose = self._S3.replace("do the thing", "do the thing DIFFERENTLY")
-        self.assertEqual(add._contract_body_hash(prose), h)
-
-    def test_fenced_contract_change_tampers(self):
-        h = add._contract_body_hash(self._S3)
-        shape = self._S3.replace("CONTRACT SHAPE v1", "CONTRACT SHAPE v2")
-        self.assertNotEqual(add._contract_body_hash(shape), h)
-
-
 class _CLI(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()

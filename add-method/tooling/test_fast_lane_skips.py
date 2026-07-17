@@ -262,38 +262,6 @@ class SkipSetAllowedTest(unittest.TestCase):
 
     def test_predicate_lives_in_engine_predicates_module(self):
         self.assertIs(add._skip_set_allowed, engine_predicates._skip_set_allowed)
-
-
-# ---------------------------------------------------------------------------
-# M5 — _skip_rationale extracts a matching clause and fails closed on absence
-# ---------------------------------------------------------------------------
-
-class SkipRationaleTest(unittest.TestCase):
-    RAW0 = ("Touches: x\nSkip rationale: scenarios — the Accept line covers it; "
-            "observe — no rollout to watch\nGround SHA: abc\n")
-
-    def test_extracts_each_matching_clause(self):
-        self.assertEqual(add._skip_rationale(self.RAW0, "observe"),
-                         "no rollout to watch")
-        # phase-merge-specify: a retired scenarios clause no longer parses as a rationale
-        self.assertIsNone(add._skip_rationale(self.RAW0, "scenarios"))
-
-    def test_no_line_at_all_returns_none(self):
-        self.assertIsNone(add._skip_rationale("Touches: x\nGround SHA: abc\n", "observe"))
-
-    def test_line_present_but_no_clause_for_phase_returns_none(self):
-        raw0 = "Skip rationale: scenarios — reason only\n"
-        self.assertIsNone(add._skip_rationale(raw0, "observe"))
-
-    def test_empty_reason_text_returns_none(self):
-        raw0 = "Skip rationale: observe —    \n"
-        self.assertIsNone(add._skip_rationale(raw0, "observe"))
-
-
-# ---------------------------------------------------------------------------
-# M6 — cmd_advance skip mechanic
-# ---------------------------------------------------------------------------
-
 class CmdAdvanceSkipMechanicTest(_Harness):
     def test_retired_declaration_never_touches_a_crossing(self):
         # phase-collapse-3: NO crossing runs skip logic; a vestigial declaration (either
@@ -448,45 +416,6 @@ class GateExplainSkipSetTest(_Harness):
         self._silent("new-task", "t", "--title", "F")
         out = self._silent("gate", "--explain", "t")
         self.assertNotIn("skip-set:", out)
-
-
-# ---------------------------------------------------------------------------
-# M11 — audit flags a post-skip deleted rationale
-# ---------------------------------------------------------------------------
-
-class AuditSkipRationaleMissingPostHocTest(_Harness):
-    def _skipped_task(self, slug="t"):
-        # HISTORIC board simulation: no live path records a skip anymore, but the
-        # audit glint must keep guarding boards that recorded one pre-merge.
-        self._new_fast_task(slug, fast=True)
-        self._silent("phase", "verify", slug)
-        self._set_header(slug, skips="observe")
-        self._set_skip_rationale(slug, "observe — no rollout to watch")
-        sp = self.tmp / ".add" / "state.json"
-        raw = json.loads(sp.read_text(encoding="utf-8"))
-        raw["tasks"][slug]["skips"] = [{"phase": "observe", "reason": "no rollout to watch",
-                                        "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
-        sp.write_text(json.dumps(raw), encoding="utf-8")
-        self._silent("gate", "HARD-STOP", slug)   # recordable from any phase
-
-    def test_intact_rationale_not_flagged(self):
-        self._skipped_task("t")
-        out, _ = self._run("audit")
-        self.assertNotIn("skip_rationale_missing_post_hoc", out)
-
-    def test_deleted_rationale_flagged_measure_not_block(self):
-        self._skipped_task("t")
-        self._clear_skip_rationale("t")
-        out, code = self._run("audit")
-        self.assertIn("skip_rationale_missing_post_hoc", out)
-        self.assertIn("t", out)
-        self.assertEqual(code, 1)
-
-
-# ---------------------------------------------------------------------------
-# M12 — TASK.fast.md.tmpl carries the scaffold; TASK.md.tmpl is untouched
-# ---------------------------------------------------------------------------
-
 class TemplateScaffoldTest(unittest.TestCase):
     def test_fast_template_carries_no_skips_machinery(self):
         # phase-merge-verify: the grammar is retired. template-unify: the fast lane

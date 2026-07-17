@@ -196,19 +196,6 @@ class _Project(unittest.TestCase):
 
 
 class AdoptionTest(_Project):
-    def test_fold_routes_through_primitive(self):
-        self._make_foldable()
-        with mock.patch("add._atomic_write_many", wraps=add._atomic_write_many) as spy:
-            self._silent("fold")
-        self.assertTrue(spy.called, "fold must commit via _atomic_write_many")
-
-    def test_release_routes_through_primitive(self):
-        with mock.patch("add._atomic_write_many", wraps=add._atomic_write_many) as spy:
-            self._silent("release", "0.0.0-test", "--force")
-        self.assertEqual(spy.call_count, 1, "release must commit via one _atomic_write_many")
-        writes = spy.call_args.args[0]
-        names = sorted(Path(p).name for p, _ in writes)
-        self.assertEqual(names, ["CHANGELOG.md", "RELEASES.md"])
 
     def test_seed_routes_through_primitive(self):
         self._silent("new-task", "prior")
@@ -218,37 +205,6 @@ class AdoptionTest(_Project):
         self.assertEqual(spy.call_count, 1, "from-delta seed must commit both files via one call")
         writes = spy.call_args.args[0]
         self.assertEqual(len(writes), 2, "the new TASK.md + the consumed source TASK.md")
-
-
-class FoldAtomicityTest(_Project):
-    def test_fold_atomic_under_injected_commit_failure(self):
-        self._make_foldable()
-        fv_before = self._fv()
-        # fail on the move-IN of CONVENTIONS.md (the 2nd file) -> PROJECT.md (1st, committed) must roll back.
-        # The primitive rolls back then RE-RAISES; cmd_fold lets the IO error propagate (expected).
-        with mock.patch("add.os.replace", side_effect=_flaky_replace([self.conventions])):
-            with self.assertRaises(OSError):
-                self._silent("fold")
-        self.assertEqual(self._fv(), fv_before, "PROJECT.md foundation-version must NOT advance on a partial fold")
-        self.assertIn("[SDD · open]", self._task_md("alpha"), "the lesson must stay open (no silent flip)")
-        self.assertIn("[ADD · open]", self._task_md("beta"))
-        self.assertEqual(_siblings(self.root), [], "no .tmp/.bak left in .add/ after a rolled-back fold")
-
-
-class ReleaseAtomicityTest(_Project):
-    def test_release_all_or_nothing_on_commit_failure(self):
-        # seed a prior CHANGELOG/RELEASES, then fail the RELEASES.md move-IN mid-cut
-        changelog = self.tmp / "CHANGELOG.md"; changelog.write_text("# Changelog\n\nOLD-CL\n", encoding="utf-8")
-        releases = self.tmp / "RELEASES.md"; releases.write_text("# Releases\n\nOLD-REL\n", encoding="utf-8")  # project root, sibling of CHANGELOG
-        with mock.patch("add.os.replace", side_effect=_flaky_replace([releases])):
-            out = self._silent("release", "0.0.0-test", "--force")
-        self.assertIn("release_write_failed", out)                      # command-level error preserved
-        self.assertIn("OLD-CL", changelog.read_text(encoding="utf-8"))  # CHANGELOG rolled back
-        self.assertNotIn("0.0.0-test", changelog.read_text(encoding="utf-8"))
-        self.assertIn("OLD-REL", releases.read_text(encoding="utf-8"))  # RELEASES untouched
-        self.assertEqual(_siblings(self.tmp, self.root), [])            # no .tmp/.bak residue
-
-
 class SeedAtomicityTest(_Project):
     def test_seed_all_or_nothing_on_commit_failure(self):
         self._silent("new-task", "prior")

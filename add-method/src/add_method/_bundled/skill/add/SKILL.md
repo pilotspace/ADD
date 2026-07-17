@@ -108,8 +108,7 @@ Read each at most once per session.
 Emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its living spec in
 `.add/specs/` (grammar: `deltas.md`).
-At milestone close the retrospective consolidation gathers confirmed deltas into a versioned
-foundation — `fold.md`; then compact each spec's stable tail — `compact-foundation.md`. Observe also
+The living specs ARE the foundation — the close just counts what §7 still holds open. Observe also
 tunes your voice: a confirmable delta the human confirms rewrites `SOUL.md` (the human is the only
 writer) — `deltas.md`.
 
@@ -117,13 +116,12 @@ writer) — `deltas.md`.
 
 One trigger = one guide — full prose: `beyond.md`; load only when a trigger fires:
 
-- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster (agent-call-preferred,
+- §3 FROZEN → auto-gated run `run.md` · subagent roster + pipelines (agent-call-preferred,
   the default execution mode) → `phases/verify.md` · self-score → `phases/direction.md`
 - UI/experience surface → UDD loop `design.md` (the fast lane is flag-mode above — no extra guide)
 - milestone goal unmet at `milestone-done` → `loop.md`
-- status cues: `MVP covered` → `graduate.md` · closed-milestone cut → `release.md`
-- monorepo green-bars → `docs/17-components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·
-  `sensitivity:` risk classes + `advisor-gate-relax` → `phases/verify.md`
+- graduation · release · monorepo green-bars → persona-owned playbooks, `beyond.md` ·
+  the persona loop (`.add/personas/`) → `docs/18-personas.md` · `sensitivity:` + `advisor-gate-relax` → `phases/verify.md`
 
 ## Non-negotiable rules (from the method)
 
@@ -155,8 +153,8 @@ The steps never change; their depth does (stage from `add.py status`):
 - **prototype** — light; throwaway code; design/experience is the point.
 - **poc** — contract/tests/build deep on the single riskiest slice only.
 - **mvp** — full flow, narrow scope, light observation.
-- **production** — full rigor + the observe loop; reached via the `graduate.md` orchestration,
-  never a bare `stage production` flip.
+- **production** — full rigor + the observe loop; reached via the graduation playbook
+  (`beyond.md`), never a bare `stage production` flip.
 
 ## The method rationale
 

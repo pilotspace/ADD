@@ -74,12 +74,6 @@ class CanonicalPreconditionsTest(unittest.TestCase):
 
 
 class AuditAndDisclosureTest(unittest.TestCase):
-    def test_audit_surfaces_lints_noted(self):
-        for p in (RUN_MD, VERIFY_MD):
-            text = _read(p)
-            for lint in ("shallow_deep_check", "risk_unset", "refute_unrecorded"):
-                self.assertIn(lint, text,
-                              f"{p.name} must note add.py audit surfaces {lint}")
 
     def test_book_missed_finding_disclosure(self):
         text = _read(CH08)

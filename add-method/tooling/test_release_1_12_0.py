@@ -28,7 +28,6 @@ PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 VERSION = "1.12.0"
 PRIOR_VERSIONS = ("1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
                   "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
-CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline the release notes must name (the milestone-naming bundle)
 FEATURE_ANCHORS = ("new-milestone", "descriptive", "created:")
 
@@ -75,12 +74,6 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/checkout@v4", text, wf.name)
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
-
-    def test_audit_line_survives_bumps(self):
-        self.assertIn(CANONICAL_AUDIT, CI_YML.read_text(encoding="utf-8"),
-                      "the seam-audit command must stay byte-identical")
-
-
 class ReleaseShapeTest(unittest.TestCase):
     # NOTE: the version-equality asserts (package.json / pyproject / plugin / __version__
     # all == "1.12.0") migrated FORWARD to test_release_1_13_0.py when the version bumped

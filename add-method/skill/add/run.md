@@ -55,9 +55,9 @@ recorded pass is an explicit pass, not a skip).
 - **Auto-PASS requires ALL of:** every test green; coverage not decreased; no test weakened and no
   contract edited; loops dry; completeness-critic clean; and the deep check below.
 - **The deep check (every gate, do not skim).** If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read. An unfilled deep check is a **shallow verify**, not an auto-PASS.
-- **The recorded refute-read (under `auto`).** The earned-green refute-read (`6-verify.md`) is not just run — its **verdict is recorded** in §6 (`EARNED | NOT-EARNED`); `add.py audit` surfaces an unrecorded one as `refute_unrecorded` — one of three shape lints it lists (with `shallow_deep_check` + `risk_unset`) — and a human spot-audit is the backstop. NOT-EARNED routes to `add.py heal`, never an auto-PASS.
-- **The recorded Advisor 3-lens verdict (under `auto`).** The Advisor 3-lens sweep (security → concurrency → architecture, `6-verify.md`) is recorded in §6 `### Advisor 3-lens verdict`; `add.py audit` surfaces an unfilled block as `advisor_verdict_unrecorded` — a shape lint alongside `refute_unrecorded`.
-- **The rendered gate report (§3/§6).** Report-template.md's ceremony is recorded, not just performed — a `Reported: yes` line in §3/§6; `add.py audit` surfaces an unrecorded one as `contract_report_unrecorded`/`verify_report_unrecorded`; a human spot-audit is the backstop.
+- **The recorded refute-read (under `auto`).** The earned-green refute-read (`6-verify.md`) is not just run — its **verdict is recorded** in §6 (`EARNED | NOT-EARNED`); an unrecorded verdict leaves the auto-PASS untraceable — a human spot-audit is the backstop. NOT-EARNED routes to `add.py heal`, never an auto-PASS.
+- **The recorded Advisor 3-lens verdict (under `auto`).** The Advisor 3-lens sweep (security → concurrency → architecture, `6-verify.md`) is recorded in §6 `### Advisor 3-lens verdict`; an unfilled block is an unrecorded verdict, not a PASS.
+- **The rendered gate report (§3/§6).** Report-template.md's ceremony is recorded, not just performed — a `Reported: yes` line in §3/§6 is the trace; a missed render surfaces only there — a human spot-audit is the backstop.
 - **The `advisor-gate-relax` pathway.** A `risk: high` + `sensitivity: mechanical` task whose §6 Advisor 3-lens verdict records Verdict `PASS` and Residue `none` may auto-complete via `add.py gate PASS` **without** a lowered autonomy level. Security and every non-mechanical sensitivity class are never relaxed by this pathway — the high-risk guard still applies.
 - **Always escalates to a human (never auto-passed):** any **security** finding (HARD-STOP, always);
   a **concurrency**/timing risk the tests cannot exercise; an **architecture**/layering violation;
@@ -92,8 +92,8 @@ Either way: ≤3 honest redos, then escalate. A gamed green never ships.
 ## Emitting deltas — feeding the foundation back
 
 Every gap the completeness-critic finds becomes an **`open` lesson learned** in the task's OBSERVE
-block (`deltas.md` grammar). These `open` deltas feed v5's human-gated consolidation (`fold.md`)
-at milestone close — the loop closing: **v6 run -> v5 foundation**.
+block (`deltas.md` grammar). File each into its living spec (`add.py delta-append`) as it lands
+— the loop closing: **v6 run -> the living 5-DD specs**.
 
 ## The autonomy level
 
@@ -117,9 +117,8 @@ autonomy: manual | conservative | auto
 The scope declares **`risk: high`** in the `TASK.md` header (the engine never classifies scope).
 Since v14 the guard is mechanical for the declared case:
 the engine refuses the declared combination — `add.py gate` will not complete (`PASS`/`RISK-ACCEPTED`)
-a task whose header carries `risk: high` without a lowered level (`HARD-STOP` always records);
-`add.py audit` flags finished records whose header was tampered or whose GATE RECORD reviewer is
-the auto-gate (CI enforces). An undeclared high-risk scope passes — a scope without `risk: high`
+a task whose header carries `risk: high` without a lowered level (`HARD-STOP` always records).
+An undeclared high-risk scope passes — a scope without `risk: high`
 in its header is not blocked by the v14 mechanical guard.
 
 **Autonomy is earned by goal-clarity — the auto-ready goal.** A milestone goal is auto-ready

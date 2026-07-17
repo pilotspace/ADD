@@ -112,13 +112,6 @@ class _Harness(unittest.TestCase):
 
 
 class DraftTest(_Harness):
-    def test_draft_classifies_three_shapes(self):                  # M1
-        self._closed_milestone(with_deltas=True)
-        out = self._ok("milestone-done", "m")
-        self.assertIn("fold draft", out)
-        self.assertRegex(out, r"(?m)^\s*seed .*widget parser.*\[t\] — evidence resolves: pkg/live\.py$")
-        self.assertRegex(out, r"(?m)^\s*drop\? .*legacy shim.*\[t\] — evidence no longer resolves$")
-        self.assertRegex(out, r"(?m)^\s*seed .*retry policy.*\[t\] — forward hand-off by default$")
 
     def test_existing_nudge_survives(self):                        # M2
         self._closed_milestone(with_deltas=True)

@@ -32,7 +32,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-import test_gate_audit as tga   # GOOD3 (the FROZEN stamp) + _sec6 — one source of truth
+import gate_fixtures as tga   # frozen record shapes — one source of truth (ex test_gate_audit)
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -208,51 +208,6 @@ class AdvanceGuardTest(_Board):
         self.assertIn("contract_not_frozen", out + err)
         self.assertNotIn("unflagged_freeze", out + err)
         self.assertEqual(self._state()["tasks"]["beta"]["phase"], "direction")
-
-
-# ============================================================================
-# Audit sibling — the verified-marker discriminator
-# ============================================================================
-class AuditMarkerTest(_Board):
-
-    def _mk_done(self, slug, flag, marked):
-        """A done task whose §3 we control, optionally carrying the verified
-        marker in state (simulating a record that crossed the guard)."""
-        buf, err = io.StringIO(), io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(err):
-            add.main(["new-task", slug, "--title", slug])
-            add.main(["phase", "verify"])
-            add.main(["gate", "PASS", slug])
-        self._task_md(slug).write_text(self._body(slug, flag), encoding="utf-8")
-        if marked:
-            st = self._state()
-            st["tasks"][slug]["flag_verified"] = True
-            (self._root() / "state.json").write_text(
-                json.dumps(st, indent=2), encoding="utf-8")
-
-    def test_flags_marked_missing_flag(self):
-        # a flag_verified record whose flag was deleted post-freeze = tampering
-        self._mk_done("alpha", flag="", marked=True)
-        d, code = self._audit_json()
-        self.assertEqual(code, 1)
-        self.assertIn("unflagged_freeze", self._codes(d))
-
-    def test_flags_marked_malformed_flag(self):
-        self._mk_done("alpha", flag=FLAG_BARE_NONE, marked=True)
-        d, code = self._audit_json()
-        self.assertEqual(code, 1)
-        self.assertIn("unflagged_freeze", self._codes(d))
-
-    def test_silent_unmarked_predecessor(self):
-        # the 45-record reality: frozen, no flag, NO marker -> never flagged
-        self._mk_done("alpha", flag="", marked=False)
-        d, code = self._audit_json()
-        self.assertNotIn("unflagged_freeze", self._codes(d))
-
-    def test_silent_marked_wellformed(self):
-        self._mk_done("alpha", flag=FLAG_GOOD, marked=True)
-        d, code = self._audit_json()
-        self.assertNotIn("unflagged_freeze", self._codes(d))
 
 
 # ============================================================================

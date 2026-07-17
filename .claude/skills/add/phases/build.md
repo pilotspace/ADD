@@ -59,13 +59,12 @@ verify residue → a SPEC delta.
 
 | what improves | grammar (closes `(evidence: …)`) | consolidator |
 |---|---|---|
-| foundation — `PROJECT.md`/`CONVENTIONS.md` | `[DDD\|SDD\|UDD\|TDD\|ADD · open] lesson` | `add.py fold` → `fold.md` |
-| personas — the agents' stances | `… · persona:<slug> · critical-rule\|success-metric\|anti-pattern\|ability` | same `fold` run |
+| the living specs — `.add/specs/` | `[DDD\|SDD\|UDD\|TDD\|ADD · open] lesson` | `add.py delta-append <dd>` |
+| personas — the agents' stances | `… · persona:<slug> · critical-rule\|success-metric\|anti-pattern\|ability` | the persona loop |
 | `SOUL.md` — your voice | a voice delta, `open` | human rewrite (`deltas.md`) |
 | the next scope | `[SPEC · open]` → seeded · dropped · carried | `loop.md` → `new-task` |
 
-Routing: `DDD`→§Domain · `SDD`→§Spec · `UDD`→§Users · `TDD`/`ADD`→§Method learnings — and
-in-flight into the living specs via `add.py delta-append <dd>` (grammar: `deltas.md`). A
-HOW-an-agent-behaves lesson → a persona, not the shared pile. Convergence: `fold` prepends
-newest-first; the settled tail rolls via `compact-foundation.md`; `status` counts the debt
-(`carried:` · `compaction:`). Self-score before emitting (the confidence six dimensions; < 0.9 → refine).
+Routing: `ddd`→domain · `sdd`→system · `udd`→experience · `tdd`→quality · `add`→method — each
+lands in-flight in its living spec via `add.py delta-append <dd>` (grammar: `deltas.md`). A
+HOW-an-agent-behaves lesson → a persona, not the shared pile. Deltas prepend newest-first;
+the spec diff is the receipt. Self-score before emitting (the confidence six dimensions; < 0.9 → refine).

@@ -1,11 +1,6 @@
 # Always-green gate: the tooling test suite runs on every push to main and every PR,
 # across the Python floor (3.10) and a current release (3.12). The publish workflow
 # re-runs this same suite at tag time, so a tag can never ship a red tree.
-#
-# seam-audit is the enforcement seam DISTINCT from the agent (task audit-ci, v14):
-# it re-verifies every recorded human gate on the dogfood board with
-# `add.py audit` — a malformed seam record fails CI on a machine the agent does
-# not control (never-self-gate, foundation v2). BLOCKING by design.
 
 name: ci
 
@@ -57,23 +52,3 @@ jobs:
         working-directory: add-method
         run: python3 -m unittest discover -s tooling -p 'test_*.py'
 
-  seam-audit:
-    name: Seam audit (recorded human gates)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Materialize the dogfood tooling mirror (untracked; installer does this for consumers)
-        run: |
-          mkdir -p .add/tooling
-          cp add-method/tooling/add.py .add/tooling/add.py
-          cp -r add-method/tooling/add_engine .add/tooling/add_engine
-          cp add-method/tooling/engine_pin.py .add/tooling/engine_pin.py
-          cp -r add-method/tooling/templates .add/tooling/templates
-
-      - name: Audit the dogfood board (.add)
-        run: python3 .add/tooling/add.py audit
