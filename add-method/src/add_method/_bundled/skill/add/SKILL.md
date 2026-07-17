@@ -103,9 +103,10 @@ At each decision point (intake · bundle · gate · close) the fitting persona O
 evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP) — the question is a summary, never the artifact.
 Read `gate-udd.md`/`run.md` at most once per session.
 
-In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
-they improve (written `open`; the human consolidates into `PROJECT.md`) — grammar + lifecycle in
-`deltas.md`. At milestone close the retrospective consolidation gathers confirmed deltas into a versioned
+Emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
+they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its living spec in
+`.add/specs/` (grammar: `deltas.md`).
+At milestone close the retrospective consolidation gathers confirmed deltas into a versioned
 foundation — `fold.md`; then compact each spec's stable tail — `compact-foundation.md`. Observe also
 tunes your voice: a confirmable delta the human confirms rewrites `SOUL.md` (the human is the only
 writer) — `soul.md`.

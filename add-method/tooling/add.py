@@ -186,6 +186,30 @@ def _render_template(name: str, **subs: str) -> str:
     return text
 
 
+def _seed_spec_file(root: Path, dd: str, *, project: str, stage: str,
+                    date_str: str) -> Path:
+    """specs-5dd: seed ONE 5-DD spec file under .add/specs/ — never clobber, never
+    write blank (the SETUP_FILES survivor idiom). Returns the file's path either
+    way so callers (init AND delta-append's on-demand legacy path) share one
+    seeding truth instead of two drifting copies."""
+    fname, title, lens = SPEC_DDS[dd]
+    dest = root / "specs" / fname
+    if dest.exists():
+        return dest
+    rendered = _render_template(
+        "specs/SPEC.md", dd=dd.upper(), dd_lower=dd, title=title, lens=lens,
+        project=project, stage=stage, date=date_str)
+    if not rendered.strip():
+        # missing/stale template — skip rather than seed a 0-content survivor
+        # (same circuit breaker as the SETUP_FILES loop)
+        print(f"add: warning: template for specs/{fname} is missing/blank — skipped",
+              file=sys.stderr)
+        return dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    _atomic_write(dest, rendered)
+    return dest
+
+
 def _strip_fast_sections(text: str) -> str:
     """template-unify: the fast render = the full render minus exactly the
     _FAST_SECTIONS heading blocks — a strict line-subset by construction.
@@ -670,6 +694,11 @@ def cmd_init(args: argparse.Namespace) -> None:
                   file=sys.stderr)
             continue
         _atomic_write(dest, rendered)
+
+    # specs-5dd (ADD 2.0 M3): the five living 5-DD specs — same survivor idiom as
+    # SETUP_FILES (never clobber, never write blank), ONE template rendered five ways.
+    for dd in SPEC_DDS:
+        _seed_spec_file(root, dd, project=proj_name, stage=args.stage, date_str=today)
 
     # --run-mode: apply the paired autonomy + streams posture into PROJECT.md.
     # ONLY when the flag is explicitly set — absent flag leaves PROJECT.md byte-identical.
@@ -8705,6 +8734,53 @@ def cmd_deltas(args: argparse.Namespace) -> None:
         print("no open deltas.")
 
 
+def cmd_delta_append(args: argparse.Namespace) -> None:
+    """specs-5dd (ADD 2.0 M3): append ONE lesson to its living 5-DD spec, in-flight.
+
+    `delta-append <dd> "<text>"` — dd ∈ ddd|sdd|udd|tdd|add routes to its spec file
+    (constants.SPEC_DDS); the line is prepended directly UNDER the `## Deltas`
+    heading (newest first), tagged `[open · <date>]`, stamped with the active task
+    (or `--task`; no task -> no stamp, never inferred). An unknown dd refuses
+    BEFORE any write (delta_dd_unknown). Legacy tolerance: a pre-2.0 project with
+    no .add/specs/ gets the TARGET file seeded on demand via the same
+    _seed_spec_file init uses — the verb never dies on a missing dir; a customised
+    spec that lost its Deltas heading gets one appended rather than an error."""
+    root = _require_root()
+    dd = (args.dd or "").strip().lower()
+    if dd not in SPEC_DDS:
+        _die(f"delta_dd_unknown: '{args.dd}' — dd must be one of {'|'.join(SPEC_DDS)} "
+             "(ddd=domain · sdd=system · udd=experience · tdd=quality · add=method)")
+    text = " ".join((args.text or "").split())
+    if not text:
+        _die("delta_text_empty: give the lesson as one quoted line")
+    state = load_state(root)
+    slug = getattr(args, "task", None) or _active_task(state)
+    today = date.today().isoformat()
+    spec_path = _seed_spec_file(root, dd, project=state.get("project") or root.parent.name,
+                                stage=state.get("stage") or "mvp", date_str=today)
+    line = f"- [open · {today}] {text}" + (f" (task:{slug})" if slug else "")
+    if spec_path.exists():
+        body = spec_path.read_text(encoding="utf-8")
+        idx = body.find("## Deltas")
+        if idx == -1:
+            body = body.rstrip("\n") + "\n\n## Deltas (newest first)\n" + line + "\n"
+        else:
+            nl = body.find("\n", idx)
+            insert_at = (nl + 1) if nl != -1 else len(body.rstrip("\n")) + 1
+            if nl == -1:
+                body = body + "\n" + line + "\n"
+            else:
+                body = body[:insert_at] + line + "\n" + body[insert_at:]
+    else:
+        # seed skipped (blank/missing template) — still capture the delta; a lost
+        # lesson costs more than a header-less file (design-for-failure)
+        spec_path.parent.mkdir(parents=True, exist_ok=True)
+        body = f"# {SPEC_DDS[dd][1]} — the {dd.upper()} spec\n\n## Deltas (newest first)\n{line}\n"
+    _atomic_write(spec_path, body)
+    stamp = f" (task:{slug})" if slug else ""
+    print(f"delta-append [{dd}] -> .add/specs/{SPEC_DDS[dd][0]}{stamp}")
+
+
 def cmd_project(args: argparse.Namespace) -> None:
     """Read-only: print .add/PROJECT.md (the read-first foundation) in one command.
 
@@ -9023,6 +9099,16 @@ def build_parser() -> argparse.ArgumentParser:
                      help="target the UNIQUE carried SPEC delta whose text contains SUBSTR "
                           "(case-insensitive) instead of the first")
     prd.set_defaults(func=cmd_reopen_delta)
+
+    pdap = sub.add_parser("delta-append",
+                          help="append one lesson to its living 5-DD spec under .add/specs/ "
+                               "(specs-5dd kernel verb — in-flight, newest first)")
+    pdap.add_argument("dd", help="target lens: ddd=domain · sdd=system · udd=experience · "
+                                 "tdd=quality · add=method")
+    pdap.add_argument("text", help="the lesson, one quoted line")
+    pdap.add_argument("--task", default=None, metavar="SLUG",
+                      help="stamp this task slug (default: the active task; none -> no stamp)")
+    pdap.set_defaults(func=cmd_delta_append)
 
     pm = sub.add_parser("new-milestone", help="scaffold a milestone (SDD living doc)")
     pm.add_argument("slug")

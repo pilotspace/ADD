@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "9cc73f6e713e9ac5e7d47c60c7eeb1a3"  # re-aimed @ plan-target (ADD 2.0 M2: gate --target-hit yes|partial|no — validated pre-write (target_hit_invalid), recorded in state + the route-outcome trace; the §3 Target's judgment). prior: 9433f6e3… @ roster-distill
-ENGINE_PKG_MD5 = "d82eeae040e30f0f70511555205c5f9b"  # re-aimed @ roster-distill (ADD 2.0 M1: PHASE_AGENT all-phases -> the ONE "add" agent; PERSONA_HINT/PERSONA_FIT_HINT reworded to "add agent, persona mode"; guidelines.py roster block -> 1-agent + modes). prior: 991ce131… @ persona-task-kinds
+ENGINE_MD5 = "11fe18dbbd8534a7be246693639131c5"  # re-aimed @ specs-5dd (ADD 2.0 M3: init seeds the five living 5-DD specs under .add/specs/ (ONE templates/specs/SPEC.md.tmpl, five renders, never-clobber) + the `delta-append <dd>` kernel verb — newest-first [open · date] line under ## Deltas, active-task stamp, delta_dd_unknown pre-write refusal, on-demand legacy seeding). prior: 9cc73f6e… @ plan-target
+ENGINE_PKG_MD5 = "cd2d7e81ce3ac0b9fb16c29d3caecc5a"  # re-aimed @ specs-5dd (ADD 2.0 M3: constants.py gains SPEC_DDS — the closed dd -> (file, title, lens) map for the five living specs). prior: d82eeae0… @ roster-distill

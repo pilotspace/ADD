@@ -29,6 +29,7 @@ __all__ = [
     "PERSONA_REQUIRED_SECTIONS",
     "PERSONA_FLOW_VALUES",
     "TASK_KINDS",
+    "SPEC_DDS",
     "PERSONA_HINT",
     "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
@@ -142,6 +143,24 @@ PERSONA_FLOW_VALUES = ("design", "build", "advisor", "verify")
 # an unknown kind is a named WARN (quality predicate Finding C), never a refusal.
 TASK_KINDS = ("feature", "refactor", "test", "docs", "ui",
               "security", "data", "infra", "release", "integration")
+
+# specs-5dd (ADD 2.0 M3): the closed 5-DD map — dd tag -> (spec file under .add/specs/,
+# title, lens). init renders ONE template (templates/specs/SPEC.md.tmpl) five ways;
+# `delta-append <dd>` routes a lesson to its file. Closed on purpose: the five lenses ARE
+# the method's competency model (DDD·SDD·UDD·TDD·ADD) — an unknown dd is a refusal
+# (delta_dd_unknown), because a delta filed under a sixth ad-hoc lens is a delta lost.
+SPEC_DDS = {
+    "ddd": ("domain.md", "Domain",
+            "what the system IS: entities, rules, ubiquitous language (DDD)"),
+    "sdd": ("system.md", "System",
+            "how it is built: architecture, contracts, data shapes (SDD)"),
+    "udd": ("experience.md", "Experience",
+            "how it feels to use: flows, surfaces, the humans served (UDD)"),
+    "tdd": ("quality.md", "Quality",
+            "how we know it works: test strategy, floors, evidence (TDD)"),
+    "add": ("method.md", "Method",
+            "how we work: the loop, autonomy, ceremony budget (ADD)"),
+}
 
 # persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.

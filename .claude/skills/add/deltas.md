@@ -4,6 +4,8 @@ A **lesson learned** is a single learning a task produces, tagged by which of AD
 
 You **emit** deltas as `open`; only the **human** moves one to `folded` or `rejected`. You never self-approve a consolidation.
 
+**Emit in-flight, not batched**: the moment a lesson is learned — any phase, any task — file it with `add.py delta-append <dd> "<lesson>"` (`ddd|sdd|udd|tdd|add`). The verb prepends one `[open · <date>]` line (newest first, active task stamped) into the lesson's **living spec** under `.add/specs/` — `domain.md · system.md · experience.md · quality.md · method.md`, seeded at init and on demand for pre-2.0 projects. The task's §7 Competency-deltas block stays the per-task record; the living spec is where the lessons accumulate across tasks between folds.
+
 ## The grammar (frozen)
 
 Each delta begins on its own **tag line**; the learning may wrap:

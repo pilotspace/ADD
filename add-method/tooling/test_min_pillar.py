@@ -122,6 +122,9 @@ LIFECYCLE = [
     ["reopen-delta", "t"],                      # SPEC-delta re-activate verb: task t holds no carried
                                                # SPEC delta here -> refuses no_carried_spec_delta
                                                # (expected nonzero, tolerated; reads TASK.md, never docs/)
+    ["delta-append", "add", "spy lesson"],     # specs-5dd kernel verb: appends one [open] line to
+                                               # .add/specs/method.md (seeding it on demand — reads
+                                               # state + the specs template, never docs/; exit 0)
     ["freeze", "t"],                           # §3 contract-freeze write-seam: task t's §3 is still
                                                # the unfilled template here -> refuses contract_not_drafted
                                                # (expected nonzero, tolerated; reads TASK.md/state, never docs/)
