@@ -11,7 +11,7 @@ Spawn when the piece is **separable and worth the round-trip**: a broad sweep; a
 
 Don't spawn for narrow, cheap work — pay the round-trip only when the piece is big or independent enough. When in doubt, do it in-context.
 
-**Prefer the named roster.** Check first whether the piece fits one of ADD's five phase specialists — `add-design` (setup–contract) · `add-build` (tests·build) · `add-verify` (verify·observe) · `add-persona` (fit-persona selection) · `add-advisor` (a consultative second opinion) — before an ad-hoc spawn; each already carries the worker contract below.
+**Prefer the named roster.** ADD ships ONE `add` agent — the spawn prompt names the mode: `direction` (setup–contract) · `build` (tests·build) · `verify` (verify·observe) · `persona` (fit-persona selection/drafting) · `advise` (a consultative second opinion) — prefer it over an ad-hoc spawn; it already carries the worker contract below and loads the beat's phase guide + best-fit persona itself.
 
 ## The 3-lens sequential checklist at verify
 

@@ -17,5 +17,5 @@ prose (its TASK.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "26d1db26d19e9330cdff0d6d0cdd747d"  # re-aimed @ persona-task-kinds (ADD 2.0 M1: _TASK_KIND_RE/_task_kind header reader + _append_route_trace — every gate outcome appends a route-outcome JSONL trace, the persona scoreboard's evidence stream). prior: ec9a5730… @ persona-routes-depth
-ENGINE_PKG_MD5 = "991ce1315c39abb7404f954826ee1d95"  # re-aimed @ persona-task-kinds (constants.py gains TASK_KINDS closed taxonomy; predicates.py _persona_quality_warnings gains Finding C — task-kinds outside the taxonomy is a named WARN). prior: ed7bf3e1… @ template-unify
+ENGINE_MD5 = "9433f6e36d72cf101d04150a596eb686"  # re-aimed @ roster-distill (ADD 2.0 M1: roster_uninstalled lint follows the ONE add agent — cites agents/add.md, globs add*.md). prior: 26d1db26… @ persona-task-kinds
+ENGINE_PKG_MD5 = "d82eeae040e30f0f70511555205c5f9b"  # re-aimed @ roster-distill (ADD 2.0 M1: PHASE_AGENT all-phases -> the ONE "add" agent; PERSONA_HINT/PERSONA_FIT_HINT reworded to "add agent, persona mode"; guidelines.py roster block -> 1-agent + modes). prior: 991ce131… @ persona-task-kinds

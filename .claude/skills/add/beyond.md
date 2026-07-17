@@ -6,7 +6,7 @@ prose. Load it (or the one guide you need) only when a trigger fires.
 - **§3 CONTRACT FROZEN** → build→verify is a dynamic, auto-gated run (`autonomy: auto` default; lower to
   `conservative`/`manual` for a human gate) — `run.md`. Pipeline ready tasks behind frozen
   contracts — `streams.md`. Delegate one piece of your plan to a subagent — the named roster
-  (`add-design`/`add-build`/`add-verify`/`add-persona`/`add-advisor`) is agent-call-preferred, the
+  (the ONE `add` agent — mode: direction/build/verify/persona/advise) is agent-call-preferred, the
   default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
   `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9) — `confidence.md`.
   Both advisory; the engine never spawns.

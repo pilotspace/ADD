@@ -130,8 +130,12 @@ class PipInstallerSharedNamespaceTest(_Harness):
             from add_method import _installer
         finally:
             sys.path.pop(0)
-        self.assertEqual(getattr(_installer, "_RETIRED_AGENTS", None), (),
-                         "_RETIRED_AGENTS must exist as an (empty today) explicit tuple")
+        # roster-distill (ADD 2.0 M1): the 5-agent roster is tombstoned — update removes
+        # exactly these names from the shared namespace, never a sweep or heuristic.
+        self.assertEqual(getattr(_installer, "_RETIRED_AGENTS", None),
+                         ("add-design.md", "add-build.md", "add-verify.md",
+                          "add-persona.md", "add-advisor.md"),
+                         "_RETIRED_AGENTS must name exactly the retired 5-agent roster")
         agents = self._seed_foreign()
         (agents / "add-observe.md").write_text("retired roster leftover", encoding="utf-8")
         original = _installer._RETIRED_AGENTS

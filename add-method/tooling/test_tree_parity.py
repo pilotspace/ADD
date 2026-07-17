@@ -83,14 +83,14 @@ class SkillTreeParityTest(unittest.TestCase):
 
 class AgentsParityTest(unittest.TestCase):
     def test_roster_agents_byte_identical(self):
-        # the add-* roster ships in three trees; .claude/agents also holds user
-        # agents, so parity binds the add-*.md subset only
+        # roster-distill (ADD 2.0 M1): the ONE `add` agent ships in three trees;
+        # .claude/agents also holds user agents, so parity binds the add*.md subset only
         canon, bundle, dogfood = AGENT_TREES
         for tracked in (canon, bundle):
             self.assertTrue(tracked.is_dir(), f"git-tracked agents tree missing: {tracked}")
-        names = sorted(p.name for p in canon.glob("add-*.md"))
+        names = sorted(p.name for p in canon.glob("add*.md"))
         self.assertTrue(names, "canonical roster is empty — the sweep would be vacuous")
-        self.assertEqual(names, sorted(p.name for p in bundle.glob("add-*.md")),
+        self.assertEqual(names, sorted(p.name for p in bundle.glob("add*.md")),
                          "bundled roster file set diverged")
         for name in names:
             self.assertEqual(_md5(canon / name), _md5(bundle / name),

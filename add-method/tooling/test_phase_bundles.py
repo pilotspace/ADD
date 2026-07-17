@@ -110,16 +110,15 @@ class PhaseAgentConstantTest(unittest.TestCase):
         self.assertEqual(set(engine_constants.PHASE_AGENT.keys()), set(PHASES) - {"done"})
 
     def test_values_match_shipped_roster_ownership(self):
-        # phase-collapse-3: no more "specify"/"scenarios"/"plan"/"tests" keys — the
-        # whole front span is add-design owned as ONE `direction` phase.
+        # roster-distill (ADD 2.0 M1): ONE `add` agent serves every phase — the spawn
+        # names the mode, the agent loads the beat's guide + persona.
         pa = engine_constants.PHASE_AGENT
-        self.assertEqual(pa["direction"], "add-design")
-        self.assertEqual(pa["build"], "add-build")
-        self.assertEqual(pa["verify"], "add-verify")
+        self.assertEqual(pa["direction"], "add")
+        self.assertEqual(pa["build"], "add")
+        self.assertEqual(pa["verify"], "add")
 
     def test_values_are_roster_slugs_only(self):
-        self.assertTrue(set(engine_constants.PHASE_AGENT.values())
-                        <= {"add-design", "add-build", "add-verify"})
+        self.assertTrue(set(engine_constants.PHASE_AGENT.values()) <= {"add"})
 
     def test_importable_via_star_import(self):
         self.assertIn("PHASE_AGENT", engine_constants.__all__)
@@ -182,15 +181,12 @@ class StatusPlainBundleLineTest(CliFixture):
     """M4 — status prints the active bundle + preferred agent; silent at done/no-task."""
 
     def test_status_prints_bundle_for_non_done_task(self):
-        # phase-collapse-3: a fresh task is already at "direction" — the whole front
-        # span is now ONE phase, so DIRECTION's preferred agent is add-design (not the
-        # add-build a pre-collapse "tests" sub-phase preferred).
+        # roster-distill (ADD 2.0 M1): every phase prefers the ONE `add` agent.
         _, out, _ = _run(["status"])
         self.assertIn("DIRECTION", out)
-        self.assertIn("add-design", out)
         bundle_lines = [ln for ln in out.splitlines() if ln.strip().startswith("bundle")]
         self.assertEqual(len(bundle_lines), 1, out)
-        self.assertIn("prefer: add-design agent", bundle_lines[0])
+        self.assertIn("prefer: add agent", bundle_lines[0])
 
     def test_status_silent_at_done(self):
         self._set_phase("build")
@@ -222,7 +218,7 @@ class GuidePlainBundleLineTest(CliFixture):
         self.assertIsNotNone(bundle_idx, out)
         self.assertGreater(bundle_idx, guide_idx, out)
         self.assertIn("BUILD", lines[bundle_idx])
-        self.assertIn("agent-call-preferred: add-build", lines[bundle_idx])
+        self.assertIn("agent-call-preferred: add", lines[bundle_idx])
 
     def test_guide_silent_at_done(self):
         self._set_phase("build")

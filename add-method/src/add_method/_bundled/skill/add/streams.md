@@ -54,8 +54,9 @@ tier hint: top → dag-scheduler, setup-run-mode; mid → the rest
 - **Spend your strongest model on the critical path.** Critical-path tasks gate the most
   downstream work; off-path tasks take **mid**. The tier hint is advisory — override when a task
   is harder than its position suggests.
-- **Prefer the named roster per worker** — `add-build` for a tests/build worker, `add-design` for
-  design, `add-verify` for verify (full roster + when-to-spawn in advisor.md) — over an ad-hoc spawn.
+- **Prefer the named roster per worker** — the ONE `add` agent, mode named per worker: `build`
+  for a tests/build worker, `direction` for design, `verify` for verify (modes + when-to-spawn
+  in advisor.md) — over an ad-hoc spawn.
 - **`--json`** (`{ milestone, waves, critical_path, critical_path_len, tiers, blocked }`) feeds
   a runner that spawns programmatically. `blocked` lists tasks whose dep cannot be satisfied
   within this milestone; a `dependency_cycle` is refused with the offending members named.

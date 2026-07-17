@@ -112,15 +112,16 @@ PHASE_GROUPS = {
     "VERIFY": ("verify",),
 }
 # phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
-# `tests` bundles into DIRECTION above yet its preferred agent is still add-build, the
-# shipped roster's own boundary: add-design owns specify/plan, add-build owns
-# tests/build, add-verify owns verify). A phase missing here is a bug (PHASE_GROUPS'
+# roster-distill (ADD 2.0 M1): ONE execution shell — the `add` agent — serves every
+# phase; the spawn prompt names the mode (direction·build·verify·advise·persona) and
+# the agent loads that beat's guide + the fitting persona (personas carry the
+# expertise, the agent carries the discipline). A phase missing here is a bug (PHASE_GROUPS'
 # own union covers every key); `_phase_bundle` is the fail-closed resolver for an
 # unmapped/corrupted phase token, not this map directly.
 PHASE_AGENT = {
-    "direction": "add-design",
-    "build": "add-build",
-    "verify": "add-verify",
+    "direction": "add",
+    "build": "add",
+    "verify": "add",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 
@@ -146,18 +147,18 @@ TASK_KINDS = ("feature", "refactor", "test", "docs", "ui",
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.
 # Project-scoped (not "this milestone's domain") per the confirmed v2 amendment: the AI should
 # catch up ALL of a project's missing personas, not draft a single milestone-fit one.
-PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add-persona "
-                "agent (or read docs/18-personas.md) to seed the project's persona(s) from "
-                "PROJECT.md's domain")
+PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add agent "
+                "in persona mode (or read docs/18-personas.md) to seed the project's persona(s) "
+                "from PROJECT.md's domain + the seed templates (tooling/templates/personas/)")
 
 # persona-fit-nudge: the OPPOSITE-branch, mutually-exclusive sibling of PERSONA_HINT — fires only
 # when ≥1 real persona ALREADY exists, so a brand-new milestone doesn't silently assume one of
 # them fits its domain. Existence-only (names the persona slugs already seeded); the AI still
-# owns the actual fit judgment via add-persona — the engine never scores content similarity.
-# {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
+# owns the actual fit judgment (the add agent's persona mode) — the engine never scores content
+# similarity. {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
 PERSONA_FIT_HINT_TEMPLATE = (
     "existing persona(s) seeded — {slugs} — confirm one fits this milestone's domain, or spawn "
-    "the add-persona agent (or read docs/18-personas.md) to draft a better-fit one"
+    "the add agent in persona mode (or read docs/18-personas.md) to draft a better-fit one"
 )
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts

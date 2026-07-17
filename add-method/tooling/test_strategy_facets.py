@@ -71,7 +71,7 @@ FULL_FACET_LINES = (
     "anchor it extends>",
     "Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, "
     "readability — or \"correctness-first, no budget\"; never blank; ⚠-mark the facet you trust "
-    "least; risk: high -> consult add-advisor; advisory, never a gate>",
+    "least; risk: high -> consult the add agent (advise mode); advisory, never a gate>",
 )
 # template-hint-dedup: the fast §5 Approach hint migrated from a stance-restating one-liner
 # to a ≤6-word technique TAG ("NOT a restatement of the Strategy above") — still ONE collapsed
@@ -111,7 +111,7 @@ class StrategyFacetsTest(unittest.TestCase):
     # rather than left draft through tests->build, so that token is retired with the phase.
     def test_optimization_stance_fill_discipline(self):
         stance = FULL_FACET_LINES[3]
-        for token in ("never blank", "⚠", "add-advisor", "advisory, never a gate"):
+        for token in ("never blank", "⚠", "add agent (advise mode)", "advisory, never a gate"):
             self.assertIn(token, stance, f"Optimization stance missing discipline token: {token}")
 
     # template-unify: M4's collapsed fast Approach line is retired — the fast lane

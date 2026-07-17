@@ -24,19 +24,17 @@ Boundary:
 - STOP-and-escalate (return findings; do not decide): any SECURITY finding (HARD-STOP, always) ·
   a discovered scope/contract gap · a concurrency/architecture risk the tests cannot exercise.
 
-## Adapter stubs
-ONE body above; only the spawn differs per runner. Only **Claude Code** is verified in-repo;
-every other row is an *illustrative* shape — confirm exact syntax before relying on it.
+## Spawn contract
+ONE body above; ANY agent runner spawns it by honoring four slots — general guidance,
+never per-runner syntax (your runner's subagent/CLI mechanism supplies the verb):
 
-| Runner | Spawn the worker with the rendered prompt body |
-|--------|------------------------------------------------|
-| Claude Code (reference) | `Task(subagent_type="add:add-{{PHASE}}", prompt=<rendered PROMPT.persona.md>, isolation="worktree")` — the registered phase-specialist (roster: `agents/add-<phase>.md`; advisor.md). Plain `Task(description=<label>, prompt=…)` still works when no roster is installed. |
-| Codex (illustrative) | `cd $WT && codex run --prompt-file PROMPT.persona.md` |
-| opencode (illustrative) | `cd $WT && opencode run --prompt-file PROMPT.persona.md` |
-| Cursor (illustrative) | `cursor agent --prompt-file PROMPT.persona.md` |
-| Windsurf (illustrative) | `windsurf run --prompt-file PROMPT.persona.md` |
-| Trae (illustrative) | `trae run --prompt-file PROMPT.persona.md` |
-| Copilot (illustrative) | `gh copilot suggest < PROMPT.persona.md` |
-| Cline (illustrative) | `cline task --file PROMPT.persona.md` |
-| Aider (illustrative) | `aider --message-file PROMPT.persona.md` |
-| Gemini CLI (illustrative) | `gemini generate --prompt-file PROMPT.persona.md` |
+| Slot | Value |
+|------|-------|
+| prompt template | this rendered PROMPT.persona.md body, `mode: {{PHASE}}` prepended — pass it whole, never paraphrased |
+| persona | `{{PERSONA_SLUG}}` — the body loads `.add/personas/{{PERSONA_SLUG}}.md` itself; pass the slug, never inline the file |
+| model | by mode — direction/verify/advise: top tier · build: mid (top on the critical path); the project's MODEL_REGISTRY.md overrides |
+| isolation | worktree for a parallel stream worker (one worker per stream, serial merge); none for a sequential inline run |
+
+Only **Claude Code** is verified in-repo (reference: spawn the registered `add` agent with
+this prompt and worktree isolation); every other runner follows the same four slots —
+confirm your runner's exact spawn syntax before relying on it.

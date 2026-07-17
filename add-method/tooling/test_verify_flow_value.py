@@ -41,9 +41,10 @@ TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl"
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
               REPO / "18-personas.md",
               BUNDLE / "docs" / "18-personas.md")
-AGENT_TWINS = (ADD_METHOD / "agents" / "add-verify.md",
-               REPO / ".claude" / "agents" / "add-verify.md",
-               BUNDLE / "agents" / "add-verify.md")
+# roster-distill (ADD 2.0 M1): the verify specialist is the ONE `add` agent (verify mode)
+AGENT_TWINS = (ADD_METHOD / "agents" / "add.md",
+               REPO / ".claude" / "agents" / "add.md",
+               BUNDLE / "agents" / "add.md")
 GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md",
                REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
                BUNDLE / "skill" / "add" / "phases" / "verify.md")
@@ -96,7 +97,7 @@ class VerifyFlowValueTest(unittest.TestCase):
             digests.add(_md5(p))
         self.assertEqual(len(digests), 1, "18-personas.md twins diverged")
 
-    # ── M4: add-verify routes flow: verify first ──────────────────────────────────
+    # ── M4: the add agent's verify mode routes flow: verify first ─────────────────
     def test_add_verify_routes_verify_first(self):
         digests = set()
         for p in AGENT_TWINS:
@@ -105,7 +106,7 @@ class VerifyFlowValueTest(unittest.TestCase):
                           f"{p} must select flow: verify first")
             self.assertIn("flow: advisor", text, f"{p} must keep the advisor fallback")
             digests.add(_md5(p))
-        self.assertEqual(len(digests), 1, "add-verify.md twins diverged")
+        self.assertEqual(len(digests), 1, "add.md agent twins diverged")
 
     # ── M5: the verify guide names the flow; phases pool fence held ──────────────
     def test_verify_guide_names_flow(self):

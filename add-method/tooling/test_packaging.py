@@ -84,8 +84,8 @@ class NpmTarballTest(unittest.TestCase):
         that can never resolve (the apple-container transcript finding)."""
         self.assertTrue(any(p.startswith("agents/") for p in self.paths),
                         "no file under agents/ shipped (roster_absent_from_npm)")
-        self.assertIn("agents/add-build.md", self.paths,
-                      "add-build.md must ship in the npm tarball (roster_absent_from_npm)")
+        self.assertIn("agents/add.md", self.paths,
+                      "the ONE add agent must ship in the npm tarball (roster_absent_from_npm)")
 
     def test_teacher_corpus_and_notices_ship(self):
         """The vendored teacher snapshot + its MIT attribution must ride in the tarball

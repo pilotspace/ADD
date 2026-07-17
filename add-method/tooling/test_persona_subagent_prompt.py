@@ -4,9 +4,10 @@
 The portable worker PROMPT loads the active `.add/personas/<slug>.md` (Identity->persona,
 Critical Rules->constraints, Success Metrics->done-bar) via a {{PERSONA_SLUG}} slot. ONE canonical
 runner-token-free body ships as a seedable template the engine renders LOCALLY (no network, no
-process launch); thin per-platform adapter stubs cover the 9 onboarded agents — Claude Code
-verified, the rest illustrative. The streams.md worker contract documents the injection point.
-Run: python3 -m unittest test_persona_subagent_prompt -v
+process launch); a runner-AGNOSTIC spawn contract (four slots: prompt template · persona ·
+model · isolation) replaces the retired per-platform adapter table (ADD 2.0 M1 roster-distill) —
+Claude Code stays the one verified reference. The streams.md worker contract documents the
+injection point. Run: python3 -m unittest test_persona_subagent_prompt -v
 """
 import inspect
 import unittest
@@ -27,11 +28,14 @@ SKILL_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add",
 )
 TMPL_REL = "templates/PROMPT.persona.md.tmpl"
-# the 10 coding agents ADD already onboards (parity with the installer + the supported-agents docs)
+# runner tokens the PORTABLE body must never carry (the spawn contract is runner-agnostic;
+# Claude Code alone may appear BELOW the marker as the verified reference)
 PLATFORMS = ("Claude Code", "Codex", "opencode", "Cursor", "Windsurf", "Trae",
              "Copilot", "Cline", "Aider", "Gemini CLI")
-# the marker splitting the runner-token-free BODY from the per-runner ADAPTER STUBS section
-ADAPTER_MARKER = "## Adapter stubs"
+# the marker splitting the runner-token-free BODY from the runner-agnostic SPAWN CONTRACT
+ADAPTER_MARKER = "## Spawn contract"
+# the four general slots every runner honors (replaces the retired 10-row adapter table)
+CONTRACT_SLOTS = ("prompt template", "persona", "model", "isolation")
 # network/process-launch tokens a NO-EXEC path must never contain (built to dodge lint scanners)
 FORBIDDEN_EXEC = ("socket", "urllib", "requests", "sub" + "process",
                   "Pop" + "en", "os." + "system", "spa" + "wn")
@@ -69,21 +73,22 @@ class InjectionPointTest(unittest.TestCase):
             self.assertNotIn(plat, portable,
                              f"the portable body must carry no runner-specific token (found {plat!r})")
 
-    # scenario: the 9 per-platform stubs exist with the honesty labelling
-    def test_nine_platform_stubs_present(self):
-        body = _tmpl(TOOLING)
-        stubs = body.split(ADAPTER_MARKER, 1)[1]
-        for plat in PLATFORMS:
-            self.assertIn(plat, stubs, f"an adapter stub must exist for {plat}")
+    # scenario: the runner-agnostic spawn contract carries the four general slots
+    def test_spawn_contract_slots_present(self):
+        contract = _tmpl(TOOLING).split(ADAPTER_MARKER, 1)[1].lower()
+        for slot in CONTRACT_SLOTS:
+            self.assertIn(slot, contract, f"the spawn contract must carry the '{slot}' slot")
+        for plat in PLATFORMS[1:]:
+            self.assertNotIn(plat, _tmpl(TOOLING).split(ADAPTER_MARKER, 1)[1],
+                             f"no per-runner row may survive (found {plat!r}) — general guidance only")
 
-    # scenario: only Claude Code is marked verified; every other is labelled illustrative
+    # scenario: only Claude Code is named as the verified reference
     def test_only_claude_code_verified(self):
-        stubs = _tmpl(TOOLING).split(ADAPTER_MARKER, 1)[1].lower()
-        self.assertIn("verified", stubs, "the Claude Code stub must be marked verified")
-        self.assertIn("illustrative", stubs, "non-verified stubs must be labelled illustrative")
-        # 'verified' appears once (Claude Code); the others are illustrative
-        self.assertEqual(stubs.count("verified"), 1,
-                         "exactly one stub (Claude Code) may claim verified; the rest illustrative")
+        contract = _tmpl(TOOLING).split(ADAPTER_MARKER, 1)[1].lower()
+        self.assertIn("verified", contract, "Claude Code must be marked the verified reference")
+        self.assertIn("claude code", contract, "the verified reference must name Claude Code")
+        self.assertEqual(contract.count("verified"), 1,
+                         "exactly one runner (Claude Code) may claim verified")
 
     # scenario: degrade-safe when no persona is matched
     def test_degrade_no_persona_generic(self):

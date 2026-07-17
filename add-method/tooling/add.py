@@ -4527,18 +4527,21 @@ def cmd_check(args: argparse.Namespace) -> None:
     _cites_roster = False
     for _gname in GUIDELINE_FILES:
         try:
-            if "agents/*.md" in (_project_root / _gname).read_text(encoding="utf-8"):
+            _gtext = (_project_root / _gname).read_text(encoding="utf-8")
+            # roster-distill (ADD 2.0 M1): the block cites `agents/add.md`; the old
+            # `agents/*.md` phrasing keeps pre-distill projects covered (never retro-exempt).
+            if "agents/add.md" in _gtext or "agents/*.md" in _gtext:
                 _cites_roster = True
                 break
         except OSError:
             pass
     if _cites_roster:
         _agents_dir = _project_root / ".claude" / "agents"
-        if not (_agents_dir.is_dir() and any(_agents_dir.glob("add-*.md"))):
+        if not (_agents_dir.is_dir() and any(_agents_dir.glob("add*.md"))):
             warnings.append(("roster_uninstalled",
                              "guideline file(s) cite the agent roster but no `.claude/agents/"
-                             "add-*.md` files are installed — run `add.py update` (or re-run the "
-                             "CLI installer) to materialize them"))
+                             "add*.md` agent is installed — run `add.py update` (or re-run the "
+                             "CLI installer) to materialize it"))
 
     # milestone-relations health (wire-milestone-relations): surface a milestone whose
     # depends-on/extends/relates-to header edge names an unknown milestone (dangling) or

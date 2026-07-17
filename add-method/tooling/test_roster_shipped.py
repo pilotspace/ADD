@@ -62,7 +62,7 @@ CLI_JS = _ADD_METHOD / "bin" / "cli.js"
 PACKAGE_JSON = _ADD_METHOD / "package.json"
 CANON_AGENTS = _ADD_METHOD / "agents"
 BUNDLED_AGENTS = _ADD_METHOD / "src" / "add_method" / "_bundled" / "agents"
-AGENT_NAMES = ("add-design.md", "add-build.md", "add-verify.md", "add-persona.md", "add-advisor.md")
+AGENT_NAMES = ("add.md",)   # roster-distill (ADD 2.0 M1): the ONE `add` agent
 
 
 def _md5(p: Path) -> str:
@@ -94,7 +94,8 @@ def _make_bundled_with_agents(root: Path) -> Path:
     (root / "docs").mkdir(parents=True)
     (root / "docs" / "00-introduction.md").write_text("intro v-new\n")
     (root / "agents").mkdir(parents=True)
-    (root / "agents" / "add-build.md").write_text("---\nname: add-build\n---\nbuild agent v-new\n")
+    # roster-distill (ADD 2.0 M1): the fixture agent is the ONE `add` agent (add-build.md is a tombstone now)
+    (root / "agents" / "add.md").write_text("---\nname: add\n---\nadd agent v-new\n")
     return root
 
 
@@ -123,9 +124,9 @@ class PythonInstallerBehavior(unittest.TestCase):
             code = _installer.install(target=str(proj), bundled=str(bundled),
                                       yes=True, non_interactive=True)
         self.assertEqual(code, 0, buf.getvalue())
-        installed = proj / ".claude" / "agents" / "add-build.md"
+        installed = proj / ".claude" / "agents" / "add.md"
         self.assertTrue(installed.is_file(), "install() must materialize agents/ -> .claude/agents")
-        self.assertEqual(installed.read_text(), "---\nname: add-build\n---\nbuild agent v-new\n")
+        self.assertEqual(installed.read_text(), "---\nname: add\n---\nadd agent v-new\n")
 
     def test_update_preserves_undeclared_agents(self):
         # SUPERSEDED PIN (installer-shared-namespace-guard, frozen v1): .claude/agents is a
@@ -149,8 +150,8 @@ class PythonInstallerBehavior(unittest.TestCase):
         self.assertTrue(stale.exists(),
                         "an undeclared file in the shared namespace survives update — "
                         "removal is tombstone-only, never a sweep or a name heuristic")
-        self.assertEqual((proj / ".claude" / "agents" / "add-build.md").read_text(),
-                         "---\nname: add-build\n---\nbuild agent v-new\n",
+        self.assertEqual((proj / ".claude" / "agents" / "add.md").read_text(),
+                         "---\nname: add\n---\nadd agent v-new\n",
                          "shipped roster files still refresh")
 
     def test_missing_agents_in_bundled_soft_skips(self):
@@ -193,13 +194,14 @@ class GuidelineBlockStaysPortable(unittest.TestCase):
         block = _guideline_block()
         self.assertNotIn(".claude/agents", block,
                          "roster_claude_only_leak: the shared block must stay tool-agnostic — "
-                         "cite add-method/agents/*.md (attribution), never a Claude-only path")
+                         "cite add-method/agents/add.md (attribution), never a Claude-only path")
 
     def test_still_cites_roster_for_attribution(self):
         block = _guideline_block()
-        self.assertIn("agents/*.md", block,
-                     "the roster line must still name its source — roster_uninstalled below "
-                     "detects drift from the real .claude/agents/ tree, independent of this prose")
+        self.assertIn("agents/add.md", block,
+                     "the roster line must still name its source (the ONE add agent) — "
+                     "roster_uninstalled below detects drift from the real .claude/agents/ "
+                     "tree, independent of this prose")
 
 
 class RosterUninstalledCheckLint(unittest.TestCase):
@@ -244,7 +246,7 @@ class RosterUninstalledCheckLint(unittest.TestCase):
         self._silent("init", "--name", "demo", "--stage", "mvp")
         agents_dir = self.tmp / ".claude" / "agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
-        (agents_dir / "add-build.md").write_text("---\nname: add-build\n---\n")
+        (agents_dir / "add.md").write_text("---\nname: add\n---\n")
         _, out = self._run("check")
         self.assertNotIn("roster_uninstalled", out)
 
