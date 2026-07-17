@@ -54,7 +54,8 @@ Scope (may touch): `pkg/api/`
 
 TRACE_REL = Path(".add") / "traces" / "route-outcomes.jsonl"
 REQUIRED_KEYS = {"ts", "task", "milestone", "kind", "lane", "routed_by",
-                 "persona", "outcome", "heals", "recross", "age_hours", "actor"}
+                 "persona", "outcome", "heals", "recross", "age_hours", "actor",
+                 "target_hit"}
 
 
 class _Harness(unittest.TestCase):

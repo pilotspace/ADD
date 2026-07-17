@@ -55,7 +55,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:6048` (`_declared_scope`)   <!-- re-pinned 2026-07-17 roster-distill: 6045→6048 (the roster_uninstalled lint's add.md citation lines land above the def); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 5990→6045 @ persona-task-kinds -->
+Anchor: `add-method/tooling/add.py:6056` (`_declared_scope`)   <!-- re-pinned 2026-07-17 plan-target: 6048→6056 (gate --target-hit validation + state write land above the def); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 6045→6048 @ roster-distill -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,

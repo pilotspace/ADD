@@ -2332,6 +2332,7 @@ def _append_route_trace(root: Path, state: dict, slug: str, outcome: str) -> Non
             "persona": m.group(1) if m else None, "outcome": outcome,
             "heals": (t.get("heal") or {}).get("attempts", 0),
             "recross": bool(t.get("recross")), "age_hours": age,
+            "target_hit": t.get("target_hit"),          # the §3 Target judgment (plan-core)
             "actor": (t.get("gate_actor") or {}).get("name"),
         }
         tdir = root / "traces"
@@ -2356,6 +2357,11 @@ def cmd_gate(args: argparse.Namespace) -> None:
         _die("setup_unlocked: lock the foundation first — add.py lock")
     if args.outcome not in GATES:
         _die(f"outcome must be one of: {', '.join(GATES)}")
+    # plan-core (ADD 2.0 M2): the §3 Target's judgment — validated BEFORE any write so a
+    # typo never half-records a verdict. Optional (absence is conformant, never inferred).
+    _thit = getattr(args, "target_hit", None)
+    if _thit is not None and _thit not in ("yes", "partial", "no"):
+        _die(f"target_hit_invalid: --target-hit must be yes|partial|no (got '{_thit}')")
     # Completing outcomes (PASS, RISK-ACCEPTED) are the VERIFY step's verdict, so they
     # share the verify-phase guard — no silent skips (principle 7). HARD-STOP stays
     # recordable from any phase (a security finding is always HARD-STOP). The
@@ -2432,6 +2438,8 @@ def cmd_gate(args: argparse.Namespace) -> None:
     if completing:
         state["tasks"][slug]["phase"] = "done"
     state["tasks"][slug]["gate"] = args.outcome
+    if _thit is not None:
+        state["tasks"][slug]["target_hit"] = _thit     # the §3 Target judgment (plan-core)
     state["tasks"][slug]["gate_actor"] = identity._actor_stamp(state)   # WHO recorded the verdict (every outcome)
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                                # F12: durable state FIRST (source of truth) — may _die
@@ -9136,6 +9144,9 @@ def build_parser() -> argparse.ArgumentParser:
     pg.add_argument("--explain", action="store_true",
                     help="READ-ONLY: print the composed auto-pass/escalation path for the task "
                          "(autonomy · risk · sensitivity · advisor verdict), then exit")
+    pg.add_argument("--target-hit", dest="target_hit", default=None,
+                    help="the §3 Target judgment: yes|partial|no (plan-core; recorded in "
+                         "state + the route-outcome trace; omit when no Target declared)")
     pg.add_argument("--owner", help="RISK-ACCEPTED waiver: accountable owner")
     pg.add_argument("--ticket", help="RISK-ACCEPTED waiver: tracking ticket/link")
     pg.add_argument("--expires", help="RISK-ACCEPTED waiver: expiry date")

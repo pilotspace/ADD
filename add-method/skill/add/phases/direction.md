@@ -154,7 +154,9 @@ foundation docs — an honest "new module, no code; honors CONVENTIONS.md §X" i
 ### Contract — freeze the external shape (HARD, tamper-guarded)
 Interfaces with inputs/outputs; shapes + persistent schema (note transactional needs). Names drawn
 from `GLOSSARY.md`; a response for **every** Reject code from §1; cites only Grounding anchors.
-Generate a mock + contract tests so dependent work can start.
+Declare the measurable **Target** — the success bar the verify evidence must hit (numbers, not
+adjectives; judged at the gate with `--target-hit`). Generate a mock + contract tests so
+dependent work can start.
 
 ### Build-strategy — the intended approach (SOFT: preferred; the builder self-improves, records actual at verify)
 **Scope (may touch)** — backticked path tokens; the freeze locks this. **Strategy** — ordered
@@ -173,7 +175,7 @@ ratifies the header `route:` line — the persona's lane proposal — recording 
 <exit_gate>
 - [ ] **Grounding** — Touches · Context · Honors · Anchors named from the code; Issues/Risks · Related intent · Ground SHA recorded (or an honest none).
 - [ ] **Contract** — versioned, `FROZEN`; contract tests pass against the mock; every name matches the glossary; every §1 rejection has a contracted response.
-- [ ] **Build-strategy** — Scope declared; batches + persona + spawn isolation named.
+- [ ] **Build-strategy** — Scope declared; batches + persona + spawn isolation named; a measurable Target set.
 - [ ] The Contract cites only Grounding anchors; the ⚠ lowest-confidence flag is surfaced.
 </exit_gate>
 

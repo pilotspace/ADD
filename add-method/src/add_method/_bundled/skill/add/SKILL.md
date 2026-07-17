@@ -24,9 +24,9 @@ You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
 result through passing evidence, not a plausible-looking diff.
 
-**One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — seven step sections,
-filled top to bottom; the tool tracks where you are. The **plan** phase unites grounding + frozen
-contract + build strategy.
+**One plan = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — the engine-known
+spine; its §3 PLAN (grounding · contract · scope · measurable Target) is the core artifact.
+Shard free context files beside it in the task folder — the AI owns that architecture.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
@@ -83,14 +83,14 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a mil
 Every task is three beats, three engine calls, ONE human decision point:
 
 1. **DIRECTION** — draft the whole bundle top-to-bottom in TASK.md: §1 rules + ranked ⚠ flag (co-specify) ·
-   §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope) · §4 red suite
+   §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
    (run it — red for the RIGHT reason) · §6 Build expectations. Then the ONE approval, presented
    lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`
    IS this approval).
 2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
    inside the §3 Scope.
 3. **VERIFY** — confirm evidence · 3 lenses (**security always HARD-STOP**) · earned-green
-   refute-read · then `add.py gate PASS` (from build it compound-crosses; under `autonomy: auto` a
+   refute-read · then `add.py gate PASS --target-hit yes|partial|no` (from build it compound-crosses; under `autonomy: auto` a
    run auto-PASSes on complete no-residue evidence — *auto-resolved*, an explicit PASS, never a
    skip; residue or lowered autonomy → human — `run.md`).
 
@@ -152,10 +152,10 @@ The steps never change; their depth does (stage from `add.py status`):
 - **prototype** — light; throwaway code; design/experience is the point.
 - **poc** — contract/tests/build deep on the single riskiest slice only.
 - **mvp** — full flow, narrow scope, light observation.
-- **production** — full rigor + the observe loop; reached via the `graduate.md` orchestration
-  (`MVP covered → propose graduation`), never a bare `stage production` flip.
+- **production** — full rigor + the observe loop; reached via the `graduate.md` orchestration,
+  never a bare `stage production` flip.
 
 ## The method rationale
 
-The full method (the *why*) is the AIDD book in `.add/docs/`; each phase guide
-points to its chapter. Read it only when a decision is genuinely unclear — never duplicate it here.
+The full method (the *why*) is the AIDD book in `.add/docs/`. Read it only when a
+decision is genuinely unclear — never duplicate it here.
