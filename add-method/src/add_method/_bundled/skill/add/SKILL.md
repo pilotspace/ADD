@@ -30,25 +30,25 @@ Shard free context files beside it in the task folder — the AI owns that archi
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
 `add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
-`--todo --done <id>` closes (engine errors surface verbatim) — then STOP.
+`--todo --done <id>` closes — then STOP.
 
 ## Always start here (orient — do not skip)
 
 Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure it is in the project:
 
 - It exists → go to `status` below.
-- It does NOT (a plugin install — engine + book ride in it) → materialize once:
+- It does NOT (a plugin install) → materialize once:
   `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine) +
   `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
 
-Resume from the tool (COLD start), never re-read the repo — mid-flow, trust each verb's
+Resume from the tool, never re-read the repo — mid-flow, trust each verb's
 `next:` footer:
 
 ```bash
 python3 .add/tooling/add.py status --brief
 ```
 
-Then read the foundation map `add.py status --foundation` (one section: `--foundation "Users"` · `--all` full) + `.add/SOUL.md` (**voice** — `soul.md`). Then branch on state:
+Then read the foundation map `add.py status --foundation` (`--all` full) + `.add/SOUL.md` (**voice** — `soul.md`). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
@@ -71,7 +71,9 @@ Then read the foundation map `add.py status --foundation` (one section: `--found
 
 ## Intake — size a request before creating scope
 
-Classify a raw request BEFORE any scope: read `intake.md`, place it in one bucket — `new-major` ·
+Classify a raw request BEFORE any scope: read `intake.md`. Too small for scope → the
+**inline lane** (diff + `delta-append` receipt; security·data·architecture escalates). Else
+one bucket — `new-major` ·
 `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`; the human
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
 `MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks) — read `scope.md` — then

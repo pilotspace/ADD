@@ -12,6 +12,26 @@ the intent, name in/out of scope, offer 2–3 sized options with a recommendatio
 `{ bucket, rationale, command }`. `ask_human` stays the floor: if interviewing can't sharpen it,
 reject — never guess a bucket.
 
+## The inline lane — below the bucket floor
+
+Buckets create versioned scope; some changes are too small to deserve any. After the
+interview sharpens the request, judge the lane FIRST — you (the AI) route it, silently:
+
+**Inline fits when ALL hold**: one file or a few adjacent ones · behavior the current specs
+already cover (a typo, a wording fix, a config value, a mechanical rename) · no new contract
+surface anyone else consumes · sensitivity mechanical. Then: **no task, no milestone** — make
+the edit directly, and leave the receipt:
+
+1. the **git diff** is the change record (commit it as usual);
+2. `add.py delta-append <dd> "<lesson>"` files what was learned into the living 5-DD spec —
+   the spec diff IS the approval artifact; a lane run that teaches nothing appends nothing.
+
+**The floor is closed**: a change touching **security · data · architecture** ALWAYS escalates
+to a real task — never inline, no matter how small (security stays HARD-STOP everywhere).
+New behavior, a new/changed contract, or anything you would want a frozen §3 for → bucket it.
+The route is yours, the veto is not: the human saying "make it a task" overrides the lane,
+always. When in doubt, bucket — the lane is for changes whose whole story fits in a diff.
+
 ## The four buckets
 
 Classify every request into exactly ONE bucket:
