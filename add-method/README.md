@@ -76,18 +76,21 @@ greenfield first milestone. The unsolved part is **trust across change**: when t
 spec evolves in milestone 2 and breaks compatibility in milestone 3, does the work
 you already trusted *stay* trusted?
 
-Our benchmark runs the same three-milestone project through each flow under a
-pinned model with deterministic probe scoring
-([report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
-In the latest head-to-head, ADD held every trust floor at 1.0 across all three
-milestones with zero regressions and zero weakened tests; spec-kit collapsed on the
-evolution milestones (coverage .20/.25, a third to nearly half of the earlier
-oracles broken, six carried tests weakened). Raw cost: ADD $6.61 vs spec-kit $3.90
-per rep — but per **trusted** milestone ADD is cheaper outright: **$2.20 vs
-$3.90**. And when we forced one continued conversation to carry all three
-milestones, every flow decayed the same way (.92 → .80 → .75, one early wrong turn
-never revisited) — the flat 1.0 line only exists when fresh sessions resume from
-externalized state.
+Our benchmark runs the same six-milestone evolving project through each flow under
+a pinned model with deterministic probe scoring
+([report, revised edition](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
+The causal finding: when ONE continued conversation carried the milestones, every
+flow decayed the same way (coverage .92 → .75, with an early list-shape spec
+violation carried through five further milestones, never re-examined). When every
+milestone instead started a **fresh session resuming from disk**, ADD held every
+floor at 1.0 across all six milestones — through a breaking shape change and a
+cross-cutting refactor — with zero regressions, at ~$2.90 per milestone (a 3–5×
+cut vs ADD 1.x's $4.65–13.94 per trusted feature). Honesty note, from the same
+report: on this friendly workload a strong model under spec-kit also passed the
+restart-mode floors (and ran cheaper) — we published the retraction of our own
+earlier collapse claim when we found the meter defect behind it. What ADD uniquely
+adds is the *guarantees*: contracts that can't be silently edited, tests that
+can't be quietly weakened, security findings that can't scroll past.
 
 That's the design, in three moves:
 

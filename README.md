@@ -24,30 +24,29 @@ conversation gets long or gets lost, and the agent quietly re-breaks things it
 already got right. That decay has a name — **context rot** — and we measure it
 instead of hand-waving about it.
 
-Our benchmark runs the *same* three-milestone project (CRUD → business rules + auth
-→ a breaking-change refactor with regression bait) through each flow, scored by
-deterministic probes — no LLM judge, no vibes ([latest
-campaign](./benchmark/results/2026-07-add-2.0-remeasure.md), pinned model, same
+Our benchmark runs the *same* six-milestone project (CRUD → business rules + auth
+→ a breaking shape change → filters/pagination/recurring → a cross-cutting rooms
+refactor → correctness hardening) through each flow, scored by deterministic
+probes — no LLM judge, no vibes ([campaign report, revised
+edition](./benchmark/results/2026-07-add-2.0-remeasure.md), pinned model, same
 prompts per arm):
 
-| same 3-milestone project, same model | **ADD 2.0** | spec-kit |
+| six evolving milestones, same model | one continued conversation | fresh session per milestone, resuming from disk |
 |---|---|---|
-| Milestone 1 — greenfield | all floors **1.0** | all floors 1.0 |
-| Milestones 2–3 — the spec *evolves* | all floors **1.0**, zero regressions, zero tests weakened | coverage **.20 / .25** · broke **33–43%** of earlier milestones' oracles · weakened **6** carried tests |
-| Whole rep, raw cost | $6.61 | $3.90 |
-| **Cost per *trusted* milestone** (every floor 1.0) | **$2.20** | **$3.90** |
+| requirement coverage | **.92 → .80 → .75 → decayed** — never recovered the early loss | **1.0 flat, all six milestones**, zero regressions |
+| the WM1 deviation (list-shape spec violation) | carried through **five further milestones** — never re-examined, even while editing that exact endpoint | never introduced: each session re-derived the shape from the spec, 4 of 4 runs |
+| new-feature quality at milestone 6 | still 1.0 — *new* work stays good while old promises rot | 1.0 |
 
-Two findings that shaped ADD 2.0:
-
-1. **The first milestone tells you nothing.** Every flow we've measured — spec-kit,
-   GSD, plan-mode — aces milestone 1. The separation shows up only when earlier
-   promises must survive change: that's where coverage collapses, old oracles break,
-   and carried tests get quietly weakened.
-2. **Conversation memory is where rot lives.** When we let *one* continued agent
-   conversation carry all three milestones, quality decayed .92 → .80 → .75 — a
-   single early wrong turn was never re-examined again, in **every** flow we tried
-   it with. The only flat line in the whole experiment: fresh sessions resuming from
-   ADD's on-disk board — **1.0, three milestones straight**.
+The finding that shaped ADD 2.0: **context rot is real, measurable, and lives in
+the conversation — not in the method, and not in the model.** The same agent that
+decays inside one long conversation holds a perfect line when every milestone
+restarts from state on disk. So the deciding question for any AI dev flow is: *is
+your on-disk state good enough to restart from, every time?* ADD is built so the
+answer is structurally yes — and honesty note: on this friendly single-app
+workload a strong model with spec-kit's files also passed the restart bar; the
+report says so plainly. The gap ADD keeps is what's *guaranteed* rather than
+usual: contracts can't be silently edited, tests can't be quietly weakened,
+security findings can't scroll past.
 
 ADD's answer isn't a longer context window or a smarter summary. It's this:
 **nothing that matters lives in the chat.** The spec, the frozen contract, the red
@@ -71,22 +70,22 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 |---|---|---|
 | 🧠 **Memory** — *what is true* | the board, frozen contracts, red suites, five living specs compacting forward | `add.py status` — a brand-new session resumes mid-build, losing nothing |
 | ⚖️ **Judgment** — *how to work here* | personas propose each task's lane; gates trace outcomes; the loop reflects on the record (GEPA) | `add.py deltas` — the per-lane scoreboard: what got gated, what passed, what healed |
-| 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen test and watch the gate refuse — measured `tests_weakened: 0` vs 6–7 for the alternatives |
+| 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen test and watch the gate refuse — weakening a test to get green is structurally impossible, not just unusual |
 
 ## The pain points every coding agent faces — and ADD's receipt for each
 
 These are the failure modes users of *any* agent tool know first-hand. Each row is
-what ADD does about it, and the measured evidence from the
+what ADD does about it, with the evidence from the
 [benchmark](./benchmark/results/2026-07-add-2.0-remeasure.md) — same project, same
-model, deterministic probes:
+model, deterministic probes, retractions published when the meter itself was wrong:
 
-| Pain point you've hit | What ADD does | Measured receipt |
+| Pain point you've hit | What ADD does | Receipt |
 |---|---|---|
-| **The session degrades** — long conversations drift; compaction silently drops constraints | Nothing that matters lives in the chat; every milestone can start a fresh session from the board | One continued conversation decayed **.92 → .80 → .75**; fresh sessions on ADD's board held **1.0 flat** across the same milestones |
-| **It breaks what it built last week** — change one feature, three others quietly regress | Earlier contracts and red suites stay frozen and re-run at every gate | ADD: **0 regressions** across the evolution milestones; the alternative broke **33–43%** of its own earlier oracles |
-| **It games the tests** — the fastest path to green is deleting the assertion | Weakening a frozen test is *tampering* — the gate refuses; recovery requires a human-visible re-cross | ADD: **0 tests weakened**; the alternatives weakened **6–7** carried tests in the same campaign |
-| **A confident diff that's wrong** — it looks right, so it merges | Trust comes from pre-declared expectations passing, never from a plausible diff; you approve once, at the frozen contract | Requirement coverage **1.0 on every milestone**, scored by probes written before the build |
-| **Every session starts over** — re-reading the repo, re-explaining the goal, paying for it | One command orients from `state.json`; the skill loads only the beat you're in | **$2.20 per trusted milestone** vs $3.90 — and roughly half ADD 1.x's own cost |
+| **The session degrades** — long conversations drift; compaction silently drops constraints | Nothing that matters lives in the chat; every milestone starts a fresh session from the board | Measured: one continued conversation decayed **.92 → .75** and carried an early spec violation through **five further milestones**; fresh sessions from disk held **1.0 flat** across all six |
+| **An early wrong turn becomes permanent** — the agent keeps trusting its own past decisions over the spec | The frozen contract and red suite are re-read from disk every session — the agent's memory of itself never outranks the written spec | The locked-in deviation appeared **only** in conversation-carry mode, in every flow tried; never once in a restart-from-disk run |
+| **It games the tests** — the fastest path to green is deleting the assertion | Weakening a frozen test is *tampering* — the gate refuses; recovery requires a human-visible re-cross | A structural guarantee, not a habit: the tamper tripwire fires on any frozen-suite edit during build (WV2 measured no arm gaming on friendly workloads — this floor exists for the day that stops being true) |
+| **A confident diff that's wrong** — it looks right, so it merges | Trust comes from pre-declared expectations passing, never from a plausible diff; you approve once, at the frozen contract | Coverage **1.0 on all six milestones** including a cross-cutting refactor, scored by probes the agent never sees |
+| **Every session starts over** — re-reading the repo, re-explaining the goal, paying for it | One command orients from `state.json`; the skill loads only the beat you're in | **~$2.90 per milestone** at full discipline — a **3–5× cut vs ADD 1.x** ($4.65–13.94), competitive with the lightest structured flows |
 | **Security findings scroll past** in auto-accept mode | A security finding is a `HARD-STOP` — the one gate no flag, persona, or lane can soften | A structural floor in every mode, including the fully-autonomous lanes |
 
 ## Why This Exists
@@ -225,9 +224,12 @@ records):
 - [ADD 2.0 remeasure + context-rot campaign](./benchmark/results/2026-07-add-2.0-remeasure.md) — add vs spec-kit, fresh vs one-continued-conversation
 - [Earlier campaigns](./benchmark/results/) — hostile-change resistance, ceremony-cost anatomy, multi-arm sweeps
 
-Honest fine print: cells are single-rep (direction, not statistical proof), and the
-raw whole-rep dollar figure favors spec-kit — it's the *per-trusted-milestone* cost
-where ADD wins, because trust is the thing you actually ship.
+Honest fine print: cells are single-rep (direction, not statistical proof); on the
+friendly single-app workload a strong model passed the floors under spec-kit too,
+and spec-kit's rep ran cheaper — the report's revised edition retracts our own
+earlier collapse claim after we found the meter defect behind it. ADD's case rests
+on the context-rot result, the structural guarantees, and the 3–5× cost cut vs its
+own 1.x — not on a rival's failure.
 
 ## 📚 Learn More
 

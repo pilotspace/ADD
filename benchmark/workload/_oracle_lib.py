@@ -74,11 +74,29 @@ def running_app(workspace: str):
     never opens the port — in that case yields a base_url that simply will
     not answer, so callers see ordinary connection failures (a clean
     oracle-red on an empty workspace), not a harness crash.
+
+    Tempdir isolation (hermetic-scoring amendment, 2026-07-18): every boot
+    gets a FRESH private TMPDIR/TEMP/TMP. Live defect: a spec-kit-arm app
+    stored its bookings at `tempfile.gettempdir()/app_bookings.json` —
+    outside the workspace, invisible to isolated_workspace's root-store
+    reset — so one GLOBAL temp file accumulated state across every probe,
+    suite, run, and campaign that ever booted that app (fresh spec-kit wm4
+    scored cov .50 in-campaign and .17 on a same-workspace rescore purely
+    from that drift). A per-boot tempdir makes any tempdir-persisting app
+    boot empty, exactly like a workspace-rooted store.
     """
     port = _free_port()
-    env = {**os.environ, "PORT": str(port)}
+    private_tmp = tempfile.mkdtemp(prefix="bench-app-tmp-")
+    env = {**os.environ, "PORT": str(port),
+           "TMPDIR": private_tmp, "TEMP": private_tmp, "TMP": private_tmp}
+    # -E -s -S = the entry contract's BARE runtime: ignore PYTHONPATH, user
+    # site, and site-packages. Live defect 2026-07-18: a campaign agent
+    # `pip install -e`'d its app into the GLOBAL site-packages, so an
+    # empty-workspace boot silently imported that foreign app and probes
+    # scored someone else's build. cwd (the workspace) stays importable —
+    # that's the only place an app may legitimately come from.
     proc = subprocess.Popen(
-        [sys.executable, "-m", "app"],
+        [sys.executable, "-E", "-s", "-S", "-m", "app"],
         cwd=workspace,
         env=env,
         stdout=subprocess.DEVNULL,
@@ -89,7 +107,14 @@ def running_app(workspace: str):
         deadline = time.monotonic() + STARTUP_TIMEOUT_S
         while time.monotonic() < deadline:
             if proc.poll() is not None:
-                break  # process died — never came up, let callers fail naturally
+                # process died — never came up. Yield a guaranteed-dead URL
+                # (port 0 is unconnectable) instead of the freed port: a
+                # FOREIGN server (live 2026-07-18: a concurrent campaign's
+                # app) can grab the port and answer probes meant for a dead
+                # app, turning a clean red into cross-talk with someone
+                # else's booking store.
+                base_url = "http://127.0.0.1:0"
+                break
             try:
                 urllib.request.urlopen(f"{base_url}/bookings", timeout=0.5)
                 break
@@ -103,6 +128,8 @@ def running_app(workspace: str):
             proc.terminate()
             with contextlib.suppress(Exception):
                 proc.wait(timeout=3)
+        with contextlib.suppress(Exception):
+            shutil.rmtree(private_tmp)
 
 
 def http_call(method: str, url: str, payload: dict | None = None, headers: dict | None = None):
