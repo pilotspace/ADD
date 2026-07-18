@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "5486b8c230dcd060dac678800c12afc3"  # re-aimed @ book-stops-shipping (ADD 2.0 M6b: chapter pointers deep-link BOOK_URL; the book never installs). prior: 07750e20… @ migrate-verb
+ENGINE_MD5 = "abac501b7c59227e9f0794a106a274fb"  # re-aimed @ route-scoreboard (ADD 2.0 M7 persona-gepa-loop: deltas rolls route-outcomes.jsonl up per lane + GEPA nudge). prior: 5486b8c2… @ book-stops-shipping
 ENGINE_PKG_MD5 = "557f500fbd493fa5087848d8b881e3c0"  # re-aimed @ book-stops-shipping (ADD 2.0 M6b: constants gains BOOK_URL/book_url; guidelines block re-aims the Book pointer). prior: 0c8b1aba… @ migrate-verb

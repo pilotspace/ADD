@@ -51,6 +51,20 @@ Every task done but not the goal? `add.py status` shows
    Present the close via `gate-udd.md` — open with the ARC (goal · done · plan),
    render as a guided choice — **before `milestone-done`/`archive-milestone` run, not after.**
 
+## Route reflection (GEPA) — the routes learn at close
+
+`add.py deltas` ends with the **route scoreboard**: per-lane evidence (gated · outcome mix ·
+heals · median age) rolled up from `.add/traces/route-outcomes.jsonl` — one line the engine
+appends at every recorded gate. At close, reflect on it GEPA-style under the PM persona:
+
+- **keep** a route rule whose lane cut heals/age with no gate regressions;
+- **prune** a rule no trace ever took (it never fired);
+- **propose** each change as `add.py delta-append add "<route-rule delta>"`, evidence cited.
+
+The **human folds** ratified rules into `.add/personas/<slug>.md` — the only mutation path
+(never-clobber). Personas never touch frozen contracts, tests, the SKILL core, or the
+security HARD-STOP.
+
 ## Reopen is the verb; this loop is the trigger
 
 When a deepened verify finds a criterion unmet on a task already marked done,

@@ -5906,6 +5906,67 @@ _REPORTED_LINE_RE = re.compile(r"(?m)^Reported:[ \t]*(.*)$")
 
 
 
+_OUTCOME_ORDER = ("PASS", "RISK-ACCEPTED", "HARD-STOP")
+
+
+def _route_scoreboard(root: Path) -> dict:
+    """persona-gepa-loop (ADD 2.0 M7): roll `.add/traces/route-outcomes.jsonl` up per
+    LANE — gated count · outcome mix · heal total · median age. The READ side of the
+    M1 telemetry stream: evidence for the PM persona's GEPA reflection. Read-only and
+    degrade-safe (a malformed line is skipped, an unreadable file is an empty board);
+    {} when there are no traces."""
+    p = root / "traces" / "route-outcomes.jsonl"
+    try:
+        text = p.read_text(encoding="utf-8") if p.exists() else ""
+    except OSError:
+        return {}
+    lanes: dict[str, dict] = {}
+    for ln in text.splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            rec = json.loads(ln)
+        except ValueError:
+            continue                                  # telemetry, never a crash
+        if not isinstance(rec, dict):
+            continue
+        row = lanes.setdefault(rec.get("lane") or "unrouted",
+                               {"gated": 0, "outcomes": {}, "heals": 0, "_ages": []})
+        row["gated"] += 1
+        oc = str(rec.get("outcome") or "?")
+        row["outcomes"][oc] = row["outcomes"].get(oc, 0) + 1
+        try:
+            row["heals"] += int(rec.get("heals") or 0)
+        except (TypeError, ValueError):
+            pass
+        age = rec.get("age_hours")
+        if isinstance(age, (int, float)):
+            row["_ages"].append(float(age))
+    for row in lanes.values():
+        ages = sorted(row.pop("_ages"))
+        n = len(ages)
+        row["median_age_hours"] = (None if not n else round(
+            ages[n // 2] if n % 2 else (ages[n // 2 - 1] + ages[n // 2]) / 2, 1))
+    return lanes
+
+
+def _print_route_scoreboard(board: dict) -> None:
+    total = sum(r["gated"] for r in board.values())
+    print(f"route scoreboard ({total} gated · .add/traces/route-outcomes.jsonl):")
+    width = max(len(k) for k in board)
+    for lane in sorted(board, key=lambda k: -board[k]["gated"]):
+        r = board[lane]
+        mix = " · ".join(f"{oc} {r['outcomes'][oc]}"
+                         for oc in (*_OUTCOME_ORDER, *sorted(set(r["outcomes"]) - set(_OUTCOME_ORDER)))
+                         if oc in r["outcomes"])
+        med = f" · median {r['median_age_hours']}h" if r["median_age_hours"] is not None else ""
+        print(f"  {lane:<{width}} : {r['gated']} gated · {mix} · heals {r['heals']}{med}")
+    print("  reflect (GEPA): keep routes that cut heals/age without gate regressions, prune")
+    print('  rules that never fired — propose: add.py delta-append add "<route-rule>";')
+    print("  a human folds ratified rules into .add/personas/ (the engine never edits a persona)")
+
+
 def cmd_deltas(args: argparse.Namespace) -> None:
     """Read-only: report open competency lessons AND open SPEC deltas, SEPARATELY.
 
@@ -5919,6 +5980,7 @@ def cmd_deltas(args: argparse.Namespace) -> None:
     by_comp = _collect_open_deltas(root)
     total = sum(len(v) for v in by_comp.values())
     spec = _collect_open_spec_deltas(root)
+    board = _route_scoreboard(root)          # persona-gepa-loop: the traces' read side
 
     if getattr(args, "json", False):
         print(json.dumps({
@@ -5926,6 +5988,7 @@ def cmd_deltas(args: argparse.Namespace) -> None:
             "by_competency": {c: v for c, v in by_comp.items() if v},
             "spec": spec,
             "spec_total": len(spec),
+            "routes": board,
         }, ensure_ascii=False))
         return
 
@@ -5947,6 +6010,8 @@ def cmd_deltas(args: argparse.Namespace) -> None:
         printed = True
     if not printed:
         print("no open deltas.")
+    if board:                                # silent at zero — telemetry, never noise
+        _print_route_scoreboard(board)
 
 
 def cmd_delta_append(args: argparse.Namespace) -> None:
