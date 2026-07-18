@@ -13,7 +13,7 @@ from typing import Sequence
 PINNED_MODEL = "claude-sonnet-5"
 
 
-def default_agent_cmd(prompt: str) -> list[str]:
+def default_agent_cmd(prompt: str, continue_session: bool = False) -> list[str]:
     """The real `claude -p` invocation, pinned by the 2026-07-07 live spike:
     `--output-format stream-json` gives the per-event transcript this runner
     parses for tokens/cost/time_to_first_edit.
@@ -37,19 +37,30 @@ def default_agent_cmd(prompt: str) -> list[str]:
     same add WM1 running on opus-4-8 (single, $5.62) vs fable-5 (multi-rep,
     $8.71-11.02), same work at ~2x cost, invalidating every cross-run cost/turn
     comparison. Sonnet+medium is the fixed, model-comparable meter for all arms."""
-    return [
+    argv = [
         "claude", "-p", prompt,
         "--model", PINNED_MODEL, "--effort", "medium",
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
         "--dangerously-skip-permissions",
     ]
+    if continue_session:
+        # session-mode (context-rot-cross-milestones): continue the most recent
+        # conversation in this workspace instead of opening a fresh context —
+        # the accumulated cross-milestone context is the thing being measured.
+        argv.append("--continue")
+    return argv
 
 
-def build_argv(prompt: str, agent_cmd: Sequence[str] | None) -> list[str]:
+def build_argv(prompt: str, agent_cmd: Sequence[str] | None,
+               continue_session: bool = False) -> list[str]:
     """Resolve the actual argv for one attempt: an injected fake-agent argv
     gets the prompt appended as its final positional arg; absent an
-    injection, fall back to the real `claude -p` argv."""
+    injection, fall back to the real `claude -p` argv. `continue_session`
+    (session-mode wm>1) adds `--continue` — before the prompt for an injected
+    fake so a spy can observe it, via default_agent_cmd for the real CLI."""
     if agent_cmd:
+        if continue_session:
+            return [*agent_cmd, "--continue", prompt]
         return [*agent_cmd, prompt]
-    return default_agent_cmd(prompt)
+    return default_agent_cmd(prompt, continue_session=continue_session)

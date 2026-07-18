@@ -32,6 +32,27 @@ finished WM(k−1) app, so later milestones work against real accumulated code:
   WM1-frozen shape to test how each method handles a controlled breaking
   change.
 
+## Session modes — fresh vs continue (context-rot-cross-milestones)
+
+Two ways to drive the longitudinal workload, selected with `--session-mode`:
+
+- **fresh** (default) — the classic shape: each WM starts a NEW agent
+  conversation in a NEW per-WM workspace seeded by copying the prior WM's
+  app. Context lives only in the method's own artifacts (state files, specs) —
+  this measures how well a method *externalizes* context.
+- **continue** — the context-rot arm: ONE persistent project workspace
+  (`runs/<arm>/session/workspace`, never re-copied; setup runs at WM1 only)
+  and ONE continuing conversation (`--continue` for WM>1), so the context
+  accumulated across milestones is exactly what gets measured. Per-WM records
+  still land at `runs/<arm>/wm<k>/record.json` (stamped
+  `artifacts.session_mode`), and scoring stays hermetic (`isolated_workspace`
+  copies before probing — the live session workspace is never mutated).
+
+Run the two modes into DISTINCT `--runs-root` dirs (their per-WM record paths
+collide otherwise). Context rot = the continue-mode deltas against the
+fresh-mode control: per-WM cost/turn growth and the `context_rot_slope`
+trajectory as the same conversation carries WM1 → WM3.
+
 ## Metrics
 
 Five frozen metrics, scored per WM from the run record, the workspace, and an

@@ -264,13 +264,29 @@ def execute_wm(
     retries: int = 1,
     runs_root: pathlib.Path | None = None,
     family: str = "wm",
+    session_mode: str = "fresh",
 ) -> RunRecord:
-    """Drive one arm x WM end-to-end and write exactly one RunRecord."""
+    """Drive one arm x WM end-to-end and write exactly one RunRecord.
+
+    session_mode (context-rot-cross-milestones): "fresh" (default) is the
+    classic per-WM shape — new workspace seeded by copy, new conversation.
+    "continue" is the context-rot arm: ONE persistent project workspace
+    (runs/<arm>/session/workspace, never copy-seeded), setup at WM1 only,
+    and the SAME conversation continued (`--continue`) for wm>1 — the
+    accumulated context across milestones is what gets measured. Per-WM
+    records still land at runs/<arm>/<family><wm>/record.json."""
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
     wm_dir = root / arm.name / f"{family}{wm}"
-    workspace_dir = wm_dir / "workspace"
-    workspace_dir.mkdir(parents=True, exist_ok=True)
-    seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
+    continuing = session_mode == "continue"
+    if continuing:
+        workspace_dir = root / arm.name / "session" / "workspace"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
+        seed_note = "session-mode: persistent workspace (no copy-seed)"
+        wm_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        workspace_dir = wm_dir / "workspace"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
+        seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
 
@@ -280,7 +296,10 @@ def execute_wm(
     if seed_note:
         attempts_log.append(seed_note)
 
-    setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
+    if continuing and wm > 1:
+        setup_ok, setup_log = True, ["setup skipped: session-mode continues the WM1 board"]
+    else:
+        setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
     attempts_log.extend(setup_log)
     if not setup_ok:
         record = validate(
@@ -310,7 +329,8 @@ def execute_wm(
 
     for attempt_idx in range(max_attempts):
         attempt_count = attempt_idx + 1
-        argv = build_argv(prompt_text, agent_cmd)
+        argv = build_argv(prompt_text, agent_cmd,
+                          continue_session=continuing and wm > 1)
         outcome, lines, first_edit_elapsed = _invoke_once(
             argv, cwd=workspace_dir, timeout_s=timeout_s, log_path=transcript_path
         )
@@ -379,6 +399,8 @@ def execute_wm(
         "oracle_report": str(oracle_report_path),
         "attempts": "; ".join(attempts_log),
     }
+    if continuing:
+        artifacts["session_mode"] = "continue"
     if unparseable:
         artifacts["token_source"] = "unparseable"
     if arm.name == "add":
