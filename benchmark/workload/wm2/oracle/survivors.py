@@ -30,24 +30,30 @@ def _workspace() -> str:
     return ws
 
 
-def _create(base: str, token: str, title: str, start: str, end: str, minutes: int):
-    """Shape-adaptive create: try the WM3+ end_time shape; fall back to the
-    WM2 duration_minutes shape ONLY on a 400 shape rejection. Any other
-    status — including business-rule answers like 401/403/409 — is returned
-    untouched (meter defect #5: falling back on a correct 409 turned it into
-    the fallback's 400 and scored a false regression on every arm)."""
-    status, body = http_call(
-        "POST", f"{base}/bookings",
+def _create(base: str, token: str, title: str, start: str, end: str, minutes: int,
+            room: str = "sv2-room"):
+    """Shape-adaptive create: WM3+ end_time shape -> WM2 duration_minutes
+    shape -> WM5+ end_time+room_id shape, advancing ONLY on a 400 shape
+    rejection. Any other status — including business-rule answers like
+    401/403/409 — is returned untouched (meter defect #5: falling back on a
+    correct 409 turned it into the fallback's 400 and scored a false
+    regression on every arm; the room step is the same lesson at WM5, where
+    a missing room_id 400s BOTH earlier shapes — live, fresh add wm5 scored
+    reg 3/13 on a correct app, 2026-07-18). Probes that create twice pass
+    the SAME room so overlap expectations hold per-room too."""
+    attempts = (
         {"title": title, "start_time": start, "end_time": end},
-        headers=_auth(token),
-    )
-    if status != 400:
-        return status, body
-    return http_call(
-        "POST", f"{base}/bookings",
         {"title": title, "start_time": start, "duration_minutes": minutes},
-        headers=_auth(token),
+        {"title": title, "start_time": start, "end_time": end, "room_id": room},
     )
+    status, body = 400, {}
+    for payload in attempts:
+        status, body = http_call(
+            "POST", f"{base}/bookings", payload, headers=_auth(token),
+        )
+        if status != 400:
+            return status, body
+    return status, body
 
 
 def test_unauthenticated_request_rejected():

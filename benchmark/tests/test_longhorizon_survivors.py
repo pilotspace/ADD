@@ -49,6 +49,38 @@ def test_longhorizon_survivors_importable_and_sized():
         assert count >= floor, f"wm{wm} survivors expose {count} probes, need >= {floor}"
 
 
+def test_wm2_create_is_room_adaptive():
+    """At WM5+ every create needs room_id; wm2's shape chain (end_time ->
+    duration_minutes) dead-ends at 400/400 and false-fails 3 of its 4 probes
+    (live: fresh add wm5 scored reg 3/13 on a correct app, 2026-07-18). The
+    chain must end with an end_time+room attempt; business statuses still
+    return untouched at every step."""
+    mod = _load(2)
+
+    calls: list = []
+
+    def fake_room_only(method, url, payload=None, headers=None):
+        calls.append(payload)
+        return (201, {"id": "1"}) if "room_id" in payload else (400, {"error": "room_id required"})
+
+    mod.http_call = fake_room_only
+    status, _ = mod._create("http://x", "test-token-alice", "t",
+                            "2028-03-06T09:00:00Z", "2028-03-06T09:30:00Z", 30)
+    assert status == 201, "the chain must reach an end_time+room attempt"
+    assert "room_id" in calls[-1]
+
+    calls.clear()
+
+    def fake_409(method, url, payload=None, headers=None):
+        calls.append(payload)
+        return 409, {"error": "overlap"}
+
+    mod.http_call = fake_409
+    status, _ = mod._create("http://x", "test-token-alice", "t",
+                            "2028-03-06T09:00:00Z", "2028-03-06T09:30:00Z", 30)
+    assert status == 409 and len(calls) == 1, "409 still returns untouched, no retries"
+
+
 def test_wm3_room_fallback_only_on_shape_rejection():
     """The room-adaptive create may retry ONLY on 400; a business-rule status
     (401/403/409) must be returned untouched (meter defect #5 recurrence guard)."""
