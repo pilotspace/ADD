@@ -12,8 +12,11 @@ extends: strategy-intake, self-improving-loop, dynamic-personas
 > written just-in-time. Update this doc whenever a task reveals a milestone gap.
 
 ## Scope
-In:  <what this milestone delivers>
-Out: <explicitly deferred — the anti-scope-creep list>
+In:  the READ side of the M1 route-trace stream (`deltas` route scoreboard, per-lane) + the
+     GEPA reflection beat in loop.md (keep/prune/propose via delta-append; human folds into
+     the persona file).
+Out: per-PERSONA rollup (no board has trace volume yet — build on evidence) · automatic
+     rule mutation of any kind (the human fold IS the design) · milestone reactivation.
 
 > UI/UX in scope? Name it precisely, not "make it nice" — information architecture ·
 > interaction pattern · visual hierarchy · design tokens · component states ·
@@ -24,8 +27,9 @@ Out: <explicitly deferred — the anti-scope-creep list>
 > feature also triggers DESIGN.md via the `add` skill's design.md.
 
 ## Ground   (shared real-code context — gathered ONCE; every task's specify projects from this)
-Touches (shared files · symbols): <the code every task in this milestone lands in — gathered once, task-delta>
-Anchors: <the shared symbols tasks may cite — the floor each task's contract builds on>
+Touches (shared files · symbols): add.py `_append_route_trace` (writer, M1) · `cmd_deltas` ·
+  skill/add/loop.md · .add/traces/route-outcomes.jsonl
+Anchors: `_route_scoreboard` / `_print_route_scoreboard` (add.py, before cmd_deltas)
 Honors (conventions): <PROJECT.md · CONVENTIONS.md · SEAMS.md rules every task honors>
 Issues/Risks (shared): <traps in the shared code that feed each task's §1 expectations>
 
@@ -38,12 +42,18 @@ Issues/Risks (shared): <traps in the shared code that feed each task's §1 expec
 ## Shared / risky contracts (freeze these first)
 - <contract name> -> owning task <slug>
 
-## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] <slug>   depends-on: none     — <one line>
-- [ ] <slug>   depends-on: <slug>   — <one line>
+## Tasks (breadth-first decomposition; detail lives in each PLAN.md)
+- [x] route-scoreboard   depends-on: none — deltas rolls route-outcomes.jsonl up per lane +
+      GEPA nudge; loop.md gains the reflection beat (`ea3b5bf2`, corpus 2451 green)
+- [ ] persona-rollup     depends-on: route-scoreboard — per-persona rollup once real traces
+      accumulate (deferred: evidence-first)
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] User can <observable behavior — the SEEN outcome only, NOT the task's plan line>        (← <slug>)
+- [ ] User can read a per-lane route scoreboard from `add.py deltas` on any board with
+      recorded gates, and it is silent on a board with none        (← route-scoreboard)
+- [ ] User can follow loop.md's GEPA beat: reflect on the scoreboard, propose a route-rule
+      delta via `add.py delta-append`, and fold it into `.add/personas/` by hand — with the
+      engine never editing a persona        (← route-scoreboard)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
