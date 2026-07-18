@@ -1,18 +1,20 @@
-"""Behavioral proof of session-mode (context-rot-cross-milestones).
+"""Behavioral proof of session-mode (persistent-workspace, fresh conversations).
 
 The fresh mode (default, unchanged) starts a NEW agent conversation per WM in
-a NEW per-WM workspace seeded by copy — it measures the method with context
-externalized. `session_mode="continue"` is the context-rot arm: ONE persistent
-project workspace (`runs/<arm>/session/workspace`, never re-copied) and ONE
-continuing conversation (`--continue` on the agent argv for wm>1), so the
-context accumulated across milestones is exactly what gets measured.
+a NEW per-WM workspace seeded by copy. `session_mode="continue"` persists the
+PROJECT, never the conversation: ONE workspace
+(`runs/<arm>/session/workspace`, never re-copied), setup at WM1 only, and a
+FRESH conversation every milestone — the on-disk board is the only carrier
+across milestones. (`--continue` was removed 2026-07-18 by user decision; the
+conversation-carried variant lives on only in the archived
+runs-session wm1–6 records and the 2026-07-add-2.0-remeasure report.)
 
 Contract:
   - continue-mode shares a single workspace across WMs; nothing is seeded by
     copy (the project persists in place);
   - setup_steps run at WM1 ONLY (a re-run would clobber the continuing board);
-  - the default `claude -p` argv gains `--continue` for wm>1 — never for wm1,
-    never in fresh mode; an injected fake agent_cmd sees the flag too;
+  - the agent argv NEVER carries `--continue` — not in any mode, not at any
+    WM; every milestone opens a fresh conversation;
   - per-WM records still land at runs/<arm>/wm<k>/record.json (report
     machinery untouched) and stamp artifacts["session_mode"];
   - fresh mode is byte-for-byte the old behavior (default).
@@ -36,7 +38,7 @@ from benchmark.arms.loader import Arm                       # noqa: E402
 from benchmark.runner.agent import build_argv, default_agent_cmd  # noqa: E402
 from benchmark.runner.core import execute_wm                # noqa: E402
 
-# a fake agent that "builds" by touching a file and emits a parseable result line
+# a fake agent that emits a parseable result line
 _FAKE_AGENT = [sys.executable, "-c",
                "import json,sys; print(json.dumps({'type':'result','total_cost_usd':0.0,"
                "'usage':{'input_tokens':1,'output_tokens':1}}))"]
@@ -52,21 +54,34 @@ def _arm(tmp_path: pathlib.Path) -> Arm:
         same_model=True, token_ceiling=200000, turn_ceiling=60)
 
 
-class TestArgvContinueFlag:
-    def test_default_argv_gains_continue(self):
-        argv = default_agent_cmd("do it", continue_session=True)
-        assert "--continue" in argv
-
-    def test_default_argv_fresh_has_no_continue(self):
+class TestArgvNeverContinues:
+    def test_default_argv_has_no_continue(self):
         assert "--continue" not in default_agent_cmd("do it")
 
-    def test_build_argv_injected_cmd_sees_flag(self):
-        argv = build_argv("do it", ["fake"], continue_session=True)
-        assert "--continue" in argv
-        assert argv[-1] == "do it", "the prompt stays the final positional arg"
-
-    def test_build_argv_default_is_unchanged(self):
+    def test_injected_cmd_prompt_is_final_arg(self):
         assert build_argv("do it", ["fake"]) == ["fake", "do it"]
+
+    def test_continue_mode_argv_is_fresh_every_wm(self, tmp_path, monkeypatch):
+        # the mode persists the WORKSPACE, never the conversation — every
+        # milestone's argv must be conversation-fresh
+        import benchmark.runner.core as core
+        seen: list[list[str]] = []
+        real = core.build_argv
+
+        def spy(prompt, agent_cmd):
+            argv = real(prompt, agent_cmd)
+            seen.append(argv)
+            return argv
+
+        monkeypatch.setattr(core, "build_argv", spy)
+        arm = _arm(tmp_path)
+        runs = tmp_path / "runs"
+        for wm in (1, 2):
+            execute_wm(arm, wm, agent_cmd=_FAKE_AGENT, timeout_s=30.0,
+                       runs_root=runs, session_mode="continue")
+        assert len(seen) == 2
+        for argv in seen:
+            assert "--continue" not in argv, "every milestone must open a fresh conversation"
 
 
 class TestContinueModeWorkspace:
@@ -99,25 +114,6 @@ class TestContinueModeWorkspace:
         rec = execute_wm(arm, 1, agent_cmd=_FAKE_AGENT, timeout_s=30.0, runs_root=runs)
         assert rec.artifacts["workspace"] == str(runs / "vanilla" / "wm1" / "workspace")
         assert "session_mode" not in rec.artifacts, "fresh mode stays byte-identical"
-
-
-class TestContinueFlagThreading:
-    def test_wm1_never_continues_wm2_does(self, tmp_path, monkeypatch):
-        import benchmark.runner.core as core
-        seen: list[tuple[int, bool]] = []
-        real = core.build_argv
-
-        def spy(prompt, agent_cmd, continue_session=False):
-            seen.append(continue_session)
-            return real(prompt, agent_cmd, continue_session=continue_session)
-
-        monkeypatch.setattr(core, "build_argv", spy)
-        arm = _arm(tmp_path)
-        runs = tmp_path / "runs"
-        for wm in (1, 2):
-            execute_wm(arm, wm, agent_cmd=_FAKE_AGENT, timeout_s=30.0,
-                       runs_root=runs, session_mode="continue")
-        assert seen == [False, True], "wm1 opens the session; wm2 continues it"
 
 
 if __name__ == "__main__":

@@ -268,13 +268,15 @@ def execute_wm(
 ) -> RunRecord:
     """Drive one arm x WM end-to-end and write exactly one RunRecord.
 
-    session_mode (context-rot-cross-milestones): "fresh" (default) is the
-    classic per-WM shape — new workspace seeded by copy, new conversation.
-    "continue" is the context-rot arm: ONE persistent project workspace
+    session_mode: "fresh" (default) is the classic per-WM shape — new
+    workspace seeded by copy, new conversation. "continue" persists the
+    PROJECT, never the conversation: ONE workspace
     (runs/<arm>/session/workspace, never copy-seeded), setup at WM1 only,
-    and the SAME conversation continued (`--continue`) for wm>1 — the
-    accumulated context across milestones is what gets measured. Per-WM
-    records still land at runs/<arm>/<family><wm>/record.json."""
+    and a FRESH conversation every milestone (`--continue` removed
+    2026-07-18 by user decision) — the on-disk board is the only carrier
+    across milestones, exactly the resume-anytime shape the methods claim
+    to support. Per-WM records still land at
+    runs/<arm>/<family><wm>/record.json."""
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
     wm_dir = root / arm.name / f"{family}{wm}"
     continuing = session_mode == "continue"
@@ -329,8 +331,7 @@ def execute_wm(
 
     for attempt_idx in range(max_attempts):
         attempt_count = attempt_idx + 1
-        argv = build_argv(prompt_text, agent_cmd,
-                          continue_session=continuing and wm > 1)
+        argv = build_argv(prompt_text, agent_cmd)
         outcome, lines, first_edit_elapsed = _invoke_once(
             argv, cwd=workspace_dir, timeout_s=timeout_s, log_path=transcript_path
         )
