@@ -52,10 +52,11 @@ def test_regression_v2_runs_survivors_only(monkeypatch):
 def test_regression_v2_missing_survivors_raises(monkeypatch):
     calls: list = []
     _patch_run(monkeypatch, "1 passed in 0.1s", 0, calls)
-    # wm5's earlier span includes wm4, which has no survivors.py yet — the
-    # meter must fail LOUD before spawning anything, never silently score
+    # wm1..wm5 all carry survivors now (long-horizon extension) — synthesize
+    # the gap via a nonexistent family: the meter must fail LOUD before
+    # spawning anything, never silently score
     with pytest.raises(BenchError, match="^regression_run_failed"):
-        score_mod.compute_regression_rate_v2(pathlib.Path("/tmp/ws"), 5)
+        score_mod.compute_regression_rate_v2(pathlib.Path("/tmp/ws"), 5, family="nosuchwm")
     assert not calls, "pytest was spawned despite a missing survivors file"
 
 
