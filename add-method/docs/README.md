@@ -10,6 +10,8 @@
 
 This is a complete guide to **AIDD (AI-Driven Development)** — a way of building software in which an AI agent writes most of the code and people do the two things AI cannot reliably do alone: decide *what* to build, and *verify* that what was built is correct.
 
+The method's center in one sentence: **the agent is the hands; ADD is the memory, judgment, and conscience — the part of the team that survives when the context window doesn't.** Everything an agent structurally cannot keep — what is true so far, what was promised, what worked here before, what must never be traded away — lives as artifacts on disk, not in a conversation. That is why a fresh session loses nothing, and why the method's quality holds across milestones while chat-carried work decays.
+
 It is written to be read once front to back, then kept open beside you as a working manual. The early chapters explain *why* the method has the shape it does; the middle chapters explain each step in detail; the later chapters explain how to operate it across a real team and product; the appendices are copy-paste reference material.
 
 A single worked example — *transferring money between a user's own accounts* — runs through the entire book so that every abstract step has a concrete form you can see.

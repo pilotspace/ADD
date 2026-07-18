@@ -15,10 +15,10 @@ argument-hint: "status | init | continue | --todo <text> | [describe new short g
 license: MIT
 metadata:
   author: add
-  version: "1.8.0"
+  version: "2.0.0"
 ---
 
-# ADD — the orchestration engine
+# ADD — memory · judgment · conscience (the agent is the hands)
 
 You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the

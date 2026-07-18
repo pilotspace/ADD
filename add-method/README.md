@@ -15,8 +15,13 @@
 > *verify* it is correct. Native on Claude Code; every other CLI coding agent
 > follows the same loop through the phase guides.
 
-ADD is the **orchestration engine** of the AIDD method. It sits on top of a
-context foundation (DDD → SDD → UDD) and runs as a red/green TDD ↔ AI-build loop.
+**The agent is the hands. ADD is the memory, judgment, and conscience — the part
+of the team that survives when the context window doesn't.** Memory: the board,
+frozen contracts, and living specs on disk (`add.py status` resumes any session
+losslessly). Judgment: personas propose each task's lane and the loop learns from
+the traced outcomes (`add.py deltas`). Conscience: evidence-scored gates, the
+tamper tripwire, the security hard-stop. It sits on top of a context foundation
+(DDD → SDD → UDD) and runs as a red/green TDD ↔ AI-build loop.
 The full reasoning — *why* every rule exists — is [the AIDD book, published
 online](https://pilotspace.github.io/ADD/). Read it once; keep it open beside you.
 
@@ -97,9 +102,9 @@ That's the design, in three moves:
 
 ## Where ADD fits vs. skill libraries (e.g. agency-agents)
 
-ADD is an **orchestration method** — the gated loop (Direction → Build → Verify)
-that decides when work is trusted. It is not a catalog of ready-made expert
-personas. Skill libraries like [agency-agents](https://github.com/msitarzewski/agency-agents), or
+ADD is the **trust layer** — the gated loop (Direction → Build → Verify)
+that decides when work is trusted, and the on-disk memory it runs on. It is not a
+catalog of ready-made expert personas. Skill libraries like [agency-agents](https://github.com/msitarzewski/agency-agents), or
 role-specific subagents (a backend expert, a security reviewer, a senior Java engineer), sit at a
 different layer: they answer **who does the work** — a domain stance, vocabulary, and craft rules
 for one kind of task. ADD answers **how you trust what gets built**, no matter who or what wrote it.

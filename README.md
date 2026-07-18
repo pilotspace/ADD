@@ -55,6 +55,40 @@ suite, the gate records — all of it is state on disk. Close the laptop, lose t
 session, swap the agent: the next session resumes with one command and loses
 nothing. Long conversations don't need surviving when they're unnecessary.
 
+## What ADD is
+
+An agent already knows how to write code. What it structurally *cannot* keep is
+everything that lives outside one context window: what's true so far, what was
+promised, what worked last time, what must never be traded away. Human teams keep
+those in senior engineers' heads — and AI has no head that survives the session.
+
+> **The agent is the hands. ADD is the memory, judgment, and conscience — the part
+> of the team that survives when the context window doesn't.**
+
+Every faculty is a file on disk and a command that shows it — never a promise:
+
+| Faculty | What it holds | See it yourself |
+|---|---|---|
+| 🧠 **Memory** — *what is true* | the board, frozen contracts, red suites, five living specs compacting forward | `add.py status` — a brand-new session resumes mid-build, losing nothing |
+| ⚖️ **Judgment** — *how to work here* | personas propose each task's lane; gates trace outcomes; the loop reflects on the record (GEPA) | `add.py deltas` — the per-lane scoreboard: what got gated, what passed, what healed |
+| 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen test and watch the gate refuse — measured `tests_weakened: 0` vs 6–7 for the alternatives |
+
+## The pain points every coding agent faces — and ADD's receipt for each
+
+These are the failure modes users of *any* agent tool know first-hand. Each row is
+what ADD does about it, and the measured evidence from the
+[benchmark](./benchmark/results/2026-07-add-2.0-remeasure.md) — same project, same
+model, deterministic probes:
+
+| Pain point you've hit | What ADD does | Measured receipt |
+|---|---|---|
+| **The session degrades** — long conversations drift; compaction silently drops constraints | Nothing that matters lives in the chat; every milestone can start a fresh session from the board | One continued conversation decayed **.92 → .80 → .75**; fresh sessions on ADD's board held **1.0 flat** across the same milestones |
+| **It breaks what it built last week** — change one feature, three others quietly regress | Earlier contracts and red suites stay frozen and re-run at every gate | ADD: **0 regressions** across the evolution milestones; the alternative broke **33–43%** of its own earlier oracles |
+| **It games the tests** — the fastest path to green is deleting the assertion | Weakening a frozen test is *tampering* — the gate refuses; recovery requires a human-visible re-cross | ADD: **0 tests weakened**; the alternatives weakened **6–7** carried tests in the same campaign |
+| **A confident diff that's wrong** — it looks right, so it merges | Trust comes from pre-declared expectations passing, never from a plausible diff; you approve once, at the frozen contract | Requirement coverage **1.0 on every milestone**, scored by probes written before the build |
+| **Every session starts over** — re-reading the repo, re-explaining the goal, paying for it | One command orients from `state.json`; the skill loads only the beat you're in | **$2.20 per trusted milestone** vs $3.90 — and roughly half ADD 1.x's own cost |
+| **Security findings scroll past** in auto-accept mode | A security finding is a `HARD-STOP` — the one gate no flag, persona, or lane can soften | A structural floor in every mode, including the fully-autonomous lanes |
+
 ## Why This Exists
 
 Every AI coding tool can write code fast now. The part that never got solved is
