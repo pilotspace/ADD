@@ -83,31 +83,14 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
 class ReleaseShapeTest(unittest.TestCase):
-    def test_versions_agree_at_1_18_0(self):
-        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
-        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
-                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
-        self.assertEqual((pkg, py), (VERSION, VERSION),
-                         "publish.yml's guard would fail this release closed")
-
-
-    def test_runtime_version_agrees(self):
-        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
-        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
-        self.assertEqual(runtime, VERSION,
-                         "add_method.__version__ must match the shipped version")
+    # NOTE: 1.18.0 is superseded by 2.0.0 — the live-version-agreement assertions
+    # migrated FORWARD into test_release_2_0_0 (release-gate pattern: exactly ONE
+    # suite pins the current version).
 
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
-
-    def test_plugin_version_matches(self):
-        plugin = json.loads(
-            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-        )["version"]
-        self.assertEqual(plugin, VERSION,
-                         "the Claude Code plugin manifest must match the shipped version")
 
 
 if __name__ == "__main__":

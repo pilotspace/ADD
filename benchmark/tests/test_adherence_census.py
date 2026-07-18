@@ -47,16 +47,16 @@ class TestAddLoopWrapper:
         assert "frozen" in low and "red" in low
         assert "proxy authority" in low  # headless runs must not stall at human gates
 
-    def test_add_loop_instructs_benchmark_skip(self):
-        """three-phase-flow proof: a cleared benchmark workload is a fully-specified
-        oneshot task, so the wrapper must tell the headless agent to engage the skip
-        lane (--oneshot) and skip the optional ceremony (scenarios · observe) — while
-        the floor (contract frozen · red suite before build) stays explicitly stated."""
+    def test_add_loop_instructs_lean_lane(self):
+        """ADD 2.0 (phase-collapse-3): a cleared benchmark workload is a fully-specified
+        oneshot task, so the wrapper engages the lean lane (--oneshot + the 3-call walk:
+        one Direction pass, freeze --cross, gate) — while the floor (contract frozen ·
+        red suite before build) stays explicitly stated."""
         out = _wrap_prompt("Build the thing.", "add-loop")
         low = out.lower()
-        # engages the skip lane + names the exact optional phases it may skip
+        # engages the lean lane + names the one-pass walk
         assert "--oneshot" in low
-        assert "scenarios" in low and "observe" in low
+        assert "--cross" in low and "3-call walk" in low
         # floor still stated in the same wrapper (never skip contract/tests)
         assert "frozen" in low and "red" in low
 
@@ -69,7 +69,7 @@ class TestAddLoopWrapper:
         low = out.lower()
         # names the ledger close-out as NOT-to-run
         assert "milestone-done" in low
-        assert "fold" in low and "archive" in low
+        assert "fold" in low and "archive" in low   # 2.0: "fold-style" names the dead ceremony
         # finish boundary is the recorded verify gate
         assert "verify gate" in low
         # existing floor still stated (unchanged)
