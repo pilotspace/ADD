@@ -49,3 +49,4 @@ add-method/CLAUDE.md
 benchmark/runs/
 benchmark/runs-session/
 benchmark/runs-persist/
+benchmark/runs-swe/
