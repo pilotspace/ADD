@@ -48,3 +48,4 @@ add-method/CLAUDE.md
 # committed. The benchmark/ scaffold itself (workload/arms/schema) IS tracked.
 benchmark/runs/
 benchmark/runs-session/
+benchmark/runs-persist/
