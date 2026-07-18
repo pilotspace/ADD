@@ -42,6 +42,25 @@ def test_survivors_exist_for_every_wm_below_wm6():
         assert "def test_" in body
 
 
+def test_all_survivors_collect_in_one_pytest_invocation():
+    """The regression runner hands EVERY earlier WM's survivors.py to ONE
+    pytest spawn — two same-named `oracle.conftest` modules raise
+    ImportPathMismatchError unless each wm{k} dir is a package (live:
+    wm4-6 shipped without __init__.py; wm6 scoring died, 2026-07-18)."""
+    import subprocess
+    import sys
+
+    files = [str(WORKLOAD / f"wm{wm}" / "oracle" / "survivors.py") for wm in (1, 2, 3, 4, 5)]
+    for wm in (1, 2, 3, 4, 5, 6):
+        assert (WORKLOAD / f"wm{wm}" / "__init__.py").exists(), \
+            f"wm{wm}/__init__.py missing — conftest module names collide in one spawn"
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "--collect-only", "-p", "no:cacheprovider", *files],
+        capture_output=True, text=True, cwd=str(REPO_ROOT),
+    )
+    assert proc.returncode == 0, f"joint collection failed:\n{proc.stdout}\n{proc.stderr}"
+
+
 def test_longhorizon_survivors_importable_and_sized():
     for wm, floor in ((3, 3), (4, 3), (5, 4)):
         mod = _load(wm)
