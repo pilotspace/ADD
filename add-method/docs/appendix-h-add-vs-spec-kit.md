@@ -78,6 +78,15 @@ tracks in [`benchmark/`](https://github.com/pilotspace/ADD/tree/main/benchmark)
 are how they become numbers. When a prediction fails, the retraction gets
 published the same way this page's first one was.
 
+**First data point on prediction 1 (published because it went against us):** a
+smoke run of three SWE-bench Lite issues under the official Docker harness
+scored bare haiku-4.5 at 3/3 resolved and haiku+ADD at 2/3 — the ADD arm's fix
+was correct on the miss, but the small model over-built and broke two adjacent
+tests, and ADD's gate never saw it because the loop bound only its OWN task
+tests as the floor, not the host repo's suite. Diagnosed gap, not destiny: in a
+foreign repo the loop must declare the existing suite as a floor. Data:
+[the SWE smoke report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-swe-smoke.md).
+
 ## The bottom line
 
 - Choose **spec-kit** for small, friendly, strong-model, human-re-read
