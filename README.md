@@ -234,6 +234,7 @@ own 1.x — not on a rival's failure.
 ## 📚 Learn More
 
 - 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
+- ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
 - ⚡ [2-minute Getting Started](./GETTING-STARTED.md)
 - 🔍 [Full hands-on walkthrough](./add-method/GETTING-STARTED.md) — one real feature, end to end
 - 📦 [Package source](./add-method/README.md) · [Changelog](./add-method/CHANGELOG.md)

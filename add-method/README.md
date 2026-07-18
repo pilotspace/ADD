@@ -286,6 +286,7 @@ More entry points:
 - 📖 [Read the book online](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
 - 🔍 [Full hands-on walkthrough](./GETTING-STARTED.md) — one real feature, end to end
 - 📊 [Benchmark results](https://github.com/pilotspace/ADD/tree/main/benchmark/results) — every trust and cost claim, measured
+- ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
 
 ## What's new in 2.0
