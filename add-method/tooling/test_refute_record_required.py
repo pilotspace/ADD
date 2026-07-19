@@ -113,12 +113,12 @@ class TemplateAndWritebackTest(_Harness):
         body = p.read_text(encoding="utf-8")
         self.assertIn(REFUTE_HEADER, body)
         self.assertRegex(body, r"Verdict:\s*<[^>\n]+>", "ships an unfilled placeholder")
-        i_exp = body.find("### Build expectations")
+        i_chk = body.find("- [ ] all tests pass")
         i_ref = body.find(REFUTE_HEADER)
         i_gate = body.find("### GATE RECORD")
-        self.assertTrue(-1 < i_exp < i_ref < i_gate,
-                        "refute block sits AFTER Build expectations and BEFORE GATE RECORD "
-                        "(atomic-node: Deep checks left the template)")
+        self.assertTrue(-1 < i_chk < i_ref < i_gate,
+                        "refute block sits AFTER the §6 checklist and BEFORE GATE RECORD "
+                        "(atomic-node: Deep checks + Build expectations left the template)")
 
     def test_writebacks_inert_to_new_block(self):            # scenario 6
         self._verify_task("t")

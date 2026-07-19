@@ -146,23 +146,19 @@ class FreezeBeforeBuildGateTest(unittest.TestCase):
         self.assertIn("contract_not_frozen", err)
         self.assertEqual(self._task("loose").get("phase"), "direction")
 
-    # ── scenario 5: freeze precedes build-expectations (DRAFT §3 + empty §6) ──────────────
-    def test_freeze_precedes_build_expectations(self):
-        self._optedin_task_at_direction()          # DRAFT §3 AND placeholder §6
+    # ── scenario 5: the freeze gate fires at direction; the build-expectations gate is
+    #    RETIRED with the template block (atomic-node) — a frozen opted-in task crosses clean ─
+    def test_freeze_gate_fires_then_frozen_crosses(self):
+        self._optedin_task_at_direction()          # DRAFT §3
         code, err = self._die_stderr(["advance", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
         self.assertNotIn("build_expectations_unfilled", err,
-                         "the freeze gate fires FIRST — build-expectations is never reached")
-
-    # ── precedence proof in reverse: frozen §3 + empty §6 -> build-expectations now fires ─
-    def test_frozen_then_build_expectations_gate_takes_over(self):
-        self._optedin_task_at_direction()
-        self._freeze()                     # §3 frozen, but §6 left as placeholder
-        code, err = self._die_stderr(["advance", "t"])   # direction -> build (the ONE crossing)
-        self.assertEqual(code, 1)
-        self.assertIn("build_expectations_unfilled", err,
-                      "once §3 is frozen the NEXT gate (build-expectations) takes over")
+                         "build_expectations_unfilled is retired — it must never fire")
+        self._freeze()                     # §3 frozen -> the crossing is clean
+        self._quiet(["advance", "t"])
+        self.assertEqual(self._task("t").get("phase"), "build",
+                         "a frozen task crosses with no expectations gate in the way")
 
 
 if __name__ == "__main__":

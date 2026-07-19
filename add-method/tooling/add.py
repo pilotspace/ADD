@@ -1266,7 +1266,7 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
 
     Extracted VERBATIM from cmd_advance's `nxt == "build"` block so BOTH `advance` and the
     `phase build` admin override run the identical gate stack — the freeze gate, the
-    build-expectations gate, the unflagged-freeze check + flag stamp, the tamper tripwire, and
+    unflagged-freeze check + flag stamp, the tamper tripwire, and
     the §5 scope snapshot. validate-then-write: every `_die` precedes the first state mutation,
     so a refused entry leaves the task byte-unchanged. The heal loop sets phase=build DIRECTLY
     and never routes here, so it stays exempt.
@@ -1282,7 +1282,7 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
     # tests->build on a DRAFT §3 — the method's decision point was engine-enforced for only a
     # subset. It now fires for EVERY task. The ONLY bypass is the RECORDED `--skip-freeze` escape:
     # it stamps an auditable `freeze_skipped` marker (never silent) and never auto-freezes §3
-    # (Status stays DRAFT). Still PRECEDES build-expectations: freeze §3 before pre-declaring §6.
+    # (Status stays DRAFT).
     if not _contract_frozen(raw3):
         # a freeze_skipped recorded at the plan->tests gate carries through here (a single
         # --skip-freeze is enough for the whole plan->tests->build run); a still-DRAFT §3 with
@@ -1301,13 +1301,6 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
                 "at": _now(),
                 "from_phase": state["tasks"][slug].get("phase", "direction"),
             }
-    # build-expectations gate (flow-enforcement): an opted-in task may not enter build until
-    # its §6 `### Build expectations` are pre-declared — so verify checks the build is RIGHT,
-    # not just green. Same opt-in switch as the contract-fill gate, one level out.
-    if _optin:
-        if _section_unfilled(_raw_phase_bodies(root, slug).get(6, ""), "### Build expectations"):
-            _die("build_expectations_unfilled: fill the §6 '### Build expectations' block "
-                 f"of {slug}'s PLAN.md before crossing into build")
     if _contract_frozen(raw3):
         if not _flag_well_formed(raw3):
             _die("unflagged_freeze: a frozen §3 must surface a well-formed "
@@ -1400,7 +1393,7 @@ def cmd_phase(args: argparse.Namespace) -> None:
         _die(f"phase must be one of: {', '.join(PHASES)}")
     # phase-build-guard (F4): the admin override is NOT a backdoor around the direction->build
     # gate stack — setting a task to build runs the SAME _build_entry guards `advance` runs
-    # (freeze gate · build-expectations · flag check · cross-component hold · tamper tripwire ·
+    # (freeze gate · flag check · cross-component hold · tamper tripwire ·
     # scope snapshot), so verify's _tamper_guard is armed and a freeze-gated DRAFT §3 is refused.
     # validate-then-write: a refusal raises BEFORE the phase is set, so nothing moves. The heal
     # loop sets phase=build directly (never via cmd_phase) and so stays exempt.

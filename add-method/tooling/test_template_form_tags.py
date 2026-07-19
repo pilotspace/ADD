@@ -336,23 +336,14 @@ class BuildExpectationsBlock(unittest.TestCase):
         tmpl = self.TASK_TMPL[0].read_text(encoding="utf-8")
         return tmpl.split("## 6 · VERIFY")[1].split("## 7 · OBSERVE")[0]
 
-    def test_build_expectations_block_present_in_section6(self):
+    def test_section6_verdict_surface_survives_block_retirements(self):
+        # atomic-node: Deep checks AND Build expectations left the template; the verdict
+        # surface (checklist · refute-read · GATE RECORD) is what §6 persists.
         sec6 = self._section6()
-        self.assertIn("### Build expectations", sec6,
-                      "§6 must carry a '### Build expectations' block")
-        # the surviving §6 parts (atomic-node: Deep checks left the template)
+        self.assertNotIn("### Build expectations", sec6,
+                         "the Build-expectations block is retired (folded into §3 Target)")
         self.assertIn("### GATE RECORD", sec6, "GATE RECORD retained")
         self.assertIn("- [ ] all tests pass", sec6, "the §6 checklist retained")
-
-    def test_block_cue_is_observable_and_derived(self):
-        sec6 = self._section6()
-        block = sec6.split("### Build expectations")[1].split("### ")[0].lower()
-        self.assertIn("confirmed by", block,
-                      "each expectation row carries a 'confirmed by'")
-        self.assertIn("before build", block,
-                      "the block is filled before build")
-        self.assertIn("observable outcome", block,
-                      "the cue asks for OBSERVABLE outcomes, not test names")
 
     def test_engine_seams_untouched_by_the_block(self):
         # the amended template still passes every parsed-seam guard (no parsed_seam_touched).
@@ -360,14 +351,11 @@ class BuildExpectationsBlock(unittest.TestCase):
         self.assertEqual([], form_tag_offenses(tmpl),
                          "the new block must leave the amended template offense-free")
 
-    def test_verify_guide_cues_fill_and_confirm(self):
+    def test_verify_guide_dropped_the_block(self):
+        # atomic-node: the block retired — the guide must no longer cue a §6 fill for it
         guide = self.VERIFY_GUIDE[0].read_text(encoding="utf-8").lower()
-        self.assertIn("build expectations", guide,
-                      "6-verify.md must reference the build-expectations block")
-        self.assertTrue("before build" in guide or "fill" in guide,
-                        "the guide cues filling the expectations before build")
-        self.assertIn("confirm", guide,
-                      "the guide cues confirming each expectation at the gate")
+        self.assertNotIn("build expectations", guide,
+                         "verify.md must not reference the retired build-expectations block")
 
 
 if __name__ == "__main__":

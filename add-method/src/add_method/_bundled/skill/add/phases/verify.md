@@ -9,18 +9,14 @@ sufficient. Fill **§6** in PLAN.md including the GATE RECORD.
 > **security is always a HARD-STOP and is never auto-passed**. Under `conservative`, or whenever
 > residue is found, this phase is **human-led** (auto-PASS conditions: `run.md`).
 
-## Before you build — declare the build expectations
-
-Fill the §6 **Build expectations** block BEFORE Build: OBSERVABLE outcomes derived from §2 + §3. At this gate, confirm each against real evidence (the `confirmed by` column) — one with no evidence isn't yet verified.
-
 ## Part one — confirm the evidence
 
 - [ ] All tests pass.
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during build.
-- [ ] Every §6 Build expectation is confirmed by real evidence (not just a green test).
+- [ ] The §3 Target (measurable) is hit — including any declared outcome tests can't show, confirmed by real evidence.
 - [ ] §1 rules trace to §2/§4 — an untraced rule is a coverage gap (`add.py check` warns on it).
-- [ ] every §3-cited symbol still resolves in the CURRENT tree, not just Ground SHA (§6 Live-verify evidence catches a stale/moved anchor here, not later).
+- [ ] every §3-cited symbol still resolves in the CURRENT tree.
 
 If any is false, stop and return to Build.
 

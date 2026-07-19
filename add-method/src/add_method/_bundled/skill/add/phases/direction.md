@@ -243,7 +243,7 @@ machine-checkable assertion**, not only xUnit code — a metric threshold (ML/da
 query, a plan-diff (infra), a rendered-screen diff (UI). Produce: one executable test per §2
 scenario asserting **behavior, not internals** · contract-conformance tests (shapes + error
 responses) · side-effect assertions on rejection paths (`assert balance unchanged`) · a recorded
-coverage target · §6 **Build expectations** filled now, BEFORE build.
+coverage target.
 
 ## Declaring where tests live
 

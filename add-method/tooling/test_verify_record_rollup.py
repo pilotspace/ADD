@@ -127,15 +127,5 @@ class _Harness(unittest.TestCase):
     def _rollup_line(self, out):
         m = re.search(rf"{ROLLUP}[^\n]*", out)
         return m.group(0) if m else None
-class GuideDisclosureTest(unittest.TestCase):
-    def test_tests_guide_declares_expectations(self):           # scenario 11
-        for p in (SKILL_TESTS_MD, DOGFOOD_TESTS_MD):
-            text = p.read_text(encoding="utf-8")
-            self.assertIn("Build expectations", text,
-                          f"{p} must tell the tests phase to pre-declare §6 Build expectations")
-            self.assertIn("before", text.split("Build expectations", 1)[1][:200].lower(),
-                          f"{p} must say the block is filled BEFORE build")
-
-
 if __name__ == "__main__":
     unittest.main()

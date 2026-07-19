@@ -50,7 +50,6 @@ ENGINE_ANCHORS = (
     "## 5 · BUILD",
     "Strategy actually used:",           # ADR harvest source
     "## 6 · VERIFY",
-    "### Build expectations",            # build_expectations_unfilled (opt-in gate)
     "### Refute-read verdict",
     "### GATE RECORD",
     "Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>",
@@ -94,7 +93,8 @@ class EngineAnchorsTest(unittest.TestCase):
     def test_retired_surfaces_stay_retired(self):
         text = TMPL_TREES[0].read_text(encoding="utf-8")
         for gone in ("### Grounding", "### Deep checks", "### Live-verify evidence",
-                     "### Advisor 3-lens verdict", "Optimization stance:",
+                     "### Advisor 3-lens verdict", "### Build expectations",
+                     "Optimization stance:",
                      "Coverage target:", "Watch (reuse scenarios"):
             self.assertNotIn(gone, text, f"retired template surface returned: {gone!r}")
 
