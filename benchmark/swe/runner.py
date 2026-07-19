@@ -98,12 +98,19 @@ def clone_at(repo: str, base_commit: str, dest: pathlib.Path, log: pathlib.Path)
 
 
 def install_add(workspace: pathlib.Path, log: pathlib.Path) -> bool:
-    """ADD arm setup: this checkout's package + init, exactly like the wm bench."""
+    """ADD arm setup: this checkout's package + init, exactly like the wm bench.
+
+    The final engine `init` seeds the WORKSPACE's own .add/state.json. Load-bearing:
+    without it, an agent that skips init makes add.py's root discovery walk up and
+    find THIS repo's .add five levels above — the whole loop then runs against the
+    host checkout (observed: haiku wrote its 863 task into the host .add).
+    """
     steps = (
         ["uv", "venv", ".add-venv", "--clear"],
         ["uv", "pip", "install", "-e", str(REPO_ROOT / "add-method"),
          "--python", ".add-venv/bin/python"],
         [".add-venv/bin/pilotspace-add", "init", "--yes", "--non-interactive", "--force"],
+        ["python3", ".add/tooling/add.py", "init", "--name", "swe-fix", "--stage", "mvp"],
     )
     for step in steps:
         if _run(step, cwd=workspace, timeout=600, log=log).returncode != 0:

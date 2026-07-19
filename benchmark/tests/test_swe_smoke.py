@@ -89,6 +89,18 @@ class PromptTest(unittest.TestCase):
         self.assertNotIn(".add", p)
 
 
+class WorkspaceIsolationTest(unittest.TestCase):
+    def test_install_seeds_workspace_state(self):
+        """harness-workspace-isolation for the SWE arm: install_add must end with the
+        ENGINE init that writes the workspace's own .add/state.json — without it an
+        agent that skips init leaks the whole loop into the HOST repo's .add via
+        ancestor root discovery (observed live on the haiku 863 run)."""
+        import inspect
+        src = inspect.getsource(runner.install_add)
+        self.assertIn('".add/tooling/add.py", "init"', src,
+                      "install_add must seed the workspace state.json via engine init")
+
+
 class SmokeConfigTest(unittest.TestCase):
     def test_smoke_slice_is_small_requests_trio(self):
         self.assertEqual(len(runner.SMOKE_INSTANCES), 3)
