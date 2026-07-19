@@ -52,7 +52,7 @@ class ThinLaneReachesDoneInThreeCalls(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_thin_task_prescribes_at_most_three_engine_calls(self):
-        r = _run(["new-task", "tweak", "--title", "trivial doc tweak", "--thin"], self.tmp)
+        r = _run(["new-task", "tweak", "--title", "trivial doc tweak"], self.tmp)
         self.assertEqual(r.returncode, 0, f"new-task failed: {r.stderr}")
         n = _prescribed_calls(r.stdout + r.stderr)
         self.assertLessEqual(

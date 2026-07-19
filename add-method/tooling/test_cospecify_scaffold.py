@@ -22,7 +22,7 @@ import add
 OLD_FLAT_SHAPE = "Assumptions (confirm before building):"
 OLD_EXIT = "zero open assumptions"
 NEW_FRAMINGS = "Framings weighed:"
-NEW_RANKED = "Assumptions — lowest-confidence first:"
+NEW_RANKED = "<assumptions>"  # atomic-node: the ranked label left; the tag + ⚠ flag line are the shape
 FLAG_GLYPH = "⚠"
 
 

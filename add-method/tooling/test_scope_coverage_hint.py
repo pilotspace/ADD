@@ -64,7 +64,7 @@ class _Harness(unittest.TestCase):
     def _frozen_board(self, drop_scope_line: bool = False):
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         (self.tmp / "pkg" / "api").mkdir(parents=True)
         (self.tmp / "pkg" / "api" / "handler.py").write_text("x = 1\n", encoding="utf-8")
@@ -76,7 +76,7 @@ class _Harness(unittest.TestCase):
         if drop_scope_line:
             sec3 = "\n".join(ln for ln in sec3.splitlines()
                              if not ln.startswith("Scope (may touch):")) + "\n"
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", sec3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", sec3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")

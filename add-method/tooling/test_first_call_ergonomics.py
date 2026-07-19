@@ -235,7 +235,7 @@ class InitKickoffTest(unittest.TestCase):
         # the single-task lane leads (the cheapest measured benchmark run skipped
         # the milestone), the multi-task milestone lines follow, same command set.
         self.assertIn("kickoff (single task):", out)
-        self.assertIn("--oneshot", out)
+        self.assertIn('new-task <slug> --title', out)
         self.assertIn("kickoff (multi-task milestone):", out)
         self.assertIn("new-milestone", out)
         self.assertIn("--title", out)

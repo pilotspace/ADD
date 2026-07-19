@@ -129,7 +129,7 @@ class DeltaAppendTest(_Harness):
         self._ok("delta-append", "sdd", "taskless lesson")
         self.assertNotIn("task:", self._spec("sdd").split("## Deltas", 1)[1])
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("delta-append", "sdd", "in-flight lesson")
         self.assertIn("task:t", self._spec("sdd"))
         self._ok("delta-append", "sdd", "other-task lesson", "--task", "zz")

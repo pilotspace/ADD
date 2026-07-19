@@ -7,7 +7,8 @@ the freeze (direction→build cross) ratifies it by recording
 state.tasks[slug].route = {lane, by}; a missing/malformed line records
 lane "unrouted" and NEVER refuses (measure-not-block). `add.py audit` gains
 route_unrecorded + route_lane_mismatch, grandfathered by key absence.
-SKILL.md's flag mode teaches propose-then-ratify, ≤9500 B, ×3 trees.
+SKILL.md's flag mode taught propose-then-ratify; since atomic-node the lanes are
+retired — the ENGINE record (measure-not-block, legacy tolerance) is what remains.
 
 Red-for-the-right-reason today: the freeze writes no route key, the audit
 codes don't exist, SKILL.md still calls the flags human-owned. Floor pins
@@ -94,12 +95,16 @@ class FreezeRecordsRouteTest(_RouteHarness):
         self.assertEqual((rec or {}).get("lane"), "unrouted",
                          "an unknown lane token records 'unrouted', never a refusal")
 class DoctrineTest(unittest.TestCase):
-    def test_skill_doctrine_propose_ratify(self):
+    def test_skill_doctrine_atomic_flags(self):
+        # atomic-node: the lane vocabulary is retired from the teaching surface; the
+        # engine keeps READ-side route tolerance (the tests above) for legacy plans.
         text = SKILL_TREES[0].read_text(encoding="utf-8")
-        self.assertIn("route:", text, "SKILL.md must name the route header line")
-        self.assertIn("routed-by", text, "SKILL.md must name the routed-by attribution")
-        self.assertRegex(text, r"(?i)propos", "flag mode must teach the persona PROPOSES the route")
-        self.assertRegex(text, r"(?i)ratif", "flag mode must teach the human/freeze RATIFIES it")
+        self.assertIn("ONE atomic template", text,
+                      "flag mode must teach the single-template doctrine")
+        self.assertIn("gate_mode: ai-plan-verify", text,
+                      "flag mode must name the agent-crossed-freeze declaration")
+        self.assertNotIn("route: <full|fast|oneshot>", text,
+                         "route-lane vocabulary is retired from SKILL.md")
 
 
     def test_no_new_freeze_refusal(self):

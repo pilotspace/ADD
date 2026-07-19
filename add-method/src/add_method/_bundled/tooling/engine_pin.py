@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "abac501b7c59227e9f0794a106a274fb"  # re-aimed @ route-scoreboard (ADD 2.0 M7 persona-gepa-loop: deltas rolls route-outcomes.jsonl up per lane + GEPA nudge). prior: 5486b8c2… @ book-stops-shipping
-ENGINE_PKG_MD5 = "557f500fbd493fa5087848d8b881e3c0"  # re-aimed @ book-stops-shipping (ADD 2.0 M6b: constants gains BOOK_URL/book_url; guidelines block re-aims the Book pointer). prior: 0c8b1aba… @ migrate-verb
+ENGINE_MD5 = "3e7e03c014f0cda2a0cbdc0becc1f18d"  # re-aimed @ atomic-node (ONE atomic PLAN.md template; --fast/--oneshot/--thin/--full lane scaffolds retired; AI-verify block template-borne; Regression-floor + multi-agent Advisor seams). prior: abac501b… @ route-scoreboard
+ENGINE_PKG_MD5 = "fa82d37a92d1ef4e7cc7dd9989089409"  # re-aimed @ atomic-node (constants drops _FAST_SECTIONS — the lane scaffolds retired with the fat template blocks). prior: 557f500f… @ book-stops-shipping

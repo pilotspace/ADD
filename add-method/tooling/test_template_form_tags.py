@@ -33,7 +33,6 @@ LABELS = (
     "Must:",
     "Reject:",
     "After:",
-    "Assumptions — lowest-confidence first:",
     "Framings weighed:",
 )
 
@@ -91,9 +90,9 @@ def form_tag_offenses(template_text: str) -> list[str]:
         if re.search(rf"^\s*<{tag}>.+</{tag}>\s*$", template_text, re.M):
             offenses.append("inline_fill")
             break
-    if paired & {"must", "reject", "after", "assumptions"}:
-        for label, tag in (("Must:", "must"), ("Reject:", "reject"), ("After:", "after"),
-                           ("Assumptions — lowest-confidence first:", "assumptions")):
+    if paired & {"must", "reject", "after"}:
+        # atomic-node: <assumptions> carries the bare ⚠ flag line — no label required
+        for label, tag in (("Must:", "must"), ("Reject:", "reject"), ("After:", "after")):
             if tag in paired and label not in template_text:
                 offenses.append("label_dropped")
                 break
@@ -341,8 +340,7 @@ class BuildExpectationsBlock(unittest.TestCase):
         sec6 = self._section6()
         self.assertIn("### Build expectations", sec6,
                       "§6 must carry a '### Build expectations' block")
-        # the existing §6 parts must survive (the block is additive)
-        self.assertIn("### Deep checks", sec6, "Deep checks subsection retained")
+        # the surviving §6 parts (atomic-node: Deep checks left the template)
         self.assertIn("### GATE RECORD", sec6, "GATE RECORD retained")
         self.assertIn("- [ ] all tests pass", sec6, "the §6 checklist retained")
 
@@ -353,8 +351,8 @@ class BuildExpectationsBlock(unittest.TestCase):
                       "each expectation row carries a 'confirmed by'")
         self.assertIn("before build", block,
                       "the block is filled before build")
-        self.assertTrue("scenario" in block and "contract" in block,
-                        "the cue must name the §2 scenarios + §3 contract derivation")
+        self.assertIn("observable outcome", block,
+                      "the cue asks for OBSERVABLE outcomes, not test names")
 
     def test_engine_seams_untouched_by_the_block(self):
         # the amended template still passes every parsed-seam guard (no parsed_seam_touched).

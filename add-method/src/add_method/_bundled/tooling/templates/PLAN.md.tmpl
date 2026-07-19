@@ -2,19 +2,17 @@
 
 slug: {{slug}} · created: {{date}} · stage: {{stage}}
 milestone: {{milestone}}
-autonomy: {{autonomy}}   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line (.add/components.toml) joins that root to §5 Scope; task edges: `--depends-on`/`--extends`/`--relates-to` -->
+autonomy: {{autonomy}}   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line joins that root to §3 Scope; task edges: `--depends-on`/`--extends`/`--relates-to`; high-risk/method-defining? declare `risk: high` on the slug line; headless agent-crossed freeze? declare `gate_mode: ai-plan-verify` here (human floor: security|data|architecture never AI-frozen) -->
 phase: direction   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · scenarios · change plan · red suite) to the ONE freeze -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy (`unguarded_high_risk_auto` refuses an unguarded completion). -->
 
-> One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
+> One file = one task — an ATOMIC node: persist the interface (contract · red suite · scope · verdict); reason everything else in-context, don't write essays. The phase marker above is the single source of truth (`add.py phase`).
 
 ---
 
 ## 1 · SPECIFY — the rules ▸ docs/03-step-1-specify.md
 
-> Project the expectations from the milestone Ground + this request — light, not re-invented.
-Feature: <name>
-Framings weighed: <chosen> (chosen) · <alternative> · <alternative>
+Feature: <name — one-line description of the behavior this task ships>
+Framings weighed: <chosen> (chosen — why) · <alternative>
 Must:
 <must>
   - <required behavior>
@@ -28,47 +26,23 @@ After:
   - <state that is true once it succeeds>
 </after>
 Boundary: <one format-variant per external input shape the tests must speak — e.g. aware vs naive timestamp · or "none — no external input">
-Assumptions — lowest-confidence first:
 <assumptions>
-  ⚠ <the one assumption most likely to be wrong> — lowest confidence because <why>; if wrong: <cost>
-  - [ ] <next assumption, ranked> — confirm or deny; never carry an open one forward
+  ⚠ <the ONE assumption most likely to be wrong — if wrong: <cost>>
 </assumptions>
-
-<!-- EXIT: the specify guide's exit_gate binds (rules + ranked ⚠ assumptions). -->
 
 ---
 
 ## 2 · SCENARIOS — pass/fail cases ▸ docs/04-step-2-scenarios.md
 
 <scenarios>
-
-```gherkin
-Scenario: <short name>   # <Must/Reject item this covers, e.g. M1 or R1>
-  Given <starting situation>
-  When <action>
-  Then <expected result>
-  And <what must remain unchanged>   # required for every rejection
-```
-
 </scenarios>
-
-<!-- EXIT: the scenarios guide's exit_gate binds. -->
+<!-- The §4 test_plan is the canonical encoding of every scenario (one test per Must/Reject). Add gherkin above ONLY when a human stakeholder needs readable cases — never as ceremony. -->
 
 ---
 
 ## 3 · PLAN — the change plan: ground · contract · build-strategy ▸ docs/05-step-3-plan.md
 
-### Grounding (the real code the contract will cite — gather BEFORE you freeze)
-Touches (files · symbols · signatures): <path:symbol — the symbols/anchors you'll edit + how each is keyed; name symbols, not the full file list — §5 Scope owns the write-set>
-Context (working folder): <docs · todos · config · data the task touches — task-delta only>
-Honors (patterns / conventions): <PROJECT.md / CONVENTIONS.md anchors — task-delta only, never a re-scan>
-Seams consulted: <SEAMS.md entry cited instead of re-deriving, e.g. .add/SEAMS.md#scope-token-grammar — optional, omit if none apply>
-Anchors the contract cites: <the symbols the Contract below names — it may cite ONLY anchors named here>
-Issues/Risks: <problems · traps · untestable risks found in the real code — task-delta; these feed the rules in §1>
-Related intent: <PROJECT.md § · GLOSSARY term(s) · originating request/milestone rationale — the WHY; task-delta>
-Ground SHA: <stamped by freeze — leave this placeholder; cite symbols, not bare line numbers>
-
-### Contract (freeze the shape — the HARD, tamper-guarded core)
+### Contract (freeze the shape — the HARD, tamper-guarded core; ground it in the REAL code in-context, cite symbols not line numbers)
 
 ```
 <METHOD> <path>   body: { <fields> }
@@ -77,94 +51,63 @@ Ground SHA: <stamped by freeze — leave this placeholder; cite symbols, not bar
 Schema: <tables/fields touched, and access pattern>
 ```
 
-Target (measurable): <the success bar §6 evidence must hit — numbers, not adjectives, e.g. "all §4 green · p95 <100ms" — judged at the gate via --target-hit>
-Glossary deltas: <new domain term(s) this task introduces, `Term: definition` — or "none">
+Target (measurable): <the success bar §6 evidence must hit — numbers, not adjectives — judged at the gate via --target-hit>
 Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
 
-### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
-Scope (may touch): `./src/`   <fill before the freeze — the file write-set, the single source of truth (§3 Touches names symbols, this names files); every file the build may write; scope-lock source>
-Strategy (ordered batches): <1. … 2. … — the planned build order; guidance, not enforced; let the named Persona's domain stance shape the approach, not just architecture patterns>
-Approach (domain strategy): <the core technique chosen and WHY it fits this task's domain — an algorithm, a data model, a migration path, a prose structure, a UX flow — derive from §1 Framings weighed, not invented here>
-Data strategy: <the shapes and access patterns the work realizes — must agree with the Contract Schema line above>
-Pattern: <the domain pattern this build follows and the Grounding Honors / CONVENTIONS.md anchor it extends>
-Optimization stance: <WHAT is optimized and its budget — latency, memory, token cost, readability — or "correctness-first, no budget"; never blank; ⚠-mark the facet you trust least; risk: high -> consult the add agent (advise mode); advisory, never a gate>
-Persona (required): <name the persona file under `.add/personas/` this build embodies as a domain stance atop SOUL.md — advisory, never lowers a gate; name "generic" if no project persona fits yet>
-Spawn isolation (default): <prefer isolation: "worktree" for any subagent build/verify spawn; shared-tree needs a stated reason — see worktree-isolated-spawn-default>
-Known-problem fixes: <trap → planned fix — the failure modes this build must dodge; guidance, not enforced>
+### Build-strategy (SOFT: preferred; the builder self-improves and records actual at verify)
+Scope (may touch): `./src/`   <fill before the freeze — the file write-set, single source of truth; every file the build may write; scope-lock source>
+Regression floor: <the existing suite(s) that must stay green — the host repo's own tests are ALWAYS a floor; run them before the gate — or "none — greenfield">
+Persona (required): <persona file under `.add/personas/` this build embodies — advisory, never lowers a gate; "generic" if none fits>
 
-<!-- The freeze IS the one approval — it freezes the whole PLAN, led by the bundle's lowest-confidence flag. Contract = HARD (tamper-guarded); Grounding + Build-strategy = SOFT (the builder improves, recording actual at verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). Exit: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
+### AI-verify record (required when gate_mode: ai-plan-verify)
+- [ ] §3 PLAN grounding anchors resolve in the current tree
+- [ ] §1 every Must + every Reject present, each Reject paired with an error code
+- [ ] §3 Contract shape is concrete (no template placeholder text remains)
+- [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
+Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
+
+<!-- The freeze IS the one approval, led by the bundle's lowest-confidence flag — Contract = HARD (tamper-guarded); Build-strategy = SOFT. Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). -->
 
 ---
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
-Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_<name>: arrange / act / assert behavior not internals · covers: <M#, R:code>
 </test_plan>
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
 
-<!-- EXIT: the tests guide's exit_gate binds (red for the RIGHT reason). -->
-
 ---
 
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
-> The change plan — grounding + contract + build-strategy — was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope, follow the strategy (improve on it if the code teaches you better), and touch no test or the frozen contract.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
+Strategy actually used: <fill at VERIFY — what you ACTUALLY did (or "as planned"); harvested into §7 Decisions (ADR)>
 Code lives in: `./src/`
-Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
-
-<!-- Scope-lock source: the §3 `Scope (may touch)` line; an out-of-scope build fails the gate (scope_violation); the build guide's exit_gate binds. -->
+Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn the `add` agent in **advise mode** (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
+Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 Scope (an out-of-scope build fails the gate: scope_violation); keep the §3 Regression floor green; allow-list packages only; ask if unclear.
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
+- [ ] all tests pass — including the §3 Regression floor (host suite)
 - [ ] coverage did not decrease
 - [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
+- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (a confirmed cheat is HARD-STOP)
 - [ ] concurrency / timing of the risky operation is safe
 - [ ] no exposed secrets, injection openings, or unexpected dependencies
 - [ ] layering & dependencies follow CONVENTIONS.md
 - [ ] a person reviewed and approved the change
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
-> OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
 - [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
-
-### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
-
-### Live-verify evidence — confirm the §3 PLAN grounding anchors still resolve (fill at the gate)
-> Re-resolve every symbol the §3 Contract cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol the §3 Contract cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Recorded, never blocked; a human spot-audit is the backstop.
 Verdict: <EARNED | NOT-EARNED>
 By: <self | agent-id> · adversarially checked: <what was probed>
-
-### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
 
 ### GATE RECORD
 Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
@@ -172,13 +115,11 @@ Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
 Reviewed by: <name> · date: <date>
 
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are recorded, never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Refute-read verdict is recorded, never engine-blocked; a human spot-audit backstops anything unrecorded. -->
 
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
-
-Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §3 Build-strategy Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
 <harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
@@ -188,4 +129,3 @@ One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence �
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->

@@ -78,7 +78,7 @@ class _Harness(unittest.TestCase):
         (None drops the whole Scope line — the UNDECLARED grandfather)."""
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         # real files so Touches paths + a real scope dir resolve
         (self.tmp / "pkg" / "api").mkdir(parents=True)
@@ -91,7 +91,7 @@ class _Harness(unittest.TestCase):
                              if not ln.startswith("Scope (may touch):")) + "\n"
         else:
             sec3 = sec3.replace("{scope}", scope_line)
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", sec3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", sec3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")

@@ -55,7 +55,6 @@ class HelpDietTest(unittest.TestCase):
         blob = out.getvalue()
         self.assertEqual(code, 0)
         self.assertIn("--title", blob, "subcommand --help still shows its own flags")
-        self.assertIn("--fast", blob)
         self.assertNotIn(_MAP_HEAD, blob, "the flow map must not hijack subcommand help")
 
 

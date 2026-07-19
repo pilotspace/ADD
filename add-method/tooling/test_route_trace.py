@@ -88,11 +88,11 @@ class _Harness(unittest.TestCase):
         """A frozen oneshot task moved to build, ready for a completing gate."""
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         if header_extra:
@@ -122,7 +122,7 @@ class TraceOnGateTest(_Harness):
                          f"missing keys: {REQUIRED_KEYS - set(line)}")
         self.assertEqual(line["task"], "t")
         self.assertEqual(line["outcome"], "PASS")
-        self.assertEqual(line["lane"], "oneshot")
+        self.assertEqual(line["lane"], "unrouted")
         self.assertEqual(line["heals"], 0)
         self.assertIsInstance(line["age_hours"], (int, float))
 

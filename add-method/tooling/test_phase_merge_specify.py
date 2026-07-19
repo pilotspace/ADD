@@ -48,7 +48,7 @@ class _Harness(unittest.TestCase):
     def _board(self):
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
 
     def _freeze(self, slug="t"):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at

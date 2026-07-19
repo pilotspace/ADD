@@ -120,7 +120,7 @@ class PhaseBuildGuardTest(unittest.TestCase):
         self._quiet(["new-task", slug])
 
     def _fast_task_at_direction(self, slug="t"):
-        self._quiet(["new-task", slug, "--fast"])
+        self._quiet(["new-task", slug])
 
     # ── scenarios ────────────────────────────────────────────────────────────────────────
     def test_optedin_unfrozen_blocks_phase_build(self):

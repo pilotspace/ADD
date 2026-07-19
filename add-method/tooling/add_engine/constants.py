@@ -246,20 +246,18 @@ Framings weighed:
 Must:
 Reject:
 After:
-Assumptions — lowest-confidence first:
-  ⚠ <most likely wrong> — lowest confidence because <why>; if wrong: <cost>
+Boundary:
+<assumptions>
+  ⚠ <the ONE assumption most likely to be wrong — if wrong: <cost>>
+</assumptions>
 
 ## 2 · SCENARIOS
 ## 3 · PLAN
-### Grounding
-Touches (files · symbols · signatures):
-Honors (patterns / conventions):
-Anchors the contract cites:
-Ground SHA:
 ### Contract
 Status: DRAFT
 ### Build-strategy
 Scope (may touch):
+Regression floor:
 ## 4 · TESTS
 ## 5 · BUILD
 ## 6 · VERIFY
@@ -271,17 +269,9 @@ Outcome:
 """
 
 
-# template-unify: ONE PLAN.md.tmpl serves every lane. The fast render is the full render
-# minus exactly these heading blocks (subset by construction — never a second template
-# file). Each key drops its heading line through the line before the next heading of the
-# same-or-higher level; add.py:_strip_fast_sections owns the mechanics.
-_FAST_SECTIONS = (
-    "## 7 · OBSERVE",
-    "### Deep checks",
-    "### Live-verify evidence",
-    "### Refute-read verdict",
-    "### Advisor 3-lens verdict",
-)
+# atomic-node: the ONE template IS the lean render — _FAST_SECTIONS retired with
+# the lane scaffolds (the stripped blocks no longer exist in the template).
+
 
 _DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETRO.md)
 

@@ -18,7 +18,7 @@ TOOLING = Path(__file__).resolve().parent
 
 # kernel-trim (ADD 2.0 M5): test_audit_ci + test_wave_ledger died with their pillars
 IMPORTERS = (
-    "test_ground_wiring.py",
+    # atomic-node: test_ground_wiring retired with the §3 Grounding block
     "test_intake_interview.py",
     "test_review_checklist.py",
 )

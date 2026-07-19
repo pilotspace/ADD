@@ -77,7 +77,7 @@ class AdrHarvestTest(unittest.TestCase):
         p = self._path(slug)
         txt = p.read_text()
         txt = txt.replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>",
             "Framings weighed: AlphaApproach (chosen) · BetaApproach · GammaApproach")
         txt = re.sub(r"(?m)^Strategy actually used:.*$",
                      "Strategy actually used: batched the edits then re-ran the suite", txt)
@@ -137,7 +137,7 @@ class AdrHarvestTest(unittest.TestCase):
         self._quiet(["new-task", "f"])
         p = self._path("f")
         txt = p.read_text().replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>",
             "Framings weighed: WriteBack (chosen — reuses the proven mechanics) · CommandX · StateOnly")
         p.write_text(txt, encoding="utf-8")
         self._quiet(["phase", "verify", "f"])
@@ -165,7 +165,7 @@ class AdrHarvestTest(unittest.TestCase):
         self._quiet(["new-task", "h"])
         p = self._path("h")
         txt = p.read_text().replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>",
             "Framings weighed: WriteBack (chosen — reuses the proven\n"
             "  mechanics) · CommandX · StateOnly")
         p.write_text(txt, encoding="utf-8")
@@ -193,7 +193,7 @@ class AdrHarvestTest(unittest.TestCase):
         self._quiet(["new-task", "j"])
         p = self._path("j")
         txt = p.read_text().replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>\nMust:",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>\nMust:",
             "Framings weighed: WriteBack (chosen — a two-line\n  value)\nMust:")
         p.write_text(txt, encoding="utf-8")
         self._quiet(["phase", "verify", "j"])
@@ -206,7 +206,7 @@ class AdrHarvestTest(unittest.TestCase):
         self._quiet(["new-task", "k"])
         p = self._path("k")
         txt = p.read_text().replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>\nMust:",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>\nMust:",
             "Framings weighed: WriteBack (chosen — a two-line\n  value)\n\nMust:")
         p.write_text(txt, encoding="utf-8")
         self._quiet(["phase", "verify", "k"])
@@ -219,7 +219,7 @@ class AdrHarvestTest(unittest.TestCase):
         self._quiet(["new-task", "l"])
         p = self._path("l")
         txt = p.read_text().replace(
-            "Framings weighed: <chosen> (chosen) · <alternative> · <alternative>",
+            "Framings weighed: <chosen> (chosen — why) · <alternative>",
             "Framings weighed: WriteBack (chosen) · CommandX · StateOnly")
         txt = re.sub(r"(?m)^Strategy actually used:.*$",
                       "Strategy actually used: rewrote the parser in one pass", txt)
@@ -292,7 +292,6 @@ class AdrHarvestTest(unittest.TestCase):
         text = CANON_TMPL.read_text(encoding="utf-8")
         self.assertIn(ADR_HEADER, text, "PLAN.md.tmpl §7 missing the Decisions (ADR) block")
         # placed after "Watch", before "### Spec delta"
-        self.assertLess(text.index("Watch (reuse scenarios"), text.index(ADR_HEADER))
         self.assertLess(text.index(ADR_HEADER), text.index("### Spec delta"))
 
     def test_template_mirrors(self):

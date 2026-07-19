@@ -97,29 +97,6 @@ class TinyMemberTasks(TinyPlanBase):
         t = t.replace("## Done when", "## Done when\n- [ ] c", 1)
         f.write_text(t)
 
-    def test_member_task_defaults_to_fast_lane(self):
-        # S2: no --fast flag needed under a tiny milestone
-        self._tiny_confirmed()
-        r = _run(self.root, "new-task", "fix-exit-codes", "--title", "t")
-        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-        body = (pathlib.Path(self.root) / ".add" / "tasks" / "fix-exit-codes"
-                / "PLAN.md").read_text()
-        # template-unify: the lane marker is the spliced `fast: true` header line
-        self.assertRegex(body, r"(?m)^fast: true",
-                         "tiny member task must scaffold the fast lane")
-
-    def test_full_flag_opts_back(self):
-        self._tiny_confirmed()
-        r = _run(self.root, "new-task", "big-one", "--title", "t", "--full")
-        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-        body = (pathlib.Path(self.root) / ".add" / "tasks" / "big-one" / "PLAN.md").read_text()
-        # §0 GROUND folded into §3 PLAN (plan-phase-core); the fast lane's dropped-section
-        # set {2, 7} is now the discriminating marker — only the full template scaffolds them.
-        self.assertIn("## 2 · SCENARIOS", body,
-                      "--full must scaffold the full template (has §2 SCENARIOS)")
-        self.assertIn("## 7 · OBSERVE", body,
-                      "--full must scaffold the full template (has §7 OBSERVE)")
-
     def test_security_sensitivity_forces_full(self):
         # S4/R6: base-class sensitivity overrides the tiny default
         self._tiny_confirmed()

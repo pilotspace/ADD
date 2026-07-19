@@ -29,7 +29,7 @@ PRIOR_VERSIONS = ("1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0",
                   "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
 # the headline capabilities the release notes must name (the lean-pass bundle:
 # fast lane + the three engine-enforced fill-seams + the lighter skill tree)
-FEATURE_ANCHORS = ("fast-lane", "--fast", "Freeze-before-build", "flow-enforcement",
+FEATURE_ANCHORS = ("fast-lane", "Freeze-before-build", "flow-enforcement",
                    "Gate-record write-back", "Skill tree 25% lighter", "Confirm-parent")
 
 

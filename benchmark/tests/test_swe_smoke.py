@@ -78,7 +78,8 @@ class PromptTest(unittest.TestCase):
     def test_add_arm_names_the_loop(self):
         p = runner.wrap_prompt("x", "add")
         self.assertIn("add.py status", p)
-        self.assertIn("--oneshot", p)
+        self.assertIn("gate_mode: ", p)
+        self.assertIn("Regression floor", p)
         self.assertIn("freeze --by agent --cross", p)
         self.assertIn("Never weaken existing tests", p)
 

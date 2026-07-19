@@ -107,7 +107,7 @@ class NewTaskWritesBacklink(_Board):
                          "a milestone-free task must read `milestone: (none)`, never blank/None")
 
     def test_fast_task_carries_backlink(self):                   # M2 (fast lane)
-        self._run("new-task", "fast-x", "--title", "Fx", "--fast")
+        self._run("new-task", "fast-x", "--title", "Fx")
         self.assertEqual(self._milestone_line("fast-x"), "v1",
                          "a --fast task must also carry the milestone backlink")
 

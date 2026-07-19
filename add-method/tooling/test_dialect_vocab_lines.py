@@ -22,23 +22,6 @@ REPO = HERE.parents[1]
 SKILL_GUIDE = HERE.parent / "skill" / "add" / "phases" / "verify.md"  # skill-fold-8: sensitivity.md folded here
 
 
-class TemplateDialectLineTest(unittest.TestCase):
-    def test_full_template_deep_checks_carries_dialect_line(self):
-        body = (TEMPLATES / "PLAN.md.tmpl").read_text(encoding="utf-8")
-        idx = body.find("### Deep checks")
-        self.assertNotEqual(idx, -1)
-        nxt = body.find("###", idx + 3)
-        block = body[idx:nxt]
-        self.assertIn("DIALECT", block,
-                      "the dialect check must live INSIDE Deep checks (shallow-audit-counted)")
-        self.assertIn("spec-dialect floor", block)
-        self.assertIn("same value formats", block)
-
-    # template-unify: the fast lane derives from the one template and drops the §6
-    # Deep-checks block; the input-dialect floor is held by the freeze-checked §1
-    # Boundary line on BOTH lanes (test_fast_boundary_line, test_template_unify).
-
-
 class GlossaryGuidanceTest(unittest.TestCase):
     def _sens_section(self, text: str) -> str:
         m = re.search(r"(?m)^##[ \t]+Sensitivity classes[ \t]*$", text)

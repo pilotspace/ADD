@@ -46,8 +46,8 @@ class LaneNudgeTest(_Harness):
 
     def test_nudge_prints(self):                                   # M1
         out = self._create()
-        self.assertIn("oneshot lane is cheaper", out)
-        self.assertIn("--oneshot", out)
+        self.assertIn("skip the milestone", out)
+        self.assertIn("new-task <slug>", out)
 
     def test_footer_stays_last(self):                              # M2
         out = self._create()

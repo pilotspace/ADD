@@ -34,7 +34,7 @@ class ResumeTeachesContextOps(unittest.TestCase):
         cls.root = cls._tmp.name
         r = _run(cls.root, "init", "--name", "ctx", "--stage", "mvp")
         assert r.returncode == 0, r.stderr + r.stdout
-        r = _run(cls.root, "new-task", "ctx-probe", "--fast", "--title", "probe")
+        r = _run(cls.root, "new-task", "ctx-probe", "--title", "probe")
         assert r.returncode == 0, r.stderr + r.stdout
 
     @classmethod

@@ -48,14 +48,15 @@ class TestAddLoopWrapper:
         assert "proxy authority" in low  # headless runs must not stall at human gates
 
     def test_add_loop_instructs_lean_lane(self):
-        """ADD 2.0 (phase-collapse-3): a cleared benchmark workload is a fully-specified
-        oneshot task, so the wrapper engages the lean lane (--oneshot + the 3-call walk:
-        one Direction pass, freeze --cross, gate) — while the floor (contract frozen ·
-        red suite before build) stays explicitly stated."""
+        """ADD 2.0 (atomic-node): ONE atomic template serves every task — a cleared
+        benchmark workload takes the 3-call walk (one Direction pass, freeze --cross,
+        gate) with the agent-crossed freeze declared via `gate_mode: ai-plan-verify`
+        in the PLAN.md header — while the floor (contract frozen · red suite before
+        build) stays explicitly stated."""
         out = _wrap_prompt("Build the thing.", "add-loop")
         low = out.lower()
-        # engages the lean lane + names the one-pass walk
-        assert "--oneshot" in low
+        # declares the agent-crossed freeze + names the one-pass walk
+        assert "gate_mode: ai-plan-verify" in low
         assert "--cross" in low and "3-call walk" in low
         # floor still stated in the same wrapper (never skip contract/tests)
         assert "frozen" in low and "red" in low

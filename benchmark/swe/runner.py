@@ -122,11 +122,15 @@ def wrap_prompt(problem_statement: str, arm: str) -> str:
     return (
         "Fix the following GitHub issue in this repository by driving the ADD loop "
         "(see CLAUDE.md): run `python3 .add/tooling/add.py status` first, create ONE task "
-        "with `python3 .add/tooling/add.py new-task fix-issue --oneshot`, draft the whole "
-        "Direction bundle in one pass (rules, scenarios, change plan, red test capturing the "
-        "issue), freeze it with `python3 .add/tooling/add.py freeze --by agent --cross`, "
-        "build to green, record the gate. Never weaken existing tests. Modify only what the "
-        "fix requires. When done, ensure the change is present in the working tree.\n\n"
+        "with `python3 .add/tooling/add.py new-task fix-issue`, declare `gate_mode: "
+        "ai-plan-verify` in the PLAN.md header, draft the whole Direction bundle in one "
+        "pass (rules, scenarios, change plan, red test capturing the issue). This is a "
+        "FOREIGN host repo: its existing test suite is your §3 Regression floor — run the "
+        "tests nearest the code you touch before the gate and keep them green (a fix that "
+        "breaks a neighboring host test is a defect, not collateral). Freeze with `python3 "
+        ".add/tooling/add.py freeze --by agent --cross`, build to green, record the gate. "
+        "Never weaken existing tests. Modify only what the fix requires. When done, ensure "
+        "the change is present in the working tree.\n\n"
         f"<issue>\n{problem_statement}\n</issue>"
     )
 

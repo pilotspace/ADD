@@ -59,12 +59,9 @@ Then read the foundation map `add.py status --foundation` (`--all` full) + `.add
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
 **Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
-**Flag mode** — the fitting persona proposes; the human ratifies (flag + freeze), never auto-applied.
-- **route** — propose the lane in the TASK header: `route: <full|fast|oneshot> · routed-by:
-  <persona:<slug> | human> — <why>`; the freeze records the ratified lane (audit measures a
-  missing record — never blocks).
-- **fast** — `new-task --fast`: lean derived render, freeze-gated; a milestone-free `--fast` task is
-  the blessed low-ceremony lane.
+**Flag mode** — ONE atomic template serves every task (no lanes); flags are header declarations.
+- **gate_mode** — headless/agent-crossed freeze: declare `gate_mode: ai-plan-verify` in the PLAN.md
+  header + fill the §3 AI-verify record; security|data|architecture stay human-frozen (unstrikeable).
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; `add.py autonomy set
   conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates
   a milestone's tasks.
@@ -118,7 +115,7 @@ One trigger = one guide — full prose: `beyond.md`; load only when a trigger fi
 
 - §3 FROZEN → auto-gated run `run.md` · subagent roster + pipelines (agent-call-preferred,
   the default execution mode) → `phases/verify.md` · self-score → `phases/direction.md`
-- UI/experience surface → UDD loop `design.md` (the fast lane is flag-mode above — no extra guide)
+- UI/experience surface → UDD loop `design.md`
 - milestone goal unmet at `milestone-done` → `loop.md`
 - graduation · release · monorepo green-bars → persona-owned playbooks, `beyond.md` ·
   the persona loop (`.add/personas/`) → `docs/18-personas.md` · `sensitivity:` + `advisor-gate-relax` → `phases/verify.md`

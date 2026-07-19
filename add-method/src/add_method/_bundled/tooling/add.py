@@ -34,7 +34,7 @@ except ModuleNotFoundError:   # < 3.11: the registry is unsupported → degrade 
 from add_engine.constants import *  # noqa: F401,F403  (public constants via __all__)
 from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _GITIGNORE_BODY, _GUIDE_BEGIN, _GUIDE_END,
-    _RULE_REF_LINE, _FALLBACK_TASK, _FAST_SECTIONS,
+    _RULE_REF_LINE, _FALLBACK_TASK,
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
@@ -205,48 +205,10 @@ def _seed_spec_file(root: Path, dd: str, *, project: str, stage: str,
     return dest
 
 
-def _strip_fast_sections(text: str) -> str:
-    """template-unify: the fast render = the full render minus exactly the
-    _FAST_SECTIONS heading blocks — a strict line-subset by construction.
-    A key's block runs from its heading line to the line before the next heading
-    of the same-or-higher level (### stops at ###/##, ## at ##) or EOF; the
-    `---` separator immediately above a dropped block is absorbed with it."""
-    def _level(line: str) -> int:
-        return 2 if line.startswith("## ") else (3 if line.startswith("### ") else 0)
-
-    lines = text.splitlines()
-    out: list[str] = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        if any(line.startswith(key) for key in _FAST_SECTIONS):
-            lvl = _level(line)
-            j = i + 1
-            while j < len(lines) and not (0 < _level(lines[j]) <= lvl):
-                j += 1
-            while out and not out[-1].strip():
-                out.pop()
-            if out and out[-1].strip() == "---":
-                out.pop()
-                while out and not out[-1].strip():
-                    out.pop()
-            out.append("")
-            i = j
-            continue
-        out.append(line)
-        i += 1
-    return "\n".join(out).rstrip("\n") + "\n"
-
-
-# The §3 block an --oneshot scaffold carries so the AI-plan-verify freeze floor
-# (_ai_verify_checklist_complete) has its checklist to read — spliced by cmd_new_task.
-_AI_VERIFY_RECORD_BLOCK = """### AI-verify record (required when gate_mode: ai-plan-verify)
-- [ ] §3 PLAN grounding anchors resolve in the current tree
-- [ ] §1 every Must + every Reject present, each Reject paired with an error code
-- [ ] §3 Contract shape is concrete (no template placeholder text remains)
-- [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
-Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
-"""
+# atomic-node: the ONE template IS the lean render — every lane distinction
+# (--fast/--oneshot/--thin scaffolds) retired with the fat sections themselves;
+# the AI-verify record block ships in the template (no splice), so an agent-crossed
+# freeze (`gate_mode: ai-plan-verify`, declared in the header) finds its checklist.
 
 
 # --- PLAN.md milestone backlink (task-milestone-backlink) --------------------
@@ -686,7 +648,8 @@ def cmd_init(args: argparse.Namespace) -> None:
         # kickoff-truth M1: the single-task lane leads here too — this hint prints
         # BEFORE the kickoff block, so a milestone-first line here would re-arm the
         # measured bait the kickoff reorder kills.
-        print('      or headless, single task: add.py new-task <slug> --title "..." --oneshot')
+        print('      or headless, single task: add.py new-task <slug> --title "..." '
+              '(declare `gate_mode: ai-plan-verify` in the PLAN.md header for an agent-crossed freeze)')
         print('      or headless, multi-task:  add.py new-milestone <slug> --title "..." --goal "..."')
     # setup hygiene (both branches): the .add/ folder IS the shared project state — commit it
     # so the team shares one source of truth; its transient working files are already gitignored.
@@ -698,7 +661,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     # kickoff-truth M1: the single-task lane leads — the cheapest measured benchmark
     # run skipped the milestone entirely; the milestone lines serve multi-task work.
     print("kickoff (single task):")
-    print('  add.py new-task <slug> --title "..." --oneshot')
+    print('  add.py new-task <slug> --title "..."')
     print("kickoff (multi-task milestone):")
     print('  add.py new-milestone <slug> --title "..." --goal "..."')
     print('  add.py new-task <slug> --title "..." --milestone <ms>')
@@ -710,26 +673,6 @@ def cmd_sync_guidelines(args: argparse.Namespace) -> None:
     project_root = _require_root().parent
     for name, action in _inject_guidelines(project_root, getattr(args, "rule_file", False)):
         print(f"{action:>9}  {name}")
-
-
-# fastlane-intake-nudge: a frozen, blunt lexical heuristic — substring match only, no semantic
-# read. Advisory-only (see _fastlane_nudge); never blocks, never selects the lane itself.
-RISK_KEYWORDS = frozenset({
-    "milestone", "release", "security", "auth", "architecture", "migration",
-    "schema", "protocol", "engine", "breaking", "concurrency", "compliance", "payment",
-})
-
-
-def _fastlane_nudge(title: str, slug: str) -> str | None:
-    """PURE. None if any RISK_KEYWORDS token appears in title.lower() or slug.lower();
-    else the one-line advisory recommending the fast lane or a direct edit."""
-    haystack = f"{title} {slug}".lower()
-    if any(word in haystack for word in RISK_KEYWORDS):
-        return None
-    return ("heuristic: this looks like a fast-lane or direct-edit candidate (no --fast, "
-            "no risk keyword in title/slug) — consider `add.py new-task <slug> --fast`, or "
-            "just edit directly for a single-file change. Recommendation only — the lane "
-            "is yours to pick.")
 
 
 def cmd_new_task(args: argparse.Namespace) -> None:
@@ -793,52 +736,17 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # inherit the project's DECLARED autonomy default (task init-auto-default) — fail-SAFE:
     # absent -> auto, garbled -> conservative; the posture is project-scoped, not hardcoded.
     autonomy = _project_autonomy(root)
-    # fast lane (fast-new-task-flag): --fast scaffolds the MINIMAL template instead of the full one.
-    # The human opts in explicitly (the engine never guesses ceremony); the freeze floor is held by
-    # the freeze-before-build gate's fast arm (cmd_advance), so the lighter shape never drops the trust seam.
-    # fast-lane-skips: --oneshot is a REQUEST for BOTH the fast template AND task2's
-    # AI-plan-verify contract-freeze gate — it implies the minimal fast template (no new
-    # template file) plus two additive header lines spliced in below. Whether the freeze
-    # request is ever honored is entirely governed by task2's own, unchanged,
-    # _ai_freeze_allowed — this task adds zero new code to that floor.
-    oneshot = bool(getattr(args, "oneshot", False))
-    thin = bool(getattr(args, "thin", False))                 # thin-engine-loop W1: Direction-span-freeze lane
-    fast = bool(getattr(args, "fast", False)) or oneshot or thin
-    # tiny-milestone default lane (tiny-plan-small-scope): member tasks of a tiny
-    # milestone scaffold the fast template WITHOUT a per-task --fast; `--full` opts back,
-    # and a base-class sensitivity (security|data|architecture) ALWAYS gets the full
-    # template — the risk floor outranks the lane default. The human declared the lane
-    # once, at `new-milestone --tiny`; this only applies that declaration.
+    # atomic-node: ONE template for every task — the lean render IS the template
+    # (lane scaffolds retired). The trust seams are template-borne: the AI-verify
+    # record block ships in §3 (an agent-crossed freeze declares `gate_mode:
+    # ai-plan-verify` in the header — _ai_freeze_allowed's floor is unchanged),
+    # and the §3 Regression floor line makes the host suite an inherited edge.
     sensitivity = (getattr(args, "sensitivity", None) or "").strip().lower()
-    _tiny_parent = bool(milestone and state.get("milestones", {}).get(milestone, {}).get("tiny"))
-    if _tiny_parent and not fast:
-        if not bool(getattr(args, "full", False)) and sensitivity not in (
-                "security", "data", "architecture"):
-            fast = True
     rendered = _render_template(
         "PLAN.md",
         title=title, slug=slug, date=date.today().isoformat(),
         stage=state["stage"], autonomy=autonomy,
         milestone=_milestone_backlink_value(milestone))
-    if fast:
-        # template-unify: the fast lane is a DERIVED render of the one template —
-        # strip the _FAST_SECTIONS blocks, then splice the lane header beneath the
-        # phase marker (bare `fast: true`, so the scaffold stays a strict line-subset
-        # of the full render plus this one splice).
-        rendered = _strip_fast_sections(rendered)
-        rendered = re.sub(r"(?m)^(phase:[^\n]*)$",
-                          lambda m: m.group(1) + "\nfast: true", rendered, count=1)
-    if oneshot:
-        # splice directly beneath the spliced "fast: true" line (regex sub, count=1) —
-        # mirrors the §1 Feature / §0 Related-intent pre-fill idiom below.
-        rendered = re.sub(r"(?m)^(fast:\s*true\b[^\n]*)$",
-                          lambda m: m.group(1) + "\noneshot: true\ngate_mode: ai-plan-verify",
-                          rendered, count=1)
-        # the AI-plan-verify freeze floor reads this block inside the §3 span
-        # (_ai_verify_checklist_complete) — spliced at §3's tail, before the §4 break.
-        rendered = re.sub(r"(?m)^---\n\n## 4 ·",
-                          _AI_VERIFY_RECORD_BLOCK + "\n---\n\n## 4 ·",
-                          rendered, count=1)
     if feature_override:                                     # pre-fill §1 from the seeded delta
         rendered = re.sub(r"(?m)^Feature:.*$",
                           lambda _m: f"Feature: {feature_override}", rendered, count=1)
@@ -889,12 +797,6 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         state["tasks"][slug]["heal"] = prior_heal   # monotonic — survives the --force re-create
     if from_delta:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
-    if fast:
-        state["tasks"][slug]["fast"] = True                 # durable lane marker (absent == not-fast)
-    if oneshot:
-        state["tasks"][slug]["oneshot"] = True               # durable lane marker (absent == not-oneshot)
-    if thin:
-        state["tasks"][slug]["thin"] = True                  # thin-engine-loop W1: Direction-span-freeze lane marker
     if sensitivity:
         state["tasks"][slug]["sensitivity"] = sensitivity   # declared at creation (tiny-plan-small-scope)
     _set_active_task(state, slug, milestone)
@@ -903,11 +805,6 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if milestone:
         print(f"linked to milestone '{milestone}'" +
               (f", depends-on {depends_on}" if depends_on else ""))
-    elif fast:
-        # blessed milestone-free fast lane (standalone-fast-task): a --fast task with no owning
-        # milestone is a DELIBERATE low-ceremony lane, not an orphan to nag — AFFIRM it.
-        print(f"standalone fast task '{slug}' — milestone-free by design (low-ceremony lane); "
-              f"attach later with `add.py set-milestone {slug} --milestone <id>` if it grows")
     else:
         # warn-never-block: the task is created (escape hatch), but nudge back toward the
         # intake -> milestone flow. Speaks of STRUCTURE (not attached), never the act.
@@ -916,10 +813,6 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if from_delta:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
-    if not fast:
-        note = _fastlane_nudge(title, slug)
-        if note:
-            print(note)
     print("active task set. phase: direction. Draft the whole Direction bundle top-to-bottom — "
           "§1 rules · §2 scenarios · §3 the change PLAN (ground + contract + what this task "
           "will do) · §4 red suite — then ONE freeze approval crosses it into build.")
@@ -941,9 +834,6 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
     else:
         print("recipe — remaining calls: add.py freeze --by <name> --cross · add.py gate PASS")
-    if thin:
-        print("note: --thin is now the default flow (phase-collapse-3) — the flag is a no-op "
-              "kept for compatibility")
 
 
 
@@ -1842,7 +1732,7 @@ _BENCHMARK_MODE_RE = re.compile(r"(?:^|·)[ \t]*benchmark_mode:[ \t]*(true|false
 
 def _project_benchmark_mode(root: Path) -> bool:
     """Whether the project runs in benchmark mode (fast-lane-skips): every task in the project
-    is skip-eligible without needing --oneshot/--fast individually. Fail-SAFE: `true` -> True;
+    is skip-eligible without a per-task opt-in (the lane flags are retired). Fail-SAFE: `true` -> True;
     `false`, absent, an unreadable foundation, or any other token -> False. Read-only and PURE."""
     try:
         text = (root / "PROJECT.md").read_text(encoding="utf-8")
@@ -2342,7 +2232,7 @@ def cmd_todo(args: argparse.Namespace) -> None:
 
     A todo is a JOTTED IDEA, not a task — it carries no spec/contract/gate. It lets you
     record an intent without sizing it. Promote one to a real task with
-    `add.py new-task <slug> --fast` when you decide to build it. Stored in state["todos"]
+    `add.py new-task <slug>` when you decide to build it. Stored in state["todos"]
     as {id (1-based = max+1), text, created, status:"open"|"done"}.
     """
     root = _require_root()                                   # reused -> "no .add/ project found …"
@@ -3667,8 +3557,8 @@ def cmd_check(args: argparse.Namespace) -> None:
             checks.append((ms in milestones, f"task '{slug}' milestone resolves",
                            f"unknown milestone {ms!r}"))
         elif t.get("fast"):
-            # blessed milestone-free fast lane (standalone-fast-task): a --fast task with no
-            # milestone is DELIBERATE — a soft INFO affirmation, never a WARN/orphan nudge.
+            # LEGACY state marker (pre-atomic-node --fast tasks): milestone-free was
+            # DELIBERATE for these — a soft INFO affirmation, never a WARN/orphan nudge.
             infos.append((f"task '{slug}'", "— standalone fast lane (milestone-free by design)"))
         else:
             # warn-never-block: a task outside a milestone is a structural nudge back toward
@@ -4099,7 +3989,7 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
             print(f"persona-fit: {PERSONA_FIT_HINT_TEMPLATE.format(slugs=slugs)}")
     # milestone-lane-nudge: the WM1 bait point — a single-task request routed here costs
     # ~10 calls of milestone ceremony. Advisory only; the command-point beats wrapper prose.
-    print("lane: single task? the oneshot lane is cheaper: add.py new-task <slug> --oneshot")
+    print("lane: single task? skip the milestone: add.py new-task <slug> --title \"...\"")
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
@@ -6211,7 +6101,7 @@ _FLOW_MAP = (
     "start here: add.py status   — where you are + your exact next command\n"
     "flow:  init → new-task → advance → freeze → gate\n"
     '  add.py init --name "<project>" --stage mvp     start a project in this directory\n'
-    '  add.py new-task <slug> --title "..."           a task   [--fast lean · --oneshot single-task]\n'
+    '  add.py new-task <slug> --title "..."           a task (ONE atomic template, every lane)\n'
     "  add.py advance                                 cross to the next phase (status names the exact form)\n"
     '  add.py freeze --by "<name>" --cross            approve the frozen §3 contract (the one human gate)\n'
     "  add.py gate PASS                               record the verify outcome\n"
@@ -6345,27 +6235,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="with --from-delta: target the UNIQUE open SPEC delta whose text "
                          "contains SUBSTR (case-insensitive) instead of the first")
     pn.add_argument("--force", action="store_true", help="overwrite PLAN.md if present")
-    pn.add_argument("--fast", action="store_true",
-                    help="opt into the fast lane: render the one PLAN.md template minus its "
-                         "deep-check/observe blocks (_FAST_SECTIONS) + "
-                         "hold the task to the freeze floor under any milestone")
-    pn.add_argument("--oneshot", action="store_true",
-                    help="fast lane + a REQUEST for the AI-plan-verify contract-freeze gate: "
-                         "scaffolds fast:true, oneshot:true, gate_mode:ai-plan-verify (task2's "
-                         "_ai_freeze_allowed, unchanged, is the sole arbiter of whether it is "
-                         "ever honored; the skip grammar itself is retired — six-phase-loop)")
-    pn.add_argument("--thin", action="store_true",
-                    help="thin lane (thin-engine-loop): the Direction bundle (spec+plan+§4 "
-                         "tests) is drafted pre-freeze, so ONE `freeze --cross` crosses "
-                         "spec+plan+tests into build — collapsing the two bookkeeping advances "
-                         "(3 engine calls: new-task · freeze · gate). Implies the fast template.")
-    pn.add_argument("--full", action="store_true",
-                    help="under a tiny milestone: opt back into the FULL PLAN.md template "
-                         "(tiny members default to the fast lane)")
     pn.add_argument("--sensitivity", default=None, metavar="CLASS",
                     help="declare the task's risk class at creation (base: security|data|"
                          "architecture|mechanical \u222a GLOSSARY classes); a base non-mechanical "
-                         "class forces the full template even under a tiny milestone")
+                         "class blocks any AI-crossed freeze (_ai_freeze_allowed's human floor)")
     pn.set_defaults(func=cmd_new_task)
 
     pdap = sub.add_parser("delta-append",
@@ -6392,8 +6265,8 @@ def build_parser() -> argparse.ArgumentParser:
     pm.add_argument("--force", action="store_true", help="overwrite MILESTONE.md if present")
     pm.add_argument("--tiny", action="store_true",
                     help="tiny plan for small scope: compact MILESTONE.md (goal + Plan + "
-                         "Done-when, no contracts scaffold); member tasks default to the "
-                         "fast lane. Human-declared; the freeze/red/gate floor is unchanged.")
+                         "Done-when, no contracts scaffold). Human-declared; the "
+                         "freeze/red/gate floor is unchanged.")
     pm.add_argument("--queued", action="store_true",
                     help="create the milestone QUEUED (status=queued), not active: it is recorded "
                          "and its MILESTONE.md written, but the active focus is unchanged. Promote it "

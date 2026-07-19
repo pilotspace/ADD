@@ -155,27 +155,3 @@ class MeasureNotBlockTest(_Harness):
         src = (TOOLING / "add.py").read_text(encoding="utf-8")
         self.assertNotIn("advisor_verdict_missing", src,
                          "design is measure-not-block: no hard-gate reject code may ship")
-class TemplatePlacementTest(_Harness):
-    def test_template_carries_advisor_block(self):             # block exists with placeholders
-        p = self._verify_task("t")
-        body = p.read_text(encoding="utf-8")
-        self.assertIn(ADVISOR_HEADER, body)
-        self.assertRegex(body, r"Advisor:\s*<[^>\n]+>", "ships an unfilled Advisor placeholder")
-        self.assertRegex(body, r"Verdict:\s*<[^>\n]+>")
-        self.assertRegex(body, r"Binding:\s*<[^>\n]+")
-
-    def test_block_position_after_refute_before_gate(self):    # ordering invariant
-        p = self._verify_task("t")
-        body = p.read_text(encoding="utf-8")
-        i_refute = body.find("### Refute-read verdict")
-        i_advisor = body.find(ADVISOR_HEADER)
-        i_gate = body.find("### GATE RECORD")
-        self.assertGreater(i_refute, -1, "Refute-read verdict block must still exist")
-        self.assertGreater(i_advisor, -1, "Advisor block must exist")
-        self.assertGreater(i_gate, -1, "GATE RECORD must exist")
-        self.assertLess(i_refute, i_advisor,
-                        "Advisor block must sit AFTER Refute-read verdict")
-        self.assertLess(i_advisor, i_gate,
-                        "Advisor block must sit BEFORE GATE RECORD")
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

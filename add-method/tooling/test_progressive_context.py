@@ -41,7 +41,7 @@ class _Project(unittest.TestCase):
         task_md = self.root / ".add" / "tasks" / "widget" / "PLAN.md"
         task_md.write_text(
             task_md.read_text().replace(
-                "Feature: <name>",
+                "Feature: <name — one-line description of the behavior this task ships>",
                 "Feature: widget rules\nMust:\n  - the one rule",
             ), encoding="utf-8")
 

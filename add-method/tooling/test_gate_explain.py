@@ -69,14 +69,14 @@ class _Harness(unittest.TestCase):
         self.md.write_text(t, encoding="utf-8")
 
     def _fill_advisor_pass(self):
-        t = (self.md.read_text(encoding="utf-8")
-             .replace("Advisor: <agent-id | self>", "Advisor: self")
-             .replace("1. Security: <CLEAR | HARD-STOP: finding>", "1. Security: CLEAR")
-             .replace("2. Concurrency: <CLEAR | RESIDUE: finding>", "2. Concurrency: CLEAR")
-             .replace("3. Architecture: <CLEAR | RESIDUE: finding>", "3. Architecture: CLEAR")
-             .replace("Verdict: <PASS | HARD-STOP>", "Verdict: PASS")
-             .replace("Residue: <none | summary>", "Residue: none")
-             .replace("Binding: <yes — mechanical | advisory — <sensitivity>>", "Binding: yes — mechanical"))
+        # atomic-node: the cross-agent advisor WRITES the block (template no
+        # longer scaffolds it) — the fixture inserts a clean PASS verdict.
+        block = ("### Advisor 3-lens verdict — sequential\n"
+                 "Advisor: self\n"
+                 "1. Security: CLEAR\n2. Concurrency: CLEAR\n3. Architecture: CLEAR\n"
+                 "Verdict: PASS\nResidue: none\nBinding: yes — mechanical\n\n")
+        t = self.md.read_text(encoding="utf-8").replace(
+            "### GATE RECORD", block + "### GATE RECORD", 1)
         self.md.write_text(t, encoding="utf-8")
 
 

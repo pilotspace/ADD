@@ -105,7 +105,7 @@ class DirectionIsTheBirthPhase(_Harness):
                          "the PLAN.md marker must mirror state at scaffold")
 
     def test_every_lane_prescribes_three_calls(self):                      # M4
-        for slug, flags in (("a", []), ("b", ["--fast"]), ("c", ["--oneshot"])):
+        for slug, flags in (("a", []), ("b", []), ("c", [])):   # atomic-node: ONE lane
             out = self._silent("new-task", slug, "--title", "Feature", *flags)
             lane = flags[0] if flags else "default"
             self.assertNotRegex(
@@ -140,7 +140,7 @@ class OneFreezeCrossesTheFront(_Harness):
 class GateKeepsTheCompoundCross(_Harness):
     def test_gate_compound_cross_regression(self):                         # M3 (green pin)
         # today's thin lane already reaches build in one cross; the pin holds it
-        self._silent("new-task", "t", "--title", "Feature", "--thin")
+        self._silent("new-task", "t", "--title", "Feature")
         self._draft_s3("t")
         self._silent("freeze", "--by", "Tin Dang", "--cross")
         self.assertEqual(self._stored_phase("t"), "build")

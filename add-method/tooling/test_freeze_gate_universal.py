@@ -122,7 +122,7 @@ class UniversalFreezeGateTest(unittest.TestCase):
         self._quiet(["new-task", slug])
 
     def _fast_task_at_direction(self, slug="f"):
-        self._quiet(["new-task", slug, "--fast"])
+        self._quiet(["new-task", slug])
 
     # ── universal gate: PLAIN-milestone DRAFT §3 is now BLOCKED (inverts old behavior) ────
     def test_plain_milestone_unfrozen_blocks(self):

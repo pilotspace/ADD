@@ -85,23 +85,6 @@ class _Board(unittest.TestCase):
         self._append_delta(slug, f"  - [SPEC · open] {text} (evidence: prod herd)")
 
 
-class SeedPrefillsBacklink(_Board):
-    def test_seed_prefills_section0_backlink(self):              # M1
-        self._silent("new-task", "prior", "--title", "P")
-        self._give_open_delta("prior")
-        self._silent("new-task", "child", "--title", "C", "--from-delta", "prior")
-        rel = self._related_intent("child") or ""
-        self.assertIn("prior", rel, "child §0 Related intent must name the prior task")
-        self.assertNotIn("<", rel, "the §0 placeholder must be replaced, not left as <…>")
-        prior_txt = self._task_md("prior").read_text(encoding="utf-8")
-        self.assertIn("[→ child]", prior_txt, "the source delta is flipped to seeded [→ child]")
-
-    def test_plain_newtask_leaves_section0(self):                # M2, R:backlink_clobbers_authored
-        self._silent("new-task", "plain", "--title", "X")
-        rel = self._related_intent("plain") or ""
-        self.assertIn("<", rel, "a non-seeded task keeps the §0 Related-intent placeholder")
-
-
 class CheckWarnsDangling(_Board):
     def test_check_warns_on_dangling_pointer(self):             # M3
         self._silent("new-task", "host", "--title", "H")

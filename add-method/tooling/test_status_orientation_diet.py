@@ -28,7 +28,7 @@ class _Harness(unittest.TestCase):
         self.addCleanup(os.chdir, self._cwd)
         os.chdir(self.tmp)
         self._silent("init", "--name", "demo", "--stage", "mvp")
-        self._silent("new-task", "orient", "--fast", "--title", "x")
+        self._silent("new-task", "orient", "--title", "x")
 
     def _silent(self, *argv):
         out, err = io.StringIO(), io.StringIO()

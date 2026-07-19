@@ -42,7 +42,7 @@ class PersonaNudgeSeams(unittest.TestCase):
         self.assertIn(NAG, out, "idle (no active task) status keeps the discovery nudge")
 
     def test_active_task_status_is_quiet(self):
-        _run(self.root, "new-task", "probe", "--fast", "--title", "t")
+        _run(self.root, "new-task", "probe", "--title", "t")
         out = _run(self.root, "status").stdout
         self.assertNotIn(NAG, out,
                          "an active task's status must not re-advertise personas every turn")

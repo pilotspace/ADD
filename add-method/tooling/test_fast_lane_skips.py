@@ -156,11 +156,13 @@ class _Harness(unittest.TestCase):
             proj.write_text(proj.read_text(encoding="utf-8") + "\nbenchmark_mode: true\n",
                              encoding="utf-8")
         argv = ["new-task", slug, "--title", "Feature"]
-        if oneshot:
-            argv.append("--oneshot")
-        elif fast:
-            argv.append("--fast")
         self._silent(*argv)
+        if oneshot:
+            # atomic-node: gate_mode is declared in the artifact header, not a CLI flag
+            md = self._task_md(slug)
+            md.write_text(md.read_text(encoding="utf-8").replace(
+                "phase: direction", "gate_mode: ai-plan-verify\nphase: direction", 1),
+                encoding="utf-8")
 
     def _set_section3_and_freeze(self, slug):
         # phase-collapse-3: a fresh task is BORN at `direction` — draft + freeze §3
@@ -316,37 +318,8 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
 
 
 # ---------------------------------------------------------------------------
-# M7 — new-task --oneshot / --fast (no --oneshot)
-# ---------------------------------------------------------------------------
-
-class OneshotNewTaskTest(_Harness):
-    def test_scaffolds_minimal_template_and_both_header_lines(self):
-        self._silent("lock", "--force")
-        self._silent("new-task", "quick", "--title", "Feature", "--oneshot")
-        text = self._task_md("quick").read_text(encoding="utf-8")
-        secs = set(add._phase_spans(text))
-        self.assertEqual(secs, {1, 2, 3, 4, 5, 6})   # template-unify: fast = full minus §7
-        self.assertRegex(text, r"(?m)^fast:\s*true")
-        self.assertRegex(text, r"(?m)^oneshot:\s*true")
-        self.assertRegex(text, r"(?m)^gate_mode:\s*ai-plan-verify")
-        st = self._state()["tasks"]["quick"]
-        self.assertIs(st["fast"], True)
-        self.assertIs(st["oneshot"], True)
-
-
-class FastOnlyUnaffectedByOneshotTest(_Harness):
-    def test_fast_without_oneshot_has_no_new_header_lines_or_state_key(self):
-        self._silent("lock", "--force")
-        self._silent("new-task", "quick", "--title", "Feature", "--fast")
-        text = self._task_md("quick").read_text(encoding="utf-8")
-        self.assertRegex(text, r"(?m)^fast:\s*true")
-        self.assertNotRegex(text, r"(?m)^oneshot:")
-        self.assertNotRegex(text, r"(?m)^gate_mode:")
-        self.assertNotIn("oneshot", self._state()["tasks"]["quick"])
-
-
-# ---------------------------------------------------------------------------
-# M8 — _project_benchmark_mode
+# M7 retired (atomic-node): the --oneshot/--fast scaffolds are gone — gate_mode
+# is a header declaration and the template is ONE atomic render for every task.
 # ---------------------------------------------------------------------------
 
 class ProjectBenchmarkModeTest(_Harness):
@@ -381,6 +354,7 @@ class StatusGuideSurfaceTest(_Harness):
         self._new_fast_task("t", fast=True)
         sp = self.tmp / ".add" / "state.json"
         raw = json.loads(sp.read_text(encoding="utf-8"))
+        raw["tasks"]["t"]["oneshot"] = True   # legacy lane marker (historic board)
         raw["tasks"]["t"]["skips"] = [{"phase": "observe", "reason": "historic",
                                        "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
         sp.write_text(json.dumps(raw), encoding="utf-8")
@@ -417,14 +391,6 @@ class GateExplainSkipSetTest(_Harness):
         out = self._silent("gate", "--explain", "t")
         self.assertNotIn("skip-set:", out)
 class TemplateScaffoldTest(unittest.TestCase):
-    def test_fast_template_carries_no_skips_machinery(self):
-        # phase-merge-verify: the grammar is retired. template-unify: the fast lane
-        # derives from the ONE template, so the derived render is the pinned surface.
-        text = add._strip_fast_sections(
-            (HERE / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8"))
-        self.assertNotIn("skips:", text)
-        self.assertNotIn("Skip rationale:", text)
-
     def test_full_template_carries_no_skips_machinery(self):
         # (pre-dates the retirement: the full template NEVER carried the grammar)
         body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
@@ -482,10 +448,11 @@ class FloorCompositionTest(_Harness):
     def test_oneshot_security_task_freeze_stays_human(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "risky", "--title", "F", "--oneshot")
+        self._silent("new-task", "risky", "--title", "F")
         self._set_header("risky", skips="observe")   # vestigial — must change nothing
         p = self._task_md("risky")
         t = p.read_text(encoding="utf-8")
+        t = t.replace("phase: direction", "gate_mode: ai-plan-verify\nphase: direction", 1)
         t = re.sub(r"(?m)^(autonomy:[^\n]*)$", r"\1\nsensitivity: security", t, count=1)
         p.write_text(t, encoding="utf-8")
         # phase-collapse-3: the task is BORN at `direction` — no bookkeeping crossing is

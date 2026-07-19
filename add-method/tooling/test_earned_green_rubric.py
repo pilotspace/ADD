@@ -83,8 +83,7 @@ CHEAT_KEYWORDS = ["overfit", "vacuous", "stub"]
 SIX_EXISTING = [
     "all tests pass",
     "no test or contract was altered during build",
-    "### Deep checks",
-    "### GATE RECORD",
+        "### GATE RECORD",
 ]
 
 # heal-then-escalate (task 3) LANDED the bounded self-heal loop. Its home is run.md (the

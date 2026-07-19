@@ -74,11 +74,11 @@ class _Harness(unittest.TestCase):
                             "commit", "-q", "--allow-empty", "-m", "seed"], check=True)
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _DRAFT.lstrip("\n") + "\n",
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", _DRAFT.lstrip("\n") + "\n",
                      text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         # quality-floors: an unfilled §1 Boundary: refuses the freeze — fill it

@@ -70,11 +70,10 @@ class KickoffLaneTest(_Harness):
 
     def test_init_kickoff_names_single_task_lane_first(self):
         out = self._init()
-        self.assertIn("--oneshot", out, "kickoff never names the single-task lane")
-        one = out.index("--oneshot")
-        ms = out.index("new-milestone <slug>")
+        one = out.index("headless, single task:")
+        ms = out.index("headless, multi-task:")
         self.assertLess(one, ms,
-                        "the --oneshot lane must print BEFORE the milestone kickoff lines "
+                        "the single-task kickoff must print BEFORE the milestone kickoff lines "
                         "(rep2 — the cheapest measured run — skipped the milestone)")
 
 
@@ -104,10 +103,10 @@ class RecipeTest(_Harness):
     def test_new_task_emits_full_recipe_fast_and_oneshot_lanes(self):
         self._init()
         self._ok("lock", "--force")
-        out = self._ok("new-task", "t-one", "--title", "T", "--oneshot")
+        out = self._ok("new-task", "t-one", "--title", "T")
         self._assert_recipe(out, "--oneshot lane")
         self._ok("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        out = self._ok("new-task", "t-fast", "--title", "T", "--fast", "--milestone", "m")
+        out = self._ok("new-task", "t-fast", "--title", "T", "--milestone", "m")
         self._assert_recipe(out, "--fast lane")
 
     def test_later_task_recipe_is_compact_not_re_annotated(self):
@@ -118,8 +117,8 @@ class RecipeTest(_Harness):
         # no rediscovery/--help backfire — only the repeated annotation prose is dropped.
         self._init()
         self._ok("lock", "--force")
-        first = self._ok("new-task", "t1", "--title", "T", "--oneshot")
-        second = self._ok("new-task", "t2", "--title", "T", "--oneshot")
+        first = self._ok("new-task", "t1", "--title", "T")
+        second = self._ok("new-task", "t2", "--title", "T")
         self._assert_recipe(first, "first task")   # full flow named
         self._assert_recipe(second, "later task")  # full flow STILL named (no backfire)
         self.assertIn("[approval —", first,
@@ -182,7 +181,7 @@ class BaitDeadRegressionTest(_Harness):
     def test_advance_to_plan_unfilled_succeeds(self):
         self._init()
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
 

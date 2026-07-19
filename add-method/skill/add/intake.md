@@ -48,9 +48,9 @@ already-frozen scope?" → if yes it is a `change-request` (never re-size frozen
 Only if no, apply the size test: a new theme → `new-major`; a slice of a live theme → `sub-milestone`;
 fits the active milestone → `task`.
 
-**Fast-fit test (task bucket only).** single behavior · no new contract surface others consume ·
-sensitivity mechanical → propose `add.py new-task <slug> --fast` + why. The flag stays human-owned:
-the proposal carries it; the human's confirm picks it. Any doubt → the full lane.
+**Size the freeze, not the template (task bucket only).** ONE atomic template serves every task;
+single behavior · no new contract surface others consume · sensitivity mechanical → propose drafting
+the whole Direction bundle in one pass to a single freeze. Any doubt → draft §1–§4 beat by beat.
 
 **One-task gap rule.** ONE task that does NOT fit the active milestone's scope: never force it
 into `sub-milestone` — create a micro-milestone to house it (`new-milestone` + `new-task`) for

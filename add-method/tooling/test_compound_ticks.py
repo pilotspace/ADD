@@ -73,11 +73,11 @@ class _Harness(unittest.TestCase):
         """A oneshot task at the plan phase with a freezeable §3."""
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
@@ -147,7 +147,7 @@ class RecipeCrossTest(_Harness):
     def test_recipe_advertises_compressed_lane(self):              # M3
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        out = self._ok("new-task", "t", "--title", "T", "--oneshot")
+        out = self._ok("new-task", "t", "--title", "T")
         tail = out[out.lower().index("recipe"):]
         self.assertIn("--cross", tail, "the recipe must advertise freeze --cross")
         self.assertIn("gate PASS", tail)

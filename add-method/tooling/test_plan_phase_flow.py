@@ -144,7 +144,7 @@ class _CLI(unittest.TestCase):
         md = self._task_md().read_text()
         self.assertNotIn("## 0 · GROUND", md)
         self.assertIn("## 3 · PLAN", md)
-        for sub in ("### Grounding", "### Contract", "### Build-strategy"):
+        for sub in ("### Contract", "### Contract", "### Build-strategy"):
             self.assertIn(sub, md, f"§3 PLAN must contain {sub}")
 
     # M9 — an unfrozen `plan` is the PLAN approval seam

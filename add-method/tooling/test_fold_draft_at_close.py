@@ -91,7 +91,7 @@ class _Harness(unittest.TestCase):
         self._ok("advance", "--to", "plan")
         p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
