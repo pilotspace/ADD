@@ -40,7 +40,7 @@ The spec, contract, and tests fix *what* correct means; they deliberately do not
 
 - **Approach (domain strategy)** — the core technique and why it fits this task's domain: an algorithm, a data model, a migration path, a prose structure, a UX flow. It comes from the framings §1 already weighed, stated in the loaded persona's domain vocabulary.
 - **Data strategy** — the shapes and access patterns the work realizes; it must agree with the schema line the frozen contract states.
-- **Pattern** — the domain pattern the build follows, citing the convention (§0 Honors / CONVENTIONS.md) it extends.
+- **Pattern** — the domain pattern the build follows, citing the convention (CONVENTIONS.md Honors) it extends.
 - **Optimization stance** — what, if anything, is being optimized and to what budget: latency, memory, token cost, readability. "Correctness-first, no budget" is a legitimate answer; silence is not, because the stance you declare here is the monitor you install at Observe.
 
 The facets are drafted at the tests→build crossing — the moment the red suite makes the shape concrete and a challenge is still cheap — with the facet you trust least ⚠-marked (on a high-risk task, that flag is the natural advisor consult). They are guidance, not a gate: the builder may improve on them as reality pushes back, and reports the strategy actually used at Verify, where it feeds the task's decision record.

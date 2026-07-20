@@ -165,7 +165,7 @@ This book uses plain step names. Teams connecting it to a larger formal standard
 | Plain step (this book) | Formal phase name |
 |------------------------|-------------------|
 | Project setup | Foundation |
-| Ground (preamble) | Codebase Discovery (the §0 grounding map) |
+| Ground (preamble) | Codebase Discovery (the grounding map) |
 | Specify | Domain Discovery + Spec Definition |
 | (design portion) | UX-Driven Design |
 | Scenarios | Behavior specification (Given/When/Then) |
