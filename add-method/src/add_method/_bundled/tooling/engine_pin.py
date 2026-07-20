@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "3a191a5595c8be8794120e753cbc1d77"  # re-aimed @ atomic-node (ONE atomic PLAN.md template; --fast/--oneshot/--thin/--full lane scaffolds retired; AI-verify block template-borne; Regression-floor + multi-agent Advisor seams; Build-expectations block + opt-in gate retired; edge-truth graph compile + relate verb; neighborhood-status card REVERTED — gate bench FAIL, rot curve returned at +33% cost). prior: 2d28aebe… @ neighborhood-status
+ENGINE_MD5 = "b2869fdd50dd469c65102386c0fcb699"  # re-aimed @ graph-repair (verb 33 `locate`: test path -> owning node + in-node/interface-regression class; slug -> dependent closure over reverse depends-on/extends — the minimal repair subgraph; neighborhood-status card stays reverted). prior: 3a191a55… @ nbr-card-revert
 ENGINE_PKG_MD5 = "ec7f8093d556a5e00b25353005b018b0"  # re-aimed @ atomic-node (constants drops _FAST_SECTIONS — the lane scaffolds retired with the fat template blocks; _section_unfilled serves contract-fill only). prior: 557f500f… @ book-stops-shipping

@@ -68,6 +68,10 @@ LIFECYCLE = [
     ["set-milestone", "t2", "none"],           # detach: t2 must not block milestone-done mvp
     ["relate", "t2", "--relates-to", "t"],     # edge-truth W1.5: post-creation edge verb
                                                # (reads/writes state only, never docs/)
+    ["locate", "t"],                           # graph-repair W2: read-only failure-location —
+                                               # slug form prints t's dependent closure (t2's edge
+                                               # is relates_to, so the closure is empty; reads
+                                               # state only, never docs/)
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
     ["todo", "a captured idea"],               # backlog capture (todo-capture): appends state["todos"], never docs/
     ["status"],

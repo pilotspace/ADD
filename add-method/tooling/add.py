@@ -1236,6 +1236,101 @@ def cmd_relate(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))
 
 
+def _dependent_closure(state: dict, slug: str) -> list[tuple[str, int, str]]:
+    """graph-repair W2: REVERSE reachability over depends_on ∪ extends — every task
+    that must re-verify if `slug`'s contract changes (the minimal necessary repair
+    subgraph). BFS so depth = shortest interface distance; per-ring sorted so output
+    is deterministic. relates_to never enters: context is not interface. DONE
+    dependents stay in — settled work re-verifies when its foundation moves."""
+    tasks = state.get("tasks") or {}
+    rev: dict[str, list[tuple[str, str]]] = {}
+    for t, rec in tasks.items():
+        rel = _task_relations(rec or {})
+        for key in ("depends_on", "extends"):
+            for parent in rel[key]:
+                rev.setdefault(parent, []).append((t, key.replace("_", "-")))
+    out: list[tuple[str, int, str]] = []
+    seen, ring, depth = {slug}, [slug], 0
+    while ring:
+        depth += 1
+        nxt: list[str] = []
+        for node in ring:
+            for child, kind in sorted(rev.get(node, [])):
+                if child in seen:
+                    continue
+                seen.add(child)
+                out.append((child, depth, kind))
+                nxt.append(child)
+        ring = nxt
+    return out
+
+
+def _print_closure(state: dict, slug: str) -> None:
+    closure = _dependent_closure(state, slug)
+    if not closure:
+        print(f"closure of '{slug}': no dependents — no task declares a "
+              f"depends-on/extends edge on it")
+        return
+    print(f"closure of '{slug}' — re-verify these if its contract changes "
+          f"(reverse depends-on ∪ extends):")
+    tasks = state.get("tasks") or {}
+    for child, depth, kind in closure:
+        ph = (tasks.get(child) or {}).get("phase", "?")
+        print(f"  {child} [{ph}] ({kind}, depth {depth})")
+
+
+def cmd_locate(args: argparse.Namespace) -> None:
+    """graph-repair W2: deterministic failure-location — no LLM, read-only. A test
+    PATH maps to its OWNING node (§4 `Tests live in:` declarations, falling back to
+    the frozen §5 scope snapshot) plus the failure class: `in-node` (owner still
+    live — fix inside it, its frozen suite is the floor) vs `interface-regression`
+    (owner DONE — a live change broke a settled contract; the repair set is that
+    owner's dependent closure). A task SLUG prints the closure directly."""
+    root = _require_root()
+    state = load_state(root)
+    ref = args.ref.strip()
+    tasks = state.get("tasks") or {}
+    if ref in tasks:
+        _print_closure(state, ref)
+        return
+    rootp = root.parent.resolve()
+    target = (Path(ref) if Path(ref).is_absolute() else root.parent / ref).resolve()
+    try:
+        relref = target.relative_to(rootp).as_posix()
+    except ValueError:
+        relref = ref
+    owners: list[tuple[str, str]] = []
+    for slug in sorted(tasks):
+        try:
+            if any(f.resolve() == target for f in _declared_test_files(root, slug)):
+                owners.append((slug, "§4 Tests-live-in"))
+                continue
+        except OSError:
+            pass
+        for tok in ((tasks[slug].get("scope") or {}).get("declared") or []):
+            t = str(tok).strip().strip("`")
+            t = t[2:] if t.startswith("./") else t
+            if t and (relref == t or relref.startswith(t.rstrip("/") + "/")):
+                owners.append((slug, "scope snapshot"))
+                break
+    if not owners:
+        print(f"unowned: no task declares `{ref}` — not in any §4 Tests-live-in "
+              f"nor frozen scope snapshot; treat it as a host/foreign surface "
+              f"(regression floor), or declare it before repairing")
+        return
+    for slug, prov in owners:
+        ph = (tasks.get(slug) or {}).get("phase", "?")
+        print(f"owner: {slug} [{ph}] (via {prov})")
+        if ph == "done":
+            print(f"class: interface-regression — '{slug}' is settled; a live change "
+                  f"broke its contract. Fix the breaker first; if the CONTRACT itself "
+                  f"must move, re-verify the closure:")
+            _print_closure(state, slug)
+        else:
+            print(f"class: in-node — fix inside '{slug}'; its frozen suite is the "
+                  f"floor (never weaken it to pass)")
+
+
 def _relations_health(root: Path, state: dict) -> list[dict]:
     """ADVISORY validate/sync pass over every task's non-blocking relations. Returns findings
     [{slug, relation, target, kind}] — kind in {'dangling','self_relation'}. A target that is a
@@ -6379,6 +6474,12 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--relates-to", dest="relates_to",
                     help="comma-separated slugs this task relates to (non-blocking)")
     pr.set_defaults(func=cmd_relate)
+
+    plc = sub.add_parser("locate", help="failure-location: a test path -> owning node "
+                         "+ class (in-node vs interface-regression); a slug -> its "
+                         "dependent closure (who re-verifies on a contract change)")
+    plc.add_argument("ref", help="test path (project-root-relative) or task slug")
+    plc.set_defaults(func=cmd_locate)
 
     pdap = sub.add_parser("delta-append",
                           help="append one lesson to its living 5-DD spec under .add/specs/ "
