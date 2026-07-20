@@ -62,8 +62,8 @@ gate); capture each surfaced decision as an ADR in `PROJECT.md` **Key Decisions*
 | **sequential · manual/conservative** | contract freeze **and** every Verify — safest |
 
 One task at a time; raise the gate via `add.py autonomy set conservative --project` (or
-`init --run-mode conservative`). Need concurrency? Spawn a subagent per task to run in parallel;
-floor stays **one human approval per contract**.
+`init --run-mode conservative`). Need concurrency? Spawn a subagent per task to run in parallel, its
+model picked by task complexity (mid ordinary · top complex) — floor stays **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 
