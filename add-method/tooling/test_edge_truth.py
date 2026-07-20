@@ -185,5 +185,78 @@ class EdgeHintTest(_EdgeHarness):
         self.assertEqual(code, 0)
 
 
+class RelateVerbTest(_EdgeHarness):
+    """W1.5: the post-creation edge verb the edge-hint ratifies through. Additive
+    (dedup, never drops), validate-then-write on the SOURCE slug, dangling TARGETS
+    allowed (check's warn owns them — forward edges are legal), self-edge refused."""
+
+    def _two_tasks(self):
+        self._silent("lock", "--force")
+        self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
+        self._silent("new-task", "api-core", "--title", "API")
+        self._silent("new-task", "auth-rules", "--title", "Auth")
+
+    def test_relate_adds_blocking_edge(self):
+        self._two_tasks()
+        self._silent("relate", "auth-rules", "--depends-on", "api-core")
+        self.assertEqual(self._state()["tasks"]["auth-rules"]["depends_on"], ["api-core"])
+
+    def test_relate_dedups_and_appends(self):
+        self._two_tasks()
+        self._silent("relate", "auth-rules", "--depends-on", "api-core")
+        self._silent("relate", "auth-rules", "--depends-on", "api-core,search")
+        self.assertEqual(self._state()["tasks"]["auth-rules"]["depends_on"],
+                         ["api-core", "search"], "append + dedup, never drop")
+
+    def test_relate_nonblocking_edges(self):
+        self._two_tasks()
+        self._silent("relate", "auth-rules", "--extends", "api-core")
+        self.assertEqual(self._state()["tasks"]["auth-rules"].get("extends"), ["api-core"])
+
+    def test_unknown_source_refused(self):
+        self._two_tasks()
+        out, code = self._run("relate", "ghost", "--depends-on", "api-core")
+        self.assertEqual(code, 1)
+
+    def test_self_edge_refused(self):
+        self._two_tasks()
+        out, code = self._run("relate", "auth-rules", "--depends-on", "auth-rules")
+        self.assertEqual(code, 1)
+        self.assertIn("self", out)
+
+    def test_relate_silences_the_hint(self):
+        self._silent("lock", "--force")
+        self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
+        self._mk_done_with_scope_helper()
+        self._draft_with_scope("auth-rules", "`src/`")
+        self._silent("relate", "auth-rules", "--depends-on", "api-core")
+        out = self._silent("freeze", "auth-rules", "--by", "Ada", "--cross")
+        self.assertNotIn("edge-hint", out, "the ratified edge ends the proposal")
+
+    def _mk_done_with_scope_helper(self):
+        EdgeHintTest._mk_done_with_scope(self, "api-core", "`src/`")
+
+    def _draft_with_scope(self, slug, scope_line):
+        EdgeHintTest._draft_with_scope(self, slug, scope_line)
+
+
+class CycleWarnTest(_EdgeHarness):
+    def test_compile_warns_on_cycle(self):
+        out_holder = {}
+        import io
+        from contextlib import redirect_stdout
+        self._silent("lock", "--force")
+        self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp", "--await-confirm")
+        mfile = self.tmp / ".add" / "milestones" / "m" / "MILESTONE.md"
+        mfile.write_text(_fill_confirm_floor(
+            mfile.read_text(encoding="utf-8"),
+            "## Tasks (breadth-first decomposition; detail lives in each PLAN.md)\n"
+            "- [ ] a   depends-on: b   — first\n"
+            "- [ ] b   depends-on: a   — second\n"), encoding="utf-8")
+        out = self._silent("milestone-confirm", "m", "--by", "Ada")
+        self.assertIn("cycle", out.lower(),
+                      "a depends-on cycle deadlocks the wave schedule — warn at compile")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

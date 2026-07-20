@@ -1191,8 +1191,8 @@ def _edge_hints(root: Path, state: dict, slug: str) -> list[str]:
                        if a == b or a.startswith(b) or b.startswith(a)), None)
         if shared:
             hints.append(f"edge-hint: scope overlaps done task '{other}' ({shared}) — "
-                         f"likely a depends-on edge; ratify it in MILESTONE.md's Tasks "
-                         f"list (re-confirm recompiles) or at new-task")
+                         f"likely a depends-on edge; ratify: add.py relate {slug} "
+                         f"--depends-on {other}")
     return hints
 
 
@@ -1249,6 +1249,40 @@ def _milestone_relations(root: Path, mslug: str) -> dict:
             if val and val.lower() != "none" and not val.startswith("<"):   # skip a placeholder/none
                 out[key] = _parse_deps(val)
     return out
+
+
+def cmd_relate(args: argparse.Namespace) -> None:
+    """edge-truth W1.5: the post-creation edge verb the freeze edge-hint ratifies
+    through. ADDITIVE only (append + dedup — dropping an edge is a deliberate state
+    edit, not a verb). Validate-then-write on the SOURCE slug; TARGETS may dangle
+    (forward edges are legal — check's existing warn owns them); a self-edge is
+    refused (nonsense input, not a measurement)."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, args.slug)                 # unknown slug -> _die
+    rec = state["tasks"][slug]
+    changed = False
+    for flag, key in (("depends_on", "depends_on"), ("extends", "extends"),
+                      ("relates_to", "relates_to")):
+        new = _parse_deps(getattr(args, flag, None))
+        if not new:
+            continue
+        if slug in new:
+            _die(f"self_relation: '{slug}' cannot relate to itself")
+        cur = list(rec.get(key) or [])
+        merged = cur + [d for d in new if d not in cur]
+        if merged != cur:
+            rec[key] = merged
+            changed = True
+    if not changed:
+        _die("relate_noop: pass at least one NEW edge — "
+             "--depends-on / --extends / --relates-to <slug,slug>")
+    rec["updated"] = _now()
+    save_state(root, state)
+    rel = _task_relations(rec)
+    print(f"related '{slug}' — depends_on {rel['depends_on']} · "
+          f"extends {rel['extends']} · relates_to {rel['relates_to']}")
+    print(_next_footer(root, state))
 
 
 def _relations_health(root: Path, state: dict) -> list[dict]:
@@ -4114,6 +4148,27 @@ def _persist_task_graph(root: Path, state: dict, slug: str) -> None:
     edges = sum(len(v) for v in graph.values())
     print(f"compiled task graph: {len(graph)} nodes · {edges} edges "
           "(new-task inherits each node's planned depends-on)")
+    # cycle warn (measure-not-block): a depends-on cycle deadlocks the wave schedule —
+    # name it at compile time, never refuse the confirm (the human just approved the plan;
+    # the fix is an edit + re-confirm, and the recompile is idempotent).
+    seen: set[str] = set()
+    def _visit(n: str, path: tuple) -> tuple | None:
+        if n in path:
+            return path[path.index(n):] + (n,)
+        if n in seen or n not in graph:
+            return None
+        seen.add(n)
+        for d in graph[n]:
+            found = _visit(d, path + (n,))
+            if found:
+                return found
+        return None
+    for node in graph:
+        cyc = _visit(node, ())
+        if cyc:
+            print(f"warning: graph_cycle — depends-on cycle {' -> '.join(cyc)} "
+                  "would deadlock the wave schedule; edit MILESTONE.md and re-confirm")
+            break
 
 
 def cmd_milestone_confirm(args: argparse.Namespace) -> None:
@@ -6366,6 +6421,16 @@ def build_parser() -> argparse.ArgumentParser:
                          "architecture|mechanical \u222a GLOSSARY classes); a base non-mechanical "
                          "class blocks any AI-crossed freeze (_ai_freeze_allowed's human floor)")
     pn.set_defaults(func=cmd_new_task)
+
+    pr = sub.add_parser("relate", help="declare task-graph edges AFTER creation "
+                        "(the edge-hint's ratify path; additive, never drops)")
+    pr.add_argument("slug")
+    pr.add_argument("--depends-on", dest="depends_on",
+                    help="comma-separated task slugs this task depends on (BLOCKING)")
+    pr.add_argument("--extends", help="comma-separated slugs this task extends (non-blocking)")
+    pr.add_argument("--relates-to", dest="relates_to",
+                    help="comma-separated slugs this task relates to (non-blocking)")
+    pr.set_defaults(func=cmd_relate)
 
     pdap = sub.add_parser("delta-append",
                           help="append one lesson to its living 5-DD spec under .add/specs/ "
