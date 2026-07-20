@@ -74,7 +74,7 @@ one bucket — `new-major` ·
 `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`; the human
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
 `MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks — `phases/direction.md`), then
-`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed). For
+`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed; the confirm COMPILES the Tasks list into the task DAG — new-task inherits each node's planned depends-on). For
 `task`/`change-request`: `add.py new-task`, then beat 1 above.
 
 ## The 3-beat loop (inline — this file IS the loop; references load on demand)

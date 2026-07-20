@@ -748,6 +748,10 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if milestone and not _milestone_confirmed(state, milestone):
         _die(f"milestone_unconfirmed: confirm it first — add.py milestone-confirm {milestone}")
     depends_on = _parse_deps(getattr(args, "depends_on", None))
+    # edge-truth inherit: no explicit edge -> the milestone's compiled plan is the truth.
+    # Verbatim, creation-order-proof (a dangling forward edge is check's warn, never lost).
+    if not depends_on and milestone:
+        depends_on = list((state["milestones"][milestone].get("planned") or {}).get(slug) or [])
     # relations-surface: two NON-BLOCKING sibling relations, parsed exactly like depends_on
     # (comma-separated slugs). They never gate the wave schedule — legibility + validate only.
     extends = _parse_deps(getattr(args, "extends", None))
@@ -1148,6 +1152,8 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     # _build_entry's floor machinery (freeze gate + tamper tripwire + §5 scope
     # snapshot + the cross-component hold/snapshot) — never a parallel path. The human
     # seam (this freeze) + the verify seam (gate next) stay.
+    for _hint in _edge_hints(root, state, slug):
+        print(_hint)
     if getattr(args, "cross", False):
         cur = state["tasks"][slug]["phase"]
         if cur == "direction":
@@ -1160,6 +1166,34 @@ def cmd_freeze(args: argparse.Namespace) -> None:
         else:
             print(f"--cross: only a direction-phase freeze crosses (task is at '{cur}' — no-op)")
     print(_next_footer(root, state))
+
+
+def _edge_hints(root: Path, state: dict, slug: str) -> list[str]:
+    """edge-truth hint (task-graph-native W1): at freeze — scope is declared by now —
+    name every DONE task whose declared scope overlaps this one's when NO edge links
+    them. Deterministic (the _declared_scope grammar both sides, containment on the
+    resolved paths), print-only, capped at 2, and silent on UNDECLARED either side —
+    a proposal for the agent/human to ratify, never a refusal (measure-not-block)."""
+    mine = _declared_scope(root, slug)
+    if not mine:
+        return []
+    rec = (state.get("tasks") or {}).get(slug) or {}
+    linked = set((rec.get("depends_on") or []) + (rec.get("extends") or [])
+                 + (rec.get("relates_to") or []))
+    hints: list[str] = []
+    for other, orec in (state.get("tasks") or {}).items():
+        if len(hints) >= 2:
+            break
+        if other == slug or other in linked or (orec or {}).get("phase") != "done":
+            continue
+        theirs = _declared_scope(root, other) or []
+        shared = next((b for a in mine for b in theirs
+                       if a == b or a.startswith(b) or b.startswith(a)), None)
+        if shared:
+            hints.append(f"edge-hint: scope overlaps done task '{other}' ({shared}) — "
+                         f"likely a depends-on edge; ratify it in MILESTONE.md's Tasks "
+                         f"list (re-confirm recompiles) or at new-task")
+    return hints
 
 
 def _parse_deps(raw: str | None) -> list[str]:
@@ -4039,6 +4073,49 @@ def cmd_new_milestone(args: argparse.Namespace) -> None:
     print(_next_footer(root, state))   # converges the old "Decompose it into tasks: …" hint
 
 
+_PLAN_LINE_RE = re.compile(r"^-\s*\[.\]\s+(\S+)\s+depends-on:\s*(.*?)\s+—", re.M)
+
+
+def _compile_task_graph(md_text: str) -> dict[str, list[str]]:
+    """edge-truth (task-graph-native W1): compile MILESTONE.md's `## Tasks` list into the
+    planned task DAG — the milestone is the scope ROOT; the graph's depth lives in these
+    edges. Grammar: `- [ ] <slug>   depends-on: <none | slug, slug>   — <one line>`.
+    Placeholder `<slug>` entries and malformed lines are skipped silently (the scaffold
+    itself must compile to {}). Pure; the caller persists the result."""
+    start = md_text.find("## Tasks")
+    if start == -1:
+        return {}
+    end = md_text.find("\n## ", start + 1)
+    section = md_text[start:end if end != -1 else len(md_text)]
+    graph: dict[str, list[str]] = {}
+    for m in _PLAN_LINE_RE.finditer(section):
+        slug, deps_raw = m.group(1), m.group(2).strip()
+        if slug.startswith("<"):
+            continue
+        deps = ([] if deps_raw.lower() == "none"
+                else [d.strip() for d in deps_raw.split(",")
+                      if d.strip() and not d.strip().startswith("<")])
+        graph[slug] = deps
+    return graph
+
+
+def _persist_task_graph(root: Path, state: dict, slug: str) -> None:
+    """Compile-and-store the milestone's planned graph; prints the summary when non-empty.
+    Runs on confirm AND re-confirm — the plan is living, the compile is idempotent."""
+    mfile = root / "milestones" / slug / MILESTONE_FILE
+    try:
+        md = mfile.read_text(encoding="utf-8")
+    except OSError:
+        return
+    graph = _compile_task_graph(md)
+    if not graph:
+        return
+    state["milestones"][slug]["planned"] = graph
+    edges = sum(len(v) for v in graph.values())
+    print(f"compiled task graph: {len(graph)} nodes · {edges} edges "
+          "(new-task inherits each node's planned depends-on)")
+
+
 def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     """The human gate that opens new-task for a milestone (confirm-parent). Mirrors `cmd_lock`
     one level down: the human reviews the filled MILESTONE.md, then RECORDS confirmation here.
@@ -4048,6 +4125,8 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     slug = _resolve_milestone(state, args.slug)
     m = state["milestones"][slug]
     if m.get("confirmed") is True:
+        _persist_task_graph(root, state, slug)     # the plan is living — recompile
+        save_state(root, state)
         print(f"milestone '{slug}' already confirmed (by {m.get('confirmed_by', '?')}).")
         return
     # contract-fill gate (flow-enforcement, OPTED-IN only): a milestone that opted into
@@ -4074,6 +4153,7 @@ def cmd_milestone_confirm(args: argparse.Namespace) -> None:
     m["confirmed_by"] = who
     m["actor"] = identity._actor_stamp(state)   # structured actor alongside the free-text confirmed_by
     m["updated"] = _now()
+    _persist_task_graph(root, state, slug)      # edge-truth: the confirm IS the compile
     save_state(root, state)
     print(f"confirmed milestone '{slug}' (by {who}) — new-task is now open for it.")
     print(_next_footer(root, state))
