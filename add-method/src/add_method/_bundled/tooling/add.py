@@ -40,7 +40,6 @@ from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
     _DIALECT_CLASSES,   # shared (spec-dialect-floor) — crossing warning + check lint
     _AUTONOMY_LEVELS,   # shared (autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy)
-    _STREAMS_POSTURES,  # shared (streams resolvers + cmd_streams) — run-mode streams half
     _SENSITIVITY_VALUES,  # shared (_task_sensitivity + cmd_freeze/status/audit) — risk-class taxonomy
 )
 
@@ -77,7 +76,6 @@ from add_engine.taskdoc import (
 # --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
 from add_engine.autonomy import (
     _autonomy_level, _effective_autonomy, _project_autonomy, _project_autonomy_token,
-    _project_streams,   # run-mode streams half (persist-run-mode) — read live from PROJECT.md
 )
 
 # --- keyword/substring corpus search (NEW — add_engine/search.py) -----------
@@ -600,17 +598,16 @@ def cmd_init(args: argparse.Namespace) -> None:
     for dd in SPEC_DDS:
         _seed_spec_file(root, dd, project=proj_name, stage=args.stage, date_str=today)
 
-    # --run-mode: apply the paired autonomy + streams posture into PROJECT.md.
+    # --run-mode: seed the autonomy dial into PROJECT.md. Run mode IS the autonomy posture;
+    # concurrency is a per-task subagent (doc-level), never an engine-managed streams line.
     # ONLY when the flag is explicitly set — absent flag leaves PROJECT.md byte-identical.
     run_mode = getattr(args, "run_mode", None)
     if run_mode is not None:
         _level = run_mode                                           # "auto" | "conservative"
-        _posture = "parallel" if run_mode == "auto" else "sequential"
         proj_md = root / "PROJECT.md"
         if proj_md.exists():
             _text = proj_md.read_text(encoding="utf-8")
             _text = _autonomy_decl_line(_text, _level)
-            _text = _streams_decl_line(_text, _posture)
             _atomic_write(proj_md, _text)
 
     state = {
@@ -2008,7 +2005,7 @@ _SKIP_RATIONALE_CLAUSE_RE = re.compile(r"^\s*(observe)\s*[-—:]\s*(.+)$")
 
 
 
-# fast-lane-skips: the project-level benchmark-mode opt-in — mirrors _streams_posture /
+# fast-lane-skips: the project-level benchmark-mode opt-in — mirrors
 # _project_autonomy_token's idiom exactly (anchored declaration, HTML comments stripped,
 # fail-SAFE default: a NEW ceremony-loosening capability never silently activates).
 _BENCHMARK_MODE_RE = re.compile(r"(?:^|·)[ \t]*benchmark_mode:[ \t]*(true|false)",
@@ -2053,13 +2050,13 @@ def _skip_status_line(root: Path, state: dict, slug: str) -> str | None:
 # sensitivity-glossary: a project EXTENDS the universal base with domain risk-classes declared in
 # GLOSSARY.md's "## Sensitivity classes" section (the AI keeps it current per the skill guide). The
 # base four stay method-universal (advisor-gate-relax keys off `mechanical`) — a project never
-# REMOVES them. Read live like _project_autonomy/_project_streams (no state.json field). The first
+# REMOVES them. Read live like _project_autonomy (no state.json field). The first
 # GLOSSARY reader in the engine; degrade-safe by construction (design-for-failure).
 _SENS_CLASSES_HEADING_RE = re.compile(r"(?im)^##[ \t]+sensitivity[ \t]+classes\b.*$")
 # a domain line is "- <token>: …" or "- <token> — …"; the token must START with a letter, so a
 # placeholder ("- <token>: …") begins with "<" and never matches, and the ": "/"—" separator keeps
-# a prose bullet from being read as a class. HTML comments are stripped FIRST (mirrors _project_
-# autonomy/_project_streams) so a commented-out template example is never a declaration.
+# a prose bullet from being read as a class. HTML comments are stripped FIRST (mirrors
+# _project_autonomy) so a commented-out template example is never a declaration.
 _SENS_CLASS_LINE_RE = re.compile(r"(?m)^[ \t]*-[ \t]+([A-Za-z][\w-]*)[ \t]*(?::|—)")
 
 def _project_sensitivity_domain(root: Path) -> tuple:
@@ -2443,20 +2440,6 @@ def _autonomy_decl_line(text: str, level: str) -> str:
     if lines and lines[0].lstrip().startswith("#"):
         return lines[0] + f"autonomy: {level}\n" + "".join(lines[1:])
     return f"autonomy: {level}\n" + text
-
-
-def _streams_decl_line(text: str, posture: str) -> str:
-    """Rewrite the SINGLE `streams:` declaration line to `posture`, PRESERVING its trailing comment,
-    idempotently (replace in place, count=1 — never a second line). If absent, insert it after a
-    leading `#` heading (PROJECT.md), else prepend. PURE on the text; the caller does the atomic
-    write. Mirrors _autonomy_decl_line — streams is project-scoped, so there is no slug-line branch."""
-    pat = re.compile(r"(?m)^(streams:[ \t]*)[^\s<#|]+(.*)$")
-    if pat.search(text):
-        return pat.sub(lambda m: f"{m.group(1)}{posture}{m.group(2)}", text, count=1)
-    lines = text.splitlines(keepends=True)
-    if lines and lines[0].lstrip().startswith("#"):
-        return lines[0] + f"streams: {posture}\n" + "".join(lines[1:])
-    return f"streams: {posture}\n" + text
 
 
 def _guard_autonomy_raise(current: str, target: str, yes: bool) -> None:
@@ -2948,9 +2931,6 @@ def cmd_status(args: argparse.Namespace) -> None:
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
     print(f"project autonomy: {_project_autonomy(root)}   (default — new tasks inherit)")
-    # run mode (persist-run-mode): the combined streams + autonomy posture, both read LIVE from
-    # PROJECT.md so the human sees the whole run-mode throttle every session. Advisory; engine never spawns.
-    print(f"run mode: {_project_streams(root)} + {_project_autonomy(root)}")
     # git-native actor (user-identity): who ADD sees you as this session — the identity every
     # human-owned stamp records. Always present (the resolver is TOTAL). Read-only, no write.
     _who = identity._whoami(state)

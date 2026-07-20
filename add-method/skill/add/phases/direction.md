@@ -56,13 +56,14 @@ gate); capture each surfaced decision as an ADR in `PROJECT.md` **Key Decisions*
 
 **Run mode** — propose before the lock, confirm-to-keep, record in PROJECT.md Key Decisions:
 
-| Run mode | Human gates | Concurrency |
-|----------|-------------|-------------|
-| **sequential · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence | one task at a time |
-| **sequential · manual/conservative** | contract freeze **and** every Verify | one task; safest |
+| Autonomy | Human gates |
+|----------|-------------|
+| **sequential · auto** *(default)* | contract freeze **only** — Verify auto-PASSes on evidence |
+| **sequential · manual/conservative** | contract freeze **and** every Verify — safest |
 
-Raise the gate: `add.py autonomy set conservative --project` · parallel streams are a project
-posture (`init --run-mode`), read from `PROJECT.md`. Floor: **one human approval per contract**.
+One task at a time; raise the gate via `add.py autonomy set conservative --project` (or
+`init --run-mode conservative`). Need concurrency? Spawn a subagent per task to run in parallel;
+floor stays **one human approval per contract**.
 
 ## 4 · The one human gate — the baseline approval
 

@@ -123,26 +123,27 @@ class InitRunMode(unittest.TestCase):
     # 2. --run-mode auto
     # ------------------------------------------------------------------
     def test_init_runmode_auto(self):
-        """--run-mode auto: autonomy: auto AND streams: parallel in PROJECT.md."""
+        """--run-mode auto sets ONLY autonomy: auto — the streams coupling is removed
+        (run mode is the autonomy dial; parallelism is 'spawn a subagent', not an engine posture)."""
         self._run("init", "--name", "demo", "--run-mode", "auto")
         text = self._project_md()
         self.assertIn("autonomy: auto", text)
-        self.assertTrue(
-            any(l.startswith("streams: parallel") for l in text.splitlines()),
-            "streams: parallel not found in PROJECT.md after --run-mode auto",
+        self.assertEqual(
+            [], [l for l in text.splitlines() if l.startswith("streams:")],
+            "the streams coupling is removed — --run-mode must NOT write a streams: line",
         )
 
     # ------------------------------------------------------------------
     # 3. --run-mode conservative
     # ------------------------------------------------------------------
     def test_init_runmode_conservative(self):
-        """--run-mode conservative: autonomy: conservative AND streams: sequential."""
+        """--run-mode conservative sets ONLY autonomy: conservative — no streams: line."""
         self._run("init", "--name", "demo", "--run-mode", "conservative")
         text = self._project_md()
         self.assertIn("autonomy: conservative", text)
-        self.assertTrue(
-            any(l.startswith("streams: sequential") for l in text.splitlines()),
-            "streams: sequential not found in PROJECT.md after --run-mode conservative",
+        self.assertEqual(
+            [], [l for l in text.splitlines() if l.startswith("streams:")],
+            "the streams coupling is removed — --run-mode must NOT write a streams: line",
         )
 
     # ------------------------------------------------------------------

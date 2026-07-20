@@ -311,19 +311,15 @@ _TAG_TOKEN_RE = re.compile(r"(M\d+|R:[A-Za-z0-9_]+)")
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
 
-# --- streams posture (shared: streams resolvers + cmd_streams) — the parallel-vs-sequential
-#     half of the run mode (persist-run-mode); project-scoped, persisted in PROJECT.md beside autonomy ---
-_STREAMS_POSTURES = ("parallel", "sequential")
-
 # --- sensitivity taxonomy (shared: _task_sensitivity reader + cmd_freeze/status/audit) — the
 #     risk-CLASS the human declares in the TASK header at freeze (risk-sensitivity-taxonomy). The
 #     engine validates + surfaces a HUMAN-declared token; it NEVER classifies. A closed enum, sibling
-#     of _AUTONOMY_LEVELS/_STREAMS_POSTURES. Consumed downstream by advisor-gate-relax (mechanical). ---
+#     of _AUTONOMY_LEVELS. Consumed downstream by advisor-gate-relax (mechanical). ---
 _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
 
 # --- gate mode (shared: _task_gate_mode reader + cmd_freeze's --ai-plan-verify path) — the
 #     two-way DIRECTION-freeze declaration (ai-plan-verify-gate): human (default) | ai-plan-verify.
-#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_STREAMS_POSTURES/_SENSITIVITY_VALUES — but,
+#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_SENSITIVITY_VALUES — but,
 #     unlike them, listed in __all__: a NEW trust-loosening capability is deliberately surfaced via
 #     `from add_engine.constants import *`, not tucked into the _-prefixed sibling import list.
 #     Absent header line -> None from the resolver, treated as "human" by every caller (fail-closed

@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "427a2501d29e5dfa1e56dc8c2774cc7e"  # re-aimed @ graph-views (verb 34 `graph`: mermaid flowchart of the task DAG — milestone subgraphs, edge-style semantics, dashed planned-never-created nodes; check gains the planned-drift WARN). prior: 3a19e9dd… @ clause-repair
-ENGINE_PKG_MD5 = "ec7f8093d556a5e00b25353005b018b0"  # re-aimed @ atomic-node (constants drops _FAST_SECTIONS — the lane scaffolds retired with the fat template blocks; _section_unfilled serves contract-fill only). prior: 557f500f… @ book-stops-shipping
+ENGINE_MD5 = "bfd472014a1f3bdcb76c0a7f103fc44b"  # re-aimed @ run-mode-decouple (run mode = the autonomy dial only; the streams: posture coupling is removed — --run-mode no longer writes a streams line, status drops its `run mode:` row, concurrency is now 'spawn a subagent per task'). prior: 427a2501… @ graph-views
+ENGINE_PKG_MD5 = "e0ff925d46f1666460e8b3c3e375acf1"  # re-aimed @ run-mode-decouple (constants drops _STREAMS_POSTURES; autonomy drops _streams_posture/_project_streams_token/_project_streams + the streams regex). prior: ec7f8093… @ atomic-node
