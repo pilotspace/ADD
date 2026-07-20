@@ -83,12 +83,13 @@ Every task is three beats, three engine calls, ONE human decision point:
 
 1. **DIRECTION** — draft the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
-   (run it — red for the RIGHT reason). Then the ONE approval, presented
+   (run it — red for the RIGHT reason; fill each bullet's `covers:` clause key). Then the ONE approval, presented
    lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`
    IS this approval).
 2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
-   inside the §3 Scope. A test OUTSIDE your suite failing? `add.py locate <path>` names the owning
-   node, the failure class, and who re-verifies if a settled contract must move.
+   inside the §3 Scope. A test OUTSIDE your suite failing? `add.py locate path::test` names the
+   owning node, the failure class, the frozen §3 clause it proves, and who re-verifies if a
+   settled contract must move.
 3. **VERIFY** — confirm evidence · 3 lenses (**security always HARD-STOP**) · earned-green
    refute-read · then `add.py gate PASS --target-hit yes|partial|no` (from build it compound-crosses; under `autonomy: auto` a
    run auto-PASSes on complete no-residue evidence — *auto-resolved*, an explicit PASS, never a

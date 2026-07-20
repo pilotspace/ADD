@@ -23,6 +23,14 @@ Enforced: a completing verify gate refuses an out-of-scope build (`scope_violati
 
 Load the active `.add/personas/<slug>.md` as a domain **overlay** atop `SOUL.md` (SOUL = voice/trust; persona = domain **stance**) — name it in §5; its domain supplies the facet vocabulary. SOUL.md is **human-owned**: the overlay never rewrites it (voice deltas: `deltas.md`). Advisory — it never lowers a gate; security still **HARD-STOPs**.
 
+## A red outside your suite — locate first
+
+`add.py locate path::test_name`, never a blind fix. **in-node** — a live task owns it;
+coordinate. **interface-regression** — you broke a DONE task's contract: fix the breaker; a
+contract change is a change request, the printed closure names who re-verifies. **unowned** —
+host/foreign surface = your §3 Regression floor; keep it green. A §4 `covers:` map quotes the
+frozen §3 clause — repair the clause, not the symptom.
+
 ## The cardinal rule
 
 **Never weaken or delete a test to make it pass, and never edit the frozen

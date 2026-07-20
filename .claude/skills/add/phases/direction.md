@@ -88,8 +88,8 @@ stamp its §3 `Status: FROZEN @ v1`, build is open.
 
 ## Milestone scope drafting — a classified request into a versioned MILESTONE.md
 
-Intake CLASSIFIES (`intake.md`); scope drafting turns a milestone bucket into a confirmed
-`MILESTONE.md` — the template is the SHAPE, this rubric is HOW to fill it.
+Intake CLASSIFIES (`intake.md`); this rubric fills the confirmed `MILESTONE.md` (the
+template is the SHAPE).
 `new-major`/`sub-milestone` → draft ONE MILESTONE.md · `split_required` → draft ALL N as one
 batch pass · `task`/`change-request` → no milestone (route per intake).
 **Confirm before create is the convention** — one drafting pass, nothing written until the human confirms; enforced only
@@ -97,9 +97,7 @@ by the opt-in gate: `new-milestone <slug> --await-confirm` seeds it unconfirmed 
 `new-task` (`milestone_unconfirmed`) until you show the filled draft and run
 `milestone-confirm <slug>`.
 
-## Position the goal — ground in assets, relate to the milestone map
-
-Do this FIRST:
+## Position the goal FIRST — ground in assets, relate to the map
 
 1. **Ground in current assets** — the same four fields as §3 Grounding, raised to milestone
    scope: **Touches** (subsystems/files spanned) · **Context** (docs · config · data) ·
@@ -128,8 +126,7 @@ Rejects: `not_classified` · `dangling_criterion` · `no_milestone` · `duplicat
 
 ## Rules (§1) + scenarios (§2) — co-specification
 
-State what the feature MUST do and what it must REJECT, with zero ambiguity left for the AI to
-resolve by guessing. Co-specify in three moves: **Diverge** (surface the 2–3 genuine framings +
+State what the feature MUST do and MUST REJECT — zero ambiguity left to guessing. Co-specify in three moves: **Diverge** (surface the 2–3 genuine framings +
 open questions; let the user react), **Converge** (draft §1 by PROJECTING from the milestone
 `## Ground` + the request), **Validate** (present the ranked uncertainty first). If you cannot
 write the spec, you don't yet understand the feature — stop and ask. **Identity is direction, not
@@ -255,15 +252,22 @@ sibling of the previous token's dir. A directory counts its `*.py` files
 marked `†`. Paths are confined: outside the project root counts 0 — `..` traversal,
 absolute paths, and symlink escapes are never read.
 
+**Clause map + edges.** Fill each `<test_plan>` bullet's `covers:` tail — frozen with the
+bundle; `add.py locate path::test_x` walks a failure → owning node → that frozen §3 clause.
+Declare edges at creation (`--depends-on`, later `relate`; milestone-confirm compiles `## Tasks`
+rows into inherited edges) — `locate <slug>` names who re-verifies when a settled contract
+moves. Ground §3 on each parent edge's frozen §3 — the PLAN.md itself, never a summary or
+built code.
+
 <exit_gate>
 - [ ] One test per scenario, red for the right reason, asserting observable behavior; coverage target recorded.
 </exit_gate>
 
 > **Persona / Advisor / Confidence** — load the fit `.add/personas/<slug>.md` (its Critical Rules
 > shape §1, its Success Metrics shape the red suite; advisory, never lowers a gate). Canonical
-> spawns: a researcher for an unfamiliar domain, a broad ground sweep, a second opinion on a risky
-> shape, a test-author for a wide suite (the advisor spawn — `phases/verify.md`); self-score the
-> bundle below — the lowest dimension aims your ⚠ flag.
+> spawns: researcher (unfamiliar domain) · broad ground sweep · second opinion on a risky shape ·
+> test-author for a wide suite (the advisor spawn — `phases/verify.md`); self-score the bundle
+> below — the lowest dimension aims your ⚠ flag.
 
 ## The confidence self-score
 

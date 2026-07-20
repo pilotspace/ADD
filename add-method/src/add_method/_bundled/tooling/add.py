@@ -1279,13 +1279,59 @@ def _print_closure(state: dict, slug: str) -> None:
         print(f"  {child} [{ph}] ({kind}, depth {depth})")
 
 
+_COVERS_RE = re.compile(
+    r"^\s*-\s*(?:`(?P<bt>[^`]+)`|(?P<bare>test_[\w.\[\]-]+))\s*:?.*?covers:\s*(?P<codes>[^\n]+)$",
+    re.M)
+
+
+def _covers_map(root: Path, slug: str) -> dict[str, list[str]]:
+    """clause-repair W3: §4's test→clause map, frozen WITH the bundle so it is
+    tamper-guarded like the suite it describes. Grammar = the template's OWN
+    `<test_plan>` dialect — a §4 bullet naming a test (bare `test_…` or
+    backticked) whose line carries `covers: <key>[, <key>…]`. The template's
+    unfilled placeholder bullet parses to nothing (a `<…>` key is filtered,
+    fail-safe); an unmapped test is a nudge downstream, never a gate."""
+    body = _raw_phase_bodies(root, slug).get(4, "")
+    out: dict[str, list[str]] = {}
+    for m in _COVERS_RE.finditer(body):
+        name = (m.group("bt") or m.group("bare") or "").strip()
+        keys = [c.strip() for c in m.group("codes").split(",")
+                if c.strip() and "<" not in c and ">" not in c]
+        if name and keys:
+            cur = out.setdefault(name, [])
+            cur.extend(k for k in keys if k not in cur)
+    return out
+
+
+def _print_clauses(root: Path, slug: str, test_name: str) -> None:
+    """Resolve one failing test through the §4 covers map to the frozen §3 clause
+    LINE(s) — literal key match inside the §3 body, never a guess. A key §3
+    doesn't carry is reported honestly (the clause lives in §1/§2 prose)."""
+    codes = _covers_map(root, slug).get(test_name)
+    if not codes:
+        print(f"  no covers: entry for `{test_name}` in '{slug}' §4 — map each red "
+              f"to the §3 clause key it proves (`- `{test_name}` covers: R-…`)")
+        return
+    s3 = _raw_phase_bodies(root, slug).get(3, "")
+    for code in codes:
+        hit = next((ln.strip() for ln in s3.splitlines() if code in ln), None)
+        if hit:
+            print(f"  clause {code} — §3: {hit[:120]}")
+        else:
+            print(f"  clause {code} — not literal in '{slug}' §3; the clause lives "
+                  f"in §1/§2 prose — re-read the Direction bundle before repairing")
+
+
 def cmd_locate(args: argparse.Namespace) -> None:
-    """graph-repair W2: deterministic failure-location — no LLM, read-only. A test
-    PATH maps to its OWNING node (§4 `Tests live in:` declarations, falling back to
-    the frozen §5 scope snapshot) plus the failure class: `in-node` (owner still
-    live — fix inside it, its frozen suite is the floor) vs `interface-regression`
-    (owner DONE — a live change broke a settled contract; the repair set is that
-    owner's dependent closure). A task SLUG prints the closure directly."""
+    """graph-repair W2 + clause-repair W3: deterministic failure-location — no LLM,
+    read-only. A test PATH maps to its OWNING node (§4 `Tests live in:`
+    declarations, falling back to the frozen §5 scope snapshot) plus the failure
+    class: `in-node` (owner still live — fix inside it, its frozen suite is the
+    floor) vs `interface-regression` (owner DONE — a live change broke a settled
+    contract; the repair set is that owner's dependent closure). The pytest
+    node-id form `path::test_name` goes one level deeper: the §4 covers map
+    resolves the test to its frozen §3 clause line. A task SLUG prints the
+    closure directly."""
     root = _require_root()
     state = load_state(root)
     ref = args.ref.strip()
@@ -1293,6 +1339,10 @@ def cmd_locate(args: argparse.Namespace) -> None:
     if ref in tasks:
         _print_closure(state, ref)
         return
+    test_name = None
+    if "::" in ref:
+        ref, _, test_name = ref.partition("::")
+        test_name = test_name.split("::")[-1].strip() or None   # class::method -> method
     rootp = root.parent.resolve()
     target = (Path(ref) if Path(ref).is_absolute() else root.parent / ref).resolve()
     try:
@@ -1321,6 +1371,8 @@ def cmd_locate(args: argparse.Namespace) -> None:
     for slug, prov in owners:
         ph = (tasks.get(slug) or {}).get("phase", "?")
         print(f"owner: {slug} [{ph}] (via {prov})")
+        if test_name:
+            _print_clauses(root, slug, test_name)
         if ph == "done":
             print(f"class: interface-regression — '{slug}' is settled; a live change "
                   f"broke its contract. Fix the breaker first; if the CONTRACT itself "
@@ -6478,7 +6530,9 @@ def build_parser() -> argparse.ArgumentParser:
     plc = sub.add_parser("locate", help="failure-location: a test path -> owning node "
                          "+ class (in-node vs interface-regression); a slug -> its "
                          "dependent closure (who re-verifies on a contract change)")
-    plc.add_argument("ref", help="test path (project-root-relative) or task slug")
+    plc.add_argument("ref", help="test path (project-root-relative), pytest node-id "
+                     "path::test_name (adds the §4 covers -> frozen §3 clause map), "
+                     "or task slug")
     plc.set_defaults(func=cmd_locate)
 
     pdap = sub.add_parser("delta-append",

@@ -23,14 +23,14 @@ If any is false, stop and return to Build.
 ## Part two — check what tests miss
 
 - **Concurrency/timing** — correct when two run at once? (Tests run serially and miss races.)
-- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so a reviewer can see it. **But that trail holds only what you wrote down:** a finding you never marked is **invisible**, escalated to no one. Under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
+- **Security** — exposed secrets, injection openings, unexpected dependencies. A security finding is always `HARD-STOP`, never a waiver. ANY note here escalates to the human — start it with `NOTE` or `⚠` so a reviewer can see it. A finding you never marked is **invisible** — escalated to no one. Under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding.
 - **Architecture** — respects layering/dependency rules in CONVENTIONS.md?
 
 Run the three lenses in order — a Security `HARD-STOP` ends the checklist (leave the rest blank). Record in §6 `### Advisor 3-lens verdict` (Verdict · Residue · Binding): `sensitivity: mechanical` → Binding `yes` (engine reads it for `advisor-gate-relax`), every other class → Binding `advisory`. An unfilled block is an unrecorded verdict, not a PASS.
 
 ## Part three — the deep check (do not skim)
 
-If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. The resolver judges which path; the engine never classifies.
+Code: record every new symbol referenced (wiring) and no new dead/unused code introduced. Prose or non-code: record a semantic read — what you read in full and what it confirmed. The resolver judges which path; the engine never classifies.
 
 Record in the §6 **Deep checks** block — an unfilled one is a **shallow verify**, not a PASS.
 
