@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Behavioral proof of machine-readable engine state (task: machine-state-json, v4-1).
 
-The CONTRACT (frozen @ v1): a `--json` flag on guide/status/check/ready, each printing
+The CONTRACT (frozen @ v1): a `--json` flag on guide/status/check, each printing
 ONE compact JSON object to stdout (and nothing else); an `owner`/`stop` derived from the
 phase via a single map; fail-closed (`no_state` / `unmapped_phase` -> stderr + exit 1 +
 EMPTY stdout, never partial JSON); text mode unchanged; JSON built from State only (no
@@ -48,7 +48,7 @@ class MachineStateTest(unittest.TestCase):
     def _freeze(self, slug: str):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -92,10 +92,10 @@ class MachineStateTest(unittest.TestCase):
         self.assertEqual(d["phase"], "build")
 
     def test_owner_map_stops_at_human_and_seam(self):
-        # plan-phase-core: ground+contract collapsed into `plan` — it stays the seam owner.
+        # phase-collapse-3: the whole front span collapsed into ONE `direction` phase —
+        # it stays the seam owner.
         expect = {
-            "specify": ("human", True),
-            "plan": ("seam", True), "tests": ("ai", False),
+            "direction": ("seam", True),
             "build": ("ai", False), "verify": ("human", True),
             "done": ("human", True),
         }
@@ -124,9 +124,9 @@ class MachineStateTest(unittest.TestCase):
         code, out, _ = _run(["status", "--json", "--task", "t"])
         self.assertEqual(code, 0)
         d = self._json_only(out)
-        # phase-bundles: additive "bundle" key (specify -> DIRECTION); every other key
-        # unchanged. plan-phase-core: new-task now seeds `specify` (was `ground`).
-        self.assertEqual(d, {"slug": "t", "phase": "specify", "gate": "none",
+        # phase-bundles: additive "bundle" key (direction -> DIRECTION); every other key
+        # unchanged. phase-collapse-3: new-task now seeds `direction` (was `specify`).
+        self.assertEqual(d, {"slug": "t", "phase": "direction", "gate": "none",
                               "milestone": "m", "owner": None, "assignee": None,
                               "bundle": "DIRECTION"})
 
@@ -212,21 +212,10 @@ class MachineStateTest(unittest.TestCase):
         self.assertTrue(all({"ok", "name", "reason"} <= set(c) for c in d["checks"]))
         self.assertEqual(code, 0 if d["failed"] == 0 else 1)
 
-    def test_ready_json_lists_ready_and_blocked(self):
-        add.main(["new-task", "a", "--title", "A"])
-        add.main(["new-task", "b", "--title", "B", "--depends-on", "a"])
-        code, out, _ = _run(["ready", "--json"])
-        self.assertEqual(code, 0)
-        d = self._json_only(out)
-        self.assertIn("a", d["ready"])
-        blocked = {x["slug"]: x["waiting_on"] for x in d["blocked"]}
-        self.assertIn("b", blocked)
-        self.assertIn("a", blocked["b"])
-
     def test_json_output_is_machine_clean(self):
         self._task_at("build")
         for argv in (["guide", "--json"], ["status", "--json"],
-                     ["check", "--json"], ["ready", "--json"]):
+                     ["check", "--json"]):
             _, out, _ = _run(argv)
             self._json_only(out)   # parses whole stdout -> no human prose mixed in
 
@@ -251,7 +240,7 @@ class MachineStateTest(unittest.TestCase):
         pathlib.Path.read_text = spy
         try:
             for argv in (["guide", "--json"], ["status", "--json"],
-                         ["check", "--json"], ["ready", "--json"]):
+                         ["check", "--json"]):
                 _run(argv)
         finally:
             pathlib.Path.read_text = orig

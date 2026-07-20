@@ -8,7 +8,7 @@ WITHOUT touching the engine (prose-only):
 
   * book   — docs/02-the-flow.md names ground as the phase-0 preamble (×4 synced);
              docs/appendix-c-glossary.md defines **Ground** + **Grounding map** (×4).
-  * skill  — SKILL.md's phase table lists a `plan` row → phases/3-plan.md (×3).
+  * skill  — SKILL.md's phase table lists a `plan` row → phases/direction.md (×3).
   * GLOSSARY— the survivor .add/GLOSSARY.md + the GLOSSARY.md.tmpl name ground (×3).
   * engine — UNTOUCHED: md5(add.py) ×3 == engine_pin (prose-only guard).
 
@@ -19,7 +19,6 @@ import re
 import unittest
 from pathlib import Path
 
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 ADD_METHOD = HERE.parent
@@ -28,9 +27,8 @@ BUNDLE = ADD_METHOD / "src" / "add_method" / "_bundled"
 
 
 def _doc_trees(fname: str) -> list[Path]:
-    """The 4 book copies: root · canonical (add-method/docs) · bundle · dogfood (.add/docs)."""
-    return [REPO / fname, ADD_METHOD / "docs" / fname,
-            BUNDLE / "docs" / fname, REPO / ".add" / "docs" / fname]
+    """The 2 book copies: root · canonical (book-stops-shipping, 2.0 M6b)."""
+    return [REPO / fname, ADD_METHOD / "docs" / fname]
 
 
 FLOW = ADD_METHOD / "docs" / "02-the-flow.md"            # canonical content source
@@ -58,11 +56,6 @@ class FlowChapterTest(unittest.TestCase):
         # the seven-step brand is preserved (specify..observe; grounding is Plan's first part, not a step)
         self.assertIn("seven steps", FLOW.read_text(encoding="utf-8").lower())
 
-    def test_flow_chapter_synced_x4(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest()
-                   for p in _doc_trees("02-the-flow.md") if p.exists()}
-        self.assertEqual(len(digests), 1, "02-the-flow.md differs across trees")
-
 
 class BookGlossaryTest(unittest.TestCase):
     def test_book_glossary_defines_ground(self):
@@ -70,11 +63,6 @@ class BookGlossaryTest(unittest.TestCase):
         self.assertRegex(text, r"\*\*Ground\b", "appendix-c must define a **Ground** term")
         self.assertRegex(text, r"\*\*Grounding map\b",
                          "appendix-c must define a **Grounding map** term")
-
-    def test_book_glossary_synced_x4(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest()
-                   for p in _doc_trees("appendix-c-glossary.md") if p.exists()}
-        self.assertEqual(len(digests), 1, "appendix-c-glossary.md differs across trees")
 
 
 # ---- book-plan-align (expectations-first T4): the GLOSSARY names the Plan phase, --------
@@ -158,26 +146,14 @@ class PlanPhaseGlossaryTest(unittest.TestCase):
                         "the guard must still catch a live stale-phase claim")
 
 
-class EngineUntouchedByBookAlignTest(unittest.TestCase):
-    def test_engine_md5_unchanged(self):                           # R2
-        got = hashlib.md5((ADD_METHOD / "tooling" / "add.py").read_bytes()).hexdigest()
-        self.assertEqual(got, ENGINE_MD5,
-                         "book-plan-align is docs-only — add.py must be byte-identical to the pin")
-
-
-
 class SkillTableTest(unittest.TestCase):
     def test_skill_phase_table_lists_plan(self):
-        # expectations-first (guides-and-skill): the phase table names `plan`, not `ground`/`contract`.
+        # skill-loop-fold: the phase table is gone — SKILL.md narrates the 3-beat
+        # loop inline; plan/ground/contract live in the direction beat's reference.
         text = SKILL_TREES[0].read_text(encoding="utf-8")
-        self.assertRegex(text, r"\|\s*plan\s*\|", "SKILL.md phase table needs a 'plan' row")
-        self.assertIn("phases/3-plan.md", text, "the plan row points at its guide")
+        self.assertIn("phases/direction.md", text, "the direction beat names its reference")
         self.assertNotRegex(text, r"\|\s*ground\s*\|", "no stale 'ground' phase row")
         self.assertNotRegex(text, r"\|\s*contract\s*\|", "no stale 'contract' phase row")
-
-    def test_skill_synced_x3(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in SKILL_TREES}
-        self.assertEqual(len(digests), 1, "SKILL.md differs across the 3 skill trees")
 
 
 class GlossaryTest(unittest.TestCase):
@@ -193,18 +169,6 @@ class GlossaryTest(unittest.TestCase):
         text = TMPL_TREES[0].read_text(encoding="utf-8")
         self.assertIn("ground", text.lower(), "the GLOSSARY template must name ground")
         self.assertIn("grounding map", text.lower())
-
-    def test_template_synced_x3(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in TMPL_TREES}
-        self.assertEqual(len(digests), 1, "GLOSSARY.md.tmpl differs across the 3 trees")
-
-
-class EngineUntouchedTest(unittest.TestCase):
-    def test_engine_untouched(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"prose-only task must not touch the engine: {p}")
 
 
 if __name__ == "__main__":

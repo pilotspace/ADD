@@ -41,25 +41,25 @@ class GuideTest(unittest.TestCase):
     def _freeze(self, slug: str) -> None:
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
             "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
         ), encoding="utf-8")
 
-    def test_guide_specify_phase(self):
-        add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=specify (plan-phase-core seed)
+    def test_guide_direction_phase(self):
+        add.main(["new-task", "feat-a", "--title", "Feat A"])   # active, phase=direction (phase-collapse-3)
         out = self._guide()
-        self.assertIn("phase: specify", out)
-        self.assertIn("03-step-1-specify.md", out)
-        self.assertIn("add.py advance", out)
+        self.assertIn("phase: direction", out)
+        self.assertIn("03-step-1-specify/", out)
+        self.assertIn("add.py freeze", out)
 
     def test_guide_verify_points_at_gate(self):
         add.main(["new-task", "feat-a"])
         add.main(["phase", "verify", "feat-a"])
         out = self._guide()
-        self.assertIn("08-step-6-verify.md", out)
+        self.assertIn("08-step-6-verify/", out)
         self.assertIn("add.py gate", out)
         self.assertNotIn("advance", out, "verify must point at the gate, not advance")
 
@@ -74,12 +74,12 @@ class GuideTest(unittest.TestCase):
         self.assertNotIn("then   : add.py advance", out,
                          "plan must NOT tell the agent to advance")
 
-    def test_guide_front_phase_teaches_collapse(self):
-        # the read-only guide teaches the SAME collapse the mutating footer does
-        add.main(["new-task", "feat-a"])                         # phase=specify (plan-phase-core seed)
-        out = self._guide()
-        self.assertIn("add.py advance --to plan", out,
-                      f"specify guide teaches the collapse: {out!r}")
+    # test_guide_front_phase_teaches_collapse DELETED (rule W, authorized 2026-07-16,
+    # same justification as test_next_footer_engine's deleted collapse-hint tests): it
+    # pinned the exact wording of a transitional "teach the --to plan shortcut" hint from
+    # the prior thin-engine-loop W1 milestone. Under phase-collapse-3 the front is already
+    # ONE phase (direction) and `guide`'s own `then:` line names `add.py freeze` directly
+    # (see test_guide_direction_phase) — there is no more shortcut to teach.
 
     def test_guide_done_points_at_new_task(self):
         add.main(["new-task", "feat-a"])
@@ -100,7 +100,7 @@ class GuideTest(unittest.TestCase):
         add.main(["new-task", "feat-b"])             # active becomes feat-b (specify)
         out = self._guide("feat-a")                  # explicit slug overrides active
         self.assertIn("phase: build", out)
-        self.assertIn("07-step-5-build.md", out)
+        self.assertIn("07-step-5-build/", out)
 
     def test_guide_unknown_slug_errors(self):
         add.main(["new-task", "feat-a"])

@@ -32,6 +32,32 @@ finished WM(k−1) app, so later milestones work against real accumulated code:
   WM1-frozen shape to test how each method handles a controlled breaking
   change.
 
+## Session modes — fresh vs continue (persistent workspace)
+
+Two ways to drive the longitudinal workload, selected with `--session-mode`.
+EVERY milestone opens a fresh conversation in both modes — the modes differ
+only in how the *workspace* carries:
+
+- **fresh** (default) — the classic shape: each WM works in a NEW per-WM
+  workspace seeded by copying the prior WM's app, so each record has an
+  immutable per-WM snapshot.
+- **continue** — the persistent-project shape: ONE workspace
+  (`runs/<arm>/session/workspace`, never re-copied; setup runs at WM1 only)
+  that every milestone evolves in place — exactly the resume-anytime,
+  one-repo shape the methods claim to support day-to-day. Per-WM records
+  still land at `runs/<arm>/wm<k>/record.json` (stamped
+  `artifacts.session_mode`), and scoring stays hermetic (`isolated_workspace`
+  copies before probing — the live session workspace is never mutated).
+
+(A third variant — one CONTINUING conversation via `--continue` — was
+measured once and then removed by user decision 2026-07-18; its wm1–6
+records are archived in the 2026-07 runs-session root and written up in
+`results/2026-07-add-2.0-remeasure.md`. Finding: conversation memory decayed
+.92→.75 and locked in an early spec deviation for six straight milestones.)
+
+Run the two modes into DISTINCT `--runs-root` dirs (their per-WM record paths
+collide otherwise).
+
 ## Metrics
 
 Five frozen metrics, scored per WM from the run record, the workspace, and an

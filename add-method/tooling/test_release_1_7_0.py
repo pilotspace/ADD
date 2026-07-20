@@ -22,8 +22,6 @@ PUBLISH_YML = REPO / ".github" / "workflows" / "publish.yml"
 
 VERSION = "1.7.0"
 PRIOR_VERSIONS = ("1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")   # the changelog must keep its lineage
-from engine_pin import ENGINE_MD5
-CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline capabilities the release notes must name (the installer-experience
 # milestone: the interactive clack onramp, the global install + global-data flags,
 # the delta-resolution fold verb, and Claude Code plugin distribution)
@@ -57,23 +55,11 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/checkout@v4", text, wf.name)
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
-
-    def test_audit_line_survives_bumps(self):
-        self.assertIn(CANONICAL_AUDIT, CI_YML.read_text(encoding="utf-8"),
-                      "the seam-audit command must stay byte-identical")
-
-
 class ReleaseShapeTest(unittest.TestCase):
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
-
-    def test_engine_untouched(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"the release task must not touch the engine: {p}")
 
 
 if __name__ == "__main__":

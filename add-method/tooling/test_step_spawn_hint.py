@@ -28,9 +28,8 @@ import add
 
 
 EXPECTED = {
-    "specify": "domain researcher + wide scenario sweep",
-    "plan": "change-plan design sweep",
-    "tests": "red-suite test-author",
+    "direction": "domain researcher + wide scenario sweep + change-plan design sweep + "
+                 "red-suite test-author",
     "build": "independent well-scoped batch",
     "verify": "earned-green refute-read",
 }
@@ -87,9 +86,11 @@ class _CLI(unittest.TestCase):
         return buf.getvalue() + err.getvalue()
 
     def test_status_renders_hint_for_active_specify(self):
-        # fresh task t is active at specify under the default (auto) project dial
+        # fresh task t is active at direction under the default (auto) project dial
         out = self._run("status")
-        self.assertIn("spawn hint: specify → domain researcher + wide scenario sweep (tier: mid)", out)
+        self.assertIn(
+            "spawn hint: direction → domain researcher + wide scenario sweep + "
+            "change-plan design sweep + red-suite test-author (tier: mid)", out)
 
     def test_manual_dial_suppresses_hint(self):
         self._run("autonomy", "set", "manual", "--project")
@@ -98,7 +99,7 @@ class _CLI(unittest.TestCase):
 
     def test_guide_renders_hint(self):
         out = self._run("guide")
-        self.assertIn("spawn hint: specify → domain researcher", out)
+        self.assertIn("spawn hint: direction → domain researcher", out)
 
     def test_status_does_not_mutate_state(self):
         before = (self.tmp / ".add" / "state.json").read_bytes()

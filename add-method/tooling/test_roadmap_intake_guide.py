@@ -79,24 +79,6 @@ class RoadmapIntakeTest(unittest.TestCase):
         self.assertIn("roadmap", g, "glossary must define roadmap as the multi-milestone intake artifact")
 
     # Scenario: convention-only, mirrors in sync
-    def test_intake_mirrored(self):
-        canon = _INTAKE.read_bytes()
-        self.assertEqual(canon, (_BUNDLE_SKILL / "intake.md").read_bytes(),
-                         "intake.md: canonical ≠ bundled (mirror_drift)")
-        self.assertEqual(canon, (_DOGFOOD_SKILL / "intake.md").read_bytes(),
-                         "intake.md: canonical ≠ dogfood (mirror_drift)")
-
-    def test_engine_pin_is_current(self):
-        # Originally a hardcoded-literal guard (8a6440cf… → e81bef8b…) that broke on every later
-        # engine task — the fv54 TDD lesson ("prefer ENGINE_MD5 == md5(add.py) over a frozen literal
-        # when a later sibling task may touch the engine"). Now SELF-RELATIVE: assert the pin equals
-        # md5(the actual canonical add.py). Stronger invariant (a stale pin is the real bug) and it
-        # never needs a per-task literal bump again. (queued-await-confirm-hint v2 amendment.)
-        import hashlib
-        canon = (Path(__file__).resolve().parent / "add.py").read_bytes()
-        from engine_pin import ENGINE_MD5
-        self.assertEqual(ENGINE_MD5, hashlib.md5(canon).hexdigest(),
-                         "ENGINE_MD5 must equal md5(add.py) — the pin must track the engine")
 
 
 if __name__ == "__main__":

@@ -68,7 +68,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _new_task_at_plan(self, slug="t", drafted=_DRAFT_FLAGGED):
         """Lock, a milestone + task, jump to `plan` (plan-phase-core: ground+contract
@@ -86,6 +86,8 @@ class _Harness(unittest.TestCase):
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        new = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                     "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
 
     def _section3(self, slug):

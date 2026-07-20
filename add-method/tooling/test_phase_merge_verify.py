@@ -50,10 +50,10 @@ class _Harness(unittest.TestCase):
     def _board(self):
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
 
     def _freeze(self, slug="t"):
-        p = self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text(encoding="utf-8").replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-07-14.\n"
@@ -65,9 +65,10 @@ class _Harness(unittest.TestCase):
         return state["tasks"][slug]["phase"]
 
     def _to_verify(self):
-        """Drive t specify -> verify (4 hops post-merge; freeze first for the tests gate)."""
+        """Drive t direction -> verify (2 hops post phase-collapse-3: direction -> build
+        -> verify; freeze first for the direction->build gate)."""
         self._freeze()
-        for _ in range(4):
+        for _ in range(2):
             self._ok("advance", "t")
         self.assertEqual(self._phase(), "verify")
 
@@ -75,7 +76,7 @@ class _Harness(unittest.TestCase):
 class PhaseListTest(_Harness):
     def test_phases_has_no_observe(self):                          # M1
         self.assertNotIn("observe", PHASES)
-        self.assertEqual(PHASES, ("specify", "plan", "tests", "build", "verify", "done"))
+        self.assertEqual(PHASES, ("direction", "build", "verify", "done"))
 
     def test_maps_carry_no_observe_key(self):                      # M1
         for name, mapping in (("PHASE_GUIDE", PHASE_GUIDE), ("PHASE_OWNER", PHASE_OWNER),
@@ -103,15 +104,24 @@ class AdvanceAndGateTest(_Harness):
         self._to_verify()
         out = self._ok("gate", "PASS", "t")
         self.assertEqual(self._phase(), "done")
-        self.assertIn("fold", out,
-                      "gate completion must carry the fold nudge observe used to print")
+        self.assertIn("delta-append", out,
+                      "gate completion must carry the living-spec delta nudge")
 
-    def test_phase_cmd_observe_refused(self):                      # R1
+    def test_phase_cmd_observe_maps_to_verify(self):                # R1 (retargeted:
+        # phase-collapse-3's LEGACY_PHASES recognizes "observe" as a legacy alias —
+        # mapped to verify, never refused as an unknown token)
         self._board()
         out, code = self._run("phase", "observe", "t")
-        self.assertNotEqual(code, 0, "observe is no longer a phase token")
+        self.assertEqual(code, 0, "observe is a recognized legacy alias, not refused")
+        self.assertEqual(self._phase(), "verify")
+        self.assertIn("verify", out, "the mapping must be noted in the output")
+
+    def test_advance_to_observe_stops_at_direction(self):          # R1
+        self._board()
         out2, code2 = self._run("advance", "--to", "observe")
-        self.assertNotEqual(code2, 0)
+        self.assertNotEqual(code2, 0,
+                            "observe maps to verify, past the direction span --to may reach")
+        self.assertIn("advance_to_stops_at_direction", out2)
 
 
 class LegacyStateTest(_Harness):
@@ -146,7 +156,7 @@ class LegacyStateTest(_Harness):
 
 class VestigialSkipsTest(_Harness):
     def _declare_skip(self, token):
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         m = re.search(r"(?m)^phase:.*$", text)
         self.assertIsNotNone(m, "no phase marker line to anchor the skip header")
@@ -159,7 +169,7 @@ class VestigialSkipsTest(_Harness):
         self._board()
         self._declare_skip("observe")
         self._freeze()
-        for _ in range(4):                                          # every advance silent
+        for _ in range(2):                                          # direction -> build -> verify, silent
             out, code = self._run("advance", "t")
             self.assertEqual(code, 0,
                              f"a vestigial skips: header must never die at a crossing: {out}")
@@ -172,7 +182,7 @@ class VestigialSkipsTest(_Harness):
         self._board()
         self._declare_skip("build")                                # was a die pre-merge
         self._freeze()
-        for _ in range(4):
+        for _ in range(2):                                         # direction -> build -> verify
             self._ok("advance", "t")
         out = self._ok("gate", "PASS", "t")
         self.assertIn("retired", out)
@@ -181,33 +191,32 @@ class VestigialSkipsTest(_Harness):
 class SectionsTableTest(_Harness):
     def test_phase_sections_verify_owns_6_and_7(self):             # M4
         self.assertEqual(add._PHASE_SECTIONS["verify"], (6, 7))
-        self.assertEqual(add._PHASE_SECTIONS["specify"], (1, 2))
+        self.assertEqual(add._PHASE_SECTIONS["direction"], (1, 2, 3, 4),
+                         "direction owns the whole front span's sections (§1-§4)")
 
     def test_section_flag_uses_the_sections_table(self):           # M5
         self._board()
-        self._ok("advance", "t")                                   # specify -> plan
-        out = self._ok("status", "--section", "plan")
-        self.assertIn("Grounding", out,
-                      "--section plan must print §3 PLAN (the table), not §2 (ordinal math)")
+        out1 = self._ok("status", "--section", "direction")
+        self.assertIn("Feature:", out1,
+                      "--section direction must print §1 SPECIFY (its primary section)")
         out6 = self._ok("status", "--section", "verify")
         self.assertIn("GATE RECORD", out6,
-                      "--section verify must print §6 VERIFY (its primary section)")
+                      "--section verify must print §6 VERIFY (its primary section, not "
+                      "ordinal index+1=§3)")
 
     def test_fill_targets_the_primary_section(self):               # M5
-        # At tests the table says §4; ordinal math would say §3 (index 2 + 1) — the
-        # discriminating hop. (plan can't host this fixture: --fill is all-or-nothing
-        # and the plan->tests crossing demands the freeze the fill would clobber.)
+        # At build the table says §5; ordinal math would say §2 (index 1 + 1) — the
+        # discriminating hop under the collapsed 4-phase ladder.
         self._board()
         self._freeze()
-        self._ok("advance", "t")                                   # specify -> plan
-        self._ok("advance", "t")                                   # plan -> tests
+        self._ok("advance", "t")                                   # direction -> build
         draft = self.tmp / "d.txt"
         draft.write_text("PMV-FILL-MARKER red-suite note", encoding="utf-8")
-        self._ok("advance", "t", "--fill", str(draft))             # fills §4 then advances
-        body = (self.tmp / ".add" / "tasks" / "t" / "TASK.md").read_text(encoding="utf-8")
-        sec4 = body.split("## 4 ·", 1)[1].split("## 5 ·", 1)[0]
-        self.assertIn("PMV-FILL-MARKER", sec4,
-                      "--fill at tests must write §4 (the table), not §3 (ordinal math)")
+        self._ok("advance", "t", "--fill", str(draft))             # fills §5 then advances
+        body = (self.tmp / ".add" / "tasks" / "t" / "PLAN.md").read_text(encoding="utf-8")
+        sec5 = body.split("## 5 ·", 1)[1].split("## 6 ·", 1)[0]
+        self.assertIn("PMV-FILL-MARKER", sec5,
+                      "--fill at build must write §5 (the table), not §2 (ordinal math)")
 
 
 if __name__ == "__main__":

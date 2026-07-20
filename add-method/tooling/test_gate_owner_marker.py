@@ -39,14 +39,14 @@ HERE = Path(__file__).resolve().parent           # add-method/tooling
 
 # the table the frozen §3 contract encodes — only verify moves with the dial
 _TABLE = {
+    # direction ends at the freeze seam (owner: seam -> the human approves §1–§4),
+    # so the whole direction span reads [human gate]; build/verify follow autonomy.
     "auto": {
-        "specify": " [human gate]",
-        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "direction": " [human gate]", "build": " [you drive]",
         "verify": " [you drive]", "done": " [human gate]",
     },
     "conservative": {
-        "specify": " [human gate]",
-        "plan": " [human gate]", "tests": " [you drive]", "build": " [you drive]",
+        "direction": " [human gate]", "build": " [you drive]",
         "verify": " [human gate]", "done": " [human gate]",
     },
 }
@@ -88,7 +88,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -118,7 +118,7 @@ class _Board(unittest.TestCase):
 
     # ---- autonomy arrangement ---------------------------------------------
     def _task(self, slug="t", autonomy="auto"):
-        """A real seeded task (keeps its TASK.md header), with the autonomy rung set."""
+        """A real seeded task (keeps its PLAN.md header), with the autonomy rung set."""
         self._silent("new-task", slug, "--title", slug)
         self._set_autonomy(slug, autonomy)
 
@@ -147,7 +147,7 @@ class _Board(unittest.TestCase):
 
     def _write_task(self, slug):
         lines = [
-            f"# TASK: {slug}", f"slug: {slug} · created: 2026-06-12 · stage: mvp",
+            f"# PLAN: {slug}", f"slug: {slug} · created: 2026-06-12 · stage: mvp",
             "phase: specify", "",
             *self._section(1, "SPECIFY", "Feature: f"),
             *self._section(2, "SCENARIOS", "(none)"),

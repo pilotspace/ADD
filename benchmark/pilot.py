@@ -63,6 +63,7 @@ def run_pilot(
     runs_root: pathlib.Path | None = None,
     repo_root: pathlib.Path | None = None,
     family: str = "wm",
+    session_mode: str = "fresh",
 ) -> list[RunRecord]:
     """Sequences, PER ARM independently: resolve the arm (load_arm +
     resolve_setup_steps) -> determine the starting WM (find_resume_point
@@ -108,6 +109,7 @@ def run_pilot(
                 retries=retries,
                 runs_root=root,
                 family=family,
+                session_mode=session_mode,
             )
             records.append(record)
             if record.status != "done":
@@ -186,6 +188,7 @@ def run_reps(
     timeout_s: float = 1800.0,
     retries: int = 1,
     family: str = "wm",
+    session_mode: str = "fresh",
 ) -> list[RunRecord]:
     """Run the full arms×wms pilot `reps` times into DISTINCT `runs_root/rep{i}`
     roots (resume disabled per rep so each is an independent fresh sample), and
@@ -209,6 +212,7 @@ def run_reps(
             runs_root=root / f"rep{i}",
             repo_root=repo_root,
             family=family,
+            session_mode=session_mode,
         )
         records.extend(rep_records)
     return records
@@ -235,6 +239,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--runs-root", default=None)
     run_all_p.add_argument("--repo-root", default=None)
     run_all_p.add_argument("--family", default="wm", choices=("wm", "hv"))
+    run_all_p.add_argument("--session-mode", default="fresh", choices=("fresh", "continue"),
+                           dest="session_mode",
+                           help="continue = ONE persistent workspace + ONE continuing "
+                                "conversation across WMs (context-rot-cross-milestones); "
+                                "fresh = classic per-WM shape (default)")
 
     return parser
 
@@ -259,6 +268,7 @@ def main(argv: list[str] | None = None) -> int:
                     runs_root=runs_root,
                     repo_root=repo_root,
                     family=args.family,
+                    session_mode=args.session_mode,
                 )
                 for (arm, wm), stats in sorted(aggregate_reps(records).items()):
                     print(
@@ -282,6 +292,7 @@ def main(argv: list[str] | None = None) -> int:
                 runs_root=runs_root,
                 repo_root=repo_root,
                 family=args.family,
+                session_mode=args.session_mode,
             )
         except BenchError as exc:
             print(str(exc), file=sys.stderr)

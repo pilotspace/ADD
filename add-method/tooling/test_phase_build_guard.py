@@ -3,16 +3,21 @@
 audit-hardening — deep-audit finding F4).
 
 `add.py phase build <slug>` is the human admin override; today it sets phase=build with NONE of
-the guards `cmd_advance` runs at the tests->build crossing, so a task can reach build with a DRAFT
-§3 and NO tamper-tripwire — and verify's `_tamper_guard` then returns silently (a gamed green can
-record PASS). The fix extracts cmd_advance's `nxt == "build"` block into a shared `_build_entry`
-helper that BOTH commands call: `phase build` becomes equivalent to advancing into build — the
-freeze gate, the unflagged-freeze check + flag stamp, the tamper-tripwire snapshot, and the §5
-scope snapshot all run.
+the guards `cmd_advance` runs at the direction->build crossing, so a task can reach build with a
+DRAFT §3 and NO tamper-tripwire — and verify's `_tamper_guard` then returns silently (a gamed
+green can record PASS). The fix extracts cmd_advance's `nxt == "build"` block into a shared
+`_build_entry` helper that BOTH commands call: `phase build` becomes equivalent to advancing into
+build — the freeze gate, the unflagged-freeze check + flag stamp, the tamper-tripwire snapshot,
+and the §5 scope snapshot all run.
 
-A plain / no-milestone task is NOT freeze-gated (no contract_not_frozen), but DOES get the same
-tripwire baseline advance writes. The heal loop is exempt by construction (`_heal_or_escalate`
-sets phase=build directly, never via cmd_phase).
+A plain / no-milestone task is NOT freeze-gated for build-expectations (that gate is opt-in only),
+but DOES get the same freeze gate + tripwire baseline as an opted-in task. The heal loop is exempt
+by construction (`_heal_or_escalate` sets phase=build directly, never via cmd_phase).
+
+phase-collapse-3: the front (specify · plan · tests) collapsed into ONE phase `direction`, so a
+DRAFT §3 task simply SITS at `direction` — there is no longer a separate "reach tests" bookkeeping
+hop to force before exercising `phase build`; the admin override is tried directly from a fresh
+task at `direction`.
 
 Run: python3 -m unittest test_phase_build_guard -v
 """
@@ -70,7 +75,7 @@ class PhaseBuildGuardTest(unittest.TestCase):
         return Path(self.tmp) / ".add" / "milestones" / slug / "MILESTONE.md"
 
     def _task_path(self, slug="t"):
-        return Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        return Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
 
     def _fill_contracts(self, ms):
         p = self._ms_path(ms)
@@ -102,54 +107,34 @@ class PhaseBuildGuardTest(unittest.TestCase):
                       "- [x] the gate passes through a frozen contract — confirmed by the green test")
         p.write_text(t, encoding="utf-8")
 
-    def _to_plan(self, slug="t"):
-        self._quiet(["advance", slug])   # specify -> plan
-
-    def _optedin_task_at_plan(self, slug="t", ms="mvp"):
+    # phase-collapse-3: a fresh task is BORN at `direction` — no bookkeeping hop is needed to
+    # reach the freeze seam, so these helpers just arrange the task AT direction.
+    def _optedin_task_at_direction(self, slug="t", ms="mvp"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp", "--await-confirm"])
         self._fill_contracts(ms)
         self._quiet(["milestone-confirm", ms])
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
 
-    def _plain_task_at_plan(self, slug="t", ms="plain"):
+    def _plain_task_at_direction(self, slug="t", ms="plain"):
         self._quiet(["new-milestone", ms, "--goal", "g", "--stage", "mvp"])
         self._quiet(["new-task", slug])
-        self._to_plan(slug)
 
-    def _fast_task_at_plan(self, slug="t"):
-        self._quiet(["new-task", slug, "--fast"])
-        self._to_plan(slug)
-
-    def _force_to_tests(self, slug="t"):
-        """Admin override: force phase=tests directly, WITHOUT crossing the plan->tests freeze
-        gate — `phase <n>` for a non-build/-plan target runs no guard (test_non_build_target_
-        never_gated proves it below). Arranges the grandfather scenario a DRAFT §3 can now only
-        reach `tests` through (a pre-plan-phase-core record, or a lost/never-granted skip marker)
-        — `phase build` from here must still refuse it, proving the override is not a backdoor."""
-        self._quiet(["phase", "tests", slug])
-
-    def _to_tests_frozen(self, slug="t", unflagged=False):
-        """Reach `tests` the REAL way FROM `plan` (caller must already be at `plan`): freeze §3
-        (well-formed flag unless `unflagged`), then cross the (now real) plan->tests freeze gate
-        via `advance`."""
-        self._freeze_unflagged(slug) if unflagged else self._freeze(slug)
-        self._quiet(["advance", slug])   # plan -> tests: frozen, passes
+    def _fast_task_at_direction(self, slug="t"):
+        self._quiet(["new-task", slug])
 
     # ── scenarios ────────────────────────────────────────────────────────────────────────
     def test_optedin_unfrozen_blocks_phase_build(self):
-        self._optedin_task_at_plan()
-        self._force_to_tests()
+        self._optedin_task_at_direction()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests",
-                         "a refused `phase build` leaves phase=tests (validate-then-write)")
+        self.assertEqual(self._task().get("phase"), "direction",
+                         "a refused `phase build` leaves phase=direction (validate-then-write)")
         self.assertNotIn("tripwire", self._task(), "no tripwire written on a refusal")
 
     def test_optedin_frozen_phase_build_arms_tripwire(self):
-        self._optedin_task_at_plan()
-        self._to_tests_frozen()
+        self._optedin_task_at_direction()
+        self._freeze()
         self._fill_build_expectations()
         self._quiet(["phase", "build", "t"])
         t = self._task()
@@ -158,21 +143,20 @@ class PhaseBuildGuardTest(unittest.TestCase):
         self.assertTrue(t.get("flag_verified"), "flag_verified stamped on a flagged freeze")
 
     def test_unflagged_freeze_blocks_phase_build(self):
-        self._optedin_task_at_plan()
-        self._to_tests_frozen(unflagged=True)
+        self._optedin_task_at_direction()
+        self._freeze_unflagged()
         self._fill_build_expectations()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
         self.assertIn("unflagged_freeze", err)
-        self.assertEqual(self._task().get("phase"), "tests")
+        self.assertEqual(self._task().get("phase"), "direction")
 
     # freeze-gate-universal (flow-honesty): a plain task is now freeze-gated even via the `phase
     # build` admin override, so reaching build (and arming the tripwire) requires a FROZEN §3.
-    # plan-phase-core: the freeze happens at `plan`, before the (now real) plan->tests crossing.
     def test_plain_milestone_frozen_arms_tripwire(self):
-        self._plain_task_at_plan()
-        self._to_tests_frozen()                  # universal freeze gate: §3 must be frozen to reach tests
-        self._quiet(["phase", "build", "t"])     # frozen §3 -> the override runs the full gate stack
+        self._plain_task_at_direction()
+        self._freeze()                            # universal freeze gate: §3 must be frozen
+        self._quiet(["phase", "build", "t"])      # frozen §3 -> the override runs the full gate stack
         t = self._task()
         self.assertEqual(t.get("phase"), "build")
         self.assertIn("tripwire", t, "the override arms the same tripwire baseline as advance")
@@ -180,33 +164,33 @@ class PhaseBuildGuardTest(unittest.TestCase):
     # the override is NOT a backdoor: a plain UNFROZEN task is blocked at `phase build` too
     # (the universal gate, matching test_fast_unfrozen_blocks_phase_build for the fast case).
     def test_plain_milestone_unfrozen_blocks_phase_build(self):
-        self._plain_task_at_plan()
-        self._force_to_tests()
+        self._plain_task_at_direction()
         code, err = self._die_stderr(["phase", "build", "t"])   # DRAFT §3 -> universal gate refuses
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests")
+        self.assertEqual(self._task().get("phase"), "direction")
 
     def test_fast_unfrozen_blocks_phase_build(self):
-        self._fast_task_at_plan()
-        self._force_to_tests()
+        self._fast_task_at_direction()
         code, err = self._die_stderr(["phase", "build", "t"])
         self.assertEqual(code, 1)
         self.assertIn("contract_not_frozen", err)
-        self.assertEqual(self._task().get("phase"), "tests")
+        self.assertEqual(self._task().get("phase"), "direction")
 
     def test_non_build_target_never_gated(self):
-        self._optedin_task_at_plan()
-        self._quiet(["phase", "specify", "t"])
-        self._quiet(["phase", "tests", "t"])
+        # a non-build target (e.g. `verify`) is a bare admin phase-set with NO guard — even a
+        # DRAFT §3, never-frozen task can be pointed there, and it takes no tripwire snapshot.
+        # Only `build` is gated (the direction->build crossing is the one seam that matters).
+        self._optedin_task_at_direction()
+        self._quiet(["phase", "verify", "t"])
         t = self._task()
-        self.assertEqual(t.get("phase"), "tests")
+        self.assertEqual(t.get("phase"), "verify")
         self.assertNotIn("tripwire", t, "a non-build target takes no tripwire snapshot")
 
     def test_advance_into_build_unchanged(self):
         # parity guard: the extraction must leave `advance` into build behaving exactly as before
-        self._optedin_task_at_plan()
-        self._to_tests_frozen()
+        self._optedin_task_at_direction()
+        self._freeze()
         self._fill_build_expectations()
         self._quiet(["advance", "t"])
         t = self._task()

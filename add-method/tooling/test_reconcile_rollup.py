@@ -11,11 +11,11 @@ FROZEN @ v1: a reconcile REPORTS a file-level "N restored · M refreshed" roll-u
   - update() folds the rollup into its headline. A partially-gutted PRESENT tree shows
     restored>0 even though the tree-level status calls it "refreshed".
 
-Hermetic: a bundled fixture (skill/tooling/docs with known file counts) + tmp targets; the
+Hermetic: a bundled fixture (skill/tooling with known file counts) + tmp targets; the
 npm twin is exercised by a node subprocess. RED until _clean_replace returns counts and
 _reconcile returns/logs the rollup — red for the right reason (missing implementation).
 
-project-scope-atomic-reconcile (TASK.md v1) extends this file with a crash-safe stage-then-
+project-scope-atomic-reconcile (PLAN.md v1) extends this file with a crash-safe stage-then-
 swap redesign of _clean_replace/cleanReplaceTree: StageCommitUnitTest (§2 scenarios 1-9, 11 —
 missing/present dest, strip-on-staged, mid-copy + commit-land failure rollback, stale
 tmp/backup self-heal), CrossTwinStagedCommitTest (§2 scenario 10 — python+node parity),
@@ -49,7 +49,7 @@ CLI_JS = _ADD_METHOD / "bin" / "cli.js"
 
 
 def _make_bundled(root: Path) -> Path:
-    """A managed-layer fixture with KNOWN file counts: skill=1, tooling=3, docs=2 (total 6)."""
+    """A managed-layer fixture with KNOWN file counts: skill=1, tooling=3 (total 4)."""
     (root / "skill" / "add").mkdir(parents=True)
     (root / "skill" / "add" / "SKILL.md").write_text("skill\n")
     (root / "tooling").mkdir(parents=True)
@@ -57,13 +57,10 @@ def _make_bundled(root: Path) -> Path:
     (root / "tooling" / "add_engine").mkdir()
     (root / "tooling" / "add_engine" / "__init__.py").write_text("# pkg\n")
     (root / "tooling" / "add_engine" / "core.py").write_text("# core\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro\n")
-    (root / "docs" / "01-flow.md").write_text("flow\n")
     return root
 
 
-TOTAL_MANAGED = 6   # skill(1) + tooling(3) + docs(2)
+TOTAL_MANAGED = 4   # skill(1) + tooling(3)
 
 
 class _Base(unittest.TestCase):
@@ -241,13 +238,13 @@ class ParityRollupTest(_Base):
                          "cli.js headline carries the same parenthetical")
 
 
-# --- project-scope-atomic-reconcile: crash-safe stage-then-swap (TASK.md v1) ------------
+# --- project-scope-atomic-reconcile: crash-safe stage-then-swap (PLAN.md v1) ------------
 
 def _partial_copytree_then_raise(n_files):
     """A shutil.copytree replacement that really copies the first n_files (sorted,
     deterministic) leaf files from src into dst — dst is expected to already exist as an
     empty dir, matching how the real staging call is made — then raises, simulating a real
-    crash/disk-full/permission-denied partway through a directory copy (TASK.md §1 Issue #1)."""
+    crash/disk-full/permission-denied partway through a directory copy (PLAN.md §1 Issue #1)."""
     def _fn(src, dst, *a, **kw):
         srcp, dstp = Path(src), Path(dst)
         dstp.mkdir(parents=True, exist_ok=True)
@@ -261,7 +258,7 @@ def _partial_copytree_then_raise(n_files):
 
 
 class StageCommitUnitTest(unittest.TestCase):
-    """_clean_replace: TASK.md §2 scenarios 1-9, 11. Each dest lives in its OWN dedicated
+    """_clean_replace: PLAN.md §2 scenarios 1-9, 11. Each dest lives in its OWN dedicated
     `area` dir (never a sibling of src) so `_siblings_of` only ever reveals a GENUINE scratch
     sibling (staging/backup), never an unrelated fixture. scn1/2/9/11 restate the pre-existing
     happy-path contract (M8: unchanged) and are expected GREEN even pre-build — the

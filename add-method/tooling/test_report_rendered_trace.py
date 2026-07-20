@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Red/green tests for the mechanical report-rendered trace (direct chat-directed task
 `report-rendered-trace`, motivated by a forensic transcript audit of a separate ADD project
-where report-template.md was cited-but-never-rendered at every human gate).
+where gate-udd.md was cited-but-never-rendered at every human gate).
 
 CONTRACT — design mirrors refute_unrecorded/advisor_verdict_unrecorded EXACTLY, MEASURE-NOT-BLOCK:
-  templates/TASK.md.tmpl §3 gains a `Reported: <…>` line right after `Status: DRAFT`.
-  templates/TASK.md.tmpl §6 gains a `Reported: <…>` line as the first line of `### GATE RECORD`,
+  templates/PLAN.md.tmpl §3 gains a `Reported: <…>` line right after `Status: DRAFT`.
+  templates/PLAN.md.tmpl §6 gains a `Reported: <…>` line as the first line of `### GATE RECORD`,
     before `Outcome:`.
   _guarantee_lint_notices(root, state) gains two keys:
     contract_report_unrecorded[] = §3 body's `Reported:` line PRESENT-but-unfilled
@@ -36,8 +36,8 @@ TOOLING = Path(add.__file__).resolve().parent
 ADD_METHOD = TOOLING.parent
 REPO = ADD_METHOD.parent
 RUN_MD = ADD_METHOD / "skill" / "add" / "run.md"
-CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "3-plan.md"
-VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+CONTRACT_MD = ADD_METHOD / "skill" / "add" / "phases" / "direction.md"
+VERIFY_MD = ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 
 
 class _Harness(unittest.TestCase):
@@ -74,7 +74,7 @@ class _Harness(unittest.TestCase):
         return code, out.getvalue()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _verify_task(self, slug):
         """A fresh task driven to verify — §3/§6 both carry the template's unfilled Reported: line."""
@@ -109,83 +109,6 @@ class _Harness(unittest.TestCase):
         self.assertEqual(len(parts), 3)
         t = parts[0] + "Reported:" + parts[1] + re.sub(r"^[^\n]*\n", "", parts[2], count=1)
         p.write_text(t, encoding="utf-8")
-
-
-class ContractReportUnrecordedTest(_Harness):
-    def test_audit_surfaces_unrecorded(self):                     # scenario 1
-        self._verify_task("t")
-        code, out = self._run("audit")
-        self.assertIn("contract_report_unrecorded", out)
-        self.assertIn("t", out)
-        self.assertEqual(code, 0, "a notice, not a finding")
-
-    def test_recorded_clears_notice(self):                        # scenario 2
-        self._verify_task("t")
-        self._fill_contract_reported("t")
-        _, out = self._run("audit")
-        m = re.search(r"contract_report_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"a recorded §3 report must clear the notice:\n{out}")
-
-    def test_absent_line_grandfathers(self):                      # scenario 3
-        self._verify_task("t")
-        self._drop_contract_reported("t")
-        code, out = self._run("audit")
-        m = re.search(r"contract_report_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0), "absent line is never retro-flagged")
-        self.assertEqual(code, 0)
-
-
-class VerifyReportUnrecordedTest(_Harness):
-    def test_audit_surfaces_unrecorded(self):                     # scenario 1 (verify twin)
-        self._verify_task("t")
-        code, out = self._run("audit")
-        self.assertIn("verify_report_unrecorded", out)
-        self.assertIn("t", out)
-        self.assertEqual(code, 0, "a notice, not a finding")
-
-    def test_recorded_clears_notice(self):                        # scenario 2 (verify twin)
-        self._verify_task("t")
-        self._fill_verify_reported("t")
-        _, out = self._run("audit")
-        m = re.search(r"verify_report_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0),
-                        f"a recorded §6 report must clear the notice:\n{out}")
-
-    def test_absent_line_grandfathers(self):                      # scenario 3 (verify twin)
-        self._verify_task("t")
-        self._drop_verify_reported("t")
-        code, out = self._run("audit")
-        m = re.search(r"verify_report_unrecorded[^\n]*", out)
-        self.assertTrue(m is None or "t" not in m.group(0), "absent line is never retro-flagged")
-        self.assertEqual(code, 0)
-
-    def test_independent_of_contract_notice(self):                # both fire independently
-        self._verify_task("t")
-        self._fill_contract_reported("t")                          # clear §3 only
-        _, out = self._run("audit")
-        self.assertNotIn("contract_report_unrecorded", out)
-        self.assertIn("verify_report_unrecorded", out)              # §6 still unfilled
-
-
-class GroupedAndScopeTest(_Harness):
-    def test_one_grouped_line_each(self):                          # grouped, like refute_unrecorded
-        for s in ("a", "b", "c"):
-            self._verify_task(s)
-        _, out = self._run("audit")
-        for code in ("contract_report_unrecorded", "verify_report_unrecorded"):
-            self.assertEqual(out.count(code), 1, f"exactly ONE grouped line for {code}")
-            m = re.search(rf"{code} — (\d+) task\(s\)[^\n]*", out)
-            self.assertIsNotNone(m, f"a grouped 'N task(s)' line expected for {code}:\n{out}")
-            self.assertEqual(int(m.group(1)), 3)
-
-    def test_not_at_verify_is_silent(self):                        # phase < verify -> grandfather
-        self._silent("new-task", "g", "--title", "X")               # stays at ground
-        _, out = self._run("audit")
-        self.assertNotIn("contract_report_unrecorded", out)
-        self.assertNotIn("verify_report_unrecorded", out)
-
-
 class MeasureNotBlockTest(_Harness):
     def test_gate_never_blocked_by_unrecorded(self):               # the core guarantee
         self._verify_task("t")
@@ -226,18 +149,6 @@ class TemplateAndWritebackTest(_Harness):
 
 
 class JsonAndDisclosureTest(_Harness):
-    def test_audit_json_has_both_keys(self):
-        self._verify_task("t")
-        _, out = self._run("audit", "--json")
-        data = json.loads(out)
-        for code in ("contract_report_unrecorded", "verify_report_unrecorded"):
-            self.assertIn(code, data["guarantee_lints"])
-            self.assertIn("t", data["guarantee_lints"][code])
-
-    def test_disclosure_in_run_md(self):
-        text = RUN_MD.read_text(encoding="utf-8")
-        for code in ("contract_report_unrecorded", "verify_report_unrecorded"):
-            self.assertIn(code, text, f"run.md must disclose {code}")
 
     def test_disclosure_in_contract_and_verify_guides(self):
         self.assertIn("Reported: yes", CONTRACT_MD.read_text(encoding="utf-8"),

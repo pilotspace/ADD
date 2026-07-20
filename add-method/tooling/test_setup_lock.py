@@ -59,7 +59,7 @@ class SetupLockTest(unittest.TestCase):
     def _freeze(self, slug):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -130,17 +130,15 @@ class SetupLockTest(unittest.TestCase):
 
     def test_front_advances_but_build_blocked(self):
         self._init_await()
-        add.main(["new-task", "a"])                      # phase=specify (plan-phase-core seed)
-        self.assertEqual(_run(["advance", "a"])[0], 0)   # specify -> plan
-        # plan-phase-core: the plan->tests crossing is now freeze-gated — freeze §3 here so
-        # this test isolates the setup_unlocked block at tests->build, not contract_not_frozen.
+        add.main(["new-task", "a"])                      # phase=direction (phase-collapse-3 seed)
+        # phase-collapse-3: the whole pre-lock front is the direction span — drafting needs
+        # no advance at all, and the FIRST advance IS the build crossing. Freeze §3 so this
+        # test isolates the setup_unlocked block, not contract_not_frozen.
         self._freeze("a")
-        self.assertEqual(_run(["advance", "a"])[0], 0)   # plan -> tests
-        self.assertEqual(self._state()["tasks"]["a"]["phase"], "tests")
-        code, _, err = _run(["advance", "a"])            # tests -> build : BLOCKED
+        code, _, err = _run(["advance", "a"])            # direction -> build : BLOCKED
         self.assertEqual(code, 1)
         self.assertIn("setup_unlocked", err)
-        self.assertEqual(self._state()["tasks"]["a"]["phase"], "tests")
+        self.assertEqual(self._state()["tasks"]["a"]["phase"], "direction")
 
     def test_gate_blocked_pre_lock(self):
         self._init_await()

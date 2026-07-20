@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """engine-batch-ops (add-lean-loop task 1): `advance --fill` writes the current
-phase's TASK.md section AND advances in one call — all-or-nothing (a guard
-refusal restores TASK.md byte-identical) — and `status --brief` prints only
+phase's PLAN.md section AND advances in one call — all-or-nothing (a guard
+refusal restores PLAN.md byte-identical) — and `status --brief` prints only
 the resume essentials.
 
 Run:
@@ -38,43 +38,55 @@ class _Project(unittest.TestCase):
         _run(self.root, "lock")
         r = _run(self.root, "new-task", "widget", "--title", "Widget")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-        # plan-phase-core: new-task now seeds phase=specify directly (no more separate
-        # "ground" phase to advance out of), so the task is already at specify here.
-        self.task_md = self.root / ".add" / "tasks" / "widget" / "TASK.md"
+        # phase-collapse-3: new-task now seeds phase=direction directly (specify · plan ·
+        # tests are ONE span), so the task is already at direction here.
+        self.task_md = self.root / ".add" / "tasks" / "widget" / "PLAN.md"
 
     def tearDown(self):
         self._tmp.cleanup()
 
+    def _freeze(self):
+        """Stamp §3 FROZEN + a well-formed flag so the direction->build crossing (the
+        ONE freeze gate) passes. freeze-gate-universal sweep."""
+        self.task_md.write_text(self.task_md.read_text().replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
 
 class FillAndAdvance(_Project):
     def test_fill_writes_section_and_advances(self):  # M1
+        # phase-collapse-3: --fill drafts the CURRENT phase's primary section (§1 for
+        # direction) and then runs the unchanged advance guard stack — direction's only
+        # crossing (into build) still needs §3 FROZEN, independent of what --fill wrote.
+        self._freeze()
         draft = self.root / "draft.md"
         draft.write_text("Feature: widget rules\nMust:\n  - the one rule\n")
         r = _run(self.root, "advance", "--fill", str(draft))
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = self.task_md.read_text()
         self.assertIn("Feature: widget rules", body)
-        self.assertIn("phase: plan", body)
+        self.assertIn("phase: build", body)
 
     def test_fill_from_stdin(self):  # M1 (stdin form)
+        self._freeze()
         r = _run(self.root, "advance", "--fill", "-", stdin_text="Feature: stdin rules\n")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         self.assertIn("Feature: stdin rules", self.task_md.read_text())
 
     def test_guard_refusal_rolls_back_byte_identical(self):  # M2
-        # walk to plan with plain advances (sections untouched), then attempt the
-        # plan->tests crossing with --fill on an unfrozen §3 — plan-phase-core moved
-        # the freeze gate from tests->build to THIS crossing (one step earlier).
-        r = _run(self.root, "advance")  # specify -> plan (merged flow)
-        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        # phase-collapse-3: the front is ONE phase (direction) — no separate "plan" phase
+        # to walk to first. --fill on a still-unfrozen §3 refuses right at the single
+        # direction->build crossing (contract_not_frozen), same all-or-nothing rollback.
         before = self.task_md.read_bytes()
         draft = self.root / "d4.md"
         draft.write_text("Plan: test_widget — red first\n")
         r = _run(self.root, "advance", "--fill", str(draft))
         self.assertNotEqual(r.returncode, 0, "unfrozen §3 must refuse the crossing")
         self.assertEqual(self.task_md.read_bytes(), before,
-                         "guard refusal must restore TASK.md byte-identical")
-        self.assertIn("phase: plan", self.task_md.read_text())
+                         "guard refusal must restore PLAN.md byte-identical")
+        self.assertIn("phase: direction", self.task_md.read_text())
 
     def test_fill_with_to_rejected(self):  # R1
         draft = self.root / "d.md"
@@ -122,7 +134,7 @@ class BriefStatus(_Project):
         self.assertLessEqual(len(out), 6, r.stdout)
         joined = "\n".join(out)
         self.assertIn("widget", joined)
-        self.assertIn("specify", joined)
+        self.assertIn("direction", joined)
         self.assertIn("next:", joined)
 
     def test_plain_status_unchanged_shape(self):
@@ -130,17 +142,6 @@ class BriefStatus(_Project):
         self.assertEqual(r.returncode, 0)
         self.assertGreater(len(r.stdout.splitlines()), 6,
                            "plain status keeps the full orient dump")
-
-
-class TreesStayIdentical(unittest.TestCase):
-    def test_three_trees_byte_identical(self):
-        import hashlib
-        repo = HERE.parent.parent
-        trees = (HERE / "add.py",
-                 repo / ".add" / "tooling" / "add.py",
-                 HERE.parent / "src" / "add_method" / "_bundled" / "tooling" / "add.py")
-        digests = {hashlib.md5(t.read_bytes()).hexdigest() for t in trees}
-        self.assertEqual(1, len(digests), "engine trees diverged")
 
 
 if __name__ == "__main__":

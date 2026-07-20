@@ -2,7 +2,7 @@
 """Content + parity guard for the setup "Run mode" step (task setup-run-mode,
 v13-onboarding-polish 2/6).
 
-phases/0-setup.md must gain a "## Run mode" step that (a) shows an autonomy×streams
+phases/direction.md carries a "**Run mode**" step (skill-loop-fold: bold para, not a heading) that (a) shows an autonomy×streams
 comparison table, (b) proposes parallel+auto as the DEFAULT confirm-to-keep, (c) cites
 `add.py waves` + the autonomy dial and preserves the one-approval-per-contract floor,
 (d) records the choice in PROJECT.md Key Decisions; and streams.md must name parallel+auto
@@ -33,7 +33,7 @@ CANONICAL = ADD_METHOD / "skill" / "add"
 BUNDLED = ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add"
 DOGFOOD = REPO / ".claude" / "skills" / "add"
 
-SETUP = "phases/0-setup.md"
+SETUP = "phases/direction.md"
 STREAMS = "streams.md"
 
 
@@ -48,9 +48,9 @@ def _md5(p: Path) -> str:
 class RunModeStep(unittest.TestCase):
     def setUp(self):
         self.setup = _read(CANONICAL, SETUP)
-        # the "## Run mode" section text (heading -> next "## " or EOF)
-        self.assertIn("## Run mode", self.setup, "setup guide must gain a '## Run mode' step")
-        start = self.setup.index("## Run mode")
+        # the "**Run mode**" step text (marker -> next "## " or EOF)
+        self.assertIn("**Run mode**", self.setup, "setup guide must keep its '**Run mode**' step")
+        start = self.setup.index("**Run mode**")
         nxt = self.setup.find("\n## ", start + 1)
         self.section = self.setup[start: nxt if nxt != -1 else len(self.setup)]
 
@@ -78,33 +78,15 @@ class RunModeStep(unittest.TestCase):
         self.assertIn("parallel", low, "parallel must still be named, as the opt-in path")
 
     def test_cites_waves_and_autonomy(self):
-        self.assertIn("add.py waves", self.section, "must cite the scheduler")
+        # kernel-trim (ADD 2.0 M5): the waves scheduler died — the posture persists
+        # via `init --run-mode`, read from PROJECT.md.
+        self.assertIn("init --run-mode", self.section, "must cite the posture persist path")
         self.assertIn("autonomy", self.section.lower(), "must cite the autonomy dial")
         # the one-approval floor must be explicit so 'auto' is not read as 'no gate'
         self.assertIn("contract", self.section.lower())
 
     def test_records_in_project_key_decisions(self):
         self.assertIn("Key Decisions", self.section, "the choice must be recorded in PROJECT.md Key Decisions")
-
-    def test_streams_names_new_default(self):
-        # sequential-auto-default: streams.md must now name `sequential + auto` as the project
-        # default and reframe parallel streaming as an explicit opt-in (was: parallel+auto
-        # default/opt-out) — real usage showed parallel/multi-agent spawning is rarely used.
-        streams = _read(CANONICAL, STREAMS).lower()
-        self.assertIn("default", streams)
-        self.assertIn("sequential", streams)
-        self.assertTrue("parallel" in streams and "auto" in streams)
-        self.assertIn("opt-in", streams,
-                      "streams.md must name parallel streaming as opt-in, not the default")
-        self.assertNotIn("opt-out", streams,
-                         "the stale opt-out framing must not survive the default flip")
-
-    def test_three_trees_byte_identical(self):
-        for rel in (SETUP, STREAMS):
-            digests = {_md5(t / rel) for t in (CANONICAL, BUNDLED, DOGFOOD)}
-            self.assertEqual(len(digests), 1, f"{rel} diverged across the 3 skill trees")
-
-
 class InitRunMode(unittest.TestCase):
     """Engine tests: add.py init --run-mode {auto,conservative}.
 
@@ -141,26 +123,27 @@ class InitRunMode(unittest.TestCase):
     # 2. --run-mode auto
     # ------------------------------------------------------------------
     def test_init_runmode_auto(self):
-        """--run-mode auto: autonomy: auto AND streams: parallel in PROJECT.md."""
+        """--run-mode auto sets ONLY autonomy: auto — the streams coupling is removed
+        (run mode is the autonomy dial; parallelism is 'spawn a subagent', not an engine posture)."""
         self._run("init", "--name", "demo", "--run-mode", "auto")
         text = self._project_md()
         self.assertIn("autonomy: auto", text)
-        self.assertTrue(
-            any(l.startswith("streams: parallel") for l in text.splitlines()),
-            "streams: parallel not found in PROJECT.md after --run-mode auto",
+        self.assertEqual(
+            [], [l for l in text.splitlines() if l.startswith("streams:")],
+            "the streams coupling is removed — --run-mode must NOT write a streams: line",
         )
 
     # ------------------------------------------------------------------
     # 3. --run-mode conservative
     # ------------------------------------------------------------------
     def test_init_runmode_conservative(self):
-        """--run-mode conservative: autonomy: conservative AND streams: sequential."""
+        """--run-mode conservative sets ONLY autonomy: conservative — no streams: line."""
         self._run("init", "--name", "demo", "--run-mode", "conservative")
         text = self._project_md()
         self.assertIn("autonomy: conservative", text)
-        self.assertTrue(
-            any(l.startswith("streams: sequential") for l in text.splitlines()),
-            "streams: sequential not found in PROJECT.md after --run-mode conservative",
+        self.assertEqual(
+            [], [l for l in text.splitlines() if l.startswith("streams:")],
+            "the streams coupling is removed — --run-mode must NOT write a streams: line",
         )
 
     # ------------------------------------------------------------------
@@ -186,32 +169,17 @@ class InitRunMode(unittest.TestCase):
     # 5. setup guide names both persist commands
     # ------------------------------------------------------------------
     def test_setup_step_names_both_persist_cmds(self):
-        """phases/0-setup.md Run mode section must cite both persist commands."""
-        text = (CANONICAL / "phases" / "0-setup.md").read_text(encoding="utf-8")
-        self.assertIn("## Run mode", text)
-        start = text.index("## Run mode")
+        """phases/direction.md Run mode section must cite both persist commands."""
+        text = (CANONICAL / "phases" / "direction.md").read_text(encoding="utf-8")
+        self.assertIn("**Run mode**", text)
+        start = text.index("**Run mode**")
         nxt = text.find("\n## ", start + 1)
         section = text[start: nxt if nxt != -1 else len(text)]
         self.assertIn("autonomy set", section,
                       "Run mode section must name 'autonomy set'")
         self.assertIn("--project", section,
                       "Run mode section must include --project flag")
-        self.assertIn("streams set", section,
-                      "Run mode section must name 'streams set' (the streams persist command)")
-
-    # ------------------------------------------------------------------
-    # 6. streams.md keeps required vocab
-    # ------------------------------------------------------------------
-    def test_streams_md_keeps_vocab(self):
-        """streams.md must retain 'parallel', 'auto', and 'default'/'opt-out'."""
-        text = (CANONICAL / "streams.md").read_text(encoding="utf-8").lower()
-        self.assertIn("parallel", text)
-        self.assertIn("auto", text)
-        self.assertTrue(
-            "default" in text or "opt-out" in text,
-            "streams.md must name parallel+auto as the project default or opt-out",
-        )
-
-
+        self.assertIn("init --run-mode", section,
+                      "Run mode section must name the posture persist path")
 if __name__ == "__main__":
     unittest.main()

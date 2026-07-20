@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Red/green tests for strip-scaffold-at-done (drift-guard M3/2) — tidy a closed TASK.md.
+"""Red/green tests for strip-scaffold-at-done (drift-guard M3/2) — tidy a closed PLAN.md.
 
-A live TASK.md carries `<!-- … -->` instruction comments that guide the active phase; once the
+A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 task is `done` they are dead weight (PR40 audit). Frozen shape (§3 @ v1):
   - `_strip_live_scaffold(text)` removes `<!-- … -->` spans OUTSIDE fenced code blocks (```…```
     pass through byte-exact — the frozen §3 is never mutated), trims the trailing whitespace a
     removal leaves, collapses 3+ blank lines; idempotent;
   - cmd_gate calls it as the LAST step of a COMPLETING gate (PASS/RISK-ACCEPTED), atomic + degrade-safe;
-  - INVARIANTS: add.py ×3 == re-pinned ENGINE_MD5; phases pool untouched.
+  - INVARIANTS: add.py ×3 == re-pinned the engine pin; phases pool untouched.
 
 Run: cd add-method/tooling && python3 -m unittest test_strip_scaffold_at_done -v
 """
@@ -33,11 +33,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 
 
 def _md5(p: Path) -> str:
@@ -75,7 +70,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _ready_to_gate(self, slug="t1"):
         self._silent("new-task", slug, "--title", "T")
@@ -99,12 +94,12 @@ class CompletingGateStrips(_Board):
     def test_pass_strips_instruction_comments(self):             # M1
         self._ready_to_gate("t1")
         p = self._task_md("t1")
-        self.assertIn("<!--", p.read_text(encoding="utf-8"), "precondition: a live TASK.md has comments")
+        self.assertIn("<!--", p.read_text(encoding="utf-8"), "precondition: a live PLAN.md has comments")
         self._silent("gate", "PASS", "t1")
         txt = p.read_text(encoding="utf-8")
         self.assertNotIn("<!--", txt, "a completing gate must strip the `<!-- -->` instruction comments")
         self.assertIn("## 1 ", txt, "authored content (section headings) must remain")
-        self.assertIn("# TASK:", txt)
+        self.assertIn("# PLAN:", txt)
 
     def test_fenced_block_left_untouched(self):                  # M2, R:strip_corrupts_content
         self._ready_to_gate("t1")
@@ -175,23 +170,6 @@ class StripHelperProperties(unittest.TestCase):
         self.assertNotIn("<!-- real comment", out,
                           "a real comment after a stray backtick must still be stripped")
         self.assertIn("kept line", out)
-
-
-class EnginePinnedAndPoolUntouched(unittest.TestCase):
-    def test_engine_byte_identical_to_pin(self):                 # M4, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-pinned engine_pin.ENGINE_MD5")
-
-    def test_phases_pool_untouched(self):                        # M4
-        from test_skill_lean import POOLS
-        phases = next(p for p in POOLS if p["name"] == "phases")
-        target = int(phases["baseline"] * phases["ratio"])
-        nbytes = sum(len((_CANON_SKILL / g).read_bytes())
-                     for g in PHASES_POOL if (_CANON_SKILL / g).exists())
-        self.assertLessEqual(nbytes, target, f"phases pool {nbytes} B must stay ≤ {target}")
 
 
 if __name__ == "__main__":

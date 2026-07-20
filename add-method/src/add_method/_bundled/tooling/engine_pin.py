@@ -13,9 +13,9 @@ Trim policy: each annotation carries only the CURRENT re-aim plus a one-line
 `prior: <hash>… @ <task>` pointer to the immediately-preceding re-aim — never
 a deeper chain. `git log -p` on this file is the real, complete audit trail;
 the comment is a quick-glance anchor, not an append-only ledger. A task's own
-prose (its TASK.md) is the place to record the full rationale for a re-aim —
+prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "4e65596032185cb3d88f764d425b4eb4"  # re-aimed @ foundation-slice-progressive (engine-output-trim: `status --foundation` is a progressive-disclosure MAP — invariants+Domain+Spec full, other sections collapsed to an on-demand `--foundation "<section>"` pull that fleshes out one section; −59% on the 55KB dogfood foundation, re-read every turn; `--all` for the full read). prior: a9ec7dd8… @ foundation-slice
-ENGINE_PKG_MD5 = "265dd143fd850317c66ffb3ad021c98d"  # re-aimed @ hygiene-bundle (engine-hygiene: taskdoc._HEADING_RE — static §-heading regex hoisted to module load). prior: 955023db… @ harness-workspace-isolation
+ENGINE_MD5 = "bfd472014a1f3bdcb76c0a7f103fc44b"  # re-aimed @ run-mode-decouple (run mode = the autonomy dial only; the streams: posture coupling is removed — --run-mode no longer writes a streams line, status drops its `run mode:` row, concurrency is now 'spawn a subagent per task'). prior: 427a2501… @ graph-views
+ENGINE_PKG_MD5 = "e0ff925d46f1666460e8b3c3e375acf1"  # re-aimed @ run-mode-decouple (constants drops _STREAMS_POSTURES; autonomy drops _streams_posture/_project_streams_token/_project_streams + the streams regex). prior: ec7f8093… @ atomic-node

@@ -64,29 +64,21 @@ _REQUIRED_MATERIALIZE_LINES = [
 
 class CiMaterializes(unittest.TestCase):
     def test_ci_materializes_before_untouched_audit(self):         # M3
+        # kernel-trim (ADD 2.0 M5): the seam-audit job died with the audit verb;
+        # the materialize step (the dogfood mirror CI still depends on) survives.
         txt = (REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-        self.assertIn("python3 .add/tooling/add.py audit", txt,
-                      "the seam-audit run: line is a tested, shipped invariant "
-                      "(test_audit_ci.py CANONICAL) — it must stay byte-identical")
-        audit_pos = txt.index("python3 .add/tooling/add.py audit")
         for line in _REQUIRED_MATERIALIZE_LINES:
-            pos = txt.find(line)
-            self.assertGreaterEqual(pos, 0,
-                                     f"ci.yml materialize step must copy: {line!r}")
-            self.assertLess(pos, audit_pos,
-                             f"materialize line must run BEFORE the audit step: {line!r}")
+            self.assertIn(line, txt,
+                          f"ci.yml materialize step must copy: {line!r}")
 
 
 class PinTestsToleratesAbsence(unittest.TestCase):
-    def test_argv_portability_soft_skips(self):                    # M4, R:pin_test_hard_fails_on_absence
-        txt = (HERE / "test_argv_portability.py").read_text(encoding="utf-8")
+    def test_canonical_sweep_soft_skips(self):                     # M4, R:pin_test_hard_fails_on_absence
+        # test-corpus-slim: the per-suite pin copies were consolidated into the
+        # canonical sweep — the absence-tolerance guard re-aims at it.
+        txt = (HERE / "test_tree_parity.py").read_text(encoding="utf-8")
         self.assertIn(".exists()", txt,
-                      "test_argv_portability.py must filter ADD_PY_COPIES by existence")
-
-    def test_merge_base_enforcement_soft_skips(self):               # M4, R:pin_test_hard_fails_on_absence
-        txt = (HERE / "test_merge_base_enforcement.py").read_text(encoding="utf-8")
-        self.assertIn(".exists()", txt,
-                      "test_merge_base_enforcement.py must filter ADD_PY_COPIES by existence")
+                      "test_tree_parity.py must filter absent (gitignored) twins by existence")
 
 
 if __name__ == "__main__":

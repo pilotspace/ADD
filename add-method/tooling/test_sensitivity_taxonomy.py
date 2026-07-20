@@ -84,7 +84,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _new_task_at_contract(self, slug="t", drafted=_DRAFT_FLAGGED):
         self._silent("lock", "--force")
@@ -99,6 +99,8 @@ class _Harness(unittest.TestCase):
             # replace only the ### Contract sub-block body, leaving Grounding/Build-strategy intact.
             new = re.sub(r"(### Contract[^\n]*\n).*?(\n### Build-strategy)",
                          lambda m: m.group(1) + drafted + m.group(2), text, count=1, flags=re.S)
+            new = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                         "Boundary: none — no external input", new, count=1)
             p.write_text(new, encoding="utf-8")
 
     def _set_sensitivity(self, slug, token):

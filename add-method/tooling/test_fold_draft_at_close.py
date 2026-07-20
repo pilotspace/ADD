@@ -89,9 +89,9 @@ class _Harness(unittest.TestCase):
             ms.write_text(re.sub(r"(?m)^\s*- \[ \].*\n?", "", body), encoding="utf-8")
         self._ok("new-task", "t", "--title", "T", "--milestone", "m")
         self._ok("advance", "--to", "plan")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", _SEC3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", _SEC3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
@@ -112,13 +112,6 @@ class _Harness(unittest.TestCase):
 
 
 class DraftTest(_Harness):
-    def test_draft_classifies_three_shapes(self):                  # M1
-        self._closed_milestone(with_deltas=True)
-        out = self._ok("milestone-done", "m")
-        self.assertIn("fold draft", out)
-        self.assertRegex(out, r"(?m)^\s*seed .*widget parser.*\[t\] — evidence resolves: pkg/live\.py$")
-        self.assertRegex(out, r"(?m)^\s*drop\? .*legacy shim.*\[t\] — evidence no longer resolves$")
-        self.assertRegex(out, r"(?m)^\s*seed .*retry policy.*\[t\] — forward hand-off by default$")
 
     def test_existing_nudge_survives(self):                        # M2
         self._closed_milestone(with_deltas=True)

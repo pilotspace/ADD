@@ -2,8 +2,11 @@
 
 Source of truth: the book chapters. A misspelled/dropped label = reject, re-render.
 
-## 1 · add-flow.png — The 7-phase flow (ch02)
-Exact order + essence (spelling must match):
+## 1 · add-flow.png — The flow: 3 phases, 7 beats (ch02)
+Phase bands (engine walk — direction · build · verify; done is bookkeeping, not a card):
+- direction = beats 1–4, one span ending at the single freeze approval
+- build = beat 5 · verify = beats 6–7 (verify owns Observe)
+Exact beat order + essence (spelling must match):
 1. Specify — the rules
 2. Scenarios — pass/fail cases
 3. Plan — ground the code, freeze the contract

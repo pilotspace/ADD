@@ -77,7 +77,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -95,14 +95,14 @@ class _Board(unittest.TestCase):
     _CONTRACT_BODY = "shape: heal { attempts:int, history:[{at,reason,source}] }"
 
     def _write_task(self, slug: str, *, frozen=True):
-        """A full TASK.md with a FROZEN, well-formed §3 (so tests->build does not die
+        """A full PLAN.md with a FROZEN, well-formed §3 (so tests->build does not die
         on unflagged_freeze) and a §4 declaring `./tests/`."""
         status = ("Status: FROZEN @ v1 — approved by Tester 2026-06-11."
                   if frozen else "Status: DRAFT")
         flag = ("Least-sure flag surfaced at freeze: [contract] attempts is monotonic "
                 "— no auto-reset — accepted as the cap's only honest floor.")
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-06-11 · stage: mvp",
             "phase: ground",
             "",
@@ -318,7 +318,7 @@ class ForcePreservesHeal(_Board):
         self.assertEqual(self._attempts("t"), 2,
                          "the monotonic heal counter must survive a --force re-create")
         self.assertEqual(len(self._heal("t").get("history", [])), 1, "heal history preserved")
-        self.assertEqual(self._task_state("t")["phase"], "specify",  # plan-phase-core seed
+        self.assertEqual(self._task_state("t")["phase"], "direction",  # phase-collapse-3 seed
                          "the rest of the record still resets on a --force overwrite")
 
     def test_force_over_fresh_task_adds_no_heal(self):

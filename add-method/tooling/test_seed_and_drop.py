@@ -56,10 +56,10 @@ class SeedAndDropTest(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug):
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _mk(self, slug):
-        """Create task `slug` (idempotent); return its TASK.md path."""
+        """Create task `slug` (idempotent); return its PLAN.md path."""
         root = add.find_root()
         if slug not in (add.load_state(root).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])
@@ -98,25 +98,6 @@ class SeedAndDropTest(unittest.TestCase):
         # lineage recorded in state
         self.assertEqual(self._state()["tasks"]["followup"]["from_delta"], "prior")
 
-    def test_drop_dismisses_without_task(self):  # Must 2
-        self._set_spec("t", "drop idea")
-        before_tasks = set((self._root() / "tasks").glob("*"))
-        code, out, err = _run(["drop-delta", "t"])
-        self.assertEqual(code, 0, f"drop failed: {out}{err}")
-        ttext = self._task_md("t").read_text(encoding="utf-8")
-        self.assertIn("- [SPEC · dropped] drop idea (evidence: ev)", ttext)
-        self.assertNotIn("[SPEC · open] drop idea", ttext)
-        # no new task directory appeared
-        self.assertEqual(set((self._root() / "tasks").glob("*")), before_tasks)
-
-    def test_only_first_open_resolved(self):  # Must 3
-        self._set_spec("t", "alpha", "beta")
-        code, out, err = _run(["drop-delta", "t"])
-        self.assertEqual(code, 0, f"drop failed: {out}{err}")
-        ttext = self._task_md("t").read_text(encoding="utf-8")
-        self.assertIn("- [SPEC · dropped] alpha (evidence: ev)", ttext)
-        self.assertIn("- [SPEC · open] beta (evidence: ev)", ttext)
-
     def test_seed_no_open_refuses(self):  # Reject 1 (seed)
         self._mk("prior")  # fresh task — empty "### Spec delta" block, no open delta
         before = self._task_md("prior").read_bytes()
@@ -125,19 +106,6 @@ class SeedAndDropTest(unittest.TestCase):
         self.assertIn("no_open_spec_delta", out + err)
         self.assertFalse((self._root() / "tasks" / "followup").exists())
         self.assertEqual(self._task_md("prior").read_bytes(), before)  # untouched
-
-    def test_drop_no_open_refuses(self):  # Reject 1 (drop)
-        self._mk("t")  # fresh task, no open SPEC delta
-        before = self._task_md("t").read_bytes()
-        code, out, err = _run(["drop-delta", "t"])
-        self.assertNotEqual(code, 0)
-        self.assertIn("no_open_spec_delta", out + err)
-        self.assertEqual(self._task_md("t").read_bytes(), before)  # untouched
-
-    def test_unknown_task_refuses(self):  # Reject 2
-        code, out, err = _run(["drop-delta", "ghost"])
-        self.assertNotEqual(code, 0)
-        self.assertIn("unknown task 'ghost'", out + err)
 
     def test_seed_taken_slug_no_consume(self):  # Reject 3 (validate-all-then-write)
         self._set_spec("prior", "shared idea")

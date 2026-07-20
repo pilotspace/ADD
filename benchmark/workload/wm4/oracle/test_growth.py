@@ -51,10 +51,18 @@ def test_time_window_filter():
 
 
 def test_pagination_limit_offset():
+    # own December days + window-scoped listing (params combine, per PROMPT):
+    # the original fixed 2026-09-01..04 windows collided with the filter
+    # probe's F1 booking (409 on P0) and the unscoped listing depended on
+    # every earlier probe's bookings — probe-state pollution, meter defect
+    # class twice proven (live: add wm4 orc 0.83 in BOTH modes, 2026-07-18)
     with running_app(_workspace()) as base:
         for i in range(4):
-            _mk(base, f"P{i}", f"2026-09-0{i+1}T09:00:00Z", f"2026-09-0{i+1}T10:00:00Z")
-        status, page = http_call("GET", f"{base}/bookings?limit=2&offset=1", headers=_auth(TOKEN_A))
+            _mk(base, f"P{i}", f"2026-12-0{i+1}T09:00:00Z", f"2026-12-0{i+1}T10:00:00Z")
+        status, page = http_call(
+            "GET",
+            f"{base}/bookings?from=2026-12-01T00:00:00Z&to=2026-12-31T23:59:59Z&limit=2&offset=1",
+            headers=_auth(TOKEN_A))
         assert status == 200
         items = page if isinstance(page, list) else page.get("bookings", page.get("items", []))
         assert len(items) == 2

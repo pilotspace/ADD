@@ -19,8 +19,7 @@ import add
 ROOT = Path(__file__).resolve().parents[2]          # tooling -> add-method -> repo root
 FLOW_TREES = [
     ROOT / "02-the-flow.md",                         # repo-root book (flat)
-    ROOT / "add-method" / "docs" / "02-the-flow.md", # shipped npm copy
-    ROOT / ".add" / "docs" / "02-the-flow.md",       # dogfood install (gitignored)
+    ROOT / "add-method" / "docs" / "02-the-flow.md", # canonical (book-stops-shipping: no other copies)
 ]
 CHAPTER = ROOT / "add-method" / "docs" / "02-the-flow.md"   # the tested content source
 CHECKLIST = ROOT / "add-method" / "diagrams" / "CHECKLIST.md"  # the reusable pipeline
@@ -87,15 +86,6 @@ class FlowDiagramProofTest(unittest.TestCase):
                         "mid-flow backward-correction edge (loopback_not_drawn)")
 
     # --- no surface drifts: the doc trees agree byte-for-byte -----------------
-    def test_flow_chapter_identical_across_trees(self):
-        present = [p for p in FLOW_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2, "expected at least root + shipped copy")
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
-        self.assertEqual(
-            len(digests), 1,
-            "02-the-flow.md differs across trees: "
-            + ", ".join(f"{p.name}@{p.parent.name}={hashlib.md5(p.read_bytes()).hexdigest()[:8]}"
-                        for p in present))
 
 
 if __name__ == "__main__":

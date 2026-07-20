@@ -9,7 +9,7 @@ Designed for failure:
 - Verifies bundled sources exist before touching target.
 - Never clobbers an existing skill (skip-if-exists unless --force).
 - Uses shutil.copytree with dirs_exist_ok=True so a re-install refreshes
-  tooling/docs without destroying the existing project structure.
+  tooling without destroying the existing project structure.
 """
 from __future__ import annotations
 
@@ -34,13 +34,12 @@ MANAGED = (
     ("skill/add", ".claude/skills/add", False),
     ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
-    ("docs", ".add/docs", False),
     ("personas-teacher", ".add/personas-teacher", False),
 )
 # Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
 # but a malformed/older package missing one must NOT abort the whole install — the core
-# (skill/tooling/docs) still lands, and the optional tree is soft-skipped. Design-for-failure.
+# (skill/tooling) still lands, and the optional tree is soft-skipped. Design-for-failure.
 # `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
 # enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
 # predating this fix must still install its core cleanly.
@@ -53,7 +52,11 @@ OPTIONAL = frozenset({"personas-teacher", "agents"})
 _SHARED = frozenset({"agents"})
 # Roster names retired upstream — the ONLY names the shared lander may remove (never a
 # pattern/prefix heuristic: a USER file named add-anything.md must survive). Empty today.
-_RETIRED_AGENTS = ()
+# roster-distill (ADD 2.0 M1): the 5-agent roster collapsed into the ONE `add` agent;
+# these tombstones let update remove the retired files from the SHARED .claude/agents
+# namespace (tombstone-only removal — a user's own subagents are never swept).
+_RETIRED_AGENTS = ("add-design.md", "add-build.md", "add-verify.md",
+                   "add-persona.md", "add-advisor.md")
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,
@@ -440,7 +443,7 @@ def _agent_pointer_block(profile: dict) -> str:
         f"{_GUIDE_BEGIN}\n"
         "## ADD — how to work in this repo\n"
         "\n"
-        "This project uses **ADD (AI-Driven Development)**. The engine + book are installed.\n"
+        "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n"
         "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n"
         "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n"
         "\n"
@@ -617,7 +620,7 @@ def _write_rule_file_pointer(target, profile: dict) -> str:
     return "ok"
 
 
-# --- global home: an OPT-IN shared install of the managed layer (engine+book+skill) ----
+# --- global home: an OPT-IN shared install of the managed layer (engine+skill) ----
 # Resolution is PURE + total (never throws); the home MIRRORS the bundled managed layer so
 # `update --global` propagation reuses the SAME MANAGED map. Mirrored by behaviour in cli.js.
 def resolve_global_home(env=None) -> Path:
@@ -677,13 +680,15 @@ def _write_registry(home: Path, paths) -> None:
     os.replace(str(tmp), str(target))   # atomic on POSIX + Windows (same filesystem)
 
 
-# The home MIRRORS the bundled managed layer (skill/add + tooling + docs at the SAME relative
+# The home MIRRORS the bundled managed layer (skill/add + tooling at the SAME relative
 # paths the package ships) so `_reconcile(project, source=<home>)` reuses MANAGED unchanged.
 # (bundled subpath, dest relative to <home>, strip dev-only test_*.py)
 _GLOBAL_TREES = (
     ("skill/add", "skill/add", False),
+    ("agents", "agents", False),   # roster-drift fix: absent here, `update --global`
+                                   # propagation (sourced FROM the home) soft-skipped the
+                                   # roster forever — no refresh, no retired tombstones
     ("tooling", "tooling", True),
-    ("docs", "docs", False),
     ("personas-teacher", "personas-teacher", False),
 )
 
@@ -707,7 +712,7 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
 # CLEAN-REPLACED, one-way (project->home). Mirrored by behaviour in cli.js.
 LOCK_FILE = ".update.lock"                                         # the `update --global` home lock (never user-data)
 PROJECT_LOCK_FILE = ".install.lock"                                # the project-scope install()/update() lock (never user-data)
-_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks
+_DATA_EXCLUDE = {"tooling", "docs", ".update-cache", STAMP_FILE, LOCK_FILE, PROJECT_LOCK_FILE}   # managed trees + managed-meta + both locks ("docs" = legacy 1.x tree: still never user-data)
 
 
 def data_key(project_abspath) -> str:
@@ -1445,7 +1450,7 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
     return {"restored": len(after - before), "refreshed": len(after & before)}
 
 
-_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling", "docs": "docs",
+_TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling",
                "personas-teacher": "personas"}
 
 
@@ -2111,7 +2116,7 @@ def update(
     as_global: bool = False,
     lock_timeout: float | None = None,
 ) -> int:
-    """Re-materialize the managed layer (skill · tooling · docs) from the installed
+    """Re-materialize the managed layer (skill · tooling) from the installed
     package into an EXISTING .add/ project, preserving ALL user data. Idempotent;
     clean-replaces so no orphan files survive a version bump. 0 on success/no-op, 1 on error.
 
@@ -2173,10 +2178,21 @@ def update(
 
             _log(
                 f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-                f"skill · tooling · docs refreshed "
+                f"managed layer reconciled "
                 f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
                 "your project state untouched."
             )
+            # crossing nudges — engine-owned follow-ups the updater must NAME, never run
+            # (python3 may be absent on this PATH; both commands are idempotent):
+            if cur_version != new_version:
+                _log("next: python3 .add/tooling/add.py sync-guidelines"
+                     "   # refresh the CLAUDE.md guidance block to this version")
+            tasks_dir = add_dir / "tasks"
+            if tasks_dir.is_dir() and any(
+                    d.is_dir() and (d / "TASK.md").exists() and not (d / "PLAN.md").exists()
+                    for d in tasks_dir.iterdir()):
+                _log("next: python3 .add/tooling/add.py migrate"
+                     "   # 1.x board detected: TASK.md -> PLAN.md, live + archived")
             return 0
     except BlockingIOError:
         return _fail(

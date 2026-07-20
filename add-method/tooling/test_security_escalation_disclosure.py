@@ -3,7 +3,7 @@
 (flow-honesty milestone, task `security-escalation-disclosure`, M1).
 
 CONTRACT (frozen @ v1) — doc-only, no engine change:
-  run.md + phases/6-verify.md must DISCLOSE that the engine cannot detect a MISSED security
+  run.md + phases/verify.md must DISCLOSE that the engine cannot detect a MISSED security
   finding: `unescalated_security_note` only catches a MARKED note (NOTE/⚠) that was auto-gated,
   so under `auto` a human SPOT-AUDIT is the only backstop for a finding never marked. The standing
   "a security finding is always HARD-STOP" guarantee stays VERBATIM. add.py byte-identical
@@ -37,7 +37,7 @@ class SecurityEscalationDisclosureTest(unittest.TestCase):
         return [(t, _read(t / rel)) for t in SKILL_TREES]
 
     def test_verify_guide_discloses_missed_finding(self):       # Must + missing_disclosure_verify
-        for tree, text in self._each("phases/6-verify.md"):
+        for tree, text in self._each("phases/verify.md"):
             low = text.lower()
             self.assertIn("spot-audit", low,
                           f"missing_disclosure_verify: no spot-audit backstop in {tree}")
@@ -58,7 +58,7 @@ class SecurityEscalationDisclosureTest(unittest.TestCase):
 
     def test_guarantee_not_weakened(self):                      # guarantee_weakened
         for tree in SKILL_TREES:
-            v = _read(tree / "phases/6-verify.md")
+            v = _read(tree / "phases/verify.md")
             self.assertIn("always `HARD-STOP`", v,
                           f"guarantee_weakened: 6-verify dropped 'always HARD-STOP' in {tree}")
             r = _read(tree / "run.md")
@@ -66,7 +66,7 @@ class SecurityEscalationDisclosureTest(unittest.TestCase):
                           f"guarantee_weakened: run.md dropped the escalation guarantee in {tree}")
 
     def test_skill_trees_byte_identical_for_both_guides(self):  # skill_tree_drift
-        for rel in ("run.md", "phases/6-verify.md"):
+        for rel in ("run.md", "phases/verify.md"):
             md5s = {hashlib.md5(_read(t / rel).encode("utf-8")).hexdigest() for t in SKILL_TREES}
             self.assertEqual(len(md5s), 1,
                              f"skill_tree_drift: {rel} differs across the 3 skill trees")

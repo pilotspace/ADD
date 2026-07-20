@@ -3,7 +3,7 @@
 
 A COMPLETING `advance` that lands an agent INTO a working phase folds the landed
 phase's guide chapter — the ONE `add.py guide` line the `next:` footer lacks (the
-footer already carries command + short why) — as a `guide: .add/docs/<chapter>`
+footer already carries command + short why) — as a `guide: <book-site chapter URL>`
 line right ABOVE the footer, plus a "don't re-run `add.py guide`" cue. This kills
 the re-run-guide orientation habit WITHOUT duplicating the footer. Landing in
 `done` folds nothing (Arm B owns that juncture); a bundle fast-forward folds only
@@ -67,7 +67,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _freeze(self, slug: str) -> None:
         p = self._task_md(slug)
@@ -86,7 +86,7 @@ class _Board(unittest.TestCase):
     @staticmethod
     def _fold_lines(out: str) -> list[str]:
         return [ln.strip() for ln in out.splitlines()
-                if ln.strip().startswith("guide:") and ".add/docs/" in ln]
+                if ln.strip().startswith("guide:") and "pilotspace.github.io/ADD/" in ln]
 
     @staticmethod
     def _next_lines(out: str) -> list[str]:
@@ -96,12 +96,13 @@ class _Board(unittest.TestCase):
 class GuideFoldTest(_Board):
 
     def test_advance_folds_landed_phase_chapter(self):
-        self._silent("new-task", "foo")                  # active @ specify
-        out, _, _ = self._run("advance", "foo")          # specify -> plan (merged flow)
+        self._silent("new-task", "foo")                  # active @ direction
+        self._freeze("foo")                              # freeze-gate-universal sweep
+        out, _, _ = self._run("advance", "foo")          # direction -> build (the ONE crossing)
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"exactly one guide-fold line, got: {folds!r}\n{out}")
-        self.assertIn(".add/docs/05-step-3-plan.md", folds[0],
-                      "the fold carries the LANDED phase's chapter (plan)")
+        self.assertIn("/07-step-5-build/", folds[0],
+                      "the fold carries the LANDED phase's chapter (build)")
         self.assertIn("add.py guide", folds[0],
                       "the fold names `add.py guide` as the thing not to re-run")
         # the footer is untouched — still exactly one next: line, still below the fold
@@ -111,15 +112,15 @@ class GuideFoldTest(_Board):
                         "the fold prints ABOVE the next: footer")
 
     def test_fold_tracks_the_phase_it_lands_in(self):
-        # a second landing folds a DIFFERENT chapter — plan -> tests folds tests' chapter
+        # a second landing folds a DIFFERENT chapter — build -> verify folds verify's chapter
         self._silent("new-task", "bar")
-        self._silent("advance", "bar")                   # specify -> plan
         self._freeze("bar")
-        out, _, _ = self._run("advance", "bar")          # plan -> tests (frozen cross)
+        self._silent("advance", "bar")                   # direction -> build
+        out, _, _ = self._run("advance", "bar")          # build -> verify
         folds = self._fold_lines(out)
         self.assertEqual(len(folds), 1, f"one fold, got {folds!r}\n{out}")
-        self.assertIn(".add/docs/06-step-4-tests.md", folds[0],
-                      "landing in tests folds tests' chapter, not plan's")
+        self.assertIn("/08-step-6-verify/", folds[0],
+                      "landing in verify folds verify's chapter, not build's")
 
     def test_landing_in_done_folds_nothing(self):
         # arm a task through to build, then advance build->verify and gate PASS (-> done)
@@ -133,14 +134,6 @@ class GuideFoldTest(_Board):
         self.assertEqual(code, 0, out_done)
         self.assertEqual(self._fold_lines(out_done), [],
                          "landing in done folds nothing — Arm B footer owns that juncture")
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_mirrors_and_pin(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "engine_pin.ENGINE_MD5 must track the live engine")
 
 
 if __name__ == "__main__":

@@ -29,9 +29,9 @@ class _Harness(unittest.TestCase):
         self.addCleanup(os.chdir, self._cwd)
         os.chdir(self.tmp)
         self._silent("init", "--name", "demo", "--stage", "mvp")
-        self._silent("new-task", "t", "--fast", "--title", "x")
+        self._silent("new-task", "t", "--title", "x")
         self.root = self.tmp / ".add"
-        self.task_md = self.root / "tasks" / "t" / "TASK.md"
+        self.task_md = self.root / "tasks" / "t" / "PLAN.md"
 
     def _silent(self, *argv):
         out, err = io.StringIO(), io.StringIO()
@@ -48,13 +48,14 @@ class _Harness(unittest.TestCase):
         p.write_text("x\n")
 
     def _write_plan(self, touches: str, scope: str):
-        # Replace the §3 Touches + §5 Scope lines with the fixture's.
+        # atomic-node: the template no longer scaffolds a Touches line — the
+        # fixture INSERTS one (a hand-added Touches line is still engine-read),
+        # and replaces the scaffolded Scope line.
         text = self.task_md.read_text()
         lines = []
         for ln in text.splitlines():
-            if ln.lstrip().startswith("Touches (files"):
+            if ln.lstrip().startswith("Scope (may touch):"):
                 lines.append(f"Touches (files · symbols): {touches}")
-            elif ln.lstrip().startswith("Scope (may touch):"):
                 lines.append(f"Scope (may touch): {scope}")
             else:
                 lines.append(ln)
@@ -105,7 +106,7 @@ class PasteReadyLineTest(_Harness):
         before = self.task_md.read_bytes()
         self._echo()
         self.assertEqual(before, self.task_md.read_bytes(),
-                         "propose-not-impose: the echo must never write TASK.md")
+                         "propose-not-impose: the echo must never write PLAN.md")
 
 
 if __name__ == "__main__":

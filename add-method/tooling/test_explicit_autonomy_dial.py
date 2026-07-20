@@ -62,13 +62,13 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _body(self, slug: str, risk=None, autonomy=None, frozen: bool = True) -> str:
         meta = f"slug: {slug} · created: 2026-06-10 · stage: mvp"
         if risk:
             meta += f" · risk: {risk}"
-        head = [f"# TASK: {slug}", "", meta]
+        head = [f"# PLAN: {slug}", "", meta]
         if autonomy is not None:
             head.append(f"autonomy: {autonomy}")
         head.append("phase: specify")  # plan-phase-core seed; must match new-task's state phase
@@ -216,7 +216,7 @@ class DocsAccordTest(unittest.TestCase):
     RUNGS = ("manual", "conservative", "auto")
 
     # canonical add-method/ tree first; the synced twins must stay byte-identical
-    DOC_TREES = (REPO / "add-method" / "docs", REPO / ".add" / "docs", BUNDLE / "docs")
+    DOC_TREES = (REPO / "add-method" / "docs",)   # book-stops-shipping (2.0 M6b): canonical only
     AUTONOMY_DOCS = ("appendix-c-glossary.md", "10-setup-and-stages.md", "11-governance.md")
     TMPL_TREES = (REPO / "add-method" / "tooling" / "templates",
                   REPO / ".add" / "tooling" / "templates",
@@ -241,11 +241,6 @@ class DocsAccordTest(unittest.TestCase):
                 self.assertEqual(canon, (t / fname).read_bytes(),
                                  f"divergence (synced): {t / fname}")
 
-    def test_autonomy_book_docs_name_three_rungs_synced(self):
-        # the §1 Must names appendix-c · 10-setup · 11-governance explicitly
-        for fname in self.AUTONOMY_DOCS:
-            self._assert_names_rungs(self.DOC_TREES[0] / fname, f"docs/{fname}")
-            self._assert_synced(self.DOC_TREES, fname)
 
     def test_glossary_survivor_names_three_rungs(self):
         # the living-doc GLOSSARY the human reads on the board

@@ -6,7 +6,8 @@ from bare `new-task` (CLI-first, skips intake) to the AI-first entry: open Claud
 describe what to build; the agent runs intake -> milestone -> one-approval.
 
 A load-bearing invariant is GUARDED (not added — it already works): `bin/cli.js` copies the skill into
-`.claude/skills/add/` and the book into `.add/docs/`, and package.json ships both. The orientation
+`.claude/skills/add/`, and package.json ships it (book-stops-shipping, 2.0 M6b: the book is
+NEVER bundled or copied — it lives at the published site only). The orientation
 block (agent-orientation-block) now PROMISES "the `add` skill drives the flow" — so the skill must be
 present after install. This guard fails if that bundling ever regresses.
 
@@ -71,14 +72,15 @@ class V8InstallTest(unittest.TestCase):
         cli = _cli()
         self.assertTrue(re.search(r'"skill/add".*?\.claude.*?skills.*?add', cli, re.DOTALL),
                         "cli.js must copy the skill into .claude/skills/add/")
-        self.assertTrue(re.search(r'"docs".*?\.add.*?docs', cli, re.DOTALL),
-                        "cli.js must copy the book into .add/docs/")
+        self.assertIsNone(re.search(r'"docs",\s*\[\s*"\.add",\s*"docs"', cli),
+                          "book-stops-shipping: cli.js must NOT copy a book into .add/docs/")
 
     def test_package_ships_brain(self):
         files = json.loads(PACKAGE_JSON.read_text(encoding="utf-8")).get("files", [])
         joined = " ".join(files)
         self.assertIn("skill/", joined, "package.json `files` must ship the skill")
-        self.assertIn("docs/", joined, "package.json `files` must ship the book")
+        self.assertNotIn("docs/", joined,
+                         "book-stops-shipping: package.json `files` must NOT ship the book")
         self.assertTrue(any("add.py" in f for f in files), "package.json `files` must ship add.py")
 
     # --- v12 installer-arm: installer drops files only, never auto-runs init -----

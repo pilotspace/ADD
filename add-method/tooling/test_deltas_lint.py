@@ -47,7 +47,7 @@ class DeltasLintTest(unittest.TestCase):
         root = add.find_root()
         if slug not in (add.load_state(root).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         marker = "### Competency deltas"
         idx = text.index(marker) + len(marker)
@@ -112,14 +112,14 @@ class DeltasLintTest(unittest.TestCase):
         self.assertNotIn("no_evidence", out)
 
     def test_unreadable_task_emits_no_check(self):
-        # design-for-failure: an existing-but-unreadable TASK.md yields no lint check
+        # design-for-failure: an existing-but-unreadable PLAN.md yields no lint check
         # (None), never a crash/traceback.
         from unittest import mock
         self._add_deltas("a", "- [TDD · open] one (evidence: e)")
         root = add.find_root()
         with mock.patch.object(Path, "read_text", side_effect=OSError("boom")):
             result = add._lint_task_deltas(root, "a")
-        self.assertIsNone(result, "unreadable TASK.md must yield no check (None), not a crash")
+        self.assertIsNone(result, "unreadable PLAN.md must yield no check (None), not a crash")
 
 
 if __name__ == "__main__":

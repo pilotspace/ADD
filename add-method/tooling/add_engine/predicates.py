@@ -11,6 +11,7 @@ import re
 
 from add_engine.constants import (
     PHASE_OWNER, PHASE_GROUPS, PERSONA_FLOW_VALUES, PERSONA_FRONTMATTER_KEYS, PERSONA_REQUIRED_SECTIONS,
+    TASK_KINDS,
     _MUST_ID_RE, _REJECT_CODE_RE, _SCENARIO_TAG_RE, _COVERS_LINE_RE, _TAG_TOKEN_RE,
 )
 from add_engine.io_state import _die
@@ -101,7 +102,7 @@ def _section_unfilled(md_text: str, header: str) -> bool:
     """True iff the `header` section is PRESENT but UNFILLED — empty (no real bullet) or
     still a `<…>` template placeholder. ABSENT section -> False (grandfathered legacy);
     a filled section (>=1 real bullet, no `<…>`) -> False. Pure predicate — the shared
-    placeholder test the fill gates use (contract-fill at confirm; build-expectations at build).
+    placeholder test the contract-fill gate uses at confirm.
     Angle brackets INSIDE a backtick code span are literal technical notation (`<persona>`,
     `.add/personas/<slug>.md`), not a fill placeholder — only a BARE <…> counts as unfilled."""
     body, in_sec, present = [], False, False
@@ -160,6 +161,14 @@ def _persona_quality_warnings(md_text: str) -> list[str]:
         for v in (tok.strip() for tok in m.group(1).split(",")):
             if v and v not in PERSONA_FLOW_VALUES:
                 findings.append(f"flow value '{v}' not one of " + "|".join(PERSONA_FLOW_VALUES))
+    # (C) persona-task-kinds: a `task-kinds:` value outside the closed taxonomy scores as
+    # NOTHING on the persona scoreboard (the trace join key never matches), so a typo would
+    # otherwise fail silently — same shape as Finding A; an ABSENT line is conformant.
+    m = re.search(r"(?m)^\s*task-kinds\s*:\s*(.+)$", fm_body)
+    if m:
+        for v in (tok.strip() for tok in m.group(1).split(",")):
+            if v and v not in TASK_KINDS:
+                findings.append(f"task-kinds value '{v}' not one of " + "|".join(TASK_KINDS))
     # strip comments FIRST (a backtick inside a comment is already gone), then ```-fenced
     # blocks (a Playbook skeleton legitimately carries <placeholder> lines), then inline spans
     no_comments = re.sub(r"<!--.*?-->", "", md_text, flags=re.S)

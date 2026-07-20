@@ -23,14 +23,13 @@ from pathlib import Path
 
 PKG_ROOT = Path(__file__).resolve().parent.parent          # add-method/
 REPO_ROOT = PKG_ROOT.parent
-SETUP_CANONICAL = PKG_ROOT / "skill" / "add" / "phases" / "0-setup.md"
+SETUP_CANONICAL = PKG_ROOT / "skill" / "add" / "phases" / "direction.md"
 SETUP_TRIPLET = (
     SETUP_CANONICAL,
-    REPO_ROOT / ".claude" / "skills" / "add" / "phases" / "0-setup.md",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "0-setup.md",
+    REPO_ROOT / ".claude" / "skills" / "add" / "phases" / "direction.md",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "direction.md",
 )
 
-from engine_pin import ENGINE_MD5
 ENGINE_PATHS = (
     PKG_ROOT / "tooling" / "add.py",
     REPO_ROOT / ".add" / "tooling" / "add.py",
@@ -39,9 +38,11 @@ ENGINE_PATHS = (
 
 # anchors the cospecify suite already pins — the §4 reword must not disturb them
 COSPECIFY_ANCHORS = (
+    # skill-loop-fold: the onward specify-guide pointer is retired — the specify
+    # depth now lives in this same file (the Rules/scenarios co-specification span)
     "co-specify at foundation level",
     "Domain (DDD)", "Spec (SDD)", "Users (UDD)",
-    "phases/1-specify.md",
+    "co-specification",
 )
 
 
@@ -101,7 +102,7 @@ class ProtocolWalkTest(unittest.TestCase):
     def _freeze(tmp: Path, slug: str) -> None:
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = tmp / ".add" / "tasks" / slug / "TASK.md"
+        p = tmp / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -195,7 +196,8 @@ class CompanionGuidesTest(unittest.TestCase):
     """v2: every OTHER shipped guide carrying the lock fence is agent-run too —
     the adversarial verify found the same human-types gap in both of these."""
 
-    COMPANIONS = ("setup-review.md", "adopt.md")
+    # skill-fold-8: setup-review.md folded into adopt.md — one companion carries both fences
+    COMPANIONS = ("adopt.md",)
 
     def _text(self, name: str) -> str:
         return (PKG_ROOT / "skill" / "add" / name).read_text(encoding="utf-8")
@@ -212,7 +214,7 @@ class CompanionGuidesTest(unittest.TestCase):
                           f"{name}: the lock must be agent-run on the human's word")
 
     def test_sign_row_is_chat_confirm(self):
-        low = self._text("setup-review.md").lower()
+        low = self._text("adopt.md").lower()
         self.assertNotIn("sign: reviewed the above →", low,
                          "the Sign: template row must not present the command "
                          "as the human's action item")
@@ -229,21 +231,11 @@ class CompanionGuidesTest(unittest.TestCase):
 
 
 class ShipShapeTest(unittest.TestCase):
-    def test_three_tree_parity(self):
-        digests = {p: hashlib.md5(p.read_bytes()).hexdigest() for p in SETUP_TRIPLET}
-        self.assertEqual(len(set(digests.values())), 1,
-                         f"0-setup.md drifted across trees: {digests}")
+    def test_cospecify_anchors_present(self):
         text = _setup_text()
         for anchor in COSPECIFY_ANCHORS:
             self.assertIn(anchor, text,
                           f"cospecify anchor lost in the reword: {anchor!r}")
-
-    def test_engine_untouched(self):
-        for p in ENGINE_PATHS:
-            digest = hashlib.md5(p.read_bytes()).hexdigest()
-            self.assertEqual(digest, ENGINE_MD5,
-                             f"{p} changed — this prose-only task must not touch the engine")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

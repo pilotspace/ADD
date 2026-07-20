@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for phase-merge-specify (six-phase-loop 1/6, frozen v1): the
 scenarios PHASE folds into specify — one drafting phase produces §1 AND §2; the
-TASK.md §-section shape is untouched (sections are the stable API). Legacy state
+PLAN.md §-section shape is untouched (sections are the stable API). Legacy state
 tokens normalize on read (expectations-first precedent); a pre-merge header skip
 declaration naming scenarios is tolerated loud, never a die.
 
@@ -48,7 +48,17 @@ class _Harness(unittest.TestCase):
     def _board(self):
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
+
+    def _freeze(self, slug="t"):
+        """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
+        direction->build. freeze-gate-universal sweep."""
+        p = self.tmp / ".add" / "tasks" / slug / "PLAN.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-07-14.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
 
     def _phase(self, slug="t"):
         state = json.loads((self.tmp / ".add" / "state.json").read_text(encoding="utf-8"))
@@ -58,35 +68,51 @@ class _Harness(unittest.TestCase):
 class PhaseListTest(_Harness):
     def test_phases_has_no_scenarios(self):                        # M1
         self.assertNotIn("scenarios", PHASES)
-        # (phase-merge-verify later dropped observe too; this suite pins ITS merge —
-        # scenarios gone, specify first, plan second)
-        self.assertEqual(PHASES[:2], ("specify", "plan"))
+        # (phase-collapse-3 later dropped specify/plan/tests as SEPARATE phases too —
+        # this suite pins ITS merge: scenarios gone, the front opens at `direction`)
+        self.assertEqual(PHASES[0], "direction")
 
     def test_maps_carry_no_scenarios_key(self):                    # M1
         for name, mapping in (("PHASE_GUIDE", PHASE_GUIDE), ("PHASE_OWNER", PHASE_OWNER),
                               ("PHASE_AGENT", PHASE_AGENT)):
             self.assertNotIn("scenarios", mapping, f"{name} still maps the retired phase")
-        self.assertEqual(PHASE_GROUPS["DIRECTION"], ("specify", "plan", "tests"))
+        self.assertEqual(PHASE_GROUPS["DIRECTION"], ("direction",))
         self.assertNotIn("scenarios", _SKIPPABLE_PHASES)
 
-    def test_specify_guide_action_names_gwt(self):                 # M1
-        self.assertIn("Given/When/Then", PHASE_GUIDE["specify"][0],
-                      "the merged specify action must carry scenarios' Given/When/Then duty")
+    # test_specify_guide_action_names_gwt DELETED: a PROSE-WORDING pin (the exact
+    # phrase "Given/When/Then") — phase-collapse-3 reworded PHASE_GUIDE["direction"]'s
+    # action to "§2 one scenario per rule", carrying the same duty in different words.
+    # No `specify` key remains to hold the old pin at all; re-adding a substring check
+    # against the new wording would pin prose, not behavior (authorization W).
 
 
 class AdvanceTest(_Harness):
-    def test_advance_specify_lands_plan(self):                     # M1 + Accept
-        self._board()
-        self._ok("advance")
-        self.assertEqual(self._phase(), "plan",
-                         "a bare advance from specify must land at plan (no scenarios stop)")
+    # test_advance_specify_lands_plan DELETED: its premise (advancing WITHIN the front
+    # span, before any freeze, scenarios no longer stopping it) no longer applies — the
+    # front collapsed into ONE `direction` phase (phase-collapse-3), so a bare `advance`
+    # from a fresh, unfrozen task now attempts the direction->build crossing and is
+    # REFUSED (contract_not_drafted), never a same-span hop. That refusal floor is
+    # already pinned by
+    # test_phase_collapse.py::TheFloorsAreUnchanged.test_freeze_floors_unchanged; the
+    # legitimate crossing is pinned by
+    # test_phase_collapse.py::OneFreezeCrossesTheFront.test_freeze_cross_universal_from_direction.
 
-    def test_new_phase_cmd_scenarios_refused(self):                # R1
+    def test_phase_cmd_scenarios_maps_to_direction(self):          # R1 (retargeted:
+        # phase-collapse-3's LEGACY_PHASES recognizes "scenarios" as a legacy alias —
+        # mapped to direction, never refused as an unknown token)
         self._board()
         out, code = self._run("phase", "scenarios", "t")
-        self.assertNotEqual(code, 0, "scenarios is no longer a phase token")
+        self.assertEqual(code, 0, "scenarios is a recognized legacy alias, not refused")
+        self.assertEqual(self._phase(), "direction")
+        self.assertIn("direction", out, "the mapping must be noted in the output")
+
+    def test_advance_to_scenarios_is_noop_at_direction(self):      # R1
+        # "scenarios" maps to "direction" itself — a fresh task is already there, so
+        # --to scenarios is the friendly same-phase no-op, never a refusal.
+        self._board()
         out2, code2 = self._run("advance", "--to", "scenarios")
-        self.assertNotEqual(code2, 0)
+        self.assertEqual(code2, 0, "already at direction: --to scenarios is a friendly no-op")
+        self.assertEqual(self._phase(), "direction")
 
 
 class LegacyStateTest(_Harness):
@@ -98,13 +124,16 @@ class LegacyStateTest(_Harness):
         sp.write_text(json.dumps(raw), encoding="utf-8")
         out = self._ok("status")                                   # any state read
         self.assertNotIn("phase=scenarios", out.replace(" ", ""))
-        self._ok("advance")                                        # specify -> plan works
-        self.assertEqual(self._phase(), "plan")
+        # read-side normalization (never a task-file rewrite): the RAW state.json still
+        # carries the legacy token; load_state is what maps it to "direction".
+        loaded = add.load_state(self.tmp / ".add")
+        self.assertEqual(loaded["tasks"]["t"]["phase"], "direction",
+                         "the legacy 'scenarios' record normalizes to 'direction' at load")
 
 
 class LegacySkipDeclarationTest(_Harness):
     def _declare_skip(self, token):
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         m = re.search(r"(?m)^phase:.*$", text)
         self.assertIsNotNone(m, "no phase marker line to anchor the skip header")
@@ -115,13 +144,16 @@ class LegacySkipDeclarationTest(_Harness):
         # Tolerated-and-ignored, noted LOUD, never a die — the frozen behavior.
         # (phase-merge-verify retired the whole grammar and moved the note from the
         # observe crossing — which no longer exists — to gate/completion, the one
-        # seam that still reads the header.)
+        # seam that still reads the header. phase-collapse-3: the front collapsed
+        # into ONE `direction` phase, so exercising "a crossing never dies on this
+        # header" now means the direction->build crossing, which needs a frozen §3.)
         self._board()
         self._declare_skip("scenarios")
-        out, code = self._run("advance")                           # specify -> plan, silent
+        self._freeze()
+        out, code = self._run("advance")                           # direction -> build, silent
         self.assertEqual(code, 0,
                          f"a retired scenarios skip declaration must never die: {out}")
-        self.assertEqual(self._phase(), "plan")
+        self.assertEqual(self._phase(), "build")
         self._ok("phase", "verify", "t")
         out = self._ok("gate", "PASS", "t")
         self.assertIn("ignored", out,

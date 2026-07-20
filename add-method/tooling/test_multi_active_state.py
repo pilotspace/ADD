@@ -17,7 +17,6 @@ import unittest
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent          # add-method/tooling
 REPO = HERE.parent.parent                        # repo root
@@ -127,13 +126,6 @@ class InitBornMigratedTest(unittest.TestCase):
         # a second load is a no-op (already conforms)
         out = add.load_state(self.tmp / ".add")
         self.assertEqual(out["active_milestones"], [])
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1, "the 3 add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), ENGINE_MD5, "ENGINE_MD5 must track the engine")
 
 
 if __name__ == "__main__":

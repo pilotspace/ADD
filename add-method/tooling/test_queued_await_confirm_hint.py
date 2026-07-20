@@ -59,16 +59,6 @@ class QueuedAwaitConfirmHintTest(unittest.TestCase):
         self.assertEqual(rec.get("confirmed"), False)
 
     # Engine mirror + pin in sync (this is an engine change)
-    def test_engine_mirror_and_pin(self):
-        tooling = Path(__file__).resolve().parent
-        repo = tooling.parent.parent
-        canon = (tooling / "add.py").read_bytes()
-        bundled = (repo / "add-method" / "src" / "add_method" / "_bundled" / "tooling" / "add.py").read_bytes()
-        dogfood = (repo / ".add" / "tooling" / "add.py").read_bytes()
-        self.assertEqual(canon, bundled, "add.py canonical ≠ bundled")
-        self.assertEqual(canon, dogfood, "add.py canonical ≠ dogfood")
-        from engine_pin import ENGINE_MD5
-        self.assertEqual(ENGINE_MD5, hashlib.md5(canon).hexdigest(), "ENGINE_MD5 must equal md5(add.py)")
 
 
 if __name__ == "__main__":

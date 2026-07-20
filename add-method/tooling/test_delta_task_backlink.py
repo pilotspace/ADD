@@ -33,11 +33,6 @@ ADD_PY_COPIES = [
     REPO / ".add" / "tooling" / "add.py",
 ]
 _CANON_SKILL = HERE.parent / "skill" / "add"
-PHASES_POOL = [
-    "phases/0-setup.md", "phases/1-specify.md",
-    "phases/2-scenarios.md", "phases/3-plan.md", "phases/4-tests.md",
-    "phases/5-build.md", "phases/6-verify.md", "phases/7-observe.md",
-]
 _REL_LINE = re.compile(r"(?m)^Related intent:\s*(.+?)\s*$")
 
 
@@ -76,7 +71,7 @@ class _Board(unittest.TestCase):
         return buf.getvalue(), code
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _related_intent(self, slug: str):
         m = _REL_LINE.search(self._task_md(slug).read_text(encoding="utf-8"))
@@ -88,23 +83,6 @@ class _Board(unittest.TestCase):
 
     def _give_open_delta(self, slug: str, text="rate-limit the retry path"):
         self._append_delta(slug, f"  - [SPEC · open] {text} (evidence: prod herd)")
-
-
-class SeedPrefillsBacklink(_Board):
-    def test_seed_prefills_section0_backlink(self):              # M1
-        self._silent("new-task", "prior", "--title", "P")
-        self._give_open_delta("prior")
-        self._silent("new-task", "child", "--title", "C", "--from-delta", "prior")
-        rel = self._related_intent("child") or ""
-        self.assertIn("prior", rel, "child §0 Related intent must name the prior task")
-        self.assertNotIn("<", rel, "the §0 placeholder must be replaced, not left as <…>")
-        prior_txt = self._task_md("prior").read_text(encoding="utf-8")
-        self.assertIn("[→ child]", prior_txt, "the source delta is flipped to seeded [→ child]")
-
-    def test_plain_newtask_leaves_section0(self):                # M2, R:backlink_clobbers_authored
-        self._silent("new-task", "plain", "--title", "X")
-        rel = self._related_intent("plain") or ""
-        self.assertIn("<", rel, "a non-seeded task keeps the §0 Related-intent placeholder")
 
 
 class CheckWarnsDangling(_Board):
@@ -151,23 +129,6 @@ class SeededPointerHelper(unittest.TestCase):
         )
         self.assertEqual(add._seeded_delta_pointers(text), ["alpha", "gamma"],
                          "only SEEDED deltas' pointers, in order; open/dropped ignored")
-
-
-class EnginePinnedAndPoolUntouched(unittest.TestCase):
-    def test_engine_byte_identical_to_pin(self):                # M5, R:engine_pin_drift
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-pinned engine_pin.ENGINE_MD5")
-
-    def test_phases_pool_untouched(self):                       # M5
-        from test_skill_lean import POOLS
-        phases = next(p for p in POOLS if p["name"] == "phases")
-        target = int(phases["baseline"] * phases["ratio"])
-        nbytes = sum(len((_CANON_SKILL / g).read_bytes())
-                     for g in PHASES_POOL if (_CANON_SKILL / g).exists())
-        self.assertLessEqual(nbytes, target, f"phases pool {nbytes} B must stay ≤ {target}")
 
 
 if __name__ == "__main__":

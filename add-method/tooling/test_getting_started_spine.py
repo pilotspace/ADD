@@ -18,7 +18,6 @@ PKG_ROOT = Path(__file__).resolve().parent.parent          # add-method/
 REPO_ROOT = PKG_ROOT.parent
 GUIDE = PKG_ROOT / "GETTING-STARTED.md"
 
-from engine_pin import ENGINE_MD5
 ENGINE_PATHS = (
     PKG_ROOT / "tooling" / "add.py",
     REPO_ROOT / ".add" / "tooling" / "add.py",
@@ -125,14 +124,6 @@ class SpineTest(unittest.TestCase):
                 cmd, appendix,
                 f"the escape hatch must be self-contained — `{cmd}` belongs "
                 f"in the appendix so the by-hand walk works without the spine")
-
-    def test_engine_untouched(self):
-        for p in ENGINE_PATHS:
-            self.assertTrue(p.exists(), f"missing engine copy: {p}")
-            digest = hashlib.md5(p.read_bytes()).hexdigest()
-            self.assertEqual(
-                digest, ENGINE_MD5,
-                f"{p} changed — this prose-only task must not touch the engine")
 
 
 if __name__ == "__main__":

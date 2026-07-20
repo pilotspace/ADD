@@ -9,7 +9,7 @@ is redirected in the same stdout, never via a repair loop.
   M2 — an exact-state retry (freeze on an already-FROZEN §3 · lock on an
        already-locked setup without --force · advance on a task already `done`)
        is an exit-0 no-op: it restates the state + the true next command and
-       writes ZERO bytes to state.json / TASK.md.
+       writes ZERO bytes to state.json / PLAN.md.
   M3 — `init`'s success stdout ends with a copy-pasteable `kickoff:` hand-off
        (new-milestone -> new-task -> advance --to contract, flags included).
 
@@ -80,7 +80,7 @@ class _Harness(unittest.TestCase):
         return (self.tmp / ".add" / "state.json").read_bytes()
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _task_md_bytes(self, slug):
         return self._task_md(slug).read_bytes()
@@ -93,6 +93,8 @@ class _Harness(unittest.TestCase):
         text = p.read_text(encoding="utf-8")
         new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        new = re.sub(r"(?m)^Boundary: <[^\n]*$",
+                     "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")
 
     def _new_task_at_contract(self, slug="t", drafted=_DRAFT_FLAGGED):
@@ -111,7 +113,7 @@ class _Harness(unittest.TestCase):
 
     def _write_full_task(self, slug):
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-07-09 · stage: mvp",
             "phase: ground",
             "",
@@ -183,7 +185,7 @@ class ExactRetryNoopTest(_Harness):
         self.assertIn("change request", out)
         self.assertIn("next: add.py advance", out)
         self.assertEqual(self._state_bytes(), state_before, "state.json must be byte-identical")
-        self.assertEqual(self._task_md_bytes("t"), task_before, "TASK.md must be byte-identical")
+        self.assertEqual(self._task_md_bytes("t"), task_before, "PLAN.md must be byte-identical")
 
     def test_relock_is_exit0_noop(self):
         # explicit await-lock -> explicit first lock, so the retry below targets a
@@ -233,14 +235,16 @@ class InitKickoffTest(unittest.TestCase):
         # the single-task lane leads (the cheapest measured benchmark run skipped
         # the milestone), the multi-task milestone lines follow, same command set.
         self.assertIn("kickoff (single task):", out)
-        self.assertIn("--oneshot", out)
+        self.assertIn('new-task <slug> --title', out)
         self.assertIn("kickoff (multi-task milestone):", out)
         self.assertIn("new-milestone", out)
         self.assertIn("--title", out)
         self.assertIn("--goal", out)
         self.assertIn("new-task", out)
         self.assertIn("--milestone", out)
-        self.assertIn("advance --to plan", out)
+        # phase-collapse-3: the handoff teaches the 3-call walk, not a --to bundle step
+        self.assertIn("freeze --by <name> --cross", out)
+        self.assertIn("gate PASS", out)
 
 
 # ── R1: the floor guards stay loud errors ────────────────────────────────────

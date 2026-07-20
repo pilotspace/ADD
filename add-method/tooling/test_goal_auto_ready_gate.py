@@ -166,7 +166,7 @@ class StatusSurfaceTest(_Board):
 # ============================================================================
 class DocsAccordTest(unittest.TestCase):
     TERM = "auto-ready goal"
-    DOC_TREES = (REPO / "add-method" / "docs", REPO / ".add" / "docs", BUNDLE / "docs")
+    DOC_TREES = (REPO / "add-method" / "docs",)   # book-stops-shipping (2.0 M6b): canonical only
     BOOK_DOCS = ("appendix-c-glossary.md", "11-governance.md")
     TMPL_TREES = (REPO / "add-method" / "tooling" / "templates",
                   REPO / ".add" / "tooling" / "templates",
@@ -196,10 +196,6 @@ class DocsAccordTest(unittest.TestCase):
         self._assert_has(self.TMPL_TREES[0] / "GLOSSARY.md.tmpl", "GLOSSARY.md.tmpl")
         self._assert_synced(self.TMPL_TREES, "GLOSSARY.md.tmpl")
 
-    def test_book_docs_name_term_synced(self):
-        for fname in self.BOOK_DOCS:
-            self._assert_has(self.DOC_TREES[0] / fname, f"docs/{fname}")
-            self._assert_synced(self.DOC_TREES, fname)
 
     def test_skill_run_names_term(self):
         self._assert_has(REPO / ".claude" / "skills" / "add" / "run.md", "skill run.md")

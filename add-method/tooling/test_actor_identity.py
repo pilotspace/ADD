@@ -17,7 +17,6 @@ from unittest import mock
 
 import add
 from add_engine import identity
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -102,81 +101,5 @@ class GitConfigFailSoftTest(unittest.TestCase):
         self.assertEqual(captured["argv"], ["git", "config", "--get", "user.name"])
         self.assertNotIn("shell", captured["kw"])  # never shell=True
         self.assertIn("timeout", captured["kw"])    # bounded
-
-
-class WhoamiCommandTest(unittest.TestCase):
-    def setUp(self):
-        self._cwd = Path.cwd()
-        self.tmp = Path(tempfile.mkdtemp(prefix="add-actor-")).resolve()
-        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
-        self.addCleanup(os.chdir, os.getcwd())
-        os.chdir(self.tmp)
-        self._silent("init", "--name", "demo", "--stage", "mvp")
-
-    def tearDown(self):
-        os.chdir(self._cwd)
-
-    def _silent(self, *argv):
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            add.main(list(argv))
-        return buf.getvalue()
-
-    def _run(self, *argv):
-        buf = io.StringIO()
-        code = 0
-        try:
-            with redirect_stdout(buf):
-                add.main(list(argv))
-        except SystemExit as e:
-            code = e.code if isinstance(e.code, int) else 1
-        return buf.getvalue(), code
-
-    def _state(self):
-        return json.loads((self.tmp / ".add" / "state.json").read_text())
-
-    def test_whoami_set_stores_override(self):
-        self._silent("whoami", "--name", "Cleo", "--email", "cleo@z.io")
-        self.assertEqual(self._state()["actor_override"], {"name": "Cleo", "email": "cleo@z.io"})
-        out = json.loads(self._silent("whoami", "--json"))
-        self.assertEqual(out, {"name": "Cleo", "email": "cleo@z.io", "source": "override"})
-
-    def test_whoami_unset_clears(self):
-        self._silent("whoami", "--name", "Cleo")
-        self._silent("whoami", "--unset")
-        self.assertNotIn("actor_override", self._state())
-
-    def test_unset_without_override_rejected(self):
-        before = self._state()
-        _, code = self._run("whoami", "--unset")
-        self.assertNotEqual(code, 0)
-        self.assertEqual(self._state(), before)
-
-    def test_set_blank_name_rejected(self):
-        before = self._state()
-        _, code = self._run("whoami", "--name", "")
-        self.assertNotEqual(code, 0)
-        self.assertEqual(self._state(), before)
-
-    def test_set_empty_email_normalized_to_none(self):
-        # --email "" is no email at all -> stored as None, not the empty string
-        self._silent("whoami", "--name", "Cleo", "--email", "")
-        self.assertEqual(self._state()["actor_override"], {"name": "Cleo", "email": None})
-
-    def test_name_and_unset_mutually_exclusive(self):
-        # contradictory flags must be rejected (argparse exit 2) before any state write
-        before = self._state()
-        _, code = self._run("whoami", "--unset", "--name", "Foo")
-        self.assertNotEqual(code, 0)
-        self.assertEqual(self._state(), before)
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -30,7 +30,7 @@ class AddToolTest(unittest.TestCase):
     def _freeze(self, slug="t"):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -119,13 +119,13 @@ class AddToolTest(unittest.TestCase):
         self._run("init")
         self._run("new-task", "transfer", "--title", "Transfer money")
         tdir = Path(self.tmp) / ".add" / "tasks" / "transfer"
-        self.assertTrue((tdir / "TASK.md").exists())
+        self.assertTrue((tdir / "PLAN.md").exists())
         self.assertTrue((tdir / "tests").is_dir())
         self.assertTrue((tdir / "src").is_dir())
         st = self._state()
         self.assertEqual(st["active_task"], "transfer")
-        self.assertEqual(st["tasks"]["transfer"]["phase"], "specify")  # plan-phase-core seed
-        self.assertIn("Transfer money", (tdir / "TASK.md").read_text())
+        self.assertEqual(st["tasks"]["transfer"]["phase"], "direction")  # phase-collapse-3 seed
+        self.assertIn("Transfer money", (tdir / "PLAN.md").read_text())
 
     def test_new_task_rejects_bad_slug(self):
         self._run("init")
@@ -139,13 +139,14 @@ class AddToolTest(unittest.TestCase):
     # --- advance / phase / marker sync ---
     def test_advance_moves_phase_and_syncs_marker(self):
         self._run("init")
-        self._run("new-task", "t")            # phase=specify (plan-phase-core seed)
-        self._run("advance")  # specify -> plan (phase-merge-specify: scenarios folded in)
+        self._run("new-task", "t")            # phase=direction (phase-collapse-3 seed)
+        self._freeze()                        # the ONE crossing runs the freeze gate
+        self._run("advance")  # direction -> build (the full _build_entry stack)
         st = self._state()
-        self.assertEqual(st["tasks"]["t"]["phase"], "plan")
-        marker = [l for l in (Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
+        self.assertEqual(st["tasks"]["t"]["phase"], "build")
+        marker = [l for l in (Path(self.tmp) / ".add" / "tasks" / "t" / "PLAN.md"
                               ).read_text().splitlines() if l.startswith("phase:")][0]
-        self.assertIn("plan", marker)
+        self.assertIn("build", marker)
 
     def test_phase_explicit_set(self):
         self._run("init")
@@ -204,7 +205,7 @@ class AddToolTest(unittest.TestCase):
     def test_check_detects_missing_task_md(self):
         self._run("init")
         self._run("new-task", "t")
-        task_md = Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
+        task_md = Path(self.tmp) / ".add" / "tasks" / "t" / "PLAN.md"
         task_md.unlink()
         with self.assertRaises(SystemExit) as cm:
             self._run("check")
@@ -215,7 +216,7 @@ class AddToolTest(unittest.TestCase):
         self._run("init")
         self._run("new-task", "t")
         st = self._state()
-        st["tasks"]["t"]["phase"] = "build"  # diverge from TASK.md marker (specify)
+        st["tasks"]["t"]["phase"] = "build"  # diverge from PLAN.md marker (specify)
         (Path(self.tmp) / ".add" / "state.json").write_text(json.dumps(st))
         with self.assertRaises(SystemExit) as cm:
             self._run("check")

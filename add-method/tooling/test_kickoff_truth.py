@@ -70,28 +70,28 @@ class KickoffLaneTest(_Harness):
 
     def test_init_kickoff_names_single_task_lane_first(self):
         out = self._init()
-        self.assertIn("--oneshot", out, "kickoff never names the single-task lane")
-        one = out.index("--oneshot")
-        ms = out.index("new-milestone <slug>")
+        one = out.index("headless, single task:")
+        ms = out.index("headless, multi-task:")
         self.assertLess(one, ms,
-                        "the --oneshot lane must print BEFORE the milestone kickoff lines "
+                        "the single-task kickoff must print BEFORE the milestone kickoff lines "
                         "(rep2 — the cheapest measured run — skipped the milestone)")
 
 
 class RecipeTest(_Harness):
     """M2 — new-task hands the full remaining call recipe, every lane."""
 
-    _MARKS = ("advance --to plan", "freeze --by", "--cross", "gate PASS")
+    _MARKS = ("freeze --by", "--cross", "gate PASS")
 
     def _assert_recipe(self, out, lane):
         self.assertIn("recipe", out.lower(), f"{lane}: no recipe block in new-task stdout")
         for mark in self._MARKS:
             self.assertIn(mark, out, f"{lane}: recipe is missing `{mark}`")
-        # the compressed lane (compound-ticks): freeze --cross absorbs plan->tests and
-        # gate-from-build absorbs build->verify, so two advances remain in the recipe
+        # phase-collapse-3: the front is ONE phase — freeze --cross absorbs the whole
+        # direction->build crossing and a completing gate absorbs build->verify, so the
+        # recipe is the two-call walk with no bookkeeping `advance` left to list.
         tail = out[out.lower().index("recipe"):]
-        self.assertGreaterEqual(tail.count("add.py advance"), 2,
-                                f"{lane}: recipe must list every remaining advance")
+        self.assertNotIn("add.py advance", tail,
+                         f"{lane}: recipe must not list a bookkeeping advance (none remain)")
 
     def test_new_task_emits_full_recipe_milestone_lane(self):
         self._init()
@@ -103,10 +103,10 @@ class RecipeTest(_Harness):
     def test_new_task_emits_full_recipe_fast_and_oneshot_lanes(self):
         self._init()
         self._ok("lock", "--force")
-        out = self._ok("new-task", "t-one", "--title", "T", "--oneshot")
+        out = self._ok("new-task", "t-one", "--title", "T")
         self._assert_recipe(out, "--oneshot lane")
         self._ok("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        out = self._ok("new-task", "t-fast", "--title", "T", "--fast", "--milestone", "m")
+        out = self._ok("new-task", "t-fast", "--title", "T", "--milestone", "m")
         self._assert_recipe(out, "--fast lane")
 
     def test_later_task_recipe_is_compact_not_re_annotated(self):
@@ -117,13 +117,13 @@ class RecipeTest(_Harness):
         # no rediscovery/--help backfire — only the repeated annotation prose is dropped.
         self._init()
         self._ok("lock", "--force")
-        first = self._ok("new-task", "t1", "--title", "T", "--oneshot")
-        second = self._ok("new-task", "t2", "--title", "T", "--oneshot")
+        first = self._ok("new-task", "t1", "--title", "T")
+        second = self._ok("new-task", "t2", "--title", "T")
         self._assert_recipe(first, "first task")   # full flow named
         self._assert_recipe(second, "later task")  # full flow STILL named (no backfire)
-        self.assertIn("write the section rules first", first,
+        self.assertIn("[approval —", first,
                       "the first task must carry the teaching annotations")
-        self.assertNotIn("write the section rules first", second,
+        self.assertNotIn("[approval —", second,
                          "a later task must not repeat the per-step annotations")
 
         def _recipe_span(o):
@@ -174,14 +174,16 @@ class DupFailureTest(_Harness):
 
 
 class BaitDeadRegressionTest(_Harness):
-    """R — the measured skip bait stays dead: --to plan succeeds on a fresh task."""
+    """R — the measured skip bait stays dead: --to plan succeeds on a fresh task.
+    phase-collapse-3: `plan` is now a legacy alias for `direction` (the sole front
+    phase), so the call succeeds as a friendly no-op rather than landing a new phase."""
 
     def test_advance_to_plan_unfilled_succeeds(self):
         self._init()
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
 
 
 if __name__ == "__main__":

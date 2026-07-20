@@ -23,7 +23,7 @@ and update()/cmdUpdate (non-`--global` path) against the SAME target's own `.add
     (global-lock-followups, merged) sits INSIDE this task's own whole-function project-lock
     wrap. LockOrderingInvariantTest proves this by REAL execution, not a static source read.
 
-Fully hermetic: a synthetic bundled fixture (skill/tooling/docs) + tmp targets; ADD_HOME/HOME
+Fully hermetic: a synthetic bundled fixture (skill/tooling) + tmp targets; ADD_HOME/HOME
 injected via `env=` for the --global-touching scenarios. npm parity is structural (call-sites,
 not just defs) + real `node cli.js` subprocess smokes on contention + self-heal.
 
@@ -70,8 +70,6 @@ def _make_bundled(root: Path) -> Path:
     (root / "skill" / "add" / "SKILL.md").write_text("skill\n")
     (root / "tooling").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro\n")
     return root
 
 
@@ -186,7 +184,7 @@ class ConcurrentInstallTest(_Base):
 class ConcurrentUpdateTest(_Base):
     def test_two_concurrent_updates_one_proceeds_one_fails_cleanly(self):   # Scenario 3, M2/M4/Reject
         self._make_project(self.proj)
-        shutil.rmtree(self.proj / ".add" / "docs")            # sentinel: reconcile would restore it
+        (self.proj / ".add" / "tooling" / "add.py").unlink()  # sentinel: reconcile would restore it
         fd = self._hold_project_lock(self.proj)
         try:
             code, err = self._update(self.proj)
@@ -194,10 +192,10 @@ class ConcurrentUpdateTest(_Base):
             self._release_project_lock(fd, self.proj)
         self.assertNotEqual(code, 0, "the second update fails while the lock is held")
         self.assertIn("install_in_progress", err)
-        self.assertFalse((self.proj / ".add" / "docs").exists(), "nothing reconciled while locked")
+        self.assertFalse((self.proj / ".add" / "tooling" / "add.py").exists(), "nothing reconciled while locked")
         code2, err2 = self._update(self.proj)
         self.assertEqual(code2, 0, err2)
-        self.assertTrue((self.proj / ".add" / "docs").exists(), "the second, unlocked update reconciles")
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(), "the second, unlocked update reconciles")
 
 
 # --- the lock keys on the FINAL, post-prompt target -------------------------
@@ -319,12 +317,12 @@ class GlobalAndCheckUnaffectedTest(_Base):
 class StaleProjectLockSelfHealTest(_Base):
     def test_stale_project_lock_self_heals(self):   # Scenario 8, M5
         self._make_project(self.proj)
-        shutil.rmtree(self.proj / ".add" / "docs")
+        (self.proj / ".add" / "tooling" / "add.py").unlink()
         lock_path = self._write_project_lock(self.proj, age_seconds=10)
         code, err = self._update(self.proj, env_extra={"ADD_PROJECT_LOCK_STALE_SECONDS": "1"})
         self.assertEqual(code, 0, err)
         self.assertNotIn("install_in_progress", err)
-        self.assertTrue((self.proj / ".add" / "docs").exists(), "the run proceeded to completion")
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(), "the run proceeded to completion")
         self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
 
 
@@ -384,13 +382,13 @@ class LeakedTicketWedgeTest(_Base):
 
     def test_leaked_ticket_self_heals_instead_of_permanent_wedge(self):
         self._make_project(self.proj)
-        shutil.rmtree(self.proj / ".add" / "docs")            # sentinel: reconcile would restore it
+        (self.proj / ".add" / "tooling" / "add.py").unlink()  # sentinel: reconcile would restore it
         lock_path = self._write_project_lock(self.proj, age_seconds=1000)      # very stale
         ticket_path = self._leak_ticket(lock_path, ticket_age_seconds=1000)    # leaked long ago too
         code, err = self._update(self.proj, env_extra={"ADD_PROJECT_LOCK_STALE_SECONDS": "1"})
         self.assertEqual(code, 0, f"a leaked ticket must self-heal, not wedge permanently: {err}")
         self.assertNotIn("install_in_progress", err)
-        self.assertTrue((self.proj / ".add" / "docs").exists(), "the run proceeded to completion")
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(), "the run proceeded to completion")
         self.assertFalse(lock_path.exists(), "the reclaimed lock is released again after the run")
         self.assertFalse(ticket_path.exists(), "the leaked ticket itself is cleaned up too — "
                          "no residue left to re-wedge a future call")

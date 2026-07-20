@@ -35,6 +35,34 @@ Fill each living-doc file in `.add/` from what the code shows — **ask nothing*
 2. **Tag every drafted decision `evidence-grounded` vs `guessed`.** A line you read from the code is *evidence-grounded* (cite the file). A line you inferred because the code was silent is *guessed*. The human's single baseline approval is only honest if they can see which is which — the guesses are what they actually need to check. (The tags feed `SETUP-REVIEW.md`.)
 </constraints>
 
+## Setup review — the one page the human signs
+
+Both setup paths (this brownfield map AND the greenfield draft, `phases/direction.md`) end at
+the same single human gate, and `SETUP-REVIEW.md` is that page: every decision you made while
+drafting the foundation, first-scope, and first contract, ordered **lowest-confidence-first** so
+the riskiest guesses meet the human's eye first. The engine never reads it — `add.py lock` is
+judgment-free; the human *reading* this page is the review. Write ONE artifact at
+`.add/SETUP-REVIEW.md`, beside `PROJECT.md` (never clobber a human-edited one — append/update):
+
+```markdown
+# SETUP REVIEW — <project>
+
+<stage> · <brownfield | greenfield> · drafted by <model> @ <date>
+
+| # | Decision | Lands in | Tag | Why / Evidence |
+|---|----------|----------|-----|----------------|
+| 1 | <the drafted decision> | PROJECT.md \| scope \| first-contract | `guessed` | <the inference + why you had to guess> |
+| 2 | <…> | <…> | `evidence-grounded` | <cite the source file/line you read it from> |
+
+Sign: confirm in chat → the agent runs `add.py lock --by "<name>"` (typing it yourself works too)
+```
+
+The two rules that make it honest: rows sort by confidence **ascending** — a `guessed` row
+always floats above an `evidence-grounded` one (the top of the table is what the human must
+actually challenge); and EVERY row is tagged with the shared vocabulary above (`guessed` = the
+repo was silent, state the inference; `evidence-grounded` = cite the file). Rows are numbered
+for reference at the gate. Present it lowest-confidence-first, not field-by-field.
+
 ## Where it ends — the baseline approval
 
 Brownfield onboarding draws no per-step approvals: map the foundation, draft the first milestone's scope and first task's candidate specification bundle, then present it all at **one** human gate. The human reviews decisions (`guessed` first) and confirms; you run the lock:

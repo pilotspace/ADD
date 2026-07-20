@@ -53,7 +53,7 @@ class _Base(unittest.TestCase):
         return buf.getvalue() + err.getvalue()
 
     def _plant_carried(self):
-        md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         t = md.read_text(encoding="utf-8")
         marker = "### Spec delta\n"
         i = t.index(marker) + len(marker)
@@ -74,24 +74,6 @@ class _Base(unittest.TestCase):
 
 
 class StatusCues(_Base):
-    def test_status_shows_carried(self):                           # M1
-        self._plant_carried()
-        out = self._run("status")
-        self.assertIn("carried: 1 deferred spec delta", out)
-        self.assertIn("deltas --carried", out)
-
-    def test_status_shows_compaction_tail(self):                   # M2
-        self._plant_tail(25, settled_to=2)
-        out = self._run("status")
-        self.assertIn("compaction: 25 consolidated lesson", out)
-        self.assertIn("last rolled fv2", out)
-        self.assertIn("now fv30", out)
-        self.assertIn("compact-foundation.md", out)
-
-    def test_never_rolled_reads_never(self):                       # M2 edge
-        self._plant_tail(25)
-        out = self._run("status")
-        self.assertIn("last rolled never", out)
 
     def test_status_silent_when_clean(self):                       # R1
         out = self._run("status")
@@ -102,44 +84,22 @@ class StatusCues(_Base):
         self._plant_tail(24, settled_to=2)
         out = self._run("status")
         self.assertNotIn("compaction:", out)
-
-
-class ReleaseReportCarried(_Base):
-    def test_release_report_carried_total(self):                   # M3
-        self._plant_carried()
-        out = self._run("release-report")
-        self.assertIn("Carried (1)", out)
-
-    def test_release_json_keys_unchanged(self):                    # R2
-        self._plant_carried()
-        out = self._run("release-report", "--json")
-        d = json.loads(out)
-        self.assertNotIn("carried", d,
-                         "the frozen release_data facts interface must not gain keys")
-
-
 class LoopGuideAndParity(unittest.TestCase):
     def test_loop_md_names_carried(self):                          # M4
+        # kernel-trim (ADD 2.0 M5): the carried lens died — the gather step
+        # points at the one open-deltas surface.
         text = (ADD_METHOD / "skill" / "add" / "loop.md").read_text(encoding="utf-8")
-        self.assertIn("deltas --carried", text,
-                      "loop.md's gather step must include the carried backlog")
+        self.assertIn("add.py deltas", text,
+                      "loop.md's gather step must point at the open-deltas surface")
 
     def test_pool_holds_dedup_floor(self):                         # R3
-        guides = ["run.md", "streams.md", "advisor.md", "loop.md", "design.md"]
+        # skill-fold-8 dropped advisor.md (floor 41300→36361); kernel-trim (ADD 2.0
+        # M5) dropped streams.md (16223B) — the floor drops by its bytes, never
+        # re-widened: 36361 − 16223 = 20138.
+        guides = ["run.md", "loop.md", "design.md"]
         skill = ADD_METHOD / "skill" / "add"
         total = sum((skill / g).stat().st_size for g in guides)
-        self.assertLessEqual(total, 41300, "the dedup RECLAIM floor must hold")
-
-    def test_engine_and_loop_parity(self):                         # R3
-        for group in (
-            [ADD_METHOD / "tooling" / "add.py", REPO / ".add" / "tooling" / "add.py",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py"],
-            [ADD_METHOD / "skill" / "add" / "loop.md",
-             REPO / ".claude" / "skills" / "add" / "loop.md",
-             ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "loop.md"],
-        ):
-            digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in group}
-            self.assertEqual(len(digests), 1, f"twin drift: {group[0].name}")
+        self.assertLessEqual(total, 20138, "the dedup RECLAIM floor must hold")
 
 
 if __name__ == "__main__":

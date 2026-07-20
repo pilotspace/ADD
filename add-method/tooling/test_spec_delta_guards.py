@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Behavioral proof of the SPEC-delta GUARDS (task: spec-delta-guards, delta-resolution).
 
-CONTRACT (frozen @ v1): an open SPEC delta can never be lost silently — PROJECT-WIDE.
-  - `compact <ms>` REFUSES "open_spec_deltas_unresolved" while ANY task in the project
-    holds an open SPEC delta (after open_deltas_unfolded, BEFORE the move; tree+state
-    byte-unchanged on reject). Deliberately broader than the member-scoped competency guard.
-  - `status` prints a read-only "spec : N open SPEC delta(s) …" line (project-wide; silent at 0).
+CONTRACT (kernel-trim (ADD 2.0 M5): the compact-refusal surface died with `compact`):
+  - `status` prints a read-only "spec : N open SPEC delta(s) — stale; drain via add.py deltas"
+    line (project-wide; silent at 0) — the staleness wording pin migrated from test_delta_drain.
   - `milestone-done` prints a "note: N open SPEC delta(s) to resolve …" (project-wide; never blocks).
   - `report <ms> --json` carries summary["open_spec"] = project-wide count.
-  All four surfaces read ONE source: len(_collect_open_spec_deltas(root)). One test per SCENARIO.
+  All surfaces read ONE source: len(_collect_open_spec_deltas(root)). One test per SCENARIO.
 Run: python3 -m unittest test_spec_delta_guards -v
 """
 from __future__ import annotations
@@ -46,11 +44,6 @@ def _meet_exit_criteria(ms):
     p.write_text(text, encoding="utf-8")
 
 
-def _snapshot(base):
-    return {str(p.relative_to(base)): p.read_bytes()
-            for p in sorted(base.rglob("*")) if p.is_file()}
-
-
 class SpecDeltaGuardsTest(unittest.TestCase):
     def setUp(self):
         self._cwd = Path.cwd()
@@ -66,59 +59,30 @@ class SpecDeltaGuardsTest(unittest.TestCase):
     # --- helpers -------------------------------------------------------------
     def _plant_spec(self, slug, text="x"):
         """Inject one grammar-valid OPEN SPEC delta into slug's §7 block."""
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         i = s.index("### Spec delta") + len("### Spec delta")
         p.write_text(s[:i] + f"\n- [SPEC · open] {text} (evidence: e)\n" + s[i:],
                      encoding="utf-8")
 
-    def _light_archive(self, ms, *slugs):
-        """Drive a milestone to light-archived (the precondition compact operates on)."""
-        add.main(["new-milestone", ms, "--goal", "g"])
-        for s in slugs:
-            add.main(["new-task", s, "--milestone", ms])
-            add.main(["phase", "verify", s])
-            add.main(["gate", "PASS", s])
-        _meet_exit_criteria(ms)
-        _run(["milestone-done", ms])
-        _run(["archive-milestone", ms])
-
     def _state_bytes(self):
         return (self.root / "state.json").read_bytes()
 
     # --- scenarios -----------------------------------------------------------
-    def test_compact_blocks_open_spec_delta_projectwide(self):  # Must 1 (project-wide)
-        self._light_archive("v1", "t1")          # v1 ready to compact (member: t1)
-        add.main(["new-task", "outsider"])        # a NON-member task elsewhere
-        self._plant_spec("outsider", "stray idea")
-        before_tree, before_state = _snapshot(self.root), self._state_bytes()
-        out, err, code = _run(["compact", "v1"])
-        self.assertIsNotNone(code)
-        self.assertIn("open_spec_deltas_unresolved", out + err)
-        self.assertIn("outsider", out + err)      # names the offending NON-member -> project-wide
-        self.assertFalse((self.root / "archive" / "v1").exists())
-        self.assertEqual(_snapshot(self.root), before_tree)   # byte-unchanged
-        self.assertEqual(self._state_bytes(), before_state)
-
-    def test_compact_proceeds_when_spec_resolved(self):  # Must 1 (unblock)
-        self._light_archive("v1", "t1")
-        add.main(["new-task", "outsider"])
-        self._plant_spec("outsider", "stray idea")
-        _run(["drop-delta", "outsider"])          # resolve the only open SPEC delta
-        out, err, code = _run(["compact", "v1"])
-        self.assertIsNone(code, f"compact should succeed once resolved: {err}")
-        self.assertTrue((self.root / "archive" / "v1").exists())
-
-    def test_status_nudges_open_spec_silent_when_none(self):  # Must 2
+    def test_status_nudges_open_spec_silent_when_none(self):  # Must 2 (+ staleness wording, ex delta-drain)
         add.main(["new-task", "a"])
-        self._plant_spec("a", "rate limit")
         out, _, _ = _run(["status"])
-        self.assertRegex(out, r"spec\s*:\s*1\b", "status must surface the open SPEC count")
-        before = self._state_bytes()
-        _run(["drop-delta", "a"])                 # now zero open
-        out2, _, _ = _run(["status"])
-        self.assertNotRegex(out2, r"spec\s*:\s*\d+ open",
+        self.assertNotRegex(out, r"spec\s*:\s*\d+ open",
                             "status must be silent when no open SPEC delta")
+        self.assertNotIn("stale", out.lower())
+        self._plant_spec("a", "rate limit")
+        out2, _, _ = _run(["status"])
+        # Pin the `spec :` prefix AND the staleness AND the drain pointer, so a
+        # `stale :`-prefixed or pointer-less impl would FAIL here.
+        self.assertRegex(
+            out2,
+            r"spec\s*:\s*1 open SPEC delta(?:s)? — stale; drain via add\.py deltas",
+            "status must keep the `spec :` prefix AND name staleness AND point at the drain surface")
         # status itself never wrote (compare a status run against its own pre-bytes)
         pre = self._state_bytes()
         _run(["status"])

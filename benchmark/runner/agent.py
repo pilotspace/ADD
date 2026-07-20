@@ -49,7 +49,10 @@ def default_agent_cmd(prompt: str) -> list[str]:
 def build_argv(prompt: str, agent_cmd: Sequence[str] | None) -> list[str]:
     """Resolve the actual argv for one attempt: an injected fake-agent argv
     gets the prompt appended as its final positional arg; absent an
-    injection, fall back to the real `claude -p` argv."""
+    injection, fall back to the real `claude -p` argv. EVERY milestone gets a
+    fresh conversation in every session mode — `--continue` was removed
+    (2026-07-18): session-mode "continue" persists the WORKSPACE, never the
+    conversation, so the on-disk board is the only cross-milestone carrier."""
     if agent_cmd:
         return [*agent_cmd, prompt]
     return default_agent_cmd(prompt)

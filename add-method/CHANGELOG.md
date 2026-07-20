@@ -4,6 +4,42 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.0.0] — 2026-07-18
+
+Major: ADD 2.0 — a skill-led method on a thin state kernel. The skill drives
+the loop; `add.py` records state and guards the seams; **personas carry the
+playbooks** the platform pillars used to hard-code.
+
+- **engine-kernel-trim** — the verb surface collapses 54 → 31: the platform
+  pillars die as engine code (streams/waves/DAG orchestration · components/
+  federation · release/graduation engines · gate-audit machinery · fold/compact
+  consolidation · team verbs · the SPEC-delta trio · doctor/worktree-prep) and
+  their workflows live on as seed-persona playbooks. `add.py` shrinks
+  9,558 → 6,596 lines; the phase guides fold 17 → 12.
+- **PLAN.md** — the task doc is `PLAN.md` everywhere (was TASK.md; the
+  template is `PLAN.md.tmpl`), and the new one-shot **`add.py migrate`**
+  converts a 1.x board: renames live + archived task docs, seeds any missing
+  living spec, idempotent, refuses `migrate_conflict` before touching anything.
+- **5-DD living specs** — `.add/specs/` (domain · system · experience ·
+  quality · method) with **`add.py delta-append`** as the in-flight lesson
+  channel; the fold ceremony is gone.
+- **book-stops-shipping** — the AIDD book publishes at
+  https://pilotspace.github.io/ADD/ and never installs; engine chapter
+  pointers deep-link the site (`BOOK_URL`), installers drop the docs tree,
+  and a legacy `.add/docs/` from 1.x is user-space (never swept).
+- **phase-collapse-3** — the lifecycle is direction · build · verify: ONE
+  freeze approval crosses the whole Direction bundle; the 3-call walk
+  (`new-task` · `freeze --by --cross` · `gate PASS`) is the whole ceremony.
+- **persona routes + route scoreboard (GEPA)** — the persona proposes the
+  lane (`route:` header, ratified at freeze); every recorded gate appends a
+  route-outcome trace, and `add.py deltas` rolls the traces up per lane —
+  the evidence the PM persona reflects on GEPA-style, proposing route-rule
+  deltas the human folds into the persona file.
+
+Breaking (the 2.0 line): removed verbs refuse as unknown commands; task docs
+must be `PLAN.md` (`add.py migrate` is the paved path); the book no longer
+lands in `.add/docs/`; `TASK.fast.md.tmpl` is gone (one template, every lane).
+
 ## [1.18.0] — 2026-07-14
 
 Minor: eleven milestones, expanded from the original July-7 two-milestone cut

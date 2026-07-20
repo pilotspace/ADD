@@ -172,6 +172,5 @@ class TokenArtifactParityTest(unittest.TestCase):
             self.assertEqual(canon, bundle, f"{rel}: canonical ≠ bundled")
             self.assertEqual(canon, dogfood, f"{rel}: canonical ≠ dogfood")
 
-
 if __name__ == "__main__":
     unittest.main()

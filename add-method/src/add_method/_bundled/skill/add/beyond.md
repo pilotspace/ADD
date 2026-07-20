@@ -5,34 +5,32 @@ prose. Load it (or the one guide you need) only when a trigger fires.
 
 - **§3 CONTRACT FROZEN** → build→verify is a dynamic, auto-gated run (`autonomy: auto` default; lower to
   `conservative`/`manual` for a human gate) — `run.md`. Pipeline ready tasks behind frozen
-  contracts — `streams.md`. Delegate one piece of your plan to a subagent — the named roster
-  (`add-design`/`add-build`/`add-verify`/`add-persona`/`add-advisor`) is agent-call-preferred, the
+  contracts — the stream-orchestrator persona owns the playbook. Delegate one piece of your plan to a subagent — the named roster
+  (the ONE `add` agent — mode: direction/build/verify/persona/advise) is agent-call-preferred, the
   default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
-  `advisor.md`. Self-score a draft (0–1 across six dimensions, refine if any < 0.9) — `confidence.md`.
-  Both advisory; the engine never spawns.
-- **Small, low-risk task**, less ceremony → the **fast lane**: `new-task --fast` scaffolds the minimal
-  `TASK.fast.md`, bundle approved in one freeze — `phases/fast-lane.md`. Floor held (frozen contract ·
-  red test · verify gate; freeze-gated under any milestone). Collapse, never skip; opt-in.
+  the advisor spawn (`phases/verify.md`). Self-score a draft (0–1 across six dimensions, refine if
+  any < 0.9) — the confidence self-score (`phases/direction.md`). Both advisory; the engine never spawns.
+- **Small, low-risk task**, less ceremony → the ONE atomic template already IS the lean render:
+  `new-task` scaffolds only the interface (contract · red suite · scope · verdict), bundle approved
+  in one freeze. Floor held (frozen contract · red test · verify gate; freeze-gated under any
+  milestone). Collapse, never skip — there is no separate lane to opt into.
 - **UI feature** at specify → the **design-definition loop** (UDD): intake the design axes → review the
   domain → research and reuse components → wireframe → a captured screen the human confirms **before** build — `design.md`.
   Tool-agnostic; the engine never renders.
 - Tasks all done but the milestone **goal** unmet → `milestone-done` holds it open; the loop turns open
   deltas + extras into the next tasks until the goal is met — `loop.md`.
-- `status` prints **`MVP covered → propose graduation`** (every milestone done AND stage criteria all
-  `[x]`) → `graduate.md`: `graduation-report` → co-specify interview → draft ≥1 production milestone →
-  human confirm → then `stage production`. Guarded (`stage_no_roadmap`); the FINAL step, never a bare flip.
-- `status` prints **`→ releasable: N milestone(s) closed since last release`** → `release.md` (the 5th
-  scope level): `release-report` → draft notes from the consolidated deltas → meet the readiness floor
-  (security HARD-STOP is un-forceable) → human confirms → `add.py release <version>` records the cut
-  (CHANGELOG + `RELEASES.md` ledger + milestone attribution). The engine records; the human runs the
-  tag/publish/deploy. A release bundles ≥1 milestone, orthogonal to stage.
+- **Graduating mvp → production** — co-specify interview → draft ≥1 production milestone →
+  human confirm → then `stage production`. Guarded (`stage_no_roadmap`); the FINAL step, never a
+  bare flip. The quality-auditor persona carries the readiness playbook.
+- **Cutting a release** — draft notes from the closed milestones' deltas → meet the readiness
+  floor (security HARD-STOP is un-forceable) → the human confirms and runs the tag/publish/deploy.
+  The release-manager persona carries the cut playbook; the engine records nothing.
 - **Monorepo / multi-repo** — a milestone spans more than one green bar (a BE + its FE) → the
-  **component pillar**: declare components in `.add/components.toml`, gate each task on its component's
-  green-bar, freeze cross-component contracts (`produces:`/`consumes:`), hold the FE until the BE
-  freezes, `federate pull` across repos — `components.md`. Opt-in; no components = today.
+  platform-engineer seed persona carries the components playbook (declare the parts, gate each
+  task on its part's green bar, hold a consumer until its producer's contract freezes). Opt-in.
 - **Project-fit personas** — the **persona loop** seeds `.add/personas/<slug>.md`, grows them via
-  observe→delta→consolidate, applies them in design/streams/advisor/build (advisory; never lowers a gate) — `docs/18-personas.md`.
+  observe→delta→consolidate, applies them in design/orchestration/advisor/build (advisory; never lowers a gate) — `docs/18-personas.md`.
 - **Risk-class of a task** — declare `sensitivity:` in the TASK header (base `security|data|architecture|
   mechanical`, always valid). EXTEND it with your project's domain classes in `GLOSSARY.md`'s `## Sensitivity
   classes` section; freeze/status/check read base ∪ project. The AI keeps the domain vocabulary current —
-  `sensitivity.md`. Security is a human floor in every tier; only `mechanical` is advisor-gatable — see `advisor-gate-relax` in `run.md`.
+  the Sensitivity section (`phases/verify.md`). Security is a human floor in every tier; only `mechanical` is advisor-gatable — see `advisor-gate-relax` in `run.md`.

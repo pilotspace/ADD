@@ -110,10 +110,6 @@ class SoulArtifact(unittest.TestCase):
                       "SKILL.md 'Always start here' must tell the agent to read .add/SOUL.md")
 
     # --- installer ships it: 3-tree parity ---
-    def test_template_three_trees_identical(self):
-        digests = {_md5(p) for p in (CANON_TMPL, DOG_TMPL, BUNDLE_TMPL)}
-        self.assertEqual(len(digests), 1,
-                         "SOUL.md.tmpl diverged across canonical · dogfood · bundle")
 
     # --- reject: a SETUP_FILES member with no template scaffolds nothing ---
     def test_dangling_member_scaffolds_nothing(self):

@@ -18,7 +18,6 @@ from unittest import mock
 
 import add
 from add_engine import identity
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -85,7 +84,12 @@ class _Harness(unittest.TestCase):
 
 class StatusActorTest(_Harness):
     def test_status_human_shows_actor(self):
-        self._silent("whoami", "--name", "Bob", "--email", "bob@y.io")
+        # kernel-trim (ADD 2.0 M5): the `whoami --name` setter died; the override
+        # READ path (state["actor_override"]) survives — write it directly.
+        sp = Path(self.tmp) / ".add" / "state.json"
+        st = json.loads(sp.read_text())
+        st["actor_override"] = {"name": "Bob", "email": "bob@y.io"}
+        sp.write_text(json.dumps(st, indent=2))
         out = self._silent("status")
         # status aligns its colons (project :/stage   :/active  :) -> actor   :
         self.assertIn("actor   : Bob <bob@y.io> (source: override)", out)
@@ -126,13 +130,6 @@ class ReportActorTest(_Harness):
         d = add.report_data(root, add.load_state(root), "m")
         row = next(r for r in d["tasks"] if r["slug"] == "t")
         self.assertIsNone(row["gate_actor"])
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

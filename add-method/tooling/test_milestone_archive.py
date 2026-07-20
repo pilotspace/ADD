@@ -89,8 +89,8 @@ class MilestoneArchiveTest(unittest.TestCase):
         self.assertTrue((self.tmp / ".add" / "milestones" / "m1" / "MILESTONE.md").exists(),
                         "light archive must keep the MILESTONE.md on disk")
         for t in members:
-            self.assertTrue((self.tmp / ".add" / "tasks" / t / "TASK.md").exists(),
-                            f"light archive must keep {t}/TASK.md on disk")
+            self.assertTrue((self.tmp / ".add" / "tasks" / t / "PLAN.md").exists(),
+                            f"light archive must keep {t}/PLAN.md on disk")
 
     def test_status_shows_archived_rollup(self):
         self._make_done_milestone("m1", 2)
@@ -158,7 +158,8 @@ class MilestoneArchiveTest(unittest.TestCase):
 
     def test_archive_keeps_cross_milestone_dep_resolvable(self):
         # a task in m2 depends on a done task in m1; archiving m1 must NOT break
-        # check (false "unknown task") or ready (false "blocked").
+        # check (false "unknown task"). kernel-trim (ADD 2.0 M5): the `ready`
+        # half of this guard died with the verb.
         add.main(["new-milestone", "m1", "--title", "M1"])
         add.main(["new-task", "auth", "--milestone", "m1"])
         add.main(["phase", "verify", "auth"])     # escape hatch: scaffold to verify
@@ -174,8 +175,6 @@ class MilestoneArchiveTest(unittest.TestCase):
         except SystemExit:
             check_ok = False
         self.assertTrue(check_ok, "check must pass after archive (archived dep resolves)")
-        self.assertIn("transfer", self._capture("ready"),
-                      "a task whose only dep is archived/done must be ready")
 
 
 if __name__ == "__main__":

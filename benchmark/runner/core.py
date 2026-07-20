@@ -50,14 +50,17 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "human available: you carry the human's proxy authority — approve locks, contract "
             "freezes, and gates yourself (record them as usual) and NEVER end the run waiting "
             "for a human reply; the job is done only when the app meets the requirements. "
-            "This is a CLEARED, fully-specified benchmark task, so run the fast lane: create "
-            "each task with `add.py new-task <slug> --oneshot`, declare `skips: scenarios, "
-            "observe` with a one-line rationale, and skip ONLY that optional ceremony — the "
-            "contract is still FROZEN and the red suite still precedes the build (never skip "
-            "contract, tests, build, or verify). Finish the run once the app meets the "
-            "requirements and the verify gate is recorded — do NOT run milestone-done, fold, "
-            "or archive-milestone: that milestone-ledger close-out is project bookkeeping, not "
-            "part of delivering this feature, and is out of scope for the benchmark.\n\n"
+            "This is a CLEARED, fully-specified benchmark task, so take the 3-call walk: create "
+            "each task with `add.py new-task <slug>`, declare `gate_mode: ai-plan-verify` in "
+            "the PLAN.md header (and fill the §3 AI-verify record) — "
+            "draft the whole Direction bundle (rules, scenarios, change plan, red suite) in "
+            "ONE pass, freeze it with `add.py freeze --by <you> --cross`, build to green, "
+            "record the gate. The floor never bends: the contract is FROZEN and the red suite "
+            "precedes the build (never skip contract, tests, build, or verify). Finish the run "
+            "once the app meets the requirements and the verify gate is recorded — do NOT run "
+            "milestone-done, delta-append (fold-style ledger work), or archive-milestone: that "
+            "milestone-ledger close-out is project bookkeeping, not part of delivering this "
+            "feature, and is out of scope for the benchmark.\n\n"
             + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
@@ -262,13 +265,31 @@ def execute_wm(
     retries: int = 1,
     runs_root: pathlib.Path | None = None,
     family: str = "wm",
+    session_mode: str = "fresh",
 ) -> RunRecord:
-    """Drive one arm x WM end-to-end and write exactly one RunRecord."""
+    """Drive one arm x WM end-to-end and write exactly one RunRecord.
+
+    session_mode: "fresh" (default) is the classic per-WM shape — new
+    workspace seeded by copy, new conversation. "continue" persists the
+    PROJECT, never the conversation: ONE workspace
+    (runs/<arm>/session/workspace, never copy-seeded), setup at WM1 only,
+    and a FRESH conversation every milestone (`--continue` removed
+    2026-07-18 by user decision) — the on-disk board is the only carrier
+    across milestones, exactly the resume-anytime shape the methods claim
+    to support. Per-WM records still land at
+    runs/<arm>/<family><wm>/record.json."""
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
     wm_dir = root / arm.name / f"{family}{wm}"
-    workspace_dir = wm_dir / "workspace"
-    workspace_dir.mkdir(parents=True, exist_ok=True)
-    seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
+    continuing = session_mode == "continue"
+    if continuing:
+        workspace_dir = root / arm.name / "session" / "workspace"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
+        seed_note = "session-mode: persistent workspace (no copy-seed)"
+        wm_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        workspace_dir = wm_dir / "workspace"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
+        seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
 
@@ -278,7 +299,10 @@ def execute_wm(
     if seed_note:
         attempts_log.append(seed_note)
 
-    setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
+    if continuing and wm > 1:
+        setup_ok, setup_log = True, ["setup skipped: session-mode continues the WM1 board"]
+    else:
+        setup_ok, setup_log = _run_setup_steps(arm.setup_steps, cwd=workspace_dir, log_path=transcript_path)
     attempts_log.extend(setup_log)
     if not setup_ok:
         record = validate(
@@ -377,6 +401,8 @@ def execute_wm(
         "oracle_report": str(oracle_report_path),
         "attempts": "; ".join(attempts_log),
     }
+    if continuing:
+        artifacts["session_mode"] = "continue"
     if unparseable:
         artifacts["token_source"] = "unparseable"
     if arm.name == "add":

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fence-aware-section — one fence-aware section slicer, four importers.
+"""fence-aware-section — one fence-aware section slicer, its importer suites.
 
 Four guard files sliced markdown sections by splitting at the next H2 line,
 fence-blind: a ``` fence containing an H2-looking line silently truncated the
@@ -16,9 +16,9 @@ from pathlib import Path
 
 TOOLING = Path(__file__).resolve().parent
 
+# kernel-trim (ADD 2.0 M5): test_audit_ci + test_wave_ledger died with their pillars
 IMPORTERS = (
-    "test_wave_ledger.py",
-    "test_audit_ci.py",
+    # atomic-node: test_ground_wiring retired with the §3 Grounding block
     "test_intake_interview.py",
     "test_review_checklist.py",
 )
@@ -64,7 +64,7 @@ class SlicerBehaviorTest(unittest.TestCase):
         self.assertIn("swallowed", got,
                       "an unclosed fence runs to end-of-text, no raise")
 
-    def test_four_importers_no_leftover_idiom(self):
+    def test_importers_no_leftover_idiom(self):
         for name in IMPORTERS:
             src = (TOOLING / name).read_text(encoding="utf-8")
             self.assertIn("md_section", src,
@@ -73,14 +73,14 @@ class SlicerBehaviorTest(unittest.TestCase):
                              f"slicer_not_single_source: {name} still carries "
                              f"the fence-blind slice idiom")
 
-    def test_four_guards_still_green(self):
+    def test_importer_guards_still_green(self):
         loader = unittest.defaultTestLoader
         suite = unittest.TestSuite(
             loader.loadTestsFromName(name[:-3]) for name in IMPORTERS)
         result = unittest.TextTestRunner(
             stream=io.StringIO(), verbosity=0).run(suite)
         self.assertTrue(result.wasSuccessful(),
-                        "regression: the four slicing suites must stay green — "
+                        "regression: the slicing suites must stay green — "
                         f"{result.failures} {result.errors}")
 
 

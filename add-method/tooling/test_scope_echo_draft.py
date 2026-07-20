@@ -9,7 +9,7 @@ declaration is absent/default/garbage. Propose-not-impose; pure read; fail-open.
   M2 — a token no tree provides echoes `[MISSING]` (the `./src/` default is REAL —
        new-task scaffolds a task-local src/, an honest ground correction).
   M3 — default/dead scope + real Touches paths -> `scope (proposed from §3 Touches):`
-       with backticked root-relative tokens; the TASK.md Scope line byte-identical.
+       with backticked root-relative tokens; the PLAN.md Scope line byte-identical.
   M4 — no Scope line at all -> UNDECLARED (grandfathered) + proposal, no MISSING noise.
   R1 — the next-footer stays the LAST stdout line (kickoff-truth's footer convention).
   R2 — the already-frozen no-op (exit 0, nothing re-stamped) prints no `scope:` lines.
@@ -78,12 +78,12 @@ class _Harness(unittest.TestCase):
         (None drops the whole Scope line — the UNDECLARED grandfather)."""
         self._ok("init", "--name", "demo", "--stage", "mvp")
         self._ok("lock", "--force")
-        self._ok("new-task", "t", "--title", "T", "--oneshot")
+        self._ok("new-task", "t", "--title", "T")
         self._ok("advance", "--to", "plan")
         # real files so Touches paths + a real scope dir resolve
         (self.tmp / "pkg" / "api").mkdir(parents=True)
         (self.tmp / "pkg" / "api" / "handler.py").write_text("x = 1\n", encoding="utf-8")
-        p = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        p = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         sec3 = _SEC3
         if scope_line is None:
@@ -91,7 +91,7 @@ class _Harness(unittest.TestCase):
                              if not ln.startswith("Scope (may touch):")) + "\n"
         else:
             sec3 = sec3.replace("{scope}", scope_line)
-        new = re.sub(r"(?ms)(^### Grounding.*?)(?=^---)", sec3 + "\n", text, count=1)
+        new = re.sub(r"(?ms)(^### Contract.*?)(?=^---)", sec3 + "\n", text, count=1)
         self.assertNotEqual(new, text, "fixture §3 replacement failed")
         new = re.sub(r"(?m)^Boundary:.*$", "Boundary: none — no external input", new, count=1)
         p.write_text(new, encoding="utf-8")

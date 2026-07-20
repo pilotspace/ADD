@@ -40,7 +40,7 @@ class ProofHarnessTest(unittest.TestCase):
     def _freeze(self, slug="t"):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -51,16 +51,16 @@ class ProofHarnessTest(unittest.TestCase):
     def test_gate_pass_refused_before_verify(self):
         # the divergence: the engine must REFUSE PASS before the task reaches verify
         with self.assertRaises(SystemExit) as cm:
-            add.main(["gate", "PASS"])               # phase is "specify" (plan-phase-core seed)
+            add.main(["gate", "PASS"])               # phase is "direction" (phase-collapse-3 seed)
         self.assertEqual(cm.exception.code, 1)       # _die default; cf. check's exit 1
         st = self._state()["tasks"]["t"]
-        self.assertEqual(st["phase"], "specify", "refused gate must NOT advance phase")
+        self.assertEqual(st["phase"], "direction", "refused gate must NOT advance phase")
         self.assertEqual(st["gate"], "none", "refused gate must NOT record an outcome")
 
     # --- Matrix 3: done only when Verify reads PASS ---------------------------
     def test_gate_pass_at_verify_reaches_done(self):
-        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before plan->tests crossing
-        for _ in range(4):                            # specify -> plan -> tests -> build -> verify
+        self._freeze()  # freeze-gate-universal: §3 must be FROZEN before the direction->build crossing
+        for _ in range(2):                            # direction -> build -> verify
             add.main(["advance"])
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         add.main(["gate", "PASS"])

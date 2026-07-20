@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
-"""v11 — parallel-streams safety: the rubric's clauses + the engine behavior it leans on.
+"""v11 — parallel-streams safety: the ENGINE behavior the concurrency rubric leans on.
 
-streams.md is the opt-in concurrency rubric. It changes NO add.py code, so its safety
-guarantees live in two places that must not drift apart:
+streams.md is the opt-in concurrency rubric; it changes NO add.py code. The one safety
+guarantee that IS engine-enforced — and thus tested here — is slug routing: advance/gate/
+phase act on the EXPLICIT <slug>, and omitting it falls back to the single active_task.
+streams.md tells the orchestrator to name the task every time precisely because that
+fallback races once more than one stream is live. If the precedence ever flipped, every
+parallel orchestration would corrupt the wrong task while the rubric still read as safe.
 
-  1. The PROSE clauses a human/orchestrator reads — the design-for-failure rules
-     (slug-routing, fresh worktree base, lease+timeout, circuit-breaker, failure
-     isolation, serial integration-merge, the irreducible human floor, "a worker
-     never writes shared state"). Words-exist guards so a refactor cannot quietly
-     drop a safety rule from the rubric.
-  2. The ENGINE behavior clause #1 depends on — advance/gate/phase route to the
-     EXPLICIT <slug> and act on it; omitting the slug falls back to the single
-     active_task. streams.md tells the orchestrator to "name the task every time"
-     precisely because the fallback races once more than one stream is live. If
-     that precedence ever flipped, every parallel orchestration would corrupt the
-     wrong task while the rubric still told you it was safe.
+(The rubric's prose clauses — design-for-failure rules, the human floor — are no longer
+word-pinned here: doc wording is free to evolve; only the engine contract is guarded.)
 
 Run: python3 -m unittest test_streams -v
 """
@@ -49,57 +44,6 @@ def _run(argv):
     return code, out.getvalue(), err.getvalue()
 
 
-class StreamsSafetyClausesTest(unittest.TestCase):
-    """Each design-for-failure clause in streams.md must survive a refactor.
-
-    Pins the SAFETY CONCEPT (distinctive lowercased substrings), not whole sentences,
-    so wording can evolve but a deleted guarantee fails loudly."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.low = (SKILL / "streams.md").read_text(encoding="utf-8").lower()
-
-    def test_slug_routing_names_the_task_every_time(self):
-        self.assertIn("explicit", self.low)
-        self.assertIn("name the task every time", self.low,
-                      "the rubric must keep the always-pass-the-slug rule")
-        self.assertIn("race", self.low,
-                      "the rubric must keep the WHY: the active_task fallback races across streams")
-
-    def test_fresh_worktree_base_clause(self):
-        self.assertIn("fresh worktree base", self.low,
-                      "the worktree-base safety step must remain")
-        self.assertIn("base == head", self.low,
-                      "must keep the concrete check: worker base == orchestrator HEAD")
-
-    def test_lease_and_timeout_clause(self):
-        self.assertIn("lease", self.low)
-        self.assertIn("timeout", self.low,
-                      "a dead worker's claim must be releasable — lease + timeout")
-
-    def test_circuit_breaker_clause(self):
-        self.assertIn("circuit-breaker", self.low,
-                      "repeated worker failure must fall back to sequential, not keep fanning out")
-
-    def test_failure_isolation_clause(self):
-        self.assertIn("failure isolates", self.low,
-                      "a STOP-and-escalate must block only its own task, not siblings")
-
-    def test_serial_integration_merge_clause(self):
-        self.assertIn("merge is serial", self.low)
-        self.assertIn("integration", self.low,
-                      "merged-green tasks can still conflict — the integration Verify must stay")
-
-    def test_irreducible_human_floor_clause(self):
-        self.assertIn("one human approval per task", self.low,
-                      "the contract-seam floor must never be engineered away")
-        self.assertIn("never drops to zero", self.low)
-
-    def test_worker_never_writes_shared_state(self):
-        self.assertIn("never write shared state", self.low,
-                      "the worker/orchestrator write boundary is the core race guard")
-
-
 class SlugRoutingPrecedenceTest(unittest.TestCase):
     """advance/gate/phase act on the EXPLICIT slug; omitting it uses active_task.
 
@@ -126,6 +70,16 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
     def _state(self):
         return json.loads(self.state_path.read_text(encoding="utf-8"))
 
+    def _freeze(self, slug):
+        """Stamp §3 FROZEN + a well-formed flag so `advance` (no admin override) can
+        actually cross the slug's direction->build gate. freeze-gate-universal sweep."""
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none",
+        ), encoding="utf-8")
+
     def test_active_task_is_b_after_setup(self):
         # premise check: the LAST-created task is active, so naming 'a' is the non-trivial path
         self.assertEqual(self._state()["active_task"], "b")
@@ -135,15 +89,16 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         self.assertEqual(code, 0)
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "verify", "the NAMED task must change")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT change")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must NOT change")
         self.assertEqual(st["active_task"], "b", "phase <slug> must not steal focus from active_task")
 
     def test_advance_routes_to_explicit_slug_not_active(self):
+        self._freeze("a")                        # a bare advance now needs a frozen §3 to cross
         code, _, _ = _run(["advance", "a"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["a"]["phase"], "plan", "advance must step the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must NOT step")
+        self.assertEqual(st["tasks"]["a"]["phase"], "build", "advance must step the NAMED task")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must NOT step")
         self.assertEqual(st["active_task"], "b")
 
     def test_gate_routes_to_explicit_slug_not_active(self):
@@ -153,17 +108,18 @@ class SlugRoutingPrecedenceTest(unittest.TestCase):
         st = self._state()
         self.assertEqual(st["tasks"]["a"]["phase"], "done")
         self.assertEqual(st["tasks"]["a"]["gate"], "PASS", "gate must record on the NAMED task")
-        self.assertEqual(st["tasks"]["b"]["phase"], "specify", "the active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "direction", "the active task must be untouched")
         self.assertEqual(st["tasks"]["b"].get("gate", "none"), "none", "no gate may land on 'b'")
         self.assertEqual(st["active_task"], "b")
 
     def test_omitted_slug_falls_back_to_active_task(self):
         # the documented fallback (and the race premise): no slug => act on active_task ('b')
+        self._freeze("b")                        # a bare advance now needs a frozen §3 to cross
         code, _, _ = _run(["advance"])
         self.assertEqual(code, 0)
         st = self._state()
-        self.assertEqual(st["tasks"]["b"]["phase"], "plan", "omitted slug must step the active task")
-        self.assertEqual(st["tasks"]["a"]["phase"], "specify", "the non-active task must be untouched")
+        self.assertEqual(st["tasks"]["b"]["phase"], "build", "omitted slug must step the active task")
+        self.assertEqual(st["tasks"]["a"]["phase"], "direction", "the non-active task must be untouched")
 
 
 # ── wave-protocol-runtime: merge-time fork-base shift + worker commits its report ──
@@ -178,91 +134,5 @@ _STREAMS_TREES = (
     _REPO / ".claude" / "skills" / "add" / "streams.md",                               # dogfood
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "streams.md",  # bundle
 )
-
-
-class WaveProtocolRuntimeTest(unittest.TestCase):
-    """streams.md states the merge-time fork-base shift for spawn-time runners and requires the
-    worker to COMMIT its report — mirroring the folded CONVENTIONS runtime-exception — while the
-    pre-spawn rule is PRESERVED and the ×3 copies stay byte-identical. RED until the build amends
-    streams.md (the 2 new-behaviour tests); the 2 invariant tests stay green throughout."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.low = (SKILL / "streams.md").read_text(encoding="utf-8").lower()
-
-    def test_merge_time_fork_base_shift_stated(self):        # Scenario 1 / Must 1
-        self.assertIn("merge-time", self.low,
-                      "the fork-base check must SHIFT to merge-time on a spawn-time-worktree runner")
-        self.assertIn("step-0", self.low,
-                      "the shift names the worker step-0 (sync-to-base + re-echo)")
-        self.assertIn("unverified_fork_base", self.low,
-                      "the shifted check keeps its refusal code — it shifts, it never skips")
-
-    def test_worker_commits_its_report(self):                # Scenario 2 / Must 2
-        self.assertIn("commit summary.md", self.low,
-                      "the worker <return> contract must require COMMITTING SUMMARY.md, not just writing it")
-        self.assertIn("deltas.md", self.low,
-                      "the worker commits deltas.md alongside SUMMARY.md")
-
-    def test_pre_spawn_rule_preserved(self):                 # Scenario 4 / Must 4 · Reject 1
-        self.assertIn("fresh worktree base", self.low,
-                      "the pre-spawn rule stays the DEFAULT — deleting it is fork_base_rule_weakened")
-        self.assertIn("base == head", self.low,
-                      "the concrete pre-spawn check (worker base == orchestrator HEAD) must remain")
-
-    def test_three_streams_copies_byte_identical(self):      # Scenario 3 / Must 3 · Reject 2
-        present = [p for p in _STREAMS_TREES if p.exists()]
-        self.assertEqual(len(present), 3,
-                         f"all 3 streams.md copies must exist: {[str(p) for p in _STREAMS_TREES]}")
-        hashes = {hashlib.md5(p.read_bytes()).hexdigest() for p in present}
-        self.assertEqual(len(hashes), 1, f"streams.md mirror_drift across the 3 copies: {hashes}")
-
-
-class WorkerStrategyPullTest(unittest.TestCase):
-    """streams-strategy-pull: streams.md's worker-contract fence carries a <strategy> block that
-    points the worker at the task's §5 (mirroring advisor.md). It must stay INSIDE the fence."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.text = (SKILL / "streams.md").read_text(encoding="utf-8")
-
-    def test_strategy_block_present_and_names_section5(self):
-        block = re.search(r"<strategy>(.*?)</strategy>", self.text, re.DOTALL)
-        self.assertIsNotNone(block, "streams.md worker contract missing the <strategy> block")
-        self.assertIn("§5", block.group(1), "the <strategy> block must point at the task's §5")
-        # placed inside the worker contract: between </persona> and <touch_boundary>
-        self.assertLess(self.text.index("</persona>"), self.text.index("<strategy>"))
-        self.assertLess(self.text.index("</strategy>"), self.text.index("<touch_boundary>"))
-
-    def test_strategy_stays_fenced(self):
-        stripped = _FENCE_RE.sub("", self.text)
-        self.assertNotIn("<strategy>", stripped,
-                         "<strategy> leaked OUTSIDE the worker-contract code fence")
-
-    def test_strategy_block_is_preferred_not_hard(self):
-        # strategy-soft-not-hard: §5 is the worker's PREFERRED plan it self-improves on and
-        # reports for audit — NOT a hard "do not invent your own" directive.
-        block = re.search(r"\n<strategy>\n(.*?)\n</strategy>", self.text, re.DOTALL)
-        self.assertIsNotNone(block, "no line-anchored <strategy> block")
-        body = block.group(1)
-        self.assertIn("not a hard rule", body, "block must frame §5 as preferred, not a hard rule")
-        self.assertIn("Improve on it", body, "block must invite the worker to self-improve the plan")
-        self.assertIn("report the strategy", body, "block must ask the worker to report the strategy used")
-        self.assertIn("audit", body, "the report must feed the §5 audit trail")
-        self.assertNotIn("do not invent your own", self.text,
-                         "the rigid 'do not invent your own' phrasing must be gone")
-
-    def test_block_byte_identical_to_advisor(self):
-        # the two spawn homes must carry the SAME <strategy> block (no drift -> block_drift)
-        adv = (SKILL / "advisor.md").read_text(encoding="utf-8")
-        pat = r"\n<strategy>\n.*?\n</strategy>"
-        s_block = re.search(pat, self.text, re.DOTALL)
-        a_block = re.search(pat, adv, re.DOTALL)
-        self.assertIsNotNone(s_block, "streams.md <strategy> block not found")
-        self.assertIsNotNone(a_block, "advisor.md <strategy> block not found")
-        self.assertEqual(s_block.group(0), a_block.group(0),
-                         "advisor.md and streams.md <strategy> blocks have drifted")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

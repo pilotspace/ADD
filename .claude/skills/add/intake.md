@@ -4,6 +4,25 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 **intake level** (the per-task flow is phases 0–7; intake is the step *before* a task). You
 (the AI) **propose**; the human **confirms**. Never create scope without a confirmed proposal.
 
+## Analyze the request before you size it
+
+A raw request is rarely a task yet — it is intent wrapped in prose. ADD's first job is not to
+route it but to *read it into a task shape*. Do this BEFORE any bucket or interview:
+
+1. **Restate the intent** in one line — the outcome the human wants, in their world, not the
+   mechanism. If you cannot state it, it is underspecified → `ask_human` (never guess it).
+2. **Extract the latent requirements** — the acceptance signals hiding in the ask ("fast",
+   "secure", "works like X") are the measurable Targets in disguise; name each one explicitly.
+3. **Name the unstated** — the assumptions, defaults, and edge behavior the prose skips. These
+   become the interview agenda below; surface them, never silently fill them.
+4. **Surface the hidden work** — the migrations, new contract surface, and risks a naive read
+   misses. This is what separates a real task from a wish, and what escalates sensitivity.
+
+This analysis IS the task's raw material: the restated intent seeds §1 grounding, the latent
+requirements seed the §3 Target, the unstated becomes what the interview settles. Sizing (below)
+only decides *where* the task lives — the analysis decides *what it is*. Skipping it is how a
+vague prompt becomes a mis-sized, under-specified task.
+
 ## Interview before you size
 
 Run `add.py search <keyword> ...` first — it surfaces overlapping/prior work in one command. When
@@ -11,6 +30,26 @@ the request is a question or won't place in one bucket, explore it WITH the user
 the intent, name in/out of scope, offer 2–3 sized options with a recommendation. Only then emit
 `{ bucket, rationale, command }`. `ask_human` stays the floor: if interviewing can't sharpen it,
 reject — never guess a bucket.
+
+## The inline lane — below the bucket floor
+
+Buckets create versioned scope; some changes are too small to deserve any. After the
+interview sharpens the request, judge the lane FIRST — you (the AI) route it, silently:
+
+**Inline fits when ALL hold**: one file or a few adjacent ones · behavior the current specs
+already cover (a typo, a wording fix, a config value, a mechanical rename) · no new contract
+surface anyone else consumes · sensitivity mechanical. Then: **no task, no milestone** — make
+the edit directly, and leave the receipt:
+
+1. the **git diff** is the change record (commit it as usual);
+2. `add.py delta-append <dd> "<lesson>"` files what was learned into the living 5-DD spec —
+   the spec diff IS the approval artifact; a lane run that teaches nothing appends nothing.
+
+**The floor is closed**: a change touching **security · data · architecture** ALWAYS escalates
+to a real task — never inline, no matter how small (security stays HARD-STOP everywhere).
+New behavior, a new/changed contract, or anything you would want a frozen §3 for → bucket it.
+The route is yours, the veto is not: the human saying "make it a task" overrides the lane,
+always. When in doubt, bucket — the lane is for changes whose whole story fits in a diff.
 
 ## The four buckets
 
@@ -28,9 +67,9 @@ already-frozen scope?" → if yes it is a `change-request` (never re-size frozen
 Only if no, apply the size test: a new theme → `new-major`; a slice of a live theme → `sub-milestone`;
 fits the active milestone → `task`.
 
-**Fast-fit test (task bucket only).** single behavior · no new contract surface others consume ·
-sensitivity mechanical → propose `add.py new-task <slug> --fast` + why. The flag stays human-owned:
-the proposal carries it; the human's confirm picks it. Any doubt → the full lane.
+**Size the freeze, not the template (task bucket only).** ONE atomic template serves every task;
+single behavior · no new contract surface others consume · sensitivity mechanical → propose drafting
+the whole Direction bundle in one pass to a single freeze. Any doubt → draft §1–§4 beat by beat.
 
 **One-task gap rule.** ONE task that does NOT fit the active milestone's scope: never force it
 into `sub-milestone` — create a micro-milestone to house it (`new-milestone` + `new-task`) for
@@ -42,9 +81,9 @@ one human confirm covering the batch — never N sequential asks. Mixed buckets 
 
 ## What you emit (the proposal)
 
-Present the proposal via `report-template.md` — open with the ARC (goal · done · plan): the goal this
+Present the proposal via `gate-udd.md` — open with the ARC (goal · done · plan): the goal this
 request serves, what is already covered, and the plan the chosen bucket sets up. Render it as a guided
-choice — the recommended bucket + its described alternatives (per `report-template.md`). For every
+choice — the recommended bucket + its described alternatives (per `gate-udd.md`). For every
 request, emit ONE of:
 
 - **a classification** — `{ bucket, rationale, command }` — `rationale` names WHY (the theme, the
@@ -61,7 +100,7 @@ request, emit ONE of:
 </reject_codes>
 
 When confirmed, record the `rationale` in the artifact you create or affect — the new MILESTONE.md
-goal/body, the new TASK.md, or a note in the affected TASK.md — never in state.json.
+goal/body, the new PLAN.md, or a note in the affected PLAN.md — never in state.json.
 
 ## Roadmap — a request that is several milestones
 
@@ -78,12 +117,3 @@ Don't create only the first and lose the rest. Instead:
 
 NOT `split_required` (that is for a request spanning **different buckets**); a roadmap is
 several milestones of the **same line**, created queued.
-
-## Worked examples (from this project's own history)
-
-| request | bucket | rationale |
-|---------|--------|-----------|
-| give ADD a hosted web dashboard | new-major | a new product theme → a fresh major line (v5) |
-| add the build corridor + tests-red-before-build | sub-milestone | a slice of the live v4 theme, too big for one task → v4-2 |
-| expose owner/stop as --json | task | fits the active v4-1 (intake interface) scope → one task |
-| guide --json phase/gate should be nullable | change-request | changes a FROZEN contract → reopen its CONTRACT, never a new milestone |

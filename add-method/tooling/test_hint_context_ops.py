@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """engine-hint-context-ops: the full-`status` resume block teaches the cheap
 context ops (`status --section <phase>` · `status --brief`) at the moment of
-use, instead of instructing a whole-TASK.md read every re-orient.
+use, instead of instructing a whole-PLAN.md read every re-orient.
 
 Post-hint wm1 census: advance --fill ×12 adopted, --brief/--section still 0 —
 nothing in the engine's own output named them. Same fix shape as
@@ -34,7 +34,7 @@ class ResumeTeachesContextOps(unittest.TestCase):
         cls.root = cls._tmp.name
         r = _run(cls.root, "init", "--name", "ctx", "--stage", "mvp")
         assert r.returncode == 0, r.stderr + r.stdout
-        r = _run(cls.root, "new-task", "ctx-probe", "--fast", "--title", "probe")
+        r = _run(cls.root, "new-task", "ctx-probe", "--title", "probe")
         assert r.returncode == 0, r.stderr + r.stdout
 
     @classmethod
@@ -44,7 +44,7 @@ class ResumeTeachesContextOps(unittest.TestCase):
     def test_resume_names_section_and_brief(self):
         out = _run(self.root, "status").stdout
         resume = out.split("resume", 1)[1]
-        self.assertIn("status --section specify", resume,
+        self.assertIn("status --section direction", resume,
                       f"resume must teach the per-section read:\n{out}")
         self.assertIn("status --brief", resume,
                       f"resume must teach the cheap re-orient:\n{out}")
@@ -52,7 +52,7 @@ class ResumeTeachesContextOps(unittest.TestCase):
     def test_whole_file_read_is_no_longer_the_first_action(self):
         out = _run(self.root, "status").stdout
         resume = out.split("resume", 1)[1]
-        self.assertNotIn("read .add/tasks/ctx-probe/TASK.md and continue", resume,
+        self.assertNotIn("read .add/tasks/ctx-probe/PLAN.md and continue", resume,
                          "the old whole-file instruction must be replaced")
 
     def test_done_branch_unchanged_shape(self):

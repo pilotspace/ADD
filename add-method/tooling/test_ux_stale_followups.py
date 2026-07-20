@@ -103,7 +103,7 @@ class _Base(unittest.TestCase):
 
     def _write_task(self, slug):
         lines = [
-            f"# TASK: {slug}", f"slug: {slug} · created: 2026-06-12 · stage: mvp",
+            f"# PLAN: {slug}", f"slug: {slug} · created: 2026-06-12 · stage: mvp",
             "phase: ground", "",
             *self._section(0, "GROUND", "Anchors the contract cites: cmd_gate"),
             *self._section(1, "SPECIFY", "Feature: f"),
@@ -117,7 +117,7 @@ class _Base(unittest.TestCase):
             *self._section(6, "VERIFY", "checks"),
             *self._section(7, "OBSERVE", "watch"),
         ]
-        (self.add_dir / "tasks" / slug / "TASK.md").write_text("\n".join(lines), encoding="utf-8")
+        (self.add_dir / "tasks" / slug / "PLAN.md").write_text("\n".join(lines), encoding="utf-8")
 
     def _write_test_file(self, slug):
         d = self.add_dir / "tasks" / slug / "tests"
@@ -179,12 +179,10 @@ class TemplateTest(_Base):
         self.assertIn("Domain (DDD)", text)
         self.assertIn("UDD", text)
 
-    def test_template_mirrors_byte_identical(self):
+    def test_template_goal_softened(self):
         canon = CANON_TMPL.read_text(encoding="utf-8")
-        self.assertEqual(canon, BUNDLE_TMPL.read_text(encoding="utf-8"), "canonical != bundled")
-        self.assertEqual(canon, DOGFOOD_TMPL.read_text(encoding="utf-8"), "canonical != dogfood")
         self.assertNotIn(PLACEHOLDER, canon, "the goal value must be softened (no raw placeholder)")
-        self.assertRegex(canon, r"(?im)^goal:")               # still carries a goal line
+        self.assertRegex(canon, r"(?im)^goal:")
 
 
 # ── #1: milestone-done success output carries no stale confirm-the-boxes prose ─

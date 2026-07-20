@@ -2,7 +2,7 @@
 """Behavioral proof of `add.py deltas` (task: deltas-report, v10).
 
 CONTRACT (frozen @ v1): a READ-ONLY report. `add.py deltas` scans every
-.add/tasks/*/TASK.md "### Competency deltas" block, shows only `open` deltas
+.add/tasks/*/PLAN.md "### Competency deltas" block, shows only `open` deltas
 grouped by competency in canonical order with per-group counts + a grand total;
 `--json` prints ONE object {total, by_competency}; exit 0 ALWAYS; writes
 nothing; folded/rejected excluded; malformed/comment lines skipped (not fatal).
@@ -50,7 +50,7 @@ class DeltasReportTest(unittest.TestCase):
         root = add.find_root()
         if slug not in (add.load_state(root).get("tasks") or {}):
             add.main(["new-task", slug, "--title", "Feature"])
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         marker = "### Competency deltas"
         idx = text.index(marker) + len(marker)
@@ -130,7 +130,7 @@ class DeltasReportTest(unittest.TestCase):
                          "evidence on the continuation line was lost")
 
     def test_unreadable_task_skipped_not_fatal(self):
-        # design-for-failure: an existing-but-unreadable TASK.md is skipped, never crashes.
+        # design-for-failure: an existing-but-unreadable PLAN.md is skipped, never crashes.
         from unittest import mock
         self._add_deltas("a", "- [TDD · open] one (evidence: e)")
         root = add.find_root()

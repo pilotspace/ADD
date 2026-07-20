@@ -10,7 +10,7 @@ the engines floor reads package.json directly so it always runs.
 The PyPI side has the same risk and its own ground truth: build the wheel with the
 real setuptools backend and read its namelist. _bundled/ ships only because
 MANIFEST.in + [tool.setuptools.package-data] agree — a single drift and the wheel
-installs but `pilotspace-add init` finds no skill/docs/tooling to copy. PyWheelTest
+installs but `pilotspace-add init` finds no skill/tooling to copy. PyWheelTest
 catches that the same way NpmTarballTest catches an npm leak. Skips honestly when
 setuptools is absent.
 
@@ -72,10 +72,12 @@ class NpmTarballTest(unittest.TestCase):
     def test_runtime_surface_ships(self):
         missing = [p for p in _RUNTIME_MUST if p not in self.paths]
         self.assertEqual(missing, [], f"runtime files must ship: {missing}")
-        # the directory surfaces (templates/skill/docs) must each contribute ≥1 file
-        for prefix in ("tooling/templates/", "skill/", "docs/"):
+        # the directory surfaces (templates/skill) must each contribute ≥1 file
+        for prefix in ("tooling/templates/", "skill/"):
             self.assertTrue(any(p.startswith(prefix) for p in self.paths),
                             f"no file under {prefix} shipped")
+        self.assertFalse(any(p.startswith("docs/") for p in self.paths),
+                         "book-stops-shipping (2.0 M6b): the npm tarball must not ship docs/")
 
     def test_agent_roster_ships(self):
         """roster-install-drift: a missing agents/ here is the SAME files-allowlist trap
@@ -84,8 +86,8 @@ class NpmTarballTest(unittest.TestCase):
         that can never resolve (the apple-container transcript finding)."""
         self.assertTrue(any(p.startswith("agents/") for p in self.paths),
                         "no file under agents/ shipped (roster_absent_from_npm)")
-        self.assertIn("agents/add-build.md", self.paths,
-                      "add-build.md must ship in the npm tarball (roster_absent_from_npm)")
+        self.assertIn("agents/add.md", self.paths,
+                      "the ONE add agent must ship in the npm tarball (roster_absent_from_npm)")
 
     def test_teacher_corpus_and_notices_ship(self):
         """The vendored teacher snapshot + its MIT attribution must ride in the tarball
@@ -135,7 +137,6 @@ def _setuptools_backend():
 
 
 _BUNDLE_PREFIXES = (
-    "add_method/_bundled/docs/",
     "add_method/_bundled/skill/add/",
     "add_method/_bundled/agents/",
     "add_method/_bundled/tooling/",

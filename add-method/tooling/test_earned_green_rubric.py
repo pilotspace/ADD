@@ -13,7 +13,7 @@ autonomy:auto is recommended; the engine never spawns one) prompted to argue
 
 This is PROSE + TEMPLATE only (the verify-deepen precedent): add.py is byte-unchanged
 (the engine stays judgment-free; the resolver, not the engine, judges earned-vs-gamed).
-The rubric is stated IDENTICALLY in the guide (phases/6-verify.md) and the book
+The rubric is stated IDENTICALLY in the guide (phases/verify.md) and the book
 (docs/08-step-6-verify.md), carried as one additive §6 template line, and the two new
 terms are defined in the living glossary. ENFORCEMENT (the auto-gate wiring + the
 <=3-attempt self-heal loop) is task 3 (heal-then-escalate) — NOT here.
@@ -37,10 +37,10 @@ _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
 # ── the surfaces (canonical copies) ───────────────────────────────────────────
-GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md"
+GUIDE = _ADD_METHOD / "skill" / "add" / "phases" / "verify.md"
 BOOK = _ADD_METHOD / "docs" / "08-step-6-verify.md"
 RUN_MD = _ADD_METHOD / "skill" / "add" / "run.md"
-TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "TASK.md.tmpl"
+TASK_TMPL = _ADD_METHOD / "tooling" / "templates" / "PLAN.md.tmpl"
 GLOSSARY_TMPL = _ADD_METHOD / "tooling" / "templates" / "GLOSSARY.md.tmpl"
 LIVING_GLOSSARY = _REPO / ".add" / "GLOSSARY.md"
 ADD_PY = _ADD_METHOD / "tooling" / "add.py"
@@ -48,20 +48,18 @@ ADD_PY = _ADD_METHOD / "tooling" / "add.py"
 # ── the mirror trees (every copy — drift in any is a finding) ─────────────────
 GUIDE_TREES = [
     GUIDE,                                                                       # canonical
-    _REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",            # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "6-verify.md",  # bundle
+    _REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",            # dogfood
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "skill" / "add" / "phases" / "verify.md",  # bundle
 ]
 ROOT_BOOK = _REPO / "08-step-6-verify.md"
 BOOK_TREES = [
     ROOT_BOOK,                                                                   # root
     BOOK,                                                                        # canonical
-    _REPO / ".add" / "docs" / "08-step-6-verify.md",                            # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "docs" / "08-step-6-verify.md",  # bundle
-]
+]   # book-stops-shipping (2.0 M6b): no bundled/dogfood copies
 TMPL_TREES = [
     TASK_TMPL,                                                                   # canonical
-    _REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",                  # dogfood
-    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.md.tmpl",  # bundle
+    _REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",                  # dogfood
+    _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",  # bundle
 ]
 
 # Contiguous ASCII substrings of the frozen canonical wording. Each must appear
@@ -85,8 +83,7 @@ CHEAT_KEYWORDS = ["overfit", "vacuous", "stub"]
 SIX_EXISTING = [
     "all tests pass",
     "no test or contract was altered during build",
-    "### Deep checks",
-    "### GATE RECORD",
+        "### GATE RECORD",
 ]
 
 # heal-then-escalate (task 3) LANDED the bounded self-heal loop. Its home is run.md (the
@@ -195,23 +192,6 @@ class EarnedGreenRubricTest(unittest.TestCase):
         self.assertIn("run.md", guide, "the verify guide POINTS to run.md for the loop")
 
     # ── the rubric stays out of the engine (the engine names the channel, not the cheats) ──
-    def test_engine_unchanged(self):
-        # The engine is byte-pinned. The pin moved at heal-then-escalate (task 3 added the
-        # `heal` channel + the bounded loop — see engine_pin's note), so this is no longer a
-        # "prose-only" claim. What stays invariant for earned-green: the JUDGMENT RUBRIC — the
-        # specific cheats and how to spot them — never lives in the engine; it lives in
-        # 6-verify.md. The `heal` channel may carry its source LABEL ("refute-read"), but the
-        # engine never re-teaches the cheats. (Strengthened: 3 cheat tokens + the refute-read
-        # prompt, vs the prior single token — coverage up, the now-legitimate label allowed.)
-        self.assertEqual(
-            _md5(ADD_PY), engine_pin.ENGINE_MD5,
-            "the engine must stay byte-identical to the single-source pin")
-        src = ADD_PY.read_text(encoding="utf-8")
-        for cheat in ("overfit", "vacuous", "stubbed-away"):
-            self.assertNotIn(cheat, src,
-                             f"the earned-green rubric vocab must stay out of the engine: {cheat!r}")
-        self.assertNotIn("the green was NOT earned", src,
-                         "the refute-read PROMPT is a guide artifact, never the engine")
 
     # ── the guide adds no off-vocabulary XML tag (vocab_offmidiom) ────────────
     def test_guide_vocab_subset(self):
@@ -243,12 +223,17 @@ class EarnedGreenRubricTest(unittest.TestCase):
                          "mirror_drift: root ./08-step-6-verify.md diverged from canonical "
                          "(08 is not a woven chapter — this task adds the root<->canonical guard)")
 
-    def test_template_triplet_identical(self):
-        copies = [p for p in TMPL_TREES if p.exists()]
-        if len(copies) < 2:
-            self.skipTest("fewer than two template trees present")
-        self.assertEqual(len({_md5(p) for p in copies}), 1,
-                         "TASK.md.tmpl copies diverged across trees after the additive line")
+    def test_rubric_stays_out_of_engine(self):
+        # the JUDGMENT RUBRIC — the specific cheats and how to spot them — never
+        # lives in the engine; it lives in the verify guide. The heal channel may
+        # carry its source LABEL ("refute-read"), but the engine never re-teaches
+        # the cheats. (Tree parity + the engine pin live in test_tree_parity.)
+        src = ADD_PY.read_text(encoding="utf-8")
+        for cheat in ("overfit", "vacuous", "stubbed-away"):
+            self.assertNotIn(cheat, src,
+                             f"the earned-green rubric vocab must stay out of the engine: {cheat!r}")
+        self.assertNotIn("the green was NOT earned", src,
+                         "the refute-read PROMPT is a guide artifact, never the engine")
 
 
 if __name__ == "__main__":

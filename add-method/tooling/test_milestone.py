@@ -61,18 +61,6 @@ class MilestoneTierTest(unittest.TestCase):
         self.assertEqual(t["milestone"], "mvp")
         self.assertEqual(t["depends_on"], ["accounts", "login"])
 
-    def test_ready_lists_only_unblocked(self):
-        add.main(["new-task", "a"])
-        add.main(["phase", "verify", "a"])        # escape hatch: scaffold to verify
-        add.main(["gate", "PASS", "a"])           # a is done
-        add.main(["new-task", "b", "--depends-on", "a"])
-        add.main(["new-task", "c", "--depends-on", "b"])
-        out = self._run_capture("ready")
-        listed = set(out.split())
-        self.assertIn("b", listed)        # b's only dep (a) is done -> ready
-        self.assertNotIn("c", listed)     # c blocked by unfinished b
-        self.assertNotIn("a", listed)     # a is done -> not listed
-
     def test_milestone_done_blocks_incomplete(self):
         add.main(["new-milestone", "mvp", "--goal", "g", "--stage", "mvp"])
         add.main(["new-task", "t"])               # not done
@@ -115,7 +103,7 @@ class MilestoneTierTest(unittest.TestCase):
         st.pop("active_milestone", None)
         st["tasks"]["legacy"] = {"title": "Legacy", "phase": "specify", "gate": "none"}
         (Path(self.tmp) / ".add" / "tasks" / "legacy").mkdir(parents=True, exist_ok=True)
-        (Path(self.tmp) / ".add" / "tasks" / "legacy" / "TASK.md").write_text("phase: specify\n")
+        (Path(self.tmp) / ".add" / "tasks" / "legacy" / "PLAN.md").write_text("phase: specify\n")
         sp.write_text(json.dumps(st))
         # status and check must not crash on a minimal, old-style task
         self._run_capture("status")

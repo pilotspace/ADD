@@ -14,12 +14,19 @@ AIDD is one repeatable flow of **seven steps**: six build the feature — Specif
 
 ```mermaid
 flowchart LR
-  S1["1 Specify<br/>the rules"] --> S2["2 Scenarios<br/>pass/fail cases"]
-  S2 --> S3["3 Plan<br/>ground the code, freeze the contract"]
-  S3 --> S4["4 Tests<br/>failing-first (red)"]
-  S4 --> S5["5 Build<br/>AI writes code"]
-  S5 --> S6["6 Verify<br/>evidence + checks"]
-  S6 --> OBS["Observe<br/>in production"]
+  subgraph DIR["Phase 1 · Direction — drafted by AI, ONE human freeze approves it all"]
+    S1["Specify<br/>the rules"] --> S2["Scenarios<br/>pass/fail cases"]
+    S2 --> S3["Plan<br/>ground the code, freeze the contract"]
+    S3 --> S4["Tests<br/>failing-first (red)"]
+  end
+  subgraph BLD["Phase 2 · Build"]
+    S5["Build<br/>AI writes code"]
+  end
+  subgraph VER["Phase 3 · Verify"]
+    S6["Verify<br/>evidence + checks"] --> OBS["Observe<br/>in production"]
+  end
+  S4 --> S5
+  S5 --> S6
   S5 -. "red / green engine" .-> S4
   S6 -. "evidence fails → back to Build" .-> S5
   S5 -. "a missing rule → back to Specify" .-> S1
@@ -31,6 +38,8 @@ flowchart LR
   class S3,S4 decision;
   class S5,S6 machine;
 ```
+
+> **Three phases, seven beats.** The engine walks three phases — **direction** (Specify · Scenarios · Plan · Tests, one span ending at the single freeze approval), **build**, and **verify** (which owns Observe) — so the whole loop costs three calls: `new-task` → `freeze --by <name> --cross` → `gate PASS`. The seven beats above are the *inside* of those phases, not extra stops.
 
 > **Solid arrows are the primary flow** — you never start a phase before its input exists (forward-skip forbidden). **Dashed arrows are backward correction** — any phase may return to an earlier one to repair its artifact (the long loop, Observe → Specify, is the same rule at milestone scale). The tight Tests ⇄ Build cycle is the per-feature red/green engine.
 
@@ -92,7 +101,7 @@ The flow runs in two directions under two rules that never conflict. **Backward 
 | 6 Verify | own the residue (security · concurrency · architecture); approve when `conservative` | gather evidence; **auto-PASS on complete evidence** under `autonomy: auto` |
 | 7 Observe | read the signal; consolidate confirmed deltas into PROJECT.md | run behind a flag; emit lessons learned |
 
-**What the human sees when it is their turn — the decision banner and arc.** Whenever the flow stops for the human — the baseline approval that ends setup, the plan-freeze decision point and an escalated verify gate within each task, and the wider decision points of the loop (intake · scope · milestone close · stage graduation) — the AI opens its report with a **banner** (`PLAN · <title> · <gate> → APPROVE?` plus a file-path line) and the **decision arc**: three engine-sourced lines — `goal:` the milestone goal the work serves · `done:` the proven progress toward it · `plan:` what comes next. The arc renders above the report's summary, so the human confirms with sight of the whole trajectory rather than a local snapshot. Within that report the AI also presents **APPROVE** itself as a **guided choice** — one highlighted **recommended pick** (`▶ … (recommended)`) plus its real, described alternatives — so the human chooses with the recommendation and each option's consequence in view rather than a bare next-step line. Both are presentation only — they never add a gate or change an outcome, and the guided choice fires at human gates only. See [Appendix C](./appendix-c-glossary.md) and the `add` skill's `report-template.md` for the convention itself.
+**What the human sees when it is their turn — the decision banner and arc.** Whenever the flow stops for the human — the baseline approval that ends setup, the plan-freeze decision point and an escalated verify gate within each task, and the wider decision points of the loop (intake · scope · milestone close · stage graduation) — the AI opens its report with a **banner** (`PLAN · <title> · <gate> → APPROVE?` plus a file-path line) and the **decision arc**: three engine-sourced lines — `goal:` the milestone goal the work serves · `done:` the proven progress toward it · `plan:` what comes next. The arc renders above the report's summary, so the human confirms with sight of the whole trajectory rather than a local snapshot. Within that report the AI also presents **APPROVE** itself as a **guided choice** — one highlighted **recommended pick** (`▶ … (recommended)`) plus its real, described alternatives — so the human chooses with the recommendation and each option's consequence in view rather than a bare next-step line. Both are presentation only — they never add a gate or change an outcome, and the guided choice fires at human gates only. See [Appendix C](./appendix-c-glossary.md) and the `add` skill's `gate-udd.md` for the convention itself.
 
 ## What survives, and what is disposable
 

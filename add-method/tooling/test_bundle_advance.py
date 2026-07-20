@@ -1,11 +1,11 @@
 """bundle-advance (method-ergonomics): fast-forward the bundle's bookkeeping crossings +
 a recorded, legal post-freeze re-cross.
 
-CONTRACT:
-  advance --to <phase>: repeats the single-step advance (every existing crossing guard runs
-    per step) until the task reaches <phase>. HARD LIMIT: <phase> is at most `tests` — the
-    tests->build crossing carries the gate stack and is never fast-forwarded.
-    Reject codes: advance_to_invalid · advance_to_stops_at_tests · advance_to_not_forward.
+CONTRACT (phase-collapse-3: direction·build·verify·done):
+  advance --to <phase>: --to has no bundle bookkeeping left to fast-forward now the front
+    is ONE phase (direction). A target at/behind direction is a friendly no-op; any target
+    past direction dies — the direction->build crossing carries the gate stack and is never
+    fast-forwarded. Reject codes: advance_to_invalid · advance_to_stops_at_direction.
   re-cross <slug> --by <name>: for a task at build/verify whose §3 is FROZEN, re-runs the
     IDENTICAL _build_entry gate stack (freeze gate · flag check · tamper tripwire · §5 scope
     snapshot), sets phase=build, and records {by, at, from_phase} in state["tasks"][slug]
@@ -66,7 +66,7 @@ class _Harness(unittest.TestCase):
         return self._state()["tasks"][slug]["phase"]
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _freeze(self, slug):
         p = self._task_md(slug)
@@ -85,36 +85,35 @@ class _Harness(unittest.TestCase):
         (tests_dir / "test_red.py").write_text("def test_x():\n    assert False\n",
                                                encoding="utf-8")
         self._freeze(slug)
-        for _ in range(3):                       # specify→plan→tests→build
-            self._silent("advance", slug)
+        self._silent("advance", slug)            # direction -> build (the ONE crossing)
         self.assertEqual(self._phase(slug), "build")
 
 
 class AdvanceToTest(_Harness):
-    def test_to_tests_one_call(self):                            # scenario 1
-        # --to tests now crosses the plan->tests freeze gate (plan-phase-core), so a
-        # DRAFT task must freeze first (or --skip-freeze) to reach `tests` in one call.
+    def test_to_direction_is_noop(self):                          # scenario 1 (phase-collapse-3)
+        # --to has no bundle bookkeeping left to fast-forward now the front is ONE phase
+        # (direction); a still-inside-the-span target (direction itself, or a legacy
+        # front alias) is a friendly no-op — the build crossing is never fast-forwarded.
         self._silent("new-task", "t", "--title", "F")
-        self._freeze("t")
-        out = self._silent("advance", "t", "--to", "tests")
-        self.assertEqual(self._phase("t"), "tests")
-        self.assertIn("-> tests", out)
+        out = self._silent("advance", "t", "--to", "direction")
+        self.assertEqual(self._phase("t"), "direction")
+        self.assertIn("already at direction", out)
 
-    def test_to_past_tests_refused(self):                        # scenario 2
+    def test_to_past_direction_refused(self):                     # scenario 2
         self._silent("new-task", "t", "--title", "F")
         code, out = self._run("advance", "t", "--to", "build")
         self.assertNotEqual(code, 0)
-        self.assertIn("advance_to_stops_at_tests", out)
-        self.assertEqual(self._phase("t"), "specify", "phase unchanged on refusal")
+        self.assertIn("advance_to_stops_at_direction", out)
+        self.assertEqual(self._phase("t"), "direction", "phase unchanged on refusal")
 
-    def test_to_not_forward_refused(self):                       # scenario 3
-        self._silent("new-task", "t", "--title", "F")
-        self._freeze("t")
-        self._silent("advance", "t", "--to", "tests")
-        code, out = self._run("advance", "t", "--to", "specify")
-        self.assertNotEqual(code, 0)
-        self.assertIn("advance_to_not_forward", out)
-        self.assertEqual(self._phase("t"), "tests")
+    def test_to_backward_from_build_is_noop(self):                # scenario 3 (re-shaped)
+        # scenario 3 used to refuse a backward --to with advance_to_not_forward; that
+        # reject code is gone post-collapse — going "backward" to direction from a later
+        # phase now folds into the SAME already-there no-op branch as going nowhere.
+        self._to_build("t")
+        out = self._silent("advance", "t", "--to", "direction")
+        self.assertIn("already at build", out)
+        self.assertEqual(self._phase("t"), "build", "a backward --to must not move the phase")
 
     def test_to_invalid_refused(self):                           # scenario 4
         self._silent("new-task", "t", "--title", "F")
@@ -122,10 +121,14 @@ class AdvanceToTest(_Harness):
         self.assertNotEqual(code, 0)
         self.assertIn("advance_to_invalid", out)
 
-    def test_plain_advance_unchanged(self):                      # scenario 5 (additive)
+    def test_plain_advance_unchanged(self):                      # scenario 5 (additive; re-shaped)
+        # a bare advance on a fresh, unfrozen direction task now refuses outright — the
+        # universal freeze gate fires on EVERY crossing into build, not just --to.
         self._silent("new-task", "t", "--title", "F")
-        self._silent("advance", "t")
-        self.assertEqual(self._phase("t"), "plan")
+        code, out = self._run("advance", "t")
+        self.assertNotEqual(code, 0, "an unfrozen direction task must refuse to cross")
+        self.assertIn("contract_not_frozen", out)
+        self.assertEqual(self._phase("t"), "direction")
 
 
 class RecrossTest(_Harness):

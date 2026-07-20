@@ -11,15 +11,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from add_engine.constants import _AUTONOMY_LEVELS, _STREAMS_POSTURES
+from add_engine.constants import _AUTONOMY_LEVELS
 from add_engine.taskdoc import _task_header
 
 _AUTONOMY_LINE_RE = re.compile(r"(?:^|·)[ \t]*autonomy:[ \t]*([^\s<#|]+)", re.MULTILINE)
-_STREAMS_LINE_RE = re.compile(r"(?:^|·)[ \t]*streams:[ \t]*([^\s<#|]+)", re.MULTILINE)
 
 
 def _autonomy_level(hdr: str):
-    """The declared autonomy rung from a TASK.md header region (HTML comments
+    """The declared autonomy rung from a PLAN.md header region (HTML comments
     already stripped by _task_header). Returns a member of _AUTONOMY_LEVELS, or
     None when no `autonomy:` line is present (UNSET — an unfilled `<…>` placeholder,
     whose value the regex declines, counts as unset), or "?" when a REAL token outside
@@ -57,37 +56,3 @@ def _project_autonomy(root: Path) -> str:
     Read-only and PURE — mirrors _project_goal; the seed source for cmd_new_task."""
     tok = _project_autonomy_token(root)
     return "auto" if tok is None else ("conservative" if tok == "?" else tok)
-
-
-# --- streams posture: the parallel-vs-sequential half of the run mode (persist-run-mode) ---
-# A project-scoped declaration in PROJECT.md beside autonomy. Mirrors the autonomy resolvers:
-# anchored read (a title/prose substring is never a declaration), fail-safe defaults.
-
-def _streams_posture(text: str):
-    """The declared streams posture from a foundation region (HTML comments already stripped
-    by the caller). A member of _STREAMS_POSTURES, None when no `streams:` line is present, or
-    "?" when a REAL token outside the set was written (unknown). PURE."""
-    m = _STREAMS_LINE_RE.search(text)
-    if not m:
-        return None
-    tok = m.group(1).strip().lower()
-    return tok if tok in _STREAMS_POSTURES else "?"
-
-def _project_streams_token(root: Path):
-    """The RAW streams declaration in PROJECT.md — a recognized posture, None when no
-    declaration line is present, or "?" for a real-but-unrecognized token. Uses the anchored
-    _streams_posture (a title/prose substring is never a declaration) with HTML comments
-    stripped. Unreadable foundation -> None. Read-only and PURE."""
-    try:
-        text = (root / "PROJECT.md").read_text(encoding="utf-8")
-    except OSError:
-        return None
-    return _streams_posture(re.sub(r"<!--.*?-->", "", text, flags=re.S))
-
-def _project_streams(root: Path) -> str:
-    """The streams posture the project runs under. Fail-SAFE: no declaration -> "parallel"
-    (the documented project default: parallel+auto); an unrecognized token -> "sequential"
-    (the conservative fallback, NEVER silently parallel); an unreadable foundation -> "parallel".
-    Read-only and PURE — mirrors _project_autonomy."""
-    tok = _project_streams_token(root)
-    return "parallel" if tok is None else ("sequential" if tok == "?" else tok)

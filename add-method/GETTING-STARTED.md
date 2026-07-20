@@ -53,7 +53,8 @@ at the `prototype` stage. (Prefer to choose up front? Both installers take
 changed later — see the appendix.)
 
 Either one creates `.add/` (your runtime), drops the `add` skill into
-`.claude/skills/add/`, and bundles the book into `.add/docs/`. It deliberately
+`.claude/skills/add/`. The book itself is published at
+https://pilotspace.github.io/ADD/ and never installs into the project. It deliberately
 does **not** initialise the project — that's the agent's first move, so nothing
 gets decided without you in the loop.
 
@@ -61,7 +62,7 @@ gets decided without you in the loop.
 handoff — from here on it's conversation, not terminal commands.
 
 > Why stages exist: the steps never change, only how *deeply* you run them.
-> See `.add/docs/10-setup-and-stages.md`.
+> See https://pilotspace.github.io/ADD/10-setup-and-stages/.
 
 ### Updating to a newer ADD — no re-install
 
@@ -79,7 +80,7 @@ pipx run pilotspace-add update
 pip install -U pilotspace-add && pilotspace-add update
 ```
 
-`update` clean-replaces the managed layer (`skill` · `.add/tooling` · `.add/docs`)
+`update` clean-replaces the managed layer (`skill` · `.add/tooling`)
 and **never touches your work** — `state.json`, `PROJECT.md`, milestones, tasks and
 archive are left exactly as they were (it backs `state.json` up first regardless). It
 is idempotent (same version twice is a no-op) and writes a `.add/.add-version` stamp.
@@ -115,7 +116,7 @@ contract → review the result.** Everything between is the agent. For the
 transfer-money feature above, that's four short conversations — and zero typed
 commands.
 
-> New term: **Onboarding** — the install→first-milestone path. See `.add/docs/appendix-c-glossary.md`.
+> New term: **Onboarding** — the install→first-milestone path. See https://pilotspace.github.io/ADD/appendix-c-glossary/.
 
 ---
 
@@ -169,53 +170,8 @@ Confirm your project is internally consistent at any time:
 python3 .add/tooling/add.py check
 ```
 
-It verifies state is valid, every task has its TASK.md, and markers match. Exit
+It verifies state is valid, every task has its PLAN.md, and markers match. Exit
 code 0 means healthy — handy as a CI gate.
-
----
-
-## Enforce the decision points in CI
-
-`add.py audit` re-verifies every recorded human gate on your board — a named
-human at each contract freeze, exactly one gate outcome per done task, a human
-reviewer wherever the security line carries a note. It exits non-zero naming
-the task and the finding, which makes it a CI gate: enforcement runs on a
-machine the agent does not control, so the agent can never stamp its own work
-green (*never self-gate*).
-
-Drop this workflow into `.github/workflows/seam-audit.yml`:
-
-```yaml
-name: seam-audit
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-permissions:
-  contents: read
-
-jobs:
-  seam-audit:
-    name: Decision-point audit (recorded human gates)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Audit recorded decision points
-        run: python3 .add/tooling/add.py audit
-```
-
-The command is the same one you can run locally — the installer already placed
-`add.py` at `.add/tooling/add.py`, and the audit is read-only (it never edits
-your board). A red `seam-audit` job means a decision record is malformed or a
-security note was left to the auto-gate; fix the record (or escalate the gate
-to a human), never the auditor.
 
 ---
 
@@ -227,7 +183,7 @@ each one produces and step in manually whenever you want to. You never *have* to
 these — they are the agent's hands, and yours when you take the wheel.
 
 The rhythm is always: **fill the section → run `python3 .add/tooling/add.py advance`.**
-The tool keeps the `phase:` marker at the top of TASK.md in sync.
+The tool keeps the `phase:` marker at the top of PLAN.md in sync.
 
 ### Before the phases — initialise and scaffold
 
@@ -244,7 +200,7 @@ python3 .add/tooling/add.py new-task transfer --title "Transfer money between my
 > any build. Plain `init` skips that gate, which is fine here: by hand, the
 > human IS the one driving every step.
 
-This scaffolds `.add/tasks/transfer/TASK.md` — **one file holding all seven phase
+This scaffolds `.add/tasks/transfer/PLAN.md` — **one file holding all seven phase
 sections** — plus empty `tests/` and `src/` folders, and makes it the active task
 at phase `specify`. Open it in your editor; you'll fill it top to bottom.
 
@@ -254,7 +210,7 @@ You can also change the project's depth at any time:
 python3 .add/tooling/add.py stage mvp
 ```
 
-### Phase 1 — Specify (`.add/docs/03-step-1-specify.md`)
+### Phase 1 — Specify (https://pilotspace.github.io/ADD/03-step-1-specify/)
 
 Write the rules in **§1**. State what it *must* do, what it must *reject* (each
 with a named error code), and what's true after success:
@@ -278,7 +234,7 @@ Confirm every assumption (no FX, no daily limit in v1). Then:
 python3 .add/tooling/add.py advance
 ```
 
-### Phase 2 — Scenarios (`.add/docs/04-step-2-scenarios.md`)
+### Phase 2 — Scenarios (https://pilotspace.github.io/ADD/04-step-2-scenarios/)
 
 In **§2**, turn each rule into a Given/When/Then. For every rejection, assert what
 must stay **unchanged**:
@@ -293,7 +249,7 @@ Scenario: insufficient funds
 
 Then `python3 .add/tooling/add.py advance`.
 
-### Phase 3 — Contract (`.add/docs/05-step-3-plan.md`)
+### Phase 3 — Contract (https://pilotspace.github.io/ADD/05-step-3-plan/)
 
 In **§3**, fix the external shape and **freeze** it (`Status: FROZEN @ v1`):
 
@@ -306,19 +262,19 @@ POST /transfers  body: { fromAccountId, toAccountId, amount }
 
 A frozen contract is the decision point that makes the AI build safe. Then advance.
 
-### Phase 4 — Tests, red first (`.add/docs/06-step-4-tests.md`)
+### Phase 4 — Tests, red first (https://pilotspace.github.io/ADD/06-step-4-tests/)
 
 Write one test per scenario into `.add/tasks/transfer/tests/`, then **run them and
 confirm they FAIL** — there's no code yet. A test that passes now is testing
 nothing. This is red/green TDD: red before green. Then advance.
 
-### Phase 5 — Build (`.add/docs/07-step-5-build.md`)
+### Phase 5 — Build (https://pilotspace.github.io/ADD/07-step-5-build/)
 
 Now let the AI write code into `.add/tasks/transfer/src/` until **every test
 passes** — without changing any test or the frozen contract. Honor the safety rule
 (here: debit + credit in one atomic transaction). Then advance.
 
-### Phase 6 — Verify (`.add/docs/08-step-6-verify.md`)
+### Phase 6 — Verify (https://pilotspace.github.io/ADD/08-step-6-verify/)
 
 In **§6**, confirm the evidence (all green, nothing weakened) and check what tests
 miss: concurrency, security, architecture. Record the gate — and close the task:
@@ -330,7 +286,7 @@ python3 .add/tooling/add.py gate PASS
 `gate PASS` marks the task `done`. (Use `gate HARD-STOP` to send it back to Build,
 or `gate RISK-ACCEPTED` for a signed, non-security waiver.)
 
-### Phase 7 — Observe (`.add/docs/09-the-loop.md`)
+### Phase 7 — Observe (https://pilotspace.github.io/ADD/09-the-loop/)
 
 In **§7**, note what to watch in production and the next spec delta. Every learning
 becomes the next `new-task`. The flow is a loop, not a finish line.
@@ -341,11 +297,11 @@ becomes the next `new-task`. The flow is a loop, not a finish line.
 
 You just ran the method; now read *why* it's shaped this way:
 
-- The shift & principles — `.add/docs/00-introduction.md`, `.add/docs/01-principles.md`
-- The flow end to end — `.add/docs/02-the-flow.md`
-- Each step in depth — `.add/docs/03-step-1-specify.md` through `.add/docs/09-the-loop.md`
-- Operating it on a team — `.add/docs/11-governance.md`, `.add/docs/12-roles.md`
-- A fully worked example — `.add/docs/appendix-d-worked-example.md`
+- The shift & principles — https://pilotspace.github.io/ADD/00-introduction/, https://pilotspace.github.io/ADD/01-principles/
+- The flow end to end — https://pilotspace.github.io/ADD/02-the-flow/
+- Each step in depth — https://pilotspace.github.io/ADD/03-step-1-specify/ through https://pilotspace.github.io/ADD/09-the-loop/
+- Operating it on a team — https://pilotspace.github.io/ADD/11-governance/, https://pilotspace.github.io/ADD/12-roles/
+- A fully worked example — https://pilotspace.github.io/ADD/appendix-d-worked-example/
 - Building UI? The render-ready UDD foundation — `.add/DESIGN.md` is the prose
   front-door to a lintable design system (`.add/design/` tokens · catalog ·
   prototypes) the AI drafts from; `add.py check` lints it (delete `DESIGN.md` if

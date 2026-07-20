@@ -4,7 +4,7 @@ rollup's DECIDE NEXT footer (task decide-digest, milestone v13).
 
 The digest detects a task's seam FROM STATE ONLY (recorded / front / gate), extracts
 decision markers (`⚠` / `- [~]` / `- [ ]` + deeper-indented continuations) BYTE-VERBATIM
-from TASK.md §bodies, and renders decisive-facts-first: NEEDS YOUR JUDGMENT → ENGINE
+from PLAN.md §bodies, and renders decisive-facts-first: NEEDS YOUR JUDGMENT → ENGINE
 FACTS → UNLOCKS → DECIDE. Every --decide path is PURE (no writes). The milestone rollup
 always ends with one DECIDE NEXT line (HARD-STOP → fold+archive → seam-blocked task →
 run-in-progress). Asserts behavior via stdout/exit/state — never internals. Run:
@@ -41,9 +41,9 @@ SEC1_FLAG = "  ⚠ risky assumption — least sure because prose drifts; if wron
 
 
 def _task_md_text(sec1="", sec3="", sec6=""):
-    """A minimal TASK.md with the seven numbered headings and controlled §bodies."""
+    """A minimal PLAN.md with the seven numbered headings and controlled §bodies."""
     return "\n".join([
-        "# TASK: t", "",
+        "# PLAN: t", "",
         "## 1 · SPECIFY", sec1 or "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
         "## 3 · CONTRACT", sec3 or "shape", "",
@@ -95,7 +95,7 @@ class DecideDigestTest(unittest.TestCase):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep.
         _task_md_text does not include 'Status: DRAFT', so append before ## 4 · TESTS."""
-        p = self._root() / "tasks" / slug / "TASK.md"
+        p = self._root() / "tasks" / slug / "PLAN.md"
         txt = p.read_text(encoding="utf-8")
         if "Status: DRAFT" in txt:
             txt = txt.replace(
@@ -117,7 +117,7 @@ class DecideDigestTest(unittest.TestCase):
         if deps:
             argv += ["--depends-on", deps]
         add.main(argv)
-        (self._root() / "tasks" / slug / "TASK.md").write_text(
+        (self._root() / "tasks" / slug / "PLAN.md").write_text(
             _task_md_text(sec1, sec3, sec6), encoding="utf-8")
         if phase:
             add.main(["phase", phase, slug])
@@ -236,7 +236,7 @@ class DecideDigestTest(unittest.TestCase):
     # ---- BUILD PLAN block (plan-in-report): the §3 build-strategy plan-of-action ----
     # A filled §3 Build-strategy sub-block: the plan-of-action fields the freeze surfaces.
     _BS_FILLED = ("the-frozen-shape-text\n\n"
-                  "Scope (may touch): add.py report-template.md\n"
+                  "Scope (may touch): add.py gate-udd.md\n"
                   "Strategy (ordered batches): 1. red 2. green 3. sync\n"
                   "Persona (required): generic\n"
                   "Spawn isolation (default): inline\n\n"
@@ -249,7 +249,7 @@ class DecideDigestTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("BUILD PLAN", out)
         region = out[out.index("BUILD PLAN"):]
-        for frag in ("Scope", "add.py report-template.md",
+        for frag in ("Scope", "add.py gate-udd.md",
                      "Strategy", "1. red 2. green 3. sync",
                      "Persona", "generic", "Spawn isolation", "inline"):
             self.assertIn(frag, region)
@@ -267,7 +267,7 @@ class DecideDigestTest(unittest.TestCase):
         labels = [e["label"] for e in plan]
         self.assertEqual(labels, ["Scope (may touch)", "Strategy (ordered batches)",
                                   "Persona (required)", "Spawn isolation (default)"])
-        self.assertEqual(plan[0]["value"], "add.py report-template.md")
+        self.assertEqual(plan[0]["value"], "add.py gate-udd.md")
 
     def test_build_plan_no_field_bleed(self):
         """A field value must NOT swallow the next field's label/text — even when that
@@ -425,11 +425,11 @@ class DecideDigestTest(unittest.TestCase):
 
 
 class ReportTemplateSurfaceTest(unittest.TestCase):
-    """M5: the ONE human-gate report shape (report-template.md) names the BUILD PLAN block."""
+    """M5: the ONE human-gate report shape (gate-udd.md) names the BUILD PLAN block."""
 
     def test_report_template_documents_build_plan(self):
         skill = Path(add.__file__).resolve().parent.parent / "skill" / "add"
-        tmpl = skill / "report-template.md"
+        tmpl = skill / "gate-udd.md"
         self.assertTrue(tmpl.is_file(), f"missing {tmpl}")
         self.assertIn("BUILD PLAN", tmpl.read_text(encoding="utf-8"))
 

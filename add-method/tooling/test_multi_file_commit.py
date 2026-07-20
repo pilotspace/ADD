@@ -24,7 +24,6 @@ from pathlib import Path
 from unittest import mock
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -149,11 +148,11 @@ class _Project(unittest.TestCase):
         return out.getvalue() + err.getvalue()
 
     def _task_md(self, slug):
-        return (self.root / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        return (self.root / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
 
     def _set_spec(self, slug, text):
         """Plant one open SPEC delta in slug's §7 OBSERVE (mirrors test_seed_and_drop)."""
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         idx = s.index("## 7 · OBSERVE")
         head_end = s.index("\n", idx) + 1
@@ -162,7 +161,7 @@ class _Project(unittest.TestCase):
 
     # fold scaffolding (mirrors test_fold_command) --------------------------------
     def _plant_comp(self, slug, tag, text, ev="e"):
-        p = self.root / "tasks" / slug / "TASK.md"
+        p = self.root / "tasks" / slug / "PLAN.md"
         s = p.read_text(encoding="utf-8")
         i = s.index("### Competency deltas") + len("### Competency deltas")
         p.write_text(s[:i] + f"\n- [{tag} · open] {text} (evidence: {ev})\n" + s[i:],
@@ -197,19 +196,6 @@ class _Project(unittest.TestCase):
 
 
 class AdoptionTest(_Project):
-    def test_fold_routes_through_primitive(self):
-        self._make_foldable()
-        with mock.patch("add._atomic_write_many", wraps=add._atomic_write_many) as spy:
-            self._silent("fold")
-        self.assertTrue(spy.called, "fold must commit via _atomic_write_many")
-
-    def test_release_routes_through_primitive(self):
-        with mock.patch("add._atomic_write_many", wraps=add._atomic_write_many) as spy:
-            self._silent("release", "0.0.0-test", "--force")
-        self.assertEqual(spy.call_count, 1, "release must commit via one _atomic_write_many")
-        writes = spy.call_args.args[0]
-        names = sorted(Path(p).name for p, _ in writes)
-        self.assertEqual(names, ["CHANGELOG.md", "RELEASES.md"])
 
     def test_seed_routes_through_primitive(self):
         self._silent("new-task", "prior")
@@ -218,58 +204,20 @@ class AdoptionTest(_Project):
             self._silent("new-task", "followup", "--from-delta", "prior")
         self.assertEqual(spy.call_count, 1, "from-delta seed must commit both files via one call")
         writes = spy.call_args.args[0]
-        self.assertEqual(len(writes), 2, "the new TASK.md + the consumed source TASK.md")
-
-
-class FoldAtomicityTest(_Project):
-    def test_fold_atomic_under_injected_commit_failure(self):
-        self._make_foldable()
-        fv_before = self._fv()
-        # fail on the move-IN of CONVENTIONS.md (the 2nd file) -> PROJECT.md (1st, committed) must roll back.
-        # The primitive rolls back then RE-RAISES; cmd_fold lets the IO error propagate (expected).
-        with mock.patch("add.os.replace", side_effect=_flaky_replace([self.conventions])):
-            with self.assertRaises(OSError):
-                self._silent("fold")
-        self.assertEqual(self._fv(), fv_before, "PROJECT.md foundation-version must NOT advance on a partial fold")
-        self.assertIn("[SDD · open]", self._task_md("alpha"), "the lesson must stay open (no silent flip)")
-        self.assertIn("[ADD · open]", self._task_md("beta"))
-        self.assertEqual(_siblings(self.root), [], "no .tmp/.bak left in .add/ after a rolled-back fold")
-
-
-class ReleaseAtomicityTest(_Project):
-    def test_release_all_or_nothing_on_commit_failure(self):
-        # seed a prior CHANGELOG/RELEASES, then fail the RELEASES.md move-IN mid-cut
-        changelog = self.tmp / "CHANGELOG.md"; changelog.write_text("# Changelog\n\nOLD-CL\n", encoding="utf-8")
-        releases = self.tmp / "RELEASES.md"; releases.write_text("# Releases\n\nOLD-REL\n", encoding="utf-8")  # project root, sibling of CHANGELOG
-        with mock.patch("add.os.replace", side_effect=_flaky_replace([releases])):
-            out = self._silent("release", "0.0.0-test", "--force")
-        self.assertIn("release_write_failed", out)                      # command-level error preserved
-        self.assertIn("OLD-CL", changelog.read_text(encoding="utf-8"))  # CHANGELOG rolled back
-        self.assertNotIn("0.0.0-test", changelog.read_text(encoding="utf-8"))
-        self.assertIn("OLD-REL", releases.read_text(encoding="utf-8"))  # RELEASES untouched
-        self.assertEqual(_siblings(self.tmp, self.root), [])            # no .tmp/.bak residue
-
-
+        self.assertEqual(len(writes), 2, "the new PLAN.md + the consumed source PLAN.md")
 class SeedAtomicityTest(_Project):
     def test_seed_all_or_nothing_on_commit_failure(self):
         self._silent("new-task", "prior")
         self._set_spec("prior", "a deferred idea")
         prior_before = self._task_md("prior")
-        followup_md = self.root / "tasks" / "followup" / "TASK.md"
-        # fail on the source-delta (prior TASK.md) move-IN -> the new followup TASK.md must roll back too
-        prior_md = self.root / "tasks" / "prior" / "TASK.md"
+        followup_md = self.root / "tasks" / "followup" / "PLAN.md"
+        # fail on the source-delta (prior PLAN.md) move-IN -> the new followup PLAN.md must roll back too
+        prior_md = self.root / "tasks" / "prior" / "PLAN.md"
         with mock.patch("add.os.replace", side_effect=_flaky_replace([prior_md])):
             with self.assertRaises(OSError):
                 self._silent("new-task", "followup", "--from-delta", "prior")
         self.assertEqual(self._task_md("prior"), prior_before, "source delta must NOT be half-flipped")
-        self.assertFalse(followup_md.exists(), "the new TASK.md must not be left behind on a failed seed")
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1, "the 3 add.py copies diverged")
-        self.assertEqual(digests.pop(), ENGINE_MD5)
+        self.assertFalse(followup_md.exists(), "the new PLAN.md must not be left behind on a failed seed")
 
 
 if __name__ == "__main__":

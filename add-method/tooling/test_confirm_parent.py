@@ -80,7 +80,7 @@ class ConfirmParentTest(unittest.TestCase):
         self.assertIn("milestone_unconfirmed", err)
         # validate-then-write: nothing scaffolded for the blocked task
         self.assertNotIn("t", self._state().get("tasks", {}))
-        self.assertFalse((Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md").exists())
+        self.assertFalse((Path(self.tmp) / ".add" / "tasks" / "t" / "PLAN.md").exists())
 
     def test_milestone_confirm_opens_gate(self):
         add.main(["new-milestone", "mvp", "--goal", "g", "--stage", "mvp", "--await-confirm"])

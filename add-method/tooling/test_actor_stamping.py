@@ -18,7 +18,6 @@ from unittest import mock
 
 import add
 from add_engine import identity
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -92,8 +91,13 @@ class LockStampTest(_Harness):
         self.assertIn("locked_by", setup)          # the existing free-text survives
 
     def test_override_flows_into_stamp(self):
-        # end-to-end (no mock): an override resolves source=override into the stamp
-        self._silent("whoami", "--name", "Bob", "--email", "bob@y.io")
+        # end-to-end (no mock): an override resolves source=override into the stamp.
+        # kernel-trim (ADD 2.0 M5): the `whoami --name` setter died; the read path
+        # (state["actor_override"]) survives — write the override directly.
+        sp = self.tmp / ".add" / "state.json"
+        st = json.loads(sp.read_text())
+        st["actor_override"] = {"name": "Bob", "email": "bob@y.io"}
+        sp.write_text(json.dumps(st, indent=2))
         self._silent("lock", "--force")
         self.assertEqual(self._state()["setup"]["actor"],
                          {"name": "Bob", "email": "bob@y.io", "source": "override"})
@@ -127,23 +131,6 @@ class MilestoneDoneStampTest(_Harness):
         rec = self._state()["milestones"]["m"]
         self.assertEqual(rec["done_actor"], KNOWN)
         self.assertEqual(rec["status"], "done")
-
-
-class ReleaseStampTest(_Harness):
-    def test_release_row_carries_actor_line(self):
-        self._task_to_verify()
-        self._silent("gate", "PASS", "t")
-        self._meet_exit_criteria("m")
-        self._silent("milestone-done", "m")
-        before = self._state()
-        with mock.patch.object(identity, "_whoami", return_value=dict(KNOWN)):
-            self._silent("release", "0.1.0")
-        releases = (self.tmp / "RELEASES.md").read_text(encoding="utf-8")
-        self.assertIn("actor: Ada <ada@x.io> (git)", releases)
-        # release records to the LEDGER only — state.json is byte-unchanged (no release actor in state)
-        self.assertEqual(self._state(), before)
-
-
 class DescriptiveOnlyTest(_Harness):
     def test_legacy_record_without_actor_unchanged(self):
         # a state whose gate record predates stamping (no gate_actor) must load + run clean
@@ -160,13 +147,6 @@ class DescriptiveOnlyTest(_Harness):
     def test_actor_stamp_is_whoami(self):
         # single-source: the stamp helper IS the resolver
         self.assertEqual(add._actor_stamp({}), add._whoami({}))
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

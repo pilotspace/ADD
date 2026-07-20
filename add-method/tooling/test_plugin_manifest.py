@@ -112,11 +112,12 @@ class PluginRootContract(unittest.TestCase):
         self.assertIn("--no-skill", text)
 
 
-class BootstrapDropsEngineAndBookOnly(unittest.TestCase):
+class BootstrapDropsEngineOnly(unittest.TestCase):
     """`cli.js init --no-skill` is what a plugin runs on first use: it must drop the
-    engine + book into the project but NOT a duplicate skill (the plugin owns the skill)."""
+    engine into the project but NOT a duplicate skill (the plugin owns the skill) and
+    NOT a book tree (book-stops-shipping, 2.0 M6b)."""
 
-    def test_no_skill_drops_engine_and_book_but_not_skill(self) -> None:
+    def test_no_skill_drops_engine_but_not_skill_or_book(self) -> None:
         import shutil
         import subprocess
         import tempfile
@@ -131,8 +132,8 @@ class BootstrapDropsEngineAndBookOnly(unittest.TestCase):
             target = Path(d)
             self.assertTrue((target / ".add" / "tooling" / "add.py").is_file(),
                             "engine must land in .add/tooling/")
-            self.assertTrue((target / ".add" / "docs").is_dir(),
-                            "book must land in .add/docs/")
+            self.assertFalse((target / ".add" / "docs").exists(),
+                             "book-stops-shipping: no .add/docs may land")
             self.assertFalse((target / ".claude" / "skills" / "add").exists(),
                              "--no-skill must NOT drop a duplicate skill (plugin owns it)")
             # runtime-only: no test files leak into the project copy

@@ -328,15 +328,7 @@ class EnginePkgPinTest(unittest.TestCase):     # M5, R:engine_pkg_pin_stale
         import engine_pin
         self.assertEqual(engine_manifest.package_digest(_TOOLING), engine_pin.ENGINE_PKG_MD5,
                          "add_engine/*.py digest (incl. constants.py's corrected _GITIGNORE_BODY) "
-                         "must match the pinned ENGINE_PKG_MD5")
-
-    def test_engine_md5_unchanged(self):
-        import hashlib
-        import engine_pin
-        live = hashlib.md5((_TOOLING / "add.py").read_bytes()).hexdigest()
-        self.assertEqual(live, engine_pin.ENGINE_MD5,
-                         "this task touches add_engine/constants.py only — add.py's own "
-                         "ENGINE_MD5 must be unchanged")
+                         "must match the pinned the package digest")
 
 
 if __name__ == "__main__":

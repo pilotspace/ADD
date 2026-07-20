@@ -47,3 +47,6 @@ add-method/CLAUDE.md
 # generated artifacts of later bench-runner/bench-scoring tasks — never
 # committed. The benchmark/ scaffold itself (workload/arms/schema) IS tracked.
 benchmark/runs/
+benchmark/runs-session/
+benchmark/runs-persist/
+benchmark/runs-swe/

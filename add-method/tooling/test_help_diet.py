@@ -17,7 +17,7 @@ from add import build_parser
 _MAP_HEAD = "ADD — spec-and-tests-first"
 # a spread of subcommands across the alphabet — all must stay discoverable
 _SAMPLE = ["init", "new-task", "advance", "freeze", "gate", "status",
-           "milestone-done", "new-milestone", "release", "federate"]
+           "milestone-done", "new-milestone", "delta-append", "re-cross"]
 
 
 class HelpDietTest(unittest.TestCase):
@@ -39,7 +39,7 @@ class HelpDietTest(unittest.TestCase):
     def test_no_per_command_help_paragraph(self):
         # the FULL dump carried each command's help sentence; the compact list drops them.
         fh = self._top_help()
-        self.assertNotIn("scaffold a new task (TASK.md", fh,
+        self.assertNotIn("scaffold a new task (PLAN.md", fh,
                          "the per-command help paragraph must be gone (compact names only)")
         self.assertNotIn("record a verify gate outcome", fh)
 
@@ -55,7 +55,6 @@ class HelpDietTest(unittest.TestCase):
         blob = out.getvalue()
         self.assertEqual(code, 0)
         self.assertIn("--title", blob, "subcommand --help still shows its own flags")
-        self.assertIn("--fast", blob)
         self.assertNotIn(_MAP_HEAD, blob, "the flow map must not hijack subcommand help")
 
 

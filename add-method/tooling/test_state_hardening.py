@@ -170,10 +170,18 @@ class StateHardeningTest(unittest.TestCase):
                          "a failed atomic state write must leave state.json byte-unchanged")
 
     def test_advance_state_write_failure_named(self):
-        add.main(["new-task", "t"])                    # at ground
+        add.main(["new-task", "t"])                    # at direction (phase-collapse-3 seed)
+        # freeze + flag OUTSIDE the mock so the crossing's gate stack passes and the
+        # advance actually reaches its save_state — the write failure is the test subject
+        p = self.state_path.parent / "tasks" / "t" / "PLAN.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by T\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none"),
+            encoding="utf-8")
         before = self.state_path.read_bytes()
         with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
-            code, _, err = _run(["advance", "t"])      # ground -> specify, no snapshots
+            code, _, err = _run(["advance", "t"])      # direction -> build
         self.assertEqual(code, 1)
         self.assertIn("state_write_failed", err)
         self.assertEqual(self.state_path.read_bytes(), before,
@@ -192,16 +200,16 @@ class StateHardeningTest(unittest.TestCase):
 
     def test_gate_save_failure_no_split_brain(self):
         # F12: save_state runs BEFORE _sync_task_marker, so a failed save dies before the
-        # TASK.md marker moves — the file is never ahead of state (no split-brain).
+        # PLAN.md marker moves — the file is never ahead of state (no split-brain).
         add.main(["new-task", "t"])
         add.main(["phase", "verify", "t"])
-        task_md = Path(self.tmp) / ".add" / "tasks" / "t" / "TASK.md"
+        task_md = Path(self.tmp) / ".add" / "tasks" / "t" / "PLAN.md"
         with mock.patch("add._atomic_write", side_effect=self._fail_state_write()):
             code, _, err = _run(["gate", "PASS", "t"])
         self.assertEqual(code, 1)
         self.assertIn("state_write_failed", err)
         self.assertRegex(task_md.read_text(encoding="utf-8"), r"(?m)^phase:\s*verify\b",
-                         "a failed gate save must NOT advance the TASK.md marker to done")
+                         "a failed gate save must NOT advance the PLAN.md marker to done")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red/green tests for the mechanized high-risk guard (task high-risk-signal, v14).
 
-run.md's guard becomes engine-enforced for the DECLARED case: a TASK.md header
+run.md's guard becomes engine-enforced for the DECLARED case: a PLAN.md header
 carrying `risk: high` without `autonomy: conservative` is a pure token
 contradiction — `gate` refuses to complete it (state untouched) and `audit`
 flags `unguarded_high_risk_auto` on records. Judgment of WHAT is high-risk
@@ -21,7 +21,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-import test_gate_audit as tga   # frozen record shapes — one source of truth
+import gate_fixtures as tga   # frozen record shapes — one source of truth (ex test_gate_audit)
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -56,7 +56,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _mk_verify_task(self, slug: str, header_extra: str = ""):
         """A task advanced to verify, with optional tokens appended to its
@@ -152,73 +152,6 @@ class GateRefusalTest(_Board):
         self.assertEqual(st["tasks"]["alpha"]["phase"], "done")
 
 
-class AuditFindingTest(_Board):
-    """F7: the record-shape side, enforced in CI by audit-ci."""
-
-    def _done_high_risk(self, slug, record):
-        """A guarded high-risk task gated PASS, with §3/§6 we control."""
-        self._mk_verify_task(slug, " · risk: high · autonomy: conservative")
-        out, err, code = self._gate("PASS", slug)
-        self.assertEqual(code, 0, out + err)
-        p = self._task_md(slug)
-        text = p.read_text(encoding="utf-8")
-        header_line = next(l for l in text.splitlines() if l.startswith("slug:"))
-        p.write_text("\n".join([
-            f"# TASK: {slug}", header_line, "",
-            "## 1 · SPECIFY", "Feature: f", "",
-            "## 2 · SCENARIOS", "(none)", "",
-            "## 3 · CONTRACT", "```\nshape\n```", "", tga.GOOD3, "",
-            "## 4 · TESTS", "plan", "",
-            "## 5 · BUILD", "code", "",
-            "## 6 · VERIFY", tga._sec6(record=record), "",
-            "## 7 · OBSERVE", "watch", "",
-        ]), encoding="utf-8")
-
-    def _codes(self, d):
-        return [x["code"] for x in d["findings"]]
-
-    def test_audit_flags_tampered_header(self):
-        # gate passed GUARDED, then the header's dial was stripped post-gate
-        self._done_high_risk("alpha", tga.REC_HUMAN)
-        p = self._task_md("alpha")
-        p.write_text(p.read_text(encoding="utf-8")
-                     .replace(" · autonomy: conservative", ""), encoding="utf-8")
-        d, code = self._audit_json()
-        self.assertEqual(code, 1)
-        self.assertIn("unguarded_high_risk_auto", self._codes(d))
-
-    def test_audit_flags_auto_reviewed_record(self):
-        # declared conservative, but the GATE RECORD names the auto-gate
-        self._done_high_risk("alpha", tga.REC_AUTO)
-        d, code = self._audit_json()
-        self.assertEqual(code, 1)
-        self.assertIn("unguarded_high_risk_auto", self._codes(d))
-
-    def test_audit_silent_guarded_human(self):
-        self._done_high_risk("alpha", tga.REC_HUMAN)
-        d, code = self._audit_json()
-        self.assertNotIn("unguarded_high_risk_auto", self._codes(d))
-        self.assertEqual(code, 0, d)
-
-    def test_audit_silent_ordinary_auto(self):
-        # the live-board shape: ordinary tasks auto-resolve freely (45 stay clean)
-        self._mk_verify_task("alpha")
-        out, err, code = self._gate("PASS", "alpha")
-        self.assertEqual(code, 0, out + err)
-        p = self._task_md("alpha")
-        p.write_text("\n".join([
-            "# TASK: alpha", "",
-            "## 1 · SPECIFY", "Feature: f", "",
-            "## 2 · SCENARIOS", "(none)", "",
-            "## 3 · CONTRACT", "```\nshape\n```", "", tga.GOOD3, "",
-            "## 4 · TESTS", "plan", "",
-            "## 5 · BUILD", "code", "",
-            "## 6 · VERIFY", tga._sec6(record=tga.REC_AUTO), "",
-            "## 7 · OBSERVE", "watch", "",
-        ]), encoding="utf-8")
-        d, code = self._audit_json()
-        self.assertNotIn("unguarded_high_risk_auto", self._codes(d))
-        self.assertEqual(code, 0, d)
 
 
 class ProseAccordTest(unittest.TestCase):
@@ -239,7 +172,7 @@ class ProseAccordTest(unittest.TestCase):
         self._assert_triplet(("skill", "add", "run.md"), RUN_MD_ANCHOR)
 
     def test_template_documents_risk_token(self):
-        self._assert_triplet(("tooling", "templates", "TASK.md.tmpl"), TMPL_ANCHOR)
+        self._assert_triplet(("tooling", "templates", "PLAN.md.tmpl"), TMPL_ANCHOR)
 
 
 if __name__ == "__main__":

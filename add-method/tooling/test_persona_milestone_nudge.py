@@ -218,28 +218,6 @@ class PredicateUnitTest(unittest.TestCase):
 class ParityTest(unittest.TestCase):
     # scenario: the change is byte-identical across all engine trees (mirrors
     # test_persona_setup.py:test_persona_template_3tree_parity)
-    def test_persona_nudge_source_parity(self):
-        bodies_add = []
-        bodies_io = []
-        bodies_const = []
-        for tree in ENGINE_TREES:
-            add_py = tree / "add.py"
-            io_py = tree / "add_engine" / "io_state.py"
-            const_py = tree / "add_engine" / "constants.py"
-            self.assertTrue(add_py.exists(), f"add.py missing in {tree}")
-            self.assertTrue(io_py.exists(), f"io_state.py missing in {tree}")
-            self.assertTrue(const_py.exists(), f"constants.py missing in {tree}")
-            self.assertIn("_personas_unseeded", add_py.read_text(encoding="utf-8"),
-                          f"add.py in {tree} must reference _personas_unseeded")
-            io_text = io_py.read_text(encoding="utf-8")
-            self.assertIn("def _personas_unseeded", io_text,
-                          f"io_state.py in {tree} must define _personas_unseeded")
-            bodies_add.append(add_py.read_bytes())
-            bodies_io.append(io_py.read_bytes())
-            bodies_const.append(const_py.read_bytes())
-        self.assertEqual(len(set(bodies_add)), 1, "add.py must be byte-identical across trees")
-        self.assertEqual(len(set(bodies_io)), 1, "io_state.py must be byte-identical across trees")
-        self.assertEqual(len(set(bodies_const)), 1, "constants.py must be byte-identical across trees")
 
     # scenario: single-sourced wording (v2 M8) — all three call sites reference the ONE
     # PERSONA_HINT constant, never a duplicated literal that could drift out of sync.

@@ -16,7 +16,6 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 import add
-from engine_pin import ENGINE_MD5
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -118,13 +117,6 @@ class NonConflictTest(_Harness):
         self.assertIn("=======ish", self.state.read_text(encoding="utf-8"))  # marker text is present
         code, out, err = self._run("status")
         self.assertEqual(code, 0, err)
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_three_trees_byte_identical_and_pinned(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ENGINE_COPIES}
-        self.assertEqual(len(digests), 1)
-        self.assertEqual(digests.pop(), ENGINE_MD5)
 
 
 if __name__ == "__main__":

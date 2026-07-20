@@ -33,7 +33,7 @@ class _Harness(unittest.TestCase):
         self._silent("init", "--name", "demo", "--stage", "mvp")
         self._silent("lock", "--force")
         self._silent("new-task", "t", "--title", "F")
-        self.md = self.tmp / ".add" / "tasks" / "t" / "TASK.md"
+        self.md = self.tmp / ".add" / "tasks" / "t" / "PLAN.md"
 
     def tearDown(self):
         os.chdir(self._cwd)
@@ -65,18 +65,18 @@ class _Harness(unittest.TestCase):
         if kv.get("risk_high"):
             t = t.replace("slug: t ·", "slug: t · risk: high ·")
         if kv.get("sensitivity"):
-            t = t.replace("phase: specify", f"sensitivity: {kv['sensitivity']}\nphase: specify")
+            t = t.replace("phase: direction", f"sensitivity: {kv['sensitivity']}\nphase: direction", 1)
         self.md.write_text(t, encoding="utf-8")
 
     def _fill_advisor_pass(self):
-        t = (self.md.read_text(encoding="utf-8")
-             .replace("Advisor: <agent-id | self>", "Advisor: self")
-             .replace("1. Security: <CLEAR | HARD-STOP: finding>", "1. Security: CLEAR")
-             .replace("2. Concurrency: <CLEAR | RESIDUE: finding>", "2. Concurrency: CLEAR")
-             .replace("3. Architecture: <CLEAR | RESIDUE: finding>", "3. Architecture: CLEAR")
-             .replace("Verdict: <PASS | HARD-STOP>", "Verdict: PASS")
-             .replace("Residue: <none | summary>", "Residue: none")
-             .replace("Binding: <yes — mechanical | advisory — <sensitivity>>", "Binding: yes — mechanical"))
+        # atomic-node: the cross-agent advisor WRITES the block (template no
+        # longer scaffolds it) — the fixture inserts a clean PASS verdict.
+        block = ("### Advisor 3-lens verdict — sequential\n"
+                 "Advisor: self\n"
+                 "1. Security: CLEAR\n2. Concurrency: CLEAR\n3. Architecture: CLEAR\n"
+                 "Verdict: PASS\nResidue: none\nBinding: yes — mechanical\n\n")
+        t = self.md.read_text(encoding="utf-8").replace(
+            "### GATE RECORD", block + "### GATE RECORD", 1)
         self.md.write_text(t, encoding="utf-8")
 
 

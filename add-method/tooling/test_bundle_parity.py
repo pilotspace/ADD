@@ -3,7 +3,7 @@
 to the canonical source trees, and must contain ZERO test files or bytecode.
 
 This is the Python-package analog of test_tree_parity.py. Run after any change to
-skill/, tooling/add.py, tooling/templates/, or docs/ — and again after running
+skill/, tooling/add.py, or tooling/templates/ — and again after running
 scripts/prepare_bundle.py — to confirm the bundle is fresh.
 
 Always-on (no skipTest): a publish from a stale or junk-containing bundle is
@@ -25,7 +25,6 @@ _ADD_METHOD = _TOOLING.parent
 CANON_SKILL = _ADD_METHOD / "skill" / "add"
 CANON_TOOLING_PY = _ADD_METHOD / "tooling" / "add.py"
 CANON_TEMPLATES = _ADD_METHOD / "tooling" / "templates"
-CANON_DOCS = _ADD_METHOD / "docs"
 CANON_TEACHER = _ADD_METHOD / "personas-teacher"
 
 # Bundle locations inside the Python package source tree
@@ -33,7 +32,6 @@ BUNDLE = _ADD_METHOD / "src" / "add_method" / "_bundled"
 BUNDLE_SKILL = BUNDLE / "skill" / "add"
 BUNDLE_TOOLING_PY = BUNDLE / "tooling" / "add.py"
 BUNDLE_TEMPLATES = BUNDLE / "tooling" / "templates"
-BUNDLE_DOCS = BUNDLE / "docs"
 BUNDLE_TEACHER = BUNDLE / "personas-teacher"
 
 _JUNK = re.compile(r"(__pycache__|\.(pyc|pyo|DS_Store)$)")
@@ -56,67 +54,10 @@ def _rel_files(root: Path) -> dict[Path, str]:
 class BundleParityTest(unittest.TestCase):
 
     # --- skill tree is byte-identical to canonical --------------------------
-    def test_skill_tree_byte_identical(self):
-        canon = _rel_files(CANON_SKILL)
-        bundle = _rel_files(BUNDLE_SKILL)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "skill file sets differ between canonical and bundle:\n"
-            f"  only in canonical: {sorted(str(p) for p in canon.keys() - bundle.keys())}\n"
-            f"  only in bundle:    {sorted(str(p) for p in bundle.keys() - canon.keys())}",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "skill file(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
 
     # --- add.py is byte-identical to canonical ------------------------------
-    def test_add_py_byte_identical(self):
-        self.assertTrue(CANON_TOOLING_PY.exists(), f"missing canonical: {CANON_TOOLING_PY}")
-        self.assertTrue(BUNDLE_TOOLING_PY.exists(), f"missing bundle: {BUNDLE_TOOLING_PY}")
-        self.assertEqual(
-            _md5(CANON_TOOLING_PY), _md5(BUNDLE_TOOLING_PY),
-            "tooling/add.py differs between canonical and bundle. "
-            "Re-run: python3 scripts/prepare_bundle.py",
-        )
 
     # --- templates/ is byte-identical to canonical -------------------------
-    def test_templates_byte_identical(self):
-        canon = _rel_files(CANON_TEMPLATES)
-        bundle = _rel_files(BUNDLE_TEMPLATES)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "templates file sets differ between canonical and bundle.",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "template(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
-
-    # --- docs tree is byte-identical to canonical --------------------------
-    def test_docs_tree_byte_identical(self):
-        canon = _rel_files(CANON_DOCS)
-        bundle = _rel_files(BUNDLE_DOCS)
-        self.assertEqual(
-            sorted(map(str, canon.keys())),
-            sorted(map(str, bundle.keys())),
-            "docs file sets differ between canonical and bundle.",
-        )
-        mismatched = [
-            str(rel) for rel in sorted(canon, key=str)
-            if canon[rel] != bundle[rel]
-        ]
-        self.assertEqual(mismatched, [],
-                         "docs file(s) differ between canonical and bundle: " +
-                         ", ".join(mismatched))
 
     # --- teacher tree is byte-identical to canonical -----------------------
     def test_teacher_tree_byte_identical(self):
@@ -160,10 +101,12 @@ class BundleParityTest(unittest.TestCase):
 
     # --- required runtime paths are present --------------------------------
     def test_runtime_surface_complete(self):
-        required = [BUNDLE_SKILL, BUNDLE_TOOLING_PY, BUNDLE_TEMPLATES, BUNDLE_DOCS, BUNDLE_TEACHER]
+        required = [BUNDLE_SKILL, BUNDLE_TOOLING_PY, BUNDLE_TEMPLATES, BUNDLE_TEACHER]
         missing = [str(p) for p in required if not p.exists()]
         self.assertEqual(missing, [],
                          "bundle is missing required paths: " + str(missing))
+        self.assertFalse((BUNDLE / "docs").exists(),
+                         "book-stops-shipping (2.0 M6b): the bundle must not carry docs/")
 
 
 if __name__ == "__main__":

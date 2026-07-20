@@ -148,8 +148,8 @@ class RelationsTest(unittest.TestCase):
     def test_milestone_relations_parse_header(self):
         md = self._root() / "milestones" / "m1" / "MILESTONE.md"
         txt = md.read_text(encoding="utf-8")
-        txt = txt.replace("release: pending",
-                          "release: pending\nextends: prior-ms\nrelates-to: other-ms")
+        txt = txt.replace("relations: ",
+                          "extends: prior-ms\nrelates-to: other-ms\nrelations: ")
         md.write_text(txt, encoding="utf-8")
         rel = add._milestone_relations(self._root(), "m1")
         self.assertEqual(rel["extends"], ["prior-ms"])
@@ -173,18 +173,6 @@ class RelationsTest(unittest.TestCase):
         rel = add._milestone_relations(self._root(), "m1")
         self.assertEqual(rel["depends_on"], [])
 
-    # ---- non-blocking: extends/relates_to stay OUT of the schedule DAG ----
-    def test_extends_not_in_edge_fingerprint(self):
-        """The wave-schedule fingerprint keys ONLY on depends_on — an extends edge is invisible to it."""
-        self._mk("alpha")
-        self._mk("beta")
-        fp_before = add._edges_fingerprint(self._state(), "m1")
-        st = self._state()
-        st["tasks"]["beta"]["extends"] = ["alpha"]     # add a non-blocking edge
-        (self._root() / "state.json").write_text(json.dumps(st), encoding="utf-8")
-        fp_after = add._edges_fingerprint(self._state(), "m1")
-        self.assertEqual(fp_before, fp_after, "extends must not perturb the depends_on schedule DAG")
-
 
     # ---- M5: vocabulary + where-declared, on the shipped surface ---------
     def test_glossary_names_relation_vocab(self):
@@ -196,7 +184,7 @@ class RelationsTest(unittest.TestCase):
 
     def test_templates_name_where_relations_declared(self):
         tdir = Path(add.__file__).resolve().parent / "templates"
-        task_t = (tdir / "TASK.md.tmpl").read_text(encoding="utf-8")
+        task_t = (tdir / "PLAN.md.tmpl").read_text(encoding="utf-8")
         ms_t = (tdir / "MILESTONE.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("--extends", task_t)        # task relations declared via new-task flags
         self.assertIn("relations:", ms_t)         # milestone relations declared in the header

@@ -19,25 +19,7 @@ import add
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE / "templates"
 REPO = HERE.parents[1]
-SKILL_GUIDE = HERE.parent / "skill" / "add" / "sensitivity.md"
-
-
-class TemplateDialectLineTest(unittest.TestCase):
-    def test_full_template_deep_checks_carries_dialect_line(self):
-        body = (TEMPLATES / "TASK.md.tmpl").read_text(encoding="utf-8")
-        idx = body.find("### Deep checks")
-        self.assertNotEqual(idx, -1)
-        nxt = body.find("###", idx + 3)
-        block = body[idx:nxt]
-        self.assertIn("DIALECT", block,
-                      "the dialect check must live INSIDE Deep checks (shallow-audit-counted)")
-        self.assertIn("spec-dialect floor", block)
-        self.assertIn("same value formats", block)
-
-    def test_fast_template_carries_dialect_line(self):
-        body = (TEMPLATES / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
-        self.assertIn("input dialect held", body)
-        self.assertIn("spec-dialect floor", body)
+SKILL_GUIDE = HERE.parent / "skill" / "add" / "phases" / "verify.md"  # skill-fold-8: sensitivity.md folded here
 
 
 class GlossaryGuidanceTest(unittest.TestCase):

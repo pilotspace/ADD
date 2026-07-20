@@ -17,7 +17,6 @@ import unittest
 from pathlib import Path
 
 import engine_pin
-import test_skill_lean
 from add_engine.constants import PERSONA_FLOW_VALUES
 from add_engine.predicates import _persona_quality_warnings
 
@@ -40,14 +39,14 @@ TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl"
                            ADD_METHOD / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
                            BUNDLE / "tooling" / "templates" / "personas" / "_template.md.tmpl")
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
-              REPO / "18-personas.md",
-              BUNDLE / "docs" / "18-personas.md")
-AGENT_TWINS = (ADD_METHOD / "agents" / "add-verify.md",
-               REPO / ".claude" / "agents" / "add-verify.md",
-               BUNDLE / "agents" / "add-verify.md")
-GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "6-verify.md",
-               REPO / ".claude" / "skills" / "add" / "phases" / "6-verify.md",
-               BUNDLE / "skill" / "add" / "phases" / "6-verify.md")
+              REPO / "18-personas.md")   # book-stops-shipping (2.0 M6b): no bundled copy
+# roster-distill (ADD 2.0 M1): the verify specialist is the ONE `add` agent (verify mode)
+AGENT_TWINS = (ADD_METHOD / "agents" / "add.md",
+               REPO / ".claude" / "agents" / "add.md",
+               BUNDLE / "agents" / "add.md")
+GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md",
+               REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
+               BUNDLE / "skill" / "add" / "phases" / "verify.md")
 TDD_VERIFIER = REPO / ".add" / "personas" / "tdd-verifier.md"
 ADDPY_TRIO = (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
               BUNDLE / "tooling" / "add.py")
@@ -66,8 +65,6 @@ class VerifyFlowValueTest(unittest.TestCase):
     def test_constant_is_the_frozen_4_tuple(self):
         self.assertEqual(PERSONA_FLOW_VALUES, ("design", "build", "advisor", "verify"))
 
-    def test_constants_twins_lockstep(self):
-        self.assertEqual(len({_md5(p) for p in CONSTANTS_TWINS}), 1, "constants.py twins diverged")
 
     # ── Accept: flow: verify earns no quality warning ─────────────────────────────
     def test_flow_verify_is_warning_free(self):
@@ -99,7 +96,7 @@ class VerifyFlowValueTest(unittest.TestCase):
             digests.add(_md5(p))
         self.assertEqual(len(digests), 1, "18-personas.md twins diverged")
 
-    # ── M4: add-verify routes flow: verify first ──────────────────────────────────
+    # ── M4: the add agent's verify mode routes flow: verify first ─────────────────
     def test_add_verify_routes_verify_first(self):
         digests = set()
         for p in AGENT_TWINS:
@@ -108,7 +105,7 @@ class VerifyFlowValueTest(unittest.TestCase):
                           f"{p} must select flow: verify first")
             self.assertIn("flow: advisor", text, f"{p} must keep the advisor fallback")
             digests.add(_md5(p))
-        self.assertEqual(len(digests), 1, "add-verify.md twins diverged")
+        self.assertEqual(len(digests), 1, "add.md agent twins diverged")
 
     # ── M5: the verify guide names the flow; phases pool fence held ──────────────
     def test_verify_guide_names_flow(self):
@@ -119,12 +116,6 @@ class VerifyFlowValueTest(unittest.TestCase):
             digests.add(_md5(p))
         self.assertEqual(len(digests), 1, "6-verify.md trees diverged")
 
-    def test_phases_pool_fence_held(self):
-        pool = next(p for p in test_skill_lean.POOLS if p["name"] == "phases")
-        self.assertLessEqual(test_skill_lean._pool_bytes(pool),
-                             int(pool["baseline"] * pool["ratio"]),
-                             "phases pool over its fence — compress 6-verify.md in-file")
-
     # ── M6: the reader exists — tdd-verifier declares the value ───────────────────
     def test_tdd_verifier_declares_verify(self):
         if not TDD_VERIFIER.exists():          # fresh-checkout tolerance (.add/personas is local)
@@ -134,11 +125,6 @@ class VerifyFlowValueTest(unittest.TestCase):
                       "tdd-verifier must adopt the new value (no dead wiring)")
 
     # ── pin honesty: add.py untouched by this task ────────────────────────────────
-    def test_engine_addpy_untouched(self):
-        digests = {_md5(p) for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must not move in this task (constants-only engine change)")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ name: add
 description: >-
   ADD (AI-Driven Development) — a minimal, state-tracked workflow: the AI writes
   the code, the human owns direction and verification. Drives every feature through
-  one lean TASK.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
+  one lean PLAN.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
   red/green TDD built in. Use whenever a repo has `.add/`, or the user says "add",
   "start a task", "next phase", "specify this feature", "ADD method", "AI-driven
   development", or wants spec/tests-first discipline over vague-prompt coding. Also
@@ -15,108 +15,111 @@ argument-hint: "status | init | continue | --todo <text> | [describe new short g
 license: MIT
 metadata:
   author: add
-  version: "1.8.0"
+  version: "2.0.0"
 ---
 
-# ADD — the orchestration engine
+# ADD — memory · judgment · conscience (the agent is the hands)
 
-You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
+You turn intent into the right task, then drive it. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
-result through passing evidence, not a plausible-looking diff.
+result through passing evidence, not a plausible diff.
 
-**One file = one task.** Each feature is one `.add/tasks/<slug>/TASK.md` — seven step sections,
-filled top to bottom; the tool tracks where you are. The **plan** phase unites grounding + frozen
-contract + build strategy.
+**One task = one atomic node.** Each feature is one `.add/tasks/<slug>/PLAN.md`; its frozen §3
+(contract · scope · Target) is the interface neighbor nodes depend on — edges compile from the
+milestone, `graph` renders the DAG, `locate` walks a failure to its node. Shard context beside it.
 
-**The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
-`add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
-`--todo --done <id>` closes (engine errors surface verbatim) — then STOP.
+**The `--todo` fast-path.** ARGUMENTS begin with `--todo`? Skip orienting: run `add.py todo`, print
+it — `--todo <text>` captures · `--todo` lists · `--todo --done <id>` closes — then STOP.
 
 ## Always start here (orient — do not skip)
 
-Engine: `.add/tooling/add.py` · book: `.add/docs/`. Ensure it is in the project:
+Engine: `.add/tooling/add.py`. Ensure it is in the project:
 
 - It exists → go to `status` below.
-- It does NOT (a plugin install — engine + book ride in it) → materialize once:
-  `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine) +
-  `.add/docs/` (book) + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
+- It does NOT (a plugin install) → materialize once:
+  `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init --no-skill` — drops `.add/tooling/` (engine)
+  + the agent-agnostic `CLAUDE.md` block; the skill stays in the plugin.
 
-Resume from the tool (COLD start), never re-read the repo — mid-flow, trust each verb's
+Resume from the tool, never re-read the repo — mid-flow, trust each verb's
 `next:` footer:
 
 ```bash
 python3 .add/tooling/add.py status --brief
 ```
 
-Then read the foundation map `add.py status --foundation` (one section: `--foundation "Users"` · `--all` full) + `.add/SOUL.md` (**voice** — `soul.md`). Then branch on state:
+Then read the foundation map `add.py status --foundation` (`--all` full) + `.add/SOUL.md` (**voice**). Then branch on state:
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
-  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and read `phases/0-setup.md`
-  to draft the foundation + §1–§3 to the human baseline approval.
-- **A task is active** → open its `.add/tasks/<active>/TASK.md`, read the `phase:` marker, load the
-  matching `phases/<n>-<phase>.md`. Work *only* that phase.
+  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and drive setup via
+  `phases/direction.md` (brownfield repo → map it silently, `adopt.md`) — to the human baseline `lock`.
+- **A task is active** → open its `.add/tasks/<active>/PLAN.md`, read the `phase:` marker, work that
+  beat per the loop below.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
-**Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
-**Flag mode** — two human-owned settings (never auto-picked): **fast** (task) · **auto** (mode).
-- **fast** — `new-task --fast`: minimal template, freeze-gated; a milestone-free `--fast` task is
-  the blessed low-ceremony lane. Jot ideas: `add.py todo "<text>"` · `todo` lists · `todo --done <id>`.
+**Quick ref** — `status --brief` resume · `advance --fill <draft>` writes · `status --section <n>` one §body · `gate PASS` at verify.
+**Flag mode** — ONE atomic template serves every task (no lanes); flags are header declarations.
+- **gate_mode** — headless/agent-crossed freeze: declare `gate_mode: ai-plan-verify` in the PLAN.md
+  header + fill the §3 AI-verify record; security|data|architecture stay human-frozen (unstrikeable).
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; `add.py autonomy set
-  conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates
-  a milestone's tasks.
+  conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates its tasks.
 
 ## Intake — size a request before creating scope
 
-Classify a raw request BEFORE any scope: read `intake.md`, place it in one bucket — `new-major` ·
+Classify a raw request BEFORE any scope: read `intake.md`. Too small for scope → the
+**inline lane** (diff + `delta-append` receipt; security·data·architecture escalates). Else
+one bucket — `new-major` ·
 `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`; the human
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
-`MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks) — read `scope.md` — then
-`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed). For
-`task`/`change-request`: `add.py new-task` then the first phase guide.
+`MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks — `phases/direction.md`), then
+`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task`; confirm compiles Tasks to the DAG → new-task inherits each node's depends-on). For
+`task`/`change-request`: `add.py new-task`, then beat 1 above.
 
-## The flow and which file to load
+## The 3-beat loop (inline — this file IS the loop; references load on demand)
 
-Inline, load **only the phase you are in**; delegating, spawn the Bundle-column agent — it loads its own bundle guides (you read ONLY this file):
+Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
-| Phase | Guide | Produces (TASK.md section) | Who leads | Bundle |
-|-------|-------|----------------------------|-----------|--------|
-| setup | `phases/0-setup.md` | `.add/` + living docs + first §1–§3 + `SETUP-REVIEW.md` | AI drafts → **human locks** (the baseline approval) | – |
-| specify | `phases/1-specify.md` | §1 rules + ranked flag + §2 Given/When/Then | AI drafts (co-specify)† | DIRECTION |
-| plan | `phases/3-plan.md` | §3 grounding + frozen shape + build-strategy | AI drafts → **human approves once** (the decision point)† | DIRECTION |
-| tests | `phases/4-tests.md` | §4 + red suite in `tests/` | AI drafts† | DIRECTION |
-| build | `phases/5-build.md` | code in `src/`, tests green | **AI** | BUILD |
-| verify | `phases/6-verify.md` | §6 checks + gate record + §7 spec delta | **AI auto-gates on evidence**; human on residue/security‡ | VERIFY |
+1. **DIRECTION** — load the domain-fit persona (seed via add persona-mode if none), then draft
+   the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
+   §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
+   (run it — red for the RIGHT reason; fill each bullet's `covers:` clause key). Then the ONE approval, presented
+   lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`
+   IS this approval).
+2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
+   inside the §3 Scope. A test OUTSIDE your suite failing? `add.py locate path::test` names the
+   owning node, the failure class, the frozen §3 clause it proves, and who re-verifies if a
+   settled contract must move.
+3. **VERIFY** — confirm evidence · 3 lenses (**security always HARD-STOP**) · earned-green
+   refute-read · then `add.py gate PASS --target-hit yes|partial|no` (from build it compound-crosses; under `autonomy: auto` a
+   run auto-PASSes on complete no-residue evidence — *auto-resolved*, an explicit PASS, never a
+   skip; residue or lowered autonomy → human — `run.md`).
 
-† **The specification bundle (v7).** §1–§4 are one bundle; the human gives **one approval at the
-contract freeze**, lowest-confidence-first — `run.md`.
-‡ **Verify auto-gate (v6–v7).** Under `autonomy: auto` (default) a run may auto-PASS on complete
-evidence (*auto-resolved* — an explicit PASS, not a skip). **Security always escalates** (HARD-STOP);
-so do concurrency / architecture residue and a lowered autonomy level — `run.md`.
+Stuck or deep? References, on demand — optional: `phases/direction.md` ·
+`phases/build.md` · `phases/verify.md` · opaque term? `terms.md`. Delegating? Spawn
+the roster agent; it loads its own references (you read ONLY this file).
 
-At every human decision point (intake · bundle approval · gate · milestone close) follow
-`report-template.md`: open with the banner then the ARC (goal · done · plan, engine-sourced), then PLAN/SHAPE → SUMMARY →
-FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT; show-before-ask; never pre-stamp; the question is a summary, never the artifact.
-Read `report-template.md`/`run.md` at most once per session — each phase guide carries its gate card.
+At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
+`gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·
+evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP) — the question is a summary, never the artifact.
+Read once per session.
 
-In **observe**, emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
-they improve (written `open`; the human consolidates into `PROJECT.md`) — grammar + lifecycle in
-`deltas.md`. At milestone close the retrospective consolidation gathers confirmed deltas into a versioned
-foundation — `fold.md`; then compact each spec's stable tail — `compact-foundation.md`. Observe also
+Emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
+they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its living spec in
+`.add/specs/` (grammar: `deltas.md`).
+The living specs ARE the foundation; the close counts what §7 still holds open. Observe also
 tunes your voice: a confirmable delta the human confirms rewrites `SOUL.md` (the human is the only
-writer) — `soul.md`.
+writer) — `deltas.md`.
 
 ## Beyond the bundle — load on demand
 
 One trigger = one guide — full prose: `beyond.md`; load only when a trigger fires:
 
-- §3 FROZEN → auto-gated run `run.md` · pipelines `streams.md` · subagent roster `advisor.md` (agent-call-preferred, the default execution mode) ·
-  self-score `confidence.md`
-- small low-risk task → fast lane `phases/fast-lane.md` · UI feature → UDD loop `design.md`
+- §3 FROZEN → auto-gated run `run.md` · subagent roster + pipelines (agent-call-preferred,
+  the default execution mode) → `phases/verify.md` · self-score → `phases/direction.md`
+- UI/experience surface → UDD loop `design.md`
 - milestone goal unmet at `milestone-done` → `loop.md`
-- status cues: `MVP covered` → `graduate.md` · closed-milestone cut → `release.md`
-- monorepo green-bars → `components.md` · the persona loop (`.add/personas/`) → `docs/18-personas.md` ·
-  `sensitivity:` risk classes + `advisor-gate-relax` → `sensitivity.md`
+- graduation · release · monorepo green-bars → persona-owned playbooks, `beyond.md` ·
+  the persona loop (`.add/personas/`) → `docs/18-personas.md` · `sensitivity:` + `advisor-gate-relax` → `phases/verify.md`
 
 ## Non-negotiable rules (from the method)
 
@@ -129,17 +132,15 @@ One trigger = one guide — full prose: `beyond.md`; load only when a trigger fi
    A real change is a *change request* back to Specify.
 4. **No silent skips.** Every Verify ends in exactly one recorded outcome: `PASS`, `RISK-ACCEPTED`
    (signed, non-security only), or `HARD-STOP`. A security finding is always `HARD-STOP`.
-5. **Ask, don't guess.** If a requirement is unclear, stop and ask the user.
 </constraints>
 
-## Advancing
-
-Exit gate met → advance (also syncs the TASK.md marker):
+## Advancing — the 3-call walk
 
 ```bash
-python3 .add/tooling/add.py advance            # next phase of the active task
-python3 .add/tooling/add.py gate PASS          # at verify: records PASS, marks done
-python3 .add/tooling/add.py use <slug>         # switch the active task
+python3 .add/tooling/add.py new-task <slug> --title "..."   # born at direction
+python3 .add/tooling/add.py freeze --by "<name>" --cross    # the ONE approval -> build
+python3 .add/tooling/add.py gate PASS                       # verify recorded, task done
+# add.py advance = step-wise alternative · add.py use <slug> = switch tasks
 ```
 
 ## Depth by stage
@@ -149,10 +150,9 @@ The steps never change; their depth does (stage from `add.py status`):
 - **prototype** — light; throwaway code; design/experience is the point.
 - **poc** — contract/tests/build deep on the single riskiest slice only.
 - **mvp** — full flow, narrow scope, light observation.
-- **production** — full rigor + the observe loop; reached via the `graduate.md` orchestration
-  (`MVP covered → propose graduation`), never a bare `stage production` flip.
+- **production** — full rigor + the observe loop; reached via the graduation playbook
+  (`beyond.md`), never a bare `stage production` flip.
 
 ## The method rationale
 
-The full method (the *why*) is the AIDD book in `.add/docs/`; each phase guide
-points to its chapter. Read it only when a decision is genuinely unclear — never duplicate it here.
+The *why* lives in the AIDD book — https://pilotspace.github.io/ADD/ (the `docs/…` chapters the guides cite). Read it when a decision is genuinely unclear; never duplicate it here.

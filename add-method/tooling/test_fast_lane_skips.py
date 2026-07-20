@@ -57,9 +57,9 @@ FAST_TMPL_TREES = (
     # copy, is gitignored local scratch state for add-method's self-hosted task tracking; it
     # is not part of the shipped-artifact parity claim (its currency depends on whether that
     # local dogfood task has itself been advanced), so it is deliberately excluded here.
-    HERE / "templates" / "TASK.fast.md.tmpl",
-    REPO_ROOT / ".add" / "tooling" / "templates" / "TASK.fast.md.tmpl",
-    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "TASK.fast.md.tmpl",
+    HERE / "templates" / "PLAN.fast.md.tmpl",
+    REPO_ROOT / ".add" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
+    PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.fast.md.tmpl",
 )
 
 
@@ -104,7 +104,7 @@ class _Harness(unittest.TestCase):
         return json.loads((self.tmp / ".add" / "state.json").read_text())
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _fill_boundary(self, slug):
         # boundary floor (fast-lane-boundary-line): the rendered fast template now
@@ -156,11 +156,28 @@ class _Harness(unittest.TestCase):
             proj.write_text(proj.read_text(encoding="utf-8") + "\nbenchmark_mode: true\n",
                              encoding="utf-8")
         argv = ["new-task", slug, "--title", "Feature"]
-        if oneshot:
-            argv.append("--oneshot")
-        elif fast:
-            argv.append("--fast")
         self._silent(*argv)
+        if oneshot:
+            # atomic-node: gate_mode is declared in the artifact header, not a CLI flag
+            md = self._task_md(slug)
+            md.write_text(md.read_text(encoding="utf-8").replace(
+                "phase: direction", "gate_mode: ai-plan-verify\nphase: direction", 1),
+                encoding="utf-8")
+
+    def _set_section3_and_freeze(self, slug):
+        # phase-collapse-3: a fresh task is BORN at `direction` — draft + freeze §3
+        # right there, straight into the ONE direction->build crossing.
+        p = self._task_md(slug)
+        text = p.read_text(encoding="utf-8")
+        body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
+                "Least-sure flag surfaced at freeze:\n"
+                "  ⚠ [contract] x — cost: y.\n"
+                "Status: DRAFT\n")
+        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
+                     lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        p.write_text(new, encoding="utf-8")
+        self._fill_boundary(slug)
+        self._silent("freeze", "--by", "Human")
 
 
 # ---------------------------------------------------------------------------
@@ -247,48 +264,18 @@ class SkipSetAllowedTest(unittest.TestCase):
 
     def test_predicate_lives_in_engine_predicates_module(self):
         self.assertIs(add._skip_set_allowed, engine_predicates._skip_set_allowed)
-
-
-# ---------------------------------------------------------------------------
-# M5 — _skip_rationale extracts a matching clause and fails closed on absence
-# ---------------------------------------------------------------------------
-
-class SkipRationaleTest(unittest.TestCase):
-    RAW0 = ("Touches: x\nSkip rationale: scenarios — the Accept line covers it; "
-            "observe — no rollout to watch\nGround SHA: abc\n")
-
-    def test_extracts_each_matching_clause(self):
-        self.assertEqual(add._skip_rationale(self.RAW0, "observe"),
-                         "no rollout to watch")
-        # phase-merge-specify: a retired scenarios clause no longer parses as a rationale
-        self.assertIsNone(add._skip_rationale(self.RAW0, "scenarios"))
-
-    def test_no_line_at_all_returns_none(self):
-        self.assertIsNone(add._skip_rationale("Touches: x\nGround SHA: abc\n", "observe"))
-
-    def test_line_present_but_no_clause_for_phase_returns_none(self):
-        raw0 = "Skip rationale: scenarios — reason only\n"
-        self.assertIsNone(add._skip_rationale(raw0, "observe"))
-
-    def test_empty_reason_text_returns_none(self):
-        raw0 = "Skip rationale: observe —    \n"
-        self.assertIsNone(add._skip_rationale(raw0, "observe"))
-
-
-# ---------------------------------------------------------------------------
-# M6 — cmd_advance skip mechanic
-# ---------------------------------------------------------------------------
-
 class CmdAdvanceSkipMechanicTest(_Harness):
     def test_retired_declaration_never_touches_a_crossing(self):
-        # phase-merge-verify: NO crossing runs skip logic; a vestigial declaration
-        # (either retired token) is invisible to advance and records nothing.
+        # phase-collapse-3: NO crossing runs skip logic; a vestigial declaration (either
+        # retired token) is invisible to advance and records nothing, across all 3 remaining
+        # crossings (direction->build, build->verify, verify->done).
         self._new_fast_task("t", fast=True)
-        self._silent("phase", "specify", "t")
         self._set_header("t", skips="scenarios,observe")
-        self._silent("advance", "t")
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self._set_section3_and_freeze("t")
+        out = self._silent("advance", "t")                 # direction -> build, silent
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "build")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
+        self.assertNotIn("note:", out, "crossings stay silent — the note lives at gate")
         self._silent("phase", "verify", "t")
         out = self._silent("advance", "t")                 # verify -> done, silent
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
@@ -318,66 +305,21 @@ class NonSkippableCrossingsUntouchedTest(_Harness):
             self._silent("advance", slug)
             return spy.call_count
 
-    def _set_section3_and_freeze(self, slug):
-        p = self._task_md(slug)
-        text = p.read_text(encoding="utf-8")
-        body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
-                "Least-sure flag surfaced at freeze:\n"
-                "  ⚠ [contract] x — cost: y.\n"
-                "Status: DRAFT\n")
-        new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
-                     lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
-        p.write_text(new, encoding="utf-8")
-        self._fill_boundary(slug)
-        self._silent("freeze", "--by", "Human")
-
     def test_every_crossing_never_invokes_task_skip_set(self):
-        # phase-merge-verify: observe merged into verify and the skip grammar retired,
-        # so the flow is specify -> plan -> tests -> build -> verify -> done —
-        # 5 crossings total, ALL of them run ZERO skip logic (the old M13 pin,
-        # now universal; the header is read once, at gate, not here).
+        # phase-collapse-3: the front collapsed into ONE phase (`direction`), so the flow is
+        # direction -> build -> verify -> done — 3 crossings total, ALL of them run ZERO skip
+        # logic (the old M13 pin, now universal; the header is read once, at gate, not here).
         self._new_fast_task("t", fast=True)   # no skips: declared anywhere
-        self.assertEqual(self._advance_spy_count(), 0, "specify->plan")
         self._set_section3_and_freeze("t")
-        self.assertEqual(self._advance_spy_count(), 0, "plan->tests")
-        self.assertEqual(self._advance_spy_count(), 0, "tests->build")
+        self.assertEqual(self._advance_spy_count(), 0, "direction->build")
         self.assertEqual(self._advance_spy_count(), 0, "build->verify")
         self.assertEqual(self._advance_spy_count(), 0, "verify->done")
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
 
 
 # ---------------------------------------------------------------------------
-# M7 — new-task --oneshot / --fast (no --oneshot)
-# ---------------------------------------------------------------------------
-
-class OneshotNewTaskTest(_Harness):
-    def test_scaffolds_minimal_template_and_both_header_lines(self):
-        self._silent("lock", "--force")
-        self._silent("new-task", "quick", "--title", "Feature", "--oneshot")
-        text = self._task_md("quick").read_text(encoding="utf-8")
-        secs = set(add._phase_spans(text))
-        self.assertEqual(secs, {1, 3, 4, 5, 6})   # §0 GROUND folded into §3 PLAN (plan-phase-core)
-        self.assertRegex(text, r"(?m)^fast:\s*true")
-        self.assertRegex(text, r"(?m)^oneshot:\s*true")
-        self.assertRegex(text, r"(?m)^gate_mode:\s*ai-plan-verify")
-        st = self._state()["tasks"]["quick"]
-        self.assertIs(st["fast"], True)
-        self.assertIs(st["oneshot"], True)
-
-
-class FastOnlyUnaffectedByOneshotTest(_Harness):
-    def test_fast_without_oneshot_has_no_new_header_lines_or_state_key(self):
-        self._silent("lock", "--force")
-        self._silent("new-task", "quick", "--title", "Feature", "--fast")
-        text = self._task_md("quick").read_text(encoding="utf-8")
-        self.assertRegex(text, r"(?m)^fast:\s*true")
-        self.assertNotRegex(text, r"(?m)^oneshot:")
-        self.assertNotRegex(text, r"(?m)^gate_mode:")
-        self.assertNotIn("oneshot", self._state()["tasks"]["quick"])
-
-
-# ---------------------------------------------------------------------------
-# M8 — _project_benchmark_mode
+# M7 retired (atomic-node): the --oneshot/--fast scaffolds are gone — gate_mode
+# is a header declaration and the template is ONE atomic render for every task.
 # ---------------------------------------------------------------------------
 
 class ProjectBenchmarkModeTest(_Harness):
@@ -412,6 +354,7 @@ class StatusGuideSurfaceTest(_Harness):
         self._new_fast_task("t", fast=True)
         sp = self.tmp / ".add" / "state.json"
         raw = json.loads(sp.read_text(encoding="utf-8"))
+        raw["tasks"]["t"]["oneshot"] = True   # legacy lane marker (historic board)
         raw["tasks"]["t"]["skips"] = [{"phase": "observe", "reason": "historic",
                                        "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
         sp.write_text(json.dumps(raw), encoding="utf-8")
@@ -447,57 +390,11 @@ class GateExplainSkipSetTest(_Harness):
         self._silent("new-task", "t", "--title", "F")
         out = self._silent("gate", "--explain", "t")
         self.assertNotIn("skip-set:", out)
-
-
-# ---------------------------------------------------------------------------
-# M11 — audit flags a post-skip deleted rationale
-# ---------------------------------------------------------------------------
-
-class AuditSkipRationaleMissingPostHocTest(_Harness):
-    def _skipped_task(self, slug="t"):
-        # HISTORIC board simulation: no live path records a skip anymore, but the
-        # audit glint must keep guarding boards that recorded one pre-merge.
-        self._new_fast_task(slug, fast=True)
-        self._silent("phase", "verify", slug)
-        self._set_header(slug, skips="observe")
-        self._set_skip_rationale(slug, "observe — no rollout to watch")
-        sp = self.tmp / ".add" / "state.json"
-        raw = json.loads(sp.read_text(encoding="utf-8"))
-        raw["tasks"][slug]["skips"] = [{"phase": "observe", "reason": "no rollout to watch",
-                                        "by": "Tester", "at": "2026-01-01T00:00:00Z"}]
-        sp.write_text(json.dumps(raw), encoding="utf-8")
-        self._silent("gate", "HARD-STOP", slug)   # recordable from any phase
-
-    def test_intact_rationale_not_flagged(self):
-        self._skipped_task("t")
-        out, _ = self._run("audit")
-        self.assertNotIn("skip_rationale_missing_post_hoc", out)
-
-    def test_deleted_rationale_flagged_measure_not_block(self):
-        self._skipped_task("t")
-        self._clear_skip_rationale("t")
-        out, code = self._run("audit")
-        self.assertIn("skip_rationale_missing_post_hoc", out)
-        self.assertIn("t", out)
-        self.assertEqual(code, 1)
-
-
-# ---------------------------------------------------------------------------
-# M12 — TASK.fast.md.tmpl carries the scaffold; TASK.md.tmpl is untouched
-# ---------------------------------------------------------------------------
-
 class TemplateScaffoldTest(unittest.TestCase):
-    def test_fast_template_carries_no_skips_machinery(self):
-        # phase-merge-verify: the grammar is retired — the fast template no longer
-        # scaffolds the `skips:` hint or the rationale placeholder.
-        text = (HERE / "templates" / "TASK.fast.md.tmpl").read_text(encoding="utf-8")
-        self.assertNotIn("skips:", text)
-        self.assertNotIn("Skip rationale:", text)
-
     def test_full_template_carries_no_skips_machinery(self):
         # (pre-dates the retirement: the full template NEVER carried the grammar)
         body = (REPO_ROOT / "add-method" / "tooling" / "templates" /
-                "TASK.md.tmpl").read_text(encoding="utf-8")
+                "PLAN.md.tmpl").read_text(encoding="utf-8")
         self.assertNotIn("skips:", body)
 
 
@@ -506,25 +403,13 @@ class TemplateScaffoldTest(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class EngineTreeParityTest(unittest.TestCase):
-    def test_add_py_trees_byte_identical(self):
-        present = [p for p in ADD_PY_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
 
-    def test_constants_trees_byte_identical(self):
-        present = [p for p in CONSTANTS_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
 
-    def test_predicates_trees_byte_identical(self):
-        present = [p for p in PREDICATES_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
-
-    def test_fast_template_trees_byte_identical(self):
-        present = [p for p in FAST_TMPL_TREES if p.exists()]
-        self.assertGreaterEqual(len(present), 2)
-        self.assertEqual(len({_md5(p) for p in present}), 1)
+    def test_fast_template_gone_from_every_tree(self):
+        # template-unify: the fast lane derives from PLAN.md.tmpl — no tree may
+        # resurrect the deleted PLAN.fast.md.tmpl
+        for p in FAST_TMPL_TREES:
+            self.assertFalse(p.exists(), f"PLAN.fast.md.tmpl must stay deleted: {p}")
 
 
 # ---------------------------------------------------------------------------
@@ -563,15 +448,15 @@ class FloorCompositionTest(_Harness):
     def test_oneshot_security_task_freeze_stays_human(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "risky", "--title", "F", "--oneshot")
+        self._silent("new-task", "risky", "--title", "F")
         self._set_header("risky", skips="observe")   # vestigial — must change nothing
         p = self._task_md("risky")
         t = p.read_text(encoding="utf-8")
+        t = t.replace("phase: direction", "gate_mode: ai-plan-verify\nphase: direction", 1)
         t = re.sub(r"(?m)^(autonomy:[^\n]*)$", r"\1\nsensitivity: security", t, count=1)
         p.write_text(t, encoding="utf-8")
-        self._silent("phase", "specify", "risky")
-        self._silent("advance", "risky")   # specify -> plan (the natural crossing now)
-        self.assertEqual(self._state()["tasks"]["risky"]["phase"], "plan")
+        # phase-collapse-3: the task is BORN at `direction` — no bookkeeping crossing is
+        # needed before drafting §3.
         # AI freeze attempt is blocked (task2's unchanged floor)
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n"
@@ -608,25 +493,26 @@ class NormalFlowUnchangedTest(_Harness):
     def test_plain_task_visits_every_phase_every_crossing(self):
         self._silent("lock", "--force")
         self._silent("new-milestone", "m", "--goal", "g", "--stage", "mvp")
-        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; seeds specify
-        self._silent("advance", "t")    # specify -> plan (scenarios merged into specify)
-        self.assertEqual(self._state()["tasks"]["t"]["phase"], "plan")
+        self._silent("new-task", "t", "--title", "F")   # full-lane, no fast/oneshot; born at direction
+        self.assertEqual(self._state()["tasks"]["t"]["phase"], "direction")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        # freeze the contract to cross plan -> tests
+        # freeze the contract to cross direction -> build (the ONE crossing)
         p = self._task_md("t")
         text = p.read_text(encoding="utf-8")
         body = ("\n```\nGET /x\n  200 -> {ok:true}\n```\n\n"
                 "Least-sure flag surfaced at freeze:\n  ⚠ [contract] x — cost: y.\nStatus: DRAFT\n")
         new = re.sub(r"(## 3 · PLAN[^\n]*\n).*?(\n---)",
                      lambda m: m.group(1) + body + m.group(2), text, count=1, flags=re.S)
+        # template-unify M6: the full scaffold now carries the §1 Boundary line — fill
+        # it (the boundary_unfilled floor fires on both lanes at freeze)
+        new = re.sub(r"(?m)^Boundary: <[^\n]*$", "Boundary: none — no external input", new)
         p.write_text(new, encoding="utf-8")
         self._silent("freeze", "--by", "Human")
-        self._silent("advance", "t")    # plan -> tests
-        self._silent("advance", "t")    # tests -> build
+        self._silent("advance", "t")    # direction -> build
         self._silent("advance", "t")    # build -> verify
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "verify")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
-        self._silent("advance", "t")    # verify -> done (observe merged into verify)
+        self._silent("advance", "t")    # verify -> done
         self.assertEqual(self._state()["tasks"]["t"]["phase"], "done")
         self.assertNotIn("skips", self._state()["tasks"]["t"])
 

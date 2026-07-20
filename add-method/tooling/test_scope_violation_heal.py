@@ -91,7 +91,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug: str) -> Path:
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _state(self) -> dict:
         return json.loads((self._root() / "state.json").read_text(encoding="utf-8"))
@@ -117,7 +117,7 @@ class _Board(unittest.TestCase):
         if scope_line is not None:
             five.insert(0, scope_line)
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-06-12 · stage: mvp",
             "phase: ground",
             "",
@@ -308,12 +308,6 @@ class NoLaunderTest(_Board):
 
 
 # ── the discipline: ×3 parity + pin (GREEN pin, survives the re-pin) ─────────
-class EnginePinTest(unittest.TestCase):
-    def test_mirrors_and_pin(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "engine_pin.ENGINE_MD5 must track the live engine")
 
 
 if __name__ == "__main__":

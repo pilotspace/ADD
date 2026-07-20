@@ -2,7 +2,7 @@
 """Structural proof of `onboarding-align` — the onboarding surfaces tell the shipped
 v7 one-approval flow, and the empty-project entry point is actionable.
 
-Frozen contract (.add/tasks/onboarding-align/TASK.md §3):
+Frozen contract (.add/tasks/onboarding-align/PLAN.md §3):
   - the two shipping onboarding surfaces (add-method/GETTING-STARTED.md, add-method/README.md)
     describe ONE flow (intake -> one-approval front -> self-driving run); NO v6/v7 "shipped
     default" version narration; security HARD-STOP intact

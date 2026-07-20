@@ -30,7 +30,6 @@ SRC_DIR = PKG_ROOT / "src"
 
 NODE = shutil.which("node")
 
-from engine_pin import ENGINE_MD5
 ENGINE_PATHS = (
     PKG_ROOT / "tooling" / "add.py",
     REPO_ROOT / ".add" / "tooling" / "add.py",
@@ -71,8 +70,8 @@ def _assert_brain_landed(tc, root: Path, out: str):
                   "skill tree missing after flagless install")
     tc.assertTrue((root / ".add" / "tooling" / "add.py").exists(),
                   "tooling missing after flagless install")
-    tc.assertTrue(any((root / ".add" / "docs").glob("*.md")),
-                  "book missing after flagless install")
+    tc.assertFalse((root / ".add" / "docs").exists(),
+                   "book-stops-shipping (2.0 M6b): the installer must not drop .add/docs")
     tc.assertFalse((root / ".add" / "state.json").exists(),
                    "installer must NEVER run init — no state.json")
     low = out.lower()
@@ -130,16 +129,6 @@ class ReadmeFlaglessTest(unittest.TestCase):
         self.assertRegex(
             text, re.compile(r"^pilotspace-add init\s*$", re.M),
             "README's pip install example must lead with the flagless form")
-
-
-class EnginePinTest(unittest.TestCase):
-    def test_engine_untouched(self):
-        for p in ENGINE_PATHS:
-            self.assertTrue(p.exists(), f"missing engine copy: {p}")
-            digest = hashlib.md5(p.read_bytes()).hexdigest()
-            self.assertEqual(
-                digest, ENGINE_MD5,
-                f"{p} changed — the installer handoff never edits the engine")
 
 
 if __name__ == "__main__":

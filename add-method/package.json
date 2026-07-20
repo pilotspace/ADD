@@ -1,7 +1,7 @@
 {
   "name": "@pilotspace/add",
-  "version": "1.18.0",
-  "description": "ADD (AI-Driven Development). One skill. Eight steps. Five disciplines. Every feature ships through the loop — a minimal, state-tracked Claude Code skill that ships the AIDD book as its trust layer.",
+  "version": "2.0.0",
+  "description": "ADD (AI-Driven Development) 2.0. The agent is the hands; ADD is the memory, judgment, and conscience — a minimal, state-tracked skill: one freeze per feature, trust from passing tests, state on disk so context rot never survives a new session.",
   "bin": {
     "add": "bin/cli.js"
   },
@@ -24,7 +24,6 @@
     "!tooling/add_engine/__pycache__",
     "!**/*.pyc",
     "tooling/templates/",
-    "docs/",
     "personas-teacher/",
     "THIRD_PARTY_NOTICES.md",
     "README.md",

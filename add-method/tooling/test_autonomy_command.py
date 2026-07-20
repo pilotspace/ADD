@@ -10,7 +10,7 @@ CONTRACT (frozen @ v2, autonomy-command):
      - `set auto` on a risk:high task               -> "unguarded_high_risk_auto"  (reused guard)
      - bad/missing level                            -> "autonomy_level_invalid"
      - reused guards VERBATIM: _require_root ("no .add/ project found …") · _resolve_task ("unknown task '<slug>'")
-  De-command-shape: add.py:480/:730/:1575 + TASK.md.tmpl cite `add.py autonomy set`, never bare "set autonomy: X";
+  De-command-shape: add.py:480/:730/:1575 + PLAN.md.tmpl cite `add.py autonomy set`, never bare "set autonomy: X";
      WORDING_RUBRIC.md carries an [enforced] fence; engine_pin.py re-aims @ autonomy-command.
 
 Render-blind: assertions read printed lines / the public file surface, never a private state key.
@@ -71,7 +71,7 @@ class _Board(unittest.TestCase):
         return self.tmp / ".add"
 
     def _task_md(self, slug):
-        return self._root() / "tasks" / slug / "TASK.md"
+        return self._root() / "tasks" / slug / "PLAN.md"
 
     def _project_md(self):
         return self._root() / "PROJECT.md"
@@ -254,8 +254,8 @@ class DeCommandShapeTest(_Board):
             self.assertNotIn(phrase, src, f"command-shaped autonomy string still present: {phrase!r}")
         self.assertGreaterEqual(src.count("add.py autonomy set"), 3,
                                 "each reworded site should point at the verb")
-        tmpl = (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")
-        self.assertIn("add.py autonomy set", tmpl, "the TASK.md template points at the verb")
+        tmpl = (HERE / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8")
+        self.assertIn("add.py autonomy set", tmpl, "the PLAN.md template points at the verb")
 
     def test_autonomy_subcommand_is_registered(self):
         # the phantom resolves real — `autonomy` is no longer an invalid choice

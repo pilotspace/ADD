@@ -14,7 +14,7 @@ Behavior pinned (not words):
     reopens entry (prior_gate/prior_waiver) and DROP the live key;
   - refuse not-done / empty-reason / invalid-target with named codes;
   - the new verb is census-classified (test_min_pillar LIFECYCLE) and the engine
-    re-anchors (md5(add.py) == engine_pin.ENGINE_MD5 across copies).
+    re-anchors (md5(add.py) == the engine pin across copies).
 
 Arrange-through-CLI-contracts: the board is built with the real `add.main` calls,
 so the tests exercise the engine's input contracts, not its internals.
@@ -44,7 +44,7 @@ _REPO = _ADD_METHOD.parent                              # repo root
 BOOK_CH02 = _ADD_METHOD / "docs" / "02-the-flow.md"     # canonical book chapter
 LIVE_PROJECT = _REPO / ".add" / "PROJECT.md"            # the foundation survivor line
 
-# add.py copies the shared pin guards (must stay byte-identical and == ENGINE_MD5).
+# add.py copies the shared pin guards (must stay byte-identical and == the engine pin).
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
@@ -89,7 +89,7 @@ class ReopenBoard(unittest.TestCase):
     def _freeze(self, slug: str):
         """Stamp §3 FROZEN + a well-formed lowest-confidence flag so the universal freeze gate
         (and the unflagged_freeze check) pass at tests->build. freeze-gate-universal sweep."""
-        p = self._root() / "tasks" / slug / "TASK.md"
+        p = self._root() / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -132,10 +132,10 @@ class ReopenBoard(unittest.TestCase):
                                    "--reason", "wiring check failed post-merge")
         self.assertEqual(code, 0, f"reopen should succeed; err={err!r}")
         self.assertEqual(self._task("t")["phase"], "build")
-        # PHASES tuple keeps "done" as a terminal state (six-phase-loop shrank the
-        # list to 6: scenarios merged into specify, observe into verify).
+        # PHASES tuple keeps "done" as a terminal state (phase-collapse-3 shrank the
+        # list to 4: specify/plan/tests merged into direction, observe into verify).
         self.assertEqual(add.PHASES[-1], "done")
-        self.assertEqual(len(add.PHASES), 6)
+        self.assertEqual(len(add.PHASES), 4)
 
     def test_reopen_resets_gate_to_none(self):
         self._mk_done("t")
@@ -220,13 +220,6 @@ class ReopenBoard(unittest.TestCase):
         import test_min_pillar
         census = {argv[0] for argv in test_min_pillar.LIFECYCLE}
         self.assertIn("reopen", census, "reopen must be classified in the LIFECYCLE census")
-
-    def test_engine_repinned(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match the re-aimed engine_pin.ENGINE_MD5")
 
 
 if __name__ == "__main__":

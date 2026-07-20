@@ -11,17 +11,20 @@
 Name: ENGINE_MD5 / ENGINE_PKG_MD5 re-pin checklist
 Anchor: `add-method/tooling/engine_pin.py:20` (`ENGINE_MD5`) ·
   `add-method/tooling/engine_pin.py:21` (`ENGINE_PKG_MD5`) ·
-  `add-method/tooling/test_engine_repin_parity.py:54` (`test_three_engines_byte_identical_and_current`)
+  `add-method/tooling/test_tree_parity.py:125` (`test_engine_pin_holds`)
 Contract: Any change to `add-method/tooling/add.py` re-aims ENGINE_MD5; any change under
   `add_engine/` re-aims ENGINE_PKG_MD5 — both hard-coded literals (never runtime-computed,
   or a pin could never detect its own drift), each carrying a prepended changelog comment
   naming the task and prior digest. The new digest propagates byte-identically to all 3
-  engine trees before the next gate; test_engine_repin_parity.py's ENGINE_COPIES +
-  test_three_engines_byte_identical_and_current mechanically enforce byte-identity and
-  pin-currency, but never choose the digest for you — skipping the re-pin after a real
-  engine edit is this project's single most common self-heal.
-Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`) — method:
-  `grep -rl "ENGINE_MD5\|ENGINE_PKG_MD5" --include=TASK.md .add/tasks` · as of `c152945`.
+  engine trees before the next gate; the canonical sweep's test_tree_parity.py
+  (test_engine_pin_holds + the tooling file-set/md5 walk) mechanically enforces
+  byte-identity and pin-currency — test-corpus-slim consolidated the per-suite pin
+  copies into that ONE sweep — but it never chooses the digest for you; skipping the
+  re-pin after a real engine edit is this project's single most common self-heal.
+Citations: 251 files / 1217 mentions in `.add/tasks/` (+18/68 in `.add/archive/`) — method:
+  `grep -rl "ENGINE_MD5\|ENGINE_PKG_MD5" --include=PLAN.md .add/tasks` · as of `a7ef15e`
+  (migrate-verb re-aimed the method's `--include` from TASK.md after `add.py migrate`
+  renamed every board doc — the counts were refreshed in the same change).
   Anchor re-verified at build time against the current tree (`test_engine_repin_parity.py`
   unchanged since Ground SHA `c152945`) — `test_three_engines_byte_identical_and_current`
   resolves at `:54`, not the `:57` cited when this entry was drafted; disclosed here rather
@@ -35,16 +38,16 @@ Citations: 160 files / 1059 mentions in `.add/tasks/` (+18/71 in `.add/archive/`
 
 ## three-tree-parity
 Name: Engine / skill / bundle / book tree parity convention
-Anchor: `add-method/tooling/test_engine_repin_parity.py:40` (`ENGINE_COPIES`) ·
-  `add-method/tooling/test_tree_parity.py:21` (`CANON_SKILL`) ·
-  `add-method/tooling/test_bundle_parity.py` · `add-method/tooling/test_book_parity.py`
-Contract: Four independent parity guards hold the byte-identical-twin invariant:
-  test_engine_repin_parity (the 3 add.py/add_engine copies), test_tree_parity (canonical
-  skill vs `.claude/skills/add/` dogfood), test_bundle_parity (whole `_bundled/` package vs
-  canonical, plus zero-test/zero-bytecode), and test_book_parity (book canonical vs repo-root
-  chapters, with `.add/docs/` as a 4th gitignored, non-git-tracked copy). Any engine, skill,
-  template, or book edit must propagate to every one of its own twins before the gate —
-  hand-editing one tree in isolation is the recurring trap all four suites exist to catch.
+Anchor: `add-method/tooling/test_tree_parity.py:39` (`CANON_SKILL`) ·
+  `add-method/tooling/test_tree_parity.py:46` (`TOOLING_TREES`)
+Contract: ONE canonical sweep holds the byte-identical-twin invariant: test_tree_parity.py
+  compares the skill trees (canonical · `_bundled` · `.claude/skills/add/` dogfood), the
+  roster agents, the tooling trees (add.py · engine_pin.py · add_engine/*.py · templates),
+  and the book trees + repo-root chapter mirrors — file-set both directions plus md5.
+  test-corpus-slim consolidated the former per-suite guards (test_engine_repin_parity's
+  copies, test_bundle_parity's tree walks, ~180 per-task parity pins) under it. Any engine,
+  skill, or template edit must propagate to every one of its own twins before the gate —
+  hand-editing one tree in isolation is the recurring trap this sweep exists to catch.
 Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
   `grep -rl "byte-identical" --include=TASK.md .add/tasks` · as of `c152945` — a broad
   proxy count, not a precise invocation count. Anchor re-verified at build time against the
@@ -54,7 +57,7 @@ Citations: 232 files reference "byte-identical" in `.add/tasks/` — method:
 
 ## scope-token-grammar
 Name: §5 "Scope (may touch):" token-resolution grammar
-Anchor: `add-method/tooling/add.py:5901` (`_declared_scope`)   <!-- re-pinned 2026-07-16 foundation-slice-progressive: 5857→5901 (_foundation_skeleton + _foundation_pick + _foundation_selector replaced the flat _foundation_slice above cmd_status, net +44 lines); prior foundation-slice: 5808→5857; prior recipe-dedup: 5797→5808 (the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class). prior: 5778→5800 @ status-lean-default -->
+Anchor: `add-method/tooling/add.py:4776` (`_declared_scope`)   <!-- re-pinned 2026-07-20 run-mode-decouple: 4796→4776 (streams-posture code removed upstream); the pin drifts on ANY upstream add.py change; symbol cited so the drift self-describes; todo #30 seams-symbol-pins retires this class. prior: 4710→4796 @ graph-views -->
 Contract: `_declared_scope` reads ONLY the first physical line after the §5 header — a
   wrapped multi-line list silently truncates. Each backticked token then resolves
   independently: `./...` = this task's dir, any token containing `/` = project-root-relative,
@@ -88,7 +91,7 @@ Citations: 26 files / 93 mentions — method:
 
 ## section-unfilled-truth-table
 Name: `_section_unfilled`'s placeholder/grandfather truth table
-Anchor: `add-method/tooling/add_engine/predicates.py:100` (`_section_unfilled`)   <!-- re-pinned 2026-07-09 x3: 47→60→80→100 (fast-lane-skips's own _skip_lane_eligible/_skip_set_allowed addition above it shifted the line) -->
+Anchor: `add-method/tooling/add_engine/predicates.py:101` (`_section_unfilled`)   <!-- re-pinned 2026-07-17 persona-task-kinds: 100→101 (the TASK_KINDS import line above it). prior: 47→60→80→100 @ fast-lane-skips -->
 Contract: A pure 3-way predicate reused across every fill-gate: header ABSENT -> False
   (grandfathered legacy task); header PRESENT but empty or a bare `<...>` placeholder ->
   True (unfilled, gate fires); header PRESENT with ≥1 real bullet -> False (filled, gate

@@ -88,7 +88,7 @@ one only for a genuine new `catalog.json` component.
 
 The screenshot of a Stage-B mock is **design-confirm evidence** — the human-facing
 proof of beat 4 in `design.md`. Captures live at **`.add/design/captures/<name>.<ext>`**
-(one per prototype) and are **attached or mentioned in the feature's `TASK.md`**
+(one per prototype) and are **attached or mentioned in the feature's `PLAN.md`**
 (alongside the §6 evidence), so the screen the human approved stays traceable from the
 task that builds it. The recommended default capture engine for a json-render project is
 **`@json-render/image`** (Satori → PNG/SVG, no browser); otherwise capture the

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """Red/green suite for phase-bundles (task: phase-bundles, milestone: three-phase-flow).
 
-CONTRACT (frozen, as briefed at BUILD; re-pointed for plan-phase-core — ground+contract
-collapsed into ONE `plan` phase, PHASES now has 7 work phases + terminal "done"): the 7
-work phases (PHASES minus "done") group into 3 agent-owned bundles surfaced at
-`status`/`guide`:
+CONTRACT (frozen, as briefed at BUILD; re-pointed for phase-collapse-3 — the whole front
+span (specify+scenarios+plan+tests) collapsed into ONE `direction` phase, PHASES now has
+3 work phases + terminal "done"): the 3 work phases (PHASES minus "done") group into 3
+agent-owned bundles surfaced at `status`/`guide`:
 
   PHASE_GROUPS = {
-      "DIRECTION": ("specify", "scenarios", "plan", "tests"),
+      "DIRECTION": ("direction",),
       "BUILD":     ("build",),
       "VERIFY":    ("verify",),
   }
-  PHASE_AGENT (per-PHASE, 7 keys) = {
-      "specify": "add-design", "scenarios": "add-design", "plan": "add-design",
-      "tests": "add-build", "build": "add-build",
+  PHASE_AGENT (per-PHASE, 3 keys) = {
+      "direction": "add-design",
+      "build": "add-build",
       "verify": "add-verify",
   }
 
@@ -79,10 +79,10 @@ class PhaseGroupsConstantTest(unittest.TestCase):
                          {"DIRECTION", "BUILD", "VERIFY"})
 
     def test_tuples_match_frozen_shape(self):
-        # phase-merge-specify: scenarios merged into specify; DIRECTION now names
-        # specify/plan/tests (3 phases, was 4).
+        # phase-collapse-3: the whole front span collapsed into ONE `direction` phase;
+        # DIRECTION now names just (direction,), 1 phase (was 3).
         self.assertEqual(engine_constants.PHASE_GROUPS["DIRECTION"],
-                         ("specify", "plan", "tests"))
+                         ("direction",))
         self.assertEqual(engine_constants.PHASE_GROUPS["BUILD"], ("build",))
         self.assertEqual(engine_constants.PHASE_GROUPS["VERIFY"], ("verify",))
 
@@ -110,18 +110,15 @@ class PhaseAgentConstantTest(unittest.TestCase):
         self.assertEqual(set(engine_constants.PHASE_AGENT.keys()), set(PHASES) - {"done"})
 
     def test_values_match_shipped_roster_ownership(self):
-        # plan-phase-core: no more "ground"/"contract" keys — `plan` (the collapsed
-        # phase) is add-design owned, same as specify/scenarios were.
+        # roster-distill (ADD 2.0 M1): ONE `add` agent serves every phase — the spawn
+        # names the mode, the agent loads the beat's guide + persona.
         pa = engine_constants.PHASE_AGENT
-        self.assertEqual(pa["specify"], "add-design")
-        self.assertEqual(pa["plan"], "add-design")
-        self.assertEqual(pa["tests"], "add-build")
-        self.assertEqual(pa["build"], "add-build")
-        self.assertEqual(pa["verify"], "add-verify")
+        self.assertEqual(pa["direction"], "add")
+        self.assertEqual(pa["build"], "add")
+        self.assertEqual(pa["verify"], "add")
 
     def test_values_are_roster_slugs_only(self):
-        self.assertTrue(set(engine_constants.PHASE_AGENT.values())
-                        <= {"add-design", "add-build", "add-verify"})
+        self.assertTrue(set(engine_constants.PHASE_AGENT.values()) <= {"add"})
 
     def test_importable_via_star_import(self):
         self.assertIn("PHASE_AGENT", engine_constants.__all__)
@@ -134,7 +131,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
     """M3 — _phase_bundle: normal resolve / terminal None / fail-closed unmapped."""
 
     def test_resolves_direction_phases(self):
-        for phase in ("specify", "plan", "tests"):
+        for phase in ("direction",):
             self.assertEqual(engine_predicates._phase_bundle(phase), "DIRECTION", phase)
 
     def test_resolves_build_phase(self):
@@ -155,7 +152,7 @@ class PhaseBundleResolverTest(unittest.TestCase):
 
     def test_exposed_on_add_module(self):
         self.assertTrue(hasattr(add, "_phase_bundle"))
-        self.assertEqual(add._phase_bundle("tests"), "DIRECTION")
+        self.assertEqual(add._phase_bundle("direction"), "DIRECTION")
 
 
 class CliFixture(unittest.TestCase):
@@ -184,13 +181,12 @@ class StatusPlainBundleLineTest(CliFixture):
     """M4 — status prints the active bundle + preferred agent; silent at done/no-task."""
 
     def test_status_prints_bundle_for_non_done_task(self):
-        self._set_phase("tests")
+        # roster-distill (ADD 2.0 M1): every phase prefers the ONE `add` agent.
         _, out, _ = _run(["status"])
         self.assertIn("DIRECTION", out)
-        self.assertIn("add-build", out)
         bundle_lines = [ln for ln in out.splitlines() if ln.strip().startswith("bundle")]
         self.assertEqual(len(bundle_lines), 1, out)
-        self.assertIn("prefer: add-build agent", bundle_lines[0])
+        self.assertIn("prefer: add agent", bundle_lines[0])
 
     def test_status_silent_at_done(self):
         self._set_phase("build")
@@ -222,7 +218,7 @@ class GuidePlainBundleLineTest(CliFixture):
         self.assertIsNotNone(bundle_idx, out)
         self.assertGreater(bundle_idx, guide_idx, out)
         self.assertIn("BUILD", lines[bundle_idx])
-        self.assertIn("agent-call-preferred: add-build", lines[bundle_idx])
+        self.assertIn("agent-call-preferred: add", lines[bundle_idx])
 
     def test_guide_silent_at_done(self):
         self._set_phase("build")
@@ -290,45 +286,20 @@ class SkillDocBundleColumnTest(unittest.TestCase):
     SKILL = HERE.parent / "skill" / "add" / "SKILL.md"
 
     def test_phase_table_has_bundle_column_populated(self):
+        # skill-loop-fold: the phase table is retired — SKILL.md narrates the three
+        # bundles INLINE. Same intent: every old phase is owned by a named bundle.
         text = self.SKILL.read_text(encoding="utf-8")
-        lines = text.splitlines()
-        header_idx = next(i for i, ln in enumerate(lines) if ln.startswith("| Phase"))
-        self.assertIn("Bundle", lines[header_idx])
-        rows = {}
-        for ln in lines[header_idx + 2:]:
-            if not ln.startswith("|"):
-                break
-            cells = [c.strip() for c in ln.strip("|").split("|")]
-            rows[cells[0]] = cells
-        expected_bundle = {
-            "specify": "DIRECTION",
-            "plan": "DIRECTION", "tests": "DIRECTION", "build": "BUILD",
-            "verify": "VERIFY",
-        }
-        for phase, bundle in expected_bundle.items():
-            self.assertIn(phase, rows, f"phase row '{phase}' missing")
-            self.assertIn(bundle, rows[phase], f"row '{phase}' missing bundle '{bundle}': {rows[phase]}")
+        for beat in ("**DIRECTION**", "**BUILD**", "**VERIFY**"):
+            self.assertIn(beat, text, f"SKILL.md must narrate the {beat} bundle inline")
+        direction = text.split("**DIRECTION**", 1)[1].split("**BUILD**", 1)[0]
+        for span in ("§1", "§2", "§3", "§4"):
+            self.assertIn(span, direction,
+                          f"the DIRECTION bundle must own the {span} span of the old phases")
 
     def test_agent_call_preferred_documented_as_default(self):
         text = self.SKILL.read_text(encoding="utf-8")
         self.assertIn("agent-call-preferred", text)
         self.assertRegex(text, re.compile(r"default execution mode", re.IGNORECASE))
-
-
-class EngineThreeTreeParityTest(unittest.TestCase):
-    """M9 — the three engine trees stay byte-identical for constants.py/predicates.py/add.py."""
-
-    def test_constants_py_byte_identical(self):
-        digests = {_md5(t / "add_engine" / "constants.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add_engine/constants.py diverged across the 3 trees")
-
-    def test_predicates_py_byte_identical(self):
-        digests = {_md5(t / "add_engine" / "predicates.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add_engine/predicates.py diverged across the 3 trees")
-
-    def test_add_py_byte_identical(self):
-        digests = {_md5(t / "add.py") for t in TREES}
-        self.assertEqual(len(digests), 1, "add.py diverged across the 3 trees")
 
 
 if __name__ == "__main__":

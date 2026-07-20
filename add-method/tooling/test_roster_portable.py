@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""Red/green tests for the PORTABLE phase-roster in the ADD guideline block
-(milestone `portable-roster`, task `roster-portable-shape`, §3 FROZEN @ v1).
+"""Red/green tests for the PORTABLE roster in the ADD guideline block.
 
-The guideline block that `sync-guidelines`/`init` writes into every tool's AGENTS.md
-(and Claude's CLAUDE.md) must carry a COMPACT, tool-agnostic roster section — the 5
-role-stances mapped to their phase span + recommended tier, plus persona/advisor marked
-as cross-cutting services that own no phase — DERIVED from add-method/agents/*.md, and
-POINTING to the per-phase guides + the floor already in the block (never restating them).
+ADD 2.0 M1 roster-distill: the roster is ONE `add` agent — the spawn names the
+mode (direction · build · verify · advise · persona); the agent loads that
+beat's phase guide plus the best-fit persona. The guideline block that
+`sync-guidelines`/`init` writes into every tool's AGENTS.md (and Claude's
+CLAUDE.md) must carry a COMPACT, tool-agnostic roster section DERIVED from
+`add-method/agents/add.md`: the one agent, all five modes, and the
+persona-carries-the-expertise routing — POINTING at the per-phase guides +
+the floor already in the block (never restating them).
 
-The roster is a hand-written compact form that this suite parity-CHECKS against the
-canonical agents/*.md (CHECK-not-generate): every role name, its phase span, its tier
-word, and both service names must be present, and the block↔AGENTS role set is bound
-BIDIRECTIONALLY (added / removed / re-tiered => drift). Reject codes are the assertion
-messages, matching the sibling test_agent_roster convention. Uses Python string search
-only — never shells out to grep (ugrep/BSD-grep gotcha).
+The mode set is bound BIDIRECTIONALLY: the block's modes must EQUAL the mode
+bullets `agents/add.md` declares (a mode added/removed in the agent file with
+no block regen => drift). Python string search only — never shells out to grep.
 
 Run: cd add-method/tooling && python3 -m unittest test_roster_portable -v
 """
@@ -29,18 +28,19 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import add
-from test_agent_roster import AGENTS, AGENT_PHASES, AGENT_TREES, _agent_path, _frontmatter
 
-# the tier the roster must show per role — DERIVED from each agent's own description
-# ("Recommended tier — <tier>"), never hard-coded here (re-tiering the source moves this).
-TIER_RE = re.compile(r"recommended tier\s*[—-]\s*(top|mid)", re.I)
-_BULLET_RE = re.compile(r"^\s*[-*]\s*([a-z][a-z-]*)")
+_PKG_ROOT = Path(__file__).resolve().parent.parent      # add-method/
+_REPO_ROOT = _PKG_ROOT.parent                            # AIDD-Book/
+MODES = ("direction", "build", "verify", "advise", "persona")
+AGENT_TREES = (_PKG_ROOT / "agents", _REPO_ROOT / ".claude" / "agents")
+AGENT_FILE = "add.md"
+# a mode bullet in the agent file's mode-resolution section: `- **direction** — …`
+_MODE_BULLET_RE = re.compile(r"(?m)^-\s*\*\*([a-z]+)\*\*")
 
 
-def _agent_tier(agent: str) -> str:
-    fm = _frontmatter(_agent_path(AGENT_TREES[0], agent).read_text(encoding="utf-8"))
-    m = TIER_RE.search(fm.get("description", ""))
-    return m.group(1).lower() if m else ""
+def _agent_modes(tree: Path) -> set:
+    text = (tree / AGENT_FILE).read_text(encoding="utf-8")
+    return set(_MODE_BULLET_RE.findall(text))
 
 
 def _block(text: str) -> str:
@@ -65,18 +65,6 @@ def _roster(block: str) -> str:
     return "\n".join(out)
 
 
-def _role_line(roster: str, role: str) -> str:
-    for l in roster.splitlines():
-        if role in l.lower():
-            return l
-    return ""
-
-
-def _roster_roles(roster: str) -> set:
-    """The role short-names the roster lists as bullets (for a bidirectional set check)."""
-    return {m.group(1) for l in roster.splitlines() if (m := _BULLET_RE.match(l))}
-
-
 class _Synced(unittest.TestCase):
     """A temp project after `init` auto-syncs AGENTS.md + CLAUDE.md with the block."""
 
@@ -97,29 +85,28 @@ class _Synced(unittest.TestCase):
 
 
 class RosterContentTest(_Synced):
-    def test_roster_names_5_roles_and_spans(self):                      # M1
-        roster = _roster(self.agents_block())
+    def test_roster_names_one_agent_and_all_modes(self):                # M1
+        roster = _roster(self.agents_block()).lower()
         self.assertTrue(roster, "block carries no roster section")
-        self.assertEqual(_roster_roles(roster), set(AGENTS),
-                         f"roster must list exactly {set(AGENTS)}, got {_roster_roles(roster)}")
-        for agent in ("design", "build", "verify"):
-            line = _role_line(roster, agent).lower()
-            first, last = AGENT_PHASES[agent][0], AGENT_PHASES[agent][-1]
-            self.assertIn(first, line, f"{agent} line missing first phase {first!r}")
-            self.assertIn(last, line, f"{agent} line missing last phase {last!r}")
-        for svc in ("persona", "advisor"):
-            line = _role_line(roster, svc).lower()
-            self.assertRegex(line, r"(service|any phase|cross-cut)",
-                             f"{svc} must be marked a cross-cutting service (owns no phase)")
+        self.assertIn("`add` agent", roster, "roster must name the ONE `add` agent")
+        for mode in MODES:
+            self.assertIn(mode, roster, f"roster missing mode {mode!r}")
 
-    def test_each_role_shows_tier(self):                                # M2
-        roster = _roster(self.agents_block())
+    def test_roster_derived_from_agent_file(self):                      # M4 (bidirectional)
+        roster = _roster(self.agents_block()).lower()
         self.assertTrue(roster, "block carries no roster section")
-        for agent in AGENTS:
-            tier = _agent_tier(agent)
-            self.assertIn(tier, ("top", "mid"), f"could not derive tier for {agent}")
-            self.assertIn(tier, _role_line(roster, agent).lower(),
-                          f"{agent} line must show its recommended tier {tier!r}")
+        self.assertIn(AGENT_FILE, roster, "roster must cite its source agents/add.md")
+        declared = _agent_modes(AGENT_TREES[0])
+        listed = {m for m in MODES if m in roster} | {m for m in declared if m in roster}
+        self.assertEqual(declared, listed,
+                         f"roster_portable_drift: block modes {listed} must EQUAL the agent "
+                         f"file's declared mode bullets {declared} — regen sync-guidelines")
+
+    def test_roster_routes_personas(self):                              # M2 (2.0: personas core)
+        roster = _roster(self.agents_block()).lower()
+        self.assertIn("persona", roster, "roster must route the persona loading")
+        self.assertIn("expertise", roster,
+                      "roster must say personas carry the expertise (the 2.0 core value)")
 
     def test_roster_points_not_restates(self):                          # M3
         block = self.agents_block()
@@ -129,21 +116,6 @@ class RosterContentTest(_Synced):
         self.assertEqual(block.count("Never weaken a test or edit a frozen contract"), 1,
                          "roster must NOT duplicate the floor sentence (point, don't restate)")
 
-    def test_roster_derived_from_agents(self):                          # M4
-        roster = _roster(self.agents_block())
-        self.assertTrue(roster, "block carries no roster section")
-        for agent in AGENTS:
-            line = _role_line(roster, agent).lower()
-            self.assertIn(agent, roster.lower(), f"roster missing role {agent}")
-            self.assertIn(_agent_tier(agent), line, f"{agent} tier not derived onto its line")
-            for phase in (AGENT_PHASES[agent][:1] + AGENT_PHASES[agent][-1:]):
-                self.assertIn(phase, line, f"{agent} line missing derived phase {phase!r}")
-
-    def test_roster_text_identical_across_tools(self):                  # M6
-        ra, rc = _roster(self.agents_block()), _roster(self.claude_block())
-        self.assertTrue(ra, "AGENTS.md carries no roster section")
-        self.assertEqual(ra, rc, "roster text must be byte-identical across tools")
-
     def test_block_stays_lean(self):                                    # M7
         block = self.agents_block()
         roster = _roster(block)
@@ -152,6 +124,11 @@ class RosterContentTest(_Synced):
         self.assertLessEqual(len(lines), 12, f"roster must stay compact, got {len(lines)} lines")
         for anchor in ("## ADD — how to work in this repo", "add.py status", "PROJECT.md"):
             self.assertIn(anchor, block, f"block lost a pinned anchor: {anchor!r}")
+
+    def test_roster_text_identical_across_tools(self):                  # M6
+        ra, rc = _roster(self.agents_block()), _roster(self.claude_block())
+        self.assertTrue(ra, "AGENTS.md carries no roster section")
+        self.assertEqual(ra, rc, "roster text must be byte-identical across tools")
 
 
 class RosterAgnosticTest(_Synced):
@@ -163,30 +140,21 @@ class RosterAgnosticTest(_Synced):
 
 
 class RosterRejectTest(_Synced):
-    def test_drift_bidirectional(self):                                 # R1: roster_portable_drift
-        roster = _roster(self.agents_block())
-        self.assertEqual(
-            _roster_roles(roster), set(AGENTS),
-            f"roster_portable_drift: block roster roles {_roster_roles(roster)} must EQUAL the "
-            f"canonical roster {set(AGENTS)} — added / removed / renamed agent")
+    def test_retired_roster_names_gone(self):                           # R1: no zombie roster
+        block = self.agents_block()
+        for retired in ("add-design", "add-build", "add-verify", "add-persona", "add-advisor"):
+            self.assertNotIn(retired, block,
+                             f"retired 5-agent roster name must not survive in the block: {retired!r}")
 
-    def test_claude_leak_rejected(self):                                # R2: roster_claude_only_leak
-        roster = _roster(self.agents_block())
-        self.assertTrue(roster, "roster_claude_only_leak: no roster section to check")
-        for tok in ("task(subagent_type", "plugin auto-discovery", ".claude/agents"):
-            self.assertNotIn(tok, roster.lower(),
-                             f"roster_claude_only_leak: portable roster must not carry {tok!r}")
-
-    def test_phase_mismatch_rejected(self):                             # R3: roster_phase_mismatch
-        roster = _roster(self.agents_block())
-        bline = _role_line(roster, "build").lower()
-        self.assertTrue(bline, "roster_phase_mismatch: no build role line")
-        self.assertIn("tests", bline, "roster_phase_mismatch: build must map to its own phases")
-        for foreign in ("verify", "observe", "specify"):
-            self.assertNotIn(foreign, bline,
-                             f"roster_phase_mismatch: build line must not name {foreign!r} "
-                             f"(a phase build does not own)")
+    def test_agent_file_shipped_in_both_trees(self):                    # R2: roster_uninstalled
+        for tree in AGENT_TREES:
+            self.assertTrue((tree / AGENT_FILE).exists(),
+                            f"the ONE `add` agent must ship in {tree}")
+            for retired in ("add-design.md", "add-build.md", "add-verify.md",
+                            "add-persona.md", "add-advisor.md"):
+                self.assertFalse((tree / retired).exists(),
+                                 f"retired agent file must be deleted: {tree / retired}")
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()

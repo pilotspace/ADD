@@ -119,13 +119,5 @@ class SurfaceTest(_Board):
                          "a clean project prints no milestone-relations line")
 
 
-class EnginePinTest(unittest.TestCase):
-    def test_addpy_trio_matches_engine_md5(self):
-        digests = {hashlib.md5(p.read_bytes()).hexdigest() for p in ADDPY_TRIO}
-        self.assertEqual(len(digests), 1, "add.py trio diverged")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "engine_pin.ENGINE_MD5 must track the live engine")
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

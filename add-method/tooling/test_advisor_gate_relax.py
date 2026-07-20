@@ -77,10 +77,10 @@ class _Board(unittest.TestCase):
                 code = e.code if isinstance(e.code, int) else (0 if e.code is None else 1)
         return code, out.getvalue()
 
-    # ── TASK.md helpers ────────────────────────────────────────────────────
+    # ── PLAN.md helpers ────────────────────────────────────────────────────
 
     def _task_md(self, slug: str) -> Path:
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _mk_verify_task(self, slug: str, *, risk: str = "high",
                         sensitivity: str | None = None, autonomy: str | None = None):
@@ -101,20 +101,23 @@ class _Board(unittest.TestCase):
             p.write_text(t, encoding="utf-8")
 
     def _fill_advisor(self, slug: str, *, verdict: str = "PASS", residue: str = "none"):
-        """Replace §6 advisor block placeholders with real values."""
+        """INSERT a filled §6 advisor block before GATE RECORD (atomic-node: the
+        template no longer scaffolds it — the cross-agent advisor WRITES it)."""
         p = self._task_md(slug)
         t = p.read_text(encoding="utf-8")
-        t = t.replace("Advisor: <agent-id | self>", "Advisor: test-agent")
-        t = t.replace("1. Security: <CLEAR | HARD-STOP: finding>", "1. Security: CLEAR")
-        t = t.replace("2. Concurrency: <CLEAR | RESIDUE: finding>", "2. Concurrency: CLEAR")
-        t = t.replace("3. Architecture: <CLEAR | RESIDUE: finding>", "3. Architecture: CLEAR")
-        t = t.replace("Verdict: <PASS | HARD-STOP>", f"Verdict: {verdict}")
-        t = t.replace("Residue: <none | summary>", f"Residue: {residue}")
-        t = re.sub(r"Binding: <[^>\n]+(?:<[^>\n]+>)?[^>\n]*>", "Binding: yes — mechanical", t)
+        block = ("### Advisor 3-lens verdict — sequential\n"
+                 "Advisor: test-agent\n"
+                 "1. Security: CLEAR\n"
+                 "2. Concurrency: CLEAR\n"
+                 "3. Architecture: CLEAR\n"
+                 f"Verdict: {verdict}\n"
+                 f"Residue: {residue}\n"
+                 "Binding: yes — mechanical\n\n")
+        t = t.replace("### GATE RECORD", block + "### GATE RECORD", 1)
         p.write_text(t, encoding="utf-8")
 
     def _drop_advisor(self, slug: str):
-        """Remove the entire advisor block from §6 (simulates a legacy TASK.md)."""
+        """Remove the entire advisor block from §6 (simulates a legacy PLAN.md)."""
         p = self._task_md(slug)
         t = re.sub(
             r"### Advisor 3-lens verdict.*?(?=\n### GATE RECORD)",

@@ -57,8 +57,6 @@ def _make_bundled(root: Path) -> Path:
     (root / "skill" / "add" / "SKILL.md").write_text("skill\n")
     (root / "tooling").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py\n")
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "00-introduction.md").write_text("intro\n")
     return root
 
 
@@ -136,10 +134,10 @@ class LockTest(_Base):
         self._valid_home()
         self._make_project(self.proj)
         self._set_registry(self.proj.resolve())
-        shutil.rmtree(self.proj / ".add" / "docs")                   # sentinel: reconcile restores it
+        shutil.rmtree(self.proj / ".add" / "tooling")                # sentinel: reconcile restores it
         code, _ = self._update()
         self.assertEqual(code, 0)
-        self.assertTrue((self.proj / ".add" / "docs" / "00-introduction.md").exists(),
+        self.assertTrue((self.proj / ".add" / "tooling" / "add.py").exists(),
                         "the project was reconciled under the lock")
         self.assertFalse((self.home / LOCK_NAME).exists(), "the lockfile is unlinked after a successful run")
         code2, _ = self._update()                                    # lock was released -> a 2nd run acquires it
@@ -149,7 +147,7 @@ class LockTest(_Base):
         self._valid_home()
         self._make_project(self.proj)
         self._set_registry(self.proj.resolve())
-        shutil.rmtree(self.proj / ".add" / "docs")                   # sentinel: must NOT be restored on fail-fast
+        shutil.rmtree(self.proj / ".add" / "tooling")                # sentinel: must NOT be restored on fail-fast
         fd = self._hold_lock()
         try:
             code, err = self._update()
@@ -157,7 +155,7 @@ class LockTest(_Base):
             self._release(fd)
         self.assertNotEqual(code, 0, "a held lock fails the second run fast")
         self.assertIn("update_in_progress", err)
-        self.assertFalse((self.proj / ".add" / "docs").exists(),
+        self.assertFalse((self.proj / ".add" / "tooling").exists(),
                          "nothing reconciled while the lock was held")
 
     def test_lock_released_after_failure(self):                      # Must 1 (release-on-failure)
@@ -208,14 +206,14 @@ class ValidationTest(_Base):
     def test_relative_path_aborts_loud(self):                        # Must 4 + Reject unsafe_registry_path
         self._valid_home()
         self._make_project(self.proj)
-        shutil.rmtree(self.proj / ".add" / "docs")                   # sentinel
+        shutil.rmtree(self.proj / ".add" / "tooling")                # sentinel
         self._set_registry("rel/proj", self.proj.resolve())
         before = (self.home / "registry.json").read_text()           # capture the exact bytes we expect intact
         code, err = self._update()
         self.assertNotEqual(code, 0)
         self.assertIn("unsafe_registry_path", err)
         self.assertEqual((self.home / "registry.json").read_text(), before, "registry left byte-intact")
-        self.assertFalse((self.proj / ".add" / "docs").exists(), "the valid sibling was NOT reconciled")
+        self.assertFalse((self.proj / ".add" / "tooling").exists(), "the valid sibling was NOT reconciled")
         self.assertNotIn("9.9.9", self._stamp_text(), "the home was NOT re-stamped (failed before refresh)")
 
     def test_absolute_nonnormalized_nonproject_dropped(self):        # Must 5 (benign, not loud)
@@ -400,7 +398,7 @@ class ParityHardenTest(_Base):
 # --- stale-lock self-heal (global-lock-followups M1) ------------------------
 
 class StaleLockSelfHealTest(_Base):
-    """M1: a wedged .update.lock self-heals via mtime-AGE (never PID-liveness — see TASK.md §0
+    """M1: a wedged .update.lock self-heals via mtime-AGE (never PID-liveness — see PLAN.md §0
     Honors on the Windows os.kill(pid,0) hazard); a live lock's fail-fast stays unchanged."""
 
     def _write_lock(self, *, age_seconds, content=""):
@@ -528,7 +526,7 @@ class StaleLockSelfHealTest(_Base):
         one), but a heartbeat thread cannot survive whole-PROCESS scheduling starvation any more
         than the holder it protects can, so the test's own stale_after override is ALSO widened
         (test-only, prod default is 600s) to keep realistic margin against CI noise — belt AND
-        suspenders, not an either/or (see TASK.md §1 Reject R1 for why a bigger constant ALONE,
+        suspenders, not an either/or (see PLAN.md §1 Reject R1 for why a bigger constant ALONE,
         without the heartbeat, was already rejected as a non-fix)."""
         self._write_lock(age_seconds=10)
         env = self._env()

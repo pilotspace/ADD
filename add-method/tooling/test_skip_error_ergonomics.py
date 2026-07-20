@@ -58,14 +58,14 @@ class _Board(unittest.TestCase):
         self._silent("milestone-confirm", "m1")
 
     def _task_md(self, slug):
-        return self.tmp / ".add" / "tasks" / slug / "TASK.md"
+        return self.tmp / ".add" / "tasks" / slug / "PLAN.md"
 
     def _write_task(self, slug, *, skips_line, rationale=""):
         ground = ["Anchors the contract cites: cmd_advance"]
         if rationale:
             ground.append(rationale)
         lines = [
-            f"# TASK: {slug}",
+            f"# PLAN: {slug}",
             f"slug: {slug} · created: 2026-07-10 · stage: mvp · {skips_line}" if skips_line
             else f"slug: {slug} · created: 2026-07-10 · stage: mvp",
             "phase: ground",

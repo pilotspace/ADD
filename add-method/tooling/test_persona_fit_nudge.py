@@ -152,21 +152,6 @@ class SourceInspectionTest(unittest.TestCase):
                       "the fit-hint branch must be gated ONLY by the existence predicate")
 
     # scenario: source parity across the 3 engine trees
-    def test_persona_fit_nudge_source_parity(self):
-        bodies_add, bodies_const, bodies_io = [], [], []
-        for tree in ENGINE_TREES:
-            add_py = tree / "add.py"
-            const_py = tree / "add_engine" / "constants.py"
-            io_py = tree / "add_engine" / "io_state.py"
-            self.assertTrue(add_py.exists(), f"add.py missing in {tree}")
-            self.assertTrue(const_py.exists(), f"constants.py missing in {tree}")
-            self.assertTrue(io_py.exists(), f"io_state.py missing in {tree}")
-            bodies_add.append(add_py.read_bytes())
-            bodies_const.append(const_py.read_bytes())
-            bodies_io.append(io_py.read_bytes())
-        self.assertEqual(len(set(bodies_add)), 1, "add.py must be byte-identical across trees")
-        self.assertEqual(len(set(bodies_const)), 1, "constants.py must be byte-identical across trees")
-        self.assertEqual(len(set(bodies_io)), 1, "io_state.py must be byte-identical across trees")
 
 
 if __name__ == "__main__":

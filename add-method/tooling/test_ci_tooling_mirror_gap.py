@@ -57,14 +57,6 @@ _REQUIRED_MATERIALIZE_LINES = [
 ]
 
 
-def _tomllib_available() -> bool:
-    try:
-        import tomllib  # noqa: F401
-    except ModuleNotFoundError:
-        return False
-    return True
-
-
 def _setuptools_available() -> bool:
     return importlib.util.find_spec("setuptools") is not None
 
@@ -74,17 +66,12 @@ def _expected_skip_count() -> int:
     own recursion guard (FreshCheckoutSurvivesTestJob, rediscovered inside the
     clone) hits `_ADD_CI_MIRROR_GAP_NESTED == "1"` and calls skipTest — PLUS
     whatever environment-conditional skips the CURRENT interpreter is already
-    known to produce elsewhere in the suite: the 6 component-pillar test files
-    (test_component_registry / _components_validator / _cross_component_contract
-    / _cross_component_milestone / _multirepo_federation / _per_component_verify)
-    each self-skip as ONE module-level result when tomllib is unavailable (< 3.11);
-    test_packaging.py's 3 PyWheelTest checks self-skip per-method when setuptools
-    isn't importable. Computed instead of a fixed literal, so an unrelated THIRD
-    kind of skip still fails loudly instead of being silently waved through
-    (task fresh-checkout-skip-tolerance / nested-suite-skip-count-tolerance)."""
+    known to produce elsewhere in the suite: test_packaging.py's 3 PyWheelTest
+    checks self-skip per-method when setuptools isn't importable. (kernel-trim
+    (ADD 2.0 M5): the 6 component-pillar files with tomllib skips are deleted.)
+    Computed instead of a fixed literal, so an unrelated skip still fails loudly
+    instead of being silently waved through."""
     n = 1
-    if not _tomllib_available():
-        n += 6
     if not _setuptools_available():
         n += 3
     return n
@@ -152,25 +139,6 @@ class PublishGuardJobMaterializes(unittest.TestCase):
                                      f"publish.yml `guard` job must materialize: {line!r}")
             self.assertLess(pos, run_pos,
                              f"materialize line must run BEFORE the suite: {line!r}")
-
-
-class SeamAuditUntouched(unittest.TestCase):
-    def test_seam_audit_job_untouched(self):                       # M4, R:seam_audit_regressed
-        diff = subprocess.run(
-            ["git", "diff", "HEAD", "--", "add-method/tooling/test_untrack_add_tooling.py"],
-            cwd=REPO, capture_output=True, text=True, check=False,
-        )
-        self.assertEqual(diff.stdout.strip(), "",
-                          "test_untrack_add_tooling.py must not be touched by this build")
-        block = _job_block(CI_YML.read_text(encoding="utf-8"), "seam-audit")
-        audit_pos = block.find("python3 .add/tooling/add.py audit")
-        self.assertGreaterEqual(audit_pos, 0,
-                                 "seam-audit must still carry the canonical audit invocation")
-        for line in _REQUIRED_MATERIALIZE_LINES:
-            pos = block.find(line)
-            self.assertGreaterEqual(pos, 0,
-                                     f"seam-audit must still materialize: {line!r}")
-            self.assertLess(pos, audit_pos)
 
 
 class FreshCheckoutSurvivesTestJob(unittest.TestCase):
@@ -263,30 +231,17 @@ class OkSummaryRegexTest(unittest.TestCase):
     guard (this file's FreshCheckoutSurvivesTestJob, rediscovered inside the
     clone) always self-skips exactly once, PLUS whatever environment-conditional
     skips the CURRENT interpreter already produces elsewhere in the suite
-    (component-pillar tests self-skip as one unit per file when tomllib is
-    unavailable < 3.11; test_packaging's wheel checks skip per-method when
-    setuptools isn't importable) — compute the exact expected count instead of a
-    fixed literal, so an unrelated THIRD kind of skip still fails loudly."""
+    (test_packaging's wheel checks skip per-method when setuptools isn't
+    importable) — compute the exact expected count instead of a fixed literal,
+    so an unrelated skip still fails loudly."""
 
     def test_both_deps_present_computes_one(self):
-        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=True), \
-             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
+        with mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
             self.assertEqual(_expected_skip_count(), 1)
 
-    def test_tomllib_missing_adds_six(self):
-        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=False), \
-             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
-            self.assertEqual(_expected_skip_count(), 7)
-
     def test_setuptools_missing_adds_three(self):
-        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=True), \
-             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
+        with mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
             self.assertEqual(_expected_skip_count(), 4)
-
-    def test_both_missing_sums_both(self):
-        with mock.patch("test_ci_tooling_mirror_gap._tomllib_available", return_value=False), \
-             mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
-            self.assertEqual(_expected_skip_count(), 10)
 
     def test_regex_matches_its_own_exact_count(self):
         rx = _nested_ok_regex(7)

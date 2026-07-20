@@ -90,14 +90,14 @@ tasks promote idioms here as they retire them.
 
 Load-bearing method vocabulary — reworded AROUND, never renamed (a rename breaks GLOSSARY,
 cross-refs, and tests). F3 asserts each still appears on the surface.
+(kernel-trim (ADD 2.0 M5): dogfood · scope level · retrospective consolidation ·
+READY-QUEUE · REVIEW-QUEUE retired with their guides/pillars.)
 
-- dogfood
 - automated quality gate
 - autonomy level
 - baseline approval
 - lesson learned
 - living documentation
-- scope level
 - change scope
 - failing-first suite
 - non-functional review
@@ -105,10 +105,7 @@ cross-refs, and tests). F3 asserts each still appears on the surface.
 - onboarding
 - lowest-confidence
 - decision point
-- retrospective consolidation
 - specification bundle
-- READY-QUEUE
-- REVIEW-QUEUE
 - change request
 - HARD-STOP
 - RISK-ACCEPTED

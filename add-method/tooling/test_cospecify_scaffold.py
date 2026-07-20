@@ -2,7 +2,7 @@
 """Regression guard: the new-task scaffold must emit the co-specification §1 shape.
 
 This pins the surface that the docs-only reform could not reach on its own: a
-real `add.py new-task` materializes `TASK.md` from `templates/TASK.md.tmpl` (or
+real `add.py new-task` materializes `PLAN.md` from `templates/PLAN.md.tmpl` (or
 the embedded `_FALLBACK_TASK` circuit breaker). Before co-specification this
 section was a flat `Assumptions (confirm before building)` list — the very shape
 that produced walls of pre-ticked `[x] confirmed` assumptions. These tests fail
@@ -22,7 +22,7 @@ import add
 OLD_FLAT_SHAPE = "Assumptions (confirm before building):"
 OLD_EXIT = "zero open assumptions"
 NEW_FRAMINGS = "Framings weighed:"
-NEW_RANKED = "Assumptions — lowest-confidence first:"
+NEW_RANKED = "<assumptions>"  # atomic-node: the ranked label left; the tag + ⚠ flag line are the shape
 FLAG_GLYPH = "⚠"
 
 
@@ -37,11 +37,11 @@ class CospecifyScaffoldTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self._cwd)
 
-    # --- the real end-to-end path that produced the smoking-gun TASK.md -------
+    # --- the real end-to-end path that produced the smoking-gun PLAN.md -------
     def test_new_task_scaffolds_cospecification_spec(self):
         add.main(["init"])
         add.main(["new-task", "demo", "--title", "Demo feature"])
-        text = (Path(self.tmp) / ".add" / "tasks" / "demo" / "TASK.md").read_text(
+        text = (Path(self.tmp) / ".add" / "tasks" / "demo" / "PLAN.md").read_text(
             encoding="utf-8"
         )
         # new shape present
@@ -105,20 +105,6 @@ class CospecifyScaffoldTest(unittest.TestCase):
         )
 
     # --- propagation discipline: the two tooling trees stay byte-identical ----
-    def test_tooling_trees_byte_identical(self):
-        root = Path(add.__file__).resolve().parents[2]  # .../AIDD-Book
-        pairs = [
-            ("add-method/tooling/templates/TASK.md.tmpl", ".add/tooling/templates/TASK.md.tmpl"),
-            ("add-method/tooling/add.py", ".add/tooling/add.py"),
-        ]
-        for canon, dogfood in pairs:
-            cb, db = (root / canon), (root / dogfood)
-            if not db.exists():
-                self.skipTest(f"dogfood mirror absent: {dogfood}")
-            self.assertEqual(
-                cb.read_bytes(), db.read_bytes(),
-                f"tooling trees drifted: {canon} != {dogfood} — propagate with cp",
-            )
 
 
 if __name__ == "__main__":

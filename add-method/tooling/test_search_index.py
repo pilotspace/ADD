@@ -50,7 +50,7 @@ def _md5(p: Path) -> str:
 
 
 class _Board(unittest.TestCase):
-    """Shared harness: a fresh temp `.add/` project + raw MILESTONE.md/TASK.md
+    """Shared harness: a fresh temp `.add/` project + raw MILESTONE.md/PLAN.md
     fixture writers. Search is stateless (reads only the filesystem corpus, no
     state.json involvement beyond `find_root`), so fixtures are written
     directly — no need to drive the full new-milestone/new-task scaffolding."""
@@ -119,9 +119,9 @@ class _Board(unittest.TestCase):
              else (self.root / "tasks" / slug))
         d.mkdir(parents=True, exist_ok=True)
         title = slug if title is None else title
-        path = d / "TASK.md"
+        path = d / "PLAN.md"
         path.write_text(
-            f"# TASK: {title}\n\n"
+            f"# PLAN: {title}\n\n"
             f"slug: {slug} · created: 2026-01-01 · stage: mvp\n"
             f"milestone: none\n"
             f"phase: {phase}\n\n"
@@ -161,7 +161,7 @@ class ArchivedTaskNestedLayoutFound(_Board):
         # M2, R:archived_task_layout_missed
         self._write_task("nested-task", feature="contains UNIQUEARCHKW",
                           archived_under="owning-ms")
-        # deliberately NO flat .add/archive/nested-task/TASK.md exists
+        # deliberately NO flat .add/archive/nested-task/PLAN.md exists
         self.assertFalse((self.root / "archive" / "nested-task").exists())
         out, code = self._run("search", "UNIQUEARCHKW", "--json")
         self.assertEqual(code, 0)
@@ -324,7 +324,7 @@ class MalformedDocSkippedNotFatal(_Board):
         broken_dir.mkdir(parents=True, exist_ok=True)
         # a DIRECTORY where a file is expected -> .read_text() raises
         # IsADirectoryError (an OSError subclass) portably, no chmod/root gotchas
-        (broken_dir / "TASK.md").mkdir()
+        (broken_dir / "PLAN.md").mkdir()
         out, code = self._run("search", "SURVIVEKW")
         self.assertEqual(code, 0, f"must not raise on a malformed doc:\n{out}")
         self.assertIn("good-task", out, "every OTHER readable artifact must still be reported")
@@ -399,7 +399,7 @@ class SearchPureFunctionsContractConformance(unittest.TestCase):
 
     def test_task_fields_placeholder_feature_is_empty_string(self):
         from add_engine.search import _task_fields
-        fields = _task_fields("# TASK: a title\n\nFeature: <name>\n")
+        fields = _task_fields("# PLAN: a title\n\nFeature: <name>\n")
         self.assertEqual(fields["feature"], "")
 
     def test_keyword_hit_none_when_nothing_matches(self):
@@ -419,26 +419,14 @@ class SearchPureFunctionsContractConformance(unittest.TestCase):
 
 # --- engine-parity: this task's own regression guard (mirrors precedent) ---
 class EngineSearchPinned(unittest.TestCase):
-    def test_add_py_byte_identical_and_pinned(self):                # M... (invariants)
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        self.assertTrue(present, "at least the canonical add.py must exist")
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                          "add.py must match the re-pinned engine_pin.ENGINE_MD5")
 
-    def test_search_py_exists_and_byte_identical_across_trees(self):
-        present = [p for p in SEARCH_PY_COPIES if p.exists()]
-        self.assertEqual(len(present), 3, "add_engine/search.py must exist in all 3 engine trees")
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add_engine/search.py copies must be byte-identical")
 
     def test_package_digest_matches_pinned_engine_pkg_md5(self):
         import engine_manifest
         for tree in (HERE, HERE.parent / "src" / "add_method" / "_bundled" / "tooling",
                      REPO / ".add" / "tooling"):
             self.assertEqual(engine_manifest.package_digest(tree), engine_pin.ENGINE_PKG_MD5,
-                              f"mirror_incomplete: {tree} package digest != ENGINE_PKG_MD5")
+                              f"mirror_incomplete: {tree} package digest != the package digest")
 
 
 if __name__ == "__main__":

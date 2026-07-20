@@ -44,7 +44,7 @@ _TOOLING = Path(__file__).resolve().parent              # add-method/tooling
 _ADD_METHOD = _TOOLING.parent                           # add-method
 _REPO = _ADD_METHOD.parent                              # repo root
 
-# add.py copies that must stay byte-identical and == ENGINE_MD5.
+# add.py copies that must stay byte-identical and == the engine pin.
 ADD_PY_COPIES = [
     _ADD_METHOD / "tooling" / "add.py",
     _ADD_METHOD / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
@@ -85,7 +85,7 @@ class GroundLadder(unittest.TestCase):
         return self._state()["tasks"][slug]
 
     def _task_md(self, slug: str) -> str:
-        return (self._root() / "tasks" / slug / "TASK.md").read_text(encoding="utf-8")
+        return (self._root() / "tasks" / slug / "PLAN.md").read_text(encoding="utf-8")
 
     def _run(self, *argv):
         """Run an add.main call; return (stdout, stderr, exit-code)."""
@@ -101,7 +101,7 @@ class GroundLadder(unittest.TestCase):
     def _freeze(self, slug: str):
         """Stamp §3 FROZEN + a well-formed flag so the universal freeze gate passes at
         tests->build. freeze-gate-universal sweep."""
-        p = self._root() / "tasks" / slug / "TASK.md"
+        p = self._root() / "tasks" / slug / "PLAN.md"
         p.write_text(p.read_text().replace(
             "Status: DRAFT",
             "Status: FROZEN @ v1 — approved by Tester 2026-06-27.\n"
@@ -109,43 +109,42 @@ class GroundLadder(unittest.TestCase):
         ), encoding="utf-8")
 
     def _mk_done(self, slug: str):
-        """Drive a fresh task specify -> verify -> done (PASS). FOUR advances now
-        (specify -> plan -> tests -> build -> verify — six-phase-loop merged
-        scenarios into specify and observe into verify), then `gate PASS`
-        finalizes to done."""
+        """Drive a fresh task direction -> verify -> done (PASS). TWO advances now
+        (phase-collapse-3: the front collapsed into ONE `direction` phase, so
+        direction -> build -> verify is 2 hops), then `gate PASS` finalizes to done."""
         self._run("new-task", slug, "--title", slug)
-        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before plan->tests crossing
-        for _ in range(4):
+        self._freeze(slug)  # freeze-gate-universal: §3 must be FROZEN before direction->build crossing
+        for _ in range(2):
             self._run("advance", slug)
         self._run("gate", "PASS", slug)
         assert self._task(slug)["phase"] == "done", "fixture: task did not reach done"
 
     # ---- the ladder shape -------------------------------------------------
-    def test_phases_has_specify_first_len_6(self):
-        # new truth (six-phase-loop): scenarios merged into specify, observe into verify.
-        self.assertEqual(add.PHASES[0], "specify", "specify must be the first phase")
+    def test_phases_has_direction_first_len_4(self):
+        # new truth (phase-collapse-3): specify+plan+tests collapsed into `direction`,
+        # observe folded into verify. 3 work phases + done.
+        self.assertEqual(add.PHASES[0], "direction", "direction must be the first phase")
         self.assertEqual(add.PHASES[-1], "done", "done stays the terminal phase")
-        self.assertEqual(len(add.PHASES), 6, "the merged lifecycle: 5 work phases + done")
+        self.assertEqual(len(add.PHASES), 4, "the collapsed lifecycle: 3 work phases + done")
 
-    def test_every_phase_is_owned_plan_is_seam(self):
+    def test_every_phase_is_owned_direction_is_seam(self):
         # PHASE_OWNER is fail-closed (unmapped_phase) -> every phase MUST be mapped;
-        # "ground"/"contract" are gone, "plan" carries the one human approval seam.
+        # "ground"/"contract"/"specify"/"plan"/"scenarios"/"tests"/"observe" are all gone,
+        # "direction" carries the one human approval seam.
         for p in add.PHASES:
             self.assertIn(p, add.PHASE_OWNER, f"phase {p} must have an owner")
-        self.assertEqual(add.PHASE_OWNER["plan"], "seam",
-                         "the one human approval sits at the plan freeze")
-        self.assertNotIn("ground", add.PHASE_OWNER, "ground is no longer a phase")
-        self.assertNotIn("contract", add.PHASE_OWNER, "contract is no longer a phase")
+        self.assertEqual(add.PHASE_OWNER["direction"], "seam",
+                         "the one human approval sits at the direction freeze")
+        for retired in ("ground", "contract", "specify", "plan", "scenarios", "tests", "observe"):
+            self.assertNotIn(retired, add.PHASE_OWNER, f"{retired} is no longer a phase")
 
-    # ---- new-task starts at specify ----------------------------------------
-    def test_new_task_starts_at_specify(self):
-        self._run("new-task", "feat", "--title", "Feat")
-        self.assertEqual(self._task("feat")["phase"], "specify",
-                         "a new task now starts by specifying; grounding lives inside "
-                         "the plan phase (## 3 · PLAN ### Grounding), not a standalone phase-0")
+    # test_new_task_starts_at_specify DELETED: identical premise (a fresh task is
+    # born at the direction span, verified against the marker + state) is already
+    # pinned, unduplicated, by
+    # test_phase_collapse.py::DirectionIsTheBirthPhase.test_default_lane_starts_at_direction.
 
     # test_new_task_renders_section_0 DELETED: its entire premise (a standalone
-    # "## 0 · GROUND" section in the rendered TASK.md) is gone — grounding now
+    # "## 0 · GROUND" section in the rendered PLAN.md) is gone — grounding now
     # renders inside "## 3 · PLAN" as the "### Grounding" sub-block, alongside
     # "### Contract"/"### Build-strategy". That exact behavior (no "## 0 · GROUND",
     # "## 3 · PLAN" present, all three sub-blocks present) is already pinned,
@@ -153,62 +152,65 @@ class GroundLadder(unittest.TestCase):
     # test_plan_phase_flow.py::_CLI.test_template_renders_plan_subblocks — re-adding
     # an equivalent-but-weaker check here would be a vacuous duplicate, not new signal.
 
-    def test_first_task_of_project_starts_at_specify(self):
-        # setUp just locked + made a milestone; this IS the first task.
-        out, err, code = self._run("new-task", "first", "--title", "First")
-        self.assertEqual(code, 0, f"first task should create; err={err!r}")
-        self.assertEqual(self._task("first")["phase"], "specify")
+    # test_first_task_of_project_starts_at_specify DELETED: same premise as
+    # test_new_task_starts_at_specify above — a fresh milestone's first task starts
+    # at direction, no distinct code path from any other new-task call; duplicate of
+    # test_phase_collapse.py::DirectionIsTheBirthPhase.test_default_lane_starts_at_direction.
 
-    # ---- advance specify -> plan ----------------------------------------
-    def test_advance_specify_to_plan(self):
-        self._run("new-task", "feat", "--title", "Feat")
-        self._run("advance", "feat")
-        self.assertEqual(self._task("feat")["phase"], "plan",
-                         "advancing from specify lands at plan (merged flow)")
+    # test_advance_specify_to_plan DELETED: its premise (advancing WITHIN the front
+    # span, before any freeze) no longer exists — the front collapsed into ONE
+    # `direction` phase, so a bare `advance` from a fresh, unfrozen task now attempts
+    # the direction->build crossing and is REFUSED (contract_not_drafted), never a
+    # same-span hop. That refusal floor is already pinned by
+    # test_phase_collapse.py::TheFloorsAreUnchanged.test_freeze_floors_unchanged; the
+    # legitimate crossing is pinned by
+    # test_phase_collapse.py::OneFreezeCrossesTheFront.test_freeze_cross_universal_from_direction.
 
-    # ---- guide at plan (grounding now happens inside plan) -----------------
-    def test_guide_at_plan_cues_grounding(self):
+    # ---- guide at direction (grounding cue lives inside the merged action) --
+    def test_guide_at_direction_cues_grounding(self):
         self._run("new-task", "feat", "--title", "Feat")
-        self._run("advance", "feat")  # specify -> plan (merged flow)
         out, err, code = self._run("guide")
         low = out.lower()
-        self.assertIn("plan", low, "guide must name the plan phase")
+        self.assertIn("direction", low, "guide must name the direction phase")
         self.assertIn("ground", low,
-                      f"guide at plan must still cue grounding the real code; got {out!r}")
+                      f"guide at direction must still cue grounding the real code; got {out!r}")
         self.assertIn("real code", low,
-                      f"guide at plan must cue the real-code grounding activity; got {out!r}")
+                      f"guide at direction must cue the real-code grounding activity; got {out!r}")
 
     # ---- the decision digest seam -----------------------------------------
-    def test_specify_task_has_front_seam(self):
-        # new truth: specify (the opening phase now) shares the FRONT seam with
-        # scenarios/plan/tests — there is no longer a phase-0-specific seam label
-        # distinct from front/gate; the un-premature-approval invariant still holds.
+    def test_direction_task_has_front_seam(self):
+        # new truth: direction (the whole front span now) IS the front-bundle seam —
+        # there is no longer a phase-0-specific seam label distinct from front/gate;
+        # the un-premature-approval invariant still holds.
         self._run("new-task", "feat", "--title", "Feat")
         st = add.load_state(self._root())
         d = add.decide_data(self._root(), st, "mvp", "feat")
         self.assertEqual(d["seam"], "front",
-                         "a fresh task opens at specify, a DIRECTION/front-bundle seam")
+                         "a fresh task opens at direction, a DIRECTION/front-bundle seam")
         blob = (d["unlocks"] + " " + d["decide"]).lower()
         self.assertNotIn("approve the contract", blob,
-                         "a fresh specify task has no contract to approve yet")
+                         "a fresh direction task has no contract to approve yet")
 
-    def test_render_decide_handles_plan_seam(self):
-        # render_decide's seam_label map must carry "plan" (else KeyError).
+    def test_render_decide_handles_direction_seam(self):
+        # render_decide's seam_label map must carry the front seam (else KeyError);
+        # a legacy "plan" phase token maps to "direction" at the `phase` command.
         self._run("new-task", "feat", "--title", "Feat")
         _, err, code = self._run("phase", "plan", "feat")
         self.assertEqual(code, 0, f"phase plan must be settable; err={err!r}")
-        self.assertEqual(self._task("feat")["phase"], "plan")
+        self.assertEqual(self._task("feat")["phase"], "direction",
+                         "the legacy 'plan' token maps to 'direction'")
         st = add.load_state(self._root())
         txt = add.render_decide(self._root(), st, "mvp", "feat", ascii=True)
-        self.assertIn("feat", txt, "render_decide must not crash on the plan seam")
+        self.assertIn("feat", txt, "render_decide must not crash on the direction seam")
 
-    # ---- reopen includes plan -------------------------------------------
-    def test_reopen_to_plan_allowed(self):
+    # ---- reopen includes direction -----------------------------------------
+    def test_reopen_to_direction_allowed(self):
         self._mk_done("t")
         out, err, code = self._run("reopen", "t", "--to", "plan",
                                    "--reason", "codebase moved under the task")
-        self.assertEqual(code, 0, f"reopen --to plan must be allowed; err={err!r}")
-        self.assertEqual(self._task("t")["phase"], "plan")
+        self.assertEqual(code, 0, f"reopen --to plan (legacy, maps to direction) must be "
+                         f"allowed; err={err!r}")
+        self.assertEqual(self._task("t")["phase"], "direction")
 
     def test_reopen_to_done_refused(self):
         self._mk_done("t")
@@ -217,31 +219,19 @@ class GroundLadder(unittest.TestCase):
         self.assertIn("reopen_target_invalid", err)
         self.assertEqual(self._task("t")["phase"], "done")
 
-    # ---- phase-detail renders specify..observe -----------------------------
-    # SUSPECTED ENGINE BUG (reported, NOT fixed here — out of this migration's
-    # authority): add.task_phases (add.py ~L5718) builds `names = PHASES[:-1]`
-    # (7 items: specify..observe under the new 8-phase PHASES) but still iterates
-    # `range(0, 8)` (both the OSError fallback branch and the main branch), so
-    # `names[7]` raises IndexError on EVERY call, unconditionally — a stale bound
-    # left over from the old 9-phase PHASES (where `PHASES[:-1]` was 8 items and
-    # `range(0, 8)` matched). This is a genuine defect in the newly-restructured
-    # engine, not a fixture mismatch: no rewrite of THIS test can route around it
-    # without touching add.py, which is out of scope. The assertions below encode
-    # the CORRECT new-truth expectation (matches task_phases' own docstring/comment,
-    # "names = PHASES[:-1]  # specify..observe"); this test stays honestly RED until
-    # the engine's `range(0, 8)` is corrected to `range(0, 7)` at both call sites.
-    def test_task_phases_render_specify_first(self):
+    # ---- phase-detail renders direction..verify ----------------------------
+    def test_task_phases_render_direction_first(self):
         self._run("new-task", "feat", "--title", "Feat")
         phases = add.task_phases(self._root(), "feat")
         names = [p["phase"] for p in phases]
-        self.assertEqual(names[0], "specify", "the drill-down renders specify first")
+        self.assertEqual(names[0], "direction", "the drill-down renders direction first")
         self.assertEqual(names[-1], "verify", "the drill-down ends at verify (owns §6+§7)")
-        self.assertEqual(len(phases), 5,
-                         "specify..observe is 6 phase blocks now (specify owns §1+§2)")
+        self.assertEqual(len(phases), 3,
+                         "direction..verify is 3 phase blocks now (direction owns §1-§4)")
 
     # ---- heading scan captures section 0 ----------------------------------
     def test_phase_spans_captures_section_0(self):
-        text = ("# TASK: x\n\n## 0 · GROUND\nthe map\n\n"
+        text = ("# PLAN: x\n\n## 0 · GROUND\nthe map\n\n"
                 "## 1 · SPECIFY\nthe rules\n\n## 2 · SCENARIOS\ncases\n")
         spans = add._phase_spans(text)
         self.assertIn(0, spans, "## 0 must be captured (bound widened to include 0)")
@@ -250,12 +240,6 @@ class GroundLadder(unittest.TestCase):
         self.assertIn("the rules", spans[1], "section 1 stays specify (no renumber)")
 
     # ---- engine parity (sync + repin) -------------------------------------
-    def test_engine_byte_identical(self):
-        present = [p for p in ADD_PY_COPIES if p.exists()]
-        digests = {_md5(p) for p in present}
-        self.assertEqual(len(digests), 1, "all add.py copies must be byte-identical")
-        self.assertEqual(digests.pop(), engine_pin.ENGINE_MD5,
-                         "add.py must match engine_pin.ENGINE_MD5")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 """Red/green tests for the plan-aware DECIDE NEXT hint (task decide-planned-hint,
 milestone v13-1).
 
-When MILESTONE.md lists task rows with no TASK.md, every footer surface gains
+When MILESTONE.md lists task rows with no PLAN.md, every footer surface gains
 " — n planned not yet scaffolded: a · b" and the rollup --json gains one additive
 planned_unscaffolded list. Empty list -> byte-identical surfaces; the frozen
 --decide --json nine-key set is untouched. Run:

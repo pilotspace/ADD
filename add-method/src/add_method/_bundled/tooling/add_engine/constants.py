@@ -8,15 +8,15 @@ import re
 from pathlib import Path
 
 __all__ = [
+    "BOOK_URL",
+    "book_url",
     "ROOT_DIRNAME",
     "STATE_FILE",
     "MILESTONE_FILE",
     "GOAL_UNSET",
     "STAGES",
-    "GRADUATION_CUE",
-    "RELEASABLE_CUE",
-    "RELEASES_FILE",
     "PHASES",
+    "LEGACY_PHASES",
     "GATES",
     "HEAL_CAP",
     "PHASE_GUIDE",
@@ -27,6 +27,8 @@ __all__ = [
     "PERSONA_FRONTMATTER_KEYS",
     "PERSONA_REQUIRED_SECTIONS",
     "PERSONA_FLOW_VALUES",
+    "TASK_KINDS",
+    "SPEC_DDS",
     "PERSONA_HINT",
     "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
@@ -45,18 +47,19 @@ MILESTONE_FILE = "MILESTONE.md"
 # this sentinel so the read-only orientation surfaces never blank or crash.
 GOAL_UNSET = "(unset — add a 'goal:' line to PROJECT.md)"
 STAGES = ("prototype", "poc", "mvp", "production")
-# v22 stage-graduation: the read-only cue `status` shows when the MVP is covered.
-# Worded as the ACTION (never a file) so it stands before graduate.md exists.
-GRADUATION_CUE = "MVP covered → propose graduation"
-# release-altitude: the read-only cue `status` shows when ≥1 closed milestone is
-# unreleased. The 5th scope level (release.md). `{n}` is filled at print time; the
-# wording matches SKILL.md's "Beyond the bundle" cross-ref byte-for-byte.
-RELEASABLE_CUE = "releasable: {n} milestone(s) closed since last release"
-# the append-only release ledger lives at the PROJECT ROOT (the dir containing .add/),
-# a sibling of CHANGELOG.md — NOT inside .add/. The ledger IS the attribution source:
-# a milestone is "released" iff its slug appears on a `milestones:` row.
-RELEASES_FILE = "RELEASES.md"
-PHASES = ("specify", "plan", "tests", "build", "verify", "done")
+# kernel-trim (ADD 2.0 M5): GRADUATION_CUE / RELEASABLE_CUE / RELEASES_FILE died with the
+# graduate/release verbs — the release-manager persona owns that judgment now.
+PHASES = ("direction", "build", "verify", "done")
+# phase-collapse-3 (thin-engine-loop W2): the 6-phase walk collapsed to 3 work phases.
+# `direction` is the whole front span (the old specify+plan+tests — §1–§4 drafted
+# top-to-bottom, ONE freeze approval crosses it into build). Legacy tokens normalize to
+# their 3-phase home at READ time (load_state) — 473 pre-collapse task records are never
+# bulk-rewritten; the map below is the single source both load_state and _phase_index use.
+LEGACY_PHASES = {
+    "ground": "direction", "specify": "direction", "scenarios": "direction",
+    "contract": "direction", "plan": "direction", "tests": "direction",
+    "observe": "verify",
+}
 GATES = ("none", "PASS", "RISK-ACCEPTED", "HARD-STOP")
 # heal-then-escalate (verify-integrity): the bounded self-heal loop cap. A CONFIRMED cheat
 # (mechanical tripwire divergence, or an agent-reported semantic refute-read finding) returns
@@ -67,15 +70,23 @@ HEAL_CAP = 3
 
 
 
+# The AIDD book's published home (book-stops-shipping, ADD 2.0 M6b): the book no
+# longer installs into projects as .add/docs/ — every engine chapter pointer deep-
+# links here instead. mkdocs pretty-URLs: docs/<stem>.md renders at <BOOK_URL>/<stem>/.
+BOOK_URL = "https://pilotspace.github.io/ADD"
+
+
+def book_url(chapter: str) -> str:
+    """Deep link for a book chapter filename ('02-the-flow.md' -> …/02-the-flow/)."""
+    stem = chapter[:-3] if chapter.endswith(".md") else chapter
+    return f"{BOOK_URL}/{stem}/"
+
+
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).
 # Keep the action wording aligned with each phase's EXIT line in the TASK template.
 PHASE_GUIDE = {
-    "specify":   ("state every rule — Must / Reject (+ named code) / After, projected from the milestone Ground + the request; rank assumptions lowest-confidence first and flag the biggest risk; then write one Given/When/Then per Must AND per Reject (§2) — every result observable",
+    "direction": ("draft the Direction bundle top-to-bottom — §1 rules (Must / Reject + named codes / After, assumptions ranked lowest-confidence first) · §2 one scenario per rule · §3 the change PLAN: ground the real code, draft the contract, and DESCRIBE what this task will do (scope · ordered batches · approach — the plan-of-action the freeze report shows the human) · §4 red suite failing for the right reason; then the ONE approval: freeze --by <name> --cross",
                   "03-step-1-specify.md"),
-    "plan":      ("build the change plan — ground the real code the contract will cite, freeze the contract shape (names match the glossary), and set the build strategy; this is the one human approval",
-                  "05-step-3-plan.md"),
-    "tests":     ("write one failing test per scenario; run them RED for the right reason",
-                  "06-step-4-tests.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",
                   "07-step-5-build.md"),
     "verify":    ("run the suite + non-functional checks, then record the gate; then note what to watch + the spec delta for the next loop (§7)",
@@ -88,8 +99,8 @@ PHASE_GUIDE = {
 # follows the book's who-does-what table (Verify is "human only"); `tests`/`build`
 # are AI-led. A phase missing here is `unmapped_phase` (fail closed) — never defaulted.
 PHASE_OWNER = {
-    "specify": "human", "plan": "seam",
-    "tests": "ai", "build": "ai", "verify": "human", "done": "human",
+    "direction": "seam",
+    "build": "ai", "verify": "human", "done": "human",
 }
 # phase-bundles: the work phases (PHASES minus the terminal "done") group into 3
 # agent-owned bundles surfaced at `status`/`guide` — DIRECTION fixes the shape (through
@@ -99,20 +110,21 @@ PHASE_OWNER = {
 # reorder; "done" (terminal, human-led) deliberately has no bundle — see PHASE_AGENT/
 # _phase_bundle below. Union == set(PHASES) - {"done"}, pairwise disjoint (test_phase_bundles.py).
 PHASE_GROUPS = {
-    "DIRECTION": ("specify", "plan", "tests"),
+    "DIRECTION": ("direction",),
     "BUILD": ("build",),
     "VERIFY": ("verify",),
 }
 # phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
-# `tests` bundles into DIRECTION above yet its preferred agent is still add-build, the
-# shipped roster's own boundary: add-design owns specify/plan, add-build owns
-# tests/build, add-verify owns verify). A phase missing here is a bug (PHASE_GROUPS'
+# roster-distill (ADD 2.0 M1): ONE execution shell — the `add` agent — serves every
+# phase; the spawn prompt names the mode (direction·build·verify·advise·persona) and
+# the agent loads that beat's guide + the fitting persona (personas carry the
+# expertise, the agent carries the discipline). A phase missing here is a bug (PHASE_GROUPS'
 # own union covers every key); `_phase_bundle` is the fail-closed resolver for an
 # unmapped/corrupted phase token, not this map directly.
 PHASE_AGENT = {
-    "specify": "add-design", "plan": "add-design",
-    "tests": "add-build", "build": "add-build",
-    "verify": "add-verify",
+    "direction": "add",
+    "build": "add",
+    "verify": "add",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 
@@ -126,23 +138,48 @@ PERSONA_REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Req
 # single source the quality predicate reads (a value outside this set is loaded by NO surface,
 # so a typo would otherwise fail silently). Findings are WARN-only (measure-not-block).
 PERSONA_FLOW_VALUES = ("design", "build", "advisor", "verify")
+# persona-task-kinds (ADD 2.0 M1 persona-core): the closed task-kind taxonomy — the join key
+# between a persona's routing claim (`task-kinds:` frontmatter) and a task's declared kind
+# (`kind:` header line). Route-outcome traces record it, the persona scoreboard groups by it.
+# Closed on purpose: a free-text kind can't be scored across tasks. Measure-not-block —
+# an unknown kind is a named WARN (quality predicate Finding C), never a refusal.
+TASK_KINDS = ("feature", "refactor", "test", "docs", "ui",
+              "security", "data", "infra", "release", "integration")
+
+# specs-5dd (ADD 2.0 M3): the closed 5-DD map — dd tag -> (spec file under .add/specs/,
+# title, lens). init renders ONE template (templates/specs/SPEC.md.tmpl) five ways;
+# `delta-append <dd>` routes a lesson to its file. Closed on purpose: the five lenses ARE
+# the method's competency model (DDD·SDD·UDD·TDD·ADD) — an unknown dd is a refusal
+# (delta_dd_unknown), because a delta filed under a sixth ad-hoc lens is a delta lost.
+SPEC_DDS = {
+    "ddd": ("domain.md", "Domain",
+            "what the system IS: entities, rules, ubiquitous language (DDD)"),
+    "sdd": ("system.md", "System",
+            "how it is built: architecture, contracts, data shapes (SDD)"),
+    "udd": ("experience.md", "Experience",
+            "how it feels to use: flows, surfaces, the humans served (UDD)"),
+    "tdd": ("quality.md", "Quality",
+            "how we know it works: test strategy, floors, evidence (TDD)"),
+    "add": ("method.md", "Method",
+            "how we work: the loop, autonomy, ceremony budget (ADD)"),
+}
 
 # persona-seed-nudge v2: ONE hint, single-sourced — `new-milestone`/`check`/`status` all print
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.
 # Project-scoped (not "this milestone's domain") per the confirmed v2 amendment: the AI should
 # catch up ALL of a project's missing personas, not draft a single milestone-fit one.
-PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add-persona "
-                "agent (or read docs/18-personas.md) to seed the project's persona(s) from "
-                "PROJECT.md's domain")
+PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add agent "
+                "in persona mode (or read docs/18-personas.md) to seed the project's persona(s) "
+                "from PROJECT.md's domain + the seed templates (tooling/templates/personas/)")
 
 # persona-fit-nudge: the OPPOSITE-branch, mutually-exclusive sibling of PERSONA_HINT — fires only
 # when ≥1 real persona ALREADY exists, so a brand-new milestone doesn't silently assume one of
 # them fits its domain. Existence-only (names the persona slugs already seeded); the AI still
-# owns the actual fit judgment via add-persona — the engine never scores content similarity.
-# {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
+# owns the actual fit judgment (the add agent's persona mode) — the engine never scores content
+# similarity. {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
 PERSONA_FIT_HINT_TEMPLATE = (
     "existing persona(s) seeded — {slugs} — confirm one fits this milestone's domain, or spawn "
-    "the add-persona agent (or read docs/18-personas.md) to draft a better-fit one"
+    "the add agent in persona mode (or read docs/18-personas.md) to draft a better-fit one"
 )
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts
@@ -197,11 +234,11 @@ _RULE_REF_LINE = "- ADD (AI-Driven Development) Workflows rules: ./.claude/rules
 
 # Minimal embedded fallback so the tool still works if templates/ is missing
 # (circuit breaker: never hard-fail just because a template file was deleted).
-_FALLBACK_TASK = """# TASK: {title}
+_FALLBACK_TASK = """# PLAN: {title}
 
 slug: {slug} · created: {date} · stage: {stage}
 autonomy: auto
-phase: specify
+phase: direction
 
 ## 1 · SPECIFY
 Feature:
@@ -209,19 +246,18 @@ Framings weighed:
 Must:
 Reject:
 After:
-Assumptions — lowest-confidence first:
-  ⚠ <most likely wrong> — lowest confidence because <why>; if wrong: <cost>
+Boundary:
+<assumptions>
+  ⚠ <the ONE assumption most likely to be wrong — if wrong: <cost>>
+</assumptions>
 
 ## 2 · SCENARIOS
 ## 3 · PLAN
-### Grounding
-Touches (files · symbols · signatures):
-Honors (patterns / conventions):
-Anchors the contract cites:
 ### Contract
 Status: DRAFT
 ### Build-strategy
 Scope (may touch):
+Regression floor:
 ## 4 · TESTS
 ## 5 · BUILD
 ## 6 · VERIFY
@@ -233,49 +269,9 @@ Outcome:
 """
 
 
-# Fast-lane fallback: the minimal TASK.md variant (sections {0,1,3,4,5,6}; §2 + §7 dropped).
-# Mirrors templates/TASK.fast.md.tmpl's section set (circuit-breaker parity); a deleted
-# templates/ never hard-fails the fast lane. Keeps the trust floor: §3 freeze-flag + Status,
-# §6 GATE RECORD/Outcome, §0 Anchors, §4 red-before-build, §5 Scope.
-_FALLBACK_TASK_FAST = """# TASK: {title}
+# atomic-node: the ONE template IS the lean render — _FAST_SECTIONS retired with
+# the lane scaffolds (the stripped blocks no longer exist in the template).
 
-slug: {slug} · created: {date} · stage: {stage}
-autonomy: auto
-phase: specify
-fast: true
-
-## 1 · SPECIFY
-Feature:
-Must:
-Reject:
-Accept:
-Assumptions: ⚠ <most likely wrong> — why; if wrong: <cost>
-
-## 3 · PLAN
-### Grounding
-Touches (files · symbols):
-Anchors the contract cites:
-Ground SHA:
-### Contract
-Least-sure flag surfaced at freeze:
-Status: DRAFT
-### Build-strategy
-Scope (may touch): `./src/`
-
-## 4 · TESTS
-Plan:
-Tests live in: `./tests/` · MUST run red before Build.
-
-## 5 · BUILD
-Strategy actually used:
-Code lives in: `./src/`
-
-## 6 · VERIFY
-Build expectations (from §1 Accept + §3 CONTRACT):
-### GATE RECORD
-Outcome:
-Reviewed by:
-"""
 
 _DEFAULT_WIDTH = 72       # fixed width for the persisted/canonical render (RETRO.md)
 
@@ -315,19 +311,15 @@ _TAG_TOKEN_RE = re.compile(r"(M\d+|R:[A-Za-z0-9_]+)")
 # --- autonomy levels (shared: autonomy resolvers + _AUTONOMY_ORDER/cmd_autonomy) ---
 _AUTONOMY_LEVELS = ("manual", "conservative", "auto")
 
-# --- streams posture (shared: streams resolvers + cmd_streams) — the parallel-vs-sequential
-#     half of the run mode (persist-run-mode); project-scoped, persisted in PROJECT.md beside autonomy ---
-_STREAMS_POSTURES = ("parallel", "sequential")
-
 # --- sensitivity taxonomy (shared: _task_sensitivity reader + cmd_freeze/status/audit) — the
 #     risk-CLASS the human declares in the TASK header at freeze (risk-sensitivity-taxonomy). The
 #     engine validates + surfaces a HUMAN-declared token; it NEVER classifies. A closed enum, sibling
-#     of _AUTONOMY_LEVELS/_STREAMS_POSTURES. Consumed downstream by advisor-gate-relax (mechanical). ---
+#     of _AUTONOMY_LEVELS. Consumed downstream by advisor-gate-relax (mechanical). ---
 _SENSITIVITY_VALUES = ("security", "data", "architecture", "mechanical")
 
 # --- gate mode (shared: _task_gate_mode reader + cmd_freeze's --ai-plan-verify path) — the
 #     two-way DIRECTION-freeze declaration (ai-plan-verify-gate): human (default) | ai-plan-verify.
-#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_STREAMS_POSTURES/_SENSITIVITY_VALUES — but,
+#     A closed 2-tuple, sibling of _AUTONOMY_LEVELS/_SENSITIVITY_VALUES — but,
 #     unlike them, listed in __all__: a NEW trust-loosening capability is deliberately surfaced via
 #     `from add_engine.constants import *`, not tucked into the _-prefixed sibling import list.
 #     Absent header line -> None from the resolver, treated as "human" by every caller (fail-closed

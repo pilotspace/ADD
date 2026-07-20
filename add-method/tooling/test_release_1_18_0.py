@@ -34,8 +34,6 @@ VERSION = "1.18.0"
 PRIOR_VERSIONS = ("1.17.0", "1.16.1", "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0",
                   "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1",
                   "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
-from engine_pin import ENGINE_MD5
-CANONICAL_AUDIT = "run: python3 .add/tooling/add.py audit"
 # the headline changes the 1.18.0 notes must name
 FEATURE_ANCHORS = ("Approach", "Data strategy", "Optimization stance",
                    "per-facet ADR harvest", "compact-foundation `--propose`",
@@ -84,43 +82,15 @@ class WorkflowHygieneTest(unittest.TestCase):
             self.assertNotIn("actions/checkout@v4", text, wf.name)
             self.assertNotIn("actions/setup-python@v5", text, wf.name)
             self.assertNotIn("actions/setup-node@v4", text, wf.name)
-
-    def test_audit_line_survives_bumps(self):
-        self.assertIn(CANONICAL_AUDIT, CI_YML.read_text(encoding="utf-8"),
-                      "the seam-audit command must stay byte-identical")
-
-
 class ReleaseShapeTest(unittest.TestCase):
-    def test_versions_agree_at_1_18_0(self):
-        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
-        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
-                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
-        self.assertEqual((pkg, py), (VERSION, VERSION),
-                         "publish.yml's guard would fail this release closed")
-
-    def test_plugin_version_agrees(self):
-        plugin = json.loads(
-            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-        )["version"]
-        self.assertEqual(plugin, VERSION,
-                         "the Claude Code plugin manifest must match the shipped version")
-
-    def test_runtime_version_agrees(self):
-        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
-        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
-        self.assertEqual(runtime, VERSION,
-                         "add_method.__version__ must match the shipped version")
+    # NOTE: 1.18.0 is superseded by 2.0.0 — the live-version-agreement assertions
+    # migrated FORWARD into test_release_2_0_0 (release-gate pattern: exactly ONE
+    # suite pins the current version).
 
     def test_getting_started_mentions_guide_line(self):
         text = (PKG / "GETTING-STARTED.md").read_text(encoding="utf-8")
         self.assertIn("guide  :", text,
                       "orient docs must name the phase-playbook line")
-
-    def test_engine_trees_parity(self):
-        for p in (HERE / "add.py", REPO / ".add" / "tooling" / "add.py",
-                  BUNDLE / "tooling" / "add.py"):
-            self.assertEqual(hashlib.md5(p.read_bytes()).hexdigest(), ENGINE_MD5,
-                             f"engine trees must stay byte-identical + pinned: {p}")
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ class FoldNudgeTest(unittest.TestCase):
         os.chdir(self._cwd)
 
     def _add_delta(self, slug, line):
-        p = Path(self.tmp) / ".add" / "tasks" / slug / "TASK.md"
+        p = Path(self.tmp) / ".add" / "tasks" / slug / "PLAN.md"
         text = p.read_text(encoding="utf-8")
         marker = "### Competency deltas"
         idx = text.index(marker) + len(marker)
@@ -106,37 +106,44 @@ class FoldNudgeTest(unittest.TestCase):
         self.assertNotIn("add.py deltas", out,
                          "no fold nudge when there are no open deltas")
 
-    # --- milestone-done: PREVIEW the deltas + emit the ready-to-run fold command --
+    # --- milestone-done: COUNT the open deltas + point at the living-spec channel --
     def test_milestone_done_previews_deltas_and_fold_command(self):
-        """The enhanced close prompt lists each open delta by competency tag and
-        prints the exact `add.py fold` command — not just a bare count."""
+        """kernel-trim (ADD 2.0 M5): the fold ceremony died — the close prompt
+        counts the open §7 deltas and points at delta-append (the living-spec
+        channel), never at a fold verb."""
         self._complete_task_in_milestone("mvp", "t")
         self._add_delta("t", "- [DDD \u00b7 open] domain gap found (evidence: prod signal)")
         code, out, _ = _run(["milestone-done", "mvp"])
         self.assertEqual(code, 0)
-        self.assertIn("(DDD)", out, "preview must tag the delta by competency")
-        self.assertIn("domain gap found", out, "preview must show the delta text")
-        self.assertIn("add.py fold", out, "must emit the ready-to-run fold command")
+        self.assertRegex(out, r"note: 1 open delta", "close must count the open deltas")
+        self.assertIn("add.py delta-append", out, "must point at the living-spec channel")
         self.assertIn("add.py deltas", out, "must still point at the review command")
+        self.assertNotIn("add.py fold", out, "the fold verb is dead — never suggested")
 
-    # --- observe transition: suggest folding into PROJECT.md DURING implement -----
+    # --- observe transition: file lessons into the living specs at completion ------
     def test_gate_completion_suggests_fold(self):
-        """phase-merge-verify moved the nudge: gate/completion — where the loop's
-        lessons are captured now (§7 renders under verify) — suggests folding
-        them into PROJECT.md (add.py fold --task <slug>)."""
+        """kernel-trim (ADD 2.0 M5): a completing gate points §7 lessons at
+        delta-append (the living-spec channel), never at the dead fold verb."""
         add.main(["new-task", "a"])             # fresh project is grandfathered-locked
         add.main(["phase", "verify", "a"])      # to the gate
         code, out, _ = _run(["gate", "PASS", "a"])
         self.assertEqual(code, 0)
-        self.assertIn("add.py fold --task a", out,
-                      "a completing gate must suggest the per-task fold")
-        self.assertIn("PROJECT.md", out, "the suggestion names the foundation it updates")
+        self.assertIn("add.py delta-append", out,
+                      "a completing gate must point at the living-spec channel")
+        self.assertIn("§7", out, "the suggestion names where the lessons live")
+        self.assertNotIn("add.py fold", out, "the fold verb is dead — never suggested")
 
     def test_advance_crossings_silent_on_fold(self):
         """The fold suggestion fires ONLY at gate/completion — advancing
         into any phase stays silent on folding (additive, no noise)."""
-        add.main(["new-task", "a"])             # at specify
-        code, out, _ = _run(["advance", "a"])   # specify -> plan
+        add.main(["new-task", "a"])             # at direction (phase-collapse-3 seed)
+        p = Path(add.find_root()) / "tasks" / "a" / "PLAN.md"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "Status: DRAFT",
+            "Status: FROZEN @ v1 — approved by T\n"
+            "Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none"),
+            encoding="utf-8")                   # pass the crossing's freeze + flag floor
+        code, out, _ = _run(["advance", "a"])   # direction -> build
         self.assertEqual(code, 0)
         self.assertNotIn("add.py fold", out,
                          "advance crossings must not suggest folding")

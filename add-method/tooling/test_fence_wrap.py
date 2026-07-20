@@ -30,7 +30,7 @@ SPACED = "col_amount:      int64        col_currency:   char(3)        col_state
 
 def _task_md_text(sec3):
     return "\n".join([
-        "# TASK: t", "",
+        "# PLAN: t", "",
         "## 1 · SPECIFY", "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
         "## 3 · PLAN", sec3, "",   # plan-phase-core: §3 is now PLAN (ground+contract collapsed into it)
@@ -76,7 +76,7 @@ class FenceWrapTest(unittest.TestCase):
 
     def _mk_task(self, slug, sec3):
         add.main(["new-task", slug, "--title", slug])
-        (self._root() / "tasks" / slug / "TASK.md").write_text(
+        (self._root() / "tasks" / slug / "PLAN.md").write_text(
             _task_md_text(sec3), encoding="utf-8")
 
     # ---- scenarios ---------------------------------------------------------

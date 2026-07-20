@@ -35,7 +35,7 @@ def _tests_src(n):
 
 def _task_md_text(sec4):
     return "\n".join([
-        "# TASK: t", "",
+        "# PLAN: t", "",
         "## 1 · SPECIFY", "Feature: f", "",
         "## 2 · SCENARIOS", "(none)", "",
         "## 3 · CONTRACT", "shape", "",
@@ -90,7 +90,7 @@ class PathConfinementTest(unittest.TestCase):
         buf, err = io.StringIO(), io.StringIO()
         with redirect_stdout(buf), redirect_stderr(err):
             add.main(["new-task", slug, "--title", slug])
-        (self._root() / "tasks" / slug / "TASK.md").write_text(
+        (self._root() / "tasks" / slug / "PLAN.md").write_text(
             _task_md_text(declare_line), encoding="utf-8")
 
     def _json_tests(self, slug):
@@ -155,18 +155,18 @@ class PathConfinementTest(unittest.TestCase):
 
     # ---- prose accord (anchors, red until build) ----------------------------
     def test_prose_clause_present(self):
-        tmpl = (HERE / "templates" / "TASK.md.tmpl").read_text(encoding="utf-8")
-        guide = (HERE.parent / "skill" / "add" / "phases" / "4-tests.md").read_text(
+        tmpl = (HERE / "templates" / "PLAN.md.tmpl").read_text(encoding="utf-8")
+        guide = (HERE.parent / "skill" / "add" / "phases" / "direction.md").read_text(
             encoding="utf-8")
         self.assertIn(CLAUSE, tmpl)
         self.assertIn(CLAUSE, guide)
         for canon, twins in (
-            (HERE / "templates" / "TASK.md.tmpl",
-             (REPO / ".add" / "tooling" / "templates" / "TASK.md.tmpl",
-              BUNDLE / "tooling" / "templates" / "TASK.md.tmpl")),
-            (HERE.parent / "skill" / "add" / "phases" / "4-tests.md",
-             (REPO / ".claude" / "skills" / "add" / "phases" / "4-tests.md",
-              BUNDLE / "skill" / "add" / "phases" / "4-tests.md")),
+            (HERE / "templates" / "PLAN.md.tmpl",
+             (REPO / ".add" / "tooling" / "templates" / "PLAN.md.tmpl",
+              BUNDLE / "tooling" / "templates" / "PLAN.md.tmpl")),
+            (HERE.parent / "skill" / "add" / "phases" / "direction.md",
+             (REPO / ".claude" / "skills" / "add" / "phases" / "direction.md",
+              BUNDLE / "skill" / "add" / "phases" / "direction.md")),
         ):
             for twin in twins:
                 self.assertEqual(canon.read_bytes(), twin.read_bytes(),
