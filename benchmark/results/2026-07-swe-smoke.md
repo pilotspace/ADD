@@ -1,5 +1,10 @@
 # SWE-bench Lite smoke — does ADD change what a coding agent ships?
 
+> **Superseded for the ADD arm** by the atomic-template remeasure
+> ([2026-07-atomic-remeasure.md](2026-07-atomic-remeasure.md)): haiku 2/3 → 3/3 after the
+> host-suite Regression floor became method; sonnet 3/3 held at ~half the wall-clock.
+> The vanilla numbers and the diagnosis below stand as recorded.
+
 **2026-07-19 · smoke-scale (n=3 instances × 2 arms × 2 models) · officially evaluated**
 
 The wm bench measures ADD on a longitudinal project it designed. This campaign

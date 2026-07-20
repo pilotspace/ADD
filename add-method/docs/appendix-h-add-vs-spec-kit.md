@@ -87,6 +87,14 @@ tests as the floor, not the host repo's suite. Diagnosed gap, not destiny: in a
 foreign repo the loop must declare the existing suite as a floor. Data:
 [the SWE smoke report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-swe-smoke.md).
 
+**Resolution (one release later):** the diagnosis became method — the task
+template now carries a `Regression floor:` line binding the host repo's own
+suite at the gate — and the re-run scored haiku+ADD at **3/3 resolved, cheaper
+than before** ($2.15 vs $2.52), with the miss's patch shrinking from 1.6 KB of
+over-build to a 559 B minimal fix. The floor caught exactly what the small
+model couldn't hold in its head. Data:
+[the atomic remeasure](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-atomic-remeasure.md).
+
 ## The bottom line
 
 - Choose **spec-kit** for small, friendly, strong-model, human-re-read
