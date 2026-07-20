@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "8d44e6eda025cdf79263020c93832ec9"  # re-aimed @ atomic-node (ONE atomic PLAN.md template; --fast/--oneshot/--thin/--full lane scaffolds retired; AI-verify block template-borne; Regression-floor + multi-agent Advisor seams; Build-expectations block + opt-in gate retired). prior: abac501b… @ route-scoreboard
+ENGINE_MD5 = "0d98f6934351c7c1d60b9b4cf06c4d18"  # re-aimed @ atomic-node (ONE atomic PLAN.md template; --fast/--oneshot/--thin/--full lane scaffolds retired; AI-verify block template-borne; Regression-floor + multi-agent Advisor seams; Build-expectations block + opt-in gate retired; + neighborhood-status card). prior: abac501b… @ route-scoreboard
 ENGINE_PKG_MD5 = "ec7f8093d556a5e00b25353005b018b0"  # re-aimed @ atomic-node (constants drops _FAST_SECTIONS — the lane scaffolds retired with the fat template blocks; _section_unfilled serves contract-fill only). prior: 557f500f… @ book-stops-shipping
