@@ -20,9 +20,9 @@ metadata:
 
 # ADD — memory · judgment · conscience (the agent is the hands)
 
-You are the orchestrator. ADD keeps the AI fast *and* safe by fixing direction
+You turn intent into the right task, then drive it. ADD keeps the AI fast *and* safe by fixing direction
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
-result through passing evidence, not a plausible-looking diff.
+result through passing evidence, not a plausible diff.
 
 **One plan = one task.** Each feature is one `.add/tasks/<slug>/PLAN.md` — the engine-known
 spine; its §3 PLAN (grounding · contract · scope · measurable Target) is the core artifact.
@@ -52,13 +52,13 @@ Then read the foundation map `add.py status --foundation` (`--all` full) + `.add
 
 - **No `.add/state.json` yet** (`status` says `no .add/ project found`) → **autonomous setup**: read
   `.add/.intent` if present (the installer's first-build intent — a NOTE, never an init trigger), then
-  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and drive the setup span of
-  `phases/direction.md` — foundation + first bundle to the human baseline `lock`.
+  YOU run `add.py init --name "<inferred>" --stage <picked> --await-lock` and drive setup via
+  `phases/direction.md` (brownfield repo → map it silently, `adopt.md`) — to the human baseline `lock`.
 - **A task is active** → open its `.add/tasks/<active>/PLAN.md`, read the `phase:` marker, work that
   beat per the loop below.
 - **No active task** → first SIZE the request (Intake below), then `add.py new-task <slug> --title "..."`.
 
-**Quick ref** — `status --brief` resume · `advance --fill <draft>` write+continue · `status --section <n>` one §body · `gate PASS` at verify.
+**Quick ref** — `status --brief` resume · `advance --fill <draft>` writes · `status --section <n>` one §body · `gate PASS` at verify.
 **Flag mode** — ONE atomic template serves every task (no lanes); flags are header declarations.
 - **gate_mode** — headless/agent-crossed freeze: declare `gate_mode: ai-plan-verify` in the PLAN.md
   header + fill the §3 AI-verify record; security|data|architecture stay human-frozen (unstrikeable).
@@ -73,12 +73,12 @@ one bucket — `new-major` ·
 `sub-milestone` · `task` · `change-request` — propose `{ bucket, rationale, command }`; the human
 confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a milestone bucket draft
 `MILESTONE.md` (goal · scope · exit criteria · breadth-first tasks — `phases/direction.md`), then
-`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task` until agreed; the confirm COMPILES the Tasks list into the task DAG — new-task inherits each node's planned depends-on). For
+`new-milestone --await-confirm` + `milestone-confirm <slug>` (gates `new-task`; confirm compiles Tasks to the DAG → new-task inherits each node's depends-on). For
 `task`/`change-request`: `add.py new-task`, then beat 1 above.
 
 ## The 3-beat loop (inline — this file IS the loop; references load on demand)
 
-Every task is three beats, three engine calls, ONE human decision point:
+Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
 1. **DIRECTION** — load the domain-fit persona (seed via add persona-mode if none), then draft
    the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
@@ -95,9 +95,9 @@ Every task is three beats, three engine calls, ONE human decision point:
    run auto-PASSes on complete no-residue evidence — *auto-resolved*, an explicit PASS, never a
    skip; residue or lowered autonomy → human — `run.md`).
 
-Stuck or deep? References, on demand — never a mandatory read: `phases/direction.md` ·
-`phases/build.md` · `phases/verify.md`. Delegating? Spawn the roster agent for the beat; it loads
-its own references (you read ONLY this file).
+Stuck or deep? References, on demand — optional: `phases/direction.md` ·
+`phases/build.md` · `phases/verify.md` · opaque term? `terms.md`. Delegating? Spawn
+the roster agent; it loads its own references (you read ONLY this file).
 
 At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
 `gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·

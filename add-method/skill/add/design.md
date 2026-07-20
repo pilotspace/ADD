@@ -4,8 +4,8 @@ When a **UI feature** — or any human-facing **experience surface** (screen · 
 **human gate**) — reaches specify, design it first. UDD is experience-driven, not UI-only: it takes
 the surface from the **domain** to a real captured image the human has **seen and confirmed** —
 *before* build. Loaded on demand; the engine never runs it. It fills the existing token + component
-foundation — `tokens.json` (`udd-tokens.md`), `catalog.json` + `prototypes/<name>.json`
-(`udd-catalog.md`).
+foundation — `tokens.json` (schema: `templates/udd-tokens.md`), `catalog.json` +
+`prototypes/<name>.json` (schema: `templates/udd-catalog.md`).
 
 ## The loop — five beats
 
@@ -23,7 +23,7 @@ record the pick:
 - **CONCEPT** — the *idea / mood / direction* in a line.
 - **LAYOUT** — the *structure / grid / hierarchy*.
 - **VISUAL DESIGN** — *color · type · spacing · imagery*. **Surface** identity values for the human
-  to choose — never auto-pick (identity stays **human-owned**, `udd-tokens.md`).
+  to choose — never auto-pick (identity stays **human-owned**, `templates/udd-tokens.md`).
 - **INTERACTION** — *cadence · when/how to seek the human · turn-rhythm*; static screen → *none*.
 
 Record **before** review-domain: project **defaults** in DESIGN.md's `## Design intake`; per-screen
@@ -71,7 +71,7 @@ tool-agnostic. Captures live at **`.add/design/captures/<name>.<ext>`**, mention
 
 The loop **binds** the UDD contracts **read-only** — `tokens.json` / `catalog.json` /
 `prototypes/<name>.json` are read, never reshaped (a reshape is a change request). **Identity**
-values stay **human-owned** (`udd-tokens.md`).
+values stay **human-owned** (`templates/udd-tokens.md`).
 
 ## The hard rules
 

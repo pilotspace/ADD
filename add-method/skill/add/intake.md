@@ -4,6 +4,25 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 **intake level** (the per-task flow is phases 0–7; intake is the step *before* a task). You
 (the AI) **propose**; the human **confirms**. Never create scope without a confirmed proposal.
 
+## Analyze the request before you size it
+
+A raw request is rarely a task yet — it is intent wrapped in prose. ADD's first job is not to
+route it but to *read it into a task shape*. Do this BEFORE any bucket or interview:
+
+1. **Restate the intent** in one line — the outcome the human wants, in their world, not the
+   mechanism. If you cannot state it, it is underspecified → `ask_human` (never guess it).
+2. **Extract the latent requirements** — the acceptance signals hiding in the ask ("fast",
+   "secure", "works like X") are the measurable Targets in disguise; name each one explicitly.
+3. **Name the unstated** — the assumptions, defaults, and edge behavior the prose skips. These
+   become the interview agenda below; surface them, never silently fill them.
+4. **Surface the hidden work** — the migrations, new contract surface, and risks a naive read
+   misses. This is what separates a real task from a wish, and what escalates sensitivity.
+
+This analysis IS the task's raw material: the restated intent seeds §1 grounding, the latent
+requirements seed the §3 Target, the unstated becomes what the interview settles. Sizing (below)
+only decides *where* the task lives — the analysis decides *what it is*. Skipping it is how a
+vague prompt becomes a mis-sized, under-specified task.
+
 ## Interview before you size
 
 Run `add.py search <keyword> ...` first — it surfaces overlapping/prior work in one command. When
