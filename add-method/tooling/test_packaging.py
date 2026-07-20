@@ -43,6 +43,32 @@ def _npm_on_path() -> bool:
     return shutil.which("npm") is not None
 
 
+def _paths_from_pack_json(data) -> list[str]:
+    """Normalize `npm pack --json`'s output shape to a flat files[].path list.
+
+    npm has shipped this payload in three shapes across versions/environments, and the
+    publish job's `npm@latest` inside the `prepublishOnly` hook emits a different one than
+    Node 20's bundled npm in the guard job — a hard-coded `data[0]["files"]` raised
+    `KeyError: 0` in CI (npm >= 11 handed back a dict, not a list), splitting a release.
+    Handle every shape by keying on where the `files` array actually lives:
+
+      1. list of pack-results        -> [ { ..., "files": [...] } ]        (npm 10, npm 11.12 local)
+      2. a single pack-result dict   -> { ..., "files": [...] }
+      3. a dict of pack-results      -> { "<tarball>": { ..., "files": [...] }, ... }
+    """
+    if isinstance(data, list):
+        entries = data
+    elif isinstance(data, dict):
+        entries = [data] if "files" in data else list(data.values())
+    else:
+        raise RuntimeError(f"unexpected `npm pack --json` payload type: {type(data).__name__}")
+    paths: list[str] = []
+    for entry in entries:
+        for f in entry.get("files", []):
+            paths.append(f["path"])
+    return paths
+
+
 def _pack_paths() -> list[str]:
     """Return files[].path from `npm pack --dry-run --json`, run from the package root."""
     proc = subprocess.run(
@@ -51,8 +77,34 @@ def _pack_paths() -> list[str]:
     )
     if proc.returncode != 0:
         raise RuntimeError(f"`npm pack --dry-run` failed ({proc.returncode}):\n{proc.stderr}")
-    data = json.loads(proc.stdout)                     # [ { ..., "files": [ {path,size,mode} ] } ]
-    return [f["path"] for f in data[0]["files"]]
+    return _paths_from_pack_json(json.loads(proc.stdout))
+
+
+class PackJsonShapeTest(unittest.TestCase):
+    """`npm pack --json` shape drift must never split a release again (npm>=11 KeyError:0).
+
+    No npm needed — these feed `_paths_from_pack_json` the raw shapes directly, so they run
+    everywhere (including the guard job on Node 20, catching the shape the npm job hits)."""
+    _FILES = [{"path": "bin/cli.js", "size": 1, "mode": 420},
+              {"path": "tooling/add.py", "size": 2, "mode": 420}]
+    _EXPECTED = ["bin/cli.js", "tooling/add.py"]
+
+    def test_list_of_results_shape(self):   # npm 10 / npm 11.12 local
+        self.assertEqual(_paths_from_pack_json([{"name": "x", "files": self._FILES}]),
+                         self._EXPECTED)
+
+    def test_single_dict_result_shape(self):
+        self.assertEqual(_paths_from_pack_json({"name": "x", "files": self._FILES}),
+                         self._EXPECTED)
+
+    def test_dict_of_results_shape(self):   # the CI npm>=11 shape that raised KeyError: 0
+        self.assertEqual(_paths_from_pack_json({"pilotspace-add-2.0.0.tgz":
+                                                {"name": "x", "files": self._FILES}}),
+                         self._EXPECTED)
+
+    def test_unexpected_scalar_raises(self):
+        with self.assertRaises(RuntimeError):
+            _paths_from_pack_json(42)
 
 
 @unittest.skipUnless(_npm_on_path(), "npm not on PATH — tarball checks skipped (honest skip)")
