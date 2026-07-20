@@ -24,13 +24,12 @@ You turn intent into the right task, then drive it. ADD keeps the AI fast *and* 
 (spec, scenarios, contract, failing tests) **before** the build, and trusting the
 result through passing evidence, not a plausible diff.
 
-**One plan = one task.** Each feature is one `.add/tasks/<slug>/PLAN.md` — the engine-known
-spine; its §3 PLAN (grounding · contract · scope · measurable Target) is the core artifact.
-Shard free context files beside it — the AI owns that architecture.
+**One task = one atomic node.** Each feature is one `.add/tasks/<slug>/PLAN.md`; its frozen §3
+(contract · scope · Target) is the interface neighbor nodes depend on — edges compile from the
+milestone, `graph` renders the DAG, `locate` walks a failure to its node. Shard context beside it.
 
-**The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
-`add.py todo` and print its output — `--todo <text>` captures · `--todo` lists · `--todo --done
-<id>` closes — then STOP.
+**The `--todo` fast-path.** ARGUMENTS begin with `--todo`? Skip orienting: run `add.py todo`, print
+it — `--todo <text>` captures · `--todo` lists · `--todo --done <id>` closes — then STOP.
 
 ## Always start here (orient — do not skip)
 
@@ -133,7 +132,6 @@ One trigger = one guide — full prose: `beyond.md`; load only when a trigger fi
    A real change is a *change request* back to Specify.
 4. **No silent skips.** Every Verify ends in exactly one recorded outcome: `PASS`, `RISK-ACCEPTED`
    (signed, non-security only), or `HARD-STOP`. A security finding is always `HARD-STOP`.
-5. **Ask, don't guess.** If a requirement is unclear, stop and ask the user.
 </constraints>
 
 ## Advancing — the 3-call walk
@@ -157,6 +155,4 @@ The steps never change; their depth does (stage from `add.py status`):
 
 ## The method rationale
 
-The full method (the *why*) is the AIDD book — https://pilotspace.github.io/ADD/
-(the `docs/…` chapters the guides cite). Read it only when a
-decision is genuinely unclear — never duplicate it here.
+The *why* lives in the AIDD book — https://pilotspace.github.io/ADD/ (the `docs/…` chapters the guides cite). Read it when a decision is genuinely unclear; never duplicate it here.

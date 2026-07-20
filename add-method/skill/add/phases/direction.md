@@ -170,22 +170,17 @@ one per applicable case, or rule it out on purpose. Every Then is specific and o
 Turn the rules + scenarios into ONE change plan and FREEZE it. Below the freeze code is disposable;
 above it the Contract does not move.
 
-### Grounding — the real code the contract will cite (gather BEFORE you freeze)
+### Grounding — reason it in-context (don't write an essay — `PLAN.md.tmpl`: persist the interface, not prose)
 Project from the milestone `## Ground`, then deepen only where THIS task lands. Never invent a
-file/symbol you have not opened.
-- **Touches** — real files · symbols · signatures, as `path:symbol — what it is / how keyed` (cite the
-  symbol, not a bare line number — `l.NNN` rots; symbols survive). Use code-navigation tools, not memory.
-- **Context (working folder)** — non-code artifacts touched: docs/textbase · TODOs · config · data fixtures. Task-delta.
-- **Honors** — patterns/conventions from `PROJECT.md`/`CONVENTIONS.md` · seams consulted (`SEAMS.md`). Task-delta.
-- **Anchors the contract cites** — the specific symbols §3's Contract will name; it may cite ONLY these.
-- **Issues/Risks** — concrete traps/untestable risks found in the real code (feeds §1).
-- **Related intent** — the WHY: `PROJECT.md §` · `GLOSSARY` term(s) · originating request/milestone rationale.
-- **Ground SHA** — the commit grounded against, stamped by freeze.
-
-Sweep BROAD cheaply (skim an index/map; a subagent sweep for unfamiliar ground), then DEEPEN on
-what THIS task needs. **Grounding is complete when** every field
-is filled from real assets (a `<…>` placeholder = weak). *Greenfield / first task:* grounding IS the
-foundation docs — an honest "new module, no code; honors CONVENTIONS.md §X" is complete.
+file/symbol you have not opened; cite the **symbol**, not a bare line number (`l.NNN` rots; symbols
+survive), via code-navigation tools, not memory. **Persist only what the contract needs**: the
+**Anchors** it may cite (the specific symbols §3 names — it may cite ONLY these) and, optionally, a
+**Ground SHA** (the commit grounded against — the engine stamps it when the line is present).
+Everything else — what it **Touches**, the **Honors**/seams consulted, the **Issues/Risks**, the
+**Related intent** (the WHY) — you REASON now and let the frozen Contract encode; don't transcribe it
+into the file. Sweep BROAD cheaply (skim an index/map; a subagent sweep for unfamiliar ground), then
+DEEPEN on what THIS task needs. *Greenfield / first task:* grounding IS the foundation docs — an
+honest "new module, no code; honors CONVENTIONS.md §X" is complete.
 
 ### Contract — freeze the external shape (HARD, tamper-guarded)
 Interfaces with inputs/outputs; shapes + persistent schema (note transactional needs). Names drawn
@@ -204,12 +199,12 @@ Present the bundle **lowest-confidence first**. Render from the card: banner →
 SUMMARY → FLAGS → DECIDED → EVIDENCE → APPROVE → NEXT (`gate-udd.md` = template + examples, read at
 most once per session) — **render before `FROZEN`, then record `Reported: yes`; never on a
 timeout** (`run.md`). The freeze always renders the full card. The approval freezes the Contract
-(HARD) + the Build-strategy Scope; then `Status: FROZEN @ v1 — approved by <name>`. The freeze also
-ratifies the header `route:` line — the persona's lane proposal — recording it to state
-(`route_unrecorded` is audit-measured, never a refusal).
+(HARD) + the Build-strategy Scope; then `Status: FROZEN @ v1 — approved by <name>`. Lane modes are
+retired — ONE atomic template serves every task; if the header still carries an optional `route:`
+line the freeze records it (audit-only — `route_unrecorded` is measured, never a refusal).
 
 <exit_gate>
-- [ ] **Grounding** — Touches · Context · Honors · Anchors named from the code; Issues/Risks · Related intent · Ground SHA recorded (or an honest none).
+- [ ] **Grounding** — reasoned in-context; the Contract's **Anchors** resolve in the code; an optional **Ground SHA** recorded (the essay bullets are not persisted — the interface is).
 - [ ] **Contract** — versioned, `FROZEN`; contract tests pass against the mock; every name matches the glossary; every §1 rejection has a contracted response.
 - [ ] **Build-strategy** — Scope declared; batches + persona + spawn isolation named; a measurable Target set.
 - [ ] The Contract cites only Grounding anchors; the ⚠ lowest-confidence flag is surfaced.
