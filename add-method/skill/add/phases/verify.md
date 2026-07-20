@@ -147,16 +147,14 @@ means refine or re-spawn, never a pass.
 
 ## Sensitivity — the risk-class vocabulary
 
-A task declares its risk-CLASS with a `sensitivity:` header line — *what kind* of risk, distinct
-from `risk:` (*how much*). The engine validates + surfaces it (freeze/status/check); it **never
-classifies**. Base four, method-universal: **security** (authn/authz, secrets, crypto, attack
-surface — HARD-STOP, human in the loop in EVERY tier) · **data** (persistence, migrations,
-privacy, loss; Datetime, money, or timezone arithmetic also ⇒ `data` —
-value formats are the risk surface, bench wm2's naive-timestamp green) · **architecture** (module boundaries,
-contracts, cross-cutting structure) · **mechanical** (rote, low-impact — the only class a
-recorded advisor verdict can gate for auto-completion, `advisor-gate-relax`). EXTEND per project
-in `GLOSSARY.md`'s `## Sensitivity classes` (`- <token>: <definition>` bullets); freeze accepts
-base ∪ domain — else `sensitivity_invalid`. Keep it current: a new KIND of risk → propose a
-class, the human confirms; map domain → base behavior in the definition ("pii … escalates to
-human review" = human-floor, not advisor-gatable). Declared, never inferred · the base four are
-never replaced · a comment is never a declaration.
+A `sensitivity:` header line declares the risk-CLASS (*what kind*, distinct from `risk:` = *how
+much*); the engine validates + surfaces it (freeze/status/check), never classifies. Base four:
+**security** (authn/authz, secrets, crypto, attack surface — HARD-STOP, human in EVERY tier) ·
+**data** (persistence, migrations, privacy, loss — Datetime, money, or timezone arithmetic also ⇒
+`data`, value formats are the risk surface, bench wm2's naive-timestamp green) · **architecture**
+(module boundaries, contracts, cross-cutting structure) · **mechanical** (rote, low-impact — the
+only class a recorded advisor verdict can gate for auto-completion, `advisor-gate-relax`). EXTEND
+per project in `GLOSSARY.md`'s `## Sensitivity classes` (`- <token>: <definition>`); freeze accepts
+base ∪ domain else `sensitivity_invalid`. Declared never inferred · base four never replaced · a
+comment is never a declaration · a new KIND of risk → propose a class, human confirms (map domain →
+base behavior in the definition, e.g. "pii … escalates to human review" = human-floor).
