@@ -1255,7 +1255,8 @@ def cmd_relate(args: argparse.Namespace) -> None:
     """edge-truth W1.5: the post-creation edge verb the freeze edge-hint ratifies
     through. ADDITIVE only (append + dedup — dropping an edge is a deliberate state
     edit, not a verb). Validate-then-write on the SOURCE slug; TARGETS may dangle
-    (forward edges are legal — check's existing warn owns them); a self-edge is
+    (a forward edge is legal while its target is pending — `add.py check` reds the
+    dangling ref until it resolves, but no gate ever refuses); a self-edge is
     refused (nonsense input, not a measurement)."""
     root = _require_root()
     state = load_state(root)

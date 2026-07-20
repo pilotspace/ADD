@@ -111,7 +111,7 @@ class InheritTest(_EdgeHarness):
         self.assertEqual(self._state()["tasks"]["search"]["depends_on"],
                          ["api-core", "auth-rules"],
                          "the plan's truth is inherited verbatim; a dangling forward "
-                         "edge is check's warn, never a lost edge")
+                         "edge reds check until the parent exists, never a lost edge")
 
     def test_explicit_depends_on_wins(self):
         self._mk_confirm_milestone()
@@ -188,7 +188,7 @@ class EdgeHintTest(_EdgeHarness):
 class RelateVerbTest(_EdgeHarness):
     """W1.5: the post-creation edge verb the edge-hint ratifies through. Additive
     (dedup, never drops), validate-then-write on the SOURCE slug, dangling TARGETS
-    allowed (check's warn owns them — forward edges are legal), self-edge refused."""
+    allowed (forward edges are legal while pending; check reds them until resolved), self-edge refused."""
 
     def _two_tasks(self):
         self._silent("lock", "--force")
