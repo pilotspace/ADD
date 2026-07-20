@@ -26,11 +26,11 @@ result through passing evidence, not a plausible-looking diff.
 
 **One plan = one task.** Each feature is one `.add/tasks/<slug>/PLAN.md` — the engine-known
 spine; its §3 PLAN (grounding · contract · scope · measurable Target) is the core artifact.
-Shard free context files beside it in the task folder — the AI owns that architecture.
+Shard free context files beside it — the AI owns that architecture.
 
 **The `--todo` fast-path.** When the skill ARGUMENTS begin with `--todo`, skip orienting: route to
-`add.py todo` and print its output — `--todo <text>` captures · `--todo` lists open todos ·
-`--todo --done <id>` closes — then STOP.
+`add.py todo` and print its output — `--todo <text>` captures · `--todo` lists · `--todo --done
+<id>` closes — then STOP.
 
 ## Always start here (orient — do not skip)
 
@@ -63,8 +63,7 @@ Then read the foundation map `add.py status --foundation` (`--all` full) + `.add
 - **gate_mode** — headless/agent-crossed freeze: declare `gate_mode: ai-plan-verify` in the PLAN.md
   header + fill the §3 AI-verify record; security|data|architecture stay human-frozen (unstrikeable).
 - **auto** — `autonomy: auto` (default) auto-gates verify on evidence; `add.py autonomy set
-  conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates
-  a milestone's tasks.
+  conservative|manual` restores a human gate · `new-milestone --await-confirm` confirm-gates its tasks.
 
 ## Intake — size a request before creating scope
 
@@ -81,7 +80,8 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a mil
 
 Every task is three beats, three engine calls, ONE human decision point:
 
-1. **DIRECTION** — draft the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
+1. **DIRECTION** — load the domain-fit persona (seed via add persona-mode if none), then draft
+   the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
    (run it — red for the RIGHT reason; fill each bullet's `covers:` clause key). Then the ONE approval, presented
    lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`
@@ -102,12 +102,12 @@ its own references (you read ONLY this file).
 At each decision point (intake · bundle · gate · close) the fitting persona OWNS the gate report (banner then the ARC) —
 `gate-udd.md` holds the principles: CONVEY decision + ARC (engine-sourced) · shape · flags (lowest-first) ·
 evidence · a guided APPROVE; the persona owns the form, never the four floors (security stays HARD-STOP) — the question is a summary, never the artifact.
-Read each at most once per session.
+Read once per session.
 
 Emit **lessons learned** tagged by which of the five (`DDD · SDD · UDD · TDD · ADD`)
 they improve — **in-flight**: `add.py delta-append <dd> "<lesson>"` → its living spec in
 `.add/specs/` (grammar: `deltas.md`).
-The living specs ARE the foundation — the close just counts what §7 still holds open. Observe also
+The living specs ARE the foundation; the close counts what §7 still holds open. Observe also
 tunes your voice: a confirmable delta the human confirms rewrites `SOUL.md` (the human is the only
 writer) — `deltas.md`.
 

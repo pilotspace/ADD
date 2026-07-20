@@ -99,15 +99,14 @@ by the opt-in gate: `new-milestone <slug> --await-confirm` seeds it unconfirmed 
 
 ## Position the goal FIRST — ground in assets, relate to the map
 
-1. **Ground in current assets** — the same four fields as §3 Grounding, raised to milestone
-   scope: **Touches** (subsystems/files spanned) · **Context** (docs · config · data) ·
-   **Honors** (`PROJECT.md`/`CONVENTIONS.md` invariants) · **Anchors** (contracts/symbols tasks
-   cite) — each named from real assets, never assumed. Record it as the milestone's `## Ground`
-   section — shared context gathered ONCE; each task's specify PROJECTS its §1 from it. Touches
-   spanning >1 app root (BE+FE)? weigh `.add/components.toml` now.
-2. **Relate to the map** — run `add.py search <keyword> ...` first, then read every live +
-   archived goal (`.add/milestones/*` · `.add/archive/*`); name THIS request's relationship —
-   *extends* X · *depends-on* Y · *overlaps* Z — in the `rationale` line.
+1. **Ground in current assets** — the four §3 Grounding fields at milestone scope: **Touches**
+   (subsystems/files) · **Context** (docs · config · data) · **Honors** (`PROJECT.md`/
+   `CONVENTIONS.md` invariants) · **Anchors** (contracts/symbols tasks cite) — each from real
+   assets, never assumed. Record it as the milestone's `## Ground` — gathered ONCE; each task's
+   specify PROJECTS its §1 from it. Touches >1 app root (BE+FE)? weigh `.add/components.toml` now.
+2. **Relate to the map** — `add.py search <keyword>` first, then read every live + archived goal
+   (`.add/milestones/*` · `.add/archive/*`); name the relationship — *extends* X · *depends-on* Y ·
+   *overlaps* Z — in the `rationale` line.
 3. **Already delivered** by an existing milestone → reject `duplicate_goal`; route as `task` or
    `change-request`.
 
@@ -117,9 +116,8 @@ deferral list (an empty Out means scope is not thought through) · shared decisi
 name the owning task · tasks breadth-first (`slug · depends-on · one line`, each one-file-sized) ·
 exit criteria observable, EVERY criterion maps to a declared task slug · `Close — ship review` +
 `Release steps` stay drafted-blank (filled at `milestone-done`/release). Brainstorm via the
-three-move co-specify (below) raised to milestone scope; rank assumptions lowest-confidence
-first (top 1–2 get the ⚠ flag); present per `gate-udd.md` as a guided choice. A draft is
-well-formed only when those boxes hold — fix before proposing.
+three-move co-specify (below) at milestone scope; rank assumptions lowest-confidence first (top
+1–2 get the ⚠ flag); present per `gate-udd.md` as a guided choice — fix any unmet box first.
 Rejects: `not_classified` · `dangling_criterion` · `no_milestone` · `duplicate_goal`.
 
 ---
@@ -263,11 +261,12 @@ built code.
 - [ ] One test per scenario, red for the right reason, asserting observable behavior; coverage target recorded.
 </exit_gate>
 
-> **Persona / Advisor / Confidence** — load the fit `.add/personas/<slug>.md` (its Critical Rules
-> shape §1, its Success Metrics shape the red suite; advisory, never lowers a gate). Canonical
-> spawns: researcher (unfamiliar domain) · broad ground sweep · second opinion on a risky shape ·
-> test-author for a wide suite (the advisor spawn — `phases/verify.md`); self-score the bundle
-> below — the lowest dimension aims your ⚠ flag.
+> **Persona / Advisor / Confidence** — load the domain-fit `.add/personas/<slug>.md` (its Critical
+> Rules shape §1, its Success Metrics shape the red suite; advisory, never lowers a gate). If none
+> fits, spawn the add agent in persona mode to seed one (PROJECT.md + `.add/personas-teacher/`),
+> then load it — seed per DOMAIN, REUSE across tasks, never one per task. Canonical spawns:
+> researcher (unfamiliar domain) · risky-shape second opinion · test-author for a wide suite (the
+> advisor spawn — `phases/verify.md`); self-score the bundle below — the lowest dimension aims ⚠.
 
 ## The confidence self-score
 
@@ -279,7 +278,7 @@ it 0–1 on six dimensions: **Completeness** (every rule/scenario/rejection cove
 (does it carry its own refine step?). Any dimension **< 0.9** → refine, then re-score. The lowest
 dimension is what you surface ⚠-first at the freeze; persistently low on risky scope →
 *recommend* lowering autonomy (the level stays the human's call).
-The hard rule: **advisory, never a gate** — it never auto-passes a verify, never substitutes for evidence or the human
-decision point, and a self-asserted score is never recorded as something the human "agreed to".
+The hard rule: **advisory, never a gate** — it never auto-passes a verify, never substitutes for evidence or the
+human decision, and a self-asserted score is never recorded as something the human "agreed to".
 
 Book: `docs/03-step-1-specify.md` · `docs/05-step-3-plan.md` · `docs/06-step-4-tests.md` · `docs/10-setup-and-stages.md`.
