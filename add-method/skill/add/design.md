@@ -15,6 +15,17 @@ design-intake  →  review-domain  →  research-components  →  wireframe  →
 
 Run the beats in order; the last ends at a human design-confirm.
 
+## Personas carry the design — the loop carries the discipline
+
+Load the design-fit persona FIRST: it brings the **frontend-designer** performance, the loop keeps
+the rigor (personas carry the expertise, the loop the discipline). Two `flow: design` dimensions
+(`.add/personas/*` frontmatter, else description-match) — **UI-Designer** (visual systems · component
+libraries · pixel-craft · WCAG-AA **accessibility**) and **UX-Researcher** (evidence-validated,
+never assumed). None fits? Seed from `.add/personas-teacher/design/` (ui-designer · ux-researcher ·
+ux-architect) + `engineering-frontend-developer` via the add agent in persona mode, then load — seed
+per DOMAIN, reuse across screens. The persona's **Critical Rules** shape every beat; its **Success
+Metrics** become the beat-4 confirm checklist. Advisory: it sharpens the design, never lowers a gate.
+
 ### 0 · design-intake
 Before reading the domain, interview the human on **five design axes** — ask each, show options,
 record the pick:
@@ -50,12 +61,11 @@ image (headless screenshot), present it for **design-confirm** — show-before-a
 On confirm: record layout to `prototypes/<name>.json` + `catalog.json`, save image to
 `.add/design/captures/<name>.<ext>`, mention it in the feature's `PLAN.md`.
 
-**Persona evidence checklist.** Before design-confirm, load the `flow: design` personas
-(`.add/personas/*` frontmatter, else description-match) and render their `## Success Metrics` as a
-confirmable **checklist** beside the image — **both dimensions**: **UI-Designer** (visual + WCAG-AA
-**accessibility**) and **UX-Researcher** (evidence-validated, not assumed). Each item traces to a
-success-metric the human confirms — **evidence, never an auto-pass**; a persona
-**never lowers a gate** (principle 2). **No UI personas** → a generic design-confirm; UI-less skips it.
+**Persona evidence checklist.** Render the loaded personas' `## Success Metrics` as a confirmable
+**checklist** beside the image — both dimensions: **UI-Designer** (visual/**accessibility**) and
+**UX-Researcher** (evidence, not assumed). Each item traces to a metric the human confirms —
+**evidence, never an auto-pass**; a persona **never lowers a gate**. **No UI personas** → a
+generic design-confirm; UI-less skips it.
 
 ### Text-mode gate variant
 A **human gate** runs the loop in **text mode** — intake the **INTERACTION** axis → design the
@@ -72,25 +82,6 @@ tool-agnostic. Captures live at **`.add/design/captures/<name>.<ext>`**, mention
 The loop **binds** the UDD contracts **read-only** — `tokens.json` / `catalog.json` /
 `prototypes/<name>.json` are read, never reshaped (a reshape is a change request). **Identity**
 values stay **human-owned** (`templates/udd-tokens.md`).
-
-## The hard rules
-
-<constraints>
-- **Intake before domain.** The five axes (FIDELITY · CONCEPT · LAYOUT · VISUAL DESIGN ·
-  INTERACTION) are interviewed and recorded — DESIGN.md defaults + per-screen overrides — before beat 1.
-- **Domain first.** A screen is derived from the domain (beat 1), never sketched blind.
-- **Reuse before invent.** Beat 2 checks the catalog first; a new component is a justified,
-  cited exception — never the reflex.
-- **Confirm before build.** The captured image is approved by the human *before* implementation;
-  a design-confirm placed at or after build defeats the loop.
-- **The engine never renders.** Capture is a recommended, tool-agnostic recipe run by the
-  agent's own tools; the image is evidence, not an engine artifact.
-- **Bind, don't break.** The loop reads `tokens.json` / `catalog.json` / `prototypes/<name>.json`
-  read-only; the data contract is unchanged, and identity values stay human-owned.
-- **Confirm against the personas.** With UI personas seeded, the checklist carries the UI-Designer
-  (visual/accessibility) + UX-Researcher (evidence-not-assumption) success-metrics — evidence,
-  never an auto-pass.
-</constraints>
 
 > Used at specify for a UI feature: `phases/direction.md`'s setup span scaffolds `DESIGN.md`, and
 > its Rules span points here when the feature has a screen — run the four beats, then
