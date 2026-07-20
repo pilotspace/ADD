@@ -81,7 +81,7 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). For a mil
 
 Every task is three beats, three engine calls, ONE human decision point:
 
-1. **DIRECTION** — ground §3 in the `neighborhood` card new-task/status print (inherited interfaces — not code re-reads), then draft the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
+1. **DIRECTION** — draft the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
    (run it — red for the RIGHT reason). Then the ONE approval, presented
    lowest-confidence-first: `add.py freeze --by "<name>" --cross` (a setup session's baseline `lock`

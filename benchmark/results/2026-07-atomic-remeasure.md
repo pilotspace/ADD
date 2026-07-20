@@ -88,6 +88,40 @@ the atomic change touches its arm):
   un-rechallenged until both arms re-run in atomic-era conditions. The appendix-H
   bottom line does not flip on this data.
 
+## Neighborhood-card gate bench — FAIL, feature reverted
+
+The `neighborhood-status` card (d5a28791: new-task/status prints the 90-char §3
+fence head + code location of edge-declared or most-recent DONE parents, sold as
+"ground §3 here, not in code re-reads") was gated on a re-run of the same 6-WM
+continue-mode bench (`runs-nbr-session`). It failed on every axis:
+
+| | atomic, no card (`runs-atomic-session`) | atomic + card (`runs-nbr-session`) |
+|---|---|---|
+| Fidelity wm1→6 | flat 1.0 × 6 | 0.92 → 0.80 → 0.75 → **0.33** → 0.75 → 1.0 |
+| Regression rate wm2–6 | 0 everywhere | 0.33 / 0.29 / 0.20 / 0.38 / 0.35 |
+| Total cost | $17.75 | **$23.57** |
+
+The decay curve is a near-exact replay of the OLD pre-atomic rot trajectory —
+the one the atomic template had eliminated. Why the card can't help and can hurt:
+
+- **It externalizes precedent, not spec.** wm1 shipped with one deviation
+  (R-get-list); wm2's card then quoted wm1's *shipped* contract — deviation
+  included — as the thing to ground on. That is the "memory of past decisions
+  outranks the written spec" rot mechanism, now printed by the engine itself.
+- **A 90-char fence head is not an interface.** At wm4 the card's two lines were
+  both auth boilerplate ("Auth (unchanged from WM2): header `Authorization:
+  Bearer…`") because those parents' §3 fences *open* with the auth line — zero
+  signal about the list/filter shape wm4 needed, and wm4 cratered to 0.33.
+- n=1 per mode, and disclosed: engine commits (edge-truth `8d4f573b`, relate
+  `0d2ccbf6`) landed mid-bench, so `resolved_pin` drifted across WMs — additive
+  changes, unlikely causal, but the run is not pin-clean. Isolation WAS clean
+  (oracle_report: no host-`.add` leak).
+
+Verdict: reverted in-place (card code + suite removed; edge-truth graph compile
+and `relate` stay). Localized context returns as graph-native work (`locate` +
+dependent closure over declared edges), gated on its own bench — not as a
+truncated-string status print.
+
 ## Reproduce
 
 ```bash

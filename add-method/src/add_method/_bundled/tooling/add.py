@@ -675,54 +675,6 @@ def cmd_sync_guidelines(args: argparse.Namespace) -> None:
         print(f"{action:>9}  {name}")
 
 
-def _neighborhood_card(root: Path, state: dict, slug: str) -> list[str]:
-    """neighborhood-status (ATG localized context): one line per inherited interface so
-    the node never re-discovers a neighbor's contract from code. Parents = the task's
-    declared edges (depends_on ∪ extends, order kept); a board with NO edges falls back
-    to the most recently updated DONE tasks (the temporal neighborhood — measured: bench
-    agents declare no edges, and prior-interface re-reads are the late-milestone cost
-    growth). Pure read, degrade-safe: unreadable/placeholder parents are skipped; an
-    empty neighborhood returns [] (silent). Cap 3 lines — a summary, never the board."""
-    tasks = state.get("tasks") or {}
-    rec = tasks.get(slug) or {}
-    parents = list(dict.fromkeys((rec.get("depends_on") or []) + (rec.get("extends") or [])))
-    if not parents:
-        done = [(s, r) for s, r in tasks.items()
-                if s != slug and (r or {}).get("phase") == "done"]
-        done.sort(key=lambda kv: (kv[1] or {}).get("updated") or "", reverse=True)
-        parents = [s for s, _ in done[:2]]
-    lines: list[str] = []
-    for parent in parents:
-        if len(lines) >= 3:
-            break
-        try:
-            text = (root / "tasks" / parent / "PLAN.md").read_text(encoding="utf-8")
-        except OSError:
-            continue
-        head = None
-        anchor = text.find("### Contract")
-        fence = text.find("```", anchor) if anchor != -1 else -1
-        if fence != -1:
-            close = text.find("```", fence + 3)
-            body = text[fence + 3:close] if close != -1 else ""
-            for ln in body.splitlines():
-                if ln.strip():
-                    head = ln.strip()
-                    break
-        if not head or head.startswith("<"):
-            continue                      # unfilled/placeholder contract teaches nothing
-        code = ""
-        for ln in text.splitlines():
-            if ln.startswith("Code lives in:"):
-                code = ln.split(":", 1)[1].strip()
-                break
-        ph = (tasks.get(parent) or {}).get("phase", "?")
-        lines.append(f"  {parent} [{ph}] {head[:90]}" + (f" · code {code[:40]}" if code else ""))
-    if not lines:
-        return []
-    return ["neighborhood (inherited interfaces — ground §3 here, not in code re-reads):"] + lines
-
-
 def cmd_new_task(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -868,8 +820,6 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     print("active task set. phase: direction. Draft the whole Direction bundle top-to-bottom — "
           "§1 rules · §2 scenarios · §3 the change PLAN (ground + contract + what this task "
           "will do) · §4 red suite — then ONE freeze approval crosses it into build.")
-    for _nline in _neighborhood_card(root, state, slug):
-        print(_nline)
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
     # kickoff-truth M2: the remaining engine-call recipe at task birth — the transcript
     # audit measured 6-11 status/guide/--help re-orientation calls per run that this
@@ -2771,9 +2721,6 @@ def cmd_status(args: argparse.Namespace) -> None:
         _now_ph = (state["tasks"][_now_active] or {}).get("phase", "?")
         print(f"now     : '{_now_active}' · phase={_now_ph} · {_next_footer(root, state)}")
         print(f"          PLAN.md: .add/tasks/{_now_active}/PLAN.md   ·   re-orient: add.py status --brief")
-        if _now_ph != "done":
-            for _nline in _neighborhood_card(root, state, _now_active):
-                print("          " + _nline if not _nline.startswith("  ") else "        " + _nline)
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
     # read LIVE from PROJECT.md so the human sees the project-wide throttle every session.
