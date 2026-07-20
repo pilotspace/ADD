@@ -67,6 +67,27 @@ ends with the engine `init`; `WorkspaceIsolationTest` pins it). The contaminated
 haiku run is kept at `runs-swe/atomic-mini` (1/3, reference only); the canonical haiku
 numbers above are the clean re-run (`runs-swe/atomic-mini2`).
 
+## Same-mode comparison vs spec-kit (recorded arm, not re-run)
+
+Spec-kit's continue-mode board (`runs-session/spec-kit`, wm1–3 recorded; nothing in
+the atomic change touches its arm):
+
+| | spec-kit (recorded) | old ADD (recorded) | atomic ADD (new) |
+|---|---|---|---|
+| Fidelity wm1→2→3 | 0.92 → 0.80 → 0.75 | 0.92 → 0.80 → 0.75 | **1.0 → 1.0 → 1.0** |
+| Regression rate wm2 / wm3 | **0.33 / 0.29** | 0 / 0 | 0 / 0 |
+| Oracle wm1–3 | 0.8 / 0.8 / 1.0 | 0.8 / 0.8 / 1.0 | 1.0 × 3 |
+| Cost wm1–3 | $4.48 | $5.84 | $7.39 |
+
+- The honesty wave's verdict was "the mode is the hazard, not the method" — both arms
+  decayed identically in a continuing conversation. **That no longer holds**: atomic
+  ADD is flat 1.0 in the exact mode where spec-kit rots to 0.75 by wm3 AND breaks a
+  third of wm1's behaviors at wm2 with nothing in its flow to notice.
+- What spec-kit still wins, unchanged: raw price on friendly workloads (~1.7× gap
+  survives the trim), and the fresh-mode matrix (spec-kit 6/6 $10.05) stands
+  un-rechallenged until both arms re-run in atomic-era conditions. The appendix-H
+  bottom line does not flip on this data.
+
 ## Reproduce
 
 ```bash

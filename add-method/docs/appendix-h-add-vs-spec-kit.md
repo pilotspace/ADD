@@ -95,6 +95,17 @@ over-build to a 559 B minimal fix. The floor caught exactly what the small
 model couldn't hold in its head. Data:
 [the atomic remeasure](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-atomic-remeasure.md).
 
+**Second data point — the continuing-conversation mode:** the earlier honest
+finding was that BOTH methods decay identically when one conversation carries six
+milestones (fidelity 0.92→0.75 by the third; the mode was the hazard). After the
+atomic template landed, ADD re-ran that exact mode and held fidelity 1.0 across
+all six milestones with zero regressions — while spec-kit's recorded board still
+shows the decay plus regression rates of 0.33/0.29 (a third of milestone-1's
+behaviors silently broken by milestone 2). Externalizing the interface — contract,
+red suite, scope, verdict in ONE small file — is what makes the long session safe.
+Raw price is unchanged: spec-kit still costs ~1.7× less on friendly workloads.
+Data: [the atomic remeasure](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-atomic-remeasure.md).
+
 ## The bottom line
 
 - Choose **spec-kit** for small, friendly, strong-model, human-re-read
