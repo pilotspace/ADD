@@ -769,7 +769,7 @@ const OPTIONAL = new Set(["personas-teacher", "agents"]);
 // _installer.py:_SHARED / _RETIRED_AGENTS.
 const SHARED = new Set(["agents"]);
 // Roster names retired upstream — the ONLY names the shared lander may remove (never a
-// pattern/prefix heuristic: a USER file named add-anything.md must survive). Empty today.
+// pattern/prefix heuristic: a USER file named add-anything.md must survive).
 // roster-distill (ADD 2.0 M1): the 5-agent roster collapsed into the ONE `add` agent.
 const RETIRED_AGENTS = ["add-design.md", "add-build.md", "add-verify.md",
                         "add-persona.md", "add-advisor.md"];
@@ -1081,6 +1081,9 @@ function writeRegistry(home, paths) {
 // the package ships) so reconcile(args, project, home) reuses MANAGED unchanged.
 const GLOBAL_TREES = [
   ["skill/add", ["skill", "add"], false],
+  // roster-drift fix: absent here, `update --global` propagation (sourced FROM the home)
+  // soft-skipped the roster forever — no refresh, no retired-agent tombstones.
+  ["agents", ["agents"], false],
   ["tooling", ["tooling"], true],
   ["personas-teacher", ["personas-teacher"], false],
 ];
@@ -1882,6 +1885,26 @@ function cmdUpdate(args) {
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
       " · managed layer reconciled (" + roll.restored + " restored · " + roll.refreshed +
       " refreshed) · your project state untouched.");
+  // crossing nudges — engine-owned follow-ups the updater must NAME, never run (python3
+  // may be absent on this PATH; both commands are idempotent). Twin of _installer.py.
+  if (cur !== version) {
+    log("next: python3 .add/tooling/add.py sync-guidelines   # refresh the CLAUDE.md guidance block to this version");
+  }
+  const tasksDir = path.join(addDir, "tasks");
+  let legacyBoard = false;
+  if (fs.existsSync(tasksDir)) {
+    for (const entry of fs.readdirSync(tasksDir, { withFileTypes: true })) {
+      if (entry.isDirectory()
+          && fs.existsSync(path.join(tasksDir, entry.name, "TASK.md"))
+          && !fs.existsSync(path.join(tasksDir, entry.name, "PLAN.md"))) {
+        legacyBoard = true;
+        break;
+      }
+    }
+  }
+  if (legacyBoard) {
+    log("next: python3 .add/tooling/add.py migrate   # 1.x board detected: TASK.md -> PLAN.md, live + archived");
+  }
 }
 
 // js-reclaim-lock-heartbeat: a test-only entrypoint so the Python subprocess suite can drive

@@ -685,6 +685,9 @@ def _write_registry(home: Path, paths) -> None:
 # (bundled subpath, dest relative to <home>, strip dev-only test_*.py)
 _GLOBAL_TREES = (
     ("skill/add", "skill/add", False),
+    ("agents", "agents", False),   # roster-drift fix: absent here, `update --global`
+                                   # propagation (sourced FROM the home) soft-skipped the
+                                   # roster forever — no refresh, no retired tombstones
     ("tooling", "tooling", True),
     ("personas-teacher", "personas-teacher", False),
 )
@@ -2175,10 +2178,21 @@ def update(
 
             _log(
                 f"ADD updated {cur_version or '(unstamped)'} -> {new_version} · "
-                f"skill · tooling · docs refreshed "
+                f"managed layer reconciled "
                 f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
                 "your project state untouched."
             )
+            # crossing nudges — engine-owned follow-ups the updater must NAME, never run
+            # (python3 may be absent on this PATH; both commands are idempotent):
+            if cur_version != new_version:
+                _log("next: python3 .add/tooling/add.py sync-guidelines"
+                     "   # refresh the CLAUDE.md guidance block to this version")
+            tasks_dir = add_dir / "tasks"
+            if tasks_dir.is_dir() and any(
+                    d.is_dir() and (d / "TASK.md").exists() and not (d / "PLAN.md").exists()
+                    for d in tasks_dir.iterdir()):
+                _log("next: python3 .add/tooling/add.py migrate"
+                     "   # 1.x board detected: TASK.md -> PLAN.md, live + archived")
             return 0
     except BlockingIOError:
         return _fail(
