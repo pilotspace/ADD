@@ -1,7 +1,7 @@
-# dependencies.allowlist — one package per line; CI rejects anything not listed.
+# dependencies.allowlist — one package per line; the corpus (which CI runs) rejects
+# any declared RUNTIME dependency not listed here (test_dependency_allowlist.py).
 # Defeats the AI "invented a plausible package name" supply-chain risk.
 #
-# This project is intentionally ZERO third-party dependencies:
-#   - Python tooling uses the standard library only.
-#   - Node installer uses built-in modules only.
-# Add a line here only when a real dependency is approved by Security.
+# Python tooling is standard-library only (pyproject dependencies = []).
+# Node installer carries exactly one approved runtime dependency:
+@clack/prompts
