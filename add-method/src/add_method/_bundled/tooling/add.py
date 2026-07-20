@@ -1383,6 +1383,82 @@ def cmd_locate(args: argparse.Namespace) -> None:
                   f"floor (never weaken it to pass)")
 
 
+def cmd_graph(args: argparse.Namespace) -> None:
+    """graph-views W4: the live board as a mermaid flowchart — deterministic,
+    read-only, print-only (paste into any mermaid renderer / GitHub fence).
+    Milestone = the scope ROOT: a subgraph wrapping its tasks; depth lives in
+    EDGES, never nesting. Styles carry semantics: depends-on solid `-->` ·
+    extends dashed `-.->` · relates-to open dashed `-.-`; node class = phase
+    (done · live · planned). The compiled plan renders too: a planned-but-
+    never-created node appears dashed — drift is visible before it warns."""
+    root = _require_root()
+    state = load_state(root)
+    tasks = state.get("tasks") or {}
+    milestones = state.get("milestones") or {}
+    archived = _archived_task_slugs(state)
+    only = getattr(args, "milestone", None)
+    if only and only not in milestones:
+        _die(f"unknown_milestone: '{only}'")
+
+    def node_id(slug: str) -> str:
+        return ("t_" + slug) if slug in tasks else ("p_" + slug)
+
+    lines = ["flowchart TD"]
+    extra_nodes: dict[str, str] = {}       # id -> label, for archived/missing edge targets
+    shown: set[str] = set()
+    planned_shown: set[str] = set()
+    for ms in sorted(milestones):
+        if only and ms != only:
+            continue
+        members = sorted(s for s, t in tasks.items() if t.get("milestone") == ms)
+        planned = sorted(k for k in (milestones[ms].get("planned") or {})
+                         if k not in tasks and k not in archived)
+        if not members and not planned:
+            continue
+        lines.append(f'  subgraph ms_{ms}["{ms} · milestone"]')
+        for slug in members:
+            ph = tasks[slug].get("phase", "?")
+            lines.append(f'    t_{slug}["{slug} · {ph}"]')
+            shown.add(slug)
+        for slug in planned:
+            lines.append(f'    p_{slug}["{slug} · planned"]')
+            planned_shown.add(slug)
+        lines.append("  end")
+    if not only:
+        for slug in sorted(tasks):
+            if slug not in shown and not tasks[slug].get("milestone"):
+                lines.append(f'  t_{slug}["{slug} · {tasks[slug].get("phase", "?")}"]')
+                shown.add(slug)
+
+    edge_style = (("depends_on", "-->", "depends-on"),
+                  ("extends", "-.->", "extends"),
+                  ("relates_to", "-.-", "relates-to"))
+    for slug in sorted(tasks):
+        if only and tasks[slug].get("milestone") != only:
+            continue
+        rel = _task_relations(tasks[slug])
+        for key, arrow, label in edge_style:
+            for parent in rel[key]:
+                pid = node_id(parent)
+                if parent not in tasks:
+                    note = "archived" if parent in archived else "planned" \
+                        if any(parent in (m.get("planned") or {}) for m in milestones.values()) \
+                        else "missing"
+                    if note != "planned":                      # planned already rendered above
+                        pid = "x_" + parent
+                        extra_nodes[pid] = f'{pid}["{parent} · {note}"]'
+                lines.append(f"  t_{slug} {arrow}|{label}| {pid}")
+    lines.extend(f"  {n}" for _, n in sorted(extra_nodes.items()))
+    lines.append("  classDef done fill:#d3f9d8,stroke:#2b8a3e")
+    lines.append("  classDef live fill:#fff3bf,stroke:#e67700")
+    lines.append("  classDef planned fill:none,stroke:#868e96,stroke-dasharray: 4 4")
+    for slug in sorted(shown):
+        cls = "done" if tasks[slug].get("phase") == "done" else "live"
+        lines.append(f"  class t_{slug} {cls}")
+    lines.extend(f"  class p_{slug} planned" for slug in sorted(planned_shown))
+    print("\n".join(lines))
+
+
 def _relations_health(root: Path, state: dict) -> list[dict]:
     """ADVISORY validate/sync pass over every task's non-blocking relations. Returns findings
     [{slug, relation, target, kind}] — kind in {'dangling','self_relation'}. A target that is a
@@ -3927,6 +4003,16 @@ def cmd_check(args: argparse.Namespace) -> None:
                           if t.get("milestone") == mslug and not _task_done(t)]
             checks.append((not unfinished, f"done milestone '{mslug}' fully complete",
                            f"unfinished: {unfinished}"))
+        # planned-drift (graph-views W4): a compiled `## Tasks` node with no live task and
+        # no archived record. WARN, never red — mid-milestone a planned-not-yet-created node
+        # is normal flow; the warning keeps the compiled plan and the board honest with each
+        # other (the drift also renders dashed in `add.py graph`).
+        ghosts = sorted(k for k in (m.get("planned") or {})
+                        if k not in tasks and k not in archived_slugs)
+        for g in ghosts:
+            warnings.append((f"milestone '{mslug}'", f"planned task '{g}' was never created — "
+                             f"`add.py new-task {g}` inherits its planned depends-on "
+                             f"(or re-confirm MILESTONE.md without it)"))
 
     # goal-auto-ready (task goal-auto-ready-gate): nudge the ACTIVE milestone toward a
     # machine-checkable goal — every exit criterion citing a verifier `(verify: …)` so the
@@ -6534,6 +6620,12 @@ def build_parser() -> argparse.ArgumentParser:
                      "path::test_name (adds the §4 covers -> frozen §3 clause map), "
                      "or task slug")
     plc.set_defaults(func=cmd_locate)
+
+    pgr = sub.add_parser("graph", help="render the task DAG as a mermaid flowchart "
+                         "(milestone subgraphs; edge style = edge type; dashed = "
+                         "planned-but-never-created)")
+    pgr.add_argument("--milestone", help="limit to one milestone's subgraph")
+    pgr.set_defaults(func=cmd_graph)
 
     pdap = sub.add_parser("delta-append",
                           help="append one lesson to its living 5-DD spec under .add/specs/ "

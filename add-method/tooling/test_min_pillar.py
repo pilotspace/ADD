@@ -72,6 +72,8 @@ LIFECYCLE = [
                                                # slug form prints t's dependent closure (t2's edge
                                                # is relates_to, so the closure is empty; reads
                                                # state only, never docs/)
+    ["graph"],                                 # graph-views W4: read-only mermaid render of the
+                                               # task DAG (reads state only, never docs/)
     ["autonomy"],                              # read-only dial view of active task t (reads TASK/PROJECT/state, never docs/)
     ["todo", "a captured idea"],               # backlog capture (todo-capture): appends state["todos"], never docs/
     ["status"],

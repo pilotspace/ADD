@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "3a19e9dd23a47052957bb6c04dd914a5"  # re-aimed @ clause-repair (locate grows the pytest node-id form: §4 covers map — the template test_plan dialect, bare or backticked names, placeholder-safe — resolves path::test to the frozen §3 clause line). prior: b2869fdd… @ graph-repair
+ENGINE_MD5 = "427a2501d29e5dfa1e56dc8c2774cc7e"  # re-aimed @ graph-views (verb 34 `graph`: mermaid flowchart of the task DAG — milestone subgraphs, edge-style semantics, dashed planned-never-created nodes; check gains the planned-drift WARN). prior: 3a19e9dd… @ clause-repair
 ENGINE_PKG_MD5 = "ec7f8093d556a5e00b25353005b018b0"  # re-aimed @ atomic-node (constants drops _FAST_SECTIONS — the lane scaffolds retired with the fat template blocks; _section_unfilled serves contract-fill only). prior: 557f500f… @ book-stops-shipping
