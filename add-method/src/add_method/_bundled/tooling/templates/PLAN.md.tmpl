@@ -86,7 +86,7 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 Strategy actually used: <fill at VERIFY — what you ACTUALLY did (or "as planned"); harvested into §7 Decisions (ADR)>
 Code lives in: `./src/`
-Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn the `add` agent in **advise mode** (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
+Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn `add-advisor` (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
 Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 Scope (an out-of-scope build fails the gate: scope_violation); keep the §3 Regression floor green; allow-list packages only; ask if unclear.
 
 ---

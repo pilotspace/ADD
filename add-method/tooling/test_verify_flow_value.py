@@ -40,10 +40,10 @@ TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl"
                            BUNDLE / "tooling" / "templates" / "personas" / "_template.md.tmpl")
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
               REPO / "18-personas.md")   # book-stops-shipping (2.0 M6b): no bundled copy
-# roster-distill (ADD 2.0 M1): the verify specialist is the ONE `add` agent (verify mode)
-AGENT_TWINS = (ADD_METHOD / "agents" / "add.md",
-               REPO / ".claude" / "agents" / "add.md",
-               BUNDLE / "agents" / "add.md")
+# advisor-split: the verify specialist is add-worker (verify mode); the advisor is a separate agent
+AGENT_TWINS = (ADD_METHOD / "agents" / "add-worker.md",
+               REPO / ".claude" / "agents" / "add-worker.md",
+               BUNDLE / "agents" / "add-worker.md")
 GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md",
                REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
                BUNDLE / "skill" / "add" / "phases" / "verify.md")
@@ -105,7 +105,7 @@ class VerifyFlowValueTest(unittest.TestCase):
                           f"{p} must select flow: verify first")
             self.assertIn("flow: advisor", text, f"{p} must keep the advisor fallback")
             digests.add(_md5(p))
-        self.assertEqual(len(digests), 1, "add.md agent twins diverged")
+        self.assertEqual(len(digests), 1, "add-worker.md agent twins diverged")
 
     # ── M5: the verify guide names the flow; phases pool fence held ──────────────
     def test_verify_guide_names_flow(self):

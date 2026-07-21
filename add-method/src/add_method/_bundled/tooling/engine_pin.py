@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "bfd472014a1f3bdcb76c0a7f103fc44b"  # re-aimed @ run-mode-decouple (run mode = the autonomy dial only; the streams: posture coupling is removed — --run-mode no longer writes a streams line, status drops its `run mode:` row, concurrency is now 'spawn a subagent per task'). prior: 427a2501… @ graph-views
-ENGINE_PKG_MD5 = "e0ff925d46f1666460e8b3c3e375acf1"  # re-aimed @ run-mode-decouple (constants drops _STREAMS_POSTURES; autonomy drops _streams_posture/_project_streams_token/_project_streams + the streams regex). prior: ec7f8093… @ atomic-node
+ENGINE_PKG_MD5 = "8f3d546ad34f44309d6bb5dc9dfdf6c7"  # re-aimed @ advisor-split (add_engine guidelines.py roster citation -> add-worker+add-advisor two-agent block; constants.py PHASE_AGENT values add->add-worker). prior: e0ff925d… @ run-mode-decouple

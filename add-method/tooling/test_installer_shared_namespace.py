@@ -130,12 +130,15 @@ class PipInstallerSharedNamespaceTest(_Harness):
             from add_method import _installer
         finally:
             sys.path.pop(0)
-        # roster-distill (ADD 2.0 M1): the 5-agent roster is tombstoned — update removes
-        # exactly these names from the shared namespace, never a sweep or heuristic.
+        # advisor-split: the retired names are the 4 phase-agents + the ONE `add` agent (add.md)
+        # that split into add-worker/add-advisor — update removes exactly these from the shared
+        # namespace, never a sweep or heuristic. add-advisor.md LEFT the list (it ships again).
         self.assertEqual(getattr(_installer, "_RETIRED_AGENTS", None),
                          ("add-design.md", "add-build.md", "add-verify.md",
-                          "add-persona.md", "add-advisor.md"),
-                         "_RETIRED_AGENTS must name exactly the retired 5-agent roster")
+                          "add-persona.md", "add.md"),
+                         "_RETIRED_AGENTS must name exactly the retired agents (incl. the split add.md)")
+        self.assertNotIn("add-advisor.md", _installer._RETIRED_AGENTS,
+                         "add-advisor.md ships again — it must not be tombstoned (would delete the shipped file)")
         agents = self._seed_foreign()
         (agents / "add-observe.md").write_text("retired roster leftover", encoding="utf-8")
         original = _installer._RETIRED_AGENTS

@@ -15,7 +15,7 @@ each batch small enough to review in full.
 
 - **Scope (may touch)** — the allowlist the build may write (backticked tokens); a file outside it is a **STOP → change request** back to Specify.
 - **Strategy (ordered batches)** — the planned build order; guidance, not enforced.
-- **Strategy facets** — Approach (domain strategy) · Data strategy · Pattern · Optimization stance: the domain HOW, anchored upstream (§1 Framings · §3 Schema · CONVENTIONS.md Honors), drafted at tests->build in the Persona's domain vocabulary; ⚠-mark the facet you trust least (risk: high → consult the add agent, advise mode). Advisory, never a gate.
+- **Strategy facets** — Approach (domain strategy) · Data strategy · Pattern · Optimization stance: the domain HOW, anchored upstream (§1 Framings · §3 Schema · CONVENTIONS.md Honors), drafted at tests->build in the Persona's domain vocabulary; ⚠-mark the facet you trust least (risk: high → spawn `add-advisor`, advise-midflight mode). Advisory, never a gate.
 
 Enforced: a completing verify gate refuses an out-of-scope build (`scope_violation` → self-heal).
 

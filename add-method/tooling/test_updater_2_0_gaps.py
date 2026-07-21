@@ -47,7 +47,7 @@ def _mk_bundled(root: Path) -> Path:
     (root / "tooling").mkdir(parents=True)
     (root / "tooling" / "add.py").write_text("# add.py\n")
     (root / "agents").mkdir(parents=True)
-    (root / "agents" / "add.md").write_text("# the one add agent\n")
+    (root / "agents" / "add-worker.md").write_text("# the add-worker agent\n")
     return root
 
 
@@ -80,7 +80,7 @@ class GlobalRosterMirrorTest(_Tmp):
         bundled = _mk_bundled(self.tmp / "pkg")
         home, claude = self.tmp / "home", self.tmp / "claude-skill"
         _installer._reconcile_global(home, claude, bundled, no_skill=True)
-        self.assertTrue((home / "agents" / "add.md").exists(),
+        self.assertTrue((home / "agents" / "add-worker.md").exists(),
                         "the home mirror must carry the roster or `update --global` "
                         "propagation soft-skips it forever (roster-drift, PR #151 residue)")
 
@@ -92,7 +92,7 @@ class GlobalRosterMirrorTest(_Tmp):
         r = subprocess.run([NODE, str(CLI_JS), "init", str(proj), "--global", "--yes"],
                            capture_output=True, text=True, env=env, timeout=120)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertTrue((home / "agents" / "add.md").exists(),
+        self.assertTrue((home / "agents" / "add-worker.md").exists(),
                         "js twin: init --global must mirror agents/ into the home")
 
 

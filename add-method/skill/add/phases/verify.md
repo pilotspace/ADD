@@ -95,10 +95,11 @@ Spawn a *single* subagent for one well-scoped piece of your plan (many-task pipe
 stream-orchestrator persona); the engine never spawns — your call per step. Spawn when the piece
 is separable and worth the round-trip: a broad sweep, an independent adversarial review (the
 refute-read — fresh context, never author-graded), a batch, a context-offload; not for narrow
-cheap work — in doubt, do it in-context. **Prefer the named roster**: the ONE `add` agent — the
-spawn names the mode (direction · build · verify · persona · advise) — over an ad-hoc spawn; it
-carries the worker contract and loads the beat guide + best-fit persona itself. Tier: **mid**
-ordinary, **top** complex/cross-cutting (the roster contract in `agents/add.md` maps tiers to
+cheap work — in doubt, do it in-context. **Prefer the named roster**: `add-worker` for an execution
+piece (the spawn names the mode: direction · build · verify · persona) and `add-advisor` for an
+advisory one (propose-plan · refute · advise-midflight) — over an ad-hoc spawn; each carries its
+roster contract and loads the beat guide + best-fit persona itself. Tier: **mid** ordinary, **top**
+complex/cross-cutting (the roster contract in `agents/*.md` maps tiers to
 models); a stronger model never buys back a gate. **Refute-read persona** — a **Code-Reviewer**;
 findings carry severity: 🔴 blocker · 🟡 concern · 💭 note. A persona is advisory: it never
 lowers a gate (a security finding still HARD-STOPs).

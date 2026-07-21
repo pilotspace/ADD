@@ -115,16 +115,16 @@ PHASE_GROUPS = {
     "VERIFY": ("verify",),
 }
 # phase-bundles: the roster agent PREFERRED for each phase (per-PHASE, not per-bundle —
-# roster-distill (ADD 2.0 M1): ONE execution shell — the `add` agent — serves every
-# phase; the spawn prompt names the mode (direction·build·verify·advise·persona) and
-# the agent loads that beat's guide + the fitting persona (personas carry the
-# expertise, the agent carries the discipline). A phase missing here is a bug (PHASE_GROUPS'
-# own union covers every key); `_phase_bundle` is the fail-closed resolver for an
-# unmapped/corrupted phase token, not this map directly.
+# advisor-split: `add-worker` is the execution shell for every phase; the spawn prompt names
+# the mode (direction·build·verify·persona) and the agent loads that beat's guide + the fitting
+# persona (personas carry the expertise, the agent carries the discipline). `add-advisor` is
+# spawned on demand to propose/pressure-test/decide — it is not a per-phase default, so it is
+# absent here. A phase missing here is a bug (PHASE_GROUPS' own union covers every key);
+# `_phase_bundle` is the fail-closed resolver for an unmapped/corrupted phase token, not this map.
 PHASE_AGENT = {
-    "direction": "add",
-    "build": "add",
-    "verify": "add",
+    "direction": "add-worker",
+    "build": "add-worker",
+    "verify": "add-worker",
 }
 SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
 

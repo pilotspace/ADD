@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Red/green tests for the PORTABLE roster in the ADD guideline block.
 
-ADD 2.0 M1 roster-distill: the roster is ONE `add` agent — the spawn names the
-mode (direction · build · verify · advise · persona); the agent loads that
-beat's phase guide plus the best-fit persona. The guideline block that
-`sync-guidelines`/`init` writes into every tool's AGENTS.md (and Claude's
+advisor-split (supersedes ADD 2.0 M1 roster-distill's ONE-agent contract): the roster
+is now TWO agents — `add-worker` runs each EXECUTION beat (the spawn names the mode:
+direction · build · verify · persona), and `add-advisor` is the second mind it spawns
+to propose a plan, pressure-test a draft, or decide a delegable ambiguity. The guideline
+block that `sync-guidelines`/`init` writes into every tool's AGENTS.md (and Claude's
 CLAUDE.md) must carry a COMPACT, tool-agnostic roster section DERIVED from
-`add-method/agents/add.md`: the one agent, all five modes, and the
+`add-method/agents/*.md`: both agents, the worker's modes, and the
 persona-carries-the-expertise routing — POINTING at the per-phase guides +
 the floor already in the block (never restating them).
 
-The mode set is bound BIDIRECTIONALLY: the block's modes must EQUAL the mode
-bullets `agents/add.md` declares (a mode added/removed in the agent file with
+The worker mode set is bound BIDIRECTIONALLY: the block's worker modes must EQUAL the
+mode bullets `agents/add-worker.md` declares (a mode added/removed in the agent file with
 no block regen => drift). Python string search only — never shells out to grep.
 
 Run: cd add-method/tooling && python3 -m unittest test_roster_portable -v
@@ -31,15 +32,17 @@ import add
 
 _PKG_ROOT = Path(__file__).resolve().parent.parent      # add-method/
 _REPO_ROOT = _PKG_ROOT.parent                            # AIDD-Book/
-MODES = ("direction", "build", "verify", "advise", "persona")
+WORKER_MODES = ("direction", "build", "verify", "persona")   # advise moved to add-advisor
 AGENT_TREES = (_PKG_ROOT / "agents", _REPO_ROOT / ".claude" / "agents")
-AGENT_FILE = "add.md"
-# a mode bullet in the agent file's mode-resolution section: `- **direction** — …`
+WORKER_FILE = "add-worker.md"
+ADVISOR_FILE = "add-advisor.md"
+ROSTER_AGENTS = (WORKER_FILE, ADVISOR_FILE)
+# a mode bullet in the worker file's mode-resolution section: `- **direction** — …`
 _MODE_BULLET_RE = re.compile(r"(?m)^-\s*\*\*([a-z]+)\*\*")
 
 
-def _agent_modes(tree: Path) -> set:
-    text = (tree / AGENT_FILE).read_text(encoding="utf-8")
+def _worker_modes(tree: Path) -> set:
+    text = (tree / WORKER_FILE).read_text(encoding="utf-8")
     return set(_MODE_BULLET_RE.findall(text))
 
 
@@ -85,22 +88,23 @@ class _Synced(unittest.TestCase):
 
 
 class RosterContentTest(_Synced):
-    def test_roster_names_one_agent_and_all_modes(self):                # M1
+    def test_roster_names_both_agents_and_worker_modes(self):           # M1
         roster = _roster(self.agents_block()).lower()
         self.assertTrue(roster, "block carries no roster section")
-        self.assertIn("`add` agent", roster, "roster must name the ONE `add` agent")
-        for mode in MODES:
-            self.assertIn(mode, roster, f"roster missing mode {mode!r}")
+        self.assertIn("add-worker", roster, "roster must name the execution agent add-worker")
+        self.assertIn("add-advisor", roster, "roster must name the advisory agent add-advisor")
+        for mode in WORKER_MODES:
+            self.assertIn(mode, roster, f"roster missing worker mode {mode!r}")
 
-    def test_roster_derived_from_agent_file(self):                      # M4 (bidirectional)
+    def test_roster_worker_modes_match_agent_file(self):                # M4 (bidirectional)
         roster = _roster(self.agents_block()).lower()
         self.assertTrue(roster, "block carries no roster section")
-        self.assertIn(AGENT_FILE, roster, "roster must cite its source agents/add.md")
-        declared = _agent_modes(AGENT_TREES[0])
-        listed = {m for m in MODES if m in roster} | {m for m in declared if m in roster}
+        self.assertIn("agents/*.md", roster, "roster must cite its source agents/*.md")
+        declared = _worker_modes(AGENT_TREES[0])
+        listed = {m for m in WORKER_MODES if m in roster} | {m for m in declared if m in roster}
         self.assertEqual(declared, listed,
-                         f"roster_portable_drift: block modes {listed} must EQUAL the agent "
-                         f"file's declared mode bullets {declared} — regen sync-guidelines")
+                         f"roster_portable_drift: block worker modes {listed} must EQUAL the "
+                         f"worker file's declared mode bullets {declared} — regen sync-guidelines")
 
     def test_roster_routes_personas(self):                              # M2 (2.0: personas core)
         roster = _roster(self.agents_block()).lower()
@@ -140,18 +144,23 @@ class RosterAgnosticTest(_Synced):
 
 
 class RosterRejectTest(_Synced):
-    def test_retired_roster_names_gone(self):                           # R1: no zombie roster
+    def test_retired_single_agent_gone(self):                           # R1: no zombie roster
         block = self.agents_block()
-        for retired in ("add-design", "add-build", "add-verify", "add-persona", "add-advisor"):
+        self.assertNotIn("ONE `add` agent", block,
+                         "the retired single-agent phrasing must not survive in the block")
+        self.assertNotIn("agents/add.md", block,
+                         "the block must cite agents/*.md, not the retired single add.md")
+        for retired in ("add-design", "add-build", "add-verify", "add-persona"):
             self.assertNotIn(retired, block,
                              f"retired 5-agent roster name must not survive in the block: {retired!r}")
 
-    def test_agent_file_shipped_in_both_trees(self):                    # R2: roster_uninstalled
+    def test_roster_agent_files_shipped_in_both_trees(self):            # R2: roster_uninstalled
         for tree in AGENT_TREES:
-            self.assertTrue((tree / AGENT_FILE).exists(),
-                            f"the ONE `add` agent must ship in {tree}")
-            for retired in ("add-design.md", "add-build.md", "add-verify.md",
-                            "add-persona.md", "add-advisor.md"):
+            for shipped in ROSTER_AGENTS:
+                self.assertTrue((tree / shipped).exists(),
+                                f"roster agent must ship in {tree}: {shipped}")
+            for retired in ("add.md", "add-design.md", "add-build.md", "add-verify.md",
+                            "add-persona.md"):
                 self.assertFalse((tree / retired).exists(),
                                  f"retired agent file must be deleted: {tree / retired}")
 
