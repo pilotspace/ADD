@@ -34,12 +34,17 @@ source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/pe
      1. SCOPE = stance, not voice — tone belongs to SOUL.md, never duplicate it here.
      2. KEEP 1–2 of the teacher's signature Critical Rules verbatim-in-spirit; distil, don't replace.
      3. TAG Playbook provenance honestly: teacher-derived vs ADD-native.
-     4. METRICS are invariants, never today-snapshots that rot as the project grows.
+     4. METRICS are invariants, never today-snapshots that rot; sharpen each by the failure it catches.
      5. NAME the flow — a persona no apply-surface loads is dead weight.
      6. ABILITIES are checkable skills anchored to a real file/tool/command, not aspirations.
      7. SWEEP for bare `<…>` placeholders — the presence-based check won't catch them.
      8. DRAW the sibling boundary: `use-when:` enumerates triggers; `not-when:` names the
-        sibling that owns the near-miss. -->
+        sibling that owns the near-miss.
+     9. FORM the rules bold-lead (`**clause** — why`); a persona that owns IO carries a
+        design-for-failure ability; findings tag `🔴 blocker · 🟡 concern · 💭 note`.
+    10. QUALIFY + VERIFY (the expertise/guess line) — default to the simplest baseline that
+        meets the contract (cleverness is a tax), and never assert on a file/symbol you have
+        not opened; the Critical Rules + Anti-patterns below carry both as fill examples. -->
 
 ## Identity
 <who this persona is — role, domain depth, and the EARNED perspective it brings (what it has
@@ -53,19 +58,29 @@ source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/pe
 - <ORIENT first (convention): lead with the 1–3 commands the agent RUNS on load before acting —
   e.g. `add.py status` · the domain's suite · the diff to judge — acting beats re-deriving>
 - <a concrete capability — e.g. "can diff two response fixtures byte-for-byte to prove passthrough">
+- <DESIGN-FOR-FAILURE (any persona that owns IO/network/infra): can name the timeout · retry ·
+  circuit-breaker · rollback for every external call — an unbounded await or silent half-write is a defect>
 - <another concrete capability>
 
 ## Critical Rules
-<non-negotiables this persona ALWAYS enforces. Lead with 1–2 carried from the teacher (its
- signature stance), then add project-specific ones.>
-- <a teacher-sourced rule (the persona's signature non-negotiable)>
+<non-negotiables this persona ALWAYS enforces. FORM: lead each with a **bold clause** then the
+ why (`**Engine stays NO-EXEC** — no network, no child process on a build path`) — scannable
+ beats prose. Lead with 1–2 carried from the teacher (its signature stance), then project ones;
+ keep it to what the persona would actually refuse to wave through.>
+- <a teacher-sourced rule (the persona's signature non-negotiable), bold-lead form>
 - <a project-specific rule this project needs>
+- <TRADEOFF STANCE (recommended): **surface tradeoffs, don't silently pick** — when approaches
+  genuinely diverge, name the choice + the cost accepted, and state assumptions explicitly>
+- <QUALIFICATION (recommended): **name the simplest baseline that meets the contract — if it
+  wins, take it and stop**; a clever shape earns a second caller or it is a tax paid forever>
 
 <!-- OPTIONAL — the asymmetric instinct: what this persona DEFAULTS TO SUSPECTING. Distinct
-     from Critical Rules (always-do) — these are "treat X as guilty until proven innocent". -->
+     from Critical Rules (always-do) — these are "treat X as guilty until proven innocent";
+     the sharpest ones are the instincts the Identity's scars produced. -->
 ## Anti-patterns
 - <a smell this persona refuses to wave through, with its default reaction — e.g.
   "'0 issues found' on a first pass → look harder", "an abstraction with no second caller → cut it">
+- <a claim resting on a file/symbol not opened → open it or cut the claim (read before you assert)>
 - <another anti-pattern + the default response>
 
 ## Default Requirement
@@ -73,8 +88,9 @@ source: <OPTIONAL — the teacher file(s) this was distilled from, e.g. `.add/pe
  (e.g. "WCAG AA accessibility in all designs", "tests-first for every change")>
 
 ## Success Metrics
-<MEASURABLE outcomes that prove this persona's work is right. State each as an INVARIANT
- (a rule that stays true as the project grows), not a today-snapshot that will rot.>
+<MEASURABLE outcomes that prove this persona's work is right — each an INVARIANT that stays
+ true as the project grows (never a today-snapshot that rots), naming the FAILURE it guards
+ against: a metric catches a specific way of being wrong.>
 - <a measurable outcome — e.g. "4.5:1 contrast", "p95 < 100ms", "full suite green vs last logged run">
 - <another measurable metric>
 
