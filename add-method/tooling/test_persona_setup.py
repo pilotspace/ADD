@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Red/green tests for persona-setup (persona-learning-loop 1/7).
+"""Red/green tests for persona-setup (persona-learning-loop 1/7; persona-skill refit).
 
-The setup phase SEEDS project requirements personas as a validated living doc under
-`.add/personas/`. The engine: (a) scaffolds a schema-conformant template at cmd_init via
-SETUP_FILES (survivor never-clobber), (b) validates personas presence-based (measure-not-block),
-(c) stays NO-EXEC (no network/spawn). The AI authors project-tailored personas on first run
-(skill, off-build). One test per §2 scenario. Run: python3 -m unittest test_persona_setup -v
+Personas are project requirements personas living under `.add/personas/`, AUTHORED via the
+persona-author skill (persona-skill: the static `_template.md` scaffold is retired). The engine:
+(a) creates the empty `.add/personas/` dir at cmd_init so authored personas have a home,
+(b) validates personas presence-based (measure-not-block), (c) stays NO-EXEC (no network/spawn).
+The persona-author skill (skill/add/persona-author/) carries the schema + judgment layer.
+One test per scenario. Run: python3 -m unittest test_persona_setup -v
 """
 import inspect
 import io
@@ -32,7 +33,7 @@ SKILL_TREES = (
     REPO_ROOT / ".claude" / "skills" / "add",
     PKG_ROOT / "src" / "add_method" / "_bundled" / "skill" / "add",
 )
-PERSONA_TMPL_REL = "templates/personas/_template.md.tmpl"
+PERSONA_AUTHOR_REL = "persona-author"  # skill dir under each skill/add tree (persona-skill)
 REQUIRED_SECTIONS = ("## Identity", "## Critical Rules", "## Default Requirement", "## Success Metrics")
 FRONTMATTER_KEYS = ("name", "vibe")
 # network/spawn tokens a NO-EXEC path must never contain (os.system built to dodge lint scanners)
@@ -64,28 +65,30 @@ class SeedTest(unittest.TestCase):
     def _personas(self) -> Path:
         return Path(self.tmp) / ".add" / "personas"
 
-    # scenario: init seeds the personas dir with a schema-conformant template
-    def test_init_seeds_persona_template(self):
-        tmpl = self._personas() / "_template.md"
-        self.assertTrue(tmpl.exists(), "init must seed .add/personas/_template.md")
-        text = tmpl.read_text(encoding="utf-8")
-        for key in FRONTMATTER_KEYS:
-            self.assertRegex(text, rf"(?m)^{key}:", f"template frontmatter must carry '{key}'")
-        for sec in REQUIRED_SECTIONS:
-            self.assertIn(sec, text, f"template must carry the '{sec}' section")
+    # scenario: init creates the empty personas dir (no template) — personas are authored via the skill
+    def test_init_creates_empty_personas_dir(self):
+        d = self._personas()
+        self.assertTrue(d.is_dir(), "init must create the .add/personas/ directory")
+        self.assertFalse((d / "_template.md").exists(),
+                         "no template is seeded — personas are authored via the persona-author skill")
+        self.assertEqual(list(d.glob("*.md")), [], "the personas dir starts empty (unseeded → nudge fires)")
 
-    # scenario: the seeded template validates as schema-conformant
-    def test_seeded_template_is_conformant(self):
-        text = (self._personas() / "_template.md").read_text(encoding="utf-8")
-        self.assertEqual(add._persona_missing(text), [],
-                         "the seeded template must be schema-conformant (no missing parts)")
+    # scenario: the skill's worked examples are schema-conformant (what an author imitates)
+    def test_skill_examples_are_conformant(self):
+        assets = PKG_ROOT / "skill" / "add" / PERSONA_AUTHOR_REL / "assets"
+        for ex in ("example-persona.md", "example-design-persona.md"):
+            text = (assets / ex).read_text(encoding="utf-8")
+            self.assertEqual(add._persona_missing(text), [],
+                             f"the skill example {ex} must be schema-conformant")
 
-    # scenario: the template recommends stating each persona's flow + abilities, so the
-    # design/build/advisor surfaces can actually pick a persona up and use it (not engine-checked)
-    def test_template_recommends_flow_and_abilities(self):
-        text = (self._personas() / "_template.md").read_text(encoding="utf-8")
-        self.assertRegex(text, r"(?m)^flow:", "template frontmatter must carry 'flow'")
-        self.assertIn("## Abilities", text, "template must carry the '## Abilities' section")
+    # scenario: the skill documents the recommended flow frontmatter + the Abilities section, so the
+    # design/build/advisor/verify surfaces can actually pick a persona up and use it
+    def test_skill_documents_flow_and_abilities(self):
+        base = PKG_ROOT / "skill" / "add" / PERSONA_AUTHOR_REL
+        contract = (base / "references" / "contract.md").read_text(encoding="utf-8")
+        self.assertRegex(contract, r"(?m)^flow:", "contract must document the 'flow' frontmatter")
+        self.assertIn("Abilities", (base / "SKILL.md").read_text(encoding="utf-8"),
+                      "the skill must cover the Abilities section")
 
     # scenario: re-init never clobbers an authored persona (survivor)
     def test_reinit_never_clobbers_authored_persona(self):
@@ -96,11 +99,11 @@ class SeedTest(unittest.TestCase):
         self.assertEqual(f.read_bytes(), before,
                          "init --force must not clobber an authored persona (survivor)")
 
-    # scenario: seeding succeeds offline (fail-safe, no network)
+    # scenario: init succeeds offline (fail-safe, no network)
     def test_seed_offline_failsafe(self):
-        # Seed a FRESH project (so the persona template is actually RENDERED, not survivor-skipped)
-        # under a dead network: any socket the engine opens on the seed path raises. A NO-EXEC
-        # fail-safe seed must (a) attempt NO socket and (b) still write the template.
+        # Seed a FRESH project under a dead network: any socket the engine opens on the init path
+        # raises. A NO-EXEC fail-safe init must (a) attempt NO socket and (b) still create the
+        # personas dir (personas are authored later via the skill — nothing is fetched).
         import socket
         fresh = tempfile.mkdtemp(prefix="add-persona-offline-")
         self.addCleanup(shutil.rmtree, fresh, ignore_errors=True)
@@ -114,13 +117,13 @@ class SeedTest(unittest.TestCase):
 
         socket.socket = _boom
         try:
-            add.main(["init", "--name", "offline"])  # FRESH init — renders the template; must NOT raise
+            add.main(["init", "--name", "offline"])  # FRESH init — must NOT raise
         finally:
             socket.socket = orig
         self.assertEqual(attempts, [],
-                         "the engine must attempt no network on the seed path (NO-EXEC)")
-        self.assertTrue((Path(fresh) / ".add" / "personas" / "_template.md").exists(),
-                        "a fresh seed must succeed with the network down (fail-safe)")
+                         "the engine must attempt no network on the init path (NO-EXEC)")
+        self.assertTrue((Path(fresh) / ".add" / "personas").is_dir(),
+                        "a fresh init must create the personas dir with the network down (fail-safe)")
 
     # scenario: a persona missing a required section is flagged (measure-not-block via check)
     def test_check_census_warns_not_blocks(self):
@@ -175,14 +178,17 @@ class PredicateTest(unittest.TestCase):
 class ParityAndDocTest(unittest.TestCase):
     # scenario: the seed change is byte-identical across all three engine/template trees
 
-    def test_setup_files_entry_in_all_trees(self):
-        # SETUP_FILES (constants) must carry the path-bearing personas entry in every engine tree
+    def test_persona_author_skill_ships_not_template(self):
+        # persona-skill: the static template is retired from SETUP_FILES; the persona-author skill
+        # ships in every skill tree instead (SKILL.md + the contract/patterns references).
         import add_engine.constants as c
-        self.assertIn("personas/_template.md", c.SETUP_FILES,
-                      "SETUP_FILES must seed the persona template")
-        for tree in ENGINE_TREES:
-            txt = (tree / "add_engine" / "constants.py").read_text(encoding="utf-8")
-            self.assertIn("personas/_template.md", txt, f"constants.py in {tree} must list the entry")
+        self.assertNotIn("personas/_template.md", c.SETUP_FILES,
+                         "the persona template is retired — SETUP_FILES must not seed it")
+        for tree in SKILL_TREES:
+            base = tree / "persona-author"
+            self.assertTrue((base / "SKILL.md").exists(), f"persona-author SKILL.md must ship in {tree}")
+            self.assertTrue((base / "references" / "contract.md").exists(),
+                            f"persona-author contract.md must ship in {tree}")
 
     # scenario: the first-run authoring step is documented and baseline-approval-covered
     def test_setup_guide_documents_authoring(self):

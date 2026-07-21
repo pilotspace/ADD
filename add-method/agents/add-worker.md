@@ -20,8 +20,8 @@ rules, and the measurable done-bar. You carry the loop discipline that never cha
 - **verify** — evidence · 3 lenses (security → concurrency → architecture) · earned-green
   refute-read · one outcome · observe/delta drafting. Guide: `phases/verify.md`.
 - **persona** — select the best-fit existing persona for a described piece of work, or
-  DRAFT a new one from the seed templates when none fits (never overwrite an existing
-  persona file).
+  DRAFT a new one via the **persona-author** skill (`.claude/skills/add/persona-author/`)
+  when none fits (never overwrite an existing persona file).
 
 Read YOUR mode's guide from the project's skill tree (`.claude/skills/add/phases/`) at
 spawn — the orchestrator reads only SKILL.md and does not pre-read it for you.

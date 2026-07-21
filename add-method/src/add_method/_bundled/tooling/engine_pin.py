@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "bfd472014a1f3bdcb76c0a7f103fc44b"  # re-aimed @ run-mode-decouple (run mode = the autonomy dial only; the streams: posture coupling is removed — --run-mode no longer writes a streams line, status drops its `run mode:` row, concurrency is now 'spawn a subagent per task'). prior: 427a2501… @ graph-views
-ENGINE_PKG_MD5 = "8f3d546ad34f44309d6bb5dc9dfdf6c7"  # re-aimed @ advisor-split (add_engine guidelines.py roster citation -> add-worker+add-advisor two-agent block; constants.py PHASE_AGENT values add->add-worker). prior: e0ff925d… @ run-mode-decouple
+ENGINE_MD5 = "1cebca7e72ef43efd8d259f261e8ead3"  # re-aimed @ persona-skill (add.py comment: any `_`-prefixed scaffold is placeholders — no seeded _template.md). prior: bfd47201… @ run-mode-decouple
+ENGINE_PKG_MD5 = "bcc35aa23727c5ecb19b9f3e3a53d348"  # re-aimed @ persona-skill (constants SETUP_FILES drops personas/_template.md; PERSONA_HINT/FIT point at the persona-author skill; io_state comment). prior: 8f3d546a… @ advisor-split

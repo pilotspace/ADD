@@ -33,7 +33,7 @@ ENGINE_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling",
 )
 
-FIT_MARKERS = ("add-persona", "docs/18-personas.md")
+FIT_MARKERS = ("persona-author", "docs/18-personas.md")
 
 _CONFORMANT_PERSONA = (
     "---\nname: Frontend Engineer\nvibe: ships accessible, fast UI\n---\n"

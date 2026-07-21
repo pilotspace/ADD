@@ -34,10 +34,11 @@ def _existing(*paths):
 CONSTANTS_TWINS = _existing(HERE / "add_engine" / "constants.py",
                             REPO / ".add" / "tooling" / "add_engine" / "constants.py",
                             BUNDLE / "tooling" / "add_engine" / "constants.py")
-TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl",
-                           REPO / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
-                           ADD_METHOD / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
-                           BUNDLE / "tooling" / "templates" / "personas" / "_template.md.tmpl")
+# persona-skill: the flow values doc moved from the retired template to the persona-author skill
+SKILL_CONTRACT_TWINS = _existing(
+    ADD_METHOD / "skill" / "add" / "persona-author" / "references" / "contract.md",
+    REPO / ".claude" / "skills" / "add" / "persona-author" / "references" / "contract.md",
+    BUNDLE / "skill" / "add" / "persona-author" / "references" / "contract.md")
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
               REPO / "18-personas.md")   # book-stops-shipping (2.0 M6b): no bundled copy
 # advisor-split: the verify specialist is add-worker (verify mode); the advisor is a separate agent
@@ -79,12 +80,14 @@ class VerifyFlowValueTest(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("design|build|advisor|verify", findings[0])
 
-    # ── M2: the template flow hint teaches verify + four surfaces ─────────────────
-    def test_template_hint_names_verify(self):
-        text = TEMPLATE_TWINS[0].read_text(encoding="utf-8")
-        self.assertIn("four apply-surfaces", text, "template must count FOUR apply-surfaces")
-        self.assertIn("verify", text.split("use-when:")[0], "flow hint must name verify")
-        self.assertEqual(len({_md5(p) for p in TEMPLATE_TWINS}), 1, "template twins diverged")
+    # ── M2: the persona-author skill contract teaches verify + all four flow values ──
+    def test_skill_contract_names_verify(self):
+        text = SKILL_CONTRACT_TWINS[0].read_text(encoding="utf-8")
+        self.assertIn("`design` · `build` · `advisor` · `verify`", text,
+                      "contract must name all four flow values")
+        self.assertIn("evidence-judging lens", text, "contract must describe the verify surface")
+        self.assertEqual(len({_md5(p) for p in SKILL_CONTRACT_TWINS}), 1,
+                         "persona-author contract twins diverged")
 
     # ── M3: the book chapter gains the fourth surface ─────────────────────────────
     def test_docs_four_surfaces(self):

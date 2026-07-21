@@ -126,7 +126,7 @@ PHASE_AGENT = {
     "build": "add-worker",
     "verify": "add-worker",
 }
-SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md", "personas/_template.md")
+SETUP_FILES = ("PROJECT.md", "CONVENTIONS.md", "GLOSSARY.md", "MODEL_REGISTRY.md", "dependencies.allowlist", "DESIGN.md", "SOUL.md")
 
 # persona-setup: a PERSONA living doc (`.add/personas/<slug>.md`) is a frozen-schema file
 # distilled from the vendored teacher library to its critical-rules + default-requirement +
@@ -168,18 +168,19 @@ SPEC_DDS = {
 # THIS constant (not their own copy) so the wording can never drift across the three surfaces.
 # Project-scoped (not "this milestone's domain") per the confirmed v2 amendment: the AI should
 # catch up ALL of a project's missing personas, not draft a single milestone-fit one.
-PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — spawn the add agent "
-                "in persona mode (or read docs/18-personas.md) to seed the project's persona(s) "
-                "from PROJECT.md's domain + the seed templates (tooling/templates/personas/)")
+PERSONA_HINT = ("no project-fit persona seeded yet under .add/personas/ — use the persona-author "
+                "skill (or read docs/18-personas.md) to author the project's persona(s) "
+                "from PROJECT.md's domain")
 
 # persona-fit-nudge: the OPPOSITE-branch, mutually-exclusive sibling of PERSONA_HINT — fires only
 # when ≥1 real persona ALREADY exists, so a brand-new milestone doesn't silently assume one of
 # them fits its domain. Existence-only (names the persona slugs already seeded); the AI still
-# owns the actual fit judgment (the add agent's persona mode) — the engine never scores content
-# similarity. {slugs} is filled at call time from `.add/personas/*.md` (excluding `_template`).
+# owns the actual fit judgment (add-worker's persona mode, guided by the persona-author skill) —
+# the engine never scores content similarity. {slugs} is filled at call time from
+# `.add/personas/*.md` (excluding any `_`-prefixed scaffold).
 PERSONA_FIT_HINT_TEMPLATE = (
-    "existing persona(s) seeded — {slugs} — confirm one fits this milestone's domain, or spawn "
-    "the add agent in persona mode (or read docs/18-personas.md) to draft a better-fit one"
+    "existing persona(s) seeded — {slugs} — confirm one fits this milestone's domain, or use the "
+    "persona-author skill (or read docs/18-personas.md) to author a better-fit one"
 )
 
 # Scaffolded into .add/.gitignore at init so the engine's transient LOCAL artifacts

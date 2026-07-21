@@ -593,6 +593,11 @@ def cmd_init(args: argparse.Namespace) -> None:
             continue
         _atomic_write(dest, rendered)
 
+    # persona-skill: personas are AUTHORED via the persona-author skill (not seeded from a
+    # template) — but the location must exist so the first authored persona has a home and the
+    # unseeded nudge has a directory to check. Create it empty; the skill fills it.
+    (root / "personas").mkdir(parents=True, exist_ok=True)
+
     # specs-5dd (ADD 2.0 M3): the five living 5-DD specs — same survivor idiom as
     # SETUP_FILES (never clobber, never write blank), ONE template rendered five ways.
     for dd in SPEC_DDS:
@@ -3957,7 +3962,7 @@ def cmd_check(args: argparse.Namespace) -> None:
                 infos.append((f"persona '{slug}'", "schema-conformant"))
                 # persona-schema-hardening: quality findings the presence check can't see
                 # (typo'd flow: value · bare <…> placeholder) — WARN-only (measure-not-block),
-                # REAL personas only: the seeded `_template.md` is all placeholders by design.
+                # REAL personas only: any `_`-prefixed scaffold is placeholders by design.
                 if not slug.startswith("_"):
                     try:
                         text = pf.read_text(encoding="utf-8")

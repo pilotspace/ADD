@@ -1,0 +1,97 @@
+---
+name: persona-author
+description: >-
+  Author or improve an ADD-method persona file (a .add/personas/ slug.md) — the project-fit
+  requirements LENS the ADD engine validates and the design/build/verify/advisor surfaces load.
+  Use when adding a domain expert to the ADD roster, when the add-worker persona mode must DRAFT
+  a persona because none fits the task kind, or when folding a retrospective into an existing
+  persona. Produces a schema-valid persona (Identity, Critical Rules, Default Requirement,
+  Success Metrics, plus recommended frontmatter and Abilities/Anti-patterns/Playbook) that carries
+  the judgment layer of strong agent design: earned-perspective identity, bold-lead rules, the
+  qualification gate, read-before-you-assert, and failure-mode-aware metrics.
+---
+
+# Authoring an ADD persona
+
+A persona is a **lens, not a voice** — a distilled slice of domain expertise the ADD engine
+loads onto a beat so a generic agent becomes the specialist. Author for that seam and nothing
+else: **tone lives in SOUL.md**, the **six-dimension self-score lives in the agent** (add-worker),
+and the **deliverable's shape lives in the agent's Return contract**. A persona that duplicates
+any of those is dead weight. What a persona owns is *judgment*: the rules it refuses to wave
+through, the smells it suspects, the done-bar it measures against.
+
+Two references and one worked example back this workflow — read them as you go:
+- **`references/contract.md`** — the exact engine contract (required/recommended/optional sections,
+  frontmatter field semantics, the flow values and task-kinds taxonomy, the quality WARNs). Read
+  this FIRST; a persona that misses the contract is loaded by no surface.
+- **`references/patterns.md`** — the judgment layer distilled from a deep read of strong subagent
+  files, each pattern with a before/after. This is what separates an expert lens from a keyword list.
+- **`assets/example-persona.md`** (an I/O lens) and **`assets/example-design-persona.md`** (a
+  design lens) — two fully-worked personas to imitate, not copy. Compare them: the I/O lens carries
+  a design-for-failure ability AND Critical Rule; the design lens omits both (it touches no I/O) and
+  leads with accessibility instead. Proof the patterns are *conditional* — matched to the surface.
+
+## Decide the move
+
+Most requests are NOT "write a new persona". Pick the path first:
+
+1. **A sibling already fits** — its `use-when:` matches the task's `kind:` and domain → *select it,
+   don't author*. A roster of near-duplicates is worse than one sharp lens.
+2. **A sibling ALMOST fits** and the gap is a lesson worth keeping → *fold into it* (bump its
+   `folded:` line), don't fork a near-twin.
+3. **No lens owns this seam** → author a new one via the Workflow below.
+
+When unsure, prefer (1) then (2). A new persona must earn its place by owning a seam no sibling does.
+
+## Workflow
+
+1. **ORIENT before drafting.** Run `python3 .add/tooling/add.py status`. Read the sibling personas
+   in `.add/personas/*.md` (frontmatter alone is enough) and, if present, the teacher library at
+   `.add/personas-teacher/`. You are placing ONE lens in a roster — know the neighbours so this
+   persona has a distinct seam, not an overlap.
+
+2. **Fix the seam (frontmatter).** Decide the apply-`flow:` (design · build · advisor · verify —
+   comma-separate if more than one; NO other value is loaded), the `task-kinds:` it owns (from the
+   closed taxonomy), and the `use-when:` / `not-when:` boundary that routes THIS persona over its
+   siblings. See `references/contract.md` for exact semantics — these keys are the selection contract.
+
+3. **Write Identity with earned perspective.** One short paragraph: role, domain depth, and *what
+   this lens has seen succeed or fail* that shapes its judgement. Scars, not a résumé.
+
+4. **Write Critical Rules bold-lead.** Each rule leads with a `**bold clause** — then the why`.
+   Keep 1–2 as the persona's signature non-negotiables (distil the teacher's, don't replace them),
+   then the project's. Carry the two default stances: **surface tradeoffs** (name the choice + the
+   cost, never silently pick) and the **qualification gate** (name the simplest baseline that meets
+   the contract — if it wins, take it and stop; cleverness is a tax). Keep it to what it would refuse.
+
+5. **List Abilities — concrete, anchored, checkable.** Lead with the ORIENT commands the lens runs
+   on load (`add.py status` · the suite · the diff). State each ability as something doable *now*,
+   anchored to a real file/tool/command — never an aspiration. A persona that owns I/O/network/infra
+   carries a **design-for-failure** ability (timeout · retry · circuit-breaker · rollback for every
+   external call; an unbounded await or silent half-write is a defect).
+
+6. **Name Anti-patterns — guilty-until-proven.** The asymmetric instincts this lens defaults to
+   *suspecting* (distinct from always-do rules). The sharpest ones are the instincts the Identity's
+   scars produced. Always include **read-before-you-assert**: a claim resting on a file/symbol not
+   opened → open it or cut the claim.
+
+7. **Set Default Requirement + Success Metrics.** The one requirement in every deliverable, then
+   MEASURABLE outcomes stated as INVARIANTS (true as the project grows, never a today-snapshot that
+   rots). Sharpen each by **the failure it guards against** — a metric catches a specific way of
+   being wrong.
+
+8. **(Optional) Playbook.** Only if the lens carries executable know-how (an ADR skeleton, a STRIDE
+   pass, a red→green loop). Tag each item `(teacher)` or `(ADD)` so provenance is honest.
+
+9. **VALIDATE.** Save as `.add/personas/<slug>.md` (never overwrite an existing persona; never use a
+   `_`-prefixed name). Run `python3 .add/tooling/add.py check` — it validates presence-based and
+   surfaces quality WARNs (a `flow:` typo loaded by no surface; a bare `<…>` placeholder left
+   unfilled). Sweep every `<…>` placeholder out; fix every WARN. Green check = the persona is
+   roster-ready.
+
+## The one-line test
+
+Before finishing, read the persona as its future self would: *"Given only this lens and a task of
+my kind, would I make a sharper decision than a generic 15-year specialist?"* If not, the judgment
+layer is too thin — deepen the Critical Rules, Anti-patterns, and failure-aware Metrics (that is
+where expertise lives), not the prose.
