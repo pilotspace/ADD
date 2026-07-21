@@ -36,7 +36,7 @@ agent: the next session resumes with one command and loses nothing.
 |---|---|---|
 | Requirement coverage | **.92 → .75, never recovered** | **1.0 flat across all six** |
 | An early spec violation | carried through **five more milestones**, never re-examined | **never introduced** — each session re-derived the shape from the spec |
-| Cost per milestone | — | **3–5× cheaper than ADD 1.x** — structure got leaner, not pricier |
+| New-feature quality at milestone 6 | still good — but the old promises rotted | **1.0** — new work stays good *and* old work holds |
 
 <sub>[Campaign report, revised edition](./benchmark/results/2026-07-add-2.0-remeasure.md) — pinned model, deterministic probes, no LLM judge.</sub>
 
@@ -60,20 +60,20 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 
 ## ✨ Highlights
 
-- 📉 **Anti-context-rot by design** — state on disk, fresh sessions lossless; measured flat 1.0 across evolving milestones while conversation-carried flows decayed.
-- ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent drives Direction → Build → Verify.
-- 🔬 **Proof, not promises** — deterministic gates on observed behavior, never a plausible-looking diff. Weakening a test to get green is treated as tampering.
-- 💸 **Lean enough to be the cheap option** — a thin 31-verb state kernel and a 3-call task walk; 3–5× lower per-milestone cost than ADD 1.x, competitive with the lightest structured flows.
-- 🔒 **Security never gets waved through** — any security finding is a hard stop, human in the loop.
-- 🧠 **Personas that learn your project** — a persona proposes each task's lane, outcomes are traced, and the loop reflects on what worked (GEPA).
-- 📄 **One file per feature** — spec, scenarios, contract, tests, and gate record live in a single `PLAN.md`.
-- 🎨 **See it before you build it** — a wireframe and a zero-dependency HTML mock, approved before any code.
-- 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
-- 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed.
+- ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify on its own and only comes back when it matters.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right. Gaming a test to go green is treated as tampering, not a shortcut.
+- 💸 **Structure without the ceremony tax** — a thin 31-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
+- 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
+- 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
+- 📄 **Everything about a feature in one place** — spec, scenarios, contract, tests, and gate record in a single `PLAN.md`; no doc tree to hunt through.
+- 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
+- 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
+- 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
 > _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
 
-<sub>**Fine print:** benchmark cells are single-rep (direction, not statistical proof). On this friendly single-app workload a strong model under spec-kit also passed the restart floors, and ran cheaper — the report's revised edition retracts our own earlier "collapse" claim after we found the meter defect behind it. ADD's case rests on the context-rot result, the structural guarantees, and the 3–5× cost cut vs its own 1.x — not on a rival's failure.</sub>
+<sub>**Fine print:** benchmark cells are single-rep (direction, not statistical proof). On this friendly single-app workload a strong model under spec-kit also passed the restart floors, and ran cheaper — the report's revised edition retracts our own earlier "collapse" claim after we found the meter defect behind it. ADD's case rests on the context-rot result and the structural guarantees — not on a rival's failure.</sub>
 
 ## ADD vs vanilla — when it earns its keep
 
@@ -87,7 +87,7 @@ trade — you spend minutes on direction to buy trust that holds across mileston
 | **Across milestones** | quality decays; old promises silently break | frozen contracts + red suites re-run; trust holds |
 | **What you verify** | you re-read the diff and hope | pre-declared tests pass, or the gate refuses |
 | **Resuming later** | re-explain the goal, re-read the repo | one command from `state.json`, lossless |
-| **Cost** | near-zero ceremony up front | one bounded direction pass per milestone — and 3–5× leaner than ADD 1.x |
+| **Cost** | near-zero ceremony up front | one bounded direction pass per milestone — minutes, not a doc tree |
 | **Best for** | throwaway scripts, one-shots, spikes | evolving products, multiple milestones, teams |
 
 **Rule of thumb:** building something you'll throw away this week? Vanilla is

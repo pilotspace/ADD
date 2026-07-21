@@ -52,15 +52,15 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Highlights
 
-- 📉 **Anti-context-rot by design** — every decision lives on disk (`PLAN.md`, frozen contracts, red suites, `.add/state.json`), so a fresh session resumes losslessly; measured flat 1.0 quality across evolving milestones while conversation-carried flows decayed.
-- ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent drives Direction → Build → Verify.
-- 🔬 **Proof, not promises** — verified against observed behavior and pre-declared expectations, never just a plausible-looking diff; weakening a test to reach green is treated as tampering.
-- 💸 **Lean by measurement** — a thin 31-verb state kernel, a 3-call task walk, one file per feature; 3–5× lower per-milestone cost than ADD 1.x.
-- 🔒 **Security never gets waved through** — any security finding is a hard stop, human in the loop.
-- 🧠 **Personas route the work** — a project-owned persona proposes each task's lane, the freeze ratifies it, outcomes are traced, and the loop reflects on the record (GEPA) so the method adapts to your codebase.
-- 🎨 **See it before you build it** — a wireframe and a zero-dependency HTML mock, approved before any code.
-- 👥 **Built for teams** — git-native multi-user, N parallel milestones, DAG-scheduled waves; monorepo or multi-repo in one team.
-- 🤝 **Works with your AI** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (`PLAN.md`, frozen contracts, red suites, `.add/state.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
+- ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
+- 💸 **Structure without the ceremony tax** — a thin 31-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
+- 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
+- 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
+- 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
+- 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves; monorepo or multi-repo in one team.
+- 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
 > _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
 
@@ -77,7 +77,7 @@ The causal finding: when ONE continued conversation carried the milestones, ever
 flow decayed the same way (coverage .92 → .75, an early spec violation carried
 through five more milestones). When every milestone instead started a **fresh
 session resuming from disk**, ADD held every floor at 1.0 across all six — through
-a breaking shape change and a cross-cutting refactor — at a fraction of ADD 1.x's per-milestone cost.
+a breaking shape change and a cross-cutting refactor — with zero regressions.
 
 That's the design, in three moves:
 
@@ -103,7 +103,7 @@ runtime dependency — down to the three parts a project needs: **Identity**,
 
 A distilled persona is an **advisory overlay** during direction, build, or verify:
 it shapes *how* a step gets done, never whether it happens. It can't skip a gate,
-edit a frozen contract, or wave through a security finding. In 2.0 personas also
+edit a frozen contract, or wave through a security finding. Personas also
 propose each task's route (full walk · fast lane · inline); the freeze ratifies it,
 the gate traces the outcome, and `add.py deltas` rolls the traces into a per-lane
 scoreboard the loop reflects on (GEPA).
@@ -209,14 +209,6 @@ be upset to lose is "the code," you're still working the old way.
 - 📊 [Benchmark results](https://github.com/pilotspace/ADD/tree/main/benchmark/results) — every trust and cost claim, measured
 - ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
-
-## What's new in 2.0
-
-- **Skill-led loop on a thin kernel** — the skill narrates Direction → Build → Verify; `add.py` shrinks to a 31-verb state kernel (54 → 31).
-- **`PLAN.md` + one-shot `migrate`** — the per-task file is the plan; a whole 1.x board converts with one idempotent command.
-- **Five living 5-DD specs with `delta-append`** — the project's evolving truth, compacted forward instead of rewritten.
-- **Persona routes + the GEPA scoreboard** — personas propose lanes, gates trace outcomes, `deltas` shows the per-lane record, and the loop reflects on it.
-- **The book stops shipping** — published online only, deep-linked from the engine.
 
 ## Develop
 
