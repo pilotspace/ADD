@@ -55,7 +55,7 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 - 📉 **Anti-context-rot by design** — every decision lives on disk (`PLAN.md`, frozen contracts, red suites, `.add/state.json`), so a fresh session resumes losslessly; measured flat 1.0 quality across evolving milestones while conversation-carried flows decayed.
 - ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent drives Direction → Build → Verify.
 - 🔬 **Proof, not promises** — verified against observed behavior and pre-declared expectations, never just a plausible-looking diff; weakening a test to reach green is treated as tampering.
-- 💸 **Lean by measurement** — a thin 31-verb state kernel, a 3-call task walk, one file per feature; ~$2.90 per trusted milestone, a 3–5× cut vs ADD 1.x.
+- 💸 **Lean by measurement** — a thin 31-verb state kernel, a 3-call task walk, one file per feature; 3–5× lower per-milestone cost than ADD 1.x.
 - 🔒 **Security never gets waved through** — any security finding is a hard stop, human in the loop.
 - 🧠 **Personas route the work** — a project-owned persona proposes each task's lane, the freeze ratifies it, outcomes are traced, and the loop reflects on the record (GEPA) so the method adapts to your codebase.
 - 🎨 **See it before you build it** — a wireframe and a zero-dependency HTML mock, approved before any code.
@@ -77,7 +77,7 @@ The causal finding: when ONE continued conversation carried the milestones, ever
 flow decayed the same way (coverage .92 → .75, an early spec violation carried
 through five more milestones). When every milestone instead started a **fresh
 session resuming from disk**, ADD held every floor at 1.0 across all six — through
-a breaking shape change and a cross-cutting refactor — at ~$2.90 per milestone.
+a breaking shape change and a cross-cutting refactor — at a fraction of ADD 1.x's per-milestone cost.
 
 That's the design, in three moves:
 

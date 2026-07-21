@@ -36,7 +36,7 @@ agent: the next session resumes with one command and loses nothing.
 |---|---|---|
 | Requirement coverage | **.92 → .75, never recovered** | **1.0 flat across all six** |
 | An early spec violation | carried through **five more milestones**, never re-examined | **never introduced** — each session re-derived the shape from the spec |
-| Cost | — | **~$2.90 / milestone** (a 3–5× cut vs ADD 1.x) |
+| Cost per milestone | — | **3–5× cheaper than ADD 1.x** — structure got leaner, not pricier |
 
 <sub>[Campaign report, revised edition](./benchmark/results/2026-07-add-2.0-remeasure.md) — pinned model, deterministic probes, no LLM judge.</sub>
 
@@ -63,7 +63,7 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 📉 **Anti-context-rot by design** — state on disk, fresh sessions lossless; measured flat 1.0 across evolving milestones while conversation-carried flows decayed.
 - ✅ **Approve once, then let it run** — one human sign-off at the frozen contract; the agent drives Direction → Build → Verify.
 - 🔬 **Proof, not promises** — deterministic gates on observed behavior, never a plausible-looking diff. Weakening a test to get green is treated as tampering.
-- 💸 **Lean enough to be the cheap option** — a thin 31-verb state kernel and a 3-call task walk; ~$2.90 per trusted milestone, a 3–5× cut vs ADD 1.x.
+- 💸 **Lean enough to be the cheap option** — a thin 31-verb state kernel and a 3-call task walk; 3–5× lower per-milestone cost than ADD 1.x, competitive with the lightest structured flows.
 - 🔒 **Security never gets waved through** — any security finding is a hard stop, human in the loop.
 - 🧠 **Personas that learn your project** — a persona proposes each task's lane, outcomes are traced, and the loop reflects on what worked (GEPA).
 - 📄 **One file per feature** — spec, scenarios, contract, tests, and gate record live in a single `PLAN.md`.
@@ -87,7 +87,7 @@ trade — you spend minutes on direction to buy trust that holds across mileston
 | **Across milestones** | quality decays; old promises silently break | frozen contracts + red suites re-run; trust holds |
 | **What you verify** | you re-read the diff and hope | pre-declared tests pass, or the gate refuses |
 | **Resuming later** | re-explain the goal, re-read the repo | one command from `state.json`, lossless |
-| **Cost** | near-zero ceremony | ~$2.90 / milestone of structure |
+| **Cost** | near-zero ceremony up front | one bounded direction pass per milestone — and 3–5× leaner than ADD 1.x |
 | **Best for** | throwaway scripts, one-shots, spikes | evolving products, multiple milestones, teams |
 
 **Rule of thumb:** building something you'll throw away this week? Vanilla is
