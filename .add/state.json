@@ -4558,7 +4558,7 @@
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-17T17:19:49+00:00",
+  "updated": "2026-07-21T03:36:01+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6132,6 +6132,12 @@
       "id": 34,
       "text": "bench meter: the judge rubric's 'single float and nothing else' protocol caps spec_fidelity at ~0.98 (LLM hedging artifact \u2014 the SAME sonnet judge forced to itemize MET/UNMET with evidence scored sixphase-r1 1.0, all requirements MET); meter v3 candidate = itemize-then-float rubric, but changing it breaks comparability with every archived round",
       "created": "2026-07-14T04:38:54+00:00",
+      "status": "open"
+    },
+    {
+      "id": 35,
+      "text": "semantic_inventory.py is red on main (17 findings incl. fold.md 'file gone') and NO test invokes it \u2014 wire it into the suite like wording_lint, then reconcile SEMANTIC_INVENTORY.md with the current surface",
+      "created": "2026-07-21T03:36:01+00:00",
       "status": "open"
     }
   ]
