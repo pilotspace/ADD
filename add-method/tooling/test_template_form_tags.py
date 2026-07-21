@@ -343,7 +343,7 @@ class BuildExpectationsBlock(unittest.TestCase):
         self.assertNotIn("### Build expectations", sec6,
                          "the Build-expectations block is retired (folded into §3 Target)")
         self.assertIn("### GATE RECORD", sec6, "GATE RECORD retained")
-        self.assertIn("- [ ] all tests pass", sec6, "the §6 checklist retained")
+        self.assertIn("- [ ] all tests (or §4 acceptance checks) pass", sec6, "the §6 checklist retained")
 
     def test_engine_seams_untouched_by_the_block(self):
         # the amended template still passes every parsed-seam guard (no parsed_seam_touched).

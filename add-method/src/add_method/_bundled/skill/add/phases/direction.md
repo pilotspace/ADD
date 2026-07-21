@@ -81,7 +81,7 @@ stamp its §3 `Status: FROZEN @ v1`, build is open.
 <exit_gate>
 - [ ] `.add/state.json` exists; setup seeded unlocked (`--await-lock`) then locked.
 - [ ] Seed lines filled; untouched sections carry the living marker (brownfield: evidence-grounded from code).
-- [ ] First task created; §1–§4 drafted — the red suite runs RED before build opens; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
+- [ ] First task created; §1–§4 drafted — the red suite (or §4 acceptance checks) runs RED before build opens; `.add/SETUP-REVIEW.md` written lowest-confidence-first.
 - [ ] Human confirmed the baseline approval and `add.py lock --by` ran with their name.
 </exit_gate>
 
@@ -236,6 +236,13 @@ scenario asserting **behavior, not internals** · contract-conformance tests (sh
 responses) · side-effect assertions on rejection paths (`assert balance unchanged`) · a recorded
 coverage target.
 
+**Non-coding task?** For `kind: docs · release · infra` (or a wholly non-coding project) the
+check need not be a script: §4 is a failing-first **acceptance check** — verifiable pass/fail
+evidence (renders · every internal link resolves · `§X covers A/B/C` · a command exits 0), red
+before the artifact exists and green after. Declare `Tests live in: evidence`. Red→green still
+binds; only the must-be-executable-code requirement is lifted (the human may declare acceptance
+mode on any task). Coding kinds keep the executable red suite above.
+
 ## Declaring where tests live
 
 §4's `Tests live in:` line is machine-read — declare paths as backticked tokens on that line: with
@@ -254,7 +261,7 @@ moves. Ground §3 on each parent edge's frozen §3 — the PLAN.md itself, never
 built code.
 
 <exit_gate>
-- [ ] One test per scenario, red for the right reason, asserting observable behavior; coverage target recorded.
+- [ ] One test (or acceptance check, for a non-coding kind) per scenario, red for the right reason, asserting observable behavior; coverage target recorded.
 </exit_gate>
 
 > **Persona / Advisor / Confidence** — load the domain-fit `.add/personas/<slug>.md` (its Critical

@@ -11,7 +11,7 @@ sufficient. Fill **§6** in PLAN.md including the GATE RECORD.
 
 ## Part one — confirm the evidence
 
-- [ ] All tests pass.
+- [ ] All tests pass — or, for a non-coding task, every §4 acceptance check is green (the evidence it names is real).
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during build.
 - [ ] The §3 Target (measurable) is hit — including any declared outcome tests can't show, confirmed by real evidence.
@@ -50,7 +50,7 @@ tasks use the compact form — banner → SUMMARY → EVIDENCE → APPROVE; `sec
 |---------|------|
 | `PASS` | all checks met |
 | `RISK-ACCEPTED` | a **non-security** gap, with signed owner + ticket + expiry |
-| `HARD-STOP` | any failing test or any security finding |
+| `HARD-STOP` | any failing test or acceptance check, or any security finding |
 
 ## Exit gate / Next
 

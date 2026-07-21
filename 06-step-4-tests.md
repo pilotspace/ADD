@@ -3,7 +3,7 @@
 [← 05 Step 3 Contract](./05-step-3-plan.md) · [Contents](./README.md) · Next: [07 Step 5 Build →](./07-step-5-build.md)
 
 > **Purpose:** turn the scenarios and contract into automated tests, and confirm they fail before any code exists.
-> **Produces:** a failing (red) automated test suite.
+> **Produces:** a failing (red) automated test suite — or, for a non-coding task, a failing-first acceptance-check list.
 > **Person's job:** set the targets and coverage. **AI's job:** generate the tests.
 
 > **Part of the specification bundle (v7).** In the default flow these tests are drafted by the AI as part of the specification **bundle** (spec · scenarios · contract · tests) and approved by a person **once**, at the contract freeze — the tests are part of what that one approval covers. They still must be **red before the build**. See [11 Governance](./11-governance.md).
@@ -54,6 +54,22 @@ Run this now, with no implementation: all three fail. That is the correct, hones
 
 If §1's Musts and Rejects carry stable IDs, add a trailing `covers: M1, R:amount_invalid` to a test-plan line to declare which ID(s) that test satisfies. Once any test in a task declares a `covers:` line (or any §2 scenario carries a tag), `add.py check` confirms every §1 ID is covered by a tag or a `covers:` line somewhere — a task that never uses either is left alone. See the template's own inline example for the exact grammar.
 
+## Non-coding tasks — acceptance checks, not scripts
+
+Not every task ships code. A documentation task, a release, an infrastructure change, or a wholly non-coding project has no unit to exercise — forcing an executable test onto it is ceremony. For these (`kind: docs · release · infra`, or when the human declares acceptance mode), §4 becomes a **failing-first acceptance check**: a short list of verifiable pass/fail evidence, red before the artifact exists and green once it does.
+
+The discipline is unchanged — the check must genuinely fail first, and every item is concrete and observable:
+
+```
+## 4 · ACCEPTANCE — failing-first checks
+- [ ] `mkdocs build` succeeds (fails now: the page does not exist)
+- [ ] the Personas chapter covers author · validate · flow
+- [ ] every internal link resolves
+Checks live in: evidence
+```
+
+Only the *form* is relaxed: the check need not be executable code. Everything else holds — red before build, one check per scenario, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite above; the two modes never mix within one task.
+
 ## The AI's role here
 
 The AI generates the test suite from the scenarios and contract. Your job is to confirm two things it cannot judge for itself: that each test asserts *behavior* rather than internal detail, and that none of them pass by accident before code exists. See `playbook/4_tests.md` in [Appendix B](./appendix-b-prompts.md).
@@ -72,8 +88,8 @@ The AI generates the test suite from the scenarios and contract. Your job is to 
 
 ## Exit check
 
-- [ ] One test exists per scenario.
-- [ ] The suite runs in the pipeline and is **red for the right reason**.
+- [ ] One test — or, for a non-coding task, one acceptance check — exists per scenario.
+- [ ] The suite (or the acceptance-check list) runs in the pipeline and is **red for the right reason**.
 - [ ] Tests assert observable behavior, not internals.
 - [ ] A coverage target is recorded.
 - [ ] No `should_panic` lying reds — unimplemented paths use `todo!()` or equivalent so they actually fail.

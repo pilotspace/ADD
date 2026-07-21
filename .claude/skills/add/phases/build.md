@@ -1,8 +1,9 @@
 # Build — AI writes the code (the beat you drive to green)
 
-Objective: implement the feature so EVERY failing test passes — without changing any
-test or the contract. This is the only phase the AI leads; §1–§4 removed all
-ambiguity. Write code into `.add/tasks/<slug>/src/`.
+Objective: implement the feature so EVERY failing test — or, for a non-coding task, every §4
+acceptance check — passes, without changing any test or the contract. This is the only phase the
+AI leads; §1–§4 removed all ambiguity. Write code into `.add/tasks/<slug>/src/` (a non-coding
+task writes its artifact to the path its §5 Scope declares).
 
 ## Work in small batches
 
@@ -39,7 +40,7 @@ contract.** A genuine need to change either is a change request back to Specify.
 ## Exit gate
 
 <exit_gate>
-- [ ] All tests pass.
+- [ ] All tests (or §4 acceptance checks) pass.
 - [ ] Coverage did not decrease.
 - [ ] No test and no contract modified by the AI.
 - [ ] No dependency outside the allow-list.

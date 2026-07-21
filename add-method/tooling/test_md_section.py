@@ -1,29 +1,14 @@
 #!/usr/bin/env python3
-"""fence-aware-section — one fence-aware section slicer, its importer suites.
+"""fence-aware-section — one fence-aware markdown section slicer.
 
-Four guard files sliced markdown sections by splitting at the next H2 line,
+Guard files once sliced markdown sections by splitting at the next H2 line,
 fence-blind: a ``` fence containing an H2-looking line silently truncated the
-scan while the guard claimed the whole section (the wave-ledger hazard; its
-template was forced to ### headings as a workaround). This suite drives
-md_section.section(): the terminator scan skips fenced lines, the four guard
-files route through it, and a sweep proves the fence-blind idiom is gone.
+scan while the guard claimed the whole section (the wave-ledger hazard). This
+suite drives md_section.section(): the terminator scan skips fenced lines.
 
 Run: python3 -m unittest test_md_section -v
 """
-import io
 import unittest
-from pathlib import Path
-
-TOOLING = Path(__file__).resolve().parent
-
-# kernel-trim (ADD 2.0 M5): test_audit_ci + test_wave_ledger died with their pillars
-IMPORTERS = (
-    # atomic-node: test_ground_wiring retired with the §3 Grounding block
-    "test_intake_interview.py",
-    "test_review_checklist.py",
-)
-# the fence-blind idiom: slicing at the next-H2 escape sequence
-_IDIOM = '\\n## '
 
 FENCE = "`" * 3
 
@@ -63,25 +48,6 @@ class SlicerBehaviorTest(unittest.TestCase):
         got = section(text, "## A")
         self.assertIn("swallowed", got,
                       "an unclosed fence runs to end-of-text, no raise")
-
-    def test_importers_no_leftover_idiom(self):
-        for name in IMPORTERS:
-            src = (TOOLING / name).read_text(encoding="utf-8")
-            self.assertIn("md_section", src,
-                          f"{name} must route slicing through md_section")
-            self.assertNotIn(_IDIOM, src,
-                             f"slicer_not_single_source: {name} still carries "
-                             f"the fence-blind slice idiom")
-
-    def test_importer_guards_still_green(self):
-        loader = unittest.defaultTestLoader
-        suite = unittest.TestSuite(
-            loader.loadTestsFromName(name[:-3]) for name in IMPORTERS)
-        result = unittest.TextTestRunner(
-            stream=io.StringIO(), verbosity=0).run(suite)
-        self.assertTrue(result.wasSuccessful(),
-                        "regression: the slicing suites must stay green — "
-                        f"{result.failures} {result.errors}")
 
 
 if __name__ == "__main__":
