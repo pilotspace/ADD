@@ -8,7 +8,8 @@ description: >-
   persona. Produces a schema-valid persona (Identity, Critical Rules, Default Requirement,
   Success Metrics, plus recommended frontmatter and Abilities/Anti-patterns/Playbook) that carries
   the judgment layer of strong agent design: earned-perspective identity, bold-lead rules, the
-  qualification gate, read-before-you-assert, and failure-mode-aware metrics.
+  qualification gate, read-before-you-assert, and failure-mode-aware metrics. Seeds a first draft
+  from the teacher library or a sample subagent when a near-fit source exists, instead of a blank page.
 ---
 
 # Authoring an ADD persona
@@ -26,6 +27,10 @@ Two references and one worked example back this workflow — read them as you go
   this FIRST; a persona that misses the contract is loaded by no surface.
 - **`references/patterns.md`** — the judgment layer distilled from a deep read of strong subagent
   files, each pattern with a before/after. This is what separates an expert lens from a keyword list.
+- **`references/seeding.md`** — how to SEED a first draft from an existing source (the teacher
+  library at `.add/personas-teacher/`, or a `~/.claude/agents/*.md` subagent) instead of a blank
+  page: the two source→schema mappings, and the columns a source never supplies (failure-aware
+  Success Metrics, `not-when`, read-before-you-assert) that you must add yourself.
 - **`assets/example-persona.md`** (an I/O lens) and **`assets/example-design-persona.md`** (a
   design lens) — two fully-worked personas to imitate, not copy. Compare them: the I/O lens carries
   a design-for-failure ability AND Critical Rule; the design lens omits both (it touches no I/O) and
@@ -39,7 +44,9 @@ Most requests are NOT "write a new persona". Pick the path first:
    don't author*. A roster of near-duplicates is worse than one sharp lens.
 2. **A sibling ALMOST fits** and the gap is a lesson worth keeping → *fold into it* (bump its
    `folded:` line), don't fork a near-twin.
-3. **No lens owns this seam** → author a new one via the Workflow below.
+3. **No lens owns this seam** → author a new one. Don't start blank: **seed** from the nearest
+   teacher persona (`.add/personas-teacher/`) or a sample subagent (`~/.claude/agents/*.md`) per
+   `references/seeding.md`, then run the Workflow below over the seeded draft.
 
 When unsure, prefer (1) then (2). A new persona must earn its place by owning a seam no sibling does.
 
@@ -48,7 +55,9 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
 1. **ORIENT before drafting.** Run `python3 .add/tooling/add.py status`. Read the sibling personas
    in `.add/personas/*.md` (frontmatter alone is enough) and, if present, the teacher library at
    `.add/personas-teacher/`. You are placing ONE lens in a roster — know the neighbours so this
-   persona has a distinct seam, not an overlap.
+   persona has a distinct seam, not an overlap. If you'll author (no sibling fits), pick the
+   nearest teacher persona or a sample subagent as a seed now and follow `references/seeding.md` —
+   a head-start on structure beats a blank page (the judgment layer is still yours to add).
 
 2. **Fix the seam (frontmatter).** Decide the apply-`flow:` (design · build · advisor · verify —
    comma-separate if more than one; NO other value is loaded), the `task-kinds:` it owns (from the
