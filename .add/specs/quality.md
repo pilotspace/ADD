@@ -20,5 +20,6 @@ project: AIDD / ADD Methodology · seeded: 2026-07-17 · stage: mvp
 - YAML 1.1 parses a bare `on:` key as boolean True — a workflow-shape test must read `cfg.get("on", cfg.get(True))` or it silently asserts against a missing key. [fv49 · pages-deploy]
 
 ## Deltas (newest first)
+- [open · 2026-07-22] content-presence phrase pins pass vacuously when the token pre-exists elsewhere in the file (Goal/invariant already in direction.md); require CO-LOCATION in the target bullet, and confirm the pin was RED pre-edit for the discriminating token, not an incidental one (evidence: test_fable_floor hardened at verify) (task:fable-floor-reasoning)
 - [open · 2026-07-22] lock-reclaim race probe flakes under CI runner contention — peak-holders=2 on slow 2-core runners, passes on rerun; 5 consecutive branch CI runs red until rerun. Widen the reclaim grace under CI or make the probe retry-tolerant (evidence: run 29893983512 fail→rerun-pass, 2026-07-22) (task:round-visible-runs)
 <!-- prepended by `add.py delta-append tdd "<text>"` — one line per lesson, `- [open · <date>] <lesson>` + the active-task stamp; fold a delta upward, then retag [open]->[folded] -->

@@ -6,6 +6,34 @@ narration — then §4 runs red and ONE human approval crosses it into build:
 suite (a tool action, not prose) and the freeze. This file is the reference depth for that span —
 SKILL.md carries the loop; read the section you're stuck in, not the file.
 
+## The reasoning discipline (the lens for the sections below)
+
+**Fluent ≠ true.** A draft's polish tracks its token count, not its evidence; every check in this
+file forces a fresh derivation from THIS task over a plausible template. It is Rule 2 (trust
+evidence, not inspection) turned inward — on your own reasoning, not just the build. Distilled from
+the fable-thinking protocol; each move maps to where the loop already applies it.
+
+**Five moves, one arc per beat:**
+- **FRAME** — restate the real question + the load-bearing facts. → §1 co-specify.
+- **GROUND** — verify by observation, not memory; a recalled file/flag/symbol/lesson is `[PRIOR]`
+  until re-confirmed against the live tree THIS session; a live read outranks memory. → §3 Grounding.
+- **REASON** — hold more than one hypothesis; demand a mechanism ("because…"), not a correlation;
+  simulate with concrete values before committing. → the persona plan · the advisor's propose-plan.
+- **ATTACK** — switch to reviewer, run the cheap kill-test; its output is a concrete falsifying input
+  (file · line · values), not a verdict. → advisor `refute` · verify earned-green (security = HARD-STOP).
+- **DELIVER** — lead with the outcome, expose the weakness, recommend don't survey. → the gate report, lowest-confidence-first.
+
+**Two pre-answer checks the fluent draft skips** (applied at the freeze — checklist below): the
+**Floor** — restate the **Goal** in the human's world (not the wording), then sweep the
+**Leftovers** (every supplied invariant / the BARE runtime encoded or waived) — and the
+**constraint loop** for mechanically-checkable output shape (§3 tag census · §5 scope tokens · §4
+`covers:` keys · REDS): expand → verify mechanically (grep/count, not a re-read) → repair → then freeze.
+
+**Claim grammar** — tag each factual assertion by how you know it: `[OBSERVED]` (checked live this
+session) · `[DERIVED]` (follows from an observation) · `[PRIOR]` (memory, may be stale) · `[ASSUMED]`
+(unverified but required). A bare claim reads as OBSERVED — never leave a guess untagged; it is the
+advisor's §6 Return discipline.
+
 ---
 
 ## Setup — first session only (autonomous draft → one baseline lock)
@@ -176,7 +204,10 @@ above it the Contract does not move.
 ### Grounding — reason it in-context (don't write an essay — `PLAN.md.tmpl`: persist the interface, not prose)
 Project from the milestone `## Ground`, then deepen only where THIS task lands. Never invent a
 file/symbol you have not opened; cite the **symbol**, not a bare line number (`l.NNN` rots; symbols
-survive), via code-navigation tools, not memory. **Persist only what the contract needs**: the
+survive), via code-navigation tools, not memory. A recalled fact — a file, a flag, a symbol, or a
+prior lesson (even one carried in from memory) — is **PRIOR until re-confirmed** against the live
+tree THIS session; a live read outranks memory, and a safety-grep counts only once you have
+confirmed it actually matched (a `for x in $VAR` that ran vacuous proves nothing). **Persist only what the contract needs**: the
 **Anchors** it may cite (the specific symbols §3 names — it may cite ONLY these) and, optionally, a
 **Ground SHA** (the commit grounded against — the engine stamps it when the line is present).
 Everything else — what it **Touches**, the **Honors**/seams consulted, the **Issues/Risks**, the
@@ -215,12 +246,27 @@ line the freeze records it (audit-only — `route_unrecorded` is measured, never
 
 ## The freeze review checklist
 
-The human's one minute, aimed. Walk these seven before saying yes:
+The human's one minute, aimed. **Fluent ≠ true** — a bundle's polish tracks its token count, not its
+evidence, so these checks force a fresh read of THIS task over a plausible template. Run the **Floor**
+first, then walk the rest before saying yes:
 
+- **Floor (before you read the shape)** — the pre-answer check the fluent draft skips. (1) Restate the
+  **Goal**: the end-state the human actually wants, in their world, not the ticket's wording — a bundle
+  that satisfies the words but misses the goal is the most expensive miss. (2) Check the **Leftovers**:
+  every supplied constraint — each PROJECT.md `invariant:`, the BARE declared runtime, every ⚠ the
+  interview surfaced — is either encoded in §1–§4 or explicitly waived. An unused constraint is a trap,
+  not noise: the artifact must hold under the BARE runtime, so a leftover invariant is a defect already
+  waiting at verify.
 - **⚠ flags first** — read the lowest-confidence flags; accept each knowing its cost if wrong. The engine refuses an unflagged freeze before build (`unflagged_freeze`).
 - **Intent** — does §1 say what you actually want built?
 - **Cases** — does every Must and Reject have an observable §2 scenario?
 - **Shape** — glossary names, error codes, additive vs breaking: is THIS the shape to freeze?
+- **Shape self-verify (the constraint loop)** — for the mechanically-checkable output-shape rules — the
+  frozen §3 tag census (the closed XML vocabulary), the §5 Scope path tokens, each §4 `covers:` key, any
+  REDS / dangling refs — don't eyeball them: expand the rule, self-verify the draft **mechanically**
+  (grep/count in reasoning space, not a re-read), repair, THEN freeze. This is where the freeze-parser
+  self-breaks get caught before the engine does — a bare `<word>` colliding with the tag census, a
+  `./src/` scope token tripping `scope_violation`.
 - **Grounded** — does the Contract cite anchors that exist in the Grounding map? `status`/`check` surface this.
 - **Risk** — high-risk or method-defining? Require `risk: high · autonomy: conservative` in the PLAN.md header.
 - **Tests** — will §4 go red for the right reason, asserting behavior rather than internals?

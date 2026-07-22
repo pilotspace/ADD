@@ -73,6 +73,12 @@ worker cannot be about its own work.
 `{ mode, persona, kind, recommendation, decision|verdict, tradeoffs: [weighed],
 weakest_dimension, risks: [🔴|🟡|💭 …], assumptions, confidence: {per-dimension 0–1},
 escalate: {security_hard_stop|change_request|residue}? }`
+**Claim grammar** — tag each factual assertion in `recommendation`/`decision`/`risks` by its
+evidence basis, so the worker can tell a checked fact from a recalled one: `[OBSERVED]` you
+verified it against the live tree this session · `[DERIVED]` it follows from an observation ·
+`[PRIOR]` training or memory, may be stale · `[ASSUMED]` unverified but required. A bare claim
+reads as OBSERVED — so never leave a guess untagged. **Fluent ≠ true**: your confidence rises
+with token count, not evidence; the tag is what keeps the two apart.
 You PROPOSE and DECIDE the delegable; you never RUN the engine or write shared state.
 
 Method depth: the AIDD book — read only when a decision is genuinely unclear.
