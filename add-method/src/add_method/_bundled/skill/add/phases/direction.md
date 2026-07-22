@@ -6,7 +6,7 @@ narration — then §4 runs red and ONE human approval crosses it into build:
 suite (a tool action, not prose) and the freeze. This file is the reference depth for that span —
 SKILL.md carries the loop; read the section you're stuck in, not the file.
 
-## The reasoning discipline — the fable Floor (the lens for the sections below)
+## The reasoning discipline (the lens for the sections below)
 
 **Fluent ≠ true.** A draft's polish tracks its token count, not its evidence; every check in this
 file forces a fresh derivation from THIS task over a plausible template. It is Rule 2 (trust
