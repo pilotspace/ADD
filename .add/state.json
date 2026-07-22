@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "foundation-split",
+  "active_task": "lock-probe-ci-realism",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -4925,10 +4925,41 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "lock-probe-ci-realism": {
+      "title": "Lock race probes: CI-starvation realism without losing teeth",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "thin-engine-loop",
+      "depends_on": [],
+      "created": "2026-07-22T07:39:35+00:00",
+      "updated": "2026-07-22T09:13:58+00:00",
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "d8090a62f489b3ed2304ef5c6b9023b8",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "tmp/",
+          ".add/tasks/lock-probe-ci-realism/"
+        ],
+        "snapshot_md5": "189f070737160c3aebfc7ba9febd4043"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-22T06:37:20+00:00",
+  "updated": "2026-07-22T09:13:58+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6297,7 +6328,7 @@
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
     "strategy-intake": "gate-experience-udd",
-    "thin-engine-loop": "foundation-split"
+    "thin-engine-loop": "lock-probe-ci-realism"
   },
   "todos": [
     {
