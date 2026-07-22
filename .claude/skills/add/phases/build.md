@@ -5,6 +5,28 @@ acceptance check — passes, without changing any test or the contract. This is 
 AI leads; §1–§4 removed all ambiguity. Write code into `.add/tasks/<slug>/src/` (a non-coding
 task writes its artifact to the path its §5 Scope declares).
 
+## The reasoning discipline — build's slice of the arc (definitions: `phases/direction.md`)
+
+**Fluent ≠ true** holds in code: a diff feels done in proportion to how much you wrote, not how
+much you verified — a green you haven't refuted is a claim, not evidence. Run the arc per batch:
+
+- **FRAME** — restate the batch's tests and the frozen §3 clause they cover before writing a line.
+- **GROUND** — open every anchor before editing it; a recalled file/symbol/flag is `[PRIOR]`
+  until re-confirmed against the live tree THIS session; a live read outranks memory.
+- **REASON** — name the mechanism ("because…"), simulate one concrete input through the change
+  before committing it; when a red survives a fix, hold a second hypothesis instead of patching harder.
+- **ATTACK** — before presenting green: re-run the suite fresh, then reviewer-read your own diff
+  hunting the cheap falsifying input (file · line · values). An earned green is one you tried to
+  kill. Security findings stay HARD-STOP.
+- **DELIVER** — the green report leads with the outcome and tags its claims: a pass you ran THIS
+  session is `[OBSERVED]`; a remembered pass is `[PRIOR]` — never present it bare.
+- **Constraint loop on the §5 Scope allowlist** — don't eyeball it: list the files actually
+  touched (`git status` / diff) and check each against the declared Scope tokens mechanically
+  before the gate; a miss is `scope_violation` — caught by you, not by the engine.
+- **Follow-through (the Floor's second check)** — green tests ≠ the goal reached; simulate the
+  human's end state once — run the artifact under the BARE declared runtime — before calling
+  the batch done.
+
 ## Work in small batches
 
 Pick ONE task-sized slice, restate its tests, implement, iterate to green —
