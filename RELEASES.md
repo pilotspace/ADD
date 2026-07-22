@@ -1,5 +1,12 @@
 # Releases
 
+## 2.2.0 — 2026-07-22
+milestones: (thin-engine-loop still open — this cut ships its landed method-prose tasks)
+loose tasks: fable-floor-reasoning, fable-thinking-reference (the fable reasoning discipline — Fluent≠true + Five Moves + Floor + constraint loop in direction.md; claim grammar + GROUND observation-over-memory in add-advisor)
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: recorded by hand — the release engine retired in the 2.0 kernel-trim (playbook-guided cut). PR #168 merged to main (fable Floor reasoning pass, distilled inline), CI green. Prompt-only, propagated byte-identical across the three synced skill trees; `add.py` == ENGINE_MD5 unchanged; `test_fable_floor` + `test_tree_parity` green. Version sources ×5 in lockstep; tag v2.2.0 human-ordered.
+
 ## 2.1.0 — 2026-07-22
 milestones: (thin-engine-loop still open — this cut ships its landed feature tasks)
 loose tasks: round-visible-runs, foundation-split, plus the feat/advisor-roster + feat/adaptive-flow follow-on commits (two-agent roster · persona-author v11 + seeding · flexible TDD · SKILL cookbook · README copy)
