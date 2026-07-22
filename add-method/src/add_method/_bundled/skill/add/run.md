@@ -89,6 +89,11 @@ Two findings enter the loop:
 
 Either way: ≤3 honest redos, then escalate. A gamed green never ships.
 
+**Every return trip is a visible round** (round-visible-runs): any verify→build return —
+a plain `add.py phase build [--note "finding"]` or a heal — increments the task's
+uncapped, observational `rounds` record; `status` names `round N` and the route trace
+carries it. Heal stays the cheat-classed, capped subset; rounds are the honest whole.
+
 ## Emitting deltas — feeding the foundation back
 
 Every gap the completeness-critic finds becomes an **`open` lesson learned** in the task's OBSERVE

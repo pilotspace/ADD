@@ -784,6 +784,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # was HARD-STOP escalated) could launder the cap (HEAL_CAP) to zero by re-creating itself —
     # a zero-human cap bypass (the same invariant _heal_or_escalate guards: "never auto-resets").
     prior_heal = state["tasks"].get(slug, {}).get("heal") if args.force else None
+    # round-visible-runs: the round record is monotonic the same way — survives a --force re-create.
+    prior_rounds = state["tasks"].get(slug, {}).get("rounds") if args.force else None
     state["tasks"][slug] = {
         "title": title,
         "phase": "direction",
@@ -801,6 +803,8 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         state["tasks"][slug]["relates_to"] = relates_to
     if prior_heal is not None:
         state["tasks"][slug]["heal"] = prior_heal   # monotonic — survives the --force re-create
+    if prior_rounds is not None:
+        state["tasks"][slug]["rounds"] = prior_rounds   # same monotonic contract as heal
     if from_delta:
         state["tasks"][slug]["from_delta"] = from_delta     # lineage: seeded from <prior>
     if sensitivity:
@@ -1691,8 +1695,21 @@ def cmd_phase(args: argparse.Namespace) -> None:
     # scope snapshot), so verify's _tamper_guard is armed and a freeze-gated DRAFT §3 is refused.
     # validate-then-write: a refusal raises BEFORE the phase is set, so nothing moves. The heal
     # loop sets phase=build directly (never via cmd_phase) and so stays exempt.
+    # round-visible-runs: --note annotates a verify->build ROUND — refuse it anywhere else,
+    # BEFORE any write (validate-then-write; a refused entry leaves state byte-unchanged).
+    # The refusal keys on the FLAG being passed (whitespace included) and the note is stored
+    # VERBATIM (§1 Boundary); the contract's refusal exit code is 2.
+    note = getattr(args, "note", None)
+    if note is not None and args.phase != "build":
+        _die("phase_note_build_only: --note annotates the verify->build round this return "
+             "records — it is only valid with target build", code=2)
+    prior = state["tasks"][slug].get("phase")
     if args.phase == "build":
         _build_entry(root, state, slug, skip_freeze=getattr(args, "skip_freeze", False))
+    # round-visible-runs: a verify->build return trip IS a round — record it in the SAME
+    # save as the phase write (atomic; no round without the return, no return without it).
+    if args.phase == "build" and prior == "verify":
+        _record_round(state["tasks"][slug], source="phase", note=note)
     state["tasks"][slug]["phase"] = args.phase
     state["tasks"][slug]["updated"] = _now()
     save_state(root, state)                    # F12: durable state FIRST (source of truth) — may _die
@@ -2298,6 +2315,7 @@ def _append_route_trace(root: Path, state: dict, slug: str, outcome: str) -> Non
             "kind": kind, "lane": lane, "routed_by": by,
             "persona": m.group(1) if m else None, "outcome": outcome,
             "heals": (t.get("heal") or {}).get("attempts", 0),
+            "rounds": (t.get("rounds") or {}).get("count", 0),   # visible verify->build return trips
             "recross": bool(t.get("recross")), "age_hours": age,
             "target_hit": t.get("target_hit"),          # the §3 Target judgment (plan-core)
             "actor": (t.get("gate_actor") or {}).get("name"),
@@ -2930,7 +2948,10 @@ def cmd_status(args: argparse.Namespace) -> None:
     _now_active = _active_task(state)
     if _now_active and _now_active in (state.get("tasks") or {}):
         _now_ph = (state["tasks"][_now_active] or {}).get("phase", "?")
-        print(f"now     : '{_now_active}' · phase={_now_ph} · {_next_footer(root, state)}")
+        # round-visible-runs: a bounced task names its return-trip count; silent at 0.
+        _now_r = ((state["tasks"][_now_active] or {}).get("rounds") or {}).get("count", 0)
+        _now_rr = f" · round {_now_r}" if _now_r else ""
+        print(f"now     : '{_now_active}' · phase={_now_ph}{_now_rr} · {_next_footer(root, state)}")
         print(f"          PLAN.md: .add/tasks/{_now_active}/PLAN.md   ·   re-orient: add.py status --brief")
     print(f"project : {state.get('project', '(unknown)')}")
     # project autonomy default (task init-auto-default): the posture new tasks INHERIT,
@@ -4919,6 +4940,18 @@ def _scope_guard(root: Path, state: dict, slug: str) -> None:
                                   f"declared §5 Scope — {shown} ({len(out)} total)"))
 
 
+def _record_round(task: dict, *, source: str, note: str | None = None) -> None:
+    """Record ONE verify->build return trip — a visible 'round' (round-visible-runs).
+
+    Uncapped and OBSERVATIONAL: rounds never gate, never cap, never move a phase — they
+    make a dynamic verify->fix workflow legible in status and the route traces. Distinct
+    from the heal counter (the CHEAT-classed, capped subset); a heal return records BOTH.
+    Caller owns the save — the increment rides the same atomic write as the phase move."""
+    r = task.setdefault("rounds", {"count": 0, "history": []})
+    r["count"] = r.get("count", 0) + 1
+    r.setdefault("history", []).append({"at": _now(), "source": source, "note": note})
+
+
 def _heal_or_escalate(root: Path, state: dict, slug: str, *, reason: str, source: str) -> None:
     """The bounded self-heal router (verify-integrity, heal-then-escalate). Called ONLY when
     a cheat is CONFIRMED at this point — mechanical (tripwire divergence, source "tamper") or
@@ -4946,6 +4979,7 @@ def _heal_or_escalate(root: Path, state: dict, slug: str, *, reason: str, source
              "spec (change-request -> re-freeze) or abandon. A gamed green is never auto-passed.")
     heal["attempts"] = heal.get("attempts", 0) + 1
     heal.setdefault("history", []).append(entry)
+    _record_round(t, source=source)           # a heal return is ALSO a visible round (uncapped view)
     t["phase"] = "build"                      # DIRECT — never via advance (no re-snapshot)
     t["updated"] = _now()
     _sync_task_marker(root, slug, "build")
@@ -6687,6 +6721,8 @@ def build_parser() -> argparse.ArgumentParser:
     # cmd_phase) so pre-collapse scripts keep working; the stored value is always canonical.
     pp.add_argument("phase", choices=PHASES + tuple(LEGACY_PHASES))
     pp.add_argument("slug", nargs="?", default=None)
+    pp.add_argument("--note", default=None,
+                    help="annotate the verify->build round this return records (build target only)")
     pp.add_argument("--skip-freeze", action="store_true",
                     help="cross direction->build on a DRAFT §3, recording an auditable freeze_skipped "
                          "marker (the universal freeze gate's only bypass; never auto-freezes §3)")

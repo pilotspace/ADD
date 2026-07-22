@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "1cebca7e72ef43efd8d259f261e8ead3"  # re-aimed @ persona-skill (add.py comment: any `_`-prefixed scaffold is placeholders — no seeded _template.md). prior: bfd47201… @ run-mode-decouple
+ENGINE_MD5 = "d8fb245ea769ff834a03ba8c1932be72"  # re-aimed @ round-visible-runs (verify->build return trips recorded as uncapped rounds; phase --note refusal exit 2, verbatim note; status round N; trace rounds). prior: 1cebca7e… @ persona-skill
 ENGINE_PKG_MD5 = "bcc35aa23727c5ecb19b9f3e3a53d348"  # re-aimed @ persona-skill (constants SETUP_FILES drops personas/_template.md; PERSONA_HINT/FIT point at the persona-author skill; io_state comment). prior: 8f3d546a… @ advisor-split
