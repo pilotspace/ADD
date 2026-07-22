@@ -69,10 +69,10 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). A milesto
 
 Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
-1. **DIRECTION** — load the domain-fit persona (seed via add-worker persona-mode if none), then draft
-   the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
-   §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
-   (run it — red for the RIGHT reason; fill each bullet's `covers:` clause key). Then the ONE approval,
+1. **DIRECTION** — load the domain-fit persona (seed via add-worker persona-mode if none), then compose
+   the whole bundle in ONE silent draft — §1–§3 + §5-scope, no per-section narration; §4 then runs red — in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
+   §2 scenarios (optional gherkin — §4 is canonical) · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) ·
+   §4 red suite — one test per Must & per Reject (a Must/Reject encoded in neither §2 nor §4 = §1 not understood — stop); run red for the RIGHT reason; fill each `covers:` key. Then the ONE approval,
    presented lowest-confidence-first: `add.py freeze` (a setup session's baseline `lock` IS this approval).
 2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
    inside the §3 Scope. A test OUTSIDE your suite failing? `add.py locate` names the owning node, the
@@ -118,7 +118,7 @@ confirmable delta the human confirms rewrites `SOUL.md` (the human is the only w
 
 ## Command cookbook — copy a line; `-h` only off-menu
 
-`add.py` = `python3 .add/tooling/add.py`; lines 2–4 = the 3-call walk (`advance --fill <draft>` = step-wise).
+`add.py` = `python3 .add/tooling/add.py`; lines 2–4 = the 3 calls — default is ONE composed draft then bare `advance`/`freeze`; `advance --fill <draft>` = step-wise, only for a large/uncertain task.
 
 ```bash
 add.py status --brief        # resume · status --section <n|phase> = §body · --foundation · --json

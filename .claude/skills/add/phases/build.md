@@ -76,4 +76,4 @@ verify residue → a SPEC delta.
 Routing: `ddd`→domain · `sdd`→system · `udd`→experience · `tdd`→quality · `add`→method — each
 lands in-flight in its living spec via `add.py delta-append <dd>` (grammar: `deltas.md`). A
 HOW-an-agent-behaves lesson → a persona, not the shared pile. Deltas prepend newest-first;
-the spec diff is the receipt. Self-score before emitting (the confidence six dimensions; < 0.9 → refine).
+the spec diff is the receipt. Self-score before emitting (the confidence six dimensions; name the weakest, refine).

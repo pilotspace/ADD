@@ -19,8 +19,10 @@ beat keeps moving. Personas carry the expertise; you carry independent, first-pr
   options and RETURN A DECISION with its rationale. This is delegated judgement — binding for
   the beat — not one more opinion to hold open.
 - **refute** — an adversarial read of a drafted artifact (bundle · earned-green · verdict):
-  try to BREAK it. Name the input/state that makes it wrong. Default to "not yet proven" when
-  uncertain — your job is to catch the plausible-but-wrong before the human or the gate does.
+  try to BREAK it. Your PRIMARY output is the concrete input/state/interleaving that makes it wrong —
+  values, file, line; not a category, not a bare verdict. A "looks fine" with no attempted repro is
+  not a refute; if a real attempt finds none, concede it holds and say so. Default to "not yet proven"
+  when uncertain — catch the plausible-but-wrong before the human or the gate does.
 
 Every mode serves EVERY beat — the spawn names the beat + mode, and you calibrate to it:
 **direction** (propose the bundle plan · refute the draft so the human freezes the stronger

@@ -1,7 +1,9 @@
 # Direction — the whole specification bundle (setup · rules · plan · red suite) to the ONE freeze
 
-Every task drafts §1–§4 top-to-bottom, then ONE human approval crosses it into build:
-`add.py freeze --by <name> --cross`. This file is the reference depth for that span —
+Every task COMPOSES §1–§3 + §5-scope in ONE silent draft — a single write, no "moving on to §N"
+narration — then §4 runs red and ONE human approval crosses it into build:
+`add.py freeze --by <name> --cross`. The only mandatory breaks in the draft are running the §4 red
+suite (a tool action, not prose) and the freeze. This file is the reference depth for that span —
 SKILL.md carries the loop; read the section you're stuck in, not the file.
 
 ---
@@ -141,7 +143,8 @@ the design-definition loop (`design.md`).
   `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`.
 </output_format>
 
-§2 makes every rule checkable — one scenario per Must and per Reject:
+Every Must and Reject must be checkable — canonically as a §4 test (its `covers:` tag); §2 gherkin is
+an OPTIONAL readable projection, added only when a human needs prose cases at the freeze, never as ceremony:
 
 ```gherkin
 Scenario: <short name>
@@ -159,8 +162,8 @@ one per applicable case, or rule it out on purpose. Every Then is specific and o
 - [ ] Framings weighed noted; every required behavior stated; every rejection has a named error code.
 - [ ] Assumptions ordered lowest-confidence first; the 1–2 `⚠` flags carry why + cost — or an honest
       "none material" that still names the single biggest risk (never a blank "none").
-- [ ] §2: one scenario per Must and per Reject; every rejection asserts what stays unchanged; edge
-      cases covered or ruled out on purpose.
+- [ ] Every Must and Reject is encoded — a §4 test (canonical) or an optional §2 gherkin scenario;
+      every rejection asserts what stays unchanged; edge cases covered or ruled out on purpose.
 </exit_gate>
 
 ---
@@ -247,6 +250,8 @@ mode on any task). Coding kinds keep the executable red suite above.
 
 §4's `Tests live in:` line is machine-read — declare paths as backticked tokens on that line: with
 no local `tests/`, `add.py report` counts test functions at the declared paths (FIRST such line only).
+REPLACE the template's `./tests/` placeholder in place — never append a SECOND `Tests live in:` line:
+the report reads the FIRST, so a stale default left above your real path silently wins.
 `./…` → this task dir · a token with `/` → the project root · a bare name → a
 sibling of the previous token's dir. A directory counts its `*.py` files
 (non-recursive); a `.py` file counts itself. Resolved files dedupe; declared counts
@@ -278,9 +283,13 @@ it 0–1 on six dimensions: **Completeness** (every rule/scenario/rejection cove
 (understood without you in the room?) · **Practicality** (implementable against the real code?) ·
 **Optimization** (correctness/simplicity/cost balanced — no gold-plating, no corner cut?) ·
 **Edge cases** (failure modes, concurrency, empty/oversized inputs named?) · **Self-evaluation**
-(does it carry its own refine step?). Any dimension **< 0.9** → refine, then re-score. The lowest
-dimension is what you surface ⚠-first at the freeze; persistently low on risky scope →
-*recommend* lowering autonomy (the level stays the human's call).
+(does it carry its own refine step?). Rank the six worst→best (a model ranks far more reliably than
+it calibrates an absolute), then NAME the one concrete deficiency in your weakest dimension — a
+missing scenario, an unhandled input, not a number — and fix THAT before presenting; re-rank after.
+The lowest dimension is what you surface ⚠-first at the freeze; persistently low on risky scope →
+*recommend* lowering autonomy (the level stays the human's call). The self-score is a **weak signal**:
+the load-bearing correctness check is the adversarial refute-read (`phases/verify.md`) — the
+plausible-but-wrong a self-score waves through is exactly what the refute exists to catch.
 The hard rule: **advisory, never a gate** — it never auto-passes a verify, never substitutes for evidence or the
 human decision, and a self-asserted score is never recorded as something the human "agreed to".
 
