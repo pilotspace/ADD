@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "round-visible-runs",
+  "active_task": "foundation-split",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -4893,10 +4893,42 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "foundation-split": {
+      "title": "Fold PROJECT.md standing bullets into the 5-DD living specs",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "thin-engine-loop",
+      "depends_on": [],
+      "created": "2026-07-22T06:03:57+00:00",
+      "updated": "2026-07-22T06:37:20+00:00",
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "a8ce1117f9bca821e0fcc846a14b6339",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".add/PROJECT.md",
+          ".add/specs/",
+          "tmp/",
+          ".add/tasks/foundation-split/"
+        ],
+        "snapshot_md5": "fe59354829fcccc3472b4dc46b5d9411"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-22T05:30:01+00:00",
+  "updated": "2026-07-22T06:37:20+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6265,7 +6297,7 @@
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
     "strategy-intake": "gate-experience-udd",
-    "thin-engine-loop": "round-visible-runs"
+    "thin-engine-loop": "foundation-split"
   },
   "todos": [
     {
