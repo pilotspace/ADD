@@ -15,4 +15,5 @@ project: AIDD / ADD Methodology · seeded: 2026-07-17 · stage: mvp
 <the TDD-lens decisions every task must honor — one line each, with the task/ADR that set it — or leave the placeholder until the first one lands>
 
 ## Deltas (newest first)
+- [open · 2026-07-22] lock-reclaim race probe flakes under CI runner contention — peak-holders=2 on slow 2-core runners, passes on rerun; 5 consecutive branch CI runs red until rerun. Widen the reclaim grace under CI or make the probe retry-tolerant (evidence: run 29893983512 fail→rerun-pass, 2026-07-22) (task:round-visible-runs)
 <!-- prepended by `add.py delta-append tdd "<text>"` — one line per lesson, `- [open · <date>] <lesson>` + the active-task stamp; fold a delta upward, then retag [open]->[folded] -->
