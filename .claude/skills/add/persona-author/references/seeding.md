@@ -50,6 +50,27 @@ A subagent file: frontmatter `name · description · model · color`, the `descr
 | `## Success Metrics` | *(subagents state principles, not measurable bars)* | **ADD — measurable, failure-aware invariants** |
 | `## Anti-patterns` | the "only when genuinely required" / "avoid" hedges | name them guilty-until-proven; **always add** read-before-you-assert |
 
+## What to mine, what to refuse
+
+Both source families carry gold the mapping tables can't express — and a signature rot that must
+not survive the seed:
+
+- **Teacher gold** — the one-line `Default requirement:` floor · the "You've seen…" scar sentence
+  (feeds Identity) · behaviour-paired metric rows ("100% warm transfers — never a cold handoff")
+  · a named methodology with its verbatim moves and why-they-work (feeds a Playbook) · the rare
+  "when NOT to use" lines (feed `not-when:` as *symptom → sibling*) · a reviewer's default-verdict
+  stance with automatic-fail triggers (feeds a verify-flow stance).
+- **Teacher rot — refuse** — deliverable code dumps (CSS/config skeletons), emoji-header chrome,
+  invented outcome statistics ("+40% engagement" no one measured), motivational closers and
+  "instructions reference" footers that point at nothing.
+- **Subagent gold** — review-mode checklists (feed the verify side of a per-flow stance) ·
+  pitfalls with the cost attached ("PIL in prod preprocessing → 3× slower than cv2" — feeds
+  Anti-patterns) · budgets the author would defend ("p95 < 200 ms", "44×44 px" — feed
+  Rules/Metrics) · mode bookends ("reviewing opens with the defect sweep").
+- **Subagent rot — refuse** — keyword-taxonomy pages (nouns buy no behaviour), tip bribes and
+  self-score rubrics, tutorial code blocks, and another project's hard-coded paths — a persona
+  anchors to THIS project's real files only.
+
 ## After the seed
 
 Record provenance honestly: add a `source:` frontmatter line naming the seed — the teacher slug,

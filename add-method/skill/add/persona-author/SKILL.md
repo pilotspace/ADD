@@ -8,7 +8,8 @@ description: >-
   persona. Produces a schema-valid persona (Identity, Critical Rules, Default Requirement,
   Success Metrics, plus recommended frontmatter and Abilities/Anti-patterns/Playbook) that carries
   the judgment layer of strong agent design: earned-perspective identity, bold-lead rules, the
-  qualification gate, read-before-you-assert, and failure-mode-aware metrics. Seeds a first draft
+  qualification gate, read-before-you-assert, failure-mode-aware metrics, defended budgets, and
+  per-flow stances. Seeds a first draft
   from the teacher library or a sample subagent when a near-fit source exists, instead of a blank page.
 ---
 
@@ -26,7 +27,8 @@ Two references and one worked example back this workflow — read them as you go
   frontmatter field semantics, the flow values and task-kinds taxonomy, the quality WARNs). Read
   this FIRST; a persona that misses the contract is loaded by no surface.
 - **`references/patterns.md`** — the judgment layer distilled from a deep read of strong subagent
-  files, each pattern with a before/after. This is what separates an expert lens from a keyword list.
+  files plus a diagnosis of the vendored teacher corpus, each pattern with a before/after. This is
+  what separates an expert lens from a keyword list.
 - **`references/seeding.md`** — how to SEED a first draft from an existing source (the teacher
   library at `.add/personas-teacher/`, or a `~/.claude/agents/*.md` subagent) instead of a blank
   page: the two source→schema mappings, and the columns a source never supplies (failure-aware
@@ -63,6 +65,8 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    comma-separate if more than one; NO other value is loaded), the `task-kinds:` it owns (from the
    closed taxonomy), and the `use-when:` / `not-when:` boundary that routes THIS persona over its
    siblings. See `references/contract.md` for exact semantics — these keys are the selection contract.
+   Claiming more than one flow? Plan the **per-flow stance** now: one line per flow on what the
+   lens leads with there (a verify stance defaults to NEEDS-WORK until the evidence cites the run).
 
 3. **Write Identity with earned perspective.** One short paragraph: role, domain depth, and *what
    this lens has seen succeed or fail* that shapes its judgement. Scars, not a résumé.
@@ -71,7 +75,9 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    Keep 1–2 as the persona's signature non-negotiables (distil the teacher's, don't replace them),
    then the project's. Carry the two default stances: **surface tradeoffs** (name the choice + the
    cost, never silently pick) and the **qualification gate** (name the simplest baseline that meets
-   the contract — if it wins, take it and stop; cleverness is a tax). Keep it to what it would refuse.
+   the contract — if it wins, take it and stop; cleverness is a tax). Prefer a **named budget over
+   an adjective** ("p95 < 200 ms", "44×44 px") — only a number the expert would defend and the lens
+   can check in-session; fake precision is worse than none. Keep it to what it would refuse.
 
 5. **List Abilities — concrete, anchored, checkable.** Lead with the ORIENT commands the lens runs
    on load (`add.py status` · the suite · the diff). State each ability as something doable *now*,
@@ -81,16 +87,20 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
 
 6. **Name Anti-patterns — guilty-until-proven.** The asymmetric instincts this lens defaults to
    *suspecting* (distinct from always-do rules). The sharpest ones are the instincts the Identity's
-   scars produced. Always include **read-before-you-assert**: a claim resting on a file/symbol not
-   opened → open it or cut the claim.
+   scars produced — attach the COST where you can ("PIL in prod → 3× slower than cv2"). Always
+   include **read-before-you-assert**: a claim resting on a file/symbol not opened → open it or
+   cut the claim — and no placeholder survives into a cited deliverable.
 
 7. **Set Default Requirement + Success Metrics.** The one requirement in every deliverable, then
    MEASURABLE outcomes stated as INVARIANTS (true as the project grows, never a today-snapshot that
    rots). Sharpen each by **the failure it guards against** — a metric catches a specific way of
-   being wrong.
+   being wrong — and keep every bar checkable in-session; an invented outcome statistic
+   ("engagement +40%") is the signature rot of weak persona corpora.
 
-8. **(Optional) Playbook.** Only if the lens carries executable know-how (an ADR skeleton, a STRIDE
-   pass, a red→green loop). Tag each item `(teacher)` or `(ADD)` so provenance is honest.
+8. **(Optional) Playbook.** Only if the lens carries executable know-how: a named methodology with
+   its verbatim moves and why-they-work, a cheap→expensive intervention ladder, an ADR skeleton, a
+   red→green loop — never a tutorial code dump. Tag each item `(teacher)` or `(ADD)` so provenance
+   is honest.
 
 9. **VALIDATE.** Save as `.add/personas/<slug>.md` (never overwrite an existing persona; never use a
    `_`-prefixed name). Run `python3 .add/tooling/add.py check` — it validates presence-based and

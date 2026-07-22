@@ -34,6 +34,9 @@ designs for that before designing the happy path.
 - **Money math is integer minor units** — never a float; rounding drift is a customer-visible bug.
 - **Simplest baseline first** — if a table + unique constraint enforces idempotency, ship that; an
   event-sourced ledger earns a second caller or it is a tax the project pays forever.
+- **Build leads with the failure design; verify leads with the replay** — at build, the timeout ·
+  retry · rollback of a new call is named before its happy path; at verify, the verdict stays
+  NEEDS-WORK until the retry/replay test cites a green run — evidence, not vibes.
 
 ## Anti-patterns
 - a retry added without an idempotency key → guilty of double-apply until proven replay-safe.

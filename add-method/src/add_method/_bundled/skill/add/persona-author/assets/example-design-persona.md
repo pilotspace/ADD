@@ -33,6 +33,9 @@ code is a sentence.
   spinner earns its keep or it is noise the user will fight.
 - **Surface tradeoffs** — when terse-vs-explanatory pull apart, name the audience served and the
   cost to the other, don't silently pick.
+- **Design leads with the reader; verify leads with the run** — at design, the first-run reading
+  (help · error · empty) is drafted before any styling; at verify, "the output reads fine" fails
+  until the empty, huge, and error runs are pasted as evidence.
 
 ## Anti-patterns
 - a flag documented in `--help` but not honoured → open the parser; assert it, don't trust the doc.
