@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "d8fb245ea769ff834a03ba8c1932be72"  # re-aimed @ round-visible-runs (verify->build return trips recorded as uncapped rounds; phase --note refusal exit 2, verbatim note; status round N; trace rounds). prior: 1cebca7e… @ persona-skill
-ENGINE_PKG_MD5 = "bcc35aa23727c5ecb19b9f3e3a53d348"  # re-aimed @ persona-skill (constants SETUP_FILES drops personas/_template.md; PERSONA_HINT/FIT point at the persona-author skill; io_state comment). prior: 8f3d546a… @ advisor-split
+ENGINE_MD5 = "764bf47717b77112e5e02c60ed540173"  # re-aimed @ remove-rule-file-mode (dropped --rule-file/.ccsk-autodetect relocation from cmd_init/cmd_sync_guidelines + argparse). prior: d8fb245e… @ round-visible-runs
+ENGINE_PKG_MD5 = "81553881899a4c6dfaad73f548ed5e04"  # re-aimed @ remove-rule-file-mode (guidelines.py/constants.py drop _rule_file_mode + rule-file relocation fns/constants). prior: bcc35aa2… @ persona-skill

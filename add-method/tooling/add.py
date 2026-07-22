@@ -34,7 +34,7 @@ except ModuleNotFoundError:   # < 3.11: the registry is unsupported → degrade 
 from add_engine.constants import *  # noqa: F401,F403  (public constants via __all__)
 from add_engine.constants import (  # the _-prefixed names (import * skips them)
     _GITIGNORE_BODY, _GUIDE_BEGIN, _GUIDE_END,
-    _RULE_REF_LINE, _FALLBACK_TASK,
+    _FALLBACK_TASK,
     _DEFAULT_WIDTH,
     _DELTA_RE, _PERSONA_TAG_RE, _EVIDENCE_RE, _SPEC_DELTA_RE,   # shared delta regexes (taskdoc + deltas-web lint)
     _SEED_POINTER_RE,   # shared (delta-task-backlink) — reads the `[→ slug]` seed stamp back
@@ -545,8 +545,7 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
 # --- guidelines / CLAUDE.md-injection subsystem (moved to add_engine/guidelines.py) -
 from add_engine.guidelines import (
-    _guideline_block, _inject_block, _rule_file_mode, _strip_inline_block,
-    _insert_rule_reference, _ensure_claude_reference, _inject_guidelines, _is_brownfield,
+    _guideline_block, _inject_block, _inject_guidelines, _is_brownfield,
 )
 def cmd_init(args: argparse.Namespace) -> None:
     base = Path(args.dir).resolve()
@@ -633,7 +632,7 @@ def cmd_init(args: argparse.Namespace) -> None:
         state["setup"] = {"locked": False, "locked_at": None, "locked_by": None, "layers": []}
     save_state(root, state)
     # zero-config: give any agent a stable pointer into the ADD runtime.
-    for name, action in _inject_guidelines(base, getattr(args, "rule_file", False)):
+    for name, action in _inject_guidelines(base):
         if action != "unchanged":
             print(f"{action:>9}  {name}")
     print(f"initialised ADD project '{state['project']}' (stage: {state['stage']}) at {root}")
@@ -673,7 +672,7 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 def cmd_sync_guidelines(args: argparse.Namespace) -> None:
     project_root = _require_root().parent
-    for name, action in _inject_guidelines(project_root, getattr(args, "rule_file", False)):
+    for name, action in _inject_guidelines(project_root):
         print(f"{action:>9}  {name}")
 
 
@@ -6564,9 +6563,6 @@ def build_parser() -> argparse.ArgumentParser:
     pi.add_argument("--force", action="store_true", help="reset state.json if present")
     pi.add_argument("--await-lock", dest="await_lock", action="store_true",
                     help="seed an unlocked setup; gates new-task/advance/gate until `add.py lock`")
-    pi.add_argument("--rule-file", dest="rule_file", action="store_true",
-                    help="write the ADD block to .claude/rules/add-workflows.md and reference it "
-                         "from CLAUDE.md (auto-on for ccsk projects with a .ccsk/ dir)")
     pi.add_argument("--run-mode", dest="run_mode", default=None,
                     choices=["auto", "conservative"],
                     help="seed autonomy+streams posture: auto→parallel, conservative→sequential "
@@ -6832,9 +6828,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     psg = sub.add_parser("sync-guidelines",
                          help="(re)write the ADD guideline block into AGENTS.md + CLAUDE.md")
-    psg.add_argument("--rule-file", dest="rule_file", action="store_true",
-                     help="relocate CLAUDE.md's block to .claude/rules/add-workflows.md + reference "
-                          "it (auto-on for ccsk projects)")
     psg.set_defaults(func=cmd_sync_guidelines)
 
     pgd = sub.add_parser("guide", help="print the one concrete next step for the active task")

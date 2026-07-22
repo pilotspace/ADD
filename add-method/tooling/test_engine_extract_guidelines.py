@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """extract-guidelines (engine-modularization 8/N) — the guidelines/CLAUDE.md-injection
-subsystem (8 fns + the cluster-private `_INIT_EXCLUDE`) moved from add.py into a NEW
+subsystem (4 fns + the cluster-private `_INIT_EXCLUDE`) moved from add.py into a NEW
 add_engine/guidelines.py, re-exported as add.py module globals.
 
 Transitive-closure AST scan proved the cluster is self-contained (ZERO outbound calls
 to non-cluster add fns) and none are monkeypatched → a plain re-export, no qualification.
-Deps: constants (6) + _atomic_write (io_state) + os/re/sys/Path (stdlib).
+Deps: constants + _atomic_write (io_state) + os/sys/Path (stdlib).
 
 Run: python3 -m unittest test_engine_extract_guidelines -v
 """
@@ -30,9 +30,7 @@ TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling",
 )
 
-MOVED = ("_guideline_block", "_inject_block", "_rule_file_mode", "_strip_inline_block",
-         "_insert_rule_reference", "_ensure_claude_reference", "_inject_guidelines",
-         "_is_brownfield")
+MOVED = ("_guideline_block", "_inject_block", "_inject_guidelines", "_is_brownfield")
 
 
 class ReexportTest(unittest.TestCase):

@@ -3,21 +3,17 @@
 Inject one stable, marker-delimited ADD block into every GUIDELINE_FILES target under the
 project root (AGENTS.md, CLAUDE.md, .clinerules). DYNAMIC-BY-REFERENCE: the block tells the
 agent to run `add.py status` and read PROJECT.md — it never embeds live state. A closed,
-self-contained cluster (8 fns + the cluster-private _INIT_EXCLUDE); transitive-closure AST
+self-contained cluster (4 fns + the cluster-private _INIT_EXCLUDE); transitive-closure AST
 scan: ZERO outbound calls to non-cluster add fns. Deps: constants + _atomic_write (io_state)
 + stdlib. None patched.
 """
 from __future__ import annotations
 
 import os
-import re
 import sys
 from pathlib import Path
 
-from add_engine.constants import (
-    GUIDELINE_FILES, RULES_FILE_REL, WORKFLOW_HEADINGS,
-    _GUIDE_BEGIN, _GUIDE_END, _RULE_REF_LINE,
-)
+from add_engine.constants import GUIDELINE_FILES, _GUIDE_BEGIN, _GUIDE_END
 from add_engine.io_state import _atomic_write
 
 
@@ -89,131 +85,17 @@ def _inject_block(path: Path) -> str:
     return "created"
 
 
-def _rule_file_mode(project_root: Path, flag: bool = False) -> bool:
-    """True when the ADD block should live in .claude/rules/add-workflows.md (referenced
-    from CLAUDE.md) instead of inline. Re-derived from disk EACH phase — no persisted
-    state — so an explicit `--rule-file` at install carries into init via the rule file it
-    leaves behind. Three triggers: the explicit flag, a ccsk project (.ccsk/ sibling to
-    .claude/), or a rule file already written by a prior run. Pure + fail-soft."""
-    if flag:
-        return True
-    try:
-        if (project_root / ".ccsk").is_dir():
-            return True
-        if (project_root / RULES_FILE_REL).exists():
-            return True
-    except OSError:
-        pass
-    return False
-
-
-def _strip_inline_block(text: str) -> str:
-    """Remove an inline ADD:BEGIN..ADD:END region (migration to rule-file mode), collapsing
-    the blank-line gap it leaves behind. An unterminated BEGIN (no END) is left as-is rather
-    than eating the rest of the file (design-for-failure)."""
-    begin = text.find(_GUIDE_BEGIN)
-    if begin == -1:
-        return text
-    end = text.find(_GUIDE_END, begin)
-    if end == -1:
-        return text
-    end += len(_GUIDE_END)
-    head = text[:begin].rstrip("\n")
-    tail = text[end:].lstrip("\n")
-    if head and tail:
-        return head + "\n\n" + tail
-    return head or tail
-
-
-def _insert_rule_reference(text: str) -> str:
-    """Insert the ADD rule-file bullet under an existing Workflows/Rules heading, or append a
-    fresh '## Workflows' section when none is found. Caller guarantees the bullet is absent."""
-    lines = text.split("\n")
-    heading_idx = -1
-    for i, line in enumerate(lines):
-        m = re.match(r"^(#{1,6})\s+(.*?)\s*$", line)
-        if m and any(m.group(2).strip().lower() == h.lower() for h in WORKFLOW_HEADINGS):
-            heading_idx = i
-            break
-    if heading_idx == -1:                       # no section — append a fresh one
-        body = text.rstrip("\n")
-        sep = "\n\n" if body else ""
-        return f"{body}{sep}## Workflows\n\n{_RULE_REF_LINE}\n"
-    level = len(re.match(r"^(#{1,6})", lines[heading_idx]).group(1))
-    end = len(lines)                            # section ends at next same/higher heading or EOF
-    for j in range(heading_idx + 1, len(lines)):
-        m = re.match(r"^(#{1,6})\s+", lines[j])
-        if m and len(m.group(1)) <= level:
-            end = j
-            break
-    insert_at = heading_idx + 1                 # after the last non-blank line in the section
-    for j in range(heading_idx + 1, end):
-        if lines[j].strip():
-            insert_at = j + 1
-    lines.insert(insert_at, _RULE_REF_LINE)
-    return "\n".join(lines)
-
-
-def _ensure_claude_reference(claude_md: Path) -> str:
-    """Make CLAUDE.md reference the ADD rule file under a Workflows/Rules heading, migrating
-    any prior inline ADD block out. Returns created|updated|unchanged.
-
-    - Strips a prior inline ADD:BEGIN..END block (rule-file mode supersedes inline).
-    - If a reference to add-workflows.md already exists -> no bullet change.
-    - Else inserts the bullet into the first matching section, or appends '## Workflows'.
-    .bak on change; idempotent. User content outside the touched region is preserved.
-    """
-    existed = claude_md.exists()
-    current = claude_md.read_text(encoding="utf-8") if existed else ""
-    new = _strip_inline_block(current)
-    if "add-workflows.md" not in new:
-        new = _insert_rule_reference(new)
-    if not new.endswith("\n"):
-        new += "\n"
-    if new == current:
-        return "unchanged"
-    if existed:
-        _atomic_write(Path(str(claude_md) + ".bak"), current)   # rollback path before mutate
-    _atomic_write(claude_md, new)
-    return "updated" if existed else "created"
-
-
-def _inject_guidelines(project_root: Path, rule_file: bool = False) -> list[tuple[str, str]]:
+def _inject_guidelines(project_root: Path) -> list[tuple[str, str]]:
     """Inject the block into each guideline file under `project_root`.
 
     Symlink-dedup: targets resolving (os.path.realpath) to the same inode are
     written once, against the REAL file (never replacing the symlink with a
     regular file). Per-target OSError is isolated (warn+skip) so one unwritable
     file never aborts the run or `init`.
-
-    Rule-file mode (ccsk projects / `--rule-file`): CLAUDE.md's full block is relocated
-    to .claude/rules/add-workflows.md and CLAUDE.md keeps only a reference bullet. This is
-    CLAUDE-only — AGENTS.md (and any other guideline file) keeps the inline block.
     """
     results: list[tuple[str, str]] = []
     seen: set[str] = set()
-    mode = _rule_file_mode(project_root, rule_file)
     for name in GUIDELINE_FILES:
-        if name == "CLAUDE.md" and mode:
-            rules_path = project_root / RULES_FILE_REL
-            real = os.path.realpath(rules_path)
-            if real not in seen:
-                seen.add(real)
-                try:
-                    action = _inject_block(rules_path)
-                except (OSError, UnicodeDecodeError) as exc:
-                    print(f"add: warning: could not sync {RULES_FILE_REL} — {exc}; skipped",
-                          file=sys.stderr)
-                    action = "skipped"
-                results.append((str(RULES_FILE_REL), action))
-            try:
-                ref_action = _ensure_claude_reference(project_root / "CLAUDE.md")
-            except (OSError, UnicodeDecodeError) as exc:
-                print(f"add: warning: could not sync CLAUDE.md — {exc}; skipped",
-                      file=sys.stderr)
-                ref_action = "skipped"
-            results.append(("CLAUDE.md", ref_action))
-            continue
         target = project_root / name
         real = os.path.realpath(target)
         if real in seen:

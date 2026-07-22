@@ -104,9 +104,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="rehydrate this project's user-data FROM the shared home "
                              "(<home>/data/<key>) on a fresh clone — fill-gaps; --force overwrites "
                              "with a .bak")
-    parser.add_argument("--rule-file", dest="rule_file", action="store_true",
-                        help="write the ADD block to .claude/rules/add-workflows.md and "
-                             "reference it from CLAUDE.md (auto-on when a .ccsk/ dir is present)")
     parser.add_argument("--lock-timeout", dest="lock_timeout", type=float, default=None,
                         help="(--global only) seconds to wait for a LIVE contended home "
                              "lock before failing 'update_in_progress' (default: fail "
@@ -125,7 +122,6 @@ def main(argv: list[str] | None = None) -> int:
         as_global=args.as_global,
         as_global_data=args.as_global_data,
         as_global_data_restore=args.from_global_data,
-        rule_file=args.rule_file,
         lock_timeout=args.lock_timeout,
     )
 

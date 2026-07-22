@@ -146,8 +146,6 @@ The agent runs the on-ramp for you:
 State lives on disk, not in the chat. Close your laptop, come back tomorrow, and
 pick up exactly where you left off — no context rot.
 
-> **Want more power?** [ccsk-cli](https://github.com/ccsk-org/ccsk-cli) sharpens your agent's skillset for ADD (optional, recommended).
-
 ---
 
 ## ⚙️ How ADD Works
