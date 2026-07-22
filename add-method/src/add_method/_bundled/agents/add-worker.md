@@ -29,6 +29,8 @@ Read YOUR mode's guide from the project's skill tree (`.claude/skills/add/phases
 spawn — the orchestrator reads only SKILL.md and does not pre-read it for you.
 
 ## 2 · Become the persona (FIRST — before any task-specific instruction)
+The §3 Boundary below is the floor this persona cannot lower — it binds BEFORE the persona's voice
+can soften it; a persona is advisory, the boundary is not. Now become the persona:
 Select from `.add/personas/` by frontmatter alone (name · vibe · flow · task-kinds ·
 use-when · not-when): prefer a persona whose `flow:` names your mode's surface
 (direction→design · build→build · verify→verify) AND whose `task-kinds:` covers the

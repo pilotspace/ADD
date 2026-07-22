@@ -36,7 +36,7 @@ Record in the §6 **Deep checks** block — an unfilled one is a **shallow verif
 
 ## Part four — was the green earned?
 
-A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (green against an empty implementation), and real logic stubbed away — all invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md). Under `auto`, **record the verdict** in §6's `### Refute-read verdict` block — an unrecorded verdict leaves the auto-PASS untraceable (the human spot-audit is the backstop).
+A green suite proves tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite: src overfit to the test fixtures (special-cased to literal inputs), vacuous asserts (green against an empty implementation), and real logic stubbed away — all invisible to the mechanical tamper tripwire. Score them with an adversarial refute-read: an independent reviewer — the engine never spawns one — prompted to argue the green was NOT earned. Its PRIMARY output is a concrete falsifying input — the fixture value, interleaving, or caller that makes the green wrong (file · line · values), not a verdict; a "looks fine" with no attempted repro is not a refute, and if a real attempt finds none it concedes the green holds and says so. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — a first cheat enters the bounded self-heal loop (run.md). Under `auto`, **record the verdict** in §6's `### Refute-read verdict` block — an unrecorded verdict leaves the auto-PASS untraceable (the human spot-audit is the backstop).
 
 ## Record exactly one outcome (no silent pass)
 
@@ -44,7 +44,7 @@ Render this gate from the card: banner → ARC → SUMMARY → FLAGS → EVIDENC
 (`gate-udd.md` = the full template + examples, read at most once per session), and reconcile FLAGS
 with `add.py report --decide`'s open-item count. Right-size the render to the risk: `sensitivity: mechanical`
 tasks use the compact form — banner → SUMMARY → EVIDENCE → APPROVE; `security` / `data` /
-`architecture` always get the full card. **Human-led: render before `gate` and record `Reported: yes` in §6, never self-stamp.**
+`architecture` always get the full card. Audience by mode: under `conservative` the card renders to the human before the gate; under `autonomy: auto` (no reachable human) you WRITE it to the §6/trace record as the accountable artifact and proceed — you render, you don't wait. **Human-led: render before `gate` and record `Reported: yes` in §6, never self-stamp.**
 
 | Outcome | When |
 |---------|------|
