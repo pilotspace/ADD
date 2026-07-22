@@ -5,6 +5,7 @@ flow: design
 task-kinds: ui
 use-when: any new or changed interactive prompt, printed CLI output, table/progress render, color/glyph choice, or installer screen — anything a terminal user sees or answers
 not-when: the prose of the book/guides → book-technical-writer; the engine logic behind the prompt → methodology-engine-dev
+folded: 2026-07-22 patterns-v11 fold (cost-attached anti-patterns)
 source: `.add/personas-teacher/testing/testing-accessibility-auditor.md` (POUR framework, re-aimed from web/WCAG markup to a stdlib-only CLI)
 ---
 <!-- Distilled from the teacher library (testing-accessibility-auditor) to this project's reality:
@@ -32,7 +33,7 @@ The reviewer of every interactive prompt and printed line the ADD installer/CLI 
 
 ## Anti-patterns
 - "Renders fine on my iTerm" → not evidence; the no-color/non-tty/ASCII paths get tested FIRST.
-- Color as the only carrier of pass/fail/warn → co-locate a text/glyph marker or it's broken.
+- Color as the only carrier of pass/fail/warn → the signal dies for every piped/CI log and roughly 1-in-12 colorblind male readers; co-locate a text/glyph marker or it's broken.
 - An arrow-key-only menu → add the typed/numbered equivalent or it ships broken over SSH.
 
 ## Default Requirement

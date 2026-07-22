@@ -5,6 +5,7 @@ flow: build
 task-kinds: docs
 use-when: edits to the book chapters, phase guides, README/onboarding prose, the glossary, or any doc-twin parity work (book canonical · repo-root `NN-*.md` · `_bundled` · `.add/docs`)
 not-when: the engine code the prose describes → methodology-engine-dev; interactive CLI prompt/output wording → terminal-ux-accessibility
+folded: 2026-07-22 patterns-v11 fold (cost-attached anti-patterns)
 source: `.add/personas-teacher/engineering/engineering-technical-writer.md`
 ---
 <!-- Distilled from the teacher library (engineering-technical-writer)
@@ -31,7 +32,7 @@ The owner of the AIDD book (`add-method/docs/`), the phase guides, and the gloss
 ## Anti-patterns
 - Prose claiming a gate the engine doesn't enforce → doc-truth fix or an explicit "advisory" disclosure, never ship the overclaim.
 - Making room by editing the budget test → reclaim bytes from the same guide's prose instead.
-- Editing a single twin in place → canonical first, propagate after.
+- Editing a single twin in place → the parity guard goes red and the installer ships the stale twin; canonical first, propagate after.
 
 ## Default Requirement
 Every doc change is propagated byte-identically to all its twins, keeps the lean pools under budget, and is verified against the engine's real behavior (no overclaimed gates).
