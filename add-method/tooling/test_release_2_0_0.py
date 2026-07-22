@@ -57,34 +57,16 @@ class ChangelogTest(unittest.TestCase):
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    """The version sources move in lockstep (migrated forward from 1.18.0)."""
+    # NOTE: 2.0.0 is superseded by 2.1.0 — the live-version-agreement assertions
+    # migrated FORWARD into test_release_2_1_0 (release-gate pattern: exactly ONE
+    # suite pins the current version).
 
-    def test_versions_agree_at_2_0_0(self):
-        pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
-        py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
-                       (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
-        self.assertEqual((pkg, py), (VERSION, VERSION),
-                         "publish.yml's guard would fail this release closed")
-
-    def test_runtime_version_agrees(self):
-        init = (PKG / "src" / "add_method" / "__init__.py").read_text(encoding="utf-8")
-        runtime = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"', init).group(1)
-        self.assertEqual(runtime, VERSION,
-                         "add_method.__version__ must match the shipped version")
-
-    def test_plugin_version_matches(self):
-        plugin = json.loads(
-            (PKG / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-        )["version"]
-        self.assertEqual(plugin, VERSION,
-                         "the Claude Code plugin manifest must match the shipped version")
-
-    def test_package_lock_self_version(self):
-        # npm refuses a mismatched lock in CI; the lock self-version appears twice
-        # (top-level + the "" package entry) — both must carry the release.
-        lock = json.loads((PKG / "package-lock.json").read_text(encoding="utf-8"))
-        self.assertEqual(lock["version"], VERSION)
-        self.assertEqual(lock["packages"][""]["version"], VERSION)
+    def test_major_entry_keeps_its_migrate_pointer(self):
+        # the 2.0 upgrade door must stay documented for as long as 1.x boards exist
+        entry = CHANGELOG.read_text(encoding="utf-8").split(
+            f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
+        self.assertIn("`add.py migrate`", entry,
+                      "the 2.0.0 entry must keep naming the one-shot board conversion")
 
 
 if __name__ == "__main__":

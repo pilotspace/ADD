@@ -1,6 +1,6 @@
 {
   "name": "@pilotspace/add",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "ADD (AI-Driven Development) 2.0. The agent is the hands; ADD is the memory, judgment, and conscience — a minimal, state-tracked skill: one freeze per feature, trust from passing tests, state on disk so context rot never survives a new session.",
   "bin": {
     "add": "bin/cli.js"

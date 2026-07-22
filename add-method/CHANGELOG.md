@@ -4,6 +4,55 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.1.0] — 2026-07-22
+
+Minor: the two-agent roster matures and the persona author learns from real
+corpora; TDD flexes for non-coding tasks; every honest verify→build round
+becomes engine-visible; the dogfood foundation completes its 2.0 migration.
+
+- **two-agent roster** — `add` retires; **add-worker** runs every EXECUTION
+  beat (direction · build · verify · persona) and **add-advisor** is the
+  second mind serving EVERY beat (propose-plan · advise-midflight · refute)
+  with a per-beat calibration map. The worker gains a mid-flight **support
+  fan-out** for medium/large builds: non-overlapping §3-Scope slices,
+  worktree isolation per support worker, the lead serializes git and re-runs
+  the FULL suite on every return; the quality floor multiplies, never dilutes.
+- **persona-author skill** — the static `.add/personas/_template.md` retires
+  for a `persona-author` skill (contract · patterns · seeding references +
+  two worked examples). Patterns grow 9 → 11 from a deep diagnosis of 13
+  sample subagents and the 256-file teacher corpus: NEW *numbers-you'd-defend*
+  (a named budget beats an adjective; fake precision is worse than none) and
+  *per-flow stance* (what a lens LEADS with at build vs REFUSES at verify —
+  the verify stance carries a default NEEDS-WORK verdict); seeding gains
+  mine-the-gold / refuse-the-rot source guidance. All 6 live roster personas
+  folded to patterns-v11.
+- **flexible TDD** — §4 supports failing-first **acceptance checks** for
+  non-coding kinds (docs · release · infra): verifiable pass/fail evidence,
+  red before the artifact exists, green after — the red→green discipline
+  holds; only the must-be-executable-code requirement is lifted. Guide,
+  template, and book reframe; NO engine change (the kernel was already
+  tolerant); 21 non-coding prose-guard tests retired dogfooding the policy.
+- **round-visible runs** — every verify→build return trip is a recorded
+  **round**: `add.py phase build [--note "finding"]` and every non-exhausted
+  heal return increment an uncapped, observational `tasks[slug].rounds`
+  (count + timestamped history, notes verbatim); `status` names `round N`;
+  the route trace carries `"rounds"` beside `"heals"`. Heal stays the
+  cheat-classed, capped subset; rounds are the honest whole. `--note` off
+  the build target refuses (`phase_note_build_only`).
+- **foundation-split** — the dogfood board completes the 1.x→2.0 foundation
+  migration this package's own `migrate` verb leaves to judgment: PROJECT.md
+  322 → 63 lines (engine-read lines byte-identical), the pre-2.0 standing
+  picture folded into the five `.add/specs/` living specs with a per-bullet
+  fold ledger — the worked example external 2.0 upgraders can follow.
+- **SKILL.md command cookbook** — the skill router carries the common
+  call recipes so agents skip the `-h` round-trip; README copy tightened
+  (benefit-led highlights, honest tradeoffs, no dollar figures).
+
+Retired (no CLI/install surface change): the `add` roster agent (superseded
+by add-worker + add-advisor) and the static persona template (superseded by
+the persona-author skill; `init` now creates an empty personas dir and the
+hints point at the skill).
+
 ## [2.0.0] — 2026-07-18
 
 Major: ADD 2.0 — a skill-led method on a thin state kernel. The skill drives

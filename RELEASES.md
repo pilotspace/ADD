@@ -1,5 +1,17 @@
 # Releases
 
+## 2.1.0 — 2026-07-22
+milestones: (thin-engine-loop still open — this cut ships its landed feature tasks)
+loose tasks: round-visible-runs, foundation-split, plus the feat/advisor-roster + feat/adaptive-flow follow-on commits (two-agent roster · persona-author v11 + seeding · flexible TDD · SKILL cookbook · README copy)
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: recorded by hand — the release engine retired in the 2.0 kernel-trim (playbook-guided cut). PRs #164 + #165 merged to main, CI green (Tooling py3.10+3.12); full suite 1959/0 at the cut; `add.py check` 414/0; round-visible-runs gate PASS (cross-agent refute two-pass EARNED) · foundation-split gate PASS (fv66, fold ledger). Version sources ×5 in lockstep; tag v2.1.0 human-ordered 2026-07-22.
+
+## 2.0.0 — 2026-07-18 (backfilled 2026-07-22)
+milestones: adaptive-flow (ADD 2.0: kernel-trim 54→31 verbs · PLAN.md + migrate · 5-DD living specs + delta-append · book-stops-shipping · phase-collapse-3 · route scoreboard)
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: shipped via PR #163 (merge 5275f3f9) → tag v2.0.0 → npm + PyPI both live 2.0.0; no ledger entry was recorded at the cut because `add.py release` itself retired in this very release — backfilled for lineage, content per CHANGELOG [2.0.0].
+
 ## 1.18.0 — 2026-07-14
 milestones: build-strategy-facets, delta-drain, add-bench, add-lean-loop, expectations-first, plan-legibility, six-phase-loop, add-bench-v2, three-phase-flow, risk-proportional-ceremony, quality-floors, honest-fidelity-meter, token-anatomy, engine-minimalism, ceremony-turn-cut, engine-output-trim
 loose tasks: prune-benchmark-deadweight
