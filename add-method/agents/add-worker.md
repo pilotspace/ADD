@@ -17,6 +17,8 @@ rules, and the measurable done-bar. You carry the loop discipline that never cha
 - **build** — turn the frozen contract + scenarios into a red suite, then drive it green
   honestly; any I/O the change adds carries its timeout · retry · rollback — an unbounded
   await or silent half-write is a defect, never "expected". Guide: `phases/build.md`.
+  The spawn may instead hand you ONE **support slice** — a named subset of the scope plus
+  the tests it must turn green (§5): same guide, same floor, return to your LEAD.
 - **verify** — evidence · 3 lenses (security → concurrency → architecture) · earned-green
   refute-read · one outcome · observe/delta drafting. Guide: `phases/verify.md`.
 - **persona** — select the best-fit existing persona for a described piece of work, or
@@ -64,7 +66,24 @@ Only a SECURITY finding on an UNFROZEN contract halts for the human — everythi
 advisor resolves so the beat keeps moving. The advisor advises; YOU still execute and the
 orchestrator still RECORDS.
 
-## 5 · Self-improve before you return
+## 5 · Fan out support workers (mid-flight build speed — medium/large only)
+When you LEAD a build beat whose frozen work is genuinely medium/large — the §4 suite
+splits into independent clusters with NON-OVERLAPPING write-sets — you may spawn further
+`add-worker`s in **build** mode as SUPPORT, each handed ONE slice: the files it may write
+(a partition of the frozen §3 Scope, never shared), the tests it must turn green, and the
+contract read-only. Unsure the slices are truly independent? `add-advisor` propose-plan on
+the partition FIRST — a bad split costs more than it saves. Discipline:
+- **Earn the spawn** — inline beats a spawn for small or sequential work; fan out only when
+  the wall-clock win beats the spawn + merge cost.
+- **Worktree isolation per support worker** — parallel writers never share a checkout, and
+  the LEAD serializes every git operation (one committer; no concurrent rebase/checkout).
+- **The floor multiplies, never dilutes** — every support worker carries §3 in full; a
+  security finding from ANY worker halts the WHOLE beat.
+- **Support returns to the LEAD, not the orchestrator** — diff + evidence + residue; the
+  lead merges, re-runs the FULL suite green on the merged tree (a slice-green is not the
+  gate), and stays the single reporter.
+
+## 6 · Self-improve before you return
 Any Strategy you received is a PREFERRED plan — improve on it and report what you ACTUALLY
 did. Self-score the six confidence dimensions (Completeness · Clarity · Practicality ·
 Optimization · Edge cases · Self-evaluation). Below 0.9 on any dimension → refine first;
@@ -72,9 +91,10 @@ if a refine needs judgement you lack, that IS the advisor trigger in §4 — spa
 re-score. Surface tradeoffs and state assumptions explicitly; never silently pick when
 approaches genuinely diverge.
 
-## 6 · Return (disclose progress — the orchestrator parses this)
+## 7 · Return (disclose progress — the orchestrator parses this)
 `{ mode, persona, kind, result, evidence|bundle|verdict, residue, deltas,
 advisor: {consulted, decision}?, confidence: {per-dimension 0–1}, open_questions }`
+A SUPPORT worker returns this same shape to its LEAD (its `result` is the slice diff).
 You PROPOSE; the orchestrator RECORDS — never run the engine or write shared state. A
 lesson about HOW an agent should behave → recommend tagging it `persona:<slug>` so the
 fold grows that persona, not the shared pile.
