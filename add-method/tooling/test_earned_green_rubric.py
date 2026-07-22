@@ -81,7 +81,7 @@ CHEAT_KEYWORDS = ["overfit", "vacuous", "stub"]
 # Pre-existing section-6 template lines the additive change must NOT remove
 # (a subset re-checked here so this guard fails loudly on a seam break).
 SIX_EXISTING = [
-    "all tests pass",
+    "all tests (or §4 acceptance checks) pass",  # flexible-TDD wording (feat a0d6a476)
     "no test or contract was altered during build",
         "### GATE RECORD",
 ]

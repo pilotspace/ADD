@@ -123,11 +123,13 @@ class PipFlaglessTest(unittest.TestCase):
 class ReadmeFlaglessTest(unittest.TestCase):
     def test_readme_install_examples_flagless_first(self):
         text = README.read_text(encoding="utf-8")
+        # the flagless pin allows the marketing copy's trailing "# ecosystem" comment and the
+        # pip one-liner prefix — any flag between `init` and EOL/comment still fails the pin.
         self.assertRegex(
-            text, re.compile(r"^npx @pilotspace/add init\s*$", re.M),
+            text, re.compile(r"^npx @pilotspace/add init\s*(#.*)?$", re.M),
             "README's npx install example must lead with the flagless form")
         self.assertRegex(
-            text, re.compile(r"^pilotspace-add init\s*$", re.M),
+            text, re.compile(r"^(pip install pilotspace-add && )?pilotspace-add init\s*(#.*)?$", re.M),
             "README's pip install example must lead with the flagless form")
 
 
