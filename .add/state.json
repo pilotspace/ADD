@@ -1,7 +1,7 @@
 {
   "project": "AIDD / ADD Methodology",
   "stage": "mvp",
-  "active_task": "fable-floor-reasoning",
+  "active_task": "fable-thinking-reference",
   "tasks": {
     "add-check": {
       "title": "add.py check: validate .add project integrity",
@@ -4998,10 +4998,56 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fable-thinking-reference": {
+      "title": "Distil the fable-thinking protocol into an on-demand skill reference doc",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "thin-engine-loop",
+      "depends_on": [],
+      "created": "2026-07-22T09:50:57+00:00",
+      "updated": "2026-07-22T10:00:41+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v2",
+        "frozen_at": "2026-07-22T09:59:58+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "f9fd9eb428bbcf512c676d53721f193f",
+        "tests": {
+          "add-method/tooling/test_fable_floor.py": "277b5d9d76b1b1f016f5f1cc8e5717e5"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/phases/direction.md",
+          ".claude/skills/add/phases/direction.md",
+          "add-method/src/add_method/_bundled/skill/add/phases/direction.md",
+          "add-method/tooling/test_fable_floor.py"
+        ],
+        "snapshot_md5": "27748212dd6f14d9489d51b29c89f7bb"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-22T09:47:05+00:00",
+  "updated": "2026-07-22T10:00:41+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6370,7 +6416,7 @@
     "engine-hygiene": "wire-milestone-relations",
     "honest-fidelity-meter": "status-lean-default",
     "strategy-intake": "gate-experience-udd",
-    "thin-engine-loop": "fable-floor-reasoning"
+    "thin-engine-loop": "fable-thinking-reference"
   },
   "todos": [
     {

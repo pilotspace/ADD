@@ -78,6 +78,13 @@ class FableFloorContentTest(unittest.TestCase):
                 body, r"PRIOR until",
                 f"{p}: GROUND lacks the observation-over-memory rule")
 
+    def test_fluent_not_true_principle(self):
+        """Distilled inline (task fable-thinking-reference): the freeze-review carries
+        the fable umbrella principle so direction.md is self-framing, no parallel doc."""
+        for p in _live(DIRECTIONS):
+            self.assertIn("Fluent", p.read_text(encoding="utf-8"),
+                          f"{p}: freeze-review lacks the 'Fluent != true' principle")
+
     def test_constraint_loop_before_freeze(self):
         """M4 — one output-shape self-verify bullet naming census/covers/REDS AND the
         mechanical step, CO-LOCATED in a single bullet."""

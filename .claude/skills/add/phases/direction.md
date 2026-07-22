@@ -218,7 +218,9 @@ line the freeze records it (audit-only — `route_unrecorded` is measured, never
 
 ## The freeze review checklist
 
-The human's one minute, aimed. Run the **Floor** first, then walk the rest before saying yes:
+The human's one minute, aimed. **Fluent ≠ true** — a bundle's polish tracks its token count, not its
+evidence, so these checks force a fresh read of THIS task over a plausible template. Run the **Floor**
+first, then walk the rest before saying yes:
 
 - **Floor (before you read the shape)** — the pre-answer check the fluent draft skips. (1) Restate the
   **Goal**: the end-state the human actually wants, in their world, not the ticket's wording — a bundle
