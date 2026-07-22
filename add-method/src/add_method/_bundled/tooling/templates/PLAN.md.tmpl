@@ -71,7 +71,7 @@ Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
 ---
 
-## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
+## 4 · TESTS — failing-first suite or acceptance checks (red) ▸ docs/06-step-4-tests.md
 
 <test_plan>
   - test_<name>: arrange / act / assert behavior not internals · covers: <M#, R:code>
@@ -79,6 +79,7 @@ Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0. The test_plan bullets' `covers:` tails are machine-read too: `add.py locate path::test_name` resolves a failing test to the frozen §3 clause it proves -->
+<!-- NON-CODING task (kind: docs · release · infra, or a non-coding project)? §4 is a failing-first ACCEPTANCE CHECK, not a script — verifiable pass/fail evidence (mkdocs build succeeds · §X covers A/B/C · every internal link resolves), red before the artifact exists and green after. Set `Tests live in: evidence` (no `./tests/`). The red→green discipline holds; only the must-be-executable-code requirement is lifted. -->
 
 ---
 
@@ -86,14 +87,14 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 
 Strategy actually used: <fill at VERIFY — what you ACTUALLY did (or "as planned"); harvested into §7 Decisions (ADR)>
 Code lives in: `./src/`
-Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn the `add` agent in **advise mode** (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
+Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn `add-advisor` (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
 Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 Scope (an out-of-scope build fails the gate: scope_violation); keep the §3 Regression floor green; allow-list packages only; ask if unclear.
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass — including the §3 Regression floor (host suite)
+- [ ] all tests (or §4 acceptance checks) pass — including the §3 Regression floor (host suite)
 - [ ] coverage did not decrease
 - [ ] no test or contract was altered during build
 - [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (a confirmed cheat is HARD-STOP)

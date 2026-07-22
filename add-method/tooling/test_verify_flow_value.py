@@ -34,16 +34,17 @@ def _existing(*paths):
 CONSTANTS_TWINS = _existing(HERE / "add_engine" / "constants.py",
                             REPO / ".add" / "tooling" / "add_engine" / "constants.py",
                             BUNDLE / "tooling" / "add_engine" / "constants.py")
-TEMPLATE_TWINS = _existing(HERE / "templates" / "personas" / "_template.md.tmpl",
-                           REPO / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
-                           ADD_METHOD / ".add" / "tooling" / "templates" / "personas" / "_template.md.tmpl",
-                           BUNDLE / "tooling" / "templates" / "personas" / "_template.md.tmpl")
+# persona-skill: the flow values doc moved from the retired template to the persona-author skill
+SKILL_CONTRACT_TWINS = _existing(
+    ADD_METHOD / "skill" / "add" / "persona-author" / "references" / "contract.md",
+    REPO / ".claude" / "skills" / "add" / "persona-author" / "references" / "contract.md",
+    BUNDLE / "skill" / "add" / "persona-author" / "references" / "contract.md")
 DOCS_TWINS = (ADD_METHOD / "docs" / "18-personas.md",
               REPO / "18-personas.md")   # book-stops-shipping (2.0 M6b): no bundled copy
-# roster-distill (ADD 2.0 M1): the verify specialist is the ONE `add` agent (verify mode)
-AGENT_TWINS = (ADD_METHOD / "agents" / "add.md",
-               REPO / ".claude" / "agents" / "add.md",
-               BUNDLE / "agents" / "add.md")
+# advisor-split: the verify specialist is add-worker (verify mode); the advisor is a separate agent
+AGENT_TWINS = (ADD_METHOD / "agents" / "add-worker.md",
+               REPO / ".claude" / "agents" / "add-worker.md",
+               BUNDLE / "agents" / "add-worker.md")
 GUIDE_TWINS = (ADD_METHOD / "skill" / "add" / "phases" / "verify.md",
                REPO / ".claude" / "skills" / "add" / "phases" / "verify.md",
                BUNDLE / "skill" / "add" / "phases" / "verify.md")
@@ -79,12 +80,14 @@ class VerifyFlowValueTest(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("design|build|advisor|verify", findings[0])
 
-    # ── M2: the template flow hint teaches verify + four surfaces ─────────────────
-    def test_template_hint_names_verify(self):
-        text = TEMPLATE_TWINS[0].read_text(encoding="utf-8")
-        self.assertIn("four apply-surfaces", text, "template must count FOUR apply-surfaces")
-        self.assertIn("verify", text.split("use-when:")[0], "flow hint must name verify")
-        self.assertEqual(len({_md5(p) for p in TEMPLATE_TWINS}), 1, "template twins diverged")
+    # ── M2: the persona-author skill contract teaches verify + all four flow values ──
+    def test_skill_contract_names_verify(self):
+        text = SKILL_CONTRACT_TWINS[0].read_text(encoding="utf-8")
+        self.assertIn("`design` · `build` · `advisor` · `verify`", text,
+                      "contract must name all four flow values")
+        self.assertIn("evidence-judging lens", text, "contract must describe the verify surface")
+        self.assertEqual(len({_md5(p) for p in SKILL_CONTRACT_TWINS}), 1,
+                         "persona-author contract twins diverged")
 
     # ── M3: the book chapter gains the fourth surface ─────────────────────────────
     def test_docs_four_surfaces(self):
@@ -105,7 +108,7 @@ class VerifyFlowValueTest(unittest.TestCase):
                           f"{p} must select flow: verify first")
             self.assertIn("flow: advisor", text, f"{p} must keep the advisor fallback")
             digests.add(_md5(p))
-        self.assertEqual(len(digests), 1, "add.md agent twins diverged")
+        self.assertEqual(len(digests), 1, "add-worker.md agent twins diverged")
 
     # ── M5: the verify guide names the flow; phases pool fence held ──────────────
     def test_verify_guide_names_flow(self):

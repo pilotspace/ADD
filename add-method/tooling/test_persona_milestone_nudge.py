@@ -37,7 +37,7 @@ ENGINE_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling",
 )
 
-NOTE_MARKERS = ("add-persona", "docs/18-personas.md")
+NOTE_MARKERS = ("persona-author", "docs/18-personas.md")
 
 _CONFORMANT_PERSONA = (
     "---\nname: Frontend Engineer\nvibe: ships accessible, fast UI\n---\n"
@@ -80,7 +80,7 @@ class NewMilestoneNudgeTest(_Board):
     # scenario: nudge on a personas-less project (M1/M2)
     def test_new_milestone_nudges_when_personas_dir_absent(self):
         self._run("init", "--name", "demo")
-        shutil.rmtree(self._personas(), ignore_errors=True)   # strip the seeded _template.md too
+        shutil.rmtree(self._personas(), ignore_errors=True)   # remove the personas dir entirely
         out, _err, code = self._run("new-milestone", "mvp", "--goal", "g", "--stage", "mvp")
         self.assertEqual(code, 0)
         self.assertIn("note:", out)
@@ -90,10 +90,12 @@ class NewMilestoneNudgeTest(_Board):
         self.assertIn("created milestone 'mvp'", out)
         self.assertIn("next:", out)
 
-    # scenario: nudge on a template-only project (M1/M2)
+    # scenario: a lone `_template.md` scaffold still counts as unseeded (io_state filters `_`-prefixed)
     def test_new_milestone_nudges_when_only_template_present(self):
         self._run("init", "--name", "demo")
-        self.assertTrue((self._personas() / "_template.md").exists())
+        # persona-skill: init no longer seeds a template — write one to prove the filter still holds
+        (self._personas() / "_template.md").write_text(
+            "---\nname: _t\nvibe: scaffold\n---\n", encoding="utf-8")
         out, _err, code = self._run("new-milestone", "mvp", "--goal", "g", "--stage", "mvp")
         self.assertEqual(code, 0)
         self.assertTrue(any(m in out for m in NOTE_MARKERS), out)

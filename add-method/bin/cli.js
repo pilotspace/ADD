@@ -771,8 +771,10 @@ const SHARED = new Set(["agents"]);
 // Roster names retired upstream — the ONLY names the shared lander may remove (never a
 // pattern/prefix heuristic: a USER file named add-anything.md must survive).
 // roster-distill (ADD 2.0 M1): the 5-agent roster collapsed into the ONE `add` agent.
+// advisor-split: that ONE `add` agent split into `add-worker` + `add-advisor`, so `add.md`
+// retires here and `add-advisor.md` leaves the list (it ships again; landing precedes removal).
 const RETIRED_AGENTS = ["add-design.md", "add-build.md", "add-verify.md",
-                        "add-persona.md", "add-advisor.md"];
+                        "add-persona.md", "add.md"];
 const STAMP_FILE = ".add-version";
 const LOCK_FILE = ".update.lock";   // the `update --global` home lock (never user-data)
 const LOCK_STALE_DEFAULT = 600;     // seconds (10 min); ADD_LOCK_STALE_SECONDS env-overridable

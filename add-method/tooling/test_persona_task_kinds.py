@@ -24,7 +24,8 @@ import add
 from add_engine import constants
 
 TOOLING = Path(__file__).resolve().parent
-TEMPLATE = TOOLING / "templates" / "personas" / "_template.md.tmpl"
+# persona-skill: the task-kinds taxonomy moved from the retired template to the skill contract
+SKILL_CONTRACT = TOOLING.parent / "skill" / "add" / "persona-author" / "references" / "contract.md"
 
 
 def _persona(extra_fm: str = "", body_extra: str = "") -> str:
@@ -104,12 +105,14 @@ class PersonaTaskKindsWarningTest(unittest.TestCase):
             self.fail(f"quality predicate must never raise: {e}")
 
 
-class TemplateSlotTest(unittest.TestCase):
-    # Must: the shipped persona template carries the task-kinds slot
-    def test_template_has_task_kinds_slot(self):
-        text = TEMPLATE.read_text(encoding="utf-8")
-        self.assertIn("task-kinds:", text,
-                      "_template.md.tmpl must carry a task-kinds: frontmatter slot")
+class SkillContractSlotTest(unittest.TestCase):
+    # Must: the persona-author skill contract documents the task-kinds slot + its closed taxonomy
+    def test_skill_contract_has_task_kinds_taxonomy(self):
+        text = SKILL_CONTRACT.read_text(encoding="utf-8")
+        self.assertIn("task-kinds", text, "contract.md must document the task-kinds frontmatter")
+        for kind in ("feature", "refactor", "test", "docs", "ui", "security",
+                     "data", "infra", "release", "integration"):
+            self.assertIn(kind, text, f"contract.md must list the '{kind}' task kind")
 
 
 if __name__ == "__main__":

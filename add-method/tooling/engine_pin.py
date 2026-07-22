@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "bfd472014a1f3bdcb76c0a7f103fc44b"  # re-aimed @ run-mode-decouple (run mode = the autonomy dial only; the streams: posture coupling is removed — --run-mode no longer writes a streams line, status drops its `run mode:` row, concurrency is now 'spawn a subagent per task'). prior: 427a2501… @ graph-views
-ENGINE_PKG_MD5 = "e0ff925d46f1666460e8b3c3e375acf1"  # re-aimed @ run-mode-decouple (constants drops _STREAMS_POSTURES; autonomy drops _streams_posture/_project_streams_token/_project_streams + the streams regex). prior: ec7f8093… @ atomic-node
+ENGINE_MD5 = "d8fb245ea769ff834a03ba8c1932be72"  # re-aimed @ round-visible-runs (verify->build return trips recorded as uncapped rounds; phase --note refusal exit 2, verbatim note; status round N; trace rounds). prior: 1cebca7e… @ persona-skill
+ENGINE_PKG_MD5 = "bcc35aa23727c5ecb19b9f3e3a53d348"  # re-aimed @ persona-skill (constants SETUP_FILES drops personas/_template.md; PERSONA_HINT/FIT point at the persona-author skill; io_state comment). prior: 8f3d546a… @ advisor-split

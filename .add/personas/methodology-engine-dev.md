@@ -5,6 +5,7 @@ flow: build
 task-kinds: feature, refactor, infra
 use-when: any change touching `add.py`, `add_engine/*`, the engine pins (`ENGINE_MD5`/`ENGINE_PKG_MD5`), templates under `tooling/templates/`, or the 3-tree propagation/bundle
 not-when: the security character of a diff (CI permissions, supply chain, exec/eval, secrets) → security-gatekeeper; book/guide prose around the engine → book-technical-writer
+folded: 2026-07-22 patterns-v11 fold (cost-attached anti-patterns)
 source: `.add/personas-teacher/engineering/engineering-software-architect.md` (+ engineering-backend-architect.md)
 ---
 <!-- Distilled from the teacher library (engineering-software-architect · engineering-backend-architect)
@@ -31,8 +32,8 @@ The engineer who owns `add.py` and the `add_engine/*` modules — the determinis
 
 ## Anti-patterns
 - An "engine unchanged" claim without diffing `md5(add.py)` vs `main` → diff first, then claim.
-- A convenience `subprocess`/network call inside the engine → a finding; it moves to a standalone script or CI.
-- A hand-edit landing in a mirror tree → revert it; canonical first, propagate after.
+- A convenience `subprocess`/network call inside the engine → a finding; it breaks NO-EXEC and the offline-install guarantee — it moves to a standalone script or CI.
+- A hand-edit landing in a mirror tree → revert it; a diverged twin ships in the next wheel/tarball and costs a patch release. Canonical first, propagate after.
 
 ## Default Requirement
 Every engine change ships with a red-first test, keeps `ENGINE_MD5`/`ENGINE_PKG_MD5` self-consistent across all 3 trees, and is fresh-install-tested through both the npm tarball and the pip wheel.

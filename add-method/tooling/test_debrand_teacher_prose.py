@@ -57,11 +57,13 @@ def _setup_trees():
     )
 
 
-def _template_trees():
-    rel = Path("tooling") / "templates" / "personas" / "_template.md.tmpl"
+def _persona_skill_trees():
+    # persona-skill: the persona-authoring prose moved from the retired template to the
+    # persona-author skill's SKILL.md (which names the local teacher library).
+    rel = Path("skill") / "add" / "persona-author" / "SKILL.md"
     return _existing(
         _ADD_METHOD / rel,
-        _REPO / ".add" / rel,
+        _REPO / ".claude" / "skills" / "add" / "persona-author" / "SKILL.md",
         _ADD_METHOD / "src" / "add_method" / "_bundled" / rel,
     )
 
@@ -77,7 +79,7 @@ def _constants_trees():
 
 def _all_prose():
     return (_chapter_trees() + _glossary_trees() + _setup_trees()
-            + _template_trees() + _constants_trees())
+            + _persona_skill_trees() + _constants_trees())
 
 
 def _md5(p: Path) -> str:
@@ -103,7 +105,7 @@ class ProsePointsAtLocalLibraryTest(unittest.TestCase):
         # the persona-AUTHORING prose names the local library (constants.py is engine — excluded
         # so no path literal contaminates engine source).
         for group, label in ((_chapter_trees(), "ch.18"), (_setup_trees(), "0-setup"),
-                             (_template_trees(), "_template"), (_glossary_trees(), "glossary")):
+                             (_persona_skill_trees(), "persona-author-skill"), (_glossary_trees(), "glossary")):
             self.assertTrue(group, f"{label}: no tree found")
             for p in group:
                 self.assertIn(LOCAL_LIB, p.read_text(encoding="utf-8"),

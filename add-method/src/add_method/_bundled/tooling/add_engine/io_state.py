@@ -270,9 +270,9 @@ def _md5_file(p: Path) -> str | None:
 
 def _personas_unseeded(root: Path) -> bool:
     """True when `.add/personas/` has no REAL (non-template) authored persona: the
-    directory is absent, empty, or holds only the seeded `_template.md` scaffold
-    (persona-seed-nudge). Fail-soft: an unreadable directory counts as unseeded
-    rather than raising — this feeds a `note:`/INFO hint, never a gate."""
+    directory is absent, empty, or holds only a `_template.md` scaffold (personas are
+    authored via the persona-author skill, not seeded). Fail-soft: an unreadable directory
+    counts as unseeded rather than raising — this feeds a `note:`/INFO hint, never a gate."""
     d = root / "personas"
     if not d.is_dir():
         return True

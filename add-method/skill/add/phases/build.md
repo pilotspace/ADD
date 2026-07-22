@@ -1,8 +1,9 @@
 # Build — AI writes the code (the beat you drive to green)
 
-Objective: implement the feature so EVERY failing test passes — without changing any
-test or the contract. This is the only phase the AI leads; §1–§4 removed all
-ambiguity. Write code into `.add/tasks/<slug>/src/`.
+Objective: implement the feature so EVERY failing test — or, for a non-coding task, every §4
+acceptance check — passes, without changing any test or the contract. This is the only phase the
+AI leads; §1–§4 removed all ambiguity. Write code into `.add/tasks/<slug>/src/` (a non-coding
+task writes its artifact to the path its §5 Scope declares).
 
 ## Work in small batches
 
@@ -15,7 +16,7 @@ each batch small enough to review in full.
 
 - **Scope (may touch)** — the allowlist the build may write (backticked tokens); a file outside it is a **STOP → change request** back to Specify.
 - **Strategy (ordered batches)** — the planned build order; guidance, not enforced.
-- **Strategy facets** — Approach (domain strategy) · Data strategy · Pattern · Optimization stance: the domain HOW, anchored upstream (§1 Framings · §3 Schema · CONVENTIONS.md Honors), drafted at tests->build in the Persona's domain vocabulary; ⚠-mark the facet you trust least (risk: high → consult the add agent, advise mode). Advisory, never a gate.
+- **Strategy facets** — Approach (domain strategy) · Data strategy · Pattern · Optimization stance: the domain HOW, anchored upstream (§1 Framings · §3 Schema · CONVENTIONS.md Honors), drafted at tests->build in the Persona's domain vocabulary; ⚠-mark the facet you trust least (risk: high → spawn `add-advisor`, advise-midflight mode). Advisory, never a gate.
 
 Enforced: a completing verify gate refuses an out-of-scope build (`scope_violation` → self-heal).
 
@@ -39,7 +40,7 @@ contract.** A genuine need to change either is a change request back to Specify.
 ## Exit gate
 
 <exit_gate>
-- [ ] All tests pass.
+- [ ] All tests (or §4 acceptance checks) pass.
 - [ ] Coverage did not decrease.
 - [ ] No test and no contract modified by the AI.
 - [ ] No dependency outside the allow-list.

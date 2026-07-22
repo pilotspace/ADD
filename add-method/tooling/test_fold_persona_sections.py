@@ -107,10 +107,10 @@ class ProseNamesAllFour(unittest.TestCase):
         self.assertIn("Abilities", book)
 
     def test_agents_recommend_persona_tag(self):                   # M4
-        # roster-distill (ADD 2.0 M1): the ONE `add` agent carries the recommendation
-        text = (ADD_METHOD / "agents" / "add.md").read_text(encoding="utf-8")
+        # advisor-split: the add-worker agent carries the persona-tagging recommendation
+        text = (ADD_METHOD / "agents" / "add-worker.md").read_text(encoding="utf-8")
         self.assertIn("persona:", text,
-                      "the add agent must recommend persona-targeting behavioral lessons")
+                      "the add-worker agent must recommend persona-targeting behavioral lessons")
 
 
 if __name__ == "__main__":

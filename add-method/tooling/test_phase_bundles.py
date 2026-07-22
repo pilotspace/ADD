@@ -110,15 +110,16 @@ class PhaseAgentConstantTest(unittest.TestCase):
         self.assertEqual(set(engine_constants.PHASE_AGENT.keys()), set(PHASES) - {"done"})
 
     def test_values_match_shipped_roster_ownership(self):
-        # roster-distill (ADD 2.0 M1): ONE `add` agent serves every phase — the spawn
-        # names the mode, the agent loads the beat's guide + persona.
+        # advisor-split: add-worker is the execution shell for every phase — the spawn
+        # names the mode, the agent loads the beat's guide + persona. (add-advisor is
+        # spawned on demand, never a per-phase default.)
         pa = engine_constants.PHASE_AGENT
-        self.assertEqual(pa["direction"], "add")
-        self.assertEqual(pa["build"], "add")
-        self.assertEqual(pa["verify"], "add")
+        self.assertEqual(pa["direction"], "add-worker")
+        self.assertEqual(pa["build"], "add-worker")
+        self.assertEqual(pa["verify"], "add-worker")
 
     def test_values_are_roster_slugs_only(self):
-        self.assertTrue(set(engine_constants.PHASE_AGENT.values()) <= {"add"})
+        self.assertTrue(set(engine_constants.PHASE_AGENT.values()) <= {"add-worker"})
 
     def test_importable_via_star_import(self):
         self.assertIn("PHASE_AGENT", engine_constants.__all__)
@@ -181,12 +182,12 @@ class StatusPlainBundleLineTest(CliFixture):
     """M4 — status prints the active bundle + preferred agent; silent at done/no-task."""
 
     def test_status_prints_bundle_for_non_done_task(self):
-        # roster-distill (ADD 2.0 M1): every phase prefers the ONE `add` agent.
+        # advisor-split: every phase prefers the add-worker execution agent.
         _, out, _ = _run(["status"])
         self.assertIn("DIRECTION", out)
         bundle_lines = [ln for ln in out.splitlines() if ln.strip().startswith("bundle")]
         self.assertEqual(len(bundle_lines), 1, out)
-        self.assertIn("prefer: add agent", bundle_lines[0])
+        self.assertIn("prefer: add-worker agent", bundle_lines[0])
 
     def test_status_silent_at_done(self):
         self._set_phase("build")

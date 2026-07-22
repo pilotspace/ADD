@@ -109,13 +109,15 @@ the gate traces the outcome, and `add.py deltas` rolls the traces into a per-lan
 scoreboard the loop reflects on (GEPA).
 
 **Best setup:** install ADD to drive the loop, keep whatever subagent libraries you
-already use. ADD ships ONE `add` agent in the same `.claude/agents/` mechanism as
-any other subagent — it coexists with a distilled persona or a built-in expert with
-zero conflict, nothing is replaced. Prefer the `add` agent for anything
-phase-shaped (verify mode for the adversarial refute-read, build mode for a
-red→green batch); reach for another specialist when a piece needs deep domain
-expertise the phase guide doesn't carry. **The gates hold no matter who did the
-work** — a delegated subagent proposes; the orchestrating agent records.
+already use. ADD ships two agents — `add-worker` (the execution shell) and `add-advisor`
+(the second mind it spawns to propose a plan, pressure-test a draft, or decide a delegable
+ambiguity) — in the same `.claude/agents/` mechanism as any other subagent; they coexist
+with a distilled persona or a built-in expert with zero conflict, nothing is replaced.
+Prefer `add-worker` for anything phase-shaped (verify mode for the adversarial refute-read,
+build mode for a red→green batch) and let it consult `add-advisor` when confidence is thin;
+reach for another specialist when a piece needs deep domain expertise the phase guide
+doesn't carry. **The gates hold no matter who did the work** — a delegated subagent
+proposes; the orchestrating agent records.
 
 ## Install
 

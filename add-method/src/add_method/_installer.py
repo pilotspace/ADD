@@ -52,11 +52,14 @@ OPTIONAL = frozenset({"personas-teacher", "agents"})
 _SHARED = frozenset({"agents"})
 # Roster names retired upstream — the ONLY names the shared lander may remove (never a
 # pattern/prefix heuristic: a USER file named add-anything.md must survive). Empty today.
-# roster-distill (ADD 2.0 M1): the 5-agent roster collapsed into the ONE `add` agent;
-# these tombstones let update remove the retired files from the SHARED .claude/agents
-# namespace (tombstone-only removal — a user's own subagents are never swept).
+# roster-distill (ADD 2.0 M1): the 5-agent roster collapsed into the ONE `add` agent.
+# advisor-split: that ONE `add` agent then split into `add-worker` (execution) + `add-advisor`
+# (advisory) — so `add.md` retires here, and `add-advisor.md` LEAVES this list (it ships again).
+# These tombstones let update remove the retired files from the SHARED .claude/agents namespace
+# (tombstone-only removal — a user's own subagents are never swept; landing precedes removal,
+# so a name may never be both shipped and tombstoned).
 _RETIRED_AGENTS = ("add-design.md", "add-build.md", "add-verify.md",
-                   "add-persona.md", "add-advisor.md")
+                   "add-persona.md", "add.md")
 STAMP_FILE = ".add-version"          # records the materialized version, under .add/
 # Forward-only, idempotent state migrations keyed by the version that introduces them.
 # Empty today — the framework exists so the NEXT schema change is an in-place update,

@@ -6,10 +6,11 @@ prose. Load it (or the one guide you need) only when a trigger fires.
 - **§3 CONTRACT FROZEN** → build→verify is a dynamic, auto-gated run (`autonomy: auto` default; lower to
   `conservative`/`manual` for a human gate) — `run.md`. Pipeline ready tasks behind frozen
   contracts — the stream-orchestrator persona owns the playbook. Delegate one piece of your plan to a subagent — the named roster
-  (the ONE `add` agent — mode: direction/build/verify/persona/advise) is agent-call-preferred, the
-  default execution mode over an ad-hoc spawn; when to spawn, the prompt template, the tier —
-  the advisor spawn (`phases/verify.md`). Self-score a draft (0–1 across six dimensions, refine if
-  any < 0.9) — the confidence self-score (`phases/direction.md`). Both advisory; the engine never spawns.
+  (`add-worker` runs the beat — mode: direction/build/verify/persona; `add-advisor` is the second
+  mind it spawns to propose a plan, pressure-test a draft, or decide a delegable ambiguity) is
+  agent-call-preferred, the default over an ad-hoc spawn; when to spawn, the prompt template, the
+  tier — the advisor spawn (`phases/verify.md`). Self-score a draft (0–1 across six dimensions,
+  refine if any < 0.9) — the confidence self-score (`phases/direction.md`). Both advisory; the engine never spawns.
 - **Small, low-risk task**, less ceremony → the ONE atomic template already IS the lean render:
   `new-task` scaffolds only the interface (contract · red suite · scope · verdict), bundle approved
   in one freeze. Floor held (frozen contract · red test · verify gate; freeze-gated under any

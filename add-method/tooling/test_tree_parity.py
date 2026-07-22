@@ -83,7 +83,7 @@ class SkillTreeParityTest(unittest.TestCase):
 
 class AgentsParityTest(unittest.TestCase):
     def test_roster_agents_byte_identical(self):
-        # roster-distill (ADD 2.0 M1): the ONE `add` agent ships in three trees;
+        # advisor-split: the roster (add-worker + add-advisor) ships in three trees;
         # .claude/agents also holds user agents, so parity binds the add*.md subset only
         canon, bundle, dogfood = AGENT_TREES
         for tracked in (canon, bundle):

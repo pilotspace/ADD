@@ -69,7 +69,7 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). A milesto
 
 Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
-1. **DIRECTION** — load the domain-fit persona (seed via add persona-mode if none), then draft
+1. **DIRECTION** — load the domain-fit persona (seed via add-worker persona-mode if none), then draft
    the whole bundle top-to-bottom in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §2 scenarios · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) · §4 red suite
    (run it — red for the RIGHT reason; fill each bullet's `covers:` clause key). Then the ONE approval,
