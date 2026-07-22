@@ -4,6 +4,28 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.2.0] — 2026-07-22
+
+Minor: the Direction beat gains a **fable reasoning discipline** — a prompt-only
+pass that makes the agent derive from the task in front of it instead of a fluent
+template, distilled from the fable-thinking protocol. No engine change.
+
+- **fable reasoning discipline** — `phases/direction.md` opens with the lens for
+  the whole bundle: **Fluent ≠ true** (a draft's polish tracks its token count,
+  not its evidence), the **Five Moves** (FRAME · GROUND · REASON · ATTACK ·
+  DELIVER) each mapped to the beat that already applies it, and two pre-answer
+  checks the fluent draft skips — the **Floor** (restate the Goal in the human's
+  world, then sweep the Leftovers: every supplied invariant and the BARE runtime)
+  and the **constraint loop** (expand → verify mechanically → repair the §3 tag
+  census · §5 scope tokens · §4 `covers:` keys · REDS refs before the freeze).
+- **claim grammar** — `add-advisor`'s §6 Return tags every factual assertion by
+  how it's known: `[OBSERVED]` (checked live this session) · `[DERIVED]` ·
+  `[PRIOR]` (memory, may be stale) · `[ASSUMED]`; a bare claim reads as OBSERVED,
+  so a guess never rides in unmarked. **GROUND** makes the same rule structural:
+  a recalled file/flag/symbol is `[PRIOR]` until re-confirmed against the live tree.
+- Prompt-only, propagated byte-identical across the three synced skill trees;
+  `add.py` == ENGINE_MD5 unchanged. Pinned by `test_fable_floor.py`.
+
 ## [2.1.0] — 2026-07-22
 
 Minor: the two-agent roster matures and the persona author learns from real

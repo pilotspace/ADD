@@ -66,6 +66,7 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 💸 **Structure without the ceremony tax** — a thin 31-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
 - 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
+- 🧭 **The agent reasons before it drafts** — a built-in reasoning floor makes it restate your goal in your words, tag what it *checked* versus what it *remembers*, and run a cheap kill-test on its own plan — catching the fluent-but-wrong that reads fine in a diff. Fluent ≠ true.
 - 📄 **Everything about a feature in one place** — spec, scenarios, contract, tests, and gate record in a single `PLAN.md`; no doc tree to hunt through.
 - 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves.

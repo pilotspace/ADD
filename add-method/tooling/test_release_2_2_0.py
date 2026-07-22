@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 2.1.0 release readiness.
+"""Red/green tests for the 2.2.0 release readiness.
 
-Minor cut: two-agent roster (add-worker + add-advisor, every-beat advising +
-mid-flight support fan-out) · persona-author skill v11 (numbers-you'd-defend ·
-per-flow stance · seeding) · flexible TDD (§4 acceptance checks for non-coding
-kinds) · round-visible runs (uncapped observational verify→build rounds) ·
-foundation-split (the dogfood 1.x→2.0 foundation migration worked example).
+Minor cut: the fable reasoning discipline — a prompt-only Direction pass distilled
+from the fable-thinking protocol. `phases/direction.md` opens with Fluent≠true +
+the Five Moves + the pre-freeze Floor + the output-shape constraint loop;
+`add-advisor`'s §6 Return carries claim grammar (OBSERVED/DERIVED/PRIOR/ASSUMED)
+and GROUND makes observation-over-memory structural. No engine change.
 
-In-repo readiness only — the live-registry halves (npm/PyPI serving 2.1.0) are
+In-repo readiness only — the live-registry halves (npm/PyPI serving 2.2.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
-The live-version-agreement asserts migrated FORWARD from test_release_2_0_0
+The live-version-agreement asserts migrated FORWARD from test_release_2_1_0
 (release-gate pattern: exactly ONE suite pins the current version).
 Run:
-    python3 -m unittest test_release_2_1_0 -v
+    python3 -m unittest test_release_2_2_0 -v
 """
 import json
 import re
@@ -24,18 +24,18 @@ PKG = HERE.parent                       # add-method/
 
 CHANGELOG = PKG / "CHANGELOG.md"
 
-VERSION = "2.1.0"
-PRIOR_VERSIONS = ("2.0.0", "1.18.0", "1.17.0", "1.16.1", "1.16.0", "1.15.0", "1.14.0",
-                  "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0", "1.8.0", "1.7.3",
-                  "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0", "1.3.0",
-                  "1.2.0", "1.1.0", "1.0.0")
-# the headline changes the 2.1.0 notes must name
-FEATURE_ANCHORS = ("add-worker", "add-advisor", "persona-author", "flexible TDD",
-                   "acceptance checks", "round", "foundation-split")
+VERSION = "2.2.0"
+PRIOR_VERSIONS = ("2.1.0", "2.0.0", "1.18.0", "1.17.0", "1.16.1", "1.16.0", "1.15.0",
+                  "1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0", "1.9.0", "1.8.0",
+                  "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0", "1.4.0",
+                  "1.3.0", "1.2.0", "1.1.0", "1.0.0")
+# the headline changes the 2.2.0 notes must name
+FEATURE_ANCHORS = ("reasoning discipline", "Fluent", "Five Moves", "Floor",
+                   "constraint loop", "claim grammar", "GROUND")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_2_1_0_entry(self):
+    def test_changelog_has_2_2_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -44,23 +44,13 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"2.1.0 entry must name: {anchor}")
-
-    def test_minor_names_its_retirements(self):
-        # two `!`-marked commits ride this minor (the `add` agent · the static
-        # persona template); the entry must carry an explicit Retired block so
-        # the supersessions are named, not silent.
-        entry = CHANGELOG.read_text(encoding="utf-8").split(
-            f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
-        self.assertIn("Retired", entry, "the retirements must be named")
-        for ret in ("`add` roster agent", "persona template"):
-            self.assertIn(ret, entry, f"the Retired block must cover: {ret}")
+            self.assertIn(anchor, entry, f"2.2.0 entry must name: {anchor}")
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    """The version sources move in lockstep (migrated forward from 2.0.0)."""
+    """The version sources move in lockstep (migrated forward from 2.1.0)."""
 
-    def test_versions_agree_at_2_1_0(self):
+    def test_versions_agree_at_2_2_0(self):
         pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
         py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
                        (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)
