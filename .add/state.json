@@ -1269,6 +1269,20 @@
         "route-scoreboard"
       ],
       "archived": "2026-07-23"
+    },
+    {
+      "slug": "honest-fidelity-meter",
+      "title": "Honest fidelity meter: deterministic requirement_coverage replaces artifact-blind spec_fidelity",
+      "tasks": 6,
+      "task_slugs": [
+        "report-diagnostics",
+        "coverage-scorer",
+        "coverage-detail",
+        "status-lean-default",
+        "hermetic-scoring",
+        "judge-advisory"
+      ],
+      "archived": "2026-07-23"
     }
   ],
   "active_milestones": [
@@ -1276,7 +1290,6 @@
     "call-floor",
     "call-residuals",
     "orientation-honesty",
-    "honest-fidelity-meter",
     "strategy-intake",
     "wm1-lean-to-twelve"
   ],
@@ -1284,7 +1297,6 @@
   "active_tasks": {
     "orientation-honesty": "guide-fold",
     "ceremony-to-effort": "fold-draft-at-close",
-    "honest-fidelity-meter": "status-lean-default",
     "call-residuals": "help-habit-kill",
     "strategy-intake": "strategy-section",
     "add-bench-2": "tiny-plan-small-scope",
@@ -1535,7 +1547,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T13:48:39+00:00",
+  "updated": "2026-07-23T13:54:59+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -1601,23 +1613,6 @@
         "source": "git"
       },
       "updated": "2026-07-13T08:47:09+00:00",
-      "confirmed": true,
-      "confirmed_by": "tindang",
-      "await_confirm": true
-    },
-    "honest-fidelity-meter": {
-      "title": "Honest fidelity meter: deterministic requirement_coverage replaces artifact-blind spec_fidelity",
-      "stage": "mvp",
-      "status": "active",
-      "goal": "Replace the artifact-blind LLM spec_fidelity metric with a deterministic requirement_coverage meter (frozen per-requirement checklists + probes across all 6 WMs), promote oracle_pass_rate to the headline, and demote the LLM judge to an advisory source-aware code_quality_annotation",
-      "created": "2026-07-15T02:56:10+00:00",
-      "confirmed_at": "2026-07-15T03:00:28+00:00",
-      "actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "updated": "2026-07-15T03:00:28+00:00",
       "confirmed": true,
       "confirmed_by": "tindang",
       "await_confirm": true
@@ -2937,43 +2932,6 @@
         }
       }
     },
-    "report-diagnostics": {
-      "title": "Surface coverage_detail + code_quality_annotation in report.py's per-WM view (read-only, non-gating)",
-      "tripwire": {
-        "contract_md5": "9cd89127494a0c19201b0c9d5049caca",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/report.py",
-          "benchmark/tests/"
-        ],
-        "snapshot_md5": "d6214b948e631b8caec0aff66bf5d1f0"
-      },
-      "phase": "done",
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T05:53:15+00:00",
-      "updated": "2026-07-15T06:00:25+00:00",
-      "fast": true,
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T05:54:25+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
-    },
     "risk-report-render": {
       "title": "Right-size the gate render to the risk class",
       "tripwire": {
@@ -3738,52 +3696,6 @@
       "depends_on": [],
       "gate": "RISK-ACCEPTED"
     },
-    "coverage-scorer": {
-      "title": "Deterministic requirement_coverage scorer + frozen metric-set swap (ships WM1 checklist)",
-      "tripwire": {
-        "contract_md5": "4c29b4153bdc4665ed3933cd301d0cb8",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/schema/run_record.py",
-          "benchmark/score.py",
-          "benchmark/report.py",
-          "benchmark/workload/",
-          "benchmark/runner/core.py",
-          "benchmark/pilot.py",
-          "benchmark/tests/"
-        ],
-        "snapshot_md5": "0898d078a306b9604e04933ea0e27d5a"
-      },
-      "phase": "done",
-      "recross": {
-        "at": "2026-07-15T04:01:21+00:00",
-        "from_phase": "build",
-        "by": "Tin Dang"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T03:00:28+00:00",
-      "updated": "2026-07-15T04:04:26+00:00",
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T03:04:48+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
-    },
     "scope-echo-draft": {
       "title": "Freeze echoes resolved scope; proposes a Scope line from \u00a73 Touches",
       "tripwire": {
@@ -4050,48 +3962,6 @@
       "flag_verified": true,
       "depends_on": [],
       "gate": "PASS"
-    },
-    "coverage-detail": {
-      "title": "Emit a per-WM coverage_detail artifact \u2014 which checklist requirement each WM covered (non-gating)",
-      "tripwire": {
-        "contract_md5": "cb75d9e057495b8bbcd2f5271b44a868",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/score.py",
-          "benchmark/tests/"
-        ],
-        "snapshot_md5": "4325dd9fcf2decf96d772157f37b70e5"
-      },
-      "phase": "done",
-      "recross": {
-        "at": "2026-07-15T05:46:37+00:00",
-        "from_phase": "build",
-        "by": "Tin Dang"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T05:38:01+00:00",
-      "updated": "2026-07-15T05:47:39+00:00",
-      "fast": true,
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T05:40:01+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
     },
     "question-summary-layer": {
       "milestone": null,
@@ -5001,63 +4871,6 @@
       "depends_on": [],
       "gate": "PASS"
     },
-    "status-lean-default": {
-      "title": "lean bare status default: gate goal/m-goal prose + personas roster + milestone/task/stream lists behind --all, add count lines",
-      "tripwire": {
-        "contract_md5": "c9c14a2942c50c461e32519e15f672a0",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/skill/add/report-template.md",
-          "add-method/src/add_method/_bundled/skill/add/report-template.md",
-          ".claude/skills/add/report-template.md",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          "add-method/tooling/engine_pin.py",
-          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
-          "add-method/tooling/test_status_lean_default.py",
-          ".add/SEAMS.md",
-          "add-method/tooling/test_report_shape_scan_audit.py",
-          "add-method/tooling/test_machine_state.py",
-          "add-method/tooling/test_parallel_status_view.py",
-          "add-method/tooling/test_per_stream_owner.py",
-          "add-method/tooling/test_project_goal.py",
-          "add-method/tooling/test_relations.py",
-          "add-method/tooling/test_roster_status_line.py",
-          "add-method/tooling/test_ux_stale_followups.py"
-        ],
-        "snapshot_md5": "966cb5126ef16afc02f1642234381af6"
-      },
-      "phase": "done",
-      "recross": {
-        "at": "2026-07-15T09:09:20+00:00",
-        "from_phase": "build",
-        "by": "Tin Dang"
-      },
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T08:41:37+00:00",
-      "updated": "2026-07-15T09:10:21+00:00",
-      "fast": true,
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T08:45:05+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
-    },
     "engine-argv-portability": {
       "milestone": null,
       "created": "2026-06-11T10:42:52+00:00",
@@ -5073,44 +4886,6 @@
       },
       "depends_on": [],
       "phase": "done"
-    },
-    "hermetic-scoring": {
-      "title": "Hermetic scoring \u2014 isolate the app store per boot so coverage/oracle are reproducible on archived builds",
-      "tripwire": {
-        "contract_md5": "c36fd4689d8043550ec9e7dca841ed04",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/score.py",
-          "benchmark/workload/_oracle_lib.py",
-          "benchmark/tests/"
-        ],
-        "snapshot_md5": "3a192137d32d98fa9cb3e1896895a7c5"
-      },
-      "phase": "done",
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T04:24:27+00:00",
-      "updated": "2026-07-15T04:31:17+00:00",
-      "fast": true,
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T04:25:57+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
     },
     "gitignore-scaffold": {
       "title": "Scaffold .add/.gitignore at init to keep transient engine artifacts out of git",
@@ -5167,44 +4942,6 @@
       "gate": "PASS",
       "freeze": {
         "frozen_at": "2026-07-01T08:23:09+00:00",
-        "version": "v1",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      }
-    },
-    "judge-advisory": {
-      "title": "Demote the LLM judge to a source-aware, non-gating code_quality_annotation artifact",
-      "tripwire": {
-        "contract_md5": "f2cbd173fe91678079f1b44966be2997",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "benchmark/judge.py",
-          "benchmark/score.py",
-          "benchmark/tests/"
-        ],
-        "snapshot_md5": "46a4a6dc6cce3fa9b5396e48a043f9e2"
-      },
-      "phase": "done",
-      "gate_actor": {
-        "name": "Tin Dang",
-        "email": "tindang.ht97@gmail.com",
-        "source": "git"
-      },
-      "milestone": "honest-fidelity-meter",
-      "created": "2026-07-15T04:36:37+00:00",
-      "updated": "2026-07-15T04:44:51+00:00",
-      "fast": true,
-      "flag_verified": true,
-      "depends_on": [],
-      "gate": "PASS",
-      "freeze": {
-        "frozen_at": "2026-07-15T04:40:38+00:00",
         "version": "v1",
         "approved_by": "Tin Dang",
         "actor": {

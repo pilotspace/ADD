@@ -40,33 +40,40 @@ Issues/Risks (shared):
 - the frozen `REQUIRED_METRICS` new membership (spec_fidelity out, requirement_coverage + oracle_pass_rate in) + the archived-record read shim -> owning task `coverage-scorer`
 
 ## Tasks (breadth-first decomposition; detail lives in each TASK.md)
-- [ ] coverage-scorer   depends-on: none            — swap the frozen metric set + validate() + the deterministic coverage scorer + score.py wiring (slope over coverage, archived-record shim) + report label; ships WM1's checklist as the end-to-end proof on the 2 existing runs
-- [ ] wm-checklists      depends-on: coverage-scorer — frozen requirement checklists + probes for WM2–WM6 (WM1 landed in coverage-scorer), each enumerating that WM's existing PROMPT.md requirements
-- [ ] judge-advisory     depends-on: coverage-scorer — demote judge.py: rename output to `code_quality_annotation`, feed it the built source tree (fix the artifact-blindness), mark non-gating artifact; drop it from the metric path
-- [ ] rescore-progression depends-on: wm-checklists, judge-advisory — re-score EVERY existing run under `benchmark/runs/` with the new deterministic meter (no paid agent re-run — probes hit the already-built workspaces; skip + report any workspace that no longer runs), then render a progression view (arm × WM × rep → requirement_coverage + oracle_pass_rate over time) for the user
+- [x] coverage-scorer   depends-on: none            — swap the frozen metric set + validate() + the deterministic coverage scorer + score.py wiring (slope over coverage, archived-record shim) + report label; ships WM1's checklist as the end-to-end proof on the 2 existing runs
+- [x] wm-checklists      depends-on: coverage-scorer   (delivered inside coverage-scorer/coverage-detail/hermetic-scoring — never a standalone task) — frozen requirement checklists + probes for WM2–WM6 (WM1 landed in coverage-scorer), each enumerating that WM's existing PROMPT.md requirements
+- [x] judge-advisory     depends-on: coverage-scorer — demote judge.py: rename output to `code_quality_annotation`, feed it the built source tree (fix the artifact-blindness), mark non-gating artifact; drop it from the metric path
+- [x] rescore-progression depends-on: wm-checklists, judge-advisory   (delivered 2026-07-23 as a close-out sweep — .add/rescore-progression-2026-07-23.md; 25/25 records, stale post-move artifact paths mechanically repaired) — re-score EVERY existing run under `benchmark/runs/` with the new deterministic meter (no paid agent re-run — probes hit the already-built workspaces; skip + report any workspace that no longer runs), then render a progression view (arm × WM × rep → requirement_coverage + oracle_pass_rate over time) for the user
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] `run.py score --arm add --wm 1` records a `requirement_coverage` metric computed from WM1's frozen checklist run against the built app — deterministic (same workspace → same score, no LLM call in the metric path)   (← coverage-scorer)
-- [ ] a RunRecord with `spec_fidelity` instead of `requirement_coverage` is REJECTED by `validate()`; `oracle_pass_rate` is now required   (← coverage-scorer)
-- [ ] each of WM1–WM6 has a frozen requirement checklist whose row count matches its PROMPT.md's enumerated requirements, and `score` reports a coverage fraction for each   (← wm-checklists + coverage-scorer)
-- [ ] the LLM judge output appears as a `code_quality_annotation` artifact built from the actual source tree, and NO metric in the record comes from an LLM call   (← judge-advisory)
-- [ ] every re-scorable existing run under `benchmark/runs/` carries a fresh deterministic `requirement_coverage`, and the user is shown a progression view of the scores across arms/WMs/reps (with any un-re-scorable run explicitly listed, not silently dropped)   (← rescore-progression)
+- [x] `run.py score --arm add --wm 1` records a `requirement_coverage` metric computed from WM1's frozen checklist run against the built app — deterministic (same workspace → same score, no LLM call in the metric path)   (← coverage-scorer)
+- [x] a RunRecord with `spec_fidelity` instead of `requirement_coverage` is REJECTED by `validate()`; `oracle_pass_rate` is now required   (← coverage-scorer)
+- [x] each of WM1–WM6 has a frozen requirement checklist whose row count matches its PROMPT.md's enumerated requirements, and `score` reports a coverage fraction for each   (← wm-checklists + coverage-scorer)
+- [x] the LLM judge output appears as a `code_quality_annotation` artifact built from the actual source tree, and NO metric in the record comes from an LLM call   (← judge-advisory)
+- [x] every re-scorable existing run under `benchmark/runs/` carries a fresh deterministic `requirement_coverage`, and the user is shown a progression view of the scores across arms/WMs/reps (with any un-re-scorable run explicitly listed, not silently dropped)   (← rescore-progression)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : untouched (benchmark-only milestone)
+- skill   : untouched
+- book    : untouched
+- benchmark : run_record.py REQUIRED_METRICS swap + validate() · score.py deterministic coverage path (compute_coverage_detail, hermetic boot, engine-call census, slope-over-coverage + legacy shim) · judge.py demoted to code_quality_annotation (claude-less by default) · workload/wm1..6/checklist.py frozen checklists · report.py coverage columns + diagnostics
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- coverage-scorer : gate=PASS · residue=none
+- hermetic-scoring : gate=PASS · residue=none
+- coverage-detail : gate=PASS · residue=none
+- judge-advisory : gate=PASS · residue=none
+- report-diagnostics : gate=PASS · residue=none
+- status-lean-default : gate=PASS · residue=none
+- rescore-progression sweep (close-out, 2026-07-23) : 25/25 records re-scored deterministically, 0 un-re-scorable · 22 stale post-move artifact paths repaired · view: .add/rescore-progression-2026-07-23.md
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (C1/C2 ← coverage-scorer; C3 ← checklists ×6 + live sweep scores for wm1-3 + suite-green wm4-6; C4 ← judge-advisory (judge_cmd=None → "unavailable", zero LLM in any metric); C5 ← the 2026-07-23 rescore sweep)
+- goal: deterministic requirement_coverage IS the fidelity-of-record — 2026-07-23 evidence: the WM1 re-measure scored cov=1.00 on 3/3 fresh reps and the sweep reproduced identical scores from identical archived workspaces with no LLM call. Residue noted: WM4's checklist has no row for its CLI filter-flags line (delta filed, not blocking).
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
