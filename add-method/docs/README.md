@@ -26,7 +26,7 @@ For every feature, before AI writes any code, you write four short artifacts in 
 
 ## The flow
 
-> **Specify → Scenarios → Contract → Tests → Build → Verify → observe, then repeat.**
+> **Specify → Contract → Tests & Scenarios → Build → Verify → observe, then repeat.**
 
 ---
 

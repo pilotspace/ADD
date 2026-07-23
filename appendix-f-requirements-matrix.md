@@ -20,7 +20,7 @@ A **project** sets up the living documentation once. A **milestone** is a depth-
 
 ```mermaid
 flowchart TD
-  P["PROJECT — the product<br/>PROJECT.md (foundation) · CONVENTIONS · GLOSSARY · MODEL_REGISTRY · allowlist · playbook"]
+  P["PROJECT — the product<br/>PROJECT.md + .add/specs/ (foundation) · CONVENTIONS · GLOSSARY · MODEL_REGISTRY · allowlist · playbook"]
   P --> M1["MILESTONE · Prototype"]
   P --> M2["MILESTONE · POC"]
   P --> M3["MILESTONE · MVP"]
@@ -42,7 +42,7 @@ Which document lives at which level, who is accountable for it, and how long it 
 
 | Document | Level | Created | Lifespan | Accountable owner |
 |----------|:-----:|---------|----------|-------------------|
-| `PROJECT.md` (foundation: domain · spec · UI/UX) | Project | setup, grows | whole project | Product / Architect |
+| `PROJECT.md` + `.add/specs/` (foundation: goal · invariants · key decisions + the 5-DD standing picture) | Project | setup, grows | whole project | Product / Architect |
 | `CONVENTIONS.md` | Project | setup | whole project | Architect / Lead |
 | `GLOSSARY.md` | Project | setup, grows | whole project | Product / Domain |
 | `MODEL_REGISTRY.md` | Project | setup | whole project | Architect / Lead |
@@ -167,4 +167,4 @@ Every level points down to the evidence beneath it and up to the goal above it. 
 
 ---
 
-*End of book. AIDD is one repeatable loop — Specify → Scenarios → Contract → Tests → Build → Verify → observe, then repeat. People own direction and verification; the AI owns the build; the artifacts are the asset and the code is disposable.*
+*End of book. AIDD is one repeatable loop — Specify → Contract → Tests & Scenarios → Build → Verify → observe, then repeat. People own direction and verification; the AI owns the build; the artifacts are the asset and the code is disposable.*

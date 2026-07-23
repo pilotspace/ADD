@@ -14,7 +14,7 @@ Before the first feature, the project needs a foundation — but standing it up 
 
 | Item | File | Purpose |
 |------|------|---------|
-| Foundation | `PROJECT.md` | domain · active spec · UI/UX · key decisions — the context every task reads first |
+| Foundation | `PROJECT.md` + `.add/specs/` | `PROJECT.md` = goal · invariants · key decisions · pointers (read first); `.add/specs/` = the standing 5-DD picture — domain · system · experience · quality · method — every task reads |
 | Conventions | `CONVENTIONS.md` | naming, layout, language, formatter — living documentation |
 | Model record | `MODEL_REGISTRY.md` | which AI model and version the project uses, for reproducibility and audit |
 | Dependency allow-list | `dependencies.allowlist` | the packages the AI may use; the pipeline rejects others |
