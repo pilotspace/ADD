@@ -4,6 +4,66 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.3.0] — 2026-07-24
+
+Minor: three waves — a **signal graph** view over the task DAG, the **§2
+Scenarios fold** into §4, and a **call-lean pass** that kills the two measured
+WM1 freeze/scope call sinks. Engine changes are additive; templates migrate
+in place (no manual task-file edits).
+
+### Signal graph — one addressable node for every note/todo/delta
+- **unified signal model** — note, todo, and spec-delta collapse into ONE
+  addressable `signal` node (status + edges), projected as a VIEW, not a new
+  store; `_signals` reader.
+- **`graph --signals`** — opt-in overlay renders signals on the task DAG;
+  **exit-criteria** render as `ec_` *delivered-by* nodes (a milestone's own
+  criteria appear as ✓/○ nodes wired to the tasks that meet them).
+- **`graph --html`** — emits a self-rendering HTML page to tmp (Mermaid inline,
+  no external host).
+- **atomicity signal** — the freeze SEEDS a persistent atomicity signal into the
+  task's todos instead of an ephemeral print, so the nudge survives the session.
+
+### §2 Scenarios folded into §4 — one place for cases
+- the standalone **§2 SCENARIOS** section is **retired in place**: pass/fail cases
+  now live with the tests in **§4 · TESTS & SCENARIOS** (primary-case rigor). The
+  §3–§7 numbers are unchanged so the freeze parser and every §-reference keep
+  working — the §1→§3 jump is intentional.
+- **PROJECT.md** gains a managed `ADD:SPECS` pointer block (init/migrate inject it
+  from the 5-DD spec set); foundation references reconciled to the `.add/specs/`
+  model; the generated **CLAUDE.md** block finalized in the generator.
+- the Step-2 Scenarios book chapter folds into Step-4; `add-flow.png` retired.
+
+### Call-lean pass — the WM1 freeze/scope sinks die at the source
+- **freeze-flag slot** — `PLAN.md.tmpl` §3 carries a drafted-blank *Least-sure
+  flag* slot; the first freeze no longer fails `unflagged_freeze` (0/6 reps in the
+  re-measure, was 3/3). The unfilled part-menu placeholder still never satisfies
+  the gate — the floor holds.
+- **scope-first freeze** — a §3 Scope that resolves to zero cover is now refused
+  `scope_unresolved` AT the freeze with a paste-ready fix, instead of surfacing
+  later as `scope_violation` → re-cross → re-gate. UNDECLARED stays grandfathered;
+  greenfield `[MISSING]` tokens still freeze; a `.add/tasks/` token gets a
+  task-dir teach note.
+- **scope-walk prunes** — `.venv` · `venv` · `.tox` · `.mypy_cache` · `.ruff_cache`
+  · `.eggs` and any `*.egg-info` dir are pruned from the scope walk, so an
+  in-workspace virtualenv or `pip install -e .` metadata is never read as an
+  out-of-scope write. `dist`/`build` stay watched (can be a real write-set). The
+  untouched-Scope-default warning now self-explains (a note, not a blocker; clears
+  only by editing the Scope line — re-cross does not clear it).
+- **honest fidelity meter** — the artifact-blind LLM `spec_fidelity` metric is
+  replaced by a deterministic `requirement_coverage` (frozen per-WM checklists +
+  probes, no LLM in the metric path); `oracle_pass_rate` promoted to the headline;
+  the judge demoted to an advisory `code_quality_annotation`.
+- **§3 Build-strategy relabel** — *Scope (may touch)* is the HARD scope-lock; the
+  rest (Strategy · Regression floor · Persona) is SOFT/optional. `MILESTONE.md`
+  gains a drafted-blank `## Strategy` slot.
+
+Retired (no CLI/install surface change): the standalone **§2 SCENARIOS** section
+(folded into §4) · the **ccsk / rule-file** mode · `add-flow.png`.
+
+Pinned by `test_release_2_3_0.py`. `ENGINE_MD5` re-aimed to `60eef504…`
+(scope refusal + walk prunes); the four tooling twins stay byte-identical;
+full tooling suite green (2277 tests).
+
 ## [2.2.0] — 2026-07-22
 
 Minor: the Direction beat gains a **fable reasoning discipline** — a prompt-only

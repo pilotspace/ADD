@@ -15,7 +15,7 @@ argument-hint: "status | init | continue | --todo <text> | [describe new short g
 license: MIT
 metadata:
   author: add
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 # ADD — memory · judgment · conscience (the agent is the hands)
