@@ -153,7 +153,7 @@ Rejects: `not_classified` · `dangling_criterion` · `no_milestone` · `duplicat
 
 ---
 
-## Rules (§1) + scenarios (§2) — co-specification
+## Rules (§1) — co-specification
 
 State what the feature MUST do and MUST REJECT — zero ambiguity left to guessing. Co-specify in three moves: **Diverge** (surface the 2–3 genuine framings +
 open questions; let the user react), **Converge** (draft §1 by PROJECTING from the milestone
@@ -171,8 +171,10 @@ the design-definition loop (`design.md`).
   `⚠ <assumption> — lowest confidence because <why>; if wrong: <cost>`.
 </output_format>
 
-Every Must and Reject must be checkable — canonically as a §4 test (its `covers:` tag); §2 gherkin is
-an OPTIONAL readable projection, added only when a human needs prose cases at the freeze, never as ceremony:
+Every Must and Reject must be checkable — canonically as a §4 test (its `covers:` tag). Cases live
+in §4 · TESTS & SCENARIOS (the old standalone §2 SCENARIOS section is retired). A Given/When/Then
+line is an OPTIONAL readable projection, added inline in §4 only when a human needs prose cases at
+the freeze, never as ceremony:
 
 ```gherkin
 Scenario: <short name>
@@ -182,16 +184,17 @@ Scenario: <short name>
   And <what must remain unchanged>   # REQUIRED for every rejection
 ```
 
-Then sweep the edge cases — boundary · duplicate · partial failure · concurrency · malformed input —
-one per applicable case, or rule it out on purpose. Every Then is specific and observable, never
+Then sweep the edge cases — boundary · duplicate · partial failure · concurrency · malformed input.
+Gate the PRIMARY cases + primary edge cases with a red test each; minor/secondary behaviors are
+DESCRIBED in prose as build-guidance, not a red test. Every Then is specific and observable, never
 "then it works". Your §1 ranking feeds the bundle-level flag the human reads at the freeze.
 
 <exit_gate>
 - [ ] Framings weighed noted; every required behavior stated; every rejection has a named error code.
 - [ ] Assumptions ordered lowest-confidence first; the 1–2 `⚠` flags carry why + cost — or an honest
       "none material" that still names the single biggest risk (never a blank "none").
-- [ ] Every Must and Reject is encoded — a §4 test (canonical) or an optional §2 gherkin scenario;
-      every rejection asserts what stays unchanged; edge cases covered or ruled out on purpose.
+- [ ] Every Must and Reject is encoded as a §4 test (`covers:` tag); every rejection asserts what
+      stays unchanged; primary edge cases covered or ruled out on purpose (minor ones may be prose).
 </exit_gate>
 
 ---
@@ -259,7 +262,7 @@ first, then walk the rest before saying yes:
   waiting at verify.
 - **⚠ flags first** — read the lowest-confidence flags; accept each knowing its cost if wrong. The engine refuses an unflagged freeze before build (`unflagged_freeze`).
 - **Intent** — does §1 say what you actually want built?
-- **Cases** — does every Must and Reject have an observable §2 scenario?
+- **Cases** — does every Must and Reject have an observable §4 test/scenario (`covers:` tag)?
 - **Shape** — glossary names, error codes, additive vs breaking: is THIS the shape to freeze?
 - **Shape self-verify (the constraint loop)** — for the mechanically-checkable output-shape rules — the
   frozen §3 tag census (the closed XML vocabulary), the §5 Scope path tokens, each §4 `covers:` key, any
@@ -280,8 +283,8 @@ Reject any line → the bundle goes back to draft; the freeze stays the only gat
 Run the suite now, with no implementation — **red for the right reason** (missing implementation,
 not a broken harness). A test green before code exists is testing nothing. **A test is any
 machine-checkable assertion**, not only xUnit code — a metric threshold (ML/data), a reconciliation
-query, a plan-diff (infra), a rendered-screen diff (UI). Produce: one executable test per §2
-scenario asserting **behavior, not internals** · contract-conformance tests (shapes + error
+query, a plan-diff (infra), a rendered-screen diff (UI). Produce: one executable test per PRIMARY
+case/scenario asserting **behavior, not internals** · contract-conformance tests (shapes + error
 responses) · side-effect assertions on rejection paths (`assert balance unchanged`) · a recorded
 coverage target.
 

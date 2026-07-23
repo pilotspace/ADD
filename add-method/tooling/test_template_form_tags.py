@@ -2,8 +2,9 @@
 """test_template_form_tags.py — the v18 FORM-TAG amendment's parse-seam suite.
 
 The amendment is drafted in .add/tasks/xml-prompt-structure/PLAN.md §3: PLAN.md.tmpl's
-six fill regions gain a CLOSED form-tag class (must · reject · after · assumptions ·
-scenarios · test_plan) — a class DISJOINT from the v16 instruction tags, templates-only.
+fill regions gain a CLOSED form-tag class (must · reject · after · assumptions ·
+test_plan) — a class DISJOINT from the v16 instruction tags, templates-only.
+(`scenarios` RETIRED by fold-scenarios-tests — §2 folded into §4 TESTS & SCENARIOS.)
 This suite proves the ENGINE READS NEW SCAFFOLDS UNCHANGED (the seam invariant) and that
 the guards catch each contracted reject code. Tests scaffold REAL projects via add.main()
 and assert engine output, never internals-by-inspection.
@@ -25,7 +26,8 @@ from pathlib import Path
 import add
 
 # ── the contracted vocabulary (PLAN.md §3, v18 amendment) ────────────────────────────
-FORM_TAGS = {"must", "reject", "after", "assumptions", "scenarios", "test_plan"}
+# `scenarios` RETIRED (fold-scenarios-tests): §2 folded into §4 TESTS & SCENARIOS.
+FORM_TAGS = {"must", "reject", "after", "assumptions", "test_plan"}
 INSTRUCTION_TAGS = {"prompt", "exit_gate", "constraints", "reject_codes", "output_format"}
 
 # labels that must SURVIVE next to their tags (reject label_dropped)
@@ -142,7 +144,7 @@ class ScaffoldCarriesFormTags(_ScaffoldBase):
         paired = _paired_tags(text)
         self.assertEqual(
             FORM_TAGS, paired & FORM_TAGS,
-            f"scaffold must carry all six form tags; missing: {FORM_TAGS - paired}",
+            f"scaffold must carry all form tags; missing: {FORM_TAGS - paired}",
         )
         for tag in sorted(FORM_TAGS):  # own-line open AND close (block boundaries)
             self.assertRegex(text, rf"(?m)^\s*<{tag}>\s*$", f"<{tag}> must open on its own line")

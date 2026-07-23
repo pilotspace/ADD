@@ -239,14 +239,13 @@ Boundary:
   ⚠ <the ONE assumption most likely to be wrong — if wrong: <cost>>
 </assumptions>
 
-## 2 · SCENARIOS
 ## 3 · PLAN
 ### Contract
 Status: DRAFT
 ### Build-strategy
 Scope (may touch):
 Regression floor:
-## 4 · TESTS
+## 4 · TESTS & SCENARIOS
 ## 5 · BUILD
 ## 6 · VERIFY
 ### GATE RECORD

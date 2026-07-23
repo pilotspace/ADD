@@ -931,7 +931,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     # later re-words the template itself (this sub is then a no-op on an updated template).
     rendered = re.sub(r"(?m)^phase:\s*\S+(\s*<!--.*?-->)?\s*$",
                       "phase: direction   <!-- direction→build→verify→done; direction drafts "
-                      "§1–§4 (rules · scenarios · change plan · red suite) to the ONE freeze -->",
+                      "§1–§4 (rules · change plan · red suite) to the ONE freeze -->",
                       rendered, count=1)
     if from_delta:                                           # delta-task-backlink: §0 reverse link
         # pre-fill the §0 Related-intent PLACEHOLDER only (the `<…>` line a fresh full template
@@ -994,8 +994,9 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
     print("active task set. phase: direction. Draft the whole Direction bundle top-to-bottom — "
-          "§1 rules · §2 scenarios · §3 the change PLAN (ground + contract + what this task "
-          "will do) · §4 red suite — then ONE freeze approval crosses it into build.")
+          "§1 rules · §3 the change PLAN (ground + contract + what this task "
+          "will do) · §4 red suite (cases live here, in TESTS & SCENARIOS) — then ONE "
+          "freeze approval crosses it into build.")
     print(_next_footer(root, state))   # converges the old "then: add.py advance" hint
     # kickoff-truth M2: the remaining engine-call recipe at task birth — the transcript
     # audit measured 6-11 status/guide/--help re-orientation calls per run that this
@@ -1009,7 +1010,7 @@ def cmd_new_task(args: argparse.Namespace) -> None:
     if len(state.get("tasks") or {}) <= 1:
         print("recipe — this task's remaining engine calls:")
         print("  add.py freeze --by <name> --cross   [approval — freezes the Direction "
-              "bundle (§1–§4: rules · scenarios · change plan · red suite) and crosses "
+              "bundle (§1–§4: rules · change plan · red suite) and crosses "
               "straight to build]")
         print("  add.py gate PASS   (from build — crosses to verify and records the outcome)")
     else:
@@ -4212,10 +4213,11 @@ def cmd_check(args: argparse.Namespace) -> None:
         # R:code convention is silently grandfathered — never retro-flagged.
         if _task_text is not None:
             _spans = _phase_spans(_task_text)
+            # sec2 still read for legacy §2-bearing boards (fold-scenarios-tests retired the
+            # standalone §2; cases now live in §4 — a new doc's §2 span is simply absent/empty).
             for _rid, _kind in _rule_coverage_gaps(_spans.get(1, ""), _spans.get(2, ""), _spans.get(4, "")):
-                warnings.append((f"task '{slug}'", f"rule '{_rid}' ({_kind}) has no §2 scenario tag "
-                                 "and no §4 test covering it (coverage gap) — add a scenario tag "
-                                 "or a covers: line"))
+                warnings.append((f"task '{slug}'", f"rule '{_rid}' ({_kind}) has no §4 test "
+                                 "covering it (coverage gap) — add a covers: line to the §4 test_plan"))
         # autonomy level (task explicit-autonomy-dial): a REAL out-of-set token is a hard
         # unknown_autonomy_level; a LIVE task (phase before done) with no `autonomy:`
         # line is implicit_autonomy — a WARN, never red. Done predecessors are SKIPPED

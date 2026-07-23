@@ -293,7 +293,8 @@ class SkillDocBundleColumnTest(unittest.TestCase):
         for beat in ("**DIRECTION**", "**BUILD**", "**VERIFY**"):
             self.assertIn(beat, text, f"SKILL.md must narrate the {beat} bundle inline")
         direction = text.split("**DIRECTION**", 1)[1].split("**BUILD**", 1)[0]
-        for span in ("§1", "§2", "§3", "§4"):
+        # §2 retired (fold-scenarios-tests) — cases folded into §4 TESTS & SCENARIOS.
+        for span in ("§1", "§3", "§4"):
             self.assertIn(span, direction,
                           f"the DIRECTION bundle must own the {span} span of the old phases")
 

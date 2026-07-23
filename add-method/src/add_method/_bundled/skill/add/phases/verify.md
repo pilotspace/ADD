@@ -36,7 +36,7 @@ at the gate:
 - [ ] Coverage did not decrease.
 - [ ] No test or contract was altered during build.
 - [ ] The §3 Target (measurable) is hit — including any declared outcome tests can't show, confirmed by real evidence.
-- [ ] §1 rules trace to §2/§4 — an untraced rule is a coverage gap (`add.py check` warns on it).
+- [ ] §1 rules trace to a §4 test (`covers:` tag) — an untraced rule is a coverage gap (`add.py check` warns on it).
 - [ ] every §3-cited symbol still resolves in the CURRENT tree.
 
 If any is false, stop and return to Build.
@@ -94,7 +94,7 @@ python3 .add/tooling/add.py gate PASS          # marks the task done
 Verify owns the loop's tail since the six-phase merge. After the gate, fill §7:
 
 1. **Release behind a scope-of-impact limit** — a flag and/or gradual rollout.
-2. **Reuse scenarios as monitors** — the §2 scenarios that defined "correct" define
+2. **Reuse scenarios as monitors** — the §4 scenarios/tests that defined "correct" define
    what you alert on: overall error rate, each rejection's rate, latency of the risky op.
 3. **Draft the next spec delta** — every defect, surprise, or new need becomes a change
    that re-enters the flow at Specify (a new task). Emit lessons tagged by the

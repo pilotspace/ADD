@@ -131,8 +131,8 @@ class TemplateScaffoldTest(unittest.TestCase):
     def test_template_carries_boundary_line_in_section1(self):
         body = (TEMPLATES / "PLAN.md.tmpl").read_text(encoding="utf-8")
         self.assertIn("\nBoundary: <", body, "§1 must scaffold a Boundary: line")
-        self.assertLess(body.find("\nBoundary: "), body.find("## 2 ·"),
-                        "the Boundary: line lives in §1")
+        self.assertLess(body.find("\nBoundary: "), body.find("## 3 ·"),
+                        "the Boundary: line lives in §1")   # §2 retired (fold-scenarios-tests)
         line = re.search(r"(?m)^Boundary: .*$", body).group(0)
         self.assertIn("format-variant", line)
         self.assertIn("none — no external input", line)

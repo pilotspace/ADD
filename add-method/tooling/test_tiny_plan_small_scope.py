@@ -105,7 +105,7 @@ class TinyMemberTasks(TinyPlanBase):
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         body = (pathlib.Path(self.root) / ".add" / "tasks" / "patch-auth" / "PLAN.md").read_text()
         # (see test_full_flag_opts_back: §0 GROUND folded into §3 PLAN — §2/§7 discriminate now)
-        self.assertIn("## 2 · SCENARIOS", body,
+        self.assertIn("## 4 · TESTS & SCENARIOS", body,
                       "a security-sensitive task in a tiny milestone gets the FULL template")
         self.assertIn("## 7 · OBSERVE", body,
                       "a security-sensitive task in a tiny milestone gets the FULL template")

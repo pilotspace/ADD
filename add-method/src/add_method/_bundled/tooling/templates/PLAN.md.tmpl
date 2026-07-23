@@ -30,13 +30,7 @@ Boundary: <one format-variant per external input shape the tests must speak — 
   ⚠ <the ONE assumption most likely to be wrong — if wrong: <cost>>
 </assumptions>
 
----
-
-## 2 · SCENARIOS — pass/fail cases ▸ docs/04-step-2-scenarios.md
-
-<scenarios>
-</scenarios>
-<!-- The §4 test_plan is the canonical encoding of every scenario (one test per Must/Reject). Add gherkin above ONLY when a human stakeholder needs readable cases — never as ceremony. -->
+<!-- §2 (the old standalone SCENARIOS section) was RETIRED — pass/fail cases now live with the tests in §4 · TESTS & SCENARIOS. The §3–§7 numbers are unchanged so the freeze parser and every §-reference keep working; the jump from §1 to §3 is intentional. -->
 
 ---
 
@@ -71,11 +65,13 @@ Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
 ---
 
-## 4 · TESTS — failing-first suite or acceptance checks (red) ▸ docs/06-step-4-tests.md
+## 4 · TESTS & SCENARIOS — failing-first suite or acceptance checks (red) ▸ docs/06-step-4-tests.md
 
 <test_plan>
   - test_<name>: arrange / act / assert behavior not internals · covers: <M#, R:code>
 </test_plan>
+
+Rigor: one red test per §1 Must/Reject — the PRIMARY cases + primary edge cases — is the gated floor. Minor/secondary behaviors are DESCRIBED in prose below as build-guidance — no `covers:` tag, no red test, not gated. Add a Given/When/Then line inline ONLY when a human stakeholder needs a readable case — never as ceremony; the test_plan is the canonical encoding of every scenario.
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 <!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0. The test_plan bullets' `covers:` tails are machine-read too: `add.py locate path::test_name` resolves a failing test to the frozen §3 clause it proves -->
