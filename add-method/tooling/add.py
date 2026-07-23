@@ -5214,7 +5214,10 @@ def _scope_walk(rootp: Path) -> dict[str, str]:
     reads as a touch (fail-closed at the biting end). Bytes only — no git."""
     files: dict[str, str] = {}
     for dirpath, dirnames, filenames in os.walk(rootp):
-        dirnames[:] = [d for d in dirnames if d not in _SCOPE_EXCLUDE_DIRS]
+        # *.egg-info is PROJECT-DERIVED (app.egg-info) — no literal covers it; suffix-prune
+        # (egg-info-prune: 3/3 run-3 reps tripped scope_violation on pip install -e .'s output).
+        dirnames[:] = [d for d in dirnames
+                       if d not in _SCOPE_EXCLUDE_DIRS and not d.endswith(".egg-info")]
         for name in filenames:
             if name in _SCOPE_EXCLUDE_FILES or name.endswith(_SCOPE_EXCLUDE_SUFFIXES):
                 continue

@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "946b76cf263aed3fb4cdff7e7a9ec899"  # re-aimed @ scope-walk-prune (.venv/venv/.tox/.mypy_cache/.ruff_cache/.eggs pruned from the scope walk + self-explaining default warn). prior: 68109d80… @ scope-first-freeze
+ENGINE_MD5 = "60eef504c87d5ed39d58a8722401f5aa"  # re-aimed @ egg-info-prune (suffix-prune *.egg-info dirs from the scope walk). prior: 946b76cf… @ scope-walk-prune
 ENGINE_PKG_MD5 = "96f41126af98221befda9012d21b450b"  # re-aimed @ claude-md-block-finalize (guidelines._guideline_block: thin-index step 2, tightened flow/roster, portable agents/*.md). prior: fd36bb5e… @ migrate-specs-pointers
