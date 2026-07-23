@@ -32,8 +32,9 @@ TMPL_TREES = (
     PKG_ROOT / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "PLAN.md.tmpl",
 )
 
-# the frozen closed tag vocab (v16 XML convention; test_template_form_tags owns semantics)
-FROZEN_TAGS = ("must", "reject", "after", "assumptions", "scenarios", "test_plan")
+# the frozen closed tag vocab (v16 XML convention; test_template_form_tags owns semantics).
+# `scenarios` RETIRED (fold-scenarios-tests): the §2 SCENARIOS section folded into §4 TESTS & SCENARIOS.
+FROZEN_TAGS = ("must", "reject", "after", "assumptions", "test_plan")
 
 # the exact strings the engine greps — each one gates a floor or a parse
 ENGINE_ANCHORS = (
@@ -45,7 +46,7 @@ ENGINE_ANCHORS = (
     "Scope (may touch):",                # scope-lock source (§3 Build-strategy)
     "Regression floor:",                 # inherited-floors: host suite is an edge
     "### AI-verify record (required when gate_mode: ai-plan-verify)",
-    "## 4 · TESTS",
+    "## 4 · TESTS & SCENARIOS",          # §4 absorbed the retired §2 scenario role
     "Tests live in:",                    # §4 declared-suite parser line
     "## 5 · BUILD",
     "Strategy actually used:",           # ADR harvest source
@@ -94,7 +95,7 @@ class EngineAnchorsTest(unittest.TestCase):
         text = TMPL_TREES[0].read_text(encoding="utf-8")
         for gone in ("### Grounding", "### Deep checks", "### Live-verify evidence",
                      "### Advisor 3-lens verdict", "### Build expectations",
-                     "Optimization stance:",
+                     "Optimization stance:", "## 2 · SCENARIOS",
                      "Coverage target:", "Watch (reuse scenarios"):
             self.assertNotIn(gone, text, f"retired template surface returned: {gone!r}")
 

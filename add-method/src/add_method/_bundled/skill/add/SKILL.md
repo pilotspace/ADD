@@ -3,7 +3,7 @@ name: add
 description: >-
   ADD (AI-Driven Development) — a minimal, state-tracked workflow: the AI writes
   the code, the human owns direction and verification. Drives every feature through
-  one lean PLAN.md: Specify → Scenarios → Plan → Tests → Build → Verify → Observe,
+  one lean PLAN.md: Specify → Plan → Tests & Scenarios → Build → Verify → Observe,
   red/green TDD built in. Use whenever a repo has `.add/`, or the user says "add",
   "start a task", "next phase", "specify this feature", "ADD method", "AI-driven
   development", or wants spec/tests-first discipline over vague-prompt coding. Also
@@ -70,9 +70,9 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). A milesto
 Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
 1. **DIRECTION** — load the domain-fit persona (seed via add-worker persona-mode if none), then compose
-   the whole bundle in ONE silent draft — §1–§3 + §5-scope, no per-section narration; §4 then runs red — in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
-   §2 scenarios (optional gherkin — §4 is canonical) · §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) ·
-   §4 red suite — one test per Must & per Reject (a Must/Reject encoded in neither §2 nor §4 = §1 not understood — stop); run red for the RIGHT reason; fill each `covers:` key. Then the ONE approval,
+   the whole bundle in ONE silent draft — §1·§3 + §5-scope, no per-section narration; §4 then runs red — in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
+   §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) ·
+   §4 TESTS & SCENARIOS — the red suite (cases live here; optional inline gherkin when a human needs it): one test per Must & per Reject (a Must/Reject encoded in no §4 test = §1 not understood — stop); minor behaviors are prose build-guidance, not gated; run red for the RIGHT reason; fill each `covers:` key. Then the ONE approval,
    presented lowest-confidence-first: `add.py freeze` (a setup session's baseline `lock` IS this approval).
 2. **BUILD** — code in `src/` until every red is green; change no test, no frozen contract; stay
    inside the §3 Scope. A test OUTSIDE your suite failing? `add.py locate` names the owning node, the

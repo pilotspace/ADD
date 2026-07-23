@@ -91,6 +91,15 @@ class _Board(unittest.TestCase):
         text = p.read_text(encoding="utf-8")
         pattern = re.compile(rf"(?ms)(^##\s*{n}\s*·[^\n]*\n)(.*?)(?=^##\s*\d+\s*·|\Z)")
         new_text, count = pattern.subn(lambda m: m.group(1) + body + "\n", text, count=1)
+        if count == 0:
+            # §2 SCENARIOS was retired from the template (fold-scenarios-tests). The coverage
+            # predicate STILL honors a legacy §2 scenario tag, so synthesize the legacy section
+            # here — this keeps the §2-branch tests exercising a real (legacy-shaped) doc.
+            heading = {2: "## 2 · SCENARIOS"}.get(n, f"## {n} ·")
+            anchor = re.search(rf"(?m)^##\s*{n + 1}\s*·", text)
+            assert anchor, f"cannot place synthetic section {n} in {slug}'s PLAN.md"
+            new_text = f"{text[:anchor.start()]}{heading}\n{body}\n\n{text[anchor.start():]}"
+            count = 1
         assert count == 1, f"section {n} heading not found in {slug}'s PLAN.md"
         p.write_text(new_text, encoding="utf-8")
 

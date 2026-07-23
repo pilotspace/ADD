@@ -1,10 +1,9 @@
-# PLAN: {{title}}
+# PLAN: Fold Step-2 Scenarios chapter into Step-4 across the book (+ mermaid + add-flow.png)
 
-slug: {{slug}} · created: {{date}} · stage: {{stage}}
-milestone: {{milestone}}
-autonomy: {{autonomy}}   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line joins that root to §3 Scope; task edges: `--depends-on`/`--extends`/`--relates-to`; high-risk/method-defining? declare `risk: high` on the slug line; headless agent-crossed freeze? declare `gate_mode: ai-plan-verify` here (human floor: security|data|architecture never AI-frozen) -->
-phase: direction   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · scenarios · change plan · red suite) to the ONE freeze -->
-
+slug: book-de-scenarios · created: 2026-07-23 · stage: mvp
+milestone: scenarios-into-tests
+autonomy: auto   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line joins that root to §3 Scope; task edges: `--depends-on`/`--extends`/`--relates-to`; high-risk/method-defining? declare `risk: high` on the slug line; headless agent-crossed freeze? declare `gate_mode: ai-plan-verify` here (human floor: security|data|architecture never AI-frozen) -->
+phase: direction   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · change plan · red suite) to the ONE freeze -->
 > One file = one task — an ATOMIC node: persist the interface (contract · red suite · scope · verdict); reason everything else in-context, don't write essays. The phase marker above is the single source of truth (`add.py phase`).
 
 ---
