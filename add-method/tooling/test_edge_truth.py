@@ -133,7 +133,7 @@ class EdgeHintTest(_EdgeHarness):
         self._silent("new-task", slug, "--title", slug)
         p = self._task_md(slug)
         text = p.read_text(encoding="utf-8")
-        text = text.replace("Scope (may touch): `./src/`", f"Scope (may touch): {scope_line}", 1)
+        text = text.replace("Scope (may touch): `src/`", f"Scope (may touch): {scope_line}", 1)
         p.write_text(text, encoding="utf-8")
         sp = self.tmp / ".add" / "state.json"
         st = json.loads(sp.read_text())

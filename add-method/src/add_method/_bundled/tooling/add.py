@@ -1080,6 +1080,12 @@ def _scope_echo(root: Path, slug: str) -> None:
         marks = [(rel, (rootp / rel).exists()) for rel in resolved]
         for rel, ok in marks:
             print(f"scope: {rel} [{'ok' if ok else 'MISSING'}]")
+            # scope-first-freeze teach note: a MISSING token that resolved UNDER the task
+            # dir is almost always the `./…`-grammar trap (2026-07-23 WM1 census, rep1/2:
+            # declared `./app/`, built root app/) — name the rule at the freeze read.
+            if not ok and rel.startswith(".add/tasks/"):
+                print(f"note: {rel} resolves under THIS TASK's dir (the `./…` token rule) — "
+                      "a project file wants a root-relative token (e.g. `app/`)")
         missing_all = not any(ok for _, ok in marks)
         # scope-coverage-hint: the too-narrow class behind the measured re-cross
         # repairs — tokens resolve [ok] yet the build's real targets sit outside them.
@@ -1193,6 +1199,18 @@ def cmd_freeze(args: argparse.Namespace) -> None:
             _die(f"boundary_unfilled: {slug}'s §1 Boundary: line still carries the template "
                  f"placeholder — declare >=1 format-variant per external input shape "
                  f"(or an explicit \"none — ...\"), then re-freeze")
+    # scope-first-freeze (wm1-lean-to-twelve): a DECLARED §3 Scope resolving to the EMPTY
+    # allowlist would freeze a guaranteed scope_violation — the Scope line lives INSIDE the
+    # frozen §3, so every post-freeze fix costs a re-cross (2026-07-23 WM1 census: 3/3 reps
+    # paid 2-3 calls to this class). Fail-closed at the cheap seam, validate-then-write:
+    # nothing is written on this path. UNDECLARED (None) stays grandfathered; resolvable
+    # tokens — [ok] or greenfield [MISSING] — freeze exactly as today.
+    if _declared_scope(root, slug) == []:
+        _die(f"scope_unresolved: {slug} declares a §3 Scope but every token dropped — "
+             "backtick each token (`name/` = project root · `./…` = THIS task's dir · a "
+             "directory covers its whole subtree); unbackticked or outside-root tokens "
+             "grant NO cover, and the gate would refuse scope_violation after the build. "
+             "Fix the Scope line, then freeze again")
     # the human declares the risk-CLASS at freeze (risk-sensitivity-taxonomy): a present-but-
     # unknown sensitivity token is refused here (validate-then-write — nothing is written);
     # an absent token is grandfathered (allowed), a valid member proceeds. The engine never
@@ -1972,11 +1990,14 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
         _rb5 = _raw_phase_bodies(root, slug)
         m5 = (re.search(r"^\s*Scope \(may touch\):.*$", _rb5.get(3, ""), re.M)
               or re.search(r"^\s*Scope \(may touch\):.*$", _rb5.get(5, ""), re.M))
-        if m5 and "<fill before the §3 freeze" in m5.group(0):
-            print(f"warning: task '{slug}' §5 Scope is still the template default — "
-                  "`./src/` resolves to THIS TASK's dir (.add/tasks/"
-                  f"{slug}/src/), not your project files. Edit the §5 Scope line to "
-                  "the real paths the build may touch, then re-snapshot: "
+        # scope-first-freeze: detection accepts BOTH hint eras — the original
+        # "<fill before the §3 freeze" wording AND the #38-relabeled "<HARD — fill
+        # before the freeze" (the relabel silently killed the original match).
+        if m5 and ("<fill before the §3 freeze" in m5.group(0)
+                   or "<HARD — fill before the freeze" in m5.group(0)):
+            print(f"warning: task '{slug}' §3 Scope is still the template default — "
+                  "edit it to the REAL write-set (the default `src/` covers only the "
+                  "project-root src/; `./…` = this task's dir), then re-snapshot: "
                   "add.py re-cross --by <name>")
     else:
         state["tasks"][slug].pop("scope", None)
@@ -5829,7 +5850,8 @@ def _build_plan(raw3: str) -> list[dict]:
             val = val[:hint.start()].strip()
         if not val or val.startswith("<"):            # a bare placeholder is not a plan
             continue
-        if val.strip("`").strip().startswith("./src/"):   # the untouched Scope default
+        core = val.strip("`").strip()
+        if core.startswith("./src/") or core == "src/":   # the untouched Scope defaults (legacy `./src/` · current `src/`)
             continue
         out.append({"label": label, "value": val})
     return out

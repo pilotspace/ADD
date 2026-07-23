@@ -50,9 +50,11 @@ Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
 
 ### Build-strategy — Scope (may touch) is HARD scope-lock; the rest is SOFT (the builder self-improves and records actual at verify)
-Scope (may touch): `./src/`   <HARD — fill before the freeze; the file write-set, single source of truth; every file the build may write; the tamper-guarded scope-lock source>
+Scope (may touch): `src/`   <HARD — fill before the freeze; the file write-set, single source of truth; every file the build may write. Token grammar (backtick each): name/ = project root · ./… = THIS task's dir (rarely what a build writes) · a directory covers its whole subtree>
 Regression floor: <optional — the existing suite(s) that must stay green; the host repo's own tests are a floor when present; run them before the gate — or omit / "none — greenfield">
 Persona (optional): <persona file under `.add/personas/` this build embodies — advisory, never lowers a gate; omit or "generic" if none fits>
+
+Least-sure flag surfaced at freeze: [spec|scenario|contract|test] <the ONE part you trust least + why — REQUIRED at the freeze (unflagged_freeze refuses without it); pick ONE part tag from the menu; §1's top ⚠ usually feeds it>
 
 ### AI-verify record (required when gate_mode: ai-plan-verify)
 - [ ] §3 PLAN grounding anchors resolve in the current tree
@@ -82,7 +84,7 @@ Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
 Strategy actually used: <fill at VERIFY — what you ACTUALLY did (or "as planned"); harvested into §7 Decisions (ADR)>
-Code lives in: `./src/`
+Code lives in: `src/`
 Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn `add-advisor` (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
 Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 Scope (an out-of-scope build fails the gate: scope_violation); keep the §3 Regression floor green; allow-list packages only; ask if unclear.
 
