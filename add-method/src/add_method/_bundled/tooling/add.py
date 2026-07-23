@@ -404,6 +404,74 @@ def _exit_criterion_nodes(root: Path) -> list[dict]:
     return out
 
 
+_NUMBERED_BOLD_RE = re.compile(r"(?m)^\s*\d+\.\s+\*\*(.+?)\*\*")
+_PARTS_MARKER_RE = re.compile(r"\(\s*(\d+)\s+parts?\s*\)|(\d+)-part", re.I)
+_CATCHALL_KW_RE = re.compile(r"longtail|drain|sweep|catch-all|grab-bag", re.I)
+
+
+def _scope_parts(root: Path, slug: str) -> list[str]:
+    """atomicity-signal: PURE read of a task's §1/§3 body — return the ordered
+    independent-Part labels a scope enumerates. A junk-drawer / longtail / drain
+    catch-all reads as N>1 Parts; a normal atomic task reads as [] (silence = pass).
+    Signals (union, order-preserving, deduped): a numbered-bold list `N. **label**` ·
+    a `(N parts)` / `N-part` marker (N>=2) · a catch-all keyword in the slug or title.
+    Returns [] when fewer than 2 Parts — never raises (fail-soft on a missing task)."""
+    try:
+        bodies = _raw_phase_bodies(root, slug)
+    except Exception:
+        return []
+    body = (bodies.get(1, "") + "\n" + bodies.get(3, ""))
+    try:
+        state = load_state(root)
+        title = ((state.get("tasks") or {}).get(slug) or {}).get("title", "") or ""
+    except Exception:
+        title = ""
+    parts: list[str] = []
+    for m in _NUMBERED_BOLD_RE.finditer(body):
+        label = m.group(1).strip()
+        if label and label not in parts:
+            parts.append(label)
+    if len(parts) < 2:                       # no explicit bold list — try the marker
+        mk = _PARTS_MARKER_RE.search(body)
+        if mk:
+            n = int(mk.group(1) or mk.group(2) or 0)
+            if n >= 2:
+                parts = [f"part {i}" for i in range(1, n + 1)]
+    if len(parts) < 2 and _CATCHALL_KW_RE.search(f"{slug} {title}"):
+        parts = ["catch-all", "drain"]       # keyword fires the nudge (recall over a named list)
+    return parts if len(parts) >= 2 else []
+
+
+def _atomicity_signal_seed(root: Path, slug: str):
+    """atomicity-signal: when a task's scope reads as >1 independent Part, SEED a
+    persistent `captured` signal (a todo in state["todos"], the store _signals already
+    projects) instead of an ephemeral print — so the atomicity concern survives after
+    the freeze scrolls away and appears in `graph --signals`. Idempotent per slug (a
+    re-freeze adds no duplicate); returns the new todo id, or None when <2 Parts /
+    already seeded. Writes ONLY the existing todo store — no new store (thin-engine floor).
+    Measure-not-block: the freeze caller wraps this fail-open; it never gates a freeze."""
+    parts = _scope_parts(root, slug)
+    if len(parts) < 2:
+        return None
+    state = load_state(root)
+    todos = state.get("todos")
+    if not isinstance(todos, list):
+        todos = state["todos"] = []
+    tag = f"atomicity: {slug} —"
+    for t in todos:
+        if isinstance(t, dict) and t.get("status") == "open" \
+                and str(t.get("text", "")).startswith(tag):
+            return None                      # idempotent — already seeded for this slug
+    new_id = max((t.get("id", 0) for t in todos if isinstance(t, dict)), default=0) + 1
+    text = (f"{tag} §3 scope reads as {len(parts)} Parts ({', '.join(parts)}); "
+            f"consider new-milestone + one task per Part.")
+    todos.append({"id": new_id, "text": text, "created": _now(), "status": "open"})
+    save_state(root, state)
+    print(f"note: seeded atomicity signal #{new_id} — §3 scope reads as {len(parts)} "
+          f"Parts (addressable after this freeze)")
+    return new_id
+
+
 # --- tidy a closed PLAN.md (strip-scaffold-at-done) --------------------------
 # A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 # task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
@@ -1201,6 +1269,10 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     print(f"froze §3 of {slug} @ {ver} — approved by {who}")
     try:                                # scope-echo-draft: fail-open, never blocks a freeze
         _scope_echo(root, slug)
+    except Exception:
+        pass
+    try:                                # atomicity-signal: SEED a signal when §3 reads as >1 Part
+        _atomicity_signal_seed(root, slug)
     except Exception:
         pass
     # compound-ticks: `--cross` compresses the freeze->build crossing into this same

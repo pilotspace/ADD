@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "ed8624a267fb535936a8d866ef4aa8bc"  # re-aimed @ exit-criterion-nodes (_exit_criterion_nodes + --signals ec_ overlay). prior: acb9dcf6… @ graph-view-signals
+ENGINE_MD5 = "e7ad9f97a9dfd1ce0d88047839c4be79"  # re-aimed @ atomicity-signal (_scope_parts + _atomicity_signal_seed freeze hook). prior: ed8624a2… @ exit-criterion-nodes
 ENGINE_PKG_MD5 = "81553881899a4c6dfaad73f548ed5e04"  # re-aimed @ remove-rule-file-mode (guidelines.py/constants.py drop _rule_file_mode + rule-file relocation fns/constants). prior: bcc35aa2… @ persona-skill

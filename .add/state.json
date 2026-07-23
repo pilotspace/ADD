@@ -1227,7 +1227,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "call-floor": "skill-orient-split",
     "intake-atomicity": "scope-atomicity-guard",
-    "signal-graph": "exit-criterion-nodes"
+    "signal-graph": "atomicity-signal"
   },
   "active_milestone": "signal-graph",
   "todos": [
@@ -1443,7 +1443,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T03:15:30+00:00",
+  "updated": "2026-07-23T03:24:37+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -6897,7 +6897,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "atomicity-signal": {
+      "title": "Atomicity nudge SEEDS a signal at freeze (not an ephemeral print)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "signal-graph",
+      "depends_on": [
+        "signal-model"
+      ],
+      "created": "2026-07-23T03:18:02+00:00",
+      "updated": "2026-07-23T03:24:37+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-23T03:23:57+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "563f578ae5fe247a31ddf8cb2b44db98",
+        "tests": {
+          ".add/tasks/atomicity-signal/tests/test_atomicity_signal.py": "cb1c07224da1c1926e30c9c5bed3c99f"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          ".add/tasks/atomicity-signal/tests/"
+        ],
+        "snapshot_md5": "8a40dd8f680213d2f109e6449bfbe6c6"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "exit-criterion-nodes"
+  "active_task": "atomicity-signal"
 }
