@@ -47,9 +47,9 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] Gate reports are persona-owned — structure + cadence adapt per project; no fixed template section list; the four floors are met in the persona's voice and security stays HARD-STOP  (← persona-owns-gates, DONE)
-- [ ] A MILESTONE.md carries a `## Strategy` slot the persona fills risk-proportionally               (← strategy-section)
+- [x] A MILESTONE.md carries a `## Strategy` slot the persona fills risk-proportionally               (← strategy-section, DONE 2026-07-23)
 - [x] UDD is redefined as experience-driven development — the pillar (design.md + SKILL.md trigger + the FIVE axes incl. INTERACTION) covers UI AND interaction/gate UX  (← udd-experience-pillar, DONE)
-- [ ] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd)
+- [x] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd, DONE 2026-07-23)
 - [ ] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake)
 - [ ] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide)
 - [ ] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger)
