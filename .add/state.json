@@ -1227,7 +1227,7 @@
     "add-bench-2": "tiny-plan-small-scope",
     "call-floor": "skill-orient-split",
     "intake-atomicity": "scope-atomicity-guard",
-    "signal-graph": "signal-model"
+    "signal-graph": "graph-view-signals"
   },
   "active_milestone": "signal-graph",
   "todos": [
@@ -1443,7 +1443,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T02:44:20+00:00",
+  "updated": "2026-07-23T03:05:03+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -6807,7 +6807,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "graph-view-signals": {
+      "title": "cmd_graph renders signals as nodes (view over text)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "signal-graph",
+      "depends_on": [
+        "signal-model"
+      ],
+      "created": "2026-07-23T02:56:45+00:00",
+      "updated": "2026-07-23T03:05:03+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-23T03:00:39+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "dc242a581ebaae01cd6d37bd7cec47cc",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          ".add/tooling/",
+          ".add/tasks/graph-view-signals/tests/"
+        ],
+        "snapshot_md5": "cd237cc48975dee0a27f0b88b054b9f1"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "signal-model"
+  "active_task": "graph-view-signals"
 }

@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "3eb6dc23d4d36164a564b4229a2c9549"  # re-aimed @ signal-model (add _signals: unified note=todo=delta projection reader). prior: 764bf477… @ remove-rule-file-mode
+ENGINE_MD5 = "acb9dcf686fbb28b237b9fcbaf68c52e"  # re-aimed @ graph-view-signals (cmd_graph --signals overlay). prior: 3eb6dc23… @ signal-model
 ENGINE_PKG_MD5 = "81553881899a4c6dfaad73f548ed5e04"  # re-aimed @ remove-rule-file-mode (guidelines.py/constants.py drop _rule_file_mode + rule-file relocation fns/constants). prior: bcc35aa2… @ persona-skill

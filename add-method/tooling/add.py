@@ -1524,6 +1524,41 @@ def cmd_graph(args: argparse.Namespace) -> None:
         cls = "done" if tasks[slug].get("phase") == "done" else "live"
         lines.append(f"  class t_{slug} {cls}")
     lines.extend(f"  class p_{slug} planned" for slug in sorted(planned_shown))
+    # signal overlay (graph-view-signals): opt-in `--signals` layer — LIVE signals
+    # (todos + open §7 deltas via _signals) as nodes edged to their task nodes. Pure
+    # read; the default (no flag) path above is byte-unchanged. Resolved/dropped omit.
+    if getattr(args, "signals", False):
+        live = [s for s in _signals(root) if s["status"] not in ("resolved", "dropped")]
+        sig_missing: dict[str, str] = {}
+        node_lines: list[str] = []
+        edge_lines: list[str] = []
+        class_lines: list[str] = []
+        for s in live:
+            obs = [t for r, t in s["edges"] if r == "observed-by"]
+            if obs and not any(t in shown for t in obs):
+                continue                        # observed-by task filtered out by --milestone
+            sid = "sig_" + re.sub(r"[^0-9A-Za-z]", "_", s["id"])
+            text = re.sub(r'["\[\]|\n]', " ", s["text"]).strip()[:40]
+            node_lines.append(f'  {sid}["{s["kind"]} · {s["status"]}: {text}"]')
+            class_lines.append(f"  class {sid} signal")
+            for rel, target in s["edges"]:
+                arrow = {"observed-by": "-.->", "resolves-into": "-->",
+                         "blocks": "==>"}.get(rel)
+                if not arrow:
+                    continue
+                if target in tasks:
+                    tid = node_id(target)
+                else:                           # missing/archived target -> x_ fallback (never dangling)
+                    tid = "x_" + target
+                    note = "archived" if target in archived else "missing"
+                    sig_missing[tid] = f'  {tid}["{target} · {note}"]'
+                edge_lines.append(f"  {sid} {arrow}|{rel}| {tid}")
+        if node_lines:
+            lines.extend(sorted(sig_missing.values()))
+            lines.extend(node_lines)
+            lines.extend(edge_lines)
+            lines.append("  classDef signal fill:#e7f5ff,stroke:#1971c2")
+            lines.extend(class_lines)
     print("\n".join(lines))
 
 
@@ -6703,6 +6738,9 @@ def build_parser() -> argparse.ArgumentParser:
                          "(milestone subgraphs; edge style = edge type; dashed = "
                          "planned-but-never-created)")
     pgr.add_argument("--milestone", help="limit to one milestone's subgraph")
+    pgr.add_argument("--signals", action="store_true",
+                     help="overlay LIVE signals (todos + open §7 deltas) as nodes edged "
+                          "to their tasks (observed-by/resolves-into/blocks)")
     pgr.set_defaults(func=cmd_graph)
 
     pdap = sub.add_parser("delta-append",
