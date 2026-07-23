@@ -10,7 +10,7 @@
 
 **Artifact** — a durable work product: the spec, the scenarios, the contract, the tests. The artifacts survive; the code is disposable.
 
-**Lesson learned** (formerly "competency delta") — a single learning a loop produces, tagged by which of the five competencies (`DDD · SDD · UDD · TDD · ADD`) it improves, written in a task's OBSERVE phase as `- [<COMPETENCY> · <status>] <learning> (evidence: …)`. Emitted `open` by the AI; the human folds it into a versioned `PROJECT.md` (`folded`) or declines it (`rejected`). The mechanism by which the foundation self-improves instead of drifting. See the `add` skill's `deltas.md`.
+**Lesson learned** (formerly "competency delta") — a single learning a loop produces, tagged by which of the five competencies (`DDD · SDD · UDD · TDD · ADD`) it improves, written in a task's OBSERVE phase as `- [<COMPETENCY> · <status>] <learning> (evidence: …)`. Emitted `open` by the AI; the human folds it into its matching `.add/specs/` living spec (`folded`, bumping the foundation version) or declines it (`rejected`). The mechanism by which the foundation self-improves instead of drifting. See the `add` skill's `deltas.md`.
 
 **Contract** — the fixed external shape of a feature: interfaces, data structures, names, and error cases. Frozen within the **Plan** phase, before the build, it is the surface the AI builds against.
 
@@ -40,7 +40,7 @@
 
 **Ground** — the FIRST part of the **Plan** phase (not a step of its own): the AI gathers the real current codebase the task touches — files, symbols, signatures, patterns, conventions — into a lean **grounding map**, surfacing the **anchors** the frozen contract will cite. It is AI-owned and adds no approval (the one approval stays at the plan freeze); grounding the real code first is what the contract, tests, and build are then anchored to, so they fit the code as it actually is, not assumption. Lives in the `add` skill's `phases/direction.md`.
 
-**Grounding map / anchors** — the GROUND artifact produced in the first part of §3 PLAN: the real files, symbols, and conventions a task touches, plus the **anchors** — the symbols the frozen contract names. Task-specific delta only: it defers to `PROJECT.md` / `CONVENTIONS.md` for architecture and never re-runs the setup brownfield scan. `add.py status` / `check` surface whether the active task's contract is grounded (measure, never block — the contract-freeze checklist asks the human to confirm it).
+**Grounding map / anchors** — the GROUND artifact produced in the first part of §3 PLAN: the real files, symbols, and conventions a task touches, plus the **anchors** — the symbols the frozen contract names. Task-specific delta only: it defers to the `.add/specs/` foundation (`system.md` · `quality.md`) and `CONVENTIONS.md` for architecture and never re-runs the setup brownfield scan. `add.py status` / `check` surface whether the active task's contract is grounded (measure, never block — the contract-freeze checklist asks the human to confirm it).
 
 **`HARD-STOP`** — a gate outcome meaning work cannot proceed; triggered by any failing test or security finding.
 
@@ -142,7 +142,7 @@
 
 **Rolled-up settled line** — the single line a compaction leaves in place of a collapsed run of records: lossy on prose, lossless on traceability (it carries a `see git` pointer).
 
-**Per-spec shape** — each foundation spec's own tailored rolled-line format (PROJECT §Spec bullets · §Key-Decisions rows · CONVENTIONS learnings · GLOSSARY definition · MODEL_REGISTRY rows), all sharing one eligibility rule: shipped + zero open residues.
+**Per-spec shape** — each foundation spec's own tailored rolled-line format (a `.add/specs/` file's standing bullets · `PROJECT.md` §Key-Decisions rows · GLOSSARY definition · MODEL_REGISTRY rows), all sharing one eligibility rule: shipped + zero open residues.
 
 **Newest-first append-only** — every append-only foundation sequence prepends the newest record at the top; the rolled-up settled line anchors at the bottom (the oldest end), so compaction collapses upward.
 

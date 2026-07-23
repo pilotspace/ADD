@@ -1,6 +1,6 @@
 # 03 · Step 1 — Specify
 
-[← 02 The flow](./02-the-flow.md) · [Contents](./README.md) · Next: [04 Step 2 Scenarios →](./04-step-2-scenarios.md)
+[← 02 The flow](./02-the-flow.md) · [Contents](./README.md) · Next: [05 Step 3 Contract →](./05-step-3-plan.md)
 
 > **Purpose:** state, in plain language, what the feature must do and what it must reject, with no ambiguity left for the AI to resolve by guessing.
 > **Produces:** the **§1 SPECIFY** block of the task's `PLAN.md` (one file per task — what this chapter is the *why* behind; historically a separate `SPEC.md`).
@@ -37,7 +37,7 @@ Naming the errors matters. "Reject bad amounts" is an instruction to guess; `amo
 
 ### Rule IDs (optional — opt-in by usage)
 
-Give each Must a stable `M<n>:` ID; a Reject's own error code already IS its ID (referenced later as `R:<error_code>`). Once a task uses a tag anywhere in §2 SCENARIOS or §4 TESTS, `add.py check` starts asking that every Must/Reject be covered by a scenario tag or a test's `covers:` line — a task that never tags anything is never retro-flagged. See the template's own inline example for the exact grammar.
+Give each Must a stable `M<n>:` ID; a Reject's own error code already IS its ID (referenced later as `R:<error_code>`). Once a task uses a tag anywhere in §4 TESTS & SCENARIOS, `add.py check` starts asking that every Must/Reject be covered by a scenario tag or a test's `covers:` line — a task that never tags anything is never retro-flagged. See the template's own inline example for the exact grammar.
 
 ## Template
 

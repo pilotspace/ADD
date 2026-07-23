@@ -54,7 +54,7 @@ It says *there is something to consider*, not *you are ready*.
 To gather the cut's evidence, run `add.py release-report`. It clusters five labeled record-sets: the
 closed milestones since the last release · their **consolidated deltas** (the "what changed" record) ·
 the open `RISK-ACCEPTED` waivers riding into the release · any open security `HARD-STOP` (a blocker) ·
-the §2 scenarios to take live as monitors. The report **gathers; it does not judge** — there is no
+the §4 scenarios to take live as monitors. The report **gathers; it does not judge** — there is no
 readiness score to read off, because a tally that pretended to be a verdict would invite reading the
 number instead of the evidence.
 
@@ -127,7 +127,7 @@ engine's receipt that the floor was met.
 
 ## 16.6 · Watch and the hotfix path — re-entering observe
 
-A release is not the finish line; it is where the most reliable information finally appears. The §2
+A release is not the finish line; it is where the most reliable information finally appears. The §4
 scenarios that were pass/fail cases at build time become **live monitors** for the released version, and
 error-budget burn feeds the next loop. Live-registry and deploy confirmation are post-cut *evidence*,
 gathered after the tag — not unit tests pretending to be one.

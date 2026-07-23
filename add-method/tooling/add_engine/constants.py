@@ -220,6 +220,15 @@ GUIDELINE_FILES = ("AGENTS.md", "CLAUDE.md", ".clinerules")
 _GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->"
 _GUIDE_END = "<!-- ADD:END -->"
 
+# PROJECT.md specs-pointer markers (foundation-specs-refs). PROJECT.md stays the thin
+# read-first index; this managed, SPEC_DDS-driven block routes to the standing 5-DD picture
+# in `.add/specs/`. `init` scaffolds it, `migrate` wires it into a pre-pointer PROJECT.md;
+# both refresh it idempotently in place. Same never-change rule as the guideline markers:
+# a re-run finds the old block by exact match, so changing these would orphan every block a
+# prior version wrote.
+_SPECS_BEGIN = "<!-- ADD:SPECS — the 5-DD standing picture; managed by add.py — do not edit inside -->"
+_SPECS_END = "<!-- /ADD:SPECS -->"
+
 # Minimal embedded fallback so the tool still works if templates/ is missing
 # (circuit breaker: never hard-fail just because a template file was deleted).
 _FALLBACK_TASK = """# PLAN: {title}

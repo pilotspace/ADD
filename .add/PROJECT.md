@@ -14,6 +14,18 @@ goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives spec
 
 ---
 
+<!-- ADD:SPECS — the 5-DD standing picture; managed by add.py — do not edit inside -->
+## Foundation specs — the standing 5-DD picture
+
+This file is the thin index; the detail lives in the specs. Lessons land there via `add.py delta-append <dd>`.
+
+- **Domain** → `.add/specs/domain.md` — what the system IS: entities, rules, ubiquitous language (DDD)
+- **System** → `.add/specs/system.md` — how it is built: architecture, contracts, data shapes (SDD)
+- **Experience** → `.add/specs/experience.md` — how it feels to use: flows, surfaces, the humans served (UDD)
+- **Quality** → `.add/specs/quality.md` — how we know it works: test strategy, floors, evidence (TDD)
+- **Method** → `.add/specs/method.md` — how we work: the loop, autonomy, ceremony budget (ADD)
+<!-- /ADD:SPECS -->
+
 ## Domain (DDD) — the language and the boundaries
 - Invariants that must always hold: the `phase:` marker in PLAN.md == `state.json`;
   a FROZEN contract never changes silently (change request → back to SPECIFY) — the freeze

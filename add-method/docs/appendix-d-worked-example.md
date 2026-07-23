@@ -30,7 +30,22 @@ Assumptions — lowest-confidence first:
 
 The product owner read the flagged assumption first — the single-currency choice, the one most likely to be wrong and most expensive if it were — and confirmed it: v1 is single-currency with no daily limit.
 
-## Step 2 — Scenarios → `features/transfer.feature`
+## Step 3 — Contract → `contracts/transfer.md`
+
+```
+POST /transfers   body: { fromAccountId, toAccountId, amount }
+  200 -> { transferId, fromBalance, toBalance }
+  400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
+  403 -> { error: "forbidden" }
+Schema: accounts.balance (read + write, must be transactional)
+Status: FROZEN @ v1
+```
+
+Frozen at v1. The schema note flags the atomicity requirement the verification step will check.
+
+## Step 4 — Tests & Scenarios → scenarios, then `tests/transfer_test.py` (run first; all fail)
+
+First the pass/fail scenarios, one per rule:
 
 ```
 Scenario: successful transfer
@@ -62,22 +77,7 @@ Scenario: not my account
   Then it is rejected "forbidden"
 ```
 
-Five scenarios for four rejections plus the happy path — every rule from the spec is covered.
-
-## Step 3 — Contract → `contracts/transfer.md`
-
-```
-POST /transfers   body: { fromAccountId, toAccountId, amount }
-  200 -> { transferId, fromBalance, toBalance }
-  400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
-  403 -> { error: "forbidden" }
-Schema: accounts.balance (read + write, must be transactional)
-Status: FROZEN @ v1
-```
-
-Frozen at v1. The schema note flags the atomicity requirement the verification step will check.
-
-## Step 4 — Tests → `tests/transfer_test.py` (run first; all fail)
+Five scenarios for four rejections plus the happy path — every rule from the spec is covered. Each becomes one red test:
 
 ```python
 def test_successful_transfer():

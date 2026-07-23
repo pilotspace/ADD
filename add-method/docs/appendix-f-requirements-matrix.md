@@ -20,7 +20,7 @@ A **project** sets up the living documentation once. A **milestone** is a depth-
 
 ```mermaid
 flowchart TD
-  P["PROJECT — the product<br/>PROJECT.md (foundation) · CONVENTIONS · GLOSSARY · MODEL_REGISTRY · allowlist · playbook"]
+  P["PROJECT — the product<br/>PROJECT.md + .add/specs/ (foundation) · CONVENTIONS · GLOSSARY · MODEL_REGISTRY · allowlist · playbook"]
   P --> M1["MILESTONE · Prototype"]
   P --> M2["MILESTONE · POC"]
   P --> M3["MILESTONE · MVP"]
@@ -42,7 +42,7 @@ Which document lives at which level, who is accountable for it, and how long it 
 
 | Document | Level | Created | Lifespan | Accountable owner |
 |----------|:-----:|---------|----------|-------------------|
-| `PROJECT.md` (foundation: domain · spec · UI/UX) | Project | setup, grows | whole project | Product / Architect |
+| `PROJECT.md` + `.add/specs/` (foundation: goal · invariants · key decisions + the 5-DD standing picture) | Project | setup, grows | whole project | Product / Architect |
 | `CONVENTIONS.md` | Project | setup | whole project | Architect / Lead |
 | `GLOSSARY.md` | Project | setup, grows | whole project | Product / Domain |
 | `MODEL_REGISTRY.md` | Project | setup | whole project | Architect / Lead |
@@ -94,9 +94,8 @@ Every task, regardless of milestone, produces this artifact chain. The depth var
 | Step | Required document | Exit gate (the proof) | Detail |
 |------|-------------------|------------------------|--------|
 | 1 Specify | `SPEC.md` | rules + named rejections, assumptions ranked lowest-confidence first (biggest risk ⚠-flagged) | [03](./03-step-1-specify.md) |
-| 2 Scenarios | `features/<task>.feature` | one scenario per rule | [04](./04-step-2-scenarios.md) |
 | 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./05-step-3-plan.md) |
-| 4 Tests | `tests/<task>_*` | one test per scenario, red first | [06](./06-step-4-tests.md) |
+| 4 Tests & Scenarios | `tests/<task>_*` | one pass/fail scenario per rule, one test per primary scenario, red first | [06](./06-step-4-tests.md) |
 | 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./07-step-5-build.md) |
 | 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./08-step-6-verify.md) |
 | 7 Observe | `PLAN.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + lessons learned captured | [09](./09-the-loop.md) |
@@ -168,4 +167,4 @@ Every level points down to the evidence beneath it and up to the goal above it. 
 
 ---
 
-*End of book. AIDD is one repeatable loop — Specify → Scenarios → Contract → Tests → Build → Verify → observe, then repeat. People own direction and verification; the AI owns the build; the artifacts are the asset and the code is disposable.*
+*End of book. AIDD is one repeatable loop — Specify → Contract → Tests & Scenarios → Build → Verify → observe, then repeat. People own direction and verification; the AI owns the build; the artifacts are the asset and the code is disposable.*

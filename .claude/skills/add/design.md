@@ -42,7 +42,7 @@ Record **before** review-domain: project **defaults** in DESIGN.md's `## Design 
 
 ### 1 · review-domain
 Start from the **domain**, not a blank canvas. Read the domain model — entities, flows, the
-ubiquitous language in `PROJECT.md` / `GLOSSARY.md` — and derive **which screens** the feature needs
+ubiquitous language in `.add/specs/domain.md` / `GLOSSARY.md` — and derive **which screens** the feature needs
 + each screen's **regions**. Map each entity to a *presentational* component (owns no domain
 decision). Output: the screen list + regions.
 

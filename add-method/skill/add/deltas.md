@@ -43,7 +43,7 @@ If a learning touches two, ask "which competency, once updated, would have PREVE
 
 ```
 emit (OBSERVE)        human review
-   open  ───────────▶  folded     (merged into PROJECT.md; version bumps)
+   open  ───────────▶  folded     (merged into its `.add/specs/<dd>` spec; version bumps)
          └──────────▶  rejected   (deliberately NOT consolidated — trail kept)
 ```
 

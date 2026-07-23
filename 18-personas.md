@@ -32,8 +32,8 @@ on the project owns that persona outright.
 
 ## Seed — at setup
 
-The first personas are **seeded** during project setup, from the foundation (`PROJECT.md`'s domain
-and standards). Setup proposes a starter persona or two that fit the project's domain; the human
+The first personas are **seeded** during project setup, from the foundation (the domain and standards
+in `.add/specs/domain.md` and `.add/specs/system.md`, which `PROJECT.md` points to). Setup proposes a starter persona or two that fit the project's domain; the human
 confirms. Seeding writes `.add/personas/<slug>.md` and nothing else — no behaviour changes until a
 task actually applies one.
 

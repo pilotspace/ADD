@@ -21,13 +21,6 @@ Every exit check in the book, collected for quick use. Print this page.
 - [ ] Assumptions ranked lowest-confidence first; the 1–2 most-likely-wrong ⚠-flagged with why + cost (or an honest "none material" that still names the single biggest risk).
 - [ ] "Existing behavior" assumptions carry grep/line citations; wiring claims name the production caller chain.
 
-## Step 2 — Scenarios
-
-- [ ] Every "Must" rule has a scenario.
-- [ ] Every "Reject" rule has a scenario.
-- [ ] Each result is a specific, observable fact.
-- [ ] Rejections assert what must stay unchanged.
-
 ## Step 3 — Contract
 
 - [ ] Contract versioned and `FROZEN`.
@@ -35,9 +28,11 @@ Every exit check in the book, collected for quick use. Print this page.
 - [ ] Names match the glossary.
 - [ ] Every spec rejection has a contracted response.
 
-## Step 4 — Tests
+## Step 4 — Tests & Scenarios
 
-- [ ] One test per scenario.
+- [ ] Every "Must" rule has a pass/fail scenario; every "Reject" rule has one too.
+- [ ] Each scenario's result is a specific, observable fact; rejections assert what must stay unchanged.
+- [ ] One test per primary scenario; minor variants noted as build-guidance.
 - [ ] Suite runs in the pipeline and is red for the right reason.
 - [ ] Tests assert behavior, not internals.
 - [ ] Coverage target recorded.

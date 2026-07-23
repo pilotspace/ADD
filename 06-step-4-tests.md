@@ -1,14 +1,70 @@
-# 06 · Step 4 — Tests
+# 06 · Step 4 — Tests & Scenarios
 
 [← 05 Step 3 Contract](./05-step-3-plan.md) · [Contents](./README.md) · Next: [07 Step 5 Build →](./07-step-5-build.md)
 
-> **Purpose:** turn the scenarios and contract into automated tests, and confirm they fail before any code exists.
-> **Produces:** a failing (red) automated test suite — or, for a non-coding task, a failing-first acceptance-check list.
-> **Person's job:** set the targets and coverage. **AI's job:** generate the tests.
+> **Purpose:** rewrite each rule as a concrete pass/fail scenario, then turn those scenarios and the contract into automated tests — and confirm they fail before any code exists.
+> **Produces:** the **§4 TESTS & SCENARIOS** block of the task's `PLAN.md` — the pass/fail cases and a failing (red) automated test suite (or, for a non-coding task, a failing-first acceptance-check list).
+> **Person's job:** decide what "correct" looks like and set the targets. **AI's job:** draft the scenarios, then generate the tests.
 
-> **Part of the specification bundle (v7).** In the default flow these tests are drafted by the AI as part of the specification **bundle** (spec · scenarios · contract · tests) and approved by a person **once**, at the contract freeze — the tests are part of what that one approval covers. They still must be **red before the build**. See [11 Governance](./11-governance.md).
+> **Part of the specification bundle (v7).** In the default flow the scenarios *and* the tests are drafted by the AI as part of the specification **bundle** (spec · contract · tests & scenarios) and approved by a person **once**, at the contract freeze — they are part of what that one approval covers. The tests still must be **red before the build**. See [11 Governance](./11-governance.md).
 
 ---
+
+## Scenarios first — pass/fail cases
+
+A test is only as honest as the case it encodes. Before writing a single assertion, rewrite each rule from the spec as a concrete, pass-or-fail **scenario** — the readable statement of what "correct" looks like that the test is then generated from.
+
+### Why turn rules into scenarios
+
+A plain rule is still open to interpretation. "Source must have enough balance" leaves open: enough for what, exactly? What happens to the balances when it is *not* enough? A scenario removes the interpretation by pinning a specific situation to a specific expected result.
+
+Scenarios occupy a unique position: they are **readable by people and checkable by machines at the same time.** A product owner can confirm a scenario is what they meant; a test can be generated directly from it. This makes them the bridge between the human-led half of the flow and the machine-led back — everything downstream, the tests and through them the build's definition of success, is generated from them.
+
+### The form
+
+Each scenario has three parts:
+
+- **Given** — the starting situation.
+- **When** — the action taken.
+- **Then** — the result that must follow.
+
+Where a rule also constrains what must *not* change, add an **And** clause to state it. Unwanted side effects are caught by what you assert stays the same, not only by what you assert changes.
+
+```
+Scenario: <short name>
+  Given <starting situation>
+  When <action>
+  Then <expected result>
+  And <what must remain unchanged>   # when relevant
+```
+
+### ▶ Scenario example
+
+```
+Scenario: successful transfer
+  Given A has 100 and B has 0, both mine
+  When I transfer 30 from A to B
+  Then A has 70 and B has 30
+
+Scenario: insufficient funds
+  Given A has 20, mine
+  When I transfer 50 from A to B
+  Then it is rejected "insufficient_funds"
+  And no balance changes
+
+Scenario: not my account
+  Given account C is not mine
+  When I transfer 10 from C to B
+  Then it is rejected "forbidden"
+```
+
+The `And no balance changes` line is doing real work: it specifies that a rejected transfer must leave the world untouched — a property the AI could easily violate by deducting before checking.
+
+### Cover the edge cases
+
+The transfer above is one domain; the same gaps recur in every domain — an HR leave request, a marketing campaign send, a checkout. Beyond the spec's "Reject" rules, sweep the recurring gaps and add a scenario for each that applies (or rule it out on purpose): boundary, duplicate/idempotent, ownership, stale/out-of-order, partial failure, concurrency, malformed input, limits/volume.
+
+**Primary cases and primary edge cases are the gated floor; minor variants are build-guidance.** Write the pass/fail scenario for every "Must" and "Reject" rule and for the edge cases that actually change behavior — those become the red tests below. Smaller variations (a second phrasing, a low-risk boundary already implied by another case) can be described in prose for the build to honor without a dedicated test. The rule of thumb: a case earns a test when getting it wrong is a defect a reader would call a bug; otherwise reference it in text.
 
 ## Why tests come before code
 
@@ -22,12 +78,12 @@ After generating the tests, you run them — and they must **fail**, because no 
 
 ## What to test
 
-- **One test per scenario** — every scenario from [Step 2](./04-step-2-scenarios.md) becomes an executable test.
+- **One test per primary scenario** — every "Must"/"Reject" scenario above becomes an executable test; minor variants stay as prose build-guidance.
 - **Contract conformance** — tests that pin the shapes and error responses from [Step 3](./05-step-3-plan.md).
 - **Edge cases from the spec** — the boundary values implied by the "Reject" rules.
 - **Behavior, not internals** — tests assert what the feature does (the observable result), never how it is implemented, so the code can be regenerated freely beneath them.
 
-## ▶ Example
+## ▶ Test example
 
 ```python
 def test_successful_transfer():
@@ -50,9 +106,9 @@ def test_not_my_account():
 
 Run this now, with no implementation: all three fail. That is the correct, honest starting point for the build.
 
-### Declaring which rule a test covers (optional — opt-in by usage)
+### Tagging a scenario or test back to a rule ID (optional — opt-in by usage)
 
-If §1's Musts and Rejects carry stable IDs, add a trailing `covers: M1, R:amount_invalid` to a test-plan line to declare which ID(s) that test satisfies. Once any test in a task declares a `covers:` line (or any §2 scenario carries a tag), `add.py check` confirms every §1 ID is covered by a tag or a `covers:` line somewhere — a task that never uses either is left alone. See the template's own inline example for the exact grammar.
+If §1's Musts and Rejects carry stable IDs (`M1:`, and a Reject's own error code as `R:<error_code>`), declare which ID(s) a case satisfies — tag the `Scenario:` line (`# M1, R:amount_invalid`) or add a trailing `covers: M1, R:amount_invalid` to a §4 test-plan line. Once a task uses either anywhere, `add.py check` confirms every §1 ID is covered by a tag or a `covers:` line somewhere — a task that never uses either is left alone. See the template's own inline example for the exact grammar.
 
 ## Non-coding tasks — acceptance checks, not scripts
 
@@ -68,14 +124,17 @@ The discipline is unchanged — the check must genuinely fail first, and every i
 Checks live in: evidence
 ```
 
-Only the *form* is relaxed: the check need not be executable code. Everything else holds — red before build, one check per scenario, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite above; the two modes never mix within one task.
+Only the *form* is relaxed: the check need not be executable code. Everything else holds — red before build, one check per primary scenario, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite above; the two modes never mix within one task.
 
 ## The AI's role here
 
-The AI generates the test suite from the scenarios and contract. Your job is to confirm two things it cannot judge for itself: that each test asserts *behavior* rather than internal detail, and that none of them pass by accident before code exists. See `playbook/4_tests.md` in [Appendix B](./appendix-b-prompts.md).
+Hand the AI the spec and have it draft a scenario for each rule (including the rejections), then read them as the person who owns the requirement — do they describe what you actually meant? Then have it generate the test suite from those scenarios and the contract. Your job is to confirm two things it cannot judge for itself: that each test asserts *behavior* rather than internal detail, and that none of them pass by accident before code exists. See `playbook/2_scenarios.md` and `playbook/4_tests.md` in [Appendix B](./appendix-b-prompts.md).
 
 ## Common mistakes
 
+- **Only happy-path scenarios.** Every "Reject" rule in the spec needs its own scenario, or that rule will never be verified.
+- **Vague results.** "Then it works" is not checkable. The result must be a specific, observable fact ("A has 70").
+- **Forgetting the unchanged state.** For any rejection, assert that nothing changed; otherwise a partial, corrupting failure can pass.
 - **Tests that test the implementation.** Asserting on private internals couples the test to one version of the code and defeats disposability.
 - **A green suite before the build.** Means the tests are not actually exercising the missing feature — fix them now.
 - **Skipping the side-effect assertions.** Without `assert a.balance == 20` on the rejection path, a corrupting partial failure passes silently.
@@ -88,7 +147,9 @@ The AI generates the test suite from the scenarios and contract. Your job is to 
 
 ## Exit check
 
-- [ ] One test — or, for a non-coding task, one acceptance check — exists per scenario.
+- [ ] Every "Must" and "Reject" rule has at least one pass/fail scenario; each scenario's result is a specific, observable fact, and rejections assert what must stay unchanged.
+- [ ] The edge-case categories that apply to this task's domain have a scenario (or are ruled out on purpose); minor variants are noted as build-guidance.
+- [ ] One test — or, for a non-coding task, one acceptance check — exists per primary scenario.
 - [ ] The suite (or the acceptance-check list) runs in the pipeline and is **red for the right reason**.
 - [ ] Tests assert observable behavior, not internals.
 - [ ] A coverage target is recorded.
@@ -98,4 +159,4 @@ The AI generates the test suite from the scenarios and contract. Your job is to 
 
 ## If the check fails
 
-If a test passes before any implementation, it is a fake test — repair it before continuing, because it is your only independent check on the AI. If the suite is red for the wrong reason (a syntax or harness error), fix the harness first; a build cannot be judged against a broken net.
+A rule with no scenario will never be tested, and therefore never verified — write the missing scenario or remove the rule from the spec; do not carry an unscenarioed rule into the build. If a test passes before any implementation, it is a fake test — repair it before continuing, because it is your only independent check on the AI. If the suite is red for the wrong reason (a syntax or harness error), fix the harness first; a build cannot be judged against a broken net.

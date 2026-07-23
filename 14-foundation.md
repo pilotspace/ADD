@@ -6,8 +6,8 @@
 
 ## The engine needs ground
 
-The flow in [Part II](./02-the-flow.md) is the *engine*: Specify → Scenarios →
-Contract → Tests → Build → Verify, run as a tight loop. TDD and ADD turn inside
+The flow in [Part II](./02-the-flow.md) is the *engine*: Specify → Contract →
+Tests & Scenarios → Build → Verify, run as a tight loop. TDD and ADD turn inside
 that engine — write the failing test, let the AI generate code, repeat.
 
 But an engine needs something to stand on. Every loop quietly assumes context that
@@ -43,7 +43,7 @@ the method already names, made explicit as three concerns.
   every screen must handle (loading · empty · error · success), and a design source
   of truth — a `DESIGN.md` or clickable prototype. The AI can generate a prototype
   from a design system; a person owns the empathy — what the user is trying to do,
-  and what "good" feels like from their side. The scenarios ([04](./04-step-2-scenarios.md))
+  and what "good" feels like from their side. The scenarios ([Step 4](./06-step-4-tests.md))
   test that behaviour; the foundation keeps the design intent that makes a screen
   worth building.
 
@@ -70,35 +70,46 @@ fifth, where the AI executes on it:
 > documentation · the foundation document · ubiquitous language — name the same three ideas. This
 > chapter is where the diagram and the text finally meet.
 
-## One file, not three
+## A thin index over living specs
 
 A foundation that takes a week to write is a foundation no one keeps current. So
-ADD realizes all three concerns as **one living document — `PROJECT.md`** — with
-one short section each, plus an append-only record of key decisions:
+ADD keeps it **thin and split**: a single `PROJECT.md` survivor layer that every
+session reads first, pointing into the **five living specs** under `.add/specs/`
+where the standing picture actually lives — one file per competency, the same file
+lessons land in as the loop learns.
 
 ```
-.add/PROJECT.md
-  ## Domain (DDD)                — concepts · contexts · invariants
-  ## Spec / Living Document (SDD)— → active milestone + frozen contracts
-  ## Users (UDD)                 — UI/UX: user flows · states · DESIGN.md / prototype
-  ## Key Decisions               — append-only: date · decision · why · outcome
+.add/PROJECT.md                — the thin survivor layer, read first
+  goal · invariants · stage-goal-criteria   (the engine-bound header)
+  ## Domain / Spec / Users      — one rolled line + a pointer into .add/specs/
+  ## Key Decisions              — append-only ledger: date · decision · why · outcome
+
+.add/specs/                     — the standing 5-DD picture (lessons land here)
+  domain.md      (DDD)  — concepts · contexts · invariants
+  system.md      (SDD)  — the spec stance: what is settled vs still open, architecture
+  experience.md  (UDD)  — UI/UX: user flows · states · design intent
+  quality.md     (TDD)  — testing + quality conventions
+  method.md      (ADD)  — the loop and gate rules the engine runs on
 ```
 
-Keep it to one screen. If a section wants to grow into a manual, that is a signal
-the detail belongs in a milestone or a contract, not the foundation. The foundation
-is the *thin, durable* context the engine reads first — not a place to relocate the
-work. And you do not hand-write it: at setup the AI **drafts** all four sections —
-silently from an existing codebase, or from a short four-lens interview on a
-greenfield repo — and a single human **baseline approval** freezes that draft as committed
-direction (the setup-level analog of a contract freeze).
+Keep `PROJECT.md` to one screen — the goal, the `invariants:` every task must hold,
+the stage-goal-criteria, the decisions ledger, and the pointers. The detail lives in
+the specs (and, past one screen, in a milestone or a contract), never relocated back
+up. You do not hand-write any of it: at setup the AI **drafts** the foundation —
+silently from an existing codebase, or from a short interview on a greenfield repo —
+and **seeds** the five specs; a single human **baseline approval** freezes that draft
+as committed direction (the setup-level analog of a contract freeze). The `add.py
+delta-append <dd>` command streams each loop's lessons straight into the matching spec,
+so the picture stays current without a separate write-up.
 
 ## How it feeds the engine — and takes feedback back
 
 The arrow runs both ways, which is the whole point of a re-entrant method:
 
 - **Down → up.** At the start of any session or milestone, read `PROJECT.md`
-  before touching a task. It is the cheapest way to point the AI in the right
-  direction. `add.py status` prints a pointer to it for exactly this reason.
+  (and, through its pointers, the `.add/specs/` picture) before touching a task. It
+  is the cheapest way to point the AI in the right direction. `add.py status` prints
+  a pointer to the foundation for exactly this reason.
 - **Up → down.** When a loop reveals that the domain model was wrong, the spec
   stance has shifted, or a user assumption did not survive contact with reality,
   you **stop and update the foundation** — then come forward again. A passing test
@@ -110,18 +121,19 @@ The foundation is the **Project tier** of the document hierarchy
 ([Appendix F](./appendix-f-requirements-matrix.md)) — created once, kept for the
 life of the product, owned above any single milestone.
 
-![Three tiers of documents — Project (the foundation, .add/PROJECT.md) → Milestone → Task: scope narrows and lifespan shortens down the stack](./add-hierarchy.png)
+![Three tiers of documents — Project (the foundation: .add/PROJECT.md + .add/specs/) → Milestone → Task: scope narrows and lifespan shortens down the stack](./add-hierarchy.png)
 
 | Tier | Lives in | Lifespan | Holds |
 |------|----------|----------|-------|
-| **Project** (foundation) | `.add/PROJECT.md` + living-doc files | whole product | domain, spec stance, users, decisions |
+| **Project** (foundation) | `.add/PROJECT.md` + `.add/specs/` + living-doc files | whole product | invariants · decisions + the 5-DD standing picture (domain · spec stance · users · quality · method) |
 | **Milestone** | `.add/milestones/<slug>/MILESTONE.md` | one depth-bounded goal | scope, shared contracts, exit criteria |
 | **Task** | `.add/tasks/<slug>/PLAN.md` | one feature | the seven-step artifacts |
 
 A milestone is a *version bump* to the foundation, not a fresh start: when it
-closes, consolidate what it validated into `PROJECT.md` (a decision, a settled domain
-term, a confirmed user journey) and open the next one against the same, now-richer,
-ground. The consolidation is not informal: each loop emits **lessons learned** (tagged
+closes, consolidate what it validated into the `.add/specs/` foundation (a settled
+domain term into `domain.md`, a spec-stance shift into `system.md`, a confirmed user
+journey into `experience.md`) — with the decision itself recorded in `PROJECT.md`
+§Key Decisions — and open the next one against the same, now-richer, ground. The consolidation is not informal: each loop emits **lessons learned** (tagged
 `DDD · SDD · UDD · TDD · ADD`) in its Observe step, and at milestone close a person
 gathers the open ones and consolidates them — append-only, with the `foundation-version:`
 bumped — into the foundation. See [09 · The loop](./09-the-loop.md#lessons-learned-and-the-retrospective-consolidation)
@@ -129,9 +141,10 @@ for the grammar, the ritual, and the tooling (`add.py deltas`, `add.py check`).
 
 ## In the tooling
 
-- `add.py init` scaffolds `PROJECT.md` as a living-doc file; the AI then drafts its
-  content and a single human **baseline approval** (`add.py lock`) freezes it. Like every
-  living-doc file, `init` **never overwrites a hand-edited one**.
+- `add.py init` scaffolds `PROJECT.md` and seeds the five `.add/specs/` files as
+  living-doc files; the AI then drafts their content and a single human **baseline
+  approval** (`add.py lock`) freezes it. Like every living-doc file, `init` **never
+  overwrites a hand-edited one**.
 - `add.py status` shows a one-line pointer to the foundation, so a fresh session
   re-orients on context before code.
 - The guideline block written into `CLAUDE.md` / `AGENTS.md` tells any agent the

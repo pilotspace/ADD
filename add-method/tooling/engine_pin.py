@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "e226727414f44e3c66cf432e72768fb5"  # re-aimed @ fold-scenarios-tests (add.py drops §2-scenario blurbs; rule-coverage warning → §4 covers). prior: 5c769b93… @ graph-html
-ENGINE_PKG_MD5 = "43b6f9dbc1acc6ee9cbe55d7b0319629"  # re-aimed @ fold-scenarios-tests (constants._FALLBACK_TASK drops ## 2 SCENARIOS, retitles ## 4 TESTS & SCENARIOS). prior: 81553881… @ remove-rule-file-mode
+ENGINE_MD5 = "67519761c9839bf1b92ae9451e90485f"  # re-aimed @ migrate-specs-pointers (cmd_init/cmd_migrate wire PROJECT.md's ADD:SPECS pointer block; init guarded on survivor freshness). prior: 8001ed16… @ claude-md-minimal
+ENGINE_PKG_MD5 = "96f41126af98221befda9012d21b450b"  # re-aimed @ claude-md-block-finalize (guidelines._guideline_block: thin-index step 2, tightened flow/roster, portable agents/*.md). prior: fd36bb5e… @ migrate-specs-pointers
