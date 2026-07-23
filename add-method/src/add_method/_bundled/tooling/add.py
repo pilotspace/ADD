@@ -3326,7 +3326,7 @@ def cmd_status(args: argparse.Namespace) -> None:
             print(f"milestone-relations: {' · '.join(_ms_parts)} — run add.py check")
     # foundation pointer — read the cross-milestone context first (anti-rot)
     if (root / "PROJECT.md").exists():
-        print("context : .add/PROJECT.md  (foundation: domain · spec · UI/UX — read first)")
+        print("context : .add/PROJECT.md  (read-first foundation: goal · invariants · pointers to .add/specs/)")
     # voice pointer — the AI's SOUL (tone · style · trust); read each session, edit freely.
     # Existence-only: no open/parse, so the pointer adds no IO failure path (a non-file is no voice).
     if (root / "SOUL.md").exists():
