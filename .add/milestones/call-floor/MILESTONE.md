@@ -54,7 +54,7 @@ pin them; the kickoff recipe advertises the compressed forms).
 - [x] `freeze --cross` lands in tests · `gate PASS` from build records after auto-cross · bare defaults byte-identical · the recipe prints the compressed forms — test-pinned   (<- compound-ticks; test_compound_ticks.py 7 tests, d8e1718; SELF-PROVED: 4/5's own gate + 5/5's freeze and gate both ran the compound ticks)
 - [x] SKILL.md <= ~8.5K with the orient path intact; moved content reachable on demand; all parity/pool fences green; fast-lane read path <= 30KB — test-pinned PARTIAL-ACCEPTED (<- skill-orient-split, 2d10b2a: SKILL.md landed 9498B vs the ~8.5K sketch — every structural pin bound the floor higher; ceiling test-pinned at 9500. Fast-lane read path ~33KB vs 30 — remaining levers live in the next milestone's phase-guide restructure)
 - [x] floors untouched: full suite green 3508/3508 (fence-skill-orient-split-r2 exit 0), ENGINE_MD5 26f78f04 @ compound-ticks, twin parity green   (<- all)
-- [ ] (paid, human-gated) next WM1 re-measure: mean calls <= 12 on recipe-following reps   (<- all)
+- [x] (paid, human-gated) next WM1 re-measure: mean calls <= 12 on recipe-following reps   (<- all) — **WAIVED 2026-07-23 — signed: Tin Dang** (decision: 'Fix + close on trend'). 5-run trend 27 → 18.7 → 15.0 → 14.3 → 13.3 mean calls (−51%), fidelity 1.00 on EVERY measured rep, rep-floor 10 (run-3 rep2); unflagged_freeze dead (flag slot), scope-grammar garbage dead (scope_unresolved), .venv/venv/.tox/.mypy_cache/.ruff_cache/.eggs + *.egg-info pruned from the scope walk. Evidence: .add/benchmark-remeasure-2026-07-23.md
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
@@ -69,7 +69,7 @@ pin them; the kickoff recipe advertises the compressed forms).
 - <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — 5 built criteria test-pinned (rows above); the paid criterion resolved by the signed waiver
 - goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)

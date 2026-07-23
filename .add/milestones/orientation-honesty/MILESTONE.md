@@ -40,7 +40,7 @@ Issues/Risks (shared): the `--help`/next-command hint must stay a HINT, never a 
 - [x] bare `add.py`/`--help` LEAD with the concise flow map (status/init/new-task/advance/freeze/gate) then the full list, instead of the 50-choice dump — pinned by a test (REPLACES the lever-B criterion; lever B's flagged next-command form was already shipped pre-milestone)        (← orient-map: `test_orient_map.py`)
 - [x] a completing `advance` carries the LANDED phase's guide chapter above the footer, so orientation needs no separate `guide` call — pinned by a test        (← guide-fold: `test_guide_fold.py`)
 - [x] a `scope_violation` return-to-build explains the resolution rule AND emits a paste-ready `re-cross --by` line — ALREADY SHIPPED by scope-gate-repair-path M1+M2 (`add.py:1487`, `add.py:5907`); pinned by the existing scope-gate tests        (← scope-violation-explain: pre-shipped, not re-built)
-- [ ] (paid, human-gated) WM1 re-measure IN THE ISOLATED HARNESS: calls <= 12 mean, fidelity >= 0.97 held, `--help` flag-probes <= 1/rep, zero startup root-walk confusion in transcripts        (← DEFERRED: the human-gated spend, run after this PR merges)
+- [x] (paid, human-gated) WM1 re-measure IN THE ISOLATED HARNESS: fidelity 1.00 >= 0.97 MET · zero startup root-walk confusion MET in 9/9 measured reps (isolation held) · --help <= 1/rep PARTIAL (run-3: 1/3/0) · calls <= 12 mean **WAIVED 2026-07-23 — signed: Tin Dang** (decision: 'Fix + close on trend'). 5-run trend 27 → 18.7 → 15.0 → 14.3 → 13.3 mean calls (−51%), fidelity 1.00 on EVERY measured rep, rep-floor 10 (run-3 rep2); unflagged_freeze dead (flag slot), scope-grammar garbage dead (scope_unresolved), .venv/venv/.tox/.mypy_cache/.ruff_cache/.eggs + *.egg-info pruned from the scope walk. Evidence: .add/benchmark-remeasure-2026-07-23.md
 
 ## Close — ship review   (AI fills when every task is done)
 > Whole-milestone, cross-task review the AI fills in. Evidence behind the EXISTING engine gate.
@@ -60,7 +60,7 @@ Issues/Risks (shared): the `--help`/next-command hint must stay a HINT, never a 
 
 ### Goal met?
 - [x] each built Exit criterion is satisfied by a Cross-task evidence row (cited above); lever C's criterion is met by pre-shipped code (scope-gate-repair-path M1+M2)
-- [ ] goal: reach an honest WM1 <=12 — the isolated-harness re-measure line is the proof — DEFERRED to the human-gated paid re-measure after this PR merges.
+- [x] goal: reach an honest WM1 <=12 — resolved by the signed waiver above (13.3 measured, trend −51%, fidelity 1.00; the strict <=12 mean waived by the human 2026-07-23).
 - Human decision 2026-07-14: close the BUILD at 4 tasks (lever C redundant); the milestone GOAL stays open on the deferred paid re-measure.
 
 ## Release steps   (AI-DEFINED — engine records, human gate)

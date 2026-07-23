@@ -20,15 +20,15 @@ IN: init idempotence messaging (existing project -> loud resume pointer, no re-i
 OUT: any gate/freeze/tamper/scope ENFORCEMENT change - phase-list changes - roster changes - benchmark harness changes.
 
 ## Tasks (breadth-first)
-- [ ] init-idempotent-nudge   depends-on: none — `init` on an already-initialized project prints the resume pointer (status/active task) and exits 0 WITHOUT re-seeding; status opens with "project exists — do NOT init" when state.json is present (kills double-init, the +2-4 calls/rep lever)
-- [ ] scope-first-draft       depends-on: none — the freeze-time scope echo escalates from propose-to-stdout to a ready-to-paste §5 Scope line whenever declared tokens fail to cover §3 Touches (still propose-not-impose; target: post-freeze re-cross repairs -> 0)
-- [ ] status-orientation-diet depends-on: none — one status read carries the full resume context (phase - next verb - active file), so re-orientation re-reads stop; audit the 3-4x/rep re-read transcripts for what was missing
-- [ ] help-habit-kill         depends-on: none — the one --help/rep: unknown/misused subcommand errors restate usage inline (the skip-error-ergonomics recipe), and the skill quick-ref covers the verbs agents actually reach for
+- [x] init-idempotent-nudge   depends-on: none — `init` on an already-initialized project prints the resume pointer (status/active task) and exits 0 WITHOUT re-seeding; status opens with "project exists — do NOT init" when state.json is present (kills double-init, the +2-4 calls/rep lever)
+- [x] scope-first-draft       depends-on: none — the freeze-time scope echo escalates from propose-to-stdout to a ready-to-paste §5 Scope line whenever declared tokens fail to cover §3 Touches (still propose-not-impose; target: post-freeze re-cross repairs -> 0)
+- [x] status-orientation-diet depends-on: none — one status read carries the full resume context (phase - next verb - active file), so re-orientation re-reads stop; audit the 3-4x/rep re-read transcripts for what was missing
+- [x] help-habit-kill         depends-on: none — the one --help/rep: unknown/misused subcommand errors restate usage inline (the skip-error-ergonomics recipe), and the skill quick-ref covers the verbs agents actually reach for
 
 ## Exit criteria (observable)
-- [ ] init on an existing project is a no-op with a loud resume pointer — test-pinned
-- [ ] scope echo emits a paste-ready Scope line on non-covering declarations — test-pinned
-- [ ] a single status read carries phase + next verb + resume file — test-pinned
-- [ ] misuse errors restate usage inline; no doc says "run --help" — test-pinned
-- [ ] floors untouched: full fence green, no enforcement-path diff, ENGINE_MD5 re-pinned
-- [ ] (paid, human-gated) WM1 re-measure: calls <= 12 mean, fidelity >= 0.97 held, zero double-init and zero post-freeze re-cross in transcripts
+- [x] init on an existing project is a no-op with a loud resume pointer — test-pinned (test_init_idempotent_nudge.py; fired LIVE this session: 'project exists — do not re-init')
+- [x] scope echo emits a paste-ready Scope line on non-covering declarations — test-pinned (test_scope_first_draft.py)
+- [x] a single status read carries phase + next verb + resume file — test-pinned (test_status_orientation_diet.py; the 'now:' line carries phase · next · PLAN.md path)
+- [x] misuse errors restate usage inline; no doc says "run --help" — test-pinned (test_help_habit_kill.py)
+- [x] floors untouched: full fence green, no enforcement-path diff, ENGINE_MD5 re-pinned (current pin 60eef504 @ egg-info-prune; suite 2277/2277 green 2026-07-23)
+- [x] (paid, human-gated) WM1 re-measure: fidelity 1.00 MET · zero double-init MET (runs 2-3; the one run-3 rep1 double init was --help exploration, second init refused idempotently) · post-freeze re-cross NOT zero (artifact-dir traps, both since pruned) · calls <= 12 **WAIVED 2026-07-23 — signed: Tin Dang** (decision: 'Fix + close on trend'). 5-run trend 27 → 18.7 → 15.0 → 14.3 → 13.3 mean calls (−51%), fidelity 1.00 on EVERY measured rep, rep-floor 10 (run-3 rep2); unflagged_freeze dead (flag slot), scope-grammar garbage dead (scope_unresolved), .venv/venv/.tox/.mypy_cache/.ruff_cache/.eggs + *.egg-info pruned from the scope walk. Evidence: .add/benchmark-remeasure-2026-07-23.md
