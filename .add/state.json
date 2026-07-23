@@ -27,7 +27,7 @@
     },
     {
       "slug": "v13",
-      "title": "Decision-seam reports \u2014 decisive facts first, engine-sourced",
+      "title": "Decision-seam reports — decisive facts first, engine-sourced",
       "tasks": 3,
       "task_slugs": [
         "decide-digest",
@@ -188,7 +188,7 @@
     },
     {
       "slug": "goal-auto-ready",
-      "title": "Goal-auto-ready \u2014 goal-clarity earns autonomy",
+      "title": "Goal-auto-ready — goal-clarity earns autonomy",
       "tasks": 2,
       "task_slugs": [
         "init-auto-default",
@@ -198,7 +198,7 @@
     },
     {
       "slug": "ground-phase",
-      "title": "Ground phase \u2014 build against the real codebase",
+      "title": "Ground phase — build against the real codebase",
       "tasks": 3,
       "task_slugs": [
         "ground-phase-engine",
@@ -221,7 +221,7 @@
     },
     {
       "slug": "verify-integrity",
-      "title": "Verify integrity \u2014 prove the green was earned, not gamed",
+      "title": "Verify integrity — prove the green was earned, not gamed",
       "tasks": 3,
       "task_slugs": [
         "tamper-tripwire",
@@ -256,7 +256,7 @@
     },
     {
       "slug": "foundation-compaction",
-      "title": "Foundation compaction \u2014 every survivor spec shrinks too",
+      "title": "Foundation compaction — every survivor spec shrinks too",
       "tasks": 5,
       "task_slugs": [
         "compact-contract",
@@ -307,7 +307,7 @@
     },
     {
       "slug": "decision-suggestions",
-      "title": "Decision suggestions \u2014 a recommended pick + described alternatives at every human gate",
+      "title": "Decision suggestions — a recommended pick + described alternatives at every human gate",
       "tasks": 3,
       "task_slugs": [
         "suggestion-block",
@@ -420,7 +420,7 @@
     },
     {
       "slug": "skill-effectiveness",
-      "title": "lean-pass M1 \u00b7 skill effectiveness",
+      "title": "lean-pass M1 · skill effectiveness",
       "tasks": 4,
       "task_slugs": [
         "skill-core-compact",
@@ -432,7 +432,7 @@
     },
     {
       "slug": "flow-enforcement",
-      "title": "Flow enforcement \u2014 turn convention fill-seams into engine gates",
+      "title": "Flow enforcement — turn convention fill-seams into engine gates",
       "tasks": 3,
       "task_slugs": [
         "contract-fill-gate",
@@ -455,7 +455,7 @@
     },
     {
       "slug": "docs-site",
-      "title": "Docs site \u2014 ship the AIDD book to GitHub Pages",
+      "title": "Docs site — ship the AIDD book to GitHub Pages",
       "tasks": 2,
       "task_slugs": [
         "site-scaffold",
@@ -488,7 +488,7 @@
     },
     {
       "slug": "audit-hardening",
-      "title": "Audit hardening \u2014 close gate/atomicity/coverage gaps",
+      "title": "Audit hardening — close gate/atomicity/coverage gaps",
       "tasks": 5,
       "task_slugs": [
         "phase-build-guard",
@@ -545,7 +545,7 @@
     },
     {
       "slug": "multi-active-polish",
-      "title": "multi-active-polish \u2014 finish the deferred team-collaboration seams",
+      "title": "multi-active-polish — finish the deferred team-collaboration seams",
       "tasks": 4,
       "task_slugs": [
         "waves-merge",
@@ -568,7 +568,7 @@
     },
     {
       "slug": "flow-honesty",
-      "title": "flow-honesty \u2014 make ADD's stated guarantees engine-true or honestly labeled",
+      "title": "flow-honesty — make ADD's stated guarantees engine-true or honestly labeled",
       "tasks": 7,
       "task_slugs": [
         "freeze-gate-universal",
@@ -583,7 +583,7 @@
     },
     {
       "slug": "component-polish",
-      "title": "component-polish \u2014 close the component-pillar gaps and harden the cross-repo edges",
+      "title": "component-polish — close the component-pillar gaps and harden the cross-repo edges",
       "tasks": 5,
       "task_slugs": [
         "components-validator",
@@ -596,7 +596,7 @@
     },
     {
       "slug": "installer-polish",
-      "title": "installer-polish \u2014 round out the global-home and installer lane",
+      "title": "installer-polish — round out the global-home and installer lane",
       "tasks": 3,
       "task_slugs": [
         "global-data-restore",
@@ -727,7 +727,7 @@
     },
     {
       "slug": "loop-readability",
-      "title": "ADD loop readability \u2014 human-scannable output across every phase",
+      "title": "ADD loop readability — human-scannable output across every phase",
       "tasks": 2,
       "task_slugs": [
         "report-shape-scan-audit",
@@ -737,7 +737,7 @@
     },
     {
       "slug": "install-update-hardening",
-      "title": "Install/update hardening \u2014 atomic + concurrency-safe writes",
+      "title": "Install/update hardening — atomic + concurrency-safe writes",
       "tasks": 4,
       "task_slugs": [
         "global-lock-followups",
@@ -828,7 +828,7 @@
     },
     {
       "slug": "token-anatomy",
-      "title": "Ceremony token anatomy \u2014 attribute ADD's cache-read cost by category",
+      "title": "Ceremony token anatomy — attribute ADD's cache-read cost by category",
       "tasks": 2,
       "task_slugs": [
         "anatomy-core",
@@ -838,7 +838,7 @@
     },
     {
       "slug": "engine-minimalism",
-      "title": "Engine output diet \u2014 cut add.py's re-read cache weight",
+      "title": "Engine output diet — cut add.py's re-read cache weight",
       "tasks": 2,
       "task_slugs": [
         "help-diet",
@@ -848,7 +848,7 @@
     },
     {
       "slug": "v1-1",
-      "title": "v1.1 \u2014 adoption & ergonomics",
+      "title": "v1.1 — adoption & ergonomics",
       "tasks": 5,
       "task_slugs": [
         "set-milestone-cmd",
@@ -871,7 +871,7 @@
     },
     {
       "slug": "v2",
-      "title": "Transparent \u00b7 Provable \u00b7 Minimal",
+      "title": "Transparent · Provable · Minimal",
       "tasks": 5,
       "task_slugs": [
         "state-story-architecture",
@@ -918,7 +918,7 @@
     },
     {
       "slug": "v7",
-      "title": "Auto by default \u2014 the one-approval flow",
+      "title": "Auto by default — the one-approval flow",
       "tasks": 2,
       "task_slugs": [
         "auto-default-dial",
@@ -948,7 +948,7 @@
     },
     {
       "slug": "v9",
-      "title": "Awareness surface \u2014 render what happened",
+      "title": "Awareness surface — render what happened",
       "tasks": 2,
       "task_slugs": [
         "report-render",
@@ -977,7 +977,7 @@
     },
     {
       "slug": "v12",
-      "title": "Autonomous Onboarding \u2014 zero-touch setup \u2192 human lock-down",
+      "title": "Autonomous Onboarding — zero-touch setup → human lock-down",
       "tasks": 6,
       "task_slugs": [
         "setup-lock-state",
@@ -1073,7 +1073,7 @@
     },
     {
       "slug": "flow-simplification",
-      "title": "lean-pass M3 \u00b7 flow simplification",
+      "title": "lean-pass M3 · flow simplification",
       "tasks": 3,
       "task_slugs": [
         "spawn-fold",
@@ -1106,7 +1106,7 @@
     },
     {
       "slug": "build-strategy-facets",
-      "title": "Faceted \u00a75 build strategy",
+      "title": "Faceted §5 build strategy",
       "tasks": 2,
       "task_slugs": [
         "strategy-facet-block",
@@ -1179,7 +1179,7 @@
     },
     {
       "slug": "plan-legibility",
-      "title": "Plan legibility \u2014 surface the build plan at the freeze + structured task relations",
+      "title": "Plan legibility — surface the build plan at the freeze + structured task relations",
       "tasks": 2,
       "task_slugs": [
         "plan-in-report",
@@ -1212,7 +1212,6 @@
     "honest-fidelity-meter",
     "strategy-intake",
     "thin-engine-loop",
-    "intake-atomicity",
     "signal-graph"
   ],
   "project": "AIDD / ADD Methodology",
@@ -1226,7 +1225,6 @@
     "strategy-intake": "gate-experience-udd",
     "add-bench-2": "tiny-plan-small-scope",
     "call-floor": "skill-orient-split",
-    "intake-atomicity": "scope-atomicity-guard",
     "signal-graph": "atomicity-signal"
   },
   "active_milestone": "signal-graph",
@@ -1245,7 +1243,7 @@
     },
     {
       "id": 3,
-      "text": "F9 (audit): reconcile scope-level enumeration across ch10/ch16/appendix-c \u2014 pick one canonical ordered list (needs a direction call)",
+      "text": "F9 (audit): reconcile scope-level enumeration across ch10/ch16/appendix-c — pick one canonical ordered list (needs a direction call)",
       "created": "2026-06-25T10:13:51+00:00",
       "status": "done"
     },
@@ -1269,13 +1267,13 @@
     },
     {
       "id": 7,
-      "text": "F13 (audit): _audit_findings misses gate/\u00a76 mismatch when gate=='none' but \u00a76 has a verdict",
+      "text": "F13 (audit): _audit_findings misses gate/§6 mismatch when gate=='none' but §6 has a verdict",
       "created": "2026-06-25T10:13:51+00:00",
       "status": "done"
     },
     {
       "id": 8,
-      "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs \u2014 add shutil.rmtree in tearDown (shared base class)",
+      "text": "F14 (audit): ~109 test files leak tempfile.mkdtemp dirs — add shutil.rmtree in tearDown (shared base class)",
       "created": "2026-06-25T10:13:51+00:00",
       "status": "done"
     },
@@ -1293,19 +1291,19 @@
     },
     {
       "id": 11,
-      "text": "multi-active milestones: clarify + analyze requirements, then allow persisting MORE THAN ONE active milestone across sessions (extends team-collaboration M5 multi-active) \u2014 needs a requirements interview BEFORE sizing: what 'persist/allow' means (concurrency cap? per-user? resume UX?), the exact gap vs today's multi-active support",
+      "text": "multi-active milestones: clarify + analyze requirements, then allow persisting MORE THAN ONE active milestone across sessions (extends team-collaboration M5 multi-active) — needs a requirements interview BEFORE sizing: what 'persist/allow' means (concurrency cap? per-user? resume UX?), the exact gap vs today's multi-active support",
       "created": "2026-06-25T14:36:55+00:00",
       "status": "done"
     },
     {
       "id": 12,
-      "text": "split add.py (the ~6k-line engine) into focused modules \u2014 e.g. state/commands/audit/scope/release \u2014 behind a stable import surface; keep the 3-tree mirror + ENGINE_MD5 pin working (needs a design pass on module boundaries + how the mirror/pin adapt to multi-file)",
+      "text": "split add.py (the ~6k-line engine) into focused modules — e.g. state/commands/audit/scope/release — behind a stable import surface; keep the 3-tree mirror + ENGINE_MD5 pin working (needs a design pass on module boundaries + how the mirror/pin adapt to multi-file)",
       "created": "2026-06-25T16:34:48+00:00",
       "status": "done"
     },
     {
       "id": 13,
-      "text": "enhance the UDD design-definition loop (design.md) to interview UI/UX explicitly: ask FIDELITY (lo-fi wireframe vs hi-fi mockup vs production), CONCEPT (the design idea/mood/direction), LAYOUT (structure/grid/hierarchy), and VISUAL DESIGN (color/type/spacing/imagery) \u2014 a guided per-axis design intake before the captured-screen confirm",
+      "text": "enhance the UDD design-definition loop (design.md) to interview UI/UX explicitly: ask FIDELITY (lo-fi wireframe vs hi-fi mockup vs production), CONCEPT (the design idea/mood/direction), LAYOUT (structure/grid/hierarchy), and VISUAL DESIGN (color/type/spacing/imagery) — a guided per-axis design intake before the captured-screen confirm",
       "created": "2026-06-25T17:48:10+00:00",
       "status": "done"
     },
@@ -1335,13 +1333,13 @@
     },
     {
       "id": 18,
-      "text": "advisor.md subagent-spawn template has NO explicit implementation-strategy field \u2014 strategy is delegated to whatever the orchestrator writes into {{PIECE}}; only the persona's generic step-2 ('do the work in small steps, honoring the orchestrator's plan') nods to it. Consider adding an ordered-batches / dependency-aware strategy section (cf. the richer global-CLAUDE.md Rule-5 persona step-plan + success_criteria), weighed against the lean-pass skill byte budget.",
+      "text": "advisor.md subagent-spawn template has NO explicit implementation-strategy field — strategy is delegated to whatever the orchestrator writes into {{PIECE}}; only the persona's generic step-2 ('do the work in small steps, honoring the orchestrator's plan') nods to it. Consider adding an ordered-batches / dependency-aware strategy section (cf. the richer global-CLAUDE.md Rule-5 persona step-plan + success_criteria), weighed against the lean-pass skill byte budget.",
       "created": "2026-06-27T15:14:28+00:00",
       "status": "done"
     },
     {
       "id": 19,
-      "text": "GROUND phase (phases/0-ground.md) retrieves CONVENTIONS + foundation decisions (Honors field <- PROJECT.md/CONVENTIONS.md) + code-level decisions (Touches <- grep/symbol search), but has NO explicit field to retrieve prior TASK-level DECISIONS: sibling frozen \u00a73 contracts, \u00a76 GATE RECORD outcomes (PASS/RISK-ACCEPTED ledger), or open \u00a77 spec deltas this task depends on / shares a surface with. Consider a 'Prior decisions' ground input (or an  recall helper) so a new task grounds on adjacent decisions, not just conventions + raw code.",
+      "text": "GROUND phase (phases/0-ground.md) retrieves CONVENTIONS + foundation decisions (Honors field <- PROJECT.md/CONVENTIONS.md) + code-level decisions (Touches <- grep/symbol search), but has NO explicit field to retrieve prior TASK-level DECISIONS: sibling frozen §3 contracts, §6 GATE RECORD outcomes (PASS/RISK-ACCEPTED ledger), or open §7 spec deltas this task depends on / shares a surface with. Consider a 'Prior decisions' ground input (or an  recall helper) so a new task grounds on adjacent decisions, not just conventions + raw code.",
       "created": "2026-06-27T15:15:17+00:00",
       "status": "open"
     },
@@ -1359,7 +1357,7 @@
     },
     {
       "id": 22,
-      "text": "Harden decision/ADR recording at the OBSERVE phase \u2014 capture decisions made by BOTH human and AI (who decided, what, why, alternatives) as a durable Architecture-Decision-Record-style artifact, not just spec/competency deltas",
+      "text": "Harden decision/ADR recording at the OBSERVE phase — capture decisions made by BOTH human and AI (who decided, what, why, alternatives) as a durable Architecture-Decision-Record-style artifact, not just spec/competency deltas",
       "created": "2026-06-27T16:45:08+00:00",
       "status": "open"
     },
@@ -1371,13 +1369,13 @@
     },
     {
       "id": 24,
-      "text": "pty-test-helper (deferred from installer-polish): extract a reusable PTY test helper so the installer's interactive-prompt + agent-detect happy-paths run under a committed CI test (today they only run interactively). Standalone fast task \u2014 milestone-free.",
+      "text": "pty-test-helper (deferred from installer-polish): extract a reusable PTY test helper so the installer's interactive-prompt + agent-detect happy-paths run under a committed CI test (today they only run interactively). Standalone fast task — milestone-free.",
       "created": "2026-06-28T16:47:03+00:00",
       "status": "open"
     },
     {
       "id": 25,
-      "text": "engine bug: _declared_scope regex only reads the FIRST physical line of \u00a75 'Scope (may touch):' \u2014 a wrapped scope line silently truncates the declared-scope anchor, causing false build_tampered/scope_violation on any task whose \u00a75 wraps to 2+ lines (found while gating sweep-orphan-reclaim-tickets, 2026-07-05)",
+      "text": "engine bug: _declared_scope regex only reads the FIRST physical line of §5 'Scope (may touch):' — a wrapped scope line silently truncates the declared-scope anchor, causing false build_tampered/scope_violation on any task whose §5 wraps to 2+ lines (found while gating sweep-orphan-reclaim-tickets, 2026-07-05)",
       "created": "2026-07-05T02:32:14+00:00",
       "status": "open"
     },
@@ -1395,13 +1393,13 @@
     },
     {
       "id": 28,
-      "text": "benchmark harness CRITICAL: default_agent_cmd pins NO --model, so claude -p inherits the ambient session default at run time. Live proof 2026-07-09: same add WM1 ran on claude-opus-4-8 (single, $5.62) vs claude-fable-5 (multi-rep, $8.71-11.02) \u2014 same work, different model, 2x cost. ALL cross-run cost/turn comparisons (incl the $3.99 baseline) are INVALID until --model is pinned in default_agent_cmd AND the account is isolated from concurrent claude sessions (26 procs running during the multi-rep). arm.toml already declares same_model=true but nothing enforces it. Fix before any further add-bench cost claim.",
+      "text": "benchmark harness CRITICAL: default_agent_cmd pins NO --model, so claude -p inherits the ambient session default at run time. Live proof 2026-07-09: same add WM1 ran on claude-opus-4-8 (single, $5.62) vs claude-fable-5 (multi-rep, $8.71-11.02) — same work, different model, 2x cost. ALL cross-run cost/turn comparisons (incl the $3.99 baseline) are INVALID until --model is pinned in default_agent_cmd AND the account is isolated from concurrent claude sessions (26 procs running during the multi-rep). arm.toml already declares same_model=true but nothing enforces it. Fix before any further add-bench cost claim.",
       "created": "2026-07-09T13:43:23+00:00",
       "status": "open"
     },
     {
       "id": 29,
-      "text": "NEW sub-milestone 'plan-legibility' (after T3): task A = surface the \u00a73 Build-strategy plan-of-action in the DECIDE/freeze report + firm up report-template.md so the human follows WHAT the AI will do, not just the contract shape; task B = structured per-task Relations surface (depends-on \u00b7 extends \u00b7 relates-to, task AND milestone) at plan/status \u2014 consolidate today's scattered Related-intent/depends-on/SEAMS (SEAMS pointer still says retired \u00a70 GROUND).",
+      "text": "NEW sub-milestone 'plan-legibility' (after T3): task A = surface the §3 Build-strategy plan-of-action in the DECIDE/freeze report + firm up report-template.md so the human follows WHAT the AI will do, not just the contract shape; task B = structured per-task Relations surface (depends-on · extends · relates-to, task AND milestone) at plan/status — consolidate today's scattered Related-intent/depends-on/SEAMS (SEAMS pointer still says retired §0 GROUND).",
       "created": "2026-07-12T15:54:46+00:00",
       "status": "open"
     },
@@ -1419,25 +1417,25 @@
     },
     {
       "id": 32,
-      "text": "post-1.18 release: update --global \u2014 ~/.claude/skills/add is stale (still pre-plan-phase 0-ground/3-contract guides); consider a flow-fingerprint mismatch warning in status",
+      "text": "post-1.18 release: update --global — ~/.claude/skills/add is stale (still pre-plan-phase 0-ground/3-contract guides); consider a flow-fingerprint mismatch warning in status",
       "created": "2026-07-13T08:47:10+00:00",
       "status": "open"
     },
     {
       "id": 33,
-      "text": "lock-reclaim TOCTOU race: test_concurrent_stale_reclaim_survives_scheduling_delay observed peak=2 holders twice on py3.10 CI (also the older test_project_scope_lock sibling) \u2014 the reclaim window is real on slow runners; harden the ticket-race path or gate the reclaim on a holder heartbeat",
+      "text": "lock-reclaim TOCTOU race: test_concurrent_stale_reclaim_survives_scheduling_delay observed peak=2 holders twice on py3.10 CI (also the older test_project_scope_lock sibling) — the reclaim window is real on slow runners; harden the ticket-race path or gate the reclaim on a holder heartbeat",
       "created": "2026-07-13T11:37:30+00:00",
       "status": "open"
     },
     {
       "id": 34,
-      "text": "bench meter: the judge rubric's 'single float and nothing else' protocol caps spec_fidelity at ~0.98 (LLM hedging artifact \u2014 the SAME sonnet judge forced to itemize MET/UNMET with evidence scored sixphase-r1 1.0, all requirements MET); meter v3 candidate = itemize-then-float rubric, but changing it breaks comparability with every archived round",
+      "text": "bench meter: the judge rubric's 'single float and nothing else' protocol caps spec_fidelity at ~0.98 (LLM hedging artifact — the SAME sonnet judge forced to itemize MET/UNMET with evidence scored sixphase-r1 1.0, all requirements MET); meter v3 candidate = itemize-then-float rubric, but changing it breaks comparability with every archived round",
       "created": "2026-07-14T04:38:54+00:00",
       "status": "open"
     },
     {
       "id": 35,
-      "text": "semantic_inventory.py is red on main (17 findings incl. fold.md 'file gone') and NO test invokes it \u2014 wire it into the suite like wording_lint, then reconcile SEMANTIC_INVENTORY.md with the current surface",
+      "text": "semantic_inventory.py is red on main (17 findings incl. fold.md 'file gone') and NO test invokes it — wire it into the suite like wording_lint, then reconcile SEMANTIC_INVENTORY.md with the current surface",
       "created": "2026-07-21T03:36:01+00:00",
       "status": "open"
     }
@@ -1468,13 +1466,13 @@
       "stage": "mvp",
       "updated": "2026-07-14T16:16:45+00:00",
       "status": "active",
-      "goal": "Land the value-dense engine cleanup a read-only sweep found \u2014 behavior-preserving perf hoists + duplication removal (cmd_check TOML re-reads/dead recompute, 5x snapshot-hash helper with unified exceptions, static-regex hoist, milestone-resolve DRY) and finish-wiring the never-surfaced _milestone_relations feature \u2014 with the existing ~3600-test fence as the safety net"
+      "goal": "Land the value-dense engine cleanup a read-only sweep found — behavior-preserving perf hoists + duplication removal (cmd_check TOML re-reads/dead recompute, 5x snapshot-hash helper with unified exceptions, static-regex hoist, milestone-resolve DRY) and finish-wiring the never-surfaced _milestone_relations feature — with the existing ~3600-test fence as the safety net"
     },
     "add-bench-2": {
       "title": "Add Bench 2",
       "stage": "mvp",
       "status": "active",
-      "goal": "benchmark ADD on the terrain its machinery actually defends: interruption-resume, ambiguity surfacing, regression storms, cold-start maintenance, and security bait \u2014 measuring what WM1-6 never triggered",
+      "goal": "benchmark ADD on the terrain its machinery actually defends: interruption-resume, ambiguity surfacing, regression storms, cold-start maintenance, and security bait — measuring what WM1-6 never triggered",
       "created": "2026-07-08T08:41:06+00:00",
       "confirmed_at": "2026-07-08T08:41:06+00:00",
       "actor": {
@@ -1488,10 +1486,10 @@
       "await_confirm": true
     },
     "thin-engine-loop": {
-      "title": "Thin engine, loop-in-SKILL, 6\u21923 phases",
+      "title": "Thin engine, loop-in-SKILL, 6→3 phases",
       "stage": "mvp",
       "status": "active",
-      "goal": "A task runs read-SKILL\u2192edit\u2192freeze\u2192gate with \u22643 add.py calls (from 5), loop driven by the SKILL, mechanical floor intact (verify: add-bench call census \u22643 median AND test_freeze_*/test_gate_*/test_audit_* stay green)",
+      "goal": "A task runs read-SKILL→edit→freeze→gate with ≤3 add.py calls (from 5), loop driven by the SKILL, mechanical floor intact (verify: add-bench call census ≤3 median AND test_freeze_*/test_gate_*/test_audit_* stay green)",
       "created": "2026-07-16T06:52:20+00:00",
       "confirmed_at": "2026-07-16T09:51:28+00:00",
       "actor": {
@@ -1525,7 +1523,7 @@
       "title": "Ceremony-to-effort: convert evaporating ceremony into artifact turns",
       "stage": "mvp",
       "status": "active",
-      "goal": "Convert measured evaporating ceremony into artifact effort \u2014 raise the artifact-turn ratio from ~37% toward spec-kit's ~95% band without lowering any trust floor. Target on the pinned-meter re-measure: mean add.py calls <= 12 (from 21), zero --help/duplicate-retry calls, per-task read burden <= ~30KB (from 56KB).",
+      "goal": "Convert measured evaporating ceremony into artifact effort — raise the artifact-turn ratio from ~37% toward spec-kit's ~95% band without lowering any trust floor. Target on the pinned-meter re-measure: mean add.py calls <= 12 (from 21), zero --help/duplicate-retry calls, per-task read burden <= ~30KB (from 56KB).",
       "created": "2026-07-13T08:45:14+00:00",
       "confirmed_at": "2026-07-13T08:47:09+00:00",
       "actor": {
@@ -1578,7 +1576,7 @@
       "stage": "mvp",
       "updated": "2026-07-13T15:52:21+00:00",
       "status": "active",
-      "goal": "Close the gap the WM1 re-measure named: mean engine calls 18.7 -> ~12 and always-loaded read burden -> <=30KB, floors untouched \u2014 every lever engine-mechanical or additive, none prose-only"
+      "goal": "Close the gap the WM1 re-measure named: mean engine calls 18.7 -> ~12 and always-loaded read burden -> <=30KB, floors untouched — every lever engine-mechanical or additive, none prose-only"
     },
     "persona-gepa-loop": {
       "created": "2026-07-16T09:46:41+00:00",
@@ -1588,18 +1586,9 @@
       "status": "queued",
       "goal": ""
     },
-    "intake-atomicity": {
-      "title": "Atomicity nudge at intake/freeze",
-      "goal": "Freeze surfaces a non-blocking advisory nudge when a single task's frozen scope enumerates N>1 independent Parts (a longtail/drain/sweep catch-all), steering it into a milestone-of-tasks \u2014 human decides, measure-not-block, no false-positive cost",
-      "stage": "mvp",
-      "status": "active",
-      "created": "2026-07-22T17:40:22+00:00",
-      "updated": "2026-07-22T17:40:22+00:00",
-      "tiny": true
-    },
     "signal-graph": {
-      "title": "Unified signal graph \u2014 note = todo = delta as nodes",
-      "goal": "Unify the three off-graph observation primitives (ephemeral note, todo, \u00a77 delta) into ONE addressable signal node with a status lifecycle and edges, promote exit-criteria to delivered-by nodes, and render them through cmd_graph as a VIEW over existing text \u2014 no new persistence store; the honesty layer's output becomes navigable, not just readable",
+      "title": "Unified signal graph — note = todo = delta as nodes",
+      "goal": "Unify the three off-graph observation primitives (ephemeral note, todo, §7 delta) into ONE addressable signal node with a status lifecycle and edges, promote exit-criteria to delivered-by nodes, and render them through cmd_graph as a VIEW over existing text — no new persistence store; the honesty layer's output becomes navigable, not just readable",
       "stage": "mvp",
       "status": "done",
       "created": "2026-07-23T02:20:33+00:00",
@@ -1655,7 +1644,7 @@
         "history": [
           {
             "at": "2026-07-02T05:55:47+00:00",
-            "reason": "scope_violation: task 'skill-tree-compaction-audit' touched outside its declared \u00a75 Scope \u2014 add-method/skill/add/advisor.md \u00b7 add-method/skill/add/confidence.md \u00b7 add-method/skill/add/design.md \u00b7 add-method/skill/add/intake.md \u00b7 add-method/skill/add/loop.md (16 total)",
+            "reason": "scope_violation: task 'skill-tree-compaction-audit' touched outside its declared §5 Scope — add-method/skill/add/advisor.md · add-method/skill/add/confidence.md · add-method/skill/add/design.md · add-method/skill/add/intake.md · add-method/skill/add/loop.md (16 total)",
             "source": "scope"
           }
         ]
@@ -1730,12 +1719,12 @@
         "history": [
           {
             "at": "2026-07-14T14:58:08+00:00",
-            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared \u00a75 Scope \u2014 add-method/src/pilotspace_add.egg-info/SOURCES.txt \u00b7 tmp/harness-workspace-isolation-commit.txt (2 total)",
+            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared §5 Scope — add-method/src/pilotspace_add.egg-info/SOURCES.txt · tmp/harness-workspace-isolation-commit.txt (2 total)",
             "source": "scope"
           },
           {
             "at": "2026-07-14T14:58:50+00:00",
-            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared \u00a75 Scope \u2014 add-method/src/pilotspace_add.egg-info/SOURCES.txt (1 total)",
+            "reason": "scope_violation: task 'harness-workspace-isolation' touched outside its declared §5 Scope — add-method/src/pilotspace_add.egg-info/SOURCES.txt (1 total)",
             "source": "scope"
           }
         ]
@@ -1810,7 +1799,7 @@
     "intake-interview": {
       "milestone": null,
       "created": "2026-06-07T08:04:19+00:00",
-      "title": "Interview before you size \u2014 proactive intent clarification at intake",
+      "title": "Interview before you size — proactive intent clarification at intake",
       "updated": "2026-06-07T08:18:47+00:00",
       "depends_on": [],
       "gate": "PASS",
@@ -1828,7 +1817,7 @@
     "test-corpus-slim": {
       "route": {
         "lane": "full",
-        "by": "persona:tdd-verifier \u2014 wide test deletion needs the full bundle; every strike ratified at the freeze"
+        "by": "persona:tdd-verifier — wide test deletion needs the full bundle; every strike ratified at the freeze"
       },
       "title": "Consolidate duplicated parity/engine-pin tests into one canonical sweep",
       "tripwire": {
@@ -1874,7 +1863,7 @@
       }
     },
     "fold-glossary-deltas": {
-      "title": "Route \u00a73 Glossary Deltas Through Fold Into GLOSSARY.md",
+      "title": "Route §3 Glossary Deltas Through Fold Into GLOSSARY.md",
       "tripwire": {
         "contract_md5": "5a0f8fc5aed40da45c07963baa92217f",
         "tests": {}
@@ -1980,7 +1969,7 @@
     "wave-ledger": {
       "milestone": null,
       "created": "2026-06-07T16:07:44+00:00",
-      "title": "WAVE.md \u2014 durable wave ledger for parallel streams",
+      "title": "WAVE.md — durable wave ledger for parallel streams",
       "updated": "2026-06-07T16:30:01+00:00",
       "depends_on": [],
       "gate": "PASS",
@@ -2037,7 +2026,7 @@
         "history": [
           {
             "at": "2026-07-14T11:08:34+00:00",
-            "reason": "scope_violation: task 'init-idempotent-nudge' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/add.py \u00b7 add-method/tooling/engine_pin.py \u00b7 add-method/tooling/test_add.py (3 total)",
+            "reason": "scope_violation: task 'init-idempotent-nudge' touched outside its declared §5 Scope — add-method/src/add_method/_bundled/tooling/add.py · add-method/tooling/engine_pin.py · add-method/tooling/test_add.py (3 total)",
             "source": "scope"
           }
         ]
@@ -2186,7 +2175,7 @@
       }
     },
     "gate-experience-udd": {
-      "title": "host the persona-owned gate as a text-mode UDD artifact \u2014 fold report-template into the UDD family + a lightweight gate loop",
+      "title": "host the persona-owned gate as a text-mode UDD artifact — fold report-template into the UDD family + a lightweight gate loop",
       "tripwire": {
         "contract_md5": "322975876487f75cb58c4147e374e627",
         "tests": {}
@@ -2331,7 +2320,7 @@
       }
     },
     "persona-owns-gates": {
-      "title": "retire the fixed report-template \u2014 personas own gate structure + cadence",
+      "title": "retire the fixed report-template — personas own gate structure + cadence",
       "tripwire": {
         "contract_md5": "d4e6d7f991238a185b601031c160b9ff",
         "tests": {
@@ -2362,7 +2351,7 @@
           },
           {
             "at": "2026-07-16T03:48:15+00:00",
-            "reason": "scope_violation: task 'persona-owns-gates' touched outside its declared \u00a75 Scope \u2014 add-method/tooling/test_report_shape_scan_audit.py (1 total)",
+            "reason": "scope_violation: task 'persona-owns-gates' touched outside its declared §5 Scope — add-method/tooling/test_report_shape_scan_audit.py (1 total)",
             "source": "scope"
           }
         ]
@@ -2513,7 +2502,7 @@
       }
     },
     "freeze-actor-stamp": {
-      "title": "add.py freeze write seam \u2014 engine-stamped actor at the \u00a73 contract freeze",
+      "title": "add.py freeze write seam — engine-stamped actor at the §3 contract freeze",
       "tripwire": {
         "contract_md5": "d927a0c68dac461b3f57853f38e4d615",
         "tests": {
@@ -2591,7 +2580,7 @@
       "gate": "RISK-ACCEPTED"
     },
     "ground-phase-harden": {
-      "title": "Enrich the \u00a70 GROUND guide + template: require all four fields, richer prompt + exit gate",
+      "title": "Enrich the §0 GROUND guide + template: require all four fields, richer prompt + exit gate",
       "tripwire": {
         "contract_md5": "1b1ae31d853da9ae6c01e76d45486014",
         "tests": {
@@ -3041,7 +3030,7 @@
         "history": [
           {
             "at": "2026-07-06T09:33:54+00:00",
-            "reason": "scope_violation: task 'fastlane-intake-nudge' touched outside its declared \u00a75 Scope \u2014 add-method/skill/add/phases/fast-lane.md \u00b7 add-method/src/add_method/_bundled/skill/add/phases/fast-lane.md \u00b7 add-method/src/add_method/_bundled/tooling/add.py \u00b7 add-method/src/add_method/_bundled/tooling/engine_pin.py \u00b7 add-method/tooling/engine_pin.py (7 total)",
+            "reason": "scope_violation: task 'fastlane-intake-nudge' touched outside its declared §5 Scope — add-method/skill/add/phases/fast-lane.md · add-method/src/add_method/_bundled/skill/add/phases/fast-lane.md · add-method/src/add_method/_bundled/tooling/add.py · add-method/src/add_method/_bundled/tooling/engine_pin.py · add-method/tooling/engine_pin.py (7 total)",
             "source": "scope"
           }
         ]
@@ -3088,7 +3077,7 @@
       "gate": "PASS"
     },
     "audit-ungated-verdict": {
-      "title": "_audit_findings flags a \u00a76 verdict recorded with no engine gate (gate=none)",
+      "title": "_audit_findings flags a §6 verdict recorded with no engine gate (gate=none)",
       "tripwire": {
         "contract_md5": "ec526cc7f8414afd41077033d215dc70",
         "tests": {
@@ -3248,7 +3237,7 @@
         "history": [
           {
             "at": "2026-07-14T13:52:16+00:00",
-            "reason": "scope_violation: task 'status-orientation-diet' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/engine_pin.py (1 total)",
+            "reason": "scope_violation: task 'status-orientation-diet' touched outside its declared §5 Scope — add-method/src/add_method/_bundled/tooling/engine_pin.py (1 total)",
             "source": "scope"
           }
         ]
@@ -3498,7 +3487,7 @@
       }
     },
     "scope-first-draft": {
-      "title": "freeze scope echo emits a paste-ready \u00a75 Scope line when declared tokens miss \u00a73 Touches",
+      "title": "freeze scope echo emits a paste-ready §5 Scope line when declared tokens miss §3 Touches",
       "tripwire": {
         "contract_md5": "5d65a05e4bf27cc8623b6c6fdb6c6244",
         "tests": {}
@@ -3520,7 +3509,7 @@
         "history": [
           {
             "at": "2026-07-14T12:02:23+00:00",
-            "reason": "scope_violation: task 'scope-first-draft' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/engine_pin.py (1 total)",
+            "reason": "scope_violation: task 'scope-first-draft' touched outside its declared §5 Scope — add-method/src/add_method/_bundled/tooling/engine_pin.py (1 total)",
             "source": "scope"
           }
         ]
@@ -3557,7 +3546,7 @@
     "call-census-proof": {
       "milestone": "thin-engine-loop",
       "created": "2026-07-16T09:51:29+00:00",
-      "title": "add-bench call census: median \u22643 add.py calls per task, fidelity floor held",
+      "title": "add-bench call census: median ≤3 add.py calls per task, fidelity floor held",
       "updated": "2026-07-16T09:51:29+00:00",
       "depends_on": [
         "skill-loop-fold",
@@ -3683,7 +3672,7 @@
         "history": [
           {
             "at": "2026-06-15T12:32:58+00:00",
-            "reason": "scope_violation: task 'autonomy-command' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/add.py \u00b7 add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl \u00b7 add-method/tooling/engine_pin.py \u00b7 add-method/tooling/test_min_pillar.py \u00b7 add-method/tooling/test_rewrite_guides.py (5 total)",
+            "reason": "scope_violation: task 'autonomy-command' touched outside its declared §5 Scope — add-method/src/add_method/_bundled/tooling/add.py · add-method/src/add_method/_bundled/tooling/templates/TASK.md.tmpl · add-method/tooling/engine_pin.py · add-method/tooling/test_min_pillar.py · add-method/tooling/test_rewrite_guides.py (5 total)",
             "source": "scope"
           }
         ]
@@ -3710,27 +3699,27 @@
         "history": [
           {
             "at": "2026-06-11T13:57:10+00:00",
-            "reason": "refute-read:adversarial refute-read: green not earned per frozen \u00a73 \u2014 FG-1 any()-over-multi-sha-tokens lets a drift-note cell (mismatch + prefix-of-base token) pass BOTH surfaces; FG-2 unanchored re.search(status) lets body prose rescue a malformed header (check mis-classifies). Honest redo: all()-semantics on cell tokens + header-line-anchored status parse; suite untouched (coverage gap routes as delta).",
+            "reason": "refute-read:adversarial refute-read: green not earned per frozen §3 — FG-1 any()-over-multi-sha-tokens lets a drift-note cell (mismatch + prefix-of-base token) pass BOTH surfaces; FG-2 unanchored re.search(status) lets body prose rescue a malformed header (check mis-classifies). Honest redo: all()-semantics on cell tokens + header-line-anchored status parse; suite untouched (coverage gap routes as delta).",
             "source": "refute-read"
           },
           {
             "at": "2026-06-11T14:05:51+00:00",
-            "reason": "refute-read:re-refute FG-3: (?m)^wave:.*?status: matches ANY wave:-prefixed line \u2014 a status-less header + a body line 'wave: ... status: live' rescues the parse; with a clean echo wave-verify exits 0 (true false-green). Honest redo: parse status from the FIRST wave: header line ONLY; suite untouched (vector routes as delta).",
+            "reason": "refute-read:re-refute FG-3: (?m)^wave:.*?status: matches ANY wave:-prefixed line — a status-less header + a body line 'wave: ... status: live' rescues the parse; with a clean echo wave-verify exits 0 (true false-green). Honest redo: parse status from the FIRST wave: header line ONLY; suite untouched (vector routes as delta).",
             "source": "refute-read"
           },
           {
             "at": "2026-06-11T14:17:50+00:00",
-            "reason": "refute-read:3rd refute: P2b first |-row unconditionally consumed as column header \u2014 a headerless roster's mismatch row is SILENTLY skipped (both surfaces exit 0); P1 hardcoded cells[2] \u2014 an extra leading column hides the echo (check@live WARNs instead of FAILs); Pex (?m)^base:\\s*(\\S+) crosses the newline \u2014 an empty base: line parses as filled. Honest redo: first-base-line-only parse + header row MUST name a fork-base column (else malformed) + echo column derived from the header label.",
+            "reason": "refute-read:3rd refute: P2b first |-row unconditionally consumed as column header — a headerless roster's mismatch row is SILENTLY skipped (both surfaces exit 0); P1 hardcoded cells[2] — an extra leading column hides the echo (check@live WARNs instead of FAILs); Pex (?m)^base:\\s*(\\S+) crosses the newline — an empty base: line parses as filled. Honest redo: first-base-line-only parse + header row MUST name a fork-base column (else malformed) + echo column derived from the header label.",
             "source": "refute-read"
           },
           {
             "at": "2026-06-11T14:31:45+00:00",
-            "reason": "refute-read:4th refute N1/N10: substring+first-wins echo-column pick ('fork-base' in c.lower(), next()) \u2014 a decoy header label 'fork-base-prev' steals the column; a FILLED MISMATCHED echo in the real fork-base column exits 0 on BOTH surfaces (contract: FILLED echo != base -> FAIL, any status). Heals 1-3 confirmed holding; clean template + short-sha confirmed. Fix shape: ambiguity refusal (>1 matching column -> wave_ledger_malformed) or exact label match.",
+            "reason": "refute-read:4th refute N1/N10: substring+first-wins echo-column pick ('fork-base' in c.lower(), next()) — a decoy header label 'fork-base-prev' steals the column; a FILLED MISMATCHED echo in the real fork-base column exits 0 on BOTH surfaces (contract: FILLED echo != base -> FAIL, any status). Heals 1-3 confirmed holding; clean template + short-sha confirmed. Fix shape: ambiguity refusal (>1 matching column -> wave_ledger_malformed) or exact label match.",
             "source": "refute-read"
           },
           {
             "at": "2026-06-11T15:58:20+00:00",
-            "reason": "refute-read:refute-read: 5th refute FG-STATUS-BOUNDARY: r'status:\\s*(live|merging)\\b' at the wave header parse \u2014 \\b fires at non-word chars (| and -), so the prefix of an invalid status token parses as valid. Instance A (realistic): the EXACT unfilled streams.md template placeholder 'status: live|merging' + matching echo exits 0 on BOTH surfaces; A-harm: same placeholder + PENDING row leaves the standing monitor green (WARN only) \u2014 the merge-time fail-open this task exists to close. Contract: no status live|merging -> wave_ledger_malformed. Heals 1-3 + v2 ambiguity refusal CONFIRMED holding (7 known vectors re-executed, 24 new probes, this is the only failing family). Fix shape: strict status terminator (whitespace/separator/end-of-line only).",
+            "reason": "refute-read:refute-read: 5th refute FG-STATUS-BOUNDARY: r'status:\\s*(live|merging)\\b' at the wave header parse — \\b fires at non-word chars (| and -), so the prefix of an invalid status token parses as valid. Instance A (realistic): the EXACT unfilled streams.md template placeholder 'status: live|merging' + matching echo exits 0 on BOTH surfaces; A-harm: same placeholder + PENDING row leaves the standing monitor green (WARN only) — the merge-time fail-open this task exists to close. Contract: no status live|merging -> wave_ledger_malformed. Heals 1-3 + v2 ambiguity refusal CONFIRMED holding (7 known vectors re-executed, 24 new probes, this is the only failing family). Fix shape: strict status terminator (whitespace/separator/end-of-line only).",
             "source": "refute-read"
           }
         ]
@@ -4186,7 +4175,7 @@
       }
     },
     "scope-echo-draft": {
-      "title": "Freeze echoes resolved scope; proposes a Scope line from \u00a73 Touches",
+      "title": "Freeze echoes resolved scope; proposes a Scope line from §3 Touches",
       "tripwire": {
         "contract_md5": "d63f0e2152357eb67d2a3a0de3b0551c",
         "tests": {
@@ -4300,7 +4289,7 @@
       }
     },
     "template-touches-scope-dedup": {
-      "title": "templates dedup: \u00a73 Touches names symbols, \u00a75 Scope owns the file write-set",
+      "title": "templates dedup: §3 Touches names symbols, §5 Scope owns the file write-set",
       "tripwire": {
         "contract_md5": "8cf394016a210500452e7e51b97fb08e",
         "tests": {}
@@ -4498,7 +4487,7 @@
       "gate": "PASS"
     },
     "coverage-detail": {
-      "title": "Emit a per-WM coverage_detail artifact \u2014 which checklist requirement each WM covered (non-gating)",
+      "title": "Emit a per-WM coverage_detail artifact — which checklist requirement each WM covered (non-gating)",
       "tripwire": {
         "contract_md5": "cb75d9e057495b8bbcd2f5271b44a868",
         "tests": {}
@@ -4549,7 +4538,7 @@
       "phase": "done"
     },
     "wire-milestone-relations": {
-      "title": "wire _milestone_relations into cmd_check/status \u2014 dangling/self milestone-edge health (mirrors _relations_health)",
+      "title": "wire _milestone_relations into cmd_check/status — dangling/self milestone-edge health (mirrors _relations_health)",
       "tripwire": {
         "contract_md5": "b203d7801087dd97d33518a784f5c15e",
         "tests": {}
@@ -4674,7 +4663,7 @@
       }
     },
     "phase-collapse-3": {
-      "title": "Engine: collapse 6 phases to 3 (direction\u00b7build\u00b7verify), freeze/gate compound-cross, back-compat read map",
+      "title": "Engine: collapse 6 phases to 3 (direction·build·verify), freeze/gate compound-cross, back-compat read map",
       "tripwire": {
         "contract_md5": "1499450c57cd6e129f06e0abdc37dabe",
         "tests": {
@@ -4764,7 +4753,7 @@
       "phase": "done"
     },
     "streams-strategy-pull": {
-      "title": "Extend the \u00a75-strategy pull to streams.md's worker contract",
+      "title": "Extend the §5-strategy pull to streams.md's worker contract",
       "tripwire": {
         "contract_md5": "4dc67d0325806bbb9030c677f4a82598",
         "tests": {
@@ -5163,7 +5152,7 @@
       }
     },
     "fable-floor-reasoning": {
-      "title": "fable Floor reasoning pass \u2014 claim grammar + Goal/Leftovers + GROUND + constraint-loop",
+      "title": "fable Floor reasoning pass — claim grammar + Goal/Leftovers + GROUND + constraint-loop",
       "phase": "done",
       "gate": "PASS",
       "milestone": "thin-engine-loop",
@@ -5258,12 +5247,12 @@
         "history": [
           {
             "at": "2026-06-26T14:26:39+00:00",
-            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared \u00a75 Scope \u2014 02-the-flow.md (1 total)",
+            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared §5 Scope — 02-the-flow.md (1 total)",
             "source": "scope"
           },
           {
             "at": "2026-06-26T14:27:36+00:00",
-            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared \u00a75 Scope \u2014 02-the-flow.md (1 total)",
+            "reason": "scope_violation: task 'flow-jit-tasks-doc' touched outside its declared §5 Scope — 02-the-flow.md (1 total)",
             "source": "scope"
           }
         ]
@@ -5312,7 +5301,7 @@
       }
     },
     "help-habit-kill": {
-      "title": "unknown subcommand \u2192 concise close-match + resume pointer, no 50-choice dump",
+      "title": "unknown subcommand → concise close-match + resume pointer, no 50-choice dump",
       "tripwire": {
         "contract_md5": "c5aeefb7091dddd186124ad96edccc3a",
         "tests": {}
@@ -5396,7 +5385,7 @@
       }
     },
     "strategy-soft-not-hard": {
-      "title": "Soften the <strategy> block: \u00a75 is preferred, builder self-improves + reports actual strategy for audit",
+      "title": "Soften the <strategy> block: §5 is preferred, builder self-improves + reports actual strategy for audit",
       "tripwire": {
         "contract_md5": "223f592a55127bf6bfd2c7032eb10ec6",
         "tests": {
@@ -5456,7 +5445,7 @@
         "lane": "unrouted",
         "by": null
       },
-      "title": "Round-visible runs \u2014 every verify\u2192build return trip is engine-recorded",
+      "title": "Round-visible runs — every verify→build return trip is engine-recorded",
       "tripwire": {
         "contract_md5": "42ef23e8e46e928c1e368cbbb5b9dabd",
         "tests": {
@@ -5830,7 +5819,7 @@
       }
     },
     "build-strategy-solutions": {
-      "title": "\u00a75 Strategy & known-problem solutions, fed consistently into subagent spawns",
+      "title": "§5 Strategy & known-problem solutions, fed consistently into subagent spawns",
       "tripwire": {
         "contract_md5": "fe0e8c83ff820ff64a384dfd0137b370",
         "tests": {
@@ -5880,7 +5869,7 @@
       }
     },
     "untrack-add-tooling": {
-      "title": "Stop tracking .add/tooling \u2014 regenerable dogfood mirror of add-method/tooling",
+      "title": "Stop tracking .add/tooling — regenerable dogfood mirror of add-method/tooling",
       "tripwire": {
         "contract_md5": "c65e35dc0955bb972606f50e971c205d",
         "tests": {
@@ -6130,7 +6119,7 @@
       "phase": "done"
     },
     "hermetic-scoring": {
-      "title": "Hermetic scoring \u2014 isolate the app store per boot so coverage/oracle are reproducible on archived builds",
+      "title": "Hermetic scoring — isolate the app store per boot so coverage/oracle are reproducible on archived builds",
       "tripwire": {
         "contract_md5": "c36fd4689d8043550ec9e7dca841ed04",
         "tests": {}
@@ -6193,7 +6182,7 @@
       "gate": "PASS"
     },
     "skill-loop-fold": {
-      "title": "SKILL.md narrates the 3-beat loop; phases/ 7\u21923 on-demand references; zero mandatory guide reads",
+      "title": "SKILL.md narrates the 3-beat loop; phases/ 7→3 on-demand references; zero mandatory guide reads",
       "tripwire": {
         "contract_md5": "79a34ef6670599f666b01b29d512058f",
         "tests": {
@@ -6645,7 +6634,7 @@
       }
     },
     "template-hint-dedup": {
-      "title": "template hints demand distinct content: kill \u00a75/\u00a76/exit-criteria restatement",
+      "title": "template hints demand distinct content: kill §5/§6/exit-criteria restatement",
       "tripwire": {
         "contract_md5": "597c4434274b7de7e860e48f91e8962e",
         "tests": {}
@@ -6706,45 +6695,8 @@
       "depends_on": [],
       "phase": "done"
     },
-    "scope-atomicity-guard": {
-      "title": "Advisory atomicity nudge at freeze for multi-Part scope",
-      "phase": "build",
-      "gate": "none",
-      "milestone": "intake-atomicity",
-      "depends_on": [],
-      "created": "2026-07-22T17:40:30+00:00",
-      "updated": "2026-07-23T02:16:03+00:00",
-      "freeze": {
-        "version": "v1",
-        "frozen_at": "2026-07-23T02:15:56+00:00",
-        "approved_by": "Tin Dang",
-        "actor": {
-          "name": "Tin Dang",
-          "email": "tindang.ht97@gmail.com",
-          "source": "git"
-        }
-      },
-      "flag_verified": true,
-      "route": {
-        "lane": "unrouted",
-        "by": null
-      },
-      "tripwire": {
-        "contract_md5": "14599f865d5c119b65dec6dc84a7d469",
-        "tests": {}
-      },
-      "scope": {
-        "declared": [
-          "add-method/tooling/add.py",
-          "add-method/.add/tooling/add.py",
-          "add-method/src/add_method/_bundled/tooling/add.py",
-          ".add/tasks/scope-atomicity-guard/tests/"
-        ],
-        "snapshot_md5": "7e6b82e3808b85e5ae0f133a46ca44e9"
-      }
-    },
     "signal-model": {
-      "title": "Unified signal grammar \u2014 note = todo = delta, status + edges",
+      "title": "Unified signal grammar — note = todo = delta, status + edges",
       "phase": "done",
       "gate": "PASS",
       "milestone": "signal-graph",
@@ -6787,7 +6739,7 @@
         "history": [
           {
             "at": "2026-07-23T02:43:35+00:00",
-            "reason": "scope_violation: task 'signal-model' touched outside its declared \u00a75 Scope \u2014 add-method/src/add_method/_bundled/tooling/engine_pin.py \u00b7 add-method/tooling/engine_pin.py (2 total)",
+            "reason": "scope_violation: task 'signal-model' touched outside its declared §5 Scope — add-method/src/add_method/_bundled/tooling/engine_pin.py · add-method/tooling/engine_pin.py (2 total)",
             "source": "scope"
           }
         ]
