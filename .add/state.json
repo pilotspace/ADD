@@ -1260,6 +1260,15 @@
         "trim-build-strategy-labels"
       ],
       "archived": "2026-07-23"
+    },
+    {
+      "slug": "persona-gepa-loop",
+      "title": "Persona Gepa Loop",
+      "tasks": 1,
+      "task_slugs": [
+        "route-scoreboard"
+      ],
+      "archived": "2026-07-23"
     }
   ],
   "active_milestones": [
@@ -1524,7 +1533,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T09:46:27+00:00",
+  "updated": "2026-07-23T10:00:11+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -1635,14 +1644,6 @@
       "updated": "2026-07-13T15:52:21+00:00",
       "status": "active",
       "goal": "Close the gap the WM1 re-measure named: mean engine calls 18.7 -> ~12 and always-loaded read burden -> <=30KB, floors untouched \u2014 every lever engine-mechanical or additive, none prose-only"
-    },
-    "persona-gepa-loop": {
-      "created": "2026-07-16T09:46:41+00:00",
-      "title": "Persona Gepa Loop",
-      "stage": "mvp",
-      "updated": "2026-07-16T09:46:41+00:00",
-      "status": "queued",
-      "goal": ""
     }
   },
   "tasks": {

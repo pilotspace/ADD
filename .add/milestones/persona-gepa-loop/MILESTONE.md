@@ -45,15 +45,16 @@ Issues/Risks (shared): <traps in the shared code that feed each task's §1 expec
 ## Tasks (breadth-first decomposition; detail lives in each PLAN.md)
 - [x] route-scoreboard   depends-on: none — deltas rolls route-outcomes.jsonl up per lane +
       GEPA nudge; loop.md gains the reflection beat (`ea3b5bf2`, corpus 2451 green)
-- [ ] persona-rollup     depends-on: route-scoreboard — per-persona rollup once real traces
-      accumulate (deferred: evidence-first)
+- [~] persona-rollup     depends-on: route-scoreboard — per-persona rollup once real traces
+      accumulate (DEFERRED: evidence-first — no board has per-persona trace volume yet; bound
+      to NO exit criterion, so it does not gate this milestone's goal; re-open when traces accrue)
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] User can read a per-lane route scoreboard from `add.py deltas` on any board with
-      recorded gates, and it is silent on a board with none        (← route-scoreboard)
-- [ ] User can follow loop.md's GEPA beat: reflect on the scoreboard, propose a route-rule
+- [x] User can read a per-lane route scoreboard from `add.py deltas` on any board with
+      recorded gates, and it is silent on a board with none        (← route-scoreboard, VERIFIED 2026-07-23: `deltas` shows "route scoreboard (15 gated · …)" per-lane on this board; 0 scoreboard lines on a fresh init'd board)
+- [x] User can follow loop.md's GEPA beat: reflect on the scoreboard, propose a route-rule
       delta via `add.py delta-append`, and fold it into `.add/personas/` by hand — with the
-      engine never editing a persona        (← route-scoreboard)
+      engine never editing a persona        (← route-scoreboard, VERIFIED: loop.md §"Route reflection (GEPA)" keep/prune/propose via delta-append; the scoreboard nudge states "the engine never edits a persona")
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
