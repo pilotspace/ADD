@@ -716,7 +716,7 @@ def _stamp_adr_record(root: Path, state: dict, slug: str) -> None:
 
 # --- guidelines / CLAUDE.md-injection subsystem (moved to add_engine/guidelines.py) -
 from add_engine.guidelines import (
-    _guideline_block, _inject_block, _inject_guidelines, _is_brownfield,
+    _guideline_block, _inject_block, _inject_guidelines, _inject_specs_pointers, _is_brownfield,
 )
 def cmd_init(args: argparse.Namespace) -> None:
     base = Path(args.dir).resolve()
@@ -748,7 +748,11 @@ def cmd_init(args: argparse.Namespace) -> None:
     today = date.today().isoformat()
     proj_name = args.name or base.name
 
-    # survivor-layer files — never clobber an existing one, never write a blank one
+    # survivor-layer files — never clobber an existing one, never write a blank one.
+    # Remember whether PROJECT.md pre-existed: a --force reinit resets state but must NOT
+    # touch a hand-edited survivor, so the specs-pointer wiring below fires ONLY when this
+    # init actually scaffolds PROJECT.md fresh (a pre-existing one is retrofitted via `migrate`).
+    _project_md_existed = (root / "PROJECT.md").exists()
     for fname in SETUP_FILES:
         dest = root / fname
         if dest.exists():
@@ -772,6 +776,12 @@ def cmd_init(args: argparse.Namespace) -> None:
     # SETUP_FILES (never clobber, never write blank), ONE template rendered five ways.
     for dd in SPEC_DDS:
         _seed_spec_file(root, dd, project=proj_name, stage=args.stage, date_str=today)
+
+    # foundation-specs-refs: wire the freshly-scaffolded PROJECT.md's thin index to the five
+    # specs just seeded (a managed, SPEC_DDS-driven ADD:SPECS block). Guarded on freshness so a
+    # --force reinit never mutates a hand-edited survivor — that retrofit is `migrate`'s job.
+    if not _project_md_existed:
+        _inject_specs_pointers(root / "PROJECT.md")
 
     # --run-mode: seed the autonomy dial into PROJECT.md. Run mode IS the autonomy posture;
     # concurrency is a per-task subagent (doc-level), never an engine-managed streams line.
@@ -6689,13 +6699,19 @@ def cmd_migrate(args: argparse.Namespace) -> None:
                             stage=state.get("stage") or "mvp", date_str=today)
             if p.exists():
                 seeded.append(SPEC_DDS[dd][0])
-    if not renames and not seeded:
-        print("already 2.0 — nothing to migrate (task docs are PLAN.md; the 5 living specs exist)")
+    # foundation-specs-refs: wire PROJECT.md's thin index to the five specs (idempotent —
+    # a pre-pointer PROJECT.md gets the managed ADD:SPECS block; an up-to-date one is a no-op).
+    pointer_action = _inject_specs_pointers(root / "PROJECT.md")
+    if not renames and not seeded and pointer_action in ("unchanged", "absent"):
+        print("already 2.0 — nothing to migrate (task docs are PLAN.md; the 5 living specs exist; "
+              "PROJECT.md points at them)")
         return
     if renames:
         print(f"migrated {len(renames)} task doc(s) TASK.md -> PLAN.md")
     if seeded:
         print(f"seeded {len(seeded)} living spec(s): {', '.join(seeded)}")
+    if pointer_action in ("created", "updated"):
+        print(f"{pointer_action} PROJECT.md → .add/specs/ pointer block (the 5-DD standing picture)")
     print("next: add.py status — re-orient on the 2.0 board")
 
 
