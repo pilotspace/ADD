@@ -1563,6 +1563,72 @@ def cmd_locate(args: argparse.Namespace) -> None:
                   f"floor (never weaken it to pass)")
 
 
+_MERMAID_CDN = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
+
+
+def _graph_html_page(title: str, mermaid: str, done: int, total: int,
+                     met: int, ectot: int, show_ec: bool) -> str:
+    """graph-html: wrap the mermaid diagram in a self-rendering, theme-aware HTML page —
+    engine-authored chrome (title + done/met status chips + a legend) plus a `<pre
+    class="mermaid">` (HTML-escaped so no `<`/`>`/`&` breaks parsing) and a PINNED mermaid
+    CDN `<script>`. The 3 MB library rides the CDN, never the 4-way byte-twinned add.py;
+    the diagram source is fully embedded (readable offline, renders online)."""
+    esc = mermaid.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    t = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    ec_chip = (f'<span class="chip ok">{met}/{ectot} exit-criteria met</span>'
+               if show_ec else "")
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{t} · add graph</title>
+<style>
+  :root {{ --bg:#f6f7f9; --panel:#fff; --plate:#fbfcfd; --ink:#1a1f27; --soft:#5a6472;
+          --hair:#e3e7ec; --accent:#1971c2; --met:#2b8a3e;
+          --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+          --sans:system-ui,-apple-system,"Segoe UI",sans-serif; }}
+  @media (prefers-color-scheme:dark) {{ :root {{ --bg:#0e1116; --panel:#161b22;
+          --ink:#e6edf3; --soft:#8b949e; --hair:#262c34; --accent:#4a9eea; }} }}
+  :root[data-theme="light"] {{ --bg:#f6f7f9; --panel:#fff; --ink:#1a1f27; --soft:#5a6472; --hair:#e3e7ec; --accent:#1971c2; }}
+  :root[data-theme="dark"] {{ --bg:#0e1116; --panel:#161b22; --ink:#e6edf3; --soft:#8b949e; --hair:#262c34; --accent:#4a9eea; }}
+  * {{ box-sizing:border-box; }}
+  body {{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.5; }}
+  .wrap {{ max-width:1100px; margin:0 auto; padding:36px 24px 56px; }}
+  .cmd {{ font-family:var(--mono); font-size:13px; color:var(--soft); }}
+  h1 {{ font-family:var(--mono); font-size:clamp(24px,4vw,34px); font-weight:600; margin:8px 0 14px; }}
+  .chips {{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }}
+  .chip {{ font-family:var(--mono); font-size:12px; padding:4px 10px; border-radius:999px;
+          border:1px solid var(--hair); background:var(--panel); color:var(--soft); }}
+  .chip.ok {{ color:var(--met); border-color:color-mix(in srgb,var(--met) 35%,var(--hair)); }}
+  .plate {{ background:var(--plate); border:1px solid var(--hair); border-radius:14px;
+          padding:20px; overflow-x:auto; box-shadow:0 8px 28px rgba(20,30,50,.06); }}
+  .mermaid {{ display:flex; justify-content:center; min-width:560px; }}
+  .legend {{ display:flex; flex-wrap:wrap; gap:18px; margin-top:20px; font-family:var(--mono);
+          font-size:12px; color:var(--soft); }}
+  .legend b {{ color:var(--accent); font-weight:600; }}
+</style></head><body>
+<div class="wrap">
+  <div class="cmd">$ add.py graph</div>
+  <h1>{t}</h1>
+  <div class="chips">
+    <span class="chip ok">{done}/{total} tasks done</span>
+    {ec_chip}
+  </div>
+  <div class="plate"><pre class="mermaid">
+{esc}
+  </pre></div>
+  <div class="legend">
+    <span><b>--&gt;</b> depends-on</span>
+    <span><b>-.-&gt;</b> observed-by / delivered-by</span>
+    <span><b>==&gt;</b> blocks</span>
+    <span>green = done / met · blue = signal · grey = planned / unmet</span>
+  </div>
+</div>
+<script src="{_MERMAID_CDN}"></script>
+<script>mermaid.initialize({{ startOnLoad: true, securityLevel: "loose" }});</script>
+</body></html>
+"""
+
+
 def cmd_graph(args: argparse.Namespace) -> None:
     """graph-views W4: the live board as a mermaid flowchart — deterministic,
     read-only, print-only (paste into any mermaid renderer / GitHub fence).
@@ -1701,7 +1767,23 @@ def cmd_graph(args: argparse.Namespace) -> None:
             lines.append("  classDef ec_met fill:#d3f9d8,stroke:#2b8a3e")
             lines.append("  classDef ec_unmet fill:#f1f3f5,stroke:#868e96")
             lines.extend(ec_class_lines)
-    print("\n".join(lines))
+    mermaid = "\n".join(lines)
+    # graph-html: opt-in `--html` wraps the SAME mermaid in a self-rendering page written
+    # to a temp file (the board stays read-only; the only write is the requested output).
+    if getattr(args, "html", False):
+        done = sum(1 for s in shown if tasks[s].get("phase") == "done")
+        ecs = [n for n in _exit_criterion_nodes(root) if not only or n["ms"] == only]
+        met = sum(1 for n in ecs if n["met"])
+        page = _graph_html_page(only or "ADD graph", mermaid, done, len(shown),
+                                met, len(ecs), bool(only))
+        out = (Path(args.out) if getattr(args, "out", None)
+               else Path(tempfile.gettempdir()) / f"add-graph{'-' + only if only else ''}.html")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(page, encoding="utf-8")
+        print(f"wrote {out}")
+        print("open it in a browser to view the rendered graph")
+        return
+    print(mermaid)
 
 
 def _relations_health(root: Path, state: dict) -> list[dict]:
@@ -6883,6 +6965,12 @@ def build_parser() -> argparse.ArgumentParser:
     pgr.add_argument("--signals", action="store_true",
                      help="overlay LIVE signals (todos + open §7 deltas) as nodes edged "
                           "to their tasks (observed-by/resolves-into/blocks)")
+    pgr.add_argument("--html", action="store_true",
+                     help="write a self-rendering HTML page (chrome + pinned-CDN mermaid) "
+                          "to a temp file and print its path, instead of raw mermaid")
+    pgr.add_argument("--out", default=None,
+                     help="with --html, the output path (default: a stable file under the "
+                          "system temp dir; a missing parent dir is created)")
     pgr.set_defaults(func=cmd_graph)
 
     pdap = sub.add_parser("delta-append",
