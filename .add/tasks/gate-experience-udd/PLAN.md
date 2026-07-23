@@ -2,9 +2,8 @@
 
 slug: gate-experience-udd · created: 2026-07-16 · stage: mvp · risk: high
 milestone: strategy-intake
-autonomy: conservative   <!-- level: manual<conservative<auto — lowered: method-defining fold (report-template → UDD family) touching 9 guides + 16 tests; human gate at verify. Relations: `--depends-on`/`--extends`/`--relates-to` task edges (GLOSSARY; `check` validates). -->
-phase: build   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: conservative
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -39,8 +38,6 @@ Assumptions — lowest-confidence first:
   - [ ] the token to migrate is the .md-suffixed filename `report-template.md` (+ the SKILL.md bare `report-template` pointer), NEVER the historical task-name substrings — confirm each replace is filename-scoped, not a blind global sed (R2 guards this)
   - [ ] the reference pool absorbs gate-udd.md's ~200 B reframe header after the rename's −7 B/occurrence savings — confirm at build against the 51885 ceiling; compress-not-rebaseline if tight
 </assumptions>
-
-<!-- EXIT: the specify guide's exit_gate binds (rules + ranked ⚠ assumptions). -->
 
 ---
 
@@ -86,8 +83,6 @@ Scenario: the engine is untouched   # M5
 ```
 
 </scenarios>
-
-<!-- EXIT: the scenarios guide's exit_gate binds. -->
 
 ---
 
@@ -141,7 +136,7 @@ Status: FROZEN @ v1 — approved by tindang
 Reported: yes — the freeze report (banner/ARC/SHAPE + the full blast-radius map) rendered before this froze
 
 ### Build-strategy (the intended approach — SOFT: preferred; the builder self-improves and records what it ACTUALLY did at verify)
-Scope (may touch): `add-method/skill/add/` `.claude/skills/add/` `add-method/src/add_method/_bundled/skill/add/` `add-method/docs/` `add-method/src/add_method/_bundled/docs/` `add-method/../02-the-flow.md` `add-method/../appendix-c-glossary.md` `add-method/tooling/`   <!-- directory tokens (trailing / = project-root-relative subtree): the 3 skill trees (gate-udd.md/report-template.md rename + design.md + 9 guides incl. phases/) · the book's 3 TRACKED trees for the 2 edited docs — canon `add-method/docs/` + bundled `_bundled/docs/` + the published repo-root book (climb-form file tokens `add-method/../02-the-flow.md` `add-method/../appendix-c-glossary.md`); byte-parity across all 3 is enforced · the 16 tests + new test_gate_experience_udd.py. add.py lives under tooling/ but is NOT touched — the M5 invariant + a git-diff-vs-main check at verify guard it (ENGINE_MD5 unchanged). -->
+Scope (may touch): `add-method/skill/add/` `.claude/skills/add/` `add-method/src/add_method/_bundled/skill/add/` `add-method/docs/` `add-method/src/add_method/_bundled/docs/` `add-method/../02-the-flow.md` `add-method/../appendix-c-glossary.md` `add-method/tooling/`
 Strategy (ordered batches): 1. git mv report-template.md → gate-udd.md in all 3 trees 2. reframe gate-udd.md's opening as the text-mode UDD gate surface + design.md cross-link (body preserved) 3. add design.md's lightweight text-mode gate variant block (×3 trees, byte-identical) 4. filename-scoped repoint `report-template.md`→`gate-udd.md` + the two SKILL.md bare `report-template` pointers across the 9 guides ×3 trees + 2 book docs 5. migrate the 16 tests (path constants · pointer assertions · reference-pool list · byte pin) — filename-scoped, preserving historical task-name substrings 6. write test_gate_experience_udd.py (rename-happened · gate-udd-is-UDD-surface · four-floors-intact · design.md-gate-variant · no-dangling-ref · task-names-intact · engine-untouched) RED first 7. run the FULL engine suite green + `add.py check`
 Approach (domain strategy): a filename-scoped MECHANICAL migration (git mv + `report-template.md`→`gate-udd.md`), NOT a blind global sed — the `.md` suffix + the two known bare SKILL.md pointers are the only live-file references; historical task-name substrings lack the `.md` and are left untouched (R2). A whole-tree `grep report-template.md` at the end proves zero dangling (R1). Chosen over a conceptual fold because the human picked the physical rename.
 Data strategy: three parallel skill trees kept byte-identical (md5 parity) for gate-udd.md + design.md — the same twin-parity shape as prior skill-doc tasks; the byte pin migrates forward with a ledger note (report-template convention).
@@ -150,8 +145,6 @@ Optimization stance: correctness-of-migration first (zero dangling, zero task-na
 Persona (required): terminal-ux-accessibility (the gate is a text-mode UX surface — its design stance owns "the gate as experience") — advisory, never lowers a gate.
 Spawn isolation (default): inline (sequential mechanical edits across many files; user prefers inline over heavy spawns) — a review subagent MAY verify the large diff at verify (Rule 5).
 Known-problem fixes: a missed reference → R1 dangling_gate_ref (whole-tree grep catches it) · a corrupted task-name → R2 taskname_corrupted (filename-scoped replace dodges it) · a weakened floor → R3 floors_lost (four-floors assertion) · design.md over pool budget → compress same-guide, never rebaseline · a stale byte pin → migrate 9514 forward to gate-udd.md's count
-
-<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). The plan guide's exit_gate binds: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
 
 ---
 
@@ -164,21 +157,16 @@ Plan (one test per scenario, asserting behavior not internals):
 </test_plan>
 
 Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: the tests guide's exit_gate binds (red for the RIGHT reason). -->
 
 ---
 
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
 > The change plan — grounding + contract + build-strategy — was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope, follow the strategy (improve on it if the code teaches you better), and touch no test or the frozen contract.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
+Strategy actually used: the migration batches 1–5 (git mv report-template.md→gate-udd.md ×3 trees · reframe opening as the text-mode UDD gate surface + design.md cross-link · design.md text-mode gate variant · filename-scoped repoint · test migration) landed in a PRIOR commit (`ed9a3e43` "thin-engine-loop W1 … fold gate-experience-udd rename"); this session completed the one unbuilt batch — batch 6, the acceptance suite `test_gate_experience_udd.py` (7 tests, canon tooling only; NOT twinned into `_bundled`, which must hold zero test sources). The suite pins the contract's DRIFT-STABLE invariants (rename ×3 byte-identical · UDD-surface + 4 floors · design.md variant · zero dangling `report-template.md` · engine untouched), deliberately NOT the frozen §3's since-superseded literal anchors — see the Live-verify block below.
 Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
 Code lives in: `./src/`
 Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
-
-<!-- Scope-lock source: the §3 `Scope (may touch)` line; an out-of-scope build fails the gate (scope_violation); the build guide's exit_gate binds. -->
 
 ---
 
@@ -195,11 +183,11 @@ Constraints: do NOT change any test or the frozen §3 contract; stay inside the 
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] report-template.md no longer exists in any of the 3 skill trees; gate-udd.md exists in all 3, byte-identical — confirmed by `ls`/`git status` (a git-tracked rename R100) + RenameHappenedTest green
-- [ ] gate-udd.md opens as the text-mode UDD gate surface, cross-links design.md, and keeps all four floors (show-before-ask · one-approval · never-pre-stamp · security = HARD-STOP un-persona-negotiable) — confirmed by reading gate-udd.md head + floors block + GateUddIsUddSurfaceTest green
-- [ ] design.md's UDD loop carries the lightweight text-mode gate variant (intake INTERACTION → design → confirm, no wireframe/capture) naming gate-udd.md — confirmed by reading design.md + DesignGateVariantTest green
-- [ ] a whole-tree grep for report-template.md returns ZERO live references (guides · docs · tests), while report-template-recorded-loop survives — confirmed by NoDanglingReferenceTest + TaskNamesPreservedTest green
-- [ ] add.py untouched (ENGINE_MD5 4e65596 unchanged), SKILL.md < 9500 B, reference pool ≤ 51885 — confirmed by git diff add.py (empty) + EngineUntouchedTest + test_skill_lean/test_intake_freeze_batch green
+- [x] report-template.md no longer exists in any of the 3 skill trees; gate-udd.md exists in all 3, byte-identical — confirmed: `ls` shows rt=absent gu=present ×3; single md5 across trees; RenameHappened green
+- [x] gate-udd.md opens as the text-mode UDD gate surface, cross-links design.md, and keeps all four floors (show-before-ask · one-approval · never-pre-stamp · security = HARD-STOP un-persona-negotiable) — confirmed: head line "# Gate reports — the text-mode UDD gate surface", links design.md, §"The four floors" block intact; GateUddIsUddSurface green
+- [x] design.md's UDD loop carries the lightweight text-mode gate variant (intake INTERACTION → design → confirm, no wireframe/capture) naming gate-udd.md — confirmed: design.md §"Text-mode gate variant" (INTERACTION axis → report per gate-udd.md → confirm; "no capture beat") ×3 trees; DesignGateVariant green
+- [x] a whole-tree grep for report-template.md returns ZERO live references (guides · docs · tests) — confirmed: 0 live pointers across 3 skill trees + 2 book docs ×3 book trees + tooling tests; NoDanglingReference green. R2 note: the historical task-name strings (report-template-recorded-loop · report-shape-scan-audit) are ABSENT from the current corpus — removed BY LATER refactors (test-corpus-slim et al.), NOT corrupted by this filename-scoped migration; R2 (no corruption by THIS task) holds.
+- [x] add.py untouched by this task, SKILL.md — DRIFT DISCLOSED: EngineUntouched green (add.py holds no report-template/gate-udd string — migration is docs/tests only). STALE ANCHORS re-resolved: (a) `ENGINE_MD5 4e65596` is long superseded — add.py legitimately changed across dozens of later tasks (now `67519761…`); the invariant "no add.py edit BY THIS TASK" holds. (b) SKILL.md is 9876 B, OVER the frozen "< 9500 B" — this drift is from LATER unrelated work (adaptive-flow rewrote SKILL.md to the 3-beat loop + cookbook); the migration itself SHRANK it (−7 B/occurrence). The "< 9500" ceiling is unenforced now: `test_skill_lean.py` no longer exists and the full suite is green at 9876. (c) `test_report_shape_scan_audit` byte pin 9514 — that test/pin was removed with the corpus reorg. These are environmental drift since Ground SHA 53f8b00, not defects introduced here.
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
 - [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
@@ -209,31 +197,29 @@ Constraints: do NOT change any test or the frozen §3 contract; stay inside the 
 
 ### Live-verify evidence — confirm the §3 PLAN grounding anchors still resolve (fill at the gate)
 > Re-resolve every symbol the §3 Contract cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol the §3 Contract cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol the §3 Contract cites still resolves in the current tree — RESOLVED with drift: gate-udd.md (×3 trees), design.md (×3), the 2 book docs all resolve; the migration is committed (`ed9a3e43`).
+- [x] any anchor that moved/renamed since Ground SHA (53f8b00) is named here, not left silent — STALE ANCHORS: `report-template.md` (renamed → gate-udd.md, as intended) · `test_skill_lean.py` (REMOVED by later corpus reorg — no longer exists) · `test_report_shape_scan_audit.py` + its `9514` byte pin (REMOVED) · `SKILL.md < 9500 B` (now 9876 B via later work; ceiling unenforced) · `ENGINE_MD5 4e65596` (superseded → `67519761…`). None block the migration goal; all are post-freeze environmental drift.
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
 > Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self · adversarially checked: probed for the three ways this green could be fake — (1) vacuous no-dangling grep: confirmed the token is the real `.md` filename and the assertion scans live surfaces (3 skill trees + book docs + tooling tests), and it genuinely finds report-template.md ABSENT (not mis-scoped to zero files); (2) self-matching escape: the split-token `_OLD` construction means the test file's own text can't satisfy its own no-dangling assertion; (3) byte-parity illusion: the md5-set assertion would fail if any of the 3 trees drifted — verified 1 distinct digest. The floors/variant asserts read real content (opening line + §"four floors" + design.md §"Text-mode gate variant"), not test-internal stubs. NOTE (human backstop): this is a self refute-read under a CONSERVATIVE gate — the human owns the PASS.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
 > Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — a docs/tests-only migration; no code path, secret, or input surface touched. add.py untouched.
+2. Concurrency: CLEAR — no runtime, no shared state; pure static-file rename + test addition.
+3. Architecture: RESIDUE (non-blocking) — the frozen §3 carries stale literal anchors (SKILL.md 9500 ceiling, ENGINE_MD5 4e65596, test_skill_lean/report_shape_scan_audit pins) that later work superseded; the acceptance test pins drift-stable invariants instead. Surfaced, not hidden — a human call on whether the drift is acceptable to PASS on.
+Verdict: PASS (advisory)
+Residue: stale frozen-contract anchors (documented above); no functional residue.
+Binding: advisory — sensitivity: high (method-defining fold; human owns the gate)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Reported: yes — the verify gate report (banner/ARC/SHAPE/FLAGS/EVIDENCE) rendered in chat before this record, drift disclosed
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reviewed by: Tin Dang · date: 2026-07-23
 
 ---
 
@@ -242,11 +228,18 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §3 Build-strategy Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose PHYSICAL rename + migrate every reference; rejected a conceptual fold keeping the path (rejected by human) · a new gate-loop guide (rejected — pool rebaseline)
+- [human] freeze — froze §3 @ v1 (approved by tindang)
+- [AI] build — approach: a filename-scoped MECHANICAL migration (git mv + `report-template.md`→`gate-udd.md`), NOT a blind global sed — the `.md` suffix + the two known bare SKILL.md pointers are the only live-file references; historical task-name substrings lack the `.md` and are left untouched (R2). A whole-tree `grep report-template.md` at the end proves zero dangling (R1). Chosen over a conceptual fold because the human picked the physical rename.
+- [AI] build — data strategy: three parallel skill trees kept byte-identical (md5 parity) for gate-udd.md + design.md — the same twin-parity shape as prior skill-doc tasks; the byte pin migrates forward with a ledger note (report-template convention).
+- [AI] build — pattern: the 3-skill-tree parity + pool ceilings (engine-minimalism); the forward-migrated byte-ledger pin of test_report_shape_scan_audit.py; the historical-task-name-preservation convention of the test ledger comments.
+- [AI] build — optimization stance: correctness-of-migration first (zero dangling, zero task-name corruption); token cost second — the rename SHRINKS pools (−7 B/occurrence), design.md's added block offsets within orchestration-pool headroom (⚠ the facet trusted least: design.md's 774 B headroom is tight — if the gate-variant block overflows, compress same-guide, never rebaseline).
+- [AI] build — strategy used: the migration batches 1–5 (git mv report-template.md→gate-udd.md ×3 trees · reframe opening as the text-mode UDD gate surface + design.md cross-link · design.md text-mode gate variant · filename-scoped repoint · test migration) landed in a PRIOR commit (`ed9a3e43` "thin-engine-loop W1 … fold gate-experience-udd rename"); this session completed the one unbuilt batch — batch 6, the acceptance suite `test_gate_experience_udd.py` (7 tests, canon tooling only; NOT twinned into `_bundled`, which must hold zero test sources). The suite pins the contract's DRIFT-STABLE invariants (rename ×3 byte-identical · UDD-surface + 4 floors · design.md variant · zero dangling `report-template.md` · engine untouched), deliberately NOT the frozen §3's since-superseded literal anchors — see the Live-verify block below.
+- [human] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+
