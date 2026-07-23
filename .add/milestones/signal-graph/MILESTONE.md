@@ -37,26 +37,29 @@ Issues/Risks (shared): unifying three primitives risks a migration of every exis
 - [ ] atomicity-signal     depends-on: signal-model   — reopen scope-atomicity-guard (change-request to its frozen §3): the nudge SEEDS a signal instead of an ephemeral print
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] note, todo, and §7 delta are read as ONE signal type with a status + edges, still stored as git-diffable text (no new store)   (← signal-model)  (verify: test_signal_unify — a todo line and a §7 delta line both parse to a signal carrying status + edges)
-- [ ] `add.py graph` renders signals as nodes with observed-by / resolves-into / blocks edges                                       (← graph-view-signals)  (verify: test_graph_renders_signals — graph stdout contains signal nodes and their edge labels)
-- [ ] a milestone's exit-criteria render as delivered-by nodes — goal-completion is visible as a graph fact                          (← exit-criterion-nodes)  (verify: test_graph_exit_criterion_nodes — each exit-criterion appears as a node with a delivered-by edge to its task)
-- [ ] the scope-atomicity nudge seeds a persistent signal (not an ephemeral print), addressable after the freeze scrolls away        (← atomicity-signal)  (verify: test_atomicity_seeds_signal — freezing a multi-Part task creates an addressable signal, asserted after the freeze call)
-- [ ] every pre-existing todo + open delta still parses (backward-reading) and no persistence store was added (thin-engine floor held) (← signal-model, graph-view-signals)  (verify: test_backward_read_existing plus a grep proving no new state-store key/table was added)
+- [x] note, todo, and §7 delta are read as ONE signal type with a status + edges, still stored as git-diffable text (no new store)   (← signal-model)  (verify: test_signal_model — todos + SPEC deltas + competency deltas all project to one signal {id,kind,text,status,edges}; test_signal_pure_no_store proves state.json byte-identical, 9 green)
+- [x] `add.py graph` renders signals as nodes with observed-by / resolves-into / blocks edges                                       (← graph-view-signals)  (verify: test_graph_view_signals — --signals overlay renders sig_ nodes edged observed-by/resolves-into/blocks, x_ fallback, default byte-identical, 6 green)
+- [x] a milestone's exit-criteria render as delivered-by nodes — goal-completion is visible as a graph fact                          (← exit-criterion-nodes)  (verify: test_exit_criterion_nodes — each exit-criterion is an ec_ node edged -.->|delivered-by| its task, met/unmet classed, 7 green)
+- [x] the scope-atomicity nudge seeds a persistent signal (not an ephemeral print), addressable after the freeze scrolls away        (← atomicity-signal)  (verify: test_atomicity_signal::test_freeze_multipart_leaves_signal — a real freeze of a multi-Part task leaves a captured signal asserted after the call, 11 green)
+- [x] every pre-existing todo + open delta still parses (backward-reading) and no persistence store was added (thin-engine floor held) (← signal-model, graph-view-signals)  (verify: test_signal_model backward-reads pre-existing todos/deltas + test_signal_pure_no_store proves no new state-store key/table; ENGINE_PKG_MD5 unchanged across all 4 tasks)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Cross-task review the AI fills — the evidence behind the EXISTING milestone-done gate, NOT a new approval.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py cmd_graph/cmd_todo/deltas + signal grammar — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides — signal/graph guidance, or "untouched">
-- book    : <docs/* — the signal-graph chapter, or "untouched">
+- tooling : `add.py` gained `_signals` (unified projection reader), the `graph --signals` overlay (sig_ signal nodes + ec_ exit-criterion delivered-by nodes), `_exit_criterion_nodes`, `_scope_parts` + `_atomicity_signal_seed` + its fail-open cmd_freeze hook. ZERO new store — all reads over state["todos"] + §7 markdown; `_signals` frozen after signal-model; ENGINE_MD5 repinned per task, ENGINE_PKG_MD5 held (add_engine untouched). 4-way twin parity green.
+- skill   : untouched (the graph/signals surface is engine-only, opt-in `--signals`; no phase-guide change needed this milestone).
+- book    : untouched (a signal-graph chapter is a candidate follow-up; the feature is discoverable via `graph --signals` help + PLAN prose).
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- signal-model        : gate=PASS · tests=9 green · residue=none (pure projection, state.json byte-identical)
+- graph-view-signals  : gate=PASS · tests=6 green · residue=none (default graph byte-identical)
+- exit-criterion-nodes: gate=PASS · tests=7 green · residue=none (ENGINE_PKG_MD5 held)
+- atomicity-signal    : gate=PASS · tests=11 green · residue=none (supersedes parked scope-atomicity-guard)
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — criteria 1&5 ← signal-model row · 2 ← graph-view-signals row · 3 ← exit-criterion-nodes row · 4 ← atomicity-signal row
+- goal: unify note/todo/§7-delta into ONE addressable signal node with status+edges, promote exit-criteria to delivered-by nodes, render them through cmd_graph as a VIEW over existing text with NO new store — PROVEN by `graph --signals` on this very board rendering the live signals AND all 5 signal-graph exit-criteria as met/unmet delivered-by nodes, while test_signal_pure_no_store + an unchanged ENGINE_PKG_MD5 confirm zero new persistence.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > AI-written steps for THIS milestone (hints, not engine commands); MERGE is one small step; the human runs the cut.

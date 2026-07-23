@@ -1443,7 +1443,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T03:24:37+00:00",
+  "updated": "2026-07-23T03:26:23+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -1601,9 +1601,9 @@
       "title": "Unified signal graph \u2014 note = todo = delta as nodes",
       "goal": "Unify the three off-graph observation primitives (ephemeral note, todo, \u00a77 delta) into ONE addressable signal node with a status lifecycle and edges, promote exit-criteria to delivered-by nodes, and render them through cmd_graph as a VIEW over existing text \u2014 no new persistence store; the honesty layer's output becomes navigable, not just readable",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-23T02:20:33+00:00",
-      "updated": "2026-07-23T02:23:46+00:00",
+      "updated": "2026-07-23T03:26:23+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-23T02:23:46+00:00",
       "confirmed_by": "tindang",
@@ -1624,6 +1624,11 @@
         "atomicity-signal": [
           "signal-model"
         ]
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
