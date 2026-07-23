@@ -53,6 +53,14 @@ markdown_extensions:
   - tables
   - attr_list
   - md_in_html
+  # Render ```mermaid fenced blocks as diagrams (Material auto-loads mermaid.js
+  # for .mermaid blocks). Enables the native flow diagram in 02-the-flow.md now
+  # that the add-flow.png raster is retired.
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 # Explicit, ordered nav. Grouped into the book's Parts; the flattened file order is
 # Home(README.md) -> chapters 00..16 -> appendices A..G (the frozen contract seam).
@@ -64,9 +72,8 @@ nav:
       - "02 · The flow, and what is disposable": 02-the-flow.md
   - Part II — The method, step by step:
       - "03 · Step 1 — Specify": 03-step-1-specify.md
-      - "04 · Step 2 — Scenarios": 04-step-2-scenarios.md
       - "05 · Step 3 — Contract": 05-step-3-plan.md
-      - "06 · Step 4 — Tests": 06-step-4-tests.md
+      - "06 · Step 4 — Tests & Scenarios": 06-step-4-tests.md
       - "07 · Step 5 — Build": 07-step-5-build.md
       - "08 · Step 6 — Verify": 08-step-6-verify.md
       - "09 · The loop — observe and learn": 09-the-loop.md

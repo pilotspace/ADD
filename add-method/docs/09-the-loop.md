@@ -19,7 +19,7 @@ Release behind a mechanism that limits the scope of impact of a mistake — a fe
 
 ## Reuse the scenarios as monitors
 
-The scenarios from [Step 2](./04-step-2-scenarios.md) have a second life here. They described the behavior you expected; in production they become the behavior you monitor. The same definition of "correct" that drove the tests now drives the alerts.
+The scenarios from [Step 4](./06-step-4-tests.md) have a second life here. They described the behavior you expected; in production they become the behavior you monitor. The same definition of "correct" that drove the tests now drives the alerts.
 
 **What to watch (▶ example):**
 

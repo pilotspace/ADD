@@ -43,7 +43,7 @@ the method already names, made explicit as three concerns.
   every screen must handle (loading · empty · error · success), and a design source
   of truth — a `DESIGN.md` or clickable prototype. The AI can generate a prototype
   from a design system; a person owns the empathy — what the user is trying to do,
-  and what "good" feels like from their side. The scenarios ([04](./04-step-2-scenarios.md))
+  and what "good" feels like from their side. The scenarios ([Step 4](./06-step-4-tests.md))
   test that behaviour; the foundation keeps the design intent that makes a screen
   worth building.
 

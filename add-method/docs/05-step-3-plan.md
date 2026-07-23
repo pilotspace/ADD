@@ -1,6 +1,6 @@
 # 05 · Step 3 — Contract
 
-[← 04 Step 2 Scenarios](./04-step-2-scenarios.md) · [Contents](./README.md) · Next: [06 Step 4 Tests →](./06-step-4-tests.md)
+[← 03 Step 1 Specify](./03-step-1-specify.md) · [Contents](./README.md) · Next: [06 Step 4 Tests & Scenarios →](./06-step-4-tests.md)
 
 > **Purpose:** fix the external shape of the feature — interfaces, data structures, names, and error cases — and freeze it.
 > **Produces:** `contracts/<name>.md` (plus a mock and contract tests).

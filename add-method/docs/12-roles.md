@@ -84,14 +84,14 @@ Everyone on an AIDD team becomes, in part, a *verifier*; most also become *autho
 
 `A` Accountable · `R` Responsible/Lead · `C` Consulted · `I` Informed
 
-| Role | Setup | Specify | Scenarios | Contract | Tests | Build | Verify | Loop |
-|------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Product / Domain | C | **R** | R | I | I | I | I | R |
-| Architect / Lead | **R/A** | C | C | **R/A** | C | A | A | C |
-| Engineer (Senior) | C | I | C | R | R | **R** | R | C |
-| Engineer (Junior) | I | I | I | I | R | R | I | I |
-| QA / Test | I | C | R | C | **R** | C | C | C |
-| Designer | I | R (design) | R | C | I | I | I | I |
+| Role | Setup | Specify | Contract | Tests & Scenarios | Build | Verify | Loop |
+|------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Product / Domain | C | **R** | I | R | I | I | R |
+| Architect / Lead | **R/A** | C | **R/A** | C | A | A | C |
+| Engineer (Senior) | C | I | R | R | **R** | R | C |
+| Engineer (Junior) | I | I | I | R | R | I | I |
+| QA / Test | I | C | C | **R** | C | C | C |
+| Designer | I | R (design) | C | R | I | I | I |
 | DevOps / SRE | R | I | I | C | C | R | R | **R** |
 | Security | R | C | I | C | C | R | R | C |
 | EM / Delivery | C | C | C | C | C | C | C | C |

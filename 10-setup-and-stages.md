@@ -49,9 +49,8 @@ Depth: **Deep** (full rigor) · **Core** (real but scoped) · **Light** (just en
 |------|:---------:|:----------------:|:---:|:----------------:|
 | 1 Specify | Light | Deep (risky slice) | Deep | Deep |
 | (design, if UI) | **Deep** | Light | Core | Deep |
-| 2 Scenarios | Light | Core | Deep | Deep |
 | 3 Contract | — | Core | Deep | Deep |
-| 4 Tests | — | Core | Core | Deep |
+| 4 Tests & Scenarios | Light | Core | Deep | Deep |
 | 5 Build | Light (throwaway) | Core | Core | Deep |
 | 6 Verify | Light | Core | Core | Deep |
 | Loop / operate | — | — | Light | Deep |
