@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "67519761c9839bf1b92ae9451e90485f"  # re-aimed @ migrate-specs-pointers (cmd_init/cmd_migrate wire PROJECT.md's ADD:SPECS pointer block; init guarded on survivor freshness). prior: 8001ed16… @ claude-md-minimal
+ENGINE_MD5 = "868bd79b7387a4d304b983f78d89b5d0"  # re-aimed @ trim-build-strategy-labels (_PLAN_FIELDS Persona required→optional + _build_plan legacy fallback). prior: 67519761… @ migrate-specs-pointers
 ENGINE_PKG_MD5 = "96f41126af98221befda9012d21b450b"  # re-aimed @ claude-md-block-finalize (guidelines._guideline_block: thin-index step 2, tightened flow/roster, portable agents/*.md). prior: fd36bb5e… @ migrate-specs-pointers

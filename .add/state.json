@@ -1251,6 +1251,15 @@
         "skill-loop-fold"
       ],
       "archived": "2026-07-23"
+    },
+    {
+      "slug": "build-strategy-trim",
+      "title": "Trim the \u00a73 Build-strategy block",
+      "tasks": 1,
+      "task_slugs": [
+        "trim-build-strategy-labels"
+      ],
+      "archived": "2026-07-23"
     }
   ],
   "active_milestones": [
@@ -1515,7 +1524,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T09:21:53+00:00",
+  "updated": "2026-07-23T09:41:44+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -1634,15 +1643,6 @@
       "updated": "2026-07-16T09:46:41+00:00",
       "status": "queued",
       "goal": ""
-    },
-    "build-strategy-trim": {
-      "title": "Trim the \u00a73 Build-strategy block",
-      "goal": "Keep the enforced Scope line (relabel: it is HARD scope-lock, currently mislabeled SOFT); make Regression floor + Persona implicit/optional. Template + _FALLBACK_TASK + guides + conformance tests, retire-in-place.",
-      "stage": "mvp",
-      "status": "queued",
-      "created": "2026-07-23T05:32:30+00:00",
-      "updated": "2026-07-23T05:32:30+00:00",
-      "tiny": true
     }
   },
   "tasks": {

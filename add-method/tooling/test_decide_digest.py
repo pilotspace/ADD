@@ -238,7 +238,7 @@ class DecideDigestTest(unittest.TestCase):
     _BS_FILLED = ("the-frozen-shape-text\n\n"
                   "Scope (may touch): add.py gate-udd.md\n"
                   "Strategy (ordered batches): 1. red 2. green 3. sync\n"
-                  "Persona (required): generic\n"
+                  "Persona (optional): generic\n"
                   "Spawn isolation (default): inline\n\n"
                   "Status: DRAFT")
 
@@ -266,7 +266,7 @@ class DecideDigestTest(unittest.TestCase):
         self.assertTrue(all(set(e) == {"label", "value"} for e in plan))
         labels = [e["label"] for e in plan]
         self.assertEqual(labels, ["Scope (may touch)", "Strategy (ordered batches)",
-                                  "Persona (required)", "Spawn isolation (default)"])
+                                  "Persona (optional)", "Spawn isolation (default)"])
         self.assertEqual(plan[0]["value"], "add.py gate-udd.md")
 
     def test_build_plan_no_field_bleed(self):
@@ -280,7 +280,7 @@ class DecideDigestTest(unittest.TestCase):
                 "Data strategy: two list keys\n"
                 "Pattern: additive extension\n"
                 "Optimization stance: legibility-first\n"
-                "Persona (required): generic\n"
+                "Persona (optional): generic\n"
                 "Spawn isolation (default): inline\n"
                 "Known-problem fixes: re-pin both asserts\n\n"
                 "Status: DRAFT")
@@ -299,7 +299,7 @@ class DecideDigestTest(unittest.TestCase):
         """M3: an unfilled placeholder (`<…>`) or the bare `./src/` Scope default is skipped."""
         sec3 = ("shape\n\n"
                 "Scope (may touch): ./src/\n"
-                "Persona (required): <name the persona>\n"
+                "Persona (optional): <name the persona>\n"
                 "Spawn isolation (default): inline\n\n"
                 "Status: DRAFT")
         self._mk_task("alpha", phase="plan", sec3=sec3)

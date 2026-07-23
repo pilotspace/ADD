@@ -49,10 +49,10 @@ Target (measurable): <the success bar §6 evidence must hit — numbers, not adj
 Status: DRAFT
 Reported: <yes — the freeze report (banner/ARC/SHAPE) rendered before this froze | no>
 
-### Build-strategy (SOFT: preferred; the builder self-improves and records actual at verify)
-Scope (may touch): `./src/`   <fill before the freeze — the file write-set, single source of truth; every file the build may write; scope-lock source>
-Regression floor: <the existing suite(s) that must stay green — the host repo's own tests are ALWAYS a floor; run them before the gate — or "none — greenfield">
-Persona (required): <persona file under `.add/personas/` this build embodies — advisory, never lowers a gate; "generic" if none fits>
+### Build-strategy — Scope (may touch) is HARD scope-lock; the rest is SOFT (the builder self-improves and records actual at verify)
+Scope (may touch): `./src/`   <HARD — fill before the freeze; the file write-set, single source of truth; every file the build may write; the tamper-guarded scope-lock source>
+Regression floor: <optional — the existing suite(s) that must stay green; the host repo's own tests are a floor when present; run them before the gate — or omit / "none — greenfield">
+Persona (optional): <persona file under `.add/personas/` this build embodies — advisory, never lowers a gate; omit or "generic" if none fits>
 
 ### AI-verify record (required when gate_mode: ai-plan-verify)
 - [ ] §3 PLAN grounding anchors resolve in the current tree
@@ -61,7 +61,7 @@ Persona (required): <persona file under `.add/personas/` this build embodies —
 - [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
 Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
 
-<!-- The freeze IS the one approval, led by the bundle's lowest-confidence flag — Contract = HARD (tamper-guarded); Build-strategy = SOFT. Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). -->
+<!-- The freeze IS the one approval, led by the bundle's lowest-confidence flag — Contract + Scope (may touch) = HARD (tamper-guarded); Strategy · Regression floor · Persona = SOFT/optional. Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). -->
 
 ---
 

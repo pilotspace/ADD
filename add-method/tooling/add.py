@@ -5812,13 +5812,15 @@ def _flag_well_formed(raw3: str) -> bool:
 # is a template placeholder (leading "<", or the bare "./src/" Scope default) is skipped; a
 # trailing "   <hint>" on a real value is stripped. PURE.
 _PLAN_FIELDS = ("Scope (may touch)", "Strategy (ordered batches)", "Approach (domain strategy)",
-                "Persona (required)", "Spawn isolation (default)", "Known-problem fixes")
+                "Persona (optional)", "Spawn isolation (default)", "Known-problem fixes")
 
 
 def _build_plan(raw3: str) -> list[dict]:
     out: list[dict] = []
     for label in _PLAN_FIELDS:
         m = re.search(rf"(?m)^{re.escape(label)}:[ \t]*(.*)$", raw3)   # this label's line ONLY
+        if not m and label == "Persona (optional)":                   # legacy tasks froze it "(required)"
+            m = re.search(r"(?m)^Persona \(required\):[ \t]*(.*)$", raw3)
         if not m:
             continue
         val = m.group(1).strip()
