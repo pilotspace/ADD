@@ -139,8 +139,14 @@ class DefaultScopeWarningTest(_Board):
         blob = out + err
         self.assertIn("template default", blob,
                       f"crossing must name the still-default §5 line: {blob!r}")
-        self.assertIn("re-cross --by", blob,
-                      "the warning must carry the repair command")
+        # scope-walk-prune: the warn no longer instructs `re-cross --by` — the 2026-07-23
+        # re-measure showed that instruction driving a re-cross thrash loop (re-cross
+        # reprints the warn, so the agent retried 3x). It now teaches the ONLY clearing
+        # path: edit the Scope line itself.
+        self.assertIn("Scope line itself is edited", blob,
+                      "the warning must teach the real clearing path")
+        self.assertIn("re-cross does not clear it", blob,
+                      "the warning must forbid the measured thrash path")
         st = self._task_state("alpha")
         self.assertEqual(st["phase"], "build", "the warning never blocks the crossing")
         self.assertIn("scope", st, "the snapshot is still taken exactly as today")

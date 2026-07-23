@@ -1997,8 +1997,9 @@ def _build_entry(root: Path, state: dict, slug: str, skip_freeze: bool = False,
                    or "<HARD — fill before the freeze" in m5.group(0)):
             print(f"warning: task '{slug}' §3 Scope is still the template default — "
                   "edit it to the REAL write-set (the default `src/` covers only the "
-                  "project-root src/; `./…` = this task's dir), then re-snapshot: "
-                  "add.py re-cross --by <name>")
+                  "project-root src/; `./…` = this task's dir) (a note, not a blocker — "
+                  "it clears only when the Scope line itself is edited; re-cross does "
+                  "not clear it)")
     else:
         state["tasks"][slug].pop("scope", None)
         try:
@@ -5113,7 +5114,11 @@ def _tripwire_divergence(root: Path, slug: str, tw: dict) -> list[str]:
 # task's declared source; without it, the walk descends into `.claude/worktrees/<wt>/` (linked
 # git worktrees: full branch checkouts) and their churn produces false `scope_violation`s.
 _SCOPE_EXCLUDE_DIRS = (".git", ".add", ".claude", "__pycache__", "node_modules", ".serena",
-                       ".next", "coverage", "test-results", ".pytest_cache")
+                       ".next", "coverage", "test-results", ".pytest_cache",
+                       # tool-owned python dirs (scope-walk-prune): an in-workspace
+                       # virtualenv read as out-of-scope writes in 3/3 re-measure reps.
+                       # dist/build stay WATCHED — they can be a project's real write-set.
+                       ".venv", "venv", ".tox", ".mypy_cache", ".ruff_cache", ".eggs")
 _SCOPE_EXCLUDE_FILES = (".DS_Store", ".coverage")      # plus *.pyc / *.tsbuildinfo by suffix
 _SCOPE_EXCLUDE_SUFFIXES = (".pyc", ".tsbuildinfo")
 
