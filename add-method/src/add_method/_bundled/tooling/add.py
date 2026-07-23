@@ -364,6 +364,46 @@ def _signals(root: Path) -> list[dict]:
     return out
 
 
+_EXIT_CRITERION_RE = re.compile(r"^\s*- \[([ x])\]\s+(.*)$")
+_DELIVERED_BY_RE = re.compile(r"\(←\s*([A-Za-z0-9][A-Za-z0-9_-]*)\s*\)")
+
+
+def _exit_criterion_nodes(root: Path) -> list[dict]:
+    """exit-criterion-nodes: project every milestone's `## Exit criteria` section into
+    delivered-by signal nodes — one dict per criterion {ms, idx, text, met, delivered_by}.
+    `met` is the `[x]` box; `delivered_by` is the `(← <slug>)` pointer (None if absent).
+    PURE read of each MILESTONE.md (never state, never a store); a missing file/section
+    contributes nothing (fail-soft) — mirrors _exit_criteria, ADDITIVE beside it."""
+    try:
+        state = load_state(root)
+    except Exception:
+        return []
+    out: list[dict] = []
+    for mslug in sorted(state.get("milestones") or {}):
+        f = root / "milestones" / mslug / MILESTONE_FILE
+        if not f.exists():
+            continue
+        try:
+            text = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        m = re.search(r"## Exit criteria.*?(?=\n## |\Z)", text, re.S)
+        if not m:
+            continue
+        idx = 0
+        for line in m.group(0).splitlines():
+            cm = _EXIT_CRITERION_RE.match(line)
+            if not cm:
+                continue
+            idx += 1
+            body = cm.group(2)
+            p = _DELIVERED_BY_RE.search(body)
+            out.append({"ms": mslug, "idx": idx, "text": body,
+                        "met": cm.group(1) == "x",
+                        "delivered_by": p.group(1) if p else None})
+    return out
+
+
 # --- tidy a closed PLAN.md (strip-scaffold-at-done) --------------------------
 # A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 # task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
@@ -1559,6 +1599,36 @@ def cmd_graph(args: argparse.Namespace) -> None:
             lines.extend(edge_lines)
             lines.append("  classDef signal fill:#e7f5ff,stroke:#1971c2")
             lines.extend(class_lines)
+        # exit-criterion overlay (exit-criterion-nodes): each milestone exit criterion
+        # as a delivered-by node — met/unmet classed, edged to the task that satisfies it
+        # (x_ fallback for an unknown slug, no edge when unpointed). Same `--signals` gate.
+        ec_nodes = [n for n in _exit_criterion_nodes(root) if not only or n["ms"] == only]
+        if ec_nodes:
+            ec_missing: dict[str, str] = {}
+            ec_node_lines: list[str] = []
+            ec_edge_lines: list[str] = []
+            ec_class_lines: list[str] = []
+            for n in ec_nodes:
+                nid = f"ec_{n['ms']}_{n['idx']}"
+                glyph = "✓" if n["met"] else "○"
+                text = re.sub(r'["\[\]|\n]', " ", n["text"]).strip()[:40]
+                ec_node_lines.append(f'  {nid}["{glyph} {text}"]')
+                ec_class_lines.append(f"  class {nid} {'ec_met' if n['met'] else 'ec_unmet'}")
+                slug = n["delivered_by"]
+                if slug:
+                    if slug in tasks:
+                        tid = node_id(slug)
+                    else:                       # unknown slug -> x_ fallback (never dangling)
+                        tid = "x_" + slug
+                        note = "archived" if slug in archived else "missing"
+                        ec_missing[tid] = f'  {tid}["{slug} · {note}"]'
+                    ec_edge_lines.append(f"  {nid} -.->|delivered-by| {tid}")
+            lines.extend(sorted(ec_missing.values()))
+            lines.extend(ec_node_lines)
+            lines.extend(ec_edge_lines)
+            lines.append("  classDef ec_met fill:#d3f9d8,stroke:#2b8a3e")
+            lines.append("  classDef ec_unmet fill:#f1f3f5,stroke:#868e96")
+            lines.extend(ec_class_lines)
     print("\n".join(lines))
 
 
