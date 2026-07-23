@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "764bf47717b77112e5e02c60ed540173"  # re-aimed @ remove-rule-file-mode (dropped --rule-file/.ccsk-autodetect relocation from cmd_init/cmd_sync_guidelines + argparse). prior: d8fb245e… @ round-visible-runs
+ENGINE_MD5 = "3eb6dc23d4d36164a564b4229a2c9549"  # re-aimed @ signal-model (add _signals: unified note=todo=delta projection reader). prior: 764bf477… @ remove-rule-file-mode
 ENGINE_PKG_MD5 = "81553881899a4c6dfaad73f548ed5e04"  # re-aimed @ remove-rule-file-mode (guidelines.py/constants.py drop _rule_file_mode + rule-file relocation fns/constants). prior: bcc35aa2… @ persona-skill

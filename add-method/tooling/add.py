@@ -301,6 +301,69 @@ def _seeded_delta_pointers(text: str) -> list[str]:
     return out
 
 
+def _signals(root: Path) -> list[dict]:
+    """signal-model: project the three split observation primitives — todos
+    (state["todos"]), SPEC deltas and competency deltas (each task's §7) — into ONE
+    unified signal node list. A signal is {id, kind, text, status, edges}: status
+    rides the closed lifecycle {advisory, captured, evidenced, resolving, resolved,
+    dropped}; edges are (rel, target_slug) with rel in {observed-by, resolves-into,
+    blocks}. PURE projection — reads only, adds NO store, rewrites nothing (the graph
+    is a VIEW, not a table). Backward-reading: every pre-existing todo/delta maps to a
+    status; a malformed line or corrupt entry is SKIPPED, never raised."""
+    try:
+        state = load_state(root)
+    except Exception:
+        return []
+    out: list[dict] = []
+    # todos — state["todos"] {id, text, status: open|done}
+    for t in (state.get("todos") or []):
+        if not isinstance(t, dict) or "id" not in t:
+            continue
+        status = {"open": "captured", "done": "resolved"}.get(t.get("status"))
+        if status is None:
+            continue
+        out.append({"id": f"t{t['id']}", "kind": "todo", "text": t.get("text") or "",
+                    "status": status, "edges": []})
+    # §7 deltas per task — SPEC (open|seeded|dropped|carried) + competency (open|folded|rejected)
+    for slug in sorted(state.get("tasks") or {}):
+        body = _raw_phase_bodies(root, slug).get(7, "")
+        s_n = c_n = 0
+        for raw in body.splitlines():
+            line = raw.rstrip("\n")
+            ms = _SPEC_DELTA_RE.match(line)
+            if ms:
+                st, text = ms.group(2), ms.group(3)
+                edges: list = [("observed-by", slug)]
+                if st == "open":
+                    status = "evidenced" if _EVIDENCE_RE.match(text) else "captured"
+                elif st == "carried":            # still open, carried forward
+                    status = "captured"
+                elif st == "seeded":
+                    status = "resolving"
+                    p = _SEED_POINTER_RE.search(text)
+                    if p:
+                        edges.append(("resolves-into", p.group(1)))
+                elif st == "dropped":
+                    status = "dropped"
+                else:
+                    continue
+                s_n += 1
+                out.append({"id": f"s:{slug}:{s_n}", "kind": "spec-delta",
+                            "text": text, "status": status, "edges": edges})
+                continue
+            mc = _DELTA_RE.match(line)
+            if mc:
+                status = {"open": "evidenced", "folded": "resolved",
+                          "rejected": "dropped"}.get(mc.group(2))
+                if status is None:
+                    continue
+                c_n += 1
+                out.append({"id": f"c:{slug}:{c_n}", "kind": "competency-delta",
+                            "text": mc.group(3), "status": status,
+                            "edges": [("observed-by", slug)]})
+    return out
+
+
 # --- tidy a closed PLAN.md (strip-scaffold-at-done) --------------------------
 # A live PLAN.md carries `<!-- … -->` instruction comments that guide the active phase; once the
 # task is `done` they are dead weight (PR40 audit). cmd_gate strips them on a COMPLETING gate.
