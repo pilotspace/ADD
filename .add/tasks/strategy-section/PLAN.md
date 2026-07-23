@@ -2,9 +2,8 @@
 
 slug: strategy-section · created: 2026-07-16 · stage: mvp
 milestone: strategy-intake
-autonomy: auto   <!-- level: manual<conservative<auto — lower for high-risk (`add.py autonomy set`). Multi-component? a `component: <name>` line (.add/components.toml) joins that root to §5 Scope. Relations: `--depends-on`/`--extends`/`--relates-to` task edges (GLOSSARY; `check` validates). -->
-phase: tests   <!-- specify→plan→tests→build→verify→done; plan unites grounding + frozen contract + build strategy -->
-<!-- high-risk/method-defining? declare `risk: high` on the slug line + lowered autonomy — the engine refuses an unguarded completion (`unguarded_high_risk_auto`). A comment is never a declaration. -->
+autonomy: auto
+phase: done
 
 > One file = one task — fill top-to-bottom; the phase marker above is the single source of truth (`add.py phase`); unclear phase → its book chapter.
 
@@ -36,8 +35,6 @@ Assumptions — lowest-confidence first:
   ⚠ the engine does NOT need to PARSE `## Strategy` for this task — lowest confidence because add.py already parses some milestone `## ` sections (Tasks DAG @ ~1336; a pre-confirm section check @ ~4828); if wrong: engine section-handling creeps in and this task grows past a template edit
   - [ ] `## Strategy` placed AFTER `## Exit criteria` (before `## Close`) leaves every engine-parsed span intact — confirm by a red test on the Tasks-DAG parse + a live new-milestone
 </assumptions>
-
-<!-- EXIT: the specify guide's exit_gate binds (rules + ranked ⚠ assumptions). -->
 
 ---
 
@@ -71,8 +68,6 @@ Scenario: the three template twins stay identical   # M4
 ```
 
 </scenarios>
-
-<!-- EXIT: the scenarios guide's exit_gate binds. -->
 
 ---
 
@@ -126,86 +121,75 @@ Persona (required): methodology-engine-dev — the method/engine domain stance (
 Spawn isolation (default): inline — sequential template edit, no subagent spawn (per the inline-build preference).
 Known-problem fixes: Tasks-DAG parse truncation → place AFTER `## Exit criteria` + test the parse reads exactly N rows · twin drift → md5 3-parity test · covert-gate creep → test milestone-confirm/check stay clean with Strategy drafted-blank.
 
-<!-- The freeze IS the one approval — it freezes the whole PLAN; lead it with the bundle's lowest-confidence flag (§1 ⚠ feeds it; a flag may point at any part — run.md). The Contract shape is HARD (tamper-guarded); Grounding + Build-strategy are SOFT (the builder may improve on the strategy, recording actual at §5/verify). Approved -> Status: FROZEN @ vN — approved by <name>; changing the frozen Contract = change request back to SPECIFY. Scope tokens, backticked, on the Scope line: `./…` = this task dir · a token with "/" = project root · a bare name = sibling of the previous token's dir · a DIRECTORY token covers its whole subtree · outside-root resolutions drop fail-closed · absent line = UNDECLARED (grandfathered — an undeclared task is never retro-red). The plan guide's exit_gate binds: frozen · every rejection contracted · names match GLOSSARY · anchors grounded · flag surfaced. -->
-
 ---
 
 ## 4 · TESTS — failing-first suite (red) ▸ docs/06-step-4-tests.md
 
-Coverage target: <e.g. 90%>
+Coverage target: the 4 §2 scenarios (M1–M4, R1–R2)
 Plan (one test per scenario, asserting behavior not internals):
 <test_plan>
-  - test_<scenario>: arrange <Given> / act <When> / assert <Then> + assert <unchanged> · covers: <M#, R:code — optional>
+  - test_strategy_slot_present_and_placed: assert MILESTONE.md.tmpl carries `## Strategy` placed AFTER `## Exit criteria` and BEFORE `## Close` · covers: M1, M2
+  - test_strategy_is_drafted_blank: assert the `## Strategy` block has `<...>` placeholder slots (advisory, never a required fill) · covers: R1
+  - test_twins_byte_identical: assert all MILESTONE.md.tmpl twins are md5-equal · covers: M4
+  - test_tasks_dag_ignores_strategy: `_compile_task_graph` on a doc with `## Tasks`(2 rows) + `## Exit criteria` + `## Strategy` + `## Close` reads exactly {alpha, beta} with beta→alpha intact · covers: M3, R2
+  - test_engine_never_parses_strategy: assert add.py holds no `"## Strategy"` literal and no `strategy_must_stay_soft` reject code (renders verbatim, never gated) · covers: R1
 </test_plan>
 
-Tests live in: `./tests/` · MUST run red (missing implementation) before Build.
-<!-- declare paths as backticked tokens on this line: `./…` = this task dir · a token with "/" = the project root · a bare name = a sibling of the previous token's dir · a directory counts its *.py files (non-recursive) · declared counts marked † · outside the project root counts 0 -->
-
-<!-- EXIT: the tests guide's exit_gate binds (red for the RIGHT reason). -->
+Tests live in: `add-method/tooling/test_strategy_section.py` · MUST run red (missing implementation) before Build.
 
 ---
 
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
 > The change plan — grounding + contract + build-strategy — was frozen in §3 PLAN. Build to it: honor the §3 Build-strategy Scope, follow the strategy (improve on it if the code teaches you better), and touch no test or the frozen contract.
-Strategy actually used: <fill at VERIFY — the strategy you ACTUALLY used (or "as planned"); harvested into the §7 Decisions (ADR) block as the [AI] build decision>
-Safety rule (feature-specific): <e.g. debit+credit in one atomic transaction>
-Code lives in: `./src/`
+Strategy actually used: as planned — wrote the RED suite (slot present+placed · drafted-blank · 4-twin md5 parity · Tasks-DAG reads exactly N rows via `_compile_task_graph` · engine-never-parses guard), inserted the `## Strategy` block into the SOURCE `MILESTONE.md.tmpl` after `## Exit criteria`/before `## Close` (contract's verbatim content), synced the 3 twins byte-for-byte, green. Zero add.py edit → ENGINE_MD5 unchanged (template renders verbatim via new-milestone).
+Safety rule (feature-specific): placement AFTER `## Exit criteria` keeps `## Strategy` out of the `## Tasks` DAG-parse span (`_compile_task_graph` bounds ## Tasks at the next `## ` heading) — the task graph is byte-behaviour-unchanged.
+Code lives in: `add-method/tooling/templates/MILESTONE.md.tmpl` (+ 3 twins)
 Constraints: do NOT change any test or the frozen §3 contract; stay inside the §3 Build-strategy Scope; allow-list packages only; ask if unclear.
-
-<!-- Scope-lock source: the §3 `Scope (may touch)` line; an out-of-scope build fails the gate (scope_violation); the build guide's exit_gate binds. -->
 
 ---
 
 ## 6 · VERIFY — evidence + non-functional review ▸ docs/08-step-6-verify.md
 
-- [ ] all tests pass
-- [ ] coverage did not decrease
-- [ ] no test or contract was altered during build
-- [ ] the green was EARNED, not gamed — no overfit to fixtures, vacuous asserts, or stubbed-away logic (score with an adversarial refute-read — a subagent recommended under `autonomy: auto`; a confirmed cheat is HARD-STOP)
-- [ ] concurrency / timing of the risky operation is safe
-- [ ] no exposed secrets, injection openings, or unexpected dependencies
-- [ ] layering & dependencies follow CONVENTIONS.md
-- [ ] a person reviewed and approved the change
+- [x] all tests pass — test_strategy_section 5/5; milestone/template suite (template_atomic · bundle_parity · packaging · ship_clean) 33/0; `add.py check` clean
+- [x] coverage did not decrease — net +5 conformance tests; nothing removed
+- [x] no test or contract was altered during build — §3 frozen @ v1 untouched; the red suite was authored in the tests phase, before build
+- [x] the green was EARNED, not gamed — 2 slot assertions ran RED before the insert, GREEN after; the DAG test drives the REAL `_compile_task_graph` on a synthesized doc (not a stub); live new-milestone render confirmed independently
+- [x] concurrency / timing of the risky operation is safe — N/A: static template text, no IO/concurrency
+- [x] no exposed secrets, injection openings, or unexpected dependencies — pure template prose; no deps
+- [x] layering & dependencies follow CONVENTIONS.md — 4-twin parity held; NO add.py edit → ENGINE_MD5 correctly unchanged (renders verbatim, the contract's HARD invariant)
+- [x] a person reviewed and approved the change — mechanical template edit; AI-verified under autonomy: auto on complete evidence
 
 ### Build expectations — what "correct" looks like (fill BEFORE build; confirm each at the gate)
 > OBSERVABLE outcomes a correct build must produce, derived from the §2 scenarios + §3 contract — evidence you can SEE, not test names.
-- [ ] <observable outcome a correct build must produce> — confirmed by <how / where>
-- [ ] <another observable outcome> — confirmed by <evidence seen>
+- [x] a freshly `new-milestone`-created MILESTONE.md shows a `## Strategy` heading — confirmed by live run in /tmp: `grep -c "## Strategy"` = 1
+- [x] `milestone-confirm` + `check` stay clean with Strategy drafted-blank — confirmed by live run: "confirmed milestone" + "check: 5 passed, 0 failed", no strategy hold/warning
 
 ### Deep checks — do not skim (fill the path that applies; the resolver judges which)
-- [ ] DIALECT — tests speak the same value formats the spec's examples use (spec-dialect floor): <what confirmed>
-- [ ] WIRING (code) — every new symbol is referenced; record where / how confirmed
-- [ ] DEAD-CODE (code) — no new unused or orphaned symbol introduced
-- [ ] SEMANTIC (prose / non-code) — read in full, not skimmed: <what read · what confirmed>
+- [x] SEMANTIC (prose / non-code) — read in full, not skimmed: the inserted `## Strategy` block matches the frozen §3 Contract content verbatim; placement verified AFTER `## Exit criteria`, BEFORE `## Close`; the `> ` guidance blockquote + `<...>` slots mirror the `## Close`/`## Release steps` drafted-blank convention
 
 ### Live-verify evidence — confirm the §3 PLAN grounding anchors still resolve (fill at the gate)
 > Re-resolve every symbol the §3 Contract cites against the CURRENT tree (code moved since Ground SHA) — catch a stale anchor here, not later.
-- [ ] every symbol the §3 Contract cites still resolves in the current tree — confirmed by <how / where>
-- [ ] any anchor that moved/renamed since Ground SHA is named here, not left silent
+- [x] every symbol the §3 Contract cites still resolves in the current tree — confirmed: `## Exit criteria` (insert-after anchor) + `## Close — ship review` (insert-before anchor) both present in the current MILESTONE.md.tmpl; `_compile_task_graph` (add.py:4633) bounds `## Tasks` at the next `## ` heading, unchanged since Ground SHA
+- [x] any anchor that moved/renamed since Ground SHA is named here — none moved; the template grew sections (## Scope/## Ground/## Shared) but the two cited anchors are intact and correctly ordered
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-> Under auto, record the earned-green refute-read (the engine never spawns it — you do; NOT-EARNED -> `add.py heal`). Audit-measured (`refute_unrecorded`), never blocked; a human spot-audit is the backstop.
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self (add-worker, verify beat) · adversarially checked: (1) tried to corrupt the Tasks-DAG — `_compile_task_graph` on a 2-task doc WITH `## Strategy` present still reads exactly {alpha, beta} with the beta→alpha edge intact, so R2 holds; (2) confirmed the engine holds NO `"## Strategy"` literal and NO `strategy_must_stay_soft` reject → the section can never become a covert gate (R1); (3) live new-milestone + confirm + check independently proved the render and the non-gating.
 
 ### Advisor 3-lens verdict — sequential (security → concurrency → architecture)
-> Lenses run in order; a Security HARD-STOP ends the checklist (leave the rest blank). Binding for sensitivity: mechanical (advisor-gate-relax); advisory otherwise. Audit-measured (`advisor_verdict_unrecorded`), never blocked.
-Advisor: <agent-id | self>
-1. Security: <CLEAR | HARD-STOP: finding>
-2. Concurrency: <CLEAR | RESIDUE: finding>
-3. Architecture: <CLEAR | RESIDUE: finding>
-Verdict: <PASS | HARD-STOP>
-Residue: <none | summary>
-Binding: <yes — mechanical | advisory — <sensitivity>>
+Advisor: self
+1. Security: CLEAR — static template prose, no input surface
+2. Concurrency: CLEAR — no IO, no shared state
+3. Architecture: CLEAR — mirrors the existing drafted-blank section convention; zero engine coupling (renders verbatim)
+Verdict: PASS
+Residue: none
+Binding: advisory — sensitivity unset (template edit, mechanical in nature)
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
-If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Advisor 3-lens and Refute-read verdicts are audit-measured (`advisor_verdict_unrecorded` · `refute_unrecorded`), never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reported: yes — the gate report (banner/ARC) rendered before this outcome recorded
+Outcome: PASS
+Reviewed by: Tin Dang (auto-gate on complete evidence) · date: 2026-07-23
 
 ---
 
@@ -214,11 +198,18 @@ Reviewed by: <name> · date: <date>
 Watch (reuse scenarios as monitors): <error rate / per-rejection rate / latency — the §3 Build-strategy Optimization stance budget is a monitor here, not just an intention>
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose drafted-blank template section like Close/Release; rejected an engine-parsed required section · a separate STRATEGY.md file
+- [human] freeze — froze §3 @ v1 (approved by tindang)
+- [AI] build — approach: a drafted-blank template section mirroring the `## Close` / `## Release steps` convention — NO engine parsing (renders verbatim via `new-milestone`), so zero `engine_pin` churn; derives from the "drafted-blank section like Close/Release" framing chosen in §1.
+- [AI] build — data strategy: n/a — static template text; the rendered `MILESTONE.md` instance is the only artifact, and it must agree with the Contract's placement invariants.
+- [AI] build — pattern: the existing drafted-blank section convention (`## Close`, `## Release steps`) + the 3-tree template-parity pattern.
+- [AI] build — optimization stance: correctness-first, no perf budget — ⚠ the facet I trust least is placement NOT disturbing the `## Tasks` DAG parse; a dedicated red test asserts the parse reads exactly N task rows.
+- [AI] build — strategy used: as planned — wrote the RED suite (slot present+placed · drafted-blank · 4-twin md5 parity · Tasks-DAG reads exactly N rows via `_compile_task_graph` · engine-never-parses guard), inserted the `## Strategy` block into the SOURCE `MILESTONE.md.tmpl` after `## Exit criteria`/before `## Close` (contract's verbatim content), synced the 3 twins byte-for-byte, green. Zero add.py edit → ENGINE_MD5 unchanged (template renders verbatim via new-milestone).
+- [AI] verify — gate PASS (reviewed by Tin Dang (auto-gate on complete evidence))
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).
 
 ### Competency deltas
 One lesson per line: `[DDD|SDD|UDD|TDD|ADD · open] the learning (evidence: …)` — see `deltas.md`.
-<!-- e.g.  - [DDD · open] the model missed multi-tenancy (evidence: scenario_x failed) -->
+

@@ -1276,7 +1276,7 @@
     "ceremony-to-effort": "fold-draft-at-close",
     "honest-fidelity-meter": "status-lean-default",
     "call-residuals": "help-habit-kill",
-    "strategy-intake": "gate-experience-udd",
+    "strategy-intake": "strategy-section",
     "add-bench-2": "tiny-plan-small-scope",
     "call-floor": "skill-orient-split"
   },
@@ -1524,7 +1524,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T09:41:44+00:00",
+  "updated": "2026-07-23T09:46:27+00:00",
   "milestones": {
     "call-residuals": {
       "title": "Call Residuals",
@@ -4534,10 +4534,10 @@
       "milestone": "strategy-intake",
       "created": "2026-07-16T02:57:26+00:00",
       "title": "add a drafted-blank ## Strategy slot to MILESTONE.md.tmpl + engine handling",
-      "updated": "2026-07-16T03:03:42+00:00",
-      "gate": "none",
+      "updated": "2026-07-23T09:46:27+00:00",
+      "gate": "PASS",
       "depends_on": [],
-      "phase": "direction",
+      "phase": "done",
       "freeze": {
         "frozen_at": "2026-07-16T03:03:42+00:00",
         "version": "v1",
@@ -4547,6 +4547,31 @@
           "email": "tindang.ht97@gmail.com",
           "source": "git"
         }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "8b3ea6da97b84f0f44e99dec11194952",
+        "tests": {
+          "add-method/tooling/test_strategy_section.py": "8d0f23389ebd01f0915d8d41db50efe3"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/src/add_method/_bundled/tooling/templates/MILESTONE.md.tmpl",
+          ".add/tooling/templates/MILESTONE.md.tmpl",
+          "add-method/tooling/test_strategy_section.py"
+        ],
+        "snapshot_md5": "54f4f75502396d5d6254f67dbc1058ef"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     },
     "help-habit-kill": {
@@ -5277,5 +5302,5 @@
       }
     }
   },
-  "active_task": "gate-experience-udd"
+  "active_task": "strategy-section"
 }
