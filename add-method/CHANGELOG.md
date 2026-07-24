@@ -8,9 +8,10 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 Minor: the **strategy-intake** milestone closes — a fitting **persona** becomes ADD's
 adaptive project-management brain — plus the follow-on cleanup that completes the 2.3.0
-**scenarios fold** and adds a CI sweep of every shipped surface. All changes are
-skill/agent-surface prose; **zero engine change** (the engine records the `## Strategy`
-slot and the gate, never drives the loop or gates on the strategy).
+**scenarios fold** and adds a CI sweep of every shipped surface. The method changes are all
+skill/agent-surface prose with **zero `add.py` engine change** (the engine records the
+`## Strategy` slot and the gate, never drives the loop or gates on the strategy); this
+release also carries one **concurrency fix** to the installer's lock (see *Fixed*).
 
 ### Persona-as-PM strategy loop — `strategy.md` (new guide)
 - **DISCUSS → OPTIMIZE → CONVERGE** — a new `strategy.md` guide drives a persona-framed
@@ -34,6 +35,18 @@ slot and the gate, never drives the loop or gates on the strategy).
 - a **shipped-surface** CI sweep derives the published file set from the packaging manifests
   and fails on any dead chapter/section reference across every shipped surface.
 - CI/deps: `actions/setup-python` 6→7, `actions/setup-node` 6→7, `@clack/prompts` 1.6.0→1.7.0.
+
+### Fixed
+- **stale-lock reclaim could unlink a LIVE lock** (mutual-exclusion violation). The reclaim
+  path gated its unlink on inode identity alone, assuming a fresh replacement lock always
+  gets a new inode. Linux (ext4/tmpfs) **reuses freed inode numbers**, so a delayed racer
+  could match the crashed generation's inode against a *live* holder's replacement lock and
+  delete it — putting two processes inside the critical section at once. Reclaim now requires
+  the file to be **both** the observed inode **and** still stale, so a live or
+  heartbeat-refreshed lock is never mistaken for a dead one. Fixed at all four reclaim sites
+  in `_installer.py` and mirrored into the `bin/cli.js` npm twin, which carried the identical
+  guard. `O_EXCL`/`wx` remains the sole mutual-exclusion primitive and a genuinely crashed
+  lock still self-heals. Surfaced as an intermittent `peak=2` on the Linux CI runner only.
 
 ## [2.3.0] — 2026-07-24
 
