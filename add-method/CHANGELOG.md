@@ -4,6 +4,37 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.4.0] — 2026-07-24
+
+Minor: the **strategy-intake** milestone closes — a fitting **persona** becomes ADD's
+adaptive project-management brain — plus the follow-on cleanup that completes the 2.3.0
+**scenarios fold** and adds a CI sweep of every shipped surface. All changes are
+skill/agent-surface prose; **zero engine change** (the engine records the `## Strategy`
+slot and the gate, never drives the loop or gates on the strategy).
+
+### Persona-as-PM strategy loop — `strategy.md` (new guide)
+- **DISCUSS → OPTIMIZE → CONVERGE** — a new `strategy.md` guide drives a persona-framed
+  loop that fills a milestone's `## Strategy` slot with a sequenced, optimized task DAG,
+  converging on the *existing* six-dimension confidence self-score (no new bar invented).
+- **`add-advisor` refute at CONVERGE** — a high-uncertainty milestone spawns the advisor
+  in refute mode to break the strategy before it's recorded; advisory (it cannot block),
+  reusing the existing refute mode. The advisor's `direction` beat now names a milestone
+  strategy as a refutable artifact alongside a task bundle.
+- **risk-proportional depth ladder** — one legible rule: micro/`--tiny` skips the loop at
+  zero added per-turn cost · multi-task low-uncertainty runs the loop · high-uncertainty
+  adds the refute. It is the skill's judgment, never an engine gate; strategy stays SOFT
+  and security stays HARD-STOP.
+- **persona-at-intake** — `intake.md` now loads the **fitting persona** before it sizes a
+  request (match-else-seed, advisory), so the persona that owns the intake report also
+  shapes the sizing.
+
+### Fold completion + shipped-surface sweep
+- the **scenarios fold** finishes — four remaining shipped residuals of the §2→§4 retirement
+  are fixed, each defect class pinned by a new guard.
+- a **shipped-surface** CI sweep derives the published file set from the packaging manifests
+  and fails on any dead chapter/section reference across every shipped surface.
+- CI/deps: `actions/setup-python` 6→7, `actions/setup-node` 6→7, `@clack/prompts` 1.6.0→1.7.0.
+
 ## [2.3.0] — 2026-07-24
 
 Minor: three waves — a **signal graph** view over the task DAG, the **§2
