@@ -41,7 +41,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [x] udd-experience-pillar   depends-on: none                                    — DONE (gate PASS): design.md reframed experience-driven (a UI feature OR any human-facing experience surface — screen · interactive flow · human gate); the design-intake beat gained a FIFTH axis INTERACTION (cadence · seek · turn-rhythm); SKILL.md's trigger names experience surfaces; 3 trees byte-identical, SKILL.md 9490<9500. DESIGN.md.tmpl+glossary INTERACTION field deferred (§7 SPEC·open)
 - [ ] gate-experience-udd     depends-on: udd-experience-pillar, persona-owns-gates — host the persona-owned gate report as a UDD text-mode UX artifact; the persona designs the gate experience through the UDD lens; report-template.md points up to UDD as its home
 - [ ] persona-at-intake       depends-on: none                                    — extend add-persona selection + `persona:` routing to the intake/scope surface; intake.md/scope.md load the fitting persona before shaping
-- [ ] strategy-guide          depends-on: strategy-section, persona-owns-gates, persona-at-intake — new strategy.md: the persona-framed discuss→optimize→converge PM loop to ~95% confidence, using the persona-owned gate
+- [x] strategy-guide          depends-on: strategy-section, persona-owns-gates, persona-at-intake — DONE (gate PASS 2026-07-24): TIGHT standalone strategy.md — the persona-framed DISCUSS→OPTIMIZE→CONVERGE loop filling the `## Strategy` slot, converging on the existing six-dimension self-score; SOFT, security-HARD-STOP, micro/--tiny skip; deferring facets→slot, persona→intake, self-score→direction.md; SKILL.md + beyond.md pointers; 3 trees byte-identical
 - [ ] advisor-strategy-trigger depends-on: strategy-guide                          — extend the add-advisor spawn trigger to refute a high-uncertainty milestone's strategy before commit
 - [ ] risk-proportional-skip  depends-on: strategy-guide                          — the skip rule: micro / `--fast` bypasses the session; depth scales by risk/size (personas REMOVE ceremony for small work)
 
@@ -51,7 +51,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [x] UDD is redefined as experience-driven development — the pillar (design.md + SKILL.md trigger + the FIVE axes incl. INTERACTION) covers UI AND interaction/gate UX  (← udd-experience-pillar, DONE)
 - [x] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd, DONE 2026-07-23)
 - [x] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake, DONE 2026-07-24 PR #176: intake.md "## Load the fitting persona first" before ## Analyze, advisory/generic-fallback, 3 trees identical)
-- [ ] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide)
+- [x] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide, DONE 2026-07-24 PR-pending: strategy.md DISCUSS→OPTIMIZE→CONVERGE, persona-framed from intake, converges on phases/direction.md self-score, SOFT; guard test_strategy_guide 6/6, full suite green)
 - [ ] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger)
 - [ ] A micro / `--fast` milestone skips the session with zero added per-turn cost                     (← risk-proportional-skip)
 

@@ -20,6 +20,10 @@ prose. Load it (or the one guide you need) only when a trigger fires.
   Tool-agnostic; the engine never renders.
 - Tasks all done but the milestone **goal** unmet → `milestone-done` holds it open; the loop turns open
   deltas + extras into the next tasks until the goal is met — `loop.md`.
+- **A multi-task / high-uncertainty milestone** needs its task DAG sequenced before the tasks are built →
+  the persona-framed **strategy loop** (DISCUSS → OPTIMIZE → CONVERGE): the persona loaded at intake fills
+  the milestone's `## Strategy` slot with the optimized plan, converging on the six-dimension self-score —
+  `strategy.md`. SOFT/advisory, never a gate; a micro / `--tiny` milestone skips it (drafted-blank).
 - **Graduating mvp → production** — co-specify interview → draft ≥1 production milestone →
   human confirm → then `stage production`. Guarded (`stage_no_roadmap`); the FINAL step, never a
   bare flip. The quality-auditor persona carries the readiness playbook.
