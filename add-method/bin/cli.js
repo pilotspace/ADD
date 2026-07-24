@@ -1209,6 +1209,28 @@ function agedReclaimTickets(dir, lockFileName, staleAfterSeconds, nowMs) {
     }).sort();
 }
 
+// True iff `p` is STILL the exact stale generation identified by `observedIno` AND still stale —
+// the guard that gates a reclaim UNLINK. Mirror of _installer.py:_still_stale_generation.
+//
+// Inode NUMBER alone is NOT a stable identity across a delete+recreate: Linux (ext4/tmpfs)
+// aggressively REUSES freed inode numbers, so a live holder's fresh replacement lock can reuse the
+// crashed file's inode. A reclaimer that trusts inode identity alone then unlinks a LIVE lock whose
+// inode merely coincides with the crashed generation it observed — two holders end up inside the
+// critical section at once (the peak=2 double-hold; reproduced on Linux CI, never on macOS APFS,
+// which does not reuse inodes in a short window).
+//
+// Re-verifying that the CURRENT file is itself still stale (mtime age > `staleAfterSeconds`)
+// distinguishes a live reused-inode holder (age ~0, or heartbeat-refreshed) from the crashed
+// generation we meant to reclaim. The "wx" create remains the SOLE mutual-exclusion primitive;
+// this only prevents a live file being mistaken for a dead one.
+function stillStaleGeneration(p, observedIno, staleAfterSeconds, nowMs) {
+  const now = nowMs === undefined ? Date.now() : nowMs;
+  let cur = null;
+  try { cur = fs.statSync(p); }
+  catch (_e) { return false; }                  // vanished — nothing to reclaim
+  return cur.ino === observedIno && (now - cur.mtimeMs) / 1000 > staleAfterSeconds;
+}
+
 // prune-data: reclaim ORPHANED snapshots under <home>/data. An orphan is a <home>/data/<key>
 // whose key is owned by NO LIVE registry entry (LIVE = a registered path that still EXISTS on
 // disk) — so unregistered AND registered-but-vanished are BOTH orphans (the explicit reclaim;
@@ -1433,9 +1455,10 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
           // brand-new, not-yet-stale ticket for the SAME generation, so A and C would BOTH
           // believe they are the sole reclaimer — the exact double-hold bug this ticket
           // mechanism was built to prevent, reintroduced one level down).
-          let currentTino = null;
-          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
-          if (currentTino === tst.ino) {
+          // Same reuse guard as the main lock: only unlink a ticket STILL at its observed inode
+          // AND still aged past the ticket-stale threshold (a freed inode number can be reused
+          // by a fresh, live ticket for a new generation).
+          if (stillStaleGeneration(ticketPath, tst.ino, LOCK_TICKET_STALE_SECONDS)) {
             try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
           }
           try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
@@ -1462,9 +1485,12 @@ function acquireUpdateLock(home, { timeout = null } = {}, env = process.env) {
           // generation we ticketed for; otherwise our ticket is moot — leave the (unrelated,
           // currently live) file completely alone and let the loop's own open/EEXIST/age logic
           // re-evaluate reality fresh on the next iteration.
-          let currentIno = null;
-          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
-          if (currentIno === st.ino) {
+          // Re-verify STALENESS, not just inode identity: a freed inode number is REUSED by
+          // Linux (ext4/tmpfs), so a live holder's fresh reused-inode lock must never be
+          // unlinked on a bare inode match. Only remove it if it is STILL the observed inode
+          // AND still stale — a live/heartbeated file (age < staleAfterMs) is spared, closing
+          // the peak=2 double-hold.
+          if (stillStaleGeneration(lockPath, st.ino, staleAfterMs / 1000)) {
             try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
           }
         } finally {
@@ -1596,9 +1622,10 @@ function acquireProjectLock(addDir, env = process.env) {
           // mechanism was built to prevent, reintroduced one level down). Exactly one extra
           // self-heal attempt — never a second, matching M7's own "no poll, ever" discipline
           // already governing the main lock's own reclaim above.
-          let currentTino = null;
-          try { currentTino = fs.statSync(ticketPath).ino; } catch (_e) { /* already gone */ }
-          if (currentTino === tst.ino) {
+          // Same reuse guard as the main lock: only unlink a ticket STILL at its observed inode
+          // AND still aged past the ticket-stale threshold (a freed inode number can be reused
+          // by a fresh, live ticket for a new generation).
+          if (stillStaleGeneration(ticketPath, tst.ino, PROJECT_LOCK_TICKET_STALE_SECONDS)) {
             try { fs.unlinkSync(ticketPath); } catch (_e) {}   // already gone — harmless
           }
           try { ticketFd = fs.openSync(ticketPath, "wx"); } catch (_e) {}   // someone else won it
@@ -1624,9 +1651,12 @@ function acquireProjectLock(addDir, env = process.env) {
           // moot — leave the (unrelated, currently live) file completely alone and let the
           // single retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this lock
           // never polls a live holder).
-          let currentIno = null;
-          try { currentIno = fs.statSync(lockPath).ino; } catch (_e) { /* already gone */ }
-          if (currentIno === st.ino) {
+          // Re-verify STALENESS, not just inode identity: a freed inode number is REUSED by
+          // Linux (ext4/tmpfs), so a live holder's fresh reused-inode lock must never be
+          // unlinked on a bare inode match. Only remove it if it is STILL the observed inode
+          // AND still stale — a live/heartbeated file (age < staleAfterMs) is spared, closing
+          // the peak=2 double-hold.
+          if (stillStaleGeneration(lockPath, st.ino, staleAfterMs / 1000)) {
             try { fs.unlinkSync(lockPath); } catch (_e) {}   // already gone — harmless
           }
         } finally {
@@ -1846,6 +1876,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  stillStaleGeneration: stillStaleGeneration,
   detectAgent: detectAgent,
   detectAgentEnriched: detectAgentEnriched,
   readinessLine: readinessLine,

@@ -1426,6 +1426,29 @@ _LOCK_TICKET_STALE_SECONDS = 5     # a leaked per-generation reclaim ticket (its
                                    # _project_lock's own _PROJECT_LOCK_TICKET_STALE_SECONDS below).
 
 
+def _still_stale_generation(path: Path, observed_ino: int, stale_after: float, now: float | None = None) -> bool:
+    """True iff `path` is STILL the exact stale generation identified by `observed_ino` AND
+    still stale — the guard that gates a reclaim UNLINK.
+
+    Inode NUMBER alone is NOT a stable identity across a delete+recreate: Linux (ext4/tmpfs)
+    aggressively REUSES freed inode numbers, so a live holder's fresh replacement lock can
+    reuse the crashed file's inode. A reclaimer that trusts inode identity alone then unlinks
+    a LIVE lock whose inode merely coincides with the crashed generation it observed — two
+    holders end up inside the critical section at once (the peak=2 double-hold reproduced on
+    Linux CI, never on macOS APFS, which does not reuse inodes in a short window).
+
+    Re-verifying that the CURRENT file is itself still stale (mtime age > `stale_after`)
+    distinguishes a live reused-inode holder (age ~0, or heartbeat-refreshed) from the crashed
+    generation we meant to reclaim (aged mtime, no heartbeat). O_EXCL remains the sole
+    mutual-exclusion primitive; this only prevents a live file being mistaken for a dead one."""
+    now = time.time() if now is None else now
+    try:
+        cur = path.stat()
+    except OSError:
+        return False                      # vanished — nothing to reclaim
+    return cur.st_ino == observed_ino and (now - cur.st_mtime) > stale_after
+
+
 @contextlib.contextmanager
 def _lock_heartbeat(lock_path: Path, stale_after: float):
     """reclaim-ticket-race fix: refreshes `lock_path`'s own mtime on a background daemon thread
@@ -1567,11 +1590,10 @@ def _update_lock(home: Path, *, timeout: float | None = None, env=None):
                     # not-yet-stale ticket for the SAME generation, so A and C would BOTH believe
                     # they are the sole reclaimer — the exact double-hold bug this ticket
                     # mechanism was built to prevent, reintroduced one level down).
-                    try:
-                        current_tino = ticket_path.stat().st_ino
-                    except OSError:
-                        current_tino = None    # already gone — nothing to unlink
-                    if current_tino == tst.st_ino:
+                    # same reuse guard as the main lock: only unlink a ticket STILL at its
+                    # observed inode AND still aged past the ticket-stale threshold (a freed
+                    # inode number can be reused by a fresh, live ticket for a new generation).
+                    if _still_stale_generation(ticket_path, tst.st_ino, _LOCK_TICKET_STALE_SECONDS):
                         try:
                             os.unlink(str(ticket_path))
                         except OSError:
@@ -1603,11 +1625,12 @@ def _update_lock(home: Path, *, timeout: float | None = None, env=None):
                     # otherwise our ticket is moot — leave the (unrelated, currently live) file
                     # completely alone and let the loop's own open/EEXIST/age logic re-evaluate
                     # reality fresh on the next iteration.
-                    try:
-                        current_ino = lock_path.stat().st_ino
-                    except OSError:
-                        current_ino = None    # already gone — nothing to unlink
-                    if current_ino == st.st_ino:
+                    # Re-verify STALENESS, not just inode identity: a freed inode number is
+                    # REUSED by Linux (ext4/tmpfs), so a live holder's fresh reused-inode lock
+                    # must never be unlinked on a bare inode match. Only remove it if it is STILL
+                    # the observed inode AND still stale — a live/heartbeated file (age <
+                    # stale_after) is spared, closing the peak=2 double-hold.
+                    if _still_stale_generation(lock_path, st.st_ino, stale_after):
                         try:
                             os.unlink(str(lock_path))
                         except OSError:
@@ -1792,11 +1815,10 @@ def _project_lock(add_dir: Path, *, env=None):
                         # built to prevent, reintroduced one level down). Exactly one extra
                         # self-heal attempt — never a second, matching M7's own "no poll, ever"
                         # discipline already governing the main lock's own reclaim above.
-                        try:
-                            current_tino = ticket_path.stat().st_ino
-                        except OSError:
-                            current_tino = None    # already gone — nothing to unlink
-                        if current_tino == tst.st_ino:
+                        # same reuse guard as the main lock: only unlink a ticket STILL at its
+                        # observed inode AND still aged past the ticket-stale threshold (a freed
+                        # inode number can be reused by a fresh, live ticket for a new generation).
+                        if _still_stale_generation(ticket_path, tst.st_ino, _PROJECT_LOCK_TICKET_STALE_SECONDS):
                             try:
                                 os.unlink(str(ticket_path))
                             except OSError:
@@ -1829,11 +1851,12 @@ def _project_lock(add_dir: Path, *, env=None):
                     # (unrelated, currently live) file completely alone and let the single
                     # retry below observe reality fresh (EEXIST -> fail-fast, per M7 — this
                     # lock never polls a live holder).
-                    try:
-                        current_ino = lock_path.stat().st_ino
-                    except OSError:
-                        current_ino = None    # already gone — nothing to unlink
-                    if current_ino == st.st_ino:
+                    # Re-verify STALENESS, not just inode identity: a freed inode number is
+                    # REUSED by Linux (ext4/tmpfs), so a live holder's fresh reused-inode lock
+                    # must never be unlinked on a bare inode match. Only remove it if it is STILL
+                    # the observed inode AND still stale — a live/heartbeated file (age <
+                    # stale_after) is spared, closing the peak=2 double-hold.
+                    if _still_stale_generation(lock_path, st.st_ino, stale_after):
                         try:
                             os.unlink(str(lock_path))
                         except OSError:

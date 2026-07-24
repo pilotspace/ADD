@@ -1352,14 +1352,16 @@
     }
   ],
   "active_milestones": [
-    "strategy-intake"
+    "strategy-intake",
+    "lock-reclaim-hardening"
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
     "strategy-intake": "risk-proportional-skip",
-    "add-bench-2": "tiny-plan-small-scope"
+    "add-bench-2": "tiny-plan-small-scope",
+    "lock-reclaim-hardening": "lock-reclaim-hardening"
   },
-  "active_milestone": "strategy-intake",
+  "active_milestone": "lock-reclaim-hardening",
   "todos": [
     {
       "id": 1,
@@ -1612,10 +1614,16 @@
       "text": "GLOBAL MIRROR: ~/.add still 1.17.0 vs shipped 2.3.0; 11 registered projects on the old engine. Skill mirror ~/.claude/skills/add refreshed to 2.3.0 this session but the home + projects were deliberately left.  would reconcile all 10 reachable + prune rightfile-src.",
       "created": "2026-07-24T04:56:32+00:00",
       "status": "open"
+    },
+    {
+      "id": 43,
+      "text": "PUBLISH-BLOCKER (2026-07-24): #41 flaky test_concurrent_stale_reclaim_exactly_one_wins BLOCKED the v2.4.0 publish \u2014 failed 2/2 on publish.yml's gate (peak=2 concurrent holders) under the publish job's heavier load (runs alongside the fresh-checkout materialize suite), though it PASSED both py3.10+3.12 on #178's normal ci.yml. npm+PyPI skipped (nothing published); v2.4.0 tagged on main 7490603f, merged, UNPUBLISHED. _update_lock is already heavily TOCTOU-hardened (per-generation inode reclaim tickets, re-stat-before-unlink) so peak=2 is either a deep residual race OR a CI-filesystem O_EXCL-atomicity artifact under overlay/tmpfs. Promoted to task lock-reclaim-hardening. Re-run publish (idempotent: npm view-skip/pypi skip-existing) once green.",
+      "created": "2026-07-24T11:02:55+00:00",
+      "status": "open"
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T09:34:42+00:00",
+  "updated": "2026-07-24T16:57:40+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -1655,6 +1663,14 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "lock-reclaim-hardening": {
+      "title": "Harden the global-update stale-reclaim lock so the publish gate is flake-free",
+      "goal": "The concurrency suite (test_concurrent_stale_reclaim_*) passes deterministically under publish-job load \u2014 either the residual TOCTOU/double-hold in _update_lock's stale-reclaim path is fixed, or the test is proven to assert only what the CI filesystem can guarantee (without weakening the peak<=1 mutual-exclusion contract). Unblocks the v2.4.0 npm/PyPI publish.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-24T11:03:03+00:00",
+      "updated": "2026-07-24T11:03:03+00:00"
     }
   },
   "tasks": {
@@ -4421,7 +4437,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "lock-reclaim-hardening": {
+      "title": "Harden _update_lock stale-reclaim: peak<=1 holds under publish-job load",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "lock-reclaim-hardening",
+      "depends_on": [],
+      "created": "2026-07-24T11:03:08+00:00",
+      "updated": "2026-07-24T16:57:40+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T11:19:50+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "eca3acbf277f3a9fbb600f5671a24eda",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/src/add_method/_installer.py",
+          "add-method/tooling/test_lock_reclaim_hardening.py",
+          "add-method/bin/cli.js",
+          ".add/tasks/lock-reclaim-hardening/tests/"
+        ],
+        "snapshot_md5": "6aa37ed1de70968b4ba59d00fd86ea00"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-24T16:50:15+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "risk-proportional-skip"
+  "active_task": "lock-reclaim-hardening"
 }
