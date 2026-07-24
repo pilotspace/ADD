@@ -18,4 +18,4 @@ this file only ever holds the newest pointer.
 """
 
 ENGINE_MD5 = "60eef504c87d5ed39d58a8722401f5aa"  # re-aimed @ egg-info-prune (suffix-prune *.egg-info dirs from the scope walk). prior: 946b76cf… @ scope-walk-prune
-ENGINE_PKG_MD5 = "96f41126af98221befda9012d21b450b"  # re-aimed @ claude-md-block-finalize (guidelines._guideline_block: thin-index step 2, tightened flow/roster, portable agents/*.md). prior: fd36bb5e… @ migrate-specs-pointers
+ENGINE_PKG_MD5 = "3d7ec2b90d11b91fd0211b1fc61b4c19"  # re-aimed @ fold-residue-engine-guide (PHASE_GUIDE["direction"] stops instructing a retired §2; the one-case-per-rule duty folds into the §4 clause). prior: 96f41126… @ claude-md-block-finalize

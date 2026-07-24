@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "fold-residue-templates",
+    "strategy-intake": "fold-residue-engine-guide",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1603,7 +1603,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T03:57:00+00:00",
+  "updated": "2026-07-24T04:08:17+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4133,7 +4133,56 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fold-residue-engine-guide": {
+      "title": "PHASE_GUIDE stops instructing a retired section 2",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:57:23+00:00",
+      "updated": "2026-07-24T04:08:17+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:59:16+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "7a50989b730f6c54939a27b9aa71006c",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add_engine/constants.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/add_engine/constants.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_guide_sections.py",
+          ".add/tasks/fold-residue-engine-guide/tests/"
+        ],
+        "snapshot_md5": "801ae31d5d7775994e592acf68ab9ba0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "fold-residue-templates"
+  "active_task": "fold-residue-engine-guide"
 }
