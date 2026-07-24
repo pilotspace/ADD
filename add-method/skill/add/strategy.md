@@ -19,13 +19,18 @@ one. It frames the sequencing WITH the project's PM lens; it stays advisory thro
    here): **approach** (risk-first | dependency-first | first-slice-unblocks — and WHY) ·
    the **freeze-first** contract(s) · the **parallel waves** behind those frozen contracts ·
    the **first unblocking slice**. Name the alternative decompositions you rejected.
-3. **CONVERGE** — self-score the plan with the existing six-dimension confidence self-score
-   (`phases/direction.md`); refine until it clears its bar (no dimension < 0.9 ≈ ~95%
-   confident). Do **not** invent a second threshold — that bar IS convergence. Record the
-   converged plan in the milestone's `## Strategy` slot.
+3. **CONVERGE** — before you record, pressure-test the plan. If the milestone is
+   **high-uncertainty** (the sequencing is contested, or the self-score won't clear its bar),
+   spawn `add-advisor` in **refute** mode to try to **break** the strategy — the approach, the
+   freeze-first choice, the wave partition. Fold what survives; concede what holds. A
+   low-uncertainty / micro / `--tiny` milestone **skips** the spawn — no forced ceremony.
+   Then self-score with the existing six-dimension confidence self-score (`phases/direction.md`);
+   refine until it clears its bar (no dimension < 0.9 ≈ ~95% confident). Do **not** invent a
+   second threshold — that bar IS convergence. Record the converged plan in the `## Strategy` slot.
 
-Communicate at the human decision point through the persona-owned gate (`gate-udd.md`) — the persona
-decides the report's shape and cadence; the human confirms the plan there.
+The refute is **advisory**: the advisor hands back the concrete break — it **cannot block**.
+The human still confirms the strategy at the human decision point, through the persona-owned
+gate (`gate-udd.md`) — the persona decides the report's shape and cadence. Security stays **HARD-STOP**.
 
 ## It stays SOFT
 

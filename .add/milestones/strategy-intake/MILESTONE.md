@@ -42,7 +42,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [ ] gate-experience-udd     depends-on: udd-experience-pillar, persona-owns-gates — host the persona-owned gate report as a UDD text-mode UX artifact; the persona designs the gate experience through the UDD lens; report-template.md points up to UDD as its home
 - [ ] persona-at-intake       depends-on: none                                    — extend add-persona selection + `persona:` routing to the intake/scope surface; intake.md/scope.md load the fitting persona before shaping
 - [x] strategy-guide          depends-on: strategy-section, persona-owns-gates, persona-at-intake — DONE (gate PASS 2026-07-24): TIGHT standalone strategy.md — the persona-framed DISCUSS→OPTIMIZE→CONVERGE loop filling the `## Strategy` slot, converging on the existing six-dimension self-score; SOFT, security-HARD-STOP, micro/--tiny skip; deferring facets→slot, persona→intake, self-score→direction.md; SKILL.md + beyond.md pointers; 3 trees byte-identical
-- [ ] advisor-strategy-trigger depends-on: strategy-guide                          — extend the add-advisor spawn trigger to refute a high-uncertainty milestone's strategy before commit
+- [x] advisor-strategy-trigger depends-on: strategy-guide                          — DONE (gate PASS 2026-07-24, ai-plan-verify): strategy.md CONVERGE spawns add-advisor (refute mode) to break a high-uncertainty milestone's strategy before recording (advisory, cannot block; micro/--tiny skips); add-advisor.md `direction` beat names the milestone strategy as refutable, reusing the existing refute mode. No new mode/engine
 - [ ] risk-proportional-skip  depends-on: strategy-guide                          — the skip rule: micro / `--fast` bypasses the session; depth scales by risk/size (personas REMOVE ceremony for small work)
 
 ## Exit criteria (observable; map each to the task that delivers it)
@@ -52,7 +52,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [x] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd, DONE 2026-07-23)
 - [x] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake, DONE 2026-07-24 PR #176: intake.md "## Load the fitting persona first" before ## Analyze, advisory/generic-fallback, 3 trees identical)
 - [x] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide, DONE 2026-07-24 PR-pending: strategy.md DISCUSS→OPTIMIZE→CONVERGE, persona-framed from intake, converges on phases/direction.md self-score, SOFT; guard test_strategy_guide 6/6, full suite green)
-- [ ] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger)
+- [x] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger, DONE 2026-07-24: strategy.md CONVERGE + add-advisor.md direction beat; guard test_advisor_strategy_trigger 5/5, full suite 2304 green)
 - [ ] A micro / `--fast` milestone skips the session with zero added per-turn cost                     (← risk-proportional-skip)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)

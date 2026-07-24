@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "strategy-guide",
+    "strategy-intake": "advisor-strategy-trigger",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1615,7 +1615,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T08:53:05+00:00",
+  "updated": "2026-07-24T09:25:28+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4323,7 +4323,55 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "advisor-strategy-trigger": {
+      "title": "add-advisor refutes a high-uncertainty milestone strategy before commit",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "strategy-intake",
+      "depends_on": [
+        "strategy-guide"
+      ],
+      "created": "2026-07-24T09:17:38+00:00",
+      "updated": "2026-07-24T09:25:28+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T09:20:24+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "89dbce50a2fd280622788f7691e1851a",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/",
+          "add-method/src/add_method/_bundled/skill/add/",
+          ".claude/skills/add/",
+          "add-method/agents/",
+          "add-method/src/add_method/_bundled/agents/",
+          ".claude/agents/",
+          "add-method/tooling/test_advisor_strategy_trigger.py",
+          ".add/tasks/advisor-strategy-trigger/tests/"
+        ],
+        "snapshot_md5": "e704da32628305e9d572147438eb1944"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "strategy-guide"
+  "active_task": "advisor-strategy-trigger"
 }
