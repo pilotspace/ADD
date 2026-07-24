@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "strategy-section",
+    "strategy-intake": "getting-started-descenarios",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1603,7 +1603,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T16:09:42+00:00",
+  "updated": "2026-07-24T03:27:52+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4040,7 +4040,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "getting-started-descenarios": {
+      "title": "Retire the Phase 2 Scenarios section from GETTING-STARTED.md",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:17:28+00:00",
+      "updated": "2026-07-24T03:27:52+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:26:25+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "5d9489158d71851d7841593ec9592981",
+        "tests": {
+          ".add/tasks/getting-started-descenarios/tests/test_getting_started_descenarios.py": "56eaf28bdd3410a01b50e9730566e37e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/GETTING-STARTED.md",
+          ".add/tasks/getting-started-descenarios/tests/"
+        ],
+        "snapshot_md5": "19b73e80791448f742e8f8af7066e913"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "strategy-section"
+  "active_task": "getting-started-descenarios"
 }
