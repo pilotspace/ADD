@@ -43,7 +43,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [ ] persona-at-intake       depends-on: none                                    — extend add-persona selection + `persona:` routing to the intake/scope surface; intake.md/scope.md load the fitting persona before shaping
 - [x] strategy-guide          depends-on: strategy-section, persona-owns-gates, persona-at-intake — DONE (gate PASS 2026-07-24): TIGHT standalone strategy.md — the persona-framed DISCUSS→OPTIMIZE→CONVERGE loop filling the `## Strategy` slot, converging on the existing six-dimension self-score; SOFT, security-HARD-STOP, micro/--tiny skip; deferring facets→slot, persona→intake, self-score→direction.md; SKILL.md + beyond.md pointers; 3 trees byte-identical
 - [x] advisor-strategy-trigger depends-on: strategy-guide                          — DONE (gate PASS 2026-07-24, ai-plan-verify): strategy.md CONVERGE spawns add-advisor (refute mode) to break a high-uncertainty milestone's strategy before recording (advisory, cannot block; micro/--tiny skips); add-advisor.md `direction` beat names the milestone strategy as refutable, reusing the existing refute mode. No new mode/engine
-- [ ] risk-proportional-skip  depends-on: strategy-guide                          — the skip rule: micro / `--fast` bypasses the session; depth scales by risk/size (personas REMOVE ceremony for small work)
+- [x] risk-proportional-skip  depends-on: strategy-guide                          — DONE (gate PASS 2026-07-24, ai-plan-verify): strategy.md gained a "## How deep? (risk-proportional)" section unifying the three scattered tiers into one monotonic ladder — micro/--tiny skip @ zero cost → multi-task low-uncertainty loop → high-uncertainty loop+advisor; skill judgment not an engine gate, SOFT, security HARD-STOP. Legibility of the risk→depth mapping (the micro-skip criterion was already present at strategy.md:8)
 
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] Gate reports are persona-owned — structure + cadence adapt per project; no fixed template section list; the four floors are met in the persona's voice and security stays HARD-STOP  (← persona-owns-gates, DONE)
@@ -53,26 +53,33 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [x] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake, DONE 2026-07-24 PR #176: intake.md "## Load the fitting persona first" before ## Analyze, advisory/generic-fallback, 3 trees identical)
 - [x] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide, DONE 2026-07-24 PR-pending: strategy.md DISCUSS→OPTIMIZE→CONVERGE, persona-framed from intake, converges on phases/direction.md self-score, SOFT; guard test_strategy_guide 6/6, full suite green)
 - [x] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger, DONE 2026-07-24: strategy.md CONVERGE + add-advisor.md direction beat; guard test_advisor_strategy_trigger 5/5, full suite 2304 green)
-- [ ] A micro / `--fast` milestone skips the session with zero added per-turn cost                     (← risk-proportional-skip)
+- [x] A micro / `--fast` milestone skips the session with zero added per-turn cost                     (← risk-proportional-skip, DONE 2026-07-24: strategy.md "## How deep? (risk-proportional)" ladder — micro/--tiny skips @ zero cost; guard test_risk_proportional_skip 5/5, full suite 2309 green)
 
 ## Close — ship review   (AI fills when every task is done — the evidence behind the engine gate, read before the boxes are checked)
 > Whole-milestone, cross-task review the AI fills in. It is the evidence behind the EXISTING engine
 > gate (milestone-done / checking the Exit-criteria boxes) — NOT a new approval. Tool-agnostic.
 
 ### Ship by domain   (what changed, per bounded context)
-- tooling : <add.py / state.json / templates — what shipped, or "untouched">
-- skill   : <SKILL.md / phases/* / guides / report-template.md — what shipped, or "untouched">
-- book    : <docs/* — what shipped, or "untouched">
+- tooling : **untouched** — no engine, template, or pin change across all 8 tasks (the engine records the `## Strategy` slot + gate, never drives the persona loop or gates on the strategy). New guard TESTS only: test_strategy_guide, test_advisor_strategy_trigger, test_risk_proportional_skip (+ earlier tasks' guards).
+- skill   : **the persona-as-PM surface**. report-template.md → persona-adaptive principles (persona-owns-gates) folded into the UDD family as gate-udd.md (gate-experience-udd); design.md reframed experience-driven + 5th INTERACTION axis (udd-experience-pillar); intake.md loads the fitting persona before sizing (persona-at-intake); MILESTONE.md.tmpl `## Strategy` slot (strategy-section); **NEW strategy.md** — DISCUSS→OPTIMIZE→CONVERGE loop (strategy-guide) + add-advisor refute at CONVERGE (advisor-strategy-trigger) + the "How deep?" risk-proportional ladder (risk-proportional-skip); SKILL.md + beyond.md route to it. add-advisor.md `direction` beat refutes a milestone strategy. All guides byte-identical across 3 skill trees; agents across 3 agent trees.
+- book    : docs/18-personas.md + design chapters touched by the UDD-redefine tasks (earlier in the milestone); the strategy trio (guide/advisor/skip) ships in the skill surface, not the book.
 
 ### Cross-task evidence   (one row per task)
-- <slug> : gate=<PASS|RISK-ACCEPTED> · tests=<n green> · residue=<none|note>
+- persona-owns-gates      : gate=PASS · report-template → persona principles · residue=none
+- strategy-section        : gate=PASS · `## Strategy` slot in MILESTONE.md.tmpl · residue=none
+- udd-experience-pillar   : gate=PASS · design.md experience-driven + INTERACTION axis · residue=DESIGN.md.tmpl/glossary INTERACTION field deferred (§7 SPEC·open, pre-existing)
+- gate-experience-udd     : gate=PASS · gate report as UDD text-mode artifact (gate-udd.md) · residue=none
+- persona-at-intake       : gate=PASS · intake.md loads fitting persona before sizing · residue=none (PR #176)
+- strategy-guide          : gate=PASS · NEW strategy.md DISCUSS→OPTIMIZE→CONVERGE · tests=6 guard + 2299 suite · residue=none
+- advisor-strategy-trigger: gate=PASS · CONVERGE refute + add-advisor direction beat · tests=5 guard + 2304 suite · residue=none
+- risk-proportional-skip  : gate=PASS · "How deep?" risk-proportional ladder · tests=5 guard + 2309 suite · residue=none
 
 ### Goal met?   (map the evidence back to this milestone's Exit criteria — read before the Exit-criteria boxes are checked)
-- [ ] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which)
-- goal: <restate the milestone goal — and the one evidence line that proves the ship meets it>
+- [x] each Exit criterion above is satisfied by a Cross-task evidence row or a Ship-by-domain change (cite which) — criteria 1–4 by persona-owns-gates / strategy-section / udd-experience-pillar / gate-experience-udd; 5 by persona-at-intake; 6 by strategy-guide; 7 by advisor-strategy-trigger; 8 by risk-proportional-skip (all PASS rows above)
+- goal: a fitting persona is now ADD's adaptive PM + UX brain — it shapes each milestone's strategy (strategy.md loop, filling the `## Strategy` slot risk-proportionally, advisor-refuted when uncertain), and owns how every human gate is communicated/paced (persona-adaptive gate report, no fixed template), while security stays HARD-STOP. Proof: the persona loads at intake, drives the DISCUSS→OPTIMIZE→CONVERGE loop, and the whole surface ships across 3 skill/agent trees with the full suite green (2309) and ZERO engine change — the engine still only records; the persona/skill drives.
 
 ## Release steps   (AI-DEFINED — fill the ordered steps to ship this milestone; engine records, human gate)
 > The AI writes the release steps for THIS milestone here (hints, not engine commands). MERGE is one
 > small step among them. These feed the release scope (release.md) when the cut is bundled.
-- [ ] <step — e.g. open a PR from the Close ship-review above; the human reviews + merges>
-- [ ] <step — e.g. tag / publish / deploy  (human-run, per release.md)>
+- [ ] open ONE PR from branch `feat/strategy-guide` covering the strategy trio (strategy-guide · advisor-strategy-trigger · risk-proportional-skip) — the human reviews + merges (earlier tasks persona-owns-gates … persona-at-intake already merged via their own PRs #165…#176)
+- [ ] the human bundles this milestone into the next release cut (per release.md) — it is skill-surface only (no version-bump-worthy engine change), so it rides the next tag/publish alongside any queued milestones; no standalone tag required

@@ -38,3 +38,17 @@ The `## Strategy` slot is the **preferred** plan, exactly like a task's §5 Buil
 build loop may deviate and records what it actually did. It is **advisory** — **never a new
 gate**, and it never lowers a floor. Security stays **HARD-STOP** everywhere. A milestone is
 never blocked on reaching a confidence bar; the bar guides the draft, it does not gate the work.
+
+## How deep? (risk-proportional)
+
+Loop depth scales with the milestone's risk/size — more risk/size, more depth:
+
+- **micro / `--tiny`** → skip the loop. A drafted-blank `## Strategy` is valid; the loop runs
+  nothing — **zero added per-turn cost**.
+- **multi-task, low-uncertainty** → run DISCUSS → OPTIMIZE → CONVERGE; no advisor.
+- **high-uncertainty** (contested sequencing, or the self-score won't clear its bar) → the full
+  loop **plus** the `add-advisor` refute at CONVERGE.
+
+This is the skill's judgment, reusing the Trigger / Skip and CONVERGE signals above — **never an
+engine gate** on `## Strategy`. The ladder is **SOFT**: a run may go deeper or shallower and
+records what it did. Security stays **HARD-STOP**.

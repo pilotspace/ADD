@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "advisor-strategy-trigger",
+    "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1615,7 +1615,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T09:25:28+00:00",
+  "updated": "2026-07-24T09:34:42+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -1637,7 +1637,7 @@
     "strategy-intake": {
       "title": "persona-led strategy session before a milestone is born",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "goal": "Before a milestone is committed, the skill shapes it through a persona-led, risk-proportional strategy discussion that optimizes its task plan with the user.",
       "created": "2026-07-16T02:53:49+00:00",
       "confirmed_at": "2026-07-16T02:55:19+00:00",
@@ -1646,10 +1646,15 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       },
-      "updated": "2026-07-16T02:55:19+00:00",
+      "updated": "2026-07-24T09:34:42+00:00",
       "confirmed": true,
       "confirmed_by": "tindang",
-      "await_confirm": true
+      "await_confirm": true,
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
   "tasks": {
@@ -4371,7 +4376,52 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "risk-proportional-skip": {
+      "title": "strategy.md: the explicit risk-proportional depth ladder (micro skips, zero cost)",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "strategy-intake",
+      "depends_on": [
+        "strategy-guide"
+      ],
+      "created": "2026-07-24T09:26:53+00:00",
+      "updated": "2026-07-24T09:33:44+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T09:28:53+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "fdcac0b794dab8ce7731e48805fcaa96",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/",
+          "add-method/src/add_method/_bundled/skill/add/",
+          ".claude/skills/add/",
+          "add-method/tooling/test_risk_proportional_skip.py",
+          ".add/tasks/risk-proportional-skip/tests/"
+        ],
+        "snapshot_md5": "7b2a8c6bf1ab609a8dd36d1fb10d7b9d"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "advisor-strategy-trigger"
+  "active_task": "risk-proportional-skip"
 }
