@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "fold-residue-engine-guide",
+    "strategy-intake": "shipped-surface-sweep",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1603,7 +1603,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T04:08:17+00:00",
+  "updated": "2026-07-24T04:23:35+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4182,7 +4182,48 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "shipped-surface-sweep": {
+      "title": "A declared shipped-surface set that CI sweeps for retired references",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T04:15:51+00:00",
+      "updated": "2026-07-24T04:23:35+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T04:19:05+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "09f885aab1edcd86d6053acd6d202cf6",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/test_shipped_surface_sweep.py",
+          ".add/tasks/shipped-surface-sweep/tests/"
+        ],
+        "snapshot_md5": "f01e2d11e0c841dbe59213295d21dcda"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "fold-residue-engine-guide"
+  "active_task": "shipped-surface-sweep"
 }
