@@ -50,7 +50,7 @@ Issues/Risks (shared): retiring the fixed report-template is method-defining (ri
 - [x] A MILESTONE.md carries a `## Strategy` slot the persona fills risk-proportionally               (← strategy-section, DONE 2026-07-23)
 - [x] UDD is redefined as experience-driven development — the pillar (design.md + SKILL.md trigger + the FIVE axes incl. INTERACTION) covers UI AND interaction/gate UX  (← udd-experience-pillar, DONE)
 - [x] The persona-owned gate report is a UDD text-mode UX artifact, designed through the UDD lens      (← gate-experience-udd, DONE 2026-07-23)
-- [ ] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake)
+- [x] Intake/scope loads a fitting persona (selected or drafted) before shaping the milestone          (← persona-at-intake, DONE 2026-07-24 PR #176: intake.md "## Load the fitting persona first" before ## Analyze, advisory/generic-fallback, 3 trees identical)
 - [ ] The strategy guide drives a persona-framed discuss loop that converges an optimized task DAG     (← strategy-guide)
 - [ ] A high-uncertainty milestone can spawn the advisor to refute its strategy before commit          (← advisor-strategy-trigger)
 - [ ] A micro / `--fast` milestone skips the session with zero added per-turn cost                     (← risk-proportional-skip)
