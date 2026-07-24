@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "strategy-section",
+    "strategy-intake": "fold-residue-engine-guide",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1603,7 +1603,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-23T16:09:42+00:00",
+  "updated": "2026-07-24T04:08:17+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4040,7 +4040,149 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "getting-started-descenarios": {
+      "title": "Retire the Phase 2 Scenarios section from GETTING-STARTED.md",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:17:28+00:00",
+      "updated": "2026-07-24T03:27:52+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:26:25+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "5d9489158d71851d7841593ec9592981",
+        "tests": {
+          ".add/tasks/getting-started-descenarios/tests/test_getting_started_descenarios.py": "56eaf28bdd3410a01b50e9730566e37e"
+        }
+      },
+      "scope": {
+        "declared": [
+          "add-method/GETTING-STARTED.md",
+          ".add/tasks/getting-started-descenarios/tests/"
+        ],
+        "snapshot_md5": "19b73e80791448f742e8f8af7066e913"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "fold-residue-templates": {
+      "title": "Retire fold-stale instructions from the scaffold templates",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:49:00+00:00",
+      "updated": "2026-07-24T03:57:00+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:50:52+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "b86008ea5c1dbea0734a236e2d98cf97",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/",
+          ".add/tooling/templates/",
+          "add-method/.add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/tooling/test_template_flag_vocabulary.py",
+          ".add/tasks/fold-residue-templates/tests/"
+        ],
+        "snapshot_md5": "46fba776999b9da4b0e0d1abc6694929"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-24T03:54:18+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "fold-residue-engine-guide": {
+      "title": "PHASE_GUIDE stops instructing a retired section 2",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:57:23+00:00",
+      "updated": "2026-07-24T04:08:17+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:59:16+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "7a50989b730f6c54939a27b9aa71006c",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/add_engine/constants.py",
+          "add-method/tooling/engine_pin.py",
+          ".add/tooling/add_engine/constants.py",
+          ".add/tooling/engine_pin.py",
+          "add-method/.add/tooling/add_engine/constants.py",
+          "add-method/.add/tooling/engine_pin.py",
+          "add-method/src/add_method/_bundled/tooling/add_engine/constants.py",
+          "add-method/src/add_method/_bundled/tooling/engine_pin.py",
+          "add-method/tooling/test_engine_guide_sections.py",
+          ".add/tasks/fold-residue-engine-guide/tests/"
+        ],
+        "snapshot_md5": "801ae31d5d7775994e592acf68ab9ba0"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "strategy-section"
+  "active_task": "fold-residue-engine-guide"
 }

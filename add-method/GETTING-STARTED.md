@@ -200,7 +200,7 @@ python3 .add/tooling/add.py new-task transfer --title "Transfer money between my
 > any build. Plain `init` skips that gate, which is fine here: by hand, the
 > human IS the one driving every step.
 
-This scaffolds `.add/tasks/transfer/PLAN.md` — **one file holding all seven phase
+This scaffolds `.add/tasks/transfer/PLAN.md` — **one file holding all six phase
 sections** — plus empty `tests/` and `src/` folders, and makes it the active task
 at phase `specify`. Open it in your editor; you'll fill it top to bottom.
 
@@ -234,21 +234,6 @@ Confirm every assumption (no FX, no daily limit in v1). Then:
 python3 .add/tooling/add.py advance
 ```
 
-### Phase 2 — Scenarios (https://pilotspace.github.io/ADD/04-step-2-scenarios/)
-
-In **§2**, turn each rule into a Given/When/Then. For every rejection, assert what
-must stay **unchanged**:
-
-```gherkin
-Scenario: insufficient funds
-  Given A has 20, mine
-  When I transfer 50 from A to B
-  Then it is rejected "insufficient_funds"
-  And no balance changes
-```
-
-Then `python3 .add/tooling/add.py advance`.
-
 ### Phase 3 — Contract (https://pilotspace.github.io/ADD/05-step-3-plan/)
 
 In **§3**, fix the external shape and **freeze** it (`Status: FROZEN @ v1`):
@@ -264,9 +249,24 @@ A frozen contract is the decision point that makes the AI build safe. Then advan
 
 ### Phase 4 — Tests, red first (https://pilotspace.github.io/ADD/06-step-4-tests/)
 
-Write one test per scenario into `.add/tasks/transfer/tests/`, then **run them and
-confirm they FAIL** — there's no code yet. A test that passes now is testing
-nothing. This is red/green TDD: red before green. Then advance.
+**§4 · TESTS & SCENARIOS** is where pass/fail cases live — with the tests that
+prove them. Write one test per §1 Must/Reject. For every rejection, also assert
+what must stay **unchanged**.
+
+A readable case, for a human who needs one:
+
+```gherkin
+Scenario: insufficient funds
+  Given A has 20, mine
+  When I transfer 50 from A to B
+  Then it is rejected "insufficient_funds"
+  And no balance changes
+```
+
+The test plan is the canonical encoding — a Given/When/Then block is for a human
+reader, never ceremony. Write the tests into `.add/tasks/transfer/tests/`, then
+**run them and confirm they FAIL** — there's no code yet. A test that passes now
+is testing nothing. This is red/green TDD: red before green. Then advance.
 
 ### Phase 5 — Build (https://pilotspace.github.io/ADD/07-step-5-build/)
 

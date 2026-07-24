@@ -82,7 +82,7 @@ def book_url(chapter: str) -> str:
 # `add.py guide` copy: per-phase (concrete next action, book chapter to read).
 # Keep the action wording aligned with each phase's EXIT line in the TASK template.
 PHASE_GUIDE = {
-    "direction": ("draft the Direction bundle top-to-bottom — §1 rules (Must / Reject + named codes / After, assumptions ranked lowest-confidence first) · §2 one scenario per rule · §3 the change PLAN: ground the real code, draft the contract, and DESCRIBE what this task will do (scope · ordered batches · approach — the plan-of-action the freeze report shows the human) · §4 red suite failing for the right reason; then the ONE approval: freeze --by <name> --cross",
+    "direction": ("draft the Direction bundle top-to-bottom — §1 rules (Must / Reject + named codes / After, assumptions ranked lowest-confidence first) · §3 the change PLAN: ground the real code, draft the contract, and DESCRIBE what this task will do (scope · ordered batches · approach — the plan-of-action the freeze report shows the human) · §4 red suite failing for the right reason, one case per rule (scenarios live here with the tests); then the ONE approval: freeze --by <name> --cross",
                   "03-step-1-specify.md"),
     "build":     ("write the minimum code to pass the tests; change no test and no contract",
                   "07-step-5-build.md"),
