@@ -32,7 +32,7 @@ jobs:
       # force-interactive seam, so @clack/prompts must be importable for the
       # clack-cancel branch (test_installer_prompts: the "1" seam) to be exercised
       # — without it the run degrades to the plain-text fallback (exit 0 != 130).
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
 
