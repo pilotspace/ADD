@@ -65,17 +65,21 @@ class StillStaleGeneration(unittest.TestCase):
             "a vanished path is not a reclaim target (OSError -> False)")
 
     def test_different_inode_not_reclaimable(self):                    # M2 (reinforce)
-        observed_ino = self._make(age_seconds=100)
-        os.unlink(self.path)
-        self.path.write_text("y")          # recreate — a DIFFERENT generation
-        past = time.time() - 100
-        os.utime(self.path, (past, past))  # even if it is ALSO stale...
-        new_ino = self.path.stat().st_ino
-        if new_ino == observed_ino:
-            self.skipTest("filesystem reused the inode number; identity-by-mtime still covers it")
+        # Deterministic on EVERY filesystem: two files that exist SIMULTANEOUSLY always have
+        # distinct inodes, so `other`'s inode is a guaranteed-different generation id. The
+        # earlier unlink+recreate spelling had to skip when the FS reused the freed inode —
+        # which is precisely what Linux ext4/tmpfs does (the very bug this task fixes), so it
+        # skipped on CI and tripped test_ci_tooling_mirror_gap's no-unrelated-skips invariant.
+        self._make(age_seconds=100)                 # self.path: stale, and ALSO aged...
+        other = Path(self.tmp) / "other.lock"
+        other.write_text("y")
+        other_ino = other.stat().st_ino
+        self.assertNotEqual(other_ino, self.path.stat().st_ino,
+                            "two simultaneously-existing files must have distinct inodes")
         self.assertFalse(
-            _installer._still_stale_generation(self.path, observed_ino, stale_after=90),
-            "a different-inode file is a different generation — not the one we observed")
+            _installer._still_stale_generation(self.path, other_ino, stale_after=90),
+            "a file whose inode differs from the observed one is a DIFFERENT generation — not "
+            "the one we observed — even when it is itself also stale")
 
 
 class JsStillStaleGeneration(unittest.TestCase):
