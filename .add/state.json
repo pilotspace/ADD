@@ -1600,10 +1600,22 @@
       "text": "MILESTONE-COMPLETE close-out: 6 HELD-OPEN milestones w/ unmet exit criteria (honest-fidelity-meter 0/5 \u00b7 call-residuals 0/6 \u00b7 add-bench-2 0/5 \u00b7 ceremony-to-effort 7/9 \u00b7 call-floor 6/7 \u00b7 orientation-honesty 5/6) -> supply evidence to flip, OR waive+milestone-done+archive [human decision]",
       "created": "2026-07-23T08:49:11+00:00",
       "status": "open"
+    },
+    {
+      "id": 41,
+      "text": "FLAKY CI: test_concurrent_stale_reclaim_exactly_one_wins (test_project_scope_lock.py) intermittently fails on py 3.12 under full-suite CI load \u2014 'peak concurrent holders: 2', a real TOCTOU on the stale-reclaim path. Green on 3.10 + 5/5 local. Blocked PR #175 (admin-merged past it 2026-07-24). Its RISK-ACCEPTED gates deferred the root cause; will block the next PR too. Harden lock acquisition + prove with the existing test under load.",
+      "created": "2026-07-24T04:56:32+00:00",
+      "status": "open"
+    },
+    {
+      "id": 42,
+      "text": "GLOBAL MIRROR: ~/.add still 1.17.0 vs shipped 2.3.0; 11 registered projects on the old engine. Skill mirror ~/.claude/skills/add refreshed to 2.3.0 this session but the home + projects were deliberately left.  would reconcile all 10 reachable + prune rightfile-src.",
+      "created": "2026-07-24T04:56:32+00:00",
+      "status": "open"
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T04:23:35+00:00",
+  "updated": "2026-07-24T04:56:32+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
