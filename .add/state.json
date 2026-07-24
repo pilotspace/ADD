@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "shipped-surface-sweep",
+    "strategy-intake": "persona-at-intake",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1615,7 +1615,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T04:56:32+00:00",
+  "updated": "2026-07-24T06:54:34+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4235,7 +4235,50 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-at-intake": {
+      "title": "Intake/scope loads a fitting persona before shaping the milestone",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "strategy-intake",
+      "depends_on": [],
+      "created": "2026-07-24T06:17:26+00:00",
+      "updated": "2026-07-24T06:54:34+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T06:49:13+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "bdca0a48454e595a6e75add951546ab0",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/skill/add/intake.md",
+          "add-method/src/add_method/_bundled/skill/add/intake.md",
+          ".claude/skills/add/intake.md",
+          "add-method/tooling/test_persona_at_intake.py",
+          ".add/tasks/persona-at-intake/tests/"
+        ],
+        "snapshot_md5": "55539c2e42dae5012dd95bb135cc4cfc"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "shipped-surface-sweep"
+  "active_task": "persona-at-intake"
 }
