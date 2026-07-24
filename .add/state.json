@@ -1356,7 +1356,7 @@
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
-    "strategy-intake": "getting-started-descenarios",
+    "strategy-intake": "fold-residue-templates",
     "add-bench-2": "tiny-plan-small-scope"
   },
   "active_milestone": "strategy-intake",
@@ -1603,7 +1603,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T03:27:52+00:00",
+  "updated": "2026-07-24T03:57:00+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4083,7 +4083,57 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "fold-residue-templates": {
+      "title": "Retire fold-stale instructions from the scaffold templates",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": null,
+      "depends_on": [],
+      "created": "2026-07-24T03:49:00+00:00",
+      "updated": "2026-07-24T03:57:00+00:00",
+      "sensitivity": "mechanical",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-24T03:50:52+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "b86008ea5c1dbea0734a236e2d98cf97",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/templates/",
+          ".add/tooling/templates/",
+          "add-method/.add/tooling/templates/",
+          "add-method/src/add_method/_bundled/tooling/templates/",
+          "add-method/tooling/test_template_flag_vocabulary.py",
+          ".add/tasks/fold-residue-templates/tests/"
+        ],
+        "snapshot_md5": "46fba776999b9da4b0e0d1abc6694929"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-24T03:54:18+00:00",
+        "from_phase": "build"
+      },
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "getting-started-descenarios"
+  "active_task": "fold-residue-templates"
 }
