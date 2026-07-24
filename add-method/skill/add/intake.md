@@ -4,6 +4,23 @@ Before a task exists, ADD turns a raw request into correctly-sized, versioned sc
 **intake level** (the per-task flow is phases 0–7; intake is the step *before* a task). You
 (the AI) **propose**; the human **confirms**. Never create scope without a confirmed proposal.
 
+## Load the fitting persona first
+
+Intake is a decision — size it WITH the project's expertise, not generically. Before you
+analyze or size, load the fitting persona (the PM / product-direction lens), exactly as
+`design.md` loads the design-fit persona:
+
+- **match** a persona in `.add/personas/` by role/flow (frontmatter, else description-match)
+  — e.g. a `product-lead` / `method-product-owner` lens;
+- **none fits?** seed from `.add/personas-teacher/` via the add agent in persona mode, then
+  load — offered, **never required**;
+- the persona shapes the framing, the latent-requirement read, and the sizing tradeoffs. It
+  is **advisory**: it never lowers the `ask_human` floor, the frozen-scope tie-break, or the
+  security-always-escalates rule.
+
+No fitting persona and none seeded? Proceed generically — intake still runs. The persona already
+OWNS the intake report (`gate-udd.md`); loading it here makes it own the SIZING too, so the two agree.
+
 ## Analyze the request before you size it
 
 A raw request is rarely a task yet — it is intent wrapped in prose. ADD's first job is not to
