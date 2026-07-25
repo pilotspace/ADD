@@ -1361,7 +1361,7 @@
     "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "tiny-plan-small-scope",
     "lock-reclaim-hardening": "lock-reclaim-hardening",
-    "persona-template-completeness": "planner-personas-seed"
+    "persona-template-completeness": "preset-patterns-fold"
   },
   "active_milestone": "persona-template-completeness",
   "todos": [
@@ -1625,7 +1625,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-25T09:55:18+00:00",
+  "updated": "2026-07-25T10:40:31+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4658,7 +4658,62 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "preset-patterns-fold": {
+      "title": "Fold ORIENT, per-flow stance, and Escalation into the 12 preset personas",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-template-completeness",
+      "depends_on": [
+        "persona-docs-truth"
+      ],
+      "created": "2026-07-25T09:56:38+00:00",
+      "updated": "2026-07-25T10:40:31+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-25T10:10:09+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "76f0fb35c7ab266a54e49449d6f006ae",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/tooling/",
+          ".add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/",
+          "add-method/.add/tooling/",
+          ".claude/skills/add/persona-author/",
+          "add-method/skill/add/persona-author/",
+          "add-method/src/add_method/_bundled/skill/add/persona-author/",
+          "add-method/build/",
+          ".add/tasks/preset-patterns-fold/"
+        ],
+        "snapshot_md5": "04f7aba07a817223ddc6eb90e4e13b5d"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-25T10:39:35+00:00",
+        "from_phase": "build"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "planner-personas-seed"
+  "active_task": "preset-patterns-fold"
 }
