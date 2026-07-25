@@ -11,7 +11,9 @@ measure-not-block: an unknown kind is a named WARN finding, never a refusal.
 - add._task_kind(header) — PURE header reader: the declared kind, or None.
 - add._persona_quality_warnings gains Finding C: a `task-kinds:` value outside
   the taxonomy is named; a valid list and an absent line stay clean.
-- templates/personas/_template.md.tmpl carries a `task-kinds:` slot.
+- the `task-kinds:` slot is documented in the persona-author skill's
+  references/contract.md (the static persona template was retired at e29ddac4;
+  its orphaned presets were retired at preset-patterns-fold).
 
 Run: python3 -m unittest test_persona_task_kinds -v
 """

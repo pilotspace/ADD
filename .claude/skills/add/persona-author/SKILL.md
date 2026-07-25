@@ -33,10 +33,14 @@ Two references and one worked example back this workflow — read them as you go
   library at `.add/personas-teacher/`, or a `~/.claude/agents/*.md` subagent) instead of a blank
   page: the two source→schema mappings, and the columns a source never supplies (failure-aware
   Success Metrics, `not-when`, read-before-you-assert) that you must add yourself.
-- **`assets/example-persona.md`** (an I/O lens) and **`assets/example-design-persona.md`** (a
-  design lens) — two fully-worked personas to imitate, not copy. Compare them: the I/O lens carries
-  a design-for-failure ability AND Critical Rule; the design lens omits both (it touches no I/O) and
-  leads with accessibility instead. Proof the patterns are *conditional* — matched to the surface.
+- **`assets/example-persona.md`** (an I/O lens), **`assets/example-design-persona.md`** (a design
+  lens), and **`assets/example-architect-persona.md`** (a direction lens) — three fully-worked
+  personas to imitate, not copy. Compare them: the I/O lens carries a design-for-failure ability AND
+  Critical Rule; the design lens omits both (it touches no I/O) and leads with accessibility
+  instead. Proof the patterns are *conditional* — matched to the surface. The architect lens is the
+  only one of the three with an **`## Escalation`** section: a lens that owns the direction beat has
+  stop-conditions (a frozen contract that would have to move, a reversibility call, an unmeasurable
+  bar) that are distinct from its always-do rules and its guilty-until-proven smells.
 
 ## Decide the move
 

@@ -13,10 +13,13 @@ versioned file under `.add/personas/<slug>.md` with four machine-readable parts 
 - **Default Requirement** — the one requirement the persona includes in every deliverable by default.
 - **Success Metrics** — the measurable done-bar (what "good" looks like, in numbers where it can).
 
-Those four are what the engine checks (presence-based). The persona **template**
-(`templates/personas/_template.md.tmpl`) is the canonical enumeration of the full schema — it also
-recommends `flow:` and `use-when:`/`not-when:` frontmatter plus an `## Abilities` section, and
-allows optional `## Anti-patterns` and `## Playbook` sections.
+Those four are what the engine checks (presence-based). The canonical enumeration of the full
+schema is the persona-author skill's contract reference
+(`.claude/skills/add/persona-author/references/contract.md`), which groups every section into four
+**legs** — Role (`## Identity`) · Rules (`## Critical Rules`) · Standards (`## Default Requirement`
++ `## Success Metrics`) · Process (`## Abilities` + `## Playbook`) — and gives each a bar to clear.
+It recommends `flow:` and `use-when:`/`not-when:` frontmatter plus an `## Abilities` section, and
+allows optional `## Anti-patterns`, `## Playbook`, and `## Escalation` sections.
 
 The **persona loop** is how those files come to exist, improve, and get used: **seed → grow →
 apply**. The loop is opt-in and additive — a project with no personas behaves exactly as before.
@@ -41,11 +44,13 @@ task actually applies one.
 
 Personas are **living documents**: they improve through the same loop the foundation uses. In a
 task's **observe** phase the AI emits a **persona delta** — a one-line, tagged proposal to add or
-sharpen a critical-rule, success-metric, anti-pattern, or ability, written `open` with evidence (just like a lesson learned).
+sharpen a critical-rule, success-metric, anti-pattern, ability, or escalation, written `open` with evidence (just like a lesson learned).
 At a retrospective the human **consolidates** confirmed deltas into the persona file (the same
 `fold` step the foundation uses), bumping it forward. The consolidation is judgment-free
-transcription: the engine routes a confirmed delta into the named
-persona's `## Critical Rules`, `## Success Metrics`, `## Anti-patterns`, or `## Abilities` section and **never clobbers** existing content.
+transcription done by the human or the AI — **the engine never edits a persona**. The delta's hint
+names the target: a confirmed delta lands in the named persona's `## Critical Rules`,
+`## Success Metrics`, `## Anti-patterns`, `## Abilities`, or `## Escalation` section and **never clobbers** existing content.
+The hint vocabulary is closed and documented in `deltas.md` — a section no hint names cannot be grown this way.
 So a persona gets *more* accurate every milestone instead of drifting.
 
 Growth is additive, but it should not be unmeasured. Two retrospective habits keep it honest:
@@ -75,7 +80,10 @@ four treat it the same way — as **advice**, never authority:
 - **build (overlay).** While building, the orchestrating agent may load the active persona as a
   domain identity **overlay** layered on `SOUL.md`: SOUL is the voice and trust rules; the persona is
   the domain stance. The overlay **never rewrites** SOUL.md (it is human-owned) and never overrides a
-  trust rule. Convention: load Identity + Critical Rules + Anti-patterns as the overlay; pull the
+  trust rule. What the roster agent actually loads: it reads the **body** of the persona it becomes
+  and runs that persona's lead commands before drafting (`.claude/agents/add-worker.md` §2) — so `## Identity`,
+  `## Critical Rules`, `## Anti-patterns`, and `## Abilities` are all in play, with `## Abilities`
+  carrying the ORIENT commands that turn "become this lens" into "run these first". Pull the
   Playbook in only at the work moment it scaffolds.
 
 ## The non-negotiable — a persona never lowers a gate

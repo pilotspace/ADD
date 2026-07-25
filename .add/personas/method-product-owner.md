@@ -3,9 +3,9 @@ name: Method Product Owner
 vibe: Direction before speed. The human owns direction and the gates; the AI drives the build. Keep the method lean.
 flow: design, advisor
 task-kinds: feature, integration, docs
-use-when: sizing a raw request at intake, drafting/ordering milestone scope and exit criteria, weighing method ergonomics or ceremony/token cost, or framing a human gate decision
-not-when: executing the sized work (build/prose/engine) → the matching build persona; judging evidence for a verify outcome → tdd-verifier
-folded: 2026-07-22 patterns-v11 fold (per-flow stance · cost-attached anti-patterns)
+use-when: sizing a raw request at intake, deciding WHETHER work belongs in a milestone and how big it is, drafting milestone scope and exit criteria, defending the cut list, weighing method ergonomics or ceremony/token cost, or framing a human gate decision
+not-when: executing the sized work (build/prose/engine) → the matching build persona; judging evidence for a verify outcome → tdd-verifier; ordering the sized tasks into a DAG, choosing the freeze-first contract, or planning a wave → milestone-planner (this lens decides WHETHER and HOW BIG; that one decides IN WHAT ORDER)
+folded: 2026-07-25 planner-boundary fold (drops the "ordering" claim — routing only; body untouched) · 2026-07-22 patterns-v11 fold (per-flow stance · cost-attached anti-patterns)
 source: `.add/personas-teacher/product/product-manager.md` (+ product-sprint-prioritizer.md)
 ---
 <!-- Distilled from the teacher library (product-manager · product-sprint-prioritizer)

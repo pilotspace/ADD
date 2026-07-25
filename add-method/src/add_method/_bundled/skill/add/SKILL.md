@@ -69,7 +69,12 @@ confirms. Unsharp intent? **Interview before you size** (`intake.md`). A milesto
 
 Every task is three beats (seven steps, folded), three engine calls, ONE human decision:
 
-1. **DIRECTION** — load the domain-fit persona (seed via add-worker persona-mode if none), then compose
+1. **DIRECTION** — load the domain-fit persona from the `status --all` roster (`slug[flow] — vibe`;
+   `check` prints the same as one line) — frontmatter, not bodies. **select → fold → author** (a roster of near-duplicates is worse than one
+   sharp lens): a sibling's `use-when` fits → use it · almost fits → fold in (bump `folded:`) · no
+   lens owns it, or none seeded → author it (add-worker persona-mode + the `persona-author` skill).
+   NEVER blocks — no fit → the generic fallback, a 15-year specialist in the task's kind, which never
+   lowers a gate. Then compose
    the whole bundle in ONE silent draft — §1·§3 + §5-scope, no per-section narration; §4 then runs red — in PLAN.md: §1 rules + ranked ⚠ flag (co-specify) ·
    §3 PLAN (grounding → frozen contract shape → build-strategy + Scope + Target) ·
    §4 TESTS & SCENARIOS — the red suite (cases live here; optional inline gherkin when a human needs it): one test per Must & per Reject (a Must/Reject encoded in no §4 test = §1 not understood — stop); minor behaviors are prose build-guidance, not gated; run red for the RIGHT reason; fill each `covers:` key. Then the ONE approval,
