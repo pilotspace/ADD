@@ -1353,15 +1353,17 @@
   ],
   "active_milestones": [
     "strategy-intake",
-    "lock-reclaim-hardening"
+    "lock-reclaim-hardening",
+    "persona-template-completeness"
   ],
   "project": "AIDD / ADD Methodology",
   "active_tasks": {
     "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "tiny-plan-small-scope",
-    "lock-reclaim-hardening": "lock-reclaim-hardening"
+    "lock-reclaim-hardening": "lock-reclaim-hardening",
+    "persona-template-completeness": "planner-personas-seed"
   },
-  "active_milestone": "lock-reclaim-hardening",
+  "active_milestone": "persona-template-completeness",
   "todos": [
     {
       "id": 1,
@@ -1607,7 +1609,7 @@
       "id": 41,
       "text": "FLAKY CI: test_concurrent_stale_reclaim_exactly_one_wins (test_project_scope_lock.py) intermittently fails on py 3.12 under full-suite CI load \u2014 'peak concurrent holders: 2', a real TOCTOU on the stale-reclaim path. Green on 3.10 + 5/5 local. Blocked PR #175 (admin-merged past it 2026-07-24). Its RISK-ACCEPTED gates deferred the root cause; will block the next PR too. Harden lock acquisition + prove with the existing test under load.",
       "created": "2026-07-24T04:56:32+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 42,
@@ -1619,11 +1621,11 @@
       "id": 43,
       "text": "PUBLISH-BLOCKER (2026-07-24): #41 flaky test_concurrent_stale_reclaim_exactly_one_wins BLOCKED the v2.4.0 publish \u2014 failed 2/2 on publish.yml's gate (peak=2 concurrent holders) under the publish job's heavier load (runs alongside the fresh-checkout materialize suite), though it PASSED both py3.10+3.12 on #178's normal ci.yml. npm+PyPI skipped (nothing published); v2.4.0 tagged on main 7490603f, merged, UNPUBLISHED. _update_lock is already heavily TOCTOU-hardened (per-generation inode reclaim tickets, re-stat-before-unlink) so peak=2 is either a deep residual race OR a CI-filesystem O_EXCL-atomicity artifact under overlay/tmpfs. Promoted to task lock-reclaim-hardening. Re-run publish (idempotent: npm view-skip/pypi skip-existing) once green.",
       "created": "2026-07-24T11:02:55+00:00",
-      "status": "open"
+      "status": "done"
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-24T16:57:40+00:00",
+  "updated": "2026-07-25T09:55:18+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -1671,6 +1673,35 @@
       "status": "active",
       "created": "2026-07-24T11:03:03+00:00",
       "updated": "2026-07-24T11:03:03+00:00"
+    },
+    "persona-template-completeness": {
+      "title": "Persona template completeness",
+      "goal": "The persona template is one coherent artifact: the guidance names four legs with a bar each, all 12 presets carry ORIENT + a per-flow stance + an Escalation section, three planner personas exist at task/milestone/release altitude, and the book cites no retired file.",
+      "stage": "mvp",
+      "status": "active",
+      "created": "2026-07-25T07:45:40+00:00",
+      "updated": "2026-07-25T07:46:57+00:00",
+      "confirmed": true,
+      "confirmed_at": "2026-07-25T07:46:57+00:00",
+      "confirmed_by": "Tin Dang",
+      "await_confirm": true,
+      "actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      },
+      "planned": {
+        "persona-template-legs": [],
+        "persona-docs-truth": [
+          "persona-template-legs"
+        ],
+        "preset-patterns-fold": [
+          "persona-docs-truth"
+        ],
+        "planner-personas-seed": [
+          "persona-template-legs"
+        ]
+      }
     }
   },
   "tasks": {
@@ -4484,7 +4515,150 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "persona-template-legs": {
+      "title": "Name the four persona legs and define the Escalation section",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-template-completeness",
+      "depends_on": [],
+      "created": "2026-07-25T07:47:02+00:00",
+      "updated": "2026-07-25T08:48:59+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-25T08:40:14+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "bb84029cbb6c97ec817fb45b9ee7b295",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".claude/skills/add/persona-author/references/",
+          "add-method/skill/add/persona-author/references/",
+          "add-method/src/add_method/_bundled/skill/add/persona-author/references/",
+          ".add/tasks/persona-template-legs/"
+        ],
+        "snapshot_md5": "70c19918bb53d84166f6880aad0c90d9"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "persona-docs-truth": {
+      "title": "Reconcile the persona chapter with what the surfaces actually read",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-template-completeness",
+      "depends_on": [
+        "persona-template-legs"
+      ],
+      "created": "2026-07-25T08:49:12+00:00",
+      "updated": "2026-07-25T09:24:18+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-25T09:08:47+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "34437ce2b3bd091650d3d58abd2d7f92",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          "add-method/docs/18-personas.md",
+          "18-personas.md",
+          "add-method/skill/add/",
+          ".claude/skills/add/",
+          "add-method/src/add_method/_bundled/skill/add/",
+          ".add/tasks/persona-docs-truth/"
+        ],
+        "snapshot_md5": "e01e6ba5abbec042991419557d293181"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-25T09:09:48+00:00",
+        "from_phase": "build"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
+    },
+    "planner-personas-seed": {
+      "title": "Seed three planner personas at task, milestone, and release altitude",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "persona-template-completeness",
+      "depends_on": [
+        "persona-template-legs"
+      ],
+      "created": "2026-07-25T09:24:34+00:00",
+      "updated": "2026-07-25T09:55:18+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-25T09:40:10+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "ca190199b312b70511a2932d6abdef45",
+        "tests": {}
+      },
+      "scope": {
+        "declared": [
+          ".add/personas/",
+          ".add/tasks/planner-personas-seed/"
+        ],
+        "snapshot_md5": "a3db20351be2a8977374344a8e529fcd"
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-25T09:44:27+00:00",
+        "from_phase": "build"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "lock-reclaim-hardening"
+  "active_task": "planner-personas-seed"
 }
