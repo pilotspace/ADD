@@ -34,7 +34,7 @@ REQUIRED_METRICS = frozenset(
 # the required set. Unknown keys stay rejected: additive is not open-ended.
 # `spec_fidelity` has LEFT the schema entirely (v3) — it is neither required nor
 # optional, so any live record carrying it fails validate().
-OPTIONAL_METRICS = frozenset({"tests_weakened"})
+OPTIONAL_METRICS = frozenset({"tests_weakened", "ambiguity_surface_rate"})
 
 REQUIRED_ARTIFACTS = frozenset({"workspace", "transcript", "oracle_report"})
 

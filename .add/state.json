@@ -1642,7 +1642,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-25T15:27:49+00:00",
+  "updated": "2026-07-25T16:50:53+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -4804,6 +4804,31 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "bench-ambiguity": {
+      "title": "Ambiguity track: surface-vs-guess scoring on planted contradictions, gaps, and misreading traps",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "add-bench-2",
+      "depends_on": [],
+      "created": "2026-07-25T00:00:00+00:00",
+      "updated": "2026-07-25T16:50:53+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-25T16:50:53+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": null
     }
   },
   "active_task": "risk-proportional-skip"
