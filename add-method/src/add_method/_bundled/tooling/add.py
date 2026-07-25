@@ -203,6 +203,29 @@ def _seed_spec_file(root: Path, dd: str, *, project: str, stage: str,
     return dest
 
 
+def _seed_persona_file(root: Path, slug: str) -> Path:
+    """seed-method-personas: seed ONE method-lens persona under `.add/personas/` —
+    never clobber, never write blank (the `_seed_spec_file` survivor idiom, and the
+    same circuit breaker). Returns the file's path either way so `init` and `migrate`
+    share ONE seeding truth instead of two drifting copies.
+
+    Only the METHOD_PERSONAS ship: lenses that reason about ADD's own artifacts. A
+    domain lens (security, data, UX) is the project's to author via the persona-author
+    skill — seeding one here would re-open the retired-preset failure."""
+    dest = root / "personas" / f"{slug}.md"
+    if dest.exists():
+        return dest
+    rendered = _render_template(f"personas/{slug}.md")
+    if not rendered.strip():
+        # missing/stale template — skip rather than seed a 0-content persona that
+        # would then read as authoritative-but-empty on every surface that loads it
+        print(f"add: warning: template for personas/{slug}.md is missing/blank — skipped",
+              file=sys.stderr)
+        return dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    _atomic_write(dest, rendered)
+    return dest
+
 # atomic-node: the ONE template IS the lean render — every lane distinction
 # (--fast/--oneshot/--thin scaffolds) retired with the fat sections themselves;
 # the AI-verify record block ships in the template (no splice), so an agent-crossed
@@ -767,10 +790,15 @@ def cmd_init(args: argparse.Namespace) -> None:
             continue
         _atomic_write(dest, rendered)
 
-    # persona-skill: personas are AUTHORED via the persona-author skill (not seeded from a
-    # template) — but the location must exist so the first authored persona has a home and the
-    # unseeded nudge has a directory to check. Create it empty; the skill fills it.
+    # seed-method-personas: the location must exist so an authored persona has a home,
+    # and the three METHOD-LENS planners are seeded into it. This narrows the earlier
+    # `persona-skill` decision (personas are AUTHORED, never seeded) rather than
+    # reversing it wholesale: DOMAIN lenses are still the project's to author via the
+    # persona-author skill — only lenses about ADD's own artifacts ship. See
+    # METHOD_PERSONAS for the criterion that keeps this from becoming preset-shipping.
     (root / "personas").mkdir(parents=True, exist_ok=True)
+    for _slug in METHOD_PERSONAS:
+        _seed_persona_file(root, _slug)
 
     # specs-5dd (ADD 2.0 M3): the five living 5-DD specs — same survivor idiom as
     # SETUP_FILES (never clobber, never write blank), ONE template rendered five ways.
@@ -6731,6 +6759,15 @@ def cmd_migrate(args: argparse.Namespace) -> None:
                             stage=state.get("stage") or "mvp", date_str=today)
             if p.exists():
                 seeded.append(SPEC_DDS[dd][0])
+    # seed-method-personas: retrofit the three method lenses into a project that
+    # predates them — the same never-clobber twin-call the 5-DD specs use above, so an
+    # existing (possibly user-edited) persona is returned untouched.
+    for _slug in METHOD_PERSONAS:
+        _pp = root / "personas" / f"{_slug}.md"
+        if not _pp.exists():
+            _seed_persona_file(root, _slug)
+            if _pp.exists():
+                seeded.append(f"personas/{_slug}.md")
     # foundation-specs-refs: wire PROJECT.md's thin index to the five specs (idempotent —
     # a pre-pointer PROJECT.md gets the managed ADD:SPECS block; an up-to-date one is a no-op).
     pointer_action = _inject_specs_pointers(root / "PROJECT.md")

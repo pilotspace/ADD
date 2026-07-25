@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "60eef504c87d5ed39d58a8722401f5aa"  # re-aimed @ egg-info-prune (suffix-prune *.egg-info dirs from the scope walk). prior: 946b76cf… @ scope-walk-prune
-ENGINE_PKG_MD5 = "3d7ec2b90d11b91fd0211b1fc61b4c19"  # re-aimed @ fold-residue-engine-guide (PHASE_GUIDE["direction"] stops instructing a retired §2; the one-case-per-rule duty folds into the §4 clause). prior: 96f41126… @ claude-md-block-finalize
+ENGINE_MD5 = "54aff8b8ce3b8ee9c1cda23ee4e06f79"  # re-aimed @ seed-method-personas (init/migrate seed the three method-lens planners via _seed_persona_file). prior: 60eef504… @ egg-info-prune
+ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide

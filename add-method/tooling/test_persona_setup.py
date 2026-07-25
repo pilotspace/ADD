@@ -66,12 +66,18 @@ class SeedTest(unittest.TestCase):
         return Path(self.tmp) / ".add" / "personas"
 
     # scenario: init creates the empty personas dir (no template) — personas are authored via the skill
-    def test_init_creates_empty_personas_dir(self):
+    def test_init_seeds_only_the_method_personas(self):
+        # seed-method-personas SUPERSEDES the original "starts empty" contract: init now
+        # seeds the three METHOD-LENS planners (lenses about ADD's own artifacts). What
+        # did NOT change is the rule this test was really guarding — no preset/template
+        # persona is seeded, because DOMAIN lenses stay the project's to author.
+        from add_engine.constants import METHOD_PERSONAS
         d = self._personas()
         self.assertTrue(d.is_dir(), "init must create the .add/personas/ directory")
         self.assertFalse((d / "_template.md").exists(),
-                         "no template is seeded — personas are authored via the persona-author skill")
-        self.assertEqual(list(d.glob("*.md")), [], "the personas dir starts empty (unseeded → nudge fires)")
+                         "no template is seeded — domain personas are authored via the persona-author skill")
+        self.assertEqual(sorted(f.stem for f in d.glob("*.md")), sorted(METHOD_PERSONAS),
+                         "init seeds the method personas and nothing else")
 
     # scenario: the skill's worked examples are schema-conformant (what an author imitates)
     def test_skill_examples_are_conformant(self):

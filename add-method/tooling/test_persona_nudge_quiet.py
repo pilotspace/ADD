@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 HERE = pathlib.Path(__file__).resolve().parent
 ADD_PY = HERE / "add.py"
@@ -38,6 +39,10 @@ class PersonaNudgeSeams(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_idle_status_still_nudges(self):
+        # the discovery nudge fires on an EMPTY roster; init now seeds the method
+        # personas, so clear them to reach that state (behaviour under test unchanged).
+        for _f in (Path(self.root) / '.add' / 'personas').glob('*.md'):
+            _f.unlink()
         out = _run(self.root, "status").stdout
         self.assertIn(NAG, out, "idle (no active task) status keeps the discovery nudge")
 
@@ -48,6 +53,10 @@ class PersonaNudgeSeams(unittest.TestCase):
                          "an active task's status must not re-advertise personas every turn")
 
     def test_new_milestone_nudge_unchanged(self):
+        # the discovery nudge fires on an EMPTY roster; init now seeds the method
+        # personas, so clear them to reach that state (behaviour under test unchanged).
+        for _f in (Path(self.root) / '.add' / 'personas').glob('*.md'):
+            _f.unlink()
         out = _run(self.root, "new-milestone", "mvp", "--goal", "g", "--stage", "mvp").stdout
         self.assertIn(NAG, out, "new-milestone keeps its discovery nudge")
 

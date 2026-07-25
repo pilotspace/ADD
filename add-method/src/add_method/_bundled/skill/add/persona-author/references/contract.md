@@ -91,6 +91,41 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
   `add.py` never edits a persona, so the fold is the human's or the AI's transcription, and a
   section that no hint names cannot be grown this way.
 
+## What ADD ships vs what you author
+
+ADD seeds exactly three personas into `.add/personas/` at `init` and `migrate` —
+`task-planner`, `milestone-planner`, `release-planner` (`constants.METHOD_PERSONAS`).
+Everything else on your roster is yours to author.
+
+The line between them, and why it is drawn here rather than left to taste:
+
+> **Ship a persona only if it is a METHOD LENS** — one that reasons about ADD's own
+> artifacts: PLAN.md sections, the frozen §3 contract, the milestone DAG, the release
+> cut. **Never ship a DOMAIN lens** — one that reasons about a project's subject matter:
+> security, data, UX, a framework, an industry.
+
+A method lens is correct in every project by construction: every ADD project has the same
+contract, the same DAG, the same gate. A domain lens asserts what *your* project's
+judgment should be, and no author who has not read your code can do that.
+
+This is a scar, not a style preference. Twelve preset personas (`security-gatekeeper`,
+`data-steward`, `ux-experience-lead`, and nine more) shipped in every npm tarball and pip
+wheel for months while **nothing loaded them** — authoritative-looking and dead. They were
+retired at `preset-patterns-fold`. Eleven of the twelve fail the criterion above; the
+honest near-miss is `release-manager`, which would have passed. The line is narrow, not
+comfortable.
+
+Two obligations come with seeding, both test-enforced:
+
+- **Never clobber.** A seeded persona you have edited is returned untouched by any later
+  `init` or `migrate` (`_seed_persona_file` mirrors the `_seed_spec_file` survivor idiom).
+  Seeding fills gaps; it never rewrites your judgment.
+- **Prove the load, not the presence.** A seeded persona must appear in the `status --all`
+  roster as `slug [flow] — vibe`. A presence-only test is what let the presets pass a green
+  suite while dead, so `test_seed_method_personas` asserts the rendered roster line.
+
+Adding a slug to `METHOD_PERSONAS` without meeting the criterion re-opens that failure.
+
 ## Quality WARNs `add.py check` surfaces (non-blocking, measure-not-block)
 
 - **flow typo** — a `flow:` value outside the four is named in the finding (loaded by no surface).

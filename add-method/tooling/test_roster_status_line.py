@@ -94,6 +94,10 @@ class RosterStatusLineTest(unittest.TestCase):
 
     # ── M3: zero real personas -> byte-identical output ───────────────────────────
     def test_no_persona_no_roster(self):
+        # init now seeds the method personas, so empty the roster explicitly to reach
+        # the persona-less state this case is about (behaviour under test unchanged).
+        for _f in self.pdir.glob("*.md"):
+            _f.unlink()
         out = self._run(["status"])
         self.assertNotIn("personas:", out, "a persona-less project must render no roster")
         self.assertNotIn("roster:", self._run(["check"]))
