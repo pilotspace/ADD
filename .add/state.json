@@ -1625,7 +1625,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-25T10:40:31+00:00",
+  "updated": "2026-07-25T10:41:41+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -1678,9 +1678,9 @@
       "title": "Persona template completeness",
       "goal": "The persona template is one coherent artifact: the guidance names four legs with a bar each, all 12 presets carry ORIENT + a per-flow stance + an Escalation section, three planner personas exist at task/milestone/release altitude, and the book cites no retired file.",
       "stage": "mvp",
-      "status": "active",
+      "status": "done",
       "created": "2026-07-25T07:45:40+00:00",
-      "updated": "2026-07-25T07:46:57+00:00",
+      "updated": "2026-07-25T10:41:41+00:00",
       "confirmed": true,
       "confirmed_at": "2026-07-25T07:46:57+00:00",
       "confirmed_by": "Tin Dang",
@@ -1701,6 +1701,11 @@
         "planner-personas-seed": [
           "persona-template-legs"
         ]
+      },
+      "done_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
