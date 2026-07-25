@@ -4,6 +4,22 @@ What the ADD engine reads and validates. Miss the required parts and the persona
 `add.py check`; miss the recommended frontmatter and no apply-surface loads it. This is the
 hard schema — `references/patterns.md` is the judgment that fills it well.
 
+## The four legs
+
+A persona carries four kinds of judgment. The section names below are what the engine and every
+apply-surface match **literally** — the legs are how you *read* the schema, never a rename of it.
+
+| Leg | Lives in | The bar it must clear |
+|-----|----------|-----------------------|
+| **Role** | `## Identity` | States what this lens has SEEN succeed or fail — a scar, not a résumé. A reader can point to the experience that made the Anti-patterns below inevitable. |
+| **Rules** | `## Critical Rules` | Every line is something the lens would REFUSE to wave through, bold clause first. A rule nothing could violate is prose wearing a rule's clothes. |
+| **Standards** | `## Default Requirement` + `## Success Metrics` | One requirement present in every deliverable, then metrics stated as INVARIANTS — each naming the failure mode it catches, each checkable IN-SESSION by the agent holding the lens. |
+| **Process** | `## Abilities` + `## Playbook` | Abilities open with the ORIENT commands the lens runs on load, and every entry is doable NOW against a real file, tool, or command. The Playbook, when present, carries ordered moves with provenance tags — never a tutorial. |
+
+Process is the leg authors most often leave thin, and it is the one with the sharpest cost: a lens
+that knows what "good" looks like but not what to RUN first will re-derive ground truth it could
+have read in one command. If you write only one Process line, make it the ORIENT command.
+
 ## File
 
 - Path: `.add/personas/<slug>.md` — `<slug>` is kebab-case (e.g. `payments-api-engineer`).
@@ -52,12 +68,28 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
 
 **RECOMMENDED (a surface can't fully use the lens without them):**
 
-- `## Abilities`
+- `## Abilities` — the first half of the Process leg. **Loaded by:** the roster agent reads the
+  body of the persona it becomes and runs that persona's lead commands before drafting
+  (`.claude/agents/add-worker.md` §2). Abilities is what turns "become this lens" into "run these
+  commands first", so it is where ORIENT-first (`patterns.md` #6) and design-for-failure (#7) land
+  — a persona that omits it starts every beat blind.
 
 **OPTIONAL (absence is conformant):**
 
 - `## Anti-patterns`
 - `## Playbook`
+- `## Escalation` — the stop-condition: what makes THIS lens refuse to proceed rather than proceed
+  carefully. Distinct from a Critical Rule (an always-do the build must satisfy) and from an
+  Anti-pattern (a smell the lens treats as guilty until proven innocent): an Escalation names the
+  point where the lens hands the decision to a human or to a named sibling. Write one for any
+  persona that owns a gate report; omit it for a lens that only advises. Never restate the
+  universal floor here — a security finding is always HARD-STOP whatever persona is loaded; this
+  section is for the stop-conditions specific to the domain. See `patterns.md` #11.
+  **Routable:** a retrospective can file `- [ADD · open · persona:<slug> · escalation] …` and the
+  fold transcribes it into this section. The gate is the CLOSED hint vocabulary documented in
+  `deltas.md` (`critical-rule|success-metric|anti-pattern|ability|escalation`) — not the engine:
+  `add.py` never edits a persona, so the fold is the human's or the AI's transcription, and a
+  section that no hint names cannot be grown this way.
 
 ## Quality WARNs `add.py check` surfaces (non-blocking, measure-not-block)
 

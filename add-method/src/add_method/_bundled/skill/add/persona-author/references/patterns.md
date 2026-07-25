@@ -1,23 +1,25 @@
 # The judgment layer — distilled from strong subagent design
 
-Eleven patterns that separate an expert lens from an undifferentiated keyword list. Each is drawn
+Twelve patterns that separate an expert lens from an undifferentiated keyword list. Each is drawn
 from an apple-to-apple read of strong agent files (senior-rust/-java engineers, python-expert,
 module-doc-generator, component-tracer, ux-design-architect, and peers) plus a diagnosis of the
 vendored teacher corpus, and cast for an ADD persona. Contract (which section) →
 `references/contract.md`; this file is *how to fill it well*.
 
 ## Contents
-1. Earned-perspective Identity
-2. Bold-lead Critical Rules
-3. The qualification gate
-4. Read-before-you-assert
-5. Failure-mode-aware Success Metrics
-6. ORIENT-first Abilities
-7. Design-for-failure (conditional)
-8. Guilty-until-proven Anti-patterns
-9. Numbers you'd defend
-10. Per-flow stance
-11. Deliberate exclusions — what NOT to put in a persona
+Each pattern is tagged with the leg it fills (`contract.md` → The four legs).
+1. Earned-perspective Identity — *Role*
+2. Bold-lead Critical Rules — *Rules*
+3. The qualification gate — *Rules*
+4. Read-before-you-assert — *Rules*
+5. Failure-mode-aware Success Metrics — *Standards*
+6. ORIENT-first Abilities — *Process*
+7. Design-for-failure (conditional) — *Process*
+8. Guilty-until-proven Anti-patterns — *Rules*
+9. Numbers you'd defend — *Standards*
+10. Per-flow stance — *Process*
+11. Escalation stance — *Rules*
+12. Deliberate exclusions — what NOT to put in a persona — *all four legs*
 
 ---
 
@@ -102,7 +104,22 @@ with at build, what it REFUSES at verify. A verify stance carries the default ve
 until the evidence cites the actual run — plus its automatic-fail triggers. A lens whose rules
 read identically at every flow hasn't decided what each surface is for.
 
-## 11. Deliberate exclusions — what NOT to put in a persona
+## 11. Escalation stance
+A Critical Rule says what the build must satisfy. An Anti-pattern says what the lens suspects. An
+**Escalation** says where the lens STOPS — the condition under which it hands the decision to a
+human or a named sibling instead of proceeding carefully. Most personas have one or two, and they
+are the most project-specific lines in the file.
+- ✗ "escalate anything risky" — unfalsifiable; every lens already believes this.
+- ✓ "a contract change a shipped release already promised → stop; that is a change request back to
+  Specify, not a build decision."
+- ✓ "a metric I cannot check in-session → stop and say so; never report a bar I did not measure."
+Two things it is not. It never restates the universal floor — a security finding is always
+HARD-STOP, whatever persona is loaded — and it never lowers a gate; naming a stop-condition only
+ever adds a place to stop. It lives in `## Escalation` (OPTIONAL, see `contract.md`) and grows
+through a persona delta like any other section. Write one for a lens that owns a gate report; omit
+it for a lens that only advises.
+
+## 12. Deliberate exclusions — what NOT to put in a persona
 A persona is a layer in a stack; keep the other layers' work OUT of it.
 - **No tone/voice** — that is SOUL.md's. A persona that prescribes phrasing is duplicating it.
 - **No self-score / confidence rubric** — the agent (add-worker) owns the six-dimension score.
