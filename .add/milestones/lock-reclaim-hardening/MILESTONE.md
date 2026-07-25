@@ -34,11 +34,34 @@ Issues/Risks (shared): <traps in the shared code that feed each task's §1 expec
 - <contract name> -> owning task <slug>
 
 ## Tasks (breadth-first decomposition; detail lives in each PLAN.md)
-- [ ] <slug>   depends-on: none     — <one line>
-- [ ] <slug>   depends-on: <slug>   — <one line>
+- [x] lock-reclaim-hardening   depends-on: none   — stale-reclaim re-verifies staleness, not just inode identity
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] User can <observable behavior — the SEEN outcome only, NOT the task's plan line>        (← <slug>)
+- [x] A publish run completes without a second holder ever acquiring the lock — the
+      concurrency suite (test_concurrent_stale_reclaim_*) stays green on Linux CI under
+      publish-job load, and v2.4.0 actually reaches npm and PyPI.        (← lock-reclaim-hardening)
+
+      EVIDENCE (recorded 2026-07-25):
+      - root cause FIXED, not suppressed: fd9d5d5f re-verifies staleness rather than inode
+        identity at 4 sites across BOTH lock twins (_installer.py and bin/cli.js). The
+        peak<=1 mutual-exclusion contract was never weakened.
+      - the thing this criterion said it would unblock SHIPPED: npm @pilotspace/add 2.4.0
+        and PyPI pilotspace-add 2.4.0 are both live.
+      - Linux CI (`ci` workflow, py3.10 + py3.12) green on main and on both feature
+        branches through 2026-07-25.
+      - 79 reclaim tests green locally (lock_reclaim_hardening 6 · js_reclaim_lock_heartbeat
+        6 · project_scope_lock 31 · global_update_harden 36).
+
+      LIMIT ON THIS CLAIM — read before trusting it: "deterministically" rests on repeated
+      Linux CI green, NOT on a proof. The original defect was FLAKY (peak=2 observed twice
+      on py3.10) and is filesystem-dependent: ext4/tmpfs reuse freed inodes, APFS does not,
+      so every local macOS run is near-worthless as evidence for THIS bug. A future flake
+      here is a REOPEN of this criterion, not a surprise regression from nowhere.
+
+      NOTE ON PROVENANCE: this MILESTONE.md was never drafted — the exit criteria section
+      held the raw template placeholder, so the earlier "0/1 met" was counting a placeholder
+      rather than a real unmet criterion. The criterion above was written at close from the
+      milestone goal, and is marked met on the evidence listed, not by lowering a bar.
 
 ## Strategy   (AI-drafted WITH the human — the optimized task plan; SOFT/advisory like a task's Build-strategy; drafted-blank for a micro/--tiny milestone)
 > The persona-led strategy over THIS milestone's tasks — sequencing, freeze-first contracts,
