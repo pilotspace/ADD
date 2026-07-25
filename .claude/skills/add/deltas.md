@@ -18,7 +18,7 @@ Each delta begins on its own **tag line**; the learning may wrap:
 - `<status>` — `open` | `folded` | `rejected`. A **newly emitted delta is `open`**.
 - `<learning>` — the insight; the tag line comes **first**, `(evidence: …)` **closes** the delta.
 - `(evidence: …)` — **required**, non-empty: a failing scenario, a production signal, a review note. No evidence → it is an opinion, not a delta.
-- **persona target (optional)** — a competency lesson MAY add `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability>` in brackets, e.g. `- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)`. The persona loop lands it in `.add/personas/<slug>.md` under that section (newest-first, never clobbering) instead of the shared specs.
+- **persona target (optional)** — a competency lesson MAY add `· persona:<slug> · <critical-rule|success-metric|anti-pattern|ability|escalation>` in brackets, e.g. `- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)`. The persona loop lands it in `.add/personas/<slug>.md` under that section (newest-first, never clobbering) instead of the shared specs.
 
 A long learning may wrap — `add.py check` joins continuation lines into **one** delta:
 
