@@ -70,11 +70,30 @@ def _expected_skip_count() -> int:
     checks self-skip per-method when setuptools isn't importable. (kernel-trim
     (ADD 2.0 M5): the 6 component-pillar files with tomllib skips are deleted.)
     Computed instead of a fixed literal, so an unrelated skip still fails loudly
-    instead of being silently waved through."""
+    instead of being silently waved through.
+
+    PyWheelTest's method count is DERIVED (ast, no import side-effects) rather than
+    hand-written: a hard-coded count silently breaks this pin the moment anyone adds a
+    case to that class — which is exactly how seed-method-personas turned CI red while
+    the local suite was green."""
     n = 1
     if not _setuptools_available():
-        n += 3
+        n += _pywheel_test_count()
     return n
+
+
+def _pywheel_test_count() -> int:
+    """How many test methods PyWheelTest holds — read from source via ast so adding a
+    case there can never silently drift this pin (and so importing test_packaging,
+    which builds a wheel at setUpClass, is never triggered just to count)."""
+    import ast
+    src = (Path(__file__).resolve().parent / "test_packaging.py").read_text(encoding="utf-8")
+    for node in ast.parse(src).body:
+        if isinstance(node, ast.ClassDef) and node.name == "PyWheelTest":
+            return sum(1 for f in node.body
+                       if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef))
+                       and f.name.startswith("test_"))
+    raise AssertionError("PyWheelTest not found in test_packaging.py — this pin is vacuous")
 
 
 def _nested_ok_regex(n: int) -> re.Pattern:
@@ -239,9 +258,15 @@ class OkSummaryRegexTest(unittest.TestCase):
         with mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=True):
             self.assertEqual(_expected_skip_count(), 1)
 
-    def test_setuptools_missing_adds_three(self):
+    def test_setuptools_missing_adds_one_per_pywheel_case(self):
+        # was `adds_three` with a literal 4 — a SECOND hard-coded copy of PyWheelTest's
+        # method count, which drifted the moment a case was added there (seed-method-personas
+        # turned CI red exactly this way). Derive it from the same source of truth, and keep
+        # a floor so the derivation itself can't silently collapse to zero.
+        n = _pywheel_test_count()
+        self.assertGreaterEqual(n, 3, "PyWheelTest lost cases — or the ast count is broken")
         with mock.patch("test_ci_tooling_mirror_gap._setuptools_available", return_value=False):
-            self.assertEqual(_expected_skip_count(), 4)
+            self.assertEqual(_expected_skip_count(), 1 + n)
 
     def test_regex_matches_its_own_exact_count(self):
         rx = _nested_ok_regex(7)
