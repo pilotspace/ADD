@@ -230,7 +230,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="benchmark.report")
     parser.add_argument("--trust", action="store_true")
     parser.add_argument("--runs-root", default=None)
-    parser.add_argument("--family", default="wm", choices=("wm", "hv"))
+    parser.add_argument("--family", default="wm", choices=("wm", "hv", "amb"))
     parser.add_argument("--arms", nargs="*", default=list(ARM_NAMES))
     parser.add_argument("--steps", nargs="*", type=int, default=[1, 2, 3])
     args = parser.parse_args(argv)
