@@ -1591,7 +1591,7 @@
       "id": 38,
       "text": "MILESTONE-COMPLETE P3: build-strategy-trim (queued, tiny) \u2014 new-task: relabel \u00a75 Scope HARD (mislabeled SOFT), make Regression floor + Persona optional",
       "created": "2026-07-23T08:49:11+00:00",
-      "status": "open"
+      "status": "done"
     },
     {
       "id": 39,
@@ -1625,7 +1625,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-25T10:41:41+00:00",
+  "updated": "2026-07-25T11:13:29+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
