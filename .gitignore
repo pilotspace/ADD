@@ -46,8 +46,9 @@ add-method/CLAUDE.md
 # Benchmark run outputs (transcripts, per-arm workspaces, run records) are
 # generated artifacts of later bench-runner/bench-scoring tasks — never
 # committed. The benchmark/ scaffold itself (workload/arms/schema) IS tracked.
-benchmark/runs/
-benchmark/runs-session/
-benchmark/runs-persist/
-benchmark/runs-swe/
-benchmark/
+# One pattern covers every run directory, including dated ones like
+# runs-remeasure-2026-07-23/. A bare `benchmark/` sat here instead and ignored the
+# WHOLE tree — invisible, because git does not apply ignore rules to already-tracked
+# files, so the 124 tracked scaffold files kept working while every NEW benchmark
+# file was silently unstageable.
+benchmark/runs*/
