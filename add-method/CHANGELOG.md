@@ -4,6 +4,53 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [2.5.0] — 2026-07-25
+
+Minor: the **persona** system becomes a coherent artifact. The template guidance names
+**four legs** with a quality bar each, gains an optional **Escalation** section, and — for the
+first time — ADD **seeds** three planner personas into a new project instead of leaving every
+roster empty. The twelve orphaned **preset** persona templates stop shipping. Engine change is
+additive: `init` and `migrate` gain a seeding call; nothing else in the loop moves.
+
+### Added
+
+- **Three method-lens planners, seeded at `init` and `migrate`** — `task-planner` (inside one
+  frozen contract), `milestone-planner` (ordering tasks into a DAG), `release-planner` (what
+  makes a cut). A fresh project now reports a three-persona roster instead of
+  `personas: unseeded`, so the persona ladder can *select* or *fold* rather than always *author*.
+- **`## Escalation`** — an optional, routable persona section for stop-conditions: the point a
+  lens hands the decision up, distinct from an always-do rule and from a guilty-until-proven
+  smell. A retrospective can file `persona:<slug> · escalation` and the fold transcribes it.
+- **The four legs** — Role (`## Identity`) · Rules (`## Critical Rules`) · Standards
+  (`## Default Requirement` + `## Success Metrics`) · Process (`## Abilities` + `## Playbook`),
+  each with the bar it must clear. `## Abilities` gains an explicit load contract.
+- **A worked architect example** carrying `## Escalation`, alongside the I/O and design examples.
+
+### Changed
+
+- **`SKILL.md` seeds a persona when none fits** — the DIRECTION beat names where the roster comes
+  from (`status --all`) and the **select → fold → author** ladder, and states the generic fallback
+  that never blocks and never lowers a gate. Both rules previously lived only in an agent file the
+  orchestrator does not read.
+- **The persona chapter** now describes the load set the surfaces actually read, and states plainly
+  that **the engine never edits a persona** — a fold is always a human's or the AI's transcription.
+- **Seeding never clobbers.** `_seed_persona_file` mirrors the `_seed_spec_file` survivor idiom:
+  an existing (possibly edited) persona is returned untouched; seeding fills gaps, never rewrites.
+
+### Removed
+
+- **The 12 preset persona templates.** They shipped in every npm tarball and pip wheel for months
+  after the mechanism that read them was retired — authoritative-looking and dead. `software-architect`
+  was promoted to a worked example; the rest are gone. The line that stops a repeat is written into
+  the persona contract: ship a persona only if it is a **method lens** (one that reasons about ADD's
+  own artifacts), never a **domain lens** (security, data, UX).
+
+### Fixed
+
+- **A pinned CI skip count that no local run could see.** A `@skipUnless` class skips per method, and
+  the count was hand-maintained in two places — including the meta-test guarding the pin. Both now
+  derive from source.
+
 ## [2.4.0] — 2026-07-24
 
 Minor: the **strategy-intake** milestone closes — a fitting **persona** becomes ADD's

@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""Red/green tests for the 2.4.0 release readiness.
+"""Red/green tests for the 2.5.0 release readiness.
 
-Minor cut: the strategy-intake milestone closes — a fitting persona becomes ADD's
-adaptive PM brain (the new strategy.md DISCUSS→OPTIMIZE→CONVERGE loop filling the
-`## Strategy` slot, the add-advisor refute at CONVERGE, the risk-proportional depth
-ladder, and intake loading the fitting persona before it sizes) — plus the follow-on
-that completes the §2→§4 scenarios fold and adds a shipped-surface CI sweep. All
-changes are skill/agent-surface prose; the engine is unchanged (additive/zero).
+Minor cut: the persona system becomes a coherent artifact — the template guidance names
+four legs with a bar each, gains an optional Escalation section, and ADD SEEDS three
+method-lens planner personas at init/migrate instead of leaving every roster empty. The
+12 orphaned preset templates stop shipping. Engine change is additive (a seeding call in
+init and migrate); both engine pins are re-aimed accordingly.
 
 In-repo readiness only — the live-registry halves (npm/PyPI serving 2.4.0) are
 verify-gate EVIDENCE gathered after the human-gated tag push, never unit tests.
-The live-version-agreement asserts migrated FORWARD from test_release_2_3_0
+The live-version-agreement asserts migrated FORWARD from test_release_2_4_0
 (release-gate pattern: exactly ONE suite pins the current version).
 Run:
-    python3 -m unittest test_release_2_4_0 -v
+    python3 -m unittest test_release_2_5_0 -v
 """
 import json
 import re
@@ -25,18 +24,18 @@ PKG = HERE.parent                       # add-method/
 
 CHANGELOG = PKG / "CHANGELOG.md"
 
-VERSION = "2.4.0"
-PRIOR_VERSIONS = ("2.3.0", "2.2.0", "2.1.0", "2.0.0", "1.18.0", "1.17.0", "1.16.1",
+VERSION = "2.5.0"
+PRIOR_VERSIONS = ("2.4.0", "2.3.0", "2.2.0", "2.1.0", "2.0.0", "1.18.0", "1.17.0", "1.16.1",
                   "1.16.0", "1.15.0", "1.14.0", "1.13.0", "1.12.0", "1.11.0", "1.10.0",
                   "1.9.0", "1.8.0", "1.7.3", "1.7.2", "1.7.1", "1.7.0", "1.6.0", "1.5.0",
                   "1.4.0", "1.3.0", "1.2.0", "1.1.0", "1.0.0")
 # the headline changes the 2.4.0 notes must name
-FEATURE_ANCHORS = ("strategy loop", "DISCUSS", "CONVERGE", "risk-proportional",
-                   "add-advisor", "fitting persona", "shipped-surface")
+FEATURE_ANCHORS = ("four legs", "Escalation", "method lens", "domain lens",
+                   "seed", "planner", "preset", "never clobber")
 
 
 class ChangelogTest(unittest.TestCase):
-    def test_changelog_has_2_4_0_entry(self):
+    def test_changelog_has_2_5_0_entry(self):
         self.assertTrue(CHANGELOG.is_file(), "CHANGELOG.md missing")
         text = CHANGELOG.read_text(encoding="utf-8")
         self.assertIn(f"## [{VERSION}]", text)
@@ -45,13 +44,13 @@ class ChangelogTest(unittest.TestCase):
                           f"the {prior} lineage entry must survive the bump")
         entry = text.split(f"## [{VERSION}]", 1)[1].split("## [", 1)[0]
         for anchor in FEATURE_ANCHORS:
-            self.assertIn(anchor, entry, f"2.4.0 entry must name: {anchor}")
+            self.assertIn(anchor, entry, f"2.5.0 entry must name: {anchor}")
 
 
 class ReleaseShapeTest(unittest.TestCase):
-    """The version sources move in lockstep (migrated forward from 2.3.0)."""
+    """The version sources move in lockstep (migrated forward from 2.4.0)."""
 
-    def test_versions_agree_at_2_4_0(self):
+    def test_versions_agree_at_2_5_0(self):
         pkg = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["version"]
         py = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
                        (PKG / "pyproject.toml").read_text(encoding="utf-8")).group(1)

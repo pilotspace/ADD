@@ -1,5 +1,13 @@
 # Releases
 
+## 2.5.0 — 2026-07-25
+milestones: persona-template-completeness (the persona template as one coherent artifact — four legs with a bar each · `## Escalation` optional+routable · book reconciled with the load set the surfaces actually read · three planner personas at task/milestone/release altitude · the 12 orphaned preset templates retired — closed 4/4, 5/5 criteria)
+loose tasks: seed-method-personas (#182 — init/migrate SEED the three method-lens planners via `_seed_persona_file`, never-clobber, load-proven against the rendered `status --all` roster and both built artifacts) · SKILL.md persona-seeding ladder (select → fold → author; generic fallback never blocks) · lock-reclaim-hardening closed+archived with its exit criterion finally written
+waivers: none
+actor: Tin Dang <tindang.ht97@gmail.com> (git)
+evidence: recorded by hand — the release engine retired in the 2.0 kernel-trim (playbook-guided cut). PRs #181 + #182 merged to main, CI green (Tooling py3.10+3.12). ENGINE CHANGE (additive, first since 2.0): `init`/`migrate` gain a seeding call; ENGINE_MD5 -> 54aff8b8, ENGINE_PKG_MD5 -> c635ca53, both recomputed live and `add.py` byte-identical across all four tooling trees. Full `tooling/` suite 2327 green at the cut; `add.py check` 0 failed; `wording_lint` 0 findings; release test forward-migrated 2.4.0->2.5.0 (test_release_2_5_0, one suite pins current). Version sources x5 + SKILL.md x3 in lockstep; tag v2.5.0 human-ordered.
+HONESTY NOTES: (a) the 12 retired presets had been shipping in every artifact since e29ddac4 out of a stale gitignored build cache — caught only by building and unzipping the wheel + npm tarball, never by the green suite, so M5 of the seeding task reads the ARTIFACTS not the source tree. (b) PR #182's first push was CI-red on a pinned skip count invisible on macOS (a @skipUnless class skips per method; the count was hand-maintained in TWO places including the meta-test guarding it) — both now derived from source. (c) a vacuous test was found in this very work, pasted after `if __name__` and never collected; found by refute-read, not by the suite.
+
 ## 2.4.0 — 2026-07-24
 milestones: strategy-intake (personas as ADD's adaptive PM brain — the persona-framed strategy.md DISCUSS→OPTIMIZE→CONVERGE loop filling the `## Strategy` slot · add-advisor refute at CONVERGE · risk-proportional depth ladder · persona-at-intake · report→persona-owned gate · UDD experience-driven redefine — closed 8/8)
 loose tasks: scenarios-fold residuals completion (#174) · shipped-surface CI sweep (#175) · dependabot bumps (setup-python 6→7 #173, setup-node 6→7 #162, @clack/prompts 1.6→1.7 #143) · lock-reclaim-hardening (#179 — the stale-reclaim inode-reuse concurrency fix that blocked this very publish; both twins)
