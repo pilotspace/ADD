@@ -28,6 +28,7 @@ __all__ = [
     "PERSONA_FLOW_VALUES",
     "TASK_KINDS",
     "SPEC_DDS",
+    "METHOD_PERSONAS",
     "PERSONA_HINT",
     "PERSONA_FIT_HINT_TEMPLATE",
     "GUIDELINE_FILES",
@@ -148,6 +149,15 @@ TASK_KINDS = ("feature", "refactor", "test", "docs", "ui",
 # `delta-append <dd>` routes a lesson to its file. Closed on purpose: the five lenses ARE
 # the method's competency model (DDD·SDD·UDD·TDD·ADD) — an unknown dd is a refusal
 # (delta_dd_unknown), because a delta filed under a sixth ad-hoc lens is a delta lost.
+# seed-method-personas: the ONLY personas ADD ships. The shipping criterion (written
+# into persona-author/references/contract.md) is deliberately narrow — a persona ships
+# only if it reasons about ADD's OWN artifacts (PLAN.md sections, the frozen contract,
+# the milestone DAG, the release cut), never about a project domain (security, data,
+# UX). Domain lenses are the project's to author; that distinction is what separates
+# these from the 12 preset personas retired at preset-patterns-fold for having no
+# consumer. Adding a slug here without meeting the criterion re-opens that failure.
+METHOD_PERSONAS = ("task-planner", "milestone-planner", "release-planner")
+
 SPEC_DDS = {
     "ddd": ("domain.md", "Domain",
             "what the system IS: entities, rules, ubiquitous language (DDD)"),

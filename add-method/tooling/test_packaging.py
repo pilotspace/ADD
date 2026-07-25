@@ -154,6 +154,17 @@ class NpmTarballTest(unittest.TestCase):
         self.assertIn("THIRD_PARTY_NOTICES.md", self.paths,
                       "THIRD_PARTY_NOTICES.md must ship in the npm tarball (attribution_missing)")
 
+    def test_method_persona_seeds_ship_in_the_tarball(self):
+        """seed-method-personas M5: the three method-lens seeds are what turn a fresh
+        `init` into a non-empty roster. If templates/personas/ drops from the allowlist
+        the install silently reverts to `personas: unseeded` — the same silent-drop trap
+        as personas-teacher/, and the source tree would still look correct."""
+        from add_engine.constants import METHOD_PERSONAS
+        for slug in METHOD_PERSONAS:
+            self.assertIn(f"tooling/templates/personas/{slug}.md.tmpl", self.paths,
+                          f"method persona seed {slug} missing from the npm tarball "
+                          "(seed_absent_from_npm)")
+
     def test_add_engine_package_ships(self):
         """add.py imports `from add_engine.<module> import …` at load — the whole
         package MUST ship in the tarball or `bin/cli.js init` materializes an add.py
@@ -267,6 +278,16 @@ class PyWheelTest(unittest.TestCase):
                  if _WHEEL_TEST_SRC.search(n) or _JUNK.search(n)]
         self.assertEqual(leaks, [], f"no dev test source or compiled/OS junk may ship: {leaks}")
 
+    def test_method_persona_seeds_ship_in_the_wheel(self):
+        """seed-method-personas M5, PyPI side. Read the built wheel, never the source
+        tree: the retired presets shipped for months out of a stale build cache while
+        the sources were clean, so only the artifact is evidence."""
+        from add_engine.constants import METHOD_PERSONAS
+        for slug in METHOD_PERSONAS:
+            want = f"add_method/_bundled/tooling/templates/personas/{slug}.md.tmpl"
+            self.assertIn(want, self.names,
+                          f"method persona seed {slug} missing from the wheel "
+                          "(seed_absent_from_wheel)")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
