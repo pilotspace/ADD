@@ -190,6 +190,123 @@ def _load_checklist(wm: int, family: str = "wm") -> list[dict]:
     return rows
 
 
+def _load_ambiguities(wm: int, family: str = "amb") -> list[dict]:
+    """Import `workload/{family}{wm}/ambiguity.py` and return its validated
+    `AMBIGUITIES` list. Raises `missing_ambiguity_module` if absent,
+    `invalid_ambiguity_row` (via validate_ambiguities) if a row is malformed.
+
+    Mirrors `_load_checklist` deliberately — same resolution rule, same
+    fail-loud-before-any-boot ordering."""
+    from benchmark.ambiguity import AmbiguityError, validate_ambiguities
+
+    mod_path = REPO_ROOT / "benchmark" / "workload" / f"{family}{wm}" / "ambiguity.py"
+    if not mod_path.exists():
+        raise BenchError(f"missing_ambiguity_module: {mod_path} does not exist")
+    spec = importlib.util.spec_from_file_location(f"_ambiguity_{family}{wm}", mod_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    rows = getattr(module, "AMBIGUITIES", None)
+    try:
+        validate_ambiguities(rows)
+    except AmbiguityError as exc:          # one error vocabulary for the scorer
+        raise BenchError(str(exc)) from exc
+    return rows
+
+
+# A code-writing act in a transcript. Write/Edit cover the tool-using arms; the
+# Bash pattern covers writing through the shell, which archived runs show is
+# non-zero and ASYMMETRIC across arms (add 23 heredocs, spec-kit 1). Counting only
+# the tool_use shapes would push the cut-point later for the arm that shells out,
+# crediting it with "surfacing" that actually followed its first edit — bias in
+# the exact metric this track exists to produce.
+_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+_BASH_WRITE = re.compile(r"(<<\s*[\"']?\w+|>>?\s*\S+\.(py|js|ts|json|toml|cfg|txt|md))")
+
+
+def _first_code_write_offset(transcript_path: pathlib.Path) -> int:
+    """Character offset, in the transcript's raw text, of the first code-writing act.
+
+    Surfacing must PRECEDE the moment the agent committed to a reading; this is the
+    cut-point. Returns 0 when the transcript is missing or contains no write — which
+    fails closed AGAINST crediting surfacing, since nothing can precede offset 0. A
+    missing artifact must never be able to inflate the metric.
+
+    KNOWN LIMIT (recorded, not hidden): first-write is a PROXY for commitment. An
+    agent that scaffolds an unrelated file early gets a cut-point earlier than its
+    real decision, understating its surfacing. The per-run offset is emitted in the
+    detail artifact so this is auditable per arm rather than taken on faith.
+    """
+    if not transcript_path.exists():
+        return 0
+    raw = transcript_path.read_text(errors="replace")
+    offset = 0
+    for line in raw.splitlines(keepends=True):
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            offset += len(line)
+            continue
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        for block in content or []:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            name = block.get("name")
+            if name in _WRITE_TOOLS:
+                return offset
+            if name == "Bash" and _BASH_WRITE.search(
+                    str((block.get("input") or {}).get("command", ""))):
+                return offset
+        offset += len(line)
+    return 0
+
+
+def _resolve_shipped(item: dict, base: str, ws: pathlib.Path) -> str:
+    """Which reading the BUILT APP implements — decided by probe, never by prose.
+
+    Exactly one true probe resolves that reading. Zero true means the app
+    implements neither. MANY true means the app satisfies both and has therefore
+    not chosen: guessing right requires having guessed, so it is credited with
+    neither. A raising probe counts as False (fail-closed)."""
+    hits = []
+    for name, probe in item["readings"].items():
+        try:
+            if probe(base, ws):
+                hits.append(name)
+        except Exception:
+            pass
+    return hits[0] if len(hits) == 1 else "neither"
+
+
+def compute_ambiguity_detail(workspace: pathlib.Path, transcript_path: pathlib.Path,
+                             wm: int, family: str = "amb") -> list[dict]:
+    """The per-item breakdown behind `ambiguity_surface_rate` (surface-vs-guess).
+
+    ONE hermetic boot, exactly like `compute_coverage_detail`: probe writes land in a
+    store-reset throwaway copy, so the source is never mutated and repeated scorings
+    are reproducible. Fail-closed — an unbootable app leaves every item
+    `shipped="neither"` rather than crashing the scorer. Raises only on a missing or
+    malformed ambiguity module, before any boot."""
+    from benchmark.ambiguity import classify
+    from benchmark.workload._oracle_lib import isolated_workspace, running_app  # lazy: import cycle
+
+    items = _load_ambiguities(wm, family)   # raises BEFORE the boot
+    edit_pos = _first_code_write_offset(transcript_path)
+    transcript = (transcript_path.read_text(errors="replace")
+                  if transcript_path.exists() else "")
+    shipped = {item["id"]: "neither" for item in items}
+    try:
+        with isolated_workspace(workspace) as iso_ws:
+            with running_app(str(iso_ws)) as base:
+                for item in items:
+                    shipped[item["id"]] = _resolve_shipped(item, base, iso_ws)
+    except Exception:
+        pass  # unbootable workspace: every item stays "neither", never a scorer crash
+    return [classify(item=item, transcript=transcript, artifacts=(),
+                     shipped=shipped[item["id"]], edit_pos=edit_pos)
+            for item in items]
+
+
 def compute_coverage_detail(workspace: pathlib.Path, wm: int, family: str = "wm") -> list[dict]:
     """The per-requirement breakdown behind `requirement_coverage` (coverage-detail):
     run the WM's FROZEN checklist against the built app and return one
@@ -476,6 +593,22 @@ def score_record(
         metrics["tests_weakened"] = 0.0  # by definition at the first WM
     elif wm >= 2 and snap_current.is_dir() and snap_prior.is_dir():
         metrics["tests_weakened"] = float(tamper.compute_tests_weakened(arm_root, wm, family))
+
+    # surface-vs-guess (bench-ambiguity-scoring) — amb family ONLY, so wm/hv
+    # records neither grow a key nor pay for a boot they do not use. The metric
+    # and its per-item detail are set together: a rate is never published without
+    # the evidence spans a human would need to audit it.
+    if family == "amb":
+        from benchmark.ambiguity import score_all
+
+        detail = compute_ambiguity_detail(
+            workspace, pathlib.Path(artifacts["transcript"]), wm, family)
+        metrics["ambiguity_surface_rate"] = (
+            sum(1 for d in detail if d["verdict"] == "surfaced") / len(detail)
+            if detail else 0.0)
+        artifacts["ambiguity_detail"] = json.dumps(detail, separators=(",", ":"))
+        artifacts["first_code_write_offset"] = str(
+            _first_code_write_offset(pathlib.Path(artifacts["transcript"])))
 
     updated = validate(
         {
