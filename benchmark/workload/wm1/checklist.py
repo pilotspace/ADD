@@ -89,18 +89,35 @@ def _p_status_enum(base, ws):
     return status == 400
 
 
+def _entry_exists(ws: pathlib.Path, module: str) -> bool:
+    """True iff `module` resolves to a file the WORKSPACE UNDER TEST owns.
+
+    Provenance, not availability. A benchmark run once left `pip install -e .` of its
+    own workspace in the machine's site-packages, so `-m app.cli` resolved to a
+    PREVIOUS RUN's app and this probe scored True on an empty directory. An editable
+    install sits on sys.path for every process on the machine, so copying the
+    workspace cannot isolate it — the probe has to prove what it ran.
+    """
+    rel = pathlib.Path(*module.split("."))
+    return (ws / rel.with_suffix(".py")).is_file() or (ws / rel / "__init__.py").is_file()
+
+
 def _p_cli_parity(base, ws):
     """The PROMPT requires a CLI that lists via the same logic. Try the common
-    entry points; success = one exits 0 for a `list` command against the app."""
+    entry points; success = one WHOSE CODE LIVES IN `ws` exits 0 for `list`."""
+    ws = pathlib.Path(ws)
     port = base.rsplit(":", 1)[-1]
     env = {**os.environ, "APP_BASE": base, "PORT": port}
+    # (argv, the module whose source must exist in `ws` for this run to be OURS)
     invocations = (
-        [sys.executable, "-m", "app.cli", "list"],
-        [sys.executable, "-m", "cli", "list"],
-        [sys.executable, "cli.py", "list"],
-        [sys.executable, "-m", "app", "list"],
+        ([sys.executable, "-m", "app.cli", "list"], "app.cli"),
+        ([sys.executable, "-m", "cli", "list"], "cli"),
+        ([sys.executable, "cli.py", "list"], "cli"),
+        ([sys.executable, "-m", "app", "list"], "app.__main__"),
     )
-    for argv in invocations:
+    for argv, module in invocations:
+        if not _entry_exists(ws, module):
+            continue          # not this workspace's code — a pass would be borrowed
         try:
             proc = subprocess.run(argv, cwd=str(ws), env=env, capture_output=True,
                                   text=True, timeout=10)
