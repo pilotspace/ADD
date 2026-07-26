@@ -19,6 +19,7 @@ import sys
 from typing import Sequence
 
 from benchmark import judge, tamper
+from benchmark.ambiguity import is_implementation_write
 from benchmark.arms.loader import ARM_NAMES
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord, validate
@@ -252,13 +253,108 @@ def _first_code_write_offset(transcript_path: pathlib.Path) -> int:
             if not isinstance(block, dict) or block.get("type") != "tool_use":
                 continue
             name = block.get("name")
+            inp = block.get("input") or {}
             if name in _WRITE_TOOLS:
-                return offset
-            if name == "Bash" and _BASH_WRITE.search(
-                    str((block.get("input") or {}).get("command", ""))):
+                # Only an IMPLEMENTATION write commits to a reading. Writing an
+                # analysis document is the ACT of surfacing — counting it as the
+                # cut-point closed ADD's window on its own PROJECT.md in rep 0,
+                # before the contradiction it had just found could be credited.
+                if is_implementation_write(str(inp.get("file_path", ""))):
+                    return offset
+                continue
+            if name == "Bash" and _BASH_WRITE.search(str(inp.get("command", ""))):
                 return offset
         offset += len(line)
     return 0
+
+
+def _workspace_artifacts(workspace: pathlib.Path, *, limit: int = 40,
+                         max_bytes: int = 200_000) -> list[str]:
+    """The workspace's PROSE documents — the other place a method may surface.
+
+    The first live run scored ADD 0.0 while its PLAN.md said, in as many words,
+    that the spec "contains two mutually exclusive rules for the identical
+    trigger". `classify` has always accepted artifacts precisely so a
+    document-first method scores like a chat-first one; the call site passed an
+    empty tuple, so the guard existed and was never wired.
+
+    Sorted and bounded, so scoring stays deterministic and a pathological
+    workspace cannot stall it.
+    """
+    docs: list[str] = []
+    try:
+        paths = sorted(q for q in workspace.rglob("*")
+                       if q.is_file() and not is_implementation_write(q.name))
+    except OSError:
+        return docs
+    for q in paths[:limit]:
+        try:
+            if q.stat().st_size > max_bytes:
+                continue
+            docs.append(q.read_text(errors="replace"))
+        except OSError:
+            continue
+    return docs
+
+
+def transcript_prose(transcript_path: pathlib.Path) -> tuple[str, int]:
+    """The transcript's human-readable PROSE, plus the edit cut-point inside it.
+
+    Searching the raw JSONL was a mistake the first live run exposed: sentence
+    splitting ran straight through JSON syntax, so a `surfaced` verdict came back
+    carrying `...delta-append` -->"]}],"userModified":false...` as its evidence.
+    The whole mitigation for this detector's known limit is that a human can READ
+    the matched sentence and judge it; an unreadable span silently converts that
+    audit into a rubber stamp.
+
+    Returns (prose, edit_pos) in the SAME coordinate space, so the position gate
+    keeps meaning what it says. Tool INPUTS are included, not just chat: a method
+    that writes its reasoning into a file surfaces inside a Write payload, and
+    excluding those would re-introduce the document-first bias by another route.
+    """
+    if not transcript_path.exists():
+        return "", 0
+    parts: list[str] = []
+    length = 0
+    edit_pos = 0
+    for line in transcript_path.read_text(errors="replace").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        for block in content or []:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "text":
+                chunk = str(block.get("text", ""))
+            elif block.get("type") == "tool_use":
+                inp = block.get("input") or {}
+                if (block.get("name") in _WRITE_TOOLS
+                        and not is_implementation_write(str(inp.get("file_path", "")))):
+                    chunk = str(inp.get("content") or inp.get("new_string") or "")
+                elif block.get("name") in _WRITE_TOOLS or block.get("name") == "Bash":
+                    if not edit_pos:
+                        commits = (block.get("name") == "Bash"
+                                   and _BASH_WRITE.search(str(inp.get("command", "")))) or (
+                            block.get("name") in _WRITE_TOOLS
+                            and is_implementation_write(str(inp.get("file_path", ""))))
+                        if commits:
+                            edit_pos = length
+                    continue
+                else:
+                    continue
+            else:
+                continue
+            if chunk:
+                parts.append(chunk)
+                length += len(chunk) + 1
+    prose = "\n".join(parts)
+    # `length` counts a separator after EVERY chunk, including the last, so it
+    # overshoots the joined string by one. Clamp: an edit_pos past the end would
+    # be harmless for the gate but is a lie about where the cut fell.
+    return prose, min(edit_pos or len(prose), len(prose))
 
 
 def _resolve_shipped(item: dict, base: str, ws: pathlib.Path) -> str:
@@ -291,9 +387,7 @@ def compute_ambiguity_detail(workspace: pathlib.Path, transcript_path: pathlib.P
     from benchmark.workload._oracle_lib import isolated_workspace, running_app  # lazy: import cycle
 
     items = _load_ambiguities(wm, family)   # raises BEFORE the boot
-    edit_pos = _first_code_write_offset(transcript_path)
-    transcript = (transcript_path.read_text(errors="replace")
-                  if transcript_path.exists() else "")
+    transcript, edit_pos = transcript_prose(transcript_path)
     shipped = {item["id"]: "neither" for item in items}
     try:
         with isolated_workspace(workspace) as iso_ws:
@@ -302,9 +396,18 @@ def compute_ambiguity_detail(workspace: pathlib.Path, transcript_path: pathlib.P
                     shipped[item["id"]] = _resolve_shipped(item, base, iso_ws)
     except Exception:
         pass  # unbootable workspace: every item stays "neither", never a scorer crash
-    return [classify(item=item, transcript=transcript, artifacts=(),
-                     shipped=shipped[item["id"]], edit_pos=edit_pos)
-            for item in items]
+    artifacts = _workspace_artifacts(pathlib.Path(workspace))
+    rows = []
+    for item in items:
+        row = classify(item=item, transcript=transcript, artifacts=artifacts,
+                       shipped=shipped[item["id"]], edit_pos=edit_pos,
+                       siblings=items)
+        # M5: name WHERE the surfacing was found, so a reader can tell a verdict
+        # resting on a written document from one resting on chat narration.
+        row["source"] = ("transcript" if row["evidence"] and row["evidence"] in transcript
+                         else "artifact" if row["evidence"] else "")
+        rows.append(row)
+    return rows
 
 
 def compute_coverage_detail(workspace: pathlib.Path, wm: int, family: str = "wm") -> list[dict]:
