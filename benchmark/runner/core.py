@@ -15,6 +15,7 @@ import shlex
 import signal
 import shutil
 import subprocess
+import threading
 import time
 from typing import Sequence
 
@@ -64,6 +65,69 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
+
+
+# What the agent sees on resume. Deliberately bare: naming a file, a tool, or a
+# method would hand one arm its own idiom back and tell the others where to look
+# — the whole question is what each method left behind that survives a lost
+# conversation, so the prompt must not supply the answer.
+RESUME_PROMPT = (
+    "Continue the work in this workspace. A previous session was interrupted "
+    "before it finished. Determine what remains and complete it."
+)
+
+
+def _invoke_interruptible(
+    argv: list[str], *, cwd: pathlib.Path, timeout_s: float, log_path: pathlib.Path,
+    interrupt: dict,
+) -> tuple[str, list[str], dict]:
+    """Run one attempt that a watcher may KILL mid-flight. Returns
+    (outcome, stdout_lines, interrupt_result).
+
+    Why this exists as a separate path rather than a flag on `_invoke_once`:
+    that function drains stdout with `communicate()` and writes the transcript
+    only AFTER the process exits, so there is nothing on disk for a watcher to
+    poll until it is far too late to interrupt anything. Interruption needs the
+    transcript to exist WHILE the agent works.
+
+    Streaming only here — never on the default path — is deliberate: it makes
+    "an uninterrupted run behaves exactly as before" true by construction rather
+    than by careful review of a shared code path.
+    """
+    from benchmark.interrupt import watch_and_kill
+
+    proc = subprocess.Popen(
+        argv,
+        cwd=str(cwd),
+        env={**os.environ, "ADD_ROOT_CEILING": str(cwd)},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=True,
+    )
+    lines: list[str] = []
+    result: dict = {}
+
+    def _watch() -> None:
+        result.update(watch_and_kill(
+            proc, log_path, k=int(interrupt["k"]),
+            backstop_s=float(interrupt.get("backstop_s", timeout_s / 2)),
+            poll_s=float(interrupt.get("poll_s", 0.5))))
+
+    watcher = threading.Thread(target=_watch, daemon=True)
+    watcher.start()
+    with log_path.open("a", buffering=1) as fh:
+        for line in proc.stdout or []:            # stream: the watcher reads this
+            lines.append(line.rstrip("\n"))
+            fh.write(line if line.endswith("\n") else line + "\n")
+    proc.wait()
+    watcher.join(timeout=10)
+    if proc.poll() is None:
+        _kill_process_group(proc)
+    outcome = "interrupted" if result.get("fired") in ("kth_write", "backstop") else (
+        "done" if proc.returncode == 0 else "failed")
+    return outcome, lines, (result or {"fired": "none", "writes_seen": 0,
+                                       "elapsed_s": 0.0})
 
 
 def _invoke_once(
@@ -266,6 +330,7 @@ def execute_wm(
     runs_root: pathlib.Path | None = None,
     family: str = "wm",
     session_mode: str = "fresh",
+    interrupt: dict | None = None,
 ) -> RunRecord:
     """Drive one arm x WM end-to-end and write exactly one RunRecord.
 
@@ -329,6 +394,31 @@ def execute_wm(
     first_edit_elapsed = 0.0
     attempt_count = 0
     max_attempts = retries + 1
+    interrupt_result: dict | None = None
+
+    if interrupt is not None:
+        # The interrupt-resume shape: ONE interrupted attempt, then ONE resume.
+        # The resume is a FRESH invocation on the SAME workspace — a new
+        # conversation with no prior context, so the on-disk state is the only
+        # carrier. Anything else would measure the agent's memory rather than
+        # what the method left behind for it to pick up (R:context_carryover).
+        argv = build_argv(prompt_text, agent_cmd)
+        outcome, lines, interrupt_result = _invoke_interruptible(
+            argv, cwd=workspace_dir, timeout_s=timeout_s,
+            log_path=transcript_path, interrupt=interrupt)
+        attempts_log.append(
+            f"interrupted: {interrupt_result.get('fired')} after "
+            f"{interrupt_result.get('writes_seen')} writes")
+        if interrupt_result.get("fired") in ("kth_write", "backstop"):
+            resume_text = _wrap_prompt(
+                interrupt.get("resume_prompt", RESUME_PROMPT), arm.prompt_wrapper)
+            outcome, lines, first_edit_elapsed = _invoke_once(
+                build_argv(resume_text, agent_cmd), cwd=workspace_dir,
+                timeout_s=timeout_s, log_path=transcript_path)
+            attempts_log.append(f"resume: {outcome}")
+        else:
+            first_edit_elapsed = 0.0
+        max_attempts = 0   # the interrupt path owns its own attempt structure
 
     for attempt_idx in range(max_attempts):
         attempt_count = attempt_idx + 1
@@ -403,6 +493,12 @@ def execute_wm(
     }
     if continuing:
         artifacts["session_mode"] = "continue"
+    if interrupt_result is not None:
+        # M5: the kill point that ACTUALLY fired, not the one we intended. A
+        # published recovery number is only auditable if a reader can see where
+        # each arm was cut — and whether the cut landed at a comparable place.
+        artifacts["interrupt"] = json.dumps(
+            {"k": int(interrupt["k"]), **interrupt_result}, separators=(",", ":"))
     if unparseable:
         artifacts["token_source"] = "unparseable"
     if arm.name == "add":
