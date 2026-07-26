@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from benchmark.workload._oracle_lib import http_call
+from benchmark.workload._oracle_lib import http_call, records
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 
@@ -24,21 +24,23 @@ def _mk(base, **over):
 
 def _p_filter_status(base, ws):
     status, body = http_call("GET", f"{base}/bookings?status=confirmed", headers=_ALICE)
-    if status != 200 or not isinstance(body, list):
+    rows = records(body)
+    if status != 200 or rows is None:
         return False
-    return all(b.get("status") == "confirmed" for b in body)
+    return all(b.get("status") == "confirmed" for b in rows)
 
 
 def _p_filter_time_window(base, ws):
     # a from..to window far in the past must return an empty (or intersecting-only) list
     status, body = http_call(
         "GET", f"{base}/bookings?from=2000-01-01T00:00:00Z&to=2000-01-02T00:00:00Z", headers=_ALICE)
-    return status == 200 and isinstance(body, list) and len(body) == 0
+    return status == 200 and records(body) == []
 
 
 def _p_pagination_limit_offset(base, ws):
     status, body = http_call("GET", f"{base}/bookings?limit=1&offset=0", headers=_ALICE)
-    return status == 200 and isinstance(body, list) and len(body) <= 1
+    rows = records(body)
+    return status == 200 and rows is not None and len(rows) <= 1
 
 
 def _p_pagination_invalid_400(base, ws):

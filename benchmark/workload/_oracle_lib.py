@@ -132,6 +132,43 @@ def running_app(workspace: str):
             shutil.rmtree(private_tmp)
 
 
+_ENVELOPE_KEYS = ("items", "results", "data", "bookings", "entries", "records",
+                  "waitlist", "tasks")
+
+
+def records(payload):
+    """The records in a collection response — bare array or envelope — or None.
+
+    None means "not a collection response at all", so `records(body) is not None`
+    is the honest replacement for `isinstance(body, list)`.
+
+    WHY THIS EXISTS (audit, 2026-07-26). Six checklists asserted a BARE JSON
+    array for endpoints their PROMPTs describe only as "lists bookings". No wm
+    prompt fixes the serialization. Re-probing every archived workspace with an
+    envelope-unwrapping transport flipped 11 failing rows to covered across both
+    arms, the worst distorting one run's coverage from 0.17 to 0.67 — a meter
+    penalising a choice the spec left open, inside checklists marked FROZEN.
+    `requirement_coverage` replaced an LLM judge precisely because probes were
+    meant to be trustworthy; encoding an unstated preference is the same defect
+    in a deterministic costume.
+
+    Named keys first, then ANY single list value: an envelope key nobody
+    anticipated is still an envelope. A payload with two list values is
+    ambiguous and yields None rather than a guess.
+    """
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for key in _ENVELOPE_KEYS:
+            got = payload.get(key)
+            if isinstance(got, list):
+                return got
+        lists = [v for v in payload.values() if isinstance(v, list)]
+        if len(lists) == 1:
+            return lists[0]
+    return None
+
+
 def http_call(method: str, url: str, payload: dict | None = None, headers: dict | None = None):
     """Return (status_code, parsed_json_or_None). Never raises for HTTP error
     statuses — those are meaningful oracle assertions, not harness bugs."""

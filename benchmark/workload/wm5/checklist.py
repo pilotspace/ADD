@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from benchmark.workload._oracle_lib import http_call
+from benchmark.workload._oracle_lib import http_call, records
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 _BOB = {"Authorization": "Bearer test-token-bob"}
@@ -49,7 +49,7 @@ def _p_different_rooms_no_conflict(base, ws):
 def _p_room_schedule_endpoint(base, ws):
     _mk(base, room_id="rSched", start_time=_future(120), end_time=_future(121))
     status, body = http_call("GET", f"{base}/rooms/rSched/schedule", headers=_ALICE)
-    return status == 200 and isinstance(body, list)
+    return status == 200 and records(body) is not None
 
 
 REQUIREMENTS = [
