@@ -23,4 +23,5 @@ project: AIDD / ADD Methodology · seeded: 2026-07-17 · stage: mvp
 - A frozen DESCRIPTIVE parenthetical can mis-count while the binding SEAM holds — honor the seam, disclose the stale number at verify, never retro-edit the frozen contract. [fv48 · fast-lane-template]
 
 ## Deltas (newest first)
+- [open · 2026-07-26] A workload PROMPT written by analogy to a longitudinal one inherits assumptions the harness does not honour: amb1 said 'build onto the existing app' and 'keep every previous behaviour working', but the runner only seeds a workspace when wm>1, so amb1 always started empty and the base endpoints its probes depend on were never specified. When adding the FIRST milestone of a new workload family, check what the harness actually hands the agent rather than copying the prose shape of an existing family. (task:amb1-checklist-oracle)
 <!-- prepended by `add.py delta-append sdd "<text>"` — one line per lesson, `- [open · <date>] <lesson>` + the active-task stamp; fold a delta upward, then retag [open]->[folded] -->
