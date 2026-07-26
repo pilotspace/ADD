@@ -20,7 +20,7 @@ from typing import Sequence
 
 from benchmark import judge, tamper
 from benchmark.ambiguity import is_implementation_write
-from benchmark.arms.loader import ARM_NAMES
+from benchmark.arms.loader import ALL_ARM_NAMES, ARM_NAMES
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord, validate
 
@@ -593,8 +593,8 @@ def score_record(
     """
     if wm not in VALID_WMS:
         raise BenchError(f"invalid_wm: {wm} not in {VALID_WMS}")
-    if arm_name not in ARM_NAMES:
-        raise BenchError(f"unknown_arm: {arm_name!r} not in {ARM_NAMES}")
+    if arm_name not in ALL_ARM_NAMES:
+        raise BenchError(f"unknown_arm: {arm_name!r} not in {ALL_ARM_NAMES}")
 
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
     record_path = _record_path(root, arm_name, wm, family)

@@ -120,3 +120,33 @@ class TestRegisteredButNotDefault:
         arm = load_arm(_p.Path(ARMS / "add-enumerate.toml"))
         assert arm.name == "add-enumerate"
         assert arm.prompt_wrapper == "add-loop-enumerate"
+
+
+class TestEveryArmGateAcceptsIt:
+    """Registered is not the same as RUNNABLE.
+
+    The first launch of this arm failed instantly on `unknown_arm` despite 423
+    green tests: score.py keeps its OWN arm validation, and the suite covered the
+    loader and the CLI but never the scorer. Enumerating the gates mechanically
+    beats remembering them — a fourth gate added later fails here rather than at
+    the start of a paid run.
+    """
+
+    def test_no_module_validates_arms_against_the_default_set(self):
+        import re
+        root = pathlib.Path(__file__).resolve().parents[1]
+        offenders = []
+        for src in root.rglob("*.py"):
+            if "tests" in src.parts or "runs" in str(src):
+                continue
+            text = src.read_text(encoding="utf-8")
+            for m in re.finditer(r"not in ARM_NAMES", text):
+                line = text[:m.start()].count("\n") + 1
+                offenders.append(f"{src.relative_to(root)}:{line}")
+        assert not offenders, (
+            "these validate against the DEFAULT campaign set, so an experimental "
+            f"arm is rejected at runtime: {offenders}")
+
+    def test_scorer_accepts_the_experimental_arm(self):
+        from benchmark.score import ALL_ARM_NAMES as scorer_names
+        assert "add-enumerate" in scorer_names
