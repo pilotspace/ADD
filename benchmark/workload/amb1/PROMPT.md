@@ -1,7 +1,20 @@
-# Workload Milestone A1 — waitlist and cancellation policy
+# Workload Milestone A1 — booking service with waitlist and cancellation policy
 
-The booking app must now support a **waitlist** and a firmer **cancellation
-policy**. Build the following onto the existing app.
+Build a booking service as `app/`, runnable as `python -m app` on `$PORT`,
+serving JSON over HTTP. Use only the Python standard library.
+
+**Base behavior.**
+
+- `POST /bookings` creates a booking from `{title, start_time, end_time,
+  room_id}` and returns it with a server-assigned `id` and a `status` of
+  `pending`. A request missing a required field returns `400`.
+- `GET /bookings` lists bookings. `GET /bookings/{id}` returns one, or `404`.
+- `DELETE /bookings/{id}` cancels a booking.
+- Requests carry an `Authorization: Bearer <token>` header identifying the
+  caller; a booking records who created it.
+- Bookings may carry an optional integer `priority`.
+
+**Waitlist and cancellation.**
 
 1. **Waitlist on conflict.** When a create request conflicts with an existing
    booking in the same room, the request is added to that room's waitlist
@@ -28,5 +41,4 @@ policy**. Build the following onto the existing app.
    room's waitlist. Positions are reported to the caller starting from
    position 1 for the entry that will be promoted next.
 
-Keep every behavior from the previous milestones working. The app must still
-run as `python -m app` on `$PORT`.
+The app must run as `python -m app` on `$PORT` with no third-party packages.
