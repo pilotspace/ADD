@@ -37,8 +37,35 @@ from __future__ import annotations
 import re
 from typing import Any, Iterable, Sequence
 
-__all__ = ["MARKERS", "WINDOW", "AmbiguityError", "validate_ambiguities",
-           "classify", "score_all"]
+__all__ = ["MARKERS", "WINDOW", "CODE_SUFFIXES", "AmbiguityError",
+           "validate_ambiguities", "is_implementation_write", "classify", "score_all"]
+
+# Prose is where a method THINKS; code is where it COMMITS. The first live run
+# showed why the distinction matters: ADD's first "write" was to PROJECT.md — its
+# own analysis — which slammed the surfacing window shut before it could record
+# the contradiction it had just found. Counting that as commitment penalises every
+# method that reasons on disk instead of in chat.
+#
+# Decided by file KIND, never by directory: an allow-list naming `.add/` or
+# `.specify/` would hard-code one method's layout into the meter, and the arm that
+# matched the list would win on filing convention rather than judgement.
+CODE_SUFFIXES: frozenset[str] = frozenset({
+    ".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".rs", ".rb", ".java", ".kt",
+    ".c", ".h", ".cpp", ".cs", ".php", ".swift", ".sh", ".sql",
+})
+PROSE_SUFFIXES: frozenset[str] = frozenset({".md", ".rst", ".txt", ".adoc"})
+
+
+def is_implementation_write(path: str) -> bool:
+    """True iff writing `path` is COMMITTING to a reading rather than reasoning.
+
+    Prose never commits; code always does. Anything else (config, data) is
+    treated as commitment, since the conservative direction is to CLOSE the
+    surfacing window early — a metric should not be able to inflate itself by
+    keeping the window open on a technicality.
+    """
+    suffix = ("." + path.rsplit(".", 1)[-1].lower()) if "." in path else ""
+    return suffix not in PROSE_SUFFIXES
 
 
 class AmbiguityError(Exception):
@@ -146,8 +173,35 @@ def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
     return ""
 
 
+def _anchor_hits(sentence_low: str, item: dict) -> int:
+    return sum(1 for a in item["anchors"] if a.lower() in sentence_low)
+
+
+def best_attribution(sentence: str, items: Sequence[dict]) -> str | None:
+    """Which ONE item a sentence surfaces — or None when it cannot be told.
+
+    The first live run made the need concrete. One spec-kit sentence about the
+    202-vs-409 CONTRADICTION also contained the words "priority" and "position",
+    so it was credited to all three planted items and a genuine 1/3 was reported
+    as a perfect 3/3. A recognition of one ambiguity is not evidence about the
+    others that happen to share its vocabulary.
+
+    Most anchor matches wins. A TIE credits nobody: an unattributable sentence is
+    not evidence about any single item, and guessing between them would be the
+    same coin-flip the whole track exists to refuse to reward.
+    """
+    low = sentence.lower()
+    scored = sorted(((_anchor_hits(low, it), it["id"]) for it in items), reverse=True)
+    if not scored or scored[0][0] == 0:
+        return None
+    if len(scored) > 1 and scored[1][0] == scored[0][0]:
+        return None                      # tie -> unattributable
+    return scored[0][1]
+
+
 def classify(*, item: dict, transcript: str, artifacts: Sequence[str],
-             shipped: str, edit_pos: int) -> dict[str, Any]:
+             shipped: str, edit_pos: int,
+             siblings: Sequence[dict] | None = None) -> dict[str, Any]:
     """Score ONE planted ambiguity into surfaced | guessed_right | guessed_wrong.
 
     `shipped` is the reading the built app actually implements (decided by the
@@ -159,6 +213,11 @@ def classify(*, item: dict, transcript: str, artifacts: Sequence[str],
     transcript would quietly penalise document-first methods.
     """
     evidence = _find_surfacing(item, (transcript, *artifacts), edit_pos)
+    if evidence and siblings:
+        # M2: a sentence surfaces at most ONE item. If it belongs to a sibling,
+        # this item was never surfaced — only mentioned in passing.
+        if best_attribution(evidence, list(siblings)) != item["id"]:
+            evidence = ""
     if evidence:
         verdict = "surfaced"
     elif shipped == item["defensible"]:
@@ -187,7 +246,8 @@ def score_all(items: Sequence[dict], *, transcript: str, artifacts: Sequence[str
     detail = [
         classify(item=it, transcript=transcript, artifacts=artifacts,
                  shipped=shipped_by_id.get(it["id"], "neither"),
-                 edit_pos=edit_pos_by_id.get(it["id"], 0))
+                 edit_pos=edit_pos_by_id.get(it["id"], 0),
+                 siblings=list(items))
         for it in items
     ]
     surfaced = sum(1 for d in detail if d["verdict"] == "surfaced")
