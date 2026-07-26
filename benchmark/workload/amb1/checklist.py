@@ -28,7 +28,7 @@ Contamination map — what is excluded, and which planted item excludes it:
   A-cancel-authority     -> excludes cancelling ANOTHER caller's booking.
       R-delete-cancels deliberately has ALICE cancel her own.
   A-cancelled-visibility -> excludes whether a cancelled booking remains in
-      GET /bookings. R-get-list asserts only that the response is a JSON array.
+      GET /bookings. R-get-list asserts only that the response is a collection.
   A-adjacent-boundary    -> excludes back-to-back bookings. Every row here already
       uses a distinct room_id, so no row can reach the conflict path at all.
   A-list-scope           -> excludes WHOSE bookings GET /bookings returns.
@@ -55,7 +55,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from benchmark.workload._oracle_lib import http_call, running_app  # noqa: F401
+from benchmark.workload._oracle_lib import http_call, records, running_app  # noqa: F401
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 _BOB = {"Authorization": "Bearer test-token-bob"}
@@ -90,7 +90,7 @@ def _p_post_create(base, ws):
 
 def _p_get_list(base, ws):
     status, body = http_call("GET", f"{base}/bookings", None, headers=_ALICE)
-    return status == 200 and isinstance(body, list)
+    return status == 200 and records(body) is not None
 
 
 def _p_get_one(base, ws):
@@ -166,7 +166,7 @@ def _p_entry_contract(base, ws):
 
 REQUIREMENTS = [
     {"id": "R-post-create", "description": "POST /bookings creates a booking with a server id", "probe": _p_post_create},
-    {"id": "R-get-list", "description": "GET /bookings lists bookings as a JSON array", "probe": _p_get_list},
+    {"id": "R-get-list", "description": "GET /bookings answers with a collection of bookings", "probe": _p_get_list},
     {"id": "R-get-one", "description": "GET /bookings/{id} fetches one booking", "probe": _p_get_one},
     {"id": "R-unknown-404", "description": "an unknown booking id returns 404", "probe": _p_unknown_404},
     {"id": "R-missing-field-400", "description": "create with a missing required field returns 400", "probe": _p_missing_field_400},

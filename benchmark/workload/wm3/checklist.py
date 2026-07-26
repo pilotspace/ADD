@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from benchmark.workload._oracle_lib import http_call
+from benchmark.workload._oracle_lib import http_call, records
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 
@@ -43,9 +43,10 @@ def _p_duration_rejected_400(base, ws):
 def _p_list_no_duration(base, ws):
     _mk(base)
     status, body = http_call("GET", f"{base}/bookings", headers=_ALICE)
-    if status != 200 or not isinstance(body, list) or not body:
+    rows = records(body)
+    if status != 200 or not rows:
         return False
-    return all("duration_minutes" not in b and "end_time" in b for b in body)
+    return all("duration_minutes" not in b and "end_time" in b for b in rows)
 
 
 def _p_wm2_overlap_holds(base, ws):

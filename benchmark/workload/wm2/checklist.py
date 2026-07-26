@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from benchmark.workload._oracle_lib import http_call
+from benchmark.workload._oracle_lib import http_call, records
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 _BOB = {"Authorization": "Bearer test-token-bob"}
@@ -60,9 +60,10 @@ def _p_cancellation_window_422(base, ws):
 def _p_tenant_isolation(base, ws):
     _mk(base, headers=_ALICE, start_time=_future(96))
     status, body = http_call("GET", f"{base}/bookings", headers=_BOB)
-    if status != 200 or not isinstance(body, list):
+    rows = records(body)
+    if status != 200 or rows is None:
         return False
-    return all(b.get("owner_id", "bob") == "bob" for b in body)  # bob sees only bob's
+    return all(b.get("owner_id", "bob") == "bob" for b in rows)  # bob sees only bob's
 
 
 REQUIREMENTS = [

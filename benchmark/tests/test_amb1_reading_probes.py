@@ -430,3 +430,20 @@ class TestListingShapeIsNotAReading:
     def test_enveloped_app_still_resolves(self, apps, item_id):
         # Equality alone would also hold if BOTH were "neither".
         assert _shipped(item_id, apps["enveloped"]) != "neither"
+
+
+class TestEnvelopeDoesNotCostCoverage:
+    """The clean checklist must not charge an arm for wrapping its list.
+
+    This is the amb1 end-to-end for the 2026-07-26 shape audit: two apps whose
+    ONLY difference is `[...]` versus `{"bookings": [...]}` — a serialization the
+    PROMPT never fixes — must score identical requirement_coverage.
+    """
+
+    def test_enveloped_app_scores_the_same_coverage(self, apps):
+        from benchmark.score import compute_requirement_coverage
+        bare = compute_requirement_coverage(apps["loose"], 1, "amb")
+        wrapped = compute_requirement_coverage(apps["enveloped"], 1, "amb")
+        assert bare == wrapped, f"envelope costs coverage: bare={bare} enveloped={wrapped}"
+        # Equality alone would hold if both were 0.0 for an unrelated reason.
+        assert bare == 1.0, bare

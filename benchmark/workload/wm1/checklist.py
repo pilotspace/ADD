@@ -19,7 +19,7 @@ import pathlib
 import subprocess
 import sys
 
-from benchmark.workload._oracle_lib import http_call
+from benchmark.workload._oracle_lib import http_call, records
 
 _GOOD = {"title": "Standup", "start_time": "2026-08-01T09:00:00Z", "duration_minutes": 30}
 
@@ -35,7 +35,7 @@ def _p_post_create(base, ws):
 
 def _p_get_list(base, ws):
     status, body = http_call("GET", f"{base}/bookings")
-    return status == 200 and isinstance(body, list)
+    return status == 200 and records(body) is not None
 
 
 def _p_get_one(base, ws):
@@ -149,7 +149,7 @@ def _p_entry_contract(base, ws):
 
 REQUIREMENTS = [
     {"id": "R-post-create", "description": "POST /bookings creates a booking with a server id", "probe": _p_post_create},
-    {"id": "R-get-list", "description": "GET /bookings lists bookings as a JSON array", "probe": _p_get_list},
+    {"id": "R-get-list", "description": "GET /bookings answers with a collection of bookings", "probe": _p_get_list},
     {"id": "R-get-one", "description": "GET /bookings/{id} fetches one booking", "probe": _p_get_one},
     {"id": "R-patch-update", "description": "PATCH /bookings/{id} updates fields", "probe": _p_patch_update},
     {"id": "R-delete", "description": "DELETE /bookings/{id} removes a booking", "probe": _p_delete},
