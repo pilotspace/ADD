@@ -51,6 +51,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 ORDERING = "{ordering}"
 POSITION_KEY = "{position_key}"
 PROMOTE_ALL = {promote_all}
+CANCEL_AUTH = "{cancel_auth}"          # "owner" | "anyone"
+CANCELLED_VISIBLE = "{cancelled_visible}"   # "listed" | "hidden"
+ADJACENCY = "{adjacency}"              # "half_open" | "closed"
+LIST_SCOPE = "{list_scope}"            # "all" | "own"
+ENVELOPE = {envelope}                   # wrap GET /bookings as {{"bookings": [...]}}
 
 BOOKINGS = {{}}
 WAITLIST = {{}}
@@ -69,7 +74,12 @@ def _conflicts(room, start, end):
         if b["room_id"] != room or b.get("cancelled"):
             continue
         s, e = _parse(b["start_time"]), _parse(b["end_time"])
-        if s and e and start < e and s < end:
+        if not s or not e:
+            continue
+        if ADJACENCY == "closed":
+            if start <= e and s <= end:   # touching intervals collide
+                return True
+        elif start < e and s < end:       # half-open: back-to-back is fine
             return True
     return False
 
@@ -96,7 +106,12 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/bookings":
-            return self._send(200, [b for b in BOOKINGS.values() if not b.get("cancelled")])
+            out = list(BOOKINGS.values())
+            if CANCELLED_VISIBLE == "hidden":
+                out = [b for b in out if not b.get("cancelled")]
+            if LIST_SCOPE == "own":
+                out = [b for b in out if b.get("created_by") == self._caller()]
+            return self._send(200, {{"bookings": out}} if ENVELOPE else out)
         if self.path.startswith("/rooms/") and self.path.endswith("/waitlist"):
             return self._send(200, WAITLIST.get(self.path.split("/")[2], []))
         if self.path.startswith("/bookings/"):
@@ -134,6 +149,8 @@ class H(BaseHTTPRequestHandler):
         b = BOOKINGS.get(self.path.split("/")[-1])
         if not b or b.get("cancelled"):
             return self._send(404, {{}})
+        if CANCEL_AUTH == "owner" and b.get("created_by") != self._caller():
+            return self._send(403, {{}})
         start = _parse(b["start_time"])
         if start and start - _now() < timedelta(hours=24):
             return self._send(422, {{}})
@@ -156,15 +173,19 @@ HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 '''
 
 
-def _app(root: pathlib.Path, ordering: str, position_key: str,
-         promote_all: bool = False) -> pathlib.Path:
-    ws = root / f"{ordering}-{position_key}-{promote_all}"
+_DEFAULTS = {"ordering": "priority", "position_key": "position",
+             "promote_all": False, "cancel_auth": "owner",
+             "cancelled_visible": "listed", "adjacency": "half_open",
+             "list_scope": "all", "envelope": False}
+
+
+def _app(root: pathlib.Path, name: str, **knobs) -> pathlib.Path:
+    settings = {**_DEFAULTS, **knobs}
+    ws = root / name
     pkg = ws / "app"
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
-    (pkg / "__main__.py").write_text(
-        _APP.format(ordering=ordering, position_key=position_key,
-                    promote_all=promote_all), encoding="utf-8")
+    (pkg / "__main__.py").write_text(_APP.format(**settings), encoding="utf-8")
     return ws
 
 
@@ -172,13 +193,23 @@ def _app(root: pathlib.Path, ordering: str, position_key: str,
 def apps(tmp_path_factory):
     root = tmp_path_factory.mktemp("amb1probe")
     return {
-        "priority": _app(root, "priority", "position"),
-        "fifo": _app(root, "fifo", "position"),
+        "priority": _app(root, "priority", ordering="priority"),
+        "fifo": _app(root, "fifo", ordering="fifo"),
         # rep0/add's spelling — same semantics, different key.
-        "priority_alias": _app(root, "priority", "waitlist_position"),
+        "priority_alias": _app(root, "alias", position_key="waitlist_position"),
         # Promotes the ENTIRE queue on a cancellation: it has expressed no
         # ordering preference, so no reading may be attributed to it.
-        "greedy": _app(root, "priority", "position", promote_all=True),
+        "greedy": _app(root, "greedy", promote_all=True),
+        # The four NEW plants, both ways round. Every knob flipped together, so
+        # one app can prove all four probes read what they were handed.
+        "strict": _app(root, "strict", cancel_auth="owner", cancelled_visible="hidden",
+                       adjacency="closed", list_scope="own"),
+        "loose": _app(root, "loose", cancel_auth="anyone", cancelled_visible="listed",
+                      adjacency="half_open", list_scope="all"),
+        # A live spec-kit build answers {"bookings": [...]}. The prompt says
+        # "lists bookings" and never fixes the shape.
+        "enveloped": _app(root, "enveloped", cancel_auth="anyone",
+                          cancelled_visible="listed", list_scope="all", envelope=True),
     }
 
 
@@ -274,3 +305,128 @@ class TestStillNonVacuousDownward:
             for key in ("priority", "fifo"):
                 r = _readings(item_id, apps[key])
                 assert sum(r.values()) <= 1, (item_id, key, r)
+
+
+# ── the four ADDED plants ─────────────────────────────────────────────────────
+# Rationale for widening: with three items, two of which every arm resolved the
+# same way, the track measured ONE binary per run. n=3 could not separate
+# anything. These four are also chosen to fix a design flaw in the original two —
+# `A-priority-vs-fifo` and `A-position-ordering` can only resolve under the
+# WAITLIST reading of the contradiction, so an arm that reads §2 as authoritative
+# gets `neither` for free on both. Each item below resolves under EITHER reading,
+# because none of them touches the queue.
+#
+# None required a PROMPT edit: a gap is by definition something the prompt does
+# not say, and the trap is a reading the prompt already invites. The workload the
+# archived runs were given is unchanged, so they re-score for free.
+
+NEW_ITEMS = ("A-cancel-authority", "A-cancelled-visibility",
+             "A-adjacent-boundary", "A-list-scope")
+
+_STRICT_READINGS = {"A-cancel-authority": "owner_only",
+                    "A-cancelled-visibility": "hidden",
+                    "A-adjacent-boundary": "closed",
+                    "A-list-scope": "own_only"}
+_LOOSE_READINGS = {"A-cancel-authority": "anyone",
+                   "A-cancelled-visibility": "listed",
+                   "A-adjacent-boundary": "half_open",
+                   "A-list-scope": "all"}
+
+
+class TestAddedPlantsExist:
+    def test_all_four_are_declared_and_valid(self):
+        from benchmark.ambiguity import validate_ambiguities
+        validate_ambiguities(AMBIGUITIES)
+        for item_id in NEW_ITEMS:
+            assert item_id in _BY_ID, item_id
+
+    def test_no_added_anchor_is_a_marker(self):
+        # validate_ambiguities enforces this, but the failure it prevents is
+        # subtle enough to name: an anchor inside the marker vocabulary marks
+        # itself, so a silent run reads as a surfaced one.
+        from benchmark.ambiguity import MARKERS
+        for item_id in NEW_ITEMS:
+            for anchor in _BY_ID[item_id]["anchors"]:
+                assert not any(m in anchor.lower() for m in MARKERS), (item_id, anchor)
+
+
+class TestAddedPlantsResolveBothWays:
+    @pytest.mark.parametrize("item_id", NEW_ITEMS)
+    def test_strict_app_reads_strict(self, apps, item_id):
+        assert _shipped(item_id, apps["strict"]) == _STRICT_READINGS[item_id]
+
+    @pytest.mark.parametrize("item_id", NEW_ITEMS)
+    def test_loose_app_reads_loose(self, apps, item_id):
+        # The converse of the above. Without both, a probe hard-wired to one
+        # reading passes half the suite and reports that reading forever.
+        assert _shipped(item_id, apps["loose"]) == _LOOSE_READINGS[item_id]
+
+    @pytest.mark.parametrize("item_id", NEW_ITEMS)
+    def test_unreachable_app_resolves_to_neither(self, tmp_path, item_id):
+        ws = tmp_path / f"empty-{item_id}"
+        ws.mkdir()
+        assert _shipped(item_id, ws) == "neither"
+
+
+@pytest.fixture(scope="module")
+def rejecting_app(tmp_path_factory):
+    """An app that NEVER waitlists: conflicts are rejected with 409, so no queue
+    ever exists. Any item that needs a queue to resolve is invisible here."""
+    root = tmp_path_factory.mktemp("amb1reject")
+    ws = root / "reject"
+    pkg = ws / "app"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    src = _APP.format(**{**_DEFAULTS, "cancel_auth": "anyone",
+                         "cancelled_visible": "listed", "list_scope": "all"})
+    src = src.replace(
+        '''        if _conflicts(data["room_id"], s, e):
+            q = WAITLIST.setdefault(data["room_id"], [])
+            rec["status"] = "waitlisted"
+            q.append(rec)
+            _order(q)
+            return self._send(202, rec)''',
+        '''        if _conflicts(data["room_id"], s, e):
+            return self._send(409, {"error": "conflict"})''')
+    (pkg / "__main__.py").write_text(src, encoding="utf-8")
+    return ws
+
+
+class TestAddedPlantsAreWaitlistIndependent:
+    """The flaw the widening is meant to fix, pinned mechanically.
+
+    An item that only resolves when the app built a waitlist hands `neither` to
+    any arm that read §2 (reject with 409) as authoritative — scoring the arm for
+    a reading the prompt itself offered."""
+
+    @pytest.mark.parametrize("item_id", NEW_ITEMS)
+    def test_added_item_still_resolves_without_a_waitlist(self, rejecting_app, item_id):
+        assert _shipped(item_id, rejecting_app) != "neither", (
+            f"{item_id} needs a waitlist to resolve — it hands `neither` to every "
+            "arm that reads the contradiction as reject-409")
+
+    @pytest.mark.parametrize("item_id", ("A-priority-vs-fifo", "A-position-ordering"))
+    def test_original_two_are_the_ones_that_cannot(self, rejecting_app, item_id):
+        # Not a bug to fix — a documented limit of those two items, recorded here
+        # so the asymmetry is visible rather than folded into an average.
+        assert _shipped(item_id, rejecting_app) == "neither"
+
+
+class TestListingShapeIsNotAReading:
+    """R:over_specified_probe, third occurrence in this file.
+
+    rep1 and rep2 of spec-kit answer `GET /bookings` as {"bookings": [...]}. A
+    probe requiring a bare JSON array scored BOTH listing items `neither` for
+    those runs — reporting "expressed no preference" about an app that expressed
+    one plainly. The prompt fixes the semantics of the listing, never its
+    serialization, so the envelope must not change any reading.
+    """
+
+    @pytest.mark.parametrize("item_id", ("A-cancelled-visibility", "A-list-scope"))
+    def test_envelope_does_not_change_the_reading(self, apps, item_id):
+        assert _shipped(item_id, apps["enveloped"]) == _shipped(item_id, apps["loose"])
+
+    @pytest.mark.parametrize("item_id", ("A-cancelled-visibility", "A-list-scope"))
+    def test_enveloped_app_still_resolves(self, apps, item_id):
+        # Equality alone would also hold if BOTH were "neither".
+        assert _shipped(item_id, apps["enveloped"]) != "neither"

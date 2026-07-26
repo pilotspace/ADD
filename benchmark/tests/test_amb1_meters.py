@@ -41,6 +41,12 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 RESOLUTION = "{resolution}"          # "waitlist" | "reject"
+# The four ADDED plants (2026-07-26). Each knob is a reading the prompt leaves
+# open; the clean checklist must not be able to tell which one was chosen.
+CANCEL_AUTH = "{cancel_auth}"             # "owner" | "anyone"
+CANCELLED_VISIBLE = "{cancelled_visible}"  # "listed" | "hidden"
+ADJACENCY = "{adjacency}"                 # "half_open" | "closed"
+LIST_SCOPE = "{list_scope}"               # "all" | "own"
 
 BOOKINGS = {{}}
 WAITLIST = {{}}
@@ -59,7 +65,12 @@ def _conflicts(room, start, end, ignore=None):
         if b["id"] == ignore or b["room_id"] != room or b.get("cancelled"):
             continue
         s, e = _parse(b["start_time"]), _parse(b["end_time"])
-        if s and e and start < e and s < end:
+        if not s or not e:
+            continue
+        if ADJACENCY == "closed":
+            if start <= e and s <= end:
+                return True
+        elif start < e and s < end:
             return True
     return False
 
@@ -79,7 +90,12 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/bookings":
-            return self._send(200, [b for b in BOOKINGS.values() if not b.get("cancelled")])
+            out = list(BOOKINGS.values())
+            if CANCELLED_VISIBLE == "hidden":
+                out = [b for b in out if not b.get("cancelled")]
+            if LIST_SCOPE == "own":
+                out = [b for b in out if b.get("created_by") == self._caller()]
+            return self._send(200, out)
         if self.path.startswith("/bookings/"):
             b = BOOKINGS.get(self.path.split("/")[-1])
             return self._send(200, b) if b and not b.get("cancelled") else self._send(404, {{"error": "not_found"}})
@@ -124,6 +140,8 @@ class H(BaseHTTPRequestHandler):
         b = BOOKINGS.get(self.path.split("/")[-1])
         if not b or b.get("cancelled"):
             return self._send(404, {{"error": "not_found"}})
+        if CANCEL_AUTH == "owner" and b.get("created_by") != self._caller():
+            return self._send(403, {{"error": "forbidden"}})
         start = _parse(b["start_time"])
         if start and start - _now() < timedelta(hours=24):
             return self._send(422, {{"error": "inside_cancellation_window"}})
@@ -144,20 +162,33 @@ HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 '''
 
 
-def _reference(tmp_path: pathlib.Path, resolution: str) -> pathlib.Path:
-    ws = tmp_path / f"ref-{resolution}"
+_READING_DEFAULTS = {"cancel_auth": "owner", "cancelled_visible": "listed",
+                     "adjacency": "half_open", "list_scope": "all"}
+
+# Every added plant flipped to its OTHER reading, all at once.
+_FLIPPED = {"cancel_auth": "anyone", "cancelled_visible": "hidden",
+            "adjacency": "closed", "list_scope": "own"}
+
+
+def _reference(tmp_path: pathlib.Path, resolution: str, name: str = "",
+               **readings) -> pathlib.Path:
+    ws = tmp_path / f"ref-{name or resolution}"
     pkg = ws / "app"
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     (pkg / "__main__.py").write_text(
-        _REFERENCE_APP.format(resolution=resolution), encoding="utf-8")
+        _REFERENCE_APP.format(resolution=resolution,
+                              **{**_READING_DEFAULTS, **readings}), encoding="utf-8")
     return ws
 
 
 @pytest.fixture(scope="module")
 def refs(tmp_path_factory):
     root = tmp_path_factory.mktemp("amb1refs")
-    return {r: _reference(root, r) for r in ("waitlist", "reject")}
+    refs = {r: _reference(root, r) for r in ("waitlist", "reject")}
+    # Same conflict reading, every ADDED plant resolved the other way.
+    refs["flipped"] = _reference(root, "waitlist", name="flipped", **_FLIPPED)
+    return refs
 
 
 # ── M1 / M2 · the meters exist at all ─────────────────────────────────────────
@@ -258,6 +289,23 @@ class TestResolutionBlindness:
         assert a == b, (
             f"oracle sees the reading: waitlist={a} reject={b}")
 
+    def test_added_plants_do_not_move_coverage(self, refs):
+        # The widening (2026-07-26) added four plants. If the clean checklist can
+        # tell how any of them was resolved, the track has quietly become a
+        # right-answer track for that item — the exact thing this suite exists to
+        # refute, now covering seven items rather than three.
+        a = compute_requirement_coverage(refs["waitlist"], 1, "amb")
+        b = compute_requirement_coverage(refs["flipped"], 1, "amb")
+        assert a == b, (
+            f"coverage sees an added reading: default={a} flipped={b} — a row "
+            "depends on cancel authority, cancelled visibility, adjacency, or "
+            "list scope")
+
+    def test_added_plants_do_not_move_the_oracle(self, refs):
+        a = compute_oracle_pass_rate(refs["waitlist"], 1, "amb")
+        b = compute_oracle_pass_rate(refs["flipped"], 1, "amb")
+        assert a == b, f"oracle sees an added reading: default={a} flipped={b}"
+
     def test_the_two_references_really_do_differ(self, refs):
         # Guards the guard: if both apps behaved identically, the fairness proof
         # above would be trivially true and prove nothing at all.
@@ -305,6 +353,9 @@ class TestRecordCompleteness:
         import benchmark.score as score
         detail = score.compute_ambiguity_detail(
             refs["waitlist"], tmp_path / "absent.jsonl", 1, "amb")
-        assert len(detail) == 3
+        # 3 at first freeze; 7 after the 2026-07-26 widening. Pinned as a literal
+        # rather than len(AMBIGUITIES) so a silently DROPPED item still fails —
+        # comparing the meter against itself would notice nothing.
+        assert len(detail) == 7
         assert all(d["verdict"] != "surfaced" for d in detail)
         assert {d["klass"] for d in detail} == {"contradiction", "gap", "trap"}

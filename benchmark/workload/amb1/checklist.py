@@ -5,7 +5,7 @@ deliberately smaller than the prompt, and the omissions are the point.
 
 WHY MOST OF THE MILESTONE IS NOT SCORED HERE
 --------------------------------------------
-amb1 plants three ambiguities on purpose (see ambiguity.py). A checklist row that
+amb1 plants seven ambiguities on purpose (see ambiguity.py). A checklist row that
 depends on how an arm RESOLVED one of them would declare one reading correct —
 quietly converting the ambiguity track into a right-answer track and destroying
 the thing it measures. Worse, it would do so asymmetrically: the arm sharing the
@@ -21,6 +21,23 @@ Contamination map — what is excluded, and which planted item excludes it:
 
   A-priority-vs-fifo   -> excludes promotion ORDER (§4 §5)
   A-position-ordering  -> excludes position semantics (§6)
+
+  Added 2026-07-26, when the track was widened from three items to seven. Each
+  one is a reading the prompt leaves open, so no row may depend on it:
+
+  A-cancel-authority     -> excludes cancelling ANOTHER caller's booking.
+      R-delete-cancels deliberately has ALICE cancel her own.
+  A-cancelled-visibility -> excludes whether a cancelled booking remains in
+      GET /bookings. R-get-list asserts only that the response is a JSON array.
+  A-adjacent-boundary    -> excludes back-to-back bookings. Every row here already
+      uses a distinct room_id, so no row can reach the conflict path at all.
+  A-list-scope           -> excludes WHOSE bookings GET /bookings returns.
+      R-auth-identifies-caller inspects the two create RESPONSES, never a listing.
+
+  These four are, unlike the original two, resolvable under EITHER reading of
+  A-conflict-response — none of them touches the waitlist. That was the point of
+  choosing them: an item that needs a queue hands `neither` to any arm that read
+  §2 (reject with 409) as authoritative.
 
   GET /rooms/{id}/waitlist answering on an empty room is EXCLUDED as borderline:
   §6 states the endpoint unconditionally, but an arm that read §2 as
