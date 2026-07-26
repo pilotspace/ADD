@@ -89,14 +89,26 @@ def _p_status_enum(base, ws):
     return status == 400
 
 
-def _entry_exists(ws: pathlib.Path, module: str) -> bool:
-    """True iff `module` resolves to a file the WORKSPACE UNDER TEST owns.
+# The BARE declared runtime, identical to `running_app`'s app boot: -E ignores
+# PYTHONPATH, -s the user site, -S site-packages. cwd (the workspace) stays
+# importable — the only place an app may legitimately come from.
+#
+# `running_app` grew these flags on 2026-07-18 after a campaign agent
+# `pip install -e`'d its app into the GLOBAL site-packages and empty-workspace
+# boots silently imported someone else's build. This probe spawns its OWN
+# subprocess and was never given the same treatment, so it stayed the one path
+# that bypassed that fix — and it duly scored covered=True on an empty workspace
+# for every run on a contaminated machine. Same defect, same cure, one place it
+# was missed.
+_BARE = ("-E", "-s", "-S")
 
-    Provenance, not availability. A benchmark run once left `pip install -e .` of its
-    own workspace in the machine's site-packages, so `-m app.cli` resolved to a
-    PREVIOUS RUN's app and this probe scored True on an empty directory. An editable
-    install sits on sys.path for every process on the machine, so copying the
-    workspace cannot isolate it — the probe has to prove what it ran.
+
+def _entry_exists(ws: pathlib.Path, module: str) -> bool:
+    """True iff `module`'s source lives in the WORKSPACE UNDER TEST.
+
+    Belt to `_BARE`'s braces: the flags stop a FOREIGN module from being imported,
+    this stops us from spawning at all when the workspace never shipped the entry
+    point. Cheap, and it keeps the probe honest if the flags are ever loosened.
     """
     rel = pathlib.Path(*module.split("."))
     return (ws / rel.with_suffix(".py")).is_file() or (ws / rel / "__init__.py").is_file()
@@ -104,16 +116,17 @@ def _entry_exists(ws: pathlib.Path, module: str) -> bool:
 
 def _p_cli_parity(base, ws):
     """The PROMPT requires a CLI that lists via the same logic. Try the common
-    entry points; success = one WHOSE CODE LIVES IN `ws` exits 0 for `list`."""
+    entry points under the BARE runtime; success = one WHOSE CODE LIVES IN `ws`
+    exits 0 for `list`."""
     ws = pathlib.Path(ws)
     port = base.rsplit(":", 1)[-1]
     env = {**os.environ, "APP_BASE": base, "PORT": port}
     # (argv, the module whose source must exist in `ws` for this run to be OURS)
     invocations = (
-        ([sys.executable, "-m", "app.cli", "list"], "app.cli"),
-        ([sys.executable, "-m", "cli", "list"], "cli"),
-        ([sys.executable, "cli.py", "list"], "cli"),
-        ([sys.executable, "-m", "app", "list"], "app.__main__"),
+        ([sys.executable, *_BARE, "-m", "app.cli", "list"], "app.cli"),
+        ([sys.executable, *_BARE, "-m", "cli", "list"], "cli"),
+        ([sys.executable, *_BARE, "cli.py", "list"], "cli"),
+        ([sys.executable, *_BARE, "-m", "app", "list"], "app.__main__"),
     )
     for argv, module in invocations:
         if not _entry_exists(ws, module):
