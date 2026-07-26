@@ -39,10 +39,28 @@ def _prompt_path(wm: int, family: str = "wm") -> pathlib.Path:
     return BENCHMARK_ROOT / "workload" / f"{family}{wm}" / "PROMPT.md"
 
 
+# The ONE clause that separates `add` from `add-enumerate`. It tests a specific,
+# evidenced hypothesis (2026-07-26): across three amb1 reps ADD surfaced exactly
+# 1 of 7 planted ambiguities EVERY time — never 0, never 2 — and its template asks
+# for one "Least-sure flag surfaced at freeze", singular and ranked. If the ceiling
+# is the singular flag rather than the noticing, enumeration lifts it; if ADD only
+# ever noticed one, enumeration changes nothing and the flag is exonerated.
+#
+# Deliberately says nothing about WHAT to look for: naming conflicts, authorization,
+# defaults or boundaries would plant the answers this workload exists to test.
+ENUMERATE_CLAUSE = (
+    "When you freeze the contract, do not stop at the single decision you are least "
+    "sure of: list EVERY choice you made that the source spec does not settle, each "
+    "with the reading you took. Completeness of that list matters more than its "
+    "ranking. "
+)
+
+
 def _wrap_prompt(text: str, wrapper: str) -> str:
     if wrapper == "plan-then-execute":
         return f"Plan first, then execute:\n\n{text}"
-    if wrapper == "add-loop":
+    if wrapper in ("add-loop", "add-loop-enumerate"):
+        extra = ENUMERATE_CLAUSE if wrapper == "add-loop-enumerate" else ""
         return (
             "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
             "`python3 .add/tooling/add.py status` FIRST and follow its next-step through the "
@@ -56,7 +74,9 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "the PLAN.md header (and fill the §3 AI-verify record) — "
             "draft the whole Direction bundle (rules, scenarios, change plan, red suite) in "
             "ONE pass, freeze it with `add.py freeze --by <you> --cross`, build to green, "
-            "record the gate. The floor never bends: the contract is FROZEN and the red suite "
+            "record the gate. "
+            + extra
+            + "The floor never bends: the contract is FROZEN and the red suite "
             "precedes the build (never skip contract, tests, build, or verify). Finish the run "
             "once the app meets the requirements and the verify gate is recorded — do NOT run "
             "milestone-done, delta-append (fold-style ledger work), or archive-milestone: that "

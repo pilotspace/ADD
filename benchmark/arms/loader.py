@@ -15,6 +15,16 @@ from benchmark.schema.run_record import BenchError
 # add-main: the MAIN-branch control arm (v2-wv1-longitudinal M5 @v2) — first-party,
 # SHA-pinned via its toml so branch-engine changes are controlled against the release.
 ARM_NAMES = ("add", "add-main", "vanilla", "plan-mode", "gsd", "spec-kit")
+
+# Selectable by name, but NOT part of a default campaign. An experiment arm exists
+# to isolate ONE variable against its baseline; folding it into the default set
+# would change what every `run-all` costs and what a "full campaign" means, which
+# is a decision about the benchmark, not about the experiment.
+#   add-enumerate — `add` plus one clause: enumerate every unsettled choice at
+#   freeze rather than only the least-sure one. Tests whether ADD's single ranked
+#   flag is the ceiling behind its 1-of-7 surfacing rate on amb1.
+EXPERIMENTAL_ARM_NAMES = ("add-enumerate",)
+ALL_ARM_NAMES = ARM_NAMES + EXPERIMENTAL_ARM_NAMES
 PIN_REQUIRED_ARMS = frozenset({"gsd", "spec-kit"})
 REQUIRED_KEYS = ("name", "setup_steps", "prompt_wrapper", "pin")
 REQUIRED_FAIRNESS_KEYS = ("same_model", "token_ceiling", "turn_ceiling")

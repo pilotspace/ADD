@@ -1,0 +1,23 @@
+name = "add-enumerate"
+setup_steps = [
+  "uv venv .venv --clear",
+  "uv pip install -e {REPO_ROOT}/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init --yes --non-interactive --force",
+]
+# Identical to `add` in EVERY respect except the prompt wrapper, which adds one
+# clause: enumerate every unsettled choice at freeze, not just the least-sure one.
+#
+# The hypothesis under test (2026-07-26 amb1, n=3): ADD surfaced exactly 1 of 7
+# planted ambiguities in every rep — never 0, never 2 — while its template asks for
+# a single ranked "Least-sure flag surfaced at freeze". Either the singular flag is
+# the ceiling, or ADD only ever noticed one thing. This arm separates those.
+#
+# Same engine, same pin, same model, same ceilings as `add`, so a difference in
+# ambiguity_surface_rate is attributable to the clause and nothing else.
+prompt_wrapper = "add-loop-enumerate"
+pin = "add-method (this repo, path pin — identical to arms/add.toml)"
+
+# Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60
