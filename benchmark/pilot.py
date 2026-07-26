@@ -238,7 +238,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--reps", type=int, default=1)
     run_all_p.add_argument("--runs-root", default=None)
     run_all_p.add_argument("--repo-root", default=None)
-    run_all_p.add_argument("--family", default="wm", choices=("wm", "hv", "amb"))
+    run_all_p.add_argument("--family", default="wm", choices=("wm", "hv", "amb", "pay", "us"))
     run_all_p.add_argument("--session-mode", default="fresh", choices=("fresh", "continue"),
                            dest="session_mode",
                            help="continue = ONE persistent workspace + ONE continuing "
