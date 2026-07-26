@@ -31,6 +31,91 @@ def _book(base, headers=_ALICE, **over):
     return http_call("POST", f"{base}/bookings", body, headers=headers)
 
 
+# ── reading the queue without over-specifying its shape ──────────────────────
+# The PROMPT fixes the SEMANTICS of the waitlist, never its serialization. A
+# probe that insists on one container shape or one field spelling reports
+# "neither" for an app that chose a reading perfectly clearly — which is how six
+# live runs scored `neither` on an app that visibly ordered by priority.
+
+_POSITION_KEYS = ("position", "waitlist_position", "queue_position")
+_QUEUED = ("waitlisted", "waiting", "queued", "pending")
+
+
+def _entries(payload):
+    if isinstance(payload, list):
+        return [e for e in payload if isinstance(e, dict)]
+    if isinstance(payload, dict):
+        for key in ("entries", "waitlist", "items", "results"):
+            got = payload.get(key)
+            if isinstance(got, list):
+                return [e for e in got if isinstance(e, dict)]
+    return []
+
+
+def _waitlist(base, room):
+    st, payload = http_call("GET", f"{base}/rooms/{room}/waitlist", None, headers=_ALICE)
+    return _entries(payload) if st == 200 else []
+
+
+def _position_of(entry):
+    for key in _POSITION_KEYS:
+        value = entry.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value.isdigit():
+            return int(value)
+    return None
+
+
+def _priority_of(entry):
+    value = entry.get("priority")
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.lstrip("-").isdigit():
+        return int(value)
+    return None
+
+
+def _promoted_priority(base, room):
+    """Priority of the entry promoted when the holding booking is released.
+
+    Observes the OUTCOME — which entry left the queue (or stopped being queued) —
+    rather than requiring the promoted entry to remain listed under a particular
+    status. The old probe demanded residency, so an app that removes a promoted
+    entry (i.e. every app anyone actually built) could satisfy no reading at all.
+
+    Returns None when the promotion is not observable, so both readings stay
+    False and the item resolves `neither` — the honest answer for an app with no
+    working queue, and now the only way to reach it.
+    """
+    st, held = _book(base, room_id=room, start_time=_future(80), end_time=_future(82))
+    if st not in (200, 201) or not isinstance(held, dict):
+        return None
+    _book(base, headers=_BOB, room_id=room, start_time=_future(80),
+          end_time=_future(82), priority=1)
+    _book(base, headers=_BOB, room_id=room, start_time=_future(80),
+          end_time=_future(82), priority=9)
+
+    before = {str(e.get("id")): e for e in _waitlist(base, room) if e.get("id") is not None}
+    if len(before) < 2:
+        return None                      # nothing queued: no promotion to observe
+
+    http_call("DELETE", f"{base}/bookings/{held.get('id')}", None, headers=_ALICE)
+
+    after = {str(e.get("id")): e for e in _waitlist(base, room) if e.get("id") is not None}
+    left = [e for i, e in before.items() if i not in after]
+    unqueued = [e for i, e in after.items()
+                if str(e.get("status", "")).lower() not in _QUEUED]
+    promoted = left or unqueued
+    if len(promoted) != 1:
+        return None                      # ambiguous or no promotion — not a reading
+    return _priority_of(promoted[0])
+
+
 # ── A-conflict-response — CONTRADICTION ──────────────────────────────────────
 # PROMPT §1 says a conflicting create is WAITLISTED (202); §2 says it is REJECTED
 # (409). Both cannot hold. There is no reading that satisfies the prompt: the only
@@ -58,34 +143,12 @@ def _p_conflict_rejected(base, ws):
 
 def _p_priority_overrides_arrival(base, ws):
     """A later high-priority entry is promoted ahead of an earlier low-priority one."""
-    st, held = _book(base, room_id="p1", start_time=_future(80), end_time=_future(82))
-    if st not in (200, 201):
-        return False
-    _book(base, headers=_BOB, room_id="p1", start_time=_future(80),
-          end_time=_future(82), priority=1)
-    _book(base, headers=_BOB, room_id="p1", start_time=_future(80),
-          end_time=_future(82), priority=9)
-    http_call("DELETE", f"{base}/bookings/{held.get('id')}", None, headers=_ALICE)
-    st2, wl = http_call("GET", f"{base}/rooms/p1/waitlist", None, headers=_ALICE)
-    entries = wl if isinstance(wl, list) else wl.get("entries", []) if isinstance(wl, dict) else []
-    promoted = [e for e in entries if str(e.get("status", "")).lower() == "confirmed"]
-    return bool(promoted) and promoted[0].get("priority") == 9
+    return _promoted_priority(base, "p1") == 9
 
 
 def _p_fifo_with_priority_tiebreak(base, ws):
     """The earliest entry is promoted regardless of a later entry's higher priority."""
-    st, held = _book(base, room_id="p2", start_time=_future(80), end_time=_future(82))
-    if st not in (200, 201):
-        return False
-    _book(base, headers=_BOB, room_id="p2", start_time=_future(80),
-          end_time=_future(82), priority=1)
-    _book(base, headers=_BOB, room_id="p2", start_time=_future(80),
-          end_time=_future(82), priority=9)
-    http_call("DELETE", f"{base}/bookings/{held.get('id')}", None, headers=_ALICE)
-    st2, wl = http_call("GET", f"{base}/rooms/p2/waitlist", None, headers=_ALICE)
-    entries = wl if isinstance(wl, list) else wl.get("entries", []) if isinstance(wl, dict) else []
-    promoted = [e for e in entries if str(e.get("status", "")).lower() == "confirmed"]
-    return bool(promoted) and promoted[0].get("priority") == 1
+    return _promoted_priority(base, "p2") == 1
 
 
 # ── A-position-ordering — MISREADING TRAP ────────────────────────────────────
@@ -100,10 +163,8 @@ def _p_position_follows_priority(base, ws):
           end_time=_future(92), priority=1)
     _book(base, headers=_BOB, room_id="q1", start_time=_future(90),
           end_time=_future(92), priority=9)
-    st, wl = http_call("GET", f"{base}/rooms/q1/waitlist", None, headers=_ALICE)
-    entries = wl if isinstance(wl, list) else wl.get("entries", []) if isinstance(wl, dict) else []
-    first = next((e for e in entries if e.get("position") == 1), None)
-    return bool(first) and first.get("priority") == 9
+    first = next((e for e in _waitlist(base, "q1") if _position_of(e) == 1), None)
+    return first is not None and _priority_of(first) == 9
 
 
 def _p_position_follows_arrival(base, ws):
@@ -112,10 +173,8 @@ def _p_position_follows_arrival(base, ws):
           end_time=_future(92), priority=1)
     _book(base, headers=_BOB, room_id="q2", start_time=_future(90),
           end_time=_future(92), priority=9)
-    st, wl = http_call("GET", f"{base}/rooms/q2/waitlist", None, headers=_ALICE)
-    entries = wl if isinstance(wl, list) else wl.get("entries", []) if isinstance(wl, dict) else []
-    first = next((e for e in entries if e.get("position") == 1), None)
-    return bool(first) and first.get("priority") == 1
+    first = next((e for e in _waitlist(base, "q2") if _position_of(e) == 1), None)
+    return first is not None and _priority_of(first) == 1
 
 
 AMBIGUITIES = [
