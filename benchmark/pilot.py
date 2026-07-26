@@ -20,7 +20,7 @@ import pathlib
 import sys
 from typing import Sequence
 
-from benchmark.arms.loader import ARM_NAMES, Arm, load_arm
+from benchmark.arms.loader import ALL_ARM_NAMES, ARM_NAMES, Arm, load_arm
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, find_resume_point, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord
@@ -83,8 +83,8 @@ def run_pilot(
     repo_root_path = pathlib.Path(repo_root) if repo_root is not None else REPO_ROOT
 
     for arm_name in arms:
-        if arm_name not in ARM_NAMES:
-            raise BenchError(f"unknown_arm: {arm_name!r} not in {ARM_NAMES}")
+        if arm_name not in ALL_ARM_NAMES:
+            raise BenchError(f"unknown_arm: {arm_name!r} not in {ALL_ARM_NAMES}")
 
     records: list[RunRecord] = []
 
