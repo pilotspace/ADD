@@ -268,9 +268,44 @@ def _first_code_write_offset(transcript_path: pathlib.Path) -> int:
     return 0
 
 
+_WRITE_TOOL_NAMES = ("Write", "Edit", "NotebookEdit", "MultiEdit", "str_replace_editor")
+
+
+def _agent_written_paths(transcript_path: pathlib.Path) -> set[str]:
+    """Paths the AGENT wrote, taken from its own tool calls.
+
+    Arm-neutral by construction: it asks what this run produced, never where a
+    method files things. An allow-list naming `.add/` or `.specify/` would score
+    arms on filing convention, which is the failure this whole module avoids.
+    """
+    written: set[str] = set()
+    try:
+        raw = transcript_path.read_text(errors="replace")
+    except OSError:
+        return written
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        content = (event.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if (isinstance(block, dict) and block.get("type") == "tool_use"
+                    and block.get("name") in _WRITE_TOOL_NAMES):
+                target = (block.get("input") or {}).get("file_path")
+                if isinstance(target, str) and target:
+                    written.add(target.replace("\\", "/"))
+    return written
+
+
 def _workspace_artifacts(workspace: pathlib.Path, *, limit: int = 40,
-                         max_bytes: int = 200_000) -> list[str]:
-    """The workspace's PROSE documents — the other place a method may surface.
+                         max_bytes: int = 200_000,
+                         transcript_path: pathlib.Path | None = None) -> list[str]:
+    """The prose documents THIS RUN wrote — the other place a method may surface.
 
     The first live run scored ADD 0.0 while its PLAN.md said, in as many words,
     that the spec "contains two mutually exclusive rules for the identical
@@ -278,22 +313,52 @@ def _workspace_artifacts(workspace: pathlib.Path, *, limit: int = 40,
     document-first method scores like a chat-first one; the call site passed an
     empty tuple, so the guard existed and was never wired.
 
-    Sorted and bounded, so scoring stays deterministic and a pathological
-    workspace cannot stall it.
+    Wiring it exposed the opposite defect (2026-07-26). Reading every prose file
+    in sort order meant an ADD workspace — 302 prose files, 256 of them the
+    vendored `personas-teacher` library — spent the entire 40-file budget on its
+    own SHIPPED DOCUMENTATION, while PLAN.md sorted at index 270 and was never
+    read at all. A persona file's boilerplate ("Avoid ambiguous language that
+    could be interpreted multiple ways") then scored as the agent surfacing an
+    ambiguity. That sentence ships in every ADD workspace; crediting it scores an
+    arm for the contents of its own installer.
+
+    So the set is what the agent WROTE, per its tool calls. Fail CLOSED: no
+    transcript means no artifacts, never "read everything" — falling back to the
+    whole tree is precisely what produced the false positives.
     """
     docs: list[str] = []
+    if transcript_path is None:
+        return docs
+    written = _agent_written_paths(pathlib.Path(transcript_path))
+    if not written:
+        return docs
     try:
-        paths = sorted(q for q in workspace.rglob("*")
-                       if q.is_file() and not is_implementation_write(q.name))
+        candidates = sorted(q for q in workspace.rglob("*")
+                            if q.is_file() and not is_implementation_write(q.name))
     except OSError:
         return docs
-    for q in paths[:limit]:
+
+    workspace = pathlib.Path(workspace)
+    for q in candidates:
+        as_posix = q.as_posix()
+        try:
+            relative = q.relative_to(workspace).as_posix()
+        except ValueError:            # pragma: no cover - q always sits under workspace
+            relative = q.name
+        # A recorded path may be absolute, workspace-relative, or written from a
+        # different cwd; matching on the tail covers all three without admitting
+        # a same-named shipped file from an unrelated directory.
+        if not any(w == as_posix or w.endswith("/" + relative) or w == relative
+                   for w in written):
+            continue
         try:
             if q.stat().st_size > max_bytes:
                 continue
             docs.append(q.read_text(errors="replace"))
         except OSError:
             continue
+        if len(docs) >= limit:
+            break
     return docs
 
 
@@ -396,7 +461,8 @@ def compute_ambiguity_detail(workspace: pathlib.Path, transcript_path: pathlib.P
                     shipped[item["id"]] = _resolve_shipped(item, base, iso_ws)
     except Exception:
         pass  # unbootable workspace: every item stays "neither", never a scorer crash
-    artifacts = _workspace_artifacts(pathlib.Path(workspace))
+    artifacts = _workspace_artifacts(pathlib.Path(workspace),
+                                     transcript_path=pathlib.Path(transcript_path))
     rows = []
     for item in items:
         row = classify(item=item, transcript=transcript, artifacts=artifacts,

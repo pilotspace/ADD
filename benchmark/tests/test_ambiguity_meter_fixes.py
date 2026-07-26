@@ -103,11 +103,21 @@ class TestAttribution:
 
 class TestArtifactsAreRead:
     def test_workspace_artifacts_reads_prose_not_code(self, tmp_path):
+        # AMENDED 2026-07-26 (D3): artifacts are now the documents the AGENT
+        # WROTE, not every prose file present. Reading the whole tree let an ADD
+        # workspace's 256 vendored persona files consume the budget and score as
+        # the agent's reasoning, so the transcript must vouch for each file.
         (tmp_path / "PLAN.md").write_text("the spec is ambiguous about the waitlist",
                                           encoding="utf-8")
         (tmp_path / "app.py").write_text("print('code')", encoding="utf-8")
-        docs = _workspace_artifacts(tmp_path)
+        tx = tmp_path / "t.jsonl"
+        tx.write_text("\n".join(json.dumps({"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Write",
+             "input": {"file_path": str(tmp_path / name), "content": "..."}}]}})
+            for name in ("PLAN.md", "app.py")) + "\n", encoding="utf-8")
+        docs = _workspace_artifacts(tmp_path, transcript_path=tx)
         assert any("ambiguous" in d for d in docs)
+        # Still excluded — by file KIND, even though the agent wrote it too.
         assert not any("print('code')" in d for d in docs)
 
     def test_document_only_surfacing_scores(self):
@@ -205,6 +215,14 @@ class TestArtifactWiringIsPinned:
     This test can only pass if compute_ambiguity_detail actually reads the
     workspace: the recognition exists ONLY in a file on disk, and the transcript
     never mentions it.
+
+    AMENDED 2026-07-26 (D3). Artifacts are now the documents the agent WROTE, so
+    the transcript must record the Write — but its PAYLOAD still does not contain
+    the recognition. That is the realistic shape: an Edit records a replacement
+    slice, and after several edits the file on disk says things no single payload
+    ever did. The guard is unchanged in substance — pass only by reading the FILE —
+    while matching the contract that stops the scorer from crediting an arm for
+    its own installed documentation.
     """
 
     def test_surfacing_only_on_disk_is_found_by_compute(self, tmp_path, monkeypatch):
@@ -226,11 +244,17 @@ class TestArtifactWiringIsPinned:
         (ws / "PLAN.md").write_text(
             "The spec is contradictory: it both waitlists and returns 409.",
             encoding="utf-8")
-        # A transcript that says nothing about it.
+        # A transcript that records WRITING the file but whose payload says
+        # nothing about the recognition — so only reading the file can find it.
         tx = tmp_path / "t.jsonl"
-        tx.write_text(json.dumps({"type": "assistant", "message": {"content": [
-            {"type": "text", "text": "Building the service now."}]}}) + "\n",
-            encoding="utf-8")
+        tx.write_text("\n".join(json.dumps(e) for e in [
+            {"type": "assistant", "message": {"content": [
+                {"type": "text", "text": "Building the service now."}]}},
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "name": "Write",
+                 "input": {"file_path": str(ws / "PLAN.md"),
+                           "content": "# PLAN\n(section stub)\n"}}]}},
+        ]) + "\n", encoding="utf-8")
 
         detail = score.compute_ambiguity_detail(ws, tx, 9, "amb")
         assert detail[0]["verdict"] == "surfaced", \
