@@ -2952,6 +2952,29 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # changed since the tests->build snapshot. Placed BEFORE the waiver write so
         # a tamper finding is never launderable through RISK-ACCEPTED.
         _tamper_guard(root, state, slug)
+        # design-at-build: a node that PUBLISHES invariants owes its dependents the
+        # reasoning behind them. PLAN.md persists the interface and not essays — right
+        # for most tasks, wrong for the one kind that BINDS its neighbours. Fires after
+        # _tamper_guard (a cheat outranks a missing document) and applies to BOTH
+        # completing outcomes: a waiver must not launder a missing design.
+        try:
+            _raw3 = _phase_spans((root / "tasks" / slug / "PLAN.md")
+                                 .read_text(encoding="utf-8")).get(3, "")
+        except (OSError, UnicodeDecodeError):
+            _raw3 = ""
+        if _published_invariants(_raw3):
+            _design = root / "tasks" / slug / "DESIGN.md"
+            if not _design.exists():
+                _die(f"design_missing: {slug} publishes invariants its dependents inherit, "
+                     f"so it cannot gate without the reasoning behind them — write "
+                     f"{_design}")
+            try:
+                _body = _design.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                _body = ""                          # fail-soft: never a traceback at a gate
+            if not _body.strip():
+                _die(f"design_empty: {_design} is empty — a touched file is not reasoning; "
+                     f"say WHY the published invariant holds, for whoever inherits it")
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)

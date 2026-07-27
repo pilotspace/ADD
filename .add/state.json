@@ -1380,7 +1380,7 @@
   "active_tasks": {
     "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "ambiguity-meter-fixes",
-    "direction-velocity": "invariant-inherit"
+    "direction-velocity": "design-at-build"
   },
   "active_milestone": "direction-velocity",
   "todos": [
@@ -1644,7 +1644,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-27T05:11:22+00:00",
+  "updated": "2026-07-27T06:18:07+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6901,7 +6901,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "design-at-build": {
+      "title": "A node that publishes invariants cannot gate without its DESIGN.md",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "direction-velocity",
+      "depends_on": [
+        "invariants-publish"
+      ],
+      "created": "2026-07-27T05:11:46+00:00",
+      "updated": "2026-07-27T06:18:07+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-27T05:13:02+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "641af068c88221cb6778afa42def8e1b",
+        "tests": {
+          "add-method/tooling/test_design_at_build.py": "1921ed3310abe1c823fce9bf321f22c1"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".add/tooling/",
+          "add-method/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "1594c61a9d328a6503474df7de805b48"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "invariant-inherit"
+  "active_task": "design-at-build"
 }
