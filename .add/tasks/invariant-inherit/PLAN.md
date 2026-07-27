@@ -2,8 +2,8 @@
 
 slug: invariant-inherit · created: 2026-07-27 · stage: mvp
 milestone: direction-velocity
-autonomy: auto   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line joins that root to §3 Scope; task edges: `--depends-on`/`--extends`/`--relates-to`; high-risk/method-defining? declare `risk: high` on the slug line; headless agent-crossed freeze? declare `gate_mode: ai-plan-verify` here (human floor: security|data|architecture never AI-frozen) -->
-phase: build   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · change plan · red suite) to the ONE freeze -->
+autonomy: auto
+phase: done
 > One file = one task — an ATOMIC node: persist the interface (contract · red suite · scope · verdict); reason everything else in-context, don't write essays. The phase marker above is the single source of truth (`add.py phase`).
 
 ---
@@ -97,7 +97,7 @@ Tests live in: `add-method/tooling/` · MUST run red (missing implementation) be
 
 ## 5 · BUILD — AI writes the code (execution) ▸ docs/07-step-5-build.md
 
-Strategy actually used: <fill at VERIFY — what you ACTUALLY did (or "as planned"); harvested into §7 Decisions (ADR)>
+Strategy actually used: as planned for the view itself — a pure `_inherited_invariants` walking the transitive closure with a visited set, printed by cmd_new_task and stored nowhere. The placement was NOT as planned and cost a real regression: the loop first landed between the `if milestone:` body and its `else:`, which binds the else to the FOR, so the orphan nudge fired on every task that HAD a milestone. It now sits after the whole if/else with a comment stating why. Direction bundle authored by `add.py draft --from … --run-red --freeze --cross`.
 Code lives in: `src/`
 Spawn (multi-agent): build/verify subagent spawns default `isolation: worktree`; cross-agent advisor — spawn `add-advisor` (an agent OTHER than the builder) for the freeze `--cross` and the §6 refute-read; `self` only when solo.
 Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 Scope (an out-of-scope build fails the gate: scope_violation); keep the §3 Regression floor green; allow-list packages only; ask if unclear.
@@ -116,23 +116,24 @@ Constraints: do NOT change any test or the frozen §3 contract; stay inside §3 
 - [ ] a person reviewed and approved the change
 
 ### Refute-read verdict — the earned-green check (record it; required for an auto-PASS)
-Verdict: <EARNED | NOT-EARNED>
-By: <self | agent-id> · adversarially checked: <what was probed>
+Verdict: EARNED
+By: self · adversarially checked: (1) `test_nothing_is_copied_into_the_new_plan` and `test_no_new_state_key` assert the ABSENCE of the invariant text in both stores — the view claim is measured on disk, not asserted in prose; (2) `test_inheritance_is_transitive` builds a real 3-node chain, so a first-hop-only implementation fails rather than passing on a 2-node fixture; (3) `test_ancestor_with_no_invariants_prints_nothing` and `test_no_depends_on_prints_nothing` are the negative controls that stop an unconditional header passing everything; (4) `test_missing_ancestor_doc_is_fail_soft` deletes the ancestor's PLAN.md and requires exit 0. TWO defects of mine were caught by guards I did not write: `test_v8_1_orphan_guard` caught the for/else binding, and `test_ci_tooling_mirror_gap`'s nested fresh-checkout run caught that the sibling task's template guard demanded gitignored dogfood twins exist — the second had ALREADY gated, so it is recorded as a post-gate repair plus a TDD delta rather than quietly amended. NOT claimed: that the full transitive closure stays readable on a deep graph — the §3 flag says so and names the one-line cap.
 
 ### GATE RECORD
-Reported: <yes — the gate report (banner/ARC) rendered before this outcome recorded | no>
-Outcome: <PASS | RISK-ACCEPTED | HARD-STOP>
+Reported: yes
+Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
-Reviewed by: <name> · date: <date>
-
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Refute-read verdict is recorded, never engine-blocked; a human spot-audit backstops anything unrecorded. -->
+Reviewed by: Tin Dang · date: 2026-07-27
 
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose read each ancestor's §3 fresh at `new-task` and print the transitive closure, attributed to its owner; rejected copy inherited invariants into the new task's PLAN.md (rejected — the copy is what the builder reads, and it silently disagrees with the ancestor the moment that ancestor changes; this is the failure mode the whole no-second-store rule exists to prevent) · a `state.json` inherited-invariants key (rejected — same drift, plus it must now be migrated, repaired, and kept consistent by every verb that touches edges)
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: as planned for the view itself — a pure `_inherited_invariants` walking the transitive closure with a visited set, printed by cmd_new_task and stored nowhere. The placement was NOT as planned and cost a real regression: the loop first landed between the `if milestone:` body and its `else:`, which binds the else to the FOR, so the orphan nudge fired on every task that HAD a milestone. It now sits after the whole if/else with a comment stating why. Direction bundle authored by `add.py draft --from … --run-red --freeze --cross`.
+- [AI] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).

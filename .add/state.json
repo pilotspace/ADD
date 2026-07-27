@@ -1644,7 +1644,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-27T04:48:48+00:00",
+  "updated": "2026-07-27T05:11:22+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6545,14 +6545,14 @@
     },
     "invariant-inherit": {
       "title": "Creating a task shows the invariants it inherits, without a second store",
-      "phase": "build",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "direction-velocity",
       "depends_on": [
         "invariants-publish"
       ],
       "created": "2026-07-27T04:47:30+00:00",
-      "updated": "2026-07-27T04:48:48+00:00",
+      "updated": "2026-07-27T05:11:22+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-27T04:48:45+00:00",
@@ -6571,9 +6571,9 @@
       "tripwire": {
         "contract_md5": "4712bb309aeb2bea6d2988fc44875e07",
         "tests": {
-          "add-method/tooling/add.py": "108469eb0d781de39638edb3b802e1ed",
+          "add-method/tooling/add.py": "e39496922e519202994cecc6c95c3689",
           "add-method/tooling/engine_manifest.py": "1f367b9f84fd82e353bf7eaa72b3c615",
-          "add-method/tooling/engine_pin.py": "85748bd6b33fb477d9cd8d0447c28c4b",
+          "add-method/tooling/engine_pin.py": "91df180e1004ad8311eda77dab840c34",
           "add-method/tooling/gate_fixtures.py": "a6296dbfaf1db5a3175d4d328a66d4f5",
           "add-method/tooling/md_section.py": "d6ed4186e644d49bd9b3bf7cefcbff6c",
           "add-method/tooling/pty_clack.py": "e3c2995ce0b715e49cb7f3e843cf1819",
@@ -6697,7 +6697,7 @@
           "add-method/tooling/test_installer_soul_seed.py": "fa84e62286db71a4b774df4cbdcdd9a3",
           "add-method/tooling/test_intent_handoff.py": "7ec00ae48929177c9d83b1227d49498d",
           "add-method/tooling/test_invariant_inherit.py": "3ea622ad79fc8632ebf2bdb8aeaf23cd",
-          "add-method/tooling/test_invariants_publish.py": "df3d582fbd154d2f88e45f46b96ea246",
+          "add-method/tooling/test_invariants_publish.py": "bb5876ccd10c117054476619717095d8",
           "add-method/tooling/test_js_reclaim_lock_heartbeat.py": "b9eec7563e3f8d4d1789b868010f4692",
           "add-method/tooling/test_kickoff_truth.py": "b40781431219b72a183126129a46039e",
           "add-method/tooling/test_lock_reclaim_hardening.py": "0e0d68b12d4fb1f18dac7d5d693882ec",
@@ -6868,7 +6868,38 @@
           "add-method/.add/tooling/",
           "add-method/src/add_method/_bundled/tooling/"
         ],
-        "snapshot_md5": "33a61288de6ea3cc984ed269356e0f9b"
+        "snapshot_md5": "c3dbd9f70e599915e03aaed2f4d2f526"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-27T05:11:01+00:00",
+            "reason": "tamper_detected:build_tampered:add-method/tooling/add.py,build_tampered:add-method/tooling/engine_pin.py,build_tampered:add-method/tooling/test_invariants_publish.py",
+            "source": "tamper"
+          }
+        ]
+      },
+      "rounds": {
+        "count": 1,
+        "history": [
+          {
+            "at": "2026-07-27T05:11:01+00:00",
+            "source": "tamper",
+            "note": null
+          }
+        ]
+      },
+      "recross": {
+        "by": "Tin Dang",
+        "at": "2026-07-27T05:11:21+00:00",
+        "from_phase": "build"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
