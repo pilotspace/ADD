@@ -2,8 +2,8 @@
 
 slug: direction-one-shot · created: 2026-07-27 · stage: mvp · risk: high
 milestone: direction-velocity
-autonomy: auto   <!-- manual<conservative<auto — lower for high-risk (`add.py autonomy set`); a `component: <name>` line joins that root to §3 Scope; task edges: `--depends-on`/`--extends`/`--relates-to`; high-risk/method-defining? declare `risk: high` on the slug line; headless agent-crossed freeze? declare `gate_mode: ai-plan-verify` here (human floor: security|data|architecture never AI-frozen) -->
-phase: verify   <!-- direction→build→verify→done; direction drafts §1–§4 (rules · change plan · red suite) to the ONE freeze -->
+autonomy: conservative
+phase: done
 > One file = one task — an ATOMIC node: persist the interface (contract · red suite · scope · verdict); reason everything else in-context, don't write essays. The phase marker above is the single source of truth (`add.py phase`).
 
 ---
@@ -38,8 +38,6 @@ Boundary: the bundle is UTF-8 text delimited by its own `## <n> ·` headings —
 <assumptions>
   ⚠ deriving the red command from §4's `Tests live in:` tokens is right often enough to be the default — if wrong (a project whose suite is not pytest, or whose tokens are not runnable paths): `--run-red "<cmd>"` takes an explicit command, and the derived form refuses with `red_suite_unrunnable` rather than guessing again; cost = the user types their command once. The engine RUNNING a suite is a genuinely new responsibility and the least-settled part of this design.
 </assumptions>
-
-<!-- §2 (the old standalone SCENARIOS section) was RETIRED — pass/fail cases now live with the tests in §4 · TESTS & SCENARIOS. The §3–§7 numbers are unchanged so the freeze parser and every §-reference keep working; the jump from §1 to §3 is intentional. -->
 
 ---
 
@@ -94,8 +92,6 @@ Least-sure flag surfaced at freeze: [contract] the engine RUNNING a test suite. 
 - [ ] §3 Contract shape is concrete (no template placeholder text remains)
 - [ ] Lowest-confidence flag surfaced and substantive (mirrors unflagged_freeze's own bar)
 Verified by: <agent-id> · at: <ISO-8601 UTC timestamp>
-
-<!-- The freeze IS the one approval, led by the bundle's lowest-confidence flag — Contract + Scope (may touch) = HARD (tamper-guarded); Strategy · Regression floor · Persona = SOFT/optional. Approved -> Status: FROZEN @ vN — approved by <name>; changing a frozen Contract = change request back to SPECIFY. Scope tokens, backticked: `./…` = this task dir · a "/" token = project root · a bare name = sibling of the previous token's dir · a directory covers its whole subtree · outside-root drops fail-closed · absent line = UNDECLARED (grandfathered, never retro-red). -->
 
 ---
 
@@ -156,14 +152,15 @@ Outcome: PASS
 If RISK-ACCEPTED -> owner: <name> · ticket: <link> · expires: <date>   (never for a security gap)
 Reviewed by: Tin Dang · date: 2026-07-27
 
-<!-- Security is ALWAYS HARD-STOP; record exactly one outcome — no silent pass. The Refute-read verdict is recorded, never engine-blocked; a human spot-audit backstops anything unrecorded. -->
-
 ---
 
 ## 7 · OBSERVE — feed the next loop ▸ docs/09-the-loop.md
 
 ### Decisions (ADR)
-<harvested at done from §1/§3/§5/§6 — do not hand-edit; one actor-tagged line per decision, refilled only while this placeholder stands>
+- [AI] specify — chose <unrecorded>
+- [human] freeze — froze §3 @ v1 (approved by Tin Dang)
+- [AI] build — strategy used: as planned, with three corrections the plan did not foresee. (a) Section bodies are bounded at the next `## ` OR bare `---`, exactly as `_fill_and_advance` bounds its one section — replacing heading-to-heading would have swallowed the `---` rules between sections. (b) `_bundle_sections` keeps EVERY numbered heading, including out-of-range ones, where `_phase_spans` clamps to 0..7 — otherwise a §9 in a bundle would be silently dropped instead of refused. (c) `engine_pin.py` is a four-way twin in its own right, not just a pin; mirroring add.py alone left it diverged. The skill cookbook gained the verb at a NET −118 bytes, funded by compressing the freeze line's parenthetical.
+- [human] verify — gate PASS (reviewed by Tin Dang)
 
 ### Spec delta
 One line per forward change, tagged `[SPEC · open|seeded|dropped]` + evidence — each re-enters at Specify (`deltas.md`).

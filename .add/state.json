@@ -1644,7 +1644,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-27T04:29:26+00:00",
+  "updated": "2026-07-27T04:35:25+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -5847,14 +5847,14 @@
     },
     "direction-one-shot": {
       "title": "One engine call writes the whole direction bundle, and refuses a green suite",
-      "phase": "verify",
-      "gate": "none",
+      "phase": "done",
+      "gate": "PASS",
       "milestone": "direction-velocity",
       "depends_on": [
         "read-batching"
       ],
       "created": "2026-07-27T04:07:25+00:00",
-      "updated": "2026-07-27T04:29:26+00:00",
+      "updated": "2026-07-27T04:35:25+00:00",
       "freeze": {
         "version": "v1",
         "frozen_at": "2026-07-27T04:10:14+00:00",
@@ -6177,6 +6177,32 @@
         "by": "Tin Dang",
         "at": "2026-07-27T04:22:37+00:00",
         "from_phase": "build"
+      },
+      "heal": {
+        "attempts": 1,
+        "history": [
+          {
+            "at": "2026-07-27T04:35:11+00:00",
+            "reason": "scope_violation: task 'direction-one-shot' touched outside its declared \u00a75 Scope \u2014 tmp/direction-one-shot.txt (1 total)",
+            "source": "scope"
+          }
+        ]
+      },
+      "rounds": {
+        "count": 1,
+        "history": [
+          {
+            "at": "2026-07-27T04:35:11+00:00",
+            "source": "scope",
+            "note": null
+          }
+        ]
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
       }
     }
   },
