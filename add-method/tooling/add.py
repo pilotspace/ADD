@@ -1216,6 +1216,25 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not _flag_well_formed(raw3):
         _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
              f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # invariants-publish: an OPTIONAL §3 block — ABSENCE is grandfathered (boundary_unfilled's
+    # own shape), PRESENCE is validated. A published invariant that no test can fail is the
+    # `turn_ceiling` failure mode wearing a citation: declared everywhere, true nowhere.
+    # validate-then-write — nothing is written on this path.
+    for _inv_text, _inv_cited in _published_invariants(raw3):
+        _proof = (_inv_cited or "").split("::", 1)[0].strip()
+        _ok = False
+        if _proof:
+            try:                                   # fail-closed, like _declared_scope
+                _cand = (root.parent / _proof).resolve()
+                _ok = _cand.is_file() and _cand.is_relative_to(root.parent.resolve())
+            except (OSError, ValueError):
+                _ok = False
+        if not _ok:
+            _why = ("carries no `(proof: `path::test_name`)` citation" if not _inv_cited
+                    else f"cites `{_inv_cited}`, which does not resolve to a file under the "
+                         f"project root")
+            _die(f"invariant_without_proof: {slug} publishes \"{_inv_text}\" but it {_why} "
+                 f"— an invariant no test can fail is a comment, not a contract")
     # quality-floors lever 2 (fast-lane-boundary-line): a §1 `Boundary:` line still carrying
     # the bare template placeholder (or empty) refuses the freeze — the wm2 input-dialect
     # floor at the fast lane's single approval seam. Absent line = grandfathered (legacy
@@ -5934,6 +5953,34 @@ def _decision_markers(body: str, section: int) -> list[dict]:
         items.append({"marker": tag, "section": section, "text": "\n".join(block)})
         i = j
     return items
+
+
+def _published_invariants(raw3: str) -> list[tuple[str, str | None]]:
+    """§3's OPTIONAL published-invariant entries as (text, cited path | None). PURE.
+
+    A node publishes what its dependents must not break; `invariant-inherit` walks
+    these. ABSENCE returns [] — every task on disk predates the block, and absence
+    must never become a new refusal (boundary_unfilled's own grandfathering shape).
+    The block is a bare `Invariants (published):` line followed by `  - <text>`
+    bullets, ending at the first line that is neither a bullet nor blank; the
+    template's placeholder-carrying line deliberately does NOT match, so a bare new
+    task still freezes."""
+    lines = raw3.splitlines()
+    start = next((i for i, ln in enumerate(lines)
+                  if re.match(r"^\s*Invariants \(published\):\s*$", ln)), None)
+    if start is None:
+        return []
+    out: list[tuple[str, str | None]] = []
+    for ln in lines[start + 1:]:
+        if not ln.strip():
+            break
+        bullet = re.match(r"^\s*-\s+(.*)$", ln)
+        if not bullet:
+            break
+        text = bullet.group(1).strip()
+        cited = re.search(r"\(proof:\s*`([^`]+)`\s*\)", text)
+        out.append((text, cited.group(1) if cited else None))
+    return out
 
 
 def _contract_frozen(raw3: str) -> bool:
