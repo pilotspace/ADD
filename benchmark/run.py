@@ -17,7 +17,7 @@ import argparse
 import pathlib
 import sys
 
-from benchmark.arms.loader import ARM_NAMES, load_arm
+from benchmark.arms.loader import ALL_ARM_NAMES, ARM_NAMES, load_arm
 from benchmark.pilot import REPO_ROOT, resolve_setup_steps
 from benchmark.report import render_report
 from benchmark.runner.core import execute_wm
@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.wm not in VALID_WMS:
             print(f"invalid_wm: {args.wm}", file=sys.stderr)
             return 2
-        if args.arm not in ARM_NAMES:
+        if args.arm not in ALL_ARM_NAMES:
             print(f"unknown_arm: {args.arm}", file=sys.stderr)
             return 2
         try:
@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "resume":
-        if args.arm not in ARM_NAMES:
+        if args.arm not in ALL_ARM_NAMES:
             print(f"unknown_arm: {args.arm}", file=sys.stderr)
             return 2
         resume_wm = find_resume_point(args.arm)
@@ -125,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "report":
-        if args.arm is not None and args.arm not in ARM_NAMES:
+        if args.arm is not None and args.arm not in ALL_ARM_NAMES:
             print(f"unknown_arm: {args.arm}", file=sys.stderr)
             return 2
         if args.wm is not None and args.wm not in VALID_WMS:

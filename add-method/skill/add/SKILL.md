@@ -124,12 +124,13 @@ confirmable delta the human confirms rewrites `SOUL.md` (the human is the only w
 
 ## Command cookbook — copy a line; `-h` only off-menu
 
-`add.py` = `python3 .add/tooling/add.py`; lines 2–4 = the 3 calls — default is ONE composed draft then bare `advance`/`freeze`; `advance --fill <draft>` = step-wise, only for a large/uncertain task.
+`add.py` = `python3 .add/tooling/add.py`; lines 2–4 = the 3 calls. Compose the bundle ONCE and hand it to `draft` — `advance --fill` is the step-wise path a large/uncertain task can still take.
 
 ```bash
 add.py status --brief        # resume · status --section <n|phase> = §body · --foundation · --json
 add.py new-task <slug> --title "..."  # --milestone m · --depends-on a,b · --sensitivity security
-add.py freeze --by "<name>" --cross   # the ONE approval -> build (--ai-plan-verify = headless)
+add.py draft --from <bundle> --run-red --freeze --by "<name>" --cross  # §1+§3+§4 in ONE call, all-or-nothing; --run-red refuses a GREEN suite
+add.py freeze --by "<name>" --cross   # the ONE approval -> build
 add.py gate PASS --target-hit yes     # partial|no · RISK-ACCEPTED --owner --ticket --expires
 add.py locate tests/x.py::test_y      # failure -> owning node + its frozen §3 clause
 add.py graph --milestone <slug>       # mermaid DAG · relate <slug> --depends-on|--extends

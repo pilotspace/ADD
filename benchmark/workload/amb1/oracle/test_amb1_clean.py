@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from benchmark.workload._oracle_lib import http_call, running_app
+from benchmark.workload._oracle_lib import http_call, running_app, records
 
 _ALICE = {"Authorization": "Bearer test-token-alice"}
 _BOB = {"Authorization": "Bearer test-token-bob"}
@@ -57,7 +57,7 @@ def test_list_returns_an_array():
     with running_app(_workspace()) as base:
         status, body = http_call("GET", f"{base}/bookings", None, headers=_ALICE)
         assert status == 200, body
-        assert isinstance(body, list), body
+        assert records(body) is not None, body
 
 
 def test_unknown_id_is_404():

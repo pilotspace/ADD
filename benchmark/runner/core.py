@@ -39,10 +39,43 @@ def _prompt_path(wm: int, family: str = "wm") -> pathlib.Path:
     return BENCHMARK_ROOT / "workload" / f"{family}{wm}" / "PROMPT.md"
 
 
+# The ONE clause that separates `add` from `add-enumerate`. It tests a specific,
+# evidenced hypothesis (2026-07-26): across three amb1 reps ADD surfaced exactly
+# 1 of 7 planted ambiguities EVERY time — never 0, never 2 — and its template asks
+# for one "Least-sure flag surfaced at freeze", singular and ranked. If the ceiling
+# is the singular flag rather than the noticing, enumeration lifts it; if ADD only
+# ever noticed one, enumeration changes nothing and the flag is exonerated.
+#
+# Deliberately says nothing about WHAT to look for: naming conflicts, authorization,
+# defaults or boundaries would plant the answers this workload exists to test.
+ENUMERATE_CLAUSE = (
+    "When you freeze the contract, do not stop at the single decision you are least "
+    "sure of: list EVERY choice you made that the source spec does not settle, each "
+    "with the reading you took. Completeness of that list matters more than its "
+    "ranking. "
+)
+
+# Direction's other measured tax (2026-07-26 pay1-4 fold): across 209 direction
+# turns ZERO emitted more than one tool call — 7.3 min of strictly serial Reads,
+# plus 3.9 min of harness bookkeeping that delivers nothing to the workload. The
+# guide now says the same thing to every user (phases/direction.md, "Batch the
+# sweep"); this carries it to the arm under measurement so the benchmark scores
+# the method people actually run. Deliberately given to add-loop ONLY: leaking it
+# into `raw` or `spec-kit` would lift the controls along with the treatment.
+BATCH_CLAUSE = (
+    "Ground yourself in BATCHED turns: issue every independent read, grep, or "
+    "listing in ONE turn rather than one per turn — a serial chain pays a full "
+    "turn's context for each file. Skip harness bookkeeping entirely: no "
+    "task-tracker calls and no sleep-polling; they spend turns and deliver "
+    "nothing to the workload. "
+)
+
+
 def _wrap_prompt(text: str, wrapper: str) -> str:
     if wrapper == "plan-then-execute":
         return f"Plan first, then execute:\n\n{text}"
-    if wrapper == "add-loop":
+    if wrapper in ("add-loop", "add-loop-enumerate"):
+        extra = ENUMERATE_CLAUSE if wrapper == "add-loop-enumerate" else ""
         return (
             "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
             "`python3 .add/tooling/add.py status` FIRST and follow its next-step through the "
@@ -56,12 +89,32 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "the PLAN.md header (and fill the §3 AI-verify record) — "
             "draft the whole Direction bundle (rules, scenarios, change plan, red suite) in "
             "ONE pass, freeze it with `add.py freeze --by <you> --cross`, build to green, "
-            "record the gate. The floor never bends: the contract is FROZEN and the red suite "
+            "record the gate. "
+            + extra
+            + BATCH_CLAUSE
+            + "The floor never bends: the contract is FROZEN and the red suite "
             "precedes the build (never skip contract, tests, build, or verify). Finish the run "
             "once the app meets the requirements and the verify gate is recorded — do NOT run "
             "milestone-done, delta-append (fold-style ledger work), or archive-milestone: that "
             "milestone-ledger close-out is project bookkeeping, not part of delivering this "
             "feature, and is out of scope for the benchmark.\n\n"
+            + text
+        )
+    if wrapper == "spec-kit":
+        # The arm installs spec-kit and must then USE it. Without this the arm was
+        # `specify init` followed by the bare prompt: zero specs/ artifacts in every
+        # campaign, i.e. a competent agent in a directory of unopened templates.
+        return (
+            "Drive this repo's spec-kit workflow for the whole job: run the full "
+            "Spec-Driven Development cycle in order — `/speckit.specify` to write the "
+            "spec, `/speckit.plan` to plan it, `/speckit.tasks` to break it down, then "
+            "`/speckit.implement` to build it. The command prompts are installed under "
+            "`.claude/commands/`; if a slash command is unavailable, read the "
+            "corresponding prompt file and follow it. Write the spec BEFORE the code, "
+            "and leave the resulting `specs/<feature>/` artifacts in place. This is a "
+            "headless run with no human available: carry the human's proxy authority "
+            "and never end the run waiting for a reply; the job is done only when the "
+            "app meets the requirements.\n\n"
             + text
         )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim

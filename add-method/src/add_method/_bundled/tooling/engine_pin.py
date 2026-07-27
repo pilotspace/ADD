@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "54aff8b8ce3b8ee9c1cda23ee4e06f79"  # re-aimed @ seed-method-personas (init/migrate seed the three method-lens planners via _seed_persona_file). prior: 60eef504… @ egg-info-prune
+ENGINE_MD5 = "8eea32f33485955d1ce606fb7fe555e2"  # re-aimed @ edge-rigor (an enumerated [edge] row must resolve to a real test or carry a stated reason). prior: 789f9b33… @ design-at-build
 ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide

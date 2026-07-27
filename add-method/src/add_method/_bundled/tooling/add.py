@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -71,6 +72,7 @@ from add_engine.taskdoc import (
     _task_header, _count_test_defs, _primary_test_files, _tests_count,
     _declared_test_files, _declared_tests_count, _tests_info, _task_prose,
     _phase_spans, _raw_phase_bodies, _spec_delta_entries,
+    _HEADING_RE,
 )
 
 # --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
@@ -1028,6 +1030,13 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         # intake -> milestone flow. Speaks of STRUCTURE (not attached), never the act.
         print(f"note: '{slug}' is not attached to a milestone — size it via /add (intake), "
               "or pass --milestone <id>")
+    # a VIEW: printed, never written — nothing lands in PLAN.md or state.json. Silent
+    # when there is nothing to show; a header with no rows is noise on every task that
+    # inherits none. MUST sit outside the if/else above: a bare `for` between an `if`
+    # body and its `else:` binds the else to the FOR (for/else), which then fires on
+    # every loop that completes without break — valid Python, entirely wrong.
+    for _owner, _inv in _inherited_invariants(root, state, depends_on):
+        print(f"inherits (must not break) · {_owner}: {_inv}")
     if from_delta:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
@@ -1214,6 +1223,25 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     if not _flag_well_formed(raw3):
         _die(f"unflagged_freeze: {slug}'s §3 must surface a well-formed lowest-confidence flag "
              f"('Least-sure flag surfaced at freeze:' + a [part] tag) before it freezes")
+    # invariants-publish: an OPTIONAL §3 block — ABSENCE is grandfathered (boundary_unfilled's
+    # own shape), PRESENCE is validated. A published invariant that no test can fail is the
+    # `turn_ceiling` failure mode wearing a citation: declared everywhere, true nowhere.
+    # validate-then-write — nothing is written on this path.
+    for _inv_text, _inv_cited in _published_invariants(raw3):
+        _proof = (_inv_cited or "").split("::", 1)[0].strip()
+        _ok = False
+        if _proof:
+            try:                                   # fail-closed, like _declared_scope
+                _cand = (root.parent / _proof).resolve()
+                _ok = _cand.is_file() and _cand.is_relative_to(root.parent.resolve())
+            except (OSError, ValueError):
+                _ok = False
+        if not _ok:
+            _why = ("carries no `(proof: `path::test_name`)` citation" if not _inv_cited
+                    else f"cites `{_inv_cited}`, which does not resolve to a file under the "
+                         f"project root")
+            _die(f"invariant_without_proof: {slug} publishes \"{_inv_text}\" but it {_why} "
+                 f"— an invariant no test can fail is a comment, not a contract")
     # quality-floors lever 2 (fast-lane-boundary-line): a §1 `Boundary:` line still carrying
     # the bare template placeholder (or empty) refuses the freeze — the wm2 input-dialect
     # floor at the fast lane's single approval seam. Absent line = grandfathered (legacy
@@ -2194,6 +2222,157 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
     print(f"filled §{n} ({cur}) from --fill")
 
 
+# --- direction-one-shot: the whole bundle in ONE call ----------------------
+#
+# `advance --fill` batches ONE section for ONE crossing. A direction bundle is
+# three sections and a freeze, and the pay1-4 fold (2026-07-26) measured 4.9 of
+# direction's 31 minutes spent building a single PLAN.md through 45 successive
+# Edits. `draft` collapses that to one call, reusing --fill's all-or-nothing
+# snapshot verbatim in structure and the ONE canonical heading scan — never a
+# second grammar.
+_DRAFT_SECTIONS = (1, 3, 4)          # §2 is retired in place; §5-§7 are build/verify's
+_RED_TIMEOUT_DEFAULT = 300           # seconds
+
+
+def _bundle_sections(payload: str) -> dict[int, str]:
+    """Split a draft bundle into §-bodies, keyed by section number, using the ONE
+    canonical `^##\\s*<n>\\s*·` scan (`taskdoc._HEADING_RE`). Unlike `_phase_spans`
+    this keeps EVERY numbered heading it finds, including out-of-range ones, so a
+    §5 in the bundle can be REFUSED rather than silently dropped. PURE."""
+    lines = payload.splitlines()
+    marks = [(int(m.group(1)), i) for i, ln in enumerate(lines)
+             if (m := _HEADING_RE.match(ln))]
+    out: dict[int, str] = {}
+    for pos, (n, i) in enumerate(marks):
+        end = marks[pos + 1][1] if pos + 1 < len(marks) else len(lines)
+        out[n] = "\n".join(lines[i + 1:end]).strip("\n")
+    return out
+
+
+def _derived_red_cmd(text: str) -> list[str]:
+    """The red-suite command implied by §4's backticked `Tests live in:` tokens.
+    A bare `--run-red` means "run what the bundle declared" — if the bundle declared
+    nothing runnable, that is a refusal, never a guess at a second default."""
+    m = re.search(r"(?m)^Tests live in:[ \t]*(.*)$", _phase_spans(text).get(4, ""))
+    toks = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    toks = [t for t in toks if t and not t.startswith("<")]
+    if not toks:
+        _die("red_suite_unrunnable: §4 declares no backticked `Tests live in:` path to run "
+             "— pass --run-red \"<command>\" explicitly")
+    return [sys.executable, "-m", "pytest", *toks]
+
+
+def _run_red_suite(cmd: list[str], timeout: int, cwd: Path) -> int:
+    """Run the declared suite and return its exit code — the engine OBSERVING the red
+    that the method has always asked the agent to assert.
+
+    design-for-failure: an argv list, never `shell=True` (a bundle-derived token must
+    not become shell syntax); bounded by `timeout`; NO retry — a suite run is not
+    idempotent-cheap, so a retried timeout can double whatever side effect hung it.
+    Anything that prevents an honest verdict is a refusal, never a silent skip."""
+    try:
+        proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True,
+                              text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _die(f"red_suite_unrunnable: the red suite exceeded its {timeout}s limit "
+             f"({' '.join(cmd)}) — raise --red-timeout, narrow the suite, or run it yourself")
+    except (OSError, ValueError) as exc:
+        _die(f"red_suite_unrunnable: cannot run the red suite ({' '.join(cmd)}): {exc}")
+    return proc.returncode
+
+
+def cmd_draft(args: argparse.Namespace) -> None:
+    """`draft --from <bundle>`: write §1 + §3 + §4 in ONE call, optionally observe the
+    red suite, optionally freeze — all-or-nothing.
+
+    validate-then-write (cmd_freeze's own discipline): every refusal that can fire
+    without touching disk fires first. After the write, ANY refusal — `_die`'s
+    SystemExit included — restores the original bytes before re-raising, so a rejected
+    draft never leaves a half-written bundle behind (`_fill_and_advance`'s contract,
+    widened from one section to three). `draft` adds NO bypass: `--freeze` calls
+    cmd_freeze, so contract_not_drafted · unflagged_freeze · boundary_unfilled and the
+    scope floors all still decide."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, getattr(args, "slug", None))
+    f = root / "tasks" / slug / "PLAN.md"
+
+    # --- validate: zero writes past this point until every refusal has fired ---
+    src = getattr(args, "src", None)
+    if src == "-":
+        payload = sys.stdin.read()
+    else:
+        try:
+            payload = Path(src).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            _die(f"draft_unreadable: {exc}")
+    sections = _bundle_sections(payload)
+    unknown = sorted(n for n in sections if n not in _DRAFT_SECTIONS)
+    if unknown:
+        _die(f"draft_unknown_section: the bundle carries §{unknown} — `draft` writes the "
+             f"direction sections {list(_DRAFT_SECTIONS)} only; §5-§7 are filled at build "
+             f"and verify, by the beats that earned them")
+    missing = [n for n in _DRAFT_SECTIONS if n not in sections]
+    if missing:
+        _die(f"draft_sections_missing: the bundle has no §{missing} — a direction bundle is "
+             f"§1 rules + §3 plan + §4 red suite, written together or not at all")
+    try:
+        original = f.read_bytes()
+    except OSError as exc:
+        _die(f"draft_unreadable: {exc}")
+    text = original.decode("utf-8")
+    if _contract_frozen(_phase_spans(text).get(3, "")):
+        _die(f"draft_onto_frozen: {slug}'s §3 is already FROZEN — a shape change is a change "
+             f"request back to SPECIFY, never a redraft")
+    phase = (state["tasks"].get(slug) or {}).get("phase", "direction")
+    if _phase_index(phase) > _phase_index("direction"):
+        _die(f"draft_onto_frozen: {slug} is at '{phase}' — `draft` writes the direction "
+             f"bundle, and this task has left direction")
+
+    lines = text.splitlines(keepends=True)
+    heads = [(int(m.group(1)), i) for i, ln in enumerate(lines)
+             if (m := _HEADING_RE.match(ln))]
+    at = {n: i for n, i in heads if n in _DRAFT_SECTIONS}
+    absent = [n for n in _DRAFT_SECTIONS if n not in at]
+    if absent:
+        _die(f"draft_sections_missing: {f} has no '## {absent[0]} ·' heading to write into "
+             f"— the task doc is not an ADD PLAN.md")
+
+    # Bottom-up so an earlier section's replacement cannot invalidate a later index.
+    # Each body runs to the next `## ` or bare `---`, exactly as _fill_and_advance
+    # bounds its one section — so the `---` rules between sections survive.
+    for n in sorted(_DRAFT_SECTIONS, reverse=True):
+        start = at[n]
+        end = start + 1
+        while end < len(lines) and not (lines[end].startswith("## ")
+                                        or re.match(r"^---\s*$", lines[end])):
+            end += 1
+        lines[start + 1:end] = ["\n" + sections[n].rstrip("\n") + "\n\n"]
+
+    try:
+        _atomic_write(f, "".join(lines))
+        if getattr(args, "run_red", None) is not None:
+            cmd = (shlex.split(args.run_red) if args.run_red
+                   else _derived_red_cmd(f.read_text(encoding="utf-8")))
+            rc = _run_red_suite(cmd, int(getattr(args, "red_timeout", _RED_TIMEOUT_DEFAULT)),
+                                root.parent)
+            if rc == 0:
+                _die("red_suite_green: the declared suite PASSED before the build — a red "
+                     "suite is what makes the build's green mean anything. Write the failing "
+                     "cases first, then draft.")
+            print(f"red suite ran RED (exit {rc}) — {' '.join(cmd)}")
+        print(f"drafted §1 §3 §4 of {slug} in one call")
+        if getattr(args, "freeze", False):
+            cmd_freeze(args)
+        else:
+            print(_next_footer(root, state))
+    except BaseException:
+        # all-or-nothing: restore the pre-draft bytes on ANY refusal, then surface
+        # the guard's own message unchanged.
+        _atomic_write(f, text)
+        raise
+
+
 def cmd_advance(args: argparse.Namespace) -> None:
     root = _require_root()
     state = load_state(root)
@@ -2773,6 +2952,54 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # changed since the tests->build snapshot. Placed BEFORE the waiver write so
         # a tamper finding is never launderable through RISK-ACCEPTED.
         _tamper_guard(root, state, slug)
+        # design-at-build: a node that PUBLISHES invariants owes its dependents the
+        # reasoning behind them. PLAN.md persists the interface and not essays — right
+        # for most tasks, wrong for the one kind that BINDS its neighbours. Fires after
+        # _tamper_guard (a cheat outranks a missing document) and applies to BOTH
+        # completing outcomes: a waiver must not launder a missing design.
+        try:                                    # ONE read; both floors below read its spans
+            _spans = _phase_spans((root / "tasks" / slug / "PLAN.md")
+                                  .read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            _spans = {}
+        if _published_invariants(_spans.get(3, "")):
+            _design = root / "tasks" / slug / "DESIGN.md"
+            if not _design.exists():
+                _die(f"design_missing: {slug} publishes invariants its dependents inherit, "
+                     f"so it cannot gate without the reasoning behind them — write "
+                     f"{_design}")
+            try:
+                _body = _design.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                _body = ""                          # fail-soft: never a traceback at a gate
+            if not _body.strip():
+                _die(f"design_empty: {_design} is empty — a touched file is not reasoning; "
+                     f"say WHY the published invariant holds, for whoever inherits it")
+        # edge-rigor: an ENUMERATED edge case must resolve to a real test or carry a
+        # stated reason. The engine does not run the suite here, so presence of the test
+        # name in the §4-declared files is the mechanical proxy for "covered" — green-ness
+        # is the §6 evidence floor's job, and this closes the enumerate-and-forget hole.
+        _edges = _edge_rows(_spans.get(4, ""))
+        if _edges:
+            _names: set[str] = set()
+            for _f in _declared_test_files(root, slug):
+                try:                                 # fail-soft: never a traceback at a gate
+                    _names.update(re.findall(r"(?m)^\s*def\s+(\w+)",
+                                             _f.read_text(encoding="utf-8")))
+                except (OSError, UnicodeDecodeError):
+                    continue
+            for _tname, _waiver in _edges:
+                if _waiver is not None:
+                    if not _waiver.strip():
+                        _die(f"edge_waiver_unreasoned: {slug}'s §4 waives edge case "
+                             f"'{_tname}' with a blank reason — the escape hatch costs a "
+                             f"sentence, or write the test")
+                    continue                          # accounted for, on the record
+                if _tname not in _names:
+                    _die(f"edge_unaccounted: {slug}'s §4 enumerates edge case '{_tname}' but "
+                         f"no such test exists in the declared suite — write it, or waive it "
+                         f"with [edge — waived: <reason>]. Enumerating a case you do not "
+                         f"cover reads as coverage to every later reader")
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
@@ -5783,6 +6010,90 @@ def _decision_markers(body: str, section: int) -> list[dict]:
     return items
 
 
+def _edge_rows(raw4: str) -> list[tuple[str, str | None]]:
+    """§4 test_plan rows tagged `[edge]`, as (test_name, waiver_reason | None). PURE.
+
+    Enumerating an edge case buys credit for work that may never have been done: the
+    row reads as coverage to every later reader and nothing ever disagrees. Only
+    `[edge]`-tagged rows are returned — `[GATED]` rows belong to the §6 evidence floor
+    (the suite must be green), and double-enforcing them here would refuse on a naming
+    mismatch. A waived row yields its reason (possibly ""), so a blank waiver can be
+    refused separately from an honest one. Accepts an em-dash or a plain hyphen: the
+    template and hand-typed rows will differ."""
+    out: list[tuple[str, str | None]] = []
+    for ln in raw4.splitlines():
+        m = re.match(r"\s*-\s+(\w+)\s*:", ln)
+        if not m:
+            continue
+        waived = re.search(r"\[edge\s*[—-]\s*waived\s*:([^\]]*)\]", ln)
+        if waived:
+            out.append((m.group(1), waived.group(1)))
+        elif re.search(r"\[edge\]", ln):
+            out.append((m.group(1), None))
+    return out
+
+
+def _inherited_invariants(root: Path, state: dict, deps: list[str]) -> list[tuple[str, str]]:
+    """The invariants a new node inherits: (owner slug, invariant text), deduped.
+
+    A VIEW, never a store (graph-as-view, the signal-graph precedent) — each entry is
+    read fresh from the ancestor's own §3, so it cannot drift from the node that owns
+    it. Walks the TRANSITIVE depends_on closure with a visited set: `--relates-to`
+    already proves this graph is not guaranteed acyclic.
+
+    Fail-soft by design: an ancestor whose PLAN.md is missing or unreadable contributes
+    NOTHING and never raises. A broken neighbour must not block a healthy new node, and
+    the guard for an unproven invariant lives at the ancestor's own freeze."""
+    seen: set[str] = set()
+    queue = list(deps or [])
+    out: list[tuple[str, str]] = []
+    while queue:
+        slug = queue.pop(0)
+        if slug in seen:
+            continue
+        seen.add(slug)
+        rec = (state.get("tasks") or {}).get(slug) or {}
+        queue.extend(rec.get("depends_on") or [])
+        try:
+            raw3 = _phase_spans((root / "tasks" / slug / "PLAN.md")
+                                .read_text(encoding="utf-8")).get(3, "")
+        except (OSError, UnicodeDecodeError):
+            continue                                   # fail-soft: contributes nothing
+        for text, _cited in _published_invariants(raw3):
+            row = (slug, text)
+            if row not in out:
+                out.append(row)
+    return out
+
+
+def _published_invariants(raw3: str) -> list[tuple[str, str | None]]:
+    """§3's OPTIONAL published-invariant entries as (text, cited path | None). PURE.
+
+    A node publishes what its dependents must not break; `invariant-inherit` walks
+    these. ABSENCE returns [] — every task on disk predates the block, and absence
+    must never become a new refusal (boundary_unfilled's own grandfathering shape).
+    The block is a bare `Invariants (published):` line followed by `  - <text>`
+    bullets, ending at the first line that is neither a bullet nor blank; the
+    template's placeholder-carrying line deliberately does NOT match, so a bare new
+    task still freezes."""
+    lines = raw3.splitlines()
+    start = next((i for i, ln in enumerate(lines)
+                  if re.match(r"^\s*Invariants \(published\):\s*$", ln)), None)
+    if start is None:
+        return []
+    out: list[tuple[str, str | None]] = []
+    for ln in lines[start + 1:]:
+        if not ln.strip():
+            break
+        bullet = re.match(r"^\s*-\s+(.*)$", ln)
+        if not bullet:
+            break
+        text = bullet.group(1).strip()
+        cited = re.search(r"\(proof:\s*`([^`]+)`\s*\)", text)
+        out.append((text, cited.group(1) if cited else None))
+    return out
+
+
 def _contract_frozen(raw3: str) -> bool:
     """§3's `Status:` line is the freeze signal (v12 precedent: the freeze is
     artifact-observable; no engine flag). Missing Status -> DRAFT (fail-closed)."""
@@ -7155,6 +7466,28 @@ def build_parser() -> argparse.ArgumentParser:
                          "and advance in one call; all-or-nothing — a refused crossing restores "
                          "PLAN.md byte-identical (incompatible with --to)")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
+
+    pdr = sub.add_parser("draft",
+                         help="write the whole direction bundle (§1+§3+§4) from ONE file "
+                              "and optionally freeze — all-or-nothing")
+    pdr.add_argument("slug", nargs="?", default=None)
+    pdr.add_argument("--from", dest="src", required=True, metavar="PATH",
+                     help="bundle delimited by its own '## <n> ·' headings ('-' = stdin)")
+    pdr.add_argument("--run-red", dest="run_red", nargs="?", const="", default=None,
+                     metavar="CMD",
+                     help="run the red suite and REFUSE to freeze if it PASSES (bare: derive "
+                          "the command from §4's `Tests live in:` tokens)")
+    pdr.add_argument("--red-timeout", dest="red_timeout", type=int,
+                     default=_RED_TIMEOUT_DEFAULT,
+                     help="seconds the red run may take before it is a refusal (default 300)")
+    pdr.add_argument("--freeze", action="store_true",
+                     help="chain the freeze in the same call (every freeze floor still decides)")
+    pdr.add_argument("--by", default=None, help="approver name (with --freeze)")
+    pdr.add_argument("--cross", action="store_true",
+                     help="compound tick: land in build in the same call")
+    pdr.add_argument("--ai-plan-verify", action="store_true", dest="ai_plan_verify",
+                     help="AI-plan-verify-gate (see `freeze -h`)")
+    pdr.set_defaults(func=cmd_draft, _opt_positionals=("slug",))
 
     prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
                                           "HUMAN-APPROVED post-freeze test change")

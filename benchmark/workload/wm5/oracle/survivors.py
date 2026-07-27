@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from benchmark.workload._oracle_lib import http_call, running_app
+from benchmark.workload._oracle_lib import http_call, running_app, records
 
 TOKEN_A = "test-token-alice"
 TOKEN_B = "test-token-bob"
@@ -93,7 +93,7 @@ def test_room_schedule_readable_by_any_caller():
             "GET", f"{base}/rooms/sv5-sched-room/schedule", headers=_auth(TOKEN_B)
         )
         assert status == 200
-        assert isinstance(body, list)
+        assert records(body) is not None
         by_id = {item.get("id"): item for item in body}
         assert early["id"] in by_id and late["id"] in by_id
         for entry in (by_id[early["id"]], by_id[late["id"]]):

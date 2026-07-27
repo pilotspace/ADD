@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from benchmark.workload._oracle_lib import http_call, running_app
+from benchmark.workload._oracle_lib import http_call, running_app, records
 
 
 def _workspace() -> str:
@@ -43,7 +43,7 @@ def test_list_bookings():
         )
         status, body = http_call("GET", f"{base}/bookings")
         assert status == 200, body
-        assert isinstance(body, list) and len(body) >= 1
+        assert records(body) is not None and len(records(body)) >= 1
 
 
 def test_update_and_delete_booking():

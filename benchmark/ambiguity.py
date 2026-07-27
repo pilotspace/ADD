@@ -141,6 +141,39 @@ def validate_ambiguities(rows: object) -> list[dict]:
     return rows
 
 
+# D1 (2026-07-26): anchors matched inside longer words — "position" is a
+# substring of "composition", so a sentence about image composition surfaced
+# A-position-ordering. Anchors are TERMS, not character sequences. Markers stay
+# unbounded on purpose: they are stems ("assum" -> assume/assumption/assuming).
+_ANCHOR_RE: dict[str, re.Pattern] = {}
+
+
+def _anchor_at(sentence_low: str, anchor: str) -> int:
+    """Offset of `anchor` as a whole term in `sentence_low`, or -1."""
+    low = anchor.lower()
+    pattern = _ANCHOR_RE.get(low)
+    if pattern is None:
+        pattern = re.compile(r"(?<![0-9a-z])" + re.escape(low) + r"(?![0-9a-z])")
+        _ANCHOR_RE[low] = pattern
+    match = pattern.search(sentence_low)
+    return match.start() if match else -1
+
+
+# D2 (2026-07-26): "assum" is a substring of "</assumptions>", so the tag CLOSING
+# ADD's assumptions block marked whichever sentence followed it — live, the first
+# line of the contract body. Only well-formed simple tags are blanked: a greedy
+# <...> strip would eat "start < other.end AND end > other.start", which is prose
+# about a boundary and often the very thing being surfaced.
+#
+# Replaced with spaces of EQUAL LENGTH so every offset — including edit_pos, which
+# indexes the untouched transcript — keeps pointing where it did.
+_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9_-]*\s*/?>")
+
+
+def _blank_tags(text: str) -> str:
+    return _TAG_RE.sub(lambda m: " " * len(m.group(0)), text)
+
+
 def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
     """Return the matched evidence span, or "" if the item was never surfaced.
 
@@ -153,6 +186,7 @@ def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
     for raw in texts:
         if not raw:
             continue
+        raw = _blank_tags(raw)      # D2: markup is not prose
         pos = 0
         for sentence in _SENT_SPLIT.split(raw):
             start = raw.find(sentence, pos)
@@ -167,14 +201,18 @@ def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
             # rejects a run-on where the marker sits thousands of chars from the
             # anchor (a frozen test caught this when sentence-scoping alone shipped).
             m_at = next((low.find(m) for m in MARKERS if m in low), -1)
-            a_at = next((low.find(a) for a in anchors if a in low), -1)
+            a_at = next((at for at in (_anchor_at(low, a) for a in anchors)
+                         if at != -1), -1)
             if m_at != -1 and a_at != -1 and abs(m_at - a_at) <= WINDOW:
                 return sentence.strip()
     return ""
 
 
 def _anchor_hits(sentence_low: str, item: dict) -> int:
-    return sum(1 for a in item["anchors"] if a.lower() in sentence_low)
+    # Whole-term matching (D1): best_attribution RANKS on this count, so a
+    # phantom substring hit does not merely add a false surfacing — it can
+    # outrank, and thereby steal, a genuine one from the item that earned it.
+    return sum(1 for a in item["anchors"] if _anchor_at(sentence_low, a) != -1)
 
 
 def best_attribution(sentence: str, items: Sequence[dict]) -> str | None:

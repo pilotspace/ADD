@@ -3,6 +3,8 @@ setup_steps = [
   "npx -y get-shit-done-cc@1.42.3 init  # pre-seed .claude/ without a global-install PATH dependency",
 ]
 prompt_wrapper = "raw"
+scaffold_only = true
+scaffold_only_reason = """GSD's command surface has not been verified for this runner, so the arm currently measures a competent agent working in a GSD-seeded workspace — NOT the GSD method. Declared rather than silently implied; fixing it needs the same treatment spec-kit received (an integration flag that targets this runner plus a wrapper that drives the documented cycle), which is its own task."""
 # Real, reproducible upstream pin (confirmed via `npm view get-shit-done-cc versions` 2026-07-07).
 pin = "get-shit-done-cc@1.42.3"
 
