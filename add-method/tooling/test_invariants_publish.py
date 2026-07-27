@@ -31,11 +31,18 @@ HERE = pathlib.Path(__file__).resolve().parent
 ADD_PY = HERE / "add.py"
 REPO = HERE.parents[1]
 
-TEMPLATES = (
+# Two of the four template twins are GITIGNORED dogfood trees that do not exist
+# in a fresh checkout — test_tree_parity's exists-skip convention. The git-tracked
+# pair must ALWAYS be present and identical; a dogfood twin is compared only if it
+# is there. (The nested fresh-checkout run in test_ci_tooling_mirror_gap.py is what
+# catches a guard that forgets this.)
+TEMPLATES_TRACKED = (
     "add-method/tooling/templates/PLAN.md.tmpl",
+    "add-method/src/add_method/_bundled/tooling/templates/PLAN.md.tmpl",
+)
+TEMPLATES_DOGFOOD = (
     ".add/tooling/templates/PLAN.md.tmpl",
     "add-method/.add/tooling/templates/PLAN.md.tmpl",
-    "add-method/src/add_method/_bundled/tooling/templates/PLAN.md.tmpl",
 )
 
 _FLAG = ("Least-sure flag surfaced at freeze: [contract] fixture stub — cost: none")
@@ -145,19 +152,23 @@ class TheFloorLetsGoodWorkThrough(_Project):
 class TheTemplateOffersIt(unittest.TestCase):
     def test_every_template_twin_carries_the_block(self):  # M5
         digests = set()
-        for rel in TEMPLATES:
+        for rel in TEMPLATES_TRACKED:
             p = REPO / rel
-            self.assertTrue(p.exists(), f"missing template twin: {rel}")
+            self.assertTrue(p.exists(), f"git-tracked template twin missing: {rel}")
             text = p.read_text()
             self.assertIn("Invariants (published)", text,
                           f"{rel} never offers the block, so nobody will publish one")
             digests.add(text)
+        for rel in TEMPLATES_DOGFOOD:            # exists-skip: gitignored
+            p = REPO / rel
+            if p.exists():
+                digests.add(p.read_text())
         self.assertEqual(len(digests), 1, "template twins drifted")
 
     def test_the_template_block_is_commented_out_or_optional(self):  # M4
         # The scaffold must not make every new task publish an invariant — the
         # template's own line has to freeze as-is.
-        text = (REPO / TEMPLATES[0]).read_text()
+        text = (REPO / TEMPLATES_TRACKED[0]).read_text()
         idx = text.index("Invariants (published)")
         window = text[max(0, idx - 200):idx + 200]
         self.assertTrue("optional" in window.lower() or "<!--" in window,

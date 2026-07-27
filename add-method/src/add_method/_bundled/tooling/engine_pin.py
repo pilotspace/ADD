@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "108469eb0d781de39638edb3b802e1ed"  # re-aimed @ invariants-publish (a §3 may PUBLISH invariants; freeze refuses one no test proves). prior: 0591806b… @ direction-one-shot
+ENGINE_MD5 = "e39496922e519202994cecc6c95c3689"  # re-aimed @ invariant-inherit (new-task prints the transitive invariants it inherits — a view, no new store). prior: 108469eb… @ invariants-publish
 ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide

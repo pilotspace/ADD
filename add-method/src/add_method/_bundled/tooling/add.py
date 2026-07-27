@@ -1030,6 +1030,13 @@ def cmd_new_task(args: argparse.Namespace) -> None:
         # intake -> milestone flow. Speaks of STRUCTURE (not attached), never the act.
         print(f"note: '{slug}' is not attached to a milestone — size it via /add (intake), "
               "or pass --milestone <id>")
+    # a VIEW: printed, never written — nothing lands in PLAN.md or state.json. Silent
+    # when there is nothing to show; a header with no rows is noise on every task that
+    # inherits none. MUST sit outside the if/else above: a bare `for` between an `if`
+    # body and its `else:` binds the else to the FOR (for/else), which then fires on
+    # every loop that completes without break — valid Python, entirely wrong.
+    for _owner, _inv in _inherited_invariants(root, state, depends_on):
+        print(f"inherits (must not break) · {_owner}: {_inv}")
     if from_delta:
         print(f"seeded from '{from_delta}' — its open SPEC delta is now "
               f"[SPEC · seeded] … [→ {slug}]; §1 Feature pre-filled.")
@@ -5953,6 +5960,39 @@ def _decision_markers(body: str, section: int) -> list[dict]:
         items.append({"marker": tag, "section": section, "text": "\n".join(block)})
         i = j
     return items
+
+
+def _inherited_invariants(root: Path, state: dict, deps: list[str]) -> list[tuple[str, str]]:
+    """The invariants a new node inherits: (owner slug, invariant text), deduped.
+
+    A VIEW, never a store (graph-as-view, the signal-graph precedent) — each entry is
+    read fresh from the ancestor's own §3, so it cannot drift from the node that owns
+    it. Walks the TRANSITIVE depends_on closure with a visited set: `--relates-to`
+    already proves this graph is not guaranteed acyclic.
+
+    Fail-soft by design: an ancestor whose PLAN.md is missing or unreadable contributes
+    NOTHING and never raises. A broken neighbour must not block a healthy new node, and
+    the guard for an unproven invariant lives at the ancestor's own freeze."""
+    seen: set[str] = set()
+    queue = list(deps or [])
+    out: list[tuple[str, str]] = []
+    while queue:
+        slug = queue.pop(0)
+        if slug in seen:
+            continue
+        seen.add(slug)
+        rec = (state.get("tasks") or {}).get(slug) or {}
+        queue.extend(rec.get("depends_on") or [])
+        try:
+            raw3 = _phase_spans((root / "tasks" / slug / "PLAN.md")
+                                .read_text(encoding="utf-8")).get(3, "")
+        except (OSError, UnicodeDecodeError):
+            continue                                   # fail-soft: contributes nothing
+        for text, _cited in _published_invariants(raw3):
+            row = (slug, text)
+            if row not in out:
+                out.append(row)
+    return out
 
 
 def _published_invariants(raw3: str) -> list[tuple[str, str | None]]:
