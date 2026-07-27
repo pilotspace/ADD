@@ -68,6 +68,8 @@ LIFECYCLE = [
     ["set-milestone", "t2", "none"],           # detach: t2 must not block milestone-done mvp
     ["relate", "t2", "--relates-to", "t"],     # edge-truth W1.5: post-creation edge verb
                                                # (reads/writes state only, never docs/)
+    ["draft", "t2", "--from", "bundle.md"],  # direction-one-shot: the one-call bundle
+                                            # writer (reads the bundle + PLAN.md, never docs/)
     ["locate", "t"],                           # graph-repair W2: read-only failure-location —
                                                # slug form prints t's dependent closure (t2's edge
                                                # is relates_to, so the closure is empty; reads
@@ -136,7 +138,18 @@ _EXERCISED_IN_SETUP = {"init"}
 # freeze is a refusal verb here: task t's §3 is still the unfilled template, so `freeze t`
 # refuses (contract_not_drafted) — exercised under the read-spy (reads PLAN.md/state, never docs/).
 # re-cross likewise refuses (recross_wrong_phase): t is done at its lifecycle slot.
-_NONZERO_OK = {"heal", "freeze", "re-cross"}
+# draft is a refusal verb at its lifecycle slot: the loop freezes every task right
+# after new-task, so `draft t2` hits draft_onto_frozen — but only AFTER reading both
+# the bundle and PLAN.md, which is the read surface this spy exists to watch.
+_NONZERO_OK = {"heal", "freeze", "re-cross", "draft"}
+
+
+def _write_draft_bundle(path="bundle.md"):
+    """A §1+§3+§4 bundle on disk so `draft` reaches its PLAN.md read."""
+    Path(path).write_text(
+        "## 1 · SPECIFY\nFeature: lifecycle fixture\n\n"
+        "## 3 · PLAN\nStatus: DRAFT\n\n"
+        "## 4 · TESTS & SCENARIOS\nTests live in: `tests/`\n", encoding="utf-8")
 
 
 class MinimalPillarTest(unittest.TestCase):
@@ -168,6 +181,8 @@ class MinimalPillarTest(unittest.TestCase):
         # init scaffolds no book; the Story is referenced by path, never installed.
         self.assertEqual(self._docs_dirs(), [], "init must not scaffold a docs/ Story")
         for argv in LIFECYCLE:
+            if argv[0] == "draft":
+                _write_draft_bundle()
             if argv[:2] == ["milestone-done", "mvp"]:
                 _meet_exit_criteria("mvp")   # v20 goal-gate: meet criteria before close
             try:
@@ -193,6 +208,8 @@ class MinimalPillarTest(unittest.TestCase):
         pathlib.Path.read_text = spy
         try:
             for argv in LIFECYCLE:
+                if argv[0] == "draft":
+                    _write_draft_bundle()
                 if argv[:2] == ["milestone-done", "mvp"]:
                     _meet_exit_criteria("mvp")   # v20 goal-gate: meet criteria before close
                 try:

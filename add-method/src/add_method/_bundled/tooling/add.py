@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -71,6 +72,7 @@ from add_engine.taskdoc import (
     _task_header, _count_test_defs, _primary_test_files, _tests_count,
     _declared_test_files, _declared_tests_count, _tests_info, _task_prose,
     _phase_spans, _raw_phase_bodies, _spec_delta_entries,
+    _HEADING_RE,
 )
 
 # --- autonomy-level resolvers (moved to add_engine/autonomy.py) -------------
@@ -2192,6 +2194,157 @@ def _fill_and_advance(args: argparse.Namespace, root: Path, state: dict, slug: s
         _atomic_write(f, original.decode("utf-8"))
         raise
     print(f"filled §{n} ({cur}) from --fill")
+
+
+# --- direction-one-shot: the whole bundle in ONE call ----------------------
+#
+# `advance --fill` batches ONE section for ONE crossing. A direction bundle is
+# three sections and a freeze, and the pay1-4 fold (2026-07-26) measured 4.9 of
+# direction's 31 minutes spent building a single PLAN.md through 45 successive
+# Edits. `draft` collapses that to one call, reusing --fill's all-or-nothing
+# snapshot verbatim in structure and the ONE canonical heading scan — never a
+# second grammar.
+_DRAFT_SECTIONS = (1, 3, 4)          # §2 is retired in place; §5-§7 are build/verify's
+_RED_TIMEOUT_DEFAULT = 300           # seconds
+
+
+def _bundle_sections(payload: str) -> dict[int, str]:
+    """Split a draft bundle into §-bodies, keyed by section number, using the ONE
+    canonical `^##\\s*<n>\\s*·` scan (`taskdoc._HEADING_RE`). Unlike `_phase_spans`
+    this keeps EVERY numbered heading it finds, including out-of-range ones, so a
+    §5 in the bundle can be REFUSED rather than silently dropped. PURE."""
+    lines = payload.splitlines()
+    marks = [(int(m.group(1)), i) for i, ln in enumerate(lines)
+             if (m := _HEADING_RE.match(ln))]
+    out: dict[int, str] = {}
+    for pos, (n, i) in enumerate(marks):
+        end = marks[pos + 1][1] if pos + 1 < len(marks) else len(lines)
+        out[n] = "\n".join(lines[i + 1:end]).strip("\n")
+    return out
+
+
+def _derived_red_cmd(text: str) -> list[str]:
+    """The red-suite command implied by §4's backticked `Tests live in:` tokens.
+    A bare `--run-red` means "run what the bundle declared" — if the bundle declared
+    nothing runnable, that is a refusal, never a guess at a second default."""
+    m = re.search(r"(?m)^Tests live in:[ \t]*(.*)$", _phase_spans(text).get(4, ""))
+    toks = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    toks = [t for t in toks if t and not t.startswith("<")]
+    if not toks:
+        _die("red_suite_unrunnable: §4 declares no backticked `Tests live in:` path to run "
+             "— pass --run-red \"<command>\" explicitly")
+    return [sys.executable, "-m", "pytest", *toks]
+
+
+def _run_red_suite(cmd: list[str], timeout: int, cwd: Path) -> int:
+    """Run the declared suite and return its exit code — the engine OBSERVING the red
+    that the method has always asked the agent to assert.
+
+    design-for-failure: an argv list, never `shell=True` (a bundle-derived token must
+    not become shell syntax); bounded by `timeout`; NO retry — a suite run is not
+    idempotent-cheap, so a retried timeout can double whatever side effect hung it.
+    Anything that prevents an honest verdict is a refusal, never a silent skip."""
+    try:
+        proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True,
+                              text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _die(f"red_suite_unrunnable: the red suite exceeded its {timeout}s limit "
+             f"({' '.join(cmd)}) — raise --red-timeout, narrow the suite, or run it yourself")
+    except (OSError, ValueError) as exc:
+        _die(f"red_suite_unrunnable: cannot run the red suite ({' '.join(cmd)}): {exc}")
+    return proc.returncode
+
+
+def cmd_draft(args: argparse.Namespace) -> None:
+    """`draft --from <bundle>`: write §1 + §3 + §4 in ONE call, optionally observe the
+    red suite, optionally freeze — all-or-nothing.
+
+    validate-then-write (cmd_freeze's own discipline): every refusal that can fire
+    without touching disk fires first. After the write, ANY refusal — `_die`'s
+    SystemExit included — restores the original bytes before re-raising, so a rejected
+    draft never leaves a half-written bundle behind (`_fill_and_advance`'s contract,
+    widened from one section to three). `draft` adds NO bypass: `--freeze` calls
+    cmd_freeze, so contract_not_drafted · unflagged_freeze · boundary_unfilled and the
+    scope floors all still decide."""
+    root = _require_root()
+    state = load_state(root)
+    slug = _resolve_task(state, getattr(args, "slug", None))
+    f = root / "tasks" / slug / "PLAN.md"
+
+    # --- validate: zero writes past this point until every refusal has fired ---
+    src = getattr(args, "src", None)
+    if src == "-":
+        payload = sys.stdin.read()
+    else:
+        try:
+            payload = Path(src).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            _die(f"draft_unreadable: {exc}")
+    sections = _bundle_sections(payload)
+    unknown = sorted(n for n in sections if n not in _DRAFT_SECTIONS)
+    if unknown:
+        _die(f"draft_unknown_section: the bundle carries §{unknown} — `draft` writes the "
+             f"direction sections {list(_DRAFT_SECTIONS)} only; §5-§7 are filled at build "
+             f"and verify, by the beats that earned them")
+    missing = [n for n in _DRAFT_SECTIONS if n not in sections]
+    if missing:
+        _die(f"draft_sections_missing: the bundle has no §{missing} — a direction bundle is "
+             f"§1 rules + §3 plan + §4 red suite, written together or not at all")
+    try:
+        original = f.read_bytes()
+    except OSError as exc:
+        _die(f"draft_unreadable: {exc}")
+    text = original.decode("utf-8")
+    if _contract_frozen(_phase_spans(text).get(3, "")):
+        _die(f"draft_onto_frozen: {slug}'s §3 is already FROZEN — a shape change is a change "
+             f"request back to SPECIFY, never a redraft")
+    phase = (state["tasks"].get(slug) or {}).get("phase", "direction")
+    if _phase_index(phase) > _phase_index("direction"):
+        _die(f"draft_onto_frozen: {slug} is at '{phase}' — `draft` writes the direction "
+             f"bundle, and this task has left direction")
+
+    lines = text.splitlines(keepends=True)
+    heads = [(int(m.group(1)), i) for i, ln in enumerate(lines)
+             if (m := _HEADING_RE.match(ln))]
+    at = {n: i for n, i in heads if n in _DRAFT_SECTIONS}
+    absent = [n for n in _DRAFT_SECTIONS if n not in at]
+    if absent:
+        _die(f"draft_sections_missing: {f} has no '## {absent[0]} ·' heading to write into "
+             f"— the task doc is not an ADD PLAN.md")
+
+    # Bottom-up so an earlier section's replacement cannot invalidate a later index.
+    # Each body runs to the next `## ` or bare `---`, exactly as _fill_and_advance
+    # bounds its one section — so the `---` rules between sections survive.
+    for n in sorted(_DRAFT_SECTIONS, reverse=True):
+        start = at[n]
+        end = start + 1
+        while end < len(lines) and not (lines[end].startswith("## ")
+                                        or re.match(r"^---\s*$", lines[end])):
+            end += 1
+        lines[start + 1:end] = ["\n" + sections[n].rstrip("\n") + "\n\n"]
+
+    try:
+        _atomic_write(f, "".join(lines))
+        if getattr(args, "run_red", None) is not None:
+            cmd = (shlex.split(args.run_red) if args.run_red
+                   else _derived_red_cmd(f.read_text(encoding="utf-8")))
+            rc = _run_red_suite(cmd, int(getattr(args, "red_timeout", _RED_TIMEOUT_DEFAULT)),
+                                root.parent)
+            if rc == 0:
+                _die("red_suite_green: the declared suite PASSED before the build — a red "
+                     "suite is what makes the build's green mean anything. Write the failing "
+                     "cases first, then draft.")
+            print(f"red suite ran RED (exit {rc}) — {' '.join(cmd)}")
+        print(f"drafted §1 §3 §4 of {slug} in one call")
+        if getattr(args, "freeze", False):
+            cmd_freeze(args)
+        else:
+            print(_next_footer(root, state))
+    except BaseException:
+        # all-or-nothing: restore the pre-draft bytes on ANY refusal, then surface
+        # the guard's own message unchanged.
+        _atomic_write(f, text)
+        raise
 
 
 def cmd_advance(args: argparse.Namespace) -> None:
@@ -7155,6 +7308,28 @@ def build_parser() -> argparse.ArgumentParser:
                          "and advance in one call; all-or-nothing — a refused crossing restores "
                          "PLAN.md byte-identical (incompatible with --to)")
     pa.set_defaults(func=cmd_advance, _opt_positionals=("slug",))
+
+    pdr = sub.add_parser("draft",
+                         help="write the whole direction bundle (§1+§3+§4) from ONE file "
+                              "and optionally freeze — all-or-nothing")
+    pdr.add_argument("slug", nargs="?", default=None)
+    pdr.add_argument("--from", dest="src", required=True, metavar="PATH",
+                     help="bundle delimited by its own '## <n> ·' headings ('-' = stdin)")
+    pdr.add_argument("--run-red", dest="run_red", nargs="?", const="", default=None,
+                     metavar="CMD",
+                     help="run the red suite and REFUSE to freeze if it PASSES (bare: derive "
+                          "the command from §4's `Tests live in:` tokens)")
+    pdr.add_argument("--red-timeout", dest="red_timeout", type=int,
+                     default=_RED_TIMEOUT_DEFAULT,
+                     help="seconds the red run may take before it is a refusal (default 300)")
+    pdr.add_argument("--freeze", action="store_true",
+                     help="chain the freeze in the same call (every freeze floor still decides)")
+    pdr.add_argument("--by", default=None, help="approver name (with --freeze)")
+    pdr.add_argument("--cross", action="store_true",
+                     help="compound tick: land in build in the same call")
+    pdr.add_argument("--ai-plan-verify", action="store_true", dest="ai_plan_verify",
+                     help="AI-plan-verify-gate (see `freeze -h`)")
+    pdr.set_defaults(func=cmd_draft, _opt_positionals=("slug",))
 
     prx = sub.add_parser("re-cross", help="re-arm the tests->build snapshots after a "
                                           "HUMAN-APPROVED post-freeze test change")
