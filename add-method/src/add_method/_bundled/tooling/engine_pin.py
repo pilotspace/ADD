@@ -17,5 +17,5 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "789f9b33b7d0a41990bd42e13daebe51"  # re-aimed @ design-at-build (a node that publishes invariants cannot gate without a non-empty DESIGN.md). prior: e3949692… @ invariant-inherit
+ENGINE_MD5 = "8eea32f33485955d1ce606fb7fe555e2"  # re-aimed @ edge-rigor (an enumerated [edge] row must resolve to a real test or carry a stated reason). prior: 789f9b33… @ design-at-build
 ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide

@@ -2957,12 +2957,12 @@ def cmd_gate(args: argparse.Namespace) -> None:
         # for most tasks, wrong for the one kind that BINDS its neighbours. Fires after
         # _tamper_guard (a cheat outranks a missing document) and applies to BOTH
         # completing outcomes: a waiver must not launder a missing design.
-        try:
-            _raw3 = _phase_spans((root / "tasks" / slug / "PLAN.md")
-                                 .read_text(encoding="utf-8")).get(3, "")
+        try:                                    # ONE read; both floors below read its spans
+            _spans = _phase_spans((root / "tasks" / slug / "PLAN.md")
+                                  .read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError):
-            _raw3 = ""
-        if _published_invariants(_raw3):
+            _spans = {}
+        if _published_invariants(_spans.get(3, "")):
             _design = root / "tasks" / slug / "DESIGN.md"
             if not _design.exists():
                 _die(f"design_missing: {slug} publishes invariants its dependents inherit, "
@@ -2975,6 +2975,31 @@ def cmd_gate(args: argparse.Namespace) -> None:
             if not _body.strip():
                 _die(f"design_empty: {_design} is empty — a touched file is not reasoning; "
                      f"say WHY the published invariant holds, for whoever inherits it")
+        # edge-rigor: an ENUMERATED edge case must resolve to a real test or carry a
+        # stated reason. The engine does not run the suite here, so presence of the test
+        # name in the §4-declared files is the mechanical proxy for "covered" — green-ness
+        # is the §6 evidence floor's job, and this closes the enumerate-and-forget hole.
+        _edges = _edge_rows(_spans.get(4, ""))
+        if _edges:
+            _names: set[str] = set()
+            for _f in _declared_test_files(root, slug):
+                try:                                 # fail-soft: never a traceback at a gate
+                    _names.update(re.findall(r"(?m)^\s*def\s+(\w+)",
+                                             _f.read_text(encoding="utf-8")))
+                except (OSError, UnicodeDecodeError):
+                    continue
+            for _tname, _waiver in _edges:
+                if _waiver is not None:
+                    if not _waiver.strip():
+                        _die(f"edge_waiver_unreasoned: {slug}'s §4 waives edge case "
+                             f"'{_tname}' with a blank reason — the escape hatch costs a "
+                             f"sentence, or write the test")
+                    continue                          # accounted for, on the record
+                if _tname not in _names:
+                    _die(f"edge_unaccounted: {slug}'s §4 enumerates edge case '{_tname}' but "
+                         f"no such test exists in the declared suite — write it, or waive it "
+                         f"with [edge — waived: <reason>]. Enumerating a case you do not "
+                         f"cover reads as coverage to every later reader")
         # §5 scope gate (build-scope-lock): touched ⊆ declared, or a named refusal —
         # same placement discipline as the tripwire (before the waiver, never on HARD-STOP).
         _scope_guard(root, state, slug)
@@ -5983,6 +6008,29 @@ def _decision_markers(body: str, section: int) -> list[dict]:
         items.append({"marker": tag, "section": section, "text": "\n".join(block)})
         i = j
     return items
+
+
+def _edge_rows(raw4: str) -> list[tuple[str, str | None]]:
+    """§4 test_plan rows tagged `[edge]`, as (test_name, waiver_reason | None). PURE.
+
+    Enumerating an edge case buys credit for work that may never have been done: the
+    row reads as coverage to every later reader and nothing ever disagrees. Only
+    `[edge]`-tagged rows are returned — `[GATED]` rows belong to the §6 evidence floor
+    (the suite must be green), and double-enforcing them here would refuse on a naming
+    mismatch. A waived row yields its reason (possibly ""), so a blank waiver can be
+    refused separately from an honest one. Accepts an em-dash or a plain hyphen: the
+    template and hand-typed rows will differ."""
+    out: list[tuple[str, str | None]] = []
+    for ln in raw4.splitlines():
+        m = re.match(r"\s*-\s+(\w+)\s*:", ln)
+        if not m:
+            continue
+        waived = re.search(r"\[edge\s*[—-]\s*waived\s*:([^\]]*)\]", ln)
+        if waived:
+            out.append((m.group(1), waived.group(1)))
+        elif re.search(r"\[edge\]", ln):
+            out.append((m.group(1), None))
+    return out
 
 
 def _inherited_invariants(root: Path, state: dict, deps: list[str]) -> list[tuple[str, str]]:

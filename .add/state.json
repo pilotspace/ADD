@@ -1380,7 +1380,7 @@
   "active_tasks": {
     "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "ambiguity-meter-fixes",
-    "direction-velocity": "design-at-build"
+    "direction-velocity": "edge-rigor"
   },
   "active_milestone": "direction-velocity",
   "todos": [
@@ -1644,7 +1644,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-27T06:18:07+00:00",
+  "updated": "2026-07-27T06:28:29+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -6948,7 +6948,54 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "edge-rigor": {
+      "title": "An enumerated edge case must be covered or reasoned before the gate",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "direction-velocity",
+      "depends_on": [
+        "invariants-publish"
+      ],
+      "created": "2026-07-27T06:18:47+00:00",
+      "updated": "2026-07-27T06:28:29+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-27T06:20:16+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "0b999f625651f9691f9ab808e988ed76",
+        "tests": {
+          "add-method/tooling/test_edge_rigor.py": "934ca9121b887b2b23d3ae16c4098e97"
+        }
+      },
+      "scope": {
+        "declared": [
+          ".add/tooling/",
+          "add-method/tooling/",
+          "add-method/.add/tooling/",
+          "add-method/src/add_method/_bundled/tooling/"
+        ],
+        "snapshot_md5": "87d5ac2959ce2338b283d331b9920670"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "design-at-build"
+  "active_task": "edge-rigor"
 }
