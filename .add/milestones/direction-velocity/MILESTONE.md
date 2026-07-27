@@ -44,7 +44,11 @@ Issues/Risks (shared): hand-mirrored twins have no parity test (the lock-reclaim
 ## Exit criteria (observable; map each to the task that delivers it)
 - [x] A reader of any benchmark comparison can see what the comparison arm actually does, from the arm's own name and config        (← arm-honesty)
 - [x] A scored record states which meter version produced it, so a stale number is visible without re-reading git history            (← meter-provenance)
-- [ ] A direction phase issues independent reads in a single turn — the parallel-turn count is greater than zero                     (← read-batching)   ← NOT YET MEASURED: the clause ships and is guarded, but the parallel-turn count needs a pay1-4 re-run (Gate A)
+- [~] A direction phase issues independent reads in a single turn — the parallel-turn count is greater than zero                     (← read-batching)
+      ← UNMEASURABLE AS WRITTEN. Census 2026-07-27: across 138 transcripts / 7560 assistant turns — every arm, every campaign ever recorded — EVERY turn carries exactly
+      one tool_use. The '0 of 209 direction turns parallelized' finding that motivated this task was an INSTRUMENT artifact, not a fact about ADD. Either the agent CLI emits
+      one tool_use per turn or the transcript writer splits them; either way this criterion cannot be satisfied by this harness. What Gate A DID show: Agent 8->0 and
+      SendMessage 7->0, matching BATCH_CLAUSE's skip-harness-bookkeeping half. Reword the criterion against a measurable proxy, or fix the transcript writer, before re-gating.   ← NOT YET MEASURED: the clause ships and is guarded, but the parallel-turn count needs a pay1-4 re-run (Gate A)
 - [x] A task's direction bundle is written by ONE engine call, and that call refuses to freeze unless the suite ran red              (← direction-one-shot)
 - [x] A task cannot freeze while publishing an invariant that no test proves                                                          (← invariants-publish)
 - [x] Creating a task with `--depends-on` shows the invariants it inherits, without copying them into a second store                 (← invariant-inherit)
@@ -75,7 +79,31 @@ Issues/Risks (shared): hand-mirrored twins have no parity test (the lock-reclaim
 
 ## Release steps   (AI-DEFINED — the ordered steps to ship this milestone; engine records, human gate)
 - [ ] open a PR carrying the already-green meter work (syntax-agnostic `tests_weakened` · the `pay` track · the family-choice fix) — 3 commits on `fix/tamper-syntax-agnostic`, suite 493 green
-- [ ] land W1, re-run pay1–4, record Gate A against the 2026-07-26 baseline
+- [x] land W1, re-run pay1–4, record Gate A against the 2026-07-26 baseline
+
+### Gate A record — 2026-07-27 (`add` arm, pay1–4, n=1, runs-pay-gateA-2026-07-27, engine pin 4b6844ae)
+
+| metric | baseline 2026-07-26 | Gate A | |
+|---|---|---|---|
+| cost, 4 WMs | $22.15 | **$9.94** | −55% |
+| assistant turns | 326 | **163** | −50% |
+| requirement coverage | 17/18 | **18/18** | `R-payout-timeout-bounded` now covered |
+| oracle pass rate | — | 0.9 / 1.0 / 1.0 / 1.0 | 0 regressions |
+| Read / Edit calls | 64 / 87 | 26 / 44 | |
+| Agent / SendMessage | 8 / 7 | **0 / 0** | matches BATCH_CLAUSE's skip-bookkeeping half |
+| `tests_weakened` · `assertions_lost` | — | 0.0 · 0.0 | |
+
+**PASS on the cost and coverage evidence. NOT a causal result.** Three honest limits:
+- **`draft` was called ZERO times.** The `add-loop` wrapper names `add.py freeze` and does not
+  know the verb exists, so `direction-one-shot` — the change this milestone rests on — is still
+  UNMEASURED. Fix the wrapper before Gate B, or Gate B measures nothing either.
+- **The parallel-turn criterion is unmeasurable** (see the exit-criteria note above).
+- **Direction's share of turns is NOT reported.** The fold's seam detector flips at the first
+  `freeze` and never resets, and the two campaigns used different verbs (9 freezes vs 4, plus 3
+  `advance`), so the 18.7%→54.6% reading is a detector artifact, not a measurement.
+- n=1 against measured within-arm variance (41/36/85/47 direction turns across four milestones)
+  that already exceeds this effect. The engine also gained four gate floors in the same window.
+  Cost and coverage are real; the attribution is not earned.
 - [ ] land W2, re-run pay1–4, record Gate B
 - [ ] land W3 + W4, re-run both tracks, record Gate C — coverage ≥ 0.982 must not regress
 - [ ] the human reviews the three gate records and cuts the release
