@@ -76,8 +76,14 @@ class TestNoChecklistAssertsAShape:
     """Mechanical guard. The prompts fix semantics, never serialization."""
 
     def _probe_sources(self):
+        # Checklists AND oracles. The guard originally globbed only
+        # `*/checklist.py`, so six live oracle surfaces kept asserting a bare
+        # array — the guard was blind to half the tree it was written to
+        # protect, which is the same enumeration gap it exists to prevent.
         for f in sorted(WORKLOAD.glob("*/checklist.py")):
             yield f.name, f.parent.name, f.read_text(encoding="utf-8")
+        for f in sorted(WORKLOAD.glob("*/oracle/*.py")):
+            yield f"oracle/{f.name}", f.parent.parent.name, f.read_text(encoding="utf-8")
 
     def test_no_probe_requires_a_bare_json_array(self):
         for name, wm, text in self._probe_sources():

@@ -22,6 +22,7 @@ from benchmark import judge, tamper
 from benchmark.ambiguity import is_implementation_write
 from benchmark.arms.loader import ALL_ARM_NAMES, ARM_NAMES
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
+from benchmark.meter import meter_version
 from benchmark.schema.run_record import BenchError, RunRecord, validate
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -769,6 +770,9 @@ def score_record(
     # self-describes which semantics produced the number (regression_source).
     regression_rate = compute_regression_rate_v2(workspace, wm, family)
     artifacts["regression_source"] = "v2-earlier-oracles"
+    # Provenance: which scoring code produced this row. Stamped HERE rather
+    # than by the caller, so a record can never exist without it.
+    artifacts["meter_version"] = meter_version()
 
     metrics.pop("spec_fidelity", None)  # v3: the retired LLM metric never survives into a scored record
     metrics["requirement_coverage"] = requirement_coverage

@@ -19,7 +19,7 @@ import os
 
 import pytest
 
-from benchmark.workload._oracle_lib import http_call, running_app
+from benchmark.workload._oracle_lib import http_call, running_app, records
 
 _AUTH = {"Authorization": "Bearer test-token-alice"}
 
@@ -48,4 +48,4 @@ def test_listing_is_a_json_array():
     with running_app(_workspace()) as base:
         status, body = http_call("GET", f"{base}/bookings", headers=_AUTH)
         assert status == 200
-        assert isinstance(body, list)
+        assert records(body) is not None

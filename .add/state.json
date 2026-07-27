@@ -1380,7 +1380,7 @@
   "active_tasks": {
     "strategy-intake": "risk-proportional-skip",
     "add-bench-2": "ambiguity-meter-fixes",
-    "direction-velocity": "arm-honesty"
+    "direction-velocity": "meter-provenance"
   },
   "active_milestone": "direction-velocity",
   "todos": [
@@ -1644,7 +1644,7 @@
     }
   ],
   "created": "2026-05-28T15:39:04+00:00",
-  "updated": "2026-07-27T03:34:02+00:00",
+  "updated": "2026-07-27T03:41:47+00:00",
   "milestones": {
     "add-bench-2": {
       "title": "Add Bench 2",
@@ -5350,7 +5350,110 @@
         "email": "tindang.ht97@gmail.com",
         "source": "git"
       }
+    },
+    "meter-provenance": {
+      "title": "A scored record states which meter produced it",
+      "phase": "done",
+      "gate": "PASS",
+      "milestone": "direction-velocity",
+      "depends_on": [],
+      "created": "2026-07-27T03:34:43+00:00",
+      "updated": "2026-07-27T03:41:47+00:00",
+      "freeze": {
+        "version": "v1",
+        "frozen_at": "2026-07-27T03:41:23+00:00",
+        "approved_by": "Tin Dang",
+        "actor": {
+          "name": "Tin Dang",
+          "email": "tindang.ht97@gmail.com",
+          "source": "git"
+        }
+      },
+      "flag_verified": true,
+      "route": {
+        "lane": "unrouted",
+        "by": null
+      },
+      "tripwire": {
+        "contract_md5": "9544c3fdefa52572ac5883324fce4b97",
+        "tests": {
+          "benchmark/tests/__init__.py": "d41d8cd98f00b204e9800998ecf8427e",
+          "benchmark/tests/conftest.py": "d9e5c3529d2e04a4885fb3e874e88996",
+          "benchmark/tests/test_adherence_census.py": "c75a49de3f2c07d41ef708cd0d32d75e",
+          "benchmark/tests/test_amb1_meters.py": "bb14cb2b9781bc0fda33bd86da759135",
+          "benchmark/tests/test_amb1_reading_probes.py": "5ee6faa0752acbc379ccc02d7088a529",
+          "benchmark/tests/test_ambiguity_meter_fixes.py": "7f2eb140078e1ccd570d26b8e92e5bd6",
+          "benchmark/tests/test_ambiguity_scoring.py": "6090817101532e1011cdaf1e5412f5b6",
+          "benchmark/tests/test_ambiguity_track.py": "80cb2489c544d07a0134a33b0153fa90",
+          "benchmark/tests/test_anatomy_report.py": "8c7e37b33333c3ee7a575fd5498f1b5f",
+          "benchmark/tests/test_arm_invokes_its_method.py": "cafa5dcaa113c8950110daa6ca56284f",
+          "benchmark/tests/test_arms.py": "639562d3d560c4cfa99ab490cac522c5",
+          "benchmark/tests/test_assertions_lost.py": "bfc079a84a3fc7e80fda21607eda6a0e",
+          "benchmark/tests/test_assertions_lost_recorded.py": "6db0ee85c9a3a93da2d63419d8d968a2",
+          "benchmark/tests/test_carry_forward.py": "35bb76ee6fec7b18c7409a8145efbedb",
+          "benchmark/tests/test_code_quality_annotation.py": "297716c29eb4a7df660a8fa62c9f288e",
+          "benchmark/tests/test_collection_shape.py": "888c08fbf4dc51f1f28442d8fb4590f0",
+          "benchmark/tests/test_coverage_detail.py": "782ddd75ee721a229c864d28cbdb53b2",
+          "benchmark/tests/test_cross_milestone_rescore.py": "dec4d59a7b5c7e2f17cdd7c302a48f7f",
+          "benchmark/tests/test_detector_false_positives.py": "34f373f4ae5129d96e5c9bb7c23e9a5e",
+          "benchmark/tests/test_enumerate_arm.py": "803f4666302151216c62b823ccf744aa",
+          "benchmark/tests/test_every_track_wellformed.py": "96a26ca8a741eeba225b6dcfa553cad5",
+          "benchmark/tests/test_family_choices_cover_disk.py": "014c1394d61e98429da2cf1dce326e1e",
+          "benchmark/tests/test_fidelity_dip.py": "413b79b07679ac9e27c450472e4dc794",
+          "benchmark/tests/test_hard_wm6.py": "6388035400849ea7bbd2c85549cf2b97",
+          "benchmark/tests/test_hermetic_probe_provenance.py": "6f307d2f54dbffc834e7032767e59fbd",
+          "benchmark/tests/test_hermetic_scoring.py": "826a987cb2332ecf4244fd38f826611e",
+          "benchmark/tests/test_interrupt_mechanics.py": "3f95c8e5a97e54fa2a744bed2778625a",
+          "benchmark/tests/test_isolation.py": "3d5519c6572c0121e2c6049ab76420f1",
+          "benchmark/tests/test_judge_median.py": "7e6100e448a05f2385afe32f42b1ef34",
+          "benchmark/tests/test_longhorizon_survivors.py": "fcd5039bdd13d1574b4d5e849296d075",
+          "benchmark/tests/test_meter_provenance.py": "4cfcc025cbac56d233828d609802e075",
+          "benchmark/tests/test_oracles_red.py": "5708d42b875b811cee984a4233ac1f0b",
+          "benchmark/tests/test_pilot.py": "1525aa284ea6383eaed33ae1c3cde977",
+          "benchmark/tests/test_pilot_cwd_hardening.py": "40ef9f11fe24ea6b1ab091a81acfa557",
+          "benchmark/tests/test_pilot_hardening.py": "7ecb8835c1628fff09e54cc59ef030fa",
+          "benchmark/tests/test_prune_deadweight.py": "5788e21bf10c69006f806a8b0a0243db",
+          "benchmark/tests/test_regression_split.py": "3370c72a38415c11095693a7530784c4",
+          "benchmark/tests/test_report.py": "34e5e16a65fad617ea3d586955abb351",
+          "benchmark/tests/test_requirement_coverage.py": "671cb2cf5f592215ff108919affda0ae",
+          "benchmark/tests/test_run_cli.py": "d241e432df9aa63bd58bf31f2c5ec859",
+          "benchmark/tests/test_run_cli_resolve.py": "ea8c0a33e078f99ff73d652cbd965a1b",
+          "benchmark/tests/test_run_record.py": "e724b9b91ebc5eec14f610d464cefe1e",
+          "benchmark/tests/test_runner_core.py": "20941776cfcc7ebb4ef70f91f2c82b48",
+          "benchmark/tests/test_runner_records.py": "e8f9d962d0bfd7de30cca77687c219b9",
+          "benchmark/tests/test_runner_resume.py": "f1697c74004b68c3ac760961433ac515",
+          "benchmark/tests/test_score.py": "e8bb47a564d9ab770d4bb1a00665ba8a",
+          "benchmark/tests/test_session_mode.py": "bb0529320e8fbffb56b1580ae0b90757",
+          "benchmark/tests/test_swe_smoke.py": "0ad5704d64cf1ada2902d817f5e70ad0",
+          "benchmark/tests/test_tamper_syntax_agnostic.py": "47a485a8b7722ff2c60be481367c709d",
+          "benchmark/tests/test_tempdir_isolation.py": "075b61f3ac1966b18d4de3792a60b118",
+          "benchmark/tests/test_token_anatomy.py": "d0e83789c57fd49589afc5d3457f5a75",
+          "benchmark/tests/test_trust_report.py": "f9bd08c7ce562943105615f091c5fcec",
+          "benchmark/tests/test_v2_meter.py": "b129055f4270eefe5abe2b20c7c53d42",
+          "benchmark/tests/test_wm4plus.py": "7b92aed2c7c91cf18c79e20838273ee1",
+          "benchmark/tests/test_workload_prompts.py": "fa6897be01059c6b78bd59d63236d86d",
+          "benchmark/tests/test_workspace_isolation.py": "29973fab619988948d865878985df176",
+          "benchmark/tests/test_wv1_aggregate.py": "e74b63594a82fef3d606eeca18952382",
+          "benchmark/tests/test_wv1_survivors.py": "0ff3b258fa614affc7c873e66b35fc71",
+          "benchmark/tests/test_wv2_family.py": "7d274e4db2a645c10ee192377f6005da"
+        }
+      },
+      "scope": {
+        "declared": [
+          "benchmark/meter.py",
+          "benchmark/score.py",
+          "benchmark/workload/",
+          "benchmark/tests/"
+        ],
+        "snapshot_md5": "4c30507073a0f9dd0787e8f1cc77f316"
+      },
+      "target_hit": "yes",
+      "gate_actor": {
+        "name": "Tin Dang",
+        "email": "tindang.ht97@gmail.com",
+        "source": "git"
+      }
     }
   },
-  "active_task": "arm-honesty"
+  "active_task": "meter-provenance"
 }

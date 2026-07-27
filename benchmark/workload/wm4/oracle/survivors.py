@@ -14,7 +14,7 @@ import os
 
 import pytest
 
-from benchmark.workload._oracle_lib import http_call, running_app
+from benchmark.workload._oracle_lib import http_call, running_app, records
 
 _AUTH = {"Authorization": "Bearer test-token-alice"}
 
@@ -77,7 +77,7 @@ def test_window_filter_scopes_listing():
             headers=_AUTH,
         )
         assert status == 200
-        assert isinstance(body, list)
+        assert records(body) is not None
         ids = {item.get("id") for item in body}
         assert in_window["id"] in ids, "the in-window booking must be returned"
         assert out_window["id"] not in ids, "the out-of-window booking must be filtered out"
@@ -93,7 +93,7 @@ def test_pagination_caps_and_rejects_invalid():
             assert status in (200, 201), made
         status, body = http_call("GET", f"{base}/bookings?limit=2", headers=_AUTH)
         assert status == 200
-        assert isinstance(body, list)
+        assert records(body) is not None
         assert len(body) == 2, f"limit=2 must cap the listing, got {len(body)}"
         status, _ = http_call("GET", f"{base}/bookings?limit=-1", headers=_AUTH)
         assert status == 400
