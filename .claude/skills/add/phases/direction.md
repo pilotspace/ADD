@@ -216,7 +216,7 @@ confirmed it actually matched (a `for x in $VAR` that ran vacuous proves nothing
 Everything else — what it **Touches**, the **Honors**/seams consulted, the **Issues/Risks**, the
 **Related intent** (the WHY) — you REASON now and let the frozen Contract encode; don't transcribe it
 into the file. Sweep BROAD cheaply (skim an index/map; a subagent sweep for unfamiliar ground), then
-DEEPEN on what THIS task needs. *Greenfield / first task:* grounding IS the foundation docs — an
+DEEPEN on what THIS task needs. **Batch the sweep**: independent reads, greps and listings go out in ONE turn, never one per turn — a serial chain pays a full turn's context for every file, and grounding reads rarely depend on each other. Chain only where the next path is genuinely unknown until the previous result lands. *Greenfield / first task:* grounding IS the foundation docs — an
 honest "new module, no code; honors CONVENTIONS.md §X" is complete.
 
 ### Contract — freeze the external shape (HARD, tamper-guarded)
