@@ -84,6 +84,23 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "feature, and is out of scope for the benchmark.\n\n"
             + text
         )
+    if wrapper == "spec-kit":
+        # The arm installs spec-kit and must then USE it. Without this the arm was
+        # `specify init` followed by the bare prompt: zero specs/ artifacts in every
+        # campaign, i.e. a competent agent in a directory of unopened templates.
+        return (
+            "Drive this repo's spec-kit workflow for the whole job: run the full "
+            "Spec-Driven Development cycle in order — `/speckit.specify` to write the "
+            "spec, `/speckit.plan` to plan it, `/speckit.tasks` to break it down, then "
+            "`/speckit.implement` to build it. The command prompts are installed under "
+            "`.claude/commands/`; if a slash command is unavailable, read the "
+            "corresponding prompt file and follow it. Write the spec BEFORE the code, "
+            "and leave the resulting `specs/<feature>/` artifacts in place. This is a "
+            "headless run with no human available: carry the human's proxy authority "
+            "and never end the run waiting for a reply; the job is done only when the "
+            "app meets the requirements.\n\n"
+            + text
+        )
     return text  # "raw" (and any unrecognized wrapper) passes through verbatim
 
 

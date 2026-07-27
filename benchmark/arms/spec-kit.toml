@@ -1,8 +1,11 @@
 name = "spec-kit"
 setup_steps = [
-  "uvx --from git+https://github.com/github/spec-kit.git@v0.12.5 specify init --here --force",
+  "uvx --from git+https://github.com/github/spec-kit.git@v0.12.5 specify init --here --force --integration claude",
 ]
-prompt_wrapper = "raw"
+prompt_wrapper = "spec-kit"
+# `--integration claude` is REQUIRED: `specify init` defaults to Copilot in
+# non-interactive sessions, which writes .github/prompts/ — a directory the
+# runner's agent never reads. Without it the arm cannot invoke its own method.
 # Real, reproducible upstream pin: latest release tag (confirmed via
 # `gh api repos/github/spec-kit/releases/latest` 2026-07-07).
 pin = "git+https://github.com/github/spec-kit.git@v0.12.5"
