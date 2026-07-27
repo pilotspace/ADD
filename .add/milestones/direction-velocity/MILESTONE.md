@@ -31,26 +31,26 @@ Issues/Risks (shared): hand-mirrored twins have no parity test (the lock-reclaim
 - §3 `Invariants (published)` block + `invariant_without_proof` refusal -> owning task `invariants-publish`
 
 ## Tasks (breadth-first decomposition; detail lives in each PLAN.md)
-- [ ] arm-honesty        depends-on: none                — the comparison arm runs its own method or is renamed to what it is; no arm claims a method it never invokes
-- [ ] meter-provenance   depends-on: none                — every scored record carries the meter version that produced it; close the last `isinstance(body, list)` oracle surface
-- [ ] read-batching      depends-on: none                — direction issues independent reads/greps in ONE turn; harness bookkeeping (TaskCreate/sleep) leaves the benchmark path
-- [ ] direction-one-shot depends-on: read-batching       — `add.py draft` writes §1+§3+§4 and freezes in one call, all-or-nothing; per-section `--fill` retired for direction
-- [ ] invariants-publish depends-on: direction-one-shot  — §3 publishes invariants, each citing the test that proves it; freeze refuses one without a proving test
-- [ ] invariant-inherit  depends-on: invariants-publish  — `new-task --depends-on` prints ancestors' invariants (a view, no new store)
-- [ ] design-at-build    depends-on: invariants-publish  — DESIGN.md is written during build; a node that published invariants cannot gate without it
-- [ ] edge-rigor         depends-on: invariants-publish  — §4 rows carry [GATED]/[edge]; the gate refuses an edge row that is neither green nor reasoned
+- [x] arm-honesty        depends-on: none                — the comparison arm runs its own method or is renamed to what it is; no arm claims a method it never invokes
+- [x] meter-provenance   depends-on: none                — every scored record carries the meter version that produced it; close the last `isinstance(body, list)` oracle surface
+- [x] read-batching      depends-on: none                — direction issues independent reads/greps in ONE turn; harness bookkeeping (TaskCreate/sleep) leaves the benchmark path
+- [x] direction-one-shot depends-on: read-batching       — `add.py draft` writes §1+§3+§4 and freezes in one call, all-or-nothing; per-section `--fill` retired for direction
+- [x] invariants-publish depends-on: direction-one-shot  — §3 publishes invariants, each citing the test that proves it; freeze refuses one without a proving test
+- [x] invariant-inherit  depends-on: invariants-publish  — `new-task --depends-on` prints ancestors' invariants (a view, no new store)
+- [x] design-at-build    depends-on: invariants-publish  — DESIGN.md is written during build; a node that published invariants cannot gate without it
+- [x] edge-rigor         depends-on: invariants-publish  — §4 rows carry [GATED]/[edge]; the gate refuses an edge row that is neither green nor reasoned
 - [ ] algo-workload      depends-on: edge-rigor          — an algorithm-dense workload exists and has been run head-to-head
 
 ## Exit criteria (observable; map each to the task that delivers it)
-- [ ] A reader of any benchmark comparison can see what the comparison arm actually does, from the arm's own name and config        (← arm-honesty)
-- [ ] A scored record states which meter version produced it, so a stale number is visible without re-reading git history            (← meter-provenance)
-- [ ] A direction phase issues independent reads in a single turn — the parallel-turn count is greater than zero                     (← read-batching)
-- [ ] A task's direction bundle is written by ONE engine call, and that call refuses to freeze unless the suite ran red              (← direction-one-shot)
-- [ ] A task cannot freeze while publishing an invariant that no test proves                                                          (← invariants-publish)
-- [ ] Creating a task with `--depends-on` shows the invariants it inherits, without copying them into a second store                 (← invariant-inherit)
-- [ ] A node that published invariants cannot record a gate without its DESIGN.md                                                     (← design-at-build)
-- [ ] A gate refuses an enumerated edge case that is neither green nor carries a stated reason                                        (← edge-rigor)
-- [ ] A workload whose requirements are genuinely algorithmic exists and has produced a head-to-head record                          (← algo-workload)
+- [x] A reader of any benchmark comparison can see what the comparison arm actually does, from the arm's own name and config        (← arm-honesty)
+- [x] A scored record states which meter version produced it, so a stale number is visible without re-reading git history            (← meter-provenance)
+- [ ] A direction phase issues independent reads in a single turn — the parallel-turn count is greater than zero                     (← read-batching)   ← NOT YET MEASURED: the clause ships and is guarded, but the parallel-turn count needs a pay1-4 re-run (Gate A)
+- [x] A task's direction bundle is written by ONE engine call, and that call refuses to freeze unless the suite ran red              (← direction-one-shot)
+- [x] A task cannot freeze while publishing an invariant that no test proves                                                          (← invariants-publish)
+- [x] Creating a task with `--depends-on` shows the invariants it inherits, without copying them into a second store                 (← invariant-inherit)
+- [x] A node that published invariants cannot record a gate without its DESIGN.md                                                     (← design-at-build)
+- [x] A gate refuses an enumerated edge case that is neither green nor carries a stated reason                                        (← edge-rigor)
+- [ ] A workload whose requirements are genuinely algorithmic exists and has produced a head-to-head record                          (← algo-workload)   ← NOT STARTED: needs a paid head-to-head campaign
 
 ## Strategy   (AI-drafted WITH the human — the optimized task plan; SOFT/advisory like a task's Build-strategy)
 - Approach (sequencing): **instrument-first, then cheapest-attributable-first.** arm-honesty and meter-provenance cost ~nothing and unblock every downstream claim. read-batching is a guide/wrapper change with no engine risk and no re-freeze — the highest payoff-to-risk item in the milestone, and it must be measured BEFORE direction-one-shot or the two effects are inseparable. The persistence wave lands last because it pushes direction back up.
