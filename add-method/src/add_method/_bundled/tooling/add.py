@@ -910,6 +910,7 @@ BODIES = {
             "## RULES\n<must>\n- M1 <the rule that must hold>\n</must>\n<reject>\n"
             "- R:<NAME> <what must never happen> -> \"<NAME>\"\n</reject>\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
+            "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
             "## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS | RISK-ACCEPTED | HARD-STOP>\n\n"
             "## LESSONS\n- <lesson> -> add learn <lens>\n",
@@ -1544,7 +1545,7 @@ def fold(root, lens: str, match: str) -> tuple:
 # FORMAT §6.1's `covers-grammar`, stated ONCE here and reused. e15 closed F1 by holding
 # FORMAT, the validator and this engine to one grammar; a second copy in this file would
 # reopen R:DRIFT inside the engine itself.
-RULE_ALT = r"M\d+|R:[A-Z0-9_]+"
+RULE_ALT = r"M\d+|R:[A-Z0-9_]+|E\d+"
 RULE_ID = re.compile(rf"^-\s+({RULE_ALT})\b")
 REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+)\Z")
 COVERS_IN_CHECK = re.compile(r"^-\s+(\S+)\s+·\s*covers:\s*([^·]+?)\s*·")
@@ -1594,6 +1595,27 @@ def rules_of(node: dict) -> list:
     return [m.group(1) for m in (RULE_ID.match(l) for l in _section_of(body, "RULES").splitlines()) if m]
 
 
+def edges_of(node: dict) -> list:
+    """The REAL enumerated edge ids (`E<n>`) declared in the node's `## EDGES` section.
+
+    An edge is a first-class `covers:` referent (C7): the gate binds it exactly as a Must. A line
+    still carrying the scaffold `<placeholder>` is NOT a real edge — a task that never enumerated
+    an edge, or left the scaffold untouched, owes no edge coverage (backward compatible). Backticked
+    spans are code, not placeholders (same exclusion `placeholders_in` makes)."""
+    body = read(node["path"], "T2")["body"]
+    out = []
+    for line in _section_of(body, "EDGES").splitlines():
+        m = RULE_ID.match(line)
+        if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+            out.append(m.group(1))
+    return out
+
+
+def referents_of(node: dict) -> list:
+    """Every id a check may bind: Musts + Rejects (RULES) and real edges (EDGES)."""
+    return rules_of(node) + edges_of(node)
+
+
 def covers(node: dict) -> dict:
     """`{rule_id: [check_id, ...]}` — parsed from the CHECKS section, keyed by rule."""
     body = read(node["path"], "T2")["body"]
@@ -1626,7 +1648,7 @@ def unbound(node: dict, reported: dict) -> list:
     """Rules with no passing check — declared but unproven. The honest gap."""
     mapped = covers(node)
     proven, _ = bind(node, reported)
-    return sorted(r for r in rules_of(node) if r not in proven or not mapped.get(r))
+    return sorted(r for r in referents_of(node) if r not in proven or not mapped.get(r))
 
 
 def qualify(where: str, name: str) -> str:
@@ -2226,7 +2248,7 @@ def checks_verify(root, cid: str, paths, extracted: dict = None) -> list:
     full = read(node["path"], "T2")
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
     gated = any(s.get("act") == "gate" for s in stamps)
-    known, rules = set(extracted if extracted is not None else checks_of(paths)), set(rules_of(full))
+    known, rules = set(extracted if extracted is not None else checks_of(paths)), set(referents_of(full))
     findings = []
     for rule, cited in sorted(covers(full).items()):
         if rule not in rules:

@@ -59,7 +59,7 @@ MD_LINK = re.compile(r"\]\(([^)\s]+\.md)\)")
 # `tests/test_covers_grammar.py::test_grammar_stated_once` asserts that equality rather
 # than trusting a human to re-check it.
 COVERS_QUICK = re.compile(r"\A(goal|G\d+)\Z")
-COVERS_RULE = re.compile(r"\A(M\d+|R:[A-Z0-9_]+)\Z")
+COVERS_RULE = re.compile(r"\A(M\d+|R:[A-Z0-9_]+|E\d+)\Z")
 
 # A `covers:` referent is a field of a CHECKS list item (FORMAT §8.3), so it is matched
 # line-anchored and only inside that section. An unanchored scan of the whole body reads
