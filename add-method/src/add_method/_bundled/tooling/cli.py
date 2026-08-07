@@ -11,7 +11,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
-    deltas · fold · reopen · milestone-archive · doctor · wave · join · advise
+    deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -130,6 +130,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("ref", help="the task/milestone to advise")
     s.add_argument("--persona", required=True, help="the Persona slug advising this beat")
 
+    s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
+    s.add_argument("path", help="the file or directory path to locate")
+
+    s = sub.add_parser("todo", help="the open worklist — active tasks grouped by beat (read-only)")
+    s.add_argument("--milestone", help="restrict to one milestone's tasks")
+
     return p
 
 
@@ -228,6 +234,16 @@ def dispatch(args, run_cmd) -> int:
         out, note = add.advise(root, _resolve(root, args.ref), args.persona)
         print(note)
         return 0 if out else 1
+
+    if args.verb == "locate":
+        _hits, note = add.locate(root, args.path)
+        print(note)  # a no-match is a valid answer, not an error
+        return 0
+
+    if args.verb == "todo":
+        _items, note = add.todo(root, milestone=args.milestone)
+        print(note)
+        return 0
 
     if args.verb == "doctor":
         if args.sync:

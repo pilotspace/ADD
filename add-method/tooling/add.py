@@ -1235,6 +1235,74 @@ def tooling_drift(root, graph: dict = None):
             f"(run `add doctor --sync` to refresh `.add/tooling/`)")
 
 
+def _scope_matches(entry: str, query: str) -> bool:
+    """A scope entry matches a query path when they are equal or one is a directory-prefix of
+    the other — `src/` matches `src/a.py`, and `src/a.py` matches `src/`."""
+    a, b = str(entry).rstrip("/"), str(query).rstrip("/")
+    return a == b or a.startswith(b + "/") or b.startswith(a + "/")
+
+
+def locate(root, query: str) -> tuple:
+    """Reverse lookup: every node whose `scope:` matches `query` (equal or dir-prefix). Read-only.
+
+    Answers "which node owns this path?" — the everyday navigation `status` cannot. A pure read over
+    the graph: `(hits, note)` where `hits` is `[(cid, status, matched_scope_entry), …]`. It never writes.
+    """
+    graph = scan(Path(root))
+    hits = []
+    for cid, node in sorted(graph.items()):
+        fm = node["fm"] or {}
+        scope = fm.get("scope") or []
+        for entry in (scope if isinstance(scope, list) else [scope]):
+            if _scope_matches(entry, query):
+                hits.append((cid, fm.get("status", "—"), str(entry)))
+                break
+    if not hits:
+        return [], f"no node scopes `{query}`\nnext: add status"
+    lines = [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in hits]
+    return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
+
+
+def _next_verb(graph: dict, cid: str) -> str:
+    """The one runnable next command for a task, by beat — the mapping `status`'s frontier uses."""
+    fm = graph[cid]["fm"] or {}
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    st = fm.get("status")
+    if st == "verify":
+        return f"add gate {slug}"
+    if st == "build":
+        return f"add run {slug} -- <cmd>"
+    return f"add brief {slug}" if _is_frozen(graph[cid]) else f"add freeze {slug}"
+
+
+def todo(root, milestone: str = None) -> tuple:
+    """The open worklist: active Tasks (direction|build|verify) grouped by beat, each with its next
+    verb. Optionally restricted to one milestone. Read-only — `(items, note)`, never a write."""
+    graph = scan(Path(root))
+    msel = _wave_slug(milestone) if milestone else None
+    items = []
+    for cid in active(graph):
+        fm = graph[cid]["fm"] or {}
+        if fm.get("type") != "Task":
+            continue
+        if msel and _wave_slug(fm.get("milestone")) != msel:
+            continue
+        items.append((cid, fm.get("status"), _next_verb(graph, cid)))
+    if not items:
+        where = f" under `{milestone}`" if milestone else ""
+        return [], f"nothing open{where}\nnext: add status"
+    order = {"direction": 0, "build": 1, "verify": 2}
+    items.sort(key=lambda it: (order.get(it[1], 9), it[0]))
+    lines, beat = [], None
+    for cid, st, nxt in items:
+        if st != beat:
+            lines.append(f"{st}:")
+            beat = st
+        lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}")
+    where = f" under `{milestone}`" if milestone else ""
+    return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
+
+
 def status(root, all: bool = False, check: bool = False) -> str:
     """One bounded orientation report, ending in a runnable `next:` line.
 

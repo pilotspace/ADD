@@ -37,9 +37,13 @@ def bundle(tmp_path):
 # ------------------------------------------------------------------ M1 · the three are gone
 
 
-@pytest.mark.parametrize("name", ["locate", "graph_lines", "since"])
+# `locate` left this set in verb-recovery (B5): D-12 cut a slug/title-*fragment* search;
+# B5 recovers `locate` as a scope-*reverse-lookup* (which node's scope owns a path) — same
+# name, different behaviour, so this is a recorded supersession, not an un-recorded un-cut
+# (R:SILENTCUT). `graph_lines` and `since` stay withdrawn.
+@pytest.mark.parametrize("name", ["graph_lines", "since"])
 def test_the_withdrawn_functions_are_gone(name):
-    """covers: M1, R:SILENTCUT · D-12's first three steps, spent."""
+    """covers: M1, R:SILENTCUT · D-12's cut of the two flags with no recovering successor."""
     assert not hasattr(add, name), \
         f"`{name}` still exists — D-12's cut was recorded but not made"
 

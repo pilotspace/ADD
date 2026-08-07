@@ -19,7 +19,7 @@ import cli  # noqa: E402
 # Verbs the CLI wires in v1 — every one has a real engine function.
 WIRED = {"init", "status", "new", "freeze", "run", "gate", "done", "brief", "learn",
          "milestone-done", "deltas", "fold", "reopen", "milestone-archive", "doctor", "wave", "join",
-         "advise"}
+         "advise", "locate", "todo"}
 
 
 def _run(root, *argv):
