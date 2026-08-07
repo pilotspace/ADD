@@ -1,18 +1,20 @@
-# Terms — the method's coined vocabulary (decode, don't guess)
+# Terms — ADD / ABF-1 vocabulary (decode, don't guess)
 
-The loop in `SKILL.md` uses a few compressed terms of art. This is their plain-language key —
-load it once if a phrase reads opaque; it teaches nothing new about the flow, only names it.
+The loop in `SKILL.md` uses a few coined terms. This is their plain-language key — load it once if a
+phrase reads opaque; it names the flow, it does not add to it.
 
 | Term | Plain meaning |
 |------|---------------|
-| **the ARC** | the three-line frame every gate opens with — **A**im (the goal this serves) · **R**each (what is already covered) · **C**ourse (the plan the choice sets up). Engine-sourced, never invented. |
-| **co-specify** | write the ranked ⚠ risk-flag *inside* §1 as you draft it — the flag and the rule it guards are specified together, not bolted on after. |
-| **red for the right reason** | a §4 test fails because the behavior is genuinely absent, not because of a typo, bad import, or wrong fixture. Prove the failure message names the missing behavior before you build. |
-| **covers: clause** | each §4 test bullet carries a `covers:` key naming the frozen §3 clause it proves — the link that lets `locate` map a failing test back to its contract clause. |
-| **cross / re-cross** | *cross* = pass the one human approval that carries the task from direction into build (`freeze --cross`). *re-cross* = a post-freeze change reopened the contract, so the crossing must be earned again. |
-| **compound-cross** | at `gate PASS`, the engine folds every open sub-check (evidence · lenses · target-hit) into one recorded crossing — you don't stamp each; the gate compounds them. |
-| **earned-green refute-read** | before recording PASS, read the green suite *trying to disprove it* — is it green because the feature works, or because the test is weak? Green is earned, not assumed. |
-| **auto-resolved PASS** | under `autonomy: auto`, a verify with complete, no-residue evidence records an explicit PASS without a human tap — an *auto-resolved* crossing, never a skip. Residue or lowered autonomy → a human decides. |
+| **bundle** | the `.add/` ABF-1 state — the whole project memory. Files are the database; `graph.json` is a rebuildable cache. Resume from it (`add status`), never re-read the repo. |
+| **node** | one atomic task = one node, a file at `.add/tasks/<slug>.md`. The unit the 3-beat loop drives. |
+| **gives / needs** | contract edges. A task's frozen `gives:` is what it provides; `needs:` is what it depends on. The graph wires them, so a spec edit re-scopes downstream nodes with no manual edit. |
+| **receipt** | a recorded, bound test result (`add run … --junitxml`). A build is trusted on its receipt — passing evidence — not on a diff that reads plausible. |
+| **freeze** | the ONE approval carrying a task from direction into build — locks `## RULES · PLAN · CHECKS` (`add freeze`). A change to a frozen `gives:` is a change-request back to direction, never a silent edit. |
+| **gate** | the recorded verify verdict, exactly one: `PASS` · `RISK-ACCEPTED` (signed, non-security) · `HARD-STOP` (`add gate`). |
+| **residue** | the three lenses examined after build, at verify — **security · concurrency · architecture**. Security residue is always a HARD-STOP. |
+| **lane** | the intake size that routes ceremony — **quick** (mechanical, no node) · **task** (one node) · **project** (a milestone). Security · data · architecture never go quick. |
+| **delta** | one tagged lesson learned (`- [COMPETENCY · status] … (evidence: …)`) that folds into a living `.add/specs/` spec (`deltas.md`). |
+| **wave** | a batch of independent tasks run together (parallel) under one milestone, rather than serially. |
 
 Everything else in `SKILL.md` is plain method language; when in doubt, the phase guide that owns the
-beat (`phases/direction.md` · `phases/build.md` · `phases/verify.md`) defines it in full.
+beat (`phases/direction.md · build.md · verify.md`) defines it in full.

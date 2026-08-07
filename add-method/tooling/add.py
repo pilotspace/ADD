@@ -315,8 +315,8 @@ def scan(root, strays: list = None) -> dict:
     root = Path(root)
     graph = {}
     for path in sorted(root.rglob("*.md")):
-        if path.relative_to(root).parts[0] == "tooling":
-            continue  # vendored engine material (seed corpus, engine copy) — never project graph, never a stray
+        if path.relative_to(root).parts[0] in ("tooling", "personas-teacher"):
+            continue  # vendored engine material + the seed persona corpus — never project graph, never a stray
         node = read(path, "T0")
         if node["fm"] is None:
             if strays is not None:

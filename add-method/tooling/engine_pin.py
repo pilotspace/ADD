@@ -17,5 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "54aff8b8ce3b8ee9c1cda23ee4e06f79"  # re-aimed @ seed-method-personas (init/migrate seed the three method-lens planners via _seed_persona_file). prior: 60eef504… @ egg-info-prune
-ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide
+ENGINE_MD5 = "1cf160ca75454806d215471e39061e91"  # re-aimed @ graft-lean3-abf (ADD 3.0: flat ABF-1 engine — md5(tooling/add.py)). prior: 54aff8b8… @ seed-method-personas
+# ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
+# ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
+ENGINE_PKG_MD5 = "b2fc89696211854055edd251540d5b64"  # re-aimed @ graft-lean3-abf (md5(tooling/cli.py)). prior: c635ca53… @ seed-method-personas

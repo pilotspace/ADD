@@ -4,6 +4,29 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.0.0] — 2026-08-07
+
+Major: the method core is rebuilt on the **ABF-1** bundle format with a **NO-EXEC notary**
+engine — the lean "add-skill-2" line, which supersedes the 2.x/OKF surface. The engine records
+direction and evidence; it never runs the method or spawns an agent. The 3-beat loop is
+**Direction → Build → Verify**, trusted on a fresh, bound receipt rather than a plausible diff.
+
+### Changed
+
+- **Flat two-file engine** — `tooling/add.py` (library) + `tooling/cli.py` (the 17-verb dispatch
+  entry, invoked as `.add/tooling/cli.py`). The modular `add_engine/` package is retired.
+- **Lean skill surface** — SKILL.md + `intake · phases/{direction,build,verify} · loop · deltas ·
+  gate · personas · seed · streams · terms` (+ the `persona-author/` sub-skill). The 2.x docs
+  `adopt · beyond · design · gate-udd · run · strategy` are retired.
+- **Corpus** — the curated, nested `personas-teacher/` library ships unchanged and installs to
+  `.add/personas-teacher/`; both the graph scan and the M0 validator treat it as vendored
+  material, never project nodes.
+
+### Removed
+
+- The OKF/engine-notary engine surface and its verbs (`guide`, `migrate`, `sync-guidelines`) and
+  the project **stage** ceremony as engine concepts.
+
 ## [2.5.0] — 2026-07-25
 
 Minor: the **persona** system becomes a coherent artifact. The template guidance names

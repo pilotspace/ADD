@@ -86,8 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stage", default=None,
                         choices=("prototype", "poc", "mvp", "production"),
                         help="Initial project stage for the manual-init hint; "
-                             "omit it and `add.py init` itself defaults "
-                             "to prototype")
+                             "omit it for the default (prototype)")
     parser.add_argument("--name", default=None,
                         help="Project name (default: target directory name)")
     parser.add_argument("--yes", "-y", action="store_true",

@@ -8,8 +8,8 @@
  *
  * Installs the ADD skill + tooling into a target project:
  *   <target>/.claude/skills/add/   (the skill Claude loads)
- *   <target>/.add/tooling/         (add.py scaffolder + state tracker)
- * It DROPS FILES ONLY — it does NOT run `add.py init`. Initialisation is deferred to
+ *   <target>/.add/tooling/         (the flat ADD engine: cli.py dispatch entry + add.py library)
+ * It DROPS FILES ONLY — it does NOT run `cli.py init`. Initialisation is deferred to
  * the AI (via `/add`, which runs `init --await-lock` to arm the v12 lock-down gate) or
  * to a CLI user. A pre-run plain init would grandfather-lock the gate before `/add` runs
  * AND consume the brownfield signal in the terminal, where the AI never sees it.
@@ -127,8 +127,10 @@ const AGENT_PROFILES = [
     env: [], envPrefix: null, next_step: GENERIC_NEXT },
 ];
 
-// The SAME markers add.py:sync-guidelines uses, so init's sync-guidelines REPLACES this
-// drop-time pointer in place (one block, never a duplicate).
+// The drop-time pointer's marker tokens. The BEGIN token is kept BYTE-IDENTICAL to prior
+// releases (and the pip twin) so a re-run REPLACES the existing block in place rather than
+// appending a duplicate — it still NAMES the retired `sync-guidelines` verb purely for that
+// backward-compatible idempotency. The flat 3.0 engine no longer injects or supersedes this block.
 const GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->";
 const GUIDE_END = "<!-- ADD:END -->";
 
@@ -214,18 +216,17 @@ function agentPointerBlock(profile) {
     "## ADD — how to work in this repo\n" +
     "\n" +
     "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n" +
-    "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n" +
-    "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n" +
+    "To begin: run `python3 .add/tooling/cli.py status` — your resume point (read from\n" +
+    "the `.add/` bundle, not the repo), which names the next beat to work.\n" +
     "\n" +
     profile.next_step + "\n" +
     "\n" +
-    "This pointer is replaced by the full guideline block when `add.py sync-guidelines`\n" +
-    "runs (at `/add`->init). Edit outside the markers, not inside.\n" +
+    "Edit outside the markers, not inside.\n" +
     GUIDE_END
   );
 }
 
-// Inject the ADD pointer into <target>/<integration_file>, mirroring add.py:_inject_block.
+// Inject the ADD pointer into <target>/<integration_file>.
 // created|updated|unchanged|skipped. Only the marked region is (re)written; content outside
 // the markers is preserved; a real change backs up <file>.bak first. Fail-soft (warn+skip).
 function writeAgentPointer(target, profile) {
@@ -395,7 +396,7 @@ async function runClackPreamble(clack, target, detected, askScope) {
 }
 
 // Persist `intent` as a NOTE at <target>/.add/.intent for `/add` to read — iff non-empty.
-// DEFERRED-INIT: inert text only; never runs add.py/init, never touches state.json. Fail-soft
+// DEFERRED-INIT: inert text only; never runs cli.py/init, never touches state.json. Fail-soft
 // (a write error is swallowed — the note is best-effort, never a reason to fail the install).
 // Returns whether the note was written. Twin of _installer.py:_write_intent_note.
 function writeIntentNote(target, intent) {
@@ -470,8 +471,8 @@ function seedSoulMd(target) {
   }
 }
 
-// kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
-// _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
+// kept OUTSIDE the flat engine's own gitignore body / gitignore.tmpl deliberately: the engine's
+// own _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
 // and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
 // already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
 // extra ignore line itself. BARE (not repo-root style): .add/.gitignore lives INSIDE
@@ -525,7 +526,7 @@ function dropFiles(args, target, profile, intent) {
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
 
   // Agent detection: write THE detected agent's integration file (a marker-delimited
-  // pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
+  // pointer) + tailor the closing next-step.
   // Best-effort + fail-soft — never aborts the successful drop above.
   writeAgentPointer(target, profile);
 
@@ -537,7 +538,7 @@ function dropFiles(args, target, profile, intent) {
   writeIntentNote(target, intent);
 
   // NO step 4: the installer DROPS FILES ONLY. Initialisation is deferred to the AI
-  // (via `/add`) or a CLI user — a pre-run plain `add.py init` would grandfather-lock
+  // (via `/add`) or a CLI user — a pre-run plain `cli.py init` would grandfather-lock
   // the v12 lock-down gate before `/add` runs (see file header). So no Python is run here.
   log("\nDone. " + (args.noSkill ? "The engine is" : "The `add` skill + tooling are") +
       " installed (no project state yet — that's intentional).");
@@ -1785,25 +1786,12 @@ function cmdUpdate(args) {
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
       " · managed layer reconciled (" + roll.restored + " restored · " + roll.refreshed +
       " refreshed) · your project state untouched.");
-  // crossing nudges — engine-owned follow-ups the updater must NAME, never run (python3
-  // may be absent on this PATH; both commands are idempotent). Twin of _installer.py.
+  // crossing nudge — an engine-owned follow-up the updater NAMES, never runs (python3 may be
+  // absent on this PATH; the command is idempotent). After a version change, verify the vendored
+  // engine + bundle still conform, using a REAL verb — the flat 3.0 engine has no OKF
+  // `sync-guidelines`/`migrate` verbs (both retired), so there is nothing else to name here.
   if (cur !== version) {
-    log("next: python3 .add/tooling/add.py sync-guidelines   # refresh the CLAUDE.md guidance block to this version");
-  }
-  const tasksDir = path.join(addDir, "tasks");
-  let legacyBoard = false;
-  if (fs.existsSync(tasksDir)) {
-    for (const entry of fs.readdirSync(tasksDir, { withFileTypes: true })) {
-      if (entry.isDirectory()
-          && fs.existsSync(path.join(tasksDir, entry.name, "TASK.md"))
-          && !fs.existsSync(path.join(tasksDir, entry.name, "PLAN.md"))) {
-        legacyBoard = true;
-        break;
-      }
-    }
-  }
-  if (legacyBoard) {
-    log("next: python3 .add/tooling/add.py migrate   # 1.x board detected: TASK.md -> PLAN.md, live + archived");
+    log("next: python3 .add/tooling/cli.py status --check   # verify the engine + bundle conform to this version");
   }
 }
 

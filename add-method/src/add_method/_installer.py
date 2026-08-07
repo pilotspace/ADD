@@ -360,8 +360,11 @@ AGENT_PROFILES = (
      "env": (), "env_prefix": None, "next_step": _GENERIC_NEXT},
 )
 
-# The SAME markers add.py:sync-guidelines uses — so a later `/add`->init->sync-guidelines
-# REPLACES this drop-time pointer in place (one block, never a duplicate).
+# The drop-time pointer's marker tokens. The BEGIN token is kept BYTE-IDENTICAL to prior
+# releases (and the npm twin, bin/cli.js) so a re-run REPLACES the existing block in place
+# rather than appending a duplicate — it still NAMES the retired `sync-guidelines` verb purely
+# as that backward-compatible idempotency sentinel (it is opaque HTML-comment metadata, not user
+# guidance). The flat 3.0 engine no longer injects or supersedes this block.
 _GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->"
 _GUIDE_END = "<!-- ADD:END -->"
 
@@ -446,13 +449,13 @@ def _agent_pointer_block(profile: dict) -> str:
         "## ADD — how to work in this repo\n"
         "\n"
         "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n"
-        "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n"
-        "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n"
+        "To begin: run `python3 .add/tooling/cli.py status` (the resume point) and drive the\n"
+        "beat it names; `python3 .add/tooling/cli.py brief <task>` composes the working prompt.\n"
         "\n"
         f"{profile['next_step']}\n"
         "\n"
-        "This pointer is replaced by the full guideline block when `add.py sync-guidelines`\n"
-        "runs (at `/add`->init). Edit outside the markers, not inside.\n"
+        "This pointer is refreshed in place when the installer re-runs. Edit outside the\n"
+        "markers, not inside.\n"
         f"{_GUIDE_END}"
     )
 
@@ -2070,17 +2073,10 @@ def update(
                 f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
                 "your project state untouched."
             )
-            # crossing nudges — engine-owned follow-ups the updater must NAME, never run
-            # (python3 may be absent on this PATH; both commands are idempotent):
-            if cur_version != new_version:
-                _log("next: python3 .add/tooling/add.py sync-guidelines"
-                     "   # refresh the CLAUDE.md guidance block to this version")
-            tasks_dir = add_dir / "tasks"
-            if tasks_dir.is_dir() and any(
-                    d.is_dir() and (d / "TASK.md").exists() and not (d / "PLAN.md").exists()
-                    for d in tasks_dir.iterdir()):
-                _log("next: python3 .add/tooling/add.py migrate"
-                     "   # 1.x board detected: TASK.md -> PLAN.md, live + archived")
+            # ADD 3.0 (ABF-1): the flat engine has no sync-guidelines/migrate verbs — the
+            # guidance pointer is refreshed at install time, and an ABF-1 bundle has no 1.x
+            # board to migrate. The resume point is `cli.py status`.
+            _log("next: python3 .add/tooling/cli.py status")
             return 0
     except BlockingIOError:
         return _fail(
