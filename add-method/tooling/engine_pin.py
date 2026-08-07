@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "ef49fca8f108a19eb5ca10ac9a544ec8"  # re-aimed @ A4 corpus-coverage (persona use-when + index section · coverage-doctor). prior: 6d273ec6… @ A3 persona-assigned-waves
+ENGINE_MD5 = "630912c46a9176cfbfc75528af49fe7e"  # re-aimed @ A2 persona-coverage-floor (gate R:NOCOVERAGE on security · coverage-doctor severity). prior: ef49fca8… @ A4 corpus-coverage
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "b2fc89696211854055edd251540d5b64"  # re-aimed @ graft-lean3-abf (md5(tooling/cli.py)). prior: c635ca53… @ seed-method-personas

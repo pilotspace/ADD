@@ -1936,6 +1936,19 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         return refuse("a security risk cannot be folded into a RISK-ACCEPTED — the security floor is HARD-STOP",
                       f'resolve it (add gate {slug} PASS) or stop it (add gate {slug} HARD-STOP --reason "<the finding>")')
 
+    # R:NOCOVERAGE (A2) — the coverage half of the security floor. A `sensitivity: security` node
+    # cannot be signed PASS without a named lens (`persona:` or `advised_by:`): "who reviewed the
+    # security" becomes a recorded, enforced fact, not a doctor nudge. Security-only, mirroring
+    # R:SECURITYFOLD — architecture/data stay `info` findings in `doctor`. The engine binds lens
+    # PRESENCE; whether it is the *right* lens is the AI's selection and the persona's `use-when`.
+    sfm = graph[cid]["fm"] or {}
+    if verdict == "PASS" and sfm.get("sensitivity") == "security" \
+            and not sfm.get("persona") and not sfm.get("advised_by"):
+        return refuse("a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, "
+                      "so no one is on record as having reviewed the security -> \"R:NOCOVERAGE\"",
+                      f'assign a security lens (set `advised_by: <persona>` on {slug}, or run it in a '
+                      f'lensed wave), then add gate {slug} PASS')
+
     node_body = lambda n: read(n["path"], "T2")["body"]
     receipt, receipt_cid = latest_receipt(root, cid)
     if receipt is None:
@@ -2348,7 +2361,10 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
             continue
         if not fm.get("persona") and not fm.get("advised_by"):
-            find("info", "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
+            # Severity agrees with the gate floor (A2): security is a HARD gate refusal (R:NOCOVERAGE),
+            # so doctor says `warn`; the softer data/architecture floors stay `info` nudges.
+            severity = "warn" if fm.get("sensitivity") == "security" else "info"
+            find(severity, "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):
