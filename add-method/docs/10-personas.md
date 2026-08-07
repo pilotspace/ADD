@@ -4,94 +4,68 @@
 
 ---
 
-## Product / Domain Owner
+## The team is a set of lenses, not a set of chairs
 
-- **Mission:** ensure the right thing gets built. You guard the problem.
-- **Leads:** Specify. **Contributes to:** Scenarios; the loop (deciding what the next cycle addresses).
-- **Owns:** the problem definition, the glossary of domain terms, the prioritized backlog.
-- **Done means:** the spec states real user value with no disputed terms and its assumptions ranked lowest-confidence first — the one or two most likely wrong flagged with *why* and *what they cost*; after release, you have decided what the next loop must address.
-- **Apply it:** run the Specify prompt against a real ticket or interview, then read the AI's lowest-confidence flag *first* and decide the one or two load-bearing assumptions before skimming the low-stakes tail. If you cannot confirm a load-bearing rule, it is not ready to build.
+Older methods model a team as a fixed org chart — a product owner here, an architect there, a fixed title accountable for each column. ADD keeps the *judgment* those titles carried and drops the chart. The unit is a **persona**: a project-fit requirements lens the agent adopts so its work matches *this* codebase's standards, not a generic default. A persona is not a job title and not a chat costume — it is a small, versioned file the design, build, and verify surfaces load as **advice**.
 
-## Architect / Engineering Lead
+Why lenses instead of roles: an AI agent does not sit in a chair, and the same agent can build behind a payments engineer's caution on one task and a UI designer's contrast rules on the next. What you want to preserve is not *who* attends the meeting but *what judgment gets applied* — the rules a domain refuses to wave through, the smells it suspects, the done-bar it measures against. A persona carries exactly that, and nothing else: tone and the deliverable's shape live in the agent's return contract, so a persona duplicating voice or layout is dead weight.
 
-- **Mission:** own the load-bearing surfaces and the checks that protect them.
-- **Leads:** project setup; the Contract freeze. **Accountable for:** all the durable artifacts.
-- **Owns:** `CONVENTIONS.md`, the contracts, the architecture check in verification, the model record.
-- **Done means:** contracts are frozen and versioned; the architecture check runs in the pipeline; autonomy levels match the team's real review capacity.
-- **Apply it:** treat the contract freeze as a one-way door. When a stream wants to change a frozen contract, route it as a change request that reopens Specify — never let code quietly move the surface.
+The persona loop has three moves — **seed → grow → apply** — and it is opt-in and additive: a project with no personas behaves exactly as before.
 
-## Software Engineer (Senior)
+## Seed — a corpus, offered at setup
 
-- **Mission:** direct the build and hold quality at the architecture check.
-- **Leads:** Build. **Contributes to:** Contract, Tests; reviews others' changes.
-- **Owns:** the implementation, the architecture conformance check, the evidence bundle on each change.
-- **Done means:** all tests pass without any test being weakened; coverage holds; architecture and security checks pass; a person has reviewed it.
-- **Apply it:** work in small batches the review can keep up with, and never let the AI edit a test to make it pass — that is the cardinal sin of the build step.
+ADD does not invent personas from nothing; it learns them from a **teacher** — a corpus of worked agent definitions. `add init` vendors this corpus into `.add/personas-teacher/` so a standalone bundle carries its own teacher, read off-build by the AI while drafting and never a runtime dependency. Setup proposes a starter persona or two that fit the domain (from the living domain and system specs); a human confirms. Seeding writes a persona node and nothing else — no behavior changes until a task applies one.
 
-## Software Engineer (Junior)
+A seeded persona is a typed node in the bundle, created like any other:
 
-- **Mission:** learn the craft by entering at the build end and growing toward judgment.
-- **Leads:** nothing yet. **Contributes to:** Build (against handed-over specs and contracts), Tests.
-- **Owns:** your tasks' code and tests; raising a flag when a spec is ambiguous — which is a contribution, not a failure.
-- **Done means:** your task's tests pass honestly, your change has a clear evidence bundle, and a senior has reviewed it.
-- **Apply it:** start with specs and contracts given to you and make red tests green without weakening them; over time move *up* toward design and specification as your judgment matures (see [13 Adoption](./11-adoption.md)).
+```
+add new Persona payments-engineer
+```
 
-## QA / Test Engineer
+Don't start blank: distil the nearest teacher entry down to its load-bearing parts — the stance with earned scars (*a payments engineer who treats money as exact*), the non-negotiable rules each with its *why*, the one default requirement, the measurable success metrics — then own it.
 
-- **Mission:** make "done" machine-checkable; you are the guardrail for AI-written code.
-- **Leads:** Tests. **Contributes to:** Scenarios (turning rules into checkable form); the loop (production monitors).
-- **Owns:** the test suite, the scenario files, the coverage target, the test report at each gate.
-- **Done means:** every scenario has a test that was red before the build; the suite is honest (nothing passes by default); coverage never regresses.
-- **Apply it:** co-author the scenarios so the path from rule to test loses nothing, and confirm the suite fails for the *right* reason before the build begins.
+## Grow — lenses sharpen over time
 
-## Product Designer (UI/UX)
+Personas are living documents; they improve through the same delta loop the specs use. In a task's observe beat the AI emits a **persona delta** — a one-line, tagged proposal to add or sharpen a rule, a metric, or an anti-pattern, filed `open` with evidence:
 
-- **Mission:** ensure correct logic does not ship inside a poor experience.
-- **Leads:** the design portion of Specify; the Prototype stage. **Contributes to:** Scenarios (experience-side rules).
-- **Owns:** the user flows, the specification of every screen state, the design document, the clickable prototype.
-- **Done means:** every screen has all its states designed; the prototype matches the scenarios; the self-critique for generic, low-effort output has passed.
-- **Apply it:** in the Prototype stage you lead — make the experience tangible fast, and carry the design forward while the prototype code is discarded.
+```
+- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)
+```
 
-## DevOps / SRE / Platform
+At close, a **human** folds confirmed deltas into the persona file — the hinted section only, never clobbering what is there. The engine never edits a persona and the AI never self-folds, so a persona gets *more* accurate every milestone instead of drifting. Two habits keep growth honest: run one task with the persona and compare it to the un-lensed result, and prune any rule that fired zero times this milestone.
 
-- **Mission:** make the continuous concerns real and run the operate-and-learn loop.
-- **Leads:** the loop / operations. **Contributes to:** setup (pipeline, observability conventions), Build (deployment, gradual delivery).
-- **Owns:** gate enforcement in the pipeline, telemetry conventions, service-objective dashboards, rollback, the cost budget.
-- **Done means:** the gate outcomes are enforced mechanically in the pipeline; instrumentation is required to pass the build gate; rollback is tested; objectives are observed after release.
-- **Apply it:** wire the gate-fail protocol into the pipeline so a `HARD-STOP` is automatic, not a meeting, and shift security checks to setup rather than the end.
+## Apply — record a lens, on sequential work and parallel
 
-## Security Engineer
+A persona has no effect until a task adopts it. There are two ways in, matching the two ways ADD runs work.
 
-- **Mission:** keep AI-written code from importing AI-shaped risk.
-- **Leads:** the security thread. **Contributes to:** setup (allow-list, secret scanning), Specify (threat modeling), Build (scanning), AI governance.
-- **Owns:** the dependency allow-list, the provenance and license record, the security report at each gate, the supply-chain policy.
-- **Done means:** zero high-severity findings at the build gate; every AI-suggested dependency verified real and intended; generated and pulled-in code license-scanned.
-- **Apply it:** assume the AI will at some point hardcode a secret and invent a package name; gate against both from setup, and keep security findings as `HARD-STOP`, never waivers.
+**On a sequential beat**, record the lens with `advise`:
 
-## Engineering Manager / Delivery Lead
+```
+add advise <task> --persona payments-engineer
+```
 
-- **Mission:** match intensity to risk, and protect verification capacity.
-- **Leads:** profile selection and stage planning. **Contributes to:** unblocking every step; the loop (priorities).
-- **Owns:** the chosen profile, the stage roadmap, the metrics dashboard.
-- **Done means:** the team operates at an autonomy level its review capacity can sustain; metrics track the scarce things, not code volume; each stage exits on its real achievement, not a date.
-- **Apply it:** choose the profile deliberately, and watch review throughput as the true measure of velocity — if AI output outpaces review, slow the engine rather than rushing the review.
+This stamps the task with `advised_by:` and nothing more. It is a NO-EXEC record: the engine writes down *which lens the agent chose*; it never runs, spawns, or judges the persona. The named persona must be a real seeded node — advising an unseeded name is refused (`R:BADPERSONA`) — and re-advising re-routes the lens rather than stacking a second one.
+
+**On parallel streams**, personas ride the wave surface. `add wave <milestone>` plans a parallel wave from the task DAG and records the streams; each stream runs behind its own frozen contract in a git worktree, under its own lens. `add join` folds the finished stream bundles back — PASS-only, unioning their deltas. The same sensitivity floor that governs a sequential task carries into the wave: a stream whose task touches data, architecture, or security is held to its floor regardless of which lens advised it.
+
+## Who owns the residue — recast as lenses plus the floor
+
+The old org chart's real value was answering *who owns the dangerous surfaces* — security, architecture, testing. ADD keeps the answer and changes its form: the residue is owned by a **lens plus the sensitivity floor**, not a fixed title.
+
+- **Security.** The lens that assumes the AI will hardcode a secret and invent a package name — and gates against both from setup. But the ownership is not the lens's to grant: a `security` task's floor is `human`, and a security finding is always `HARD-STOP`. Recording a security lens is, in fact, required — the gate refuses a `PASS` on a security-sensitive node with no lens on record (`R:NOCOVERAGE`). The lens does the seeing; the floor does the stopping.
+- **Architecture.** The lens that treats the frozen contract as a one-way door and reads every change against the project's layering. Its floor is `plan` — a real task node with a human at the freeze — so a change to a load-bearing surface can never be quietly derived.
+- **Testing.** The lens that makes "done" machine-checkable and never lets a check be weakened to pass. It is enforced by the gate's bound-receipt rule, not by a person's vigilance: every rule must trace to a passing check.
+
+A sequential task that touches one of these surfaces but carries no lens is surfaced by `add doctor` as `unadvised_sensitive` — a nudge for the data and architecture floors, a `warn` for security — so an unseen sensitive task stays visible.
+
+## The non-negotiable — a persona never lowers a gate
+
+A persona changes *how carefully* the work is done; it never changes *what passes*.
+
+- **Security stays `HARD-STOP`**, always, whatever lens advised. A stronger persona is expertise, not permission, and never buys back a security finding.
+- **A high-risk scope still escalates** to the human at its sensitivity floor. The lens advises the freeze; it does not replace it.
+- **The engine stays a NO-EXEC notary.** It records that a lens is present; it never runs the method, spawns an agent, or lets a persona freeze or gate. Selecting, loading, and applying the lens is the orchestrating agent's judgment. Direction, the freeze, the evidence, and the gate stay exactly as strict as before.
 
 ---
 
-## Responsibility matrix
-
-`A` Accountable · `R` Responsible/Lead · `C` Consulted · `I` Informed
-
-| Role | Setup | Specify | Contract | Tests & Scenarios | Build | Verify | Loop |
-|------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Product / Domain | C | **R** | I | R | I | I | R |
-| Architect / Lead | **R/A** | C | **R/A** | C | A | A | C |
-| Engineer (Senior) | C | I | R | R | **R** | R | C |
-| Engineer (Junior) | I | I | I | R | R | I | I |
-| QA / Test | I | C | C | **R** | C | C | C |
-| Designer | I | R (design) | C | R | I | I | I |
-| DevOps / SRE | R | I | I | C | C | R | R | **R** |
-| Security | R | C | I | C | C | R | R | C |
-| EM / Delivery | C | C | C | C | C | C | C | C |
-
-> If your role is only ever `I`, you are not yet using the method — find the step where your judgment *is* the gate.
+> **Do:** grow a small corpus of lenses that carry your project's hard-won judgment, and record which lens advised each sensitive beat. **Don't:** treat a persona as a title with authority, or expect a lens to soften a gate — the floor and the gate are unmoved by whoever is looking.

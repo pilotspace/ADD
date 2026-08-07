@@ -6,91 +6,86 @@
 
 ## Setup: the AI drafts, you approve the baseline
 
-Before the first feature, the project needs a foundation — but standing it up is no longer your chore. Point ADD at the repo and **the AI does the drafting**: it runs `init` itself, reads what is there, and fills the foundation the whole project depends on. Your single act is the **baseline approval** — the one human gate that freezes it.
+Before the first feature, the project needs a foundation — but standing it up is no longer your chore. One command creates the bundle the whole project depends on:
 
-**What the AI drafts.** From an existing codebase it works **silently** — the code answers the questions a setup interview would ask. On an empty repo it runs a short **four-lens interview** (domain · spec · users · decisions), then drafts. Either way it fills the living documentation — the files that outlive all code — and drafts the first milestone's scope and the first task's candidate contract:
+```bash
+add init --profile code "<name>"      # also: --profile doc
+```
 
-| Item | File | Purpose |
-|------|------|---------|
-| Foundation | `PROJECT.md` + `.add/specs/` | `PROJECT.md` = goal · invariants · key decisions · pointers (read first); `.add/specs/` = the standing 5-DD picture — domain · system · experience · quality · method — every task reads |
-| Conventions | `CONVENTIONS.md` | naming, layout, language, formatter — living documentation |
-| Model record | `MODEL_REGISTRY.md` | which AI model and version the project uses, for reproducibility and audit |
-| Dependency allow-list | `dependencies.allowlist` | the packages the AI may use; the pipeline rejects others |
-| Prompt playbook | `playbook/` | the six prompts from [Appendix B](./appendix-b-prompts.md) |
-| Repository + pipeline | — | runs the gates on every change |
+`init` **vendors the engine and the seed persona corpus into `.add/`**, so the bundle runs standalone — the `add` you call afterwards is that vendored copy, and the project never has to have this repo. It writes the five empty **living specs** under `.add/specs/`, and it is idempotent: a re-run never clobbers a file a human already wrote.
 
-Every drafted decision is tagged **evidence-grounded** (read from the code) or **guessed** (thin or inferred) and listed lowest-confidence-first in a `SETUP-REVIEW.md`, so the one signature you give is informed rather than given without reading.
+**What the AI drafts.** From an existing codebase it works from the code — the code answers the questions a setup interview would ask. On an empty repo it interviews you briefly, then drafts. Either way it fills the five living specs — the standing picture every task reads — and drafts the first milestone and its first task:
 
-**The baseline approval.** The AI presents `SETUP-REVIEW.md`; you check the `guessed` rows; you **lock** — once. That single act freezes the foundation, the first scope, and the first contract together. It is the setup-level analog of the [contract freeze](./03-direction.md), and it doubles as the first task's contract approval — so there is no separate sign-off. Before the lock the engine lets the AI draft but refuses to cross into build; after it, the build opens.
+| Spec (`.add/specs/`) | Holds |
+|------|-------|
+| `domain` | what the product must be true about |
+| `system` | how it is built, and what that forecloses |
+| `experience` | who uses it and what they feel |
+| `quality` | what counts as proof |
+| `method` | how work proceeds, and what a gate costs |
+
+These are the specs the `learn` lenses (`ddd · sdd · udd · tdd · add`) fold back into as the project runs — the documentation that outlives all the code. Drafting them is AI-owned and adds no approval; it aims the whole project at reality instead of assumption.
+
+**The baseline approval.** There is no separate review ceremony and no review file to sign — the baseline is approved the same way every task is: **one freeze**. When the specs, the first milestone, and the first task's contract are drafted, a person freezes that first task:
+
+```bash
+add freeze <slug> --by "<name>" --authority human
+```
+
+That single act is the [contract freeze](./03-direction.md) doing double duty: it approves the foundation and the first contract together, and it opens the first build. Before the freeze the engine lets the AI draft but refuses to cross into build; after it, the build opens. The AF leads with its lowest-confidence guess so your one signature is aimed, not given blind.
 
 **Setup exit check**
 
-- [ ] Foundation + living docs drafted (brownfield: from the code, evidence-tagged; greenfield: from the interview, gaps flagged `guessed`).
-- [ ] `SETUP-REVIEW.md` lists every drafted decision lowest-confidence-first.
-- [ ] The model is pinned; the allow-list exists and the pipeline fails on any package outside it.
-- [ ] The pipeline runs and is green on the empty skeleton.
-- [ ] The human **locked down** — and only then did the first feature's build open.
+- [ ] `add init` has vendored the engine + seed personas into `.add/`, and the five living specs exist.
+- [ ] The specs are drafted — from the code on a brownfield repo, from a short interview on an empty one — with the AI's thinnest guesses flagged.
+- [ ] A first milestone and its first task are drafted.
+- [ ] A person **froze** the first task — and only then did its build open.
 
-Do not start a feature until the pipeline is green and the foundation is locked. The baseline approval turns the AI's draft into committed direction; the pipeline enforces every later exit check without anyone having to remember to.
+Do not start a feature until the foundation is frozen. The baseline freeze turns the AI's draft into committed direction; from there, every change flows through the three-beat loop.
 
 ---
 
-## Stages: the same flow at increasing depth
+## The three lanes: size the request before you create scope
 
-A *stage* is one pass through the flow at a chosen depth. The steps never change between stages; what changes is how deeply you run each one. The instinct to skip steps for an early prototype is right in spirit but wrong in form — you do not skip steps, you run them lightly.
+Not every request deserves a full task, and forcing one onto a typo is ceremony. Before any node exists, ADD reads the raw request into shape and routes it to the **cheapest lane that fits**. The AI proposes the lane; **the human vetoes** — you never create scope without a confirmed proposal. This replaces the old instinct to pick a "size of project" up front: you size each request as it arrives.
 
-### The depth matrix
+**Quick — below the scope floor.** Fits when *all* hold: one file or a few adjacent ones · behavior the specs already cover (a typo, a wording fix, a config value, a mechanical rename) · no new contract surface anyone consumes · mechanical sensitivity. Then there is **no task node** — you make the edit and leave a receipt:
 
-Depth: **Deep** (full rigor) · **Core** (real but scoped) · **Light** (just enough) · **—** (skipped or stubbed).
+- the **git diff** is the change record (commit as usual);
+- `add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>` files what was learned into the living spec. A quick lane that teaches nothing appends nothing.
 
-| Step | Prototype | Proof of Concept | MVP | Production-Ready |
-|------|:---------:|:----------------:|:---:|:----------------:|
-| 1 Specify | Light | Deep (risky slice) | Deep | Deep |
-| (design, if UI) | **Deep** | Light | Core | Deep |
-| 3 Contract | — | Core | Deep | Deep |
-| 4 Tests & Scenarios | Light | Core | Deep | Deep |
-| 5 Build | Light (throwaway) | Core | Core | Deep |
-| 6 Verify | Light | Core | Core | Deep |
-| Loop / operate | — | — | Light | Deep |
-| **Typical time\*** | ~2–5 days | ~1–3 weeks | ~4–8 weeks | ~4–8+ weeks |
-| **Code is** | disposable | disposable | kept | hardened |
+**Task — one atomic node.** Fits the active milestone's scope, or is a single behavior that needs a frozen contract. Create the node and run the three-beat loop:
 
-\* *Ranges assume a small team on a single product slice. Scale by scope and by the number of parallel streams. The pace is set by judgment and review capacity, not by how fast the AI can type — adding more AI does not compress the human-led steps.*
+```bash
+add new Task <slug> --title "..." --depth quick|standard|deep
+```
 
-### Stage by stage
+**Project / milestone — a theme or a slice.** A new product theme no active milestone covers, or a slice too big for one task. Draft the milestone *first* — **goal · in/out scope · exit criteria · a breadth-first task list** (each task a `slug · depends-on · one line`) — confirm it, then create it and list its tasks. `add milestone-done` refuses to close a milestone while any exit box is unchecked.
 
-**Prototype — prove the experience.** Run the design deeply and everything else lightly; the code is throwaway. The achievement is that a stakeholder reacts to something tangible and a go/no-go on the concept becomes possible. Do not expect real data, tests, or anything that survives.
+### The closed floor — what always sizes up
 
-**Proof of Concept — retire the biggest technical risk.** Run the contract, tests, and build *deeply but only on the single riskiest slice*. The achievement is evidence that the hardest unknown is solvable, which turns an MVP estimate from hopeful into credible. Do not expect breadth or polish.
+A change touching **security · data · architecture** ALWAYS becomes a real task — never Quick, no matter how small. New behavior, a new or changed contract, or anything you would want a frozen `gives:` for → a Task at least. **Security is a HARD-STOP everywhere.** The route is the AI's to propose; the veto is the human's — "make it a task" always wins. When in doubt, size up.
 
-**MVP — deliver value to real users.** Run the full flow at a narrow scope — the first complete loop, including light observation. The achievement is real users getting value while you learn from them. Do not expect scale or full operational rigor.
+> **Do:** route a typo or a config bump to Quick and leave a receipt — no node.
+> **Don't:** send anything touching auth, data, or an architectural boundary to Quick, however trivial the diff looks.
 
-**Production-Ready — run safely at scale.** Run every step at full rigor and deepen the operate-and-learn loop: service objectives, incident response, tested rollback, gradual delivery. The achievement is a system that is tested, secure, observable, and supportable. Do not expect "zero defects"; expect managed risk with a working feedback loop.
+### Change-request — touching already-frozen scope
 
-### What carries forward
+If the request modifies a **frozen** contract or a shipped promise, it is not new scope — it is a change-request back to Direction of the affected node: the old `gives:` stays, a refreeze stamp lands, and dependents that `need:` it are flagged stale. Never fork the truth into a parallel node.
 
-The durable thing is never the code:
+---
 
-| Transition | Discard | Keep |
-|------------|---------|------|
-| Prototype → POC | the prototype code | the validated experience (design, flows) |
-| POC → MVP | the spike code | the validated approach + the risky-interface contract |
-| MVP → Production | nothing | everything; the code is real and is hardened |
+## The depth dial: same steps, tuned ceremony
 
-The living documentation thickens as you move right: a prototype leaves you a validated design; a proof of concept adds a proven approach and a contract; the MVP adds real, kept code. By production, you are hardening, not rebuilding.
+Depth is neither a lane nor a phase — it is a dial on **how much ceremony a single task carries**. The steps never change as you turn it; what changes is how heavily you run each one. Crucially, **depth tunes ceremony, never authority.** The authority floor is computed from the task's `sensitivity:` — `security → human`, `data | architecture → plan`, else `process` — so turning the dial down can lighten the paperwork but can never lower who must sign.
 
-### Graduating between stages
+- **quick** — the lean node (CARD · CHECKS · EVIDENCE). At a green, `covers`-bound receipt the AI may record the PASS itself at `process` authority — an explicit pass you run, not an engine auto-verdict — *unless the sensitivity floor is higher*.
+- **standard** — the full node, evidence-gated, at whatever authority the floor computes.
+- **deep** — the full node plus milestone strategy, presented lowest-confidence-first; a human owns the freeze whenever the floor, or your own judgment, calls for it.
 
-Moving up a stage — most consequentially MVP → Production — is its own scope level, the fourth after setup, intake, and the milestone loop. It is *not* a label someone types: a project earns production through a human-confirmed roadmap of the hardening work, never through a bare flip. The `add` skill drives this in `graduate.md`; the shape is five steps.
+> **Do:** dial a well-understood, mechanical task down to `quick` to spend less ceremony on it.
+> **Don't:** expect `quick` to lower the gate on security or data work — the `sensitivity:` floor holds no matter where the dial sits.
 
-**The cue.** When every milestone is `done` *and* the human's **stage-goal-criteria** in `PROJECT.md` are all `[x]`, `add.py status` prints `→ MVP covered → propose graduation`. Until both tallies complete, nothing here applies — a project with no stage-goal-criteria block behaves exactly as before.
-
-1. **Gather the analytics.** `add.py graduation-report` clusters the whole MVP loop's evidence into five labeled record-sets — open deltas by competency, open RISK-ACCEPTED waivers by expiry, RETRO records, verify residue, and observe-loop coverage gaps. It *gathers, never judges*: there is no readiness verdict, only the records you reason from.
-2. **Interview.** Synthesize *what production means here* with the human, using those records as the agenda. This synthesis is the judgment the engine refuses to make.
-3. **Draft the roadmap.** For each production outcome the interview surfaces, draft a production milestone with the existing command — `add.py new-milestone <slug> --stage production --goal "…"` — and write its exit criteria. The roadmap is **≥1** milestone; the hardening work itself is what those milestones contain.
-4. **Human confirms.** The human accepts, edits, or declines each draft. Nothing is created on an unconfirmed draft.
-5. **Flip — the final step.** Only now run `add.py stage production`.
-
-**The floor the engine enforces.** `add.py stage production` is guarded: it refuses with `stage_no_roadmap` (non-zero exit, state byte-unchanged) when no milestone has `stage: production`. The check is a *tally* — does a production-roadmap record exist? — never a readiness judgment, mirroring the milestone goal-gate. `--force` overrides it for grandfathered or edge cases; use it deliberately, not as the normal path. The guard is on the `→production` transition only; flips to prototype/poc/mvp are unchanged. The engine never advances the stage on its own — it gathers, counts, and holds the floor while the human judges and confirms.
+The pace of a project is set by judgment and review capacity, not by how fast the AI can type. Adding more AI does not compress the human-led decision points; it only fills the gaps between them — which is exactly what [parallel work](./08-parallel-work.md) is for.
 
 ---
