@@ -948,10 +948,14 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     if path.exists():
         return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
 
-    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "milestone", "scope"]
+    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when", "milestone", "scope"]
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
         fm["status"] = "direction"
+    # A Persona is discoverable by its `use-when:` — the one field a tool reads to place the lens.
+    # Scaffold a placeholder when the author did not supply one, so the roster is never mute.
+    if node_type == "Persona" and fields.get("use-when") is None:
+        fm["use-when"] = "<when this lens applies>"
     fm.update({k: v for k, v in fields.items() if v is not None})
     lines = []
     for key in order + [k for k in fm if k not in order]:
@@ -2336,6 +2340,15 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         find("error", "dependency_cycle", " -> ".join(loop), loop[0])
     for cid, key, said, actual in card_drift(graph):
         find("info", "card_drift", f"{cid.lstrip('/')}: CARD `{key}` says {said}, status is {actual}", cid)
+    # Coverage: a sensitive task with no recorded lens. R:NOLENS floors PARALLEL streams only, so a
+    # SEQUENTIAL architecture/security/data task can carry no lens and go unseen. Surface it — info,
+    # reports-only, never a gate (that HARD-STOP question is A2, out of scope here).
+    for cid, node in sorted(graph.items()):
+        fm = node["fm"] or {}
+        if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
+            continue
+        if not fm.get("persona") and not fm.get("advised_by"):
+            find("info", "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):
@@ -2349,7 +2362,7 @@ def doctor(root, graph: dict = None, paths=None) -> list:
 
 
 INDEX_SECTIONS = (("Project", "Project"), ("Specs", "Spec"),
-                  ("Milestones", "Milestone"), ("Tasks", "Task"))
+                  ("Milestones", "Milestone"), ("Tasks", "Task"), ("Personas", "Persona"))
 INDEX_ENTRY = re.compile(r"^- \[[^\]]*\]\(([^)]+)\)(?:\s+—\s*(.*))?$")
 
 
@@ -2386,6 +2399,10 @@ def _render_index(root, graph: dict) -> str:
             elif node_type == "Milestone":
                 authored = tail.split("—", 1)[1].strip() if "—" in tail else ""
                 detail = f"`{fm.get('status', '?')}`" + (f" — {authored}" if authored else "")
+            elif node_type == "Persona":
+                # A persona's catalogue line is its `use-when:` FRONTMATTER (machine-read), not the
+                # preserved index tail — the roster must reflect the node, never a stale hand edit.
+                detail = str(fm.get("use-when", "") or "")
             else:
                 detail = tail
             rows.append(f"- [{fm.get('title', rel)}]({rel})" + (f" — {detail}" if detail else ""))
