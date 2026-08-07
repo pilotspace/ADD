@@ -78,21 +78,20 @@ def main() -> None:
     _copy_tree(SKILL_SRC, skill_dest)
     print(f"  copied skill/add  ({len(list(skill_dest.rglob('*')))} items)")
 
-    # 2. tooling/add.py  +  tooling/templates/  (runtime only — no tests)
+    # 2. tooling/add.py + tooling/cli.py + tooling/templates/  (runtime only — no tests)
+    #    ABF-1 (3.0): the engine is a flat two-file pair — add.py (the library) + cli.py (the
+    #    dispatch entry the skill invokes as `.add/tooling/cli.py`). No add_engine/ package.
     tooling_dest = BUNDLE_ROOT / "tooling"
     _rm(tooling_dest)
     tooling_dest.mkdir(parents=True, exist_ok=True)
-    add_py_src = TOOLING_SRC / "add.py"
-    if not add_py_src.exists():
-        print(f"error: {add_py_src} does not exist", file=sys.stderr)
-        sys.exit(1)
-    shutil.copy2(str(add_py_src), str(tooling_dest / "add.py"))
-    # the engine is a package now: ship tooling/add_engine/ (runtime modules; no tests)
-    engine_pkg_src = TOOLING_SRC / "add_engine"
-    if engine_pkg_src.is_dir():
-        _copy_tree(engine_pkg_src, tooling_dest / "add_engine", exclude_test_py=True)
+    for name in ("add.py", "cli.py"):
+        src = TOOLING_SRC / name
+        if not src.exists():
+            print(f"error: {src} does not exist", file=sys.stderr)
+            sys.exit(1)
+        shutil.copy2(str(src), str(tooling_dest / name))
     _copy_tree(TOOLING_SRC / "templates", tooling_dest / "templates")
-    print("  copied tooling/add.py + add_engine/ + templates/")
+    print("  copied tooling/add.py + cli.py + templates/")
 
     # 3. personas-teacher/  (vendored teacher snapshot — verbatim, no test/junk strip needed
     #    since it carries none; ship it whole so the persona phase reads it off-build)
