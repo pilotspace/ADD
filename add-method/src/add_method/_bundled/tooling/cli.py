@@ -11,7 +11,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
-    deltas · fold · reopen · milestone-archive · doctor · wave · join
+    deltas · fold · reopen · milestone-archive · doctor · wave · join · advise
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -126,6 +126,10 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("join", help="fold worktree stream bundles back — PASS-only, union deltas, regen graph")
     s.add_argument("bundles", nargs="+", help="paths to each stream's .add/ bundle (one per worktree)")
 
+    s = sub.add_parser("advise", help="record a persona lens on a sequential beat (NO-EXEC; feeds the coverage floor)")
+    s.add_argument("ref", help="the task/milestone to advise")
+    s.add_argument("--persona", required=True, help="the Persona slug advising this beat")
+
     return p
 
 
@@ -219,6 +223,11 @@ def dispatch(args, run_cmd) -> int:
         _result, note = add.join(root, [Path(b) for b in args.bundles])
         print(note)  # a skipped HARD-STOP stream is reported in the note, not an engine refusal
         return 0
+
+    if args.verb == "advise":
+        out, note = add.advise(root, _resolve(root, args.ref), args.persona)
+        print(note)
+        return 0 if out else 1
 
     if args.verb == "doctor":
         if args.sync:

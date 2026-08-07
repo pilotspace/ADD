@@ -575,6 +575,34 @@ def wave(root, milestone_ref, streams=None):
                    f"next: build each stream in its worktree, then add join")
 
 
+def advise(root, cid: str, persona: str) -> tuple:
+    """Record a persona lens on a SEQUENTIAL beat: stamp `advised_by: <persona>`. NO-EXEC.
+
+    The parallel path records this via `wave`→`join`; this is the sequential twin — a first-class,
+    validated record of who advised a beat, and exactly what A2's security floor (R:NOCOVERAGE)
+    consumes. The engine RECORDS the AI's chosen lens; it never runs, spawns, or judges the persona,
+    and a lens never lowers a gate. Re-advising re-routes (the value is replaced, never appended).
+    """
+    root = Path(root)
+    graph = scan(root)
+    if cid not in graph:
+        return None, f"no such node: {cid}\nnext: add status"
+    node_type = (graph[cid]["fm"] or {}).get("type")
+    if node_type not in LIFECYCLE_TYPES:
+        return None, (f'R:NOTATASK only a lifecycle node (Task/Milestone) carries a lens — '
+                      f'`{cid}` is a {node_type} -> "R:NOTATASK"')
+    # Same roster resolution `wave` uses: the lens must name a real, seeded Persona node.
+    persona_slugs = {_wave_slug(c) for c, n in graph.items() if (n["fm"] or {}).get("type") == "Persona"}
+    if persona not in persona_slugs:
+        return None, (f'R:BADPERSONA `{persona}` is not a Persona node in the bundle — '
+                      f'seed it first (`add new Persona {persona}`) -> "R:BADPERSONA"')
+    n = read(graph[cid]["path"], "T2")
+    write(graph[cid]["path"], f"---\n{set_key(n['raw'], 'advised_by', persona)}\n---\n{n['body']}")
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    return persona, (f"`{slug}` advised by `{persona}` — recorded (NO-EXEC: the lens advises; it never "
+                     f"freezes or gates)\nnext: add brief {slug}")
+
+
 def _last_gate_outcome(fm: dict):
     """The `outcome` of the last `act: gate` stamp in `verified[]`, or None if never gated."""
     outcome = None

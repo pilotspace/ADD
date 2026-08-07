@@ -18,7 +18,8 @@ import cli  # noqa: E402
 
 # Verbs the CLI wires in v1 — every one has a real engine function.
 WIRED = {"init", "status", "new", "freeze", "run", "gate", "done", "brief", "learn",
-         "milestone-done", "deltas", "fold", "reopen", "milestone-archive", "doctor", "wave", "join"}
+         "milestone-done", "deltas", "fold", "reopen", "milestone-archive", "doctor", "wave", "join",
+         "advise"}
 
 
 def _run(root, *argv):
@@ -56,6 +57,18 @@ def test_milestone_done_goal_gate(tmp_path):
     text = path.read_text(encoding="utf-8")
     path.write_text(text.replace("- [ ] not yet", "- [x] done"), encoding="utf-8")
     assert _run(tmp_path, "milestone-done", "m1") == 0, "all boxes checked closes (exit 0)"
+
+
+def test_advise_cli_dispatches(tmp_path):
+    """covers: M1 — `add advise <slug> --persona <p>` records (0) or refuses (1)."""
+    _run(tmp_path, "init", "T")
+    add.new(tmp_path, "Milestone", "m", title="m")
+    add.new(tmp_path, "Task", "sec", title="sec", milestone="m", sensitivity="security", scope=["a.py"])
+    add.new(tmp_path, "Persona", "sec-rev", title="security lens")
+    assert _run(tmp_path, "advise", "sec", "--persona", "sec-rev") == 0
+    fm = add.read(tmp_path / "tasks" / "sec.md", "T2")["fm"]
+    assert fm.get("advised_by") == "sec-rev"
+    assert _run(tmp_path, "advise", "sec", "--persona", "ghost") == 1, "an unknown persona is exit 1"
 
 
 def test_unknown_verb_is_usage_error(tmp_path):
