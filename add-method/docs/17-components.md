@@ -7,137 +7,140 @@
 Most of this book treats a project as one codebase with one green bar. Real
 systems are rarely that tidy: a backend and a frontend, a shared library and two
 apps, or three services across three repos. ADD models all of these the same
-way — as a **graph of components**. A component owns a source root, its own
-green bar, and the contracts it produces or consumes. With that, **one milestone
-can ship a vertical slice across components** — a backend endpoint and the
-frontend that calls it — instead of splitting the slice across milestones.
+way — through the **task graph** already in the `.add/` bundle. A task owns a
+`scope:` (the source subtree it may touch), its own checks, and the frozen
+contracts it produces (`gives:`) or consumes (`needs:`). With that, **one milestone
+can ship a vertical slice across parts** — a backend endpoint and the frontend that
+calls it — instead of splitting the slice across milestones.
 
-This pillar is **opt-in and additive**: a project that declares no components
-behaves exactly as the rest of the book describes. You reach for it only when a
-milestone genuinely spans more than one green bar.
+This is **opt-in and additive**: a project whose tasks all share one scope behaves
+exactly as the rest of the book describes. You reach for the multi-part machinery
+only when a milestone genuinely spans more than one green bar.
 
-## Declare the components
+## Scope is declared, never inferred
 
-Components are **declared, never inferred** — ADD does not scan `apps/*` and
-guess. You name them in `.add/components.toml`:
+A task's parts of the tree are **declared on the node**, not guessed from the
+directory layout. You name them in the task's `scope:` frontmatter (also the
+freshness set the gate hashes a receipt against):
 
-```toml
-[component.gateway]
-root      = "apps/gateway"
-green_bar = "pytest + pyright"
-
-[component.dashboard]
-root      = "apps/web"
-green_bar = "vitest + a11y"
+```yaml
+---
+type: Task
+title: Reject overlapping bookings
+scope:
+  - apps/gateway/**
+  - src/bookings/**
+---
 ```
 
-Each component owns a **root** (the source subtree it governs) and a
-**green-bar** (the suite + checks that prove *that* component healthy). A task
-binds to a component with a `component:` header line; the component's root is
-then added to the task's §5 Scope automatically. A project with no
-`components.toml`, or a task with no `component:` line, is byte-identical to a
-single-component project.
+`add new Task <slug> --scope apps/gateway/**` writes that line; `add locate
+apps/gateway/service.py` does the reverse lookup — *which node's scope owns this
+path*. A task that names no cross-part scope is byte-identical to a
+single-part project. There is no registry to keep in sync and nothing scans
+`apps/*` to guess ownership: the scope is on the node that governs it.
 
 ## Verify each task against its own green bar
 
 In a mixed milestone, a backend task and a frontend task pass on **different
-toolchains**. The verify gate enforces this per component: a task bound to
-`gateway` must cite its component's green-bar (`pytest + pyright`) in the §6
-Build-expectations evidence, or the gate refuses `component_green_bar_uncited`.
-The engine never *runs* the suite — that invariant holds here too. The AI runs
-the right suite for the bound component; the gate checks the **right bar was
-cited** in the evidence. Two tasks, one milestone, two green bars — each held to
-its own.
+toolchains**. The verify gate enforces this per task, through the **bound receipt**:
+`add run <slug> --junitxml r.xml -- <the suite for this scope>` records the checks
+that actually ran, and `add gate <slug> PASS` refuses unless every listed check
+appears in that receipt with `outcome: pass`. The engine never *runs* the suite —
+that invariant holds here too ([NO-EXEC](./01-principles.md)). The AI runs the
+right suite for the task's scope; the gate checks that the **right checks were
+observed** in a fresh, covers-bound receipt. Two tasks, one milestone, two green
+bars — each held to its own.
 
-At the gate the engine also **surfaces** the bound component's `verify` command —
-the literal suite to run (e.g. `pytest -q`) — beside the expected green-bar, and
-records it in the §6 gate record so the ledger shows which suite backed the gate.
-It prints *what* to run; it never runs it (NO-EXEC). In the fast lane the same
-`component:` affordance is available, so a small task in a monorepo can bind a
-component and get its bar and `verify` surfaced too.
+## Freeze a contract between parts
 
-## Freeze a contract between components
+When one part produces an interface another consumes, that boundary needs a
+**frozen, machine-checkable contract**. It is not a separate file type — it is the
+producer task's `gives:`, frozen at the freeze stamp, and the consumer task's
+`needs:` citing it:
 
-When one component produces an interface another consumes, that boundary needs a
-**frozen, machine-checkable contract**. Declare it, name its producer and
-consumers:
+```yaml
+# producer task
+gives:
+  - "POST /bookings -> 409 OVERLAP on user-overlap"
 
-```toml
-[contract.gateway-api]
-producer  = "gateway"
-consumers = ["dashboard"]
+# consumer task
+depends_on:
+  - /tasks/add-booking-endpoint.md
+needs:
+  - /tasks/add-booking-endpoint.md#gives     # a frozen fragment of the producer
 ```
 
-A task declares its role with a header line — `produces: gateway-api` or
-`consumes: gateway-api`. When the **producer** task freezes its §3 and crosses
-contract→tests, the engine writes an immutable snapshot at
-`.add/contracts/gateway-api.json` (id, producer, version, frozen date, and a
-hash over the frozen §3 shape). When a **consumer** task crosses contract→tests,
-it **pins** that live hash. If the producer later re-freezes a *changed* shape,
-`add.py check` flags every consumer `contract_consumer_stale` — a §7 delta to
-re-pin against the new shape. A missing or malformed snapshot is a HARD-STOP, not
-a guess: the consumer never builds against a shape that was never frozen.
+When the **producer** task freezes, its `gives:` becomes an immutable interface
+(the frozen-interface rule of the [bundle format](./12-bundle-format.md), FORMAT.md
+§3.5). The **consumer** task's `needs:` cites that frozen
+fragment by reference — resolved from `graph.json` at brief time, so a spec edit
+re-scopes the consumer with no edit here. If the producer later **refreezes a
+changed shape**, every node whose `needs:` cite the old fragment is flagged
+**stale** and must re-verify before its next gate — ATG's minimal repair made
+mechanical: internals may change freely; an interface change propagates as explicit,
+bounded re-verification of the dependents. A `needs:` pointing at a `gives:` that
+was never frozen is an `edge_unresolved` finding the consumer can see before it
+builds against a shape that does not exist.
 
 ## One milestone, a full-stack slice
 
 The reason to put a producer and a consumer in the *same* milestone is to ship a
 vertical slice — but the frontend must not commit to an endpoint the backend has
-not frozen yet. ADD enforces that ordering with a **hold**: a `consumes:` task
-cannot advance scenarios→contract (it cannot write its §3) while its producer's
-snapshot does not yet exist. The engine refuses `producer_contract_unfrozen` and
-the task stays at `scenarios`. Once the backend freezes its contract, the
-frontend proceeds and pins it. The slice is **ordered by the frozen contract**,
-all inside one milestone — the FE stays downstream of the BE endpoint, not split
-into a later milestone.
+not frozen yet. The `depends_on` edge and the frozen `gives:` enforce that ordering:
+the consumer's `needs:` cannot resolve until the producer's `gives:` is frozen, so
+the slice is **ordered by the frozen contract**, all inside one milestone. The
+frontend stays downstream of the backend endpoint, not split into a later milestone.
+`add wave <milestone>` reads exactly this DAG: it plans the parallel wave by
+**levels**, so producers land before the consumers that depend on them.
 
-The hold checks more than existence. Even once a snapshot exists, if a live
-producer task has *re-opened or drifted* its §3 — the snapshot no longer matches
-a frozen producer — the consumer is held `producer_contract_stale` rather than
-pinning a shape that is mid-change (the freeze-recency guard). Outside the hold,
-`add.py check` surfaces the softer `contract_producer_stale` (a live producer
-drifted past a pinned consumer) and `contract_snapshot_hashless` (a snapshot
-carrying no hash to verify against) as **never-red warnings** — measured and
-reported, never blocking.
+## Parallel across parts: waves and worktrees
 
-## Across repositories: federation
+When a milestone's parts are independent, they run in parallel. `add wave
+<milestone>` plans the wave from the task DAG and records the streams; each stream
+runs behind its own frozen contract in its **own git worktree**, under its own
+persona lens. `add join <bundles…>` folds the finished stream bundles back —
+**PASS-only**, unioning their deltas and regenerating the graph.
 
-Components in separate repositories work the same way; only the
-**snapshot transport** differs. A consumer repo declares where a producer repo
-publishes its frozen contract:
+What makes this safe is that **`graph.json` is a compiled cache**, gitignored and
+rebuildable from the node frontmatter at any time. Because every derivable fact is
+rendered rather than hand-maintained, there is no shared mutable file for N agents in
+N worktrees to conflict on — the compiled cache cannot go stale and has no concurrent
+writers. That property, not a coordinator, is what lets a wave fan out.
 
-```toml
-[federation.gateway-api]
-source = "../gateway/.add/contracts/gateway-api.json"
-pin    = "v1"        # optional — the version this repo expects
-```
+## Across repositories: one bundle each
 
-`add.py federate pull gateway-api` reads that source, validates it (valid JSON,
-matching id, a hash, and — if `pin` is set — a matching version), and lands a
-**byte-for-byte copy** at the local `.add/contracts/gateway-api.json`. From
-there, the consuming repo's task holds and pins exactly as in a monorepo. The
-pull is **fail-loud by design**: an unknown id, an unreadable source, a `source`
-that **escapes the consumer repo's allowlist** (`federation_source_escapes` — the
-path is confined to a sibling of the repo root, so a `../../etc`-style traversal
-lands nothing), an invalid snapshot, or a version mismatch each HARD-STOPS — federation
-never builds an FE against a guessed, out-of-tree, or stale endpoint. The producer's snapshot
-is the published artifact; "publishing" is committing that file in the producer
-repo. Each repo keeps its own git-native `state.json`; federation transports only
-the immutable frozen shape, never shared mutable state.
+Parts in separate repositories work the same way, with one honest difference: an
+edge may not escape its bundle (`edge_out_of_bundle` is the one fatal finding), so a
+consumer in repo B cannot `needs:` a node in repo A directly. Each repo carries its
+**own `.add/` bundle** — its own five specs, its own tasks, its own vendored engine
+under `.add/tooling/` (`add init` vendors the flat engine there; `add doctor --sync`
+re-vendors a stale copy).
+
+The hand-off between repos is the **frozen interface itself**. The producing repo
+freezes its `gives:` and commits it; the consuming repo carries a copy of that frozen
+shape as its own contract of record and holds its consumer task against it. The
+frozen shape is content-addressed, so a copy that drifts from the source is
+detectable rather than silent. This is deliberately **not** an automatic transport:
+the engine ships no cross-repo fetch verb, because a boundary between two teams'
+repos is exactly where a human-carried, committed contract beats a background pull.
+"Publishing" is committing the frozen shape in the producer repo; adopting it is
+committing the copy in the consumer repo.
 
 ## What this pillar is not
 
-- **Not auto-discovery.** Components are declared in `components.toml`, not
-  inferred from the directory tree.
-- **Not a central server.** Federation copies an immutable snapshot between
-  repos; there is no shared service and no shared mutable state.
-- **Not a new approval.** The component machinery rides the existing six-step
-  flow and its single contract-freeze approval — it adds gates the engine
-  enforces, not human checkpoints.
+- **Not auto-discovery.** Scope is declared on each task's `scope:`, not inferred
+  from the directory tree.
+- **Not a central server.** Each repo keeps its own `.add/` bundle; `graph.json` is
+  a local, rebuildable cache, and cross-repo sharing is a committed frozen shape, not
+  shared mutable state.
+- **Not a new approval.** The cross-part machinery rides the existing three-beat flow
+  and its single contract-freeze — it adds edges and stale-flags the engine tracks,
+  not human checkpoints.
 
-The whole pillar is structure, not policy: who *owns* a component and how
-autonomy is set per component is the identity/governance story (chapters 11–12),
-layered on top of this graph.
+The whole pillar is structure, not policy: who *owns* a part and how strict its floor
+is remains the governance story (chapters 09–10) — the sensitivity floor and the
+personas — layered on top of this graph.
 
 ---
 
-[← 16 Releasing](./16-releasing.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 16 Releasing](./16-releasing.md) · [Contents](./README.md) · Next: [18 Personas in practice →](./18-personas.md)
