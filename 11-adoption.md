@@ -1,8 +1,6 @@
-# 13 · Adoption and onboarding
+# 11 · Adoption
 
-[← 12 Roles](./12-roles.md) · [Contents](./README.md) · Next: [14 The foundation →](./14-foundation.md)
-
-How a team starts using AIDD, and how a new person becomes productive in it.
+[← 10 Personas — the team as lenses](./10-personas.md) · [Contents](./README.md) · Next: [12 The .add/ bundle — ABF-1 format →](./12-bundle-format.md)
 
 ---
 

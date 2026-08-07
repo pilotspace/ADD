@@ -1,8 +1,6 @@
-# 11 · Governance
+# 09 · Governance
 
-[← 10 Setup and stages](./10-setup-and-stages.md) · [Contents](./README.md) · Next: [12 Roles →](./12-roles.md)
-
-Governance is what keeps the method honest when a team runs it at speed. It is the same regardless of which AI tool writes the code, because it lives in the process and the pipeline, not in the agent.
+[← 08 Parallel work — waves and worktrees](./08-parallel-work.md) · [Contents](./README.md) · Next: [10 Personas — the team as lenses →](./10-personas.md)
 
 ---
 
@@ -88,4 +86,4 @@ Do **not** optimize: lines of AI code generated, code-reuse percentage, prompt c
 | Autonomy ceiling | generate-behind-gate from day one | up to auto-with-evidence | generate-behind-gate max; the AI never merges its own work |
 | Gate default | `RISK-ACCEPTED` allowed | `PASS` required to advance | `HARD-STOP`; full audit trail |
 
-Choose the profile deliberately — a startup spike and a banking system are not the same risk — and run different products at different profiles as appropriate. The choice is owned by the delivery lead (see [12 Roles](./12-roles.md)).
+Choose the profile deliberately — a startup spike and a banking system are not the same risk — and run different products at different profiles as appropriate. The choice is owned by the delivery lead (see [12 Roles](./10-personas.md)).

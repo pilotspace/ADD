@@ -1,12 +1,12 @@
 # 16 · Releasing
 
-[← 15 Foundations & Lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [17 Components →](./17-components.md)
+[← 15 Foundations and lineage](./15-foundations-and-lineage.md) · [Contents](./README.md) · Next: [17 Components — monorepo and multi-repo →](./17-components.md)
 
 ---
 
-The flow chapters ([03](./03-step-1-specify.md)–[08](./08-step-6-verify.md)) take one feature from
-spec to verified. The loop chapter ([09](./09-the-loop.md)) keeps a milestone going until its goal
-is met. The stages chapter ([10](./10-setup-and-stages.md)) graduates the project's rigor. None of
+The flow chapters ([03](./03-direction.md)–[08](./05-verify.md)) take one feature from
+spec to verified. The loop chapter ([09](./06-the-loop.md)) keeps a milestone going until its goal
+is met. The stages chapter ([10](./07-setup-and-lanes.md)) graduates the project's rigor. None of
 them *ship*. This chapter names the act every project eventually performs and that the method, until
 now, never formalized: bundling closed milestones into a versioned, user-facing release whose notes
 are evidence-backed, whose risk is disclosed, and whose behaviour is then watched.
@@ -93,10 +93,10 @@ refusing with a non-zero exit and leaving every file byte-unchanged on any of fo
   notes. Disclosure *is* the floor: a shipped risk the user cannot read about is a hidden risk.
 
 The security stop is **un-forceable.** `--force` exists for grandfathered and brownfield first-cuts —
-the same authority valve as `stage --force` ([10 · Setup and stages](./10-setup-and-stages.md)) — and
+the same authority valve as `stage --force` ([10 · Setup and stages](./07-setup-and-lanes.md)) — and
 it can override the other three rejects, but it can never override `release_security_open`. This mirrors
-the verify gate exactly ([08 · Verify](./08-step-6-verify.md)) and the governance ceiling that no
-autonomy level may lift ([11 · Governance](./11-governance.md)): a security `HARD-STOP` is the one
+the verify gate exactly ([08 · Verify](./05-verify.md)) and the governance ceiling that no
+autonomy level may lift ([11 · Governance](./09-governance.md)): a security `HARD-STOP` is the one
 outcome the method refuses to auto-pass, at verify and again at the cut.
 
 ## 16.5 · The cut versus the ship — the engine records, the human ships

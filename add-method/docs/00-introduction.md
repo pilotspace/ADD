@@ -1,4 +1,4 @@
-# 00 · The shift: why AIDD exists
+# 00 · The shift: why ADD exists
 
 [Contents](./README.md) · Next: [01 Core principles →](./01-principles.md)
 

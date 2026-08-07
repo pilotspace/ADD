@@ -1,12 +1,12 @@
-# 02 · The flow, and what is disposable
+# 02 · The three-beat loop, and what is disposable
 
-[← 01 Core principles](./01-principles.md) · [Contents](./README.md) · Next: [03 Step 1 Specify →](./03-step-1-specify.md)
+[← 01 Core principles](./01-principles.md) · [Contents](./README.md) · Next: [03 Direction — rules, plan, checks →](./03-direction.md)
 
 ---
 
 ## The flow
 
-AIDD is one repeatable flow: five steps build the feature — Specify → Plan → Tests & Scenarios → Build → Verify — and a sixth, **Observe**, feeds what production teaches back into the next Specify. (The steps keep their engine numbers — Specify is §1, Plan §3, Tests & Scenarios §4, Build §5, Verify §6, Observe §7 — so the set is non-contiguous: pass/fail scenarios are no longer a standalone step, they are written with the tests in Step 4.) In the default flow the AI drafts the specification bundle (Specify · Plan · Tests & Scenarios) and a person approves it **once**, at the plan freeze; the AI performs the Build; and Verify is resolved on evidence under `autonomy: auto`, with a person owning any residue. (See [11 Governance](./11-governance.md) for the autonomy level and the one-approval decision point.)
+AIDD is one repeatable flow: five steps build the feature — Specify → Plan → Tests & Scenarios → Build → Verify — and a sixth, **Observe**, feeds what production teaches back into the next Specify. (The steps keep their engine numbers — Specify is §1, Plan §3, Tests & Scenarios §4, Build §5, Verify §6, Observe §7 — so the set is non-contiguous: pass/fail scenarios are no longer a standalone step, they are written with the tests in Step 4.) In the default flow the AI drafts the specification bundle (Specify · Plan · Tests & Scenarios) and a person approves it **once**, at the plan freeze; the AI performs the Build; and Verify is resolved on evidence under `autonomy: auto`, with a person owning any residue. (See [11 Governance](./09-governance.md) for the autonomy level and the one-approval decision point.)
 
 **Grounding is not a separate step — it is the first part of Plan.** Before it freezes anything, the AI gathers the real current codebase the task touches — the actual files, symbols, signatures, patterns, and conventions — into a lean *grounding map*, surfacing the **anchors** the frozen contract will later cite. Grounding is AI-owned and adds no new approval (the one approval stays at the plan freeze); it aims the specification bundle at reality instead of assumption, so the contract, tests, and build are grounded in the code as it actually is. Step 3, **Plan**, does three things in order — ground the real code, freeze the contract, set the build strategy — and still costs the flow exactly one human decision.
 
@@ -55,7 +55,7 @@ flowchart LR
 
 The shape is deliberate: the human-led steps establish direction, a frozen contract forms the decision point in the middle, and the AI-led build runs fast and safely on the far side because everything it needs is already fixed.
 
-> **What changed in v7 (the diagrams above show the structural flow, which is unchanged).** The *steps* and their order are exactly as drawn — only **who resolves them** moved. The AI now drafts the whole specification bundle (Specify · Plan · Tests & Scenarios) and a person approves it **once**, at the plan freeze (not a sign-off at each step); and **Verify is auto-gated on evidence** under `autonomy: auto` (the default), escalating security — always a `HARD-STOP` — and other residue to a person. Lower the autonomy level to `conservative` to keep a human at the Verify gate. See [11 Governance](./11-governance.md).
+> **What changed in v7 (the diagrams above show the structural flow, which is unchanged).** The *steps* and their order are exactly as drawn — only **who resolves them** moved. The AI now drafts the whole specification bundle (Specify · Plan · Tests & Scenarios) and a person approves it **once**, at the plan freeze (not a sign-off at each step); and **Verify is auto-gated on evidence** under `autonomy: auto` (the default), escalating security — always a `HARD-STOP` — and other residue to a person. Lower the autonomy level to `conservative` to keep a human at the Verify gate. See [11 Governance](./09-governance.md).
 
 ## Many features, one at a time — listed up front, specified just-in-time
 

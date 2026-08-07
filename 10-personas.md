@@ -1,8 +1,6 @@
-# 12 · Roles and responsibilities
+# 10 · Personas — the team as lenses
 
-[← 11 Governance](./11-governance.md) · [Contents](./README.md) · Next: [13 Adoption →](./13-adoption.md)
-
-Everyone on an AIDD team becomes, in part, a *verifier*; most also become *authors of the artifacts*. This chapter says what each role owns and does. Find your section; each answers the same three questions — what you do, when, and what "done" means for you.
+[← 09 Governance](./09-governance.md) · [Contents](./README.md) · Next: [11 Adoption →](./11-adoption.md)
 
 ---
 
@@ -36,7 +34,7 @@ Everyone on an AIDD team becomes, in part, a *verifier*; most also become *autho
 - **Leads:** nothing yet. **Contributes to:** Build (against handed-over specs and contracts), Tests.
 - **Owns:** your tasks' code and tests; raising a flag when a spec is ambiguous — which is a contribution, not a failure.
 - **Done means:** your task's tests pass honestly, your change has a clear evidence bundle, and a senior has reviewed it.
-- **Apply it:** start with specs and contracts given to you and make red tests green without weakening them; over time move *up* toward design and specification as your judgment matures (see [13 Adoption](./13-adoption.md)).
+- **Apply it:** start with specs and contracts given to you and make red tests green without weakening them; over time move *up* toward design and specification as your judgment matures (see [13 Adoption](./11-adoption.md)).
 
 ## QA / Test Engineer
 

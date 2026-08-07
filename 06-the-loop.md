@@ -1,9 +1,6 @@
-# 09 · The loop — observe and learn
+# 06 · The loop — observe, learn, close
 
-[← 08 Step 6 Verify](./08-step-6-verify.md) · [Contents](./README.md) · Next: [10 Setup and stages →](./10-setup-and-stages.md)
-
-> **Purpose:** release the verified change, watch how it behaves in reality, and turn what you learn into the next specification.
-> **Produces:** a running feature, observations, and the next `SPEC.md` delta.
+[← 05 Verify — evidence, residue lenses, the gate](./05-verify.md) · [Contents](./README.md) · Next: [07 Setup and the three lanes →](./07-setup-and-lanes.md)
 
 ---
 
@@ -11,7 +8,7 @@
 
 Older mental models end at "ship." That framing is the source of a common pathology: teams treat release as a finish line, and so they hide defects to protect the line rather than manage them in the open. In AIDD, release is not the end of the flow — it is the point where the most reliable information about the feature finally becomes available: how it behaves with real users, real data, and real load.
 
-That information is the input to the next cycle. What you learn in production becomes the next specification, and the flow returns to [Step 1](./03-step-1-specify.md). The cycle is continuous.
+That information is the input to the next cycle. What you learn in production becomes the next specification, and the flow returns to [Step 1](./03-direction.md). The cycle is continuous.
 
 ## Release deliberately
 
@@ -19,7 +16,7 @@ Release behind a mechanism that limits the scope of impact of a mistake — a fe
 
 ## Reuse the scenarios as monitors
 
-The scenarios from [Step 4](./06-step-4-tests.md) have a second life here. They described the behavior you expected; in production they become the behavior you monitor. The same definition of "correct" that drove the tests now drives the alerts.
+The scenarios from [Step 4](./03-direction.md) have a second life here. They described the behavior you expected; in production they become the behavior you monitor. The same definition of "correct" that drove the tests now drives the alerts.
 
 **What to watch (▶ example):**
 
@@ -29,7 +26,7 @@ The scenarios from [Step 4](./06-step-4-tests.md) have a second life here. They 
 
 ## Turn observation into the next spec
 
-Every defect, surprise, or new need is written up as a change to the specification — a delta that re-enters the flow at [Step 1](./03-step-1-specify.md). An error rate that is too high, a rejection that fires more than expected, a user behavior nobody designed for: each becomes a concrete, specified next step rather than a vague intention.
+Every defect, surprise, or new need is written up as a change to the specification — a delta that re-enters the flow at [Step 1](./03-direction.md). An error rate that is too high, a rejection that fires more than expected, a user behavior nobody designed for: each becomes a concrete, specified next step rather than a vague intention.
 
 This is also where the AI returns to a useful role: summarizing telemetry, clustering errors into themes, and drafting the proposed spec delta for a person to review. But the production decisions — what to roll back, what to prioritize — remain human.
 

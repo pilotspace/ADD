@@ -1,6 +1,6 @@
 # 17 · Components — monorepo and multi-repo
 
-[← 16 Releasing](./16-releasing.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 16 Releasing](./16-releasing.md) · [Contents](./README.md) · Next: [18 Personas in practice — the project-fit loop →](./18-personas.md)
 
 ---
 

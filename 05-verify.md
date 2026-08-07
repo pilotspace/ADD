@@ -1,10 +1,6 @@
-# 08 · Step 6 — Verify
+# 05 · Verify — evidence, residue lenses, the gate
 
-[← 07 Step 5 Build](./07-step-5-build.md) · [Contents](./README.md) · Next: [09 The loop →](./09-the-loop.md)
-
-> **Purpose:** confirm the result is correct and safe to release.
-> **Produces:** a reviewed change with a recorded outcome, ready to release.
-> **Who resolves it:** set per task by the `autonomy:` header. Under `autonomy: auto` (the default) the run resolves the gate on evidence; under `conservative`, or for any residue, it is the human's check. **Security always escalates to a human.**
+[← 04 Build — red to green, inside scope](./04-build.md) · [Contents](./README.md) · Next: [06 The loop — observe, learn, close →](./06-the-loop.md)
 
 ---
 
@@ -16,7 +12,7 @@ This needs care, because it is easy to misread. "Not by inspection" does not mea
 
 ## Who resolves Verify — the automated quality gate
 
-Verify can be resolved two ways, set per task by the `autonomy:` header (see [governance](./11-governance.md) and the autonomy level):
+Verify can be resolved two ways, set per task by the `autonomy:` header (see [governance](./09-governance.md) and the autonomy level):
 
 - **Auto (the default).** When `autonomy: auto`, the run resolves the gate on **evidence** rather than waiting for a person — but only when *all* of these hold — the **same canonical list run.md owns**: every test green, coverage not decreased, no test weakened and no contract edited, the convergence loops dry, the completeness-critic clean, the deep check filled, the earned-green refute-read verdict recorded (the §6 `### Refute-read verdict` field, under auto), and **no residue** (security, concurrency, or architecture). It records `PASS` as *auto-resolved*, naming the run as the accountable owner — an explicit pass, not a skip. This is principle 7: a gate may be resolved by evidence when that evidence is sufficient and the result is logged.
 - **Human.** When `autonomy: conservative`, or whenever the run finds residue it cannot judge, the gate stops for a person; the two parts below are theirs.
@@ -102,4 +98,4 @@ A security finding is always a `HARD-STOP`; it is never waved through with a wai
 
 ## If the check fails
 
-A failing test or a security finding returns the change to the build step ([Step 5](./07-step-5-build.md)). A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry — so the team can find and close it later. Nothing proceeds on an unrecorded decision.
+A failing test or a security finding returns the change to the build step ([Step 5](./04-build.md)). A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry — so the team can find and close it later. Nothing proceeds on an unrecorded decision.

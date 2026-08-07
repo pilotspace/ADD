@@ -1,6 +1,6 @@
-# 18 · Personas — the project-fit learning loop
+# 18 · Personas in practice — the project-fit loop
 
-[← 17 Components](./17-components.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 17 Components — monorepo and multi-repo](./17-components.md) · [Contents](./README.md)
 
 ---
 

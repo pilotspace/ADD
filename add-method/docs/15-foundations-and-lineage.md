@@ -1,6 +1,6 @@
-# 15 · Foundations & Lineage
+# 15 · Foundations and lineage
 
-[← 14 The foundation](./14-foundation.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 14 The foundation and the five living specs](./14-foundation.md) · [Contents](./README.md) · Next: [16 Releasing →](./16-releasing.md)
 
 ---
 

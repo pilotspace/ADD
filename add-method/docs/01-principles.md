@@ -1,8 +1,6 @@
 # 01 · Core principles
 
-[← 00 The shift](./00-introduction.md) · [Contents](./README.md) · Next: [02 The flow →](./02-the-flow.md)
-
-Everything in this book follows from a small set of principles. If a practice ever seems arbitrary, trace it back to one of these.
+[← 00 The shift: why ADD exists](./00-introduction.md) · [Contents](./README.md) · Next: [02 The three-beat loop, and what is disposable →](./02-the-flow.md)
 
 ---
 
@@ -36,7 +34,7 @@ How much you let the AI do is not a single switch. It is a setting that lives *p
 
 The *default starting point* is a deliberate choice. A team that has built up evidence and tooling may **start a scope at auto** — the AI drafts the specification bundle, a human approves the frozen contract once, and the build runs and auto-gates on evidence — and *lower to conservative* wherever risk is high. (An earlier formulation started every scope conservative and made autonomy the earned exception; it is the same control either way — what differs is which end you default to.) Two things never move with the default, whichever way it points: the contract-freeze decision point stays human (the AI never freezes the interface it then builds against), and a high-risk scope is always lowered, never auto-run.
 
-**Consequence:** autonomy is a per-scope setting you choose deliberately and can lower at any time; high-risk scope is held to a human gate regardless of the default (see [11 Governance](./11-governance.md)).
+**Consequence:** autonomy is a per-scope setting you choose deliberately and can lower at any time; high-risk scope is held to a human gate regardless of the default (see [11 Governance](./09-governance.md)).
 
 ## 6. You cannot move faster than you can verify
 
@@ -52,7 +50,7 @@ Every checkpoint resolves explicitly. A step is either passed, or passed with a 
 
 An *automated* pass is still an explicit pass, not a skip — provided it records an outcome and escalates what it cannot judge. A gate may be resolved by evidence rather than by a person when that evidence is sufficient and the result is logged to an accountable owner: a named run, against a recorded standard, is as accountable as a signature. The line between a pass and a skip is the recorded outcome, not who signed it. The exception is absolute: security always escalates to a human and is never auto-passed — a security finding is a hard stop, whatever the evidence says.
 
-**Consequence:** every gate produces a recorded outcome with an accountable owner — a person, or a named automated run — and security always stops for a person (see [11 Governance](./11-governance.md)).
+**Consequence:** every gate produces a recorded outcome with an accountable owner — a person, or a named automated run — and security always stops for a person (see [11 Governance](./09-governance.md)).
 
 ## 8. Tool-agnostic by construction
 

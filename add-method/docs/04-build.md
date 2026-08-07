@@ -1,10 +1,6 @@
-# 07 · Step 5 — Build
+# 04 · Build — red to green, inside scope
 
-[← 06 Step 4 Tests](./06-step-4-tests.md) · [Contents](./README.md) · Next: [08 Step 6 Verify →](./08-step-6-verify.md)
-
-> **Purpose:** have the AI implement the feature so that every failing test passes.
-> **Produces:** working code, plus the evidence that the tests now pass.
-> **Person's job:** direct, in small batches. **AI's job:** implement.
+[← 03 Direction — rules, plan, checks](./03-direction.md) · [Contents](./README.md) · Next: [05 Verify — evidence, residue lenses, the gate →](./05-verify.md)
 
 ---
 
@@ -66,7 +62,7 @@ The same applies to the contract: the build implements *against* the frozen cont
 
 ## How much autonomy
 
-The autonomy granted in this step should match the evidence and your review capacity (see [11 Governance](./11-governance.md)):
+The autonomy granted in this step should match the evidence and your review capacity (see [11 Governance](./09-governance.md)):
 
 - Where the area is new or risky, the AI proposes and a person reviews every change.
 - Where the contract and tests are solid, the AI generates freely and a person reviews each batch.

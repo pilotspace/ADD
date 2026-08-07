@@ -1,6 +1,6 @@
-# 14 · The foundation: project context across milestones
+# 14 · The foundation and the five living specs
 
-[← 13 Adoption](./13-adoption.md) · [Contents](./README.md) · Next: [15 Foundations & Lineage →](./15-foundations-and-lineage.md)
+[← 13 The add command reference](./13-command-reference.md) · [Contents](./README.md) · Next: [15 Foundations and lineage →](./15-foundations-and-lineage.md)
 
 ---
 
@@ -43,7 +43,7 @@ the method already names, made explicit as three concerns.
   every screen must handle (loading · empty · error · success), and a design source
   of truth — a `DESIGN.md` or clickable prototype. The AI can generate a prototype
   from a design system; a person owns the empathy — what the user is trying to do,
-  and what "good" feels like from their side. The scenarios ([Step 4](./06-step-4-tests.md))
+  and what "good" feels like from their side. The scenarios ([Step 4](./03-direction.md))
   test that behaviour; the foundation keeps the design intent that makes a screen
   worth building.
 
@@ -136,7 +136,7 @@ journey into `experience.md`) — with the decision itself recorded in `PROJECT.
 §Key Decisions — and open the next one against the same, now-richer, ground. The consolidation is not informal: each loop emits **lessons learned** (tagged
 `DDD · SDD · UDD · TDD · ADD`) in its Observe step, and at milestone close a person
 gathers the open ones and consolidates them — append-only, with the `foundation-version:`
-bumped — into the foundation. See [09 · The loop](./09-the-loop.md#lessons-learned-and-the-retrospective-consolidation)
+bumped — into the foundation. See [09 · The loop](./06-the-loop.md#lessons-learned-and-the-retrospective-consolidation)
 for the grammar, the ritual, and the tooling (`add.py deltas`, `add.py check`).
 
 ## In the tooling

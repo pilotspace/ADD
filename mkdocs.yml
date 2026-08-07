@@ -67,30 +67,29 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Part I — Foundations:
-      - "00 · The shift: why AIDD exists": 00-introduction.md
+      - "00 · The shift: why ADD exists": 00-introduction.md
       - "01 · Core principles": 01-principles.md
-      - "02 · The flow, and what is disposable": 02-the-flow.md
-  - Part II — The method, step by step:
-      - "03 · Step 1 — Specify": 03-step-1-specify.md
-      - "05 · Step 3 — Contract": 05-step-3-plan.md
-      - "06 · Step 4 — Tests & Scenarios": 06-step-4-tests.md
-      - "07 · Step 5 — Build": 07-step-5-build.md
-      - "08 · Step 6 — Verify": 08-step-6-verify.md
-      - "09 · The loop — observe and learn": 09-the-loop.md
+  - Part II — The three-beat loop:
+      - "02 · The three-beat loop, and what is disposable": 02-the-flow.md
+      - "03 · Direction — rules, plan, checks": 03-direction.md
+      - "04 · Build — red to green, inside scope": 04-build.md
+      - "05 · Verify — evidence, residue lenses, the gate": 05-verify.md
+      - "06 · The loop — observe, learn, close": 06-the-loop.md
   - Part III — Operating the method:
-      - "10 · Project setup and stages": 10-setup-and-stages.md
-      - "11 · Governance": 11-governance.md
-      - "12 · Roles and responsibilities": 12-roles.md
-      - "13 · Adoption and onboarding": 13-adoption.md
-      - "14 · The foundation": 14-foundation.md
-  - Lineage:
-      - "15 · Foundations & Lineage": 15-foundations-and-lineage.md
-  - Releasing:
+      - "07 · Setup and the three lanes": 07-setup-and-lanes.md
+      - "08 · Parallel work — waves and worktrees": 08-parallel-work.md
+      - "09 · Governance": 09-governance.md
+      - "10 · Personas — the team as lenses": 10-personas.md
+      - "11 · Adoption": 11-adoption.md
+  - Part IV — Reference:
+      - "12 · The .add/ bundle — ABF-1 format": 12-bundle-format.md
+      - "13 · The add command reference": 13-command-reference.md
+      - "14 · The foundation and the five living specs": 14-foundation.md
+      - "15 · Foundations and lineage": 15-foundations-and-lineage.md
       - "16 · Releasing": 16-releasing.md
       - "17 · Components — monorepo and multi-repo": 17-components.md
-  - Personas:
-      - "18 · Personas — the project-fit learning loop": 18-personas.md
-  - Part IV — Reference:
+      - "18 · Personas in practice — the project-fit loop": 18-personas.md
+  - Part V — Reference appendices:
       - "Appendix A · Templates": appendix-a-templates.md
       - "Appendix B · Prompt library": appendix-b-prompts.md
       - "Appendix C · Glossary": appendix-c-glossary.md

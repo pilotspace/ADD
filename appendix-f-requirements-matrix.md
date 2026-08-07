@@ -2,7 +2,7 @@
 
 [← Appendix E Checklists](./appendix-e-checklists.md) · [Contents](./README.md)
 
-This appendix maps every AIDD document to a three-level project hierarchy, so that at any level a team can answer three questions: **which documents must exist, who owns them, and what proves the level is complete.** It is the traceability backbone of the method — read it alongside the stage-depth matrix in [10 Setup and stages](./10-setup-and-stages.md), which covers *step* depth; this appendix covers *document* requirements.
+This appendix maps every AIDD document to a three-level project hierarchy, so that at any level a team can answer three questions: **which documents must exist, who owns them, and what proves the level is complete.** It is the traceability backbone of the method — read it alongside the stage-depth matrix in [10 Setup and stages](./07-setup-and-lanes.md), which covers *step* depth; this appendix covers *document* requirements.
 
 ---
 
@@ -93,12 +93,12 @@ Every task, regardless of milestone, produces this artifact chain. The depth var
 
 | Step | Required document | Exit gate (the proof) | Detail |
 |------|-------------------|------------------------|--------|
-| 1 Specify | `SPEC.md` | rules + named rejections, assumptions ranked lowest-confidence first (biggest risk ⚠-flagged) | [03](./03-step-1-specify.md) |
-| 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./05-step-3-plan.md) |
-| 4 Tests & Scenarios | `tests/<task>_*` | one pass/fail scenario per rule, one test per primary scenario, red first | [06](./06-step-4-tests.md) |
-| 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./07-step-5-build.md) |
-| 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./08-step-6-verify.md) |
-| 7 Observe | `PLAN.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + lessons learned captured | [09](./09-the-loop.md) |
+| 1 Specify | `SPEC.md` | rules + named rejections, assumptions ranked lowest-confidence first (biggest risk ⚠-flagged) | [03](./03-direction.md) |
+| 3 Contract | `contracts/<task>.md` | frozen + contract tests green | [05](./03-direction.md) |
+| 4 Tests & Scenarios | `tests/<task>_*` | one pass/fail scenario per rule, one test per primary scenario, red first | [06](./03-direction.md) |
+| 5 Build | source code + evidence bundle | all tests green, nothing weakened | [07](./04-build.md) |
+| 6 Verify | gate outcome record | `PASS` / `RISK-ACCEPTED` / `HARD-STOP` (auto-resolved on evidence under `autonomy: auto`; security always escalates) | [08](./05-verify.md) |
+| 7 Observe | `PLAN.md` §7 OBSERVE block | released behind a flag; scenario-monitors live; spec delta + lessons learned captured | [09](./06-the-loop.md) |
 
 A task is **done** when the build's documents exist and the Verify record reads `PASS` (or a signed `RISK-ACCEPTED`); the seventh step — **Observe** (§7) — then runs in production and feeds the next loop's Specify. See the master shippable checklist in [Appendix E](./appendix-e-checklists.md).
 
@@ -163,7 +163,7 @@ Every level points down to the evidence beneath it and up to the goal above it. 
 
 ---
 
-*This matrix is the requirements view of the method. The flow ([Part II](./02-the-flow.md)) tells you the order; the stages ([10](./10-setup-and-stages.md)) tell you the depth; this appendix tells you, at each level of the project, exactly which documents must exist and who owns them.*
+*This matrix is the requirements view of the method. The flow ([Part II](./02-the-flow.md)) tells you the order; the stages ([10](./07-setup-and-lanes.md)) tell you the depth; this appendix tells you, at each level of the project, exactly which documents must exist and who owns them.*
 
 ---
 

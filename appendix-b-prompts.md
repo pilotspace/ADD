@@ -2,7 +2,7 @@
 
 [← Appendix A Templates](./appendix-a-templates.md) · [Contents](./README.md) · Next: [Appendix C Glossary →](./appendix-c-glossary.md)
 
-The contents of the `playbook/` folder. Each prompt is plain text that names the files to read, states a single task, and lists the rules. The inline `# why:` notes are annotations — keep them; they encode the judgment behind each instruction. These prompts are themselves versioned, tested artifacts (see [11 Governance](./11-governance.md)).
+The contents of the `playbook/` folder. Each prompt is plain text that names the files to read, states a single task, and lists the rules. The inline `# why:` notes are annotations — keep them; they encode the judgment behind each instruction. These prompts are themselves versioned, tested artifacts (see [11 Governance](./09-governance.md)).
 
 ---
 
