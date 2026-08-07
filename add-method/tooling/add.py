@@ -522,11 +522,32 @@ def wave(root, milestone_ref, streams=None):
                         f"next: add wave {mslug} --streams {','.join(levels[0])}")
 
     # An explicit stream set: it must be a valid antichain, scope-disjoint, all real members.
-    picks = [_wave_slug(s) for s in streams]
+    # A stream may carry a lens: `slug:persona`. Split it; `picks` stays bare slugs for the
+    # antichain/scope proofs, `lens` maps the streams that named a persona.
+    picks, lens = [], {}
+    for s in streams:
+        slug, _, persona = str(s).partition(":")
+        slug = _wave_slug(slug)
+        picks.append(slug)
+        if persona:
+            lens[slug] = persona
     by_slug = {_wave_slug(c): c for c in members}
     missing = [s for s in picks if s not in by_slug]
     if missing:
         return None, f'R:NOSTREAM not a task under `{mslug}`: {", ".join(missing)} -> "R:NOSTREAM"'
+    # A lens must resolve to a Persona node — record only a real, seeded lens (R:BADPERSONA).
+    persona_slugs = {_wave_slug(cid) for cid, n in graph.items() if (n["fm"] or {}).get("type") == "Persona"}
+    for slug, persona in lens.items():
+        if persona not in persona_slugs:
+            return None, (f'R:BADPERSONA `{persona}` is not a Persona node in the bundle — '
+                          f'seed it first (`add new Persona {persona}`) -> "R:BADPERSONA"')
+    # The sensitivity floor carries into the wave: a stream whose task needs more than `process`
+    # authority (data · architecture · security) must carry a lens, or refuse — before any write.
+    for slug in picks:
+        sens = (members[by_slug[slug]]["fm"] or {}).get("sensitivity")
+        if SENSITIVITY_FLOOR.get(sens, "process") != "process" and slug not in lens:
+            return None, (f'R:NOLENS stream `{slug}` is `{sens}` (floor above process) but carries no '
+                          f'lens — assign one (`{slug}:<persona>`) so the standard has an owner -> "R:NOLENS"')
     for i in range(len(picks)):
         for j in range(i + 1, len(picks)):
             a, b = by_slug[picks[i]], by_slug[picks[j]]
@@ -540,10 +561,17 @@ def wave(root, milestone_ref, streams=None):
             if common:
                 return None, (f'R:OVERLAP {picks[i]} and {picks[j]} both write {sorted(common)[0]} — '
                               f'disjoint scope is the write-safety invariant -> "R:OVERLAP"')
+    # Stamp the lens on each stream node (NO-EXEC: a record of the AI's choice, never an execution).
+    for slug, persona in lens.items():
+        npath = root / by_slug[slug].lstrip("/")   # by_slug[slug] is the cid, e.g. "/tasks/a.md"
+        tn = read(npath, "T2")
+        write(npath, f"---\n{set_key(tn['raw'], 'persona', persona)}\n---\n{tn['body']}")
+    tokens = [f"{s}:{lens[s]}" if s in lens else s for s in picks]
     mpath = root / "milestones" / f"{mslug}.md"
     n = read(mpath, "T2")
-    write(mpath, f"---\n{set_key(n['raw'], 'active_wave', '[' + ', '.join(picks) + ']')}\n---\n{n['body']}")
-    return picks, (f"wave recorded on `{mslug}`: {' · '.join(picks)} build in parallel (disjoint scope, no intra-dep)\n"
+    write(mpath, f"---\n{set_key(n['raw'], 'active_wave', '[' + ', '.join(tokens) + ']')}\n---\n{n['body']}")
+    lensed = " · ".join(f"{s}→{lens[s]}" if s in lens else s for s in picks)
+    return picks, (f"wave recorded on `{mslug}`: {lensed} build in parallel (disjoint scope, no intra-dep)\n"
                    f"next: build each stream in its worktree, then add join")
 
 
@@ -622,6 +650,13 @@ def join(root, stream_dirs) -> tuple:
                 continue  # R:MERGEHARDSTOP — a rejected stream's node never enters main
             # PASS / RISK-ACCEPTED: copy the node + its receipts byte-for-byte (lossless, no shutil).
             (root / "tasks" / tp.name).write_bytes(tp.read_bytes())
+            # Provenance: a stream built under a lens (`persona:`, stamped by wave) records
+            # `advised_by:` on the DELIVERED node — audit-grade, derived from the stream, never
+            # fabricated. An unlensed node is left exactly as copied (no `advised_by:`).
+            if fm.get("persona"):
+                mnode = read(root / "tasks" / tp.name, "T2")
+                write(root / "tasks" / tp.name,
+                      f"---\n{set_key(mnode['raw'], 'advised_by', fm['persona'])}\n---\n{mnode['body']}")
             sd = d / "tasks" / f"{slug}.d"
             if sd.is_dir():
                 for src in sorted(p for p in sd.rglob("*") if p.is_file()):
@@ -1210,6 +1245,17 @@ def status(root, all: bool = False, check: bool = False) -> str:
     tdrift = tooling_drift(root, graph) if check else None
     if tdrift:
         out.append(f"  ! {tdrift}")
+
+    # A live wave is surfaced at the resume point — WHO is advising WHAT — not left buried in the
+    # milestone file. Each token `slug:persona` renders `slug→persona`; a bare slug renders as-is.
+    for cid in shown:
+        fm = graph[cid]["fm"] or {}
+        if fm.get("type") != "Milestone" or not fm.get("active_wave"):
+            continue
+        raw = fm["active_wave"]
+        toks = raw if isinstance(raw, list) else [t.strip() for t in str(raw).strip("[]").split(",") if t.strip()]
+        rendered = " · ".join(t.replace(":", "→", 1) if ":" in t else t for t in toks)
+        out.append(f"  ~ wave on {cid.rsplit('/', 1)[-1][:-3]}: {rendered}")
 
     frontier = ready(graph)
     waiting = [c for c in active(graph) if (graph[c]["fm"] or {}).get("status") == "verify"]
