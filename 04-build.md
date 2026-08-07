@@ -4,86 +4,75 @@
 
 ---
 
-## The only step the AI leads
+## The only beat the AI leads
 
-This is the step the AI is genuinely good at, and the only one where it should be doing the heavy lifting. It works precisely because the previous four steps removed all the ambiguity: the AI is no longer guessing what to build: it has a spec, a set of scenarios, a frozen contract, and a suite of failing tests that define "done" exactly. Its task is narrow and checkable — turn the suite green.
+This is the beat the AI is genuinely good at, and the only one where it should be doing the heavy lifting. It works precisely because Direction already removed the ambiguity: the AI is no longer guessing what to build. It has the task node's `## RULES` (what the code must do and must reject), its `## PLAN` (the frozen `gives:` contract and the `scope:` it may touch), and a suite of failing `## CHECKS` that define "done" exactly. Its task is narrow and checkable — turn the red checks green.
 
-This is the difference between AIDD and vague-prompt coding. The same agent that produces confident nonsense from "build me a transfer feature" produces correct, bounded code from "make these specific failing tests pass without changing them." The agent did not change; the direction did.
+This is the difference between ADD and vague-prompt coding. The same agent that produces confident nonsense from "build me a transfer feature" produces correct, bounded code from "make these specific failing checks pass without changing them." The agent did not change; the direction did.
 
 ## The build prompt
 
 The instruction is explicit about constraints, because the constraints are what keep the speed safe.
 
 ```
-Read SPEC.md, contracts/<name>.md, and tests/<name>_test.py.
-Implement the feature so that EVERY test passes.
+Read the task node — its RULES, its PLAN (the frozen `gives:` contract and its `scope:`),
+and its CHECKS.
+Write code so that EVERY red check passes.
 Constraints:
-  - Do NOT change any test.
-  - Do NOT change the contract.
+  - Do NOT change any check.
+  - Do NOT move the frozen `gives:` contract.
+  - Stay inside the paths listed in `scope:`.
   - <feature-specific safety rule>.
   - Stop and ask if any requirement is unclear — do not guess.
-  - Use only packages listed in dependencies.allowlist.
-Report which tests pass and exactly what you changed.
+Report which checks pass and exactly what you changed.
 ```
 
-For the running example, the feature-specific safety rule is *"make the balance update atomic — debit and credit occur in a single transaction."* This is the one correctness property the tests alone may not force, so it is named directly to the builder.
+For the running example, the feature-specific safety rule is *"make the balance update atomic — debit and credit occur in a single transaction."* This is the one correctness property the checks alone may not force, so it is named directly to the builder — it is the riskiest assumption Direction wrote into `## RULES`.
 
-See `playbook/5_build.md` in [Appendix B](./appendix-b-prompts.md).
+## The three lines you may not cross
 
-## Choosing the implementation strategy
+The build runs fast because Direction fixed *what* correct means. It stays safe because three lines hold, and crossing any of them is not a shortcut — it is a signal that the work has left its lane:
 
-The spec, contract, and tests fix *what* correct means; they deliberately do not fix *how* the build achieves it — and "how" is itself a decision worth making explicitly rather than letting the first plausible implementation win. §5 of the task file declares it as four small **strategy facets**, each derived from work already done, never invented fresh at build time:
+- **Change no check.** A check that is hard to pass is telling you something about the code, not about the check. Weakening or deleting it to reach green inverts the method: the code would then be judging itself.
+- **Move no frozen `gives:` contract.** The build implements *against* the frozen interface. Its internals may change freely; its external shape may not. A genuine need to change the contract is a change request that returns to Direction, not a silent edit here.
+- **Stay inside `scope:`.** The paths in the node's `scope:` are the freshness set the gate will hash. Touching a path outside it means the node is mis-scoped — fix the scope in Direction, do not sneak the edit.
 
-- **Approach (domain strategy)** — the core technique and why it fits this task's domain: an algorithm, a data model, a migration path, a prose structure, a UX flow. It comes from the framings §1 already weighed, stated in the loaded persona's domain vocabulary.
-- **Data strategy** — the shapes and access patterns the work realizes; it must agree with the schema line the frozen contract states.
-- **Pattern** — the domain pattern the build follows, citing the convention (CONVENTIONS.md Honors) it extends.
-- **Optimization stance** — what, if anything, is being optimized and to what budget: latency, memory, token cost, readability. "Correctness-first, no budget" is a legitimate answer; silence is not, because the stance you declare here is the monitor you install at Observe.
-
-The facets are drafted at the tests→build crossing — the moment the red suite makes the shape concrete and a challenge is still cheap — with the facet you trust least ⚠-marked (on a high-risk task, that flag is the natural advisor consult). They are guidance, not a gate: the builder may improve on them as reality pushes back, and reports the strategy actually used at Verify, where it feeds the task's decision record.
+The strategy the build follows was set in Direction, in the node's `## PLAN`. The builder may improve on it as reality pushes back, and reports the strategy it actually used at Verify — so the record reflects what happened, not what was planned.
 
 ## Work in small batches
 
-Direct the AI one task at a time, and keep each task small enough that its result can be reviewed in full. This is a direct application of the principle *you cannot move faster than you can verify.* A single enormous change that turns the whole suite green at once is not a triumph — it is an unreviewable blob. Small batches keep the verification step (next chapter) tractable and keep a human genuinely in the loop.
+Direct the AI one task at a time, and keep each task small enough that its result can be reviewed in full. This is a direct application of the principle *you cannot move faster than you can verify.* A single enormous change that turns the whole suite green at once is not a triumph — it is an unreviewable blob. Small batches keep the verification beat (next chapter) tractable and keep a human genuinely in the loop.
+
+Progress for a task in build is read straight from the working tree — `git status` intersected with the node's `scope:`. It is never stored and always current, so there is no separate status to keep in sync.
 
 ## The iteration loop
 
 ```
-AI writes code → pipeline runs the tests → some still fail
+AI writes code → run the checks → some still fail
    → AI iterates → ... → all green → hand to Verify
 ```
 
-The loop is tight and largely autonomous within a task: the AI runs the tests, sees what fails, and adjusts. Your attention is needed at the boundaries — defining the task going in, and reviewing the result coming out — not on each internal iteration.
+The loop is tight and largely self-directed within a task: the AI runs the checks, sees what fails, and adjusts. Your attention is needed at the boundaries — defining the task going in, and reviewing the result coming out — not on each internal iteration. When every check is green and the residue is clean, the task advances to Verify.
 
-## The cardinal rule: never change the test to pass
+## The cardinal rule: never change a check to pass
 
-An AI under pressure to make a suite green has an available shortcut: weaken or delete the failing test. This must be forbidden explicitly and caught reliably. A test changed to fit the code inverts the entire method — the code is now judging itself. If you find a test was altered during the build, reject the change outright and re-prompt with the constraint restated.
+An AI under pressure to make a suite green has an available shortcut: weaken or delete the failing check. This must be forbidden explicitly and caught reliably. A check changed to fit the code inverts the entire method. If you find a check was altered during the build, reject the change outright and re-prompt with the constraint restated.
 
-The same applies to the contract: the build implements *against* the frozen contract and may not edit it. A genuine need to change either is a change request that returns to an earlier step.
-
-## How much autonomy
-
-The autonomy granted in this step should match the evidence and your review capacity (see [11 Governance](./09-governance.md)):
-
-- Where the area is new or risky, the AI proposes and a person reviews every change.
-- Where the contract and tests are solid, the AI generates freely and a person reviews each batch.
-- Only in narrow, well-tested areas, with a full evidence bundle attached, may the AI integrate its own work.
+The same applies to the contract: the build may not edit the frozen `gives:`. A genuine need to change either the checks or the contract is a change request that returns to Direction, re-freezes, and comes forward again — never a quiet patch.
 
 ## Common mistakes
 
 - **Batches too large to review.** Shrinks verification to approving without reading.
-- **Letting the AI add unknown dependencies.** The allow-list check in the pipeline should block this automatically; if it does not, the supply-chain risk is real (an AI may invent a plausible package name that an attacker has registered).
-- **Accepting "all tests pass" without reading the change.** Passing tests are necessary, not sufficient — the next step exists for exactly this reason.
+- **Crossing a check outside the task's own suite.** A failure in a check the node does not own means the build crossed a boundary. Find the node that owns it before continuing; do not patch around it.
+- **Accepting "all checks pass" without reading the change.** Passing checks are necessary, not sufficient — the next beat exists for exactly this reason.
 
 ## Exit check
 
-- [ ] All tests pass.
-- [ ] Test coverage did not decrease.
-- [ ] No test and no contract was modified by the AI.
-- [ ] No dependency outside the allow-list was added.
+- [ ] Every red check is now green.
+- [ ] No check and no frozen contract was modified by the AI.
+- [ ] Every edit stayed inside the node's `scope:`.
 - [ ] The change is small enough to review in full.
 
 ## If the check fails
 
-If the AI weakened a test, reject and re-prompt. If it added an out-of-allow-list package, the pipeline blocks it; have the AI find an approved alternative or raise the package for human approval. If the batch is too large to review, ask the AI to split the work and resubmit. Only once the exit check passes does the change proceed to verification.
-
-And in the other direction: if the *verify* gate later finds a confirmed cheat — a tamper, or a build that gamed the green (overfit to the fixtures, vacuous asserts, stubbed-away logic) — the task returns *here* for an honest redo. That return is the **bounded self-heal loop** (see the run chapter): revert the tampered file or de-overfit the code, then advance again. It is capped — after the cap a confirmed cheat HARD-STOPs to the human rather than looping forever, and a gamed green is never auto-passed.
+If the AI weakened a check, reject and re-prompt with the constraint restated. If an edit strayed outside `scope:`, the node is mis-scoped — return to Direction and fix the scope rather than expanding the build. If the batch is too large to review, ask the AI to split the work and resubmit. Only once the exit check passes, with green checks and clean residue, does the change proceed to verification.

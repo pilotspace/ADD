@@ -6,96 +6,87 @@
 
 ## Where trust is actually established
 
-The build produced passing tests. That is necessary but not sufficient. Verification is where a person establishes trust — and the principle governing it is *trust through evidence, not inspection.*
+The build produced passing checks. That is necessary but not sufficient. Verification is where trust is established — and the principle governing it is *trust through evidence, not inspection.*
 
-This needs care, because it is easy to misread. "Not by inspection" does not mean "do not look at the code." It means the *basis* of trust is the passing evidence plus a deliberate check of the specific things tests cannot easily catch — not a general impression that the code reads plausibly. Plausibility is exactly the trap: AI code is frequently plausible and wrong. So verification has two parts: confirm the evidence, then check the known non-functional risks.
+This needs care, because it is easy to misread. "Not by inspection" does not mean "do not look at the code." It means the *basis* of trust is the passing evidence plus a deliberate check of the specific things checks cannot easily catch — not a general impression that the code reads plausibly. Plausibility is exactly the trap: AI code is frequently plausible and wrong. So verification has two parts: confirm the evidence, then examine the residue automation cannot cover.
 
-## Who resolves Verify — the automated quality gate
+## Part one — gather the evidence: a fresh, bound receipt
 
-Verify can be resolved two ways, set per task by the `autonomy:` header (see [governance](./09-governance.md) and the autonomy level):
+Trust rests on a run you can point to, not a claim. Execute the task's checks and record the result as a receipt:
 
-- **Auto (the default).** When `autonomy: auto`, the run resolves the gate on **evidence** rather than waiting for a person — but only when *all* of these hold — the **same canonical list run.md owns**: every test green, coverage not decreased, no test weakened and no contract edited, the convergence loops dry, the completeness-critic clean, the deep check filled, the earned-green refute-read verdict recorded (the §6 `### Refute-read verdict` field, under auto), and **no residue** (security, concurrency, or architecture). It records `PASS` as *auto-resolved*, naming the run as the accountable owner — an explicit pass, not a skip. This is principle 7: a gate may be resolved by evidence when that evidence is sufficient and the result is logged.
-- **Human.** When `autonomy: conservative`, or whenever the run finds residue it cannot judge, the gate stops for a person; the two parts below are theirs.
+```
+add run <slug> --junitxml r.xml -- <the test command>
+```
 
-**Security is always a `HARD-STOP` and is never auto-passed, at any autonomy level.** The two parts that follow — confirm the evidence, then check the non-functional risks — are what *either* resolver works through; the only question is whether a person or the recorded run signs the outcome.
+`add run` executes your command, parses the JUnit report, and writes a **Run receipt** into the task's bundle. Two properties the gate will demand of it:
 
-## Part one — confirm the evidence
+- **fresh** — the receipt records the git blob hash of every in-`scope:` file at the moment it ran; the gate recomputes those hashes and refuses on any difference. This kills the stale-green failure — a suite that passed *before* the last edit is not evidence for the code as it stands now.
+- **bound** — this is **covers-binding**. Every check in the node's `## CHECKS` cites the Must, Reject, or Edge it proves, via its `covers:` line. The gate refuses a PASS unless each of those checks appears in the receipt with a passing outcome. A rule with no passing check behind it cannot be waved green.
 
-Before the build, the task pre-declares its **build expectations** — the observable outcomes a correct build must produce, read off §4's scenarios and §3's contract. Confirm each one here against evidence you can see, not a restated test name: this is what makes the gate check the build is *right*, not merely that the suite is green.
+A stale or unbound receipt is refused at the gate — so confirm the evidence is real before reading further: every check green, no check or frozen contract altered during the build, and every rule in `## RULES` traced to a passing check by its `covers:` line. If any of that is false, stop here and return to the build; there is nothing to verify yet.
 
-- [ ] All tests pass.
-- [ ] Coverage did not decrease.
-- [ ] No test or contract was altered during the build.
-- [ ] Every pre-declared build expectation is confirmed by real evidence (not merely a green test).
-- [ ] Every §1 Must/Reject rule still traces to a §4 scenario tag or `covers:` line.
-- [ ] Every symbol §3's contract cites still resolves in the *current* tree, not just at Ground SHA.
+## Part two — the residue: three lenses tests cannot cover
 
-If any of these is false, stop here and return to the build; there is nothing to verify yet.
+Automated checks are excellent at behavior on defined inputs and poor at a few specific things. Examine, by hand, the narrow set they miss — every time:
 
-A green suite proves the tests you wrote pass — it says nothing about a rule you never wired a scenario or test to at all. That is a different failure than the ones Part four covers: not a cheated pass, but a rule with no trace of ever being checked. `add.py check` scans every task project-wide for exactly this — a §1 Must or Reject with no §4 scenario tag and no `covers:` line — but that sweep is easy to forget to run. `add.py audit`'s `rule_coverage_gap` notice surfaces the SAME check for the task actually at this gate, the moment it reaches Verify (a task that never adopted the tag convention at all is silently grandfathered, never retro-flagged). Neither blocks the gate; both make an already-real gap impossible to miss.
+- **Security.** Are there exposed secrets, injection openings, or unexpected dependencies? AI-generated code is known to hardcode secrets and to pull in packages by plausible-but-wrong names. **A security finding is always a `HARD-STOP`** — it escalates to a human and is never waved through, whatever the evidence says.
+- **Concurrency and timing.** Is the operation correct when two of them happen at once? Checks usually run serially and miss races.
+  - ▶ *Example: the balance update must be one atomic transaction. Confirm that two simultaneous transfers from the same account cannot both pass the balance check and overdraw it.* This is the single most important check for this feature, and it is why the build prompt named atomicity explicitly.
+- **Architecture conformance.** Does the change respect the layering and dependency boundaries the project already committed to? Speed with no architectural check produces a fast-growing tangle that becomes unmaintainable within months.
 
-The second check guards against a quieter kind of drift. §3's contract cites its symbols as they were read when it was grounded — but code moves *during* the build that follows. Before this gate, re-resolve every one of those cited symbols against the tree as it stands now, not the shape they had when the contract was frozen. A moved or renamed anchor caught here is a one-line note; the same drift left silent is a future reader chasing a symbol that no longer means what it did at freeze.
+This residue stays at human speed. You may move as fast as your *automated* verification carries you, and no faster on the part only a human can check.
 
-## Part two — check what tests miss
+## The deep check — reviewer discipline, not an engine gate
 
-Automated tests are excellent at behavior on defined inputs and poor at a few specific things. Check those by hand, every time:
+Two failures slip straight past green checks, and no engine can see them for you — this is diligence the reviewer owes, not a box the tool fills:
 
-- **Concurrency and timing.** Is the operation correct when two of them happen at once? Tests usually run serially and miss races.
-  - ▶ *Example: the balance update must be one atomic transaction. Confirm that two simultaneous transfers from the same account cannot both pass the balance check and overdraw it.* This is the single most important check for this feature, and it is the reason the build prompt named atomicity explicitly.
-- **Security.** Are there exposed secrets, injection openings, or unexpected dependencies? AI-generated code is known to hardcode secrets and to pull in packages by plausible-but-wrong names. A security finding is always a `HARD-STOP`, never a waiver — and it escalates only if it is *written down*: `add.py audit`'s `unescalated_security_note` check fires on a **marked** note that slipped through as an auto-gate PASS, but a finding you **never marked** is invisible to the engine, escalated to no one. That is the honest limit of the auto-gate: under `auto`, a human **spot-audit** (reading the diff) is the only backstop for a *missed* security finding — the same backstop named for an unrecorded earned-green refute-read.
-- **Architecture conformance.** Does the change respect the layering and dependency rules in `CONVENTIONS.md`? Speed with no architectural check produces a fast-growing tangle that becomes unmaintainable within months.
+- **Wiring.** New code that is never *wired in* — a function nothing calls, an endpoint no route reaches. Its checks pass in isolation while the feature is, in practice, absent. For every new hook, closure, or middleware, trace from the process entry point to the call site: symbol, file, line. A symbol reachable only through a test helper but not through the production entry point is not wired.
+- **Dead code.** The opposite — code left behind a path nothing exercises, quietly rotting. Scan that nothing new is orphaned.
+- **Semantic read.** For a change that produced prose rather than code, the equivalent failure is signing off on a claim you never actually read in full. Note what you read and what it confirmed.
 
-## Part three — the deep check (do not skim)
+Plausibility hides all three, which is why this is *evidence*, not impression: a reference search showing where each new symbol is called, a scan confirming nothing new is orphaned, or — for prose — a note of exactly what was read. Skimming here is a shallow verify, not a pass.
 
-Two failures slip straight past green tests. The first is code that is never *wired in* — a new function that nothing calls, an endpoint no route reaches: the tests for it pass in isolation while the feature is, in practice, absent. The second is the opposite — code left *dead* behind a path nothing exercises, quietly rotting. And for a change that produced prose rather than code, the equivalent failure is signing off on a claim you never actually read in full. Plausibility hides all three. So verification carries one explicit requirement beyond the non-functional review:
+## The gate — one recorded outcome
 
-> Deep check — do not skim. If the task produced code, record that every new symbol is referenced (wiring) and that no new dead/unused code was introduced. If it produced prose or non-code, record a semantic read — what you read in full and what it confirmed. Which path applies is the resolver's judgement; the engine never classifies.
+Every verification ends with exactly one recorded outcome, carrying an accountable owner — never a silent pass:
 
-This is *evidence*, not impression: a reference search showing where each new symbol is called, a scan confirming nothing new is orphaned, or — for prose — a note of exactly what was read and what it confirmed. An unfilled deep check is a **shallow verify**, not a pass. The engine cannot judge wiring, dead code, or whether prose was truly read; the resolver records the evidence, and a person (under `conservative`) or the recorded run (under `auto`) signs it.
-
-**The wiring trace is a named step, not a free-form note.** For every new hook, closure, or middleware registered in this task: trace from the process entry point to the call site and record it explicitly — symbol, file, line. A symbol that is only reachable via a test helper or `make_config` but not via the production entry point (e.g. `build_harness_with_dispatcher`, `interactive_mode`) is not wired. This is the third repeated class in production: "runtime-activation-order/silent-noop" — the code exists and the unit tests pass, but the feature is absent in the running program. The wiring trace is how you catch it before a user does.
-
-## Part four — was the green earned?
-
-Passing tests say the code satisfies the cases you wrote down. They do not say it earned that pass honestly — and the mechanical tamper tripwire (Step 6's floor) only catches an *edited* test or contract, not a build that gamed the *unchanged* suite. The same rubric the phase guide carries names what the tripwire cannot see:
-
-A green suite proves the tests pass — not that the build EARNED them. Three judgment cheats pass the unchanged suite without earning it: src overfit to the test fixtures (special-cased to the literal inputs, not the general behavior §1 asked for), vacuous asserts (tautological — green even against an empty implementation), and real logic stubbed away (the function returns a constant the tests happen to accept). These cheats are invisible to the mechanical tamper tripwire, which only sees edited files. Score them with an adversarial refute-read: an independent reviewer — a subagent under `autonomy: auto` is recommended, the engine never spawns one — prompted to argue the green was NOT earned from outside the build context. This is the verify-gate, whole-suite specialization of run.md's adversarial verify (see run.md), not a new discipline. A confirmed earned-green failure is HARD-STOP-class: never auto-passed, never RISK-ACCEPTED — but a first cheat is a chance to redo: a confirmed cheat (mechanical tamper or a reported earned-green failure) enters the bounded self-heal loop — it returns to build for an honest redo, and only after the loop's cap does it HARD-STOP to the human (the loop lives in run.md).
-
-Under `autonomy: auto` there is no human at the gate to confirm the refute-read happened, so the verdict is **recorded** — a `### Refute-read verdict` field in §6 (`Verdict: EARNED | NOT-EARNED`, plus who read it and what they adversarially probed). This closes an honesty gap the auto-gate would otherwise leave open: the method *says* an auto-PASS rests on an earned-green check, but nothing made that check visible. Now `add.py audit` surfaces a verify-or-later task whose verdict block is still a placeholder as `refute_unrecorded` — a **measure, not a gate**: it never blocks the run (a hard gate on this universal completion path would break far too much to justify it, and the engine cannot read whether a self-graded `EARNED` is *true* anyway — only whether it was written). The honest backstop is the same one named for a missed security finding: a human **spot-audit** reading the diff. A `NOT-EARNED` verdict is not a dead end — it routes through `add.py heal` for an honest redo, never an auto-PASS. The discipline this records is simple: under auto, you are the accountable owner of the gate, so you leave the trace of the check you owe.
-
-## Recording the outcome
-
-Every verification ends with exactly one recorded outcome, with an accountable owner — never a silent pass:
+```
+add gate <slug> PASS --by "<name>"
+```
 
 | Outcome | Meaning | Allowed when |
 |---------|---------|--------------|
-| `PASS` | all checks met | the normal path |
-| `RISK-ACCEPTED` | proceed with a signed waiver: named owner, linked ticket, expiry date | a non-security gap only |
-| `HARD-STOP` | cannot proceed | any failing test or any security finding |
+| `PASS` | complete, fresh, bound evidence and clean residue | the normal path |
+| `RISK-ACCEPTED` | proceed on a signed waiver: named owner, linked ticket, expiry | a **non-security** gap only |
+| `HARD-STOP` | cannot proceed | any failing check, or any security finding |
 
-A security finding is always a `HARD-STOP`; it is never waved through with a waiver. A `RISK-ACCEPTED` outcome is a deliberate, documented decision to ship a known, non-security limitation — not a way to skip the check.
+A **`gate PASS` auto-closes** the task — there is no separate close step on the normal path. A `RISK-ACCEPTED` is a deliberate, documented decision to ship a known, non-security limitation; sign it with the reason the engine requires — owner, ticket, expiry — so the team can find and close it later:
+
+```
+add gate <slug> RISK-ACCEPTED --by "<name>" --reason "<owner · ticket · expiry>"
+```
+
+A `HARD-STOP` does not close the task: it stays open, and the finding goes back to Direction as a change request — fix the build, or add the Must the gate exposed — then you re-verify. A **security** `HARD-STOP` always escalates to a human and is never folded into a `RISK-ACCEPTED`; this one is engine-enforced — the gate refuses a `RISK-ACCEPTED` on a security-sensitive node. Resolve it to `PASS`, or `HARD-STOP`.
 
 ## The verification checklist
 
-- [ ] All tests pass (the evidence).
-- [ ] Every pre-declared build expectation is confirmed by observable evidence.
-- [ ] Every §1 rule traces to §4; every §3-cited symbol still resolves in the current tree.
+- [ ] The receipt is **fresh** (every in-`scope:` file unchanged since the run) and **bound** (every check the rules `covers:` passed).
+- [ ] No check or frozen contract was altered during the build.
 - [ ] Concurrency/timing of the risky operation is safe.
 - [ ] No exposed secrets, injection openings, or unexpected dependencies.
-- [ ] Layering and dependencies follow `CONVENTIONS.md`.
-- [ ] Deep check (do not skim): for code, every new symbol is referenced (wiring) and no new dead/unused code was introduced; for prose/non-code, a semantic read is recorded.
-- [ ] The change is approved — by a person, **or** (under `autonomy: auto`, no residue) auto-resolved by the run as the recorded accountable owner.
-- [ ] An outcome is recorded (`PASS` / `RISK-ACCEPTED` / `HARD-STOP`).
+- [ ] Layering and dependency boundaries are respected.
+- [ ] Deep check: for code, every new symbol is referenced (wiring) and no new dead code was introduced; for prose, a semantic read is recorded.
+- [ ] Exactly one outcome is recorded — `PASS` / `RISK-ACCEPTED` / `HARD-STOP` — with an accountable owner.
 
 ## Common mistakes
 
-- **Shipping on plausibility.** Reading the diff, finding it reasonable, and approving — without the evidence and the non-functional review — is the precise failure the method exists to prevent.
+- **Shipping on plausibility.** Reading the diff, finding it reasonable, and approving — without the receipt and the residue review — is the precise failure the method exists to prevent.
 - **Treating a security gap as acceptable risk.** It is a `HARD-STOP`, not a waiver.
-- **Skipping the concurrency check** because the tests are green. Tests rarely exercise simultaneity; this is a manual check by design.
-- **Trusting the green agent's self-reported test count.** A build agent running a filtered suite (e.g. `-E 'test(theme)'`) only sees tests inside the filter. Collateral failures outside the filter — a stale count in `all_commands_in_registry`, an e2e snapshot the agent did not touch — are invisible. The orchestrator's **full-suite rerun is load-bearing**; never skip it on the grounds that the scoped run was green.
-- **User-observable-only failures escalate to the human before exhausting discriminating probes.** When a symptom is only observable by a person (a TCC dialog, a visual flicker, an OS-level prompt), do not respond by running the suite again. Instead, design two or three targeted probes that let the user distinguish cause A from cause B in one interaction each. Three AskUser probes resolve what three blind reruns cannot.
-- **Background-process hangs misdiagnosed as test failures.** A test that never exits is not a failure in the test logic — it is a hang. The diagnosis recipe: background the test process, run `pgrep` to find it, use the platform profiler (`sample <pid>` on macOS, `perf` on Linux) to sample the stack, then `lsof -p <pid>` to see open files. Run an isolation experiment (suspect line on/off, 3×3) before reading any code. Entry-count caps do not bound wall time — a single huge directory or a blocking syscall inside a `spawn_blocking` call can hang indefinitely even when the entry cap is satisfied.
+- **Skipping the concurrency check** because the checks are green. Checks rarely exercise simultaneity; this is a manual review by design.
+- **Trusting a self-reported test count.** A build agent running a filtered suite (e.g. `-E 'test(theme)'`) only sees checks inside the filter. Collateral failures outside it are invisible; a full-suite run is load-bearing, never to be skipped on the grounds that a scoped run was green.
+- **User-observable-only failures escalated before probing.** When a symptom is only observable by a person (a permission dialog, a visual flicker), do not respond by running the suite again. Design two or three targeted probes that distinguish cause A from cause B in one interaction each.
+- **A hang misdiagnosed as a test failure.** A check that never exits is not a logic failure — it is a hang. Background the process, find it with `pgrep`, sample the stack with the platform profiler (`sample <pid>` on macOS, `perf` on Linux), then `lsof -p <pid>` to see open files.
 
 ## If the check fails
 
-A failing test or a security finding returns the change to the build step ([Step 5](./04-build.md)). A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry — so the team can find and close it later. Nothing proceeds on an unrecorded decision.
+A failing check or a security finding returns the change to the [build](./04-build.md) beat. A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry — so the team can find and close it later. Nothing proceeds on an unrecorded decision.
