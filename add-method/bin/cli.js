@@ -4,7 +4,7 @@
 /**
  * @pilotspace/add installer.
  *
- *   npx @pilotspace/add init [targetDir] [--force] [--stage <stage>] [--name <name>] [--yes|--non-interactive]
+ *   npx @pilotspace/add init [targetDir] [--force] [--name <name>] [--yes|--non-interactive]
  *
  * Installs the ADD skill + tooling into a target project:
  *   <target>/.claude/skills/add/   (the skill Claude loads)
@@ -34,10 +34,9 @@ function warn(msg) { process.stderr.write("warn: " + msg + "\n"); }
 function fail(msg) { process.stderr.write("error: " + msg + "\n"); process.exit(1); }
 
 function parseArgs(argv) {
-  // stage/name stay null unless EXPLICITLY passed — the engine's own `init`
-  // defaults the stage and infers the name from the folder, so the manual-init
-  // hint only echoes flags the user actually chose (shortest true command).
-  const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
+  // name stays null unless EXPLICITLY passed — the engine's own `init` infers it from
+  // the folder, so the manual-init hint only echoes flags the user actually chose.
+  const args = { _: [], force: false, check: false, noSkill: false, name: null,
                  yes: false, nonInteractive: false, global: false, globalData: false,
                  fromGlobalData: false, lockTimeout: null };
   for (let i = 0; i < argv.length; i++) {
@@ -61,20 +60,29 @@ function parseArgs(argv) {
     // already provides the `add` skill, so a plugin bootstrap uses this to materialize
     // .add/tooling/ into the project without a duplicate .claude/skills/add.
     else if (a === "--no-skill") args.noSkill = true;
-    else if (a === "--stage" || a === "--name") {
+    else if (a === "--name") {
       const v = argv[++i];
       // fail loudly on a trailing/abutting flag — never silently drop a value
       // the user tried to pass (parity with the pip twin's argparse error)
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
-      if (a === "--stage") args.stage = v; else args.name = v;
+      args.name = v;
     }
     // --lock-timeout <seconds>: (--global only) opt into a bounded wait for a LIVE contended
     // home lock before failing "update_in_progress" (default null = today's immediate fail-fast;
-    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --stage/--name.
+    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --name.
     else if (a === "--lock-timeout") {
       const v = argv[++i];
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
       args.lockTimeout = Number(v);
+    }
+    // RETIRED in 3.0: `--stage` was the graduation ceremony the three lanes replaced (and it was
+    // already inert — the installer took it and never read it). Reject it EXPLICITLY, with the
+    // same hard failure as the pip twin's argparse. Letting it fall through to the unknown-flag
+    // warning below would leave its VALUE on the positional list, where it is read as the target
+    // directory — `init --stage mvp` would install into ./mvp if that directory happened to exist.
+    else if (a === "--stage") {
+      fail("--stage was retired in ADD 3.0 — ceremony is per-task now (`add new <slug> --depth "
+           + "quick|standard|deep`), and the authority floor comes from `--sensitivity`");
     }
     else if (a.startsWith("--")) warn("ignoring unknown flag " + a);
     else args._.push(a);
@@ -285,13 +293,13 @@ async function loadClack() {
 }
 
 // --- brand + feature showcase (interactive path only; fail-soft) -------------
-// Wordmark + value line + the 7-step Specify->Observe loop, rendered BEFORE the first
+// Wordmark + value line + the three-beat loop, rendered BEFORE the first
 // prompt on the interactive path only — so the non-interactive byte stream is unchanged.
-// The 7 labels are the real ADD phases (grounded in the method, never invented; grounding
-// itself is folded into step 3, Plan, not a separate phase). Fail-soft: any draw error is
+// The three labels are the real ADD beats (grounded in the method, never invented — they are
+// what the engine implements and the book teaches). Fail-soft: any draw error is
 // swallowed so a banner can never abort the install. No color is emitted (default accent:
 // none); the glyphs / tagline / accent are a SWAPPABLE content slot.
-const BRAND_LOOP = ["Specify", "Plan", "Tests", "Build", "Verify"];
+const BRAND_LOOP = ["Direction", "Build", "Verify"];
 
 function terminalCaps(env, stream) {
   const width = Number(env.COLUMNS) || (stream && stream.columns) || 80;
@@ -452,24 +460,6 @@ function writeGeminiSettings(target) {
   }
 }
 
-// Seed .add/SOUL.md from the bundled template if it does not yet exist. Mirror of
-// _installer.py:_seed_soul_md (npm <-> pip parity): skip-if-exists (SOUL.md is
-// user-owned — never clobber); fail-soft (warn + return, never abort install/update).
-function seedSoulMd(target) {
-  const dest = path.join(target, ".add", "SOUL.md");
-  if (fs.existsSync(dest)) return;                       // skip-if-exists (never clobber)
-  const source = path.join(PKG_ROOT, "tooling", "templates", "SOUL.md.tmpl");
-  if (!fs.existsSync(source)) {
-    warn("soul_seed_skipped: SOUL.md.tmpl not found in bundled tooling/templates/");
-    return;
-  }
-  try {
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, fs.readFileSync(source, "utf8"));
-  } catch (e) {
-    warn("soul_seed_skipped: could not write .add/SOUL.md — " + (e && e.message ? e.message : e));
-  }
-}
 
 // kept OUTSIDE the flat engine's own gitignore body / gitignore.tmpl deliberately: the engine's
 // own _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
@@ -522,7 +512,6 @@ function dropFiles(args, target, profile, intent) {
   profile = profile || detectAgent(process.env);
   log("Installing ADD into " + target);
   reconcile(args, target);
-  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
 
   // Agent detection: write THE detected agent's integration file (a marker-delimited
@@ -1780,7 +1769,6 @@ function cmdUpdate(args) {
     fs.copyFileSync(stateFile, path.join(addDir, "pre-update-state.bak.json"));
   }
   const roll = reconcile(args, target);
-  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +

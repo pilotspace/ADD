@@ -84,27 +84,71 @@ def test_both_twins_manage_the_corpus_the_same_way():
         f"pip installs the corpus somewhere unexpected: {pip_targets}"
 
 
-@pytest.mark.skip(reason="known gap (OKF vestigial cleanup): BOTH twins still carry 2.x installer "
-                         "furniture — the retired 5-step brand loop, SOUL.md seeding, and --stage. "
-                         "Parity HOLDS (they are stale together); this records the shared staleness. "
-                         "Un-skip when the installer ceremony is aligned to the 3.0 method.")
 def test_installers_carry_no_2x_ceremony():
-    """The gap this records, all present in `cli.js` AND `_installer.py` alike:
+    """covers: M6 — neither twin ships 2.x installer furniture the 3.0 method retired.
 
-    - the brand loop is `Specify · Plan · Tests · Build · Verify` — the 2.x five-step model. ADD 3.0
-      is three beats (Direction → Build → Verify), which is what the book and skill now teach.
-    - both seed `.add/SOUL.md` from `tooling/templates/SOUL.md.tmpl`; 3.0 retired SOUL.md as dead.
-    - both still accept `--stage`, the graduation ceremony 3.0 replaced with the three lanes.
+    All three were present in `cli.js` AND `_installer.py` alike (parity held; they were stale
+    together, which is why a twin-vs-twin diff could never surface it):
 
-    These are shipped user-facing installer behaviour, so removing them is a product decision, not a
-    test fix — which is why this is recorded rather than made red.
+    - the brand loop was `Specify · Plan · Tests · Build · Verify`, the 2.x five-step model; ADD 3.0
+      is three beats (Direction → Build → Verify), which is what the book and skill teach.
+    - both seeded `.add/SOUL.md` from `tooling/templates/SOUL.md.tmpl`; 3.0 retired SOUL.md as dead.
+    - both accepted `--stage`, the graduation ceremony the three lanes replaced. It was already
+      INERT — `install()` took the parameter and never read it.
+    """
+    srcs = (("cli.js", _js()),
+            ("_cli.py", (PKG / "src" / "add_method" / "_cli.py").read_text(encoding="utf-8")),
+            ("_installer.py", (PKG / "src" / "add_method" / "_installer.py").read_text(encoding="utf-8")))
+    for name, src in srcs:
+        assert "Specify" not in src, f"{name} still brands the retired 5-step loop"
+        assert "SOUL" not in src, f"{name} still references the retired SOUL.md"
+        # `--stage` may only appear where it is REFUSED or explained, never where it is bound to a
+        # value — `add_argument("--stage"` (pip) or an assignment out of the parse loop (npm).
+        assert 'add_argument("--stage"' not in src, f"{name} still accepts the retired --stage"
+        assert "args.stage" not in src, f"{name} still binds a value for the retired --stage"
+    assert not (PKG / "tooling" / "templates" / "SOUL.md.tmpl").exists(), \
+        "the SOUL.md template still ships — nothing seeds it any more"
+
+
+def test_retired_stage_flag_is_refused_not_silently_dropped():
+    """covers: M8, R:STAGESHIFT — `--stage` must FAIL on both twins, never fall through.
+
+    npm's parser ends in `else if (a.startsWith("--")) warn("ignoring unknown flag")`, which drops
+    the flag but leaves its VALUE on the positional list — where the target directory is read from.
+    `init --stage mvp` would then install into ./mvp if that directory happened to exist. So the
+    retired flag needs an EXPLICIT refusal, matching the pip twin's argparse hard error.
     """
     js = _js()
-    py = (PKG / "src" / "add_method" / "_installer.py").read_text(encoding="utf-8")
-    for name, src in (("cli.js", js), ("_installer.py", py)):
-        assert "Specify" not in src, f"{name} still brands the retired 5-step loop"
-        assert "SOUL" not in src, f"{name} still seeds the retired SOUL.md"
-        assert "--stage" not in src, f"{name} still accepts the retired --stage"
+    m = re.search(r'else if \(a === "--stage"\) \{\s*\n\s*fail\(', js)
+    assert m, "cli.js must refuse --stage explicitly, before the unknown-flag fallback"
+    assert js.index(m.group(0)) < js.index('else if (a.startsWith("--")) warn('), \
+        "the --stage refusal must come BEFORE the generic unknown-flag warning, or it never fires"
+
+
+def test_brand_loop_is_the_three_beats():
+    """covers: M7 — both twins brand the SAME loop, and it is the one the engine implements."""
+    js_loop = re.search(r'const BRAND_LOOP = \[(.*?)\];', _js()).group(1)
+    py_loop = re.search(r'^_LOOP = \((.*?)\)',
+                        (PKG / "src" / "add_method" / "_installer.py").read_text(encoding="utf-8"), re.M).group(1)
+    beats = lambda raw: [t.strip().strip('"\'') for t in raw.split(",") if t.strip()]
+    assert beats(js_loop) == beats(py_loop), f"twins brand different loops: {beats(js_loop)} vs {beats(py_loop)}"
+    assert beats(js_loop) == ["Direction", "Build", "Verify"], f"not the three beats: {beats(js_loop)}"
+
+
+def test_npm_publishes_the_whole_flat_engine():
+    """covers: M9, R:HEADLESS — the published tarball must carry the dispatch ENTRY, not just the lib.
+
+    `package.json`'s `files` whitelist survived the 3.0 graft unedited: it listed `tooling/add.py`
+    and the retired `tooling/add_engine/`, but never `tooling/cli.py`. `npm pack` confirmed the
+    omission — a published package installed an engine with no entry point, so every
+    `python3 .add/tooling/cli.py status` the skill, the book and the installer pointer tell a user
+    to run would fail. Asserted on the whitelist (deterministic, no npm required).
+    """
+    files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
+    for needed in ("tooling/add.py", "tooling/cli.py"):
+        assert needed in files, f"package.json `files` omits {needed} — npm would ship a broken engine"
+    retired = [f for f in files if "add_engine" in f]
+    assert not retired, f"package.json `files` still whitelists the retired engine: {retired}"
 
 
 def test_retired_verbs_survive_only_inside_the_opaque_marker():
