@@ -102,7 +102,12 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle (also: doc)
 add new Task <slug> --title "..." --depth quick|standard|deep [--milestone m] [--scope a,b]
+                                             # --sensitivity security|data|architecture sets the floor
 add brief <slug>                             # the composed XML prompt for the active beat
+add todo [--milestone m]                     # the open worklist by beat, each with its next verb
+add locate <path>                            # which node's scope owns this file
+add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
+add doctor                                   # report-only findings — never writes, never gates
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add run <slug> --junitxml r.xml -- <test cmd>        # execute → a fresh, bound receipt
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP

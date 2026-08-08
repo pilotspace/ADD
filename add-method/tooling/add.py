@@ -2081,7 +2081,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             and not sfm.get("persona") and not sfm.get("advised_by"):
         return refuse("a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, "
                       "so no one is on record as having reviewed the security -> \"R:NOCOVERAGE\"",
-                      f'assign a security lens (set `advised_by: <persona>` on {slug}, or run it in a '
+                      f'assign a security lens (add advise {slug} --persona <p>, or run it in a '
                       f'lensed wave), then add gate {slug} PASS')
 
     node_body = lambda n: read(n["path"], "T2")["body"]
