@@ -47,7 +47,10 @@ Exactly one outcome, always recorded:
   close: it stays open, and the finding goes back to **Direction** as a change-request (fix the build,
   or add the Must the gate exposed), then you re-Verify. A **security** HARD-STOP always escalates to a
   human and is **never** folded into a RISK-ACCEPTED — and this one is **engine-enforced**: `gate`
-  refuses a `RISK-ACCEPTED` on a `sensitivity: security` node (resolve it to PASS, or HARD-STOP).
+  refuses a `RISK-ACCEPTED` on any **security-floored** node (resolve it to PASS, or HARD-STOP), and
+  refuses a `PASS` on one carrying no lens. Security-floored = `sensitivity: security`, **or** a
+  `scope:` entry matching `index.md`'s `sensitive_paths:` — the path floor arms both refusals, so a
+  task editing a sensitive path cannot sign itself away by omitting `sensitivity:`.
 
 No silent skips: a gate that isn't PASS is RISK-ACCEPTED or HARD-STOP, on the record with an owner.
 Present the gate via `gate.md`.

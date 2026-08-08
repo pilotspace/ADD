@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "dc0f3759ba3538c2e9083c73bd22a03a"  # re-aimed @ verb-recovery (locate + todo read-only query verbs). prior: 53aec4a3… @ C7 edge-case-coverage
+ENGINE_MD5 = "f1781a92c8f107a80f1af58e3748939f"  # re-aimed @ sensitive-path-floor (A17 path floor arms R:SECURITYFOLD + R:NOCOVERAGE). prior: dc0f3759… @ verb-recovery
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

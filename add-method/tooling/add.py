@@ -2045,22 +2045,28 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         return refuse(f"a {verdict} with no reason is a PASS in disguise",
                       f'add gate {slug} {verdict} --reason "<why>"')
 
-    # R:SECURITYFOLD — a security risk is a HARD-STOP, never a signed acceptance. `sensitivity:
-    # security` already floors authority at `human` (SENSITIVITY_FLOOR); this makes the other half
-    # of that floor structural rather than prose: the finding cannot be folded into a RISK-ACCEPTED,
-    # so no authority level and no persona can buy it back. PASS (a clean review) and HARD-STOP (the
-    # stop) are both still open — only the sign-it-away path is closed.
-    if verdict == "RISK-ACCEPTED" and (graph[cid]["fm"] or {}).get("sensitivity") == "security":
+    # Both halves of the security floor read the COMPUTED floor, not the literal `sensitivity:` key.
+    # `authority_for` is `max(sensitivity floor, A17 sensitive-path floor)`, and `human` is reachable
+    # only two ways: `sensitivity: security`, or a `scope:` entry matching `index.md`'s
+    # `sensitive_paths:`. Reading the key alone made the bundle's own path classification advisory —
+    # a task editing a sensitive path with no declared sensitivity could sign itself away.
+    sfm = graph[cid]["fm"] or {}
+    security_floored = authority_for(graph, cid) == "human"
+
+    # R:SECURITYFOLD — a security risk is a HARD-STOP, never a signed acceptance. The floor already
+    # puts authority at `human`; this makes the other half structural rather than prose: the finding
+    # cannot be folded into a RISK-ACCEPTED, so no authority level and no persona can buy it back.
+    # PASS (a clean review) and HARD-STOP (the stop) are both still open — only sign-it-away closes.
+    if verdict == "RISK-ACCEPTED" and security_floored:
         return refuse("a security risk cannot be folded into a RISK-ACCEPTED — the security floor is HARD-STOP",
                       f'resolve it (add gate {slug} PASS) or stop it (add gate {slug} HARD-STOP --reason "<the finding>")')
 
-    # R:NOCOVERAGE (A2) — the coverage half of the security floor. A `sensitivity: security` node
-    # cannot be signed PASS without a named lens (`persona:` or `advised_by:`): "who reviewed the
-    # security" becomes a recorded, enforced fact, not a doctor nudge. Security-only, mirroring
-    # R:SECURITYFOLD — architecture/data stay `info` findings in `doctor`. The engine binds lens
+    # R:NOCOVERAGE (A2) — the coverage half of the security floor. A security-floored node cannot be
+    # signed PASS without a named lens (`persona:` or `advised_by:`): "who reviewed the security"
+    # becomes a recorded, enforced fact, not a doctor nudge. Mirrors R:SECURITYFOLD — the softer
+    # data/architecture floors (`plan`) stay `info` findings in `doctor`. The engine binds lens
     # PRESENCE; whether it is the *right* lens is the AI's selection and the persona's `use-when`.
-    sfm = graph[cid]["fm"] or {}
-    if verdict == "PASS" and sfm.get("sensitivity") == "security" \
+    if verdict == "PASS" and security_floored \
             and not sfm.get("persona") and not sfm.get("advised_by"):
         return refuse("a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, "
                       "so no one is on record as having reviewed the security -> \"R:NOCOVERAGE\"",
