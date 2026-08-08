@@ -151,6 +151,29 @@ def test_npm_publishes_the_whole_flat_engine():
     assert not retired, f"package.json `files` still whitelists the retired engine: {retired}"
 
 
+def test_both_artifacts_ship_the_same_tooling_payload():
+    """covers: M10 — the pip bundle and the npm whitelist agree on what lands in `.add/tooling/`.
+
+    pip installs from the GENERATED `_bundled/` tree (prepare_bundle.py filters it); npm installs
+    from `tooling/` as narrowed by the `files` whitelist. The two are independent definitions of the
+    same payload, so they can drift silently — `cli.py` going missing from one of them is exactly
+    how the npm package came to ship a headless engine. Pin both to the same set.
+
+    NOTE this is the PUBLISHED payload. Running `node bin/cli.js` from a source checkout copies the
+    live `tooling/` directory unfiltered, so a dev run also drops repo-only helpers (engine_pin.py,
+    spike_cli.py, wording_lint.py, …). Those are excluded from the tarball by this whitelist and
+    never reach a real user; pip has no such gap because `_bundled/` is filtered at generation.
+    """
+    bundled = PKG / "src" / "add_method" / "_bundled" / "tooling"
+    top = {p.name for p in bundled.iterdir()}
+    assert top == {"add.py", "cli.py", "templates"}, \
+        f"_bundled/tooling/ ships something unexpected: {sorted(top)}"
+    files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
+    tooling_rules = {f for f in files if f.startswith("tooling/")}
+    assert tooling_rules == {"tooling/add.py", "tooling/cli.py", "tooling/templates/"}, \
+        f"npm whitelists a different tooling payload than pip bundles: {sorted(tooling_rules)}"
+
+
 def test_retired_verbs_survive_only_inside_the_opaque_marker():
     """covers: M5, E1 — `sync-guidelines`/`migrate`/`guide` are retired.
 
