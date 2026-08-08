@@ -46,25 +46,26 @@ There is exactly one entry per cite-key.
 ADD shares the spec-first DNA of GitHub's **spec-kit** and the Claude-Code,
 context-rot-fighting niche of **GSD**. The phase models line up closely:
 
-| ADD phase | spec-kit command | GSD phase |
+| ADD beat | spec-kit command | GSD phase |
 |---|---|---|
-| foundation · principles | `/speckit.constitution` → `constitution.md` | (project setup / `CLAUDE.md`-level) |
-| §1 specify (what / why) | `/speckit.specify` → `spec.md` | **discuss** — capture decisions before planning |
-| §3 contract (how, frozen) | `/speckit.plan` → `plan.md`, `contracts/` | **plan** — research, decompose, fit fresh context |
-| milestone tasks / waves | `/speckit.tasks` → `tasks.md` | (phases → parallel waves) |
-| §5 build | `/speckit.implement` | **execute** — parallel waves, fresh 200k-token context each |
-| §6 verify | `/speckit.analyze` + `/speckit.checklist` | **verify** — walk what was built, fix before declaring done |
+| foundation · the five living specs | `/speckit.constitution` → `constitution.md` | (project setup / `CLAUDE.md`-level) |
+| **Direction** — goal and rules (`## CARD`, `## RULES`) | `/speckit.specify` → `spec.md` | **discuss** — capture decisions before planning |
+| **Direction** — contract and scope (`## PLAN`), then frozen | `/speckit.plan` → `plan.md`, `contracts/` | **plan** — research, decompose, fit fresh context |
+| milestone tasks · `add wave` | `/speckit.tasks` → `tasks.md` | (phases → parallel waves) |
+| **Build** | `/speckit.implement` | **execute** — parallel waves, fresh 200k-token context each |
+| **Verify** — receipt, then `add gate` | `/speckit.analyze` + `/speckit.checklist` | **verify** — walk what was built, fix before declaring done |
 
 **Where ADD diverges.** spec-kit stops at `implement`; GSD ends at verify (GSD Core
 adds a fifth *ship* phase). ADD closes the loop past both by adding three things
-neither has as a first-class gate: a **failing-tests-first** gate (§4 — no build
-starts until the tests are red for the right reason), an **observe→`fold`**
-self-improvement step (§7 — confirmed learnings consolidate into a versioned foundation),
-and an engine-tracked **dynamic goal-loop** that will hold a milestone open and
-reopen tasks until its exit criteria are met. ADD also deliberately targets **less
-doc-time than GSD** — a lean foundation and one human approval per task, rather than
-a document per phase. The shared lineage is real; the tests-first gate, the `fold`,
-and the goal-loop are ADD's contribution.
+neither has as a first-class refusal: **red-first checks bound to the rules they
+prove** — the direction freezes with `## CHECKS`, and a rule no check `covers:`
+blocks the gate; an **observe→`add learn`→`add fold`** step, where a lesson needs
+evidence and confirmed ones consolidate into the living specs; and an
+engine-tracked **goal-loop** that holds a milestone open, and lets `add reopen`
+return a closed task to the loop, until the exit criteria are met. ADD also
+deliberately targets **less doc-time than GSD** — a lean foundation and one human
+approval per task, rather than a document per phase. The shared lineage is real;
+the covers-bound red suite, the `fold`, and the goal-loop are ADD's contribution.
 
 ## 1. Recursive self-improvement
 
@@ -86,7 +87,7 @@ and the goal-loop are ADD's contribution.
 - **How we built our multi-agent research system** (Anthropic 2025b) — https://www.anthropic.com/engineering/multi-agent-research-system — blog. An Opus lead orchestrating Sonnet subagents, with an LLM acting as judge, lifting task performance ~90%. ↔ ADD: the lead-plus-subagents-plus-judge pattern is exactly ADD's wave execution under a verify gate.
 - **ReAct: Synergizing Reasoning and Acting in Language Models** (Yao et al. 2022) — https://arxiv.org/abs/2210.03629 — paper. Interleaving think→act→observe turns a model into an agent. ↔ ADD: the base loop every ADD phase runs on.
 - **Toolformer: Language Models Can Teach Themselves to Use Tools** (Schick et al. 2023) — https://arxiv.org/abs/2302.04761 — paper. Self-supervised learning of when and how to call external tools. ↔ ADD: the capability that lets an agent run its own tests, linters, and builds — the evidence ADD trusts.
-- **SWE-agent: Agent–Computer Interfaces Enable Automated Software Engineering** (Yang et al. 2024) — https://arxiv.org/abs/2405.15793 — paper. A designed agent–computer interface materially improves autonomous issue resolution. ↔ ADD: the structured agent↔environment contract — ADD's `add.py` engine is that interface for the method.
+- **SWE-agent: Agent–Computer Interfaces Enable Automated Software Engineering** (Yang et al. 2024) — https://arxiv.org/abs/2405.15793 — paper. A designed agent–computer interface materially improves autonomous issue resolution. ↔ ADD: the structured agent↔environment contract — the `add` engine is that interface for the method.
 - **The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery** (Lu et al. 2024) — https://arxiv.org/abs/2408.06292 — paper. A full idea→experiment→write→review research loop at ~$15 per paper. ↔ ADD: the research analog of ADD's loop — and a reminder that an automated reviewer is the weak link a human gate protects.
 
 ## 3. Spec-driven development & spec-kit

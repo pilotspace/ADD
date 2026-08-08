@@ -19,7 +19,7 @@ guesses. That is the same failure the method exists to prevent ([00](./00-introd
 one level up.
 
 The **foundation** is the layer that holds this context and *outlives every
-milestone*. It is not new ceremony; it is the [living documentation](./appendix-f-requirements-matrix.md)
+milestone*. It is not new ceremony; it is the [living documentation](./12-bundle-format.md)
 the method already names, made explicit as five living specs.
 
 ## Three concerns, one foundation
@@ -107,8 +107,8 @@ The arrow runs both ways, which is the whole point of a re-entrant method:
 
 ## Where it sits in the hierarchy
 
-The foundation is the **Project tier** of the document hierarchy
-([Appendix F](./appendix-f-requirements-matrix.md)) — created once, kept for the
+The foundation is the **Project tier** of the node hierarchy
+([12 · The `.add/` bundle](./12-bundle-format.md)) — created once, kept for the
 life of the product, owned above any single milestone.
 
 ![Three tiers of documents — Project (the foundation: .add/index.md + .add/specs/) → Milestone → Task: scope narrows and lifespan shortens down the stack](./add-hierarchy.png)

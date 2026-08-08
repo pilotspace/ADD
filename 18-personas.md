@@ -124,4 +124,4 @@ exactly as strict as they were before — the loop adds expertise, not permissio
 
 ---
 
-[← 17 Components](./17-components.md) · [Contents](./README.md) · Next: [Appendix A Templates →](./appendix-a-templates.md)
+[← 17 Components](./17-components.md) · [Contents](./README.md) · Next: [Appendix C Glossary →](./appendix-c-glossary.md)

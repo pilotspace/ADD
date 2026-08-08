@@ -1,7 +1,7 @@
 """semantic_inventory.py — the v17 prompt-clarity preservation GATE (the meaning-side twin of wording_lint.py).
 
 Reads its units FROM SEMANTIC_INVENTORY.md (single source — no hardcoded duplicate) and diffs them
-against the agent-facing surface (skill/add 18 files + docs/appendix-b-prompts.md). DETERMINISTIC.
+against the agent-facing surface (skill/add, 18 files). DETERMINISTIC.
 It proves preservation is NECESSARY, not SUFFICIENT — three checks, each failing only on a real regression:
 
   S1  every frozen token still present IN ITS FILE          (unit_dropped / unit_relocated)

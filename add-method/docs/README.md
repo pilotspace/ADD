@@ -59,13 +59,11 @@ For every feature, before AI writes any code, you write four short artifacts in 
 - [16 · Releasing](./16-releasing.md)
 
 **Part IV — Reference**
-- [Appendix A · Templates](./appendix-a-templates.md)
-- [Appendix B · Prompt library](./appendix-b-prompts.md)
 - [Appendix C · Glossary](./appendix-c-glossary.md)
 - [Appendix D · The worked example, end to end](./appendix-d-worked-example.md)
 - [Appendix E · Checklists](./appendix-e-checklists.md)
-- [Appendix F · Document requirements matrix (Project → Milestone → Task)](./appendix-f-requirements-matrix.md)
 - [Appendix G · References & lineage](./appendix-g-references.md)
+- [Appendix H · ADD vs spec-kit — the honest comparison](./appendix-h-add-vs-spec-kit.md)
 
 ---
 
@@ -74,5 +72,5 @@ For every feature, before AI writes any code, you write four short artifacts in 
 - **▶ Example** marks the running worked example.
 - **Do / Don't** boxes give the rule in its shortest form.
 - A **gate** is a checkpoint with an explicit pass/fail exit. Its outcome is always one of `PASS`, `RISK-ACCEPTED` (a signed waiver), or `HARD-STOP`.
-- File names like `SPEC.md`, `features/*.feature`, `contracts/*` refer to the artifacts you create per feature; see [Appendix A](./appendix-a-templates.md).
-- Where this book uses a plain step name, the formal phase name (for teams mapping to a larger standard) appears once in [Appendix C](./appendix-c-glossary.md).
+- Paths like `.add/tasks/<slug>/`, `.add/specs/`, and `graph.json` refer to files inside the bundle the engine writes; see [12 · The `.add/` bundle](./12-bundle-format.md).
+- Every term the method uses — beat, node, receipt, lens, wave, lane, covers — is defined once in [Appendix C](./appendix-c-glossary.md).
