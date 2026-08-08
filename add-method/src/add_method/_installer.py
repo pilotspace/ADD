@@ -931,7 +931,7 @@ def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
         _log(f"soul_seed_skipped: could not write .add/SOUL.md — {exc}")
 
 
-# kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
+# kept OUTSIDE the engine / gitignore.tmpl deliberately: the engine's own
 # _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
 # and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
 # already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
