@@ -1263,16 +1263,27 @@ def locate(root, query: str) -> tuple:
     return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
 
 
-def _next_verb(graph: dict, cid: str) -> str:
-    """The one runnable next command for a task, by beat — the mapping `status`'s frontier uses."""
-    fm = graph[cid]["fm"] or {}
-    slug = cid.rsplit("/", 1)[-1][:-3]
+def _beat_of(node) -> str:
+    """A task's beat, DERIVED from its stamps — the same reasoning as `_is_frozen`.
+
+    `status` runs `direction → done`: nothing in `freeze`/`run` advances it, so the field cannot
+    tell direction from build from verify. Reading it made every open task report `direction`.
+    An explicit active status wins, because that is `reopen` naming a beat deliberately.
+    """
+    fm = node.get("fm") or {}
     st = fm.get("status")
-    if st == "verify":
-        return f"add gate {slug}"
-    if st == "build":
-        return f"add run {slug} -- <cmd>"
-    return f"add brief {slug}" if _is_frozen(graph[cid]) else f"add freeze {slug}"
+    if st in ("done", "dropped", "archived") or st in ("build", "verify"):
+        return st
+    stamps = [s for s in (fm.get("verified") or []) if isinstance(s, dict)]
+    if any(s.get("act") == "run" for s in stamps):
+        return "verify"
+    return "build" if _is_frozen(node) else "direction"
+
+
+def _next_verb(graph: dict, cid: str) -> str:
+    """The one runnable next command for a task, by its stamp-derived beat."""
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    return BEAT_NEXT.get(_beat_of(graph[cid]), "add status").format(slug=slug)
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -1287,7 +1298,7 @@ def todo(root, milestone: str = None) -> tuple:
             continue
         if msel and _wave_slug(fm.get("milestone")) != msel:
             continue
-        items.append((cid, fm.get("status"), _next_verb(graph, cid)))
+        items.append((cid, _beat_of(graph[cid]), _next_verb(graph, cid)))
     if not items:
         where = f" under `{milestone}`" if milestone else ""
         return [], f"nothing open{where}\nnext: add status"
