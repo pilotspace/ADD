@@ -1,38 +1,15 @@
-# Quality — the TDD spec
-
-project: AIDD / ADD Methodology · seeded: 2026-07-17 · stage: mvp
-
-> Living document — how we know it works: test strategy, floors, evidence (TDD).
-> Keep the sections below CURRENT (state, not history); lessons land under
-> Deltas the moment they are learned: `add.py delta-append tdd "<lesson>"`.
-> A delta that changes the standing picture is folded UP into the sections
-> above it and marked `[folded]` — the Deltas list is the inbox, not the spec.
-
+---
+type: Spec
+title: Quality
+lens: quality
+project: AIDD-Book
+generated: { by: add/3.0.0, at: 2026-08-08 }
+---
 ## Now
-<!-- migrated from PROJECT.md §Spec (test-strategy lessons) @ fv66 (foundation-split) -->
-- The regression floor is the full tooling suite (`add-method/tooling/./t`) + `add.py check`
-  0-failed; targeted modules gate in-session, the full suite runs backgrounded/CI.
+what counts as proof
 
 ## Decisions that bind
-- The suite IS the behavior contract for a prose compaction — wording slips surface only under the FULL suite, never a subset; gate compactions on the full run. [fv46 · skill-core-compact]
-- A new CLI subcommand ripples into test_min_pillar LIFECYCLE + _NONZERO_OK classification + the tri-tree ENGINE_MD5 pin — pre-list those traps in §5 Known-problem fixes and the build is trap-free. [fv58 · components-validator]
-- The guideline block has TWO lean guards, not one — `test_guidelines` pins no byte budget but `test_v8_onramp::test_block_stays_a_pointer` caps the WHOLE block at ≤22 non-blank lines; a freeze that measures only the first mis-sizes an inline addition. [fv61 · roster-portable-shape]
-- YAML 1.1 parses a bare `on:` key as boolean True — a workflow-shape test must read `cfg.get("on", cfg.get(True))` or it silently asserts against a missing key. [fv49 · pages-deploy]
+- <the first decision that constrains the rest>
 
-## Deltas (newest first)
-- [open · 2026-07-26] Testing a function DIRECTLY can hide that its caller never passes the argument: my fix for 'compute_ambiguity_detail passes artifacts=()' shipped with a test that called classify(artifacts=(doc,)) itself, so re-introducing the exact bug left every test green. I reproduced the original defect inside its own fix. When a fix is about a CALL SITE, the test must go through the call site and the fixture must make every other path impossible. (task:ambiguity-meter-fixes)
-- [open · 2026-07-26] A TEXTUAL guard and a BEHAVIOURAL guard catch different contamination, so a fairness claim needs both: a probe written as `return st < 400` on a conflicting create contains no forbidden token, passes a source scan cleanly, and is still reading-dependent — the two reference apps scored 1.0 vs 0.917 and only the behavioural proof caught it. Prove a fairness property by making two artifacts that differ ONLY in the dimension that must not matter, then assert the meter cannot tell them apart. (task:amb1-checklist-oracle)
-- [open · 2026-07-26] A sentinel that collides with a legitimate value hides in green tests: _first_code_write_offset returns 0 for BOTH 'no write found' and 'the write is the first byte'. Harmless for scoring here (nothing precedes offset 0 either way), but a fixture whose only event WAS the write could not tell a counted write from an uncounted one. Give fixtures the shape real data has, or the sentinel silently becomes the test's answer. (task:bench-ambiguity-scoring)
-- [open · 2026-07-26] Mutation-test every Reject clause, not just the Musts: my missing-transcript test passed a mutation that returned edit_pos=10**9 instead of 0, because it asserted through the END-TO-END path where a missing transcript ALSO yields empty text — so nothing surfaced for a reason unrelated to the clause under test. A test that reaches its assertion through two coupled causes pins neither. Assert the clause directly, then keep the end-to-end test as the consequence. (task:bench-ambiguity-scoring)
-- [open · 2026-07-26] A test that plants its adversary through a channel the guard cannot see is vacuous even when it is red for the right reason at first: benchmark provenance tests planted a PYTHONPATH leak, but the -E flag makes PYTHONPATH invisible, so every test would have passed with all guards removed. Mutation-check each guard (neuter it, confirm a named test fails) before believing a green suite pins it. (task:bench-ambiguity-scoring)
-- [open · 2026-07-25] A probe that can return covered=True on an EMPTY workspace is vacuous, and the suite will not tell you: benchmark R-cli-parity passed on an empty dir for months. Every deterministic probe needs an empty-workspace floor test asserting False — the cheapest possible guard against a meter that scores nothing as something. (task:risk-proportional-skip)
-- [open · 2026-07-25] a @skipUnless-decorated TestCase class skips PER METHOD, so adding one case there shifts the total skip count — and test_ci_tooling_mirror_gap pins that count exactly. The trap: the count was hand-maintained in TWO places (_expected_skip_count and the meta-test test_setuptools_missing_adds_three asserting a literal), and the meta-test guarding the pin shared the pins blind spot. Worse, it is INVISIBLE locally: macOS has setuptools so the class RUNS instead of skipping, while CIs nested clone does not. Derive such counts from source (ast, no import) and give the derivation a floor so it cannot collapse to zero and pass vacuously (evidence: PR #182 py3.12 red at 5 skips vs 4 expected while the local suite was 2327 OK) (task:seed-method-personas)
-- [open · 2026-07-25] a test method pasted after the `if __name__ == "__main__"` guard is SILENTLY UNCOLLECTED — it never runs and never fails, so the suite reports green while proving nothing. The test COUNT is the cheap detector: 2316 baseline + 9 + 1 = 2326 when the wheel case was dead vs 2327 once relocated. Predict the expected count before a run and reconcile it, and verify placement with ast.parse rather than by eye (evidence: seed-method-personas test_method_persona_seeds_ship_in_the_wheel; found by refute-read, not by the suite) (task:seed-method-personas)
-- [open · 2026-07-25] for a DELETION, the standing GREEN checks are the real test, not the red-first ones: removing files rarely fails, the risk is that something depended on them. Run the FULL suite rather than the tests you predict will matter — a targeted run of test_tree_parity + test_ci_tooling_mirror_gap would have PASSED and shipped a half-deleted four-way tree (evidence: preset-patterns-fold §4 check_full_suite_green; 2316 tests FAILED(1) then OK) (task:preset-patterns-fold)
-- [open · 2026-07-25] when a check fails, fix the ARTIFACT not the instrument: the disjointness check failed on 'rest deciding' and the tempting fix was to stop the tokenizer forming bigrams across punctuation — retuning the measure after seeing the result. Rewording the persona prose and re-running the UNCHANGED check is the honest path, and it left the check able to catch the next real overlap (evidence: milestone-planner.md use-when reword; .add/tasks/planner-personas-seed/PLAN.md §5) (task:planner-personas-seed)
-- [open · 2026-07-23] WM4's frozen checklist omits a row for the PROMPT's CLI filter-flags requirement — add R-cli-filter-flags on the next checklist version bump (evidence: honest-fidelity-meter close-out review 2026-07-23) (task:scope-first-freeze)
-- [open · 2026-07-23] Relabel-in-place with the MACHINE-READ prefixes preserved ('Scope (may touch):' / 'Regression floor:') held the blast radius to 1 pinning test (test_decide_digest, 4 label swaps) + a new conformance suite; renaming the prefixes would have churned test_template_atomic's census + the scope-lock parser for zero user gain (evidence: only 2 live sources keyed the label). (task:trim-build-strategy-labels)
-- [open · 2026-07-22] content-presence phrase pins pass vacuously when the token pre-exists elsewhere in the file (Goal/invariant already in direction.md); require CO-LOCATION in the target bullet, and confirm the pin was RED pre-edit for the discriminating token, not an incidental one (evidence: test_fable_floor hardened at verify) (task:fable-floor-reasoning)
-- [open · 2026-07-22] lock-reclaim race probe flakes under CI runner contention — peak-holders=2 on slow 2-core runners, passes on rerun; 5 consecutive branch CI runs red until rerun. Widen the reclaim grace under CI or make the probe retry-tolerant (evidence: run 29893983512 fail→rerun-pass, 2026-07-22) (task:round-visible-runs)
-<!-- prepended by `add.py delta-append tdd "<text>"` — one line per lesson, `- [open · <date>] <lesson>` + the active-task stamp; fold a delta upward, then retag [open]->[folded] -->
-- [open · 2026-07-26] A mutation that makes a test HANG is reported as nothing at all: deleting the interrupt backstop turned a polling loop infinite, so the suite hung instead of failing, and in CI that is a multi-hour timeout rather than a red X. Any test that waits on a process or a file needs the production code to carry an absolute ceiling, so the failure mode is a fast red rather than silence. (task:bench-interrupt-mechanics)
+## Deltas
+- <what changed, and the evidence that changed it>
