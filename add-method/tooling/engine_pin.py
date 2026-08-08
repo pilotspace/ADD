@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "afb01974c24ebb1aa499706e853b0b43"  # re-aimed @ skill-suite-port (R:NOCOVERAGE refusal names `add advise`). prior: 0ed53e48… @ stamp-derived-beat
+ENGINE_MD5 = "5f02354ea6056980884e45bf97125955"  # re-aimed @ init-identity (drop okf_version stamp; name the project, not the .add dir). prior: afb01974… @ skill-suite-port
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing
