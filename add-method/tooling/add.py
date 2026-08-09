@@ -1343,6 +1343,18 @@ def status(root, all: bool = False, check: bool = False) -> str:
     # first; on a bundle-less dir the honest answer is "create one", not a false empty-orientation
     # (`index.md` is the marker init always writes and nothing else does).
     if not (Path(root) / "index.md").is_file():
+        # …unless a 2.x bundle is sitting here. 2.x wrote `state.json` and `tasks/<slug>/PLAN.md`;
+        # 3.0 reads `index.md` + `graph.json` and retired `migrate`, so the upgrade is a deliberate
+        # clean break. But answering "no bundle here" to someone whose own state.json is in this
+        # very directory reads as "the upgrade ate my project" — name the format and say the files
+        # are safe. (Neither marker is anything 3.0 writes, so this cannot fire on a 3.0 bundle.)
+        if (Path(root) / "state.json").is_file() or (Path(root) / "tasks").is_dir():
+            return ("this is an ADD 2.x bundle — 3.0 reads a different format and does not "
+                    "convert it\n"
+                    "nothing here was deleted: your 2.x files (state.json · tasks/ · specs/) are "
+                    "untouched\n"
+                    "archive them as the record of how this was built, then start a 3.0 bundle\n"
+                    "next: add init")
         return f"no bundle here — run `add init` to create one\nnext: add init"
 
     graph = scan(root)

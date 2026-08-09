@@ -142,9 +142,12 @@ defaults to `prototype` (pass `--name "My App" --stage mvp` to choose up front).
 
 **Already installed?** `npx @pilotspace/add@latest update` (or `pipx run
 pilotspace-add update`) re-materializes the skill and tooling while leaving your
-project work untouched; add `--check` to see whether a project is behind. **Coming
-from 1.x?** One idempotent command — `python3 .add/tooling/add.py migrate` —
-converts the whole board (task docs to `PLAN.md`, living 5-DD specs seeded).
+project work untouched; add `--check` to see whether a project is behind.
+**Coming from 2.x?** 3.0 is a clean break: it reads a different bundle format and
+does not convert one, so there is no `migrate`. Upgrading leaves every 2.x file
+untouched and `add status` names the format rather than claiming there is no
+bundle — archive the 2.x bundle as the record of how the project was built, then
+`add init` a 3.0 one beside it.
 
 **New here?** The [10-minute Quickstart](./GETTING-STARTED.md) walks your first
 feature end to end.
@@ -153,17 +156,16 @@ This installs:
 
 | Path | What |
 |------|------|
-| `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus three on-demand phase references |
-| `.add/tooling/add.py` | the state kernel — scaffolder + tracker, 31 verbs (Python, stdlib only) |
+| `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
+| `.claude/agents/` | the advisor and worker subagents the skill dispatches |
+| `.add/tooling/add.py` | the notary engine — 20 verbs (Python, stdlib only) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
-| `.add/DESIGN.md` | (UI projects) front-door to the render-ready UDD foundation — delete it if your project has no UI |
+| `.add/personas-index/` | the generated routing index — which persona to reach for, and when |
 
-Project state (`.add/state.json`) and the living-documentation files
-(`CONVENTIONS.md`, `GLOSSARY.md`, `MODEL_REGISTRY.md`, `dependencies.allowlist`,
-`SOUL.md`) are *not* created at install — the installer drops files only;
-initialisation is the agent's first move when you run `/add`. On a UI project,
-`add.py check` lints the JSON design foundation under `.add/design/`, going red
-with a named code on any violation and staying silent when there's no design set.
+Project state is *not* created at install — the installer drops files only;
+initialisation is the agent's first move when you run `/add`. `add init` is what
+writes the bundle: `index.md`, `PROJECT.md`, `graph.json`, `log.md`, and the
+living `specs/`.
 
 ## Boundaries — what this plugin writes and runs
 
