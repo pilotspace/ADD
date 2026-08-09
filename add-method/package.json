@@ -1,7 +1,7 @@
 {
   "name": "@pilotspace/add",
-  "version": "2.5.0",
-  "description": "ADD (AI-Driven Development) 2.0. The agent is the hands; ADD is the memory, judgment, and conscience — a minimal, state-tracked skill: one freeze per feature, trust from passing tests, state on disk so context rot never survives a new session.",
+  "version": "3.0.0",
+  "description": "ADD (AI-Driven Development) 2.0. The agent is the hands; ADD is the memory, judgment, and conscience \u2014 a minimal, state-tracked skill: one freeze per feature, trust from passing tests, state on disk so context rot never survives a new session.",
   "bin": {
     "add": "bin/cli.js"
   },
@@ -20,11 +20,12 @@
     "skill/",
     "agents/",
     "tooling/add.py",
-    "tooling/add_engine/",
-    "!tooling/add_engine/__pycache__",
+    "tooling/cli.py",
     "!**/*.pyc",
+    "!**/__pycache__",
     "tooling/templates/",
     "personas-teacher/",
+    "personas-index/",
     "THIRD_PARTY_NOTICES.md",
     "README.md",
     "GETTING-STARTED.md",

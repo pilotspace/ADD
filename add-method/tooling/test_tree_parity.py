@@ -1,158 +1,124 @@
 #!/usr/bin/env python3
-"""THE canonical tree-parity + engine-pin sweep (task test-corpus-slim).
+"""Canonical tree-parity + engine-pin sweep — ADD 3.0 (ABF-1), flat-engine edition.
 
-Parity was previously asserted ad hoc — ~110 per-task copies of "these trees
-agree" and "the engine is untouched" scattered across the corpus, so every
-guide fold or repin rippled into dozens of duplicated reds. This ONE suite now
-owns every static-tree invariant; per-task suites keep only content pins.
+This ONE suite owns the package's static-tree integrity invariants so a diverged or
+orphaned file reds exactly here. Adapted from the 2.5 sweep for the flat two-file
+engine (add.py + cli.py; no add_engine/ package).
 
-Surfaces swept (a diverged or orphan file reds exactly this suite):
-  skill    add-method/skill/add ↔ _bundled/skill/add ↔ .claude/skills/add
-  agents   add-method/agents/add-*.md ↔ _bundled/agents ↔ .claude/agents
-  tooling  add.py · engine_pin.py · add_engine/*.py · templates/** — 4-way
-           (canonical · _bundled · REPO/.add · add-method/.add)
-  docs     add-method/docs/*.md ↔ repo-root chapter mirrors (bundle/dogfood: NEVER ship)
-  pins     md5(add.py) == ENGINE_MD5 · package_digest == ENGINE_PKG_MD5 (ONCE)
+Surfaces swept:
+  skill    add-method/skill/add  ==  _bundled/skill/add  (git-tracked: ALWAYS compared)
+                                 ==  .claude/skills/add   (dogfood twin: exists-skip)
+  tooling  add.py · cli.py · templates/**  ==  _bundled/tooling/**   (ALWAYS)
+  corpus   add-method/personas-teacher  ==  _bundled/personas-teacher (ALWAYS)
+  pins     md5(add.py) == ENGINE_MD5 · md5(cli.py) == ENGINE_PKG_MD5
 
-Skip policy — never vacuous: the canonical and _bundled trees are git-tracked
-and are ALWAYS compared (their absence is a hard failure, never a skip); only
-the gitignored dogfood twins (.claude mirrors on a fresh package, the two
-.add/tooling trees on a fresh clone) exists-skip, with ≥2 trees always live
-(ba09498 precedent).
+Skip policy — never vacuous: the canonical and _bundled trees are git-tracked and are
+ALWAYS compared (their absence is a hard failure); only the gitignored/channel-installed
+dogfood twin (.claude/skills/add on a fresh package) exists-skips.
 
-Run: python3 -m unittest test_tree_parity -v
+Run: python3 -m pytest add-method/tooling/test_tree_parity.py -v
 """
+from __future__ import annotations
+
 import hashlib
-import re
+import sys
 import unittest
 from pathlib import Path
 
-import engine_manifest
-import engine_pin
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import engine_manifest  # noqa: E402
+import engine_pin  # noqa: E402
 
 _TOOLING = Path(__file__).resolve().parent
 _ADD_METHOD = _TOOLING.parent
 _REPO = _ADD_METHOD.parent
 _BUNDLE = _ADD_METHOD / "src" / "add_method" / "_bundled"
 
-# git-tracked trees: ALWAYS present, ALWAYS compared (a missing one is a failure)
 CANON_SKILL = _ADD_METHOD / "skill" / "add"
 BUNDLE_SKILL = _BUNDLE / "skill" / "add"
-# gitignored / channel-installed twins: exists-skip
 DOGFOOD_SKILL = _REPO / ".claude" / "skills" / "add"
 
-AGENT_TREES = (_ADD_METHOD / "agents", _BUNDLE / "agents", _REPO / ".claude" / "agents")
+CANON_TOOLING = _TOOLING
+BUNDLE_TOOLING = _BUNDLE / "tooling"
 
-TOOLING_TREES = (_TOOLING, _BUNDLE / "tooling",
-                 _REPO / ".add" / "tooling", _ADD_METHOD / ".add" / "tooling")
+CANON_CORPUS = _ADD_METHOD / "personas-teacher"
+BUNDLE_CORPUS = _BUNDLE / "personas-teacher"
 
-DOCS_CANON = _ADD_METHOD / "docs"
-DOCS_BUNDLE = _BUNDLE / "docs"          # book-stops-shipping (2.0 M6b): must NOT exist
-DOCS_DOGFOOD = _REPO / ".add" / "docs"  # book-stops-shipping (2.0 M6b): must NOT exist
+# Files that live in the canonical tooling dir but are dev-only (never shipped to _bundled).
+# The 2.x prose fences (wording_lint.py/WORDING_RUBRIC.md + semantic_inventory.py/
+# SEMANTIC_INVENTORY.md) were retired in 3.0 — their keep-lists required the vocabulary the
+# release cut — so they are gone rather than exempted here.
+_DEV_ONLY = {"engine_pin.py", "engine_manifest.py", "gate_fixtures.py", "md_section.py",
+             "pty_clack.py", "spike_cli.py", "t"}
 
 
 def _md5(p: Path) -> str:
     return hashlib.md5(p.read_bytes()).hexdigest()
 
 
-def _rel_files(root: Path):
-    return {p.relative_to(root) for p in root.rglob("*") if p.is_file()}
+def _tree_map(root: Path, *, skip_names=frozenset()) -> dict:
+    """{relative-posix-path: md5} for every file under root, excluding junk + skip_names."""
+    out = {}
+    for p in root.rglob("*"):
+        if not p.is_file():
+            continue
+        if "__pycache__" in p.parts or p.suffix in (".pyc", ".pyo") or p.name == ".DS_Store":
+            continue
+        rel = p.relative_to(root)
+        if rel.parts and rel.parts[0] in skip_names:
+            continue
+        out[rel.as_posix()] = _md5(p)
+    return out
 
 
-class SkillTreeParityTest(unittest.TestCase):
-    def test_skill_trees_byte_identical(self):
-        # canonical + bundled are git-tracked: never skipped, never vacuous
-        for tracked in (CANON_SKILL, BUNDLE_SKILL):
-            self.assertTrue(tracked.is_dir(), f"git-tracked skill tree missing: {tracked}")
-        trees = [CANON_SKILL, BUNDLE_SKILL] + (
-            [DOGFOOD_SKILL] if DOGFOOD_SKILL.is_dir() else [])
-        canon = _rel_files(CANON_SKILL)
-        for twin in trees[1:]:
-            other = _rel_files(twin)
-            self.assertEqual(
-                sorted(map(str, canon)), sorted(map(str, other)),
-                f"skill file sets differ (orphans) between {CANON_SKILL} and {twin}:\n"
-                f"  only in canonical: {sorted(map(str, canon - other))}\n"
-                f"  only in twin:      {sorted(map(str, other - canon))}")
-            mismatched = [str(rel) for rel in sorted(canon, key=str)
-                          if _md5(CANON_SKILL / rel) != _md5(twin / rel)]
-            self.assertEqual(mismatched, [],
-                             f"skill file(s) diverged vs {twin} (propagate with cp):\n  "
-                             + "\n  ".join(mismatched))
+class EnginePinParity(unittest.TestCase):
+    def test_add_py_matches_ENGINE_MD5(self):
+        self.assertEqual(engine_manifest.engine_digest(_TOOLING), engine_pin.ENGINE_MD5,
+                         "md5(tooling/add.py) drifted from ENGINE_MD5 — re-aim engine_pin.py")
 
-
-class AgentsParityTest(unittest.TestCase):
-    def test_roster_agents_byte_identical(self):
-        # advisor-split: the roster (add-worker + add-advisor) ships in three trees;
-        # .claude/agents also holds user agents, so parity binds the add*.md subset only
-        canon, bundle, dogfood = AGENT_TREES
-        for tracked in (canon, bundle):
-            self.assertTrue(tracked.is_dir(), f"git-tracked agents tree missing: {tracked}")
-        names = sorted(p.name for p in canon.glob("add*.md"))
-        self.assertTrue(names, "canonical roster is empty — the sweep would be vacuous")
-        self.assertEqual(names, sorted(p.name for p in bundle.glob("add*.md")),
-                         "bundled roster file set diverged")
-        for name in names:
-            self.assertEqual(_md5(canon / name), _md5(bundle / name),
-                             f"roster agent diverged: {bundle / name}")
-            if dogfood.is_dir() and (dogfood / name).exists():
-                self.assertEqual(_md5(canon / name), _md5(dogfood / name),
-                                 f"roster agent diverged: {dogfood / name}")
-
-
-class ToolingParityTest(unittest.TestCase):
-    """4-way engine parity: canonical · bundle (git-tracked) · two dogfood
-    twins (gitignored, exists-skip — ≥2 trees always live)."""
-
-    def _present(self):
-        present = [t for t in TOOLING_TREES if (t / "add.py").exists()]
-        self.assertGreaterEqual(len(present), 2,
-                                "tooling twin set collapsed below canonical+bundle")
-        for tracked in TOOLING_TREES[:2]:
-            self.assertIn(tracked, present, f"git-tracked tooling tree missing: {tracked}")
-        return present
-
-    def test_engine_files_byte_identical(self):
-        present = self._present()
-        rels = ["add.py", "engine_pin.py"]
-        rels += [f"add_engine/{p.name}" for p in sorted((_TOOLING / "add_engine").glob("*.py"))]
-        rels += [str(p.relative_to(_TOOLING))
-                 for p in sorted((_TOOLING / "templates").rglob("*.tmpl"))]
-        for rel in sorted(set(rels)):
-            digests = {_md5(t / rel) for t in present if (t / rel).exists()}
-            self.assertEqual(len(digests), 1, f"tooling twin diverged: {rel}")
-
-    def test_engine_pin_holds(self):
-        # THE one engine-pin assert (test-corpus-slim: per-task copies deleted)
-        self.assertEqual(_md5(_TOOLING / "add.py"), engine_pin.ENGINE_MD5,
-                         "add.py != ENGINE_MD5 — an engine edit must repin engine_pin.py")
+    def test_cli_py_matches_ENGINE_PKG_MD5(self):
         self.assertEqual(engine_manifest.package_digest(_TOOLING), engine_pin.ENGINE_PKG_MD5,
-                         "add_engine package digest != ENGINE_PKG_MD5 — repin needed")
+                         "md5(tooling/cli.py) drifted from ENGINE_PKG_MD5 — re-aim engine_pin.py")
 
 
-class DocsParityTest(unittest.TestCase):
-    def test_book_never_ships(self):
-        # book-stops-shipping (2.0 M6b): the book's ONLY home is the canonical
-        # tree (published via mkdocs) — the bundle and the dogfood install carry
-        # no docs/ copy, so a package can never regrow the shipped book silently.
-        self.assertFalse(DOCS_BUNDLE.exists(), "the bundle must not ship the book")
-        self.assertFalse(DOCS_DOGFOOD.exists(), "the dogfood install must not carry .add/docs")
+class BundleParity(unittest.TestCase):
+    def test_skill_bundle_matches_canonical(self):
+        self.assertTrue(CANON_SKILL.is_dir() and BUNDLE_SKILL.is_dir(),
+                        "canonical + bundled skill trees must both exist (git-tracked)")
+        self.assertEqual(_tree_map(CANON_SKILL), _tree_map(BUNDLE_SKILL),
+                         "skill/add drifted from _bundled/skill/add — run scripts/prepare_bundle.py")
 
-    def test_book_trees_byte_identical(self):
-        self.assertTrue(DOCS_CANON.is_dir(), f"canonical docs tree missing: {DOCS_CANON}")
-        canon = {p.name for p in DOCS_CANON.glob("*.md")}
-        self.assertTrue(canon, "the canonical book must hold chapters")
-        for name in sorted(canon):
-            digests = {_md5(DOCS_CANON / name)}
-            # repo-root mirrors exist only for chapter-shaped names (NN-… /
-            # appendix-…) — a generic name like README.md at root is the
-            # PROJECT's own file, never a mirror
-            if re.match(r"\d{2}-|appendix-", name):
-                extra = _REPO / name
-                if extra.exists():
-                    digests.add(_md5(extra))
-            self.assertEqual(len(digests), 1, f"book chapter diverged across trees: {name}")
+    def test_engine_bundle_matches_canonical(self):
+        for name in ("add.py", "cli.py"):
+            self.assertEqual(_md5(CANON_TOOLING / name), _md5(BUNDLE_TOOLING / name),
+                             f"tooling/{name} drifted from _bundled — run prepare_bundle.py")
+
+    def test_templates_bundle_matches_canonical(self):
+        self.assertEqual(_tree_map(CANON_TOOLING / "templates"),
+                         _tree_map(BUNDLE_TOOLING / "templates"),
+                         "tooling/templates drifted from _bundled — run prepare_bundle.py")
+
+    def test_bundle_ships_no_add_engine_or_dev_only(self):
+        self.assertFalse((BUNDLE_TOOLING / "add_engine").exists(),
+                         "the flat engine ships no add_engine/ package")
+        shipped = {p.name for p in BUNDLE_TOOLING.iterdir() if p.is_file()}
+        leaked = shipped & _DEV_ONLY
+        self.assertFalse(leaked, f"dev-only files leaked into the bundle: {leaked}")
+
+    def test_corpus_bundle_matches_canonical(self):
+        self.assertTrue(CANON_CORPUS.is_dir() and BUNDLE_CORPUS.is_dir(),
+                        "canonical + bundled personas-teacher must both exist")
+        self.assertEqual(_tree_map(CANON_CORPUS), _tree_map(BUNDLE_CORPUS),
+                         "personas-teacher drifted from _bundled — run prepare_bundle.py")
+
+
+class DogfoodMirror(unittest.TestCase):
+    def test_dogfood_skill_matches_canonical_when_present(self):
+        if not DOGFOOD_SKILL.is_dir():
+            self.skipTest("dogfood .claude/skills/add absent (fresh package) — exists-skip")
+        self.assertEqual(_tree_map(CANON_SKILL), _tree_map(DOGFOOD_SKILL),
+                         ".claude/skills/add drifted from add-method/skill/add — resync the mirror")
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()

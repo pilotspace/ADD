@@ -17,5 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "54aff8b8ce3b8ee9c1cda23ee4e06f79"  # re-aimed @ seed-method-personas (init/migrate seed the three method-lens planners via _seed_persona_file). prior: 60eef504… @ egg-info-prune
-ENGINE_PKG_MD5 = "c635ca53a41360940620f081bf5b329d"  # re-aimed @ seed-method-personas (METHOD_PERSONAS lands in add_engine.constants). prior: 3d7ec2b9… @ fold-residue-engine-guide
+ENGINE_MD5 = "d2a8d8d678171ea09299e0c8de872942"  # re-aimed @ persona-index-sidecar (init vendors personas-index/; both oracles skip it). prior: 5f02354e… @ init-identity
+# ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
+# ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
+ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

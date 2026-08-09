@@ -2,230 +2,331 @@
 
 [← Appendix C Glossary](./appendix-c-glossary.md) · [Contents](./README.md) · Next: [Appendix E Checklists →](./appendix-e-checklists.md)
 
-The running example, assembled in one place so you can see a complete pass through the flow without flipping between chapters. The feature: **transfer money between a user's own accounts.**
+The running example, assembled in one place so you can see a complete pass through
+the loop without flipping between chapters. The feature: **transfer money between a
+user's own accounts.**
+
+Every command and every engine response on this page was produced by running the
+shipped engine against a real bundle. Nothing here is illustrative shorthand.
 
 ---
 
-## Step 1 — Specify → `SPEC.md`
+## Open the task
 
 ```
-Feature: Transfer money between my own accounts
-Framings weighed: synchronous single-currency transfer (chosen) · queued transfer · multi-currency with FX
-Must:
-  - move an amount from one of my accounts to another of mine
-  - amount > 0
-  - source and destination are different accounts
-  - source has enough balance
-After:
-  - source balance -= amount, destination balance += amount
-Reject:
-  - amount <= 0           -> "amount_invalid"
-  - source == destination -> "same_account"
-  - balance < amount      -> "insufficient_funds"
-  - account not mine      -> "forbidden"
-Assumptions — lowest-confidence first:
-  ⚠ same currency only (no FX) in v1 — lowest confidence because the ticket never said; if wrong: the amount/rounding model changes and this contract is wrong
-  - [x] no daily limit in v1 — confirmed: out of scope for v1
+$ add new milestone payments
+created milestones/payments.md
+next: add freeze payments
+
+$ add new task transfer-own-accounts --milestone payments --scope src/transfers.py
+created tasks/transfer-own-accounts.md
+next: add freeze transfer-own-accounts
 ```
 
-The product owner read the flagged assumption first — the single-currency choice, the one most likely to be wrong and most expensive if it were — and confirmed it: v1 is single-currency with no daily limit.
+`add new task` writes a scaffolded node with its sections empty. Authoring those
+sections *is* the Direction beat.
 
-## Step 3 — Contract → `contracts/transfer.md`
+## Direction — the authored node
 
-```
-POST /transfers   body: { fromAccountId, toAccountId, amount }
+One file carries the whole direction: what must hold, what must never happen, the
+contract it publishes, the files it may touch, and the checks that prove each rule.
+
+```markdown
+---
+type: Task
+title: transfer-own-accounts
+status: direction
+milestone: payments
+scope:
+  - src/transfers.py
+gives:
+  - "POST /transfers -> 200 { transferId, fromBalance, toBalance }"
+---
+## CARD
+goal: Move an amount between two accounts the caller owns, atomically.
+why: The first payments slice; every later payment feature freezes against this shape.
+
+## RULES
+<must>
+- M1 A transfer between two accounts I own moves the amount: source -= amount, destination += amount.
+</must>
+<reject>
+- R:NONPOSITIVE an amount <= 0 must never move money -> "amount_invalid"
+- R:SAMEACCOUNT source == destination must never be accepted -> "same_account"
+- R:OVERDRAW a balance below the amount must never be debited -> "insufficient_funds"
+- R:NOTMINE an account the caller does not own must never be a source -> "forbidden"
+</reject>
+
+## PLAN
+contract: POST /transfers { fromAccountId, toAccountId, amount }
   200 -> { transferId, fromBalance, toBalance }
   400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
   403 -> { error: "forbidden" }
-Schema: accounts.balance (read + write, must be transactional)
-Status: FROZEN @ v1
+scope: src/transfers.py
+assumptions (lowest confidence first):
+  - "⚠ single currency, no FX, in v1 — the ticket never said; if wrong the amount and
+     rounding model changes and this contract is wrong"
+  - "no daily limit in v1 — confirmed out of scope"
+
+## EDGES
+- E1 Two simultaneous transfers from the same source must not both pass the balance check and overdraw it.
+
+## CHECKS
+- test_successful_transfer · covers: M1 · 100/0, transfer 30, leaves 70/30
+- test_amount_must_be_positive · covers: R:NONPOSITIVE · amount 0 is rejected and no balance changes
+- test_same_account · covers: R:SAMEACCOUNT · A to A is rejected and no balance changes
+- test_insufficient_funds · covers: R:OVERDRAW · 50 from a balance of 20 is rejected and no balance changes
+- test_not_my_account · covers: R:NOTMINE · a source I do not own is rejected
+- test_concurrent_transfers_cannot_overdraw · covers: E1 · two parallel debits of 60 from 100 leave exactly one winner
+red-first: every check MUST fail first.
 ```
 
-Frozen at v1. The schema note flags the atomicity requirement the verification step will check.
+Three things earn their place here:
 
-## Step 4 — Tests & Scenarios → scenarios, then `tests/transfer_test.py` (run first; all fail)
+- **The flagged assumption comes first.** The product owner reads the single-currency
+  choice — the one most likely to be wrong and most expensive if it were — and
+  confirms it before anything is built.
+- **Every rule has exactly one check, named by `covers:`.** A rule nothing covers
+  blocks the gate later, so the binding is not a convention you have to remember.
+- **The race is an edge case, `E1`, not a hope.** It is written down and covered like
+  any rule, which is what stops "we'll check that at review" from quietly meaning
+  "nobody checked it."
 
-First the pass/fail scenarios, one per rule:
+## Freeze — the one approval
 
 ```
-Scenario: successful transfer
-  Given A has 100 and B has 0, both mine
-  When I transfer 30 from A to B
-  Then A has 70 and B has 30
-
-Scenario: amount must be positive
-  Given A has 100, mine
-  When I transfer 0 from A to B
-  Then it is rejected "amount_invalid"
-  And no balance changes
-
-Scenario: same account
-  Given A has 100, mine
-  When I transfer 10 from A to A
-  Then it is rejected "same_account"
-  And no balance changes
-
-Scenario: insufficient funds
-  Given A has 20, mine
-  When I transfer 50 from A to B
-  Then it is rejected "insufficient_funds"
-  And no balance changes
-
-Scenario: not my account
-  Given account C is not mine
-  When I transfer 10 from C to B
-  Then it is rejected "forbidden"
+$ add freeze transfer-own-accounts
+freeze recorded at authority `process`
+next: build, then `add run -- <cmd>`
 ```
 
-Five scenarios for four rejections plus the happy path — every rule from the spec is covered. Each becomes one red test:
+The freeze is the single human decision of the task. It stamps the direction and
+opens Build.
+
+## The red suite, red for the right reason
+
+The checks run before any implementation exists. The first attempt failed on an
+import error — which is a **lying red**: the suite is failing because it cannot load,
+not because the behavior is missing. Stubbing the real shape fixes that:
 
 ```python
-def test_successful_transfer():
-    a = account(balance=100, owner=me); b = account(balance=0, owner=me)
-    r = transfer(a.id, b.id, 30)
-    assert r.status == 200
-    assert a.balance == 70 and b.balance == 30
-
-def test_amount_must_be_positive():
-    a = account(balance=100, owner=me); b = account(balance=0, owner=me)
-    r = transfer(a.id, b.id, 0)
-    assert r.status == 400 and r.error == "amount_invalid"
-    assert a.balance == 100 and b.balance == 0
-
-def test_same_account():
-    a = account(balance=100, owner=me)
-    r = transfer(a.id, a.id, 10)
-    assert r.status == 400 and r.error == "same_account"
-    assert a.balance == 100
-
-def test_insufficient_funds():
-    a = account(balance=20, owner=me); b = account(balance=0, owner=me)
-    r = transfer(a.id, b.id, 50)
-    assert r.status == 400 and r.error == "insufficient_funds"
-    assert a.balance == 20
-
-def test_not_my_account():
-    c = account(balance=100, owner=someone_else); b = account(balance=0, owner=me)
-    r = transfer(c.id, b.id, 10)
-    assert r.status == 403 and r.error == "forbidden"
+def transfer(source, destination, amount, caller):
+    raise NotImplementedError
 ```
 
-Run now, with no implementation: all five fail. That is the honest baseline.
-
-## Step 5 — Build → the prompt given to the AI
-
 ```
-Read SPEC.md, contracts/transfer.md, and tests/transfer_test.py.
-Implement POST /transfers so that EVERY test passes.
-Constraints:
-  - Do NOT change any test.
-  - Do NOT change the contract.
-  - Make the balance update atomic: debit and credit in a single transaction,
-    and re-check the balance inside the transaction.
-  - Stop and ask if any requirement is unclear — do not guess.
-  - Use only packages in dependencies.allowlist.
-Report which tests pass and exactly what you changed.
+$ python3 -m pytest tests -q
+FAILED tests/test_transfers.py::test_insufficient_funds - NotImplementedError
+FAILED tests/test_transfers.py::test_not_my_account - NotImplementedError
+FAILED tests/test_transfers.py::test_concurrent_transfers_cannot_overdraw - A...
+6 failed
 ```
 
-The AI implements, runs the suite, iterates, and reports all five green, listing the files it changed.
+Six checks, six honest failures. That is the baseline the build has to move.
 
-## Step 6 — Verify → the human checks
+## Build
 
-- **Evidence:** all five tests pass; coverage held; no test or contract was altered. ✓
-- **Concurrency (the key check):** two simultaneous transfers from account A must not both pass the balance check and overdraw it. The reviewer confirms the balance re-check happens *inside* the transaction and that the row is locked for the update — so a race cannot double-spend. ✓
-- **Security:** no hardcoded secrets; inputs validated; no new dependency added. ✓
-- **Architecture:** the change respects the layering in `CONVENTIONS.md`. ✓
-- **Outcome recorded:** `PASS`, reviewed by the senior engineer.
+The AI implements against the frozen direction — it may not edit a check, may not
+edit the frozen contract, and may not touch a file outside `scope:`. The one line
+that matters for `E1`:
+
+```python
+    # The balance is re-checked INSIDE the lock: checking outside it is what lets two
+    # concurrent transfers both pass and overdraw the source (E1).
+    with _ledger_lock:
+        if source.balance < amount:
+            return {"error": "insufficient_funds"}
+```
+
+```
+$ python3 -m pytest tests -q
+6 passed
+```
+
+## Verify — record the evidence, then gate
+
+The engine never runs your suite ([NO-EXEC](./01-principles.md)). You run it; `add
+run` records what happened as a receipt:
+
+```
+$ add run transfer-own-accounts --junitxml r.xml -- python3 -m pytest tests -q --junitxml=r.xml
+receipt 1 recorded (exit 0)
+next: add gate transfer-own-accounts
+
+$ add gate transfer-own-accounts PASS
+gate PASS recorded at authority `process`
+  freshness: fresh — every file in scope is byte-identical to the run
+  brief sha256:b8e0396b0b7499f5 · receipt /tasks/transfer-own-accounts.d/runs/1.md
+/tasks/transfer-own-accounts.md is done
+next: add status
+```
+
+A `PASS` closes the node. The verdict is on record with the receipt that earned it.
+
+Before signing it, the reviewer still owes the residue — the part checks cannot
+reach: that the balance re-check happens *inside* the transaction, that no secret or
+unexpected dependency arrived, that the layering held, and that every new symbol is
+actually wired in. See [05 Verify](./05-verify.md).
+
+## What the gate actually refuses
+
+These are the engine's own words, not a description of them.
+
+**No evidence at all:**
+
+```
+$ add gate transfer-own-accounts PASS
+cannot record `PASS` — no receipt has been recorded
+next: add run transfer-own-accounts -- <cmd>
+```
+
+**Evidence that went stale** — a scoped file was edited after the run, so the receipt
+no longer describes the code you are signing for:
+
+```
+$ add gate transfer-own-accounts PASS
+cannot record `PASS` — the receipt is stale — src/transfers.py changed since the run
+next: add run transfer-own-accounts -- <cmd>
+```
+
+**A security risk someone tried to sign away.** On a task carrying
+`--sensitivity security`, `RISK-ACCEPTED` is not available at all:
+
+```
+$ add gate transfer-audit-log RISK-ACCEPTED --reason "ship it"
+cannot record `RISK-ACCEPTED` — a security risk cannot be folded into a RISK-ACCEPTED — the security floor is HARD-STOP
+next: resolve it (add gate transfer-audit-log PASS) or stop it (add gate transfer-audit-log HARD-STOP --reason "<the finding>")
+```
+
+**A security `PASS` with nobody on record for it:**
+
+```
+$ add gate transfer-audit-log PASS
+cannot record `PASS` — a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, so no one is on record as having reviewed the security -> "R:NOCOVERAGE"
+next: assign a security lens (add advise transfer-audit-log --persona <p>, or run it in a lensed wave), then add gate transfer-audit-log PASS
+```
+
+`add doctor` reports the same gap before you reach the gate:
+
+```
+$ add doctor
+  warn  unadvised_sensitive: tasks/transfer-audit-log.md: security, no lens
+1 finding(s) — `add doctor --sync` repairs what it can
+```
+
+## Knowing where you are
+
+Two read-only verbs answer "what now?" without re-reading the repo:
+
+```
+$ add todo
+1 open task(s):
+direction:
+  · transfer-audit-log       → add freeze transfer-audit-log
+
+$ add status
+.add  ·  11 nodes
+  · PROJECT                      [—] Project
+  · payments                     [direction] Milestone
+  · transfer-audit-log           [direction] Task
+  · domain                       [—] Spec
+  ...
+next: add freeze transfer-audit-log
+```
 
 ## The loop — observe
 
 Released behind a feature flag to 5% of users. Monitored:
 
 - transfer error rate (target: well under 0.1% of attempts);
-- the rate of each rejection — a spike in `insufficient_funds` would suggest a UX problem (users not seeing their balance) rather than a code defect;
+- the rate of each rejection — a spike in `insufficient_funds` would suggest a UX
+  problem (users not seeing their balance) rather than a code defect;
 - latency of the atomic update under load.
 
-A week later, telemetry shows an unexpectedly high `forbidden` rate. The `6_observe` prompt clusters it: users are trying to transfer *into* a shared account they can see but do not own. That observation becomes a `SPEC.md` delta — "support transfers into accounts I am authorized on, not only accounts I own" — and the flow returns to Step 1 for the next cycle.
+A week later, telemetry shows an unexpectedly high `forbidden` rate: users are trying
+to transfer *into* a shared account they can see but do not own. That observation is
+recorded against the evidence with `add learn`, and once confirmed it folds into the
+living specs (`add fold`) — "support transfers into accounts I am authorized on, not
+only accounts I own" — which is where the next task's direction starts.
 
 ---
 
-This is the whole method in one feature: four artifacts written in order, an AI build bounded by them, a verification grounded in evidence plus the one check tests miss, and a loop that turns production reality into the next specification.
+This is the whole method in one feature: one node holding the direction, a human
+freeze, a red suite bound to the rules it proves, a build bounded by scope, a verdict
+grounded in a fresh receipt plus the residue only a person can check, and a loop that
+turns production reality into the next direction.
 
 ---
 
 ## Multi-component, end to end
 
-The example above is a single codebase with one green bar. Real slices often cross components — a backend endpoint and the frontend that calls it. ADD ships that slice *inside one milestone* using the component pillar (chapter 17). Here is the same flow, now spanning two components: a `gateway` backend that **produces** an `orders` contract, and a `web` frontend that **consumes** it.
+The example above is a single codebase with one green bar. Real slices often cross
+components — a backend endpoint and the frontend that calls it. ADD ships that slice
+*inside one milestone* using the component pillar
+([17 Components](./17-components.md)). Here is the same flow spanning two parts: a
+`gateway` backend that **produces** an orders interface, and a `web` frontend that
+**consumes** it.
 
-### Declare the components
+### Scope is declared on the node
 
-The two parts and the boundary between them are declared in `.add/components.toml` — never inferred:
+There is no registry and nothing scans the tree to guess ownership. Each task names
+its own parts:
 
-```toml
-[component.gateway]
-root      = "apps/gateway"
-green_bar = "pytest + pyright"
-verify    = "pytest -q apps/gateway"
+```yaml
+# the backend task
+scope:
+  - apps/gateway/**
 
-[component.web]
-root      = "apps/web"
-green_bar = "vitest + a11y"
-verify    = "pnpm -C apps/web test"
-
-[contract.orders]
-producer  = "gateway"
-consumers = ["web"]
+# the frontend task
+scope:
+  - apps/web/**
 ```
 
-One milestone, **list-orders slice**, holds two tasks: `orders-api` (the BE, `produces: orders`) and `orders-list` (the FE, `consumes: orders`).
+`add locate apps/gateway/service.py` does the reverse lookup — which node's scope
+owns this path.
 
-### The backend freezes first → an immutable snapshot
+### The boundary is the producer's frozen `gives:`
 
-`orders-api` carries a `component: gateway` and a `produces: orders` header. It runs the normal flow — specify, scenarios, contract — and the human freezes its §3:
+The interface is not a separate file type. It is the producer task's `gives:`, frozen
+at the freeze stamp, cited by the consumer's `needs:`:
 
-```
-GET /orders?status=  ->  200 { orders: [{ id, status, total, placedAt }], nextCursor }
-                          400 { error: "bad_status" }
-Status: FROZEN @ v1 — approved by the tech lead
-```
+```yaml
+# producer task (apps/gateway)
+gives:
+  - "GET /orders?status= -> 200 { orders: [...], nextCursor } · 400 bad_status"
 
-The moment that contract freezes and the task crosses contract→tests, the engine writes an immutable snapshot — `.add/contracts/orders.json` — recording the id, producer, version, frozen date, and a hash over the frozen §3 shape. That file *is* the published interface.
-
-### The frontend is held until the backend freezes
-
-`orders-list` (`component: web`, `consumes: orders`) was started in the same milestone, but it must not commit to a shape the backend has not frozen. When it tries to advance scenarios→contract before the snapshot exists, the engine refuses:
-
-```
-$ python3 .add/tooling/add.py advance
-add: error: producer_contract_unfrozen: orders-list consumes 'orders' but no frozen producer snapshot exists yet — the FE is held until gateway freezes
+# consumer task (apps/web)
+depends_on:
+  - /tasks/orders-api.md
+needs:
+  - /tasks/orders-api.md#gives
 ```
 
-Once `orders.json` exists, the same `advance` succeeds: the FE writes its §3 against the frozen shape and **pins that snapshot's hash**. The slice is ordered by the contract, not by splitting BE and FE across two milestones.
+The consumer's `needs:` cannot resolve until the producer's `gives:` is frozen, so
+the slice is **ordered by the frozen contract** rather than split across two
+milestones. A `needs:` pointing at a `gives:` that was never frozen surfaces as an
+`edge_unresolved` finding *before* the frontend builds against a shape that does not
+exist. If the producer later refreezes a changed shape, every node citing the old
+fragment is flagged stale and must re-verify before its next gate.
 
-If the backend later *re-opens* its §3 to change the shape, the engine holds the consumer `producer_contract_stale` rather than letting it pin a shape that is mid-change — and `add.py check` separately surfaces `contract_producer_stale` / `contract_snapshot_hashless` as never-red warnings. Freeze-recency, not just existence.
+### Each task verifies on its own bar
 
-### Each task verifies against its own green bar
+A backend task and a frontend task pass on different toolchains, and the gate holds
+each to its own through its **bound receipt**: `add run <slug> -- <the suite for this
+scope>` records the checks that actually ran, and `add gate <slug> PASS` refuses
+unless every check the rules `covers:` appears in that receipt as passed. The engine
+never runs either suite. Two tasks, one milestone, two green bars.
 
-At the gate, the engine holds each task to *its* component. `orders-api` must cite `pytest + pyright` in its §6 evidence; `orders-list` must cite `vitest + a11y` — cite the wrong bar (or none) and the gate refuses `component_green_bar_uncited`. The engine never runs either suite; it **surfaces** the component's `verify` command so the operator sees exactly what to run:
+### In parallel, and across repositories
 
-```
-$ python3 .add/tooling/add.py gate PASS
-task 'orders-api' gate -> PASS
-component: gateway · expected green-bar: pytest + pyright · verify: pytest -q apps/gateway   # run this suite — the engine does not (NO-EXEC)
-```
+When the parts are independent, `add wave <milestone>` plans the wave from the task
+DAG by levels — producers land before their consumers — and each stream runs in its
+own git worktree under its own persona lens. `add join <bundles…>` folds the finished
+streams back, PASS-only.
 
-Two tasks, one milestone, two green bars — each held to its own, each suite run by you.
-
-### Across repositories — federation
-
-When `gateway` and `web` live in *separate* repos, only the snapshot transport changes. The `web` repo declares where the producer publishes:
-
-```toml
-[federation.orders]
-source = "../gateway/.add/contracts/orders.json"
-pin    = "v1"
-```
-
-`add.py federate pull orders` validates the producer repo's published snapshot (valid JSON, matching id, a hash, matching version) and lands a byte-for-byte copy locally — from there the FE holds and pins exactly as in a monorepo. The pull is fail-loud: an unknown id, an unreadable source, a `source` that escapes the repo's allowlist (`federation_source_escapes`), an invalid snapshot, or a version mismatch each HARD-STOPS and lands nothing. Federation never builds the FE against a guessed, out-of-tree, or stale endpoint.
-
-That is the component pillar in one slice: declare the parts, freeze the boundary, hold the consumer behind the producer, verify each part on its own bar, and carry the frozen contract across repos — all within the same six-step flow and its single contract-freeze approval.
+Across *separate repositories* one honest difference applies: an edge may not escape
+its bundle, so a consumer in repo B cannot cite a node in repo A. Each repo carries
+its own `.add/` bundle, and the hand-off is the frozen shape itself — committed in
+the producer repo, and committed as the contract of record in the consumer repo. The
+engine ships no cross-repo fetch verb, because a boundary between two teams' repos is
+exactly where a human-carried, committed contract beats a background pull.

@@ -34,6 +34,7 @@ MANAGED = (
     ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
     ("personas-teacher", ".add/personas-teacher", False),
+    ("personas-index", ".add/personas-index", False),
 )
 # Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
@@ -42,7 +43,7 @@ MANAGED = (
 # `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
 # enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
 # predating this fix must still install its core cleanly.
-OPTIONAL = frozenset({"personas-teacher", "agents"})
+OPTIONAL = frozenset({"personas-teacher", "agents", "personas-index"})
 # SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
 # TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
 # whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
@@ -234,7 +235,7 @@ def _write_gemini_settings(target) -> str:
 # the engine's phase flow), never invented marketing. Grounding itself is folded into
 # step 3, Plan, not a separate phase. The wordmark glyphs / tagline / accent are a
 # SWAPPABLE content slot, not part of the frozen boundary.
-_LOOP = ("Specify", "Plan", "Tests", "Build", "Verify")
+_LOOP = ("Direction", "Build", "Verify")
 
 
 def _terminal_caps(env):
@@ -360,8 +361,11 @@ AGENT_PROFILES = (
      "env": (), "env_prefix": None, "next_step": _GENERIC_NEXT},
 )
 
-# The SAME markers add.py:sync-guidelines uses — so a later `/add`->init->sync-guidelines
-# REPLACES this drop-time pointer in place (one block, never a duplicate).
+# The drop-time pointer's marker tokens. The BEGIN token is kept BYTE-IDENTICAL to prior
+# releases (and the npm twin, bin/cli.js) so a re-run REPLACES the existing block in place
+# rather than appending a duplicate — it still NAMES the retired `sync-guidelines` verb purely
+# as that backward-compatible idempotency sentinel (it is opaque HTML-comment metadata, not user
+# guidance). The flat 3.0 engine no longer injects or supersedes this block.
 _GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->"
 _GUIDE_END = "<!-- ADD:END -->"
 
@@ -446,13 +450,13 @@ def _agent_pointer_block(profile: dict) -> str:
         "## ADD — how to work in this repo\n"
         "\n"
         "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n"
-        "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n"
-        "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n"
+        "To begin: run `python3 .add/tooling/cli.py status` (the resume point) and drive the\n"
+        "beat it names; `python3 .add/tooling/cli.py brief <task>` composes the working prompt.\n"
         "\n"
         f"{profile['next_step']}\n"
         "\n"
-        "This pointer is replaced by the full guideline block when `add.py sync-guidelines`\n"
-        "runs (at `/add`->init). Edit outside the markers, not inside.\n"
+        "This pointer is refreshed in place when the installer re-runs. Edit outside the\n"
+        "markers, not inside.\n"
         f"{_GUIDE_END}"
     )
 
@@ -911,24 +915,7 @@ def prune_data(*, force: bool = False, env=None) -> int:
     return 0
 
 
-def _seed_soul_md(target_path: Path, bundled_root: Path) -> None:
-    """Seed .add/SOUL.md from the bundled template if it does not yet exist.
-    Skip-if-exists (SOUL.md is user-owned — never clobber). Fail-soft: any
-    problem logs a warning and returns; the caller's return code is unaffected."""
-    dest = target_path / ".add" / "SOUL.md"
-    if dest.exists():
-        return
-    source = bundled_root / "tooling" / "templates" / "SOUL.md.tmpl"
-    if not source.exists():
-        _log("soul_seed_skipped: SOUL.md.tmpl not found in bundled tooling/templates/")
-        return
-    try:
-        dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-    except OSError as exc:
-        _log(f"soul_seed_skipped: could not write .add/SOUL.md — {exc}")
-
-
-# kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
+# kept OUTSIDE the engine / gitignore.tmpl deliberately: the engine's own
 # _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
 # and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
 # already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
@@ -975,7 +962,6 @@ def _seed_gitignore(target_path: Path, bundled_root: Path) -> None:
 def install(
     target: str = ".",
     force: bool = False,
-    stage: str | None = None,
     name: str | None = None,
     yes: bool = False,
     non_interactive: bool = False,
@@ -1117,7 +1103,6 @@ def install(
             # ONLY the managed layer — state.json / PROJECT.md / milestones / tasks are never read.
             _reconcile(target_path, bundled_root)
 
-            _seed_soul_md(target_path, bundled_root)
             _seed_gitignore(target_path, bundled_root)
 
             # Agent detection: write THE detected agent's integration file (a marker-delimited
@@ -1316,7 +1301,7 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
 
 
 _TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling",
-               "personas-teacher": "personas"}
+               "personas-teacher": "personas", "personas-index": "routing"}
 
 
 def _shared_file_replace(src: Path, dest: Path) -> dict:
@@ -2061,7 +2046,6 @@ def update(
             roll = _reconcile(target_path, bundled_root)
             _run_migrations(state_file, cur_version, new_version)
             _write_stamp(add_dir, new_version, channel=channel)
-            _seed_soul_md(target_path, bundled_root)
             _seed_gitignore(target_path, bundled_root)
 
             _log(
@@ -2070,17 +2054,10 @@ def update(
                 f"({roll['restored']} restored · {roll['refreshed']} refreshed) · "
                 "your project state untouched."
             )
-            # crossing nudges — engine-owned follow-ups the updater must NAME, never run
-            # (python3 may be absent on this PATH; both commands are idempotent):
-            if cur_version != new_version:
-                _log("next: python3 .add/tooling/add.py sync-guidelines"
-                     "   # refresh the CLAUDE.md guidance block to this version")
-            tasks_dir = add_dir / "tasks"
-            if tasks_dir.is_dir() and any(
-                    d.is_dir() and (d / "TASK.md").exists() and not (d / "PLAN.md").exists()
-                    for d in tasks_dir.iterdir()):
-                _log("next: python3 .add/tooling/add.py migrate"
-                     "   # 1.x board detected: TASK.md -> PLAN.md, live + archived")
+            # ADD 3.0 (ABF-1): the flat engine has no sync-guidelines/migrate verbs — the
+            # guidance pointer is refreshed at install time, and an ABF-1 bundle has no 1.x
+            # board to migrate. The resume point is `cli.py status`.
+            _log("next: python3 .add/tooling/cli.py status")
             return 0
     except BlockingIOError:
         return _fail(

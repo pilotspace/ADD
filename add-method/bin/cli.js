@@ -4,12 +4,12 @@
 /**
  * @pilotspace/add installer.
  *
- *   npx @pilotspace/add init [targetDir] [--force] [--stage <stage>] [--name <name>] [--yes|--non-interactive]
+ *   npx @pilotspace/add init [targetDir] [--force] [--name <name>] [--yes|--non-interactive]
  *
  * Installs the ADD skill + tooling into a target project:
  *   <target>/.claude/skills/add/   (the skill Claude loads)
- *   <target>/.add/tooling/         (add.py scaffolder + state tracker)
- * It DROPS FILES ONLY — it does NOT run `add.py init`. Initialisation is deferred to
+ *   <target>/.add/tooling/         (the flat ADD engine: cli.py dispatch entry + add.py library)
+ * It DROPS FILES ONLY — it does NOT run `cli.py init`. Initialisation is deferred to
  * the AI (via `/add`, which runs `init --await-lock` to arm the v12 lock-down gate) or
  * to a CLI user. A pre-run plain init would grandfather-lock the gate before `/add` runs
  * AND consume the brownfield signal in the terminal, where the AI never sees it.
@@ -34,10 +34,9 @@ function warn(msg) { process.stderr.write("warn: " + msg + "\n"); }
 function fail(msg) { process.stderr.write("error: " + msg + "\n"); process.exit(1); }
 
 function parseArgs(argv) {
-  // stage/name stay null unless EXPLICITLY passed — the engine's own `init`
-  // defaults the stage and infers the name from the folder, so the manual-init
-  // hint only echoes flags the user actually chose (shortest true command).
-  const args = { _: [], force: false, check: false, noSkill: false, stage: null, name: null,
+  // name stays null unless EXPLICITLY passed — the engine's own `init` infers it from
+  // the folder, so the manual-init hint only echoes flags the user actually chose.
+  const args = { _: [], force: false, check: false, noSkill: false, name: null,
                  yes: false, nonInteractive: false, global: false, globalData: false,
                  fromGlobalData: false, lockTimeout: null };
   for (let i = 0; i < argv.length; i++) {
@@ -61,20 +60,29 @@ function parseArgs(argv) {
     // already provides the `add` skill, so a plugin bootstrap uses this to materialize
     // .add/tooling/ into the project without a duplicate .claude/skills/add.
     else if (a === "--no-skill") args.noSkill = true;
-    else if (a === "--stage" || a === "--name") {
+    else if (a === "--name") {
       const v = argv[++i];
       // fail loudly on a trailing/abutting flag — never silently drop a value
       // the user tried to pass (parity with the pip twin's argparse error)
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
-      if (a === "--stage") args.stage = v; else args.name = v;
+      args.name = v;
     }
     // --lock-timeout <seconds>: (--global only) opt into a bounded wait for a LIVE contended
     // home lock before failing "update_in_progress" (default null = today's immediate fail-fast;
-    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --stage/--name.
+    // a STALE lock always self-heals regardless). SAME "requires a value" idiom as --name.
     else if (a === "--lock-timeout") {
       const v = argv[++i];
       if (v == null || v.startsWith("--")) fail(a + " requires a value");
       args.lockTimeout = Number(v);
+    }
+    // RETIRED in 3.0: `--stage` was the graduation ceremony the three lanes replaced (and it was
+    // already inert — the installer took it and never read it). Reject it EXPLICITLY, with the
+    // same hard failure as the pip twin's argparse. Letting it fall through to the unknown-flag
+    // warning below would leave its VALUE on the positional list, where it is read as the target
+    // directory — `init --stage mvp` would install into ./mvp if that directory happened to exist.
+    else if (a === "--stage") {
+      fail("--stage was retired in ADD 3.0 — ceremony is per-task now (`add new <slug> --depth "
+           + "quick|standard|deep`), and the authority floor comes from `--sensitivity`");
     }
     else if (a.startsWith("--")) warn("ignoring unknown flag " + a);
     else args._.push(a);
@@ -127,8 +135,10 @@ const AGENT_PROFILES = [
     env: [], envPrefix: null, next_step: GENERIC_NEXT },
 ];
 
-// The SAME markers add.py:sync-guidelines uses, so init's sync-guidelines REPLACES this
-// drop-time pointer in place (one block, never a duplicate).
+// The drop-time pointer's marker tokens. The BEGIN token is kept BYTE-IDENTICAL to prior
+// releases (and the pip twin) so a re-run REPLACES the existing block in place rather than
+// appending a duplicate — it still NAMES the retired `sync-guidelines` verb purely for that
+// backward-compatible idempotency. The flat 3.0 engine no longer injects or supersedes this block.
 const GUIDE_BEGIN = "<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->";
 const GUIDE_END = "<!-- ADD:END -->";
 
@@ -214,18 +224,17 @@ function agentPointerBlock(profile) {
     "## ADD — how to work in this repo\n" +
     "\n" +
     "This project uses **ADD (AI-Driven Development)**. The engine is installed.\n" +
-    "To begin: run `python3 .add/tooling/add.py status` (the resume point), read\n" +
-    "`.add/PROJECT.md`, then `python3 .add/tooling/add.py guide` for the current phase.\n" +
+    "To begin: run `python3 .add/tooling/cli.py status` — your resume point (read from\n" +
+    "the `.add/` bundle, not the repo), which names the next beat to work.\n" +
     "\n" +
     profile.next_step + "\n" +
     "\n" +
-    "This pointer is replaced by the full guideline block when `add.py sync-guidelines`\n" +
-    "runs (at `/add`->init). Edit outside the markers, not inside.\n" +
+    "Edit outside the markers, not inside.\n" +
     GUIDE_END
   );
 }
 
-// Inject the ADD pointer into <target>/<integration_file>, mirroring add.py:_inject_block.
+// Inject the ADD pointer into <target>/<integration_file>.
 // created|updated|unchanged|skipped. Only the marked region is (re)written; content outside
 // the markers is preserved; a real change backs up <file>.bak first. Fail-soft (warn+skip).
 function writeAgentPointer(target, profile) {
@@ -284,13 +293,13 @@ async function loadClack() {
 }
 
 // --- brand + feature showcase (interactive path only; fail-soft) -------------
-// Wordmark + value line + the 7-step Specify->Observe loop, rendered BEFORE the first
+// Wordmark + value line + the three-beat loop, rendered BEFORE the first
 // prompt on the interactive path only — so the non-interactive byte stream is unchanged.
-// The 7 labels are the real ADD phases (grounded in the method, never invented; grounding
-// itself is folded into step 3, Plan, not a separate phase). Fail-soft: any draw error is
+// The three labels are the real ADD beats (grounded in the method, never invented — they are
+// what the engine implements and the book teaches). Fail-soft: any draw error is
 // swallowed so a banner can never abort the install. No color is emitted (default accent:
 // none); the glyphs / tagline / accent are a SWAPPABLE content slot.
-const BRAND_LOOP = ["Specify", "Plan", "Tests", "Build", "Verify"];
+const BRAND_LOOP = ["Direction", "Build", "Verify"];
 
 function terminalCaps(env, stream) {
   const width = Number(env.COLUMNS) || (stream && stream.columns) || 80;
@@ -395,7 +404,7 @@ async function runClackPreamble(clack, target, detected, askScope) {
 }
 
 // Persist `intent` as a NOTE at <target>/.add/.intent for `/add` to read — iff non-empty.
-// DEFERRED-INIT: inert text only; never runs add.py/init, never touches state.json. Fail-soft
+// DEFERRED-INIT: inert text only; never runs cli.py/init, never touches state.json. Fail-soft
 // (a write error is swallowed — the note is best-effort, never a reason to fail the install).
 // Returns whether the note was written. Twin of _installer.py:_write_intent_note.
 function writeIntentNote(target, intent) {
@@ -451,27 +460,9 @@ function writeGeminiSettings(target) {
   }
 }
 
-// Seed .add/SOUL.md from the bundled template if it does not yet exist. Mirror of
-// _installer.py:_seed_soul_md (npm <-> pip parity): skip-if-exists (SOUL.md is
-// user-owned — never clobber); fail-soft (warn + return, never abort install/update).
-function seedSoulMd(target) {
-  const dest = path.join(target, ".add", "SOUL.md");
-  if (fs.existsSync(dest)) return;                       // skip-if-exists (never clobber)
-  const source = path.join(PKG_ROOT, "tooling", "templates", "SOUL.md.tmpl");
-  if (!fs.existsSync(source)) {
-    warn("soul_seed_skipped: SOUL.md.tmpl not found in bundled tooling/templates/");
-    return;
-  }
-  try {
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, fs.readFileSync(source, "utf8"));
-  } catch (e) {
-    warn("soul_seed_skipped: could not write .add/SOUL.md — " + (e && e.message ? e.message : e));
-  }
-}
 
-// kept OUTSIDE add_engine/constants.py / gitignore.tmpl deliberately: the engine's own
-// _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
+// kept OUTSIDE the flat engine's own gitignore body / gitignore.tmpl deliberately: the engine's
+// own _GITIGNORE_BODY constant must never contain "personas-teacher" (test_engine_unchanged_
 // and_handsoff — the engine stays hands-off of the teacher vendor tree). The INSTALLER
 // already names that tree explicitly (MANAGED/OPTIONAL), so it is free to seed this one
 // extra ignore line itself. BARE (not repo-root style): .add/.gitignore lives INSIDE
@@ -521,11 +512,10 @@ function dropFiles(args, target, profile, intent) {
   profile = profile || detectAgent(process.env);
   log("Installing ADD into " + target);
   reconcile(args, target);
-  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
 
   // Agent detection: write THE detected agent's integration file (a marker-delimited
-  // pointer init's sync-guidelines later supersedes) + tailor the closing next-step.
+  // pointer) + tailor the closing next-step.
   // Best-effort + fail-soft — never aborts the successful drop above.
   writeAgentPointer(target, profile);
 
@@ -537,7 +527,7 @@ function dropFiles(args, target, profile, intent) {
   writeIntentNote(target, intent);
 
   // NO step 4: the installer DROPS FILES ONLY. Initialisation is deferred to the AI
-  // (via `/add`) or a CLI user — a pre-run plain `add.py init` would grandfather-lock
+  // (via `/add`) or a CLI user — a pre-run plain `cli.py init` would grandfather-lock
   // the v12 lock-down gate before `/add` runs (see file header). So no Python is run here.
   log("\nDone. " + (args.noSkill ? "The engine is" : "The `add` skill + tooling are") +
       " installed (no project state yet — that's intentional).");
@@ -622,13 +612,14 @@ const MANAGED = [
   ["agents", [".claude", "agents"], false],
   ["tooling", [".add", "tooling"], true],
   ["personas-teacher", [".add", "personas-teacher"], false],
+  ["personas-index", [".add", "personas-index"], false],
 ];
 // Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
 // package always ships these (guarded by test_packaging); a malformed/older package missing one
 // must NOT abort the install — the core lands and the optional tree is soft-skipped. Twin of
 // _installer.py:OPTIONAL. Design-for-failure. `agents` joins here (roster-install-drift): the
 // phase-agent roster is a spawn-acceleration enhancement, not core runtime.
-const OPTIONAL = new Set(["personas-teacher", "agents"]);
+const OPTIONAL = new Set(["personas-teacher", "agents", "personas-index"]);
 // SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
 // TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
 // whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
@@ -829,7 +820,7 @@ function cleanReplaceTree(src, dest, stripTests) {
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "personas-teacher": "personas" };
+const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "personas-teacher": "personas", "personas-index": "routing" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {
@@ -956,6 +947,7 @@ const GLOBAL_TREES = [
   ["agents", ["agents"], false],
   ["tooling", ["tooling"], true],
   ["personas-teacher", ["personas-teacher"], false],
+  ["personas-index", ["personas-index"], false],
 ];
 
 // Clean-replace the bundled managed layer INTO <home> (canonical mirror), then DEPLOY the
@@ -1779,31 +1771,17 @@ function cmdUpdate(args) {
     fs.copyFileSync(stateFile, path.join(addDir, "pre-update-state.bak.json"));
   }
   const roll = reconcile(args, target);
-  seedSoulMd(target);   // pip parity: re-seed a missing user-owned SOUL.md (never clobber)
   seedGitignore(target);   // pip parity: seed/append-if-absent the engine-transient ignore lines
   writeStamp(addDir, version);
   log("ADD updated " + (cur || "(unstamped)") + " -> " + version +
       " · managed layer reconciled (" + roll.restored + " restored · " + roll.refreshed +
       " refreshed) · your project state untouched.");
-  // crossing nudges — engine-owned follow-ups the updater must NAME, never run (python3
-  // may be absent on this PATH; both commands are idempotent). Twin of _installer.py.
+  // crossing nudge — an engine-owned follow-up the updater NAMES, never runs (python3 may be
+  // absent on this PATH; the command is idempotent). After a version change, verify the vendored
+  // engine + bundle still conform, using a REAL verb — the flat 3.0 engine has no OKF
+  // `sync-guidelines`/`migrate` verbs (both retired), so there is nothing else to name here.
   if (cur !== version) {
-    log("next: python3 .add/tooling/add.py sync-guidelines   # refresh the CLAUDE.md guidance block to this version");
-  }
-  const tasksDir = path.join(addDir, "tasks");
-  let legacyBoard = false;
-  if (fs.existsSync(tasksDir)) {
-    for (const entry of fs.readdirSync(tasksDir, { withFileTypes: true })) {
-      if (entry.isDirectory()
-          && fs.existsSync(path.join(tasksDir, entry.name, "TASK.md"))
-          && !fs.existsSync(path.join(tasksDir, entry.name, "PLAN.md"))) {
-        legacyBoard = true;
-        break;
-      }
-    }
-  }
-  if (legacyBoard) {
-    log("next: python3 .add/tooling/add.py migrate   # 1.x board detected: TASK.md -> PLAN.md, live + archived");
+    log("next: python3 .add/tooling/cli.py status --check   # verify the engine + bundle conform to this version");
   }
 }
 

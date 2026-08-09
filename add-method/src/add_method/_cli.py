@@ -1,7 +1,7 @@
 """Console-script entry point: pilotspace-add.
 
 Mirrors bin/cli.js command structure:
-    pilotspace-add init [targetDir] [--force] [--stage STAGE] [--name NAME]
+    pilotspace-add init [targetDir] [--force] [--name NAME]
     pilotspace-add help
 """
 from __future__ import annotations
@@ -83,11 +83,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--force", action="store_true",
                         help="Overwrite an existing skill tree (never touches project state)")
-    parser.add_argument("--stage", default=None,
-                        choices=("prototype", "poc", "mvp", "production"),
-                        help="Initial project stage for the manual-init hint; "
-                             "omit it and `add.py init` itself defaults "
-                             "to prototype")
     parser.add_argument("--name", default=None,
                         help="Project name (default: target directory name)")
     parser.add_argument("--yes", "-y", action="store_true",
@@ -115,7 +110,6 @@ def main(argv: list[str] | None = None) -> int:
     return install(
         target=args.target,
         force=args.force,
-        stage=args.stage,
         name=args.name,
         yes=args.yes,
         non_interactive=args.non_interactive,

@@ -40,15 +40,21 @@ jobs:
         working-directory: add-method
         run: npm ci
 
-      - name: Materialize the dogfood tooling mirror (untracked; installer does this for consumers)
-        run: |
-          mkdir -p .add/tooling
-          cp add-method/tooling/add.py .add/tooling/add.py
-          cp -r add-method/tooling/add_engine .add/tooling/add_engine
-          cp add-method/tooling/engine_pin.py .add/tooling/engine_pin.py
-          cp -r add-method/tooling/templates .add/tooling/templates
+      - name: Install pytest
+        run: python3 -m pip install --upgrade pytest
 
-      - name: Run tooling test suite
+      # The repo's own ADD 3.0 bundle tracks its authored nodes and specs, but its vendored
+      # parts (.add/tooling/, .add/personas-teacher/, .add/personas-index/) are gitignored and
+      # regenerable — so a fresh checkout materializes them the way a consumer does.
+      # `init` never overwrites an existing file, so this is idempotent.
+      - name: Materialize the vendored bundle (as `add init` does for consumers)
+        run: python3 add-method/tooling/cli.py init
+
+      # The WHOLE suite — engine, skill, book, packaging and parity. This used to be
+      # `unittest discover -s tooling`, which collected 8 tests out of 400+: the gate called
+      # itself always-green while never running the engine or book suites at all. pytest
+      # collects the unittest.TestCase files too, so this is a superset of what ran before.
+      - name: Run the test suite
         working-directory: add-method
-        run: python3 -m unittest discover -s tooling -p 'test_*.py'
+        run: python3 -m pytest -q
 

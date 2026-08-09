@@ -38,18 +38,18 @@ For every feature, before AI writes any code, you write four short artifacts in 
 - [02 · The flow, and what is disposable](./02-the-flow.md)
 
 **Part II — The method, step by step**
-- [03 · Step 1 — Specify](./03-step-1-specify.md)
-- [05 · Step 3 — Contract](./05-step-3-plan.md)
-- [06 · Step 4 — Tests & Scenarios](./06-step-4-tests.md)
-- [07 · Step 5 — Build](./07-step-5-build.md)
-- [08 · Step 6 — Verify](./08-step-6-verify.md)
-- [09 · The loop — observe and learn](./09-the-loop.md)
+- [03 · Step 1 — Specify](./03-direction.md)
+- [05 · Step 3 — Contract](./03-direction.md)
+- [06 · Step 4 — Tests & Scenarios](./03-direction.md)
+- [07 · Step 5 — Build](./04-build.md)
+- [08 · Step 6 — Verify](./05-verify.md)
+- [09 · The loop — observe and learn](./06-the-loop.md)
 
 **Part III — Operating the method**
-- [10 · Project setup and stages](./10-setup-and-stages.md)
-- [11 · Governance](./11-governance.md)
-- [12 · Roles and responsibilities](./12-roles.md)
-- [13 · Adoption and onboarding](./13-adoption.md)
+- [10 · Project setup and stages](./07-setup-and-lanes.md)
+- [11 · Governance](./09-governance.md)
+- [12 · Roles and responsibilities](./10-personas.md)
+- [13 · Adoption and onboarding](./11-adoption.md)
 - [14 · The foundation: project context across milestones](./14-foundation.md)
 
 **Lineage**
@@ -59,13 +59,11 @@ For every feature, before AI writes any code, you write four short artifacts in 
 - [16 · Releasing](./16-releasing.md)
 
 **Part IV — Reference**
-- [Appendix A · Templates](./appendix-a-templates.md)
-- [Appendix B · Prompt library](./appendix-b-prompts.md)
 - [Appendix C · Glossary](./appendix-c-glossary.md)
 - [Appendix D · The worked example, end to end](./appendix-d-worked-example.md)
 - [Appendix E · Checklists](./appendix-e-checklists.md)
-- [Appendix F · Document requirements matrix (Project → Milestone → Task)](./appendix-f-requirements-matrix.md)
 - [Appendix G · References & lineage](./appendix-g-references.md)
+- [Appendix H · ADD vs spec-kit — the honest comparison](./appendix-h-add-vs-spec-kit.md)
 
 ---
 
@@ -74,5 +72,5 @@ For every feature, before AI writes any code, you write four short artifacts in 
 - **▶ Example** marks the running worked example.
 - **Do / Don't** boxes give the rule in its shortest form.
 - A **gate** is a checkpoint with an explicit pass/fail exit. Its outcome is always one of `PASS`, `RISK-ACCEPTED` (a signed waiver), or `HARD-STOP`.
-- File names like `SPEC.md`, `features/*.feature`, `contracts/*` refer to the artifacts you create per feature; see [Appendix A](./appendix-a-templates.md).
-- Where this book uses a plain step name, the formal phase name (for teams mapping to a larger standard) appears once in [Appendix C](./appendix-c-glossary.md).
+- Paths like `.add/tasks/<slug>/`, `.add/specs/`, and `graph.json` refer to files inside the bundle the engine writes; see [12 · The `.add/` bundle](./12-bundle-format.md).
+- Every term the method uses — beat, node, receipt, lens, wave, lane, covers — is defined once in [Appendix C](./appendix-c-glossary.md).

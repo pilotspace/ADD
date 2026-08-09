@@ -21,16 +21,22 @@ site/
 # OS
 .DS_Store
 
-# Backups left by `add.py sync-guidelines` when it rewrites an existing file
+# Backups left beside a file the installer rewrites in place
 *.bak
 
 # Tooling / MCP workspace artifacts (not part of the product)
 .serena/
 
-# ADD runtime: keep state + tasks + survivor files, but not the bundled book copy
-# (the book source already lives at the repo root / in add-method/docs)
+# ADD runtime — the repo's OWN ADD 3.0 bundle, which is how this repo dogfoods what it
+# ships. The authored nodes and the five living specs ARE tracked (they are the record).
+# The vendored engine, the vendored persona corpus, and the compiled graph are NOT: all
+# three are regenerated from add-method/ by `add init` / `add doctor --sync`, and
+# graph.json is a rebuildable cache by design (that is what lets waves fan out).
 .add/docs/
-.add/tooling/__pycache__/
+.add/tooling/
+.add/personas-teacher/
+.add/personas-index/
+.add/graph.json
 tmp/
 
 # Agent worktree scratch (isolation: worktree runs) — local, never committed

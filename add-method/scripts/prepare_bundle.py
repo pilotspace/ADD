@@ -15,6 +15,7 @@ What is copied:
   tooling/add.py          -> _bundled/tooling/add.py
   tooling/templates/      -> _bundled/tooling/templates/
   personas-teacher/       -> _bundled/personas-teacher/   (vendored teacher snapshot)
+  personas-index/         -> _bundled/personas-index/     (its generated routing sidecar)
   ../THIRD_PARTY_NOTICES.md -> ./THIRD_PARTY_NOTICES.md + _bundled/THIRD_PARTY_NOTICES.md
 
 What is explicitly EXCLUDED (mirrors cli.js post-copy scrub):
@@ -34,6 +35,7 @@ BUNDLE_ROOT = REPO_ROOT / "src" / "add_method" / "_bundled"
 SKILL_SRC = REPO_ROOT / "skill" / "add"
 TOOLING_SRC = REPO_ROOT / "tooling"
 TEACHER_SRC = REPO_ROOT / "personas-teacher"             # vendored teacher snapshot (verbatim)
+INDEX_SRC = REPO_ROOT / "personas-index"                 # its routing sidecar tree (generated, ours)
 # THIRD_PARTY_NOTICES.md is a repo-LEVEL legal doc; its canonical lives one level up,
 # outside the package root, so it is propagated INTO both package roots as parity-guarded
 # twins (test_bundle_teacher.AttributionShipsBothTest asserts byte-identity).
@@ -78,27 +80,36 @@ def main() -> None:
     _copy_tree(SKILL_SRC, skill_dest)
     print(f"  copied skill/add  ({len(list(skill_dest.rglob('*')))} items)")
 
-    # 2. tooling/add.py  +  tooling/templates/  (runtime only — no tests)
+    # 2. tooling/add.py + tooling/cli.py + tooling/templates/  (runtime only — no tests)
+    #    ABF-1 (3.0): the engine is a flat two-file pair — add.py (the library) + cli.py (the
+    #    dispatch entry the skill invokes as `.add/tooling/cli.py`). No add_engine/ package.
     tooling_dest = BUNDLE_ROOT / "tooling"
     _rm(tooling_dest)
     tooling_dest.mkdir(parents=True, exist_ok=True)
-    add_py_src = TOOLING_SRC / "add.py"
-    if not add_py_src.exists():
-        print(f"error: {add_py_src} does not exist", file=sys.stderr)
-        sys.exit(1)
-    shutil.copy2(str(add_py_src), str(tooling_dest / "add.py"))
-    # the engine is a package now: ship tooling/add_engine/ (runtime modules; no tests)
-    engine_pkg_src = TOOLING_SRC / "add_engine"
-    if engine_pkg_src.is_dir():
-        _copy_tree(engine_pkg_src, tooling_dest / "add_engine", exclude_test_py=True)
+    for name in ("add.py", "cli.py"):
+        src = TOOLING_SRC / name
+        if not src.exists():
+            print(f"error: {src} does not exist", file=sys.stderr)
+            sys.exit(1)
+        shutil.copy2(str(src), str(tooling_dest / name))
     _copy_tree(TOOLING_SRC / "templates", tooling_dest / "templates")
-    print("  copied tooling/add.py + add_engine/ + templates/")
+    print("  copied tooling/add.py + cli.py + templates/")
 
     # 3. personas-teacher/  (vendored teacher snapshot — verbatim, no test/junk strip needed
     #    since it carries none; ship it whole so the persona phase reads it off-build)
     teacher_dest = BUNDLE_ROOT / "personas-teacher"
     _copy_tree(TEACHER_SRC, teacher_dest)
     print(f"  copied personas-teacher/  ({len(list(teacher_dest.rglob('*')))} items)")
+
+    # 3b. personas-index/ — the routing sidecar. It lives BESIDE the snapshot, never inside it:
+    #     update_teacher.py replaces personas-teacher/ wholesale, so an in-tree index would be
+    #     erased on the next refresh. `init` vendors it into a bundle from here.
+    if not INDEX_SRC.is_dir():
+        print(f"error: missing {INDEX_SRC} — run scripts/build_persona_index.py", file=sys.stderr)
+        sys.exit(1)
+    index_dest = BUNDLE_ROOT / "personas-index"
+    _copy_tree(INDEX_SRC, index_dest)
+    print(f"  copied personas-index/  ({len(list(index_dest.rglob('*')))} items)")
 
     # 4. THIRD_PARTY_NOTICES.md — propagate the repo-level MIT attribution into BOTH
     #    package roots (npm root + the pip bundle) as byte-identical twins of the canonical.
