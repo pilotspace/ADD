@@ -25,6 +25,7 @@
     "!**/__pycache__",
     "tooling/templates/",
     "personas-teacher/",
+    "personas-index/",
     "THIRD_PARTY_NOTICES.md",
     "README.md",
     "GETTING-STARTED.md",

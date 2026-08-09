@@ -35,6 +35,7 @@ site/
 .add/docs/
 .add/tooling/
 .add/personas-teacher/
+.add/personas-index/
 .add/graph.json
 tmp/
 

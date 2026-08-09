@@ -153,8 +153,9 @@ class Scan:
     def load(self):
         for path in sorted(self.root.rglob("*.md")):
             rel = path.relative_to(self.root).as_posix()
-            if rel.split("/", 1)[0] in ("tooling", "personas-teacher"):
-                continue  # vendored engine material + seed corpus — not project nodes (mirrors add.scan)
+            if rel.split("/", 1)[0] in ("tooling", "personas-teacher", "personas-index"):
+                continue  # vendored engine material, seed corpus, and its generated routing index —
+                # not project nodes (mirrors add.scan; the two lists must stay in lockstep)
             text = path.read_text(encoding="utf-8")
             fm, body = parse_frontmatter(text)
             if fm is None:

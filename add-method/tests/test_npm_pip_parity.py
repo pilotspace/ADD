@@ -174,6 +174,40 @@ def test_both_artifacts_ship_the_same_tooling_payload():
         f"npm whitelists a different tooling payload than pip bundles: {sorted(tooling_rules)}"
 
 
+def test_both_installers_manage_the_same_payload_trees():
+    """covers: M11 — the pip and npm MANAGED tables name the same destinations.
+
+    Same drift shape as the tooling payload above, one layer up: `MANAGED` in `_installer.py` and
+    its twin in `cli.js` are independent lists of what a real install materializes. A tree added to
+    one and not the other installs for half the users — which is what would have happened to
+    `personas-index/`, whose whole purpose is to reach the bundle beside the corpus it routes into.
+    """
+    py_trees = {sub for sub, _dest, _strip in _installer.MANAGED}
+    js = _js()
+    js_table = js[js.index("const MANAGED = ["):js.index("];", js.index("const MANAGED = ["))]
+    # first field of each entry only — the later strings are destination path SEGMENTS
+    # ([".claude", "skills", "add"]), not tree names.
+    js_trees = set(re.findall(r'^\s*\["([^"]+)"', js_table, re.M))
+    assert py_trees == js_trees, \
+        f"installer twins disagree on managed trees: pip-only {py_trees - js_trees}, npm-only {js_trees - py_trees}"
+
+
+def test_the_persona_routing_index_ships_in_both_artifacts():
+    """covers: M12 — the corpus and its routing index travel together.
+
+    A bundle with the teacher corpus but no index can read personas and cannot route to one. pip
+    ships it via the generated `_bundled/` tree; npm ships it via the `files` whitelist — the two
+    independent definitions again, so both are pinned here.
+    """
+    bundled = PKG / "src" / "add_method" / "_bundled" / "personas-index"
+    assert (bundled / "use-when.md").is_file(), \
+        "the pip bundle has no persona routing index — run scripts/prepare_bundle.py"
+    files = json.loads((PKG / "package.json").read_text(encoding="utf-8"))["files"]
+    assert "personas-index/" in files, "the npm whitelist drops the persona routing index"
+    assert not list((PKG / "personas-teacher").rglob("use-when.md")), \
+        "the index is inside the verbatim vendor tree — update_teacher.py would erase it"
+
+
 def test_retired_verbs_survive_only_inside_the_opaque_marker():
     """covers: M5, E1 — `sync-guidelines`/`migrate`/`guide` are retired.
 

@@ -96,8 +96,8 @@ def test_each_teacher_persona_is_identifiable():
     a different, larger body of material on the 2.x agent-definition schema
     (`name`/`description`/`color`/`emoji`/`vibe`): 0 of its 232 persona files carry `flow:` and only
     51 carry `Success Metrics`. Asserting the add-skill-2 schema here would be red on 232 files, and
-    weakening it to a vacuous glob is how it passed silently before. The divergence is recorded in
-    `test_corpus_carries_the_documented_routing_metadata` below rather than hidden here.
+    weakening it to a vacuous glob is how it passed silently before. Routing is checked instead by
+    `test_corpus_carries_the_documented_routing_metadata` below, against the sidecar index.
     """
     for path in _teacher_personas():
         fm = _frontmatter(path.read_text(encoding="utf-8", errors="replace"))
@@ -106,19 +106,35 @@ def test_each_teacher_persona_is_identifiable():
         assert re.search(r"^description:", fm, re.M), f"{rel}: frontmatter missing `description:`"
 
 
-@pytest.mark.skip(reason="known gap: the package corpus is on the 2.x agent-definition schema, so it "
-                         "carries neither `flow:` nor `use-when:` — the routing metadata personas.md "
-                         "documents and `_render_index` renders. Un-skip when the corpus is migrated.")
 def test_corpus_carries_the_documented_routing_metadata():
-    """The gap this records: `personas.md` says a persona names its surfaces in `flow:` and is routed
-    by `use-when:`/`not-when:`, and A4's persona index renders `use-when:`. The shipped corpus — the
-    material `seed.md` tells an agent to distil from, and the three files `streams.md`'s roster points
-    at directly — carries none of it."""
-    for path in _teacher_personas():
-        fm = _frontmatter(path.read_text(encoding="utf-8", errors="replace"))
-        rel = path.relative_to(TEACHER).as_posix()
-        assert re.search(r"^flow:", fm, re.M), f"{rel}: frontmatter missing `flow:`"
-        assert re.search(r"^use-when:", fm, re.M), f"{rel}: frontmatter missing `use-when:`"
+    """Every teacher persona is routable by a `use-when:` — from the sidecar, not from its frontmatter.
+
+    This was a recorded, skipped gap: `personas.md` documents `use-when:` routing, but the corpus
+    carries none of it. The resolution is NOT to add the key to those files. `personas-teacher/` is
+    a byte-verbatim third-party snapshot (`VENDOR.md`, `THIRD_PARTY_NOTICES.md`) that
+    `scripts/update_teacher.py` replaces wholesale — an in-tree edit would fork the vendor AND be
+    erased on the next refresh. So the routing metadata lives in `personas-index/use-when.md`, generated
+    beside the snapshot by `scripts/build_persona_index.py` and vendored into every bundle.
+
+    `flow:` is deliberately not asserted anywhere: which beats a lens applies to is authored
+    judgment (the roster above), not something derivable from a description. Synthesizing one per
+    persona would be routing metadata nobody authored.
+    """
+    index = TEACHER.parent / "personas-index" / "use-when.md"
+    assert index.is_file(), "the persona routing index is missing — run scripts/build_persona_index.py"
+    text = index.read_text(encoding="utf-8")
+
+    missing = [path.relative_to(TEACHER).with_suffix("").as_posix()
+               for path in _teacher_personas()
+               if f"`{path.relative_to(TEACHER).with_suffix('').as_posix()}`" not in text]
+    assert not missing, (f"{len(missing)} teacher personas have no `use-when:` in the index "
+                         f"(regenerate it), e.g. {missing[:3]}")
+
+
+def test_the_routing_index_is_not_inside_the_vendored_snapshot():
+    """R:VENDORFORK — the sidecar must stay a sibling; in-tree, a teacher refresh would erase it."""
+    assert not list(TEACHER.rglob("use-when.md")), \
+        "the routing index is inside the verbatim snapshot — update_teacher.py would erase it"
 
 
 def test_seed_ref_is_command_honest_and_cites_the_teacher():

@@ -34,6 +34,7 @@ MANAGED = (
     ("agents", ".claude/agents", False),
     ("tooling", ".add/tooling", True),
     ("personas-teacher", ".add/personas-teacher", False),
+    ("personas-index", ".add/personas-index", False),
 )
 # Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
 # The real package always ships these (guarded by test_packaging + test_bundle_parity);
@@ -42,7 +43,7 @@ MANAGED = (
 # `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration
 # enhancement — the CLI+skill loop is fully usable without it, and an older/malformed package
 # predating this fix must still install its core cleanly.
-OPTIONAL = frozenset({"personas-teacher", "agents"})
+OPTIONAL = frozenset({"personas-teacher", "agents", "personas-index"})
 # SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
 # TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
 # whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
@@ -1300,7 +1301,7 @@ def _clean_replace(src: Path, dest: Path, *, strip_tests: bool = False) -> dict:
 
 
 _TREE_LABEL = {"skill/add": "skill", "agents": "agents", "tooling": "tooling",
-               "personas-teacher": "personas"}
+               "personas-teacher": "personas", "personas-index": "routing"}
 
 
 def _shared_file_replace(src: Path, dest: Path) -> dict:

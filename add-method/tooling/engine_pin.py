@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "5f02354ea6056980884e45bf97125955"  # re-aimed @ init-identity (drop okf_version stamp; name the project, not the .add dir). prior: afb01974… @ skill-suite-port
+ENGINE_MD5 = "d2a8d8d678171ea09299e0c8de872942"  # re-aimed @ persona-index-sidecar (init vendors personas-index/; both oracles skip it). prior: 5f02354e… @ init-identity
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

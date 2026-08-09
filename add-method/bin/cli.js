@@ -612,13 +612,14 @@ const MANAGED = [
   ["agents", [".claude", "agents"], false],
   ["tooling", [".add", "tooling"], true],
   ["personas-teacher", [".add", "personas-teacher"], false],
+  ["personas-index", [".add", "personas-index"], false],
 ];
 // Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime. The real
 // package always ships these (guarded by test_packaging); a malformed/older package missing one
 // must NOT abort the install — the core lands and the optional tree is soft-skipped. Twin of
 // _installer.py:OPTIONAL. Design-for-failure. `agents` joins here (roster-install-drift): the
 // phase-agent roster is a spawn-acceleration enhancement, not core runtime.
-const OPTIONAL = new Set(["personas-teacher", "agents"]);
+const OPTIONAL = new Set(["personas-teacher", "agents", "personas-index"]);
 // SHARED-namespace managed trees (installer-shared-namespace-guard): destinations OTHER
 // TOOLS also write — `.claude/agents` holds the user's own Claude Code subagents. A
 // whole-dir clean-replace there sweeps the user's files as "orphans" (the reported
@@ -819,7 +820,7 @@ function cleanReplaceTree(src, dest, stripTests) {
   return { restored: restored, refreshed: refreshed };
 }
 
-const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "personas-teacher": "personas" };
+const TREE_LABEL = { "skill/add": "skill", "agents": "agents", "tooling": "tooling", "personas-teacher": "personas", "personas-index": "routing" };
 
 // Per managed tree: "missing" (dest absent OR empty) or "present".
 function managedStatus(target) {
@@ -946,6 +947,7 @@ const GLOBAL_TREES = [
   ["agents", ["agents"], false],
   ["tooling", ["tooling"], true],
   ["personas-teacher", ["personas-teacher"], false],
+  ["personas-index", ["personas-index"], false],
 ];
 
 // Clean-replace the bundled managed layer INTO <home> (canonical mirror), then DEPLOY the

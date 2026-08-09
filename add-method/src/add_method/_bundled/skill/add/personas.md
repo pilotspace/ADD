@@ -26,11 +26,17 @@ the done-bar it measures against. A persona duplicating voice or shape is dead w
   snapshot), each sharpened by **the failure it guards against**. An invented statistic
   (`engagement +40%`) is the signature rot of weak persona corpora — never write one.
 
-Recommended frontmatter: `flow:` (design · build · advisor · verify — the surfaces that load it) and
-`use-when:` / `not-when:` (the boundary that routes THIS persona over its siblings). Optional
-`## Abilities` (lead with the ORIENT commands the lens runs on load), `## Anti-patterns`
-(guilty-until-proven instincts; always include **read-before-you-assert**), `## Escalation`. Full
-schema: `.add/personas-teacher/` and the persona-author reference — referenced, never inlined.
+Frontmatter: `add new Persona` scaffolds `use-when:` (the boundary that routes THIS persona over
+its siblings); `flow:` (design · build · advisor · verify — the surfaces that load it) and
+`not-when:` are recommended, hand-authored, and read by nothing. Optional `## Abilities` (lead with
+the ORIENT commands the lens runs on load), `## Anti-patterns` (guilty-until-proven instincts;
+always include **read-before-you-assert**), `## Escalation`. Full schema: the persona-author
+reference — referenced, never inlined.
+
+This is the schema for a persona **you author**. The teacher corpus at
+`.add/personas-teacher/` is a byte-verbatim third-party snapshot on its own schema and carries
+neither key; route to one via `.add/personas-index.md`, the generated `use-when:` index vendored
+beside it.
 
 ## Seed — at setup, from the teacher (full flow: `seed.md`)
 
@@ -62,7 +68,8 @@ prune any Critical Rule that fired zero times this milestone (a human-approved e
 
 ## Apply — four surfaces, all treat it as advice
 
-A persona names its surfaces in `flow:`; `use-when:` / `not-when:` route it over a sibling.
+An authored persona names its surfaces in `flow:`; `use-when:` / `not-when:` route it over a
+sibling. For a teacher persona, the routing line is in `.add/personas-index.md`.
 
 - **design (UDD)** — frames which rules and metrics a UI/UX slice must satisfy for these users.
 - **advisor / streams** — a delegated subagent selects the best-fit persona; the returned verdict
