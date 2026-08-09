@@ -21,6 +21,11 @@ sys.path.insert(0, str(REPO / "tooling"))
 
 import add  # noqa: E402
 
+# Built OUTSIDE the f-strings below: a backslash inside an f-string expression is only legal
+# from Python 3.12 (PEP 701), and this package's floor is 3.10. CI never caught it because it
+# ran `unittest discover -s tooling` (8 tests) and never collected this suite at all.
+_GATE_STAMP = '{ by: "human:t", at: 2026-07-30, act: gate, authority: human, outcome: PASS }'
+
 
 def _at(found, name):
     """One entry from `checks_of`, looked up by its bare test name.
@@ -178,7 +183,8 @@ def test_gated_citation_is_a_defect(bundle):
     """covers: M2 — once a gate is taken against the claim, the same gap is an error."""
     path = bundle / CID.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{add.append_item(n['raw'], 'verified', '{ by: \"human:t\", at: 2026-07-30, act: gate, authority: human, outcome: PASS }')}\n---\n{n['body']}")
+    verified = add.append_item(n["raw"], "verified", _GATE_STAMP)
+    add.write(path, f"---\n{verified}\n---\n{n['body']}")
     findings = add.checks_verify(bundle, CID, _suite(bundle))
     assert any(f["severity"] == "error" for f in findings), findings
 
@@ -295,7 +301,8 @@ def test_sync_refuses_a_gated_node(bundle):
     """
     path = bundle / CID.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{add.append_item(n['raw'], 'verified', '{ by: \"human:t\", at: 2026-07-30, act: gate, authority: human, outcome: PASS }')}\n---\n{n['body']}")
+    verified = add.append_item(n["raw"], "verified", _GATE_STAMP)
+    add.write(path, f"---\n{verified}\n---\n{n['body']}")
     before = path.read_bytes()
 
     changed, note = add.checks_sync(bundle, CID, _suite(bundle))
@@ -307,7 +314,8 @@ def test_sync_on_a_gated_node_still_reports(bundle):
     """covers: M2, M4 — refusing to fix is not refusing to say. The finding survives the refusal."""
     path = bundle / CID.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{add.append_item(n['raw'], 'verified', '{ by: \"human:t\", at: 2026-07-30, act: gate, authority: human, outcome: PASS }')}\n---\n{n['body']}")
+    verified = add.append_item(n["raw"], "verified", _GATE_STAMP)
+    add.write(path, f"---\n{verified}\n---\n{n['body']}")
     assert add.checks_verify(bundle, CID, _suite(bundle)), \
         "a gated node with a fictional citation reported nothing"
 
