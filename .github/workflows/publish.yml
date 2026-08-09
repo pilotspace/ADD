@@ -72,17 +72,21 @@ jobs:
         working-directory: add-method
         run: npm ci
 
-      - name: Materialize the dogfood tooling mirror (untracked; installer does this for consumers)
-        run: |
-          mkdir -p .add/tooling
-          cp add-method/tooling/add.py .add/tooling/add.py
-          cp -r add-method/tooling/add_engine .add/tooling/add_engine
-          cp add-method/tooling/engine_pin.py .add/tooling/engine_pin.py
-          cp -r add-method/tooling/templates .add/tooling/templates
+      - name: Install pytest
+        run: python3 -m pip install --upgrade pytest
 
-      - name: Run tooling test suite (red/green gate)
+      # Materialize the bundle's vendored, gitignored parts the way a consumer's install does.
+      # `init` never overwrites an existing file, so this is idempotent. (This step used to copy
+      # `tooling/add_engine` — the OKF tree 3.0 retired — which would have failed the guard
+      # closed and published nothing on the first 3.0 tag.) Mirrors the same step in ci.yml.
+      - name: Materialize the vendored bundle (as `add init` does for consumers)
+        run: python3 add-method/tooling/cli.py init
+
+      # The WHOLE suite, not `unittest discover -s tooling` (8 of 400+ tests). A release gate
+      # that runs a twentieth of the suite is not a gate. Mirrors ci.yml.
+      - name: Run the test suite (red/green gate)
         working-directory: add-method
-        run: python3 -m unittest discover -s tooling -p 'test_*.py'
+        run: python3 -m pytest -q
 
       - name: Tag must equal package.json AND pyproject.toml versions
         working-directory: add-method
