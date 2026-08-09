@@ -45,9 +45,11 @@ CANON_CORPUS = _ADD_METHOD / "personas-teacher"
 BUNDLE_CORPUS = _BUNDLE / "personas-teacher"
 
 # Files that live in the canonical tooling dir but are dev-only (never shipped to _bundled).
+# The 2.x prose fences (wording_lint.py/WORDING_RUBRIC.md + semantic_inventory.py/
+# SEMANTIC_INVENTORY.md) were retired in 3.0 — their keep-lists required the vocabulary the
+# release cut — so they are gone rather than exempted here.
 _DEV_ONLY = {"engine_pin.py", "engine_manifest.py", "gate_fixtures.py", "md_section.py",
-             "pty_clack.py", "semantic_inventory.py", "wording_lint.py", "t",
-             "SEMANTIC_INVENTORY.md", "WORDING_RUBRIC.md"}
+             "pty_clack.py", "spike_cli.py", "t"}
 
 
 def _md5(p: Path) -> str:

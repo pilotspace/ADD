@@ -161,7 +161,7 @@ def test_both_artifacts_ship_the_same_tooling_payload():
 
     NOTE this is the PUBLISHED payload. Running `node bin/cli.js` from a source checkout copies the
     live `tooling/` directory unfiltered, so a dev run also drops repo-only helpers (engine_pin.py,
-    spike_cli.py, wording_lint.py, …). Those are excluded from the tarball by this whitelist and
+    spike_cli.py, gate_fixtures.py, …). Those are excluded from the tarball by this whitelist and
     never reach a real user; pip has no such gap because `_bundled/` is filtered at generation.
     """
     bundled = PKG / "src" / "add_method" / "_bundled" / "tooling"
