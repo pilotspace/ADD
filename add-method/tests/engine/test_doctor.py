@@ -23,7 +23,11 @@ sys.path.insert(0, str(REPO / "tooling"))
 import add  # noqa: E402
 
 VALIDATOR = REPO / "scripts" / "validate_bundle.py"
-LIVE = REPO / ".add"
+# The repo's OWN bundle, at the repository root — NOT `add-method/.add`, which .gitignore
+# forbids ("add-method/ is the PACKAGE SOURCE, never an ADD-managed project") and which
+# therefore exists only on a machine where a stray `init` once ran. Pointed there, this test
+# passed locally and died in CI with a JSONDecodeError on the validator's empty output.
+LIVE = REPO.parent / ".add"
 
 
 @pytest.fixture
@@ -117,10 +121,12 @@ def test_reserved_files_are_not_missing_frontmatter(bundle):
 def test_parity_with_m0_oracle():
     """covers: M2, R:DIVERGE — on the validator's own seven codes, both oracles agree exactly.
 
-    Run on the LIVE bundle, which is the only body of nodes large enough for a disagreement to
-    exist (59 nodes, 163 edges). Asymmetric by decision recorded on the node: doctor may report
-    codes the validator has no concept of, because it reads stamps. It may not report a
-    conformance finding the validator would not.
+    Run on the repo's own live bundle — a real tree on disk rather than a fixture, which is the
+    point: the two oracles must agree about a bundle neither of them made up. (The 2.x bundle
+    this once read had 59 nodes; the 3.0 one is small, so `test_a_broken_edge_is_found_by_both`
+    below carries the injected-defect half of the claim.) Asymmetric by decision recorded on the
+    node: doctor may report codes the validator has no concept of, because it reads stamps. It
+    may not report a conformance finding the validator would not.
     """
     shared = {"missing_frontmatter", "type_empty", "edge_out_of_bundle",
               "unknown_type", "edge_unresolved", "broken_md_link", "compiled_undeclared"}

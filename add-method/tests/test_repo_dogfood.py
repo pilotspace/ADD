@@ -30,13 +30,25 @@ def test_the_repo_has_its_own_bundle():
         "the repo has no ADD bundle of its own — it cannot dogfood a method it does not run"
 
 
+def _project_title() -> str:
+    """The project's name as COMMITTED in its own bundle."""
+    fm = (BUNDLE / "PROJECT.md").read_text(encoding="utf-8").split("---", 2)[1]
+    return next(line.split(":", 1)[1].strip()
+                for line in fm.splitlines() if line.startswith("title:"))
+
+
 def test_the_shipped_engine_can_read_it():
-    """covers: M2 — the whole point: the engine in add-method/ opens the repo's own bundle."""
+    """covers: M2 — the whole point: the engine in add-method/ opens the repo's own bundle.
+
+    The header is checked against the bundle's OWN committed `title:`, not against the checkout
+    directory name: CI clones into `…/ADD/ADD` while the committed title is `AIDD-Book`, and a
+    test that conflates the two asserts a fact about the clone path rather than about the bundle.
+    """
     report = add.status(BUNDLE)
     assert "no bundle here" not in report, \
         f"the shipped engine cannot read this repo's own bundle:\n{report}"
-    assert report.splitlines()[0].startswith(ROOT.name), \
-        f"status does not name this project:\n{report}"
+    assert report.splitlines()[0].startswith(_project_title()), \
+        f"status does not name this project ({_project_title()}):\n{report}"
 
 
 def test_the_bundle_declares_the_shipped_format_and_engine():
