@@ -1,7 +1,7 @@
 {
   "name": "@pilotspace/add",
-  "version": "3.0.0",
-  "description": "ADD (AI-Driven Development) 2.0. The agent is the hands; ADD is the memory, judgment, and conscience \u2014 a minimal, state-tracked skill: one freeze per feature, trust from passing tests, state on disk so context rot never survives a new session.",
+  "version": "3.0.0-beta.1",
+  "description": "ADD (AI-Driven Development). The agent is the hands; ADD is the memory, judgment, and conscience — a lean, state-tracked skill that drives every change through one atomic task node: Direction → Build → Verify, red/green TDD built in, trusted on a recorded receipt rather than a plausible diff. State lives on disk, so context rot never survives a new session.",
   "bin": {
     "add": "bin/cli.js"
   },
@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "python3 -m unittest discover -s tooling -p 'test_*.py'",
-    "prepublishOnly": "python3 -m unittest discover -s tooling -p 'test_packaging.py'"
+    "prepublishOnly": "python3 -m unittest discover -s tooling -p 'test_tree_parity.py'"
   },
   "files": [
     "bin/",

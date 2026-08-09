@@ -40,6 +40,28 @@ def test_every_declaration_agrees():
     assert len(set(declared.values())) == 1, f"version declarations disagree: {declared}"
 
 
+def test_no_manifest_description_hard_codes_a_stale_version():
+    """covers: M3, E2 — the blurb npm and PyPI show the world must not name the previous major.
+
+    All three descriptions still read "ADD (AI-Driven Development) 2.0" after the 3.0 graft. Those
+    strings are the public copy on both registry pages, and nothing bound them to the version
+    field — so they advertised 2.0 from a 3.0 artifact. The fix is to carry no version literal at
+    all: the `version` field already states it, and prose that repeats it only drifts again.
+    """
+    stale = {}
+    for rel in ("package.json", ".claude-plugin/plugin.json"):
+        stale[rel] = json.loads((PKG / rel).read_text(encoding="utf-8")).get("description", "")
+    stale["pyproject.toml"] = re.search(
+        r'^description\s*=\s*"([^"]*)"', (PKG / "pyproject.toml").read_text(encoding="utf-8"), re.M
+    ).group(1)
+
+    for rel, text in stale.items():
+        # The trailing `.` of "…Development) 2.0. The agent…" is sentence punctuation, not part of
+        # the version — an over-eager lookahead here silently passed while the bug sat in the copy.
+        found = re.findall(r"(?<![\w.])\d+\.\d+(?:\.\d+)*(?![\w])", text)
+        assert not found, f"{rel} description hard-codes version literal(s) {found}: {text!r}"
+
+
 def test_lockfile_root_package_agrees():
     """covers: M2, E1 — the lockfile's own `packages[""]` entry, not just its top-level version.
 
