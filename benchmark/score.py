@@ -222,6 +222,9 @@ def _load_ambiguities(wm: int, family: str = "amb") -> list[dict]:
 # the exact metric this track exists to produce.
 _WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 _BASH_WRITE = re.compile(r"(<<\s*[\"']?\w+|>>?\s*\S+\.(py|js|ts|json|toml|cfg|txt|md))")
+# The redirect TARGET, for authorship. `cat > notes.md <<'EOF'` matches on the
+# redirect, so heredoc and plain redirect are both captured by one pattern.
+_BASH_PROSE_TARGET = re.compile(r">>?\s*(\S+\.(?:md|rst|txt|adoc))")
 
 
 def _first_code_write_offset(transcript_path: pathlib.Path) -> int:
@@ -268,9 +271,63 @@ def _first_code_write_offset(transcript_path: pathlib.Path) -> int:
     return 0
 
 
-def _workspace_artifacts(workspace: pathlib.Path, *, limit: int = 40,
-                         max_bytes: int = 200_000) -> list[str]:
-    """The workspace's PROSE documents — the other place a method may surface.
+def authored_prose_paths(transcript_path: pathlib.Path) -> frozenset[str]:
+    """Resolved paths of the PROSE files this run's transcript shows the arm writing.
+
+    Authorship, not location, is what makes a document evidence of what a method
+    thought. Establishing it from the transcript keeps the rule arm-neutral in the
+    sense ambiguity.py demands: it names no directory and no method's layout, so no
+    arm can win on filing convention.
+
+    Fails CLOSED — a missing or unparseable transcript yields the empty set, matching
+    `first_code_write_offset`. A harness failure must never be able to inflate the
+    metric for whichever arm happens to ship the most prose.
+    """
+    if not transcript_path.exists():
+        return frozenset()
+    out: set[str] = set()
+    try:
+        raw = transcript_path.read_text(errors="replace")
+    except OSError:
+        return frozenset()
+    for line in raw.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        for block in content or []:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            name = block.get("name")
+            inp = block.get("input") or {}
+            targets: list[str] = []
+            if name in _WRITE_TOOLS:
+                targets.append(str(inp.get("file_path", "")))
+            elif name == "Bash":
+                # Heredocs are ASYMMETRIC across arms (add 23 of 118 transcripts,
+                # spec-kit 1), so counting only Write/Edit would under-credit the arm
+                # that heredocs its documents — the exact mirror of the vendored-corpus
+                # bias this function exists to remove. `_BASH_WRITE` already knows the
+                # shape; this captures the target it matched.
+                targets += _BASH_PROSE_TARGET.findall(str(inp.get("command", "")))
+            for target in targets:
+                # Prose only: a written .py is the act of COMMITTING to a reading, which
+                # is what edit_pos measures — never the reasoning that should precede it.
+                if not target or is_implementation_write(target):
+                    continue
+                # NOT lstrip("./") — that is a character SET, so it eats the leading
+                # dot of `.add/notes.md` and the path never matches. Strip the `./`
+                # prefix only.
+                rel = target[2:] if target.startswith("./") else target
+                out.add(os.path.realpath(target) if os.path.isabs(target) else rel)
+    return frozenset(out)
+
+
+def _workspace_artifacts(workspace: pathlib.Path, *, authored: frozenset[str],
+                         limit: int = 40, max_bytes: int = 200_000) -> list[str]:
+    """The prose documents THIS ARM WROTE — the other place a method may surface.
 
     The first live run scored ADD 0.0 while its PLAN.md said, in as many words,
     that the spec "contains two mutually exclusive rules for the identical
@@ -278,13 +335,25 @@ def _workspace_artifacts(workspace: pathlib.Path, *, limit: int = 40,
     document-first method scores like a chat-first one; the call site passed an
     empty tuple, so the guard existed and was never wired.
 
+    `authored` then had to be added because wiring it whole was worse than not
+    wiring it. An arm that installs a vendored corpus put 299 prose files in the
+    workspace, of which the agent wrote four: the scorer credited it `surfaced` on
+    a sentence out of a shipped persona template, AND never reached `.add/tasks/`
+    (where the arm actually reasons) because 35 of the 40 slots went to the corpus.
+    Both errors, one cause, one direction — the arm that installs nothing has no
+    boilerplate to be credited for and nothing to crowd out its own work.
+
     Sorted and bounded, so scoring stays deterministic and a pathological
     workspace cannot stall it.
     """
     docs: list[str] = []
+    if not authored:
+        return docs
     try:
         paths = sorted(q for q in workspace.rglob("*")
-                       if q.is_file() and not is_implementation_write(q.name))
+                       if q.is_file() and not is_implementation_write(q.name)
+                       and (os.path.realpath(q) in authored
+                            or q.relative_to(workspace).as_posix() in authored))
     except OSError:
         return docs
     for q in paths[:limit]:
@@ -396,7 +465,8 @@ def compute_ambiguity_detail(workspace: pathlib.Path, transcript_path: pathlib.P
                     shipped[item["id"]] = _resolve_shipped(item, base, iso_ws)
     except Exception:
         pass  # unbootable workspace: every item stays "neither", never a scorer crash
-    artifacts = _workspace_artifacts(pathlib.Path(workspace))
+    artifacts = _workspace_artifacts(pathlib.Path(workspace),
+                                     authored=authored_prose_paths(transcript_path))
     rows = []
     for item in items:
         row = classify(item=item, transcript=transcript, artifacts=artifacts,

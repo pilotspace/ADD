@@ -103,10 +103,14 @@ class TestAttribution:
 
 class TestArtifactsAreRead:
     def test_workspace_artifacts_reads_prose_not_code(self, tmp_path):
+        # `authored` names both, so this isolates the prose-vs-code filter rather than
+        # passing for the unrelated reason that the .py was never written by the arm.
         (tmp_path / "PLAN.md").write_text("the spec is ambiguous about the waitlist",
                                           encoding="utf-8")
         (tmp_path / "app.py").write_text("print('code')", encoding="utf-8")
-        docs = _workspace_artifacts(tmp_path)
+        authored = frozenset({str((tmp_path / "PLAN.md").resolve()),
+                              str((tmp_path / "app.py").resolve())})
+        docs = _workspace_artifacts(tmp_path, authored=authored)
         assert any("ambiguous" in d for d in docs)
         assert not any("print('code')" in d for d in docs)
 
@@ -226,11 +230,19 @@ class TestArtifactWiringIsPinned:
         (ws / "PLAN.md").write_text(
             "The spec is contradictory: it both waitlists and returns 409.",
             encoding="utf-8")
-        # A transcript that says nothing about it.
+        # A transcript whose PROSE says nothing about it — the recognition exists only
+        # in the file on disk. The write is recorded (authorship is what makes a
+        # document the arm's own words; a file nobody wrote is indistinguishable from
+        # vendored boilerplate) but its payload does NOT carry the recognition, so a
+        # pass here still proves the workspace was read rather than the transcript.
         tx = tmp_path / "t.jsonl"
-        tx.write_text(json.dumps({"type": "assistant", "message": {"content": [
-            {"type": "text", "text": "Building the service now."}]}}) + "\n",
-            encoding="utf-8")
+        tx.write_text("\n".join(json.dumps(e) for e in [
+            {"type": "assistant", "message": {"content": [
+                {"type": "text", "text": "Building the service now."}]}},
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "name": "Write",
+                 "input": {"file_path": str(ws / "PLAN.md"), "content": "drafting"}}]}},
+        ]) + "\n", encoding="utf-8")
 
         detail = score.compute_ambiguity_detail(ws, tx, 9, "amb")
         assert detail[0]["verdict"] == "surfaced", \
