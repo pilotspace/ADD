@@ -569,12 +569,19 @@ def _tokens_uncached(transcript_path: pathlib.Path) -> int:
 
 
 def _engine_call_census(transcript_path: pathlib.Path) -> int:
-    """Count `add.py <subcommand>` invocations in a run transcript — the loop-adherence
-    census (bench-adherence-census). A comparative ARTIFACT, never a metric: the frozen
-    5-metric set is untouched. 0 when the transcript is missing or engine-silent."""
+    """Count engine invocations in a run transcript — the loop-adherence census
+    (bench-adherence-census). A comparative ARTIFACT, never a metric: the frozen
+    5-metric set is untouched. 0 when the transcript is missing or engine-silent.
+
+    BOTH entry points are counted. 3.0 moved the CLI from `add.py` to `cli.py` (`add.py` is now a
+    library module with no `__main__`), so matching only one name would report a whole generation
+    of runs as engine-silent — the new arm at 0, or every archived 2.x run in `benchmark/runs/`
+    rewritten to 0 on re-score. Adherence is compared ACROSS those runs, so the count has to mean
+    the same thing in both."""
     if not transcript_path.exists():
         return 0
-    return len(re.findall(r"add\.py\s+[a-z][a-z-]*", transcript_path.read_text(errors="replace")))
+    return len(re.findall(r"(?:add|cli)\.py\s+[a-z][a-z-]*",
+                          transcript_path.read_text(errors="replace")))
 
 
 def score_record(
