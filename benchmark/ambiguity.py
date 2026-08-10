@@ -89,6 +89,37 @@ MARKERS: tuple[str, ...] = (
     "does not say",
     "two readings",
     "interpret",
+    # --- the DECLARATIVE register, added after the ASSUMPTIONS re-run -------------
+    # The list above was drawn from chat-style hedging. A method that writes its
+    # recognition into a DOCUMENT phrases it as a statement about the spec, not as a
+    # question — "the spec never restricts X", "Y is not stated". Three explicit,
+    # pre-code, in-artifact surfacings went uncredited on morphology alone.
+    #
+    # Every entry here is a variant of a speech act ALREADY above (`does not say` /
+    # `not specified`): a contraction, a negation synonym, or another verb for "said".
+    # No new speech act is admitted — test_every_addition_is_a_variant_of_an_existing
+    # _marker holds that line, and test_a_bare_mention_still_does_not_surface holds
+    # that naming a topic without a not-said construction still scores nothing.
+    "doesn't say",
+    "never says",
+    "not stated",
+    "does not state",
+    "doesn't state",
+    "not defined",
+    "does not define",
+    "doesn't define",
+    # NOT "does not specify" / "never specifies": `specify` is a BANNED arm token
+    # (spec-kit's `/specify` command), and the fairness guard is a substring check that
+    # cannot tell the command from the plain verb. Weakening that guard to fit this
+    # expansion would trade a real protection for a marginal one — `not specified` is
+    # already in the list above and covers the same construction.
+    "does not restrict",
+    "doesn't restrict",
+    "never restricts",
+    "does not give",
+    "doesn't give",
+    "does not pin",
+    "never names",
 )
 
 # Co-occurrence is SENTENCE-scoped, not a character window. A 400-char window scored
