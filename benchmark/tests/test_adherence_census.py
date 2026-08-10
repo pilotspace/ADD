@@ -65,6 +65,46 @@ class TestEngineCallCensus:
         )
         assert _engine_call_census(t) == 2
 
+    def test_a_workloads_own_cli_py_is_not_an_engine_call(self, tmp_path):
+        """covers: R:RESCORE, E1 — the counted name must be the ENGINE's, not any file called cli.py.
+
+        Measured, not imagined: matching a bare `cli.py` changed the census on 10 of 22 archived
+        ADD-arm transcripts, because the benchmark workloads BUILD apps that have an `app/cli.py`,
+        and because `test_booking_cli.py` ends in `cli.py` too. `benchmark/runs*/` is gitignored, so
+        CI can never re-measure that — these are the exact shapes those transcripts contained.
+        """
+        t = tmp_path / "transcript.jsonl"
+        t.write_text(
+            '{"text": "workspace/app/cli.py has been updated successfully"}\n'
+            '{"text": "architecture residue (does api.py/cli.py duplicate the auth path?)"}\n'
+            '{"text": "tests/test_booking_cli.py has been updated"}\n'
+            '{"tool": "Bash", "command": "for f in app/store.py app/cli.py app/__main__.py; do :; done"}\n'
+            '{"tool": "Bash", "command": ".venv/bin/python cli.py serve --port 8000"}\n'
+        )
+        assert _engine_call_census(t) == 0, "a workload's own cli.py was counted as an engine call"
+
+    def test_counts_the_3x_engine_by_its_tooling_path(self, tmp_path):
+        """covers: M1 — a real 3.0 engine call is anchored to `.add/tooling/`, so it is countable."""
+        t = tmp_path / "transcript.jsonl"
+        t.write_text(
+            '{"tool": "Bash", "command": "python3 .add/tooling/cli.py status"}\n'
+            '{"tool": "Bash", "command": ".venv/bin/python .add/tooling/cli.py gate slugify PASS"}\n'
+        )
+        assert _engine_call_census(t) == 2
+
+    def test_the_wrapper_writes_the_countable_form(self):
+        """covers: M1, R:UNCOUNTED — the arm's own prompt must not teach an uncountable shorthand.
+
+        The census can only anchor on `.add/tooling/cli.py`; if the wrapper told the agent to type
+        a bare `cli.py <verb>`, the ADD arm would drive the loop correctly and still score as
+        engine-silent — the confound the census exists to detect, reintroduced by its own prompt.
+        """
+        out = _wrap_prompt("Build the thing.", "add-loop")
+        for bare in re.finditer(r"(?<![\w/.-])cli\.py\s+[a-z]", out):
+            ctx = out[max(0, bare.start() - 20):bare.start()]
+            assert ctx.endswith(".add/tooling/"), \
+                f"wrapper names an uncountable bare `cli.py` at ...{ctx}{out[bare.start():bare.start()+20]}..."
+
     def test_zero_when_missing(self, tmp_path):
         assert _engine_call_census(tmp_path / "nope.jsonl") == 0
 

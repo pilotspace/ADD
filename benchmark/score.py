@@ -577,10 +577,18 @@ def _engine_call_census(transcript_path: pathlib.Path) -> int:
     library module with no `__main__`), so matching only one name would report a whole generation
     of runs as engine-silent — the new arm at 0, or every archived 2.x run in `benchmark/runs/`
     rewritten to 0 on re-score. Adherence is compared ACROSS those runs, so the count has to mean
-    the same thing in both."""
+    the same thing in both.
+
+    The asymmetry is deliberate and was measured, not assumed. `add.py` is matched bare, exactly as
+    before, because the historical counts ARE this pattern — narrowing it would silently re-score
+    every archived run. `cli.py` is matched ONLY under `.add/tooling/`, because the workloads build
+    apps that contain an `app/cli.py`, and `test_booking_cli.py` ends in `cli.py` as well: a bare
+    match moved the census on 10 of 22 archived ADD-arm transcripts. This form leaves all 22
+    byte-identical. The add-loop wrapper therefore writes the full tooling path, so the arm's own
+    calls stay countable (`test_the_wrapper_writes_the_countable_form`)."""
     if not transcript_path.exists():
         return 0
-    return len(re.findall(r"(?:add|cli)\.py\s+[a-z][a-z-]*",
+    return len(re.findall(r"(?:add\.py|\.add/tooling/cli\.py)\s+[a-z][a-z-]*",
                           transcript_path.read_text(errors="replace")))
 
 
