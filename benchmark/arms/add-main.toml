@@ -4,11 +4,14 @@ setup_steps = [
   # CONTROL ARM (v2-wv1-longitudinal M5 @v2): ADD as released on MAIN — installed
   # from a git worktree pinned at the SHA below, NOT from {REPO_ROOT} (which is the
   # branch under test). Controls branch-engine changes against the released flow.
+  # RE-AIMED 2026-08-10: was 0ff7d75 (v2.2.0, `add.py` CLI). 3.0 moved the CLI to
+  # cli.py and the shared add-loop wrapper is now 3.0-native, so a 2.x control could
+  # not be driven by it at all — the arm was measuring the prompt, not the method.
   "uv pip install -e /Users/tindang/add-benchmark-archives/add-main-wt/add-method --python .venv/bin/python",
   ".venv/bin/pilotspace-add init --yes --non-interactive --force",
 ]
 prompt_wrapper = "add-loop"
-pin = "0ff7d75 (git worktree of main @ ~/add-benchmark-archives/add-main-wt)"
+pin = "2fc6c5c9 (git worktree of main @ ~/add-benchmark-archives/add-main-wt) — ADD 3.0.0"
 
 # Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
 same_model = true
