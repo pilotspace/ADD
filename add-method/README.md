@@ -16,9 +16,9 @@
 
 **The agent is the hands. ADD is the memory, judgment, and conscience — the part
 of the team that survives when the context window doesn't.** Memory: the board,
-frozen contracts, and living specs on disk (`add.py status` resumes any session
+frozen contracts, and living specs on disk (`cli.py status` resumes any session
 losslessly). Judgment: personas propose each task's lane and the loop learns from
-traced outcomes (`add.py deltas`). Conscience: evidence-scored gates, the tamper
+traced outcomes (`cli.py deltas`). Conscience: evidence-scored gates, the tamper
 tripwire, the security hard-stop.
 
 Native on Claude Code; every other CLI agent follows the same loop through the
@@ -105,7 +105,7 @@ A distilled persona is an **advisory overlay** during direction, build, or verif
 it shapes *how* a step gets done, never whether it happens. It can't skip a gate,
 edit a frozen contract, or wave through a security finding. Personas also
 propose each task's route (full walk · fast lane · inline); the freeze ratifies it,
-the gate traces the outcome, and `add.py deltas` rolls the traces into a per-lane
+the gate traces the outcome, and `cli.py deltas` rolls the traces into a per-lane
 scoreboard the loop reflects on (GEPA).
 
 **Best setup:** install ADD to drive the loop, keep whatever subagent libraries you
@@ -158,7 +158,8 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/add.py` | the notary engine — 20 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 20 verbs (Python, stdlib only) |
+| `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |
 
@@ -172,7 +173,7 @@ living `specs/`.
 ADD works *inside your project* — here is exactly what that means:
 
 - **Runs only when you ask.** Nothing executes on install. It acts when you run `/add`. User-initiated, every time.
-- **What it runs:** the bundled engine only — `node bin/cli.js` and `python3 .add/tooling/add.py`. No downloaded or remote code.
+- **What it runs:** the bundled engine only — `node bin/cli.js` and `python3 .add/tooling/cli.py`. No downloaded or remote code.
 - **What it writes:** files under your project's `.add/` and the managed guideline block in `CLAUDE.md` / `AGENTS.md`. Never above the project root.
 - **Network:** one optional, advisory update check — a single HTTPS GET to the npm registry, ≤ once/24h, 1.5s timeout, fail-open, writes only a one-line note to stderr. Disable with `ADD_NO_UPDATE_CHECK=1`. No telemetry, no analytics.
 - **No secrets, no credentials, no privileged access.** Pure local file orchestration.
@@ -184,12 +185,13 @@ which coding agent you're in and drops the context file it reads — so ADD driv
 under **Claude Code, Codex, OpenCode, Cursor, Windsurf, Trae, Gemini CLI, GitHub
 Copilot, Cline, and Aider** (anything else falls back to a generic `AGENTS.md`).
 Only Claude Code runs `/add` natively; every other agent follows the same loop
-through `add.py status` / `guide`.
+through `cli.py status` (the resume point) and `cli.py brief <slug>` (the composed
+prompt for the beat that node is on).
 
 You can hand-drive the CLI too:
 
 ```bash
-python3 .add/tooling/add.py status      # where am I? (resume point)
+python3 .add/tooling/cli.py status      # where am I? (resume point)
 ```
 
 ## The non-negotiables
