@@ -90,6 +90,10 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 1. **Direction before speed.** Never start Build until RULES · PLAN · CHECKS exist and checks are red.
 2. **Trust evidence, not inspection.** A change is trusted because its checks pass and the residue
    (security · concurrency · architecture) was examined — not because the code reads fine.
+   **A green gate proves the checks you declared ran, passed and are bound — never that they were
+   enough.** A check that asserts nothing still binds and still passes. Writing the check that would
+   have caught the bug is your job; the engine can only prove you ran the ones you wrote
+   (`FORMAT.md` §10).
 3. **Never weaken a check or edit a frozen `gives:` to make the build pass.** That inverts the method;
    a real change is a change-request back to Direction.
 4. **No silent skips.** Every Verify ends in exactly one recorded outcome — `PASS`, `RISK-ACCEPTED`

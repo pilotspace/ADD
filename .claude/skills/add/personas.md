@@ -35,7 +35,7 @@ reference — referenced, never inlined.
 
 This is the schema for a persona **you author**. The teacher corpus at
 `.add/personas-teacher/` is a byte-verbatim third-party snapshot on its own schema and carries
-neither key; route to one via `.add/personas-index.md`, the generated `use-when:` index vendored
+neither key; route to one via `.add/personas-index/use-when.md`, the generated `use-when:` index vendored
 beside it.
 
 ## Seed — at setup, from the teacher (full flow: `seed.md`)
@@ -69,7 +69,7 @@ prune any Critical Rule that fired zero times this milestone (a human-approved e
 ## Apply — four surfaces, all treat it as advice
 
 An authored persona names its surfaces in `flow:`; `use-when:` / `not-when:` route it over a
-sibling. For a teacher persona, the routing line is in `.add/personas-index.md`.
+sibling. For a teacher persona, the routing line is in `.add/personas-index/use-when.md`.
 
 - **design (UDD)** — frames which rules and metrics a UI/UX slice must satisfy for these users.
 - **advisor / streams** — a delegated subagent selects the best-fit persona; the returned verdict
