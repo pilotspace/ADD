@@ -188,7 +188,7 @@ add init --profile code "Ledger"
 add new Task transfer --title "Transfer money between my accounts" --scope "src/,tests/"
 ```
 
-This creates `.add/tasks/transfer.md` — **one file, seven sections** — and leaves it
+This creates `.add/tasks/transfer.md` — **one file, eight sections** — and leaves it
 at beat `direction`. Open it in your editor; you'll fill it top to bottom.
 
 ### Beat 1 — Direction (https://pilotspace.github.io/ADD/03-direction/)
@@ -207,6 +207,46 @@ happen (`R:<NAME>`, each with a named error code):
 - R:OVERDRAW a balance must never go negative -> "insufficient_funds"
 </reject>
 ```
+
+Now the section people skip, and the one that earns its place fastest. **`## ASSUMPTIONS`**
+is for what the request did **not** say:
+
+```
+- A1 [who] covers: S1 · the request never says whether I may transfer from an account
+     I do not own; taking it as own-accounts-only -> if wrong, it moves other people's money
+- A2 [which] covers: S1 · it never says whether closed accounts are transferable;
+     excluding them -> if wrong, legitimate transfers are refused
+- A3 [when] covers: S1 · it never says whether a transfer can be backdated; taking it as
+     now-only -> if wrong, reconciliation breaks
+- A4 [absent] covers: S1 · it never says what currency the amount is in; assuming one
+     implicit currency -> if wrong, cross-currency transfers corrupt balances
+- A5 [order] n/a · a single transfer exposes no ordered collection
+```
+
+RULES records what you were **told**. EDGES records the boundaries of those rules. Neither
+has anywhere to put what nobody said — so without this section, an unstated requirement
+becomes a Must phrased exactly like a stated one, and a reader cannot tell *given* from
+*decided*.
+
+**Sweep, don't free-associate.** The axis is the `S<n>` surfaces you list in the node's
+`gives:` frontmatter (here `S1 POST /transfers`) — `new` scaffolds that slot and `freeze`
+refuses while it is still template. Take each surface and ask all five dimensions —
+`who · which · when · absent · order` — tagging each line with the one it answers and the
+surfaces it covers. `freeze` refuses until every `(dimension, surface)` pair is covered or
+retired with `[<dim>] n/a · <why>`, and names the pairs it's waiting on:
+
+```
+cannot freeze `transfer` — these (dimension, surface) pairs are unswept: who:S1
+```
+
+`add todo` counts them down while you author, so freeze confirms work you've already done.
+
+The matrix exists because free-association follows the *request's* emphasis, not the risk:
+it's the dimension nobody wrote a sentence about that ships as a silent decision. (Working
+at `--depth quick`? The sweep is skipped — depth tunes ceremony.)
+
+An assumption is a declared unknown, not a rule: `A1` needs no check, and changing one
+does not break the freeze seal.
 
 Fix the external shape in **`## PLAN`**:
 

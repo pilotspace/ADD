@@ -110,10 +110,14 @@ def test_the_digest_covers_a_frozen_gives(bundle, draft):
     """covers: M2, E4 — constraint 3 names `gives:` alongside the checks; the seal must too."""
     cid, _ = add.new(bundle, "Task", "publishes", title="Publishes")
     path = draft(bundle, cid)
-    path.write_text(path.read_text().replace("status:", "gives:\n  - api.Widget\nstatus:", 1))
+    # EDIT the scaffolded `gives:`, never inject a second key: since 3.0.0-beta.2 the
+    # scaffold ships one, and a duplicate key would leave the parser reading the first —
+    # so the edit would be invisible and this test would pass for the wrong reason.
+    path.write_text(path.read_text().replace(
+        "- S1 admit(token) — the admission decision", "- S1 api.Widget"))
     before = add.direction_digest(add.read(path, "T2"))
 
-    path.write_text(path.read_text().replace("- api.Widget", "- api.WidgetV2"))
+    path.write_text(path.read_text().replace("- S1 api.Widget", "- S1 api.WidgetV2"))
     after = add.direction_digest(add.read(path, "T2"))
 
     assert before != after, "editing a frozen `gives:` left the seal unchanged"

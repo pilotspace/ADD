@@ -373,6 +373,19 @@ def _section(body: str, slug: str) -> str:
     return "".join(out).strip()
 
 
+def _is_template(value) -> bool:
+    """True when a frontmatter value is still scaffold — `<…>` placeholder text.
+
+    An unauthored value must not SHADOW a real one. Scaffolding `gives:` (so it stops
+    being a phantom instruction) gave every Task the frontmatter key, and §3.3 resolves
+    a frontmatter key before a heading slug — which silently redirected every `#gives`
+    ref away from an authored `## GIVES` section to the placeholder above it. A slot
+    nobody has filled is not an answer, so resolution falls through to the heading.
+    """
+    items = value if isinstance(value, list) else [value]
+    return bool(items) and all("<" in str(i) and ">" in str(i) for i in items)
+
+
 def resolve(graph: dict, ref: str, src: str = "") -> tuple:
     """`(cid, value, why)` under §3.3's ordered grammar.
 
@@ -388,7 +401,7 @@ def resolve(graph: dict, ref: str, src: str = "") -> tuple:
         return cid, node, "node"
     fm = node["fm"] or {}
     for key in (fragment, fragment.replace("-", "_")):
-        if key in fm:
+        if key in fm and not _is_template(fm[key]):
             return cid, fm[key], "frontmatter"
     # Only now is a body read, and only this one (law 2 — never a bulk scan).
     section = _section(read(node["path"], "T2")["body"], fragment)
@@ -927,6 +940,19 @@ BODIES = {
             "beat: direction · next: add freeze {slug}\n\n"
             "## RULES\n<must>\n- M1 <the rule that must hold>\n</must>\n<reject>\n"
             "- R:<NAME> <what must never happen> -> \"<NAME>\"\n</reject>\n\n"
+            "## ASSUMPTIONS\n"
+            "- A1 [who] covers: <S ids> · identity/authority/scope the spec left open"
+            " -> <cost if wrong>\n"
+            "- A2 [which] covers: <S ids> · inclusion/visibility it left open"
+            " -> <cost if wrong>\n"
+            "- A3 [when] covers: <S ids> · boundaries/timing it left open"
+            " -> <cost if wrong>\n"
+            "- A4 [absent] covers: <S ids> · missing values/defaults it left open"
+            " -> <cost if wrong>\n"
+            "- A5 [order] covers: <S ids> · sequencing/ties it left open"
+            " -> <cost if wrong>\n"
+            "every `gives:` surface is swept on every dimension; "
+            "`[<dim>] n/a · <why>` retires one.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
@@ -995,10 +1021,17 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     if path.exists():
         return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
 
-    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when", "milestone", "scope"]
+    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when",
+             "milestone", "scope", "gives"]
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
         fm["status"] = "direction"
+    # `gives:` is read by the direction digest and by every brief that resolves a `needs:`
+    # ref — and it was scaffolded NOWHERE, in neither the body template nor this key order.
+    # It came back empty in 3 of 3 live runs for exactly the reason the assumption did:
+    # an instruction with no slot to fill is an instruction that does not happen.
+    if node_type == "Task" and fields.get("gives") is None:
+        fm["gives"] = ["S1 <the surface this publishes — an endpoint, function, or section>"]
     # A Persona is discoverable by its `use-when:` — the one field a tool reads to place the lens.
     # Scaffold a placeholder when the author did not supply one, so the roster is never mute.
     if node_type == "Persona" and fields.get("use-when") is None:
@@ -1045,7 +1078,30 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     if stubs:
         return None, (f"cannot freeze `{slug}` — the node still carries template placeholders: "
                       + " · ".join(stubs)
-                      + f"\nnext: author {slug}'s RULES and CHECKS, then add freeze {slug}")
+                      + f"\nnext: author {slug}'s RULES, ASSUMPTIONS and CHECKS, "
+                        f"then add freeze {slug}")
+
+    # No surfaces would mean nothing to sweep — a one-line off switch for the whole gate.
+    if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
+            and str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick" \
+            and gives_unauthored(node_t2):
+        return None, (f"cannot freeze `{slug}` — `gives:` is unauthored, so there are no "
+                      f"surfaces to sweep"
+                      f"\nnext: list what {slug} publishes as `gives:` entries "
+                      f"(`- S1 <surface> — <what a caller gets>`), then add freeze {slug}")
+
+    # Non-empty is not complete. Three live runs each recorded 5-7 real assumptions and
+    # all three still shipped a silent decision, because nothing asked whether the list
+    # covered every surface. Name the specific gaps: "incomplete" is not actionable, and a
+    # refusal an author cannot act on is one they learn to route around.
+    unswept = assumption_sweep(node_t2)
+    if unswept:
+        shown = " · ".join(f"{d}:{m}" for d, m in unswept[:6])
+        more = f" (+{len(unswept) - 6} more)" if len(unswept) > 6 else ""
+        return None, (f"cannot freeze `{slug}` — these (dimension, surface) pairs are unswept: "
+                      f"{shown}{more}"
+                      f"\nnext: add an ASSUMPTIONS line `- A<n> [<dim>] covers: <S ids> · …`, "
+                      f"or retire a dimension with `[<dim>] n/a · <why>`")
 
     authority = authority or authority_for(graph, cid)
     stamps = (entry.get("fm") or {}).get("verified") or []
@@ -1347,7 +1403,20 @@ def todo(root, milestone: str = None) -> tuple:
         if st != beat:
             lines.append(f"{st}:")
             beat = st
-        lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}")
+        hint = ""
+        if st == "direction":
+            # Progressive, so freeze CONFIRMS work already done instead of ambushing the
+            # author with the whole matrix at the moment they expected to be finished. A
+            # gate first met as a wall earns a reputation for obstruction, not for catching.
+            node_t2 = read(graph[cid]["path"], "T2")
+            if gives_unauthored(node_t2) and _section_of(node_t2.get("body") or "",
+                                                         "ASSUMPTIONS").strip():
+                hint = "  (gives: unauthored — no surfaces to sweep)"
+            else:
+                left = len(assumption_sweep(node_t2))
+                if left:
+                    hint = f"  ({left} unswept pair{'s' if left > 1 else ''})"
+        lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
 
@@ -1696,8 +1765,103 @@ def _section_of(body: str, heading: str) -> str:
 PLACEHOLDER = re.compile(r"<[a-z_][^>]*>")
 
 
+RE_ASSUMPTION_PLACEHOLDER = re.compile(
+    r"^- A\d+ \[\w+\] covers: <S ids>.*$", re.MULTILINE)
+
+# The dimensions a silence hides in. CLOSED and small on purpose: an open vocabulary
+# cannot be swept, and a long one will not be. Domain-neutral, because a Task may
+# publish an HTTP route, a function, or a document — "endpoint" is one profile's word.
+#
+#   who     identity · authority · scope — whose data, which caller may act
+#   which   inclusion · visibility — which rows/cases are in, which are filtered out
+#   when    boundaries · timing — inclusive or exclusive, before or after
+#   absent  missing values · defaults — what happens when the field is not supplied
+#   order   sequencing · ties — what breaks a tie, what comes first
+#
+# `who` and `which` are the two the live amb1 runs split on: every rep asked WHICH rows
+# `GET /bookings` returns and none asked WHOSE.
+SWEEP_DIMENSIONS = ("who", "which", "when", "absent", "order")
+
+RE_ASSUMPTION_LINE = re.compile(r"^-\s+A\d+\s+\[(\w+)\]\s*(.*)$")
+
+
+def surfaces_of(node: dict) -> list:
+    """The `S<n>` surface ids published in `gives:` — the axis the sweep runs along.
+
+    A surface is what a CALLER touches. Sweeping Musts instead demanded 50-60 pairs on
+    real nodes (12, 10 and 11 Musts x 5 dimensions), which is not a checklist but a toll
+    — and a toll gets paid with blanket lines that satisfy the gate without doing the
+    work. There are far fewer surfaces than rules, and "who may call this, and which rows
+    do they see" is a question about a surface, not about a sentence.
+    """
+    out = []
+    for entry in (node.get("fm") or {}).get("gives") or []:
+        m = re.match(r"\s*(S\d+)\b", str(entry))
+        if m:
+            out.append(m.group(1))
+    return out
+
+
+def gives_unauthored(node: dict) -> bool:
+    """True when `gives:` is missing or still the scaffold — i.e. nothing to sweep.
+
+    Without this the gate has a one-line off switch: delete `gives:`, get no surfaces,
+    sweep vacuously clean.
+    """
+    entries = (node.get("fm") or {}).get("gives") or []
+    return not entries or any("<" in str(e) for e in entries)
+
+
+def assumption_sweep(node: dict) -> list:
+    """Unswept `(dimension, surface_id)` pairs — empty when the sweep is complete.
+
+    For every surface and every dimension, some `[dim]` assumption must name that surface
+    in its `covers:`, or the dimension must be retired with `n/a` and a reason. That is
+    the difference between non-empty and complete: `freeze` used to prove an assumption
+    EXISTED, which three live runs satisfied while still shipping a silent decision.
+
+    Exempt, deliberately:
+      * `depth: quick` — depth tunes ceremony (SKILL.md). A one-file mechanical edit does
+        not earn a five-dimension matrix, and demanding one would push authors toward
+        `quick` for work that deserves `standard`.
+      * a node with no `## ASSUMPTIONS` section — law 3 reads it as empty, so bundles
+        written before the section existed are not retroactively refused.
+
+    WHAT THIS DOES NOT CLAIM: it proves the author LOOKED at every pair, never that they
+    looked honestly. A blanket `[who] covers: S1, S2, S3` satisfies it. Writing that line
+    still requires scanning every surface under "who", and the blanket reading is then on
+    the record where a reviewer can disagree with it — which a silent omission never
+    allowed. FORMAT.md §10.
+    """
+    body = node.get("body") or ""
+    section = _section_of(body, "ASSUMPTIONS")
+    if not section.strip():
+        return []
+    if str((node.get("fm") or {}).get("depth") or "standard") == "quick":
+        return []
+    surfaces = surfaces_of(node)
+    if not surfaces:
+        return []          # `gives_unauthored` is what refuses this; see freeze()
+    covered, waived = {d: set() for d in SWEEP_DIMENSIONS}, set()
+    for line in section.splitlines():
+        m = RE_ASSUMPTION_LINE.match(line.strip())
+        if not m:
+            continue
+        dim, rest = m.group(1).lower(), m.group(2)
+        if dim not in covered:
+            continue
+        if re.match(r"^n/?a\b", rest.strip(), re.I):
+            waived.add(dim)
+            continue
+        found = re.search(r"covers:\s*([^·]*)", rest)
+        if found:
+            covered[dim].update(re.findall(r"\bS\d+\b", found.group(1)))
+    return [(d, sid) for d in SWEEP_DIMENSIONS if d not in waived
+            for sid in surfaces if sid not in covered[d]]
+
+
 def placeholders_in(node: dict) -> list:
-    """Template tokens still standing in a node's RULES or CHECKS.
+    """Template tokens still standing in a node's RULES, ASSUMPTIONS or CHECKS.
 
     `new` ships `- M1 <the rule that must hold>` and `- <test_name> · covers: M1`. Those parse as
     a real rule and a real check, so an unauthored node refuses at the gate with "M1 has no
@@ -1711,7 +1875,13 @@ def placeholders_in(node: dict) -> list:
     measured across both before the exclusion was added rather than assumed.
     """
     found = []
-    for heading in ("RULES", "CHECKS"):
+    # ASSUMPTIONS joins RULES and CHECKS because an instruction with no checkpoint is an
+    # instruction that does not happen. SKILL.md and direction.md have asked for the
+    # riskiest assumption since 3.0; the live amb1 run recorded none, and skipping it
+    # cost nothing at freeze or gate. A node with no assumption section at all still
+    # freezes — `_section_of` reads a missing section as empty (law 3) — so bundles
+    # authored before this shipped are not retroactively refused.
+    for heading in ("RULES", "ASSUMPTIONS", "CHECKS"):
         for line in _section_of(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())

@@ -224,20 +224,68 @@ Derived from `add.py:204`, `add.py:736`, `add.py:1887`.
 
 ## §5 The Task body
 
-A `Task` body has seven `## ` sections, in order:
+A `Task` body has eight `## ` sections, in order:
 
 ```
-## CARD      goal / why / beat · next
-## RULES     <must> M<n> … </must> and <reject> R:<NAME> … -> "<NAME>" </reject>
-## PLAN      contract / scope
-## EDGES     E<n> — boundary and failure cases a check must cover (optional)
-## CHECKS    one line per check, each bound by `covers:` (§8.3)
-## EVIDENCE  receipt / gate
-## LESSONS   harvested at done
+## CARD         goal / why / beat · next
+## RULES        <must> M<n> … </must> and <reject> R:<NAME> … -> "<NAME>" </reject>
+## ASSUMPTIONS  A<n> — what the spec does NOT say, the reading taken, the cost if wrong
+## PLAN         contract / scope
+## EDGES        E<n> — boundary and failure cases a check must cover (optional)
+## CHECKS       one line per check, each bound by `covers:` (§8.3)
+## EVIDENCE     receipt / gate
+## LESSONS      harvested at done
 ```
 
 Section lookup is by exact `## <name>` heading, heading-exclusive, and stops at the next
 `## ` heading. A missing section reads as empty rather than raising — law 3.
+
+**`## ASSUMPTIONS` is where a silence is priced.** RULES records what the spec *said*;
+EDGES records the boundaries of those rules. Neither has anywhere to put what the spec
+did **not** say, so an unstated requirement becomes a Must written in the same
+authoritative voice as a stated one, and nothing in the artifact distinguishes *given*
+from *decided*. `freeze` refuses while the slot still holds its template line — an
+instruction with no checkpoint is one that does not happen.
+
+**The sweep makes it complete-able.** Each line is tagged with one dimension and names
+the surfaces it covers:
+
+```
+- A<n> [<dim>] covers: S1, S3 · <what the spec does not say — reading taken> -> <cost if wrong>
+- A<n> [<dim>] n/a · <why the dimension cannot apply here>
+```
+
+The dimension vocabulary is closed — `who · which · when · absent · order` — because an
+open one cannot be swept and a long one will not be. The axis is the **surface**: each
+`S<n>` entry in the node's `gives:`. For every surface and every dimension, some line must
+cover the pair or retire the dimension; `freeze` refuses and names the unswept pairs, and
+refuses an unauthored `gives:` (no surfaces would mean nothing to sweep — a one-line off
+switch). `depth: quick` is exempt: depth tunes ceremony, never the authority floor.
+
+Surfaces, not rules, because a surface is what a caller touches — and because sweeping
+Musts demanded 50-60 pairs on real nodes, which is not a checklist but a toll, and a toll
+gets paid with blanket lines.
+
+A non-empty check cannot produce completeness. Three live runs each recorded five to
+seven substantive assumptions and all three still shipped the same silent decision,
+because nothing asked whether the *list* was complete.
+
+What the sweep proves is that the author **looked** at every pair — never that they
+looked honestly. A blanket `[who] covers: S1 … S5` satisfies it. Writing that line still
+requires scanning every surface under `who`, and the blanket reading then sits on the record
+where a reviewer can disagree with it, which a silent omission never allowed (§10).
+
+Two deliberate limits:
+
+- `A<n>` is **not** a referent (§6). An assumption is a declared unknown, not a rule to
+  prove; requiring a passing check for one would select for assumptions that were never
+  risky.
+- `A<n>` is **not** in the direction digest (§8.1), which constraint 3 scopes to the
+  Musts, the Rejects and `gives:`. Widening it would change the digest of every node
+  already frozen, so every existing bundle would report drift it never had.
+
+A node with **no** `## ASSUMPTIONS` section at all still freezes: the section reads as
+empty, so bundles authored before it existed are not retroactively refused.
 
 **Rule identifiers** are matched anchored to a list item:
 

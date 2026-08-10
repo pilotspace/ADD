@@ -8,7 +8,7 @@ Run it whenever skill/, tooling/add.py, or tooling/templates/ change:
 
 The output directory (src/add_method/_bundled/) is COMMITTED to the repo so that
 `python -m build` needs no network or special tooling — it just zips what is there.
-The parity guard (tooling/test_bundle_parity.py) ensures it never drifts.
+The parity guard (tooling/test_tree_parity.py) ensures it never drifts.
 
 What is copied:
   skill/add/              -> _bundled/skill/add/
@@ -120,7 +120,7 @@ def main() -> None:
     shutil.copy2(str(NOTICES_CANON), str(BUNDLE_ROOT / "THIRD_PARTY_NOTICES.md"))
     print("  propagated THIRD_PARTY_NOTICES.md -> package root + bundle")
 
-    print("Bundle ready. Run `python3 -m unittest tooling.test_bundle_parity -v` to verify.")
+    print("Bundle ready. Run `python3 -m unittest tooling.test_tree_parity -v` to verify.")
 
 
 if __name__ == "__main__":

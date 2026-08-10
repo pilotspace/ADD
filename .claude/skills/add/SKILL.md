@@ -63,7 +63,15 @@ task — never Quick, whatever its size. **Security is always a HARD-STOP.** Whe
 One task = one atomic node. Three beats, one human decision:
 
 1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft: `## RULES`
-   (Must · Reject · the one riskiest assumption) · `## PLAN` (contract shape — you author it into the
+   (Must · Reject) · `## ASSUMPTIONS` (**sweep every surface on every dimension** — `A<n> [<dim>]
+   covers: <S ids> · <what the spec does NOT say — and the reading you took> -> <cost if wrong>`,
+   dims `who · which · when · absent · order`, sweeping each `S<n>` surface you list in `gives:`,
+   or retire one with `[<dim>] n/a · <why>`; freeze REFUSES on a template slot, an unauthored
+   `gives:`, or an unswept `(dim, surface)` pair — and names them. `add todo` counts them down
+   while you author. RULES is what you
+   were told and EDGES are the boundaries of those rules, so without this a thing nobody said
+   becomes a Must phrased like one that was said) · `## PLAN`
+   (contract shape — you author it into the
    node's `gives:`/`needs:` frontmatter · strategy · `scope:` tokens) · `## CHECKS` (one check per Must
    & per Reject, each with a `covers:` key — the `covers:`→rule binding is enforced at **gate**, not
    freeze). Run the checks **red for the right reason**. Then the ONE approval — which **stamps**
