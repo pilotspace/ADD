@@ -17,7 +17,7 @@ So a human scanning a long chat spots "this needs me" without reading prose:
 ```
 ════════════════════════════════════════════════════════════════
  PLAN · <task/milestone title, bold> · <gate name> → APPROVE?
- 📄 <task's PLAN path>  ·  <milestone's MILESTONE.md path>
+ 📄 <task's PLAN path>  ·  <milestone node path — milestones/<slug>.md>
 ════════════════════════════════════════════════════════════════
 ```
 
