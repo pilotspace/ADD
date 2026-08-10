@@ -369,6 +369,15 @@ def execute_wm(
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
 
+    # One execute_wm call is one run, so the transcript starts empty. Every write
+    # site below opens "a" — deliberately, since setup steps and each retry
+    # attempt all accumulate into the SAME run's transcript — which means a
+    # re-run at an already-used path would otherwise inherit its predecessor.
+    # Live proof 2026-08-10: a stand-in agent making 8 engine calls scored
+    # engine_calls 122, the other 114 belonging to a July campaign sitting at
+    # the default path. Truncate here, before setup, and exactly once.
+    transcript_path.write_text("")
+
     prompt_text = _wrap_prompt(_prompt_path(wm, family).read_text(), arm.prompt_wrapper)
 
     attempts_log: list[str] = []

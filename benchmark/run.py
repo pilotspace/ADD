@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """run.py — thin CLI over benchmark/runner/ (bench-runner TASK.md §3 CONTRACT).
 
-  run.py run --arm <name> --wm <1|2|3> [--timeout-s S] [--retries N] [--agent-cmd ARGV...]
-  run.py resume --arm <name> [--timeout-s S] [--retries N] [--agent-cmd ARGV...]
-  run.py score --arm <name> --wm <1|2|3> [--judge-cmd ARGV...]
+  run.py run --arm <name> --wm <1|2|3> [--timeout-s S] [--retries N] [--agent-cmd ARGV...] [--runs-root DIR]
+  run.py resume --arm <name> [--timeout-s S] [--retries N] [--agent-cmd ARGV...] [--runs-root DIR]
+  run.py score --arm <name> --wm <1|2|3> [--judge-cmd ARGV...] [--runs-root DIR]
+
+--runs-root names which runs tree to write/read; it defaults to benchmark/runs/.
+Give each campaign its own, or the second one lands on top of the first.
 
 exit 0 on success; exit 2 with one of the frozen codes on rejection
 (unknown_arm | invalid_arm_recipe | invalid_wm | nothing_to_resume |
@@ -38,6 +41,10 @@ def _build_parser() -> argparse.ArgumentParser:
     common.add_argument("--timeout-s", type=float, default=1800.0)
     common.add_argument("--retries", type=int, default=1)
     common.add_argument("--agent-cmd", nargs="*", default=None)
+    # `report` has named its tree since it shipped; `run`/`resume`/`score` could
+    # not, so a second campaign had no way to land anywhere but on top of the
+    # first. See tests/test_transcript_isolation.py.
+    common.add_argument("--runs-root", default=None)
 
     run_p = sub.add_parser("run", parents=[common])
     run_p.add_argument("--wm", type=int, required=True)
@@ -48,6 +55,7 @@ def _build_parser() -> argparse.ArgumentParser:
     score_p.add_argument("--arm", required=True)
     score_p.add_argument("--wm", type=int, required=True)
     score_p.add_argument("--judge-cmd", nargs="*", default=None)
+    score_p.add_argument("--runs-root", default=None)
 
     report_p = sub.add_parser("report")
     report_p.add_argument("--arm", default=None)
@@ -61,6 +69,10 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    # None, never a resolved path: the default lives in exactly one place
+    # (DEFAULT_RUNS_ROOT), which is what the suite monkeypatches.
+    runs_root = pathlib.Path(args.runs_root) if getattr(args, "runs_root", None) else None
 
     if args.command == "run":
         if args.wm not in VALID_WMS:
@@ -84,6 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_cmd=args.agent_cmd,
             timeout_s=args.timeout_s,
             retries=args.retries,
+            runs_root=runs_root,
         )
         print(record.to_json())
         return 0
@@ -92,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.arm not in ARM_NAMES:
             print(f"unknown_arm: {args.arm}", file=sys.stderr)
             return 2
-        resume_wm = find_resume_point(args.arm)
+        resume_wm = find_resume_point(args.arm, runs_root=runs_root)
         if resume_wm is None:
             print(f"nothing_to_resume: {args.arm}", file=sys.stderr)
             return 2
@@ -111,13 +124,15 @@ def main(argv: list[str] | None = None) -> int:
                 agent_cmd=args.agent_cmd,
                 timeout_s=args.timeout_s,
                 retries=args.retries,
+                runs_root=runs_root,
             )
             print(last_record.to_json())
         return 0
 
     if args.command == "score":
         try:
-            record = score_record(args.arm, args.wm, judge_cmd=args.judge_cmd)
+            record = score_record(args.arm, args.wm, judge_cmd=args.judge_cmd,
+                                  runs_root=runs_root)
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
             return 2
@@ -132,7 +147,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"invalid_wm: {args.wm}", file=sys.stderr)
             return 2
 
-        runs_root = pathlib.Path(args.runs_root) if args.runs_root else None
         arms = [args.arm] if args.arm is not None else ARM_NAMES
         wms = [args.wm] if args.wm is not None else VALID_WMS
         text = render_report(runs_root, arms=arms, wms=wms)
