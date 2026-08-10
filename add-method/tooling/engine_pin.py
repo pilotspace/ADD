@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "7ce07d6ba398ca6fa958062bcdb1f760"  # re-aimed @ legacy-2x-status (status names a 2.x bundle instead of denying it). prior: d2a8d8d6… @ persona-index-sidecar
+ENGINE_MD5 = "0651500a78900825072c8a17c754ae19"  # re-aimed @ freeze-seal (freeze refuses a scaffold + seals RULES·CHECKS·gives; gate refuses post-freeze drift). prior: 7ce07d6b… @ legacy-2x-status
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

@@ -1026,14 +1026,34 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
 
 
 def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
-    """Append a freeze stamp. A second freeze REFREEZES — §3.5, history is append-only."""
+    """Append a freeze stamp sealing RULES · CHECKS · `gives:`. A second freeze REFREEZES — §3.5,
+    history is append-only.
+
+    Refuses an unauthored node. 2.5.0 refused this as `contract_not_drafted`; 3.0 dropped the check
+    and stamped anything, which left `gate` as the only place a template was caught — i.e. AFTER the
+    whole build. Since freeze is precisely the stamp that says "direction is closed", approving a
+    scaffold is the one thing it must never do (constraint 1, "Direction before speed").
+    """
     graph = scan(root)
+    entry = graph.get(cid) or {}
+    if not entry.get("path"):
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+
+    node_t2 = read(entry["path"], "T2")
+    stubs = placeholders_in(node_t2)
+    if stubs:
+        return None, (f"cannot freeze `{slug}` — the node still carries template placeholders: "
+                      + " · ".join(stubs)
+                      + f"\nnext: author {slug}'s RULES and CHECKS, then add freeze {slug}")
+
     authority = authority or authority_for(graph, cid)
-    stamps = ((graph.get(cid) or {}).get("fm") or {}).get("verified") or []
+    stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
     node, err = _transition(root, cid, appends=[
-        ("verified", f'{{ by: "{by}", at: {_today()}, act: {act}, authority: {authority} }}')])
+        ("verified", f'{{ by: "{by}", at: {_today()}, act: {act}, authority: {authority}, '
+                     f'direction: "{direction_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
     return node, f"{act} recorded at authority `{authority}`\nnext: build, then `add run -- <cmd>`"
@@ -1698,6 +1718,45 @@ def placeholders_in(node: dict) -> list:
     return found
 
 
+def _canon(text: str) -> str:
+    """Trailing whitespace and blank lines are not contract changes."""
+    return "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
+
+
+def direction_digest(node: dict) -> str:
+    """The seal over what a freeze approved: RULES · CHECKS · `gives:`.
+
+    Deliberately scoped to the frozen surface rather than the whole node. A CARD `goal:` reword or
+    a new LESSONS line is not a contract change, and sealing those would make ordinary editing
+    demand a refreeze until authors refroze reflexively — which is how a seal decays into a rubber
+    stamp. Constraint 3 names exactly three things that must not move under a build: the Musts, the
+    Rejects, and the published `gives:`. Those, and nothing else.
+
+    This closes only the STRUCTURAL half of constraint 3. Whether a check still *proves* its rule is
+    semantic, and a NO-EXEC notary cannot judge it — `assert True` under an unchanged name digests
+    identically to the real assertion it replaced. What this makes impossible is the SILENT edit:
+    changing the frozen text without the change appearing in the record.
+    """
+    body = node.get("body") or ""
+    gives = (node.get("fm") or {}).get("gives") or []
+    payload = "\n".join((_canon(_section_of(body, "RULES")),
+                         _canon(_section_of(body, "CHECKS")),
+                         _canon("\n".join(str(g) for g in gives))))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def sealed_direction(fm: dict) -> str:
+    """The digest carried by the most recent freeze/refreeze, or None.
+
+    None means "cannot verify", not "verified clean": bundles frozen by a pre-seal engine carry no
+    digest, and refusing them would retroactively strand every task frozen before this shipped.
+    """
+    for stamp in reversed((fm or {}).get("verified") or []):
+        if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze"):
+            return stamp.get("direction")
+    return None
+
+
 def rules_of(node: dict) -> list:
     """Every Must and Reject id declared in the node's RULES section."""
     body = read(node["path"], "T2")["body"]
@@ -2173,6 +2232,15 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     if stubs and verdict == "PASS":
         return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                       f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
+
+    # Constraint 3, structurally: what the freeze approved is what the build must have been held to.
+    # A missing digest means a pre-seal engine froze this node — unverifiable, so not refusable.
+    sealed = sealed_direction(sfm)
+    if sealed and verdict == "PASS" and direction_digest(node) != sealed:
+        return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen contract "
+                      "changes by refreezing, never by a silent edit",
+                      f'add freeze {slug} --by "<name>" to record the change, or '
+                      f'add reopen {slug} --to direction --reason "<why the contract moved>"')
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}

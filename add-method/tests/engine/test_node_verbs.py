@@ -57,9 +57,10 @@ def test_new_rejects_duplicate_slug(bundle):
 # ----------------------------------------------------------------------- freeze (M2)
 
 
-def test_freeze_appends_stamp(bundle):
+def test_freeze_appends_stamp(bundle, draft):
     """covers: M2 — `verified[]` gains a freeze stamp."""
     cid, _ = add.new(bundle, "Task", "frozen", title="F")
+    draft(bundle, cid)
     add.freeze(bundle, cid, by="human:tindang")
     stamps = add.read(bundle / cid.lstrip("/"), "T0")["fm"]["verified"]
     assert any(s.get("act") == "freeze" for s in stamps)
@@ -76,9 +77,10 @@ def test_freeze_preserves_comments(bundle):
     assert "# a comment carrying rationale" in path.read_text()
 
 
-def test_refreeze_keeps_old_stamp(bundle):
+def test_refreeze_keeps_old_stamp(bundle, draft):
     """covers: M2, R:INPLACE — §3.5: a changed interface appends, the old stamp remains."""
     cid, _ = add.new(bundle, "Task", "twice-frozen", title="T")
+    draft(bundle, cid)
     add.freeze(bundle, cid, by="human:tindang")
     add.freeze(bundle, cid, by="human:tindang")
     stamps = add.read(bundle / cid.lstrip("/"), "T0")["fm"]["verified"]

@@ -62,7 +62,7 @@ def test_todo_empty_is_clear(tmp_path):
     assert "nothing open" in note.lower(), note
 
 
-def test_todo_beat_is_stamp_derived(tmp_path):
+def test_todo_beat_is_stamp_derived(tmp_path, draft):
     """covers: M5, E3 — the beat comes from the stamps, not the `status` field.
 
     `status` stays `direction` from creation until done, so reading it made every open task report
@@ -70,6 +70,7 @@ def test_todo_beat_is_stamp_derived(tmp_path):
     were both listed as `direction · add freeze`. A cold resume followed that back to the start.
     """
     _bundle(tmp_path)
+    draft(tmp_path, "/tasks/open1.md")
     add.freeze(tmp_path, "/tasks/open1.md", by="human:t")
     items, note = add.todo(tmp_path)
     beats = {cid.rsplit("/", 1)[-1][:-3]: st for cid, st, _ in items}
@@ -81,9 +82,10 @@ def test_todo_beat_is_stamp_derived(tmp_path):
     assert "build:" in note, note
 
 
-def test_todo_receipt_moves_the_beat_to_verify(tmp_path):
+def test_todo_receipt_moves_the_beat_to_verify(tmp_path, draft):
     """covers: M5 — a recorded receipt puts the task at verify, pointing at the gate."""
     _bundle(tmp_path)
+    draft(tmp_path, "/tasks/open1.md")
     add.freeze(tmp_path, "/tasks/open1.md", by="human:t")
     add.run(tmp_path, "/tasks/open1.md", [sys.executable, "-c", "pass"], cwd=tmp_path.parent)
     items, note = add.todo(tmp_path)
