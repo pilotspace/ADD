@@ -165,9 +165,10 @@ def test_one_method_per_surface_is_not_collapsed(tmp_path):
     assert add.collapsed_surfaces(node) == []
 
 
-def test_a_non_http_surface_is_never_judged(tmp_path):
-    """covers: E5 — a function or section surface has no method tokens to count;
-    the heuristic is deliberately partial and must stay silent off its territory."""
+def test_a_single_callable_surface_is_not_collapsed(tmp_path):
+    """covers: E5 — one `name()` is one surface; the taught function shape must pass.
+    (Before beta-2/W3 this test read 'a non-HTTP surface is never judged' — functions
+    ARE judged now, and this fixture holds because it names exactly one callable.)"""
     node, _ = _node(tmp_path, FULL_S1,
                     gives=["S1 admit(token) -> Claims | None — the admission decision"])
     assert add.collapsed_surfaces(node) == []
@@ -197,3 +198,56 @@ def test_todo_names_the_collapsed_surface(tmp_path):
     _node(tmp_path, FULL_S1, gives=COLLAPSED)
     _, out = add.todo(tmp_path)
     assert "split" in out and "S1" in out, out
+
+
+# ── surface granularity beyond HTTP (beta-2, W3) ─────────────────────────────
+#
+# The blog docket's item 5: the one-surface-per-id refusal extends to function and
+# document surfaces. The definitional line stays the same as HTTP's: two `name(`
+# callable tokens are two things a caller calls, and two BACKTICKED file names are
+# two named artifacts. A prose mention without backticks is not judged — a guess
+# about prose shape would make the notary a guard.
+
+
+def test_two_callables_in_one_entry_are_collapsed(tmp_path):
+    """covers: M9 — `admit()` and `release()` are two surfaces; one S id hides one."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 admit(token) and release(token) — the admission pair"])
+    assert add.collapsed_surfaces(node) == ["S1"]
+
+
+def test_one_callable_named_twice_is_one_surface(tmp_path):
+    """covers: M9, E7 — repetition is not multiplicity; DISTINCT names collapse."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 admit(token) — admit(token) is the whole decision"])
+    assert add.collapsed_surfaces(node) == []
+
+
+def test_a_parenthetical_is_not_a_callable(tmp_path):
+    """covers: E7 — `the list (paginated)` is prose; only `name(` counts."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 admit(token) — the decision (idempotent) (cached)"])
+    assert add.collapsed_surfaces(node) == []
+
+
+def test_two_backticked_documents_are_collapsed(tmp_path):
+    """covers: M10 — two backticked file names are two named artifacts under one id."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 `README.md` + `INSTALL.md` — the quickstart pair"])
+    assert add.collapsed_surfaces(node) == ["S1"]
+
+
+def test_a_prose_document_mention_is_not_judged(tmp_path):
+    """covers: E8 — unbackticked prose stays off the heuristic's territory."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 `README.md` quickstart — grammar lives in FORMAT.md"])
+    assert add.collapsed_surfaces(node) == []
+
+
+def test_freeze_refuses_a_collapsed_function_surface(tmp_path):
+    """covers: M9, R:SWEEPDODGE — the refusal, not just the detector."""
+    _, cid = _node(tmp_path, FULL_S1,
+                   gives=["S1 admit(token) and release(token) — the admission pair"])
+    ok, msg = add.freeze(tmp_path, cid, by="t", authority="human")
+    assert ok is None
+    assert "S1" in msg and "one surface per S id" in msg, msg

@@ -1118,9 +1118,10 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
         if collapsed:
             return None, (f"cannot freeze `{slug}` — one surface per S id: "
                           + " · ".join(collapsed)
-                          + " each name several HTTP methods, so the sweep is asking "
-                            "one set of questions about several surfaces"
-                          f"\nnext: split each into its own `- S<n> <one method+path>` "
+                          + " each name several surfaces (HTTP methods, callables, or "
+                            "backticked documents), so the sweep is asking one set of "
+                            "questions about several surfaces"
+                          f"\nnext: split each into its own `- S<n> <one surface>` "
                           f"entry, re-cover them in ASSUMPTIONS, then add freeze {slug}")
 
     # Non-empty is not complete. Three live runs each recorded 5-7 real assumptions and
@@ -1870,6 +1871,10 @@ def surfaces_of(node: dict) -> list:
 
 
 RE_HTTP_METHOD = re.compile(r"\b(?:GET|POST|PUT|DELETE|PATCH)\b")
+# W3: an identifier flush against `(` is a callable; whitespace before `(` is prose.
+RE_CALLABLE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_.]*)\(")
+# W3: only a BACKTICKED file name is a named document artifact — prose mentions stay unjudged.
+RE_BACKTICKED_DOC = re.compile(r"`([\w./-]+\.[A-Za-z0-9]{1,4})`")
 
 
 def collapsed_surfaces(node: dict) -> list:
@@ -1882,17 +1887,25 @@ def collapsed_surfaces(node: dict) -> list:
     rule stood in direction.md throughout — the third consecutive live demonstration
     that a prose rule with no engine checkpoint does not happen.
 
-    DELIBERATELY PARTIAL, and honest about it: counting method tokens judges only HTTP
-    surfaces. A function or section surface has nothing to count and is never judged —
-    a heuristic that guessed at prose shape beyond this would be a guard, not a notary.
-    Two method tokens in one entry is not a guess, it is the definition being violated:
-    a surface is what ONE caller call touches (§5), and `POST/GET` is two of them.
+    STILL PARTIAL, and honest about it (beta-2/W3 widened it, it did not complete it):
+    three definitional token shapes are judged and nothing else is. Two HTTP method
+    tokens are two caller calls; two DISTINCT `name(` callable tokens are two functions;
+    two BACKTICKED file names are two named artifacts. A prose mention without one of
+    those shapes — a section, an unbackticked filename, a described behaviour — is never
+    judged: a heuristic that guessed at prose shape would be a guard, not a notary.
+    Repetition is not multiplicity (`admit()` twice is one surface), and a parenthetical
+    like `(paginated)` is not a callable — only an identifier flush against `(` counts.
     """
     out = []
     for entry in (node.get("fm") or {}).get("gives") or []:
         text = str(entry)
         m = re.match(r"\s*(S\d+)\b", text)
-        if m and len(RE_HTTP_METHOD.findall(text)) >= 2:
+        if not m:
+            continue
+        several = (len(RE_HTTP_METHOD.findall(text)) >= 2
+                   or len(set(RE_CALLABLE.findall(text))) >= 2
+                   or len(set(RE_BACKTICKED_DOC.findall(text))) >= 2)
+        if several:
             out.append(m.group(1))
     return out
 
