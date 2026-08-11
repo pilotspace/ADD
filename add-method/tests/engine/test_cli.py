@@ -33,6 +33,25 @@ def test_init_new_status_dispatch(tmp_path):
     assert (tmp_path / "tasks" / "add-thing.md").is_file()
 
 
+def test_run_timeout_flag_reaches_the_engine(tmp_path, monkeypatch):
+    """Receipt-cost follow-up (PR #197 review) — a receipt command wrapping a slow suite (a
+    production build, cost-tuned hashing) can exceed the silent 900s default; the ceiling must
+    be settable from the CLI, and the default must hold when the flag is absent."""
+    _run(tmp_path, "init", "T")
+    _run(tmp_path, "new", "Task", "slow", "--title", "slow")
+    seen = {}
+
+    def fake(root, cid, command, cwd=None, timeout=add.RUN_TIMEOUT, junit=None):
+        seen["timeout"] = timeout
+        return {"note": "ok", "receipt": {"exit": 0}}
+
+    monkeypatch.setattr(cli.add, "run", fake)
+    assert _run(tmp_path, "run", "slow", "--timeout", "1800", "--", "echo") == 0
+    assert seen["timeout"] == 1800
+    assert _run(tmp_path, "run", "slow", "--", "echo") == 0
+    assert seen["timeout"] == add.RUN_TIMEOUT
+
+
 def test_duplicate_slug_is_an_engine_refusal(tmp_path):
     _run(tmp_path, "init", "T")
     assert _run(tmp_path, "new", "Task", "dup", "--title", "one") == 0

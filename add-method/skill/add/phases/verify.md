@@ -13,7 +13,9 @@ add run <slug> --junitxml r.xml -- <the test command>
 `.add/tasks/<slug>.d/runs/`. Two properties the gate will demand:
 - **fresh** — the receipt records the git blob hash of every in-`scope:` file at run time; a gate
   recomputes it and refuses on any difference. This kills the stale-green failure (tests that passed
-  before the last edit). Outside git it falls back to mtime and says so.
+  before the last edit). A directory scope enumerates through git, so **gitignored files (build
+  output, dependencies) never enter the digest** — a rebuild cannot stale a receipt no source edit
+  touched. Outside git it falls back to mtime and says so.
 - **bound** — every check ID in `## CHECKS` must appear in the receipt with `outcome: pass`; a
   `covers:` naming a check that did not demonstrably pass fails the gate. Probed assumptions
   (`· probe:` lines) bind the same way — a declared-checkable reading with no passing check
@@ -22,6 +24,15 @@ add run <slug> --junitxml r.xml -- <the test command>
 The gate also demands the build was **entered**: an `act: brief` stamp between the freeze and
 this receipt's run (see `phases/build.md`). Briefing after the fact buys nothing — the fix the
 refusal names is a re-run under the brief.
+
+**Keep the receipt command narrow.** The gate demands exactly the checks `## CHECKS` binds —
+nothing rewards wrapping more. Wrap the **narrowest command that reports every bound check**
+(one test file, one marker, one target); the full suite rides CI or a backgrounded run, and a
+slow check that no `covers:` names (a whole production build, cost-tuned hashing) stays out of
+the receipt loop unless a frozen check demands it. A receipt run costs minutes only when the
+wrapped command does — the notary itself is milliseconds. The wrapped command's ceiling is
+**900 s by default**; a legitimately slow receipt (a bound build check) raises it explicitly
+with `--timeout <s>` — a timeout is *recorded* as exit 124, and the gate will refuse the PASS.
 
 Evidence kinds, strongest first: `test-ids` > `artifact-hash` > `command-exit` > `human-observed`. A
 weaker kind is a *visible* weakening (the gate records which it accepted) — never a silent one.

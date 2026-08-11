@@ -35,7 +35,7 @@ Build to green, verify on evidence, record one outcome. `gate PASS` auto-closes 
 
 | verb | what it does | example |
 |---|---|---|
-| `run` | execute the checks and write a fresh, scope-bound Run receipt. `--junitxml` parses test IDs; the command follows `--` | `add run reject-overlap --junitxml r.xml -- pytest tests/test_overlap.py` |
+| `run` | execute the checks and write a fresh, scope-bound Run receipt. `--junitxml` parses test IDs; `--timeout <s>` raises the 900 s ceiling for a build-heavy command; the command follows `--` — keep it the narrowest run that reports every bound check | `add run reject-overlap --junitxml r.xml -- pytest tests/test_overlap.py` |
 | `gate` | record the verdict: `PASS \| RISK-ACCEPTED \| HARD-STOP`. `--by`, `--authority`, `--reason` | `add gate reject-overlap PASS --by "tindang"` |
 | `done` | close a gated task (the normal path closes automatically at `gate PASS`) | `add done reject-overlap` |
 | `reopen` | return a done task to a beat with a reset gate. `--to direction\|build\|verify` and `--reason` both required | `add reopen reject-overlap --to build --reason "missed a race"` |

@@ -1770,7 +1770,18 @@ def scope_digest(root, scope: list) -> list:
             p = root / entry
             # A directory scope entry expands to the files beneath it — otherwise a dir-scoped task
             # gets an empty digest and `gate` cannot establish freshness (field-report finding #6).
-            candidates = [q for q in sorted(p.rglob("*")) if q.is_file()] if p.is_dir() else [p]
+            # Enumerated THROUGH git (tracked + untracked-not-ignored), never a raw walk: the
+            # project's own .gitignore defines its build noise, so `.next/`, `node_modules/` and
+            # friends stay out — a rebuild must not stale a receipt no source edit touched, and
+            # walking a dependency tree must not price the notary (field receipt: a dir scope
+            # digested a whole turbopack cache). A glob or an explicitly named file is a
+            # deliberate declaration and keeps its exact reading.
+            if p.is_dir():
+                listed = _git(root, "ls-files", "-z", "--cached", "--others",
+                              "--exclude-standard", "--", entry)
+                candidates = [root / f for f in sorted((listed or "").split("\0")) if f]
+            else:
+                candidates = [p]
         for path in candidates:
             if not path.is_file():
                 continue
