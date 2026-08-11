@@ -52,6 +52,35 @@ def test_build_noise_is_excluded(tmp_path):
     assert _paths(add.scope_digest(root, ["src"])) == {"src/a.py"}, "bytecode must not pollute the digest"
 
 
+def test_gitignored_files_are_excluded(tmp_path):
+    """covers: M2 — the project's own .gitignore defines its build noise: `.next/`,
+    `node_modules/` and friends under a dir scope never enter the digest (field receipt:
+    matrix-ux digested a whole turbopack cache)."""
+    root = _git_repo(tmp_path)
+    (root / ".gitignore").write_text("app/.next/\napp/node_modules/\n")
+    (root / "app" / ".next" / "cache").mkdir(parents=True)
+    (root / "app" / "node_modules" / "lib").mkdir(parents=True)
+    (root / "app" / "page.tsx").write_text("P\n")
+    (root / "app" / ".next" / "cache" / "x.sst").write_bytes(b"\x00build")
+    (root / "app" / "node_modules" / "lib" / "index.js").write_text("lib\n")
+    assert _paths(add.scope_digest(root, ["app"])) == {"app/page.tsx"}, \
+        "ignored library/build files must not pollute the digest"
+
+
+def test_rebuild_of_ignored_output_keeps_receipt_fresh(tmp_path):
+    """covers: M2 — a rebuild that only touches gitignored output cannot stale a receipt
+    no source edit touched."""
+    root = _git_repo(tmp_path)
+    (root / ".gitignore").write_text("src/dist/\n")
+    (root / "src" / "dist").mkdir(parents=True)
+    (root / "src" / "a.py").write_text("A\n")
+    (root / "src" / "dist" / "bundle.js").write_text("v1\n")
+    receipt = add.scope_digest(root, ["src"])
+    (root / "src" / "dist" / "bundle.js").write_text("v2\n")
+    ok, why = add.fresh({"scope_digest": receipt, "freshness": "content"}, root)
+    assert ok, why
+
+
 def test_file_scope_is_unchanged(tmp_path):
     """covers: R:FILEUNCHANGED — a single-file scope still yields exactly its one blob."""
     root = _git_repo(tmp_path)

@@ -13,7 +13,9 @@ add run <slug> --junitxml r.xml -- <the test command>
 `.add/tasks/<slug>.d/runs/`. Two properties the gate will demand:
 - **fresh** — the receipt records the git blob hash of every in-`scope:` file at run time; a gate
   recomputes it and refuses on any difference. This kills the stale-green failure (tests that passed
-  before the last edit). Outside git it falls back to mtime and says so.
+  before the last edit). A directory scope enumerates through git, so **gitignored files (build
+  output, dependencies) never enter the digest** — a rebuild cannot stale a receipt no source edit
+  touched. Outside git it falls back to mtime and says so.
 - **bound** — every check ID in `## CHECKS` must appear in the receipt with `outcome: pass`; a
   `covers:` naming a check that did not demonstrably pass fails the gate. Probed assumptions
   (`· probe:` lines) bind the same way — a declared-checkable reading with no passing check
