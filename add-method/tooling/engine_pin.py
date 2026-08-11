@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "1f2b9931a351809aebf563a4f2962680"  # re-aimed @ surface-anchored sweep (gives: is scaffolded; freeze refuses unauthored gives: and unswept (dimension, surface) pairs; todo counts them down). prior: fe8e01c9… @ assumption-sweep
+ENGINE_MD5 = "ea12ddee17db88c1e91604db3687f25f"  # re-aimed @ not-said register (the scaffolded assumption lines frame "the request does not say"; one line, one silence). prior: 1f2b9931… @ surface-anchored sweep
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

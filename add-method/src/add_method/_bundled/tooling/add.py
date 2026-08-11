@@ -940,19 +940,27 @@ BODIES = {
             "beat: direction · next: add freeze {slug}\n\n"
             "## RULES\n<must>\n- M1 <the rule that must hold>\n</must>\n<reject>\n"
             "- R:<NAME> <what must never happen> -> \"<NAME>\"\n</reject>\n\n"
+            # The line the author fills STARTS from "the request does not say" — the
+            # not-said register is the frame, not a suggestion. The n=1 probe run showed
+            # why: the sweep forced all four blind-spot questions and every answer came
+            # back declarative ("GET /bookings lists every booking", "DELETE is permitted
+            # for any caller") — a decision wearing a stated requirement's voice, which is
+            # exactly the indistinguishability this section exists to end. With the frame
+            # scaffolded, asserting requires DELETING it; before, flagging required
+            # composing it. given -> decided -> priced, three slots apart.
             "## ASSUMPTIONS\n"
-            "- A1 [who] covers: <S ids> · identity/authority/scope the spec left open"
-            " -> <cost if wrong>\n"
-            "- A2 [which] covers: <S ids> · inclusion/visibility it left open"
-            " -> <cost if wrong>\n"
-            "- A3 [when] covers: <S ids> · boundaries/timing it left open"
-            " -> <cost if wrong>\n"
-            "- A4 [absent] covers: <S ids> · missing values/defaults it left open"
-            " -> <cost if wrong>\n"
-            "- A5 [order] covers: <S ids> · sequencing/ties it left open"
-            " -> <cost if wrong>\n"
+            "- A1 [who] covers: <S ids> · the request does not say <who may act / whose"
+            " data>; taking <reading> -> <cost if wrong>\n"
+            "- A2 [which] covers: <S ids> · the request does not say <which rows/cases"
+            " are in>; taking <reading> -> <cost if wrong>\n"
+            "- A3 [when] covers: <S ids> · the request does not say <where the boundary"
+            " falls>; taking <reading> -> <cost if wrong>\n"
+            "- A4 [absent] covers: <S ids> · the request does not say <what a missing"
+            " value means>; taking <reading> -> <cost if wrong>\n"
+            "- A5 [order] covers: <S ids> · the request does not say <what orders /"
+            " breaks a tie>; taking <reading> -> <cost if wrong>\n"
             "every `gives:` surface is swept on every dimension; "
-            "`[<dim>] n/a · <why>` retires one.\n\n"
+            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"

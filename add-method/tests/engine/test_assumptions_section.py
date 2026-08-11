@@ -121,3 +121,37 @@ def test_the_assumption_is_not_sealed_by_the_direction_digest(tmp_path):
     n["body"] = add.RE_ASSUMPTION_PLACEHOLDER.sub("- A1 an assumption -> a cost", n["body"])
 
     assert add.direction_digest(n) == before
+
+
+class TestScaffoldCarriesTheRegister:
+    """The n=1 probe (runs-amb1-v3): the sweep forced all four blind-spot questions and
+    the agent answered every one DECLARATIVELY — "GET /bookings lists every booking",
+    "DELETE is permitted for any caller" — the authoritative voice of a stated
+    requirement. The section exists to distinguish given from decided, and a reader
+    cannot make that distinction from a line that asserts. The register is therefore in
+    the SCAFFOLD, at the moment of use (law 4): the slot the author fills starts from
+    "the request does not say", so writing an assertion requires deleting the frame
+    rather than never seeing it."""
+
+    def test_every_scaffolded_assumption_line_states_the_not_said_register(self, tmp_path):
+        body = _scaffold(tmp_path).read_text(encoding="utf-8")
+        section = add._section_of(body.split("---", 2)[2], "ASSUMPTIONS")
+        lines = [l for l in section.splitlines() if l.startswith("- A")]
+        assert len(lines) == len(add.SWEEP_DIMENSIONS)
+        for line in lines:
+            assert "the request does not say" in line, line
+
+    def test_the_scaffold_separates_reading_from_cost(self, tmp_path):
+        # given -> decided -> priced: three slots, so an author states each apart.
+        body = _scaffold(tmp_path).read_text(encoding="utf-8")
+        for line in add._section_of(body.split("---", 2)[2], "ASSUMPTIONS").splitlines():
+            if line.startswith("- A"):
+                assert "taking <" in line and "-> <cost if wrong>" in line, line
+
+    def test_the_scaffold_says_one_line_one_silence(self, tmp_path):
+        # The probe's A6 bundled three silences into one line covering S2,S3,S4 —
+        # unauditable wholesale. The engine cannot police prose density (a notary
+        # records), so the rule rides the scaffold's trailing hint instead.
+        body = _scaffold(tmp_path).read_text(encoding="utf-8")
+        assert "one line, one silence" in add._section_of(body.split("---", 2)[2], "ASSUMPTIONS"), \
+            "the bundling rule must be visible at the moment of authoring"
