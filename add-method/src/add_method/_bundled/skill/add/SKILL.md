@@ -52,6 +52,8 @@ Read the request into a task shape, then pick the **lane** (you route; the human
 - **Quick** — one file / adjacent few, behavior the specs already cover, no new contract, mechanical.
   Make the edit, then leave a receipt: the git diff + `add … learn <dd> "<lesson>"`. No task node.
 - **Task** — one atomic node in the active milestone's scope. The 3-beat loop below.
+- **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
+  questions + a hard budget freeze, a cited `## FINDINGS` brief gates (`phases/explore.md`).
 - **Project / milestone** — a new theme or a slice too big for one task. Draft the milestone
   (goal · scope · exit criteria · breadth-first task list), then create it and its tasks.
 
@@ -114,7 +116,7 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle (also: doc)
 add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides re-authoring
-add new Task <slug> --title "..." --depth quick|standard|deep [--milestone m] [--scope a,b]
+add new Task <slug> --title "..." --depth quick|standard|deep [--kind explore] [--milestone m] [--scope a,b]
                                              # --sensitivity security|data|architecture sets the floor
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb

@@ -15,13 +15,18 @@ A raw request is intent wrapped in prose. First read it into shape — do this B
    interview agenda; surface them, never silently fill them.
 4. **Surface the hidden work** — migrations, new contract surface, risk. This is what separates a real
    task from a wish, and what raises sensitivity.
+5. **Tally the unknowns** — count the unstated items and unmeasurable latents from 2–3 whose answer
+   would change the contract shape; trivia and build detail do not count. This tally is the third
+   routing axis (beside size and sensitivity).
 
 This analysis IS the node's raw material: the restated intent seeds `## RULES`, the latent requirements
 seed the target, the unstated is what the interview settles.
 
 ## Pick the lane (you route silently; the human vetoes)
 
-Judge the lane FIRST, cheapest that fits:
+Judge the lane FIRST, cheapest that fits. The closed floor is checked first and always wins over the tally;
+among the lanes the floor allows, uncertainty dominates size — ONE contract-shaping unknown already
+argues Explore-first ("high" is judgment, never a numeric gate):
 
 ### Quick — below the scope floor
 Fits when **all** hold: one file or a few adjacent ones · behavior the specs already cover (typo,
@@ -35,6 +40,15 @@ mechanical. Then **no node**: make the edit and leave the receipt —
 Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the
 3-beat loop: `add new Task <slug> --title "..." --depth quick|standard|deep`, then Direction.
 (The node type is a FORMAT vocabulary word — `Task`, `Milestone` — canonically capitalized.)
+
+### Explore — the answer IS the deliverable
+Fits when the **primary work is answering questions**, not editing — investigate a defect, evaluate
+a library, research an approach or the web — whatever the eventual code size. High unknowns route
+here FIRST (explore-first beats freezing a contract on a guess; the human vetoes the routing as with
+every lane). One Task node with `--kind explore`: questions are the Musts, a hard budget sits in
+PLAN, the deliverable is a cited `## FINDINGS` brief closed by a sufficiency gate
+(`phases/explore.md`). An explicit "research X" ask is always this lane. The closed floor holds:
+security-scoped questions keep their human floor.
 
 ### Project / milestone — a theme or a slice
 A new product theme no active milestone covers, or a slice too big for one task. Draft the milestone
@@ -59,8 +73,10 @@ lands, dependents that `need:` it are flagged stale). Never fork the truth into 
 
 Present it via `gate.md` — open with the ARC (goal · done · plan), render the chosen lane as a guided
 choice with its described alternatives. Emit exactly one of:
-- **a classification** — `{ lane, rationale, command }` — `rationale` names WHY (the fit, the theme, the
-  slice, or the frozen scope touched); `command` is the exact `add …` line. The human confirms first.
+- **a classification** — `{ lane, depth, rationale, command }` — `rationale` names WHY (the fit, the
+  theme, the slice, the frozen scope touched — and the unknowns tally when it routed); `depth` makes
+  ceremony a decision output the human vetoes, never a silent constant; `command` is the exact
+  `add …` line. The human confirms first.
 - **a rejection** — create nothing: `ask_human` (too ambiguous to size), `frozen_scope` (route as a
   change-request), or `split_required` (spans lanes — propose the smallest correctly-sized set).
 

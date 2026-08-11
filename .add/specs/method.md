@@ -13,3 +13,5 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · folded] edge-list frontmatter (depends_on/needs) must be BLOCK lists — inline [a, b] flow parses in the engine's T0 but not in the M0 validator; the parity oracle catches it on the live bundle (evidence: /tasks/sources-receipt.md)
+- [ADD · folded] any angle-bracketed text in a gives: entry — even inside a backticked example path — reads as unauthored scaffold and blocks freeze; keep gives: literals bracket-free (evidence: /tasks/explore-lane.md)

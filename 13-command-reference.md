@@ -27,6 +27,7 @@ Create a node and take it through Direction to the one approval.
 | `new` | scaffold a typed node — `Task \| Milestone \| Persona \| …`. Flags: `--title --depth --sensitivity --kind --milestone --scope` | `add new Task reject-overlap --depth standard --sensitivity data --scope src/bookings/**` |
 | `freeze` | the one human approval — closes Direction, opens Build. `--by`, `--authority` | `add freeze reject-overlap --by "tindang" --authority human` |
 | `brief` | compile the sealed direction into the working XML prompt — and, on a frozen task, record an `act: brief` stamp: the entry into Build. The gate refuses a `PASS` whose receipts predate that entry. `--phase`, `--for-subagent`, `--by` | `add brief reject-overlap` |
+| `replan` | record a steering amendment on a frozen task — one additive `act: replan` stamp carrying the note; the seal, the checks and the gate are untouched. A frozen `gives:`/check change stays a change-request (refreeze), never a replan. `--note`, `--by` | `add replan reject-overlap --note "pivoting to sorted-merge"` |
 
 ## The loop
 

@@ -83,6 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--by", default="cli")
     s.add_argument("--authority")
 
+    s = sub.add_parser("replan", help="record a steering amendment on a frozen task (the seal untouched)")
+    s.add_argument("ref")
+    s.add_argument("--note", default="")
+    s.add_argument("--by", default="builder")
+
     s = sub.add_parser("run", help="execute → a fresh, bound receipt (cmd after --)")
     s.add_argument("ref")
     s.add_argument("--junitxml")
@@ -187,6 +192,11 @@ def dispatch(args, run_cmd) -> int:
 
     if args.verb == "freeze":
         node, note = add.freeze(root, _resolve(root, args.ref), by=args.by, authority=args.authority)
+        print(note)
+        return 0 if node else 1
+
+    if args.verb == "replan":
+        node, note = add.replan(root, _resolve(root, args.ref), note=args.note, by=args.by)
         print(note)
         return 0 if node else 1
 

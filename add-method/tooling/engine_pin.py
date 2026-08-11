@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "edbaaa91bb51e0fbe018deb25c6dfea6"  # re-aimed @ upgrade-working-bundle (upgrade restores the installer-managed trees from the archive BEFORE init — the engine must not archive itself away; R:SELFARCHIVE). prior: 6dd9c360… @ run-digest-root
+ENGINE_MD5 = "20f201dbdc22c64c00f21212ace1e19d"  # re-aimed @ replan-verb + sources-receipt (dynamic-flow: the replan steering stamp; the explore budget floor R:UNBOUNDED and sufficiency gate R:HOLLOW_EXPLORE with the sources evidence rung). prior: edbaaa91… @ upgrade-working-bundle
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "23b6842c15a5253add37b838181c0b54"  # re-aimed @ scope-flag-append (`--scope` is action=append — repeated flags accumulate, commas expand in place; a CLI argument is never silently dropped). prior: b4a72498… @ guided-upgrade W5
+ENGINE_PKG_MD5 = "bfb806e78d6faa4e76ce7d3feb454f50"  # re-aimed @ replan-verb (dynamic-flow: the replan verb joins the dispatch — parser + handler, nothing else moved). prior: 23b6842c… @ scope-flag-append
