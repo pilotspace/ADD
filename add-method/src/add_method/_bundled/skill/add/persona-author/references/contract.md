@@ -1,8 +1,9 @@
 # The ADD persona contract
 
-What the ADD engine reads and validates. Miss the required parts and the persona fails
-`add.py check`; miss the recommended frontmatter and no apply-surface loads it. This is the
-hard schema — `references/patterns.md` is the judgment that fills it well.
+What the ADD engine reads and validates. Miss the required parts and the node draws `add doctor`
+findings (`missing_frontmatter`, `type_empty`); miss the recommended frontmatter and no
+apply-surface loads it — SILENTLY, because the engine is a notary and does not lint routing
+fields. This is the hard schema — `references/patterns.md` is the judgment that fills it well.
 
 ## The four legs
 
@@ -45,8 +46,9 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
 - **`name` · `vibe`** — REQUIRED. Absence fails the schema check.
 - **`flow`** — the apply-surfaces this lens loads at. The ONLY valid values are
   `design` · `build` · `advisor` · `verify` (single-sourced as `constants.PERSONA_FLOW_VALUES`).
-  Any other value is a typo that no surface loads — `add.py check` emits a `persona_quality` WARN
-  naming it. Surfaces: **design** = the UDD requirements lens · **build** = the domain-identity
+  Any other value is a typo that no surface loads — and NOTHING warns: the engine reads only
+  `use-when:` for the roster, so a `flow:` typo fails silently. Check the four values yourself
+  before finishing. Surfaces: **design** = the UDD requirements lens · **build** = the domain-identity
   overlay on SOUL.md · **advisor** = the subagent/streams delegation lens · **verify** = the
   evidence-judging lens (earned-green refute-read + gate record).
 - **`task-kinds`** — the persona's SCOREBOARD KEY, from the closed taxonomy:
@@ -126,11 +128,16 @@ Two obligations come with seeding, both test-enforced:
 
 Adding a slug to `METHOD_PERSONAS` without meeting the criterion re-opens that failure.
 
-## Quality WARNs `add.py check` surfaces (non-blocking, measure-not-block)
+## The author's own final sweep (the engine does NOT check these)
 
-- **flow typo** — a `flow:` value outside the four is named in the finding (loaded by no surface).
+The 3.0 engine is a notary: `add doctor` reports structural findings only. The two classic
+half-finished-persona defects fail silently, so they are YOUR checklist, not a WARN to wait for:
+
+- **flow typo** — a `flow:` value outside the four is loaded by no surface. Re-read it against
+  `design · build · advisor · verify` verbatim.
 - **bare placeholder** — a `<…>` token left outside backtick spans and HTML comments (a half-filled
   copy). Backticked (`` `<slug>` ``) and commented (`<!-- <x> -->`) angle brackets are content, not
   placeholders. Sweep every real `<…>` before you finish.
 
-These are WARNs, never failures — but a roster-ready persona clears all of them.
+A roster-ready persona clears both, and its line appears in `.add/index.md` after
+`cli.py doctor --sync`.

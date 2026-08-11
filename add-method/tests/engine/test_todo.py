@@ -62,7 +62,7 @@ def test_todo_empty_is_clear(tmp_path):
     assert "nothing open" in note.lower(), note
 
 
-def test_todo_beat_is_stamp_derived(tmp_path):
+def test_todo_beat_is_stamp_derived(tmp_path, draft):
     """covers: M5, E3 — the beat comes from the stamps, not the `status` field.
 
     `status` stays `direction` from creation until done, so reading it made every open task report
@@ -70,20 +70,28 @@ def test_todo_beat_is_stamp_derived(tmp_path):
     were both listed as `direction · add freeze`. A cold resume followed that back to the start.
     """
     _bundle(tmp_path)
+    draft(tmp_path, "/tasks/open1.md")
     add.freeze(tmp_path, "/tasks/open1.md", by="human:t")
     items, note = add.todo(tmp_path)
     beats = {cid.rsplit("/", 1)[-1][:-3]: st for cid, st, _ in items}
     verbs = {cid.rsplit("/", 1)[-1][:-3]: nxt for cid, _, nxt in items}
     assert beats["open1"] == "build", f"a frozen task is at the build beat: {beats}"
     assert beats["open2"] == "direction", f"an unfrozen task stays at direction: {beats}"
-    assert "add run" in verbs["open1"], f"the build beat points at the run: {verbs}"
+    # beta-2 (R:UNBRIEFED): the build beat's first verb is the ENTRY — a sealed task that has
+    # not recorded a brief points at `add brief`; the run hint takes over once it has.
+    assert "add brief" in verbs["open1"], f"the build beat points at the entry first: {verbs}"
+    add.brief_stamp(tmp_path, "/tasks/open1.md", by="cli")
+    items, _ = add.todo(tmp_path)
+    verbs = {cid.rsplit("/", 1)[-1][:-3]: nxt for cid, _, nxt in items}
+    assert "add run" in verbs["open1"], f"once briefed, the build beat points at the run: {verbs}"
     assert "add freeze" in verbs["open2"], f"the direction beat points at the freeze: {verbs}"
     assert "build:" in note, note
 
 
-def test_todo_receipt_moves_the_beat_to_verify(tmp_path):
+def test_todo_receipt_moves_the_beat_to_verify(tmp_path, draft):
     """covers: M5 — a recorded receipt puts the task at verify, pointing at the gate."""
     _bundle(tmp_path)
+    draft(tmp_path, "/tasks/open1.md")
     add.freeze(tmp_path, "/tasks/open1.md", by="human:t")
     add.run(tmp_path, "/tasks/open1.md", [sys.executable, "-c", "pass"], cwd=tmp_path.parent)
     items, note = add.todo(tmp_path)

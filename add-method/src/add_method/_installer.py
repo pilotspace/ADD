@@ -37,7 +37,7 @@ MANAGED = (
     ("personas-index", ".add/personas-index", False),
 )
 # Optional managed trees: an ENHANCEMENT the persona phase reads, not core runtime.
-# The real package always ships these (guarded by test_packaging + test_bundle_parity);
+# The real package always ships these (guarded by test_packaging + test_tree_parity);
 # but a malformed/older package missing one must NOT abort the whole install — the core
 # (skill/tooling) still lands, and the optional tree is soft-skipped. Design-for-failure.
 # `agents` joins here (roster-install-drift): the phase-agent roster is a spawn-acceleration

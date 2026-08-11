@@ -121,16 +121,14 @@ jobs:
           node-version: '24'     # trusted publishing needs npm 11.5.1+, which ships with Node 24+
           registry-url: 'https://registry.npmjs.org'
 
-      # prepublishOnly runs test_packaging.py, whose wheel check drives the PEP 517
-      # backend IN-PROCESS (no build isolation) — so this job must itself provide the
-      # build requirement pyproject.toml declares (setuptools>=77 for PEP 639
-      # `license = "MIT"`). Without this, the runner's apt Python fails the publish.
+      # `prepublishOnly` shells out to python3, so pin an interpreter rather than trusting the
+      # runner's apt default. (It used to run test_packaging.py, whose wheel check drove the PEP 517
+      # backend in-process and needed setuptools>=77 provisioned here; 3.0 removed that file, which
+      # left the hook discovering nothing and exiting 0. It now runs the tree-parity sweep, which
+      # imports nothing outside the stdlib — so the setuptools step it required is gone with it.)
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
-      - name: Provision the declared build requirement (setuptools>=77)
-        run: python3 -m pip install --upgrade 'setuptools>=77'
 
       # Trusted publishing requires npm >= 11.5.1; Node 24.0 ships npm 11.3, so bump
       # explicitly rather than depending on the bundled version.
@@ -142,10 +140,20 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
+          # npm assigns the `latest` dist-tag when none is given — it does NOT infer a channel from
+          # a semver prerelease. Bare `npm publish` of 3.0.0-beta.1 would therefore repoint every
+          # plain `npm i @pilotspace/add` at the beta. Derive the channel instead of hard-coding it,
+          # so the final release still claims `latest` rather than stranding it on the old major.
+          # (PyPI needs no counterpart: pip skips prereleases unless asked with `--pre`.)
+          case "$VERSION" in
+            *-*) DIST_TAG=beta ;;    # any semver prerelease: -beta.N, -rc.N, …
+            *)   DIST_TAG=latest ;;
+          esac
           if npm view "@pilotspace/add@${VERSION}" version >/dev/null 2>&1; then
             echo "@pilotspace/add@${VERSION} already on the registry — skipping (no deps)."
           else
-            npm publish --access public      # OIDC auth + provenance are automatic
+            echo "publishing ${VERSION} to the '${DIST_TAG}' channel"
+            npm publish --access public --tag "$DIST_TAG"   # OIDC auth + provenance are automatic
           fi
 
   pypi:

@@ -63,11 +63,12 @@ def test_status_orients_after_init(tmp_path, capsys):
 # ------------------------------------------------------- new + freeze + brief
 
 
-def test_new_then_freeze_wire_through(tmp_path):
+def test_new_then_freeze_wire_through(tmp_path, draft):
     root = tmp_path / ".add"
     spike_cli.main(["init", "--root", str(root), "Spike"])
     assert spike_cli.main(["new", "Task", "widget", "--depth", "standard", "--root", str(root)]) == 0
     assert (root / "tasks" / "widget.md").is_file()
+    draft(root, "/tasks/widget.md")   # freeze refuses a scaffold — draft it first
     # freeze resolves the bare slug to its cid and stamps it
     assert spike_cli.main(["freeze", "widget", "--by", "test", "--root", str(root)]) == 0
 

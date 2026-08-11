@@ -220,3 +220,49 @@ def test_roundtrip_bundle_byte_identical():
         assert rebuilt == original, f"round-trip changed {path.relative_to(bundle)}"
         checked += 1
     assert checked >= 20, f"expected the whole bundle, only saw {checked} nodes"
+
+
+class TestBareApostropheDoesNotOpenAQuote:
+    """A live authoring pass wrote `- S2 GET /transfers — the caller's own transfer
+    history` into `gives:` and every key BELOW it vanished from the parse — including
+    `verified:`, so `sealed_direction` returned None and the freeze seal silently
+    stopped verifying. `_open_quote` treated the mid-word apostrophe as an opener;
+    in YAML a quote opens a string only at a token boundary, and `caller's` is plain
+    content. The docstring on `_open_quote` records this bug's own PRIOR incarnation
+    (count → state); this is the second: state that opens mid-word. direction.md's own
+    example teaches exactly this shape (`the caller's own sessions`)."""
+
+    RAW = ("---\n"
+           "type: Task\n"
+           "title: t\n"
+           "gives:\n"
+           "  - S1 POST /transfers — move an amount\n"
+           "  - S2 GET /transfers — the caller's own transfer history\n"
+           "generated: { by: add/3.0.0, at: 2026-08-11 }\n"
+           "verified:\n"
+           '  - { by: "tin", at: 2026-08-11, act: freeze, authority: human, direction: "sha256:aa" }\n'
+           "---\nbody")
+
+    def test_keys_after_an_apostrophe_item_survive(self):
+        fm, _ = add.parse(self.RAW)
+        assert set(fm) >= {"gives", "generated", "verified"}, sorted(fm)
+        assert add.sealed_direction(fm) == "sha256:aa"
+
+    def test_the_apostrophe_item_itself_is_intact(self):
+        fm, _ = add.parse(self.RAW)
+        assert fm["gives"][1] == "S2 GET /transfers — the caller's own transfer history"
+
+    def test_a_genuinely_quoted_wrapped_item_still_continues(self):
+        # The case the quote-arm exists for: a quoted value wrapped across lines
+        # (its braces balance inside the quote, so the brace arm cannot rescue it).
+        raw = ('---\nxs:\n  - "a wrapped }\n    value"\nafter: 1\n---\nbody')
+        fm, _ = add.parse(raw)
+        assert fm["xs"] == ["a wrapped } value"]
+        assert str(fm["after"]) == "1"
+
+    def test_an_apostrophe_inside_double_quotes_still_closes(self):
+        # The PRIOR bug's fixture — must stay green.
+        raw = ('---\nxs:\n  - "the node\'s own body"\nafter: 1\n---\nbody')
+        fm, _ = add.parse(raw)
+        assert fm["xs"] == ["the node's own body"]
+        assert str(fm["after"]) == "1"

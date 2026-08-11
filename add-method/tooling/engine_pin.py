@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "d2a8d8d678171ea09299e0c8de872942"  # re-aimed @ persona-index-sidecar (init vendors personas-index/; both oracles skip it). prior: 5f02354e… @ init-identity
+ENGINE_MD5 = "dd612bc46b51b85485ff12c1edc3bd89"  # re-aimed @ guided-upgrade W5 (`upgrade` archives a 2.x bundle whole, inits 3.0, writes MIGRATION.md in the archive — nothing deleted, nothing translated). prior: a50e4b42… @ routing-index-freshness W4
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing
+ENGINE_PKG_MD5 = "b4a7249845259f3fbcf8e1dae013b03c"  # re-aimed @ guided-upgrade W5 (upgrade subparser + dispatch; operates on the project root, not the bundle). prior: 3d21a9c2… @ brief-gate W1

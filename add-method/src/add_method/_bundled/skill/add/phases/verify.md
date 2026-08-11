@@ -15,7 +15,13 @@ add run <slug> --junitxml r.xml -- <the test command>
   recomputes it and refuses on any difference. This kills the stale-green failure (tests that passed
   before the last edit). Outside git it falls back to mtime and says so.
 - **bound** — every check ID in `## CHECKS` must appear in the receipt with `outcome: pass`; a
-  `covers:` naming a check that did not demonstrably pass fails the gate.
+  `covers:` naming a check that did not demonstrably pass fails the gate. Probed assumptions
+  (`· probe:` lines) bind the same way — a declared-checkable reading with no passing check
+  holds the PASS.
+
+The gate also demands the build was **entered**: an `act: brief` stamp between the freeze and
+this receipt's run (see `phases/build.md`). Briefing after the fact buys nothing — the fix the
+refusal names is a re-run under the brief.
 
 Evidence kinds, strongest first: `test-ids` > `artifact-hash` > `command-exit` > `human-observed`. A
 weaker kind is a *visible* weakening (the gate records which it accepted) — never a silent one.

@@ -18,7 +18,7 @@ reads every external call as a thing that will be retried, time out, and partial
 designs for that before designing the happy path.
 
 ## Abilities
-- ORIENT on load: run `add.py status`, the payments suite (`pytest tests/payments`), and `git diff`
+- ORIENT on load: run `add status`, the payments suite (`pytest tests/payments`), and `git diff`
   on the touched handler — judge against ground truth, not memory.
 - Can diff two provider-response fixtures byte-for-byte to prove a passthrough or a mapping change.
 - DESIGN-FOR-FAILURE: names the timeout · retry (with idempotency key) · circuit-breaker · rollback

@@ -58,7 +58,7 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
 
 ## Workflow
 
-1. **ORIENT before drafting.** Run `python3 .add/tooling/add.py status`. Read the sibling personas
+1. **ORIENT before drafting.** Run `python3 .add/tooling/add status`. Read the sibling personas
    in `.add/personas/*.md` (frontmatter alone is enough) and, if present, the teacher library at
    `.add/personas-teacher/`. You are placing ONE lens in a roster — know the neighbours so this
    persona has a distinct seam, not an overlap. If you'll author (no sibling fits), pick the
@@ -84,7 +84,7 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    can check in-session; fake precision is worse than none. Keep it to what it would refuse.
 
 5. **List Abilities — concrete, anchored, checkable.** Lead with the ORIENT commands the lens runs
-   on load (`add.py status` · the suite · the diff). State each ability as something doable *now*,
+   on load (`add status` · the suite · the diff). State each ability as something doable *now*,
    anchored to a real file/tool/command — never an aspiration. A persona that owns I/O/network/infra
    carries a **design-for-failure** ability (timeout · retry · circuit-breaker · rollback for every
    external call; an unbounded await or silent half-write is a defect).
@@ -107,10 +107,12 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    is honest.
 
 9. **VALIDATE.** Save as `.add/personas/<slug>.md` (never overwrite an existing persona; never use a
-   `_`-prefixed name). Run `python3 .add/tooling/add.py check` — it validates presence-based and
-   surfaces quality WARNs (a `flow:` typo loaded by no surface; a bare `<…>` placeholder left
-   unfilled). Sweep every `<…>` placeholder out; fix every WARN. Green check = the persona is
-   roster-ready.
+   `_`-prefixed name). Run `python3 .add/tooling/cli.py doctor` — no findings means the node
+   conforms. Then prove the LOAD, not the presence: `cli.py doctor --sync` recompiles the index,
+   and the persona must appear in `.add/index.md`'s roster with its `use-when:` as the catalogue
+   line — a persona missing there is one no routing ever reads. The engine does NOT lint quality:
+   sweep every bare `<…>` placeholder and check `flow:` against the four values yourself — a typo
+   there is loaded by no surface and fails silently.
 
 ## The one-line test
 

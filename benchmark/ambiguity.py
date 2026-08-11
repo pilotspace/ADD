@@ -89,6 +89,37 @@ MARKERS: tuple[str, ...] = (
     "does not say",
     "two readings",
     "interpret",
+    # --- the DECLARATIVE register, added after the ASSUMPTIONS re-run -------------
+    # The list above was drawn from chat-style hedging. A method that writes its
+    # recognition into a DOCUMENT phrases it as a statement about the spec, not as a
+    # question — "the spec never restricts X", "Y is not stated". Three explicit,
+    # pre-code, in-artifact surfacings went uncredited on morphology alone.
+    #
+    # Every entry here is a variant of a speech act ALREADY above (`does not say` /
+    # `not specified`): a contraction, a negation synonym, or another verb for "said".
+    # No new speech act is admitted — test_every_addition_is_a_variant_of_an_existing
+    # _marker holds that line, and test_a_bare_mention_still_does_not_surface holds
+    # that naming a topic without a not-said construction still scores nothing.
+    "doesn't say",
+    "never says",
+    "not stated",
+    "does not state",
+    "doesn't state",
+    "not defined",
+    "does not define",
+    "doesn't define",
+    # NOT "does not specify" / "never specifies": `specify` is a BANNED arm token
+    # (spec-kit's `/specify` command), and the fairness guard is a substring check that
+    # cannot tell the command from the plain verb. Weakening that guard to fit this
+    # expansion would trade a real protection for a marginal one — `not specified` is
+    # already in the list above and covers the same construction.
+    "does not restrict",
+    "doesn't restrict",
+    "never restricts",
+    "does not give",
+    "doesn't give",
+    "does not pin",
+    "never names",
 )
 
 # Co-occurrence is SENTENCE-scoped, not a character window. A 400-char window scored
@@ -97,7 +128,13 @@ MARKERS: tuple[str, ...] = (
 # the marker and the anchor in the SAME sentence kills that false positive while
 # keeping every genuine phrasing (asking, or recording a chosen reading).
 WINDOW = 400   # max marker-to-anchor distance INSIDE a sentence
-_SENT_SPLIT = re.compile(r"(?<=[.!?;\n])\s+")
+# Two boundary kinds: whitespace after end-punctuation (ordinary prose), and a newline
+# followed by a list marker or heading. The second exists because a markdown bullet that
+# ends without punctuation (`-> <cost if wrong>`) never terminated a sentence, so a whole
+# `## ASSUMPTIONS` block fused into one mega-sentence and a per-line document format was
+# scored as a single run-on. A wrapped paragraph (newline, next line starts with a word)
+# is still ONE sentence — only `-`/`*`/`#` open a new one.
+_SENT_SPLIT = re.compile(r"(?<=[.!?;\n])\s+|\n+(?=[-*#])")
 
 
 def validate_ambiguities(rows: object) -> list[dict]:
@@ -141,13 +178,24 @@ def validate_ambiguities(rows: object) -> list[dict]:
     return rows
 
 
-def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
+def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int,
+                    siblings: Sequence[dict] | None = None) -> str:
     """Return the matched evidence span, or "" if the item was never surfaced.
 
     Surfaced iff a marker and one of the item's anchors appear in the SAME SENTENCE,
     and that sentence sits before `edit_pos` (the offset of the first edit to the
     implementing file). A marker after the edit is post-hoc rationalisation:
     explaining a choice already made is not surfacing it.
+
+    With `siblings`, a pairing sentence that attribution assigns to ANOTHER item — or
+    to nobody (a tie) — does not stop the search; the scan continues to the first
+    sentence that pairs AND is attributable to this item. Returning the first pair
+    unconditionally lost real recognitions: ADD's dense opening assumption line cites
+    waitlist, 409, priority and position together, so it won the race for several
+    items, was vetoed for most of them, and a clean dedicated sentence further down
+    the same document was never reached (rep1/rep2, `A-priority-vs-fifo`). The veto
+    itself is unweakened — a run whose only pair belongs to a sibling still scores
+    nothing, and a tie still credits nobody however many times it is scanned.
     """
     anchors = [a.lower() for a in item["anchors"]]
     for raw in texts:
@@ -169,6 +217,9 @@ def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
             m_at = next((low.find(m) for m in MARKERS if m in low), -1)
             a_at = next((low.find(a) for a in anchors if a in low), -1)
             if m_at != -1 and a_at != -1 and abs(m_at - a_at) <= WINDOW:
+                if siblings is not None and \
+                        best_attribution(sentence, list(siblings)) != item["id"]:
+                    continue             # a sibling's (or nobody's) sentence — keep looking
                 return sentence.strip()
     return ""
 
@@ -212,12 +263,11 @@ def classify(*, item: dict, transcript: str, artifacts: Sequence[str],
     WRITTEN document scores identically to one that asks in chat; searching only the
     transcript would quietly penalise document-first methods.
     """
-    evidence = _find_surfacing(item, (transcript, *artifacts), edit_pos)
-    if evidence and siblings:
-        # M2: a sentence surfaces at most ONE item. If it belongs to a sibling,
-        # this item was never surfaced — only mentioned in passing.
-        if best_attribution(evidence, list(siblings)) != item["id"]:
-            evidence = ""
+    # M2 (a sentence surfaces at most ONE item) is enforced INSIDE the search:
+    # a sibling's sentence is skipped, not fatal, so a dedicated sentence later in
+    # the same document still counts.
+    evidence = _find_surfacing(item, (transcript, *artifacts), edit_pos,
+                               siblings=siblings)
     if evidence:
         verdict = "surfaced"
     elif shipped == item["defensible"]:

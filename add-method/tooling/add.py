@@ -103,14 +103,23 @@ def _open_quote(text: str) -> bool:
     instead of tracking state made a continuation run to the end of the frontmatter and swallow
     `budget`, `generated` and `verified` across 25 nodes of this bundle — with the full suite
     green and the M0 validator reporting CONFORMS.
+
+    A quote OPENS only at a token boundary (start of text, or after a space / `{` / `,` / `[`).
+    That is YAML's own rule, and its absence was this bug's second incarnation: state-tracking
+    fixed the count, then opened on the mid-word apostrophe in `the caller's own transfer
+    history` — an UNQUOTED item — and the continuation swallowed every key below it, including
+    the `verified:` stamps, so `sealed_direction` returned None and the freeze seal silently
+    stopped verifying. Same green suite, same CONFORMS. A mid-word quote is plain content.
     """
     quote = None
+    prev = None
     for ch in text:
         if quote:
             if ch == quote:
                 quote = None
-        elif ch in "\"'":
+        elif ch in "\"'" and (prev is None or prev in " \t{,["):
             quote = ch
+        prev = ch
     return quote is not None
 
 
@@ -373,6 +382,19 @@ def _section(body: str, slug: str) -> str:
     return "".join(out).strip()
 
 
+def _is_template(value) -> bool:
+    """True when a frontmatter value is still scaffold — `<…>` placeholder text.
+
+    An unauthored value must not SHADOW a real one. Scaffolding `gives:` (so it stops
+    being a phantom instruction) gave every Task the frontmatter key, and §3.3 resolves
+    a frontmatter key before a heading slug — which silently redirected every `#gives`
+    ref away from an authored `## GIVES` section to the placeholder above it. A slot
+    nobody has filled is not an answer, so resolution falls through to the heading.
+    """
+    items = value if isinstance(value, list) else [value]
+    return bool(items) and all("<" in str(i) and ">" in str(i) for i in items)
+
+
 def resolve(graph: dict, ref: str, src: str = "") -> tuple:
     """`(cid, value, why)` under §3.3's ordered grammar.
 
@@ -388,7 +410,7 @@ def resolve(graph: dict, ref: str, src: str = "") -> tuple:
         return cid, node, "node"
     fm = node["fm"] or {}
     for key in (fragment, fragment.replace("-", "_")):
-        if key in fm:
+        if key in fm and not _is_template(fm[key]):
             return cid, fm[key], "frontmatter"
     # Only now is a body read, and only this one (law 2 — never a bulk scan).
     section = _section(read(node["path"], "T2")["body"], fragment)
@@ -901,6 +923,84 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
     return load(root), created, f"{note}\nnext: add new milestone <slug>"
 
 
+RE_2X_PHASE = re.compile(r"^phase:\s*(\w+)", re.M)
+
+
+def upgrade(project_root, by: str = "cli") -> tuple:
+    """The guided 2.x → 3.0 clean break (W5). `(report_path, note)` — NO-EXEC, nothing deleted.
+
+    Automates exactly the path proven by hand on the bench, and nothing more: the whole 2.x
+    bundle is RENAMED to `.add-2x-archive/` (byte-identical, grep-able, never edited), a fresh
+    3.0 bundle is initialised at `.add/`, and `MIGRATION.md` lands in the ARCHIVE — it describes
+    the old world, and the new bundle's doctor should not have to classify it. State is not
+    translated: 2.x stamps, waivers and phase markers mean things 3.0 deliberately refuses to
+    mean (an untranslatable `phase: verify` re-materialising as a 3.0 beat would be a bypass
+    with a heritage story), so tasks are re-authored, with the archive open beside the editor.
+
+    A 2.x bundle is recognised by its own bones, any of: the `tooling/add_engine/` package
+    (3.0's engine is two flat files), `state.json` (3.0 has no state file), or directory-tasks
+    (`tasks/<slug>/PLAN.md`; 3.0 tasks are flat nodes).
+    """
+    project_root = Path(project_root)
+    root = project_root / ".add"
+    archive = project_root / ".add-2x-archive"
+
+    def refuse(why: str, fix: str) -> tuple:
+        return None, f"cannot upgrade — {why}\nnext: {fix}"
+
+    if not root.is_dir():
+        return refuse("no `.add/` bundle here", "add init  # start fresh at 3.0")
+    if not ((root / "tooling" / "add_engine").is_dir()
+            or (root / "state.json").is_file()
+            or any(root.glob("tasks/*/PLAN.md"))):
+        return refuse("this bundle is already 3.0 — no 2.x markers found "
+                      "(add_engine/ package, state.json, or tasks/<slug>/PLAN.md)",
+                      "add status")
+    if archive.exists():
+        return refuse(f"`{archive.name}/` already exists — a previous upgrade's record is "
+                      f"never clobbered",
+                      f"move `{archive.name}/` aside yourself, then add upgrade")
+
+    tasks = []
+    for plan in sorted(root.glob("tasks/*/PLAN.md")):
+        m = RE_2X_PHASE.search(plan.read_text(encoding="utf-8", errors="replace"))
+        tasks.append((plan.parent.name, m.group(1) if m else "unknown"))
+    title = None
+    charter = root / "PROJECT.md"
+    if charter.is_file():
+        text = charter.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^title:\s*(.+)$", text, re.M) \
+            or re.search(r"^#\s+(?:PROJECT:\s*)?(.+)$", text, re.M)
+        title = m.group(1).strip() if m else None
+
+    root.rename(archive)                      # the ONE move — everything else is additive
+    init(root, "code", title)
+
+    report = archive / "MIGRATION.md"
+    lines = [f"# 2.x → 3.0 migration — recorded {_today()} by {by}", "",
+             "Nothing was deleted. This directory is the complete 2.x bundle, byte-identical,",
+             "renamed from `.add/`. The fresh 3.0 bundle beside it starts empty on purpose:",
+             "2.x state is not translated, because its markers (phase, autonomy, waivers) mean",
+             "things 3.0 deliberately refuses to mean. Re-author each task below against its",
+             "archived PLAN.md — the direction work transfers; the bypasses do not.", "",
+             "## 2.x tasks to re-author", ""]
+    lines += [f"- `{slug}` (2.x phase: {phase}) — archived at `tasks/{slug}/PLAN.md`; "
+              f"re-author with `add new Task {slug}`" for slug, phase in tasks] \
+        or ["- (none found)"]
+    lines += ["", "## Next", "",
+              "1. `add status` — see the fresh bundle.",
+              "2. `add new milestone <slug>` — recreate the active milestone.",
+              "3. `add new Task <slug>` per task above, authoring RULES/ASSUMPTIONS/CHECKS",
+              "   from the archived PLAN.md's §1–§4.",
+              "4. Freeze, brief, build, gate — the 3.0 loop takes it from there."]
+    report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    note = (f"2.x bundle archived whole to `{archive.name}/` ({len(tasks)} task(s) recorded in "
+            f"MIGRATION.md) · fresh 3.0 bundle initialised at `.add/`"
+            f"\nnext: read {archive.name}/MIGRATION.md, then add status")
+    return report, note
+
+
 # ============================================== new · freeze · done — transitions (e4)
 #
 # One shared write path (`_transition`) serves all three verbs, per amendment A1. Two rules
@@ -927,6 +1027,29 @@ BODIES = {
             "beat: direction · next: add freeze {slug}\n\n"
             "## RULES\n<must>\n- M1 <the rule that must hold>\n</must>\n<reject>\n"
             "- R:<NAME> <what must never happen> -> \"<NAME>\"\n</reject>\n\n"
+            # The line the author fills STARTS from "the request does not say" — the
+            # not-said register is the frame, not a suggestion. The n=1 probe run showed
+            # why: the sweep forced all four blind-spot questions and every answer came
+            # back declarative ("GET /bookings lists every booking", "DELETE is permitted
+            # for any caller") — a decision wearing a stated requirement's voice, which is
+            # exactly the indistinguishability this section exists to end. With the frame
+            # scaffolded, asserting requires DELETING it; before, flagging required
+            # composing it. given -> decided -> priced, three slots apart.
+            "## ASSUMPTIONS\n"
+            "- A1 [who] covers: <S ids> · the request does not say <who may act / whose"
+            " data>; taking <reading> -> <cost if wrong>\n"
+            "- A2 [which] covers: <S ids> · the request does not say <which rows/cases"
+            " are in>; taking <reading> -> <cost if wrong>\n"
+            "- A3 [when] covers: <S ids> · the request does not say <where the boundary"
+            " falls>; taking <reading> -> <cost if wrong>\n"
+            "- A4 [absent] covers: <S ids> · the request does not say <what a missing"
+            " value means>; taking <reading> -> <cost if wrong>\n"
+            "- A5 [order] covers: <S ids> · the request does not say <what orders /"
+            " breaks a tie>; taking <reading> -> <cost if wrong>\n"
+            "every `gives:` surface is swept on every dimension; "
+            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
+            "`· probe: <what shipped behavior must show>` declares a reading checkable: "
+            "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
@@ -995,10 +1118,17 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     if path.exists():
         return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
 
-    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when", "milestone", "scope"]
+    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when",
+             "milestone", "scope", "gives"]
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
         fm["status"] = "direction"
+    # `gives:` is read by the direction digest and by every brief that resolves a `needs:`
+    # ref — and it was scaffolded NOWHERE, in neither the body template nor this key order.
+    # It came back empty in 3 of 3 live runs for exactly the reason the assumption did:
+    # an instruction with no slot to fill is an instruction that does not happen.
+    if node_type == "Task" and fields.get("gives") is None:
+        fm["gives"] = ["S1 <the surface this publishes — an endpoint, function, or section>"]
     # A Persona is discoverable by its `use-when:` — the one field a tool reads to place the lens.
     # Scaffold a placeholder when the author did not supply one, so the roster is never mute.
     if node_type == "Persona" and fields.get("use-when") is None:
@@ -1026,17 +1156,77 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
 
 
 def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
-    """Append a freeze stamp. A second freeze REFREEZES — §3.5, history is append-only."""
+    """Append a freeze stamp sealing RULES · CHECKS · `gives:`. A second freeze REFREEZES — §3.5,
+    history is append-only.
+
+    Refuses an unauthored node. 2.5.0 refused this as `contract_not_drafted`; 3.0 dropped the check
+    and stamped anything, which left `gate` as the only place a template was caught — i.e. AFTER the
+    whole build. Since freeze is precisely the stamp that says "direction is closed", approving a
+    scaffold is the one thing it must never do (constraint 1, "Direction before speed").
+    """
     graph = scan(root)
+    entry = graph.get(cid) or {}
+    if not entry.get("path"):
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+
+    node_t2 = read(entry["path"], "T2")
+    stubs = placeholders_in(node_t2)
+    if stubs:
+        return None, (f"cannot freeze `{slug}` — the node still carries template placeholders: "
+                      + " · ".join(stubs)
+                      + f"\nnext: author {slug}'s RULES, ASSUMPTIONS and CHECKS, "
+                        f"then add freeze {slug}")
+
+    # No surfaces would mean nothing to sweep — a one-line off switch for the whole gate.
+    if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
+            and str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick" \
+            and gives_unauthored(node_t2):
+        return None, (f"cannot freeze `{slug}` — `gives:` is unauthored, so there are no "
+                      f"surfaces to sweep"
+                      f"\nnext: list what {slug} publishes as `gives:` entries "
+                      f"(`- S1 <surface> — <what a caller gets>`), then add freeze {slug}")
+
+    # A collapsed surface is the granularity evasion: several endpoints under one S id
+    # shrinks the matrix and the [who]/[which] questions get asked once, about the
+    # loudest endpoint. Same exemptions as the sweep (quick depth; no section).
+    if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
+            and str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
+        collapsed = collapsed_surfaces(node_t2)
+        if collapsed:
+            return None, (f"cannot freeze `{slug}` — one surface per S id: "
+                          + " · ".join(collapsed)
+                          + " each name several surfaces (HTTP methods, callables, or "
+                            "backticked documents), so the sweep is asking one set of "
+                            "questions about several surfaces"
+                          f"\nnext: split each into its own `- S<n> <one surface>` "
+                          f"entry, re-cover them in ASSUMPTIONS, then add freeze {slug}")
+
+    # Non-empty is not complete. Three live runs each recorded 5-7 real assumptions and
+    # all three still shipped a silent decision, because nothing asked whether the list
+    # covered every surface. Name the specific gaps: "incomplete" is not actionable, and a
+    # refusal an author cannot act on is one they learn to route around.
+    unswept = assumption_sweep(node_t2)
+    if unswept:
+        shown = " · ".join(f"{d}:{m}" for d, m in unswept[:6])
+        more = f" (+{len(unswept) - 6} more)" if len(unswept) > 6 else ""
+        return None, (f"cannot freeze `{slug}` — these (dimension, surface) pairs are unswept: "
+                      f"{shown}{more}"
+                      f"\nnext: add an ASSUMPTIONS line `- A<n> [<dim>] covers: <S ids> · …`, "
+                      f"or retire a dimension with `[<dim>] n/a · <why>`")
+
     authority = authority or authority_for(graph, cid)
-    stamps = ((graph.get(cid) or {}).get("fm") or {}).get("verified") or []
+    stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
     node, err = _transition(root, cid, appends=[
-        ("verified", f'{{ by: "{by}", at: {_today()}, act: {act}, authority: {authority} }}')])
+        ("verified", f'{{ by: "{by}", at: {_today()}, act: {act}, authority: {authority}, '
+                     f'direction: "{direction_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
-    return node, f"{act} recorded at authority `{authority}`\nnext: build, then `add run -- <cmd>`"
+    return node, (f"{act} recorded at authority `{authority}`"
+                  f"\nnext: add brief {slug} — record the build entry, then build "
+                  f"(`add run {slug} -- <cmd>`)")
 
 
 def done(root, cid: str) -> tuple:
@@ -1298,10 +1488,38 @@ def _beat_of(node) -> str:
     return "build" if _is_frozen(node) else "direction"
 
 
+def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
+    """True when an `act: brief` stamp sits after the last (re)freeze — and, when
+    `receipt_cid` names a run stamp, before that run.
+
+    `verified:` is append-only (§3.5), so list order IS chronology — no clock needed.
+    A brief recorded before the freeze entered a direction that no longer exists, and a
+    brief recorded after the receipt entered nothing: the build it claims was already over.
+    """
+    stamps = [s for s in stamps if isinstance(s, dict)]
+    last_freeze = max((i for i, s in enumerate(stamps)
+                       if s.get("act") in ("freeze", "refreeze")), default=-1)
+    run_idx = next((i for i, s in enumerate(stamps)
+                    if s.get("act") == "run" and str(s.get("receipt", "")) == receipt_cid),
+                   None) if receipt_cid else None
+    return any(s.get("act") == "brief" and i > last_freeze
+               and (run_idx is None or i < run_idx)
+               for i, s in enumerate(stamps))
+
+
 def _next_verb(graph: dict, cid: str) -> str:
     """The one runnable next command for a task, by its stamp-derived beat."""
     slug = cid.rsplit("/", 1)[-1][:-3]
-    return BEAT_NEXT.get(_beat_of(graph[cid]), "add status").format(slug=slug)
+    node = graph[cid]
+    beat = _beat_of(node)
+    fm = node.get("fm") or {}
+    # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
+    # points at `add brief`, and moves on to the run the moment the entry is recorded.
+    if beat == "build" and fm.get("type") == "Task" \
+            and str(fm.get("depth") or "standard") != "quick" \
+            and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
+        return f"add brief {slug}"
+    return BEAT_NEXT.get(beat, "add status").format(slug=slug)
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -1327,7 +1545,24 @@ def todo(root, milestone: str = None) -> tuple:
         if st != beat:
             lines.append(f"{st}:")
             beat = st
-        lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}")
+        hint = ""
+        if st == "direction":
+            # Progressive, so freeze CONFIRMS work already done instead of ambushing the
+            # author with the whole matrix at the moment they expected to be finished. A
+            # gate first met as a wall earns a reputation for obstruction, not for catching.
+            node_t2 = read(graph[cid]["path"], "T2")
+            if gives_unauthored(node_t2) and _section_of(node_t2.get("body") or "",
+                                                         "ASSUMPTIONS").strip():
+                hint = "  (gives: unauthored — no surfaces to sweep)"
+            elif (collapsed := collapsed_surfaces(node_t2)) and \
+                    _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() and \
+                    str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
+                hint = f"  (split {' · '.join(collapsed)} — one surface per S id)"
+            else:
+                left = len(assumption_sweep(node_t2))
+                if left:
+                    hint = f"  ({left} unswept pair{'s' if left > 1 else ''})"
+        lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
 
@@ -1343,6 +1578,18 @@ def status(root, all: bool = False, check: bool = False) -> str:
     # first; on a bundle-less dir the honest answer is "create one", not a false empty-orientation
     # (`index.md` is the marker init always writes and nothing else does).
     if not (Path(root) / "index.md").is_file():
+        # …unless a 2.x bundle is sitting here. 2.x wrote `state.json` and `tasks/<slug>/PLAN.md`;
+        # 3.0 reads `index.md` + `graph.json` and retired `migrate`, so the upgrade is a deliberate
+        # clean break. But answering "no bundle here" to someone whose own state.json is in this
+        # very directory reads as "the upgrade ate my project" — name the format and say the files
+        # are safe. (Neither marker is anything 3.0 writes, so this cannot fire on a 3.0 bundle.)
+        if (Path(root) / "state.json").is_file() or (Path(root) / "tasks").is_dir():
+            return ("this is an ADD 2.x bundle — 3.0 reads a different format and does not "
+                    "convert it\n"
+                    "nothing here was deleted: your 2.x files (state.json · tasks/ · specs/) are "
+                    "untouched\n"
+                    "archive them as the record of how this was built, then start a 3.0 bundle\n"
+                    "next: add init")
         return f"no bundle here — run `add init` to create one\nnext: add init"
 
     graph = scan(root)
@@ -1644,7 +1891,7 @@ def fold(root, lens: str, match: str) -> tuple:
 # reopen R:DRIFT inside the engine itself.
 RULE_ALT = r"M\d+|R:[A-Z0-9_]+|E\d+"
 RULE_ID = re.compile(rf"^-\s+({RULE_ALT})\b")
-REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+)\Z")
+REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+|A\d+)\Z")  # A<n>: a probed assumption (W2)
 COVERS_IN_CHECK = re.compile(r"^-\s+(\S+)\s+·\s*covers:\s*([^·]+?)\s*·")
 
 
@@ -1664,8 +1911,143 @@ def _section_of(body: str, heading: str) -> str:
 PLACEHOLDER = re.compile(r"<[a-z_][^>]*>")
 
 
+RE_ASSUMPTION_PLACEHOLDER = re.compile(
+    r"^- A\d+ \[\w+\] covers: <S ids>.*$", re.MULTILINE)
+
+# The dimensions a silence hides in. CLOSED and small on purpose: an open vocabulary
+# cannot be swept, and a long one will not be. Domain-neutral, because a Task may
+# publish an HTTP route, a function, or a document — "endpoint" is one profile's word.
+#
+#   who     identity · authority · scope — whose data, which caller may act
+#   which   inclusion · visibility — which rows/cases are in, which are filtered out
+#   when    boundaries · timing — inclusive or exclusive, before or after
+#   absent  missing values · defaults — what happens when the field is not supplied
+#   order   sequencing · ties — what breaks a tie, what comes first
+#
+# `who` and `which` are the two the live amb1 runs split on: every rep asked WHICH rows
+# `GET /bookings` returns and none asked WHOSE.
+SWEEP_DIMENSIONS = ("who", "which", "when", "absent", "order")
+
+RE_ASSUMPTION_LINE = re.compile(r"^-\s+A\d+\s+\[(\w+)\]\s*(.*)$")
+
+
+def surfaces_of(node: dict) -> list:
+    """The `S<n>` surface ids published in `gives:` — the axis the sweep runs along.
+
+    A surface is what a CALLER touches. Sweeping Musts instead demanded 50-60 pairs on
+    real nodes (12, 10 and 11 Musts x 5 dimensions), which is not a checklist but a toll
+    — and a toll gets paid with blanket lines that satisfy the gate without doing the
+    work. There are far fewer surfaces than rules, and "who may call this, and which rows
+    do they see" is a question about a surface, not about a sentence.
+    """
+    out = []
+    for entry in (node.get("fm") or {}).get("gives") or []:
+        m = re.match(r"\s*(S\d+)\b", str(entry))
+        if m:
+            out.append(m.group(1))
+    return out
+
+
+RE_HTTP_METHOD = re.compile(r"\b(?:GET|POST|PUT|DELETE|PATCH)\b")
+# W3: an identifier flush against `(` is a callable; whitespace before `(` is prose.
+RE_CALLABLE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_.]*)\(")
+# W3: only a BACKTICKED file name is a named document artifact — prose mentions stay unjudged.
+RE_BACKTICKED_DOC = re.compile(r"`([\w./-]+\.[A-Za-z0-9]{1,4})`")
+
+
+def collapsed_surfaces(node: dict) -> list:
+    """`S<n>` ids whose entry names SEVERAL HTTP methods — several surfaces in one id.
+
+    The probe-2 evasion, verbatim: `S1 the booking HTTP surface — POST/GET /bookings,
+    GET/DELETE /bookings/{id}, GET /rooms/{room_id}/waitlist`. Five endpoints in one id
+    turns a ~25-pair sweep into a 5-pair one, and the [who]/[which] questions get asked
+    once, about the loudest endpoint, while the reads ship unexamined. The enumeration
+    rule stood in direction.md throughout — the third consecutive live demonstration
+    that a prose rule with no engine checkpoint does not happen.
+
+    STILL PARTIAL, and honest about it (beta-2/W3 widened it, it did not complete it):
+    three definitional token shapes are judged and nothing else is. Two HTTP method
+    tokens are two caller calls; two DISTINCT `name(` callable tokens are two functions;
+    two BACKTICKED file names are two named artifacts. A prose mention without one of
+    those shapes — a section, an unbackticked filename, a described behaviour — is never
+    judged: a heuristic that guessed at prose shape would be a guard, not a notary.
+    Repetition is not multiplicity (`admit()` twice is one surface), and a parenthetical
+    like `(paginated)` is not a callable — only an identifier flush against `(` counts.
+    """
+    out = []
+    for entry in (node.get("fm") or {}).get("gives") or []:
+        text = str(entry)
+        m = re.match(r"\s*(S\d+)\b", text)
+        if not m:
+            continue
+        several = (len(RE_HTTP_METHOD.findall(text)) >= 2
+                   or len(set(RE_CALLABLE.findall(text))) >= 2
+                   or len(set(RE_BACKTICKED_DOC.findall(text))) >= 2)
+        if several:
+            out.append(m.group(1))
+    return out
+
+
+def gives_unauthored(node: dict) -> bool:
+    """True when `gives:` is missing or still the scaffold — i.e. nothing to sweep.
+
+    Without this the gate has a one-line off switch: delete `gives:`, get no surfaces,
+    sweep vacuously clean.
+    """
+    entries = (node.get("fm") or {}).get("gives") or []
+    return not entries or any("<" in str(e) for e in entries)
+
+
+def assumption_sweep(node: dict) -> list:
+    """Unswept `(dimension, surface_id)` pairs — empty when the sweep is complete.
+
+    For every surface and every dimension, some `[dim]` assumption must name that surface
+    in its `covers:`, or the dimension must be retired with `n/a` and a reason. That is
+    the difference between non-empty and complete: `freeze` used to prove an assumption
+    EXISTED, which three live runs satisfied while still shipping a silent decision.
+
+    Exempt, deliberately:
+      * `depth: quick` — depth tunes ceremony (SKILL.md). A one-file mechanical edit does
+        not earn a five-dimension matrix, and demanding one would push authors toward
+        `quick` for work that deserves `standard`.
+      * a node with no `## ASSUMPTIONS` section — law 3 reads it as empty, so bundles
+        written before the section existed are not retroactively refused.
+
+    WHAT THIS DOES NOT CLAIM: it proves the author LOOKED at every pair, never that they
+    looked honestly. A blanket `[who] covers: S1, S2, S3` satisfies it. Writing that line
+    still requires scanning every surface under "who", and the blanket reading is then on
+    the record where a reviewer can disagree with it — which a silent omission never
+    allowed. FORMAT.md §10.
+    """
+    body = node.get("body") or ""
+    section = _section_of(body, "ASSUMPTIONS")
+    if not section.strip():
+        return []
+    if str((node.get("fm") or {}).get("depth") or "standard") == "quick":
+        return []
+    surfaces = surfaces_of(node)
+    if not surfaces:
+        return []          # `gives_unauthored` is what refuses this; see freeze()
+    covered, waived = {d: set() for d in SWEEP_DIMENSIONS}, set()
+    for line in section.splitlines():
+        m = RE_ASSUMPTION_LINE.match(line.strip())
+        if not m:
+            continue
+        dim, rest = m.group(1).lower(), m.group(2)
+        if dim not in covered:
+            continue
+        if re.match(r"^n/?a\b", rest.strip(), re.I):
+            waived.add(dim)
+            continue
+        found = re.search(r"covers:\s*([^·]*)", rest)
+        if found:
+            covered[dim].update(re.findall(r"\bS\d+\b", found.group(1)))
+    return [(d, sid) for d in SWEEP_DIMENSIONS if d not in waived
+            for sid in surfaces if sid not in covered[d]]
+
+
 def placeholders_in(node: dict) -> list:
-    """Template tokens still standing in a node's RULES or CHECKS.
+    """Template tokens still standing in a node's RULES, ASSUMPTIONS or CHECKS.
 
     `new` ships `- M1 <the rule that must hold>` and `- <test_name> · covers: M1`. Those parse as
     a real rule and a real check, so an unauthored node refuses at the gate with "M1 has no
@@ -1679,11 +2061,56 @@ def placeholders_in(node: dict) -> list:
     measured across both before the exclusion was added rather than assumed.
     """
     found = []
-    for heading in ("RULES", "CHECKS"):
+    # ASSUMPTIONS joins RULES and CHECKS because an instruction with no checkpoint is an
+    # instruction that does not happen. SKILL.md and direction.md have asked for the
+    # riskiest assumption since 3.0; the live amb1 run recorded none, and skipping it
+    # cost nothing at freeze or gate. A node with no assumption section at all still
+    # freezes — `_section_of` reads a missing section as empty (law 3) — so bundles
+    # authored before this shipped are not retroactively refused.
+    for heading in ("RULES", "ASSUMPTIONS", "CHECKS"):
         for line in _section_of(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())
     return found
+
+
+def _canon(text: str) -> str:
+    """Trailing whitespace and blank lines are not contract changes."""
+    return "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
+
+
+def direction_digest(node: dict) -> str:
+    """The seal over what a freeze approved: RULES · CHECKS · `gives:`.
+
+    Deliberately scoped to the frozen surface rather than the whole node. A CARD `goal:` reword or
+    a new LESSONS line is not a contract change, and sealing those would make ordinary editing
+    demand a refreeze until authors refroze reflexively — which is how a seal decays into a rubber
+    stamp. Constraint 3 names exactly three things that must not move under a build: the Musts, the
+    Rejects, and the published `gives:`. Those, and nothing else.
+
+    This closes only the STRUCTURAL half of constraint 3. Whether a check still *proves* its rule is
+    semantic, and a NO-EXEC notary cannot judge it — `assert True` under an unchanged name digests
+    identically to the real assertion it replaced. What this makes impossible is the SILENT edit:
+    changing the frozen text without the change appearing in the record.
+    """
+    body = node.get("body") or ""
+    gives = (node.get("fm") or {}).get("gives") or []
+    payload = "\n".join((_canon(_section_of(body, "RULES")),
+                         _canon(_section_of(body, "CHECKS")),
+                         _canon("\n".join(str(g) for g in gives))))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def sealed_direction(fm: dict) -> str:
+    """The digest carried by the most recent freeze/refreeze, or None.
+
+    None means "cannot verify", not "verified clean": bundles frozen by a pre-seal engine carry no
+    digest, and refusing them would retroactively strand every task frozen before this shipped.
+    """
+    for stamp in reversed((fm or {}).get("verified") or []):
+        if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze"):
+            return stamp.get("direction")
+    return None
 
 
 def rules_of(node: dict) -> list:
@@ -1708,9 +2135,30 @@ def edges_of(node: dict) -> list:
     return out
 
 
+RE_PROBED_ASSUMPTION = re.compile(r"^-\s+(A\d+)\s+\[\w+\].*·\s*probe:\s*\S")
+
+
+def probed_assumptions(node: dict) -> list:
+    """`A<n>` ids declared CHECKABLE with `· probe: <what shipped behavior must show>` (W2).
+
+    The sweep makes agents ask; nothing makes the answers right — the campaign record shows
+    two of seven readings wrong in every run, and a NO-EXEC notary cannot judge an answer.
+    What it CAN do is refuse to call a checkable answer proven while no check reports on it:
+    a probed id is a first-class covers referent, the same move as C7 made for edges. Opting
+    in is the author's; an unprobed line stays a priced guess on the record, never conscripted
+    — the engine enforces exactly what was declared checkable, and nothing else.
+    """
+    out = []
+    for line in _section_of(node.get("body") or "", "ASSUMPTIONS").splitlines():
+        m = RE_PROBED_ASSUMPTION.match(line.strip())
+        if m:
+            out.append(m.group(1))
+    return out
+
+
 def referents_of(node: dict) -> list:
-    """Every id a check may bind: Musts + Rejects (RULES) and real edges (EDGES)."""
-    return rules_of(node) + edges_of(node)
+    """Every id a check may bind: Musts + Rejects (RULES), real edges (EDGES), probed A ids."""
+    return rules_of(node) + edges_of(node) + probed_assumptions(node)
 
 
 def covers(node: dict) -> dict:
@@ -2004,6 +2452,33 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             "budget": budget, "degraded": degraded, "phase": phase, "depth": depth}
 
 
+def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
+    """Record that the brief ENTERED the build: `act: brief` on a frozen Task. `(digest, note)`.
+
+    The compile itself stays pure (`brief` is read-only and `gate` calls it); THIS is the
+    write, and it is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
+    entry — before the freeze there is no sealed direction for a brief to enter, and depth
+    `quick` never demands one (the gate exempts it), though recording one is harmless.
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    fm = node.get("fm") or {}
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if fm.get("type") != "Task" or not _is_frozen(node):
+        return None, (f"brief compiled, not recorded — only a frozen Task records its build "
+                      f"entry, and `{slug}` is not one yet"
+                      f"\nnext: add freeze {slug}, then add brief {slug}")
+    digest = brief(root, cid)["hash"]
+    _transition(root, cid, appends=[("verified",
+        f'{{ by: "{by}", at: {_today()}, act: brief, authority: process, '
+        f'brief: "{digest}" }}')])
+    return digest, (f"brief {digest} recorded as the build entry"
+                    f"\nnext: add run {slug} -- <cmd>")
+
+
 # ============================================ gate — the verdict, and its refusals (e13)
 #
 # This verb should have existed since e4. Every gate in this project's history was recorded by
@@ -2161,6 +2636,34 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     if stubs and verdict == "PASS":
         return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                       f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
+
+    # Constraint 3, structurally: what the freeze approved is what the build must have been held to.
+    # A missing digest means a pre-seal engine froze this node — unverifiable, so not refusable.
+    sealed = sealed_direction(sfm)
+    if sealed and verdict == "PASS" and direction_digest(node) != sealed:
+        return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen contract "
+                      "changes by refreezing, never by a silent edit",
+                      f'add freeze {slug} --by "<name>" to record the change, or '
+                      f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+
+    # W1 (beta-2, R:UNBRIEFED) — the brief is Build's ENTRY, not the verdict's garnish.
+    # beta-1 stamped a brief hash HERE, at gate time: a record of what the instructions would
+    # have been, taken after the build was over. Using the brief during Build was recommended
+    # prose, and three probe campaigns each showed what recommended prose becomes. Keyed off
+    # the seal (like drift) so pre-seal bundles stay gateable; quick depth is ceremony-tuned
+    # out, the same stance as the sweep's exemptions.
+    if sealed and verdict == "PASS" and sfm.get("type") == "Task" \
+            and str(sfm.get("depth") or "standard") != "quick":
+        all_stamps = sfm.get("verified") or []
+        if not _brief_entered(all_stamps, receipt_cid):
+            why = ("the brief was recorded after the receipt — an entry that postdates the "
+                   "build entered nothing"
+                   if _brief_entered(all_stamps) else
+                   "no brief entered this build — the sealed direction was never compiled "
+                   "into the working prompt since the last (re)freeze")
+            return refuse(why + ' -> "R:UNBRIEFED"',
+                          f"add brief {slug} to record the entry, then re-run "
+                          f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
@@ -2518,6 +3021,36 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             # so doctor says `warn`; the softer data/architecture floors stay `info` nudges.
             severity = "warn" if fm.get("sensitivity") == "security" else "info"
             find(severity, "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
+    # W4 (beta-2): the routing index is how a lens is FOUND — the corpus says what each
+    # persona is, the index says when to reach for it. A bundle whose corpus moved without
+    # its index routes against a roster that no longer exists, silently. "Persona" here is
+    # the generator's own definition (a corpus file carrying `description:`), so README/
+    # VENDOR/LICENSE never count. Reports only, like everything else in this function.
+    teacher = root / "personas-teacher"
+    if teacher.is_dir():
+        corpus = 0
+        for p in teacher.rglob("*.md"):
+            try:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            fm_text = text.split("---", 2)[1] if text.startswith("---") else ""
+            if re.search(r"^description:\s*\S", fm_text, re.M):
+                corpus += 1
+        index_file = root / "personas-index" / "use-when.md"
+        if not index_file.is_file():
+            find("warn", "routing_index_missing",
+                 f"personas-teacher/ holds {corpus} personas and personas-index/use-when.md "
+                 f"is absent — the corpus can be read but never routed to "
+                 f"(scripts/build_persona_index.py, then doctor --sync)")
+        else:
+            entries = sum(1 for l in index_file.read_text(encoding="utf-8").splitlines()
+                          if l.startswith("- `"))
+            if entries != corpus:
+                find("warn", "routing_index_stale",
+                     f"personas-index/use-when.md routes {entries} personas; "
+                     f"personas-teacher/ holds {corpus} — the corpus moved without the index "
+                     f"(scripts/build_persona_index.py, then doctor --sync)")
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):

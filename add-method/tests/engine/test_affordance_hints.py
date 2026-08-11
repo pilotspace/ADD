@@ -25,10 +25,11 @@ def test_status_hints_freeze_for_an_unfrozen_task(tmp_path):
     assert "freeze" in nxt and "brief" not in nxt, f"an unfrozen task should point at freeze: {nxt!r}"
 
 
-def test_status_hints_brief_for_a_frozen_task(tmp_path):
+def test_status_hints_brief_for_a_frozen_task(tmp_path, draft):
     """covers: M1 — once frozen (authoring done), the composed brief is the sensible next step."""
     add.init(tmp_path, "code", "T")
     cid, _ = add.new(tmp_path, "Task", "t", title="t")
+    draft(tmp_path, cid)
     add.freeze(tmp_path, cid, by="human:x")
     out = add.status(tmp_path)
     nxt = out.strip().splitlines()[-1]

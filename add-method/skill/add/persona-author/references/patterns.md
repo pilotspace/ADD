@@ -67,7 +67,7 @@ or a test it can run. An invented outcome statistic ("engagement +40%") sounds m
 was; it is the signature rot of weak persona corpora.
 
 ## 6. ORIENT-first Abilities
-Lead the ability list with the 1–3 commands the lens RUNS on load before acting — `add.py status`,
+Lead the ability list with the 1–3 commands the lens RUNS on load before acting — `add status`,
 the domain's suite, the diff to judge. Acting on ground truth beats re-deriving it. State every
 other ability as something doable *now*, anchored to a real file/tool/command — not an aspiration.
 - ✓ "can diff two response fixtures byte-for-byte to prove passthrough" (checkable)

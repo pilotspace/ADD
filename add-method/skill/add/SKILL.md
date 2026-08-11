@@ -63,7 +63,15 @@ task — never Quick, whatever its size. **Security is always a HARD-STOP.** Whe
 One task = one atomic node. Three beats, one human decision:
 
 1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft: `## RULES`
-   (Must · Reject · the one riskiest assumption) · `## PLAN` (contract shape — you author it into the
+   (Must · Reject) · `## ASSUMPTIONS` (**sweep every surface on every dimension** — `A<n> [<dim>]
+   covers: <S ids> · <what the spec does NOT say — and the reading you took> -> <cost if wrong>`,
+   dims `who · which · when · absent · order`, sweeping each `S<n>` surface you list in `gives:`,
+   or retire one with `[<dim>] n/a · <why>`; freeze REFUSES on a template slot, an unauthored
+   `gives:`, or an unswept `(dim, surface)` pair — and names them. `add todo` counts them down
+   while you author. RULES is what you
+   were told and EDGES are the boundaries of those rules, so without this a thing nobody said
+   becomes a Must phrased like one that was said) · `## PLAN`
+   (contract shape — you author it into the
    node's `gives:`/`needs:` frontmatter · strategy · `scope:` tokens) · `## CHECKS` (one check per Must
    & per Reject, each with a `covers:` key — the `covers:`→rule binding is enforced at **gate**, not
    freeze). Run the checks **red for the right reason**. Then the ONE approval — which **stamps**
@@ -90,6 +98,10 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 1. **Direction before speed.** Never start Build until RULES · PLAN · CHECKS exist and checks are red.
 2. **Trust evidence, not inspection.** A change is trusted because its checks pass and the residue
    (security · concurrency · architecture) was examined — not because the code reads fine.
+   **A green gate proves the checks you declared ran, passed and are bound — never that they were
+   enough.** A check that asserts nothing still binds and still passes. Writing the check that would
+   have caught the bug is your job; the engine can only prove you ran the ones you wrote
+   (`FORMAT.md` §10).
 3. **Never weaken a check or edit a frozen `gives:` to make the build pass.** That inverts the method;
    a real change is a change-request back to Direction.
 4. **No silent skips.** Every Verify ends in exactly one recorded outcome — `PASS`, `RISK-ACCEPTED`
@@ -101,6 +113,7 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 ```bash
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle (also: doc)
+add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides re-authoring
 add new Task <slug> --title "..." --depth quick|standard|deep [--milestone m] [--scope a,b]
                                              # --sensitivity security|data|architecture sets the floor
 add brief <slug>                             # the composed XML prompt for the active beat

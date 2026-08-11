@@ -43,23 +43,34 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
     if wrapper == "plan-then-execute":
         return f"Plan first, then execute:\n\n{text}"
     if wrapper == "add-loop":
+        # ABF-1 / ADD 3.0 surface. The engine CLI is `cli.py`; `add.py` is a library module with no
+        # `__main__`, so invoking it prints nothing and exits 0 — an arm pointed at it orients into
+        # a void and never learns it asked the wrong question. `tests/test_adherence_census.py`
+        # sweeps this string against `cli.build_parser()` so a retired verb cannot survive here.
         return (
             "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
-            "`python3 .add/tooling/add.py status` FIRST and follow its next-step through the "
-            "phases; write NO app code before the task's contract is FROZEN and its red suite "
+            "`python3 .add/tooling/cli.py status` FIRST and follow its next-step through the "
+            "beats; write NO app code before the task's contract is FROZEN and its red suite "
             "exists; record the verify gate before finishing. This is a headless run with no "
-            "human available: you carry the human's proxy authority — approve locks, contract "
-            "freezes, and gates yourself (record them as usual) and NEVER end the run waiting "
+            "human available: you carry the human's proxy authority — approve contract "
+            "freezes and gates yourself (record them as usual) and NEVER end the run waiting "
             "for a human reply; the job is done only when the app meets the requirements. "
-            "This is a CLEARED, fully-specified benchmark task, so take the 3-call walk: create "
-            "each task with `add.py new-task <slug>`, declare `gate_mode: ai-plan-verify` in "
-            "the PLAN.md header (and fill the §3 AI-verify record) — "
-            "draft the whole Direction bundle (rules, scenarios, change plan, red suite) in "
-            "ONE pass, freeze it with `add.py freeze --by <you> --cross`, build to green, "
-            "record the gate. The floor never bends: the contract is FROZEN and the red suite "
-            "precedes the build (never skip contract, tests, build, or verify). Finish the run "
-            "once the app meets the requirements and the verify gate is recorded — do NOT run "
-            "milestone-done, delta-append (fold-style ledger work), or archive-milestone: that "
+            "This is a CLEARED, fully-specified benchmark task, so take the one-pass walk: create "
+            "each task with `python3 .add/tooling/cli.py new Task <slug> --title \"...\" "
+            "--scope <files>`, then author its whole Direction bundle in ONE pass — `## RULES` "
+            "(Musts and Rejects), `## PLAN`, and `## CHECKS` with a `covers:` key on every line "
+            "naming the rule it proves. Freeze refuses a node that still carries template "
+            "placeholders, so replace them all first, then approve with "
+            "`python3 .add/tooling/cli.py freeze <slug> --by <you> --authority human`. Build to "
+            "green, then record evidence with `python3 .add/tooling/cli.py run <slug> "
+            "--junitxml r.xml -- <test cmd> --junitxml=r.xml` — the test command must write that "
+            "file itself, since the gate binds each `covers:` rule to a PASSING test id in it and "
+            "refuses a PASS for any rule left unproven. Close with "
+            "`python3 .add/tooling/cli.py gate <slug> PASS --by <you>`. The floor never bends: the "
+            "contract is FROZEN and the red suite precedes the build (never skip contract, tests, "
+            "build, or verify). "
+            "Finish the run once the app meets the requirements and the verify gate is recorded "
+            "— do NOT run milestone-done, fold (ledger work), or milestone-archive: that "
             "milestone-ledger close-out is project bookkeeping, not part of delivering this "
             "feature, and is out of scope for the benchmark.\n\n"
             + text
@@ -357,6 +368,15 @@ def execute_wm(
         seed_note = _seed_from_prior(workspace_dir, arm.name, wm, root, family)
     transcript_path = wm_dir / "transcript.jsonl"
     record_path = wm_dir / "record.json"
+
+    # One execute_wm call is one run, so the transcript starts empty. Every write
+    # site below opens "a" — deliberately, since setup steps and each retry
+    # attempt all accumulate into the SAME run's transcript — which means a
+    # re-run at an already-used path would otherwise inherit its predecessor.
+    # Live proof 2026-08-10: a stand-in agent making 8 engine calls scored
+    # engine_calls 122, the other 114 belonging to a July campaign sitting at
+    # the default path. Truncate here, before setup, and exactly once.
+    transcript_path.write_text("")
 
     prompt_text = _wrap_prompt(_prompt_path(wm, family).read_text(), arm.prompt_wrapper)
 

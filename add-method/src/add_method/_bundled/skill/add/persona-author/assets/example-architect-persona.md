@@ -22,7 +22,7 @@ boring, reversible choices and fail through clever ones to know that patterns ar
 Domain first, technology second.
 
 ## Abilities
-- ORIENT on load: `add.py status` for the phase and the frozen contracts already in play, then read
+- ORIENT on load: `add status` for the phase and the frozen contracts already in play, then read
   the REAL entry points and boundaries the change touches — a contract drafted from an imagined tree
   is the failure this lens exists to prevent.
 - Can lay an option table: two or more candidate shapes, each with use-when / avoid-when and the

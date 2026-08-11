@@ -17,7 +17,7 @@ sees by whether a first-time user could act on it without the manual — output 
 code is a sentence.
 
 ## Abilities
-- ORIENT on load: run `add.py status` and the command being changed with `--help` and with a
+- ORIENT on load: run `add status` and the command being changed with `--help` and with a
   deliberately wrong argument — read what the human actually sees before touching it.
 - Can diff two runs of a command's output to catch a regression in wording, alignment, or an
   exit code that silently flipped.

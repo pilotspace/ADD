@@ -80,7 +80,12 @@ verified:                               # append-only stamps: freeze, gate, refr
 Its body is six sections, each with one job:
 
 - `## CARD` — the ≤10-line summary: goal restated, the contract shape, scope, the current beat and next action. This is the **only** section other nodes ever read.
-- `## RULES` — Must (`M<n>`), Reject (`R:<code>`), After, and the one riskiest assumption (`⚠`).
+- `## RULES` — Must (`M<n>`), Reject (`R:<code>`), After. What the request *said*, and only that.
+- `## ASSUMPTIONS` — `A<n> [<dim>] covers: <S ids>`: what the request did **not** say, the reading
+  you took, and the cost if it is wrong. Every `gives:` surface is swept on every dimension
+  (`who · which · when · absent · order`) or the dimension is retired with `n/a · <why>`; `freeze`
+  refuses and names the unswept pairs. Exempt at `depth: quick`. Not bindable by `covers:`, and not
+  sealed by the direction digest (FORMAT.md §5).
 - `## PLAN` — the contract detail that becomes the frozen `gives:`, the build strategy, and the `scope:`.
 - `## EDGES` — optional enumerated boundary cases (`E<n>`) a check must cover.
 - `## CHECKS` — one check per Must / Reject / Edge, red-first, each carrying a `covers:` referent.

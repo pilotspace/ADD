@@ -1,0 +1,518 @@
+<title>ADD 2.5 vs 3.0 — The Audit Ledger</title>
+<style>
+  :root {
+    --paper: oklch(0.97 0.008 95);
+    --paper-2: oklch(0.94 0.012 95);
+    --ink: oklch(0.24 0.015 160);
+    --ink-2: oklch(0.42 0.015 160);
+    --ink-3: oklch(0.56 0.012 160);
+    --rule: oklch(0.85 0.012 95);
+    --refuse: oklch(0.5 0.19 25);
+    --refuse-soft: oklch(0.93 0.03 25);
+    --receipt: oklch(0.46 0.12 155);
+    --receipt-soft: oklch(0.92 0.035 155);
+    --old: oklch(0.62 0.02 80);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-6: 24px;
+    --sp-8: 32px; --sp-12: 48px; --sp-16: 64px; --sp-24: 96px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: oklch(0.21 0.012 160);
+      --paper-2: oklch(0.25 0.014 160);
+      --ink: oklch(0.9 0.01 95);
+      --ink-2: oklch(0.74 0.012 95);
+      --ink-3: oklch(0.6 0.012 95);
+      --rule: oklch(0.34 0.014 160);
+      --refuse: oklch(0.68 0.17 25);
+      --refuse-soft: oklch(0.3 0.05 25);
+      --receipt: oklch(0.72 0.12 155);
+      --receipt-soft: oklch(0.3 0.05 155);
+      --old: oklch(0.62 0.03 80);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: oklch(0.21 0.012 160); --paper-2: oklch(0.25 0.014 160);
+    --ink: oklch(0.9 0.01 95); --ink-2: oklch(0.74 0.012 95); --ink-3: oklch(0.6 0.012 95);
+    --rule: oklch(0.34 0.014 160);
+    --refuse: oklch(0.68 0.17 25); --refuse-soft: oklch(0.3 0.05 25);
+    --receipt: oklch(0.72 0.12 155); --receipt-soft: oklch(0.3 0.05 155);
+    --old: oklch(0.62 0.03 80);
+  }
+  :root[data-theme="light"] {
+    --paper: oklch(0.97 0.008 95); --paper-2: oklch(0.94 0.012 95);
+    --ink: oklch(0.24 0.015 160); --ink-2: oklch(0.42 0.015 160); --ink-3: oklch(0.56 0.012 160);
+    --rule: oklch(0.85 0.012 95);
+    --refuse: oklch(0.5 0.19 25); --refuse-soft: oklch(0.93 0.03 25);
+    --receipt: oklch(0.46 0.12 155); --receipt-soft: oklch(0.92 0.035 155);
+    --old: oklch(0.62 0.02 80);
+  }
+
+  html { background: var(--paper); }
+  body {
+    font-family: var(--serif); color: var(--ink); background: var(--paper);
+    line-height: 1.62; margin: 0; font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sheet { max-width: 880px; margin: 0 auto; padding: var(--sp-8) var(--sp-6) var(--sp-24); }
+
+  /* ---------- masthead ---------- */
+  header.mast { padding: var(--sp-12) 0 var(--sp-8); border-bottom: 3px double var(--rule); }
+  .case-no { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); }
+  h1 { font-size: clamp(2rem, 5.2vw, 3.4rem); line-height: 1.08; margin: var(--sp-4) 0 var(--sp-4);
+    font-weight: 700; letter-spacing: -0.015em; max-width: 20ch; }
+  .dek { font-size: 1.12rem; color: var(--ink-2); max-width: 58ch; margin: 0; }
+  .mast-row { display: flex; flex-wrap: wrap; gap: var(--sp-8); align-items: flex-end;
+    justify-content: space-between; }
+
+  .stamp { display: inline-block; font-family: var(--mono); font-weight: 700;
+    font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+    border: 2.5px solid currentColor; border-radius: 4px; padding: 7px 14px 6px;
+    transform: rotate(-4deg); white-space: nowrap; }
+  .stamp.refuse { color: var(--refuse); }
+  .stamp.receipt { color: var(--receipt); }
+  .stamp.big { font-size: 15px; padding: 10px 18px 9px; }
+
+  /* ---------- sections ---------- */
+  section { padding: var(--sp-16) 0 0; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 var(--sp-2); }
+  h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.15; margin: 0 0 var(--sp-4);
+    letter-spacing: -0.01em; max-width: 30ch; }
+  p { max-width: 66ch; margin: 0 0 var(--sp-4); }
+  .note { color: var(--ink-2); font-size: 0.95rem; max-width: 66ch; }
+  em { font-style: italic; }
+  strong { font-weight: 700; }
+  a { color: inherit; }
+
+  /* ---------- terminal panels ---------- */
+  .term-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--sp-6); margin: var(--sp-8) 0 var(--sp-4); }
+  .term { border: 1.5px solid var(--rule); border-radius: 6px; overflow: hidden;
+    background: var(--paper-2); min-width: 0; }
+  .term-head { display: flex; justify-content: space-between; align-items: baseline;
+    gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: 1.5px solid var(--rule);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-2); }
+  .term pre { margin: 0; padding: var(--sp-4); font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.65; overflow-x: auto; color: var(--ink); }
+  .t-refuse { color: var(--refuse); font-weight: 700; }
+  .t-receipt { color: var(--receipt); font-weight: 700; }
+  .t-dim { color: var(--ink-3); }
+
+  /* ---------- footprint chart ---------- */
+  .chart { margin: var(--sp-8) 0; }
+  .bar-row { display: grid; grid-template-columns: minmax(130px, 200px) 1fr;
+    gap: var(--sp-4); align-items: center; padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--rule); }
+  .bar-row:first-child { border-top: 1px solid var(--rule); }
+  .bar-label { font-size: 0.9rem; line-height: 1.35; }
+  .bar-label small { display: block; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); margin-top: 2px; }
+  .bar-lanes { display: grid; gap: 5px; min-width: 0; }
+  .lane { display: grid; grid-template-columns: 34px 1fr; gap: var(--sp-3); align-items: center; }
+  .lane .who { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .lane .track { position: relative; height: 18px; }
+  .lane .fill { position: absolute; inset: 0 auto 0 0; border-radius: 2px; min-width: 2px; }
+  .lane.v25 .fill { background: var(--old); opacity: 0.55; }
+  .lane.v30 .fill { background: var(--receipt); }
+  .lane .val { position: absolute; left: calc(var(--w) + 8px); top: 50%;
+    transform: translateY(-50%); font-family: var(--mono); font-size: 11.5px;
+    color: var(--ink-2); white-space: nowrap; }
+  .lane .fill { width: var(--w); }
+  .factor { font-family: var(--mono); font-size: 12px; color: var(--receipt); font-weight: 700; }
+
+  /* ---------- ledger table ---------- */
+  .ledger { width: 100%; border-collapse: collapse; margin: var(--sp-8) 0; font-size: 0.92rem; }
+  .ledger caption { text-align: left; font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+    padding-bottom: var(--sp-3); }
+  .ledger th { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 400;
+    text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 2px solid var(--ink); }
+  .ledger td { padding: var(--sp-3); border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .ledger td:first-child { font-weight: 700; }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
+  .tag.prose { background: var(--paper-2); color: var(--ink-3); border: 1px dashed var(--ink-3); }
+  .tag.refused { background: var(--refuse-soft); color: var(--refuse); }
+  .tag.sealed { background: var(--receipt-soft); color: var(--receipt); }
+  .tag.none { background: transparent; color: var(--ink-3); }
+  .ledger-wrap { overflow-x: auto; }
+
+  /* ---------- dot strip (campaign) ---------- */
+  .strip { margin: var(--sp-8) 0; }
+  .strip-row { display: grid; grid-template-columns: minmax(150px, 220px) 1fr 64px;
+    gap: var(--sp-4); align-items: center; padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--rule); }
+  .strip-row:first-child { border-top: 1px solid var(--rule); }
+  .strip-label { font-size: 0.9rem; }
+  .strip-label small { display: block; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+  .dot.hit { background: var(--receipt); border-color: var(--receipt); }
+  .dot.right { background: var(--paper-2); border-color: var(--receipt); }
+  .dot.wrong { background: var(--refuse-soft); border-color: var(--refuse); }
+  .strip-score { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2);
+    text-align: right; }
+  .legend { display: flex; flex-wrap: wrap; gap: var(--sp-6); font-size: 0.85rem;
+    color: var(--ink-2); margin-top: var(--sp-4); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+
+  /* ---------- arc (checkpoint law) ---------- */
+  .arc { display: grid; gap: 0; margin: var(--sp-8) 0; }
+  .arc-step { display: grid; grid-template-columns: 30px 1fr; gap: var(--sp-4); }
+  .arc-rail { display: flex; flex-direction: column; align-items: center; }
+  .arc-node { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--ink);
+    background: var(--paper); flex-shrink: 0; margin-top: 5px; }
+  .arc-line { width: 2px; flex: 1; background: var(--rule); }
+  .arc-step:last-child .arc-line { display: none; }
+  .arc-body { padding-bottom: var(--sp-8); max-width: 62ch; }
+  .arc-body h3 { margin: 0 0 var(--sp-1); font-size: 1.05rem; }
+  .arc-body p { margin: 0 0 var(--sp-2); font-size: 0.95rem; color: var(--ink-2); }
+  .arc-verdict { font-family: var(--mono); font-size: 12px; }
+  .arc-verdict.evade { color: var(--refuse); }
+  .arc-verdict.held { color: var(--receipt); }
+
+  /* ---------- cost bars ---------- */
+  .cost { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-6);
+    align-items: end; margin: var(--sp-8) 0 var(--sp-3); max-width: 560px; height: 190px; }
+  .cost .col { display: flex; flex-direction: column; justify-content: flex-end;
+    height: 100%; gap: var(--sp-2); }
+  .cost .pillar { background: var(--ink-2); border-radius: 3px 3px 0 0; height: var(--h); }
+  .cost .col.rigor .pillar { background: var(--receipt); }
+  .cost .amt { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .cost .cap { font-size: 0.82rem; color: var(--ink-2); line-height: 1.35; }
+
+  /* ---------- honest limit ---------- */
+  .limit { border: 2px solid var(--ink); border-radius: 6px; padding: var(--sp-6);
+    margin: var(--sp-8) 0; background: var(--paper-2); max-width: 66ch; }
+  .limit .kicker { color: var(--refuse); }
+  .limit p:last-child { margin-bottom: 0; }
+
+  /* ---------- roadmap ---------- */
+  .road { list-style: none; margin: var(--sp-6) 0 0; padding: 0; max-width: 66ch; }
+  .road li { display: grid; grid-template-columns: 28px 1fr; gap: var(--sp-3);
+    padding: var(--sp-3) 0; border-bottom: 1px solid var(--rule); }
+  .road .n { font-family: var(--mono); font-size: 12px; color: var(--ink-3); padding-top: 3px; }
+  .road b { font-weight: 700; }
+
+  footer { margin-top: var(--sp-24); padding-top: var(--sp-6);
+    border-top: 3px double var(--rule); display: flex; flex-wrap: wrap;
+    gap: var(--sp-6); justify-content: space-between; align-items: center;
+    font-size: 0.9rem; color: var(--ink-2); }
+  footer code { font-family: var(--mono); font-size: 0.85em; background: var(--paper-2);
+    padding: 2px 7px; border-radius: 3px; }
+
+  @media (max-width: 560px) {
+    .bar-row, .strip-row { grid-template-columns: 1fr; gap: var(--sp-2); }
+    .strip-score { text-align: left; }
+  }
+</style>
+
+<div class="sheet">
+
+<header class="mast">
+  <div class="mast-row">
+    <div>
+      <p class="case-no">Audit ledger · ADD 2.5.0 vs 3.0 · recorded 2026-08-10/11 · amended: the beta.2 docket shipped</p>
+      <h1>Two methods walked into an audit. One kept its story straight.</h1>
+      <p class="dek">Every number below was measured by driving both engines on the same
+      feature, tampering with both, and running a planted-ambiguity benchmark five ways.
+      Nothing is projected, rounded up, or taken from a slide.</p>
+    </div>
+    <span class="stamp receipt big">3.0 · verified</span>
+  </div>
+</header>
+
+<!-- ================= 1 · the tamper test ================= -->
+<section>
+  <p class="kicker">Exhibit 1 · The tamper test</p>
+  <h2>We edited a frozen rule in both. Only one noticed.</h2>
+  <p>After each version froze its plan, we gutted the central rule —
+  <em>“a transfer moves the amount atomically”</em> became <em>“anything goes”</em> —
+  and asked each engine to verify. Verbatim output:</p>
+
+  <div class="term-pair">
+    <div class="term">
+      <div class="term-head"><span>ADD 2.5 · add.py check</span><span class="stamp refuse">missed it</span></div>
+      <pre><span class="t-dim"># frozen rule now reads "M1 anything goes"</span>
+check: <span class="t-receipt">9 passed</span>, 0 failed (2 warnings)
+<span class="t-dim"># the edit is invisible. exit 0.</span></pre>
+    </div>
+    <div class="term">
+      <div class="term-head"><span>ADD 3.0 · add gate</span><span class="stamp receipt">caught it</span></div>
+      <pre>sealed at freeze : sha256:8034caf4323539bb
+digest now       : sha256:1e17133257edf4b4
+<span class="t-refuse">DRIFT — gate refuses the PASS</span>
+<span class="t-dim">next: refreeze with approval, or reopen</span></pre>
+    </div>
+  </div>
+  <p class="note">3.0’s freeze writes a digest over the rules, checks, and published
+  interface. The gate recomputes it before any PASS. 2.5 had checkboxes asking you to
+  confirm nothing changed — and no code that read them.</p>
+</section>
+
+<!-- ================= 2 · footprint ================= -->
+<section>
+  <p class="kicker">Exhibit 2 · Footprint</p>
+  <h2>Smaller everywhere it costs you, bigger only where it counts</h2>
+  <p>Same feature (<em>transfer money between a user’s own accounts</em>), both versions,
+  clean-room installs, authored to a successful freeze:</p>
+
+  <div class="chart">
+    <div class="bar-row">
+      <div class="bar-label">Task scaffold<small>bytes, empty template</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">8,617 B</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:16%"></span><span class="val" style="--w:16%">1,610 B · <span class="factor">5.4× less</span></span></span></div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Authored plan<small>bytes, same feature, frozen</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">9,140 B</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:33%"></span><span class="val" style="--w:33%">3,479 B · <span class="factor">2.6× less</span></span></span></div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Generated project state<small>bytes on disk after setup</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">48,570 B</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:8%"></span><span class="val" style="--w:8%">4,549 B · <span class="factor">10.7× less</span></span></span></div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Session resume read-set<small>what an agent reads to continue</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">12,286 B · 3 files</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:20%"></span><span class="val" style="--w:20%">2,902 B · 1 node · <span class="factor">4.2× less</span></span></span></div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Vendored engine<small>lines of code in your repo</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">9,381 ln · 16 files</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:27%"></span><span class="val" style="--w:27%">2,900 ln · 2 files · <span class="factor">3.2× less</span></span></span></div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">CLI verbs<small>surface an agent must learn</small></div>
+      <div class="bar-lanes">
+        <div class="lane v25"><span class="who">2.5</span><span class="track"><span class="fill" style="--w:86%"></span><span class="val" style="--w:86%">34 verbs</span></span></div>
+        <div class="lane v30"><span class="who">3.0</span><span class="track"><span class="fill" style="--w:50%"></span><span class="val" style="--w:50%">20 verbs · <span class="factor">80% documented</span></span></span></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">The one place 3.0 grew: assumptions. 2.5’s plan holds one ⚠ line for
+  “the assumption most likely to be wrong.” 3.0’s authored plan holds ten — one per
+  surface × dimension pair the engine refused to freeze without. (Chart measured on
+  beta.1; beta.2 adds one verb, <code>add upgrade</code> — 21 total, still 38% fewer
+  than 2.5.)</p>
+</section>
+
+<!-- ================= 3 · enforcement ledger ================= -->
+<section>
+  <p class="kicker">Exhibit 3 · The enforcement ledger</p>
+  <h2>What each version actually checks</h2>
+  <p>We grepped the shipped 2.5 engine for every planning concern its template asks
+  about. <strong>“Prose” means the artifact asks and no code ever reads the answer.</strong></p>
+
+  <div class="ledger-wrap"><table class="ledger">
+    <caption>Concern · enforcement mechanism per version</caption>
+    <thead><tr><th>Concern</th><th>ADD 2.5</th><th>ADD 3.0</th></tr></thead>
+    <tbody>
+      <tr><td>Rules authored before build</td>
+        <td><span class="tag prose">prose</span> §1 may stay template</td>
+        <td><span class="tag refused">freeze refuses</span> placeholders named</td></tr>
+      <tr><td>Assumptions recorded</td>
+        <td><span class="tag prose">prose</span> ⚠ line, read by 0 lines of code</td>
+        <td><span class="tag refused">freeze refuses</span> surface × 5-dimension sweep</td></tr>
+      <tr><td>Interface enumerated</td>
+        <td><span class="tag none">— no slot</span></td>
+        <td><span class="tag refused">freeze refuses</span> unauthored or collapsed <code>gives:</code></td></tr>
+      <tr><td>Tests exist &amp; ran red</td>
+        <td><span class="tag prose">prose</span> froze with 0 tests on disk</td>
+        <td><span class="tag sealed">receipt-bound</span> red-first recorded per run</td></tr>
+      <tr><td>Rules still intact at verify</td>
+        <td><span class="tag prose">checkbox</span> never read</td>
+        <td><span class="tag sealed">digest seal</span> gate recomputes sha256</td></tr>
+      <tr><td>Every rule proven by a passing test</td>
+        <td><span class="tag prose">prose</span> gate takes no receipt</td>
+        <td><span class="tag refused">gate refuses</span> covers-binding vs receipt</td></tr>
+      <tr><td>Security floor</td>
+        <td><span class="tag prose">waiver</span> owner + ticket + expiry closes it</td>
+        <td><span class="tag refused">categorical</span> HARD-STOP, floor from paths</td></tr>
+      <tr><td>Phase honesty</td>
+        <td><span class="tag prose">marker</span> <code>phase verify</code> = advertised bypass</td>
+        <td><span class="tag sealed">derived</span> beats computed from stamps</td></tr>
+    </tbody>
+  </table></div>
+
+  <p class="note">Score: 2.5 enforces 5 checks, all on one section of the plan.
+  3.0 enforces the entire ledger — and ships a second, independent conformance
+  checker that agrees with the engine on every bundle we’ve driven.</p>
+</section>
+
+<!-- ================= 4 · the law ================= -->
+<section>
+  <p class="kicker">Exhibit 4 · Why enforcement is the design</p>
+  <h2>Three times we asked nicely. Three times it took a refusal.</h2>
+  <p>While hardening 3.0’s assumptions feature, we ran a planted-ambiguity benchmark,
+  patched the method, and re-ran — three cycles. The same law fired every time:</p>
+
+  <div class="arc">
+    <div class="arc-step">
+      <div class="arc-rail"><div class="arc-node"></div><div class="arc-line"></div></div>
+      <div class="arc-body">
+        <h3>Probe 1 — the sweep ships</h3>
+        <p>Docs ask for every API surface and honest unknowns. The run enumerated
+        surfaces — then answered every question as confident fact and bundled three
+        unknowns into one line.</p>
+        <p class="arc-verdict evade">prose rule → routed around</p>
+      </div>
+    </div>
+    <div class="arc-step">
+      <div class="arc-rail"><div class="arc-node"></div><div class="arc-line"></div></div>
+      <div class="arc-body">
+        <h3>Probe 2 — the register moves into the scaffold</h3>
+        <p>Each line now starts from “the request does not say…”. The frame held,
+        unbundled — and the run collapsed five endpoints into a single surface,
+        shrinking the sweep from ~25 questions to 5.</p>
+        <p class="arc-verdict evade">new prose rule → routed around again</p>
+      </div>
+    </div>
+    <div class="arc-step">
+      <div class="arc-rail"><div class="arc-node"></div><div class="arc-line"></div></div>
+      <div class="arc-body">
+        <h3>Probe 3 — freeze refuses a collapsed surface</h3>
+        <p>“One surface per S id” becomes an engine refusal. The run enumerated five
+        clean surfaces, and the sweep caught a genuinely missed question
+        (<code>order:S5</code>) live — refusing the freeze until it was answered.</p>
+        <p class="arc-verdict held">engine checkpoint → held</p>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>Prose rules get routed around; engine checkpoints hold.</strong>
+  That result — reproduced three times for $7.84 in agent time — is why 3.0 converts
+  guidance into refusals instead of adding more documentation. It is also exactly what
+  the ledger above shows about 2.5.</p>
+</section>
+
+<!-- ================= 5 · campaign numbers ================= -->
+<section>
+  <p class="kicker">Exhibit 5 · The benchmark record</p>
+  <h2>Seven planted ambiguities, five scored runs</h2>
+  <p>The amb1 workload plants seven ambiguities in one request — one loud contradiction,
+  six quiet gaps. A run scores per item: did it <em>flag</em> the ambiguity before
+  coding, silently guess the defensible reading, or guess wrong?</p>
+
+  <div class="strip">
+    <div class="strip-row">
+      <div class="strip-label">Vanilla agent<small>no method · $0.61</small></div>
+      <div class="dots"><span class="dot hit"></span><span class="dot right"></span><span class="dot right"></span><span class="dot wrong"></span><span class="dot wrong"></span><span class="dot wrong"></span><span class="dot wrong"></span></div>
+      <div class="strip-score">3/7 safe</div>
+    </div>
+    <div class="strip-row">
+      <div class="strip-label">ADD, before assumptions<small>$2.14</small></div>
+      <div class="dots"><span class="dot hit"></span><span class="dot right"></span><span class="dot right"></span><span class="dot right"></span><span class="dot right"></span><span class="dot wrong"></span><span class="dot wrong"></span></div>
+      <div class="strip-score">5/7 safe</div>
+    </div>
+    <div class="strip-row">
+      <div class="strip-label">ADD, full sweep (final)<small>$3.46</small></div>
+      <div class="dots"><span class="dot hit"></span><span class="dot hit"></span><span class="dot right"></span><span class="dot right"></span><span class="dot right"></span><span class="dot wrong"></span><span class="dot wrong"></span></div>
+      <div class="strip-score">5/7 safe</div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><span class="dot hit"></span> flagged before code</span>
+    <span><span class="dot right"></span> silent, defensible reading</span>
+    <span><span class="dot wrong"></span> silent, wrong reading</span>
+  </div>
+
+  <p style="margin-top: var(--sp-6)">The dots undersell the final run. By hand-audit,
+  its plan flags <em>every</em> previously-invisible question in writing — including
+  both it still answers wrong — in lines like:</p>
+
+  <div class="term"><div class="term-head"><span>.add/tasks/booking-api.md · authored by the agent, pre-freeze</span></div>
+  <pre>- A1 [who] covers: S1,S2,S3,S4,S5 · <span class="t-receipt">the request does not say</span> whether
+  Authorization restricts who may read/cancel a booking; taking "no
+  ownership check — any caller may read or cancel any booking"
+  <span class="t-refuse">-&gt; cost if wrong: no per-tenant isolation</span></pre></div>
+
+  <p class="note">That reading is wrong — and that is the point. Six runs earlier this
+  decision was invisible. Now it sits in the one document a human approves, priced,
+  where a veto takes ten seconds.</p>
+
+  <h3 style="margin-top: var(--sp-12); font-size: 1.05rem;">The price of rigor, measured</h3>
+  <div class="cost">
+    <div class="col"><span class="amt">$1.82</span><span class="pillar" style="--h:37%"></span><span class="cap">run that dodged the ceremony</span></div>
+    <div class="col"><span class="amt">$2.56</span><span class="pillar" style="--h:52%"></span><span class="cap">partial sweep</span></div>
+    <div class="col rigor"><span class="amt">$3.46</span><span class="pillar" style="--h:70%"></span><span class="cap">full sweep, every question forced</span></div>
+  </div>
+  <p class="note">Honesty costs 35–90% more agent time than its evasions. A wrong
+  who-can-cancel decision reaching production costs more.</p>
+</section>
+
+<!-- ================= 6 · the honest limit ================= -->
+<section>
+  <p class="kicker">Exhibit 6 · Entered against ourselves</p>
+  <div class="limit">
+    <p class="kicker">What 3.0 does not claim</p>
+    <p><strong>3.0 makes agents ask the right questions. It cannot make them give the
+    right answers.</strong> On two of seven planted items the agent chose the wrong
+    reading in every run, before and after every improvement. No artifact checker can
+    fix that. What 3.0 guarantees is that the guess is on the record, priced, at the
+    moment you approve — <em>auditability, not correctness</em>. That is the release
+    claim, verbatim.</p>
+    <p>Also on the record: this comparison found two real 3.0 bugs — a missing tamper
+    seal (a regression from 2.5) and a parser flaw that silently disabled it. Both were
+    found by driving the artifacts, fixed with failing-tests-first, and pinned. A method
+    that audits itself should show its scars.</p>
+  </div>
+</section>
+
+<!-- ================= 7 · the docket, settled ================= -->
+<section>
+  <p class="kicker">Exhibit 7 · The docket, one release later</p>
+  <h2>What we said would ship next — and what beta.2 actually shipped</h2>
+  <p>This page first closed with seven promises. Beta.2 (cut 2026-08-11, 48 new
+  red-first tests) converted five of them from prose into engine refusals. The
+  two that remain open are spend-and-tag decisions, not code — marked honestly.</p>
+  <ol class="road">
+    <li><span class="n">01</span><span><b>The XML brief as a checkpoint</b> — <code>add brief</code> on a frozen task now records an <code>act: brief</code> stamp, and the gate refuses a PASS whose receipts predate it. The checkpoint law, applied to itself. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">02</span><span><b>Answer correctness via gate probes</b> — an assumption marked <code>· probe:</code> binds like a rule: no passing check on record, no PASS. Opt-in, so the engine enforces exactly what the author declared checkable. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">03</span><span><b>Broader surface detection</b> — one-surface-per-id now also refuses ≥2 distinct <code>name()</code> callables or ≥2 backticked documents under one id. Prose mentions stay unjudged: notary, not guard. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">04</span><span><b>Persona routing metadata</b> — the generated 232-lens index now has a freshness check: doctor warns when the vendored corpus and index disagree, so a stale roster can no longer misroute silently. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">05</span><span><b>Guided 2.x upgrade</b> — <code>add upgrade</code>: the 2.x bundle is renamed whole into <code>.add-2x-archive/</code>, 3.0 initialises beside it, and <code>MIGRATION.md</code> guides re-authoring. Nothing deleted; state deliberately untranslated. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">06</span><span><b>Published measurement</b> — <code>benchmark/campaign.py</code> aggregates repetition sets into a committed, reproducible record; <code>CAMPAIGN-amb1.md</code> is in the repo with its caveat in-band. Funding a homogeneous n≥3 set on the beta.2 engine is a spend decision, still open. <span class="tag sealed">tooling shipped</span> <span class="tag prose">runs unfunded</span></span></li>
+    <li><span class="n">07</span><span><b>3.0.0 final</b> — the beta hardens through live use; the tag follows. <span class="tag prose">open by design</span></span></li>
+  </ol>
+
+  <div class="term" style="margin-top: var(--sp-8)">
+    <div class="term-head"><span>beta.2, live — the newest refusal, verbatim</span><span class="stamp receipt">held</span></div>
+    <pre>$ add gate transfer PASS --by tin        <span class="t-dim"># frozen, built, green — but never briefed</span>
+<span class="t-refuse">cannot record `PASS` — no brief entered this build — the sealed
+direction was never compiled into the working prompt since the
+last (re)freeze -> "R:UNBRIEFED"</span>
+next: add brief transfer to record the entry, then re-run
+
+$ add brief transfer
+<span class="t-receipt">brief sha256:7471376cd24b1bb0 recorded as the build entry</span>
+next: add run transfer -- &lt;cmd&gt;</pre>
+  </div>
+  <p class="note">In beta.1 this page could only promise that the brief would become a
+  checkpoint. Now it can show the refusal — which is the whole difference the page is
+  about.</p>
+</section>
+
+<footer>
+  <span>Try the tamper test yourself: <code>npx @pilotspace/add init</code> · freeze ·
+  edit a frozen rule · watch the gate refuse. On 2.x? <code>add upgrade</code> walks you over.</span>
+  <span class="stamp receipt">filed 2026-08-11 · beta.2</span>
+</footer>
+
+</div>

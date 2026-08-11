@@ -23,11 +23,51 @@ conventions — into a lean grounding map, and surface the **anchors** the contr
 milestone, ground is gathered ONCE on the milestone (`## GROUND`); tasks **project** from it and never
 re-ground the repo. Aim the bundle at reality, not assumption.
 
-## The three sections (all in the node body)
+## The four sections (all in the node body)
 
 - **`## RULES`** — `Must` (what it must do) · `Reject` (what it must refuse, each a `R:CODE`) · `After`
-  (post-conditions), plus the **one riskiest assumption** and what it costs if wrong. Co-specify the
-  assumption; do not bury it.
+  (post-conditions). What you were **told**, and only that.
+- **`## ASSUMPTIONS`** — `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say — and the
+  reading you took> -> <cost if wrong>`. **Sweep every `gives:` surface on every dimension** —
+  `who · which · when · absent · order` — or retire one with `[<dim>] n/a · <why>`. `freeze`
+  REFUSES while a slot is template, `gives:` is unauthored, or a `(dimension, surface)` pair is
+  unswept — and it names the pairs. `add todo` counts them down while you author, so freeze confirms
+  work already done instead of ambushing you with the whole matrix.
+
+  **Work the matrix, don't free-associate.** Author `gives:` FIRST — the `S<n>` surfaces this node
+  publishes — since that is the axis the sweep runs along and freeze refuses while it is template.
+  **Enumerate ALL the surfaces**: every route × verb, function, or section the request touches is
+  one — including the read paths it mentions in passing. One surface per `S<n>` id — freeze
+  REFUSES an entry naming several HTTP methods, several distinct `name()` callables, or several
+  backticked documents, because five endpoints under one id shrinks the
+  matrix to one set of questions about the loudest of them. The sweep can only force questions about
+  surfaces you listed; in five live runs the never-questioned silences all lived on the quiet
+  `GET` path while every run wrote assumptions about the loud `POST` path, because free-association
+  follows the spec's own emphasis (a spec that discussed status constantly and named caller
+  identity once).
+  Then take each surface and ask all five: *who* may do this and
+  whose data is it · *which* rows/cases are in and which are filtered out · *when* — is the boundary
+  inclusive · what if the value is *absent* · what *order* / what breaks a tie.
+  When a taken reading is checkable against the running code, say so on the line:
+  `· probe: <what shipped behavior must show>` makes that `A<n>` a `covers:` referent — cite it
+  from a CHECKS line and the gate holds the PASS until that check reports passing. Probe the
+  readings whose cost-if-wrong is the highest; an unprobed line stays a priced guess on the record.
+
+  **One line, one silence.** Each `A<n>` names ONE open question. A line that resolves the
+  contradiction *and* carries the ordering, boundary and visibility questions in the same breath
+  is not auditable — a reviewer can only agree or disagree with it wholesale, and each silence it
+  bundles loses its own answer, its own cost-if-wrong, and its own place to be challenged. The
+  scaffold is one line per dimension; keep that shape as you author.
+
+  Write one here whenever you catch yourself about to state something the request never said. The
+  failure this exists to stop is silent and looks like competence: an unstated requirement gets
+  written as a Must in the same authoritative voice as a stated one, a check is bound to it, the
+  check passes, and the gate goes green on a decision nobody ever made. RULES has no slot for
+  "nobody told me" and EDGES only bounds rules you already wrote, so without this section the
+  guess has nowhere to be visible.
+
+  An assumption is a declared **unknown**, not a rule: it needs no check (`A<n>` is not bindable by
+  `covers:`) and editing one does not break the freeze seal.
 - **`## PLAN`** — the **contract shape** (this becomes the frozen `gives:` — the interface neighbors
   depend on) · the build **strategy** · the `scope:` tokens (the paths this node may touch; also the
   freshness set) · the regression floor.
@@ -54,12 +94,16 @@ prose into a node — that is what makes scope changes expensive.
 
 ## Author the contract edges yourself
 
-The graph, `brief`, and downstream re-scoping read a node's `gives:` (the contract shape it publishes)
-and `needs:` (the frozen fragments it consumes) from **frontmatter** — and nothing records them for you.
-Before you freeze, hand-author them into the node's frontmatter, e.g.:
+The graph, `brief`, downstream re-scoping AND the assumption sweep all read a node's `gives:` (the
+surfaces it publishes) and `needs:` (the frozen fragments it consumes) from **frontmatter**. `new`
+scaffolds `gives:` and `freeze` refuses while it is still template — it went unauthored in 3 of 3
+live runs when nothing asked for it. Give each surface an `S<n>` id; that id is what an ASSUMPTIONS
+line names in its `covers:`:
 
 ```yaml
-gives: "auth.verify(token) -> Claims | None"      # the shape this node publishes
+gives:
+  - S1 auth.verify(token) -> Claims | None       # a surface this node publishes
+  - S2 GET /sessions — the caller's own sessions
 needs: [/tasks/session-store.md#gives]            # a frozen fragment it builds on
 ```
 
