@@ -72,10 +72,18 @@ depends_on: [ /tasks/add-auth-token.md ]      # graph edges
 needs: [ /tasks/add-auth-token.md#gives ]     # frozen fragments this task consumes
 gives: [ "POST /bookings -> 409 OVERLAP on user-overlap" ]   # the interface it produces — FROZEN at freeze
 scope: [ src/bookings/** ]              # paths this task may touch; also the freshness set
-verified:                               # append-only stamps: freeze, gate, refreeze
-  - { by: "human:tindang", at: 2026-07-29T09:00:00Z, act: freeze, authority: human }
+verified:                               # append-only stamps — order is chronology
+  - { by: "human:tindang", at: 2026-07-29T09:00:00Z, act: freeze, authority: human, direction: "sha256:8034caf4323539bb" }
+  - { by: "cli", at: 2026-07-29T09:05:00Z, act: brief, authority: process, brief: "sha256:2f61ab90c44d17e2" }
+  - { by: "process:run", at: 2026-07-29T10:12:00Z, act: run, authority: process, outcome: PASS, receipt: /tasks/reject-overlap.d/runs/1.md }
 ---
 ```
+
+The stamps read as a story because they *are* one: the freeze seals the direction
+(`direction: sha256:…` over RULES · CHECKS · `gives:`), the brief records the moment that
+sealed direction was compiled into the working prompt (`act: brief` — Build's entry; the
+gate refuses a `PASS` whose receipts predate it), and the run binds the evidence. Append-only
+means the order is chronological fact — nothing can be back-dated into place.
 
 Its body is six sections, each with one job:
 
@@ -84,8 +92,10 @@ Its body is six sections, each with one job:
 - `## ASSUMPTIONS` — `A<n> [<dim>] covers: <S ids>`: what the request did **not** say, the reading
   you took, and the cost if it is wrong. Every `gives:` surface is swept on every dimension
   (`who · which · when · absent · order`) or the dimension is retired with `n/a · <why>`; `freeze`
-  refuses and names the unswept pairs. Exempt at `depth: quick`. Not bindable by `covers:`, and not
-  sealed by the direction digest (FORMAT.md §5).
+  refuses and names the unswept pairs. Exempt at `depth: quick`. Not sealed by the direction digest —
+  and not bindable by `covers:` *unless marked*: a line carrying `· probe: <what shipped behavior
+  must show>` makes its `A<n>` id a binding referent, and the gate holds a `PASS` until a passing
+  check cites it (FORMAT.md §5.1).
 - `## PLAN` — the contract detail that becomes the frozen `gives:`, the build strategy, and the `scope:`.
 - `## EDGES` — optional enumerated boundary cases (`E<n>`) a check must cover.
 - `## CHECKS` — one check per Must / Reject / Edge, red-first, each carrying a `covers:` referent.
@@ -181,6 +191,19 @@ gate: <PASS | RISK-ACCEPTED | HARD-STOP>
 ```
 
 The receipt at `runs/2.md` is a `type: Run` node recording the command's exit code, the passing check IDs, and the git blob hash of every in-`scope:` file at run time. The gate reads that receipt, re-hashes the scope, confirms `R:OVERLAP` and `M1` each map to a passing check, and only then records a `PASS`.
+
+## Alignment with OKF
+
+ABF-1's trust layer deliberately speaks the same shapes as the **Open Knowledge Format**
+(OKF v0.2, from Google Cloud's knowledge-catalog): every node carries a required `type:`;
+provenance and trust are recorded as `generated: { by, at }` and an append-only `verified:`
+list of confirmation events; actors follow the `human:<id>` / `process:<id>` convention;
+`index.md` and `log.md` are the reserved bundle files; and a Run receipt is essentially
+OKF's attested-computation shape (`runtime`, `computation`, `receipt`). Persona nodes adopt
+OKF's recommended `description:` and provenance `sources:` keys. This is *alignment*, not a
+conformance claim against OKF's own suite — but it means an OKF-aware tool reading an `.add/`
+bundle finds familiar structure, and the trust tiers OKF derives (unverified →
+machine-confirmed → human-reviewed) map directly onto ADD's stamp authorities.
 
 ## Conformance
 

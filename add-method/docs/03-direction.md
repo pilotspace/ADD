@@ -41,6 +41,14 @@ The RULES section is four short lists plus the one thing most likely to be wrong
 
    `depth: quick` skips the sweep — depth tunes ceremony, never the authority floor.
 
+   **Declaring a reading checkable — the `· probe:` opt-in.** An assumption line is a priced
+   guess on the record; most should stay exactly that. But when the shipped behavior can
+   *show* whether the reading was right, append `· probe: <what shipped behavior must show>`
+   to the line. That marks the `A<n>` id as a binding referent: some check must cite it in
+   its `covers:` and report passing, or the gate holds the `PASS` — the same binding rules
+   get. Opt-in on purpose: the engine enforces exactly what you declared checkable, and an
+   unmarked line stays a declared, priced guess.
+
 Naming the errors matters. "Reject bad amounts" is an instruction to guess; `amount <= 0 -> "amount_invalid"` is a rule that produces a testable check and a defined contract response.
 
 Give each Must a stable `M<n>:` ID; a Reject's own error code already *is* its ID, referenced later as `R:<code>`. These IDs are what the checks bind to.

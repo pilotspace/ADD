@@ -10,9 +10,20 @@ This is the beat the AI is genuinely good at, and the only one where it should b
 
 This is the difference between ADD and vague-prompt coding. The same agent that produces confident nonsense from "build me a transfer feature" produces correct, bounded code from "make these specific failing checks pass without changing them." The agent did not change; the direction did.
 
+## The entry is the brief — recorded, not assumed
+
+Build does not begin when the agent starts typing; it begins when the sealed direction is
+compiled into the working prompt. `add brief <slug>` does that compilation — and on a frozen
+task it also records an `act: brief` stamp carrying the compiled hash. That stamp is the
+*entry* into Build, and the gate holds it against the evidence: a `PASS` whose receipts
+predate the entry is refused (`R:UNBRIEFED`), because a brief compiled after the build is a
+decoration, not an instruction anything followed. Stamps are append-only, so the order is
+chronological fact — brief first, then build, then receipt. (`depth: quick` tasks are
+exempt: a one-file mechanical edit earns no XML prompt.)
+
 ## The build prompt
 
-The instruction is explicit about constraints, because the constraints are what keep the speed safe.
+The instruction is explicit about constraints, because the constraints are what keep the speed safe. `add brief` composes it from the sealed node — the text below is the shape it takes.
 
 ```
 Read the task node — its RULES, its PLAN (the frozen `gives:` contract and its `scope:`),

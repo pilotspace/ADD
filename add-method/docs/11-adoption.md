@@ -48,6 +48,15 @@ The prompts are plain text that reference files in the repository, and the gate 
 
 Switching tools changes which agent reads the bundle and nothing structural.
 
+## Coming from ADD 2.x
+
+If a project already carries a 2.x bundle, `add upgrade` is the path. It renames the whole
+2.x bundle into `.add-2x-archive/` — byte-identical, nothing deleted — initialises a fresh
+3.0 bundle beside it, and leaves a `MIGRATION.md` in the archive that walks the
+re-authoring task by task. 2.x state is deliberately *not* translated: its phase markers
+and signed waivers mean things 3.0 refuses to mean, so the direction work transfers by
+re-authoring against the archived plans, and the bypasses do not transfer at all.
+
 ## First week — where to enter
 
 | Coming in as… | First-week task |
