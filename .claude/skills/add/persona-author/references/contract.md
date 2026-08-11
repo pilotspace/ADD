@@ -43,18 +43,21 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
 ---
 ```
 
-- **`name` · `vibe`** — REQUIRED. Absence fails the schema check.
-- **`flow`** — the apply-surfaces this lens loads at. The ONLY valid values are
-  `design` · `build` · `advisor` · `verify` (single-sourced as `constants.PERSONA_FLOW_VALUES`).
+- **`name` · `vibe`** — REQUIRED. The engine will not refuse their absence (it is a notary,
+  not a linter) — but every surface that renders the roster prints them, so a missing `vibe`
+  is a blank line where your lens's one-sentence essence should be.
+- **`flow`** — the beats this lens loads at. The ONLY valid values are
+  `design` · `build` · `advisor` · `verify` (single-sourced in the skill's `personas.md`).
   Any other value is a typo that no surface loads — and NOTHING warns: the engine reads only
   `use-when:` for the roster, so a `flow:` typo fails silently. Check the four values yourself
-  before finishing. Surfaces: **design** = the UDD requirements lens · **build** = the domain-identity
-  overlay on SOUL.md · **advisor** = the subagent/streams delegation lens · **verify** = the
-  evidence-judging lens (earned-green refute-read + gate record).
-- **`task-kinds`** — the persona's SCOREBOARD KEY, from the closed taxonomy:
+  before finishing. Surfaces: **design** = the Direction-beat authoring lens (RULES ·
+  ASSUMPTIONS · `gives:` before the freeze) · **build** = the working lens the brief injects
+  (`<persona ref=… inject="frontmatter">`) · **advisor** = the delegation lens `advise` and
+  `wave` record on a beat · **verify** = the evidence-judging lens on the gate report.
+- **`task-kinds`** — the persona's ROUTING KEY, from the closed taxonomy:
   `feature · refactor · test · docs · ui · security · data · infra · release · integration`.
-  Route-outcome traces join a task's `kind:` header to this claim, so performance is measurable
-  per kind. A value outside the taxonomy scores as nothing.
+  It says which kinds of task should reach for this lens; a value outside the taxonomy
+  routes nothing.
 - **`use-when` / `not-when`** — the selection boundary. Selectors under-trigger on essence lines,
   so `use-when` ENUMERATES the concrete contexts that should pick THIS persona; `not-when` names
   the sibling that owns the near-miss (e.g. `CI permissions → security-gatekeeper`).
@@ -95,38 +98,42 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
 
 ## What ADD ships vs what you author
 
-ADD seeds exactly three personas into `.add/personas/` at `init` and `migrate` —
-`task-planner`, `milestone-planner`, `release-planner` (`constants.METHOD_PERSONAS`).
-Everything else on your roster is yours to author.
+3.0 seeds **no personas**. What `init` vendors is the read-only teacher corpus
+(`personas-teacher/`, 232 reference lenses, byte-verbatim third-party snapshot) and its
+generated routing sidecar (`personas-index/use-when.md`). Every Persona NODE on your
+roster is yours to author — scaffolded with `add new Persona <slug>`, or distilled from a
+teacher file by the seeding flow in `references/seeding.md`. The corpus is referenced,
+never copied into your roster: a teacher file teaches; a Persona node routes and advises.
 
-The line between them, and why it is drawn here rather than left to taste:
+The line governing what this project would ever ship as a preset, and why it is drawn
+here rather than left to taste:
 
 > **Ship a persona only if it is a METHOD LENS** — one that reasons about ADD's own
-> artifacts: PLAN.md sections, the frozen §3 contract, the milestone DAG, the release
-> cut. **Never ship a DOMAIN lens** — one that reasons about a project's subject matter:
-> security, data, UX, a framework, an industry.
+> artifacts: a Task's RULES and CHECKS, the frozen `gives:` contract and its seal, the
+> milestone graph, the gate report. **Never ship a DOMAIN lens** — one that reasons about
+> a project's subject matter: security, data, UX, a framework, an industry.
 
-A method lens is correct in every project by construction: every ADD project has the same
-contract, the same DAG, the same gate. A domain lens asserts what *your* project's
-judgment should be, and no author who has not read your code can do that.
+A method lens is correct in every project by construction: every ADD bundle has the same
+node grammar, the same freeze seal, the same gate. A domain lens asserts what *your*
+project's judgment should be, and no author who has not read your code can do that.
 
 This is a scar, not a style preference. Twelve preset personas (`security-gatekeeper`,
 `data-steward`, `ux-experience-lead`, and nine more) shipped in every npm tarball and pip
 wheel for months while **nothing loaded them** — authoritative-looking and dead. They were
 retired at `preset-patterns-fold`. Eleven of the twelve fail the criterion above; the
 honest near-miss is `release-manager`, which would have passed. The line is narrow, not
-comfortable.
+comfortable — and it is why 3.0 ships a corpus to READ and an empty roster to AUTHOR
+rather than presets to trust.
 
-Two obligations come with seeding, both test-enforced:
+Two obligations survive the 2.x seeding machinery they were learned on:
 
-- **Never clobber.** A seeded persona you have edited is returned untouched by any later
-  `init` or `migrate` (`_seed_persona_file` mirrors the `_seed_spec_file` survivor idiom).
-  Seeding fills gaps; it never rewrites your judgment.
-- **Prove the load, not the presence.** A seeded persona must appear in the `status --all`
-  roster as `slug [flow] — vibe`. A presence-only test is what let the presets pass a green
-  suite while dead, so `test_seed_method_personas` asserts the rendered roster line.
-
-Adding a slug to `METHOD_PERSONAS` without meeting the criterion re-opens that failure.
+- **Never clobber.** `init` is idempotent — an existing file always outranks a template
+  (R:CLOBBER), and `doctor --sync` is the only asked-for refresh. Nothing ever rewrites
+  your authored judgment.
+- **Prove the load, not the presence.** A roster persona must appear in the compiled
+  `index.md` roster with its `use-when:` line (that is what `doctor --sync` renders from
+  frontmatter). A presence-only check is exactly what let the dead presets pass a green
+  suite, so prove the rendered line, never the file.
 
 ## The author's own final sweep (the engine does NOT check these)
 
