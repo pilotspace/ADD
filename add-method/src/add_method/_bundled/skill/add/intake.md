@@ -51,9 +51,12 @@ PLAN, the deliverable is a cited `## FINDINGS` brief closed by a sufficiency gat
 security-scoped questions keep their human floor.
 
 ### Project / milestone — a theme or a slice
-A new product theme no active milestone covers, or a slice too big for one task. Draft the milestone
-first — **goal · in/out scope · exit criteria · a breadth-first task list** (`slug · depends-on · one
-line` each) — confirm it, then create it and list its tasks. (`add milestone-done` is **wired** — it
+A new product theme no active milestone covers, or a slice too big for one task. **Load the best-fit
+persona whose `flow:` includes advisor before the drafting starts** (`personas.md` § planning;
+if no personas are seeded, skip silently — the load is by fit). Draft the milestone first —
+**goal · in/out scope · exit criteria · a breadth-first task list** (`slug · depends-on · one
+line` each) — confirm it, then create it and list its tasks, recording the lens on the confirmed
+milestone: `add advise <milestone> --persona <p>`. (`add milestone-done` is **wired** — it
 refuses to close while a goal box is unchecked; `add milestone-archive` retires it once done.)
 
 ## The closed floor — what always sizes up

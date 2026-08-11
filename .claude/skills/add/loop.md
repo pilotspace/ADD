@@ -45,8 +45,9 @@ the cue:
    - open lessons — `add deltas` (still `open`);
    - planned-but-unscaffolded tasks — the plan-vs-state line in `add status`;
    - any reopened task — one a deepened verify returned to the flow (below).
-2. **Propose** the next tasks: for each carried item worth doing now, draft a one-line task
-   (slug + title + why). Group trivial ones; no noise.
+2. **Propose** the next tasks — with the best-fit advisor-flow persona loaded BEFORE drafting
+   (`personas.md` § planning; a roster-less bundle skips silently): for each carried item worth
+   doing now, draft a one-line task (slug + title + why). Group trivial ones; no noise.
 3. **Confirm** — the human accepts, edits, or declines each. No task is created without this.
 4. **Create** each accepted task — `add new Task <slug> --title "..."` — and run it through the
    normal 3-beat loop (direction → build → verify).
