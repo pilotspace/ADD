@@ -1143,7 +1143,9 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                      f'direction: "{direction_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
-    return node, f"{act} recorded at authority `{authority}`\nnext: build, then `add run -- <cmd>`"
+    return node, (f"{act} recorded at authority `{authority}`"
+                  f"\nnext: add brief {slug} — record the build entry, then build "
+                  f"(`add run {slug} -- <cmd>`)")
 
 
 def done(root, cid: str) -> tuple:
@@ -1405,10 +1407,38 @@ def _beat_of(node) -> str:
     return "build" if _is_frozen(node) else "direction"
 
 
+def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
+    """True when an `act: brief` stamp sits after the last (re)freeze — and, when
+    `receipt_cid` names a run stamp, before that run.
+
+    `verified:` is append-only (§3.5), so list order IS chronology — no clock needed.
+    A brief recorded before the freeze entered a direction that no longer exists, and a
+    brief recorded after the receipt entered nothing: the build it claims was already over.
+    """
+    stamps = [s for s in stamps if isinstance(s, dict)]
+    last_freeze = max((i for i, s in enumerate(stamps)
+                       if s.get("act") in ("freeze", "refreeze")), default=-1)
+    run_idx = next((i for i, s in enumerate(stamps)
+                    if s.get("act") == "run" and str(s.get("receipt", "")) == receipt_cid),
+                   None) if receipt_cid else None
+    return any(s.get("act") == "brief" and i > last_freeze
+               and (run_idx is None or i < run_idx)
+               for i, s in enumerate(stamps))
+
+
 def _next_verb(graph: dict, cid: str) -> str:
     """The one runnable next command for a task, by its stamp-derived beat."""
     slug = cid.rsplit("/", 1)[-1][:-3]
-    return BEAT_NEXT.get(_beat_of(graph[cid]), "add status").format(slug=slug)
+    node = graph[cid]
+    beat = _beat_of(node)
+    fm = node.get("fm") or {}
+    # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
+    # points at `add brief`, and moves on to the run the moment the entry is recorded.
+    if beat == "build" and fm.get("type") == "Task" \
+            and str(fm.get("depth") or "standard") != "quick" \
+            and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
+        return f"add brief {slug}"
+    return BEAT_NEXT.get(beat, "add status").format(slug=slug)
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -2308,6 +2338,33 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             "budget": budget, "degraded": degraded, "phase": phase, "depth": depth}
 
 
+def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
+    """Record that the brief ENTERED the build: `act: brief` on a frozen Task. `(digest, note)`.
+
+    The compile itself stays pure (`brief` is read-only and `gate` calls it); THIS is the
+    write, and it is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
+    entry — before the freeze there is no sealed direction for a brief to enter, and depth
+    `quick` never demands one (the gate exempts it), though recording one is harmless.
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    fm = node.get("fm") or {}
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if fm.get("type") != "Task" or not _is_frozen(node):
+        return None, (f"brief compiled, not recorded — only a frozen Task records its build "
+                      f"entry, and `{slug}` is not one yet"
+                      f"\nnext: add freeze {slug}, then add brief {slug}")
+    digest = brief(root, cid)["hash"]
+    _transition(root, cid, appends=[("verified",
+        f'{{ by: "{by}", at: {_today()}, act: brief, authority: process, '
+        f'brief: "{digest}" }}')])
+    return digest, (f"brief {digest} recorded as the build entry"
+                    f"\nnext: add run {slug} -- <cmd>")
+
+
 # ============================================ gate — the verdict, and its refusals (e13)
 #
 # This verb should have existed since e4. Every gate in this project's history was recorded by
@@ -2474,6 +2531,25 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                       "changes by refreezing, never by a silent edit",
                       f'add freeze {slug} --by "<name>" to record the change, or '
                       f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+
+    # W1 (beta-2, R:UNBRIEFED) — the brief is Build's ENTRY, not the verdict's garnish.
+    # beta-1 stamped a brief hash HERE, at gate time: a record of what the instructions would
+    # have been, taken after the build was over. Using the brief during Build was recommended
+    # prose, and three probe campaigns each showed what recommended prose becomes. Keyed off
+    # the seal (like drift) so pre-seal bundles stay gateable; quick depth is ceremony-tuned
+    # out, the same stance as the sweep's exemptions.
+    if sealed and verdict == "PASS" and sfm.get("type") == "Task" \
+            and str(sfm.get("depth") or "standard") != "quick":
+        all_stamps = sfm.get("verified") or []
+        if not _brief_entered(all_stamps, receipt_cid):
+            why = ("the brief was recorded after the receipt — an entry that postdates the "
+                   "build entered nothing"
+                   if _brief_entered(all_stamps) else
+                   "no brief entered this build — the sealed direction was never compiled "
+                   "into the working prompt since the last (re)freeze")
+            return refuse(why + ' -> "R:UNBRIEFED"',
+                          f"add brief {slug} to record the entry, then re-run "
+                          f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}

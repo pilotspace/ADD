@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "8f2006bc916bf0ca521e54bfbf8629cd"  # re-aimed @ token-boundary quotes (a bare apostrophe in an unquoted item no longer opens a quote and swallows verified:). prior: e862b3d9… @ surface-granularity
+ENGINE_MD5 = "8ead55bc17f94d2424637c2432770efe"  # re-aimed @ brief-gate W1 (R:UNBRIEFED — the brief is Build's entry: brief_stamp records it, gate refuses a PASS it never entered). prior: 8f2006bc… @ token-boundary quotes
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing
+ENGINE_PKG_MD5 = "3d21a9c2ce9029691b967ee509015b50"  # re-aimed @ brief-gate W1 (brief verb records the build entry via brief_stamp; --by added). prior: fa1d8313… @ verb-recovery
