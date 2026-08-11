@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a50e4b423a30409d8aa5587959886252"  # re-aimed @ routing-index-freshness W4 (doctor warns when the vendored corpus and use-when.md disagree — a stale index misroutes silently). prior: 567cf40b… @ surface-granularity W3
+ENGINE_MD5 = "dd612bc46b51b85485ff12c1edc3bd89"  # re-aimed @ guided-upgrade W5 (`upgrade` archives a 2.x bundle whole, inits 3.0, writes MIGRATION.md in the archive — nothing deleted, nothing translated). prior: a50e4b42… @ routing-index-freshness W4
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "3d21a9c2ce9029691b967ee509015b50"  # re-aimed @ brief-gate W1 (brief verb records the build entry via brief_stamp; --by added). prior: fa1d8313… @ verb-recovery
+ENGINE_PKG_MD5 = "b4a7249845259f3fbcf8e1dae013b03c"  # re-aimed @ guided-upgrade W5 (upgrade subparser + dispatch; operates on the project root, not the bundle). prior: 3d21a9c2… @ brief-gate W1

@@ -74,6 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--for-subagent", action="store_true")
     s.add_argument("--by", default="cli")
 
+    s = sub.add_parser("upgrade", help="archive a 2.x bundle whole, initialise 3.0 beside it")
+    s.add_argument("--by", default="cli")
+
     s = sub.add_parser("freeze", help="the one approval → Build")
     s.add_argument("ref")
     s.add_argument("--by", default="cli")
@@ -160,6 +163,12 @@ def dispatch(args, run_cmd) -> int:
         cid, note = add.new(root, args.type.capitalize(), args.slug, **fields)
         print(note)
         return 0 if cid else 1
+
+    if args.verb == "upgrade":
+        # The verb works on the PROJECT, not the bundle: `.add/` is what gets archived.
+        report, note = add.upgrade(Path(args.root).resolve().parent, by=args.by)
+        print(note)
+        return 0 if report else 1
 
     if args.verb == "brief":
         cid = _resolve(root, args.ref)

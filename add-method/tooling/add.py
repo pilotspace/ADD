@@ -923,6 +923,84 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
     return load(root), created, f"{note}\nnext: add new milestone <slug>"
 
 
+RE_2X_PHASE = re.compile(r"^phase:\s*(\w+)", re.M)
+
+
+def upgrade(project_root, by: str = "cli") -> tuple:
+    """The guided 2.x → 3.0 clean break (W5). `(report_path, note)` — NO-EXEC, nothing deleted.
+
+    Automates exactly the path proven by hand on the bench, and nothing more: the whole 2.x
+    bundle is RENAMED to `.add-2x-archive/` (byte-identical, grep-able, never edited), a fresh
+    3.0 bundle is initialised at `.add/`, and `MIGRATION.md` lands in the ARCHIVE — it describes
+    the old world, and the new bundle's doctor should not have to classify it. State is not
+    translated: 2.x stamps, waivers and phase markers mean things 3.0 deliberately refuses to
+    mean (an untranslatable `phase: verify` re-materialising as a 3.0 beat would be a bypass
+    with a heritage story), so tasks are re-authored, with the archive open beside the editor.
+
+    A 2.x bundle is recognised by its own bones, any of: the `tooling/add_engine/` package
+    (3.0's engine is two flat files), `state.json` (3.0 has no state file), or directory-tasks
+    (`tasks/<slug>/PLAN.md`; 3.0 tasks are flat nodes).
+    """
+    project_root = Path(project_root)
+    root = project_root / ".add"
+    archive = project_root / ".add-2x-archive"
+
+    def refuse(why: str, fix: str) -> tuple:
+        return None, f"cannot upgrade — {why}\nnext: {fix}"
+
+    if not root.is_dir():
+        return refuse("no `.add/` bundle here", "add init  # start fresh at 3.0")
+    if not ((root / "tooling" / "add_engine").is_dir()
+            or (root / "state.json").is_file()
+            or any(root.glob("tasks/*/PLAN.md"))):
+        return refuse("this bundle is already 3.0 — no 2.x markers found "
+                      "(add_engine/ package, state.json, or tasks/<slug>/PLAN.md)",
+                      "add status")
+    if archive.exists():
+        return refuse(f"`{archive.name}/` already exists — a previous upgrade's record is "
+                      f"never clobbered",
+                      f"move `{archive.name}/` aside yourself, then add upgrade")
+
+    tasks = []
+    for plan in sorted(root.glob("tasks/*/PLAN.md")):
+        m = RE_2X_PHASE.search(plan.read_text(encoding="utf-8", errors="replace"))
+        tasks.append((plan.parent.name, m.group(1) if m else "unknown"))
+    title = None
+    charter = root / "PROJECT.md"
+    if charter.is_file():
+        text = charter.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^title:\s*(.+)$", text, re.M) \
+            or re.search(r"^#\s+(?:PROJECT:\s*)?(.+)$", text, re.M)
+        title = m.group(1).strip() if m else None
+
+    root.rename(archive)                      # the ONE move — everything else is additive
+    init(root, "code", title)
+
+    report = archive / "MIGRATION.md"
+    lines = [f"# 2.x → 3.0 migration — recorded {_today()} by {by}", "",
+             "Nothing was deleted. This directory is the complete 2.x bundle, byte-identical,",
+             "renamed from `.add/`. The fresh 3.0 bundle beside it starts empty on purpose:",
+             "2.x state is not translated, because its markers (phase, autonomy, waivers) mean",
+             "things 3.0 deliberately refuses to mean. Re-author each task below against its",
+             "archived PLAN.md — the direction work transfers; the bypasses do not.", "",
+             "## 2.x tasks to re-author", ""]
+    lines += [f"- `{slug}` (2.x phase: {phase}) — archived at `tasks/{slug}/PLAN.md`; "
+              f"re-author with `add new Task {slug}`" for slug, phase in tasks] \
+        or ["- (none found)"]
+    lines += ["", "## Next", "",
+              "1. `add status` — see the fresh bundle.",
+              "2. `add new milestone <slug>` — recreate the active milestone.",
+              "3. `add new Task <slug>` per task above, authoring RULES/ASSUMPTIONS/CHECKS",
+              "   from the archived PLAN.md's §1–§4.",
+              "4. Freeze, brief, build, gate — the 3.0 loop takes it from there."]
+    report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    note = (f"2.x bundle archived whole to `{archive.name}/` ({len(tasks)} task(s) recorded in "
+            f"MIGRATION.md) · fresh 3.0 bundle initialised at `.add/`"
+            f"\nnext: read {archive.name}/MIGRATION.md, then add status")
+    return report, note
+
+
 # ============================================== new · freeze · done — transitions (e4)
 #
 # One shared write path (`_transition`) serves all three verbs, per amendment A1. Two rules
