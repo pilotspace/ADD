@@ -128,7 +128,13 @@ MARKERS: tuple[str, ...] = (
 # the marker and the anchor in the SAME sentence kills that false positive while
 # keeping every genuine phrasing (asking, or recording a chosen reading).
 WINDOW = 400   # max marker-to-anchor distance INSIDE a sentence
-_SENT_SPLIT = re.compile(r"(?<=[.!?;\n])\s+")
+# Two boundary kinds: whitespace after end-punctuation (ordinary prose), and a newline
+# followed by a list marker or heading. The second exists because a markdown bullet that
+# ends without punctuation (`-> <cost if wrong>`) never terminated a sentence, so a whole
+# `## ASSUMPTIONS` block fused into one mega-sentence and a per-line document format was
+# scored as a single run-on. A wrapped paragraph (newline, next line starts with a word)
+# is still ONE sentence — only `-`/`*`/`#` open a new one.
+_SENT_SPLIT = re.compile(r"(?<=[.!?;\n])\s+|\n+(?=[-*#])")
 
 
 def validate_ambiguities(rows: object) -> list[dict]:
@@ -172,13 +178,24 @@ def validate_ambiguities(rows: object) -> list[dict]:
     return rows
 
 
-def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
+def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int,
+                    siblings: Sequence[dict] | None = None) -> str:
     """Return the matched evidence span, or "" if the item was never surfaced.
 
     Surfaced iff a marker and one of the item's anchors appear in the SAME SENTENCE,
     and that sentence sits before `edit_pos` (the offset of the first edit to the
     implementing file). A marker after the edit is post-hoc rationalisation:
     explaining a choice already made is not surfacing it.
+
+    With `siblings`, a pairing sentence that attribution assigns to ANOTHER item — or
+    to nobody (a tie) — does not stop the search; the scan continues to the first
+    sentence that pairs AND is attributable to this item. Returning the first pair
+    unconditionally lost real recognitions: ADD's dense opening assumption line cites
+    waitlist, 409, priority and position together, so it won the race for several
+    items, was vetoed for most of them, and a clean dedicated sentence further down
+    the same document was never reached (rep1/rep2, `A-priority-vs-fifo`). The veto
+    itself is unweakened — a run whose only pair belongs to a sibling still scores
+    nothing, and a tie still credits nobody however many times it is scanned.
     """
     anchors = [a.lower() for a in item["anchors"]]
     for raw in texts:
@@ -200,6 +217,9 @@ def _find_surfacing(item: dict, texts: Iterable[str], edit_pos: int) -> str:
             m_at = next((low.find(m) for m in MARKERS if m in low), -1)
             a_at = next((low.find(a) for a in anchors if a in low), -1)
             if m_at != -1 and a_at != -1 and abs(m_at - a_at) <= WINDOW:
+                if siblings is not None and \
+                        best_attribution(sentence, list(siblings)) != item["id"]:
+                    continue             # a sibling's (or nobody's) sentence — keep looking
                 return sentence.strip()
     return ""
 
@@ -243,12 +263,11 @@ def classify(*, item: dict, transcript: str, artifacts: Sequence[str],
     WRITTEN document scores identically to one that asks in chat; searching only the
     transcript would quietly penalise document-first methods.
     """
-    evidence = _find_surfacing(item, (transcript, *artifacts), edit_pos)
-    if evidence and siblings:
-        # M2: a sentence surfaces at most ONE item. If it belongs to a sibling,
-        # this item was never surfaced — only mentioned in passing.
-        if best_attribution(evidence, list(siblings)) != item["id"]:
-            evidence = ""
+    # M2 (a sentence surfaces at most ONE item) is enforced INSIDE the search:
+    # a sibling's sentence is skipped, not fatal, so a dedicated sentence later in
+    # the same document still counts.
+    evidence = _find_surfacing(item, (transcript, *artifacts), edit_pos,
+                               siblings=siblings)
     if evidence:
         verdict = "surfaced"
     elif shipped == item["defensible"]:
