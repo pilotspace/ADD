@@ -974,6 +974,20 @@ def upgrade(project_root, by: str = "cli") -> tuple:
         title = m.group(1).strip() if m else None
 
     root.rename(archive)                      # the ONE move — everything else is additive
+    # The engine executing THIS verb lived inside the bundle just archived — its own source
+    # paths (TOOLING_SRC/CORPUS_SRC point into the renamed tree) are now gone, so init's
+    # vendoring degrades to `could_not` and the fresh bundle would have starter files and NO
+    # engine: the report's own `next: add status` dies on a missing cli.py (R:SELFARCHIVE —
+    # found live in the v3.0.0 updater test). Restore the installer-managed trees by COPY
+    # BEFORE init — never move (the archive stays the complete, byte-identical 2.x record),
+    # and init's idempotence then treats the restored files as the human's, exactly right:
+    # the archived tooling is by construction the running 3.0 engine, since a 3.0 cli
+    # dispatched this verb.
+    import shutil
+    for tree in ("tooling", "personas-teacher", "personas-index"):
+        src = archive / tree
+        if src.is_dir() and not (root / tree).exists():
+            shutil.copytree(src, root / tree, ignore=shutil.ignore_patterns("__pycache__"))
     init(root, "code", title)
 
     report = archive / "MIGRATION.md"
