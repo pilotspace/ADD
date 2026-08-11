@@ -1445,7 +1445,9 @@ def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
     if not (note or "").strip():
         return None, ('a replan with no note is invisible steering -> "R:SILENT_STEER"'
                       f'\nnext: add replan {slug} --note "<what changed and why>"')
-    text = str(note).strip().replace('"', "'")
+    # One physical line, always: the stamp lives in a single-line frontmatter entry, so a
+    # newline in the note would split it mid-map and take the node's whole trail with it.
+    text = " ".join(str(note).split()).replace('"', "'")
     _, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{by}", at: {_today()}, act: replan, authority: process, '
                      f'note: "{text}" }}')])
@@ -2673,10 +2675,33 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # is bound here — every frozen question named and evidenced; whether the answer SUFFICES
     # stays the gate-caller's judgment, exactly as check adequacy does.
     if receipt is None and str(sfm.get("kind") or "") == "explore":
-        body = node_body(graph[cid])
+        # Review of PR #197 — the sources path inherits the receipt path's seal discipline.
+        # The freeze IS this lane's one human approval (questions + budget, R:UNBOUNDED), so
+        # an unfrozen explore has nothing approved to gate against; and a post-freeze edit to
+        # a frozen question is the same silent tamper the drift refusal below exists for —
+        # the lane whose contract IS the questions cannot be the one lane free to rewrite them.
+        sealed_q = sealed_direction(sfm)
+        if not sealed_q:
+            return refuse("the questions were never frozen — this lane's one human approval "
+                          '(questions + budget) has not happened -> "R:UNFROZEN_EXPLORE"',
+                          f'add freeze {slug} --by "<name>", then add gate {slug} PASS')
+        node = read(graph[cid]["path"], "T2")
+        if verdict == "PASS" and direction_digest(node) != sealed_q:
+            return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen "
+                          "contract changes by refreezing, never by a silent edit",
+                          f'add freeze {slug} --by "<name>" to record the change, or '
+                          f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+        stubs = placeholders_in(node)
+        if stubs and verdict == "PASS":
+            return refuse("the node still carries template placeholders: " + " · ".join(stubs),
+                          f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
+        body = node["body"]
         musts = re.findall(r"^-\s*(M\d+)\b", _section_of(body, "RULES"), re.M)
         findings = _section_of(body, "FINDINGS")
-        closed = [m for m in musts if re.search(rf"answers {m}\b[^\n]*evidence:", findings)]
+        # A finding closes a question only with a REAL ref — `(evidence: )`, the template's
+        # `(evidence: <ref>)`, and prose that merely contains the word all stay open.
+        closed = [m for m in musts
+                  if re.search(rf"answers {m}\b[^\n]*\(evidence:\s*[^)\s<][^)]*\)", findings)]
         opens = [m for m in musts if m not in closed]
         if verdict == "PASS" and (not musts or opens):
             named = ", ".join(opens) if opens else "(no frozen questions at all)"
@@ -2691,7 +2716,9 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
                  f'outcome: {verdict}{extra}'
                  + (f', reason: "{reason}"' if reason else "") + " }")
-        _transition(root, cid, appends=[("verified", stamp)])
+        _, t_err = _transition(root, cid, appends=[("verified", stamp)])
+        if t_err:
+            return False, t_err + "\nnext: add status"
         if verdict == "PASS":
             done(root, cid)
             render_card(root, cid)
@@ -2801,7 +2828,9 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
              f'outcome: {verdict}, receipt: {receipt_cid}, brief: "{digest}"'
              + (f', reason: "{reason}"' if reason else "") + " }")
-    _transition(root, cid, appends=[("verified", stamp)])
+    _, t_err = _transition(root, cid, appends=[("verified", stamp)])
+    if t_err:
+        return False, t_err + "\nnext: add status"
 
     if verdict == "PASS":
         done(root, cid)

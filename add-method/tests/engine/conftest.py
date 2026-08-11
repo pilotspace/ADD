@@ -6,6 +6,7 @@ not a copy in each file — and keeping it here means the day the scaffold's wor
 suite follows from one place.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,6 +16,11 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tooling"))
 
 import add  # noqa: E402
+
+
+def git(*args, cwd):
+    """Run git in a test sandbox — one helper, not a copy in each file."""
+    return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
 
 DRAFTED_RULES = """<must>
 - M1 the admit path is atomic

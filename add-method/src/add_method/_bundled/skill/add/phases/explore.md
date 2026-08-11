@@ -61,15 +61,18 @@ Write `## FINDINGS` as a **compressed, cited brief** — roughly a page, never a
 ## The sufficiency gate — one recorded outcome
 
 ```bash
-add run <slug> --junitxml r.xml -- <cmd>   # when any check is executable; else evidence is the brief
-add gate <slug> PASS --by "<name>"
+add gate <slug> PASS --by "<name>"   # findings-only: the gate reads ## FINDINGS directly
 ```
 
-The gate records **which questions closed and which stayed open**. The verdict set is unchanged —
-PASS (sufficient), RISK-ACCEPTED (signed: acting despite named open questions), HARD-STOP. The
-evidence kind is typically `human-observed` on the brief until the `sources` receipt rung lands —
-a visible weakening, recorded as always, never a silent one. **Security is a HARD-STOP here too**:
-a finding surfaced *by research* escalates to the human exactly as one surfaced by tests.
+The gate records **which questions closed and which stayed open** — a findings-only explore stamps
+evidence kind `sources` with the closed tally; every frozen question needs an evidence-carrying
+`F` line or the gate refuses naming the open ones. The verdict set is unchanged — PASS
+(sufficient), RISK-ACCEPTED (signed: acting despite named open questions), HARD-STOP. Record a run
+receipt (`add run`) ONLY when **every** frozen question binds to an executable check — a recorded
+receipt puts the normal receipt path in charge, and a findings-only question would then hold the
+gate as unbound; a mixed explore keeps executable output as a cited evidence ref inside
+`## FINDINGS` instead. **Security is a HARD-STOP here too**: a finding surfaced *by research*
+escalates to the human exactly as one surfaced by tests.
 
 ## Downstream — findings seed the next Direction
 

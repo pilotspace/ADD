@@ -5,17 +5,14 @@ evidence-carrying FINDINGS line and refuses naming the open questions; a passing
 explore records evidence kind `sources` with the closed tally. Non-explore tasks byte-identical.
 """
 import re
-import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tooling"))
 
 import add  # noqa: E402
-from conftest import draft_direction  # noqa: E402
+from conftest import draft_direction, git  # noqa: E402
 
 
 def _set_section(root, cid, heading, text):
@@ -107,10 +104,6 @@ def test_extra_findings_are_ignored(tmp_path):
     assert ok is True, note
 
 
-def git(*args, cwd):
-    return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
-
-
 def test_explore_with_run_receipt_still_gates(tmp_path):
     """covers: E3 — a recorded run receipt keeps the normal receipt path in charge."""
     git("init", "-q", cwd=tmp_path)
@@ -130,6 +123,58 @@ def test_explore_with_run_receipt_still_gates(tmp_path):
     add.run(root, cid, [sys.executable, "-c", "pass"], cwd=tmp_path, junit=xml)
     ok, note = add.gate(root, cid, "PASS", by="human:t")
     assert ok is True, note
+
+
+def test_gate_refuses_unfrozen_explore(tmp_path):
+    """Review fix (PR #197) — the sources path never gates an unfrozen explore: the freeze IS
+    this lane's one human approval (questions + budget), and skipping it also skips R:UNBOUNDED."""
+    root, cid = _explore(tmp_path)
+    _set_section(root, cid, "FINDINGS",
+                 "- F1 (answers M1) · the admit path is atomic · (evidence: src/svc.py:42)")
+    ok, note = add.gate(root, cid, "PASS", by="human:t")
+    assert not ok, "an unfrozen explore must not gate"
+    assert "R:UNFROZEN_EXPLORE" in note, note
+    assert add.scan(root)[cid]["fm"]["status"] != "done"
+
+
+def test_gate_refuses_drifted_frozen_questions(tmp_path):
+    """Review fix (PR #197) — the sources path keeps the drift refusal: a frozen question
+    reworded or deleted after the freeze refuses exactly as the receipt path does."""
+    root, cid = _explore(tmp_path)
+    ok, note = _freeze(root, cid)
+    assert ok, note
+    _set_section(root, cid, "RULES",
+                 "<must>\n- M1 a softer question\n</must>\n<reject>\n"
+                 '- R:OVERADMIT two callers must never both take the last token -> "OVERADMIT"\n'
+                 "</reject>")
+    _set_section(root, cid, "FINDINGS",
+                 "- F1 (answers M1) · answered the softer question · (evidence: src/svc.py:42)")
+    ok, note = add.gate(root, cid, "PASS", by="human:t")
+    assert not ok and re.search(r"drift", note, re.I), note
+
+
+def test_hollow_evidence_refs_do_not_close(tmp_path):
+    """Review fix (PR #197) — `(evidence: )`, the template's `(evidence: <ref>)`, and prose
+    that merely contains the word close nothing; R:HOLLOW_EXPLORE still fires."""
+    root, cid = _explore(tmp_path)
+    _freeze(root, cid)
+    for hollow in ("- F1 (answers M1) · probably atomic · (evidence: )",
+                   "- F1 (answers M1) · <finding> · (evidence: <ref>)",
+                   "- F1 (answers M1) · unclear, need evidence: from vendor docs"):
+        _set_section(root, cid, "FINDINGS", hollow)
+        ok, note = add.gate(root, cid, "PASS", by="human:t")
+        assert not ok and "M1" in note, (hollow, note)
+
+
+def test_gate_surfaces_transition_failure(tmp_path, monkeypatch):
+    """Review fix (PR #197) — a failed stamp write is a refusal, never a printed success."""
+    root, cid = _explore(tmp_path)
+    _freeze(root, cid)
+    _set_section(root, cid, "FINDINGS",
+                 "- F1 (answers M1) · the admit path is atomic · (evidence: src/svc.py:42)")
+    monkeypatch.setattr(add, "_transition", lambda *a, **k: (None, "the stamp write failed"))
+    ok, note = add.gate(root, cid, "PASS", by="human:t")
+    assert not ok and "failed" in note, note
 
 
 def test_non_explore_freeze_and_gate_unchanged(tmp_path):

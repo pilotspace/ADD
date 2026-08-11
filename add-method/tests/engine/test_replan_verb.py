@@ -4,11 +4,8 @@ One additive act stamp carrying the note; refusals for the unfrozen, the noteles
 closed; the seal untouched — body byte-identical, direction sha unchanged, gate indifferent.
 """
 import re
-import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tooling"))
@@ -16,7 +13,7 @@ sys.path.insert(0, str(REPO / "tooling"))
 import add  # noqa: E402
 import argparse  # noqa: E402
 import cli  # noqa: E402
-from conftest import draft_direction  # noqa: E402
+from conftest import draft_direction, git  # noqa: E402
 
 
 def _frozen(tmp_path, slug="steered"):
@@ -90,8 +87,18 @@ def test_replan_leaves_seal_and_body_untouched(tmp_path):
     assert re.search(rf'direction: "sha256:{sha_before}"', raw), "the freeze seal moved"
 
 
-def git(*args, cwd):
-    return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
+def test_replan_multiline_note_stays_single_line(tmp_path):
+    """Review fix (PR #197) — a newline in --note must not split the stamp across frontmatter
+    lines: the node would become unparseable, taking its freeze and gate history with it."""
+    root, cid = _frozen(tmp_path)
+    ok, note = add.replan(root, cid, note="pivot to plan B\nkeep the old index", by="builder")
+    assert ok, note
+    raw = _fm_raw(root, cid)
+    stamps = [l for l in raw.splitlines() if "act: replan" in l]
+    assert len(stamps) == 1 and "keep the old index" in stamps[0], raw
+    fm = add.scan(root)[cid]["fm"]
+    assert any(isinstance(s, dict) and s.get("act") == "replan"
+               for s in fm["verified"]), "the trail no longer parses"
 
 
 def test_gate_unaffected_by_replans(tmp_path):
