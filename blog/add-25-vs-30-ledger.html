@@ -217,7 +217,7 @@
 <header class="mast">
   <div class="mast-row">
     <div>
-      <p class="case-no">Audit ledger · ADD 2.5.0 vs 3.0.0-beta.1 · recorded 2026-08-10/11</p>
+      <p class="case-no">Audit ledger · ADD 2.5.0 vs 3.0 · recorded 2026-08-10/11 · amended: the beta.2 docket shipped</p>
       <h1>Two methods walked into an audit. One kept its story straight.</h1>
       <p class="dek">Every number below was measured by driving both engines on the same
       feature, tampering with both, and running a planted-ambiguity benchmark five ways.
@@ -308,7 +308,9 @@ digest now       : sha256:1e17133257edf4b4
   </div>
   <p class="note">The one place 3.0 grew: assumptions. 2.5’s plan holds one ⚠ line for
   “the assumption most likely to be wrong.” 3.0’s authored plan holds ten — one per
-  surface × dimension pair the engine refused to freeze without.</p>
+  surface × dimension pair the engine refused to freeze without. (Chart measured on
+  beta.1; beta.2 adds one verb, <code>add upgrade</code> — 21 total, still 38% fewer
+  than 2.5.)</p>
 </section>
 
 <!-- ================= 3 · enforcement ledger ================= -->
@@ -473,25 +475,44 @@ digest now       : sha256:1e17133257edf4b4
   </div>
 </section>
 
-<!-- ================= 7 · roadmap ================= -->
+<!-- ================= 7 · the docket, settled ================= -->
 <section>
-  <p class="kicker">Exhibit 7 · Forward docket</p>
-  <h2>What ships next</h2>
+  <p class="kicker">Exhibit 7 · The docket, one release later</p>
+  <h2>What we said would ship next — and what beta.2 actually shipped</h2>
+  <p>This page first closed with seven promises. Beta.2 (cut 2026-08-11, 48 new
+  red-first tests) converted five of them from prose into engine refusals. The
+  two that remain open are spend-and-tag decisions, not code — marked honestly.</p>
   <ol class="road">
-    <li><span class="n">01</span><span><b>3.0.0 final</b> — the beta hardens through live use; the tag follows.</span></li>
-    <li><span class="n">02</span><span><b>Published measurement</b> — the benchmark grows from single probes to full repetition sets; campaign records stay committed in the repo.</span></li>
-    <li><span class="n">03</span><span><b>The XML brief as a checkpoint</b> — <code>add brief</code> already compiles a deterministic working prompt per task; making it the gated entry to Build applies the checkpoint law to itself.</span></li>
-    <li><span class="n">04</span><span><b>Answer correctness via gate probes</b> — executable probes checking shipped behavior against declared assumptions, reaching what artifact checks cannot.</span></li>
-    <li><span class="n">05</span><span><b>Broader surface detection</b> — the one-surface-per-id refusal extends beyond HTTP endpoints to functions and documents.</span></li>
-    <li><span class="n">06</span><span><b>Persona routing metadata</b> — generated indexes over the 232-lens corpus, loading the right expert lens at the right beat.</span></li>
-    <li><span class="n">07</span><span><b>Guided 2.x upgrade</b> — the clean-break path is proven (nothing deleted, state archived); an assistant walks it for you.</span></li>
+    <li><span class="n">01</span><span><b>The XML brief as a checkpoint</b> — <code>add brief</code> on a frozen task now records an <code>act: brief</code> stamp, and the gate refuses a PASS whose receipts predate it. The checkpoint law, applied to itself. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">02</span><span><b>Answer correctness via gate probes</b> — an assumption marked <code>· probe:</code> binds like a rule: no passing check on record, no PASS. Opt-in, so the engine enforces exactly what the author declared checkable. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">03</span><span><b>Broader surface detection</b> — one-surface-per-id now also refuses ≥2 distinct <code>name()</code> callables or ≥2 backticked documents under one id. Prose mentions stay unjudged: notary, not guard. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">04</span><span><b>Persona routing metadata</b> — the generated 232-lens index now has a freshness check: doctor warns when the vendored corpus and index disagree, so a stale roster can no longer misroute silently. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">05</span><span><b>Guided 2.x upgrade</b> — <code>add upgrade</code>: the 2.x bundle is renamed whole into <code>.add-2x-archive/</code>, 3.0 initialises beside it, and <code>MIGRATION.md</code> guides re-authoring. Nothing deleted; state deliberately untranslated. <span class="tag sealed">shipped · beta.2</span></span></li>
+    <li><span class="n">06</span><span><b>Published measurement</b> — <code>benchmark/campaign.py</code> aggregates repetition sets into a committed, reproducible record; <code>CAMPAIGN-amb1.md</code> is in the repo with its caveat in-band. Funding a homogeneous n≥3 set on the beta.2 engine is a spend decision, still open. <span class="tag sealed">tooling shipped</span> <span class="tag prose">runs unfunded</span></span></li>
+    <li><span class="n">07</span><span><b>3.0.0 final</b> — the beta hardens through live use; the tag follows. <span class="tag prose">open by design</span></span></li>
   </ol>
+
+  <div class="term" style="margin-top: var(--sp-8)">
+    <div class="term-head"><span>beta.2, live — the newest refusal, verbatim</span><span class="stamp receipt">held</span></div>
+    <pre>$ add gate transfer PASS --by tin        <span class="t-dim"># frozen, built, green — but never briefed</span>
+<span class="t-refuse">cannot record `PASS` — no brief entered this build — the sealed
+direction was never compiled into the working prompt since the
+last (re)freeze -> "R:UNBRIEFED"</span>
+next: add brief transfer to record the entry, then re-run
+
+$ add brief transfer
+<span class="t-receipt">brief sha256:7471376cd24b1bb0 recorded as the build entry</span>
+next: add run transfer -- &lt;cmd&gt;</pre>
+  </div>
+  <p class="note">In beta.1 this page could only promise that the brief would become a
+  checkpoint. Now it can show the refusal — which is the whole difference the page is
+  about.</p>
 </section>
 
 <footer>
   <span>Try the tamper test yourself: <code>npx @pilotspace/add init</code> · freeze ·
-  edit a frozen rule · watch the gate refuse.</span>
-  <span class="stamp receipt">filed 2026-08-11</span>
+  edit a frozen rule · watch the gate refuse. On 2.x? <code>add upgrade</code> walks you over.</span>
+  <span class="stamp receipt">filed 2026-08-11 · beta.2</span>
 </footer>
 
 </div>

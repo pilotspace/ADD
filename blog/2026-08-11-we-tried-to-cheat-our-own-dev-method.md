@@ -69,7 +69,7 @@ Keep that hash in mind. It's about to matter.
 - 2.5's checker: **`9 passed, 0 failed`.** The edit was invisible.
 - 3.0: `sealed sha256:8034… ≠ now sha256:1e17…` → **the gate refuses the PASS** and points you at re-freeze or reopen.
 
-**5. Cost.** All of that enforcement comes with *less* overhead, not more: generated state 48.6 KB → 4.5 KB (10.7×), session resume read-set 12.3 KB across 3 files → 2.9 KB in one node, the vendored engine 16 files → 2, verbs 34 → 20. And a second, independent conformance checker ships in the box and agrees with the engine on every bundle we've driven.
+**5. Cost.** All of that enforcement comes with *less* overhead, not more: generated state 48.6 KB → 4.5 KB (10.7×), session resume read-set 12.3 KB across 3 files → 2.9 KB in one node, the vendored engine 16 files → 2, verbs 34 → 20 (21 as of beta.2, which adds `upgrade`). And a second, independent conformance checker ships in the box and agrees with the engine on every bundle we've driven.
 
 ## The feature we're most proud of: silences on the record
 
@@ -110,18 +110,29 @@ Then open Claude Code and type `/add`, describe a feature, and watch the loop ru
 
 And run our tamper test on your own bundle: freeze a task, edit a frozen rule, try to gate. Watch it refuse.
 
-## What's next for ADD 3.0
+## What we said would ship next — and what beta.2 shipped
 
-- **3.0.0 final** — the current beta hardens through live use; the final tag follows.
-- **More measurement, published** — the ambiguity benchmark grows from single probes to full repetition sets, with the campaign records committed to the repo (they already are — see `benchmark/FINDINGS-2026-08-10.md`).
-- **The XML brief as a checkpoint** — `add brief` already compiles a deterministic, budgeted XML working prompt per task; today using it is recommended prose, and we've learned what happens to recommended prose. Making it the gated entry to Build is next.
-- **Answer correctness via gate probes** — artifact checks can't judge answers, but executable probes at the gate can check the *shipped behavior* against declared assumptions.
-- **Broader surface detection** — today's "one surface per ID" check covers HTTP endpoints; function and document surfaces are next.
-- **Persona routing metadata** — the 232-persona reasoning-lens corpus gains generated routing indexes so the right expert lens loads at the right beat.
-- **A guided 2.x upgrade** — the clean-break upgrade is already proven (nothing deleted, state archived); a guided migration assistant follows.
+This post originally closed with a seven-item roadmap. One day later, **3.0.0-beta.2** converted five of those items from prose into engine refusals — each one red-tests-first, 48 new tests total. Since the whole post is about the difference between a promise and a checkpoint, here is that list graded against itself:
 
-The bet behind all of it stays the same: **every guarantee becomes a refusal, every refusal gets a test, and every claim gets measured before it's published** — including the ones that come back embarrassing.
+- **The XML brief as a checkpoint — SHIPPED.** `add brief` on a frozen task now records an `act: brief` stamp, and the gate refuses a `PASS` whose receipts predate it. Verbatim, from a live bundle:
+
+  ```
+  cannot record `PASS` — no brief entered this build — the sealed direction
+  was never compiled into the working prompt since the last (re)freeze
+  -> "R:UNBRIEFED"
+  next: add brief transfer to record the entry, then re-run
+  ```
+
+  Briefing *after* the build buys nothing — the entry must precede the evidence, and stamp order is append-only chronology. The checkpoint law, applied to the thing that taught it to us.
+- **Answer correctness via gate probes — SHIPPED.** Mark an assumption `· probe: <what shipped behavior must show>` and its `A` id binds exactly like a rule: some check must cite it and report passing, or the gate holds the PASS. Opt-in on purpose — the engine enforces exactly what you declared checkable, and an unmarked line stays what it always was: a priced guess on the record.
+- **Broader surface detection — SHIPPED.** "One surface per ID" now also refuses two distinct `name()` callables or two backticked documents hiding under one id. Prose mentions are still never judged — a notary that guesses at prose shape becomes a guard.
+- **Persona routing metadata — SHIPPED.** The generated 232-lens routing index gains a freshness check: `doctor` warns when the vendored corpus and the index disagree, so a stale roster can no longer misroute silently.
+- **A guided 2.x upgrade — SHIPPED.** `add upgrade` renames your 2.x bundle whole into `.add-2x-archive/` (byte-identical, nothing deleted), initialises 3.0 beside it, and leaves a `MIGRATION.md` that walks the re-authoring. 2.x state is deliberately *not* translated — its phase markers and waivers mean things 3.0 refuses to mean.
+- **More measurement, published — tooling SHIPPED, runs still a spend decision.** `benchmark/campaign.py` now aggregates repetition sets into a committed, reproducible record; `CAMPAIGN-amb1.md` is in the repo, per-item verdicts included (`A-list-scope`: wrong 7 runs out of 7 — on the record), with its heterogeneous-engines caveat printed in-band. Funding a homogeneous n≥3 set on the beta.2 engine remains open.
+- **3.0.0 final — open by design.** The beta hardens through live use; the tag follows.
+
+The bet behind all of it stays the same: **every guarantee becomes a refusal, every refusal gets a test, and every claim gets measured before it's published** — including the ones that come back embarrassing. And the release claim has not moved an inch: beta.2 makes more of the record enforceable; it still promises **auditability, not correctness**.
 
 ---
 
-*ADD 3.0.0-beta.1 · Direction → Build → Verify · [pilotspace.github.io/ADD](https://pilotspace.github.io/ADD/)*
+*ADD 3.0.0-beta.2 · Direction → Build → Verify · [pilotspace.github.io/ADD](https://pilotspace.github.io/ADD/)*
