@@ -1,7 +1,7 @@
 {
   "name": "add",
   "displayName": "ADD — AI-Driven Development",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0-beta.2",
   "description": "ADD (AI-Driven Development). The agent is the hands; ADD is the memory, judgment, and conscience — a lean, state-tracked skill that drives every change through one atomic task node: Direction → Build → Verify, red/green TDD built in, trusted on a recorded receipt rather than a plausible diff. State lives on disk, so context rot never survives a new session.",
   "author": {
     "name": "Tin Dang",
