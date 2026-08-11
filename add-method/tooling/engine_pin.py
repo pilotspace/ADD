@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "7d303e96e72329f9fe50c92bf340ffc5"  # re-aimed @ receipt-cost follow-up (dir-scope digests enumerate through git ls-files — the project's .gitignore defines its build noise, so ignored library/build files never enter the digest). prior: 462e861c… @ PR #197 review fixes
+ENGINE_MD5 = "03e66302e667e62737228ac59c1b6090"  # re-aimed @ engine-flame perf pass (behavior-preserving: find-based fence split, jump-scan parser primitives, ONE batched git hash-object for digest+freshness — 0 divergences on 600 real files, status 4.3x, digest 3400x on a field bundle). prior: 7d303e96… @ receipt-cost follow-up
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "d9c6a4a4928c7e3b456a938083aeb374"  # re-aimed @ receipt-cost follow-up (run gains --timeout so a build-heavy receipt command can raise the 900 s ceiling; nothing else moved). prior: bfb806e7… @ replan-verb
