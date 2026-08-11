@@ -23,6 +23,15 @@ The gate also demands the build was **entered**: an `act: brief` stamp between t
 this receipt's run (see `phases/build.md`). Briefing after the fact buys nothing — the fix the
 refusal names is a re-run under the brief.
 
+**Keep the receipt command narrow.** The gate demands exactly the checks `## CHECKS` binds —
+nothing rewards wrapping more. Wrap the **narrowest command that reports every bound check**
+(one test file, one marker, one target); the full suite rides CI or a backgrounded run, and a
+slow check that no `covers:` names (a whole production build, cost-tuned hashing) stays out of
+the receipt loop unless a frozen check demands it. A receipt run costs minutes only when the
+wrapped command does — the notary itself is milliseconds. The wrapped command's ceiling is
+**900 s by default**; a legitimately slow receipt (a bound build check) raises it explicitly
+with `--timeout <s>` — a timeout is *recorded* as exit 124, and the gate will refuse the PASS.
+
 Evidence kinds, strongest first: `test-ids` > `artifact-hash` > `command-exit` > `human-observed`. A
 weaker kind is a *visible* weakening (the gate records which it accepted) — never a silent one.
 

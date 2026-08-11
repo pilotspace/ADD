@@ -20,4 +20,4 @@ this file only ever holds the newest pointer.
 ENGINE_MD5 = "462e861cc2a53073c774559227dc31de"  # re-aimed @ PR #197 review fixes (the sources gate inherits the seal discipline — R:UNFROZEN_EXPLORE, drift + placeholder refusals, a real evidence ref required; replan notes flattened to one line; _transition errors surfaced). prior: 20f201db… @ replan-verb + sources-receipt
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "bfb806e78d6faa4e76ce7d3feb454f50"  # re-aimed @ replan-verb (dynamic-flow: the replan verb joins the dispatch — parser + handler, nothing else moved). prior: 23b6842c… @ scope-flag-append
+ENGINE_PKG_MD5 = "d9c6a4a4928c7e3b456a938083aeb374"  # re-aimed @ receipt-cost follow-up (run gains --timeout so a build-heavy receipt command can raise the 900 s ceiling; nothing else moved). prior: bfb806e7… @ replan-verb

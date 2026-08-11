@@ -92,6 +92,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("ref")
     s.add_argument("--junitxml")
     s.add_argument("--cwd")
+    s.add_argument("--timeout", type=int, help="ceiling in seconds for the wrapped command "
+                   "(default 900 — a build-heavy receipt command needs more)")
 
     s = sub.add_parser("gate", help="the verdict: PASS · RISK-ACCEPTED · HARD-STOP")
     s.add_argument("ref")
@@ -203,7 +205,8 @@ def dispatch(args, run_cmd) -> int:
     if args.verb == "run":
         cwd = args.cwd or (root.parent if root.name == ".add" else root)
         result = add.run(root, _resolve(root, args.ref), run_cmd,
-                         cwd=Path(cwd), junit=Path(args.junitxml) if args.junitxml else None)
+                         cwd=Path(cwd), timeout=args.timeout or add.RUN_TIMEOUT,
+                         junit=Path(args.junitxml) if args.junitxml else None)
         print(result["note"])
         return 0 if result["receipt"]["exit"] == 0 else 1
 
