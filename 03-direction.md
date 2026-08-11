@@ -33,7 +33,21 @@ The RULES section is four short lists plus the one thing most likely to be wrong
 1. **Must** — the behaviors the feature is required to perform.
 2. **Reject** — the inputs or situations it must refuse, each paired with a **named error code**.
 3. **After** — the state that is true once it succeeds (what changed).
-4. **The one riskiest assumption** — the single thing you are taking for granted that is *most likely wrong and most expensive to get wrong*, flagged with `⚠`, *why* it is uncertain, and *what it costs* if it is wrong. A node with genuinely nothing uncertain still names its single biggest risk — the AI never claims a blank mind.
+4. **The assumptions** — recorded in their own `## ASSUMPTIONS` section: what the request did **not** say, the reading you took, and what it costs if that reading is wrong. A node with genuinely nothing uncertain still names its single biggest risk — the AI never claims a blank mind.
+
+   **Sweep it; don't free-associate.** Author `gives:` first — the `S<n>` surfaces this node publishes — then tag each assumption line with one dimension and the surfaces it covers: `- A<n> [who] covers: S1, S3 · …`. The dimensions are `who` (identity · authority · scope), `which` (inclusion · visibility), `when` (boundaries · timing), `absent` (missing values · defaults) and `order` (sequencing · ties). Take each surface and ask all five. Retire one that cannot apply with `[<dim>] n/a · <why>` — recording a considered *no* is the work; what is refused is silence.
+
+   `freeze` refuses while the slot is template, `gives:` is unauthored, or any `(dimension, surface)` pair is unswept — and it names the pairs. `add todo` counts them down while you author. Both halves were learned the hard way: the instruction to record assumptions existed before the section did and was skipped because skipping cost nothing — then, once the section existed, three live runs each wrote five to seven real assumptions and all three still shipped the same silent decision, because nothing asked whether the list was *complete*. Free-association follows the spec's own emphasis, and the dimension nobody wrote a sentence about is exactly the one that ships as a guess.
+
+   `depth: quick` skips the sweep — depth tunes ceremony, never the authority floor.
+
+   **Declaring a reading checkable — the `· probe:` opt-in.** An assumption line is a priced
+   guess on the record; most should stay exactly that. But when the shipped behavior can
+   *show* whether the reading was right, append `· probe: <what shipped behavior must show>`
+   to the line. That marks the `A<n>` id as a binding referent: some check must cite it in
+   its `covers:` and report passing, or the gate holds the `PASS` — the same binding rules
+   get. Opt-in on purpose: the engine enforces exactly what you declared checkable, and an
+   unmarked line stays a declared, priced guess.
 
 Naming the errors matters. "Reject bad amounts" is an instruction to guess; `amount <= 0 -> "amount_invalid"` is a rule that produces a testable check and a defined contract response.
 

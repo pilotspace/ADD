@@ -16,6 +16,7 @@ Where you start, and where you return every session — never re-read the whole 
 |---|---|---|
 | `status` | resume: the standing picture — active nodes, the current beat, what is next. `--all` for the full report, `--check` for conformance findings | `add status --check` |
 | `init` | create a `.add/` bundle: the eight starter files plus the vendored engine and seed corpus. `--profile code \| doc` | `add init my-service --profile code` |
+| `upgrade` | move a 2.x project to 3.0: the whole 2.x bundle is renamed into `.add-2x-archive/` (byte-identical, nothing deleted), a fresh 3.0 bundle is initialised beside it, and the archive gains a `MIGRATION.md` walking the re-authoring. 2.x state is deliberately not translated | `add upgrade` |
 
 ## Author
 
@@ -24,8 +25,8 @@ Create a node and take it through Direction to the one approval.
 | verb | what it does | example |
 |---|---|---|
 | `new` | scaffold a typed node — `Task \| Milestone \| Persona \| …`. Flags: `--title --depth --sensitivity --kind --milestone --scope` | `add new Task reject-overlap --depth standard --sensitivity data --scope src/bookings/**` |
-| `brief` | the composed XML prompt for a node's active beat, refs resolved from the current bundle. `--phase`, `--for-subagent` | `add brief reject-overlap --phase build` |
 | `freeze` | the one human approval — closes Direction, opens Build. `--by`, `--authority` | `add freeze reject-overlap --by "tindang" --authority human` |
+| `brief` | compile the sealed direction into the working XML prompt — and, on a frozen task, record an `act: brief` stamp: the entry into Build. The gate refuses a `PASS` whose receipts predate that entry. `--phase`, `--for-subagent`, `--by` | `add brief reject-overlap` |
 
 ## The loop
 

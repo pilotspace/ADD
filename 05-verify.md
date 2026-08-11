@@ -21,9 +21,10 @@ add run <slug> --junitxml r.xml -- <the test command>
 `add run` executes your command, parses the JUnit report, and writes a **Run receipt** into the task's bundle. Two properties the gate will demand of it:
 
 - **fresh** — the receipt records the git blob hash of every in-`scope:` file at the moment it ran; the gate recomputes those hashes and refuses on any difference. This kills the stale-green failure — a suite that passed *before* the last edit is not evidence for the code as it stands now.
-- **bound** — this is **covers-binding**. Every check in the node's `## CHECKS` cites the Must, Reject, or Edge it proves, via its `covers:` line. The gate refuses a PASS unless each of those checks appears in the receipt with a passing outcome. A rule with no passing check behind it cannot be waved green.
+- **bound** — this is **covers-binding**. Every check in the node's `## CHECKS` cites the Must, Reject, or Edge it proves, via its `covers:` line. The gate refuses a PASS unless each of those checks appears in the receipt with a passing outcome. A rule with no passing check behind it cannot be waved green. An assumption marked `· probe:` in `## ASSUMPTIONS` binds the same way — its `A<n>` id must be cited by a passing check, or the gate holds the PASS.
+- **build-entered** — the receipt must postdate a recorded brief: an `act: brief` stamp between the latest (re)freeze and the receipt's run stamp. A `PASS` with no such entry is refused (`R:UNBRIEFED`) — the sealed direction was never compiled into the working prompt, so whatever the suite proves, it does not prove the build followed the direction. (`depth: quick` is exempt.)
 
-A stale or unbound receipt is refused at the gate — so confirm the evidence is real before reading further: every check green, no check or frozen contract altered during the build, and every rule in `## RULES` traced to a passing check by its `covers:` line. If any of that is false, stop here and return to the build; there is nothing to verify yet.
+A stale, unbound, or unbriefed receipt is refused at the gate — so confirm the evidence is real before reading further: every check green, no check or frozen contract altered during the build, and every rule in `## RULES` traced to a passing check by its `covers:` line. If any of that is false, stop here and return to the build; there is nothing to verify yet.
 
 ## Part two — the residue: three lenses tests cannot cover
 
