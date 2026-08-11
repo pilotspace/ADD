@@ -1098,6 +1098,20 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: list what {slug} publishes as `gives:` entries "
                       f"(`- S1 <surface> — <what a caller gets>`), then add freeze {slug}")
 
+    # A collapsed surface is the granularity evasion: several endpoints under one S id
+    # shrinks the matrix and the [who]/[which] questions get asked once, about the
+    # loudest endpoint. Same exemptions as the sweep (quick depth; no section).
+    if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
+            and str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
+        collapsed = collapsed_surfaces(node_t2)
+        if collapsed:
+            return None, (f"cannot freeze `{slug}` — one surface per S id: "
+                          + " · ".join(collapsed)
+                          + " each name several HTTP methods, so the sweep is asking "
+                            "one set of questions about several surfaces"
+                          f"\nnext: split each into its own `- S<n> <one method+path>` "
+                          f"entry, re-cover them in ASSUMPTIONS, then add freeze {slug}")
+
     # Non-empty is not complete. Three live runs each recorded 5-7 real assumptions and
     # all three still shipped a silent decision, because nothing asked whether the list
     # covered every surface. Name the specific gaps: "incomplete" is not actionable, and a
@@ -1420,6 +1434,10 @@ def todo(root, milestone: str = None) -> tuple:
             if gives_unauthored(node_t2) and _section_of(node_t2.get("body") or "",
                                                          "ASSUMPTIONS").strip():
                 hint = "  (gives: unauthored — no surfaces to sweep)"
+            elif (collapsed := collapsed_surfaces(node_t2)) and \
+                    _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() and \
+                    str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
+                hint = f"  (split {' · '.join(collapsed)} — one surface per S id)"
             else:
                 left = len(assumption_sweep(node_t2))
                 if left:
@@ -1806,6 +1824,34 @@ def surfaces_of(node: dict) -> list:
     for entry in (node.get("fm") or {}).get("gives") or []:
         m = re.match(r"\s*(S\d+)\b", str(entry))
         if m:
+            out.append(m.group(1))
+    return out
+
+
+RE_HTTP_METHOD = re.compile(r"\b(?:GET|POST|PUT|DELETE|PATCH)\b")
+
+
+def collapsed_surfaces(node: dict) -> list:
+    """`S<n>` ids whose entry names SEVERAL HTTP methods — several surfaces in one id.
+
+    The probe-2 evasion, verbatim: `S1 the booking HTTP surface — POST/GET /bookings,
+    GET/DELETE /bookings/{id}, GET /rooms/{room_id}/waitlist`. Five endpoints in one id
+    turns a ~25-pair sweep into a 5-pair one, and the [who]/[which] questions get asked
+    once, about the loudest endpoint, while the reads ship unexamined. The enumeration
+    rule stood in direction.md throughout — the third consecutive live demonstration
+    that a prose rule with no engine checkpoint does not happen.
+
+    DELIBERATELY PARTIAL, and honest about it: counting method tokens judges only HTTP
+    surfaces. A function or section surface has nothing to count and is never judged —
+    a heuristic that guessed at prose shape beyond this would be a guard, not a notary.
+    Two method tokens in one entry is not a guess, it is the definition being violated:
+    a surface is what ONE caller call touches (§5), and `POST/GET` is two of them.
+    """
+    out = []
+    for entry in (node.get("fm") or {}).get("gives") or []:
+        text = str(entry)
+        m = re.match(r"\s*(S\d+)\b", text)
+        if m and len(RE_HTTP_METHOD.findall(text)) >= 2:
             out.append(m.group(1))
     return out
 

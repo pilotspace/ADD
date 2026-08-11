@@ -143,3 +143,57 @@ def test_todo_reports_remaining_pairs_before_freeze(tmp_path):
     _node(tmp_path, partial)
     _, note = add.todo(tmp_path)
     assert "unswept" in note.lower(), f"todo gives no progressive signal: {note}"
+
+
+# ── surface granularity — the probe-2 evasion ────────────────────────────────
+
+COLLAPSED = ["S1 the booking HTTP surface — POST/GET /bookings, GET/DELETE /bookings/{id}"]
+FULL_S1 = "\n".join(
+    f"- A{i} [{d}] covers: S1 · the request does not say {d} -> a wrong reading costs"
+    for i, d in enumerate(add.SWEEP_DIMENSIONS, 1))
+
+
+def test_a_surface_naming_several_methods_is_collapsed(tmp_path):
+    """covers: M7 — the live probe-2 shape verbatim: five endpoints, one S id."""
+    node, _ = _node(tmp_path, FULL_S1, gives=COLLAPSED)
+    assert add.collapsed_surfaces(node) == ["S1"]
+
+
+def test_one_method_per_surface_is_not_collapsed(tmp_path):
+    """covers: M7 — the taught shape must pass, or authors route around the gate."""
+    node, _ = _node(tmp_path, FULL)
+    assert add.collapsed_surfaces(node) == []
+
+
+def test_a_non_http_surface_is_never_judged(tmp_path):
+    """covers: E5 — a function or section surface has no method tokens to count;
+    the heuristic is deliberately partial and must stay silent off its territory."""
+    node, _ = _node(tmp_path, FULL_S1,
+                    gives=["S1 admit(token) -> Claims | None — the admission decision"])
+    assert add.collapsed_surfaces(node) == []
+
+
+def test_freeze_refuses_a_collapsed_surface(tmp_path):
+    """covers: M7, R:SWEEPDODGE — a sweep over one mega-surface asks ~5 questions
+    where the request holds ~25; probe 2 answered [who] once, about the loud POST,
+    and shipped the GET reads unexamined."""
+    node, cid = _node(tmp_path, FULL_S1, gives=COLLAPSED)
+    ok, msg = add.freeze(tmp_path, cid, by="t", authority="human")
+    assert ok is None
+    assert "S1" in msg and "one surface per S id" in msg, msg
+
+
+def test_quick_depth_is_exempt_from_the_granularity_check(tmp_path):
+    """covers: E6 — depth tunes ceremony; quick skips the sweep and its guards."""
+    node, cid = _node(tmp_path, FULL_S1, gives=COLLAPSED, depth="quick")
+    assert add.assumption_sweep(node) == []
+    ok, _ = add.freeze(tmp_path, cid, by="t", authority="human")
+    assert ok is not None
+
+
+def test_todo_names_the_collapsed_surface(tmp_path):
+    """covers: M8 — progressive: the author hears 'split S1' while authoring,
+    not first at the freeze they expected to pass."""
+    _node(tmp_path, FULL_S1, gives=COLLAPSED)
+    _, out = add.todo(tmp_path)
+    assert "split" in out and "S1" in out, out

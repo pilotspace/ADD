@@ -37,7 +37,9 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   **Work the matrix, don't free-associate.** Author `gives:` FIRST — the `S<n>` surfaces this node
   publishes — since that is the axis the sweep runs along and freeze refuses while it is template.
   **Enumerate ALL the surfaces**: every route × verb, function, or section the request touches is
-  one — including the read paths it mentions in passing. The sweep can only force questions about
+  one — including the read paths it mentions in passing. One surface per `S<n>` id — freeze
+  REFUSES an entry naming several HTTP methods, because five endpoints under one id shrinks the
+  matrix to one set of questions about the loudest of them. The sweep can only force questions about
   surfaces you listed; in five live runs the never-questioned silences all lived on the quiet
   `GET` path while every run wrote assumptions about the loud `POST` path, because free-association
   follows the spec's own emphasis (a spec that discussed status constantly and named caller

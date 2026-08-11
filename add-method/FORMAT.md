@@ -260,7 +260,12 @@ open one cannot be swept and a long one will not be. The axis is the **surface**
 `S<n>` entry in the node's `gives:`. For every surface and every dimension, some line must
 cover the pair or retire the dimension; `freeze` refuses and names the unswept pairs, and
 refuses an unauthored `gives:` (no surfaces would mean nothing to sweep — a one-line off
-switch). `depth: quick` is exempt: depth tunes ceremony, never the authority floor.
+switch). It also refuses a **collapsed** surface — an `S<n>` entry naming several HTTP
+methods is several surfaces under one id, which shrinks the matrix the same way (a live
+run listed five endpoints as one `S1` and answered `[who]` once, about the loudest). The
+check is deliberately partial: only HTTP method tokens are counted; a function or
+section surface is never judged. `depth: quick` is exempt: depth tunes ceremony, never
+the authority floor.
 
 Surfaces, not rules, because a surface is what a caller touches — and because sweeping
 Musts demanded 50-60 pairs on real nodes, which is not a checklist but a toll, and a toll
