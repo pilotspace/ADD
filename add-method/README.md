@@ -158,7 +158,7 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 20 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 21 verbs (Python, stdlib only) |
 | `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |
