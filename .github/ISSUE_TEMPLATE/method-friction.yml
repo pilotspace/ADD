@@ -1,0 +1,28 @@
+name: Method friction
+description: "The engine was honest but the experience fought you — an opaque message, ceremony that didn't earn its cost, a doc that under- or over-claims."
+labels: ["friction"]
+body:
+  - type: dropdown
+    id: beat
+    attributes:
+      label: Which beat
+      options:
+        - Direction (authoring, sweep, freeze)
+        - Build (brief, the working prompt)
+        - Verify (run, receipt, gate)
+        - Setup / install / upgrade
+        - Docs / skill text
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, verbatim where possible
+      description: The command/output or doc passage, and what you wanted instead.
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: The real task you were driving
+      description: One line of context — friction only means something against real work.

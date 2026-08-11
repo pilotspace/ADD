@@ -1,0 +1,46 @@
+name: Engine finding
+description: "The engine did something wrong — a wrong refusal, a wrong stamp, a crash, or a green that lied."
+labels: ["finding"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ADD's own bug intake runs on the same evidence rules as the method: the stamp
+        chain and the receipt are the reproduction. Paste them and this is usually
+        fixable same-day.
+  - type: input
+    id: version
+    attributes:
+      label: Engine version
+      description: "`grep version .add/index.md` or the installed package version"
+      placeholder: "3.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The exact command and its output
+      description: Verbatim, including the refusal or wrong output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: stamps
+    attributes:
+      label: The node's stamp chain
+      description: "The `verified:` block of the task involved (`.add/tasks/<slug>.md` frontmatter). Order matters — it is the chronology."
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: receipt
+    attributes:
+      label: The receipt, if a run was involved
+      description: "`.add/tasks/<slug>.d/runs/<n>.md` — the whole file is small."
+      render: yaml
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected the engine to record or refuse
+    validations:
+      required: true
