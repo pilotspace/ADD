@@ -33,6 +33,14 @@ the ORIENT commands the lens runs on load), `## Anti-patterns` (guilty-until-pro
 always include **read-before-you-assert**), `## Escalation`. Full schema: the persona-author
 reference — referenced, never inlined.
 
+## Planning loads through the advisor flow
+
+Planning is a loading surface too — without a new vocabulary word: an **intake proposal** for the
+milestone lane, a **milestone draft**, and the loop's **next-task proposal** each load the best-fit
+persona whose `flow:` includes **advisor** (design also fits a design-shaped draft) BEFORE the
+drafting starts, and the confirmed artifact records the lens (`add advise`). The load is by fit and
+by roster: a bundle with no personas skips silently and behaves exactly as before.
+
 This is the schema for a persona **you author**. The teacher corpus at
 `.add/personas-teacher/` is a byte-verbatim third-party snapshot on its own schema and carries
 neither key; route to one via `.add/personas-index/use-when.md`, the generated `use-when:` index vendored

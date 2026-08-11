@@ -1243,6 +1243,16 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: add an ASSUMPTIONS line `- A<n> [<dim>] covers: <S ids> · …`, "
                       f"or retire a dimension with `[<dim>] n/a · <why>`")
 
+    # R:UNBOUNDED (task sources-receipt) — an explore's approval IS questions plus a budget.
+    # Presence only, never arithmetic: the engine is a notary; judging the number stays human,
+    # exactly as exit criteria are read but never scored.
+    if str((node_t2.get("fm") or {}).get("kind") or "") == "explore" \
+            and not re.search(r"^budget:\s*\S", _section_of(node_t2.get("body") or "", "PLAN"), re.M):
+        return None, (f'cannot freeze `{slug}` — an explore freezes on questions PLUS a budget, '
+                      f'and `## PLAN` carries no `budget:` line -> "R:UNBOUNDED"'
+                      f"\nnext: add one hard `budget:` line (tool calls · sources · wall-clock) "
+                      f"to ## PLAN, then add freeze {slug}")
+
     authority = authority or authority_for(graph, cid)
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
@@ -1409,6 +1419,42 @@ def _is_frozen(node) -> bool:
     so the beat is stamp-derived, not read from the status field."""
     stamps = (node.get("fm") or {}).get("verified") or []
     return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze") for s in stamps)
+
+
+def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
+    """Record a steering amendment on a frozen task — one additive act stamp, the seal untouched.
+
+    Steering = a change to NO frozen surface (strategy, sequencing, a discovered constraint).
+    Anything that would move a frozen `gives:` or a check is a change-request (refreeze), never
+    a replan. Refusals: unfrozen (nothing is being steered), blank note (invisible steering),
+    done (the trail is closed — the note belongs in LESSONS). R:SILENT_STEER · R:SEAL_TOUCH.
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    fm = node.get("fm") or {}
+    if fm.get("status") == "done":
+        return None, (f"`{slug}` is done — its trail is closed; the note belongs in LESSONS "
+                      f'(add learn <dd> "<note>" --evidence {cid})\nnext: add status')
+    if not _is_frozen(node):
+        return None, (f'nothing is being steered — `{slug}` carries no freeze -> "R:SILENT_STEER"'
+                      f'\nnext: author the direction, then add freeze {slug} --by "<name>"')
+    if not (note or "").strip():
+        return None, ('a replan with no note is invisible steering -> "R:SILENT_STEER"'
+                      f'\nnext: add replan {slug} --note "<what changed and why>"')
+    # One physical line, always: the stamp lives in a single-line frontmatter entry, so a
+    # newline in the note would split it mid-map and take the node's whole trail with it.
+    text = " ".join(str(note).split()).replace('"', "'")
+    _, err = _transition(root, cid, appends=[
+        ("verified", f'{{ by: "{by}", at: {_today()}, act: replan, authority: process, '
+                     f'note: "{text}" }}')])
+    if err:
+        return None, err + "\nnext: add status"
+    return cid, (f"replan recorded on `{slug}` — steering noted, the seal untouched"
+                 f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
 
 
 def card_drift(graph: dict) -> list:
@@ -2622,6 +2668,67 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
 
     node_body = lambda n: read(n["path"], "T2")["body"]
     receipt, receipt_cid = latest_receipt(root, cid)
+
+    # The sources path (task sources-receipt) — a findings-only explore gates on its cited
+    # `## FINDINGS`, not on a run receipt. A recorded receipt keeps the normal path in charge
+    # (E3); only Musts bind (E1 — extra findings neither bind nor block). The mechanical half
+    # is bound here — every frozen question named and evidenced; whether the answer SUFFICES
+    # stays the gate-caller's judgment, exactly as check adequacy does.
+    if receipt is None and str(sfm.get("kind") or "") == "explore":
+        # Review of PR #197 — the sources path inherits the receipt path's seal discipline.
+        # The freeze IS this lane's one human approval (questions + budget, R:UNBOUNDED), so
+        # an unfrozen explore has nothing approved to gate against; and a post-freeze edit to
+        # a frozen question is the same silent tamper the drift refusal below exists for —
+        # the lane whose contract IS the questions cannot be the one lane free to rewrite them.
+        sealed_q = sealed_direction(sfm)
+        if not sealed_q:
+            return refuse("the questions were never frozen — this lane's one human approval "
+                          '(questions + budget) has not happened -> "R:UNFROZEN_EXPLORE"',
+                          f'add freeze {slug} --by "<name>", then add gate {slug} PASS')
+        node = read(graph[cid]["path"], "T2")
+        if verdict == "PASS" and direction_digest(node) != sealed_q:
+            return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen "
+                          "contract changes by refreezing, never by a silent edit",
+                          f'add freeze {slug} --by "<name>" to record the change, or '
+                          f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+        stubs = placeholders_in(node)
+        if stubs and verdict == "PASS":
+            return refuse("the node still carries template placeholders: " + " · ".join(stubs),
+                          f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
+        body = node["body"]
+        musts = re.findall(r"^-\s*(M\d+)\b", _section_of(body, "RULES"), re.M)
+        findings = _section_of(body, "FINDINGS")
+        # A finding closes a question only with a REAL ref — `(evidence: )`, the template's
+        # `(evidence: <ref>)`, and prose that merely contains the word all stay open.
+        closed = [m for m in musts
+                  if re.search(rf"answers {m}\b[^\n]*\(evidence:\s*[^)\s<][^)]*\)", findings)]
+        opens = [m for m in musts if m not in closed]
+        if verdict == "PASS" and (not musts or opens):
+            named = ", ".join(opens) if opens else "(no frozen questions at all)"
+            return refuse("open questions hold the PASS — no evidence-carrying finding answers: "
+                          f'{named} -> "R:HOLLOW_EXPLORE"',
+                          f"write the missing `F<n> (answers M<n>) · <finding> · (evidence: <ref>)` "
+                          f"lines in ## FINDINGS, or "
+                          f'add gate {slug} RISK-ACCEPTED --reason "open: {named}"')
+        authority = authority_for(graph, cid)
+        extra = (f', kind: sources, closed: "{len(closed)}/{len(musts)}"'
+                 if verdict == "PASS" else "")
+        stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
+                 f'outcome: {verdict}{extra}'
+                 + (f', reason: "{reason}"' if reason else "") + " }")
+        _, t_err = _transition(root, cid, appends=[("verified", stamp)])
+        if t_err:
+            return False, t_err + "\nnext: add status"
+        if verdict == "PASS":
+            done(root, cid)
+            render_card(root, cid)
+            tail = f"{cid} is done"
+        else:
+            tail = f"{verdict} recorded; {slug} stays in `{sfm.get('status')}`"
+        return True, (f"gate {verdict} recorded at authority `{authority}`"
+                      f"\n  evidence: sources — {len(closed)}/{len(musts)} questions closed"
+                      f"\n{tail}\nnext: add status")
+
     if receipt is None:
         return refuse("no receipt has been recorded", f"add run {slug} -- <cmd>")
 
@@ -2721,7 +2828,9 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
              f'outcome: {verdict}, receipt: {receipt_cid}, brief: "{digest}"'
              + (f', reason: "{reason}"' if reason else "") + " }")
-    _transition(root, cid, appends=[("verified", stamp)])
+    _, t_err = _transition(root, cid, appends=[("verified", stamp)])
+    if t_err:
+        return False, t_err + "\nnext: add status"
 
     if verdict == "PASS":
         done(root, cid)

@@ -25,6 +25,16 @@ looks done", but "the suite the human froze now passes".
    Touching a path outside scope means the node is mis-scoped — fix the scope in Direction, don't sneak
    the edit.
 
+## Steering vs contract — record the turn, keep the seal
+
+Mid-build discovery that changes NO frozen surface — strategy, sequencing, a discovered
+constraint, a scope observation — is **steering**: record it with `add replan <slug> --note
+"<what changed and why>"` and keep building. The stamp lands on the node's trail at process
+authority; the seal never moves, and the gate is indifferent to it. Anything that would move a
+frozen `gives:` or a check is a **change-request** back to Direction (a `refreeze` stamp),
+exactly as the three lines above demand. Consult the split at the moment of discovery, before
+any edit — an unrecorded steer is where method-bypassing starts.
+
 ## When a check outside your suite fails
 
 A failure in a test your node does not own means you crossed a boundary. Locate its owning node and the

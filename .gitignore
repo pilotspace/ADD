@@ -37,6 +37,9 @@ site/
 .add/personas-teacher/
 .add/personas-index/
 .add/graph.json
+# Run receipts are machine evidence, rebuilt by re-running the suite; the gate stamps on the
+# task nodes remain the tracked record (fresh-checkout skip-tolerance covers the gap).
+.add/tasks/*.d/runs/
 tmp/
 
 # Agent worktree scratch (isolation: worktree runs) — local, never committed

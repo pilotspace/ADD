@@ -112,6 +112,23 @@ Delegate when the beat genuinely wants expertise or a fresh adversarial read; **
 one-liner the main thread can do, and never delegate the human decision itself. The advisor sharpens
 the work; the gate, the freeze, and the floor stay exactly where the 3-beat loop put them.
 
+## Read fan-out — facts merge, decisions serialize
+
+Read-only work fans out FREELY: grounding a milestone, the residue lenses, explore-lane research
+(`phases/explore.md`) — spawn N parallel readers with **no wave, no worktree, no disjoint-scope
+proof**. The wave machinery below exists to serialize DECISIONS; reads return facts, and facts merge
+— contradictory findings surface to the human at the fold, the same divergence rule join uses.
+
+Read-only is pinned to the **spawn instruction**, not to good intentions: a delegate whose prompt
+asks for any edit is a writer, and one write instruction anywhere taints the whole delegate — that
+spawn is wave-gated (builds carry implicit decisions; parallel writers need the disjoint-scope
+proof below). Findings fold with their read time — a reader that ran beside a build observed a
+moving tree.
+
+The floors hold at any fan-out width: no reader owns a gate; findings fold back through the main
+thread, which records them against the beat; and a security finding from ANY reader is a
+HARD-STOP, exactly as from the main thread.
+
 ## Parallel streams — build the whole frontier at once
 
 When a milestone's frontier is **several tasks that do not depend on each other**, build them

@@ -59,6 +59,18 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   bundles loses its own answer, its own cost-if-wrong, and its own place to be challenged. The
   scaffold is one line per dimension; keep that shape as you author.
 
+  **Discharge the dearest guesses — the micro-spike.** A line whose cost-if-wrong is high MAY be
+  discharged before freeze by a bounded micro-explore: a few targeted tool calls inline (read the
+  code path, probe the API, check the doc) — never a task. Key the effort on cost-if-wrong —
+  highest first, checkability second; evidence where guessing is expensive, guessing where evidence
+  is not worth its cost. Record it on the line: the taken reading becomes
+  `· found: the answer (evidence: a file+line, doc, URL, or command output)` — found without its
+  evidence ref is not a discharge, just a louder guess. The line itself stays in ASSUMPTIONS,
+  never deleted — the record that the silence existed and was answered; found-lines stay freely
+  editable like any assumption. This is optional per line — an undischarged silence stays a
+  legitimate priced guess. When the question outgrows a few calls it is no micro-spike any more:
+  route it to the Explore lane through intake (`intake.md`), never a shadow research task.
+
   Write one here whenever you catch yourself about to state something the request never said. The
   failure this exists to stop is silent and looks like competence: an unstated requirement gets
   written as a Must in the same authoritative voice as a stated one, a check is bound to it, the
