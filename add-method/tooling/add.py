@@ -1729,7 +1729,9 @@ def fresh(receipt: dict, root) -> tuple:
     root = Path(root)
     recorded = receipt.get("scope_digest") or []
     if receipt.get("freshness") != "content" or not recorded:
-        return False, "receipt carries no content digest — freshness cannot be established"
+        return False, ("receipt carries no content digest — freshness cannot be established "
+                       "(the bundle parent was not a git working tree at run time, or the "
+                       "node's `scope:` paths did not exist there)")
     for entry in recorded:
         path = root / str(entry.get("path"))
         if not path.is_file():
@@ -1749,7 +1751,12 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     root, cwd = Path(root), Path(cwd or root)
     node = (scan(root).get(cid) or {})
     scope = ((node.get("fm") or {}).get("scope")) or []
-    digest = scope_digest(cwd, scope)
+    # The digest root is the BUNDLE PARENT — the identical root `gate` hands `fresh()` — never
+    # the cwd. Field finding (hardening tally #1): a cwd below the project computed the digest
+    # against paths that did not exist there, so the receipt silently degraded to mtime and the
+    # gate refused a PASS with a message naming neither the cause nor the fix. `cwd` stays what
+    # it says: the command's working directory, nothing more.
+    digest = scope_digest(root.parent, scope)
 
     try:
         done = subprocess.run([str(c) for c in command], cwd=str(cwd),
@@ -1759,6 +1766,14 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
         exit_code, stdout, note = 124, "", f"timeout after {timeout}s — recorded, not raised"
     except OSError as err:
         exit_code, stdout, note = 127, "", f"could not start the command: {err}"
+
+    # A declared scope with no digest is a degrade the gate WILL refuse — saying why belongs on
+    # the receipt, at the moment it happens (R:SILENTDEGRADE). Joined, never overwriting: a
+    # timeout's diagnosis and the degrade's are both true.
+    if scope and not digest:
+        degrade = ("scope: declared but no digest recorded — the bundle parent is not a git "
+                   "working tree, or the scope paths do not exist there; freshness degrades to mtime")
+        note = f"{note}; {degrade}" if note else degrade
 
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = root / f"tasks/{slug}.d/runs"
