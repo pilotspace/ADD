@@ -107,10 +107,12 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    is honest.
 
 9. **VALIDATE.** Save as `.add/personas/<slug>.md` (never overwrite an existing persona; never use a
-   `_`-prefixed name). Run `python3 .add/tooling/add.py check` — it validates presence-based and
-   surfaces quality WARNs (a `flow:` typo loaded by no surface; a bare `<…>` placeholder left
-   unfilled). Sweep every `<…>` placeholder out; fix every WARN. Green check = the persona is
-   roster-ready.
+   `_`-prefixed name). Run `python3 .add/tooling/cli.py doctor` — no findings means the node
+   conforms. Then prove the LOAD, not the presence: `cli.py doctor --sync` recompiles the index,
+   and the persona must appear in `.add/index.md`'s roster with its `use-when:` as the catalogue
+   line — a persona missing there is one no routing ever reads. The engine does NOT lint quality:
+   sweep every bare `<…>` placeholder and check `flow:` against the four values yourself — a typo
+   there is loaded by no surface and fails silently.
 
 ## The one-line test
 

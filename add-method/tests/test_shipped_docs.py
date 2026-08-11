@@ -30,6 +30,18 @@ INSTALLER_VERBS = {"update"}
 # sync-guidelines"). Gating it would forbid the release notes from describing the release.
 SHIPPED_DOCS = ("README.md", "GETTING-STARTED.md")
 
+
+def _shipped_skill_docs() -> list[str]:
+    """Every markdown file under skill/ — the agent-facing instruction surface.
+
+    The doc gate above stopped at the human-facing docs, and the identical defect rode a
+    SKILL: persona-author told the agent `add.py check` in five places — a phantom verb on
+    a silent-no-op entry point, in an instruction file whose whole purpose is to be
+    followed literally. Glob rather than list, so a new skill file is gated the day it
+    ships instead of the day someone remembers this test.
+    """
+    return sorted(str(p.relative_to(PKG)) for p in (PKG / "skill").rglob("*.md"))
+
 # `add.py <verb>` (any path prefix) or a bare `add <verb>` not glued to a package name — so
 # `pilotspace-add update`, `@pilotspace/add@latest`, and `marketplace add pilotspace/ADD` do not
 # read as engine calls.
@@ -106,6 +118,67 @@ def test_shipped_docs_never_invoke_add_py():
                 offenders.setdefault(rel, []).append(n)
     assert not offenders, (
         "shipped docs invoke `add.py <verb>`, which exits 0 and prints nothing; "
+        f"use `.add/tooling/cli.py` instead: {offenders}")
+
+
+# Skill prose uses `add` as an ordinary English verb constantly ("you add those yourself",
+# "add or sharpen a rule"), so the bare-`add` form only counts INSIDE code — a backtick span
+# or a fenced block, the only places a skill states a runnable line. `add.py <verb>` still
+# counts anywhere: that spelling is never English.
+_CODE_SPANS = re.compile(r"`[^`\n]+`")
+
+
+def _skill_phantoms(rel: str) -> dict[str, list[int]]:
+    known = _engine_verbs() | INSTALLER_VERBS
+    found: dict[str, list[int]] = {}
+    fenced = False
+    for n, line in enumerate((PKG / rel).read_text(encoding="utf-8").splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        code = line if fenced else " ".join(_CODE_SPANS.findall(line))
+        candidates = VERB_RE.findall(code) + [v for v in VERB_RE.findall(line)
+                                              if "add.py" in line]
+        for verb in candidates:
+            if verb not in known:
+                found.setdefault(verb, []).append(n)
+    return found
+
+
+def test_shipped_skills_advertise_no_phantom_verbs():
+    """covers: M2, E3 — the instruction files an AGENT follows literally.
+
+    A phantom verb in a skill is worse than one in a README: no human skims it with
+    judgment; the agent runs the line as written, gets exit 0 and no output, and reports
+    the step done.
+    """
+    offenders = {rel: ph for rel in _shipped_skill_docs() if (ph := _skill_phantoms(rel))}
+    assert not offenders, f"shipped skills advertise verbs the engine lacks: {offenders}"
+
+
+def test_the_skill_detector_ignores_english_but_catches_code(tmp_path):
+    """covers: R:GREENLIE — prose `add those yourself` must not fire; a fenced or
+    backticked phantom must."""
+    planted = PKG / "skill" / "_gate_probe.md"
+    planted.write_text("you add those yourself, then add or sharpen a rule\n"
+                       "run `add check` until green\n"
+                       "```bash\nadd migrate --all\n```\n", encoding="utf-8")
+    try:
+        rel = str(planted.relative_to(PKG))
+        assert _skill_phantoms(rel) == {"check": [2], "migrate": [4]}
+    finally:
+        planted.unlink()
+
+
+def test_shipped_skills_never_invoke_add_py():
+    """covers: M3, R:SILENT_NOOP — same oracle as the docs gate, over the skill tree."""
+    offenders: dict[str, list[int]] = {}
+    for rel in _shipped_skill_docs():
+        for n, line in enumerate((PKG / rel).read_text(encoding="utf-8").splitlines(), 1):
+            if ADD_PY_CALL_RE.search(line):
+                offenders.setdefault(rel, []).append(n)
+    assert not offenders, (
+        "shipped skills invoke `add.py <verb>`, which exits 0 and prints nothing; "
         f"use `.add/tooling/cli.py` instead: {offenders}")
 
 

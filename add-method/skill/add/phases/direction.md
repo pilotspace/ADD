@@ -36,12 +36,21 @@ re-ground the repo. Aim the bundle at reality, not assumption.
 
   **Work the matrix, don't free-associate.** Author `gives:` FIRST — the `S<n>` surfaces this node
   publishes — since that is the axis the sweep runs along and freeze refuses while it is template.
+  **Enumerate ALL the surfaces**: every route × verb, function, or section the request touches is
+  one — including the read paths it mentions in passing. The sweep can only force questions about
+  surfaces you listed; in five live runs the never-questioned silences all lived on the quiet
+  `GET` path while every run wrote assumptions about the loud `POST` path, because free-association
+  follows the spec's own emphasis (a spec that discussed status constantly and named caller
+  identity once).
   Then take each surface and ask all five: *who* may do this and
   whose data is it · *which* rows/cases are in and which are filtered out · *when* — is the boundary
-  inclusive · what if the value is *absent* · what *order* / what breaks a tie. The sweep exists
-  because free-association follows the spec's own emphasis: a live run asked *which* rows
-  `GET /bookings` returns and never asked *whose*, since the spec discussed status constantly and
-  named caller identity once.
+  inclusive · what if the value is *absent* · what *order* / what breaks a tie.
+
+  **One line, one silence.** Each `A<n>` names ONE open question. A line that resolves the
+  contradiction *and* carries the ordering, boundary and visibility questions in the same breath
+  is not auditable — a reviewer can only agree or disagree with it wholesale, and each silence it
+  bundles loses its own answer, its own cost-if-wrong, and its own place to be challenged. The
+  scaffold is one line per dimension; keep that shape as you author.
 
   Write one here whenever you catch yourself about to state something the request never said. The
   failure this exists to stop is silent and looks like competence: an unstated requirement gets
