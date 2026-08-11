@@ -66,7 +66,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--sensitivity")
     s.add_argument("--kind")
     s.add_argument("--milestone")
-    s.add_argument("--scope", help="comma-separated paths")
+    s.add_argument("--scope", action="append",
+                   help="paths — repeat the flag and/or comma-separate; occurrences append")
 
     s = sub.add_parser("brief", help="the composed XML prompt for the active beat")
     s.add_argument("ref")
@@ -159,7 +160,10 @@ def dispatch(args, run_cmd) -> int:
         fields = {k: getattr(args, k) for k in ("title", "depth", "sensitivity", "kind", "milestone")
                   if getattr(args, k) is not None}
         if args.scope is not None:
-            fields["scope"] = args.scope.split(",")
+            # `action="append"` makes each occurrence a list entry; commas expand in place,
+            # so `--scope a.py --scope b.py,c.py` -> [a.py, b.py, c.py] (R:LASTWINS).
+            fields["scope"] = [p.strip() for chunk in args.scope
+                               for p in chunk.split(",") if p.strip()]
         cid, note = add.new(root, args.type.capitalize(), args.slug, **fields)
         print(note)
         return 0 if cid else 1

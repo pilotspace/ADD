@@ -20,4 +20,4 @@ this file only ever holds the newest pointer.
 ENGINE_MD5 = "6dd9c360776b014c36a5fb400cb9833c"  # re-aimed @ run-digest-root (run's scope digest resolves from the bundle parent, gate's own root; a declared-scope degrade to mtime is said on the receipt). prior: fc624612… @ okf-persona-template
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "b4a7249845259f3fbcf8e1dae013b03c"  # re-aimed @ guided-upgrade W5 (upgrade subparser + dispatch; operates on the project root, not the bundle). prior: 3d21a9c2… @ brief-gate W1
+ENGINE_PKG_MD5 = "23b6842c15a5253add37b838181c0b54"  # re-aimed @ scope-flag-append (`--scope` is action=append — repeated flags accumulate, commas expand in place; a CLI argument is never silently dropped). prior: b4a72498… @ guided-upgrade W5
