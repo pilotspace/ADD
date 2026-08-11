@@ -89,6 +89,9 @@ nav:
       - "16 · Releasing": 16-releasing.md
       - "17 · Components — monorepo and multi-repo": 17-components.md
       - "18 · Personas in practice — the project-fit loop": 18-personas.md
+  - Announcements:
+      - "ADD 3.0: a dev method your agent can't talk around": announcements/introducing-add-30.md
+      - "We tried to cheat our own dev method": announcements/2026-08-11-we-tried-to-cheat-our-own-dev-method.md
   - Part V — Reference appendices:
       - "Appendix C · Glossary": appendix-c-glossary.md
       - "Appendix D · The worked example, end to end": appendix-d-worked-example.md

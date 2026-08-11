@@ -4,12 +4,28 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [3.0.0] — 2026-08-07
+## [3.0.0] — 2026-08-11
 
 Major: the method core is rebuilt on the **ABF-1** bundle format with a **NO-EXEC notary**
 engine — the lean "add-skill-2" line, which supersedes the 2.x/OKF surface. The engine records
 direction and evidence; it never runs the method or spawns an agent. The 3-beat loop is
 **Direction → Build → Verify**, trusted on a fresh, bound receipt rather than a plausible diff.
+The release claim, unchanged since the first beta: **auditability, not correctness**.
+
+Hardened through two published betas (`3.0.0-beta.1`, `3.0.0-beta.2` — the beta.2 engine added
+the brief-entry checkpoint `R:UNBRIEFED`, gate probes for assumptions, broader collapsed-surface
+detection, routing-index freshness, and `add upgrade`) and a usage window of real tasks driven
+through the loop across two projects. Since beta.2:
+
+- **`run`/`gate` resolve `scope:` from the same root** — the receipt's freshness digest is
+  computed from the bundle parent regardless of `--cwd`, a declared scope that yields no digest
+  says why on the receipt, and the gate's no-digest refusal names the candidate causes.
+- **`add new Persona` scaffolds its routing keys** — `vibe`/`flow`/`task-kinds`/`use-when`/
+  `not-when` plus OKF v0.2's `description:`/`sources:`. Slots, never validation.
+- **Repeated `--scope` flags append** instead of silently keeping the last value; the comma
+  form still splits, and both compose.
+- Docs site refreshed to teach the shipped engine (probe grammar, brief entry, `R:UNBRIEFED`,
+  `add upgrade`, the stamp chain, and an honest OKF-alignment note).
 
 ### Changed
 
