@@ -72,6 +72,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("ref")
     s.add_argument("--phase")
     s.add_argument("--for-subagent", action="store_true")
+    s.add_argument("--by", default="cli")
+
+    s = sub.add_parser("upgrade", help="archive a 2.x bundle whole, initialise 3.0 beside it")
+    s.add_argument("--by", default="cli")
 
     s = sub.add_parser("freeze", help="the one approval → Build")
     s.add_argument("ref")
@@ -160,9 +164,21 @@ def dispatch(args, run_cmd) -> int:
         print(note)
         return 0 if cid else 1
 
+    if args.verb == "upgrade":
+        # The verb works on the PROJECT, not the bundle: `.add/` is what gets archived.
+        report, note = add.upgrade(Path(args.root).resolve().parent, by=args.by)
+        print(note)
+        return 0 if report else 1
+
     if args.verb == "brief":
-        pack = add.brief(root, _resolve(root, args.ref), phase=args.phase, for_subagent=args.for_subagent)
+        cid = _resolve(root, args.ref)
+        pack = add.brief(root, cid, phase=args.phase, for_subagent=args.for_subagent)
         print(pack["text"])
+        # W1 (R:UNBRIEFED): compiling for a frozen Task IS entering the build — record it.
+        # The stamp is what `gate` reads; an unfrozen or non-Task compile stays a pure read.
+        digest, note = add.brief_stamp(root, cid, by=args.by)
+        if digest:
+            print(note)
         return 0
 
     if args.verb == "freeze":

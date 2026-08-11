@@ -263,9 +263,17 @@ refuses an unauthored `gives:` (no surfaces would mean nothing to sweep — a on
 switch). It also refuses a **collapsed** surface — an `S<n>` entry naming several HTTP
 methods is several surfaces under one id, which shrinks the matrix the same way (a live
 run listed five endpoints as one `S1` and answered `[who]` once, about the loudest). The
-check is deliberately partial: only HTTP method tokens are counted; a function or
-section surface is never judged. `depth: quick` is exempt: depth tunes ceremony, never
-the authority floor.
+check judges three definitional token shapes and nothing else: HTTP method tokens,
+distinct `name(` callables, and distinct backticked file names. Repetition is not
+multiplicity, a `(parenthetical)` is not a callable, and an unbackticked prose mention is
+never judged — a guess at prose shape would make the notary a guard. `depth: quick` is
+exempt: depth tunes ceremony, never the authority floor.
+
+An assumption whose reading is checkable against the running code may say so:
+`· probe: <what shipped behavior must show>` makes that `A<n>` a first-class `covers:`
+referent, exactly like a Must or an edge — some CHECKS line must cite it, and the gate
+holds a PASS until a runner reports that check passing. Opting in is the author's; an
+unprobed line stays a priced guess on the record, never conscripted.
 
 Surfaces, not rules, because a surface is what a caller touches — and because sweeping
 Musts demanded 50-60 pairs on real nodes, which is not a checklist but a toll, and a toll
@@ -337,6 +345,13 @@ Derived from `add.py:1674-1680`, `validate_bundle.py:61-70`.
 ## §7 The brief
 
 `brief` composes the read-set for one node without any bulk read.
+
+The brief is Build's **entry**, not a convenience: compiling it for a frozen Task records
+an `act: brief` stamp carrying the compiled hash, and the gate refuses a PASS unless that
+stamp sits between the latest (re)freeze and the gated receipt's run stamp (`verified:` is
+append-only, so stamp order is chronology). A brief recorded after the receipt entered
+nothing; a refreeze resets the entry. `depth: quick` and pre-seal bundles are exempt —
+the same stances the sweep and the drift check already take.
 
 ### §7.1 Composition
 

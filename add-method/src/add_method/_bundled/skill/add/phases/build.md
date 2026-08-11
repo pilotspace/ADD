@@ -2,6 +2,13 @@
 
 Everything you need is fixed. Build runs fast and safe because Direction already set it.
 
+## The entry is the brief
+
+`add brief <slug>` is Build's FIRST verb, not a convenience: on a frozen task it records an
+`act: brief` stamp — the sealed direction becoming the working prompt — and the gate refuses
+a PASS whose receipts predate that entry (a brief compiled after the build entered nothing;
+the fix is a re-run under it). Compile it, work from it. `depth: quick` is exempt.
+
 ## The one job
 
 Write code in the repo until **every red check is green**. That is the whole target — not "code that

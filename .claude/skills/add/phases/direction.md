@@ -38,7 +38,8 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   publishes — since that is the axis the sweep runs along and freeze refuses while it is template.
   **Enumerate ALL the surfaces**: every route × verb, function, or section the request touches is
   one — including the read paths it mentions in passing. One surface per `S<n>` id — freeze
-  REFUSES an entry naming several HTTP methods, because five endpoints under one id shrinks the
+  REFUSES an entry naming several HTTP methods, several distinct `name()` callables, or several
+  backticked documents, because five endpoints under one id shrinks the
   matrix to one set of questions about the loudest of them. The sweep can only force questions about
   surfaces you listed; in five live runs the never-questioned silences all lived on the quiet
   `GET` path while every run wrote assumptions about the loud `POST` path, because free-association
@@ -47,6 +48,10 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   Then take each surface and ask all five: *who* may do this and
   whose data is it · *which* rows/cases are in and which are filtered out · *when* — is the boundary
   inclusive · what if the value is *absent* · what *order* / what breaks a tie.
+  When a taken reading is checkable against the running code, say so on the line:
+  `· probe: <what shipped behavior must show>` makes that `A<n>` a `covers:` referent — cite it
+  from a CHECKS line and the gate holds the PASS until that check reports passing. Probe the
+  readings whose cost-if-wrong is the highest; an unprobed line stays a priced guess on the record.
 
   **One line, one silence.** Each `A<n>` names ONE open question. A line that resolves the
   contradiction *and* carries the ordering, boundary and visibility questions in the same breath

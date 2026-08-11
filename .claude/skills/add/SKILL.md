@@ -113,6 +113,7 @@ advises and returns a verdict; it never freezes, never gates, and security stays
 ```bash
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle (also: doc)
+add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides re-authoring
 add new Task <slug> --title "..." --depth quick|standard|deep [--milestone m] [--scope a,b]
                                              # --sensitivity security|data|architecture sets the floor
 add brief <slug>                             # the composed XML prompt for the active beat

@@ -923,6 +923,84 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
     return load(root), created, f"{note}\nnext: add new milestone <slug>"
 
 
+RE_2X_PHASE = re.compile(r"^phase:\s*(\w+)", re.M)
+
+
+def upgrade(project_root, by: str = "cli") -> tuple:
+    """The guided 2.x → 3.0 clean break (W5). `(report_path, note)` — NO-EXEC, nothing deleted.
+
+    Automates exactly the path proven by hand on the bench, and nothing more: the whole 2.x
+    bundle is RENAMED to `.add-2x-archive/` (byte-identical, grep-able, never edited), a fresh
+    3.0 bundle is initialised at `.add/`, and `MIGRATION.md` lands in the ARCHIVE — it describes
+    the old world, and the new bundle's doctor should not have to classify it. State is not
+    translated: 2.x stamps, waivers and phase markers mean things 3.0 deliberately refuses to
+    mean (an untranslatable `phase: verify` re-materialising as a 3.0 beat would be a bypass
+    with a heritage story), so tasks are re-authored, with the archive open beside the editor.
+
+    A 2.x bundle is recognised by its own bones, any of: the `tooling/add_engine/` package
+    (3.0's engine is two flat files), `state.json` (3.0 has no state file), or directory-tasks
+    (`tasks/<slug>/PLAN.md`; 3.0 tasks are flat nodes).
+    """
+    project_root = Path(project_root)
+    root = project_root / ".add"
+    archive = project_root / ".add-2x-archive"
+
+    def refuse(why: str, fix: str) -> tuple:
+        return None, f"cannot upgrade — {why}\nnext: {fix}"
+
+    if not root.is_dir():
+        return refuse("no `.add/` bundle here", "add init  # start fresh at 3.0")
+    if not ((root / "tooling" / "add_engine").is_dir()
+            or (root / "state.json").is_file()
+            or any(root.glob("tasks/*/PLAN.md"))):
+        return refuse("this bundle is already 3.0 — no 2.x markers found "
+                      "(add_engine/ package, state.json, or tasks/<slug>/PLAN.md)",
+                      "add status")
+    if archive.exists():
+        return refuse(f"`{archive.name}/` already exists — a previous upgrade's record is "
+                      f"never clobbered",
+                      f"move `{archive.name}/` aside yourself, then add upgrade")
+
+    tasks = []
+    for plan in sorted(root.glob("tasks/*/PLAN.md")):
+        m = RE_2X_PHASE.search(plan.read_text(encoding="utf-8", errors="replace"))
+        tasks.append((plan.parent.name, m.group(1) if m else "unknown"))
+    title = None
+    charter = root / "PROJECT.md"
+    if charter.is_file():
+        text = charter.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^title:\s*(.+)$", text, re.M) \
+            or re.search(r"^#\s+(?:PROJECT:\s*)?(.+)$", text, re.M)
+        title = m.group(1).strip() if m else None
+
+    root.rename(archive)                      # the ONE move — everything else is additive
+    init(root, "code", title)
+
+    report = archive / "MIGRATION.md"
+    lines = [f"# 2.x → 3.0 migration — recorded {_today()} by {by}", "",
+             "Nothing was deleted. This directory is the complete 2.x bundle, byte-identical,",
+             "renamed from `.add/`. The fresh 3.0 bundle beside it starts empty on purpose:",
+             "2.x state is not translated, because its markers (phase, autonomy, waivers) mean",
+             "things 3.0 deliberately refuses to mean. Re-author each task below against its",
+             "archived PLAN.md — the direction work transfers; the bypasses do not.", "",
+             "## 2.x tasks to re-author", ""]
+    lines += [f"- `{slug}` (2.x phase: {phase}) — archived at `tasks/{slug}/PLAN.md`; "
+              f"re-author with `add new Task {slug}`" for slug, phase in tasks] \
+        or ["- (none found)"]
+    lines += ["", "## Next", "",
+              "1. `add status` — see the fresh bundle.",
+              "2. `add new milestone <slug>` — recreate the active milestone.",
+              "3. `add new Task <slug>` per task above, authoring RULES/ASSUMPTIONS/CHECKS",
+              "   from the archived PLAN.md's §1–§4.",
+              "4. Freeze, brief, build, gate — the 3.0 loop takes it from there."]
+    report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    note = (f"2.x bundle archived whole to `{archive.name}/` ({len(tasks)} task(s) recorded in "
+            f"MIGRATION.md) · fresh 3.0 bundle initialised at `.add/`"
+            f"\nnext: read {archive.name}/MIGRATION.md, then add status")
+    return report, note
+
+
 # ============================================== new · freeze · done — transitions (e4)
 #
 # One shared write path (`_transition`) serves all three verbs, per amendment A1. Two rules
@@ -969,7 +1047,9 @@ BODIES = {
             "- A5 [order] covers: <S ids> · the request does not say <what orders /"
             " breaks a tie>; taking <reading> -> <cost if wrong>\n"
             "every `gives:` surface is swept on every dimension; "
-            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle.\n\n"
+            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
+            "`· probe: <what shipped behavior must show>` declares a reading checkable: "
+            "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
@@ -1116,9 +1196,10 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
         if collapsed:
             return None, (f"cannot freeze `{slug}` — one surface per S id: "
                           + " · ".join(collapsed)
-                          + " each name several HTTP methods, so the sweep is asking "
-                            "one set of questions about several surfaces"
-                          f"\nnext: split each into its own `- S<n> <one method+path>` "
+                          + " each name several surfaces (HTTP methods, callables, or "
+                            "backticked documents), so the sweep is asking one set of "
+                            "questions about several surfaces"
+                          f"\nnext: split each into its own `- S<n> <one surface>` "
                           f"entry, re-cover them in ASSUMPTIONS, then add freeze {slug}")
 
     # Non-empty is not complete. Three live runs each recorded 5-7 real assumptions and
@@ -1143,7 +1224,9 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                      f'direction: "{direction_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
-    return node, f"{act} recorded at authority `{authority}`\nnext: build, then `add run -- <cmd>`"
+    return node, (f"{act} recorded at authority `{authority}`"
+                  f"\nnext: add brief {slug} — record the build entry, then build "
+                  f"(`add run {slug} -- <cmd>`)")
 
 
 def done(root, cid: str) -> tuple:
@@ -1405,10 +1488,38 @@ def _beat_of(node) -> str:
     return "build" if _is_frozen(node) else "direction"
 
 
+def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
+    """True when an `act: brief` stamp sits after the last (re)freeze — and, when
+    `receipt_cid` names a run stamp, before that run.
+
+    `verified:` is append-only (§3.5), so list order IS chronology — no clock needed.
+    A brief recorded before the freeze entered a direction that no longer exists, and a
+    brief recorded after the receipt entered nothing: the build it claims was already over.
+    """
+    stamps = [s for s in stamps if isinstance(s, dict)]
+    last_freeze = max((i for i, s in enumerate(stamps)
+                       if s.get("act") in ("freeze", "refreeze")), default=-1)
+    run_idx = next((i for i, s in enumerate(stamps)
+                    if s.get("act") == "run" and str(s.get("receipt", "")) == receipt_cid),
+                   None) if receipt_cid else None
+    return any(s.get("act") == "brief" and i > last_freeze
+               and (run_idx is None or i < run_idx)
+               for i, s in enumerate(stamps))
+
+
 def _next_verb(graph: dict, cid: str) -> str:
     """The one runnable next command for a task, by its stamp-derived beat."""
     slug = cid.rsplit("/", 1)[-1][:-3]
-    return BEAT_NEXT.get(_beat_of(graph[cid]), "add status").format(slug=slug)
+    node = graph[cid]
+    beat = _beat_of(node)
+    fm = node.get("fm") or {}
+    # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
+    # points at `add brief`, and moves on to the run the moment the entry is recorded.
+    if beat == "build" and fm.get("type") == "Task" \
+            and str(fm.get("depth") or "standard") != "quick" \
+            and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
+        return f"add brief {slug}"
+    return BEAT_NEXT.get(beat, "add status").format(slug=slug)
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -1780,7 +1891,7 @@ def fold(root, lens: str, match: str) -> tuple:
 # reopen R:DRIFT inside the engine itself.
 RULE_ALT = r"M\d+|R:[A-Z0-9_]+|E\d+"
 RULE_ID = re.compile(rf"^-\s+({RULE_ALT})\b")
-REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+)\Z")
+REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+|A\d+)\Z")  # A<n>: a probed assumption (W2)
 COVERS_IN_CHECK = re.compile(r"^-\s+(\S+)\s+·\s*covers:\s*([^·]+?)\s*·")
 
 
@@ -1838,6 +1949,10 @@ def surfaces_of(node: dict) -> list:
 
 
 RE_HTTP_METHOD = re.compile(r"\b(?:GET|POST|PUT|DELETE|PATCH)\b")
+# W3: an identifier flush against `(` is a callable; whitespace before `(` is prose.
+RE_CALLABLE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_.]*)\(")
+# W3: only a BACKTICKED file name is a named document artifact — prose mentions stay unjudged.
+RE_BACKTICKED_DOC = re.compile(r"`([\w./-]+\.[A-Za-z0-9]{1,4})`")
 
 
 def collapsed_surfaces(node: dict) -> list:
@@ -1850,17 +1965,25 @@ def collapsed_surfaces(node: dict) -> list:
     rule stood in direction.md throughout — the third consecutive live demonstration
     that a prose rule with no engine checkpoint does not happen.
 
-    DELIBERATELY PARTIAL, and honest about it: counting method tokens judges only HTTP
-    surfaces. A function or section surface has nothing to count and is never judged —
-    a heuristic that guessed at prose shape beyond this would be a guard, not a notary.
-    Two method tokens in one entry is not a guess, it is the definition being violated:
-    a surface is what ONE caller call touches (§5), and `POST/GET` is two of them.
+    STILL PARTIAL, and honest about it (beta-2/W3 widened it, it did not complete it):
+    three definitional token shapes are judged and nothing else is. Two HTTP method
+    tokens are two caller calls; two DISTINCT `name(` callable tokens are two functions;
+    two BACKTICKED file names are two named artifacts. A prose mention without one of
+    those shapes — a section, an unbackticked filename, a described behaviour — is never
+    judged: a heuristic that guessed at prose shape would be a guard, not a notary.
+    Repetition is not multiplicity (`admit()` twice is one surface), and a parenthetical
+    like `(paginated)` is not a callable — only an identifier flush against `(` counts.
     """
     out = []
     for entry in (node.get("fm") or {}).get("gives") or []:
         text = str(entry)
         m = re.match(r"\s*(S\d+)\b", text)
-        if m and len(RE_HTTP_METHOD.findall(text)) >= 2:
+        if not m:
+            continue
+        several = (len(RE_HTTP_METHOD.findall(text)) >= 2
+                   or len(set(RE_CALLABLE.findall(text))) >= 2
+                   or len(set(RE_BACKTICKED_DOC.findall(text))) >= 2)
+        if several:
             out.append(m.group(1))
     return out
 
@@ -2012,9 +2135,30 @@ def edges_of(node: dict) -> list:
     return out
 
 
+RE_PROBED_ASSUMPTION = re.compile(r"^-\s+(A\d+)\s+\[\w+\].*·\s*probe:\s*\S")
+
+
+def probed_assumptions(node: dict) -> list:
+    """`A<n>` ids declared CHECKABLE with `· probe: <what shipped behavior must show>` (W2).
+
+    The sweep makes agents ask; nothing makes the answers right — the campaign record shows
+    two of seven readings wrong in every run, and a NO-EXEC notary cannot judge an answer.
+    What it CAN do is refuse to call a checkable answer proven while no check reports on it:
+    a probed id is a first-class covers referent, the same move as C7 made for edges. Opting
+    in is the author's; an unprobed line stays a priced guess on the record, never conscripted
+    — the engine enforces exactly what was declared checkable, and nothing else.
+    """
+    out = []
+    for line in _section_of(node.get("body") or "", "ASSUMPTIONS").splitlines():
+        m = RE_PROBED_ASSUMPTION.match(line.strip())
+        if m:
+            out.append(m.group(1))
+    return out
+
+
 def referents_of(node: dict) -> list:
-    """Every id a check may bind: Musts + Rejects (RULES) and real edges (EDGES)."""
-    return rules_of(node) + edges_of(node)
+    """Every id a check may bind: Musts + Rejects (RULES), real edges (EDGES), probed A ids."""
+    return rules_of(node) + edges_of(node) + probed_assumptions(node)
 
 
 def covers(node: dict) -> dict:
@@ -2308,6 +2452,33 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             "budget": budget, "degraded": degraded, "phase": phase, "depth": depth}
 
 
+def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
+    """Record that the brief ENTERED the build: `act: brief` on a frozen Task. `(digest, note)`.
+
+    The compile itself stays pure (`brief` is read-only and `gate` calls it); THIS is the
+    write, and it is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
+    entry — before the freeze there is no sealed direction for a brief to enter, and depth
+    `quick` never demands one (the gate exempts it), though recording one is harmless.
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    fm = node.get("fm") or {}
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if fm.get("type") != "Task" or not _is_frozen(node):
+        return None, (f"brief compiled, not recorded — only a frozen Task records its build "
+                      f"entry, and `{slug}` is not one yet"
+                      f"\nnext: add freeze {slug}, then add brief {slug}")
+    digest = brief(root, cid)["hash"]
+    _transition(root, cid, appends=[("verified",
+        f'{{ by: "{by}", at: {_today()}, act: brief, authority: process, '
+        f'brief: "{digest}" }}')])
+    return digest, (f"brief {digest} recorded as the build entry"
+                    f"\nnext: add run {slug} -- <cmd>")
+
+
 # ============================================ gate — the verdict, and its refusals (e13)
 #
 # This verb should have existed since e4. Every gate in this project's history was recorded by
@@ -2474,6 +2645,25 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                       "changes by refreezing, never by a silent edit",
                       f'add freeze {slug} --by "<name>" to record the change, or '
                       f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+
+    # W1 (beta-2, R:UNBRIEFED) — the brief is Build's ENTRY, not the verdict's garnish.
+    # beta-1 stamped a brief hash HERE, at gate time: a record of what the instructions would
+    # have been, taken after the build was over. Using the brief during Build was recommended
+    # prose, and three probe campaigns each showed what recommended prose becomes. Keyed off
+    # the seal (like drift) so pre-seal bundles stay gateable; quick depth is ceremony-tuned
+    # out, the same stance as the sweep's exemptions.
+    if sealed and verdict == "PASS" and sfm.get("type") == "Task" \
+            and str(sfm.get("depth") or "standard") != "quick":
+        all_stamps = sfm.get("verified") or []
+        if not _brief_entered(all_stamps, receipt_cid):
+            why = ("the brief was recorded after the receipt — an entry that postdates the "
+                   "build entered nothing"
+                   if _brief_entered(all_stamps) else
+                   "no brief entered this build — the sealed direction was never compiled "
+                   "into the working prompt since the last (re)freeze")
+            return refuse(why + ' -> "R:UNBRIEFED"',
+                          f"add brief {slug} to record the entry, then re-run "
+                          f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
@@ -2831,6 +3021,36 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             # so doctor says `warn`; the softer data/architecture floors stay `info` nudges.
             severity = "warn" if fm.get("sensitivity") == "security" else "info"
             find(severity, "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
+    # W4 (beta-2): the routing index is how a lens is FOUND — the corpus says what each
+    # persona is, the index says when to reach for it. A bundle whose corpus moved without
+    # its index routes against a roster that no longer exists, silently. "Persona" here is
+    # the generator's own definition (a corpus file carrying `description:`), so README/
+    # VENDOR/LICENSE never count. Reports only, like everything else in this function.
+    teacher = root / "personas-teacher"
+    if teacher.is_dir():
+        corpus = 0
+        for p in teacher.rglob("*.md"):
+            try:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            fm_text = text.split("---", 2)[1] if text.startswith("---") else ""
+            if re.search(r"^description:\s*\S", fm_text, re.M):
+                corpus += 1
+        index_file = root / "personas-index" / "use-when.md"
+        if not index_file.is_file():
+            find("warn", "routing_index_missing",
+                 f"personas-teacher/ holds {corpus} personas and personas-index/use-when.md "
+                 f"is absent — the corpus can be read but never routed to "
+                 f"(scripts/build_persona_index.py, then doctor --sync)")
+        else:
+            entries = sum(1 for l in index_file.read_text(encoding="utf-8").splitlines()
+                          if l.startswith("- `"))
+            if entries != corpus:
+                find("warn", "routing_index_stale",
+                     f"personas-index/use-when.md routes {entries} personas; "
+                     f"personas-teacher/ holds {corpus} — the corpus moved without the index "
+                     f"(scripts/build_persona_index.py, then doctor --sync)")
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):
