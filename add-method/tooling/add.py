@@ -2943,6 +2943,36 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             # so doctor says `warn`; the softer data/architecture floors stay `info` nudges.
             severity = "warn" if fm.get("sensitivity") == "security" else "info"
             find(severity, "unadvised_sensitive", f"{cid.lstrip('/')}: {fm.get('sensitivity')}, no lens", cid)
+    # W4 (beta-2): the routing index is how a lens is FOUND — the corpus says what each
+    # persona is, the index says when to reach for it. A bundle whose corpus moved without
+    # its index routes against a roster that no longer exists, silently. "Persona" here is
+    # the generator's own definition (a corpus file carrying `description:`), so README/
+    # VENDOR/LICENSE never count. Reports only, like everything else in this function.
+    teacher = root / "personas-teacher"
+    if teacher.is_dir():
+        corpus = 0
+        for p in teacher.rglob("*.md"):
+            try:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            fm_text = text.split("---", 2)[1] if text.startswith("---") else ""
+            if re.search(r"^description:\s*\S", fm_text, re.M):
+                corpus += 1
+        index_file = root / "personas-index" / "use-when.md"
+        if not index_file.is_file():
+            find("warn", "routing_index_missing",
+                 f"personas-teacher/ holds {corpus} personas and personas-index/use-when.md "
+                 f"is absent — the corpus can be read but never routed to "
+                 f"(scripts/build_persona_index.py, then doctor --sync)")
+        else:
+            entries = sum(1 for l in index_file.read_text(encoding="utf-8").splitlines()
+                          if l.startswith("- `"))
+            if entries != corpus:
+                find("warn", "routing_index_stale",
+                     f"personas-index/use-when.md routes {entries} personas; "
+                     f"personas-teacher/ holds {corpus} — the corpus moved without the index "
+                     f"(scripts/build_persona_index.py, then doctor --sync)")
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):

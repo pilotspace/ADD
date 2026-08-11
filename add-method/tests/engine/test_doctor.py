@@ -55,8 +55,14 @@ def test_doctor_uses_the_graph(bundle, monkeypatch):
     exactly this — it is a budget rule as much as a design one.
     """
     graph = add.load(bundle)
+    orig_rglob = Path.rglob
 
     def no_rglob(self, pattern):
+        # W4 exception: the persona corpus is deliberately NOT in the graph (scan skips it),
+        # so the routing-index freshness check has no graph to read and may walk that one
+        # tree. The rule this test guards is unchanged: no second walk over the NODES.
+        if self.name == "personas-teacher":
+            return orig_rglob(self, pattern)
         raise AssertionError(f"doctor built its own scan: rglob({pattern!r}) on {self}")
 
     monkeypatch.setattr(Path, "rglob", no_rglob)
