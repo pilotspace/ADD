@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "e862b3d9a14960bd5b2767741c656edd"  # re-aimed @ surface-granularity (freeze refuses an S entry naming several HTTP methods; todo says split). prior: ea12ddee… @ not-said register
+ENGINE_MD5 = "8f2006bc916bf0ca521e54bfbf8629cd"  # re-aimed @ token-boundary quotes (a bare apostrophe in an unquoted item no longer opens a quote and swallows verified:). prior: e862b3d9… @ surface-granularity
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fa1d831380b52e56af72d050ed864519"  # re-aimed @ verb-recovery (locate + todo subparsers/dispatch wired). prior: 108ff0d6… @ A1 recorded-persona-routing

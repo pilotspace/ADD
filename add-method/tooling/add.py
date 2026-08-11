@@ -103,14 +103,23 @@ def _open_quote(text: str) -> bool:
     instead of tracking state made a continuation run to the end of the frontmatter and swallow
     `budget`, `generated` and `verified` across 25 nodes of this bundle — with the full suite
     green and the M0 validator reporting CONFORMS.
+
+    A quote OPENS only at a token boundary (start of text, or after a space / `{` / `,` / `[`).
+    That is YAML's own rule, and its absence was this bug's second incarnation: state-tracking
+    fixed the count, then opened on the mid-word apostrophe in `the caller's own transfer
+    history` — an UNQUOTED item — and the continuation swallowed every key below it, including
+    the `verified:` stamps, so `sealed_direction` returned None and the freeze seal silently
+    stopped verifying. Same green suite, same CONFORMS. A mid-word quote is plain content.
     """
     quote = None
+    prev = None
     for ch in text:
         if quote:
             if ch == quote:
                 quote = None
-        elif ch in "\"'":
+        elif ch in "\"'" and (prev is None or prev in " \t{,["):
             quote = ch
+        prev = ch
     return quote is not None
 
 
