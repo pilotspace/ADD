@@ -38,8 +38,9 @@ flow: <design | build | advisor | verify>                # RECOMMENDED — comma
 task-kinds: <from the closed taxonomy, comma-separated>  # RECOMMENDED
 use-when: <pushy should-select line — enumerate triggers> # RECOMMENDED
 not-when: <the near-miss that belongs to a named sibling> # RECOMMENDED
+description: <one line for a cold catalogue reader>      # OPTIONAL — OKF-recommended
 folded: <consolidation history, newest first>            # OPTIONAL
-source: <teacher file(s) distilled from>                 # OPTIONAL
+sources: <teacher file(s) distilled from>                # OPTIONAL — OKF provenance family
 ---
 ```
 
@@ -61,6 +62,12 @@ source: <teacher file(s) distilled from>                 # OPTIONAL
 - **`use-when` / `not-when`** — the selection boundary. Selectors under-trigger on essence lines,
   so `use-when` ENUMERATES the concrete contexts that should pick THIS persona; `not-when` names
   the sibling that owns the near-miss (e.g. `CI permissions → security-gatekeeper`).
+- **`description` / `sources`** — the two OKF keys (Open Knowledge Format v0.2, whose trust
+  layer — `type:`, `generated:`, `verified:` events, `human:<id>` actors — ADD's node format
+  already speaks). `description` is one line for a cold catalogue reader; `sources` records the
+  teacher file(s) or material this lens was distilled from — provenance, not routing.
+  `add new Persona` scaffolds a slot for every key in this block; fill or delete each, because
+  the engine validates none of them.
 
 ## Sections
 

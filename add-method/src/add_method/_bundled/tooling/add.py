@@ -1118,7 +1118,8 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     if path.exists():
         return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
 
-    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "use-when",
+    order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "vibe", "flow",
+             "task-kinds", "use-when", "not-when", "description", "sources",
              "milestone", "scope", "gives"]
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
@@ -1130,9 +1131,22 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     if node_type == "Task" and fields.get("gives") is None:
         fm["gives"] = ["S1 <the surface this publishes — an endpoint, function, or section>"]
     # A Persona is discoverable by its `use-when:` — the one field a tool reads to place the lens.
-    # Scaffold a placeholder when the author did not supply one, so the roster is never mute.
-    if node_type == "Persona" and fields.get("use-when") is None:
-        fm["use-when"] = "<when this lens applies>"
+    # The rest of the contract's routing keys (vibe/flow/task-kinds/not-when) plus OKF v0.2's
+    # `description:` and provenance `sources:` get slots too — the `gives:` lesson above, learned
+    # a second time. Slots, never validation: a supplied value is recorded verbatim, and `new`
+    # judges nothing about any slot's content (the engine stays a notary).
+    if node_type == "Persona":
+        for key, hole in (
+                ("vibe", "<one-line essence — what this persona keeps true>"),
+                ("flow", "<design | build | advisor | verify — comma-separate if >1>"),
+                ("task-kinds", "<from the closed taxonomy, comma-separated>"),
+                ("use-when", "<when this lens applies — enumerate triggers>"),
+                ("not-when", "<the near-miss that belongs to a named sibling>"),
+                ("description", "<one line for a cold catalogue reader — OKF-recommended>"),
+                ("sources", ["<teacher file or material distilled from — optional>"]),
+        ):
+            if fields.get(key) is None:
+                fm[key] = hole
     fm.update({k: v for k, v in fields.items() if v is not None})
     lines = []
     for key in order + [k for k in fm if k not in order]:
