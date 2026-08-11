@@ -969,7 +969,9 @@ BODIES = {
             "- A5 [order] covers: <S ids> · the request does not say <what orders /"
             " breaks a tie>; taking <reading> -> <cost if wrong>\n"
             "every `gives:` surface is swept on every dimension; "
-            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle.\n\n"
+            "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
+            "`· probe: <what shipped behavior must show>` declares a reading checkable: "
+            "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
@@ -1810,7 +1812,7 @@ def fold(root, lens: str, match: str) -> tuple:
 # reopen R:DRIFT inside the engine itself.
 RULE_ALT = r"M\d+|R:[A-Z0-9_]+|E\d+"
 RULE_ID = re.compile(rf"^-\s+({RULE_ALT})\b")
-REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+)\Z")
+REFERENT = re.compile(rf"\A({RULE_ALT}|goal|G\d+|A\d+)\Z")  # A<n>: a probed assumption (W2)
 COVERS_IN_CHECK = re.compile(r"^-\s+(\S+)\s+·\s*covers:\s*([^·]+?)\s*·")
 
 
@@ -2042,9 +2044,30 @@ def edges_of(node: dict) -> list:
     return out
 
 
+RE_PROBED_ASSUMPTION = re.compile(r"^-\s+(A\d+)\s+\[\w+\].*·\s*probe:\s*\S")
+
+
+def probed_assumptions(node: dict) -> list:
+    """`A<n>` ids declared CHECKABLE with `· probe: <what shipped behavior must show>` (W2).
+
+    The sweep makes agents ask; nothing makes the answers right — the campaign record shows
+    two of seven readings wrong in every run, and a NO-EXEC notary cannot judge an answer.
+    What it CAN do is refuse to call a checkable answer proven while no check reports on it:
+    a probed id is a first-class covers referent, the same move as C7 made for edges. Opting
+    in is the author's; an unprobed line stays a priced guess on the record, never conscripted
+    — the engine enforces exactly what was declared checkable, and nothing else.
+    """
+    out = []
+    for line in _section_of(node.get("body") or "", "ASSUMPTIONS").splitlines():
+        m = RE_PROBED_ASSUMPTION.match(line.strip())
+        if m:
+            out.append(m.group(1))
+    return out
+
+
 def referents_of(node: dict) -> list:
-    """Every id a check may bind: Musts + Rejects (RULES) and real edges (EDGES)."""
-    return rules_of(node) + edges_of(node)
+    """Every id a check may bind: Musts + Rejects (RULES), real edges (EDGES), probed A ids."""
+    return rules_of(node) + edges_of(node) + probed_assumptions(node)
 
 
 def covers(node: dict) -> dict:
