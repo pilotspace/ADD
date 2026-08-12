@@ -155,9 +155,9 @@ def dispatch(args, run_cmd) -> int:
     root = Path(args.root)
 
     if args.verb == "init":
-        _, _, note = add.init(root, args.profile, args.name)
+        graph, _, note = add.init(root, args.profile, args.name)
         print(note)
-        return 0
+        return 0 if graph else 1
 
     if args.verb == "status":
         print(add.status(root, all=args.all, check=args.check))

@@ -12,7 +12,8 @@ why: `all-domain-evidence` proved the trust spine is domain-general and wrote `d
 next: add freeze front-door-truth
 
 ## SCOPE
-In:  both READMEs (truth, then positioning) · a runnable non-code walkthrough at `add-method/BEYOND-CODE.md` · `init --profile` refusing what it cannot honour, plus the profiles the walkthrough needs · guards that derive their expectation from the engine
+In:  both READMEs (truth, then positioning) · a runnable non-code walkthrough at `add-method/BEYOND-CODE.md` · `init --profile` refusing what it cannot honour · guards that derive their expectation from the engine
+     NOTE: intake also wrote "plus the profiles the walkthrough needs" into this line. Corrected before `profile-refusal` was frozen: whether `code`/`doc` actually serve a reconciliation is a question the walkthrough ANSWERS, so adding a profile now would be guessing ahead of the evidence. If `doc` mis-serves it, that lands as its own decision — and shipping a domain profile names a domain ADD claims, which is human-owned like the naming question still open.
 Out: the name "AI-Driven Development" and the `@pilotspace/add` package identity — human-owned, and unanswered at intake · the domains book chapter · the general prose-vs-engine drift guard (this milestone does the front-door slice only) · `add-method/.add/tooling/add.py`, an untracked book-bundle twin already drifted BEFORE this milestone · rewriting `GETTING-STARTED.md`'s code walkthrough, which stays the code walkthrough
 
 ## GROUND
