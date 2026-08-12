@@ -201,6 +201,54 @@ def test_shown_commands_actually_answer():
                       f"a reader who follows them concludes the install is broken")
 
 
+def test_shown_installer_flags_are_accepted():
+    """M5, the installer half — a flag the installer ignores is worse than one it rejects.
+
+    The first pass of this task shipped `npx @pilotspace/add init --profile doc` into the root
+    README. The installer takes no `--profile` at all: its own "profile" is AGENT detection
+    (Claude Code · Cursor · Codex), so it answers `warn: ignoring unknown flag --profile` and then
+    reads `doc` as the TARGET DIRECTORY — installing into `./doc` if that happens to exist. The
+    installer's own source says this is why `--stage` had to be rejected explicitly rather than
+    left to the unknown-flag warning.
+
+    `test_shown_commands_actually_answer` did not catch it because it only executes
+    `<engine>.py <verb>` forms. This closes the class: each installer-form command is handed to
+    the installer's OWN parser, and its own diagnostic is the verdict. Safe because it runs in a
+    temp cwd against a target directory that does not exist, so the parse happens and nothing is
+    written.
+    """
+    installer = PACKAGE / "bin" / "cli.js"
+    if not installer.is_file():
+        raise AssertionError(f"no installer at {installer} — the extractor has drifted")
+
+    # Only fenced command lines, and only up to a trailing `# comment` — prose that merely mentions
+    # the package name is not an instruction, and `init      # Node / npm` is one argument, not four.
+    shown = []
+    for path in READMES:
+        for line in _readme(path).splitlines():
+            m = re.match(r"^\s*(?:npx @pilotspace/add\S*|pilotspace-add)\s+(.+)$", line)
+            if not m:
+                continue
+            argv = m.group(1).split("#")[0].split()
+            if argv and argv[0].isalpha():          # a verb, not a sentence continuing the prose
+                shown.append((_label(path), argv))
+    assert shown, "no installer invocation found in either README — the extractor has drifted"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        absent = str(Path(tmp) / "no-such-target")
+        bad = []
+        for label, argv in shown:
+            out = subprocess.run(["node", str(installer), *argv, absent],
+                                 capture_output=True, text=True, cwd=tmp)
+            said = out.stdout + out.stderr
+            for line in said.splitlines():
+                if "ignoring unknown flag" in line or "was retired" in line:
+                    bad.append(f"{label}: `{' '.join(argv)}` — {line.strip()}")
+    assert not bad, (f"READMEs show installer flags the installer does not accept: {bad} — an "
+                     f"ignored flag leaves its VALUE on the positional list, where it is read as "
+                     f"the target directory")
+
+
 def test_alt_text_does_not_restate_stale_image_claims():
     """E1 + R:IMAGEWASH — three PNGs render the false claims into the artwork.
 

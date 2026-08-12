@@ -120,14 +120,18 @@ pip install pilotspace-add && pilotspace-add init      # Python / pip
 /plugin install add@add-method
 ```
 
-**Not building software?** The bundle's spec lenses are chosen at init, and ADD ships
-two sets — `--profile code` (the default: domain · system · experience · quality ·
-method) and `--profile doc`, which drops the build-shaped lenses for work whose
-artifact is a document, a review, or an analysis. A profile selects *lenses*; it never
-changes what a gate demands.
+**Not building software?** The bundle's spec lenses are chosen when the *bundle* is
+initialised — which is the agent's first move, not the installer's. ADD ships two sets:
+`--profile code` (the default: domain · system · experience · quality · method) and
+`--profile doc`, which drops the build-shaped lenses for work whose artifact is a
+document, a review, or an analysis. A profile selects *lenses*; it never changes what a
+gate demands, and a name ADD does not ship is refused rather than quietly treated as
+`code`.
+
+Tell the agent which one you want — or set it by hand after installing:
 
 ```bash
-npx @pilotspace/add init --profile doc
+python3 .add/tooling/cli.py init --profile doc "My Project"
 ```
 
 > See a real one: this repo's own [`.add/`](https://github.com/pilotspace/ADD/tree/main/.add) folder.

@@ -20,6 +20,11 @@ verified:
   - { by: "cli", at: 2026-08-12, act: brief, authority: process, brief: "sha256:dc9a66bfd462cfc0" }
   - { by: "process:run", at: 2026-08-12, act: run, authority: process, outcome: PASS, receipt: /tasks/front-door-truth.d/runs/2.md }
   - { by: "Tin Dang", at: 2026-08-12, act: gate, authority: process, outcome: PASS, receipt: /tasks/front-door-truth.d/runs/2.md, brief: "sha256:dc9a66bfd462cfc0" }
+  - { by: loop, at: 2026-08-12, act: reopen, to: build, reason: "the gate passed over a claim I introduced in the same commit: the root README now shows `npx @pilotspace/add init --profile doc`, and the npm installer does not accept --profile at all — it warns 'ignoring unknown flag' and reads 'doc' as a target directory. M5's check only executes <engine>.py <verb> forms, so an npx form was never run. Disproven by A1 of profile-refusal." }
+  - { by: "Tin Dang", at: 2026-08-12, act: refreeze, authority: human, direction: "sha256:a94c097b03eb0ad8" }
+  - { by: "cli", at: 2026-08-12, act: brief, authority: process, brief: "sha256:71b0d994bcd5d6e3" }
+  - { by: "process:run", at: 2026-08-12, act: run, authority: process, outcome: PASS, receipt: /tasks/front-door-truth.d/runs/3.md }
+  - { by: "Tin Dang", at: 2026-08-12, act: gate, authority: process, outcome: PASS, receipt: /tasks/front-door-truth.d/runs/3.md, brief: "sha256:71b0d994bcd5d6e3" }
 advised_by: method-steward
 ---
 ## CARD
@@ -63,6 +68,7 @@ scope: README.md, add-method/README.md, add-method/tests/skill/
 - test_expectations_are_derived_not_pinned · covers: M4, R:PINNED · feeds the extractors a fabricated engine and asserts the fabricated verb and profile come back, proving no literal list
 - test_extractors_fail_loud_on_empty · covers: R:VACUOUS · an extraction that finds nothing raises rather than reporting agreement with nothing
 - test_alt_text_does_not_restate_stale_image_claims · covers: E1, R:IMAGEWASH · the alt text of each stale PNG must not itself assert `state.json` or per-feature `PLAN.md`
+- test_shown_installer_flags_are_accepted · covers: M5 · hands every installer-form command in either README to the installer's OWN parser and fails on its own `ignoring unknown flag` / `was retired` diagnostic. ADDED after this task's first gate passed over a claim the same commit introduced: `npx @pilotspace/add init --profile doc`. The installer takes no `--profile` — its "profile" is agent detection — so it ignores the flag and reads `doc` as the target directory, the precise failure its own source cites as the reason `--stage` had to be rejected explicitly. The rule was right and the check was narrower than the rule; this closes the class rather than the instance.
 - test_shown_commands_actually_answer · covers: M5 · executes every `<engine>.py <verb>` invocation the READMEs show, in a real bundle, and fails any that returns no output — `add.py` is a library and answers nothing, which the package README itself states while the root README instructs readers to run it three times
 red-first: 5 of 7 are red at freeze — the four false claims plus the alt text. `test_expectations_are_derived_not_pinned` and `test_extractors_fail_loud_on_empty` are GREEN at freeze and cannot honestly be red: their subject is the extractor authored in this same beat, not the READMEs, so they guard a future regression in my own instrument rather than a present defect. Recorded here so the record does not imply a red they never had.
 
