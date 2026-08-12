@@ -42,7 +42,8 @@ sys.exit(0 if all(ok for _, ok, _ in cases) else 1)
 Cite those IDs from `## CHECKS` exactly as a test runner would, then run it like any other build:
 
 ```bash
-add run <slug> --junitxml r.xml -- python3 checks/recon.py r.xml
+add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- \
+  python3 checks/recon.py "${TMPDIR:-/tmp}/add-run.xml"
 ```
 
 **Declare the artifact in `scope:`.** A digested data file makes the receipt `freshness: content` —

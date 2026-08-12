@@ -94,7 +94,7 @@ One task = one atomic node. Three beats, one human decision:
    record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
    a frozen surface is a change-request back to Direction, never a silent edit.
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
-   · architecture — **security HARD-STOP**), then `add run <slug> --junitxml r.xml -- <test cmd>` for a
+   · architecture — **security HARD-STOP**), then `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>` for a
    fresh, bound receipt — wrap the **narrowest command that reports every bound check**; the full
    suite rides CI — and **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
    (and repairs its CARD). `add done` is only for closing after a signed `RISK-ACCEPTED`.
@@ -141,7 +141,7 @@ add advise <slug> --persona <p>              # record the lens that reviewed a s
 add doctor                                   # report-only findings — never writes, never gates
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
-add run <slug> [--timeout <s>] --junitxml r.xml -- <test cmd>   # execute → a fresh, bound receipt
+add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>   # execute → a fresh, bound receipt
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already closed it)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec

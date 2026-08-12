@@ -13,6 +13,8 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] an `n/a` retires a sweep DIMENSION, never an EDGE — an E<n> line is a gate referent whatever it says, so a 'dissolved' edge must be DELETED or given a check; writing 'E1 n/a' still holds the PASS (evidence: /tasks/receipt-artifact-leak.d/runs/1.md)
+- [ADD · open] a task's scope: MUST include the directory its own CHECKS live in — otherwise a defective check cannot be repaired during build, and the only in-scope 'fix' is to reshape the artifact around the broken test (evidence: /tasks/receipt-artifact-leak.md scope: omits add-method/tests/skill)
 - [ADD · open] a frozen contract on a not-yet-done task is repaired by a bare re-freeze (the engine records act: refreeze with a fresh direction hash) — reopen refuses a non-done task and replan seals untouched, and no skill doc names the real path (evidence: /tasks/domain-evidence-recipe.md verified[])
 - [ADD · open] a covers: citation must be the exact qualified ID or a BARE test name — the path.py::name form resolves to neither, so nothing binds and the gate refuses every rule (evidence: add-method/tooling/add.py:3008)
 - [ADD · open] the gate binds EVERY covers referent, EDGES included — an E<n> authored with no covering check refuses the PASS just as a Must would (evidence: /tasks/domain-evidence-recipe.d/runs/2.md)

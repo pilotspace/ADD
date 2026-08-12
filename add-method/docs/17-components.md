@@ -43,7 +43,7 @@ single-part project. There is no registry to keep in sync and nothing scans
 
 In a mixed milestone, a backend task and a frontend task pass on **different
 toolchains**. The verify gate enforces this per task, through the **bound receipt**:
-`add run <slug> --junitxml r.xml -- <the suite for this scope>` records the checks
+`add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the suite for this scope>` records the checks
 that actually ran, and `add gate <slug> PASS` refuses unless every listed check
 appears in that receipt with `outcome: pass`. The engine never *runs* the suite —
 that invariant holds here too ([NO-EXEC](./01-principles.md)). The AI runs the

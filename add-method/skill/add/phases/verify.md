@@ -6,7 +6,7 @@ because the diff reads plausible. Verify is where that trust is recorded, once.
 ## 1 · Gather the evidence — a fresh, bound receipt
 
 ```bash
-add run <slug> --junitxml r.xml -- <the test command>
+add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the test command>
 ```
 
 `run` executes your command, parses the JUnit report, and writes a **Run receipt** under

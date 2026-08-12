@@ -310,11 +310,11 @@ Now write code until **every test passes** — without changing a test or the fr
 contract. Then record a receipt from a real run:
 
 ```bash
-add run transfer --junitxml r.xml -- python3 -m pytest -q --junitxml=r.xml
+add run transfer --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- python3 -m pytest -q --junitxml="${TMPDIR:-/tmp}/add-run.xml"
 ```
 
-Note the flag appears **twice**, and that is not a typo: `--junitxml r.xml` tells ADD
-where to *read* the report, and `--junitxml=r.xml` after the `--` is part of the test
+Note the flag appears **twice**, and that is not a typo: `--junitxml "${TMPDIR:-/tmp}/add-run.xml"` tells ADD
+where to *read* the report, and `--junitxml="${TMPDIR:-/tmp}/add-run.xml"` after the `--` is part of the test
 command that *writes* it. Omit the second and the receipt records only an exit code —
 `ids: unknown` — and nothing binds to your rules.
 
