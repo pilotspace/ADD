@@ -38,8 +38,10 @@ reopen · deltas · milestone-archive` — is wired.
 Run **`add status`** first, every session — it is your resume point, read from the bundle, not the
 repo. Then branch:
 
-- **No `.add/` yet** → `add init --profile <code|doc|…> "<name>"`, then offer to seed starter
-  personas that fit the domain (`seed.md`, opt-in), then size the request (Intake).
+- **No `.add/` yet** → `add init --profile <code|doc> "<name>"` — those two ship, and `init`
+  writes the `code` lenses under any other name without refusing. Non-code domain? Take `doc`,
+  then re-author its lenses (`domains.md`). Offer to seed starter personas (`seed.md`,
+  opt-in), then size the request (Intake).
 - **A task is active** (`status` not `done`) → open `.add/tasks/<slug>.md`, read its `## CARD`, and
   work the beat `add status` names next. The beat is **derived from the node's stamps**, not the
   `status` field — which stays `direction` until close: unfrozen → author + freeze; frozen with no
@@ -96,7 +98,9 @@ One task = one atomic node. Three beats, one human decision:
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
    · architecture — **security HARD-STOP**), then `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>` for a
    fresh, bound receipt — wrap the **narrowest command that reports every bound check**; the full
-   suite rides CI — and **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
+   suite rides CI. **No runner for your domain? Write one** — `run` parses JUnit XML and does not
+   care what produced it, so a script comparing a measured value against a threshold your frozen
+   RULES already state earns the same bound receipt (`domains.md`). And **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
    (and repairs its CARD). `add done` is only for closing after a signed `RISK-ACCEPTED`.
 
 Emit **lessons** as you learn them, tagged by which of the five specs they sharpen
@@ -130,7 +134,7 @@ research fans out freely — facts merge; one write taints the stream back onto 
 
 ```bash
 add status                                   # resume · --all full · --check conformance
-add init --profile code "<name>"             # create a .add/ bundle (also: doc)
+add init --profile code "<name>"             # create a .add/ bundle — code | doc ONLY (see domains.md)
 add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides re-authoring
 add new Task <slug> --title "..." --depth quick|standard|deep [--kind explore] [--milestone m] [--scope a,b]
                                              # --sensitivity security|data|architecture sets the floor
@@ -161,6 +165,7 @@ else `process` — never from depth.
 - **deep** — full node + milestone strategy, lowest-confidence-first; a human owns freeze whenever the
   floor (or your judgment) calls for it.
 
+A coined term you cannot decode is in `terms.md` — load it once, not every session.
 The method's **why** lives in `FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) —
 **referenced, never inlined** (load the State; reference the Story). Read it only when a decision is
 genuinely unclear. The AIDD book is deeper background and is **external** (not shipped with the skill)
