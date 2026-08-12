@@ -91,7 +91,7 @@ Its body is six sections, each with one job:
 - `## RULES` — Must (`M<n>`), Reject (`R:<code>`), After. What the request *said*, and only that.
 - `## ASSUMPTIONS` — `A<n> [<dim>] covers: <S ids>`: what the request did **not** say, the reading
   you took, and the cost if it is wrong. Every `gives:` surface is swept on every dimension
-  (`who · which · when · absent · order`) or the dimension is retired with `n/a · <why>`; `freeze`
+  (`who · which · when · absent · order · experience`) or the dimension is retired with `n/a · <why>`; `freeze`
   refuses and names the unswept pairs. Exempt at `depth: quick`. Not sealed by the direction digest —
   and not bindable by `covers:` *unless marked*: a line carrying `· probe: <what shipped behavior
   must show>` makes its `A<n>` id a binding referent, and the gate holds a `PASS` until a passing

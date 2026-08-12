@@ -77,7 +77,7 @@ One task = one atomic node. Three beats, one human decision:
    - `## RULES` — Must · Reject: what you were told. EDGES are the boundaries of those rules —
      without them, a thing nobody said becomes a Must phrased like one that was said.
    - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension
-     (`who · which · when · absent · order`): `A<n> [<dim>] covers: <S ids> · <what the spec does
+     (`who · which · when · absent · order · experience`): `A<n> [<dim>] covers: <S ids> · <what the spec does
      NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
      `[<dim>] n/a · <why>`. A cheaply-checkable guess is better discharged than priced: run the
      two-minute probe and record `found: <what>` + its evidence on the line.

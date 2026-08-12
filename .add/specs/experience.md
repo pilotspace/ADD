@@ -13,3 +13,4 @@ who uses it and what they feel
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [UDD · open] The experience lens shipped in every bundle for three minor versions with nothing in the loop that ever wrote it — only 'learn' did, after the fact. A lens with no beat that engages it is a category, not a practice. (evidence: /milestones/experience-in-plan.md)

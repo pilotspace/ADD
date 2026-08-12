@@ -221,7 +221,14 @@ is for what the request did **not** say:
 - A4 [absent] covers: S1 · it never says what currency the amount is in; assuming one
      implicit currency -> if wrong, cross-currency transfers corrupt balances
 - A5 [order] n/a · a single transfer exposes no ordered collection
+- A6 [experience] covers: S1 · it never says who reads a refused transfer or what tells
+     them why; taking it as the payer, who needs the reason and the fix in the refusal
+     itself -> if wrong, a correct refusal reads as a fault and they retry until locked out
 ```
+
+`A6` is the one dimension that is not about correctness. `A1` asks *whose* money it is;
+`A6` asks who has to live with the answer. Note that its cost line does not describe a
+bug — the refusal is right — and no other section has anywhere to record that.
 
 RULES records what you were **told**. EDGES records the boundaries of those rules. Neither
 has anywhere to put what nobody said — so without this section, an unstated requirement
@@ -230,8 +237,8 @@ becomes a Must phrased exactly like a stated one, and a reader cannot tell *give
 
 **Sweep, don't free-associate.** The axis is the `S<n>` surfaces you list in the node's
 `gives:` frontmatter (here `S1 POST /transfers`) — `new` scaffolds that slot and `freeze`
-refuses while it is still template. Take each surface and ask all five dimensions —
-`who · which · when · absent · order` — tagging each line with the one it answers and the
+refuses while it is still template. Take each surface and ask all six dimensions —
+`who · which · when · absent · order · experience` — tagging each line with the one it answers and the
 surfaces it covers. `freeze` refuses until every `(dimension, surface)` pair is covered or
 retired with `[<dim>] n/a · <why>`, and names the pairs it's waiting on:
 

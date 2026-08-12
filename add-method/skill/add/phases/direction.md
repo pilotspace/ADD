@@ -29,7 +29,7 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   (post-conditions). What you were **told**, and only that.
 - **`## ASSUMPTIONS`** — `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say — and the
   reading you took> -> <cost if wrong>`. **Sweep every `gives:` surface on every dimension** —
-  `who · which · when · absent · order` — or retire one with `[<dim>] n/a · <why>`. `freeze`
+  `who · which · when · absent · order · experience` — or retire one with `[<dim>] n/a · <why>`. `freeze`
   REFUSES while a slot is template, `gives:` is unauthored, or a `(dimension, surface)` pair is
   unswept — and it names the pairs. `add todo` counts them down while you author, so freeze confirms
   work already done instead of ambushing you with the whole matrix.
@@ -45,9 +45,13 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   `GET` path while every run wrote assumptions about the loud `POST` path, because free-association
   follows the spec's own emphasis (a spec that discussed status constantly and named caller
   identity once).
-  Then take each surface and ask all five: *who* may do this and
+  Then take each surface and ask all six: *who* may do this and
   whose data is it · *which* rows/cases are in and which are filtered out · *when* — is the boundary
-  inclusive · what if the value is *absent* · what *order* / what breaks a tie.
+  inclusive · what if the value is *absent* · what *order* / what breaks a tie · whose *experience*
+  is this — who RECEIVES the output and what would make it hard for them. That last one is the only
+  dimension not about correctness, and the only one `who` does not already answer: `who` is
+  authorization, `experience` is audience. Name the recipient AND the difficulty; either half alone
+  is answerable without looking.
   When a taken reading is checkable against the running code, say so on the line:
   `· probe: <what shipped behavior must show>` makes that `A<n>` a `covers:` referent — cite it
   from a CHECKS line and the gate holds the PASS until that check reports passing. Probe the

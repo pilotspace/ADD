@@ -67,9 +67,9 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 💸 **Structure without the ceremony tax** — a thin 22-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
 - 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
-- 🧭 **The agent reasons before it drafts** — a built-in reasoning floor makes it restate your goal in your words, tag what it *checked* versus what it *remembers*, and run a cheap kill-test on its own plan — catching the fluent-but-wrong that reads fine in a diff. Fluent ≠ true.
+- 🧭 **The agent reasons before it drafts** — a second mind pressure-tests the plan before the freeze, and returns a recommendation with its confidence per dimension instead of a confident-sounding paragraph. Fluent ≠ true.
+- 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions. Provably right and unusable is a failure the freeze now catches.
 - 📄 **Everything about a feature in one place** — rules, assumptions, contract, checks, and gate record in a single task file at `.add/tasks/<slug>.md`; no doc tree to hunt through.
-- 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 

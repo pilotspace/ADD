@@ -4,6 +4,38 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.2.0] — 2026-08-12
+
+**Experience becomes a question the plan must answer.** Every instrument ADD had was about
+correctness — RULES is what must be true, EDGES the boundaries, CHECKS the proof — so a task could
+be provably right and unusable and nothing in the loop would notice. The `experience` lens shipped
+in both profiles and mapped to UDD, but the only thing that ever wrote it was `learn`, filed after
+something had already misled someone.
+
+### Added
+- **A sixth sweep dimension, `experience`** — who RECEIVES this surface, and what would make it
+  hard for them. It joins the closed vocabulary last, so `freeze` now refuses a standard-depth task
+  whose surface is unswept on it and names the pair, and the node scaffold frames both halves
+  (either alone is answerable without doing the work). It is disjoint from `who`, which is
+  authorization — whose data, which caller may act; the engine comment says so, because otherwise
+  the cheap way out is `[experience] n/a · duplicate`.
+- **A front-door promise must name what makes it true** — every Highlights bullet in both READMEs
+  is registered against a shipped artifact (a verb the CLI registers, an engine value, or a skill
+  file), and a bullet with no anchor fails by name. The guards added in 3.1 check nouns the engine
+  EXPOSES; none of them could see a capability the prose PROMISES.
+
+### Changed
+- **`freeze` is stricter for tasks not yet frozen**: one more `(dimension, surface)` pair per
+  surface. Already-frozen tasks are never re-swept — the sweep is a freeze-time question — and
+  `depth: quick` stays exempt. The authority floor is unchanged: this adds a question, not a gate.
+- Every living surface that enumerates the vocabulary now derives it from the engine's own list at
+  test time rather than repeating it. Dated announcements keep their release framing.
+
+### Removed
+- **The wireframe-and-HTML-mock promise**, from both READMEs. It described a 1.7-era UI step that
+  3.0 removed; the skill tree had no mention of either for two minor versions. The reasoning-floor
+  bullet is narrowed to the advisor pass that actually ships.
+
 ## [3.1.0] — 2026-08-12
 
 The **dynamic path**: the route through the method becomes adaptive while the trust spine stays
