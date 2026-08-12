@@ -38,6 +38,9 @@ verified:
   - { by: loop, at: 2026-08-12, act: reopen, to: verify, reason: "the dated-record check pins CHANGELOG.md byte-identical to HEAD, which would refuse the release entry this very milestone has to write — classification (excluded from must-agree) and the unchanged-pin are two different jobs and were conflated" }
   - { by: "process:run", at: 2026-08-12, act: run, authority: process, outcome: PASS, receipt: /tasks/experience-sweep.d/runs/4.md }
   - { by: "Tin Dang", at: 2026-08-12, act: gate, authority: plan, outcome: PASS, receipt: /tasks/experience-sweep.d/runs/4.md, brief: "sha256:0328dfc0e2e00c56" }
+  - { by: loop, at: 2026-08-12, act: reopen, to: verify, reason: "the append-only CHANGELOG check refuses the [Unreleased] -> [3.2.0] promotion, which is the normal release move and not the entry-rewriting it was written to forbid" }
+  - { by: "process:run", at: 2026-08-12, act: run, authority: process, outcome: PASS, receipt: /tasks/experience-sweep.d/runs/5.md }
+  - { by: "Tin Dang", at: 2026-08-12, act: gate, authority: plan, outcome: PASS, receipt: /tasks/experience-sweep.d/runs/5.md, brief: "sha256:0328dfc0e2e00c56" }
 ---
 ## CARD
 goal: a standard-depth task cannot freeze until every surface it publishes has been asked who receives it and what would make that output hard for them

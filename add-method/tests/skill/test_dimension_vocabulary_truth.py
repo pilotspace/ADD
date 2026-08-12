@@ -187,7 +187,12 @@ def test_dated_announcements_keep_their_release_framing():
         if head.returncode != 0:
             continue
         now = set(path.read_text(encoding="utf-8").splitlines())
-        lost = [l for l in head.stdout.splitlines() if l.strip() and l not in now]
+        # `## [Unreleased]` is the one heading that is SUPPOSED to disappear: promoting it to a
+        # version heading is what cutting a release IS. It is also the only line in the file that
+        # is by definition not dated, so exempting it does not soften the rule this check exists
+        # for — an entry that already names a released version still may not be reworded.
+        lost = [l for l in head.stdout.splitlines()
+                if l.strip() and l not in now and l.strip() != "## [Unreleased]"]
         assert not lost, (
             f"{_label(path)} lost {len(lost)} line(s) that were already recorded — {DATED[path]}. "
             f"It may gain entries; it may not lose or reword one. First: {lost[0]!r}")

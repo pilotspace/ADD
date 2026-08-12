@@ -2,8 +2,8 @@
 abf_version: "1.3"
 name: AIDD-Book
 profile: code
-engine: add/3.1.0
-tooling_engine: add/3.1.0
+engine: add/3.2.0
+tooling_engine: add/3.2.0
 created: 2026-08-08
 sensitive_paths: []
 generated: { by: add/3.0.0, at: 2026-08-08 }

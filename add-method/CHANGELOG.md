@@ -4,7 +4,7 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [Unreleased]
+## [3.2.0] — 2026-08-12
 
 **Experience becomes a question the plan must answer.** Every instrument ADD had was about
 correctness — RULES is what must be true, EDGES the boundaries, CHECKS the proof — so a task could
