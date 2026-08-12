@@ -190,7 +190,8 @@ code is disposable.
 
 - 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
 - ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
-- ⚡ [2-minute Getting Started](./GETTING-STARTED.md) · 🔍 [Full hands-on walkthrough](./add-method/GETTING-STARTED.md)
+- ⚡ [2-minute Getting Started](./GETTING-STARTED.md) · 🔍 [Full hands-on walkthrough](./add-method/GETTING-STARTED.md) — building software
+- 📒 [Beyond code — a month-end close, end to end](./add-method/BEYOND-CODE.md) — the same loop where the artifact is a reconciliation, not a repo
 - 📊 [Benchmark results](./benchmark/) — every trust and cost claim, reproducible from this repo
 - 📦 [Package source](./add-method/README.md) · [Changelog](./add-method/CHANGELOG.md)
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)

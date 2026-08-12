@@ -149,8 +149,11 @@ untouched and `add status` names the format rather than claiming there is no
 bundle — archive the 2.x bundle as the record of how the project was built, then
 `add init` a 3.0 one beside it.
 
-**New here?** The [10-minute Quickstart](./GETTING-STARTED.md) walks your first
-feature end to end.
+**New here?** Pick the walkthrough that matches what you are making:
+
+- 🔍 [10-minute Quickstart](./GETTING-STARTED.md) — your first feature, end to end
+- 📒 [Beyond code](./BEYOND-CODE.md) — a month-end close, end to end: same three beats, same
+  bound receipt, where the artifact under check is a ledger rather than a repo
 
 This installs:
 
@@ -212,6 +215,7 @@ be upset to lose is "the code," you're still working the old way.
 
 - 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
 - 🔍 [Full hands-on walkthrough](./GETTING-STARTED.md) — one real feature, end to end
+- 📒 [Beyond code](./BEYOND-CODE.md) — one real month-end close, end to end
 - 📊 [Benchmark results](https://github.com/pilotspace/ADD/tree/main/benchmark/results) — every trust and cost claim, measured
 - ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
