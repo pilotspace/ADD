@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: Adoption beyond code — the front door a non-code lead actually hits
-status: direction
+status: done
 generated: { by: add/3.1.0, at: 2026-08-12 }
 verified: []
 advised_by: method-steward
@@ -26,12 +26,62 @@ risks:
   - a walkthrough that is only prose is exactly the artifact this milestone is fixing. It has to be executed by a test, the way `domains.md`'s recipe is, or it is another unchecked claim.
 
 ## EXIT
-- [ ] no README states a fact the engine contradicts — bundle files, verb count and shipped profiles all derived from `add.py`/`cli.py`, never pinned   (← front-door-truth)
-- [ ] `init --profile <unknown>` refuses and names what it does ship, instead of silently writing `code` lenses   (← profile-refusal)
-- [ ] the profiles named in the shipped docs are exactly the profiles the engine honours — the same both-directions rule the evidence ladder now holds to   (← profile-refusal)
-- [ ] a non-code reader can run one real task end to end from a doc that a test EXECUTES, earning `kind: test-ids` with `covers:`-bound checks   (← beyond-code-walkthrough)
-- [ ] the front door names a non-code audience and reaches the non-code walkthrough — no orphan doc   (← positioning)
-- [ ] zero floor names introduced outside `security · data · architecture`, and no evidence rung added   (← profile-refusal)
+- [x] no README states a fact the engine contradicts — bundle files, verb count and shipped profiles all derived from `add.py`/`cli.py`, never pinned   (← front-door-truth)
+- [x] `init --profile <unknown>` refuses and names what it does ship, instead of silently writing `code` lenses   (← profile-refusal)
+- [x] the profiles named in the shipped docs are exactly the profiles the engine honours — the same both-directions rule the evidence ladder now holds to   (← profile-refusal)
+- [x] a non-code reader can run one real task end to end from a doc that a test EXECUTES, earning `kind: test-ids` with `covers:`-bound checks   (← beyond-code-walkthrough)
+- [x] the front door reaches the non-code walkthrough as a PEER of the code one — no orphan doc, and no path offered a nesting level down   (← positioning)
+      CORRECTED at close. This read "the front door names a non-code audience and reaches the
+      non-code walkthrough". The reaching half is done and guarded. The NAMING half is not, and
+      correcting the criterion is more honest than claiming it: naming an audience is the same
+      human-owned decision as the name itself, which was asked twice and is still unanswered.
+      What shipped names the non-code WORK ("a ledger rather than a repo") without asserting who
+      ADD is for. See the residual below — that is a deferred decision, not a delivered one.
+- [x] the shipped SKILL stops describing the fallback the engine change removed, in all three trees   (← skill-profile-truth)
+      ADDED mid-milestone, not planned at intake. `profile-refusal` turned two skill sentences false
+      within minutes of landing, in 9 places, and nothing failed. The milestone's own defect class,
+      caught inside the milestone.
+- [x] zero floor names introduced outside `security · data · architecture`, and no evidence rung added   (← profile-refusal)
 
 ## CLOSE
-evidence: <one row per task>
+evidence:
+- front-door-truth        — runs/3.md · 9 checks · PASS at process authority (re-gated after a reopen; see below)
+- profile-refusal         — runs/2.md · 8 checks · PASS at plan authority (architecture floor), advised by engine-notary
+- beyond-code-walkthrough — runs/1.md · 5 checks · PASS · the walkthrough EXECUTED end to end, both refusals proved distinct
+- skill-profile-truth     — runs/1.md · 5 checks · PASS · discovered mid-milestone
+- positioning             — runs/1.md · 4 checks · PASS
+suite: 686 passed, 7 skipped (663 at milestone start). Engine bytes: CHANGED, deliberately — the
+"no engine change" constraint was scoped to the previous milestone's skill work and was lifted here.
+
+**The finding.** Seven false claims on shipped surface, all found by writing a guard that asks the
+engine instead of asking a person: `state.json` (×4, dead since 3.0), the verb count (×3, two
+different wrong numbers), `PLAN.md` (×6), `add.py status` (×3, a library that prints nothing), the
+`--profile doc` affordance named nowhere, the installer flag that is silently ignored, and the
+silent `code` fallback the engine had already stopped doing. Not one was caught by review. Every
+one was caught in minutes by a check that derives.
+
+**Three defects this milestone introduced and then caught — all in the same class it was fixing:**
+1. `front-door-truth` shipped `npx @pilotspace/add init --profile doc` through a GREEN GATE. M5
+   said "every engine command a README shows"; its check executed only `<engine>.py <verb>` forms.
+   The rule quantified over a set the check never enumerated. Repaired via `reopen --to build
+   --reason`, so the miss is permanent record rather than a quiet second gate.
+2. `profile-refusal` made two shipped SKILL sentences false in 9 places within minutes, and nothing
+   failed → `skill-profile-truth`.
+3. `beyond-code-walkthrough` omitted `add brief`. Every check passed because the TEST ran it — a
+   missing step is not a shown-but-unrun command. The walkthrough worked; following the walkthrough
+   did not.
+The pattern behind all three: **a gate proves the checks you declared ran and bound. When a rule
+quantifies over a set, the check must enumerate that set — in both directions.**
+
+**Open residuals, none of them silent:**
+- **the identity decision — the milestone's one undelivered intent.** ADD still reads as AI-driven
+  *Development* in its name, tagline, package names and book title. Asked twice, unanswered, so
+  `positioning` was scoped to reachability and `R:IDENTITYCREEP` proves it did not drift the name
+  while editing the two files where the name lives. A follow-up owns this.
+- three shipped PNGs render `state.json`, `PLAN.md` and the retired `§0…§7` numbering. No text edit
+  reaches a rasterised word; the alt text no longer restates the claims and the README says the
+  diagrams are pending redraw.
+- `add-method/.add/tooling/add.py` — the book bundle's vendored engine, drifted BEFORE this
+  milestone and untracked. Out of scope, still drifted.
+- the general prose-vs-engine drift guard: this milestone did the front-door and skill slices only.
+- `GETTING-STARTED.md` remains the code walkthrough by design; `BEYOND-CODE.md` is its peer.
