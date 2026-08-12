@@ -34,7 +34,7 @@ def test_router_frontmatter_is_valid():
 
 def test_router_within_line_budget():
     n = len((SKILL / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    assert n <= 150, f"SKILL.md is {n} lines (budget 150 — the only always-loaded cost)"
+    assert n <= 176, f"SKILL.md is {n} lines (budget 176 — the only always-loaded cost; re-pinned from 150 at 3.1.0, human call)"
 
 
 def test_no_single_ref_over_split_threshold():

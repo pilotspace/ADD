@@ -62,11 +62,12 @@ def test_intake_names_explore_lane():
 
 
 def test_router_names_explore_within_budget():
-    """covers: M3, R:BUDGET — SKILL.md names the lane and stays inside 150 lines."""
+    """covers: M3, R:BUDGET — SKILL.md names the lane and stays inside the pinned budget (176,
+    re-pinned from 150 at 3.1.0 — human call, moved with test_surface's twin pin)."""
     text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     assert re.search(r"\bExplore\b", text), "SKILL.md does not name the Explore lane"
     n = len(text.splitlines())
-    assert n <= 150, f"SKILL.md is {n} lines (budget 150) — fund the lane by compressing"
+    assert n <= 176, f"SKILL.md is {n} lines (budget 176) — fund the lane by compressing"
 
 
 def test_explore_guide_uses_only_wired_verbs():
