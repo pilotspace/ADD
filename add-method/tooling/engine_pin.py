@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "03e66302e667e62737228ac59c1b6090"  # re-aimed @ engine-flame perf pass (behavior-preserving: find-based fence split, jump-scan parser primitives, ONE batched git hash-object for digest+freshness — 0 divergences on 600 real files, status 4.3x, digest 3400x on a field bundle). prior: 7d303e96… @ receipt-cost follow-up
+ENGINE_MD5 = "c44a97fe41a2ad4fce1be7fa16f96b72"  # re-aimed @ release 3.1.0 (the ENGINE version constant moves to add/3.1.0 — nothing else). prior: 03e66302… @ engine-flame perf pass
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "d9c6a4a4928c7e3b456a938083aeb374"  # re-aimed @ receipt-cost follow-up (run gains --timeout so a build-heavy receipt command can raise the 900 s ceiling; nothing else moved). prior: bfb806e7… @ replan-verb

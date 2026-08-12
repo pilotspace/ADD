@@ -4,16 +4,17 @@ description: >-
   ADD (AI-Driven Development) — a lean, state-tracked workflow where the AI writes the code and
   the human owns direction and verification. Drives every change through one atomic task node:
   Direction (specify · plan · red tests) → Build → Verify, red/green TDD built in, trusted on a
-  recorded receipt not a plausible diff. Use whenever a repo has a `.add/` bundle, or the user
-  says "add", "/add", "start a task", "next phase", "specify this", "ADD method", "AI-driven
-  development", or wants spec/tests-first discipline over vague-prompt coding. Resumes across
-  sessions from the bundle alone — run `add status`, never re-read the whole repo.
+  recorded receipt not a plausible diff. Research rides the same rails: "investigate this bug",
+  "evaluate this library", "research X" route to the Explore lane. Use whenever a repo has a
+  `.add/` bundle, or the user says "add", "/add", "start a task", "next phase", "specify this",
+  "ADD method", "AI-driven development", or wants spec/tests-first discipline over vague-prompt
+  coding. Resumes across sessions from the bundle alone — run `add status`, never re-read the repo.
 user-invocable: true
 category: workflows
-keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume]
+keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume, explore, research]
 argument-hint: "status | <describe the change or goal>"
 license: MIT
-metadata: { author: add, version: "3.0.0", format: ABF-1 }
+metadata: { author: add, version: "3.1.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle (the agent is the hands)
@@ -53,9 +54,14 @@ Read the request into a task shape, then pick the **lane** (you route; the human
   Make the edit, then leave a receipt: the git diff + `add … learn <dd> "<lesson>"`. No task node.
 - **Task** — one atomic node in the active milestone's scope. The 3-beat loop below.
 - **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
-  questions + a hard budget freeze, a cited `## FINDINGS` brief gates (`phases/explore.md`).
-- **Project / milestone** — a new theme or a slice too big for one task. Draft the milestone
-  (goal · scope · exit criteria · breadth-first task list), then create it and its tasks.
+  questions + a hard budget freeze, and the gate reads the cited `## FINDINGS` brief directly —
+  **no run receipt** for a findings-only explore (`phases/explore.md`). One contract-shaping
+  unknown already argues this lane; freezing a contract on a guess ships the wrong thing with
+  perfect receipts.
+- **Project / milestone** — a new theme or a slice too big for one task. Load the best-fit persona
+  whose `flow:` includes **advisor** BEFORE drafting (skip silently if none is seeded), draft the
+  milestone (goal · scope · exit criteria · breadth-first task list), confirm it, create it and its
+  tasks, and record the lens: `add advise <milestone> --persona <p>`.
 
 **The floor is closed:** anything touching **security · data · architecture** always becomes a real
 task — never Quick, whatever its size. **Security is always a HARD-STOP.** When in doubt, size up.
@@ -64,27 +70,33 @@ task — never Quick, whatever its size. **Security is always a HARD-STOP.** Whe
 
 One task = one atomic node. Three beats, one human decision:
 
-1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft: `## RULES`
-   (Must · Reject) · `## ASSUMPTIONS` (**sweep every surface on every dimension** — `A<n> [<dim>]
-   covers: <S ids> · <what the spec does NOT say — and the reading you took> -> <cost if wrong>`,
-   dims `who · which · when · absent · order`, sweeping each `S<n>` surface you list in `gives:`,
-   or retire one with `[<dim>] n/a · <why>`; freeze REFUSES on a template slot, an unauthored
-   `gives:`, or an unswept `(dim, surface)` pair — and names them. `add todo` counts them down
-   while you author. RULES is what you
-   were told and EDGES are the boundaries of those rules, so without this a thing nobody said
-   becomes a Must phrased like one that was said) · `## PLAN`
-   (contract shape — you author it into the
-   node's `gives:`/`needs:` frontmatter · strategy · `scope:` tokens) · `## CHECKS` (one check per Must
-   & per Reject, each with a `covers:` key — the `covers:`→rule binding is enforced at **gate**, not
-   freeze). Run the checks **red for the right reason**. Then the ONE approval — which **stamps**
-   direction closed: **`add freeze <slug> --by "<name>" --authority human`**. Get the composed prompt with
-   `add brief <slug>` — its refs resolve from the graph, so a spec edit re-scopes it with no edit here.
+1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft, then take the ONE
+   approval. The draft, section by section:
+   - `## RULES` — Must · Reject: what you were told. EDGES are the boundaries of those rules —
+     without them, a thing nobody said becomes a Must phrased like one that was said.
+   - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension
+     (`who · which · when · absent · order`): `A<n> [<dim>] covers: <S ids> · <what the spec does
+     NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
+     `[<dim>] n/a · <why>`. A cheaply-checkable guess is better discharged than priced: run the
+     two-minute probe and record `found: <what>` + its evidence on the line.
+   - `## PLAN` — contract shape (you author it into the node's `gives:`/`needs:` frontmatter) ·
+     strategy · `scope:` tokens.
+   - `## CHECKS` — one check per Must and per Reject, each with a `covers:` key. The binding is
+     enforced at **gate**, and it binds EVERY referent you name — Musts, Rejects, probed
+     assumptions, edges. Run the checks **red for the right reason**.
+   - `freeze` REFUSES on a template slot, an unauthored `gives:`, or an unswept `(dim, surface)`
+     pair — and names them; `add todo` counts them down while you author.
+   - The ONE approval stamps direction closed: **`add freeze <slug> --by "<name>" --authority
+     human`**. Get the composed prompt with `add brief <slug>` — its refs resolve from the graph,
+     so a spec edit re-scopes it with no edit here.
 2. **BUILD** (`phases/build.md`) — code until every red check is green. Change **no** check and **no**
-   frozen `gives:`; stay inside `scope:`. A change to a frozen contract is a change-request back to
-   Direction, never a silent edit.
+   frozen `gives:`; stay inside `scope:`. A discovered constraint or a strategy turn is *steering* —
+   record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
+   a frozen surface is a change-request back to Direction, never a silent edit.
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
    · architecture — **security HARD-STOP**), then `add run <slug> --junitxml r.xml -- <test cmd>` for a
-   fresh, bound receipt and **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
+   fresh, bound receipt — wrap the **narrowest command that reports every bound check**; the full
+   suite rides CI — and **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
    (and repairs its CARD). `add done` is only for closing after a signed `RISK-ACCEPTED`.
 
 Emit **lessons** as you learn them, tagged by which of the five specs they sharpen
@@ -92,7 +104,8 @@ Emit **lessons** as you learn them, tagged by which of the five specs they sharp
 Present every human decision — intake · freeze · gate · close — as a guided choice with the goal→done→plan
 arc (`gate.md`). Adopting a project-fit persona is opt-in (`personas.md`); a persona never lowers a gate.
 Delegate a beat to a best-fit persona subagent when it wants an expert (`streams.md`) — the delegate
-advises and returns a verdict; it never freezes, never gates, and security stays HARD-STOP.
+advises and returns a verdict; it never freezes, never gates, and security stays HARD-STOP. Read-only
+research fans out freely — facts merge; one write taints the stream back onto the serialized path.
 
 ## Non-negotiable rules (from the method)
 
@@ -108,6 +121,9 @@ advises and returns a verdict; it never freezes, never gates, and security stays
    a real change is a change-request back to Direction.
 4. **No silent skips.** Every Verify ends in exactly one recorded outcome — `PASS`, `RISK-ACCEPTED`
    (signed, non-security), or `HARD-STOP`. A security finding is always `HARD-STOP`.
+5. **A refusal is the method working.** Every engine refusal names its fix in the same breath
+   (`next: <verb>`) — do that fix. Never route around the engine, never hand-edit state files or
+   stamps to get past a refusal it just gave you.
 </constraints>
 
 ## Command cookbook — copy a line
@@ -124,7 +140,8 @@ add locate <path>                            # which node's scope owns this file
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
 add doctor                                   # report-only findings — never writes, never gates
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
-add run <slug> --junitxml r.xml -- <test cmd>        # execute → a fresh, bound receipt
+add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
+add run <slug> [--timeout <s>] --junitxml r.xml -- <test cmd>   # execute → a fresh, bound receipt
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already closed it)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec

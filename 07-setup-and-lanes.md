@@ -1,4 +1,4 @@
-# 07 · Setup and the three lanes
+# 07 · Setup and the four lanes
 
 [← 06 The loop — observe, learn, close](./06-the-loop.md) · [Contents](./README.md) · Next: [08 Parallel work — waves and worktrees →](./08-parallel-work.md)
 
@@ -45,7 +45,7 @@ Do not start a feature until the foundation is frozen. The baseline freeze turns
 
 ---
 
-## The three lanes: size the request before you create scope
+## The four lanes: size the request before you create scope
 
 Not every request deserves a full task, and forcing one onto a typo is ceremony. Before any node exists, ADD reads the raw request into shape and routes it to the **cheapest lane that fits**. The AI proposes the lane; **the human vetoes** — you never create scope without a confirmed proposal. This replaces the old instinct to pick a "size of project" up front: you size each request as it arrives.
 
@@ -59,6 +59,14 @@ Not every request deserves a full task, and forcing one onto a typo is ceremony.
 ```bash
 add new Task <slug> --title "..." --depth quick|standard|deep
 ```
+
+**Explore — the answer IS the deliverable.** Fits when the primary work is *answering questions*,
+not editing — investigate a defect, evaluate a library, research an approach — whatever the
+eventual code size. One Task node with `--kind explore`: the questions freeze as the contract, a
+hard budget caps the loop, and a cited `## FINDINGS` brief is the deliverable. High uncertainty
+routes here FIRST — one contract-shaping unknown already argues explore-first, because freezing a
+contract on a guess ships the wrong thing with perfect receipts. The full lane, its engine floors,
+and the rest of the dynamic path are chapter [19](./19-dynamic-workflow.md).
 
 **Project / milestone — a theme or a slice.** A new product theme no active milestone covers, or a slice too big for one task. Draft the milestone *first* — **goal · in/out scope · exit criteria · a breadth-first task list** (each task a `slug · depends-on · one line`) — confirm it, then create it and list its tasks. `add milestone-done` refuses to close a milestone while any exit box is unchecked.
 

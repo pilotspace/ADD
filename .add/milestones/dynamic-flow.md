@@ -50,6 +50,6 @@ Goal met? — each criterion below maps to the receipts above; the full suite fi
 pre-existing engine suite ran unmodified).
 
 ## Release steps
-- [ ] review the working tree and commit (tmp/ commit-msg ritual)
-- [ ] PR + reviewers — human call
+- [x] review the working tree and commit (tmp/ commit-msg ritual)
+- [x] PR + reviewers — human call (PR #197, merged 2622b3fd)
 - [ ] npm/PyPI cut rides the normal release ritual, NOT this milestone
