@@ -40,6 +40,8 @@ BLOCK_SCALARS = {">", ">-", ">+", "|", "|-", "|+"}
 
 def _strip_comment(line: str) -> str:
     """Drop a trailing `#` comment, honouring quotes. A `#` inside a value is data."""
+    if "#" not in line:            # the overwhelmingly common line, at C speed
+        return line
     quote = None
     for i, ch in enumerate(line):
         if quote:
@@ -65,12 +67,24 @@ def _scalar(value: str):
     return value
 
 
+_SPECIALS = re.compile(r'["\'{}\[\],]')
+
+
 def _split_commas(text: str) -> list[str]:
-    """Split on commas that sit outside quotes and outside nested braces."""
-    out, depth, quote, start = [], 0, None, 0
-    for i, ch in enumerate(text):
+    """Split on commas that sit outside quotes and outside nested braces.
+
+    Jumps between the characters that can change state (one compiled search per special)
+    instead of visiting every character in Python — a receipt's `{ path, blob }` line has
+    ~4 specials in ~60 characters, and this function runs once per frontmatter list item."""
+    out, depth, quote, start, i = [], 0, None, 0, 0
+    while True:
+        m = _SPECIALS.search(text, i)
+        if not m:
+            break
+        ch, i = m.group(), m.end()
         if quote:
-            quote = None if ch == quote else quote
+            if ch == quote:
+                quote = None
         elif ch in "\"'":
             quote = ch
         elif ch in "{[":
@@ -78,8 +92,8 @@ def _split_commas(text: str) -> list[str]:
         elif ch in "}]":
             depth -= 1
         elif ch == "," and depth == 0:
-            out.append(text[start:i])
-            start = i + 1
+            out.append(text[start:i - 1])
+            start = i
     out.append(text[start:])
     return out
 
@@ -110,17 +124,26 @@ def _open_quote(text: str) -> bool:
     history` — an UNQUOTED item — and the continuation swallowed every key below it, including
     the `verified:` stamps, so `sealed_direction` returned None and the freeze seal silently
     stopped verifying. Same green suite, same CONFORMS. A mid-word quote is plain content.
+
+    Jumps from quote to quote with `str.find` (C speed between the state changes) — this runs
+    once per frontmatter list item, and a quote-sparse line costs two finds instead of a
+    per-character Python loop.
     """
-    quote = None
-    prev = None
-    for ch in text:
+    quote, i = None, 0
+    while True:
         if quote:
-            if ch == quote:
-                quote = None
-        elif ch in "\"'" and (prev is None or prev in " \t{,["):
-            quote = ch
-        prev = ch
-    return quote is not None
+            j = text.find(quote, i)
+            if j == -1:
+                return True
+            quote, i = None, j + 1
+        else:
+            jd, js = text.find('"', i), text.find("'", i)
+            j = (min(jd, js) if jd != -1 and js != -1 else (jd if js == -1 else js))
+            if j == -1:
+                return False
+            if j == 0 or text[j - 1] in " \t{,[":
+                quote = text[j]
+            i = j + 1
 
 
 def _tokens(raw: str) -> list[tuple[int, str]]:
@@ -177,9 +200,19 @@ def _block(toks: list[tuple[int, str]], i: int, indent: int):
 
 
 def split(text: str):
-    """(raw_frontmatter, body). `(None, text)` when there is no parseable fence."""
-    match = FENCE.match(text)
-    return (match.group(1), match.group(2)) if match else (None, text)
+    """(raw_frontmatter, body). `(None, text)` when there is no parseable fence.
+
+    Find-based, exactly FENCE's lazy semantics (the closing fence is the FIRST `\\n---` after
+    the opening one, optional trailing newline) — the regex walked megabyte documents one
+    lazy-dot step at a time, which priced every `read` of a large receipt before a single
+    line was parsed. FENCE stays defined as the semantic reference this must keep matching."""
+    if not text.startswith("---\n"):
+        return None, text
+    end = text.find("\n---", 4)
+    if end == -1:
+        return None, text
+    rest = text[end + 4:]
+    return text[4:end], (rest[1:] if rest.startswith("\n") else rest)
 
 
 def parse(text: str):
@@ -1743,14 +1776,29 @@ def status(root, all: bool = False, check: bool = False) -> str:
 RUN_TIMEOUT = 900
 
 
-def _git(root, *args, timeout: int = 30):
+def _git(root, *args, timeout: int = 30, input: str = None):
     """Run one git command. Returns None when git is absent or the tree is not a repo."""
     try:
         done = subprocess.run(["git", *args], cwd=str(root), capture_output=True,
-                              text=True, timeout=timeout)
+                              text=True, timeout=timeout, input=input)
     except (OSError, subprocess.SubprocessError):
         return None
     return done.stdout.strip() if done.returncode == 0 else None
+
+
+def _git_blobs(root, rels: list) -> dict:
+    """`{rel: sha1}` for every path git could hash — ONE `hash-object --stdin-paths` call.
+
+    The per-file form spawned one subprocess per path, which priced a large freshness set in
+    seconds of fork/exec (field receipt: hundreds of entries at the gate). Empty on any batch
+    failure — the callers keep their per-file fallback, so a single unhashable path degrades
+    exactly as it always did instead of taking the batch with it."""
+    if not rels:
+        return {}
+    out = _git(root, "hash-object", "--stdin-paths", timeout=120,
+               input="\n".join(rels) + "\n")
+    lines = out.splitlines() if out is not None else []
+    return dict(zip(rels, lines)) if len(lines) == len(rels) else {}
 
 
 def scope_digest(root, scope: list) -> list:
@@ -1762,7 +1810,7 @@ def scope_digest(root, scope: list) -> list:
     root = Path(root)
     if _git(root, "rev-parse", "--git-dir") is None:
         return []
-    out = []
+    out, rels = [], []
     for entry in sorted(str(s) for s in (scope or [])):
         if any(c in entry for c in "*?["):
             candidates = sorted(root.glob(entry))
@@ -1789,9 +1837,12 @@ def scope_digest(root, scope: list) -> list:
             # Build noise is not the code under review — hashing it would make the digest flap.
             if "__pycache__" in rel.parts or path.suffix in (".pyc", ".pyo"):
                 continue
-            blob = _git(root, "hash-object", str(rel))
-            if blob:
-                out.append({"path": rel.as_posix(), "blob": f"sha1:{blob}"})
+            rels.append(rel)
+    hashes = _git_blobs(root, [str(r) for r in rels])
+    for rel in rels:
+        blob = hashes.get(str(rel)) or _git(root, "hash-object", str(rel))
+        if blob:
+            out.append({"path": rel.as_posix(), "blob": f"sha1:{blob}"})
     return out
 
 
@@ -1803,11 +1854,16 @@ def fresh(receipt: dict, root) -> tuple:
         return False, ("receipt carries no content digest — freshness cannot be established "
                        "(the bundle parent was not a git working tree at run time, or the "
                        "node's `scope:` paths did not exist there)")
+    # One batched hash over the existing files; the walk below keeps the original per-entry
+    # order, so which failure is reported first is byte-identical to the per-file form.
+    hashes = _git_blobs(root, [str(e.get("path")) for e in recorded
+                               if (root / str(e.get("path"))).is_file()])
     for entry in recorded:
-        path = root / str(entry.get("path"))
+        rel = str(entry.get("path"))
+        path = root / rel
         if not path.is_file():
             return False, f"{entry.get('path')} has vanished since the run"
-        blob = _git(root, "hash-object", str(path.relative_to(root)))
+        blob = hashes.get(rel) or _git(root, "hash-object", str(path.relative_to(root)))
         if blob is None or f"sha1:{blob}" != entry.get("blob"):
             return False, f"{entry.get('path')} changed since the run"
     return True, "every file in scope is byte-identical to the run"
