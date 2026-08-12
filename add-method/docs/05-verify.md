@@ -15,7 +15,7 @@ This needs care, because it is easy to misread. "Not by inspection" does not mea
 Trust rests on a run you can point to, not a claim. Execute the task's checks and record the result as a receipt:
 
 ```
-add run <slug> --junitxml r.xml -- <the test command>
+add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the test command>
 ```
 
 `add run` executes your command, parses the JUnit report, and writes a **Run receipt** into the task's bundle. Two properties the gate will demand of it:

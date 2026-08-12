@@ -6,7 +6,7 @@ because the diff reads plausible. Verify is where that trust is recorded, once.
 ## 1 · Gather the evidence — a fresh, bound receipt
 
 ```bash
-add run <slug> --junitxml r.xml -- <the test command>
+add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the test command>
 ```
 
 `run` executes your command, parses the JUnit report, and writes a **Run receipt** under
@@ -34,8 +34,11 @@ wrapped command does — the notary itself is milliseconds. The wrapped command'
 **900 s by default**; a legitimately slow receipt (a bound build check) raises it explicitly
 with `--timeout <s>` — a timeout is *recorded* as exit 124, and the gate will refuse the PASS.
 
-Evidence kinds, strongest first: `test-ids` > `artifact-hash` > `command-exit` > `human-observed`. A
-weaker kind is a *visible* weakening (the gate records which it accepted) — never a silent one.
+Evidence kinds the engine can actually stamp, strongest first: `test-ids` (a runner reported the
+IDs your `covers:` names) > `command-exit` (the command exited 0, and nothing is bound to a named
+check). A findings-only explore gates on `sources` instead — cited questions closed, no run
+receipt. A weaker kind is a *visible* weakening (the receipt records which it earned), never a
+silent one — and a kind nothing can stamp is not a weak rung, it is a false one.
 
 ## 2 · Check the residue — three lenses
 

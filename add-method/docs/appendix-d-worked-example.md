@@ -149,7 +149,7 @@ The engine never runs your suite ([NO-EXEC](./01-principles.md)). You run it; `a
 run` records what happened as a receipt:
 
 ```
-$ add run transfer-own-accounts --junitxml r.xml -- python3 -m pytest tests -q --junitxml=r.xml
+$ add run transfer-own-accounts --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- python3 -m pytest tests -q --junitxml="${TMPDIR:-/tmp}/add-run.xml"
 receipt 1 recorded (exit 0)
 next: add gate transfer-own-accounts
 
