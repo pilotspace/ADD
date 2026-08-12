@@ -10,9 +10,9 @@
 
 **Your AI's first milestone is always great. ADD is for every milestone after that.**
 
-> A minimal, state-tracked skill for building software when the AI writes the code
-> and **you** own the two things it cannot do alone: decide *what* to build, and
-> *verify* it is correct.
+> A minimal, state-tracked skill for work the AI does and **you** own the two things
+> it cannot do alone: decide *what* to make, and *verify* it is correct. Software is
+> where it started; the loop holds anywhere the result can be checked.
 
 **The agent is the hands. ADD is the memory, judgment, and conscience — the part
 of the team that survives when the context window doesn't.** Memory: the board,
@@ -205,11 +205,12 @@ python3 .add/tooling/cli.py status      # where am I? (resume point)
 4. **No silent skips** — every Verify records `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`. Security findings are always `HARD-STOP`.
 5. **Ask, don't guess.**
 
-## The artifacts survive; the code is disposable
+## The decisions survive; the output is disposable
 
-The durable asset is the decisions — spec, scenarios, contract, tests. The code is
-one implementation that satisfies them and can be regenerated. If the thing you'd
-be upset to lose is "the code," you're still working the old way.
+The durable asset is the decisions — rules, assumptions, contract, checks. What you
+produced is one thing that satisfies them and can be made again: a module, a report,
+a reconciliation. If the thing you'd be upset to lose is the output rather than the
+reasoning that justified it, you're still working the old way.
 
 ## Read the method
 

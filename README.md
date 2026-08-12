@@ -16,7 +16,7 @@
 
 ---
 
-## AI coding doesn't fail on day one — it rots
+## AI work doesn't fail on day one — it rots
 
 Every AI tool ships a beautiful first feature. The failure shows up **across
 milestones**: requirements evolve, the conversation gets long, and the agent
@@ -42,10 +42,11 @@ agent: the next session resumes with one command and loses nothing.
 
 ## What ADD is
 
-An agent already knows how to write code. What it *structurally cannot* keep is
-everything outside one context window: what's true so far, what was promised,
-what must never be traded away. Human teams keep that in senior engineers' heads.
-AI has no head that survives the session.
+An agent already knows how to do the work — write the code, draft the analysis,
+reconcile the ledger. What it *structurally cannot* keep is everything outside one
+context window: what's true so far, what was promised, what must never be traded
+away. Teams keep that in their most senior people's heads. AI has no head that
+survives the session.
 
 > **The agent is the hands. ADD is the memory, judgment, and conscience — the
 > part of the team that survives when the context window doesn't.**
@@ -102,7 +103,7 @@ three milestones ago.
 
 ![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives on disk in the .add/ bundle, no context rot](add-install.png)
 
-**Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*, plus a CLI coding agent — Claude Code, Codex, or similar.
+**Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*, plus a CLI agent — Claude Code, Codex, or similar.
 
 ### 1 · Install into your project
 
@@ -168,8 +169,8 @@ pick up exactly where you left off — no context rot.
 **`.add/tasks/<slug>.md`** that fills in section by section as the agent walks three
 beats — **Direction** (rules → assumptions → frozen contract → red checks, the *one*
 human approval), **Build** (red → green, scope-fenced), **Verify** (evidence-scored
-gate: `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`). The artifacts are what you keep — the
-code is disposable.
+gate: `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`). The decisions are what you keep — the
+output is disposable.
 
 ![Foundation Domain Documents](add-foundation.png)
 
