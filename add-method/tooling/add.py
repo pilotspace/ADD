@@ -1111,6 +1111,13 @@ BODIES = {
             " value means>; taking <reading> -> <cost if wrong>\n"
             "- A5 [order] covers: <S ids> · the request does not say <what orders /"
             " breaks a tie>; taking <reading> -> <cost if wrong>\n"
+            # BOTH halves, deliberately. Either alone is answerable without doing the work:
+            # "the controller" names a recipient and stops, "it should be readable" names a
+            # quality and nobody. Together they make a claim someone can be wrong about,
+            # which is the register this whole section runs in.
+            "- A6 [experience] covers: <S ids> · the request does not say <who receives"
+            " this and what would make it hard for them>; taking <reading> -> <cost if"
+            " wrong>\n"
             "every `gives:` surface is swept on every dimension; "
             "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
             "`· probe: <what shipped behavior must show>` declares a reading checkable: "
@@ -2092,15 +2099,34 @@ RE_ASSUMPTION_PLACEHOLDER = re.compile(
 # cannot be swept, and a long one will not be. Domain-neutral, because a Task may
 # publish an HTTP route, a function, or a document — "endpoint" is one profile's word.
 #
-#   who     identity · authority · scope — whose data, which caller may act
-#   which   inclusion · visibility — which rows/cases are in, which are filtered out
-#   when    boundaries · timing — inclusive or exclusive, before or after
-#   absent  missing values · defaults — what happens when the field is not supplied
-#   order   sequencing · ties — what breaks a tie, what comes first
+#   who         identity · authority · scope — whose data, which caller may act
+#   which       inclusion · visibility — which rows/cases are in, which are filtered out
+#   when        boundaries · timing — inclusive or exclusive, before or after
+#   absent      missing values · defaults — what happens when the field is not supplied
+#   order       sequencing · ties — what breaks a tie, what comes first
+#   experience  audience · difficulty — who receives this, what makes it hard for them
 #
 # `who` and `which` are the two the live amb1 runs split on: every rep asked WHICH rows
 # `GET /bookings` returns and none asked WHOSE.
-SWEEP_DIMENSIONS = ("who", "which", "when", "absent", "order")
+#
+# `experience` is DISJOINT from `who`, and the distinction is the whole reason it needs
+# its own name: `who` is AUTHORIZATION — whose data, which caller may act. `experience`
+# is AUDIENCE — who receives the output and what would make it hard to receive. Answer
+# one and the other is still open. Without this paragraph the two read as the same
+# question asked twice, and the cheap way out of that is `[experience] n/a · duplicate`.
+#
+# It is last, and appended rather than inserted, so the five existing `A<n>` numbers stay
+# where a reader of an already-authored bundle expects to find them.
+#
+# It exists because the other five all ask whether the output is CORRECT. The `experience`
+# lens ships in every profile and maps to UDD in LENS_COMP, but until this dimension the
+# only thing in the loop that ever wrote it was `learn` — filed AFTER something had already
+# misled someone. A task could be provably correct and unusable and nothing would notice.
+# The sweep is where it belongs rather than a beat of its own: it already refuses, it is
+# already domain-neutral, and a design-preview step would be screen-shaped — the 1.7-era
+# wireframe ceremony said nothing about a reconciliation and quietly rotted away because
+# nothing checked it.
+SWEEP_DIMENSIONS = ("who", "which", "when", "absent", "order", "experience")
 
 RE_ASSUMPTION_LINE = re.compile(r"^-\s+A\d+\s+\[(\w+)\]\s*(.*)$")
 

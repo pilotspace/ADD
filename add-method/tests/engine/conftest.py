@@ -40,6 +40,7 @@ _SILENCES = {
     "when": "whether the limit resets on a boundary or a rolling window",
     "absent": "what a request with no token at all is admitted as",
     "order": "what breaks a tie between two simultaneous admits",
+    "experience": "who reads a refused admission, or what tells them why it was refused",
 }
 DRAFTED_GIVES = "gives:\n  - S1 admit(token) — the admission decision"
 DRAFTED_ASSUMPTIONS = "\n".join(

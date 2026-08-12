@@ -255,7 +255,7 @@ the surfaces it covers:
 - A<n> [<dim>] n/a · <why the dimension cannot apply here>
 ```
 
-The dimension vocabulary is closed — `who · which · when · absent · order` — because an
+The dimension vocabulary is closed — `who · which · when · absent · order · experience` — because an
 open one cannot be swept and a long one will not be. The axis is the **surface**: each
 `S<n>` entry in the node's `gives:`. For every surface and every dimension, some line must
 cover the pair or retire the dimension; `freeze` refuses and names the unswept pairs, and
