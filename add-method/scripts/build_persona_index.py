@@ -100,7 +100,13 @@ def main() -> int:
             print(f"{INDEX.name} is stale — regenerate with "
                   f"`python3 add-method/scripts/build_persona_index.py`", file=sys.stderr)
             return 1
-        print(f"{INDEX.name} is current ({len(personas())} personas)")
+        indexed = len(personas())
+        total = len(list(CORPUS.rglob("*.md")))
+        # State the exclusion. Reporting only the indexed count made a persona that lost its
+        # `description:` in a vendor refresh vanish from routing with no signal but a number
+        # quietly getting smaller — and nobody re-reads a generated file to notice.
+        print(f"{INDEX.name} is current ({indexed} personas indexed, "
+              f"{total - indexed} corpus files skipped — no `description:`, so not agent definitions)")
         return 0
 
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
