@@ -74,8 +74,8 @@ size up**. Absence from the table is never evidence that no floor applies.
 
 ## 3 · Frame the bundle — re-author the lenses
 
-Only `code` and `doc` ship as profiles. Do **not** invent one: `init` accepts any string and then
-silently writes the `code` lenses under that name, so the bundle would misreport its own domain.
+Only `code` and `doc` ship as profiles, and `init` refuses any other name — a profile is a set of
+spec lenses that has to exist, not a label your domain can assert into being.
 
 Start from `add init --profile doc "<name>"` — its four lenses already assume no test runner —
 then rewrite each spec's `## Now` line in your domain's language, **before** creating the first

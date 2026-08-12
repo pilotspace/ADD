@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c44a97fe41a2ad4fce1be7fa16f96b72"  # re-aimed @ release 3.1.0 (the ENGINE version constant moves to add/3.1.0 — nothing else). prior: 03e66302… @ engine-flame perf pass
+ENGINE_MD5 = "e2c4962cc8119aed5af0f3279d6ec4b5"  # re-aimed @ adoption-beyond-code (`init` refuses an unknown --profile instead of silently writing the `code` lenses under it; PROFILES comment corrected). prior: c44a97fe… @ release 3.1.0
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "d9c6a4a4928c7e3b456a938083aeb374"  # re-aimed @ receipt-cost follow-up (run gains --timeout so a build-heavy receipt command can raise the 900 s ceiling; nothing else moved). prior: bfb806e7… @ replan-verb
+ENGINE_PKG_MD5 = "7363afabf1a5f53029e3c0641f2302e0"  # re-aimed @ adoption-beyond-code (the `init` dispatch branch carries the refusal's exit code). prior: d9c6a4a4… @ receipt-cost follow-up

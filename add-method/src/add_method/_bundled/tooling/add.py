@@ -810,8 +810,10 @@ def load(root, cache: bool = True) -> dict:
 #
 # A profile selects which SPEC LENSES a bundle gets — never which rules apply. It is a
 # dict, so adding one is data, not an engine branch (goal 2's closed-lens claim, tested by
-# adding a profile at runtime). `code` and `doc` ship as engine data; the remaining three
-# ship as template files (amendment A1).
+# adding a profile at runtime). `code` and `doc` are what ships, and this dict is the whole set.
+# An earlier note here pointed at further profiles arriving as template files; none was ever built,
+# so it sent every reader of this file looking for something that did not exist. `init` now
+# REFUSES a name that is not a key here, rather than quietly resolving it to `code`.
 
 PROFILES = {
     "code": {
@@ -904,11 +906,27 @@ def _today() -> str:
 def init(root, profile: str = "code", title: str = None) -> tuple:
     """Create a conforming bundle. Never overwrites; an existing file is left alone.
 
-    Returns `(graph, created_cids, note)`. The note ends in a `next:` line, because a verb
-    that does not say what comes next teaches nothing (law 4).
+    Returns `(graph, created_cids, note)`, or `(None, [], refusal)` when the profile is one this
+    engine cannot honour. The note ends in a `next:` line, because a verb that does not say what
+    comes next teaches nothing (law 4).
     """
     root, created = Path(root), []
-    lenses = PROFILES.get(profile) or PROFILES["code"]
+    # Validated BEFORE anything touches the filesystem (M2, A3): an argument the engine cannot
+    # honour is wrong independently of what is already on disk, and a refusal that half-created a
+    # bundle would be worse than the fallback it replaces.
+    #
+    # This used to read `PROFILES.get(profile) or PROFILES["code"]`, so `--profile finance` wrote
+    # the CODE lenses under a name the engine never understood. The reader learns their domain was
+    # never modelled at the first spec they open — after they have written into it. Refusing costs
+    # them one command; the silent fallback cost them the bundle (R:SILENTFALLBACK).
+    if profile is not None and profile not in PROFILES:
+        return None, [], (
+            f'`{profile}` is not a profile this engine ships — it would have written the `code` '
+            f'lenses under a name nothing understands. Available: {" · ".join(sorted(PROFILES))} '
+            f'-> "R:BADPROFILE"\n'
+            f'next: add init --profile {sorted(PROFILES)[0]} "<name>" '
+            f'(a profile selects spec LENSES, never what a gate demands)')
+    lenses = PROFILES[profile] if profile else PROFILES["code"]
     # The bundle root is `<project>/.add` in every real call (the CLI passes it), so naming the
     # project after the bundle DIRECTORY called every project `.add`. The project is the parent.
     resolved = root.resolve()

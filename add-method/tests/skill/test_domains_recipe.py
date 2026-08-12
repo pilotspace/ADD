@@ -23,8 +23,10 @@ DOMAINS = SKILL / "domains.md"
 
 # The closed floor set. A pack may map its own vocabulary ONTO these; it may never add to them.
 FLOORS = {"security", "data", "architecture"}
-# The profiles the engine actually ships. `init` falls back to `code` on anything else WITHOUT
-# refusing, so a ref that names a phantom profile produces a bundle that lies about its own domain.
+# The profiles the engine actually ships. `init` REFUSES anything else as of 3.2 — it used to fall
+# back to `code` silently, which is why a ref naming a phantom profile once produced a bundle that
+# lied about its own domain. The refusal removed the damage; naming an unshipped profile is now
+# simply an instruction that cannot be followed.
 SHIPPED_PROFILES = {"code", "doc"}
 
 
@@ -177,8 +179,8 @@ def test_recipe_buys_no_gate():
 
 
 def test_names_no_phantom_profile():
-    """R:PHANTOMPROFILE — `init` silently falls back to `code` on an unknown profile."""
+    """R:PHANTOMPROFILE — a ref must not instruct a profile the engine will refuse."""
     named = set(re.findall(r"--profile\s+([a-z]+)", _text()))
     stray = named - SHIPPED_PROFILES
     assert not stray, (f"domains.md instructs profiles the engine does not ship: {sorted(stray)} "
-                       f"— init would silently write the `code` lenses under that name")
+                       f"— `init` refuses them, so the instruction cannot be followed")

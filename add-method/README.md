@@ -10,9 +10,9 @@
 
 **Your AI's first milestone is always great. ADD is for every milestone after that.**
 
-> A minimal, state-tracked skill for building software when the AI writes the code
-> and **you** own the two things it cannot do alone: decide *what* to build, and
-> *verify* it is correct.
+> A minimal, state-tracked skill for work the AI does and **you** own the two things
+> it cannot do alone: decide *what* to make, and *verify* it is correct. Software is
+> where it started; the loop holds anywhere the result can be checked.
 
 **The agent is the hands. ADD is the memory, judgment, and conscience — the part
 of the team that survives when the context window doesn't.** Memory: the board,
@@ -52,10 +52,10 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Highlights
 
-- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (`PLAN.md`, frozen contracts, red suites, `.add/state.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
-- 💸 **Structure without the ceremony tax** — a thin 31-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
+- 💸 **Structure without the ceremony tax** — a thin 22-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
 - 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
@@ -81,8 +81,8 @@ a breaking shape change and a cross-cutting refactor — with zero regressions.
 
 That's the design, in three moves:
 
-- **One file per feature.** Spec, scenarios, contract, test-plan, and gate record all live inline in a single `PLAN.md`. No sprawling doc tree.
-- **State on disk, not in chat.** A stdlib-Python kernel tracks where you are in `.add/state.json`, so a fresh session resumes with one command instead of trusting a long conversation's memory.
+- **One file per feature.** Rules, assumptions, contract, checks, and gate record all live inline in a single task file at `.add/tasks/<slug>.md`. No sprawling doc tree.
+- **State on disk, not in chat.** Files are the database — a stdlib-Python kernel reads where you are back off the `.add/` bundle itself (`graph.json` is a rebuildable cache, not the source of truth), so a fresh session resumes with one command instead of trusting a long conversation's memory.
 - **Progressive disclosure.** The skill narrates the whole loop itself and loads a deeper phase reference only when the beat needs it — the context window stays lean.
 
 <sub>**Honesty note:** on this friendly single-app workload a strong model under spec-kit also passed the restart floors (and ran cheaper) — we published the retraction of our own earlier collapse claim when we found the meter defect behind it. What ADD uniquely adds is the *guarantees*: contracts that can't be silently edited, tests that can't be quietly weakened, security findings that can't scroll past.</sub>
@@ -149,8 +149,11 @@ untouched and `add status` names the format rather than claiming there is no
 bundle — archive the 2.x bundle as the record of how the project was built, then
 `add init` a 3.0 one beside it.
 
-**New here?** The [10-minute Quickstart](./GETTING-STARTED.md) walks your first
-feature end to end.
+**New here?** Pick the walkthrough that matches what you are making:
+
+- 🔍 [10-minute Quickstart](./GETTING-STARTED.md) — your first feature, end to end
+- 📒 [Beyond code](./BEYOND-CODE.md) — a month-end close, end to end: same three beats, same
+  bound receipt, where the artifact under check is a ledger rather than a repo
 
 This installs:
 
@@ -158,7 +161,7 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 21 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 22 verbs (Python, stdlib only) |
 | `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |
@@ -202,16 +205,18 @@ python3 .add/tooling/cli.py status      # where am I? (resume point)
 4. **No silent skips** — every Verify records `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`. Security findings are always `HARD-STOP`.
 5. **Ask, don't guess.**
 
-## The artifacts survive; the code is disposable
+## The decisions survive; the output is disposable
 
-The durable asset is the decisions — spec, scenarios, contract, tests. The code is
-one implementation that satisfies them and can be regenerated. If the thing you'd
-be upset to lose is "the code," you're still working the old way.
+The durable asset is the decisions — rules, assumptions, contract, checks. What you
+produced is one thing that satisfies them and can be made again: a module, a report,
+a reconciliation. If the thing you'd be upset to lose is the output rather than the
+reasoning that justified it, you're still working the old way.
 
 ## Read the method
 
 - 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
 - 🔍 [Full hands-on walkthrough](./GETTING-STARTED.md) — one real feature, end to end
+- 📒 [Beyond code](./BEYOND-CODE.md) — one real month-end close, end to end
 - 📊 [Benchmark results](https://github.com/pilotspace/ADD/tree/main/benchmark/results) — every trust and cost claim, measured
 - ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)

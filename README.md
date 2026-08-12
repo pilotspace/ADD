@@ -16,7 +16,7 @@
 
 ---
 
-## AI coding doesn't fail on day one — it rots
+## AI work doesn't fail on day one — it rots
 
 Every AI tool ships a beautiful first feature. The failure shows up **across
 milestones**: requirements evolve, the conversation gets long, and the agent
@@ -42,10 +42,11 @@ agent: the next session resumes with one command and loses nothing.
 
 ## What ADD is
 
-An agent already knows how to write code. What it *structurally cannot* keep is
-everything outside one context window: what's true so far, what was promised,
-what must never be traded away. Human teams keep that in senior engineers' heads.
-AI has no head that survives the session.
+An agent already knows how to do the work — write the code, draft the analysis,
+reconcile the ledger. What it *structurally cannot* keep is everything outside one
+context window: what's true so far, what was promised, what must never be traded
+away. Teams keep that in their most senior people's heads. AI has no head that
+survives the session.
 
 > **The agent is the hands. ADD is the memory, judgment, and conscience — the
 > part of the team that survives when the context window doesn't.**
@@ -54,8 +55,8 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 
 | Faculty | What it holds | See it yourself |
 |---|---|---|
-| 🧠 **Memory** — *what is true* | the board, frozen contracts, red suites, five living specs | `add.py status` — a brand-new session resumes mid-build, losing nothing |
-| ⚖️ **Judgment** — *how to work here* | personas propose each task's lane; gates trace outcomes; the loop reflects on the record (GEPA) | `add.py deltas` — the per-lane scoreboard: what got gated, passed, healed |
+| 🧠 **Memory** — *what is true* | the board, frozen contracts, red suites, five living specs | `cli.py status` — a brand-new session resumes mid-build, losing nothing |
+| ⚖️ **Judgment** — *how to work here* | personas propose each task's lane; gates trace outcomes; the loop reflects on the record (GEPA) | `cli.py deltas` — the per-lane scoreboard: what got gated, passed, healed |
 | 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen test and watch the gate refuse — gaming a test to get green is structurally impossible |
 
 ## ✨ Highlights
@@ -63,11 +64,11 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed.
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify on its own and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right. Gaming a test to go green is treated as tampering, not a shortcut.
-- 💸 **Structure without the ceremony tax** — a thin 31-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
+- 💸 **Structure without the ceremony tax** — a thin 22-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
 - 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
 - 🧭 **The agent reasons before it drafts** — a built-in reasoning floor makes it restate your goal in your words, tag what it *checked* versus what it *remembers*, and run a cheap kill-test on its own plan — catching the fluent-but-wrong that reads fine in a diff. Fluent ≠ true.
-- 📄 **Everything about a feature in one place** — spec, scenarios, contract, tests, and gate record in a single `PLAN.md`; no doc tree to hunt through.
+- 📄 **Everything about a feature in one place** — rules, assumptions, contract, checks, and gate record in a single task file at `.add/tasks/<slug>.md`; no doc tree to hunt through.
 - 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
@@ -87,7 +88,7 @@ trade — you spend minutes on direction to buy trust that holds across mileston
 | **First feature** | fastest — start typing | one Direction pass first, then builds |
 | **Across milestones** | quality decays; old promises silently break | frozen contracts + red suites re-run; trust holds |
 | **What you verify** | you re-read the diff and hope | pre-declared tests pass, or the gate refuses |
-| **Resuming later** | re-explain the goal, re-read the repo | one command from `state.json`, lossless |
+| **Resuming later** | re-explain the goal, re-read the repo | one command, read back off the `.add/` bundle, lossless |
 | **Cost** | near-zero ceremony up front | one bounded direction pass per milestone — minutes, not a doc tree |
 | **Best for** | throwaway scripts, one-shots, spikes | evolving products, multiple milestones, teams |
 
@@ -100,9 +101,9 @@ three milestones ago.
 
 ## 🚀 Get Started
 
-![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives in .add/state.json, no context rot](add-install.png)
+![Three steps — 1. Install with npx @pilotspace/add init (also pip, or the Claude Code plugin); 2. Spawn a feature with /add 'your goal' and give one approval at the frozen contract; 3. Resume anytime with /add — state lives on disk in the .add/ bundle, no context rot](add-install.png)
 
-**Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*, plus a CLI coding agent — Claude Code, Codex, or similar.
+**Prerequisites:** Node ≥ 18 *(npm path)* or Python ≥ 3.10 *(pip path)*, plus a CLI agent — Claude Code, Codex, or similar.
 
 ### 1 · Install into your project
 
@@ -120,6 +121,20 @@ pip install pilotspace-add && pilotspace-add init      # Python / pip
 /plugin install add@add-method
 ```
 
+**Not building software?** The bundle's spec lenses are chosen when the *bundle* is
+initialised — which is the agent's first move, not the installer's. ADD ships two sets:
+`--profile code` (the default: domain · system · experience · quality · method) and
+`--profile doc`, which drops the build-shaped lenses for work whose artifact is a
+document, a review, or an analysis. A profile selects *lenses*; it never changes what a
+gate demands, and a name ADD does not ship is refused rather than quietly treated as
+`code`.
+
+Tell the agent which one you want — or set it by hand after installing:
+
+```bash
+python3 .add/tooling/cli.py init --profile doc "My Project"
+```
+
 > See a real one: this repo's own [`.add/`](https://github.com/pilotspace/ADD/tree/main/.add) folder.
 
 ### 2 · Spawn your first feature
@@ -132,7 +147,7 @@ In Claude Code, run **`/add`** and say what you want to build:
 
 The agent runs the on-ramp for you:
 
-1. 🧭 **Orients** from `add.py status` — never re-reading your whole repo.
+1. 🧭 **Orients** from `cli.py status` — never re-reading your whole repo.
 2. 📐 **Sizes** your request into a **milestone** — *you confirm the shape.*
 3. ✍️ **Drafts** each task's **Direction bundle** — Spec + Scenarios + Contract + red Tests in one pass — *you give one approval, at the frozen contract.*
 4. ✅ **Runs** Build → Verify to green; a security finding always stops back to you.
@@ -150,19 +165,25 @@ pick up exactly where you left off — no context rot.
 
 ## ⚙️ How ADD Works
 
-**One task · three beats · one file.** Every feature is a single **`PLAN.md`** that
-fills in section by section as the agent walks three beats — **Direction** (spec →
-scenarios → frozen contract → red tests, the *one* human approval), **Build**
-(red → green, scope-fenced), **Verify** (evidence-scored gate: `PASS`,
-`RISK-ACCEPTED`, or `HARD-STOP`). The artifacts are what you keep — the code is disposable.
+**One task · three beats · one file.** Every feature is a single task file at
+**`.add/tasks/<slug>.md`** that fills in section by section as the agent walks three
+beats — **Direction** (rules → assumptions → frozen contract → red checks, the *one*
+human approval), **Build** (red → green, scope-fenced), **Verify** (evidence-scored
+gate: `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`). The decisions are what you keep — the
+output is disposable.
 
 ![Foundation Domain Documents](add-foundation.png)
 
-![How one PLAN.md grows — the steps circle a single PLAN.md file; each writes its own section, from §0 grounding map through §3 frozen contract (the one approval) to §7 deltas; a red⇄green engine runs between Tests and Build, and Observe loops back to the next Specify](add-task-growth-wheel.png)
+![How one task file grows — the steps circle a single task file; each writes its own section, from the grounding card through the frozen contract (the one approval) to the closing deltas; a red⇄green engine runs between Checks and Build, and Observe loops back to the next Direction](add-task-growth-wheel.png)
 
 **Tasks compound into milestones; milestones grow the project.**
 
-![MILESTONE.md and PLAN.md lifecycle — a milestone decomposes breadth-first into a task DAG of PLAN.md files run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons into PROJECT.md and CONVENTIONS.md, which loop back to ground the next milestone](add-milestone-task-lifecycle.png)
+![Milestone and task lifecycle — a milestone decomposes breadth-first into a task DAG run just-in-time; each task's Observe step feeds a spec delta into the next task; the milestone is goal-gated; at close, the ship-review folds lessons back into the living specs, which ground the next milestone](add-milestone-task-lifecycle.png)
+
+> **Diagrams pending redraw.** These three graphics still render the 2.x file names
+> (`PLAN.md`, `MILESTONE.md`, `state.json`) and the retired `§0…§7` section numbering.
+> The prose and alt text above are correct for 3.x; the artwork is not, and is tracked
+> as an open residual rather than quietly left to read as current.
 
 ---
 
@@ -170,7 +191,8 @@ scenarios → frozen contract → red tests, the *one* human approval), **Build*
 
 - 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
 - ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
-- ⚡ [2-minute Getting Started](./GETTING-STARTED.md) · 🔍 [Full hands-on walkthrough](./add-method/GETTING-STARTED.md)
+- ⚡ [2-minute Getting Started](./GETTING-STARTED.md) · 🔍 [Full hands-on walkthrough](./add-method/GETTING-STARTED.md) — building software
+- 📒 [Beyond code — a month-end close, end to end](./add-method/BEYOND-CODE.md) — the same loop where the artifact is a reconciliation, not a repo
 - 📊 [Benchmark results](./benchmark/) — every trust and cost claim, reproducible from this repo
 - 📦 [Package source](./add-method/README.md) · [Changelog](./add-method/CHANGELOG.md)
 - 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)

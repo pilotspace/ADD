@@ -39,8 +39,8 @@ Run **`add status`** first, every session — it is your resume point, read from
 repo. Then branch:
 
 - **No `.add/` yet** → `add init --profile <code|doc> "<name>"` — those two ship, and `init`
-  writes the `code` lenses under any other name without refusing. Non-code domain? Take `doc`,
-  then re-author its lenses (`domains.md`). Offer to seed starter personas (`seed.md`,
+  refuses any other name rather than guess. Non-code domain? Take `doc`, then re-author its
+  lenses (`domains.md`). Offer to seed starter personas (`seed.md`,
   opt-in), then size the request (Intake).
 - **A task is active** (`status` not `done`) → open `.add/tasks/<slug>.md`, read its `## CARD`, and
   work the beat `add status` names next. The beat is **derived from the node's stamps**, not the
