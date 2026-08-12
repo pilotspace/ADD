@@ -4,6 +4,55 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.1.0] — 2026-08-12
+
+The **dynamic path**: the route through the method becomes adaptive while the trust spine stays
+byte-identical — uncertainty gets a lane, steering gets a stamp, research gets a receipt. Plus a
+flame-profiled engine that is 4× faster on real bundles and ~3,400× faster on directory digests.
+Book chapter 19 teaches the whole path.
+
+### Added
+- **Explore lane** — research as a first-class Task (`add new Task <slug> --kind explore`):
+  questions freeze as the contract with a hard budget (`R:UNBOUNDED` refuses a budgetless
+  freeze), the deliverable is a compressed cited `## FINDINGS` brief, and the sufficiency gate is
+  engine-enforced — `R:UNFROZEN_EXPLORE` (no questions+budget approval), `R:HOLLOW_EXPLORE`
+  (an open question or an evidence-less finding holds the PASS), the drift tripwire on frozen
+  questions, and a `kind: sources` stamp with the closed tally on PASS. Downstream tasks consume
+  the brief via `needs: /tasks/<slug>.md#findings`.
+- **`add replan`** — a recorded, additive steering stamp on a frozen task; the seal untouched.
+  Refuses the unfrozen, the noteless, and the closed (`R:SILENT_STEER` · `R:SEAL_TOUCH`).
+- **Uncertainty routing at intake** — a third routing axis (the unknowns tally): the closed floor
+  is checked first and always wins; among allowed lanes, one contract-shaping unknown argues
+  Explore-first.
+- **Micro-spike assumption discharge** — a cheaply-checkable assumption records `found:` + its
+  evidence instead of a priced guess.
+- **Read fan-out** — facts merge, decisions serialize: read-only streams fan out with no wave and
+  no worktree; one write taints the stream back onto the serialized path.
+- **Persona-carried planning** — intake proposals, milestone drafts, and next-task proposals load
+  the best-fit advisor-flow persona before drafting; the confirmed artifact records the lens
+  (`add advise`). Opt-in and additive — a roster-less bundle behaves exactly as before.
+- **`add run --timeout <s>`** — the 900 s ceiling for the wrapped receipt command is settable for
+  legitimately build-heavy checks.
+- Book chapter **19 · The dynamic path**; chapter 07 becomes "the four lanes".
+
+### Changed
+- **Directory-scope freshness digests enumerate through git** (`ls-files --cached --others
+  --exclude-standard`): the project's own `.gitignore` defines its build noise, so `.next/`,
+  `node_modules/` and friends never enter the digest — a rebuild cannot stale a receipt no source
+  edit touched. Field bundle: 18,044 files/101 s → 78 files/0.03 s per `add run`.
+- **Flame-guided engine pass** (behavior-preserving, 0 divergences on a 600-file differential
+  parity run): find-based fence split with the regex's exact lazy semantics, jump-scan parser
+  primitives, and ONE batched `git hash-object --stdin-paths` for digest + freshness. Real-bundle
+  wall-clock: `status` 2.65 s → 0.61 s, `doctor` 5.26 s → 1.14 s.
+- verify.md pins the narrow-receipt stance: wrap the narrowest command that reports every bound
+  check; the full suite rides CI or a backgrounded run.
+
+### Fixed
+- The explore sources gate inherits the receipt path's seal discipline (found by the PR #197
+  review): an unfrozen explore can no longer self-close, post-freeze question edits refuse, an
+  empty/placeholder evidence ref closes nothing, `replan` notes flatten to one physical line, and
+  `gate` surfaces stamp-write failures instead of printing success.
+
 ## [3.0.0] — 2026-08-11
 
 Major: the method core is rebuilt on the **ABF-1** bundle format with a **NO-EXEC notary**
