@@ -52,10 +52,10 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Highlights
 
-- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (`PLAN.md`, frozen contracts, red suites, `.add/state.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
-- 💸 **Structure without the ceremony tax** — a thin 31-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
+- 💸 **Structure without the ceremony tax** — a thin 22-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
 - 🎨 **See the UI before a line of code** — a wireframe and a zero-dependency HTML mock, approved before any build.
@@ -81,8 +81,8 @@ a breaking shape change and a cross-cutting refactor — with zero regressions.
 
 That's the design, in three moves:
 
-- **One file per feature.** Spec, scenarios, contract, test-plan, and gate record all live inline in a single `PLAN.md`. No sprawling doc tree.
-- **State on disk, not in chat.** A stdlib-Python kernel tracks where you are in `.add/state.json`, so a fresh session resumes with one command instead of trusting a long conversation's memory.
+- **One file per feature.** Rules, assumptions, contract, checks, and gate record all live inline in a single task file at `.add/tasks/<slug>.md`. No sprawling doc tree.
+- **State on disk, not in chat.** Files are the database — a stdlib-Python kernel reads where you are back off the `.add/` bundle itself (`graph.json` is a rebuildable cache, not the source of truth), so a fresh session resumes with one command instead of trusting a long conversation's memory.
 - **Progressive disclosure.** The skill narrates the whole loop itself and loads a deeper phase reference only when the beat needs it — the context window stays lean.
 
 <sub>**Honesty note:** on this friendly single-app workload a strong model under spec-kit also passed the restart floors (and ran cheaper) — we published the retraction of our own earlier collapse claim when we found the meter defect behind it. What ADD uniquely adds is the *guarantees*: contracts that can't be silently edited, tests that can't be quietly weakened, security findings that can't scroll past.</sub>
@@ -158,7 +158,7 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 21 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 22 verbs (Python, stdlib only) |
 | `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |

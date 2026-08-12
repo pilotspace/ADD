@@ -13,6 +13,8 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] gate refuses with R:UNBRIEFED when no `brief` ran since the last (re)freeze — a refreeze invalidates the compiled prompt, so the repair order is refreeze -> brief -> run -> gate, not refreeze -> run -> gate (evidence: .add/tasks/front-door-truth.md)
+- [ADD · open] a doc that shows a command must have that command EXECUTED by a check — the root README told readers to run `add.py status` three times, which exits 0 and prints nothing because add.py is the library the CLI dispatches into; the package README said so on its own install table while the root README contradicted it (evidence: .add/tasks/front-door-truth.md)
 - [ADD · open] guard the ORPHAN direction for refs, not just verbs — a doc naming a missing verb was already caught, but a ref no always-loaded file names shipped unreachable and passed ten bound checks; the new guard immediately found a SECOND orphan (terms.md) nobody knew about (evidence: add-method/tests/skill/test_router_pointers.py::test_no_orphan_refs)
 - [ADD · open] an `n/a` retires a sweep DIMENSION, never an EDGE — an E<n> line is a gate referent whatever it says, so a 'dissolved' edge must be DELETED or given a check; writing 'E1 n/a' still holds the PASS (evidence: /tasks/receipt-artifact-leak.d/runs/1.md)
 - [ADD · open] a task's scope: MUST include the directory its own CHECKS live in — otherwise a defective check cannot be repaired during build, and the only in-scope 'fix' is to reshape the artifact around the broken test (evidence: /tasks/receipt-artifact-leak.md scope: omits add-method/tests/skill)
