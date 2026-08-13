@@ -1,0 +1,2453 @@
+<title>ADD — the trust layer for agentic development</title>
+
+<style>
+  /* ============================================================
+     ADD — ledger identity
+     Ground: cool ledger stock. Ink: fountain-pen blue-black.
+     Accents: oxblood notary stamp / deep ledger green.
+     ============================================================ */
+
+  :root {
+    --paper:    #EDEEF0;
+    --paper-2:  #F7F8F9;
+    --paper-3:  #E3E5E9;
+    --ink:      #12161C;
+    --ink-2:    #4A5460;
+    --ink-3:    #7C8794;
+    --rule:     #D3D7DD;
+    --rule-2:   #C2C7CF;
+    --stamp:    #8E2F2C;
+    --stamp-bg: rgba(142, 47, 44, 0.08);
+    --ledger:   #1F5B4A;
+    --ledger-bg:rgba(31, 91, 74, 0.09);
+
+    /* chart series — derived from the brand hues, then validated per mode:
+       lightness band · chroma floor · deuteranopia ΔE 13.4 · normal ΔE 27.1 · ≥3:1 */
+    --s-decay:  #A8382F;
+    --s-hold:   #3E9E7C;
+
+    --invert-bg:   #12161C;
+    --invert-bg2:  #1B2029;
+    --invert-ink:  #EDEEF0;
+    --invert-ink2: #99A3AF;
+    --invert-rule: #2A313B;
+
+    --display: "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
+    --body: "Iowan Old Style", "Charter", "Palatino Linotype", "Palatino", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, "IBM Plex Mono", Menlo, Consolas, monospace;
+
+    --gut: clamp(1.25rem, 4vw, 3.5rem);
+    --maxw: 1220px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:    #101318;
+      --paper-2:  #171B22;
+      --paper-3:  #1C212A;
+      --ink:      #E7EAEE;
+      --ink-2:    #A9B3BF;
+      --ink-3:    #78838F;
+      --rule:     #262C35;
+      --rule-2:   #333B46;
+      --stamp:    #DB817A;
+      --stamp-bg: rgba(219, 129, 122, 0.12);
+      --ledger:   #64C2A3;
+      --ledger-bg:rgba(100, 194, 163, 0.12);
+      --s-decay:  #C45448;
+      --s-hold:   #45AA88;
+      --invert-bg:   #060809;
+      --invert-bg2:  #10151B;
+      --invert-ink:  #E7EAEE;
+      --invert-ink2: #8B95A1;
+      --invert-rule: #1E242C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:    #101318;
+    --paper-2:  #171B22;
+    --paper-3:  #1C212A;
+    --ink:      #E7EAEE;
+    --ink-2:    #A9B3BF;
+    --ink-3:    #78838F;
+    --rule:     #262C35;
+    --rule-2:   #333B46;
+    --stamp:    #DB817A;
+    --stamp-bg: rgba(219, 129, 122, 0.12);
+    --ledger:   #64C2A3;
+    --ledger-bg:rgba(100, 194, 163, 0.12);
+    --s-decay:  #C45448;
+    --s-hold:   #45AA88;
+    --invert-bg:   #060809;
+    --invert-bg2:  #10151B;
+    --invert-ink:  #E7EAEE;
+    --invert-ink2: #8B95A1;
+    --invert-rule: #1E242C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--stamp); color: var(--paper); }
+
+  a { color: inherit; text-decoration-color: var(--rule-2); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--stamp); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--stamp); outline-offset: 3px; border-radius: 1px;
+  }
+
+  /* ---------- primitives ---------- */
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gut); }
+
+  .label {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+
+  .h-display {
+    font-family: var(--display);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h2.h-display { font-size: clamp(2.1rem, 5.2vw, 3.9rem); }
+
+  p { margin: 0; }
+  .prose { max-width: 64ch; color: var(--ink-2); }
+  .prose strong { color: var(--ink); font-weight: 600; }
+  .prose + .prose { margin-top: 1.05em; }
+
+  .stack { display: flex; flex-direction: column; gap: 1.1rem; }
+  .stack-l { display: flex; flex-direction: column; gap: 2.4rem; }
+
+  code, .mono { font-family: var(--mono); font-size: 0.855em; }
+  .prose code { background: var(--paper-3); padding: 0.1em 0.34em; border-radius: 2px; font-size: 0.8em; }
+
+  .cap {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--ink-3);
+    line-height: 1.6;
+    max-width: 80ch;
+  }
+  .cap strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- ledger act grid ---------- */
+
+  .act { border-top: 1px solid var(--rule); padding-block: clamp(3.5rem, 8vw, 6.5rem); }
+  .act-grid {
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+    gap: 0 clamp(1.5rem, 4vw, 4rem);
+  }
+  .act-margin {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    position: sticky; top: 2rem; align-self: start;
+  }
+  .act-no { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--stamp); font-weight: 600; }
+  .act-kind { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-3); }
+  @media (max-width: 800px) {
+    .act-grid { grid-template-columns: 1fr; gap: 1.1rem; }
+    .act-margin { position: static; flex-direction: row; gap: 0.75rem; align-items: baseline; }
+  }
+
+  /* ---------- hero ---------- */
+
+  .hero { position: relative; padding-top: clamp(3rem, 9vw, 6rem); padding-bottom: clamp(2.5rem, 6vw, 4rem); overflow: hidden; }
+  #heroCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.85; }
+  .hero .wrap { position: relative; }
+
+  .hero-rule {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.7rem;
+    margin-bottom: clamp(3rem, 8vw, 6rem);
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .hero h1 {
+    font-family: var(--display); font-weight: 500;
+    letter-spacing: -0.045em; line-height: 0.93;
+    font-size: clamp(2.7rem, 8.4vw, 6.6rem);
+    margin: 0; text-wrap: balance; max-width: 15ch;
+  }
+  .hero h1 .dim { color: var(--ink-3); }
+  .hero-lede { max-width: 52ch; margin-top: 1.8rem; font-size: clamp(1.02rem, 1.6vw, 1.2rem); color: var(--ink-2); }
+
+  .cta-row { display: flex; gap: 0.6rem; margin-top: 2.2rem; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.72rem 1.3rem;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+    text-decoration: none; border-radius: 999px; display: inline-block;
+    transition: transform 0.25s cubic-bezier(.2,.7,.3,1);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule-2); }
+  .btn.ghost:hover { border-color: var(--ink); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem clamp(1rem, 3vw, 2.5rem);
+    margin-top: clamp(3.5rem, 8vw, 6rem);
+    padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  }
+  .stat-n {
+    font-family: var(--display); font-weight: 500; letter-spacing: -0.04em;
+    font-size: clamp(1.9rem, 4.4vw, 3.1rem); line-height: 1; display: block;
+  }
+  .stat-t { font-family: var(--mono); font-size: 0.66rem; line-height: 1.45; color: var(--ink-3); margin-top: 0.55rem; display: block; }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ---------- quote ---------- */
+
+  .quote { border-left: 2px solid var(--rule-2); padding-left: 1.4rem; max-width: 58ch; }
+  .quote p { font-size: clamp(1.05rem, 1.8vw, 1.3rem); line-height: 1.42; font-style: italic; color: var(--ink); }
+  .quote cite {
+    display: block; margin-top: 0.7rem;
+    font-family: var(--mono); font-style: normal; font-size: 0.68rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  /* ---------- one-call vs agentic (act 01) ---------- */
+
+  .vs {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--rule); border: 1px solid var(--rule); margin-top: 1rem;
+  }
+  @media (max-width: 860px) { .vs { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--paper-2); display: flex; flex-direction: column; min-width: 0; }
+  .panel-head {
+    padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--rule);
+    display: flex; justify-content: space-between; gap: 0.7rem; align-items: baseline; flex-wrap: wrap;
+  }
+  .panel-t { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); font-weight: 600; }
+  .panel-s { font-family: var(--mono); font-size: 0.59rem; color: var(--ink-3); }
+  .panel-body { padding: 0.85rem 0.9rem; flex: 1; min-width: 0; }
+  .panel-foot {
+    padding: 0.7rem 0.9rem; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); line-height: 1.55;
+  }
+  .panel .fail { color: var(--s-decay); font-weight: 600; }
+  .panel .pass { color: var(--s-hold); font-weight: 600; }
+
+  .msg + .msg { margin-top: 0.7rem; }
+  .msg-who { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.3rem; }
+  .bubble {
+    border: 1px solid var(--rule); border-radius: 3px; padding: 0.55rem 0.7rem;
+    background: var(--paper); font-size: 0.88rem; line-height: 1.5; color: var(--ink);
+  }
+  .bubble.you { background: var(--paper-3); }
+  .bubble pre { font-family: var(--mono); font-size: 0.655rem; line-height: 1.62; margin: 0.5rem 0 0; overflow-x: auto; color: var(--ink); }
+  .bubble pre .kw { color: var(--ink-3); }
+
+  .miss {
+    display: grid; grid-template-columns: 0.85rem minmax(0,1fr); gap: 0.5rem;
+    font-family: var(--mono); font-size: 0.625rem; color: var(--ink-3); line-height: 1.5; padding: 0.16rem 0;
+  }
+  .miss .x { color: var(--s-decay); font-weight: 600; }
+
+  .turns { font-family: var(--mono); font-size: 0.625rem; }
+  .turn {
+    display: grid; grid-template-columns: 1.5rem minmax(0,1fr) 2.6rem 2.3rem;
+    gap: 0.45rem; align-items: center; padding: 0.24rem 0; color: var(--ink-2);
+  }
+  .turn .tn { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .turn .tv { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turn .tv b { color: var(--ink); font-weight: 600; }
+  .turn .tk { color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+  .track { height: 4px; background: var(--paper-3); border-radius: 2px; overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--ink-3); border-radius: 2px; }
+
+  /* ---------- rot instrument (act 02) ---------- */
+
+  .instrument { margin-top: 1rem; border: 1px solid var(--rule); background: var(--paper-2); border-radius: 3px; overflow: hidden; }
+  .inst-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--rule); flex-wrap: wrap;
+  }
+  .inst-readout {
+    font-family: var(--mono); font-size: 0.7rem; font-variant-numeric: tabular-nums;
+    color: var(--ink-2); display: flex; gap: 1.2rem; flex-wrap: wrap;
+  }
+  .inst-readout b { color: var(--ink); font-weight: 600; }
+  .inst-readout .warn { color: var(--s-decay); font-weight: 600; }
+  .inst-readout .calm { color: var(--ink-3); }
+  #rotCanvas { display: block; width: 100%; height: 250px; }
+  .inst-foot { padding: 0.75rem 1rem; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); line-height: 1.55; }
+  .n2row { display: flex; gap: 1.8rem; flex-wrap: wrap; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+  .n2 { display: flex; flex-direction: column; }
+  .n2 b { font-family: var(--display); font-weight: 500; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--s-decay); line-height: 1.1; }
+  .n2 span { font-size: 0.6rem; color: var(--ink-3); margin-top: 0.15rem; }
+
+  /* ---------- observed failure modes (act 02) ---------- */
+
+  .modes { margin-top: 1rem; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper-2); overflow: hidden; }
+  .mode {
+    display: grid; grid-template-columns: 10.5rem minmax(0, 1fr);
+    gap: 0.5rem 1.3rem; padding: 1.1rem 1rem; border-top: 1px solid var(--rule);
+  }
+  .modes .mode:first-child { border-top: none; }
+  .mode-n { font-family: var(--mono); font-size: 0.59rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); display: block; }
+  .mode-t { font-family: var(--display); font-weight: 500; font-size: 1rem; letter-spacing: -0.012em; color: var(--ink); display: block; margin-top: 0.25rem; line-height: 1.15; }
+  .mode blockquote {
+    margin: 0; font-style: italic; font-size: 0.95rem; line-height: 1.5; color: var(--ink);
+    border-left: 2px solid var(--rule-2); padding-left: 0.9rem;
+  }
+  .mode .para { font-size: 0.95rem; line-height: 1.5; color: var(--ink-2); padding-left: 0.9rem; border-left: 2px solid var(--rule); }
+  .mode .mech { margin-top: 0.6rem; font-family: var(--mono); font-size: 0.635rem; color: var(--ink-3); line-height: 1.6; display: block; }
+  .mode .mech b { color: var(--ink-2); font-weight: 600; }
+  .mode.hot { background: var(--stamp-bg); }
+  .mode.hot .mode-t, .mode.hot .mode-n { color: var(--stamp); }
+  .mode.hot blockquote { border-left-color: var(--stamp); }
+  .mode.hot .mech b { color: var(--stamp); }
+  @media (max-width: 720px) { .mode { grid-template-columns: 1fr; } }
+
+  /* the behaviour reveal */
+  .reveal {
+    margin-top: 0.7rem; background: none; border: 1px solid var(--rule-2); border-radius: 999px;
+    padding: 0.24rem 0.7rem; cursor: pointer;
+    font-family: var(--mono); font-size: 0.585rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-3); transition: color 0.2s, border-color 0.2s;
+  }
+  .reveal:hover, .mode.peek .reveal, .mode.open .reveal { color: var(--stamp); border-color: var(--stamp); }
+  .reveal .chev { display: inline-block; margin-left: 0.35rem; transition: transform 0.2s; }
+  .mode.peek .reveal .chev, .mode.open .reveal .chev { transform: rotate(90deg); }
+
+  .modeex { display: none; margin-top: 0.75rem; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+  .mode.peek .modeex, .mode.open .modeex { display: block; }
+  .modeex-h {
+    padding: 0.42rem 0.75rem; border-bottom: 1px solid var(--rule); background: var(--paper-3);
+    font-family: var(--mono); font-size: 0.575rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3);
+    display: flex; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap;
+  }
+  .modeex-b {
+    margin: 0; padding: 0.8rem 0.75rem; background: var(--paper-2);
+    font-family: var(--mono); font-size: 0.665rem; line-height: 1.68; color: var(--ink-2);
+    overflow-x: auto; white-space: pre;
+  }
+  .modeex-b .who { color: var(--ink); font-weight: 600; }
+  .modeex-b .sys { color: var(--ink-3); }
+  .modeex-b .bad { color: var(--s-decay); font-weight: 600; }
+  .modeex-b .truth { color: var(--s-decay); }
+  .modeex-b .okk { color: var(--s-hold); }
+
+  /* ---------- inverted gap (act 03) ---------- */
+
+  .invert { background: var(--invert-bg); color: var(--invert-ink); border-top: none; }
+  .invert .act-kind { color: var(--invert-ink2); }
+  .invert .act-no { color: var(--stamp); }
+  .invert .prose { color: var(--invert-ink2); }
+  .invert .prose strong { color: var(--invert-ink); }
+  .invert h2 { color: var(--invert-ink); }
+
+  /* strategy tabs */
+  .tabs { margin-top: 1rem; border: 1px solid var(--invert-rule); }
+  .tablist { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--invert-rule); }
+  .tab {
+    background: var(--invert-bg); border: 0; border-bottom: 2px solid transparent;
+    padding: 0.95rem 1rem 0.85rem; text-align: left; cursor: pointer;
+    font-family: inherit; color: inherit; width: 100%; display: block;
+    transition: background 0.2s;
+  }
+  .tab .tlab { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--invert-ink2); display: block; }
+  .tab .tname { font-family: var(--display); font-weight: 500; font-size: 0.97rem; letter-spacing: -0.012em; color: var(--invert-ink2); display: block; margin-top: 0.4rem; line-height: 1.15; }
+  .tab:hover { background: var(--invert-bg2); }
+  .tab[aria-selected="true"] { background: var(--invert-bg2); border-bottom-color: var(--stamp); }
+  .tab[aria-selected="true"] .tname { color: var(--invert-ink); }
+  .tab[aria-selected="true"] .tlab { color: var(--stamp); }
+  @media (max-width: 760px) { .tablist { grid-template-columns: repeat(2, 1fr); } }
+
+  .tabpanels { border-top: 1px solid var(--invert-rule); background: var(--invert-bg2); }
+  .tabpanel { padding: 1.2rem 1rem 1.1rem; }
+  .tabpanel[hidden] { display: none; }
+  .tabpanel .svgwrap { overflow-x: auto; }
+  .tabpanel svg { display: block; width: 100%; min-width: 520px; max-width: 620px; height: auto; }
+  .tabpanel .tcap {
+    margin-top: 0.9rem; font-family: var(--mono); font-size: 0.65rem;
+    line-height: 1.6; color: var(--invert-ink2); max-width: 74ch;
+  }
+  .tabpanel .tcap b { color: var(--stamp); font-weight: 600; }
+
+  .dsvg .lbl { font-family: var(--mono); font-size: 8.5px; fill: var(--invert-ink2); letter-spacing: 0.08em; }
+  .dsvg .txt { font-family: var(--mono); font-size: 9px; fill: var(--invert-ink2); }
+  .dsvg .txt-i { font-family: var(--mono); font-size: 9px; fill: var(--invert-ink); }
+  .dsvg .hot { fill: var(--stamp); }
+  .dsvg .box { fill: none; stroke: var(--invert-rule); stroke-width: 1; }
+  .dsvg .bar { fill: var(--invert-ink2); opacity: 0.32; }
+  .dsvg .bar-note { fill: var(--invert-ink2); opacity: 0.62; }
+  .dsvg .bar-hot { fill: var(--stamp); }
+  .dsvg .ln { stroke: var(--invert-ink2); stroke-width: 1; opacity: 0.4; }
+  .dsvg .arrow { stroke: var(--invert-ink2); stroke-width: 1.2; fill: none; opacity: 0.7; }
+  .dsvg .slot { fill: none; stroke: var(--stamp); stroke-width: 1; stroke-dasharray: 3 3; }
+  .dsvg .slothot { font-family: var(--mono); font-size: 8.5px; fill: var(--stamp); letter-spacing: 0.08em; }
+
+  .gap-line {
+    margin-top: 2.4rem;
+    font-family: var(--display); font-weight: 500; letter-spacing: -0.03em;
+    font-size: clamp(1.4rem, 3.2vw, 2.3rem); line-height: 1.14;
+    max-width: 26ch; text-wrap: balance; color: var(--invert-ink);
+  }
+  .gap-line em { font-style: normal; color: var(--stamp); }
+
+  /* ---------- the record (act 04) ---------- */
+
+  .filemap { margin-top: 1rem; border: 1px solid var(--rule); background: var(--paper-2); border-radius: 3px; overflow-x: auto; }
+  .filemap-head {
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2);
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .filemap-body { padding: 0.9rem 0; min-width: 560px; }
+  .frow {
+    display: grid; grid-template-columns: 3rem 9.5rem minmax(0,1fr);
+    gap: 1rem; padding: 0.42rem 1rem; font-family: var(--mono); font-size: 0.76rem; align-items: baseline;
+  }
+  .frow .fno { color: var(--ink-3); }
+  .frow .fsec { color: var(--ink); font-weight: 600; }
+  .frow .fwhat { color: var(--ink-2); }
+  .frow.sealed { background: var(--stamp-bg); }
+  .frow.sealed .fsec { color: var(--stamp); }
+  .seal-tag {
+    font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--stamp); border: 1px solid currentColor; padding: 0.05rem 0.4rem; border-radius: 2px; white-space: nowrap;
+  }
+
+  .tiers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 2.2rem; }
+  .tier { background: var(--paper-2); padding: 1.3rem 1.2rem; }
+  .tier h4 { font-family: var(--display); font-weight: 500; font-size: 1.08rem; letter-spacing: -0.015em; margin: 0.5rem 0; color: var(--ink); }
+  .tier p { font-size: 0.93rem; color: var(--ink-2); line-height: 1.55; }
+  .tier .life { display: block; margin-top: 0.7rem; font-family: var(--mono); font-size: 0.63rem; color: var(--ink-3); }
+  @media (max-width: 700px) { .tiers { grid-template-columns: 1fr; } }
+
+  .lenses { margin-top: 1.6rem; border-top: 1px solid var(--rule); }
+  .lens {
+    display: grid; grid-template-columns: 8rem 3rem minmax(0,1fr) 10.5rem;
+    gap: 0.4rem 1.2rem; align-items: baseline; padding: 0.9rem 0; border-bottom: 1px solid var(--rule);
+  }
+  .lens-n { font-family: var(--display); font-weight: 500; font-size: 1.05rem; letter-spacing: -0.015em; color: var(--ink); }
+  .lens-dd { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.12em; color: var(--stamp); }
+  .lens-q { color: var(--ink-2); font-size: 0.94rem; }
+  .lens-f { font-family: var(--mono); font-size: 0.67rem; color: var(--ink-3); text-align: right; }
+  @media (max-width: 860px) {
+    .lens { grid-template-columns: minmax(0,1fr) auto; }
+    .lens-dd { text-align: right; }
+    .lens-q, .lens-f { grid-column: 1 / -1; }
+    .lens-f { text-align: left; }
+  }
+
+  .deltas { margin-top: 1rem; border: 1px solid var(--rule); background: var(--paper-2); border-radius: 3px; overflow: hidden; }
+  .deltas-head {
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2);
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .delta { display: grid; grid-template-columns: 7.5rem minmax(0,1fr); gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--rule); }
+  .delta:last-child { border-bottom: none; }
+  .delta-tag { font-family: var(--mono); font-size: 0.63rem; color: var(--stamp); white-space: nowrap; padding-top: 0.18rem; }
+  .delta-tag.folded { color: var(--ledger); }
+  .delta-b p { font-size: 0.94rem; color: var(--ink); line-height: 1.5; }
+  .delta-ev { display: block; margin-top: 0.45rem; font-family: var(--mono); font-size: 0.63rem; color: var(--ink-3); overflow-wrap: anywhere; }
+  @media (max-width: 640px) { .delta { grid-template-columns: 1fr; gap: 0.35rem; } }
+
+  /* ---------- component digest (act 05) ---------- */
+
+  .digest { margin-top: 1rem; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper-2); overflow-x: auto; }
+  .digest-inner { min-width: 820px; }
+  .dhead, .dcomp { display: grid; grid-template-columns: 10.5rem 1.15fr 1fr 1.05fr; gap: 1.3rem; padding: 0.8rem 1rem; }
+  .dhead {
+    border-bottom: 1px solid var(--rule-2);
+    font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .dhead .outcol { color: var(--s-decay); }
+  .dhead .incol { color: var(--s-hold); }
+  .dgroup-head {
+    display: flex; align-items: baseline; gap: 0.8rem; padding: 0.65rem 1rem;
+    background: var(--paper-3); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); flex-wrap: wrap;
+  }
+  .dg-n { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.12em; color: var(--ink-3); }
+  .dg-t { font-family: var(--display); font-weight: 500; font-size: 0.98rem; letter-spacing: -0.012em; color: var(--ink); }
+  .dg-s { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); margin-left: auto; }
+  .dgroup.addition .dgroup-head { background: var(--stamp-bg); border-color: var(--stamp); }
+  .dgroup.addition .dg-t, .dgroup.addition .dg-n, .dgroup.addition .dg-s { color: var(--stamp); }
+  .dcomp { border-top: 1px solid var(--rule); font-size: 0.855rem; line-height: 1.5; }
+  .dgroup-head + .dcomp { border-top: none; }
+  .dc-name { font-family: var(--mono); font-size: 0.71rem; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+  .dc-what { color: var(--ink-2); }
+  .dc-out { color: var(--ink-3); }
+  .dc-in { color: var(--ink-2); }
+  .dc-out b, .dc-in b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- loop (act 06) ---------- */
+
+  .loopwrap { margin-top: 1.6rem; overflow-x: auto; }
+  .loopsvg { width: 100%; min-width: 580px; max-width: 760px; height: auto; display: block; }
+  .loopsvg .track2 { fill: none; stroke: var(--rule-2); stroke-width: 1.2; }
+  .loopsvg .station { fill: var(--paper); stroke: var(--ink); stroke-width: 1.4; }
+  .loopsvg .st-label { font-family: var(--mono); font-size: 13px; font-weight: 600; fill: var(--ink); }
+  .loopsvg .st-sub { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
+  .loopsvg .st-no { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+  .loopsvg .seam-mark { fill: var(--stamp); }
+  .loopsvg .seam-label { font-family: var(--mono); font-size: 10.5px; fill: var(--stamp); font-weight: 600; }
+  .loopsvg .runner { fill: var(--stamp); }
+  .loopsvg .backlabel { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+
+  .seam-note { margin-top: 1.4rem; border-left: 2px solid var(--stamp); background: var(--stamp-bg); padding: 0.9rem 1.1rem; max-width: 62ch; }
+  .seam-note p { font-size: 0.96rem; color: var(--ink); margin-top: 0.4rem; }
+  .seam-note .label { color: var(--stamp); }
+
+  /* ---------- worked example (act 06) ---------- */
+
+  .beat { border-top: 1px solid var(--rule); padding-top: 1.5rem; margin-top: 2.2rem; }
+  .beat-head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .beat-no { font-family: var(--mono); font-size: 0.67rem; color: var(--paper); background: var(--ink); padding: 0.15rem 0.5rem; border-radius: 2px; letter-spacing: 0.08em; }
+  .beat-name { font-family: var(--display); font-weight: 500; font-size: 1.3rem; letter-spacing: -0.02em; }
+  .beat-what { font-family: var(--mono); font-size: 0.69rem; color: var(--ink-3); }
+
+  pre.code {
+    font-family: var(--mono); font-size: 0.75rem; line-height: 1.65;
+    background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 1rem 1.1rem; overflow-x: auto; margin: 0; color: var(--ink);
+  }
+  pre.code .c { color: var(--ink-3); }
+  pre.code .must { color: var(--ledger); font-weight: 600; }
+  pre.code .rej { color: var(--stamp); font-weight: 600; }
+  pre.code .key { color: var(--ink); font-weight: 600; }
+  pre.code .dim { color: var(--ink-3); }
+
+  .sweep { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 1rem; }
+  .dimcell { background: var(--paper-2); padding: 0.7rem 0.6rem; text-align: center; }
+  .dimcell .dn { font-family: var(--mono); font-size: 0.67rem; font-weight: 600; color: var(--ink); }
+  .dimcell .dq { font-family: var(--mono); font-size: 0.57rem; color: var(--ink-3); margin-top: 0.3rem; line-height: 1.35; display: block; }
+  .dimcell.hot { background: var(--stamp-bg); }
+  .dimcell.hot .dn { color: var(--stamp); }
+  @media (max-width: 720px) { .sweep { grid-template-columns: repeat(3, 1fr); } }
+
+  .term { margin-top: 1rem; background: var(--invert-bg); border: 1px solid var(--invert-rule); border-radius: 3px; overflow: hidden; }
+  .term-bar {
+    display: flex; align-items: center; gap: 0.55rem; padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid var(--invert-rule);
+    font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--invert-ink2);
+  }
+  .term-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--invert-rule); }
+  .term-body {
+    padding: 0.95rem 1.05rem 1.15rem; font-family: var(--mono); font-size: 0.74rem; line-height: 1.72;
+    color: var(--invert-ink); min-height: 330px; overflow-x: auto; white-space: pre;
+  }
+  .term-body .tp { color: var(--invert-ink2); }
+  .term-body .tc { color: var(--invert-ink); font-weight: 600; }
+  .term-body .tno { color: var(--stamp); }
+  .term-body .tok { color: var(--ledger); }
+  .term-body .tdim { color: var(--invert-ink2); }
+  .caret { display: inline-block; width: 7px; height: 0.95em; background: var(--stamp); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- compared (act 07) ---------- */
+
+  .matrix { margin-top: 1rem; overflow-x: auto; }
+  .matrix table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  .matrix th, .matrix td { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .matrix thead th {
+    border-bottom: 1px solid var(--rule-2);
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; line-height: 1.4;
+  }
+  .matrix thead th span { display: block; font-size: 0.59rem; color: var(--ink-3); font-weight: 500; margin-top: 0.2rem; }
+  .matrix tbody th { font-family: var(--body); font-size: 0.93rem; font-weight: 400; color: var(--ink); width: 34%; }
+  .matrix td { width: 22%; }
+  .cell { display: flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.67rem; }
+  .cell .mk { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+  .cell.no { color: var(--ink-3); }
+  .cell.no .mk { background: transparent; border: 1px solid var(--ink-3); }
+  .cell.yes { color: var(--ink); }
+  .cell.yes .mk { background: var(--ink-3); }
+  .cell.held { color: var(--s-hold); }
+  .cell.held .mk { background: var(--s-hold); }
+  .cell.risk { color: var(--s-decay); }
+  .cell.risk .mk { background: var(--s-decay); }
+  .matrix .colhi { background: var(--ledger-bg); }
+
+  /* ---------- chart shell ---------- */
+
+  .figure { margin-top: 1rem; border: 1px solid var(--rule); background: var(--paper-2); border-radius: 3px; overflow: hidden; }
+  .figure-head {
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+  }
+  .figure-title { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2); }
+  .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; }
+  .lg { display: flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.64rem; color: var(--ink-2); }
+  .lg-key { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+  .lg-key.dash { height: 0; border-top: 2px dashed currentColor; border-radius: 0; }
+  .plotwrap { position: relative; padding: 0.6rem 0.4rem 0.2rem; overflow-x: auto; }
+  .plot { display: block; width: 100%; min-width: 520px; height: auto; }
+  .plot .grid { stroke: var(--rule); stroke-width: 1; }
+  .plot .axtext { font-family: var(--mono); font-size: 9.5px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .plot .dlabel { font-family: var(--mono); font-size: 10px; font-weight: 600; fill: var(--ink); }
+  .plot .dnote { font-family: var(--mono); font-size: 9px; fill: var(--ink-3); }
+  .plot .ring { stroke: var(--paper-2); stroke-width: 2; }
+  .plot .hit { fill: transparent; cursor: crosshair; }
+  .plot .cross { stroke: var(--ink-3); stroke-width: 1; opacity: 0; }
+  .plot .cross.on { opacity: 0.5; }
+
+  .tip {
+    position: absolute; pointer-events: none;
+    background: var(--invert-bg); color: var(--invert-ink);
+    border: 1px solid var(--invert-rule); border-radius: 3px;
+    padding: 0.45rem 0.6rem; font-family: var(--mono); font-size: 0.66rem; line-height: 1.5;
+    white-space: nowrap; opacity: 0; transition: opacity 0.12s; z-index: 5;
+    transform: translate(-50%, -115%);
+  }
+  .tip.on { opacity: 1; }
+  .tip .tiptitle { color: var(--invert-ink2); margin-bottom: 0.15rem; }
+  .tip .dot { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; }
+  .tip .dot.decay { background: var(--s-decay); }
+  .tip .dot.hold { background: var(--s-hold); }
+
+  .figure-foot { padding: 0.7rem 1rem; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 0.635rem; color: var(--ink-3); line-height: 1.55; }
+  .figure-foot strong { color: var(--ink-2); font-weight: 600; }
+
+  details.tableview { border-top: 1px solid var(--rule); }
+  details.tableview summary {
+    padding: 0.55rem 1rem; font-family: var(--mono); font-size: 0.63rem;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); cursor: pointer;
+  }
+  details.tableview summary:hover { color: var(--ink); }
+  details.tableview .tvbody { padding: 0 1rem 0.9rem; overflow-x: auto; }
+  details.tableview table { border-collapse: collapse; font-family: var(--mono); font-size: 0.67rem; width: 100%; }
+  details.tableview th, details.tableview td {
+    text-align: right; padding: 0.28rem 0.7rem 0.28rem 0; border-bottom: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap;
+  }
+  details.tableview th { color: var(--ink); font-weight: 600; }
+  details.tableview th:first-child, details.tableview td:first-child { text-align: left; }
+
+  /* ---------- adopt (act 08) ---------- */
+
+  .chain { display: grid; gap: 0; margin-top: 1.6rem; }
+  .chain-row {
+    display: grid; grid-template-columns: 7.5rem minmax(0,1fr); gap: 0 1.2rem;
+    align-items: start; padding: 0.95rem 0; border-top: 1px solid var(--rule);
+  }
+  .chain-row:first-child { border-top: none; padding-top: 0; }
+  .chain-k { font-family: var(--mono); font-size: 0.7rem; color: var(--ink); text-transform: uppercase; padding-top: 0.15rem; }
+  .chain-v { color: var(--ink-2); font-size: 0.96rem; }
+  .chain-v b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 640px) { .chain-row { grid-template-columns: 1fr; gap: 0.35rem; } }
+
+  .installs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1rem; margin-top: 1.8rem; }
+  .install { border: 1px solid var(--rule); background: var(--paper-2); border-radius: 3px; padding: 1rem 1.1rem; }
+  .install pre { font-family: var(--mono); font-size: 0.73rem; margin: 0.6rem 0 0; overflow-x: auto; color: var(--ink); line-height: 1.6; }
+
+  .closer { margin-top: clamp(3rem, 7vw, 5rem); padding-top: 2.2rem; border-top: 1px solid var(--rule); }
+  .closer .big {
+    font-family: var(--display); font-weight: 500; letter-spacing: -0.035em;
+    font-size: clamp(1.7rem, 4.6vw, 3.2rem); line-height: 1.06; max-width: 20ch; text-wrap: balance;
+  }
+  .closer .big .dim { color: var(--ink-3); }
+
+  footer.foot { border-top: 1px solid var(--rule); padding-block: 2.2rem 3rem; font-family: var(--mono); font-size: 0.65rem; color: var(--ink-3); line-height: 1.7; }
+  .foot-row { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+  .foot-links { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+
+  /* ---------- progress + motion ---------- */
+
+  .progress { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: var(--stamp); z-index: 60; pointer-events: none; }
+
+  .rv { opacity: 0; transform: translateY(10px); transition: opacity 0.75s cubic-bezier(.2,.7,.3,1), transform 0.75s cubic-bezier(.2,.7,.3,1); }
+  .rv.in { opacity: 1; transform: none; }
+  .rv-d1 { transition-delay: 0.07s; }
+  .rv-d2 { transition-delay: 0.14s; }
+  .rv-d3 { transition-delay: 0.21s; }
+  .rv-d4 { transition-delay: 0.28s; }
+
+  .runner-anim {
+    offset-path: path("M 90 62 L 630 62 C 700 62 700 152 630 152 L 90 152 C 20 152 20 62 90 62");
+    offset-rotate: 0deg;
+    animation: travel 11s cubic-bezier(.5,0,.5,1) infinite;
+  }
+  @keyframes travel {
+    0% { offset-distance: 0%; }
+    22% { offset-distance: 33%; }
+    30% { offset-distance: 33%; }
+    58% { offset-distance: 66%; }
+    66% { offset-distance: 66%; }
+    88% { offset-distance: 100%; }
+    100% { offset-distance: 100%; }
+  }
+  .seam-pulse { animation: pulse 11s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse {
+    0%, 20% { opacity: 0.35; transform: scale(1); }
+    26% { opacity: 1; transform: scale(1.5); }
+    40%, 100% { opacity: 0.35; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rv { opacity: 1; transform: none; transition: none; }
+    .runner-anim, .seam-pulse, .caret { animation: none; }
+    .runner-anim { offset-distance: 12%; }
+    .seam-pulse { opacity: 1; }
+    .btn { transition: none; }
+    #heroCanvas { display: none; }
+  }
+</style>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <canvas id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <div class="hero-rule rv in">
+        <span class="label">ADD · AI-Driven Development</span>
+        <span class="label">The trust layer for agentic work</span>
+      </div>
+
+      <h1 class="rv in">Your AI's first milestone is always great.<br><span class="dim">ADD is for every milestone after that.</span></h1>
+
+      <p class="hero-lede rv rv-d2 in">
+        Agents made writing code nearly free. They did not make <em>trusting</em> it free.
+        Why a coding agent needs a method with a memory — and what that method looks like
+        when it runs.
+      </p>
+
+      <div class="cta-row rv rv-d3 in">
+        <a class="btn" href="https://pilotspace.github.io/ADD/">Read the method</a>
+        <a class="btn ghost" href="https://github.com/pilotspace/ADD">Source &amp; benchmark</a>
+      </div>
+
+      <div class="stats">
+        <div class="rv rv-d1">
+          <span class="stat-n" data-count="3">3</span>
+          <span class="stat-t">beats per unit of work<br>Direction · Build · Verify</span>
+        </div>
+        <div class="rv rv-d2">
+          <span class="stat-n" data-count="1">1</span>
+          <span class="stat-t">human approval per task<br>at the frozen contract</span>
+        </div>
+        <div class="rv rv-d3">
+          <span class="stat-n" data-count="22">22</span>
+          <span class="stat-t">verbs in the whole kernel<br>stdlib Python, no deps</span>
+        </div>
+        <div class="rv rv-d4">
+          <span class="stat-n" data-count="6">6</span>
+          <span class="stat-t">of 6 milestones held every<br>quality floor at 1.0</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 01 · THE CAPABILITY JUMP ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">01</span><span class="act-kind">Reason</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">One response was never<br>going to be enough.</h2>
+          <p class="prose">
+            A single model call is a closed system. Whatever is in the prompt is the entire
+            world: it cannot look anything up, cannot open the file it is about to change,
+            cannot run what it wrote, and cannot check its own claim. For a definition or a
+            first draft, that is plenty. For work that has a <em>correct answer</em>, it is a
+            guess with excellent grammar.
+          </p>
+          <p class="prose">
+            And the guess does not arrive hedged. It arrives confident, complete-looking, and
+            occasionally subtly wrong — built on an assumption nobody stated, missing an edge
+            case nobody named. <strong>A model is fast in whatever direction it is pointed, and
+            a single response gives you no way to check the direction.</strong> One ordinary
+            request shows the difference.
+          </p>
+        </div>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 1 — one request, answered two ways</h3>
+          <div class="vs">
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="panel-t">One call</span>
+                <span class="panel-s">1 turn · 0 tools · 0 tests run</span>
+              </div>
+              <div class="panel-body">
+                <div class="msg">
+                  <div class="msg-who">You</div>
+                  <div class="bubble you">Let users transfer money between their own accounts.</div>
+                </div>
+                <div class="msg">
+                  <div class="msg-who">Assistant</div>
+                  <div class="bubble">
+                    Here's a transfer function for your accounts service:
+<pre><span class="kw">async function</span> transfer(fromId, toId, amount) {
+  <span class="kw">const</span> from = <span class="kw">await</span> db.account(fromId);
+  <span class="kw">const</span> to   = <span class="kw">await</span> db.account(toId);
+
+  from.balance -= amount;
+  to.balance   += amount;
+
+  <span class="kw">await</span> db.save(from);
+  <span class="kw">await</span> db.save(to);
+  <span class="kw">return</span> { ok: <span class="kw">true</span> };
+}</pre>
+                    This debits the source account and credits the destination, then persists both.
+                  </div>
+                </div>
+              </div>
+              <div class="panel-foot">
+                <div class="miss"><span class="x">✗</span><span>never opened your codebase — <code>db.account</code> may not exist</span></div>
+                <div class="miss"><span class="x">✗</span><span>never ran; nothing here has been executed once</span></div>
+                <div class="miss"><span class="x">✗</span><span>a balance can go negative — there is no check</span></div>
+                <div class="miss"><span class="x">✗</span><span>two saves, no transaction — a crash between them loses money</span></div>
+                <div class="miss"><span class="x">✗</span><span>never said it assumed both accounts are yours</span></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="panel-t">Agentic</span>
+                <span class="panel-s">8 turns · tools · tests run</span>
+              </div>
+              <div class="panel-body">
+                <div class="turns">
+                  <div class="turn"><span class="tn">01</span><span class="tv"><b>read</b> src/accounts.js</span><span class="track"><i style="width:11%"></i></span><span class="tk">2.1k</span></div>
+                  <div class="turn"><span class="tn">02</span><span class="tv"><b>read</b> src/db.js</span><span class="track"><i style="width:18%"></i></span><span class="tk">3.5k</span></div>
+                  <div class="turn"><span class="tn">03</span><span class="tv"><b>grep</b> "balance" → 11 hits</span><span class="track"><i style="width:22%"></i></span><span class="tk">4.4k</span></div>
+                  <div class="turn"><span class="tn">04</span><span class="tv"><b>write</b> src/transfer.js</span><span class="track"><i style="width:28%"></i></span><span class="tk">5.6k</span></div>
+                  <div class="turn"><span class="tn">05</span><span class="tv"><b>run</b> npm test <span class="fail">✗ 2 failing</span></span><span class="track"><i style="width:46%"></i></span><span class="tk">9.2k</span></div>
+                  <div class="turn"><span class="tn">06</span><span class="tv"><b>read</b> the failure output</span><span class="track"><i style="width:60%"></i></span><span class="tk">12.0k</span></div>
+                  <div class="turn"><span class="tn">07</span><span class="tv"><b>edit</b> src/transfer.js</span><span class="track"><i style="width:64%"></i></span><span class="tk">12.8k</span></div>
+                  <div class="turn"><span class="tn">08</span><span class="tv"><b>run</b> npm test <span class="pass">✓ 14 passing</span></span><span class="track"><i style="width:80%"></i></span><span class="tk">15.9k</span></div>
+                </div>
+                <p style="margin-top:0.9rem;font-family:var(--mono);font-size:0.62rem;color:var(--ink-2);line-height:1.6">
+                  It opened the real files, wrote against the real database layer, ran the real
+                  suite, <span class="fail">watched itself fail</span>, read why, fixed it, and
+                  ran again. None of that is available to the panel on the left at any price.
+                </p>
+              </div>
+              <div class="panel-foot">
+                <strong style="color:var(--ink-2)">And every line of it is still in the window.</strong>
+                Eight turns bought a working feature and spent 15.9k tokens that never leave.
+                <em>Turn counts and token deltas are illustrative of the shape, not a measurement.</em>
+              </div>
+            </div>
+
+          </div>
+          <p class="cap">
+            The ladder Anthropic names: an <strong>augmented LLM</strong> (retrieval, tools,
+            memory) → a <strong>workflow</strong> (calls orchestrated through predefined code
+            paths) → an <strong>agent</strong> (the model directs its own process and tool use).
+            The left panel cannot be prompted into the right one, because what it lacks is not
+            phrasing — it is the ability to act and then look at what happened.
+          </p>
+        </div>
+
+        <div class="quote rv">
+          <p>Agents can be used for open-ended problems where it's difficult or impossible to predict the required number of steps, and where you can't hardcode a fixed path.</p>
+          <cite>Anthropic · Building effective agents</cite>
+        </div>
+
+        <p class="prose rv">
+          So the question was never whether to go agentic. It is <strong>what breaks once you
+          do</strong> — and the answer is already visible in the right-hand panel, in its last
+          column. Hold on to this request: it comes back in act 06, run a third way.
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 · WHAT IT COSTS ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">02</span><span class="act-kind">Reason</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">Then autonomy ran into<br>its own ceiling.</h2>
+          <p class="prose">
+            An agent buys autonomy with turns, and every turn spends context. Anthropic names
+            the resulting decay <strong>context rot</strong>, and is precise about why it is not
+            a limitation waiting on a bigger window: in a transformer every token attends to
+            every other token — <strong>n² pairwise relationships</strong> — and models are
+            trained predominantly on shorter sequences, carrying fewer specialised parameters
+            for context-wide dependencies. The <strong>attention budget</strong> depletes as
+            tokens arrive. It is architectural.
+          </p>
+        </div>
+
+        <div class="quote rv">
+          <p>As the number of tokens in the context window increases, the model's ability to accurately recall information from that context decreases.</p>
+          <cite>Anthropic · Effective context engineering for AI agents</cite>
+        </div>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 2 — attention budget under load</h3>
+          <div class="instrument" id="rotInstrument">
+            <div class="inst-head">
+              <span class="figure-title">scroll to load the window</span>
+              <span class="inst-readout">
+                <span>context <b id="roTokens">0k</b></span>
+                <span>recall of turn-1 decision <b id="roRecall">1.00</b></span>
+                <span id="roState" class="calm">nominal</span>
+              </span>
+            </div>
+            <canvas id="rotCanvas" role="img" aria-label="A context window fills with tokens while recall of a decision made in turn one decays from 1.00 toward roughly 0.3."></canvas>
+            <div class="inst-foot">
+              Each mark is a slice of context; the first six are a decision made in turn one. The
+              line is the model's ability to recall it. <strong>The decision is never deleted — it
+              just stops being attended to.</strong>
+              <div class="n2row">
+                <span class="n2"><b>100M</b><span>pairwise relations at 10k tokens</span></span>
+                <span class="n2"><b>10B</b><span>at 100k</span></span>
+                <span class="n2"><b>40B</b><span>at 200k — doubling quadruples the work</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 3 — how the decay presents in production</h3>
+          <p class="prose" style="margin-top:0.2rem">
+            That curve stays abstract until you have watched it happen. Anthropic ran current
+            Claude models as long-running coding agents and published the failure modes they
+            kept hitting. Read them as the clinical presentation of everything above.
+          </p>
+
+          <div class="modes">
+            <div class="mode">
+              <span>
+                <span class="mode-n">Failure mode 01</span>
+                <span class="mode-t">Context exhaustion</span>
+              </span>
+              <span>
+                <blockquote>&ldquo;the agent tended to try to do too much at once — essentially to attempt to one-shot the app. Often, this led to the model running out of context in the middle of its implementation, leaving the next session to start with a feature half-implemented and undocumented.&rdquo;</blockquote>
+                <span class="mech"><b>Mechanically:</b> the window ends before the work does, and nothing carried the state across the boundary.</span>
+                <button class="reveal" type="button" aria-expanded="false" aria-controls="ex-1">what this looks like<span class="chev">›</span></button>
+                <div class="modeex" id="ex-1">
+                  <div class="modeex-h"><span>what the agent actually does</span><span>illustrative reconstruction</span></div>
+<pre class="modeex-b"><span class="sys">session 4 · turn 61                    context 198,402 / 200,000</span>
+
+<span class="who">assistant</span>  Now I'll wire the checkout total into the order
+           summary and then handle the discount edge ca…
+           <span class="bad">⚠ context limit reached — response truncated</span>
+
+<span class="sys">────────────────────────────────────────────────────────────</span>
+<span class="sys">session 5 · turn 01                        context 1,204 / 200,000</span>
+
+<span class="who">user</span>       continue
+<span class="who">assistant</span>  I see a <span class="truth">checkout/</span> directory with cart.ts and an
+           empty totals.ts. I don't have context on the
+           earlier decisions, so <span class="bad">I'll start with a clean
+           implementation</span> of the checkout flow.</pre>
+                </div>
+              </span>
+            </div>
+
+            <div class="mode hot">
+              <span>
+                <span class="mode-n">Failure mode 02</span>
+                <span class="mode-t">Hallucinated completion</span>
+              </span>
+              <span>
+                <blockquote>&ldquo;After some features had already been built, a later agent instance would look around, see that progress had been made, and declare the job done.&rdquo;</blockquote>
+                <span class="mech"><b>Mechanically:</b> with no durable record of what &ldquo;done&rdquo; required, the agent infers completion from <em>appearances</em> — and appearances are exactly what a capable model is best at producing. Not a wrong fact in a paragraph: <b>a wrong verdict about your project.</b></span>
+                <button class="reveal" type="button" aria-expanded="false" aria-controls="ex-2">what this looks like<span class="chev">›</span></button>
+                <div class="modeex" id="ex-2">
+                  <div class="modeex-h"><span>what the agent actually does</span><span>illustrative reconstruction</span></div>
+<pre class="modeex-b"><span class="sys">session 9 · turn 04</span>
+
+<span class="who">user</span>       is the app done?
+<span class="who">assistant</span>  Let me survey the repository.
+
+           <span class="okk">✓</span> auth/            login · signup · reset
+           <span class="okk">✓</span> payments/        stripe integration
+           <span class="okk">✓</span> dashboard/       charts · filters
+           <span class="okk">✓</span> notifications/   email + in-app
+
+           <span class="bad">The application appears feature-complete.
+           Marking the project as done.</span>
+
+<span class="sys">── ground truth · never loaded into this window ──</span>
+           features.json    <span class="truth">214 total · 61 still "failing"</span>
+           last test run    <span class="truth">4 days ago (session 5)</span>
+           open bugs        <span class="truth">17</span></pre>
+                </div>
+              </span>
+            </div>
+
+            <div class="mode">
+              <span>
+                <span class="mode-n">Failure mode 03</span>
+                <span class="mode-t">Environment degradation</span>
+              </span>
+              <span>
+                <span class="para">The agent leaves the workspace unclean — bugs in place, documentation missing — so the following session spends its budget debugging inherited damage instead of making progress. <span style="color:var(--ink-3);font-size:0.85em">(paraphrased; the other three are verbatim)</span></span>
+                <span class="mech"><b>Mechanically:</b> every session pays the previous session's unrecorded debt, and the debt compounds because nobody wrote down that it existed.</span>
+                <button class="reveal" type="button" aria-expanded="false" aria-controls="ex-3">what this looks like<span class="chev">›</span></button>
+                <div class="modeex" id="ex-3">
+                  <div class="modeex-h"><span>what the agent actually does</span><span>illustrative reconstruction</span></div>
+<pre class="modeex-b"><span class="sys">session 6 · turn 01</span>
+
+<span class="who">user</span>       add rate limiting to the API
+<span class="who">assistant</span>  Running the suite first to get a baseline.
+
+           $ npm test
+           Tests: <span class="bad">6 failed</span>, 188 passed, 194 total
+             <span class="truth">✗ payments › refund issues partial credit</span>
+             <span class="truth">✗ auth › refresh token rotates on use</span>
+             <span class="sys">… 4 more</span>
+
+           These pre-date this session. <span class="bad">I'll fix them
+           before adding rate limiting.</span>
+
+<span class="sys">── 37 minutes later ──</span>
+           rate limiting    <span class="truth">not started</span>
+           budget spent     <span class="truth">on debt nobody recorded</span></pre>
+                </div>
+              </span>
+            </div>
+
+            <div class="mode">
+              <span>
+                <span class="mode-n">Failure mode 04</span>
+                <span class="mode-t">Premature feature marking</span>
+              </span>
+              <span>
+                <blockquote>&ldquo;Claude marks features as done prematurely&rdquo;</blockquote>
+                <span class="mech"><b>Mechanically:</b> the status flag and the evidence for it are two separate artifacts, and only one got produced. Anthropic's fix was to make end-to-end testing mandatory before anything may be marked complete — which is to say, <b>to require evidence before a claim.</b></span>
+                <button class="reveal" type="button" aria-expanded="false" aria-controls="ex-4">what this looks like<span class="chev">›</span></button>
+                <div class="modeex" id="ex-4">
+                  <div class="modeex-h"><span>what the agent actually does</span><span>illustrative reconstruction</span></div>
+<pre class="modeex-b"><span class="sys">features.json · written by the agent, session 7</span>
+
+  {
+    "id": 47,
+    "name": "transfer between own accounts",
+    <span class="bad">"status": "passing"</span>        <span class="sys">← the claim</span>
+  }
+
+<span class="sys">── what backs it ──</span>
+    test run          <span class="truth">none</span>
+    browser check     <span class="truth">none</span>
+    assertion id      <span class="truth">none</span>
+    evidence          <span class="truth">the agent re-read its own diff</span></pre>
+                </div>
+              </span>
+            </div>
+          </div>
+
+          <p class="cap">
+            Source: Anthropic, <em>Effective harnesses for long-running agents</em>. Note what
+            these are <strong>not</strong> — none is a reasoning failure, a knowledge gap, or a
+            weak model. Every one is a memory failure wearing a competence costume, and the
+            better the model gets at plausible surfaces, the more convincing mode 02 becomes.
+          </p>
+        </div>
+
+        <p class="prose rv">
+          Anthropic's own remedies land somewhere worth noticing: a structured feature list
+          carrying explicit pass/fail state, commits with descriptive messages, a progress file,
+          verification at the <em>start</em> of a session, and a clean state enforced before it
+          ends. <strong>That is not a prompting technique. That is a record kept outside the
+          model</strong> — arrived at independently, under the same pressure.
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 · THE GAP ============ -->
+  <section class="act invert">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">03</span><span class="act-kind">The gap</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">Every strategy manages size.<br>None assigns authority.</h2>
+          <p class="prose">
+            A real discipline grew up around this. Anthropic defines <strong>context
+            engineering</strong> as curating and maintaining the optimal set of tokens during
+            inference, and names four strategies — every serious agent harness now ships some
+            mix of them, including the one you are using.
+          </p>
+        </div>
+
+        <div class="tabs rv" id="stratTabs">
+          <div class="tablist" role="tablist" aria-label="The four context-engineering strategies">
+            <button class="tab" role="tab" id="tab-1" aria-controls="pan-1" aria-selected="true" type="button">
+              <span class="tlab">Strategy 01</span><span class="tname">Compaction</span>
+            </button>
+            <button class="tab" role="tab" id="tab-2" aria-controls="pan-2" aria-selected="false" tabindex="-1" type="button">
+              <span class="tlab">Strategy 02</span><span class="tname">Structured notes</span>
+            </button>
+            <button class="tab" role="tab" id="tab-3" aria-controls="pan-3" aria-selected="false" tabindex="-1" type="button">
+              <span class="tlab">Strategy 03</span><span class="tname">Sub-agents</span>
+            </button>
+            <button class="tab" role="tab" id="tab-4" aria-controls="pan-4" aria-selected="false" tabindex="-1" type="button">
+              <span class="tlab">Strategy 04</span><span class="tname">Just-in-time retrieval</span>
+            </button>
+          </div>
+
+          <div class="tabpanels">
+
+            <div class="tabpanel" role="tabpanel" id="pan-1" aria-labelledby="tab-1">
+              <div class="svgwrap">
+                <svg class="dsvg" viewBox="0 0 580 150" xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="Compaction: a long history containing an approved decision and an agent note is summarised into one block, where both become the same prose. The slot for 'which of these is binding' is empty.">
+                  <text class="lbl" x="16" y="18">BEFORE · 14K OF HISTORY</text>
+                  <rect class="bar" x="16"  y="32" width="8" height="52"/>
+                  <rect class="bar" x="29"  y="32" width="8" height="52"/>
+                  <rect class="bar-hot"  x="42" y="32" width="8" height="52"/>
+                  <rect class="bar" x="55"  y="32" width="8" height="52"/>
+                  <rect class="bar" x="68"  y="32" width="8" height="52"/>
+                  <rect class="bar-note" x="81" y="32" width="8" height="52"/>
+                  <rect class="bar" x="94"  y="32" width="8" height="52"/>
+                  <rect class="bar" x="107" y="32" width="8" height="52"/>
+                  <rect class="bar" x="120" y="32" width="8" height="52"/>
+                  <rect class="bar" x="133" y="32" width="8" height="52"/>
+                  <rect class="bar" x="146" y="32" width="8" height="52"/>
+                  <rect class="bar" x="159" y="32" width="8" height="52"/>
+                  <text class="slothot" x="16" y="98">■ your approved decision</text>
+                  <text class="txt" x="16" y="112">■ the agent's own note</text>
+
+                  <path class="arrow" d="M 186 58 L 214 58 M 207 52 L 214 58 L 207 64"/>
+
+                  <text class="lbl" x="232" y="18">AFTER · 1.2K SUMMARY</text>
+                  <rect class="box" x="232" y="32" width="176" height="52"/>
+                  <line class="ln" x1="244" y1="46" x2="396" y2="46"/>
+                  <line class="ln" x1="244" y1="58" x2="386" y2="58"/>
+                  <line class="ln" x1="244" y1="70" x2="356" y2="70"/>
+                  <text class="txt" x="232" y="98">both survive — as the same prose,</text>
+                  <text class="txt" x="232" y="112">in the agent's own voice</text>
+
+                  <text class="slothot" x="432" y="18">BINDING?</text>
+                  <rect class="slot" x="432" y="32" width="132" height="52"/>
+                  <text class="slothot" x="498" y="63" text-anchor="middle">— no such field —</text>
+                </svg>
+              </div>
+              <p class="tcap">
+                Compaction is lossy on purpose, and it is loss of the right kind — until you ask
+                which surviving sentence you are still bound by. <b>A summary is the agent's
+                account of what happened,</b> and an account has no signature on it.
+              </p>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="pan-2" aria-labelledby="tab-2" hidden>
+              <div class="svgwrap">
+                <svg class="dsvg" viewBox="0 0 580 150" xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="Structured notes: a NOTES.md file where the line recording an approved decision is silently rewritten by the same agent between two sessions. Nothing detects the change.">
+                  <text class="lbl" x="16" y="18">NOTES.MD · SESSION 3</text>
+                  <rect class="box" x="16" y="28" width="236" height="72"/>
+                  <text class="txt" x="26" y="45">- auth uses JWT, 30-day refresh</text>
+                  <text class="txt" x="26" y="60">- payments: Stripe, retries TODO</text>
+                  <text class="hot txt" x="26" y="75">- decision: own accounts only</text>
+                  <text class="txt" x="26" y="90">- TODO: rate limiting</text>
+
+                  <path class="arrow" d="M 268 64 L 296 64 M 289 58 L 296 64 L 289 70"/>
+
+                  <text class="lbl" x="312" y="18">NOTES.MD · SESSION 7</text>
+                  <rect class="box" x="312" y="28" width="252" height="72"/>
+                  <text class="txt" x="322" y="45">- auth uses JWT, 30-day refresh</text>
+                  <text class="txt" x="322" y="60">- payments: Stripe, retries TODO</text>
+                  <text class="hot txt" x="322" y="75">- decision: any account by id</text>
+                  <text class="txt" x="322" y="90">- TODO: rate limiting</text>
+
+                  <text class="slothot" x="16" y="122">ONE LINE CHANGED · NO SEAL · NO DIFF SHOWN · NO REFUSAL · NOBODY ASKED</text>
+                  <line x1="16" y1="130" x2="564" y2="130" stroke="var(--stamp)" stroke-width="1" stroke-dasharray="3 3"/>
+                </svg>
+              </div>
+              <p class="tcap">
+                Persistent memory solves recall completely and ownership not at all.
+                <b>Notes the agent wrote are notes the agent can quietly rewrite</b> — and the
+                rewritten file reads exactly as authoritative as the original did.
+              </p>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="pan-3" aria-labelledby="tab-3" hidden>
+              <div class="svgwrap">
+                <svg class="dsvg" viewBox="0 0 580 150" xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="Sub-agents: three agents work in clean windows and return short summaries to an orchestrator. The orchestrator receives claims, with no evidence attached.">
+                  <rect class="box" x="220" y="12" width="140" height="26"/>
+                  <text class="txt-i" x="290" y="29" text-anchor="middle">ORCHESTRATOR</text>
+
+                  <path class="arrow" d="M 290 38 L 290 50 M 80 50 L 500 50 M 80 50 L 80 66 M 290 50 L 290 66 M 500 50 L 500 66"/>
+
+                  <rect class="box" x="20" y="66" width="120" height="40"/>
+                  <text class="txt" x="80" y="82" text-anchor="middle">sub-agent 1</text>
+                  <text class="txt" x="80" y="96" text-anchor="middle">clean window</text>
+
+                  <rect class="box" x="230" y="66" width="120" height="40"/>
+                  <text class="txt" x="290" y="82" text-anchor="middle">sub-agent 2</text>
+                  <text class="txt" x="290" y="96" text-anchor="middle">clean window</text>
+
+                  <rect class="box" x="440" y="66" width="120" height="40"/>
+                  <text class="txt" x="500" y="82" text-anchor="middle">sub-agent 3</text>
+                  <text class="txt" x="500" y="96" text-anchor="middle">clean window</text>
+
+                  <rect class="slot" x="20"  y="118" width="120" height="20"/>
+                  <text class="slothot" x="80"  y="132" text-anchor="middle">"done — looks right"</text>
+                  <rect class="slot" x="230" y="118" width="120" height="20"/>
+                  <text class="slothot" x="290" y="132" text-anchor="middle">"done — looks right"</text>
+                  <rect class="slot" x="440" y="118" width="120" height="20"/>
+                  <text class="slothot" x="500" y="132" text-anchor="middle">"done — looks right"</text>
+                </svg>
+              </div>
+              <p class="tcap">
+                Clean windows are genuinely the right architecture — and then the orchestrator
+                has to accept what comes back. <b>A condensed report about work you cannot see
+                is a claim, not evidence.</b> Nothing in the return channel carries a test id.
+              </p>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="pan-4" aria-labelledby="tab-4" hidden>
+              <div class="svgwrap">
+                <svg class="dsvg" viewBox="0 0 580 150" xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="Just-in-time retrieval: an index ranks candidate files by relevance score. The column headed 'settled?' is empty for every row — retrieval has no such field.">
+                  <text class="lbl" x="16"  y="18">IDENTIFIER</text>
+                  <text class="lbl" x="300" y="18">RELEVANCE</text>
+                  <text class="slothot" x="430" y="18">SETTLED?</text>
+
+                  <line class="ln" x1="16" y1="26" x2="564" y2="26"/>
+
+                  <text class="txt-i" x="16"  y="46">specs/auth.md</text>
+                  <text class="txt"   x="300" y="46">0.91</text>
+                  <rect class="bar-note" x="340" y="39" width="70" height="8"/>
+                  <text class="slothot" x="430" y="46">—</text>
+
+                  <text class="txt-i" x="16"  y="70">tasks/login.md</text>
+                  <text class="txt"   x="300" y="70">0.78</text>
+                  <rect class="bar-note" x="340" y="63" width="58" height="8"/>
+                  <text class="slothot" x="430" y="70">—</text>
+
+                  <text class="txt-i" x="16"  y="94">notes/session-3.md</text>
+                  <text class="txt"   x="300" y="94">0.44</text>
+                  <rect class="bar" x="340" y="87" width="32" height="8"/>
+                  <text class="slothot" x="430" y="94">—</text>
+
+                  <line class="ln" x1="16" y1="106" x2="564" y2="106"/>
+                  <rect class="slot" x="416" y="30" width="148" height="86"/>
+                  <text class="slothot" x="16" y="132">RANKED BY RELEVANCE. THERE IS NO COLUMN FOR SETTLED.</text>
+                </svg>
+              </div>
+              <p class="tcap">
+                The most efficient of the four, and the clearest about the shape of the hole.
+                <b>Retrieval decides what is relevant, never what is settled</b> — and a
+                three-week-old approved contract scores lower than this morning's chatter.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="gap-line rv">
+          The missing primitive is not more memory. It is
+          <em>a decision the agent is not permitted to edit</em>.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 · THE RECORD ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">04</span><span class="act-kind">Resolve</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">ADD is that primitive,<br>plus the record it lives in.</h2>
+          <p class="prose">
+            <strong>AI-Driven Development</strong> is a method the agent runs off disk. You own
+            the two things it cannot own — deciding <em>what</em> to build and <em>verifying</em>
+            it is correct — and it owns everything in between. It installs as a skill plus a
+            stdlib-Python kernel and drives under Claude Code, Codex, Cursor, Copilot, Gemini
+            CLI and the rest, through one CLI.
+          </p>
+          <p class="prose">
+            The unit of work is one task, in one file, with eight sections. Two of them are
+            <strong>sealed</strong> — the agent can read them, build against them, and fail
+            against them; what it cannot do is edit them so its own work passes.
+          </p>
+        </div>
+
+        <div class="filemap rv">
+          <div class="filemap-head">
+            <span>.add/tasks/transfer.md</span>
+            <span>tier 1 · one feature · sealed, then closed</span>
+          </div>
+          <div class="filemap-body">
+            <div class="frow sealed"><span class="fno">§1</span><span class="fsec">RULES</span><span class="fwhat">what must hold (M) and must never happen (R) &nbsp;<span class="seal-tag">sealed</span></span></div>
+            <div class="frow"><span class="fno">§2</span><span class="fsec">ASSUMPTIONS</span><span class="fwhat">what the request never said — swept across six dimensions</span></div>
+            <div class="frow"><span class="fno">§3</span><span class="fsec">PLAN</span><span class="fwhat">the external contract, and the file scope it may touch</span></div>
+            <div class="frow"><span class="fno">§4</span><span class="fsec">EDGES</span><span class="fwhat">boundary cases worth a check of their own</span></div>
+            <div class="frow sealed"><span class="fno">§5</span><span class="fsec">CHECKS</span><span class="fwhat">each test id bound to the rules it proves &nbsp;<span class="seal-tag">sealed</span></span></div>
+            <div class="frow"><span class="fno">§6</span><span class="fsec">RECEIPT</span><span class="fwhat">the recorded run: command, exit, reported ids, scope digests</span></div>
+            <div class="frow"><span class="fno">§7</span><span class="fsec">GATE</span><span class="fwhat">the outcome, who recorded it, and on what evidence</span></div>
+            <div class="frow"><span class="fno">§8</span><span class="fsec">DELTAS</span><span class="fwhat">what was learned — outbound to the living specs below</span></div>
+          </div>
+        </div>
+
+        <div class="stack rv">
+          <p class="prose">
+            But a task <em>closes</em>. If that were the only memory, every feature would start
+            from zero and the project would never develop an opinion — the month-two failure
+            again, one level up. So the bundle carries a second tier that never closes.
+          </p>
+          <div class="tiers">
+            <div class="tier">
+              <span class="label">Tier 1 · episodic</span>
+              <h4>The task node</h4>
+              <p>One feature's full record: what had to be true, what nobody said, what proved it, who accepted it.</p>
+              <span class="life">lifetime — one feature · <code>.add/tasks/</code></span>
+            </div>
+            <div class="tier">
+              <span class="label">Tier 2 · standing</span>
+              <h4>The five living specs</h4>
+              <p>What the project has decided and learned across every task that ever ran. Appended to, compacted, never closed.</p>
+              <span class="life">lifetime — the project · <code>.add/specs/</code></span>
+            </div>
+          </div>
+
+          <div class="lenses">
+            <div class="lens"><span class="lens-n">Domain</span><span class="lens-dd">DDD</span><span class="lens-q">what the product must be true about</span><span class="lens-f">specs/domain.md</span></div>
+            <div class="lens"><span class="lens-n">System</span><span class="lens-dd">SDD</span><span class="lens-q">how it is built, and what that forecloses</span><span class="lens-f">specs/system.md</span></div>
+            <div class="lens"><span class="lens-n">Experience</span><span class="lens-dd">UDD</span><span class="lens-q">who uses it and what they feel</span><span class="lens-f">specs/experience.md</span></div>
+            <div class="lens"><span class="lens-n">Quality</span><span class="lens-dd">TDD</span><span class="lens-q">what counts as proof</span><span class="lens-f">specs/quality.md</span></div>
+            <div class="lens"><span class="lens-n">Method</span><span class="lens-dd">ADD</span><span class="lens-q">how work proceeds, and what a gate costs</span><span class="lens-f">specs/method.md</span></div>
+          </div>
+
+          <p class="cap">
+            Three carry <strong>context</strong> (DDD · SDD · UDD), two carry the
+            <strong>engine</strong> (TDD · ADD) — that split is why there are five. Each holds
+            the same three sections: <strong>Now</strong>, the current picture ·
+            <strong>Decisions that bind</strong>, inherited by every later task ·
+            <strong>Deltas</strong>, what changed and the evidence that changed it. Above all
+            five sits <code>PROJECT.md</code> with the project <code>invariants:</code>, which
+            bind every task in the bundle rather than the one in hand.
+          </p>
+        </div>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 4 — real deltas from this page's own repository</h3>
+          <p class="prose" style="margin-top:0.2rem">
+            ADD is built with ADD, so its specs are evidence rather than illustration. These are
+            unedited entries from <code>.add/specs/</code> — each a lesson a gate produced,
+            tagged with its lens, its state, and the artifact that proves it.
+          </p>
+          <div class="deltas">
+            <div class="deltas-head">
+              <span>.add/specs/ — deltas</span>
+              <span>open = live · folded = absorbed into the method</span>
+            </div>
+            <div class="delta">
+              <span class="delta-tag">[TDD · open]</span>
+              <span class="delta-b">
+                <p>an assumption is worth writing only if you will go DISPROVE it: A1 assumed the installers pass <code>--profile</code> through. Ten minutes of reading <code>bin/cli.js</code> showed its 'profile' is agent detection and the flag is ignored. The assumption cost a shipped falsehood because it was recorded and then trusted rather than tested.</p>
+                <span class="delta-ev">evidence: .add/tasks/profile-refusal.md</span>
+              </span>
+            </div>
+            <div class="delta">
+              <span class="delta-tag">[UDD · open]</span>
+              <span class="delta-b">
+                <p>The experience lens shipped in every bundle for three minor versions with nothing in the loop that ever wrote it — only <code>learn</code> did, after the fact. A lens with no beat that engages it is a category, not a practice.</p>
+                <span class="delta-ev">evidence: /milestones/experience-in-plan.md</span>
+              </span>
+            </div>
+            <div class="delta">
+              <span class="delta-tag folded">[TDD · folded]</span>
+              <span class="delta-b">
+                <p>the gate coverage map binds EVERY referent — probed A-lines and E-lines included; write <code>covers:</code> complete at Direction or the first gate refuses on rules your suite already proves.</p>
+                <span class="delta-ev">evidence: /tasks/explore-lane.d/runs/2.md</span>
+              </span>
+            </div>
+          </div>
+          <p class="cap">
+            Read the last one, then watch the terminal in act 06 refuse a PASS for exactly that
+            reason. <strong>The lesson is already in the file</strong> — that is what a fold is
+            for. The verb is <code>add learn &lt;lens&gt;</code> and the vocabulary is closed:
+            a lesson with nowhere to fold is a lesson nobody re-reads.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 · MECHANISM ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">05</span><span class="act-kind">Mechanism</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">What leaves the window,<br>and what comes back in.</h2>
+          <p class="prose">
+            Here is the part worth being precise about. <strong>ADD implements all four of the
+            strategies in act 03</strong> — it is not an alternative to context engineering, it
+            is a concrete instance of it. Then it adds the fifth thing none of them provide.
+            For each piece, the two columns that matter to an agent's window are what it lets
+            you <em>not</em> load, and what it loads instead.
+          </p>
+        </div>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 5 — every component, against the rot it defeats</h3>
+          <div class="digest">
+            <div class="digest-inner">
+              <div class="dhead">
+                <span>Component</span>
+                <span>What it is, precisely</span>
+                <span class="outcol">Kept out of the window</span>
+                <span class="incol">Loaded in, and when</span>
+              </div>
+
+              <div class="dgroup">
+                <div class="dgroup-head">
+                  <span class="dg-n">Strategy 04</span>
+                  <span class="dg-t">Just-in-time retrieval</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">cli.py status</span>
+                  <span class="dc-what">The resume point: the node roster, each node's beat, and the exact next command.</span>
+                  <span class="dc-out">The repository. The previous session's transcript.</span>
+                  <span class="dc-in">One command's output, <b>at session start</b>.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">cli.py brief &lt;slug&gt;</span>
+                  <span class="dc-what">Composes what it takes to work one node: its body, the cards of what it depends on, the specs' bind lines.</span>
+                  <span class="dc-out">Every other task in the project, and the code they touched.</span>
+                  <span class="dc-in">One node's working set, <b>at the start of a beat</b>.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">tasks/&lt;slug&gt;.md</span>
+                  <span class="dc-what">One feature, one file — rules, contract, checks, receipt and gate inline.</span>
+                  <span class="dc-out">A doc tree whose pieces must all be resident to make sense.</span>
+                  <span class="dc-in">The single file the beat is about.</span>
+                </div>
+              </div>
+
+              <div class="dgroup">
+                <div class="dgroup-head">
+                  <span class="dg-n">Strategy 02</span>
+                  <span class="dg-t">Structured note-taking</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">specs/ ×5 · learn</span>
+                  <span class="dc-what">The standing picture per lens. <code>learn</code> writes one lesson to one of five lenses — closed vocabulary, so a note always has a home.</span>
+                  <span class="dc-out">The full body of every task that ever ran.</span>
+                  <span class="dc-in">The bind lines only, <b>compiled into the brief</b>.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">PROJECT.md invariants:</span>
+                  <span class="dc-what">Project-wide constraints binding every task in the bundle, not the one in hand.</span>
+                  <span class="dc-out">Re-deriving the same global rules once per task.</span>
+                  <span class="dc-in">A thin index, <b>read first, every session</b>.</span>
+                </div>
+              </div>
+
+              <div class="dgroup">
+                <div class="dgroup-head">
+                  <span class="dg-n">Strategy 03</span>
+                  <span class="dg-t">Sub-agent architecture</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">add-worker</span>
+                  <span class="dc-what">One execution shell per beat: loads that beat's phase guide plus the best-fit persona and becomes the specialist.</span>
+                  <span class="dc-out">The other beats' guides, and the orchestrator's history.</span>
+                  <span class="dc-in">One guide and one persona, <b>in a fresh window</b>.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">add-advisor</span>
+                  <span class="dc-what">The second mind: proposes a plan, pressure-tests a draft, or decides a delegable ambiguity so the beat never stalls.</span>
+                  <span class="dc-out">All the exploration that produced the advice.</span>
+                  <span class="dc-in">A recommendation, its tradeoffs, and per-dimension confidence.</span>
+                </div>
+              </div>
+
+              <div class="dgroup">
+                <div class="dgroup-head">
+                  <span class="dg-n">Strategy 01</span>
+                  <span class="dg-t">Compaction</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">SKILL.md</span>
+                  <span class="dc-what">Narrates the loop itself and pulls a deeper phase reference only when the beat needs one. A hard byte ceiling holds it there — enforced by a test, not by intent.</span>
+                  <span class="dc-out">Three of the four phase guides, at any moment.</span>
+                  <span class="dc-in">The one guide for the beat you are on.</span>
+                </div>
+              </div>
+
+              <div class="dgroup addition">
+                <div class="dgroup-head">
+                  <span class="dg-n">Not on the list</span>
+                  <span class="dg-t">Authority — the fifth thing</span>
+                  <span class="dg-s">none of the four provide this</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">add freeze</span>
+                  <span class="dc-what">Seals RULES · CHECKS · gives: under a digest, stamped with a computed authority.</span>
+                  <span class="dc-out">The need to re-litigate a decision already made.</span>
+                  <span class="dc-in">A hash. A changed section is <b>refused, not re-argued</b>.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">covers: bindings</span>
+                  <span class="dc-what">Every rule named by the check that proves it. Unbound rules are enumerated, not assumed.</span>
+                  <span class="dc-out">Opinions about whether the code looks correct.</span>
+                  <span class="dc-in">A rule&nbsp;→&nbsp;test-id map the engine evaluates mechanically.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">add run — receipt</span>
+                  <span class="dc-what">The real command, its exit code, the ids the runner actually reported, and digests of the files in scope.</span>
+                  <span class="dc-out">The test output. The agent's account of what it ran.</span>
+                  <span class="dc-in">One recorded result — a record, not a claim.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">add gate</span>
+                  <span class="dc-what">PASS · RISK-ACCEPTED · HARD-STOP. Refuses on a stale receipt, a failed run, drifted scope digests, or any unbound rule.</span>
+                  <span class="dc-out"><b>The diff.</b> Trusting the work no longer requires reading it.</span>
+                  <span class="dc-in">A verdict bound to evidence, and who recorded it.</span>
+                </div>
+                <div class="dcomp">
+                  <span class="dc-name">security hard-stop</span>
+                  <span class="dc-what">A security finding is the one outcome that cannot be waived — in every mode, at every depth.</span>
+                  <span class="dc-out">The possibility of it scrolling past in a long session.</span>
+                  <span class="dc-in">A stop, with a human in the loop.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack rv">
+          <p class="cap">
+            The row carrying the most weight is <code>add gate</code>'s third column. Reviewing
+            a four-hundred-line diff costs four hundred lines of somebody's attention budget,
+            human or model, and pays out in <em>plausibility</em>. Reading a receipt costs one
+            line and pays out in <strong>proof</strong>. That is a context strategy as much as a
+            trust one — and the only one here that gets cheaper as the work gets bigger.
+          </p>
+          <p class="prose">
+            The transferable lesson, if you take nothing else from this page: the four
+            strategies keep an agent's window small, and a small window still holds no opinion
+            about which of its tokens you may overwrite. <strong>Durability is a separate
+            property from size, and it has to be built separately.</strong>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 · ONE FEATURE, START TO RECEIPT ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">06</span><span class="act-kind">Walkthrough</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">One feature,<br>start to receipt.</h2>
+          <p class="prose">
+            Three beats, in that order, because the order is the point: no build starts until
+            the specification and the <em>failing</em> tests exist, and nothing is trusted until
+            a recorded run says so. Between your one approval and the result, the agent drives.
+          </p>
+
+          <div class="loopwrap" role="img" aria-label="Loop diagram: Direction, then Build, then Verify, then back to Direction for the next task. The human freeze approval sits between Direction and Build.">
+            <svg class="loopsvg" viewBox="0 0 720 195" xmlns="http://www.w3.org/2000/svg">
+              <path class="track2" d="M 90 62 L 630 62 C 700 62 700 152 630 152 L 90 152 C 20 152 20 62 90 62"/>
+              <circle class="station" cx="90" cy="62" r="9"/>
+              <circle class="station" cx="360" cy="62" r="9"/>
+              <circle class="station" cx="630" cy="62" r="9"/>
+              <text class="st-no" x="90" y="18" text-anchor="middle">01</text>
+              <text class="st-no" x="360" y="18" text-anchor="middle">02</text>
+              <text class="st-no" x="630" y="18" text-anchor="middle">03</text>
+              <text class="st-label" x="90" y="36" text-anchor="middle">DIRECTION</text>
+              <text class="st-label" x="360" y="36" text-anchor="middle">BUILD</text>
+              <text class="st-label" x="630" y="36" text-anchor="middle">VERIFY</text>
+              <text class="st-sub" x="90" y="86" text-anchor="middle">rules · assumptions</text>
+              <text class="st-sub" x="90" y="99" text-anchor="middle">contract · red tests</text>
+              <text class="st-sub" x="360" y="86" text-anchor="middle">red → green</text>
+              <text class="st-sub" x="360" y="99" text-anchor="middle">receipt from a real run</text>
+              <text class="st-sub" x="630" y="86" text-anchor="middle">residue lenses</text>
+              <text class="st-sub" x="630" y="99" text-anchor="middle">evidence-scored gate</text>
+              <rect class="seam-mark seam-pulse" x="220" y="57" width="10" height="10" rx="1"/>
+              <text class="seam-label" x="225" y="46" text-anchor="middle">FREEZE — your one approval</text>
+              <text class="backlabel" x="360" y="172" text-anchor="middle">the gate emits a delta → it folds into one of the five living specs → the next task briefs from it</text>
+              <circle class="runner runner-anim" r="4.5" cx="0" cy="0"/>
+            </svg>
+          </div>
+
+          <div class="seam-note">
+            <span class="label">Why the seam sits there</span>
+            <p>
+              Approving code after it is written is the expensive place to be wrong: the work
+              exists, and the reviewer is reading for plausibility. Approving the
+              <em>contract</em> is cheap and unambiguous — a shape, and a list of things that
+              must never happen, agreed before a line is written to satisfy them.
+            </p>
+          </div>
+        </div>
+
+        <div class="beat rv">
+          <div class="beat-head">
+            <span class="beat-no">BEAT 01</span>
+            <span class="beat-name">Direction</span>
+            <span class="beat-what">the agent drafts · you approve once</span>
+          </div>
+          <p class="prose" style="margin-bottom:1rem">
+            Same request as act 01 — <em>&ldquo;let users transfer money between their own
+            accounts&rdquo;</em>. Rules first: Musts are what it has to do, Rejects what it must
+            never do, each carrying the error code the caller will actually see.
+          </p>
+
+<pre class="code"><span class="c">## RULES</span>
+<span class="must">&lt;must&gt;</span>
+- M1 an amount moves from one of my accounts to another of mine
+- M2 the debit and the credit happen in one atomic transaction
+<span class="must">&lt;/must&gt;</span>
+<span class="rej">&lt;reject&gt;</span>
+- R:AMOUNT_INVALID an amount &lt;= 0 must never be accepted   -&gt; <span class="dim">"amount_invalid"</span>
+- R:SAME_ACCOUNT   source and destination must never match  -&gt; <span class="dim">"same_account"</span>
+- R:OVERDRAW       a balance must never go negative         -&gt; <span class="dim">"insufficient_funds"</span>
+<span class="rej">&lt;/reject&gt;</span></pre>
+
+          <p class="cap" style="margin-top:0.55rem">
+            Those are the three defects in act 01's one-call answer, now written down as rules
+            before anything is built.
+          </p>
+
+          <p class="prose" style="margin-top:1.5rem">
+            Then the section that earns its place fastest. <strong>ASSUMPTIONS records what the
+            request never said</strong> — swept, not free-associated, because free association
+            follows the request's emphasis rather than the risk. Every declared surface is
+            crossed against six dimensions:
+          </p>
+
+          <div class="sweep">
+            <div class="dimcell"><span class="dn">who</span><span class="dq">whose thing is it?</span></div>
+            <div class="dimcell"><span class="dn">which</span><span class="dq">which ones qualify?</span></div>
+            <div class="dimcell"><span class="dn">when</span><span class="dq">valid at what time?</span></div>
+            <div class="dimcell"><span class="dn">absent</span><span class="dq">what was left out?</span></div>
+            <div class="dimcell"><span class="dn">order</span><span class="dq">does sequence matter?</span></div>
+            <div class="dimcell hot"><span class="dn">experience</span><span class="dq">who lives with it?</span></div>
+          </div>
+
+<pre class="code" style="margin-top:1rem"><span class="c">## ASSUMPTIONS</span>
+- A1 <span class="key">[who]</span>        covers: S1 · never says whether I may transfer from an account I do
+     not own; taking it as own-accounts-only <span class="dim">-&gt; if wrong, it moves other people's money</span>
+- A4 <span class="key">[absent]</span>     covers: S1 · never says what currency the amount is in; assuming one
+     implicit currency <span class="dim">-&gt; if wrong, cross-currency transfers corrupt balances</span>
+- A5 <span class="key">[order]</span>      n/a · a single transfer exposes no ordered collection
+- A6 <span class="key">[experience]</span> covers: S1 · never says who reads a refused transfer or what tells
+     them why; taking it as the payer <span class="dim">-&gt; if wrong, a correct refusal reads as a fault and
+     they retry until locked out</span></pre>
+
+          <p class="cap">
+            A6 is the one dimension not about correctness. A1 asks whose money it is; A6 asks
+            who has to live with the answer — and its cost line does not describe a bug.
+            <strong>The refusal is right.</strong> No other section has anywhere to record that.
+          </p>
+
+          <p class="prose" style="margin-top:1.5rem">
+            Then the contract and the checks that prove every rule. <strong>Every M, R and E
+            must be named by some check</strong>, or the gate refuses later and says which.
+          </p>
+
+<pre class="code"><span class="c">## PLAN</span>
+contract: POST /transfers { fromAccountId, toAccountId, amount }
+          200 -&gt; { transferId, fromBalance, toBalance }
+          400 -&gt; { error: "amount_invalid" | "same_account" | "insufficient_funds" }
+scope:    src/, tests/
+
+<span class="c">## EDGES</span>
+- E1 a mid-transfer failure must leave both balances unchanged
+
+<span class="c">## CHECKS</span>
+- test_transfer_moves_funds  · <span class="key">covers: M1</span>              · balances move by exactly the amount
+- test_transfer_is_atomic    · <span class="key">covers: M2, E1</span>          · a mid-transfer failure changes nothing
+- test_rejects_non_positive  · <span class="key">covers: R:AMOUNT_INVALID</span> · zero and negatives are refused
+- test_rejects_same_account  · <span class="key">covers: R:SAME_ACCOUNT</span>   · source == destination is refused</pre>
+
+          <p class="cap">
+            Those tests get written now and <strong>must fail</strong> — there is no
+            implementation yet, so a test that passes here is testing nothing. Red before green,
+            enforced by the loop rather than by anyone's discipline. Now count: four checks,
+            five rules.
+          </p>
+        </div>
+
+        <div class="beat rv">
+          <div class="beat-head">
+            <span class="beat-no">BEATS 02 – 03</span>
+            <span class="beat-name">Build &amp; Verify</span>
+            <span class="beat-what">watch what the engine refuses</span>
+          </div>
+          <div class="term" id="terminal">
+            <div class="term-bar">
+              <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+              <span style="margin-left:0.4rem">.add/tooling/cli.py — transfer</span>
+            </div>
+            <div class="term-body" id="termBody"></div>
+          </div>
+          <p class="cap">
+            Both refusals are the method working, not a tool failing. Because RULES and CHECKS
+            are sealed, the repair is never a quiet edit — it is a visible refreeze, a re-run
+            and a re-gate, all three recorded in the file. What you are left with is not a diff
+            somebody skimmed: it is a record of what had to be true, what nobody said, what
+            would have disproved it, the command that ran, the ids it reported, and the person
+            who accepted it.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 · COMPARED ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">07</span><span class="act-kind">Compared</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">Three ways to work,<br>side by side.</h2>
+          <p class="prose">
+            Each step in this argument added something the step before could not do, and kept
+            everything it inherited. ADD is not an alternative to agentic coding — it is the
+            third column, and the third column contains the second.
+          </p>
+        </div>
+
+        <div class="matrix rv">
+          <table>
+            <caption class="label" style="text-align:left;padding-bottom:0.7rem">Fig. 6 — what each way of working can be relied on to do</caption>
+            <thead>
+              <tr>
+                <th scope="col">Capability</th>
+                <th scope="col">Single chat<span>one call, one answer</span></th>
+                <th scope="col">Agentic<span>the model drives</span></th>
+                <th scope="col" class="colhi">Agentic + ADD<span>the model drives, on rails</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Acts on the world — runs code, reads files, calls tools</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell yes"><span class="mk"></span>yes</span></td>
+                <td class="colhi"><span class="cell yes"><span class="mk"></span>yes</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Handles work whose steps you cannot predict up front</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell yes"><span class="mk"></span>yes</span></td>
+                <td class="colhi"><span class="cell yes"><span class="mk"></span>yes</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Still knows what was decided after the window fills</th>
+                <td><span class="cell no"><span class="mk"></span>no history</span></td>
+                <td><span class="cell risk"><span class="mk"></span>decays</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>reads from disk</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Carries decisions the agent is not permitted to edit</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>sealed at freeze</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Trust rests on evidence rather than a plausible diff</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell no"><span class="mk"></span>you review</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>bound receipt</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Refuses to report green while a stated rule is unproven</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>gate refuses</span></td>
+              </tr>
+              <tr>
+                <th scope="row">A security finding cannot quietly scroll past</th>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td><span class="cell no"><span class="mk"></span>no</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>hard-stop</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Human decisions required per unit of work</th>
+                <td><span class="cell yes"><span class="mk"></span>every answer</span></td>
+                <td><span class="cell risk"><span class="mk"></span>every diff</span></td>
+                <td class="colhi"><span class="cell held"><span class="mk"></span>one freeze</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Cost per unit of work</th>
+                <td><span class="cell yes"><span class="mk"></span>lowest</span></td>
+                <td><span class="cell risk"><span class="mk"></span>high — many turns</span></td>
+                <td class="colhi"><span class="cell risk"><span class="mk"></span>high, plus the kernel</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="cap rv">
+          The last row is not a typo. ADD does not make agentic work cheaper per task — it adds
+          a kernel and a Direction beat you would otherwise skip. What it changes is every row
+          above it: <strong>the expensive thing was never the tokens, it was re-deciding and
+          re-verifying work you had already paid for once.</strong>
+        </p>
+
+        <div class="stack rv">
+          <h3 class="label">Fig. 7 — the same six-milestone project, two ways</h3>
+          <p class="prose" style="margin-top:0.2rem">
+            One evolving project, six milestones, a pinned model, deterministic probe scoring.
+            The only variable is whether each milestone continued <em>one long conversation</em>
+            or started a <em>fresh session resuming from the bundle on disk</em>.
+          </p>
+
+          <div class="figure" id="figBench">
+            <div class="figure-head">
+              <span class="figure-title">quality score across milestones · 0–1</span>
+              <span class="legend">
+                <span class="lg"><span class="lg-key dash" style="color:var(--s-decay)"></span>one continued conversation</span>
+                <span class="lg"><span class="lg-key" style="background:var(--s-hold)"></span>fresh session from disk (ADD)</span>
+              </span>
+            </div>
+            <div class="plotwrap">
+              <svg class="plot" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg"
+                   role="img" aria-label="Across six milestones the fresh-session ADD run holds every quality floor at 1.0. The single continued conversation measured 0.92 requirement coverage at milestone one and 0.75 at milestone six.">
+                <line class="grid" x1="62" y1="30" x2="600" y2="30"/>
+                <line class="grid" x1="62" y1="83.33" x2="600" y2="83.33"/>
+                <line class="grid" x1="62" y1="136.67" x2="600" y2="136.67"/>
+                <line class="grid" x1="62" y1="190" x2="600" y2="190"/>
+                <text class="axtext" x="54" y="33.5" text-anchor="end">1.00</text>
+                <text class="axtext" x="54" y="86.8" text-anchor="end">0.90</text>
+                <text class="axtext" x="54" y="140.2" text-anchor="end">0.80</text>
+                <text class="axtext" x="54" y="193.5" text-anchor="end">0.70</text>
+                <text class="axtext" x="62" y="207" text-anchor="middle">M1</text>
+                <text class="axtext" x="169.6" y="207" text-anchor="middle">M2</text>
+                <text class="axtext" x="277.2" y="207" text-anchor="middle">M3</text>
+                <text class="axtext" x="384.8" y="207" text-anchor="middle">M4</text>
+                <text class="axtext" x="492.4" y="207" text-anchor="middle">M5</text>
+                <text class="axtext" x="600" y="207" text-anchor="middle">M6</text>
+
+                <path fill="none" stroke="var(--s-decay)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" d="M 62 72.67 L 600 163.33"/>
+                <circle class="ring" cx="62" cy="72.67" r="4.5" fill="var(--s-decay)"/>
+                <circle class="ring" cx="600" cy="163.33" r="4.5" fill="var(--s-decay)"/>
+                <text class="dlabel" x="74" y="66">0.92</text>
+                <text class="dlabel" x="590" y="177" text-anchor="end">0.75</text>
+
+                <path fill="none" stroke="var(--s-hold)" stroke-width="2" stroke-linecap="round" d="M 62 30 L 600 30"/>
+                <circle class="ring" cx="62" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <circle class="ring" cx="169.6" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <circle class="ring" cx="277.2" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <circle class="ring" cx="384.8" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <circle class="ring" cx="492.4" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <circle class="ring" cx="600" cy="30" r="4.5" fill="var(--s-hold)"/>
+                <text class="dlabel" x="590" y="47" text-anchor="end">1.00 held</text>
+
+                <line class="cross" id="bcross" x1="0" y1="30" x2="0" y2="190"/>
+
+                <path fill="none" stroke="var(--s-decay)" stroke-width="1" d="M 62 221 L 62 227 L 600 227 L 600 221"/>
+                <text class="dnote" x="331" y="243" text-anchor="middle" fill="var(--s-decay)">one spec violation entered at M1 — and rode through five more milestones</text>
+
+                <g id="bhits"></g>
+              </svg>
+              <div class="tip" id="btip"></div>
+            </div>
+            <div class="figure-foot">
+              <strong>What each series measures.</strong> The continued-conversation arm is
+              requirement coverage, measured at M1 and M6; the dashed segment marks the path
+              between them as unplotted, not as data. The ADD arm is every quality floor, scored
+              at all six and held at 1.0 — through a breaking shape change and a cross-cutting
+              refactor, with zero regressions.
+            </div>
+            <details class="tableview">
+              <summary>Table view</summary>
+              <div class="tvbody">
+                <table>
+                  <thead><tr><th>Milestone</th><th>Continued conversation<br>(requirement coverage)</th><th>Fresh session, ADD<br>(every quality floor)</th></tr></thead>
+                  <tbody>
+                    <tr><td>M1</td><td>0.92</td><td>1.00</td></tr>
+                    <tr><td>M2</td><td>not plotted</td><td>1.00</td></tr>
+                    <tr><td>M3</td><td>not plotted</td><td>1.00</td></tr>
+                    <tr><td>M4</td><td>not plotted</td><td>1.00</td></tr>
+                    <tr><td>M5</td><td>not plotted</td><td>1.00</td></tr>
+                    <tr><td>M6</td><td>0.75</td><td>1.00</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <p class="prose rv">
+          The flat green line is this page's whole argument rendered as one measurement. Nothing
+          about the second column got worse; what changed is that the decisions stopped living
+          in the conversation. <strong>The agent is the hands. The bundle is what remembers.</strong>
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 · ADOPT ============ -->
+  <section class="act">
+    <div class="wrap act-grid">
+      <div class="act-margin"><span class="act-no">08</span><span class="act-kind">Adopt</span></div>
+      <div class="stack-l">
+
+        <div class="stack rv">
+          <h2 class="h-display">Keep the agent you<br>already pay for.</h2>
+          <p class="prose">
+            ADD is the trust layer, not another assistant. It composes with the subagents and
+            skill libraries you already run — those answer <em>who does the work</em>; ADD
+            answers <em>how you trust what gets built</em>. One install, then you talk to your
+            agent exactly as you do now.
+          </p>
+        </div>
+
+        <div class="installs rv">
+          <div class="install">
+            <span class="label">Node</span>
+            <pre>npx @pilotspace/add init</pre>
+          </div>
+          <div class="install">
+            <span class="label">Python</span>
+            <pre>pip install pilotspace-add
+pilotspace-add init</pre>
+          </div>
+          <div class="install">
+            <span class="label">Claude Code plugin</span>
+            <pre>/plugin marketplace add pilotspace/ADD
+/plugin install add@add-method</pre>
+          </div>
+        </div>
+
+        <div class="chain rv">
+          <div class="chain-row">
+            <span class="chain-k">Then</span>
+            <span class="chain-v">Type <code>/add</code> and say what you want built. The agent sizes it into a milestone, drafts the bundle, and comes back to you at the freeze.</span>
+          </div>
+          <div class="chain-row">
+            <span class="chain-k">Tomorrow</span>
+            <span class="chain-v">Type <code>/add</code> again. It reorients from disk and continues. <b>Nothing depends on the conversation surviving.</b></span>
+          </div>
+          <div class="chain-row">
+            <span class="chain-k">Any time</span>
+            <span class="chain-v">Take the wheel — <code>add status</code> is the resume point, <code>add doctor</code> reports without ever writing.</span>
+          </div>
+        </div>
+
+        <div class="closer rv">
+          <p class="big">Build the right thing.<br>Prove it is right.<br><span class="dim">Let the AI do the building in between.</span></p>
+          <div class="cta-row">
+            <a class="btn" href="https://pilotspace.github.io/ADD/">Read the book</a>
+            <a class="btn ghost" href="https://github.com/pilotspace/ADD/tree/main/benchmark/results">See the benchmark</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <span>ADD · AI-Driven Development — MIT · npm <code>@pilotspace/add</code> · PyPI <code>pilotspace-add</code></span>
+      <span class="foot-links">
+        <a href="https://www.anthropic.com/engineering/building-effective-agents">Building effective agents</a>
+        <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering</a>
+        <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents">Harnesses for long-running agents</a>
+        <a href="https://pilotspace.github.io/ADD/">The book</a>
+      </span>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- reveal on scroll ---------- */
+  var revealables = document.querySelectorAll(".rv:not(.in)");
+  if (reduce || !("IntersectionObserver" in window)) {
+    revealables.forEach(function (el) { el.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.06 });
+    revealables.forEach(function (el) { io.observe(el); });
+  }
+
+  function tokenValue(name) {
+    return getComputedStyle(document.body).getPropertyValue(name).trim();
+  }
+
+  /* ---------- reading progress ---------- */
+  var bar = document.getElementById("progress");
+  if (bar) {
+    var queued = false;
+    function paintBar() {
+      queued = false;
+      var doc = document.documentElement;
+      var span = doc.scrollHeight - window.innerHeight;
+      var pct = span > 0 ? (window.scrollY / span) * 100 : 0;
+      bar.style.width = Math.max(0, Math.min(100, pct)) + "%";
+    }
+    window.addEventListener("scroll", function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(paintBar);
+    }, { passive: true });
+    window.addEventListener("resize", paintBar);
+    paintBar();
+  }
+
+  /* ---------- hero: ledger dot field ---------- */
+  var heroCv = document.getElementById("heroCanvas");
+  if (heroCv && !reduce) {
+    var hctx = heroCv.getContext("2d");
+    var dots = [], hw = 0, hh = 0, hdpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function seedHero() {
+      var host = heroCv.parentElement;
+      hw = host.clientWidth; hh = host.clientHeight;
+      if (!hw || !hh) return;
+      heroCv.width = hw * hdpr; heroCv.height = hh * hdpr;
+      hctx.setTransform(hdpr, 0, 0, hdpr, 0, 0);
+      dots = [];
+      var step = 26;
+      for (var y = step; y < hh; y += step) {
+        for (var x = step; x < hw; x += step) {
+          var bias = x / hw;
+          if (Math.random() > 0.10 + bias * 0.30) continue;
+          dots.push({ x: x, y: y, ph: Math.random() * Math.PI * 2, a: 0.10 + bias * 0.22, r: bias > 0.62 ? 1.5 : 1 });
+        }
+      }
+    }
+
+    function paintHero(t) {
+      hctx.clearRect(0, 0, hw, hh);
+      var ink = tokenValue("--ink");
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        var drift = Math.sin(t / 2600 + d.ph) * 1.6;
+        hctx.globalAlpha = d.a * (0.55 + 0.45 * Math.sin(t / 2100 + d.ph));
+        hctx.fillStyle = ink;
+        hctx.fillRect(d.x + drift, d.y, d.r, d.r);
+      }
+      hctx.globalAlpha = 1;
+      requestAnimationFrame(paintHero);
+    }
+
+    seedHero();
+    requestAnimationFrame(paintHero);
+    var hrt;
+    window.addEventListener("resize", function () { clearTimeout(hrt); hrt = setTimeout(seedHero, 180); });
+  }
+
+  /* ---------- Fig 2 · the rot instrument ---------- */
+  var rotCv = document.getElementById("rotCanvas");
+  if (rotCv) {
+    var rctx = rotCv.getContext("2d");
+    var rotHost = document.getElementById("rotInstrument");
+    var elTok = document.getElementById("roTokens");
+    var elRec = document.getElementById("roRecall");
+    var elSt = document.getElementById("roState");
+    var CELLS = 108, MAXTOK = 200;
+    var p = reduce ? 0.9 : 0, target = p;
+    var rdpr = Math.min(window.devicePixelRatio || 1, 2);
+    var cw = 0, ch = 0;
+
+    function sizeRot() {
+      cw = rotCv.clientWidth; ch = rotCv.clientHeight;
+      if (!cw || !ch) return;
+      rotCv.width = cw * rdpr; rotCv.height = ch * rdpr;
+      rctx.setTransform(rdpr, 0, 0, rdpr, 0, 0);
+    }
+
+    function recallAt(x) { return 1 / (1 + 2.6 * x * x); }
+
+    function drawRot() {
+      if (!cw || !ch) return;
+      var ink = tokenValue("--ink");
+      var muted = tokenValue("--ink-3");
+      var rule = tokenValue("--rule");
+      var stamp = tokenValue("--s-decay");
+      var padX = 22, topY = 36, cellH = 44;
+      var innerW = cw - padX * 2;
+      var gap = 2;
+      var cellW = (innerW - gap * (CELLS - 1)) / CELLS;
+      var mono = "ui-monospace, SFMono-Regular, Menlo, monospace";
+
+      rctx.clearRect(0, 0, cw, ch);
+      rctx.font = "500 9.5px " + mono;
+      rctx.textAlign = "left";
+      rctx.fillStyle = muted;
+      rctx.fillText("CONTEXT WINDOW", padX, topY - 12);
+
+      var filled = Math.floor(p * CELLS);
+      for (var i = 0; i < CELLS; i++) {
+        var x = padX + i * (cellW + gap);
+        if (i < filled) {
+          var age = (filled - i) / CELLS;
+          var att = Math.max(0.05, 1 - age * 1.6 * p - p * 0.18);
+          rctx.globalAlpha = att;
+          rctx.fillStyle = (i < 6) ? stamp : ink;
+          rctx.fillRect(x, topY, Math.max(cellW, 0.8), cellH);
+        } else {
+          rctx.globalAlpha = 1;
+          rctx.fillStyle = rule;
+          rctx.fillRect(x, topY + cellH - 1, Math.max(cellW, 0.8), 1);
+        }
+      }
+      rctx.globalAlpha = 1;
+
+      rctx.fillStyle = stamp;
+      rctx.font = "600 9px " + mono;
+      rctx.fillText("turn-1 decision", padX, topY + cellH + 14);
+
+      var gTop = topY + cellH + 32;
+      var gH = ch - gTop - 24;
+      rctx.strokeStyle = rule; rctx.lineWidth = 1;
+      rctx.beginPath(); rctx.moveTo(padX, gTop); rctx.lineTo(cw - padX, gTop); rctx.stroke();
+      rctx.beginPath(); rctx.moveTo(padX, gTop + gH); rctx.lineTo(cw - padX, gTop + gH); rctx.stroke();
+
+      rctx.fillStyle = muted;
+      rctx.font = "500 9.5px " + mono;
+      rctx.fillText("RECALL", padX, gTop - 8);
+      rctx.textAlign = "right";
+      rctx.fillText("1.00", cw - padX, gTop - 8);
+      rctx.textAlign = "left";
+
+      rctx.beginPath();
+      rctx.strokeStyle = stamp;
+      rctx.lineWidth = 1.6;
+      for (var s = 0; s <= 220; s++) {
+        var f = s / 220;
+        if (f > p) break;
+        var xx = padX + f * innerW;
+        var yy = gTop + (1 - recallAt(f)) * gH;
+        if (s === 0) rctx.moveTo(xx, yy); else rctx.lineTo(xx, yy);
+      }
+      rctx.stroke();
+
+      if (p > 0.006) {
+        var hx = padX + p * innerW;
+        var hy = gTop + (1 - recallAt(p)) * gH;
+        rctx.fillStyle = stamp;
+        rctx.beginPath(); rctx.arc(hx, hy, 3.2, 0, Math.PI * 2); rctx.fill();
+      }
+
+      var rec = recallAt(p);
+      elTok.textContent = Math.round(p * MAXTOK) + "k";
+      elRec.textContent = rec.toFixed(2);
+      if (rec > 0.8) { elSt.textContent = "nominal"; elSt.className = "calm"; }
+      else if (rec > 0.55) { elSt.textContent = "drifting"; elSt.className = "calm"; }
+      else { elSt.textContent = "context rot"; elSt.className = "warn"; }
+    }
+
+    function onRotScroll() {
+      var r = rotHost.getBoundingClientRect();
+      var vh = window.innerHeight;
+      var raw = (vh * 0.85 - r.top) / (vh * 0.7 + r.height * 0.4);
+      target = Math.max(0, Math.min(1, raw));
+    }
+
+    function rotTick() {
+      p += (target - p) * 0.12;
+      drawRot();
+      requestAnimationFrame(rotTick);
+    }
+
+    sizeRot();
+    if (reduce) {
+      drawRot();
+    } else {
+      onRotScroll();
+      p = target;
+      window.addEventListener("scroll", onRotScroll, { passive: true });
+      requestAnimationFrame(rotTick);
+    }
+    var rrt;
+    window.addEventListener("resize", function () {
+      clearTimeout(rrt);
+      rrt = setTimeout(function () { sizeRot(); drawRot(); }, 150);
+    });
+  }
+
+  /* ---------- terminal (DOM nodes, no innerHTML) ---------- */
+  var termBody = document.getElementById("termBody");
+  if (termBody) {
+    var LINES = [
+      { t: "$ ", c: "tp" },
+      { t: "add freeze transfer --by \"tin\"\n", c: "tc" },
+      { t: "cannot freeze `transfer` — these (dimension, surface) pairs are unswept: experience:S1\n\n", c: "tno" },
+      { t: "  … A6 [experience] written into ASSUMPTIONS\n\n", c: "tdim" },
+      { t: "$ ", c: "tp" },
+      { t: "add freeze transfer --by \"tin\"\n", c: "tc" },
+      { t: "frozen · direction digest 4f9c21 · authority: human\n\n", c: "tok" },
+      { t: "$ ", c: "tp" },
+      { t: "add run transfer --junitxml /tmp/add.xml -- pytest -q --junitxml=/tmp/add.xml\n", c: "tc" },
+      { t: "18 passed in 2.41s · receipt recorded · 18 ids captured\n\n", c: "tok" },
+      { t: "$ ", c: "tp" },
+      { t: "add gate transfer PASS --by \"tin\"\n", c: "tc" },
+      { t: "refused — every rule must bind to a passing test id\n", c: "tno" },
+      { t: "  unbound: R:OVERDRAW\n\n", c: "tno" },
+      { t: "  … test_rejects_overdraw written red, then green\n", c: "tdim" },
+      { t: "  … CHECKS changed → direction seal broken → refreeze required\n\n", c: "tdim" },
+      { t: "$ ", c: "tp" },
+      { t: "add freeze transfer --by \"tin\" && add run transfer …\n", c: "tc" },
+      { t: "frozen · digest 7b02ae · 19 passed · receipt recorded\n\n", c: "tok" },
+      { t: "$ ", c: "tp" },
+      { t: "add gate transfer PASS --by \"tin\"\n", c: "tc" },
+      { t: "PASS · 5/5 rules bound to passing ids · scope digests fresh\n", c: "tok" },
+      { t: "task `transfer` closed\n", c: "tok" }
+    ];
+
+    function makeSpan(cls, text) {
+      var s = document.createElement("span");
+      s.className = cls;
+      s.textContent = text;
+      return s;
+    }
+
+    function renderAll() {
+      termBody.textContent = "";
+      LINES.forEach(function (l) { termBody.appendChild(makeSpan(l.c, l.t)); });
+    }
+
+    function typeOut() {
+      var li = 0, ci = 0, cur = null;
+      var caret = document.createElement("span");
+      caret.className = "caret";
+      termBody.textContent = "";
+
+      function step() {
+        if (li >= LINES.length) {
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
+          return;
+        }
+        var line = LINES[li];
+        if (!cur) {
+          cur = makeSpan(line.c, "");
+          termBody.appendChild(cur);
+          termBody.appendChild(caret);
+        }
+        var chunk = line.c === "tc" ? 1 : 3;
+        ci = Math.min(line.t.length, ci + chunk);
+        cur.textContent = line.t.slice(0, ci);
+        termBody.scrollTop = termBody.scrollHeight;
+
+        if (ci >= line.t.length) {
+          cur = null; li++; ci = 0;
+          var hold = line.c === "tno" ? 500 : (line.c === "tok" ? 300 : 90);
+          setTimeout(step, hold);
+        } else {
+          setTimeout(step, line.c === "tc" ? 17 : 6);
+        }
+      }
+      step();
+    }
+
+    if (reduce || !("IntersectionObserver" in window)) {
+      renderAll();
+    } else {
+      var started = false;
+      var tio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting || started) return;
+          started = true;
+          tio.disconnect();
+          typeOut();
+        });
+      }, { threshold: 0.2 });
+      tio.observe(termBody);
+    }
+  }
+
+  /* ---------- Fig 7 hover: crosshair + tooltip ---------- */
+  var SVGNS = "http://www.w3.org/2000/svg";
+
+  function buildTip(tip, title, rows) {
+    tip.textContent = "";
+    var h = document.createElement("div");
+    h.className = "tiptitle";
+    h.textContent = title;
+    tip.appendChild(h);
+    rows.forEach(function (r) {
+      var line = document.createElement("div");
+      var dot = document.createElement("span");
+      dot.className = "dot " + r.cls;
+      line.appendChild(dot);
+      line.appendChild(document.createTextNode(r.label + "  " + r.value));
+      tip.appendChild(line);
+    });
+  }
+
+  function wireChart(o) {
+    var fig = document.getElementById(o.fig);
+    if (!fig) return;
+    var svg = fig.querySelector("svg.plot");
+    var wrap = fig.querySelector(".plotwrap");
+    var tip = document.getElementById(o.tip);
+    var cross = document.getElementById(o.cross);
+    var host = svg && svg.querySelector("#" + o.hits);
+    if (!svg || !wrap || !tip || !host) return;
+
+    function hide() {
+      tip.classList.remove("on");
+      if (cross) cross.classList.remove("on");
+    }
+
+    o.points.forEach(function (pt) {
+      var r = document.createElementNS(SVGNS, "rect");
+      r.setAttribute("class", "hit");
+      r.setAttribute("x", String(pt.x - o.half));
+      r.setAttribute("y", String(o.top));
+      r.setAttribute("width", String(o.half * 2));
+      r.setAttribute("height", String(o.bottom - o.top));
+      host.appendChild(r);
+
+      function show() {
+        var sr = svg.getBoundingClientRect();
+        var wr = wrap.getBoundingClientRect();
+        var scale = sr.width / o.vbw;
+        buildTip(tip, pt.title, pt.rows);
+        var lx = sr.left - wr.left + pt.x * scale;
+        var halfTip = tip.offsetWidth / 2 || 70;
+        lx = Math.max(halfTip + 4, Math.min(wr.width - halfTip - 4, lx));
+        tip.style.left = lx + "px";
+        tip.style.top = (sr.top - wr.top + pt.tipY * scale) + "px";
+        tip.classList.add("on");
+        if (cross) {
+          cross.setAttribute("x1", String(pt.x));
+          cross.setAttribute("x2", String(pt.x));
+          cross.classList.add("on");
+        }
+      }
+
+      r.addEventListener("mouseenter", show);
+      r.addEventListener("mousemove", show);
+      r.addEventListener("mouseleave", hide);
+    });
+
+    wrap.addEventListener("mouseleave", hide);
+  }
+
+  var BX = [62, 169.6, 277.2, 384.8, 492.4, 600];
+  var BDECAY = ["0.92", null, null, null, null, "0.75"];
+  wireChart({
+    fig: "figBench", tip: "btip", cross: "bcross", hits: "bhits",
+    vbw: 640, top: 30, bottom: 190, half: 26,
+    points: BX.map(function (x, i) {
+      return {
+        x: x, tipY: 30, title: "Milestone " + (i + 1),
+        rows: [
+          { cls: "decay", label: "continued conversation", value: BDECAY[i] === null ? "not plotted" : BDECAY[i] },
+          { cls: "hold", label: "fresh session (ADD)", value: "1.00" }
+        ]
+      };
+    })
+  });
+
+  /* ---------- stat count-up ---------- */
+  var stats = document.querySelectorAll("[data-count]");
+  if (stats.length && !reduce && "IntersectionObserver" in window) {
+    var sio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        sio.unobserve(e.target);
+        var el = e.target;
+        var end = parseInt(el.getAttribute("data-count"), 10);
+        var t0 = null;
+        function run(ts) {
+          if (!t0) t0 = ts;
+          var k = Math.min(1, (ts - t0) / 900);
+          el.textContent = String(Math.round(end * (1 - Math.pow(1 - k, 3))));
+          if (k < 1) requestAnimationFrame(run);
+        }
+        requestAnimationFrame(run);
+      });
+    }, { threshold: 0.5 });
+    stats.forEach(function (el) { sio.observe(el); });
+  }
+
+  /* ---------- act 03 · strategy tabs ---------- */
+  var tabRoot = document.getElementById("stratTabs");
+  if (tabRoot) {
+    var tabs = Array.prototype.slice.call(tabRoot.querySelectorAll(".tab"));
+    var panels = tabs.map(function (t) {
+      return document.getElementById(t.getAttribute("aria-controls"));
+    });
+
+    function selectTab(i, focus) {
+      tabs.forEach(function (t, j) {
+        var on = j === i;
+        t.setAttribute("aria-selected", on ? "true" : "false");
+        t.tabIndex = on ? 0 : -1;
+        if (panels[j]) panels[j].hidden = !on;
+      });
+      if (focus && tabs[i]) tabs[i].focus();
+    }
+
+    tabs.forEach(function (t, i) {
+      t.addEventListener("click", function () { selectTab(i, false); });
+      t.addEventListener("mouseenter", function () { selectTab(i, false); });
+      t.addEventListener("keydown", function (e) {
+        var k = e.key, n = null;
+        if (k === "ArrowRight") n = (i + 1) % tabs.length;
+        else if (k === "ArrowLeft") n = (i - 1 + tabs.length) % tabs.length;
+        else if (k === "Home") n = 0;
+        else if (k === "End") n = tabs.length - 1;
+        if (n === null) return;
+        e.preventDefault();
+        selectTab(n, true);
+      });
+    });
+  }
+
+  /* ---------- act 02 · failure-mode reveals ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll(".reveal"), function (btn) {
+    var row = btn.closest(".mode");
+    if (!row) return;
+    btn.addEventListener("click", function () {
+      var open = row.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (!open) row.classList.remove("peek");
+    });
+    row.addEventListener("mouseenter", function () {
+      if (!row.classList.contains("open")) row.classList.add("peek");
+    });
+    row.addEventListener("mouseleave", function () { row.classList.remove("peek"); });
+    btn.addEventListener("focus", function () {
+      if (!row.classList.contains("open")) row.classList.add("peek");
+    });
+    btn.addEventListener("blur", function () {
+      if (!row.classList.contains("open")) row.classList.remove("peek");
+    });
+  });
+})();
+</script>
