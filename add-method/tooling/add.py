@@ -1480,8 +1480,9 @@ def check(root, cid: str, indices, off: bool = False, section: str = None, by: s
 
     verb = "marked" if want else "unmarked"
     if not moved:
-        return True, (f"unchanged — box {', '.join(str(n) for n in sorted(set(indices)))} "
-                      f"in {cid} already {verb}\nnext: add status")
+        idle = sorted(set(indices))
+        return True, (f"unchanged — box{'es' if len(idle) > 1 else ''} "
+                      f"{', '.join(str(n) for n in idle)} in {cid} already {verb}\nnext: add status")
 
     stamp = (f'{{ by: "{by or "process:check"}", at: {_today()}, '
              f'act: {"check" if want else "uncheck"}, '
@@ -1491,7 +1492,8 @@ def check(root, cid: str, indices, off: bool = False, section: str = None, by: s
     write(path, f"---\n{raw}\n---\n{"".join(lines)}")
 
     told = "\n".join(f"  {n}. [{'x' if want else ' '}] {text}" for n, text, _s in moved)
-    return True, (f"{len(moved)} box {verb} in {cid} by {by or 'process:check'}:\n{told}\n"
+    return True, (f"{len(moved)} box{'es' if len(moved) > 1 else ''} {verb} in {cid} "
+                  f"by {by or 'process:check'}:\n{told}\n"
                   f"next: add status")
 
 

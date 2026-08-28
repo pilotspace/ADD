@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "7079fb3dfdde018bc12f4134a5c28863"  # re-aimed @ box-check-verb (the `check` verb, the shared BOX pattern, milestone_done naming who checked). prior: 293a54b9… @ experience-sweep + 3.2.0
+ENGINE_MD5 = "1b8c7eede94daefbb6811cb231c0c443"  # re-aimed @ quick: pluralise the `check` summary lines (found hand-driving a real bundle). prior: 7079fb3d… @ box-check-verb
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "5c37c3e0a4cec2534411a78a7bb8a746"  # re-aimed @ box-check-verb (the `check` subcommand + its dispatch). prior: 7363afab… @ adoption-beyond-code

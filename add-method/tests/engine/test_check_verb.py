@@ -289,6 +289,21 @@ def test_skill_names_check_in_the_wired_surface():
     assert n <= 176, f"SKILL.md is {n} lines — over the 176 pin (R:BUDGET_BUMP)"
 
 
+def test_check_summary_lines_pluralise(tmp_path):
+    """Found by hand-driving a real bundle: `2 box marked` reads like a defect to an operator."""
+    mcid, _ = _bundle(tmp_path)
+    _ok, one = add.check(tmp_path, mcid, [1], by="Ada")
+    _ok, many = add.check(tmp_path, mcid, [2, 3], by="Ada")
+    _ok, noop = add.check(tmp_path, mcid, [2, 3], by="Ada")
+    assert one.startswith("1 box marked"), f"add check: one box should read `1 box marked` — {one.splitlines()[0]!r}"
+    assert many.startswith("2 boxes marked"), f"add check: two boxes should read `2 boxes marked` — {many.splitlines()[0]!r}"
+    assert noop.startswith("unchanged — boxes 2, 3"), \
+        f"add check: a multi-box no-op should read `boxes 2, 3` — {noop.splitlines()[0]!r}"
+    _ok, single = add.check(tmp_path, mcid, [1], by="Ada")
+    assert single.startswith("unchanged — box 1"), \
+        f"add check: a single-box no-op should read `box 1` — {single.splitlines()[0]!r}"
+
+
 def test_every_registry_learned_the_new_verb():
     """covers: M10, S7, A36, A37, A38, A39, A40, A41, R:STALE_REGISTRY.
 
