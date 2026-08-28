@@ -1588,7 +1588,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
              f'authority: {authority_for(scan(root), cid)}, '
              f'via: {via}, boxes: "{_stamp_boxes(moved)}" }}')
     raw = append_item(doc["raw"], "verified", stamp)
-    write(path, f"---\n{raw}\n---\n{"".join(lines)}")
+    write(path, f"---\n{raw}\n---\n" + "".join(lines))
 
     told = "\n".join(f"  {n}. [{'x' if want else ' '}] {text}" for n, text, _s in moved)
     return True, (f"{len(moved)} box{'es' if len(moved) > 1 else ''} {verb} in {cid} "

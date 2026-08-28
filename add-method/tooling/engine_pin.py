@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "fc8bb03f8c651431c1e4cb59046f8379"  # re-aimed @ enforcement-gaps: gate refuses an unsealed PASS + an undeclared sensitive edit. prior: wrapped-criterion-preview
+ENGINE_MD5 = "8fe73c608b77330841db5a1b3509321c"  # re-aimed @ enforcement-gaps: gate refuses an unsealed PASS + an undeclared sensitive edit (and the `check` writer parses under py3.10). prior: wrapped-criterion-preview
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fced1ae9ad5743024aaa2610e5a99a7c"  # re-aimed @ enforcement-gaps (`check` records the caller context: tty vs process). prior: 5c37c3e0… @ box-check-verb
