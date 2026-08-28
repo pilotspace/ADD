@@ -58,13 +58,20 @@ def _repo_with_node(tmp_path, sensitivity, lens=None):
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    # The seal, then the brief entry — `gate` refuses a PASS on a node that was never
+    # frozen (R:UNSEALED), so a fixture that skips the one approval tests no real path.
+    add.freeze(root, cid, "human:t")
+    add.brief_stamp(root, cid)
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "init", cwd=tmp_path)
 
     xml = tmp_path / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{i}"/>' for i in ("test_one", "test_two"))
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    add.run(root, cid, [sys.executable, "-c", "pass"], cwd=tmp_path, junit=xml)
+    # The command writes the report, so both halves of the receipt come from the same
+    # process — a file dropped beside the run no longer earns `kind: test-ids`.
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    add.run(root, cid, [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+            cwd=tmp_path, junit=xml)
     return root, cid
 
 

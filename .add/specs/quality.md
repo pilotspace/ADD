@@ -13,6 +13,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · open] Every capability a doc PROMISES is a test nobody wrote: the sentence "a box the AI ticked never reads as a human's" was false for two minor versions because no check bound prose to behaviour. (evidence: /tasks/sealed-gate-enforcement.md M6 · runs/2.md)
 - [TDD · open] A green suite is only evidence about the tests that RAN. The command that runs a subset must not produce output shaped like the command that runs everything — an uncollected suite reports as a smaller number, and a smaller number reads as success. (evidence: /tasks/partial-run-visible.md)
 - [TDD · open] an assumption is worth writing only if you will go DISPROVE it: A1 assumed the installers pass --profile through. Ten minutes of reading bin/cli.js showed its 'profile' is agent detection and the flag is ignored — with its value silently becoming the target directory. The assumption cost a shipped falsehood because it was recorded and then trusted rather than tested (evidence: .add/tasks/profile-refusal.md)
 - [TDD · open] a derived guard must distinguish a DEAD name from a LAZILY-CREATED one: probing with `init` alone made the corrected prose .add/tasks/<slug>.md fail beside the state.json it replaced. Drive the probe through a bundle that has been USED (init + first task), which still refuses names no sequence of verbs produces (evidence: add-method/tests/skill/test_front_door_truth.py)

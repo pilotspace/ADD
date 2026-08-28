@@ -47,8 +47,11 @@ def _green_receipt(bundle, cid, tmp_path):
     xml = tmp_path / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{n}"/>'
                     for n in ("test_atomic_admit", "test_no_overadmit"))
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    return add.run(bundle, cid, [sys.executable, "-c", "pass"], junit=xml)
+    # Written BY the command — a report that predates the run reported nothing about it, and
+    # is downgraded to `kind: command-exit`.
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    return add.run(bundle, cid,
+                   [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"], junit=xml)
 
 
 def _stamps(bundle, cid):

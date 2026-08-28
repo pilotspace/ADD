@@ -74,6 +74,8 @@ def repo(tmp_path):
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    add.freeze(root, cid, "human:t")   # `gate` refuses an unsealed PASS (R:UNSEALED)
+    add.brief_stamp(root, cid)
     git("add", "-A", cwd=tmp_path)
     git("commit", "-q", "-m", "init", cwd=tmp_path)
     return tmp_path

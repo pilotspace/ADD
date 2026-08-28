@@ -66,9 +66,10 @@ When the goal is genuinely met, close deliberately:
 2. **Present the close as a guided choice** via `gate.md` — open with the ARC (goal · done · plan),
    render the choice — **before `milestone-done`/`milestone-archive` run, not after.**
 3. **Check the boxes** — read that evidence, then `add check <slug> <n> --by "<who>"` per satisfied
-   criterion (the single affirmation; `--off` undoes one). Each tick is stamped, and
-   `milestone-done` names the checkers when it closes — so a box the AI ticked never reads as a
-   human's. Now `add milestone-done <slug>` succeeds.
+   criterion (the single affirmation; `--off` undoes one). Each tick is stamped with the name you
+   pass AND the caller context, and `milestone-done` names the checkers when it closes, marking
+   `(unattended)` any tick that came from a process rather than a terminal. The name is a claim,
+   the context is not. Now `add milestone-done <slug>` succeeds.
 4. **Fold the deltas** — file every `open` delta into its living `.add/specs/` spec (`add fold`,
    or `add learn <dd>` per delta) — newest-first, append-only. The AI never self-folds (`deltas.md`).
 5. **Define the release steps** — write `## Release steps`: merge is one small step among PR, asset

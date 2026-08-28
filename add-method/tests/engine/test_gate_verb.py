@@ -64,6 +64,10 @@ def repo(tmp_path):
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    # The seal, then the brief entry — `gate` refuses a PASS on a node that was never frozen
+    # (R:UNSEALED), so a fixture that skips the approval tests a path no real node takes.
+    add.freeze(root, cid, "human:tindang")
+    add.brief_stamp(root, cid)
     git("add", "-A", cwd=tmp_path)
     git("commit", "-q", "-m", "init", cwd=tmp_path)
     return tmp_path
@@ -76,8 +80,13 @@ def _receipt(repo, ids=("test_one", "test_two")):
     """Record a receipt reporting `ids` as passing, the way a real runner would."""
     xml = repo / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{i}"/>' for i in ids)
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    return add.run(repo / ".add", CID, [sys.executable, "-c", "pass"], cwd=repo, junit=xml)
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    # The command WRITES the report, the way a real runner does. A file dropped beside the run
+    # no longer earns `kind: test-ids` — a report that predates the command reported nothing
+    # about it — so a fixture that hand-writes it is testing the downgrade, not the gate.
+    return add.run(repo / ".add", CID,
+                   [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+                   cwd=repo, junit=xml)
 
 
 # ------------------------------------------------------ refusal 1: freshness (M1, R:STALEGATE)
@@ -106,6 +115,7 @@ def test_no_scope_makes_freshness_not_applicable(repo):
     stub = add.read(path, "T2")
     add.write(path, f"---\n{stub['raw']}\n---\n## CARD\ngoal: a doc change with no code scope\n"
                     "beat: build · next: add run\n\n## EVIDENCE\nreceipt: pending\n")
+    add.freeze(repo / ".add", cid, "human:tindang")
     add.run(repo / ".add", cid, [sys.executable, "-c", "pass"], cwd=repo)
     ok, note = add.gate(repo / ".add", cid, "PASS", by="human:tindang")
     assert ok is True, note

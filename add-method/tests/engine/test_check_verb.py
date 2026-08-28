@@ -207,10 +207,10 @@ def test_check_never_refuses_on_who(tmp_path):
             for tell in ("authority", "by", "human", "process:"):
                 assert tell not in s, \
                     f"add.py check: refuses on WHO is ticking — {s!r} mentions `{tell}` (R:GATE_GUARD)"
-    assert "←" not in fn, \
-        "add.py check: consults a `(← task)` referent — the notary design was decided against (R:GATE_GUARD)"
     code = re.sub(r'"""1?.*?"""', "", fn, flags=re.S)                 # prose is not behavior
     code = "\n".join(ln for ln in code.splitlines() if not ln.strip().startswith("#"))
+    assert "←" not in code, \
+        "add.py check: consults a `(← task)` referent — the notary design was decided against (R:GATE_GUARD)"
     assert "gate(" not in code, \
         "add.py check: calls the gate — evidence-bound ticking was decided against (R:GATE_GUARD)"
 

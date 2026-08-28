@@ -69,14 +69,17 @@ def _repo_with_node(tmp_path, scope, sensitive_paths, lens=None):
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    add.freeze(root, cid, "human:t")   # `gate` refuses an unsealed PASS (R:UNSEALED)
+    add.brief_stamp(root, cid)
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "init", cwd=tmp_path)
 
     xml = tmp_path / "r.xml"
-    xml.write_text('<testsuites><testsuite>'
-                   '<testcase classname="c" name="test_one"/>'
-                   '</testsuite></testsuites>')
-    add.run(root, cid, [sys.executable, "-c", "pass"], cwd=tmp_path, junit=xml)
+    doc = ('<testsuites><testsuite>'
+           '<testcase classname="c" name="test_one"/>'
+           '</testsuite></testsuites>')
+    add.run(root, cid, [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+            cwd=tmp_path, junit=xml)
     return root, cid
 
 

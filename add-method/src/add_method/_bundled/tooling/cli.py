@@ -246,8 +246,14 @@ def dispatch(args, run_cmd) -> int:
         if args.all:
             body = add.read(pathlib.Path(root) / cid.lstrip("/"), "T2")["body"]
             indices = list(range(1, len(add._box_lines(body, args.section)) + 1))
-        ok, note = add.check(root, cid, indices, off=args.off,
-                             section=args.section, by=args.by)
+        # `--by` is a free string, so the name on a stamp is a CLAIM. The caller context is not:
+        # a box ticked from an interactive terminal had a human at the keyboard; one ticked by a
+        # piped/spawned process did not. Recorded beside the name so `milestone-done` can mark
+        # unattended credit rather than pretend the two are the same (2026-08-28 review).
+        interactive = bool(getattr(sys.stdin, "isatty", lambda: False)()
+                           and getattr(sys.stdout, "isatty", lambda: False)())
+        ok, note = add.check(root, cid, indices, off=args.off, section=args.section,
+                             by=args.by, via="tty" if interactive else "process")
         print(note)
         return 0 if ok else 1
 

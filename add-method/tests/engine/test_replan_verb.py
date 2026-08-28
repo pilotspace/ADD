@@ -118,8 +118,11 @@ def test_gate_unaffected_by_replans(tmp_path):
     xml = tmp_path / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{i}"/>'
                     for i in ("test_atomic_admit", "test_no_overadmit"))
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    add.run(root, cid, [sys.executable, "-c", "pass"], cwd=tmp_path, junit=xml)
+    # The command writes the report, so both halves of the receipt come from the same
+    # process — a file dropped beside the run no longer earns `kind: test-ids`.
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    add.run(root, cid, [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+            cwd=tmp_path, junit=xml)
     ok, note = add.gate(root, cid, "PASS", by="human:t")
     assert ok is True, note
 

@@ -13,6 +13,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] A guard that fires on a malformed thing and never on a missing one is a guard you get past by DELETING, not by forging — an absent section reads as clean to every consumer. Check for the ABSENCE of what is required. (evidence: /tasks/sealed-gate-enforcement.md gate PASS · runs/2.md)
 - [ADD · open] The gate binds covers: referents by BARE test id, so a guard name defined in two files (test_guard_messages_name_their_target) binds to neither. Name a guard after its subject. (evidence: /tasks/box-check-verb.d/runs/2.md)
 - [ADD · open] A guard that greps engine source for a string matches the DOCSTRING too: 'no gate' tripped on the words 'goal-gate' in prose, and 'no authority_for' forbade the very call the contract required for its stamp. Strip docstrings and comments, then scan code lines for a call. (evidence: tests/engine/test_check_verb.py::test_check_never_refuses_on_who)
 - [ADD · open] A new CLI verb ripples into every registry that ENUMERATES the verb set — 5 of them here (the WIRED set, two README counts, the book command reference, a phantom-verb fixture that used the new name precisely because it did not exist). Find them by running the full suite, never by grepping. (evidence: tests/engine/test_check_verb.py::test_every_registry_learned_the_new_verb)
