@@ -1393,7 +1393,8 @@ def _box_lines(body: str, section: str = None):
     rendered file would not be the number the verb writes to.
     """
     out, fence, inside, here = [], False, section is None, "body"
-    for i, line in enumerate(body.splitlines()):
+    lines = body.splitlines()
+    for i, line in enumerate(lines):
         stripped = line.strip()
         if stripped.startswith("```") or stripped.startswith("~~~"):
             fence = not fence
@@ -1409,8 +1410,29 @@ def _box_lines(body: str, section: str = None):
             continue
         m = BOX.match(line)
         if m:
-            out.append((i, m.group(1).lower() == "x", m.group(2).strip(), here))
+            out.append((i, m.group(1).lower() == "x", _joined_text(lines, i, m.group(2)), here))
     return out
+
+
+def _continues(line: str) -> bool:
+    """An INDENTED, non-empty line that starts no new box — the rest of a wrapped criterion.
+
+    Criteria in real milestones wrap across source lines. Previewing only the first one leaves
+    every row trailing off mid-sentence, and the preview is what an operator picks an index
+    from. Joining is display-only: the node keeps its own wrapping, byte for byte.
+    """
+    return bool(line[:1].isspace() and line.strip()
+                and not BOX.match(line)
+                and not line.strip().startswith(("```", "~~~", "#")))
+
+
+def _joined_text(lines, i: int, first: str) -> str:
+    parts = [first.strip()]
+    for line in lines[i + 1:]:
+        if not _continues(line):
+            break
+        parts.append(line.strip())
+    return " ".join(p for p in parts if p)
 
 
 def _stamp_boxes(moved) -> str:

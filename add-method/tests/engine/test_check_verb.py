@@ -304,6 +304,39 @@ def test_check_summary_lines_pluralise(tmp_path):
         f"add check: a single-box no-op should read `box 1` — {single.splitlines()[0]!r}"
 
 
+def test_listing_joins_wrapped_criteria(tmp_path):
+    """A criterion wrapped across source lines must PREVIEW whole — you pick an index from it.
+
+    Found hand-driving the live `affordance-truth` milestone, whose every criterion trailed off
+    mid-sentence because only the first physical line was shown.
+    """
+    mcid, _ = _bundle(tmp_path)
+    path = tmp_path / mcid.lstrip("/")
+    wrapped = ("## EXIT\n"
+               "- [ ] the session cookie is HttpOnly and SameSite=Lax, proven by a test that reads\n"
+               "      the Set-Cookie header rather than the handler source   (← login-form)\n"
+               "- [ ] a single-line one\n")
+    text = re.sub(r"## EXIT\n(?:- \[[ x]\].*\n)*", wrapped, path.read_text(encoding="utf-8"))
+    path.write_text(text, encoding="utf-8")
+
+    ok, msg = add.check(tmp_path, mcid, [], by="Ada")            # the bare-ref listing
+    assert not ok, "add check with no index must refuse"
+    assert "the Set-Cookie header rather than the handler source" in msg, \
+        f"add check: the listing clips a wrapped criterion mid-sentence — {msg!r}"
+    assert "proven by a test that reads the Set-Cookie" in msg, \
+        f"add check: continuation lines must join with a single space — {msg!r}"
+    assert "  2. [ ] a single-line one" in msg, "add check: an unwrapped criterion must be untouched"
+    assert len([ln for ln in msg.splitlines() if ln.strip().startswith(("1.", "2."))]) == 2, \
+        f"add check: a wrapped criterion must occupy ONE listing row — {msg!r}"
+
+    ok, msg = add.check(tmp_path, mcid, [1], by="Ada")           # and the post-write echo
+    assert ok and "the Set-Cookie header" in msg, \
+        f"add check: the confirmation echo clips the same criterion — {msg!r}"
+    body = add.read(path, "T2")["body"]
+    assert "      the Set-Cookie header rather than the handler source" in body, \
+        "add check: joining the PREVIEW must not rewrite the node's own line wrapping"
+
+
 def test_every_registry_learned_the_new_verb():
     """covers: M10, S7, A36, A37, A38, A39, A40, A41, R:STALE_REGISTRY.
 
