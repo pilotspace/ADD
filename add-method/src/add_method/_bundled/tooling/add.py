@@ -1385,6 +1385,116 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
     return True, f"{cid} reopened to {to} — gate reset\nnext: work the {to} beat, then re-gate"
 
 
+def _box_lines(body: str, section: str = None):
+    """(line index, marked, text, section) for every REAL checkbox in `body`.
+
+    Fenced blocks are skipped: a node that quotes `- [x]` as an example (this bundle's own
+    milestones do) would otherwise shift every index, so the number a human counts off the
+    rendered file would not be the number the verb writes to.
+    """
+    out, fence, inside, here = [], False, section is None, "body"
+    for i, line in enumerate(body.splitlines()):
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        if line.startswith("## "):
+            here = stripped[3:].strip()
+            if section is not None:
+                inside = here.lower() == section.lower()
+            continue
+        if not inside:
+            continue
+        m = BOX.match(line)
+        if m:
+            out.append((i, m.group(1).lower() == "x", m.group(2).strip(), here))
+    return out
+
+
+def _stamp_boxes(moved) -> str:
+    """`EXIT:1,3` — the section a box actually lives in, so an audit reads WHERE, not just how many."""
+    order, groups = [], {}
+    for n, _text, where_box in moved:
+        if where_box not in groups:
+            order.append(where_box)
+            groups[where_box] = []
+        groups[where_box].append(str(n))
+    return " ".join(f"{s}:{','.join(groups[s])}" for s in order)
+
+
+def check(root, cid: str, indices, off: bool = False, section: str = None, by: str = None) -> tuple:
+    """Mark (or with `off`, unmark) checklist boxes, and record who did it.
+
+    The engine has always READ this tally — `milestone_done` gates a milestone closed on it —
+    while offering no way to write one, so every tick was a hand edit to markdown the engine
+    parses. This verb deliberately does NOT defend the goal-gate: it ticks any box in any node
+    for any caller (decided 2026-08-28). What replaces the defence is attribution — one stamp
+    per invocation, and `milestone_done` naming the checkers when it closes.
+
+    Designed for failure: every index is validated BEFORE any line is rewritten, and the write
+    is one atomic replace, so a refusal or a crash leaves the node fully old or fully new.
+    """
+    root = Path(root)
+    node = scan(root).get(cid)
+    if node is None:
+        return False, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    path = node["path"]
+    doc = read(path, "T2")
+    body = doc["body"]
+
+    if section is not None:
+        headings = [ln.strip()[3:] for ln in body.splitlines() if ln.startswith("## ")]
+        if not any(h.lower() == section.lower() for h in headings):
+            carries = ", ".join(headings) if headings else "no `## ` sections at all"
+            return False, (f"no `## {section}` section in {cid} — it carries {carries}\n"
+                           f"next: add check {slug} <n> --section <one of those>")
+
+    boxes = _box_lines(body, section)
+    where = f"`## {section}`" if section else "its body"
+    if not boxes:
+        return False, (f"{cid} carries no checkbox in {where} — nothing to check\n"
+                       f"next: add a `- [ ] <criterion>` line first, or check a node that has one")
+
+    listing = "\n".join(f"  {n}. [{'x' if m else ' '}] {text}"
+                        for n, (_, m, text, _s) in enumerate(boxes, 1))
+    if not indices:
+        return False, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
+                       f"{listing}\nnext: add check {slug} <n> [<n> …]   (or --all)")
+
+    bad = [n for n in indices if not 1 <= n <= len(boxes)]
+    if bad:
+        return False, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
+                       f"it has {len(boxes)} in {where}; NOTHING was written:\n{listing}\n"
+                       f"next: add check {slug} <n> with an index in 1..{len(boxes)}")
+
+    want, lines, moved = not off, body.splitlines(keepends=True), []
+    for n in sorted(set(indices)):
+        i, marked, text, where_box = boxes[n - 1]
+        if marked == want:
+            continue
+        lines[i] = re.sub(r"\[[ xX]\]", "[x]" if want else "[ ]", lines[i], count=1)
+        moved.append((n, text, where_box))
+
+    verb = "marked" if want else "unmarked"
+    if not moved:
+        return True, (f"unchanged — box {', '.join(str(n) for n in sorted(set(indices)))} "
+                      f"in {cid} already {verb}\nnext: add status")
+
+    stamp = (f'{{ by: "{by or "process:check"}", at: {_today()}, '
+             f'act: {"check" if want else "uncheck"}, '
+             f'authority: {authority_for(scan(root), cid)}, '
+             f'boxes: "{_stamp_boxes(moved)}" }}')
+    raw = append_item(doc["raw"], "verified", stamp)
+    write(path, f"---\n{raw}\n---\n{"".join(lines)}")
+
+    told = "\n".join(f"  {n}. [{'x' if want else ' '}] {text}" for n, text, _s in moved)
+    return True, (f"{len(moved)} box {verb} in {cid} by {by or 'process:check'}:\n{told}\n"
+                  f"next: add status")
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -1415,10 +1525,8 @@ def milestone_done(root, cid: str) -> tuple:
         return False, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
                        f"next: state why {slug} exists in its CARD `why:`, then add milestone-done {slug}")
 
-    exit_section = _section(body, "exit")
-    checked = len(re.findall(r"^\s*- \[x\]", exit_section, re.M | re.I))
-    unchecked = len(re.findall(r"^\s*- \[ \]", exit_section, re.M))
-    total = checked + unchecked
+    tally = [marked for _, marked, _, _ in _box_lines(_section_of(body, "EXIT"))]
+    checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
 
     if unchecked:
         return False, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
@@ -1428,7 +1536,19 @@ def milestone_done(root, cid: str) -> tuple:
     _transition(root, cid, sets={"status": "done"})
     # 0 criteria => the goal-gate never fires (loop.md); close, but say the gate was empty.
     empty = "" if total else " — no exit criteria, so the goal-gate did not fire (add criteria to hold one open)"
-    return True, f"{cid} milestone done ({checked}/{total} exit criteria met){empty}\nnext: add status"
+    # `check` does not defend the goal-gate (2026-08-28), so the close line carries the audit
+    # instead: WHO left the boxes marked. No `act: check` stamp means the boxes were hand-edited,
+    # which is the honest reading — never a guessed name.
+    seen, who = set(), []
+    for entry in ((node["fm"] or {}).get("verified") or []):
+        if str(entry.get("act")) == "check":
+            name = str(entry.get("by") or "process:check")
+            if name not in seen:
+                seen.add(name)
+                who.append(name)
+    credit = f", checked by {', '.join(who)}" if who else ", checked by hand"
+    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
+                  f"{empty}\nnext: add status")
 
 
 def milestone_archive(root, cid: str) -> tuple:
@@ -2087,6 +2207,12 @@ def _section_of(body: str, heading: str) -> str:
         if inside:
             out.append(line)
     return "".join(out)
+
+
+BOX = re.compile(r"^\s*- \[([ xX])\]\s?(.*)$")
+# The ONE checkbox pattern. `check` writes what `milestone_done` tallies, so a syntax either
+# both see or neither does — two patterns would let the verb tick a box the goal-gate cannot
+# count, and the tally is what the gate refuses on.
 
 
 PLACEHOLDER = re.compile(r"<[a-z_][^>]*>")

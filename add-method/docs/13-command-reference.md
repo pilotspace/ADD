@@ -50,6 +50,7 @@ Group tasks into one user-request scope; close it on met exit criteria.
 | verb | what it does | example |
 |---|---|---|
 | `milestone-done` | close a milestone — refuses while any `## EXIT` box is unchecked | `add milestone-done auth-layer` |
+| `check` | mark (or `--off` unmark) a checklist box by 1-based index, and record who did it. `--section` narrows to one `## SECTION`; `--all` takes every box | `add check auth-layer 2 --by "Ada"` |
 | `milestone-archive` | retire a done milestone — refuses one that is not done | `add milestone-archive auth-layer` |
 | `deltas` | list open deltas across the specs — the carried inventory. `--status open\|folded\|rejected` | `add deltas --status open` |
 | `fold` | retag a named open delta folded (human consolidation) into a spec `domain\|system\|experience\|quality\|method` | `add fold domain "half-open"` |

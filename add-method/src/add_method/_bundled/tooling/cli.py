@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pathlib
 import add  # noqa: E402
 
 
@@ -109,6 +110,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("lens", help="ddd | sdd | udd | tdd | add (the spec it sharpens)")
     s.add_argument("lesson")
     s.add_argument("--evidence", help="the receipt or decision that caused it")
+
+    s = sub.add_parser("check", help="mark/unmark a checklist box — records who did it")
+    s.add_argument("ref")
+    s.add_argument("n", nargs="*", type=int, help="1-based box indices, in document order")
+    s.add_argument("--all", action="store_true", help="every box in range (refuses beside an explicit index)")
+    s.add_argument("--off", action="store_true", help="unmark instead of mark")
+    s.add_argument("--section", help="narrow to one `## SECTION` and re-index from 1 within it")
+    s.add_argument("--by", help="who is checking (default: process:check)")
 
     s = sub.add_parser("milestone-done", help="close a milestone — refuses while a goal box is unchecked")
     s.add_argument("ref")
@@ -224,6 +233,21 @@ def dispatch(args, run_cmd) -> int:
     if args.verb == "learn":
         lens = DD_LENS.get(args.lens.lower(), args.lens)  # 5-DD vocab → spec filename
         ok, note = add.learn(root, lens, args.lesson, evidence=args.evidence)
+        print(note)
+        return 0 if ok else 1
+
+    if args.verb == "check":
+        if args.all and args.n:
+            print("`--all` and an explicit index together — say one or the other, never both\n"
+                  "next: add check <ref> --all   OR   add check <ref> <n> [<n> …]")
+            return 1
+        cid = _resolve(root, args.ref)
+        indices = args.n
+        if args.all:
+            body = add.read(pathlib.Path(root) / cid.lstrip("/"), "T2")["body"]
+            indices = list(range(1, len(add._box_lines(body, args.section)) + 1))
+        ok, note = add.check(root, cid, indices, off=args.off,
+                             section=args.section, by=args.by)
         print(note)
         return 0 if ok else 1
 

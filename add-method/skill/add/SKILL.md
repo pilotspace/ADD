@@ -31,7 +31,7 @@ installer — `pilotspace-add init "<name>"` (pip) or `add init "<name>"` / `npx
 Claude Code plugin — then drive from `.add/tooling/cli.py`. State
 lives in the `.add/` bundle — files are the database, `graph.json` is a rebuildable cache. The engine
 records; it never runs the method or spawns an agent. The full loop surface — including `fold ·
-reopen · deltas · milestone-archive` — is wired.
+reopen · deltas · check · milestone-archive` — is wired.
 
 ## Always start here (orient — do not skip)
 

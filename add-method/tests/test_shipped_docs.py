@@ -161,11 +161,11 @@ def test_the_skill_detector_ignores_english_but_catches_code(tmp_path):
     backticked phantom must."""
     planted = PKG / "skill" / "_gate_probe.md"
     planted.write_text("you add those yourself, then add or sharpen a rule\n"
-                       "run `add check` until green\n"
+                       "run `add sharpen` until green\n"
                        "```bash\nadd migrate --all\n```\n", encoding="utf-8")
     try:
         rel = str(planted.relative_to(PKG))
-        assert _skill_phantoms(rel) == {"check": [2], "migrate": [4]}
+        assert _skill_phantoms(rel) == {"sharpen": [2], "migrate": [4]}
     finally:
         planted.unlink()
 

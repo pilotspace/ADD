@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "293a54b984cae96651655b2e677ac527"  # re-aimed @ experience-sweep + release 3.2.0 (SWEEP_DIMENSIONS gains `experience` last, the node scaffold gains its A6 line, ENGINE moves to add/3.2.0). prior: e2c4962c… @ adoption-beyond-code
+ENGINE_MD5 = "7079fb3dfdde018bc12f4134a5c28863"  # re-aimed @ box-check-verb (the `check` verb, the shared BOX pattern, milestone_done naming who checked). prior: 293a54b9… @ experience-sweep + 3.2.0
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "7363afabf1a5f53029e3c0641f2302e0"  # re-aimed @ adoption-beyond-code (the `init` dispatch branch carries the refusal's exit code). prior: d9c6a4a4… @ receipt-cost follow-up
+ENGINE_PKG_MD5 = "5c37c3e0a4cec2534411a78a7bb8a746"  # re-aimed @ box-check-verb (the `check` subcommand + its dispatch). prior: 7363afab… @ adoption-beyond-code

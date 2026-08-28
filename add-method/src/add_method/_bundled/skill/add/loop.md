@@ -32,7 +32,8 @@ calls — what to roll back, what to prioritise — stay human.
 `add milestone-done <slug>` REFUSES to close while any exit criterion is unchecked — it stops with
 `milestone_goal_unmet` and the milestone stays active. The `- [x]`/`- [ ]` boxes in the milestone node (`milestones/<slug>.md`)
 ARE the human's goal-met affirmation: the engine reads the tally, never judges the goal. Checking
-the last box releases the gate. The gate fires only when criteria exist — write exit criteria to
+the last box releases the gate — write it with `add check`, which records WHO checked, rather than
+by hand, which records nobody. The gate fires only when criteria exist — write exit criteria to
 hold a milestone open. `milestone-done` is the only path to `done`; `milestone-archive` refuses a
 milestone not done. One gate, no quiet way around it.
 
@@ -64,8 +65,10 @@ When the goal is genuinely met, close deliberately:
    - **Goal met?** — each exit criterion tied to the evidence that satisfies it.
 2. **Present the close as a guided choice** via `gate.md` — open with the ARC (goal · done · plan),
    render the choice — **before `milestone-done`/`milestone-archive` run, not after.**
-3. **Check the boxes** — read that evidence, then check the exit-criteria boxes in the milestone node (`milestones/<slug>.md`)
-   (the single affirmation); now `add milestone-done <slug>` succeeds.
+3. **Check the boxes** — read that evidence, then `add check <slug> <n> --by "<who>"` per satisfied
+   criterion (the single affirmation; `--off` undoes one). Each tick is stamped, and
+   `milestone-done` names the checkers when it closes — so a box the AI ticked never reads as a
+   human's. Now `add milestone-done <slug>` succeeds.
 4. **Fold the deltas** — file every `open` delta into its living `.add/specs/` spec (`add fold`,
    or `add learn <dd>` per delta) — newest-first, append-only. The AI never self-folds (`deltas.md`).
 5. **Define the release steps** — write `## Release steps`: merge is one small step among PR, asset
