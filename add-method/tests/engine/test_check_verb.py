@@ -263,12 +263,24 @@ def test_four_engine_twins_and_both_pins():
     """covers: M8, A22, A26, A32, R:PIN_DRIFT."""
     import hashlib
     source = (REPO / "tooling")
+    # The SHIPPED twin is hard-required — it is tracked, and a consumer installs what it holds.
+    # The two `.add/tooling/` twins are gitignored DOGFOOD: they are materialised by `add init`,
+    # so a fresh checkout legitimately has neither, and demanding them turns a clean clone red
+    # (CI, 2026-08-28). They exists-skip individually — but a twin that IS present is checked,
+    # so the skip can never be the thing that makes a drifted twin pass.
+    shipped = REPO / "src" / "add_method" / "_bundled" / "tooling"
     for name in ("add.py", "cli.py"):
         want = (source / name).read_bytes()
+        assert (shipped / name).exists(), f"shipped engine twin missing (not a skip): {shipped / name}"
+        checked = 0
         for twin in ENGINE_TWINS[1:]:
             path = twin / name
-            assert path.exists(), f"engine twin missing (not a skip): {path}"
+            if not path.exists():
+                assert twin != shipped, f"shipped twin absent: {path}"
+                continue                              # gitignored dogfood twin — exists-skip
             assert path.read_bytes() == want, f"{path}: differs from add-method/tooling/{name}"
+            checked += 1
+        assert checked, f"no engine twin of {name} was checked — the guard proved nothing"
     sys.path.insert(0, str(REPO / "tooling"))
     import engine_pin  # noqa: E402
     for name, pin in (("add.py", engine_pin.ENGINE_MD5), ("cli.py", engine_pin.ENGINE_PKG_MD5)):
