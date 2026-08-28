@@ -28,13 +28,33 @@ Judge the lane FIRST, cheapest that fits. The closed floor is checked first and 
 among the lanes the floor allows, uncertainty dominates size — ONE contract-shaping unknown already
 argues Explore-first ("high" is judgment, never a numeric gate):
 
-### Quick — below the scope floor
-Fits when **all** hold: one file or a few adjacent ones · behavior the specs already cover (typo,
-wording, a config value, a mechanical rename) · no new contract surface anyone consumes · sensitivity
-mechanical. Then **no node**: make the edit and leave the receipt —
-1. the **git diff** is the change record (commit as usual);
-2. `add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>` files what was learned into the
-   living 5-DD spec (**wired** — the real `add` CLI; evidence is required). A lane run that teaches nothing appends nothing.
+### Quick — direct, no node
+**Refused first, whatever the size.** A change that trips the closed floor (security · data · architecture),
+adds or alters a `gives:` surface anything else consumes, or touches frozen scope takes a Task —
+however small it is. Only then size it: at most ~3 adjacent files, a diff one
+reviewer reads in one sitting, an unknowns tally of zero. Small **new behavior** is admitted — the
+lane is bounded by size and blast radius, not by whether the specs already cover it.
+
+**Route and go.** State one line — `quick: <intent> — <fit>` — and proceed. You do NOT wait for a
+confirm here; the human vetoes after the fact, and "make it a task" always wins. Task · Explore ·
+Milestone keep the confirm-first rule unchanged.
+
+**The receipt** is the commit — its body names the check you ran and its result — plus exactly one learn line:
+`add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <sha>` — a real lesson when one was learned,
+otherwise the trace `"quick: <intent>"`. That learn line is the ONLY bundle write; a Quick
+change never writes under `.add/tasks|runs|milestones`.
+
+**Sizing up reuses today's vocabulary** — no new lane, tier, verb or stamp. medium = a Task at `--depth quick`;
+large = a Task at `standard|deep`, or a Milestone when it spans tasks.
+
+**The five steps**, in order:
+1. the route line `quick: <intent> — <fit>`;
+2. an inline card **in the reply, before the first edit** — intent · edges · the check you will run ·
+   the `invariants:` it touches — never written under `.add/`;
+3. red→green: new behavior writes or extends its check and runs it RED first; a mechanical change
+   runs the check that already covers it;
+4. confirm PROJECT.md `invariants:` hold under the bare declared runtime;
+5. the receipt above — commit, then the one learn line.
 
 ### Task — one atomic node
 Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the
@@ -66,6 +86,22 @@ how small. **Security is a HARD-STOP everywhere.** New behavior, a new/changed c
 would want a frozen `gives:` for → a Task at least. The route is yours; the veto is not — the human
 saying "make it a task" always wins. **When in doubt, size up.**
 
+## The ladder — what each rung costs and what it leaves behind
+
+Ceremony falls as you come down this table; **review never does**. Read a row left to right: the
+route says what to create, the third column what you still owe, the fourth what survives the session.
+
+| the change (kind · size) | route | effort · review | what persists |
+|---|---|---|---|
+| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card before the edit · red→green · `invariants:` hold · self-review | the commit + one `add learn` line |
+| one **behavior** worth a frozen contract | Task, `--depth quick` or `standard` | advisor pressure-test at direction · human freeze · receipt-backed verify | the node · its frozen contract · a run receipt |
+| an unanswered **question** — investigate · evaluate · research | Task, `--kind explore` | a hard budget · cited findings · sufficiency gate | the node + its cited `## FINDINGS` |
+| a **theme**, or a slice spanning tasks | Milestone | persona-led plan · breadth-first task list · goal-gate at close | the milestone + its task nodes |
+
+Effort scales UP with the rung, and review scales with it — **skipped ceremony is never skipped review**.
+A direct change still writes its check and runs it red; it simply does not persist a node
+to prove it did. A change that fits no rung cleanly sizes UP to the next one.
+
 ## Change-request — touching already-frozen scope
 
 If the request modifies a **frozen** contract or a shipped promise, it is not new scope — it is a
@@ -76,6 +112,9 @@ lands, dependents that `need:` it are flagged stale). Never fork the truth into 
 
 Present it via `gate.md` — open with the ARC (goal · done · plan), render the chosen lane as a guided
 choice with its described alternatives. Emit exactly one of:
+**Quick is route-and-go — no confirm.** It never waits for the human: state the route line and
+proceed. The proposal below is for Task · Explore · Milestone.
+
 - **a classification** — `{ lane, depth, rationale, command }` — `rationale` names WHY (the fit, the
   theme, the slice, the frozen scope touched — and the unknowns tally when it routed); `depth` makes
   ceremony a decision output the human vetoes, never a silent constant; `command` is the exact

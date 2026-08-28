@@ -52,8 +52,10 @@ repo. Then branch:
 
 Read the request into a task shape, then pick the **lane** (you route; the human vetoes):
 
-- **Quick** — one file / adjacent few, behavior the specs already cover, no new contract, mechanical.
-  Make the edit, then leave a receipt: the git diff + `add … learn <dd> "<lesson>"`. No task node.
+- **Quick** — floor first (security · data · architecture, a consumed `gives:`, frozen scope → a Task);
+  else ≤3 adjacent files, one-sitting diff, zero unknowns — small new behavior fits. Route and go, no
+  node: inline card → red→green → `invariants:` → commit + exactly one `add learn` line. Medium → Task
+  `--depth quick`; large → `standard|deep` or a Milestone. Ceremony falls with size; review never does.
 - **Task** — one atomic node in the active milestone's scope. The 3-beat loop below.
 - **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
   questions + a hard budget freeze, and the gate reads the cited `## FINDINGS` brief directly —
