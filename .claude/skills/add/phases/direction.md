@@ -146,8 +146,8 @@ cost if it is wrong; `freeze` refuses until each is answered `confirm`, `correct
 (R:UNINTERVIEWED). Every other refusal above checks the DOCUMENT — this is the one that checks the
 CONVERSATION, because `## ASSUMPTIONS` is a list of silences YOU filled in on the human's behalf.
 
-Put the questions to the human for real, one decision at a time, in their own words — **never record
-an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
+Put the questions to the human for real, one decision at a time, in their own words.
+**Never record an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
 cleared by editing the item, which moves the digest and re-opens the pass. `defer` does complete
 one — a human may accept a risk knowingly. Reword an interviewed assumption afterwards and the
 interview goes stale; edit a Must and it does not, because the Musts came from them.

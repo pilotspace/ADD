@@ -349,3 +349,32 @@ def test_no_body_section_was_renumbered():
     for section in ("## CARD", "## RULES", "## ASSUMPTIONS", "## PLAN",
                     "## EDGES", "## CHECKS", "## EVIDENCE", "## LESSONS"):
         assert section in body, f"{section} disappeared from the Task template"
+
+
+def test_selfanswer_is_carried_by_prose_not_by_an_engine_claim():
+    """covers: R:SELFANSWER, A1 — the engine is a notary; it cannot know a human typed the answer.
+
+    `--by` is recorded verbatim, exactly as `freeze --by` already is, so nothing here VERIFIES a
+    human. Pretending otherwise would be the worse failure: a guard that claims to prove something
+    it cannot is how a stamp becomes theatre. The discipline is therefore prose, and prose only
+    holds if it is actually shipped — in every tree, on one line, since a pinned phrase split
+    across a line break has silently unpinned itself in this repo before.
+    """
+    missing = [str(t) for t in TREES
+               if not any("**Never record an answer you were not given**" in line
+                          for line in (REPO.parent / t / "phases" / "direction.md")
+                          .read_text(encoding="utf-8").splitlines())]
+    assert missing == [], f"R:SELFANSWER is not taught in: {missing}"
+
+
+def test_the_by_name_is_recorded_verbatim(tmp_path):
+    """covers: A1 — the name reaches both the stamp and the sidecar, unjudged."""
+    root = _bundle(tmp_path)
+    cid = _human_floor(root, "byname", na=5)
+    _answer_all(root, cid, by="Someone Not Verified")
+
+    stamp = [s for s in add.read(root / cid.lstrip("/"), "T0")["fm"]["verified"]
+             if isinstance(s, dict) and s.get("act") == "interview"][0]
+    assert stamp["by"] == "Someone Not Verified"
+    side = (root / "tasks" / "byname.d" / "interviews" / "1.md").read_text(encoding="utf-8")
+    assert "Someone Not Verified" in side

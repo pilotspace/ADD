@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The ONE approval asks its questions out loud
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 scope:
@@ -20,12 +20,18 @@ generated: { by: add/3.2.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:6a8d4230fc9e4e79" }
   - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:2f5727fcff92fce4" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:2f5727fcff92fce4" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:61e2a81eb66a8bfd" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:069293bef06c9602" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md, brief: "sha256:069293bef06c9602" }
 advised_by: method-steward
 ---
 ## CARD
 goal: at a human floor, `freeze` refuses until every open decision in the node has been put to a human and answered.
 why: `freeze` already refuses an incomplete contract eight ways — placeholders, an unauthored `gives:`, collapsed surfaces, unswept (dim, surface) pairs, an unbudgeted explore. Every one of those checks the DOCUMENT. None checks the CONVERSATION. `## ASSUMPTIONS` is by construction a list of silences the AI filled in on the human's behalf, each carrying a reading and a cost-if-wrong, and the ONE approval ADD asks for is a single stamp that says nothing about whether the human ever saw one of them. The sweep made the AI WRITE DOWN what it decided; this makes it ASK.
-beat: direction · next: add freeze freeze-interview
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -89,7 +95,7 @@ scope: add-method/tooling/add.py, add-method/tooling/cli.py, add-method/tests/en
 - test_freeze_accepts_a_completed_interview · covers: M4 · every item confirmed, freeze stamps.
 - test_all_deferred_is_a_complete_interview · covers: E5 · deferring is answering.
 - test_a_corrected_item_leaves_the_interview_incomplete · covers: M6, E6 · freeze names the corrected id.
-- test_editing_an_assumption_makes_the_interview_stale · covers: M7, E3 · the digest moves, freeze refuses.
+- test_editing_an_assumption_makes_the_interview_stale · covers: M7, E3, A3 · the digest moves, freeze refuses.
 - test_editing_a_must_does_not_stale_the_interview · covers: E2 · the Musts came from the human.
 - test_a_refreeze_needs_no_second_interview · covers: E4 · an unchanged node refreezes.
 - test_freeze_reads_the_matching_interview_not_the_latest · covers: E8 · a stale later stamp does not satisfy a moved digest.
@@ -99,6 +105,8 @@ scope: add-method/tooling/add.py, add-method/tooling/cli.py, add-method/tests/en
 - test_the_refusal_names_a_next_verb_and_the_ids · covers: A12 · a runnable `next:` and the unanswered ids.
 - test_the_interview_instruction_is_in_all_three_skill_trees · covers: M10, A13 · one assertion per tree, named per tree.
 - test_no_body_section_was_renumbered · covers: R:RENUMBER · the section census is unchanged.
+- test_selfanswer_is_carried_by_prose_not_by_an_engine_claim · covers: R:SELFANSWER, A1 · the discipline is shipped prose, on one line, in every tree.
+- test_the_by_name_is_recorded_verbatim · covers: A1 · the notary records the name it is given and judges nothing.
 red-first: every check MUST fail first.
 
 ## EVIDENCE
