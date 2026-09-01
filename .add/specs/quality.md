@@ -13,6 +13,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · open] The gate binds covers: referents by BARE test id, so a PARAMETRIZED check binds NOTHING — pytest reports it as test_x[param]. A green parametrized check can leave its rule unbound while reading as covered. A module name (test_tree_parity) binds nothing either; cite the real test function names. (evidence: /tasks/claimed-output-guard.md gate)
 - [TDD · open] A gate that cannot READ its input must refuse, never tally zero. Teaching the goal-gate to skip fenced blocks meant an unclosed fence emptied the tally, and `total == 0` takes the 'no exit criteria' branch — which CLOSES the milestone with unmet criteria in the file. (evidence: tests/engine/test_premerge_review_fixes.py)
 - [TDD · open] Never take a timestamp from the clock to compare against a filesystem. Flooring the clock to the second fixed the coarse-filesystem false-stale but blunted the check; a sentinel written on the SAME filesystem fixes it without losing any discrimination the filesystem offers. (evidence: tests/engine/test_premerge_review_fixes.py)
 - [TDD · open] Every capability a doc PROMISES is a test nobody wrote: the sentence "a box the AI ticked never reads as a human's" was false for two minor versions because no check bound prose to behaviour. (evidence: /tasks/sealed-gate-enforcement.md M6 · runs/2.md)
