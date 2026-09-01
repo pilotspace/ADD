@@ -344,3 +344,37 @@ def test_hard_stop_is_still_recordable_on_an_unfrozen_node(tmp_path):
 
     ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="found a leak")
     assert ok, "the security finding could not be written down: " + _msg((ok, *rest))
+
+
+def test_no_existing_refusal_was_narrowed():
+    """covers: R:WIDEN — the tiers RECLASSIFY refusals; they must never drop one.
+
+    Rewriting sixteen inline conditions into two named tuples is exactly the edit where a refusal
+    quietly disappears: delete a name from both tuples and `_binds` is never called for it, so the
+    site it guarded goes unreachable with nothing red. So count them, and prove the classification
+    is total — `_binds` raises rather than defaulting, in either direction.
+    """
+    src = (REPO / "tooling" / "add.py").read_text(encoding="utf-8")
+    gate_src = src[src.index("\ndef gate("):]
+    gate_src = gate_src[:gate_src.index("\ndef ", 1)]
+    used = set(re.findall(r'_binds\("([a-z_]+)"', gate_src))
+    classified = set(add.INTEGRITY_REFUSALS) | set(add.EVIDENCE_REFUSALS)
+
+    assert used == classified, f"declared-but-unused {classified - used}, unclassified {used - classified}"
+    # An explicit set, not a count. The count in the first cut of this check was my own
+    # arithmetic (14), and running it found the real reason it was wrong: R:UNFROZEN_EXPLORE
+    # refuses unconditionally and is not dispatched through `_binds` at all. Naming the members
+    # pins strictly more than counting them, and a dropped refusal fails by name.
+    assert classified == {
+        "unsealed", "drift", "placeholders", "undeclared_sensitive", "phantom_scope",
+        "explore_drift", "explore_placeholders",
+        "stale_receipt", "failed_run", "unbound_covers", "hollow_explore", "no_security_lens",
+        "unbriefed",
+    }, f"a refusal was dropped or added: {sorted(classified)}"
+    assert not (set(add.INTEGRITY_REFUSALS) & set(add.EVIDENCE_REFUSALS)), "a refusal is in both tiers"
+    try:
+        add._binds("invented_refusal", "PASS")
+    except KeyError:
+        pass
+    else:
+        raise AssertionError("an unclassified refusal silently inherited a tier")

@@ -3235,7 +3235,10 @@ def latest_receipt(root, cid: str) -> tuple:
 
 INTEGRITY_REFUSALS = (
     "unsealed", "drift", "placeholders", "undeclared_sensitive", "phantom_scope",
-    "explore_unfrozen", "explore_drift", "explore_placeholders",
+    "explore_drift", "explore_placeholders",
+    # R:UNFROZEN_EXPLORE is deliberately NOT here: it refuses UNCONDITIONALLY, HARD-STOP
+    # included, which is stricter than this tier. Routing it through `_binds` would have
+    # NARROWED an existing refusal to buy tidiness -> "R:WIDEN".
 )
 EVIDENCE_REFUSALS = (
     "stale_receipt", "failed_run", "unbound_covers", "hollow_explore", "no_security_lens",

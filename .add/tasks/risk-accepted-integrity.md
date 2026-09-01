@@ -1,7 +1,7 @@
 ---
 type: Task
 title: RISK-ACCEPTED signs for weak evidence, never for a missing seal
-status: direction
+status: done
 depth: standard
 sensitivity: security
 scope:
@@ -17,12 +17,17 @@ generated: { by: add/3.2.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:2c0e615b723a34ec" }
   - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:5be869916c46e4ff" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/risk-accepted-integrity.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:69506b1080e819bd" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:27284dc7695f1698" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/risk-accepted-integrity.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: human, outcome: PASS, receipt: /tasks/risk-accepted-integrity.d/runs/2.md, brief: "sha256:27284dc7695f1698" }
 advised_by: engine-notary
 ---
 ## CARD
 goal: every integrity refusal in `gate` holds for RISK-ACCEPTED too; only evidence-quality refusals stay PASS-only.
 why: all 16 refusals in `gate` are conditioned on `verdict == "PASS"`. Measured 2026-09-01: a task created seconds earlier, still carrying `goal: <one line>` and every template section, never frozen and never briefed, reached `done` in three calls — `add run <slug> -- true`, `add gate <slug> RISK-ACCEPTED`, `add done <slug>`. R:UNSEALED, drift, R:UNBRIEFED, the placeholder check and R:UNDECLARED_SENSITIVE all read PASS only, so the lane that is supposed to be the SCRUTINISED one is the lane with no scrutiny at all. This is 3.2's own lesson repeating: #206 found that skipping `freeze` did not FAIL the post-freeze guards, it SWITCHED THEM OFF — and closed that hole for PASS while leaving the identical hole open one verdict over.
-beat: direction · next: add freeze risk-accepted-integrity
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -81,6 +86,8 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 - test_refreeze_alone_satisfies_the_seal · covers: E2 · a lone refreeze stamp entitles gate and done.
 - test_paths_touch_matches_whole_segments · covers: M7, E4 · srcfoo/x vs src and secrets_public/x vs secrets/** are both false; src/x vs src stays true.
 - test_paths_touch_empty_matches_nothing · covers: M7, A4 · an empty entry and an empty pattern each match nothing.
+- test_paths_touch_leaves_a_backslash_entry_unmatched · covers: A14 · `/` is the only segment separator.
+- test_hard_stop_is_still_recordable_on_an_unfrozen_node · covers: A13 · refusing a HARD-STOP would only lose the finding.
 - test_new_refuses_an_unrecognised_sensitivity · covers: M8, R:SILENT_FLOOR · new Task with `--sensitivity high` refuses and lists the recognised values.
 - test_authority_for_reads_an_unknown_sensitivity_as_human · covers: M8, E5 · an existing node declaring `high` floors at human, not process.
 - test_integrity_refusals_precede_evidence_refusals · covers: A5 · an unfrozen node with a stale receipt hears R:UNSEALED.
