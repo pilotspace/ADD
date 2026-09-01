@@ -29,6 +29,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from pathlib import Path, PurePosixPath
 
 FENCE = re.compile(r"\A---\n(.*?)\n---\n?(.*)\Z", re.DOTALL)
@@ -611,7 +612,7 @@ def wave(root, milestone_ref, streams=None):
             if _reaches(a, b) or _reaches(b, a):
                 return None, (f'R:INTRADEP {picks[i]} and {picks[j]} have a dependency path — '
                               f'sequence them across waves, not within one -> "R:INTRADEP"')
-    scopes = {s: {str(x) for x in ((members[by_slug[s]]["fm"] or {}).get("scope") or [])} for s in picks}
+    scopes = {s: {str(x) for x in _scope_list(members[by_slug[s]]["fm"])} for s in picks}
     for i in range(len(picks)):
         for j in range(i + 1, len(picks)):
             common = scopes[picks[i]] & scopes[picks[j]]
@@ -1146,6 +1147,140 @@ BODIES = {
 LIFECYCLE_TYPES = ("Task", "Milestone")
 
 
+def _scope_list(fm) -> list:
+    """`scope:` as a list of entries, whatever shape the frontmatter carries.
+
+    A single-entry `scope: src/ui.py` parses as a STRING, and every reader iterated it — so the
+    freshness set became one entry per CHARACTER, `/` resolved to the filesystem root, and the
+    gate reported a stale file the node never declared (2026-08-28 review). One coercion, at
+    every reader, rather than four hand-written isinstance checks.
+    """
+    scope = (fm or {}).get("scope") or []
+    return [scope] if isinstance(scope, str) else list(scope)
+
+
+def _paths_touch(scope_entry: str, pattern: str) -> bool:
+    """True when a declared scope entry and a sensitive pattern can name the same file.
+
+    Containment runs BOTH ways. Matching only `scope ⊆ pattern` made the floor monotonically
+    wrong: `scope: src/` did not match `src/auth/*`, so declaring a BROADER, honest scope
+    LOWERED authority below one that named the file exactly (2026-08-28 review).
+    """
+    import fnmatch
+    scope_entry, pattern = scope_entry.strip().rstrip("/"), pattern.strip()
+    if fnmatch.fnmatch(scope_entry, pattern):
+        return True
+    stem = pattern.replace("**", "").replace("*", "").rstrip("/")
+    if not stem:
+        return False
+    return scope_entry.startswith(stem) or stem.startswith(scope_entry + "/") or stem == scope_entry
+
+
+def _changed_paths(root) -> list:
+    """Repo-relative paths the working tree has touched vs HEAD, or `[]` when git cannot say.
+
+    Uncommitted AND committed-since are both out of reach of a single porcelain call, so this
+    reads the one thing that is always true at gate time: the diff against HEAD plus untracked
+    files. `[]` on any failure — a non-repo bundle must stay gateable (law 3), so this can only
+    ever ADD a refusal where git is present, never invent one where it is not.
+    """
+    out = _git(root, "status", "--porcelain", "-z", "--untracked-files=all", strip=False)
+    if not out:
+        return []
+    # `git status` prints REPO-ROOT-relative paths whatever the cwd, while `scope:` entries are
+    # written relative to the BUNDLE PARENT. For any bundle below the repo root — this project's
+    # own `add-method/.add` is one — the two bases differ, so every sensitive edit compared a
+    # prefixed path against an unprefixed scope entry and refused permanently (2026-09-01 review).
+    prefix = _git(root, "rev-parse", "--show-prefix")
+    if prefix is None:
+        return []
+    recs, seen, i = out.split("\0"), [], 0
+    while i < len(recs):
+        rec, i = recs[i], i + 1
+        if len(rec) < 4:
+            continue
+        xy, pending = rec[:2], [rec[3:]]
+        # A rename or copy emits `XY <to>\0<from>\0` — the second field is a PATH carrying NO
+        # status prefix. Read as a status record it lost three characters, so the guard refused
+        # on a path that had never existed, and its own remedy (add it to `scope:`) produced an
+        # entry resolving to nothing, which then trips the no-digest degrade.
+        if ("R" in xy or "C" in xy) and i < len(recs) and recs[i]:
+            pending.append(recs[i])
+            i += 1
+        for rel in pending:
+            if prefix:
+                if not rel.startswith(prefix):
+                    continue  # above the bundle parent — no `scope:` entry could ever name it
+                rel = rel[len(prefix):]
+            if rel and rel not in seen:
+                seen.append(rel)
+    return seen
+
+
+def _fs_epoch(near_path, fallback: float) -> float:
+    """`fallback` (the wall clock) expressed the way the FILESYSTEM at `near_path` records time.
+
+    A report written DURING the run read as stale on any filesystem whose mtime granularity is
+    coarser than the clock — HFS+, ext3, exFAT, several network and bind mounts — because the
+    truncated mtime precedes the wall-clock start. That costs more than an evidence rung:
+    emptying the reported IDs leaves every `covers:` referent unbound, so `gate` refuses a node
+    whose suite was green and correctly reported (2026-09-01 review).
+
+    Flooring the clock to the second would fix that and blunt the check, letting a report
+    forged moments before the command still pass. Taking the reference from a sentinel on the
+    SAME filesystem does neither: whatever rounding that filesystem applies to the report was
+    applied to this sentinel first, so discrimination stays as fine as the filesystem allows
+    and no honest report is ever called stale.
+    """
+    probe = Path(near_path).parent / f".add-run-epoch-{os.getpid()}"
+    try:
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_text("", encoding="utf-8")
+        return probe.stat().st_mtime
+    except OSError:
+        return fallback          # an unwritable directory is not a reason to refuse (law 3)
+    finally:
+        try:
+            probe.unlink()
+        except OSError:
+            pass
+
+
+def _report_predates_run(path, started: float) -> bool:
+    """True when `path`'s mtime proves it was written BEFORE the run began.
+
+    `started` must be an `_fs_epoch`, not a raw clock reading — see that function for why.
+    A missing report is treated as predating: no report is not evidence of THIS run either.
+    """
+    try:
+        return Path(path).stat().st_mtime < started
+    except OSError:
+        return True
+
+
+def _fence_balanced(text: str) -> bool:
+    """True when every ``` / ~~~ fence in `text` is closed.
+
+    `_box_lines` SKIPS fenced regions, so an unclosed fence silently swallows every box after
+    it. For the goal-gate that turned real unchecked criteria into `total == 0` — the "no exit
+    criteria" branch, which CLOSES the milestone (2026-09-01 review). A gate that cannot read
+    its own input must refuse, never tally zero.
+    """
+    return sum(1 for ln in text.splitlines()
+               if ln.strip().startswith(("```", "~~~"))) % 2 == 0
+
+
+def _oneline(note) -> str:
+    """One line, no quote, no brace — safe inside a flow-map stamp.
+
+    An unbalanced `{` in a `--reason` made the parser's list-continuation swallow the FOLLOWING
+    stamp: two records written, one read back, from an append-only ledger whose ordering IS the
+    trust model (2026-08-28 review). `replan` already normalised its note; `gate` did not.
+    """
+    return (" ".join(str(note).split())
+            .replace('"', "'").replace("{", "(").replace("}", ")"))
+
+
 def authority_for(graph: dict, cid: str) -> str:
     """`max(sensitivity floor, A17 sensitive-path floor)` — FORMAT §3.1.
 
@@ -1158,11 +1293,10 @@ def authority_for(graph: dict, cid: str) -> str:
     floor = SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process")
 
     patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
-    scope = fm.get("scope") or []
+    scope = _scope_list(fm)
     for entry in (scope if isinstance(scope, list) else [scope]):
         for pattern in (patterns if isinstance(patterns, list) else [patterns]):
-            if fnmatch.fnmatch(str(entry), str(pattern)) or str(entry).startswith(
-                    str(pattern).replace("**", "").replace("*", "").rstrip("/")):
+            if _paths_touch(str(entry), str(pattern)):
                 return "human"  # A17 — unstrikeable, and never lowered
     return floor
 
@@ -1385,6 +1519,165 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
     return True, f"{cid} reopened to {to} — gate reset\nnext: work the {to} beat, then re-gate"
 
 
+def _box_lines(body: str, section: str = None):
+    """(line index, marked, text, section) for every REAL checkbox in `body`.
+
+    Fenced blocks are skipped: a node that quotes `- [x]` as an example (this bundle's own
+    milestones do) would otherwise shift every index, so the number a human counts off the
+    rendered file would not be the number the verb writes to.
+    """
+    out, fence, inside, here = [], False, section is None, "body"
+    lines = body.splitlines()
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        if line.startswith("## "):
+            here = stripped[3:].strip()
+            if section is not None:
+                if inside:
+                    break          # `_section_of` reads the FIRST block only; the goal-gate
+                                   # tallies through it, so enumerating past it would let
+                                   # `check` tick a box the gate can never count.
+                inside = here.lower() == section.lower()
+            continue
+        if not inside:
+            continue
+        m = BOX.match(line)
+        if m:
+            out.append((i, m.group(1).lower() == "x", _joined_text(lines, i, m.group(2)), here))
+    return out
+
+
+def _continues(line: str) -> bool:
+    """An INDENTED, non-empty line that starts no new box — the rest of a wrapped criterion.
+
+    Criteria in real milestones wrap across source lines. Previewing only the first one leaves
+    every row trailing off mid-sentence, and the preview is what an operator picks an index
+    from. Joining is display-only: the node keeps its own wrapping, byte for byte.
+    """
+    return bool(line[:1].isspace() and line.strip()
+                and not BOX.match(line)
+                and not line.strip().startswith(("```", "~~~", "#")))
+
+
+def _joined_text(lines, i: int, first: str) -> str:
+    parts = [first.strip()]
+    for line in lines[i + 1:]:
+        if not _continues(line):
+            break
+        parts.append(line.strip())
+    return " ".join(p for p in parts if p)
+
+
+def _stamp_boxes(moved) -> str:
+    """`EXIT:1,3` — the section a box actually lives in, so an audit reads WHERE, not just how many."""
+    order, groups = [], {}
+    for n, _text, where_box in moved:
+        if where_box not in groups:
+            order.append(where_box)
+            groups[where_box] = []
+        groups[where_box].append(str(n))
+    return " ".join(f"{s}:{','.join(groups[s])}" for s in order)
+
+
+def check(root, cid: str, indices, off: bool = False, section: str = None,
+          by: str = None, via: str = "process") -> tuple:
+    """Mark (or with `off`, unmark) checklist boxes, and record who did it.
+
+    The engine has always READ this tally — `milestone_done` gates a milestone closed on it —
+    while offering no way to write one, so every tick was a hand edit to markdown the engine
+    parses. This verb deliberately does NOT defend the goal-gate: it ticks any box in any node
+    for any caller (decided 2026-08-28). What replaces the defence is attribution — one stamp
+    per invocation, and `milestone_done` naming the checkers when it closes.
+
+    Designed for failure: every index is validated BEFORE any line is rewritten, and the write
+    is one atomic replace, so a refusal or a crash leaves the node fully old or fully new.
+    """
+    root = Path(root)
+    node = scan(root).get(cid)
+    if node is None:
+        return False, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    path = node["path"]
+    doc = read(path, "T2")
+    body = doc["body"]
+
+    if section is not None:
+        headings = [ln.strip()[3:] for ln in body.splitlines() if ln.startswith("## ")]
+        if not any(h.lower() == section.lower() for h in headings):
+            carries = ", ".join(headings) if headings else "no `## ` sections at all"
+            return False, (f"no `## {section}` section in {cid} — it carries {carries}\n"
+                           f"next: add check {slug} <n> --section <one of those>")
+
+    region = _section_of(body, section) if section else body
+    where = f"`## {section}`" if section else "its body"
+    if not _fence_balanced(region):
+        return False, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
+                       f"regions, so the index you counted off the file is not the index it would "
+                       f"write to; NOTHING was written\n"
+                       f"next: close the fence in {cid}, then add check {slug} <n>")
+
+    boxes = _box_lines(body, section)
+    if not boxes:
+        return False, (f"{cid} carries no checkbox in {where} — nothing to check\n"
+                       f"next: add a `- [ ] <criterion>` line first, or check a node that has one")
+
+    listing = "\n".join(f"  {n}. [{'x' if m else ' '}] {text}"
+                        for n, (_, m, text, _s) in enumerate(boxes, 1))
+    if not indices:
+        return False, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
+                       f"{listing}\nnext: add check {slug} <n> [<n> …]   (or --all)")
+
+    bad = [n for n in indices if not 1 <= n <= len(boxes)]
+    if bad:
+        return False, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
+                       f"it has {len(boxes)} in {where}; NOTHING was written:\n{listing}\n"
+                       f"next: add check {slug} <n> with an index in 1..{len(boxes)}")
+
+    # The goal-gate closed on `- [x] <criterion>   (← <task>)` — unauthored scaffold, credited to
+    # a named human (2026-08-28 review). The engine has owned a placeholder detector all along and
+    # never pointed it at the one gate loop.md calls "the only release".
+    if not off:
+        template = [(n, boxes[n - 1][2]) for n in sorted(set(indices))
+                    if 1 <= n <= len(boxes) and PLACEHOLDER.search(boxes[n - 1][2])]
+        if template:
+            listed_t = "\n".join(f"  {n}. {text}" for n, text in template)
+            return False, (f"box {', '.join(str(n) for n, _ in template)} in {cid} is still "
+                           f"template text — checking it would release the gate on an unauthored "
+                           f"criterion:\n{listed_t}\n"
+                           f"next: author the criterion, then add check {slug} <n>")
+
+    want, lines, moved = not off, body.splitlines(keepends=True), []
+    for n in sorted(set(indices)):
+        i, marked, text, where_box = boxes[n - 1]
+        if marked == want:
+            continue
+        lines[i] = re.sub(r"\[[ xX]\]", "[x]" if want else "[ ]", lines[i], count=1)
+        moved.append((n, text, where_box))
+
+    verb = "marked" if want else "unmarked"
+    if not moved:
+        idle = sorted(set(indices))
+        return True, (f"unchanged — box{'es' if len(idle) > 1 else ''} "
+                      f"{', '.join(str(n) for n in idle)} in {cid} already {verb}\nnext: add status")
+
+    stamp = (f'{{ by: "{by or "process:check"}", at: {_today()}, '
+             f'act: {"check" if want else "uncheck"}, '
+             f'authority: {authority_for(scan(root), cid)}, '
+             f'via: {via}, boxes: "{_stamp_boxes(moved)}" }}')
+    raw = append_item(doc["raw"], "verified", stamp)
+    write(path, f"---\n{raw}\n---\n" + "".join(lines))
+
+    told = "\n".join(f"  {n}. [{'x' if want else ' '}] {text}" for n, text, _s in moved)
+    return True, (f"{len(moved)} box{'es' if len(moved) > 1 else ''} {verb} in {cid} "
+                  f"by {by or 'process:check'}:\n{told}\n"
+                  f"next: add status")
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -1415,10 +1708,14 @@ def milestone_done(root, cid: str) -> tuple:
         return False, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
                        f"next: state why {slug} exists in its CARD `why:`, then add milestone-done {slug}")
 
-    exit_section = _section(body, "exit")
-    checked = len(re.findall(r"^\s*- \[x\]", exit_section, re.M | re.I))
-    unchecked = len(re.findall(r"^\s*- \[ \]", exit_section, re.M))
-    total = checked + unchecked
+    exit_body = _section_of(body, "EXIT")
+    if not _fence_balanced(exit_body):
+        return False, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
+                       f"so the goal-gate cannot tally its boxes; it does not close on an input it "
+                       f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
+                       f"then add milestone-done {slug}")
+    tally = [marked for _, marked, _, _ in _box_lines(exit_body)]
+    checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
 
     if unchecked:
         return False, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
@@ -1428,7 +1725,23 @@ def milestone_done(root, cid: str) -> tuple:
     _transition(root, cid, sets={"status": "done"})
     # 0 criteria => the goal-gate never fires (loop.md); close, but say the gate was empty.
     empty = "" if total else " — no exit criteria, so the goal-gate did not fire (add criteria to hold one open)"
-    return True, f"{cid} milestone done ({checked}/{total} exit criteria met){empty}\nnext: add status"
+    # `check` does not defend the goal-gate (2026-08-28), so the close line carries the audit
+    # instead: WHO left the boxes marked. No `act: check` stamp means the boxes were hand-edited,
+    # which is the honest reading — never a guessed name.
+    seen, who = set(), []
+    for entry in ((node["fm"] or {}).get("verified") or []):
+        if isinstance(entry, dict) and str(entry.get("act")) == "check":
+            name = str(entry.get("by") or "process:check")
+            # `--by` is free text, so the NAME proves nothing. What it was typed at does:
+            # `via: tty` is a person at a terminal, anything else is a process claiming one.
+            if str(entry.get("via") or "process") != "tty":
+                name += " (unattended)"
+            if name not in seen:
+                seen.add(name)
+                who.append(name)
+    credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
+    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
+                  f"{empty}\nnext: add status")
 
 
 def milestone_archive(root, cid: str) -> tuple:
@@ -1592,7 +1905,7 @@ def locate(root, query: str) -> tuple:
     hits = []
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
-        scope = fm.get("scope") or []
+        scope = _scope_list(fm)
         for entry in (scope if isinstance(scope, list) else [scope]):
             if _scope_matches(entry, query):
                 hits.append((cid, fm.get("status", "—"), str(entry)))
@@ -1801,14 +2114,21 @@ def status(root, all: bool = False, check: bool = False) -> str:
 RUN_TIMEOUT = 900
 
 
-def _git(root, *args, timeout: int = 30, input: str = None):
-    """Run one git command. Returns None when git is absent or the tree is not a repo."""
+def _git(root, *args, timeout: int = 30, input: str = None, strip: bool = True):
+    """Run one git command. Returns None when git is absent or the tree is not a repo.
+
+    `strip=False` for any NUL-delimited stream: porcelain writes `" M path"` for a worktree
+    edit that is not staged, and `.strip()` eats that leading status space, so the FIRST
+    record parses two characters short and its path loses a character (2026-09-01 review).
+    """
     try:
         done = subprocess.run(["git", *args], cwd=str(root), capture_output=True,
                               text=True, timeout=timeout, input=input)
     except (OSError, subprocess.SubprocessError):
         return None
-    return done.stdout.strip() if done.returncode == 0 else None
+    if done.returncode != 0:
+        return None
+    return done.stdout.strip() if strip else done.stdout
 
 
 def _git_blobs(root, rels: list) -> dict:
@@ -1902,7 +2222,7 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     """
     root, cwd = Path(root), Path(cwd or root)
     node = (scan(root).get(cid) or {})
-    scope = ((node.get("fm") or {}).get("scope")) or []
+    scope = _scope_list(node.get("fm"))
     # The digest root is the BUNDLE PARENT — the identical root `gate` hands `fresh()` — never
     # the cwd. Field finding (hardening tally #1): a cwd below the project computed the digest
     # against paths that did not exist there, so the receipt silently degraded to mtime and the
@@ -1910,6 +2230,10 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # it says: the command's working directory, nothing more.
     digest = scope_digest(root.parent, scope)
 
+    # The reference the report is judged against, read off the filesystem that will record it.
+    started = time.time()
+    if junit:
+        started = _fs_epoch(junit, started)
     try:
         done = subprocess.run([str(c) for c in command], cwd=str(cwd),
                               capture_output=True, text=True, timeout=timeout)
@@ -1922,6 +2246,19 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # A declared scope with no digest is a degrade the gate WILL refuse — saying why belongs on
     # the receipt, at the moment it happens (R:SILENTDEGRADE). Joined, never overwriting: a
     # timeout's diagnosis and the degrade's are both true.
+    # `kind: test-ids` was earned by a file's EXISTENCE: `/usr/bin/true` plus a hand-typed XML
+    # naming tests that do not exist produced the strongest evidence rung (2026-08-28 review).
+    # A report the command did not write is not evidence of THIS run, so it does not promote.
+    stale_report = bool(junit) and _report_predates_run(junit, started)
+    if stale_report:
+        # A MISSING report and a PRE-DATED one are different facts; saying "it predates the
+        # command" of a file that was never written is a false diagnosis on the receipt.
+        why = ("junit: no report exists at that path after the run, so the receipt does not "
+               "claim `test-ids`" if not Path(junit).exists() else
+               "junit: the report was not written during this run (it predates the command), so "
+               "the receipt does not claim `test-ids` — evidence must come from the run it names")
+        note = f"{note}; {why}" if note else why
+
     if scope and not digest:
         degrade = ("scope: declared but no digest recorded — the bundle parent is not a git "
                    "working tree, or the scope paths do not exist there; freshness degrades to mtime")
@@ -1930,13 +2267,16 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = root / f"tasks/{slug}.d/runs"
     runs.mkdir(parents=True, exist_ok=True)
-    n = len(list(runs.glob("*.md"))) + 1
+    # max+1, never count+1: deleting a receipt used to make the next run OVERWRITE an
+    # existing one, so a red run could be turned green by arithmetic (2026-08-28 review).
+    taken = [int(q.stem) for q in runs.glob("*.md") if q.stem.isdigit()]
+    n = (max(taken) + 1) if taken else 1
     # A24: the evidence kind is EARNED, never assumed. `test-ids` requires IDs a runner
     # actually reported — e12 owes that extraction. Until then the honest kind for a bare
     # command is `command-exit`. Freshness is a separate question from evidence, and wiring
     # both to the presence of a digest (as this first did) claims proof that does not exist.
     # A24's ladder is climbed only with real IDs (e12). No report, no promotion.
-    ids = extract_ids(junit) if junit else {}
+    ids = extract_ids(junit) if (junit and not stale_report) else {}
     # A24 needs the ID NAMES, not a count: `gate` binds the node's `covers:` against what the
     # runner reported, and "2/2 reported" cannot be bound to anything. Recording every ID of a
     # 113-test suite would bloat the receipt, so this records exactly the evidence the node's
@@ -2087,6 +2427,12 @@ def _section_of(body: str, heading: str) -> str:
         if inside:
             out.append(line)
     return "".join(out)
+
+
+BOX = re.compile(r"^\s*- \[([ xX])\]\s?(.*)$")
+# The ONE checkbox pattern. `check` writes what `milestone_done` tallies, so a syntax either
+# both see or neither does — two patterns would let the verb tick a box the goal-gate cannot
+# count, and the tally is what the gate refuses on.
 
 
 PLACEHOLDER = re.compile(r"<[a-z_][^>]*>")
@@ -2826,7 +3172,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                  if verdict == "PASS" else "")
         stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
                  f'outcome: {verdict}{extra}'
-                 + (f', reason: "{reason}"' if reason else "") + " }")
+                 + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
             return False, t_err + "\nnext: add status"
@@ -2873,7 +3219,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # A node declaring no `scope:` has nothing to be stale ABOUT, and §3d's quick and doc lanes
     # both allow one. That is not-applicable, not failed — but it must be SAID, and it must not
     # become a way to dodge freshness: scope declared with no digest recorded stays a refusal.
-    declared_scope = (graph[cid]["fm"] or {}).get("scope") or []
+    declared_scope = _scope_list(graph[cid]["fm"])
     if not declared_scope:
         # A CARD claiming a scope the frontmatter lacks is worse than an honestly unscoped node:
         # the CARD is what a human reads, while `scope_digest` and A17's path floor both match
@@ -2892,6 +3238,28 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             return refuse(f"the receipt is stale — {why}", f"add run {slug} -- <cmd>")
         freshness = f"freshness: {'fresh' if ok else 'STALE'} — {why}"
 
+    # Refusal 3 (2026-08-28 review) — the declared scope, checked against what actually changed.
+    #
+    # A17's floor reads `scope:`, which the node declares about ITSELF, so omitting a path from
+    # `scope:` defeated the one floor that does not rest on self-declared sensitivity: edit
+    # `src/auth.py`, declare `src/ui.py`, gate at `process`. Deliberately narrow — only a
+    # changed file matching `index.md`'s `sensitive_paths:` and covered by NO scope entry is
+    # refused. An ordinary undeclared path stays the freshness check's business, because a
+    # scope diff that refuses everything would be a scope diff everyone learns to widen past.
+    if verdict == "PASS":
+        patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
+        undeclared = [rel for rel in _changed_paths(root.parent)
+                      if any(_paths_touch(rel, str(pat)) for pat in patterns)
+                      and not any(_paths_touch(rel, str(e)) or _paths_touch(str(e), rel)
+                                  for e in declared_scope)]
+        if undeclared:
+            return refuse("the build changed a SENSITIVE path this node never declared: "
+                          + " · ".join(sorted(undeclared)[:5])
+                          + " — the security floor reads `scope:`, so an undeclared sensitive "
+                          'edit gated at the wrong authority -> "R:UNDECLARED_SENSITIVE"',
+                          f"add the path to {slug}'s `scope:` and re-run "
+                          f"(add run {slug} -- <cmd>), or gate the change where it belongs")
+
     node = read(graph[cid]["path"], "T2")
     stubs = placeholders_in(node)
     if stubs and verdict == "PASS":
@@ -2901,6 +3269,24 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # Constraint 3, structurally: what the freeze approved is what the build must have been held to.
     # A missing digest means a pre-seal engine froze this node — unverifiable, so not refusable.
     sealed = sealed_direction(sfm)
+
+    # Refusal 1b (2026-08-28 review) — the ONE approval is not optional.
+    #
+    # Every post-freeze guard below was keyed off `sealed` with no else: drift detection, the
+    # brief entry, R:UNBRIEFED. So a node that skipped `freeze` entirely did not fail those
+    # checks — it SWITCHED THEM OFF, and gated PASS with less scrutiny than one that went
+    # through the approval. The tolerance above is for a MISSING DIGEST (a pre-seal engine
+    # froze it); a missing freeze STAMP is a different fact, and it is refusable. All depths:
+    # quick is ceremony-tuned, not approval-exempt — the lane under time pressure is exactly
+    # the one that must not be able to skip the human.
+    if verdict == "PASS" and not any(
+            isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")
+            for s in (sfm.get("verified") or [])):
+        return refuse("this node was never frozen — the ONE human approval ADD asks for did "
+                      "not happen, and every post-freeze guard (drift, brief entry) is keyed "
+                      'off that seal -> "R:UNSEALED"',
+                      f'add freeze {slug} --by "<name>", then add gate {slug} PASS')
+
     if sealed and verdict == "PASS" and direction_digest(node) != sealed:
         return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen contract "
                       "changes by refreezing, never by a silent edit",
@@ -2938,7 +3324,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     digest = brief(root, cid)["hash"]              # A16 — the instructions that drove the work
     stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
              f'outcome: {verdict}, receipt: {receipt_cid}, brief: "{digest}"'
-             + (f', reason: "{reason}"' if reason else "") + " }")
+             + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
     if t_err:
         return False, t_err + "\nnext: add status"

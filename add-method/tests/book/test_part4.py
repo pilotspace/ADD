@@ -20,9 +20,9 @@ EXTRA_BANNED = ["autonomy", "--stage", "stage production", "graduation", "RACI",
 # advertise a verb the engine does not ship.
 REAL_VERBS = ["status", "init", "new", "brief", "freeze", "run", "gate", "done", "learn",
               "milestone-done", "deltas", "fold", "reopen", "milestone-archive", "doctor",
-              "wave", "join", "advise", "locate", "todo"]
+              "wave", "join", "advise", "locate", "todo", "check"]
 PHANTOM_VERBS = ["add audit", "add heal", "add graduate", "add stage ", "add delta-append",
-                 "add guide", "add migrate", "add waves", "add check "]
+                 "add guide", "add migrate", "add waves"]
 
 
 def test_part4_no_banned_okf_tokens():

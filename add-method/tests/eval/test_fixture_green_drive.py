@@ -85,15 +85,22 @@ def test_fixture_supports_a_green_standard_drive(tmp_path):
     git("add", "-A", cwd=repo)
     git("commit", "-q", "-m", "add mul", cwd=repo)
 
-    # a junit report a real runner would emit for the passing check
+    # a junit report a real runner would emit for the passing check — WRITTEN BY the command,
+    # so the receipt's two halves come from one process (a report that predates the run is
+    # downgraded to `kind: command-exit`)
     xml = repo / "r.xml"
-    xml.write_text('<testsuites><testsuite>'
-                   '<testcase classname="tests.test_calc" name="test_mul"/>'
-                   '</testsuite></testsuites>')
+    doc = ('<testsuites><testsuite>'
+           '<testcase classname="tests.test_calc" name="test_mul"/>'
+           '</testsuite></testsuites>')
 
-    # drive the trust chain through the dispatch
+    # drive the trust chain through the dispatch — including the ONE approval and its brief
+    assert spike_cli.main(["freeze", "mul-fn", "--by", "human:tindang",
+                           "--authority", "human", "--root", str(root)]) == 0
+    assert spike_cli.main(["brief", "mul-fn", "--by", "human:tindang",
+                           "--root", str(root)]) == 0
     assert spike_cli.main(["run", "mul-fn", "--junitxml", str(xml), "--root", str(root),
-                           "--", sys.executable, "-c", "pass"]) == 0
+                           "--", sys.executable, "-c",
+                           f"open({str(xml)!r},'w').write({doc!r})"]) == 0
     assert spike_cli.main(["gate", "mul-fn", "PASS", "--by", "human:tindang",
                            "--authority", "human", "--root", str(root)]) == 0, "the gate refused a bound, fresh receipt"
     assert spike_cli.main(["done", "mul-fn", "--root", str(root)]) == 0

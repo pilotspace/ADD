@@ -55,7 +55,7 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
-- 💸 **Structure without the ceremony tax** — a thin 22-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
+- 💸 **Structure without the ceremony tax** — a thin 23-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
 - 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions; `freeze` refuses until it is answered or explicitly retired.
@@ -161,7 +161,7 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 22 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 23 verbs (Python, stdlib only) |
 | `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |

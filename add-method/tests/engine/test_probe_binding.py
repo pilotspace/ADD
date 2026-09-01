@@ -52,8 +52,11 @@ def _task(bundle, draft, slug, assumptions, checks):
 def _receipt(bundle, cid, tmp_path, names):
     xml = tmp_path / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{n}"/>' for n in names)
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    return add.run(bundle, cid, [sys.executable, "-c", "pass"], junit=xml)
+    # The command writes the report, so both halves of the receipt come from the same
+    # process — a file dropped beside the run no longer earns `kind: test-ids`.
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    return add.run(bundle, cid,
+                   [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"], junit=xml)
 
 
 GREEN = ("test_atomic_admit", "test_no_overadmit", "test_foreign_release_rejected")

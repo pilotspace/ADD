@@ -81,9 +81,16 @@ def main(argv):
         return 0 if cid else 1
 
     if verb == "brief":
-        pack = add.brief(root, _resolve(root, rest[0]),
-                         phase=_opt(rest, "--phase"), for_subagent=_flag(rest, "--for-subagent"))
+        cid = _resolve(root, rest[0])
+        by = _opt(rest, "--by", "spike")
+        pack = add.brief(root, cid, phase=_opt(rest, "--phase"),
+                         for_subagent=_flag(rest, "--for-subagent"))
         print(pack["text"])
+        # Compiling for a frozen Task IS entering the build, and `gate` reads that stamp
+        # (R:UNBRIEFED) — a drive that compiles without recording cannot reach a PASS.
+        digest, note = add.brief_stamp(root, cid, by=by)
+        if digest:
+            print(note)
         return 0
 
     if verb == "freeze":

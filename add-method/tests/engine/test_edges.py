@@ -48,12 +48,19 @@ def _node(tmp_path, edges, checks, report=("test_m1",)):
     path = root / cid.lstrip("/")
     raw = add.read(path, "T2")["raw"]
     add.write(path, f"---\n{add.set_key(raw, 'status', 'build')}\n---\n" + BODY.format(edges=edges, checks=checks))
+    # The seal, then the brief entry — `gate` refuses a PASS on a node that was never
+    # frozen (R:UNSEALED), so a fixture that skips the one approval tests no real path.
+    add.freeze(root, cid, "human:t")
+    add.brief_stamp(root, cid)
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "i", cwd=tmp_path)
     xml = tmp_path / "r.xml"
     cases = "".join(f'<testcase classname="c" name="{i}"/>' for i in report)
-    xml.write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
-    add.run(root, cid, [sys.executable, "-c", "pass"], cwd=tmp_path, junit=xml)
+    # The command writes the report, so both halves of the receipt come from the same
+    # process — a file dropped beside the run no longer earns `kind: test-ids`.
+    doc = f"<testsuites><testsuite>{cases}</testsuite></testsuites>"
+    add.run(root, cid, [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+            cwd=tmp_path, junit=xml)
     return root, cid
 
 
@@ -95,8 +102,10 @@ def test_no_edges_section_unchanged(tmp_path):
     path.write_text(text, encoding="utf-8")
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "noedges", cwd=tmp_path)
-    add.run(root, cid, [sys.executable, "-c", "pass"],
-            cwd=tmp_path, junit=tmp_path / "r.xml")
+    xml = tmp_path / "r.xml"
+    doc = '<testsuites><testsuite><testcase classname="c" name="test_m1"/></testsuite></testsuites>'
+    add.run(root, cid, [sys.executable, "-c", f"open({str(xml)!r},'w').write({doc!r})"],
+            cwd=tmp_path, junit=xml)
     ok, note = add.gate(root, cid, "PASS", by="human:t")
     assert ok is True, note
 

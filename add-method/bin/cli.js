@@ -227,6 +227,9 @@ function agentPointerBlock(profile) {
     "To begin: run `python3 .add/tooling/cli.py status` — your resume point (read from\n" +
     "the `.add/` bundle, not the repo), which names the next beat to work.\n" +
     "\n" +
+    "**Size before ceremony.** The floor is checked first: security · data · architecture, a new contract surface, or frozen scope always takes a Task, and security is a HARD-STOP.\n" +
+    "Under that floor, a change of at most 3 adjacent files with zero contract-shaping unknowns goes direct — an inline card, red→green, then a commit plus one `add learn` line and no node; anything larger takes a Task, and effort rises with the rung while review never falls.\n" +
+    "\n" +
     profile.next_step + "\n" +
     "\n" +
     "Edit outside the markers, not inside.\n" +
