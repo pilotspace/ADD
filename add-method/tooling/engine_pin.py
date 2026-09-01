@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "4d7a40ef14f60cbf7d6350c61937a918"  # re-aimed @ stamp-field-integrity: every operator-supplied `by` goes through _oneline, so an odd quote can no longer terminate a stamp scalar early
+ENGINE_MD5 = "504262ae5037d662f2ecfd7a0aebcfbf"  # re-aimed @ stamp-field-integrity: every operator-supplied `by` goes through _oneline, so an odd quote can no longer terminate a stamp scalar early
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "a943d7c65bca1d3563ceb55e58761f6d"  # re-aimed @ enforcement-gaps (`check` records the caller context: tty vs process). prior: 5c37c3e0… @ box-check-verb
