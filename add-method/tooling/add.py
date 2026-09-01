@@ -1184,15 +1184,90 @@ def _changed_paths(root) -> list:
     files. `[]` on any failure — a non-repo bundle must stay gateable (law 3), so this can only
     ever ADD a refusal where git is present, never invent one where it is not.
     """
-    out = _git(root, "status", "--porcelain", "-z", "--untracked-files=all")
+    out = _git(root, "status", "--porcelain", "-z", "--untracked-files=all", strip=False)
     if not out:
         return []
-    seen = []
-    for rec in out.split("\0"):
-        rel = rec[3:].strip() if len(rec) > 3 else ""
-        if rel and rel not in seen:
-            seen.append(rel)
+    # `git status` prints REPO-ROOT-relative paths whatever the cwd, while `scope:` entries are
+    # written relative to the BUNDLE PARENT. For any bundle below the repo root — this project's
+    # own `add-method/.add` is one — the two bases differ, so every sensitive edit compared a
+    # prefixed path against an unprefixed scope entry and refused permanently (2026-09-01 review).
+    prefix = _git(root, "rev-parse", "--show-prefix")
+    if prefix is None:
+        return []
+    recs, seen, i = out.split("\0"), [], 0
+    while i < len(recs):
+        rec, i = recs[i], i + 1
+        if len(rec) < 4:
+            continue
+        xy, pending = rec[:2], [rec[3:]]
+        # A rename or copy emits `XY <to>\0<from>\0` — the second field is a PATH carrying NO
+        # status prefix. Read as a status record it lost three characters, so the guard refused
+        # on a path that had never existed, and its own remedy (add it to `scope:`) produced an
+        # entry resolving to nothing, which then trips the no-digest degrade.
+        if ("R" in xy or "C" in xy) and i < len(recs) and recs[i]:
+            pending.append(recs[i])
+            i += 1
+        for rel in pending:
+            if prefix:
+                if not rel.startswith(prefix):
+                    continue  # above the bundle parent — no `scope:` entry could ever name it
+                rel = rel[len(prefix):]
+            if rel and rel not in seen:
+                seen.append(rel)
     return seen
+
+
+def _fs_epoch(near_path, fallback: float) -> float:
+    """`fallback` (the wall clock) expressed the way the FILESYSTEM at `near_path` records time.
+
+    A report written DURING the run read as stale on any filesystem whose mtime granularity is
+    coarser than the clock — HFS+, ext3, exFAT, several network and bind mounts — because the
+    truncated mtime precedes the wall-clock start. That costs more than an evidence rung:
+    emptying the reported IDs leaves every `covers:` referent unbound, so `gate` refuses a node
+    whose suite was green and correctly reported (2026-09-01 review).
+
+    Flooring the clock to the second would fix that and blunt the check, letting a report
+    forged moments before the command still pass. Taking the reference from a sentinel on the
+    SAME filesystem does neither: whatever rounding that filesystem applies to the report was
+    applied to this sentinel first, so discrimination stays as fine as the filesystem allows
+    and no honest report is ever called stale.
+    """
+    probe = Path(near_path).parent / f".add-run-epoch-{os.getpid()}"
+    try:
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_text("", encoding="utf-8")
+        return probe.stat().st_mtime
+    except OSError:
+        return fallback          # an unwritable directory is not a reason to refuse (law 3)
+    finally:
+        try:
+            probe.unlink()
+        except OSError:
+            pass
+
+
+def _report_predates_run(path, started: float) -> bool:
+    """True when `path`'s mtime proves it was written BEFORE the run began.
+
+    `started` must be an `_fs_epoch`, not a raw clock reading — see that function for why.
+    A missing report is treated as predating: no report is not evidence of THIS run either.
+    """
+    try:
+        return Path(path).stat().st_mtime < started
+    except OSError:
+        return True
+
+
+def _fence_balanced(text: str) -> bool:
+    """True when every ``` / ~~~ fence in `text` is closed.
+
+    `_box_lines` SKIPS fenced regions, so an unclosed fence silently swallows every box after
+    it. For the goal-gate that turned real unchecked criteria into `total == 0` — the "no exit
+    criteria" branch, which CLOSES the milestone (2026-09-01 review). A gate that cannot read
+    its own input must refuse, never tally zero.
+    """
+    return sum(1 for ln in text.splitlines()
+               if ln.strip().startswith(("```", "~~~"))) % 2 == 0
 
 
 def _oneline(note) -> str:
@@ -1538,8 +1613,15 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
             return False, (f"no `## {section}` section in {cid} — it carries {carries}\n"
                            f"next: add check {slug} <n> --section <one of those>")
 
-    boxes = _box_lines(body, section)
+    region = _section_of(body, section) if section else body
     where = f"`## {section}`" if section else "its body"
+    if not _fence_balanced(region):
+        return False, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
+                       f"regions, so the index you counted off the file is not the index it would "
+                       f"write to; NOTHING was written\n"
+                       f"next: close the fence in {cid}, then add check {slug} <n>")
+
+    boxes = _box_lines(body, section)
     if not boxes:
         return False, (f"{cid} carries no checkbox in {where} — nothing to check\n"
                        f"next: add a `- [ ] <criterion>` line first, or check a node that has one")
@@ -1626,7 +1708,13 @@ def milestone_done(root, cid: str) -> tuple:
         return False, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
                        f"next: state why {slug} exists in its CARD `why:`, then add milestone-done {slug}")
 
-    tally = [marked for _, marked, _, _ in _box_lines(_section_of(body, "EXIT"))]
+    exit_body = _section_of(body, "EXIT")
+    if not _fence_balanced(exit_body):
+        return False, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
+                       f"so the goal-gate cannot tally its boxes; it does not close on an input it "
+                       f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
+                       f"then add milestone-done {slug}")
+    tally = [marked for _, marked, _, _ in _box_lines(exit_body)]
     checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
 
     if unchecked:
@@ -2026,14 +2114,21 @@ def status(root, all: bool = False, check: bool = False) -> str:
 RUN_TIMEOUT = 900
 
 
-def _git(root, *args, timeout: int = 30, input: str = None):
-    """Run one git command. Returns None when git is absent or the tree is not a repo."""
+def _git(root, *args, timeout: int = 30, input: str = None, strip: bool = True):
+    """Run one git command. Returns None when git is absent or the tree is not a repo.
+
+    `strip=False` for any NUL-delimited stream: porcelain writes `" M path"` for a worktree
+    edit that is not staged, and `.strip()` eats that leading status space, so the FIRST
+    record parses two characters short and its path loses a character (2026-09-01 review).
+    """
     try:
         done = subprocess.run(["git", *args], cwd=str(root), capture_output=True,
                               text=True, timeout=timeout, input=input)
     except (OSError, subprocess.SubprocessError):
         return None
-    return done.stdout.strip() if done.returncode == 0 else None
+    if done.returncode != 0:
+        return None
+    return done.stdout.strip() if strip else done.stdout
 
 
 def _git_blobs(root, rels: list) -> dict:
@@ -2135,7 +2230,10 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # it says: the command's working directory, nothing more.
     digest = scope_digest(root.parent, scope)
 
+    # The reference the report is judged against, read off the filesystem that will record it.
     started = time.time()
+    if junit:
+        started = _fs_epoch(junit, started)
     try:
         done = subprocess.run([str(c) for c in command], cwd=str(cwd),
                               capture_output=True, text=True, timeout=timeout)
@@ -2151,15 +2249,13 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # `kind: test-ids` was earned by a file's EXISTENCE: `/usr/bin/true` plus a hand-typed XML
     # naming tests that do not exist produced the strongest evidence rung (2026-08-28 review).
     # A report the command did not write is not evidence of THIS run, so it does not promote.
-    stale_report = False
-    if junit:
-        try:
-            stale_report = Path(junit).stat().st_mtime < started - 1e-6
-        except OSError:
-            stale_report = True
-
+    stale_report = bool(junit) and _report_predates_run(junit, started)
     if stale_report:
-        why = ("junit: the report was not written during this run (it predates the command), so "
+        # A MISSING report and a PRE-DATED one are different facts; saying "it predates the
+        # command" of a file that was never written is a false diagnosis on the receipt.
+        why = ("junit: no report exists at that path after the run, so the receipt does not "
+               "claim `test-ids`" if not Path(junit).exists() else
+               "junit: the report was not written during this run (it predates the command), so "
                "the receipt does not claim `test-ids` — evidence must come from the run it names")
         note = f"{note}; {why}" if note else why
 

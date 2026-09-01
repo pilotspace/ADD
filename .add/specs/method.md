@@ -13,6 +13,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] A guard's INPUT PARSER is part of the guard: `_changed_paths` read git's porcelain -z stream as if every record carried a status prefix and every path were repo-parent-relative, so the sensitive-path refusal fired on paths that did not exist and missed the file actually edited. A refusal is only as true as the stream it reads. (evidence: tests/engine/test_premerge_review_fixes.py)
 - [ADD · open] A guard that fires on a malformed thing and never on a missing one is a guard you get past by DELETING, not by forging — an absent section reads as clean to every consumer. Check for the ABSENCE of what is required. (evidence: /tasks/sealed-gate-enforcement.md gate PASS · runs/2.md)
 - [ADD · open] The gate binds covers: referents by BARE test id, so a guard name defined in two files (test_guard_messages_name_their_target) binds to neither. Name a guard after its subject. (evidence: /tasks/box-check-verb.d/runs/2.md)
 - [ADD · open] A guard that greps engine source for a string matches the DOCSTRING too: 'no gate' tripped on the words 'goal-gate' in prose, and 'no authority_for' forbade the very call the contract required for its stamp. Strip docstrings and comments, then scan code lines for a call. (evidence: tests/engine/test_check_verb.py::test_check_never_refuses_on_who)
