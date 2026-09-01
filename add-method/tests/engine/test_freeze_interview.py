@@ -378,3 +378,43 @@ def test_the_by_name_is_recorded_verbatim(tmp_path):
     assert stamp["by"] == "Someone Not Verified"
     side = (root / "tasks" / "byname.d" / "interviews" / "1.md").read_text(encoding="utf-8")
     assert "Someone Not Verified" in side
+
+
+def test_a_partial_interview_is_completed_by_a_second_pass(tmp_path):
+    """covers: M6 — answers ACCUMULATE across passes over the same text.
+
+    Found by review, not by the suite: `interview_gap` returned on the FIRST digest-matching
+    stamp, so a human who answered three decisions, was interrupted, and came back to answer the
+    rest was still refused — with no way forward but editing the node to move the digest. An
+    interview is a conversation; two sittings about the same text are one interview.
+    """
+    root = _bundle(tmp_path)
+    cid = _human_floor(root, "twosittings", na=2)
+    qs, _ = add.interview(root, cid)
+    first, rest = qs[:2], qs[2:]
+    add.interview(root, cid, answers={q["id"]: "confirm" for q in first}, by="H")
+
+    node, note = add.freeze(root, cid, by="H", authority="human")
+    assert not node, "a partial interview satisfied the gate"
+    for q in rest:
+        assert q["id"] in note, f"{q['id']} is owed but not named: {note}"
+
+    add.interview(root, cid, answers={q["id"]: "confirm" for q in rest}, by="H")
+    node, note = add.freeze(root, cid, by="H", authority="human")
+    assert node, f"the second sitting completed the interview and was still refused: {note}"
+
+
+def test_a_later_correct_overrides_an_earlier_confirm(tmp_path):
+    """covers: M6 — accumulating must not mean a stale `confirm` outranks a later `correct`.
+
+    The counter-guard for the check above: folding passes in order is only safe if LATER wins.
+    """
+    root = _bundle(tmp_path)
+    cid = _human_floor(root, "reversed", na=4)
+    qs, _ = add.interview(root, cid)
+    add.interview(root, cid, answers={q["id"]: "confirm" for q in qs}, by="H")
+    add.interview(root, cid, answers={qs[0]["id"]: "correct"}, by="H")
+
+    node, note = add.freeze(root, cid, by="H", authority="human")
+    assert not node, "a later `correct` was outranked by the earlier `confirm`"
+    assert qs[0]["id"] in note, note

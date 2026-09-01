@@ -2877,17 +2877,19 @@ def interview_gap(node: dict, fm: dict) -> list:
     decisions = _open_decisions(node)
     if not decisions:
         return []                      # nothing to ask is not something to refuse
+    # Every pass over THIS text, folded in order — later wins. An interview is a conversation, and
+    # two sittings about the same decisions are one interview: reading only the first digest-match
+    # meant a human interrupted halfway could never finish, and reading only the last meant a
+    # follow-up `correct` was outranked by the earlier `confirm` (found in review, 2026-09-01).
     want = interview_digest(node)
+    answered = {}
     for s in _interview_stamps(fm):
-        if str(s.get("interview") or "") != want:
-            continue
-        answered = _answer_map(str(s.get("answers") or ""))
-        owed = [d["id"] for d in decisions
-                if answered.get(d["id"]) not in ("confirm", "defer")]
-        if not owed:
-            return []
-        return owed                    # `correct` is cleared by EDITING, which moves the digest
-    return [d["id"] for d in decisions]
+        if str(s.get("interview") or "") == want:
+            answered.update(_answer_map(str(s.get("answers") or "")))
+    # `correct` is never an answer that completes — it is cleared by EDITING the item, which moves
+    # the digest and re-opens the pass.
+    return [d["id"] for d in decisions
+            if answered.get(d["id"]) not in ("confirm", "defer")]
 
 
 def _answer_map(packed: str) -> dict:
@@ -2959,7 +2961,11 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
         body.append("")
     (side_dir / f"{n}.md").write_text("\n".join(body), encoding="utf-8")
 
-    packed = "|".join(f"{d['id']}={answers.get(d['id'], 'unanswered')}" for d in decisions)
+    # SPARSE, deliberately: only what THIS pass answered. Recording `unanswered` for the rest
+    # would make each pass clobber the one before it when `interview_gap` folds them, so a second
+    # sitting would erase the first instead of completing it. The sidecar still lists every
+    # decision — that is the human-readable record; this is the machine-readable delta.
+    packed = "|".join(f"{d['id']}={answers[d['id']]}" for d in decisions if d["id"] in answers)
     node_w, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{by or "unrecorded"}", at: {_today()}, act: interview, '
                      f'authority: human, interview: "{digest}", '

@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The ONE approval asks its questions out loud
-status: done
+status: build
 depth: standard
 sensitivity: architecture
 scope:
@@ -26,6 +26,7 @@ verified:
   - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:069293bef06c9602" }
   - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md }
   - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md, brief: "sha256:069293bef06c9602" }
+  - { by: loop, at: 2026-09-01, act: reopen, to: build, reason: "interview_gap returns on the FIRST digest-matching stamp, so a partial interview cannot be completed by a second pass" }
 advised_by: method-steward
 ---
 ## CARD
@@ -107,6 +108,8 @@ scope: add-method/tooling/add.py, add-method/tooling/cli.py, add-method/tests/en
 - test_no_body_section_was_renumbered · covers: R:RENUMBER · the section census is unchanged.
 - test_selfanswer_is_carried_by_prose_not_by_an_engine_claim · covers: R:SELFANSWER, A1 · the discipline is shipped prose, on one line, in every tree.
 - test_the_by_name_is_recorded_verbatim · covers: A1 · the notary records the name it is given and judges nothing.
+- test_a_partial_interview_is_completed_by_a_second_pass · covers: M6 · answers accumulate across passes over the same text.
+- test_a_later_correct_overrides_an_earlier_confirm · covers: M6 · folding is in order, and later wins.
 red-first: every check MUST fail first.
 
 ## EVIDENCE
