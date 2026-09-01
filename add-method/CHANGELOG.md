@@ -4,6 +4,63 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.3.0] — 2026-09-01
+
+**The seal has to mean something under every verdict, and the one approval has to be asked for
+out loud.** 3.2 closed the hole where skipping `freeze` did not FAIL the post-freeze guards but
+SWITCHED THEM OFF — for `PASS`. Every one of `gate`'s integrity refusals was written
+`verdict == "PASS"`, so the identical hole stayed open one verdict over: a task created seconds
+earlier, still every template slot, never frozen and never briefed, reached `done` in three calls.
+And `freeze` itself refused an incomplete contract eight ways, every one of them checking the
+DOCUMENT. None checked the CONVERSATION — so ADD's one human approval was a single stamp that said
+nothing about whether the human had seen a single decision they were approving.
+
+### Added
+- **`add interview <slug>`** — puts a node's open decisions to a human before the approval. Every
+  non-`n/a` assumption and every Reject becomes a numbered question carrying the reading the AI
+  took and the cost if it is wrong. Bare it reads; `--answer <id>=confirm|correct|defer --by
+  "<name>"` records, writing a `.d/interviews/<n>.md` sidecar and one `act: interview` stamp.
+  `correct` never completes an interview — it is cleared by EDITING the item, which moves the
+  digest; `defer` does, because a human may accept a risk knowingly. Passes over the same text
+  accumulate in order, so an interview interrupted halfway is finished, not restarted.
+- **A `scaffold` beat** between created and frozen. `add new Task` wrote a file of placeholders and
+  five surfaces then recommended `freeze`, which is structurally guaranteed to refuse it. The beat
+  is derived from the SAME predicates the refusals call, never a copy, and sorts first in
+  `add todo`.
+- **Prose that claims the engine prints something must prove it.** Skill-tree claims naming a
+  backticked verb and a rendering are proven by DRIVING that command against a bundle in the state
+  the claim describes; the anchor is captured stdout. An unregistered claim fails by name.
+
+### Fixed
+- **`RISK-ACCEPTED` no longer walks past the integrity refusals.** They are now two named tuples
+  behind one predicate: INTEGRITY protects the RECORD (unsealed · drift · placeholders ·
+  undeclared-sensitive · phantom-scope) and binds every verdict that approves or closes; EVIDENCE
+  judges the RUN (stale receipt · failed run · unbound `covers:` · open questions · missing lens ·
+  missing brief) and stays PASS-only, because signing for imperfect evidence is what the verdict is
+  FOR. HARD-STOP is refused by neither — it never closes a task, so refusing it would only stop a
+  finding being written down.
+- **`done` checks the seal.** Any (re)freeze must precede the entitling gate.
+- **`freeze` refuses a template Milestone.** `placeholders_in` reads RULES · ASSUMPTIONS · CHECKS
+  and a Milestone body carries none of those three, so it returned `[]` for EVERY milestone and the
+  one human approval was stampable against a node stating no goal and no exit criterion.
+- **`_paths_touch` matches whole path segments.** Read as a string prefix, `scope: src` exempted a
+  changed `srcfoo/secret.yaml` from R:UNDECLARED_SENSITIVE, and `secrets_public/` answered for
+  `secrets/**`.
+- **An unreadable `sensitivity:` floors UP, and `new` refuses it.** `high` and `critical` both read
+  `process` — the LOWEST floor — so a node declaring more caution than the vocabulary knows got
+  less.
+- **A stamp the notary reports written now reads back.** `_oneline` was applied to `--reason` and
+  to nothing else while seven writers interpolated `by:` raw, so an ODD number of `"` in a name
+  terminated the scalar early: `freeze --by 'O"Brien'` PRINTED `freeze recorded` and wrote a record
+  carrying `by` alone, leaving the seal silently absent. It failed closed — the gate then refused
+  with R:UNSEALED — but a notary must never report a record it did not write.
+- **`card_drift` compares the DERIVED beat**, so a freshly frozen node no longer advertises the
+  approval it has just passed.
+
+### Changed
+- The CLI ships **24 verbs**. Skill guidance for the interviewed approval is in all three live
+  skill trees, funded by compressing adjacent prose rather than raising the SKILL.md budget.
+
 ## [3.2.0] — 2026-08-12
 
 **Experience becomes a question the plan must answer.** Every instrument ADD had was about

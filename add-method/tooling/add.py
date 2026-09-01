@@ -836,7 +836,7 @@ RESERVED_FILES = ("index.md", "log.md", "PROJECT.md")
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
-ENGINE = "add/3.2.0"
+ENGINE = "add/3.3.0"
 # Where `init` vendors from: the engine lives beside this file; the seed corpus sits at the bundle
 # root as its own managed tree (`.add/personas-teacher/` installed; `add-method/personas-teacher/`
 # in the package). `parents[1]` resolves both. Module-level so a test can repoint them to simulate a
@@ -1303,6 +1303,13 @@ def _oneline(note) -> str:
     An unbalanced `{` in a `--reason` made the parser's list-continuation swallow the FOLLOWING
     stamp: two records written, one read back, from an append-only ledger whose ordering IS the
     trust model (2026-08-28 review). `replan` already normalised its note; `gate` did not.
+
+    EVERY operator-supplied value interpolated into a flow map goes through here, not just
+    `reason`. It was applied to that one field for a year while seven writers interpolated `by`
+    raw, and an ODD number of `"` in a name then terminated the scalar early: `freeze --by
+    'O"Brien'` PRINTED `freeze recorded` and wrote a record that read back carrying `by` alone,
+    so `_is_frozen` was False and the seal silently did not exist (2026-09-01). A balanced pair
+    round-trips, which is why it survived every real use -> "R:LIE".
     """
     return (" ".join(str(note).split())
             .replace('"', "'").replace("{", "(").replace("}", ")"))
@@ -1517,7 +1524,7 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
     node, err = _transition(root, cid, appends=[
-        ("verified", f'{{ by: "{by}", at: {_today()}, act: {act}, authority: {authority}, '
+        ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
                      f'direction: "{direction_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
@@ -1745,7 +1752,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
         return True, (f"unchanged — box{'es' if len(idle) > 1 else ''} "
                       f"{', '.join(str(n) for n in idle)} in {cid} already {verb}\nnext: add status")
 
-    stamp = (f'{{ by: "{by or "process:check"}", at: {_today()}, '
+    stamp = (f'{{ by: "{_oneline(by or "process:check")}", at: {_today()}, '
              f'act: {"check" if want else "uncheck"}, '
              f'authority: {authority_for(scan(root), cid)}, '
              f'via: {via}, boxes: "{_stamp_boxes(moved)}" }}')
@@ -1968,7 +1975,7 @@ def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
     # newline in the note would split it mid-map and take the node's whole trail with it.
     text = " ".join(str(note).split()).replace('"', "'")
     _, err = _transition(root, cid, appends=[
-        ("verified", f'{{ by: "{by}", at: {_today()}, act: replan, authority: process, '
+        ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: replan, authority: process, '
                      f'note: "{text}" }}')])
     if err:
         return None, err + "\nnext: add status"
@@ -2967,7 +2974,7 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     # decision — that is the human-readable record; this is the machine-readable delta.
     packed = "|".join(f"{d['id']}={answers[d['id']]}" for d in decisions if d["id"] in answers)
     node_w, err = _transition(root, cid, appends=[
-        ("verified", f'{{ by: "{by or "unrecorded"}", at: {_today()}, act: interview, '
+        ("verified", f'{{ by: "{_oneline(by or "unrecorded")}", at: {_today()}, act: interview, '
                      f'authority: human, interview: "{digest}", '
                      f'receipt: /tasks/{slug}.d/interviews/{n}.md, answers: "{_oneline(packed)}" }}')])
     if err:
@@ -3351,7 +3358,7 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
                       f"\nnext: add freeze {slug}, then add brief {slug}")
     digest = brief(root, cid)["hash"]
     _transition(root, cid, appends=[("verified",
-        f'{{ by: "{by}", at: {_today()}, act: brief, authority: process, '
+        f'{{ by: "{_oneline(by)}", at: {_today()}, act: brief, authority: process, '
         f'brief: "{digest}" }}')])
     return digest, (f"brief {digest} recorded as the build entry"
                     f"\nnext: add run {slug} -- <cmd>")
@@ -3552,7 +3559,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         authority = authority_for(graph, cid)
         extra = (f', kind: sources, closed: "{len(closed)}/{len(musts)}"'
                  if closes else "")
-        stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
+        stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: gate, authority: {authority}, '
                  f'outcome: {verdict}{extra}'
                  + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
@@ -3704,7 +3711,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
 
     authority = authority_for(graph, cid)          # computed, never the caller's claim (M3)
     digest = brief(root, cid)["hash"]              # A16 — the instructions that drove the work
-    stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
+    stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: gate, authority: {authority}, '
              f'outcome: {verdict}, receipt: {receipt_cid}, brief: "{digest}"'
              + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
