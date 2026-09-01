@@ -72,13 +72,22 @@ def test_a_value_of_only_quotes_is_not_erased():
 
 
 def test_a_flow_map_round_trips_every_punctuation(tmp_path):
-    """covers: A2 — quotes, braces, colons, commas and newlines, through a real write."""
+    """covers: A2, M4 — quotes, braces, colons, commas and newlines, through a real write.
+
+    M4 is the biconditional, not just the happy path: what the verb REPORTS must match what the
+    ledger HOLDS. A success that wrote an unreadable record and a refusal that wrote a good one
+    are both the notary lying; only the two matching outcomes are allowed.
+    """
     root = _bundle(tmp_path)
     for i, evil in enumerate(['a"b', 'a{b}', 'a}', 'a: b', 'a, b', 'a\nb', 'a"}{,b']):
         cid, p = _authored(root, f"punct{i}")
         node, note = add.freeze(root, cid, by=evil, authority="process")
-        assert node, f"{evil!r}: {note}"
         st = _stamps(p)
+        faithful = len(st) == 1 and st[0].get("act") == "freeze"
+        assert bool(node) == faithful, (
+            f"{evil!r}: freeze reported {'success' if node else 'refusal'} but the ledger "
+            f"{'holds' if faithful else 'does NOT hold'} the record — {note}")
+        assert node, f"{evil!r}: {note}"
         assert len(st) == 1, f"{evil!r} wrote {len(st)} readable stamps"
         assert st[0].get("act") == "freeze", f"{evil!r} lost `act`: {st[0]}"
         assert st[0].get("authority") == "process", f"{evil!r} lost `authority`: {st[0]}"

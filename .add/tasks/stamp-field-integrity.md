@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A stamp the notary reports written is a stamp that reads back
-status: direction
+status: done
 depth: standard
 sensitivity: data
 scope:
@@ -11,12 +11,19 @@ gives:
   - S1 the stamp writers — every verb that appends a flow-map record to `verified:`
   - S2 the `_oneline` normaliser — what it must neutralise for a flow-map scalar
 generated: { by: add/3.2.0, at: 2026-09-01 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:e6b2551ca8df9afe" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:9c08d55836a6b8f8" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/stamp-field-integrity.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:2293042cc7b4e254" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:f677674f76672298" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/stamp-field-integrity.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/stamp-field-integrity.d/runs/2.md, brief: "sha256:f677674f76672298" }
 ---
 ## CARD
 goal: no operator-supplied value can make a stamp read back as something other than what the verb reported writing.
 why: `_oneline` is applied to `--reason` and to nothing else. Seven writers interpolate `by:` raw. Measured 2026-09-01: `add freeze t --by 'O"Brien' --authority human` prints `freeze recorded at authority `human`` and writes a record that parses back carrying ONLY `by` — `act`, `authority` and `direction` are swallowed by the unterminated scalar. `_is_frozen` is then False and `sealed_direction` is None: the seal silently does not exist while the human is told it does. It fails CLOSED (the gate refuses with R:UNSEALED, so nothing is let through), and that is the whole severity — but a notary whose only job is to record faithfully must never report a record it did not write. The trigger is an ODD number of `"`; a balanced pair (`Tin "TinDang97" Dang`) round-trips, which is exactly why this survived every real use.
-beat: scaffold · next: author stamp-field-integrity's RULES, ASSUMPTIONS and CHECKS, then add freeze stamp-field-integrity
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -64,7 +71,7 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 - test_an_empty_by_keeps_the_writers_default · covers: A4, E2 · `unrecorded` and `process:check` still land.
 - test_a_value_of_only_quotes_is_not_erased · covers: E3, R:LOSSY · normalising substitutes, never deletes.
 - test_the_library_is_safe_without_the_cli · covers: A5 · `add.freeze` called directly is enough.
-- test_a_flow_map_round_trips_every_punctuation · covers: A2 · quotes, braces, colons, commas and newlines.
+- test_a_flow_map_round_trips_every_punctuation · covers: A2, M4 · what the verb reports matches what the ledger holds, over every punctuation.
 - test_no_existing_stamp_is_rewritten · covers: A3, E4 · the fix touches the writer, not history.
 red-first: every check MUST fail first.
 

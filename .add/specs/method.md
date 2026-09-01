@@ -13,6 +13,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] A normaliser is only as good as the set of writers that call it. _oneline was correct and applied to one field of seven for a year; when a helper exists to make a value safe, enumerate its call sites FROM THE SOURCE in a check, because a hand list is how the seventh writer gets missed. (evidence: /tasks/stamp-field-integrity.md)
 - [ADD · open] A new verb is never one edit: it ripples into the CLI verb-set registry, the book command reference, both READMEs' verb counts, and five SKILL.md budget pins — one of which is literally R:BUDGET_BUMP, so fund the addition by compressing the prose beside it. (evidence: /tasks/freeze-interview.md)
 - [ADD · open] Eight freeze refusals checked the DOCUMENT and none checked the CONVERSATION. When a gate exists to protect a human decision, check that the decision was actually PUT to them — the assumption sweep made the AI write down what it decided, and nothing made it ask. (evidence: /tasks/freeze-interview.md)
 - [ADD · open] A guard written for one verdict is a guard for one verdict. When a refusal protects the RECORD rather than the EVIDENCE, condition it on the node, never on the verdict — sixteen sites each written verdict == PASS let RISK-ACCEPTED walk a never-frozen scaffold to done in three calls. (evidence: /tasks/risk-accepted-integrity.md)
