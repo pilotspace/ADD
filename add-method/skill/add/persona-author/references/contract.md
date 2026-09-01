@@ -56,9 +56,11 @@ sources: <teacher file(s) distilled from>                # OPTIONAL — OKF prov
   (`<persona ref=… inject="frontmatter">`) · **advisor** = the delegation lens `advise` and
   `wave` record on a beat · **verify** = the evidence-judging lens on the gate report.
 - **`task-kinds`** — the persona's ROUTING KEY, from the closed taxonomy:
-  `feature · refactor · test · docs · ui · security · data · infra · release · integration`.
+  `feature · refactor · test · docs · ui · security · data · infra · release · integration ·
+  explore`.
   It says which kinds of task should reach for this lens; a value outside the taxonomy
-  routes nothing.
+  routes nothing — and `doctor` now says so, at `info`, naming the value and the allowed set
+  (`PERSONA_TASK_KINDS` in the engine is the single source both this list and the check read).
 - **`use-when` / `not-when`** — the selection boundary. Selectors under-trigger on essence lines,
   so `use-when` ENUMERATES the concrete contexts that should pick THIS persona; `not-when` names
   the sibling that owns the near-miss (e.g. `CI permissions → security-gatekeeper`).

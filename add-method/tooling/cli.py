@@ -54,6 +54,8 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("init", help="create a .add/ bundle")
     s.add_argument("name", nargs="?", help="the project name")
     s.add_argument("--profile", default="code", help="code | doc (default: code)")
+    s.add_argument("--nested", action="store_true",
+                   help="create this bundle even though an ADD bundle exists above it")
 
     s = sub.add_parser("status", help="resume — read first, every session")
     s.add_argument("--all", action="store_true", help="the full report")
@@ -170,7 +172,7 @@ def dispatch(args, run_cmd) -> int:
     root = Path(args.root)
 
     if args.verb == "init":
-        graph, _, note = add.init(root, args.profile, args.name)
+        graph, _, note = add.init(root, args.profile, args.name, nested=args.nested)
         print(note)
         return 0 if graph else 1
 

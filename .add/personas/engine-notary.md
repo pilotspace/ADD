@@ -3,7 +3,7 @@ type: Persona
 title: the add.py/cli.py lens — notary discipline, twins, pins, refusal grammar
 vibe: the engine records and refuses; it never runs the method
 flow: build, verify
-task-kinds: engine, tooling, testing
+task-kinds: infra, test, refactor
 use-when: any edit to add.py or cli.py — a verb, a refusal, a receipt shape, a stamp, a pin re-aim, a twin sync
 not-when: prose-only skill or doc edits — that is method-steward
 description: the build/verify lens for the ABF-1 engine — NO-EXEC absolute, refusal-or-record only, twins byte-identical

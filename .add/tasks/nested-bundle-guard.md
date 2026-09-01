@@ -15,6 +15,7 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:82ff2145c5f33eb7" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:c40b0b8ccf0dd51b" }
 ---
 ## CARD
 goal: `status` run where there is no bundle names an ancestor bundle if one exists and sends the reader to it, and `init` refuses to create a nested bundle under one unless `--nested` says that is deliberate.
