@@ -3234,11 +3234,18 @@ def latest_receipt(root, cid: str) -> tuple:
 
 
 INTEGRITY_REFUSALS = (
-    "unsealed", "drift", "unbriefed", "placeholders", "undeclared_sensitive", "phantom_scope",
+    "unsealed", "drift", "placeholders", "undeclared_sensitive", "phantom_scope",
     "explore_unfrozen", "explore_drift", "explore_placeholders",
 )
 EVIDENCE_REFUSALS = (
     "stale_receipt", "failed_run", "unbound_covers", "hollow_explore", "no_security_lens",
+    # `unbriefed` sits HERE, not in INTEGRITY, and the placement was decided by another task's
+    # frozen contract: brief-gate's M3 is "a verdict is how a node LEAVES a bad state", pinned by
+    # `test_non_pass_verdicts_are_never_blocked`. That Reject is not this task's to weaken. It also
+    # reads correctly on the merits — a missing brief says the BUILD was driven without the compiled
+    # prompt, which is a fact about the run, and the seal, the drift check and the placeholder guard
+    # all still bind every verdict, so the RECORD cannot be forged either way.
+    "unbriefed",
 )
 
 
