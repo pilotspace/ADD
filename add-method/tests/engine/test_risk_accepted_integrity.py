@@ -57,7 +57,7 @@ def _sealed(root, slug="t", **fields):
     cid = _authored(root, slug, **fields)
     node, note = add.freeze(root, cid, by="H", authority="human")
     assert node is not None, f"fixture could not freeze: {note!r}"
-    add.brief(root, cid)
+    add.brief_stamp(root, cid, by="H")     # `brief()` COMPILES; `brief_stamp()` records the entry
     return cid
 
 
@@ -93,7 +93,7 @@ def test_refreeze_alone_satisfies_the_seal(tmp_path):
     p.write_text(p.read_text(encoding="utf-8").replace(
         "only the caller's rows", "only the caller's own rows"), encoding="utf-8")
     add.freeze(root, cid, by="H", authority="human")   # records a `refreeze`
-    add.brief(root, "refrozen")
+    add.brief_stamp(root, cid, by="H")
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
@@ -133,27 +133,34 @@ def test_risk_accepted_refuses_template_placeholders(tmp_path):
 # ------------------------------------------------- M4 · the security floor
 
 def _sensitive_bundle(tmp_path, patterns=("deploy/**",)):
-    root = _bundle(tmp_path)
+    """A bundle at `<project>/.add`, because `gate` reads `_changed_paths(root.parent)`.
+
+    A bundle whose parent is not the repo makes the guard read an unrelated directory and find
+    nothing — which is how a refusal passes for the wrong reason.
+    """
+    project = tmp_path / "proj"
+    project.mkdir()
+    root = project / ".add"
+    add.init(root, "code", "T")
     idx = root / "index.md"
-    t = idx.read_text(encoding="utf-8")
     block = "sensitive_paths:\n" + "".join(f"  - {p}\n" for p in patterns)
-    t = re.sub(r"^sensitive_paths:.*?(?=^\w|\Z)", block, t, flags=re.S | re.M) \
-        if re.search(r"^sensitive_paths:", t, flags=re.M) else t.replace("---\n", "---\n" + block, 1)
-    idx.write_text(t, encoding="utf-8")
+    idx.write_text(re.sub(r"^sensitive_paths:.*\n", block, idx.read_text(encoding="utf-8"),
+                          count=1, flags=re.M), encoding="utf-8")
+    assert (add.scan(root).get("/index.md", {}).get("fm") or {}).get("sensitive_paths") \
+        == list(patterns), "fixture did not declare the sensitive paths"
+    for a in (("init", "-q", "."), ("config", "user.email", "t@t"),
+              ("config", "user.name", "t"), ("add", "-A"), ("commit", "-qm", "base")):
+        add._git(project, *a)
     return root
 
 
 def test_risk_accepted_refuses_an_undeclared_sensitive_path(tmp_path):
     """covers: M4, E6 — accepting a risk is never the way around the security floor."""
     root = _sensitive_bundle(tmp_path)
-    add._git(root, "init", "-q", ".")
-    add._git(root, "config", "user.email", "t@t")
-    add._git(root, "config", "user.name", "t")
-    add._git(root, "add", "-A")
-    add._git(root, "commit", "-qm", "base")
     cid = _sealed(root, "floored", scope=["src"])
-    (root / "deploy").mkdir(exist_ok=True)
-    (root / "deploy" / "prod.yaml").write_text("secret: 1\n", encoding="utf-8")
+    (root.parent / "deploy").mkdir(exist_ok=True)
+    (root.parent / "deploy" / "prod.yaml").write_text("secret: 1\n", encoding="utf-8")
+    assert "deploy/prod.yaml" in add._changed_paths(root.parent), "fixture changed nothing git can see"
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
@@ -293,8 +300,11 @@ def test_authority_for_reads_an_unknown_sensitivity_as_human(tmp_path):
     root = _bundle(tmp_path)
     cid = _authored(root, "legacy")
     p = root / cid.lstrip("/")
+    # anchor on a key `new` actually writes — `depth:` is omitted unless supplied, so the
+    # first cut of this fixture was a silent no-op and the check passed against nothing.
     p.write_text(p.read_text(encoding="utf-8").replace(
-        "depth: standard", "depth: standard\nsensitivity: high"), encoding="utf-8")
+        "type: Task", "type: Task\nsensitivity: high", 1), encoding="utf-8")
+    assert (add.scan(root)[cid]["fm"] or {}).get("sensitivity") == "high", "fixture did not land"
 
     assert add.authority_for(add.scan(root), cid) == "human"
 

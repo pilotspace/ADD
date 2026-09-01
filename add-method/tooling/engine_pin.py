@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "1bf617103cdfbe76006238e0c771658c"  # re-aimed @ authoring-beat-named: a node that was never authored is never advised to freeze (the `scaffold` beat), `freeze` refuses a template Milestone, and `card_drift` compares the DERIVED beat. prior: 0456c609… @ premerge-review
+ENGINE_MD5 = "4c2a048d03478968ee738c2832b575a2"  # re-aimed @ risk-accepted-integrity: every INTEGRITY refusal in `gate` binds RISK-ACCEPTED too (only EVIDENCE refusals stay PASS-only), `done` refuses a gate no freeze precedes, `_paths_touch` matches whole path segments, and an unreadable `sensitivity:` floors UP. prior: 1bf61710… @ authoring-beat-named
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fced1ae9ad5743024aaa2610e5a99a7c"  # re-aimed @ enforcement-gaps (`check` records the caller context: tty vs process). prior: 5c37c3e0… @ box-check-verb

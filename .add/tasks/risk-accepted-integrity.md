@@ -14,7 +14,9 @@ gives:
 needs:
   - /tasks/sealed-gate-enforcement.md
 generated: { by: add/3.2.0, at: 2026-09-01 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:2c0e615b723a34ec" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:5be869916c46e4ff" }
 advised_by: engine-notary
 ---
 ## CARD
