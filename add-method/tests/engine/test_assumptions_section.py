@@ -81,6 +81,7 @@ def test_an_authored_assumption_clears_the_freeze(tmp_path):
     """covers: M4 — the gate must be passable, or authors learn to route around it."""
     node = _scaffold(tmp_path)
     body = node.read_text(encoding="utf-8")
+    body = body.replace("goal: <one line>", "goal: a real authored goal.")
     body = body.replace("- M1 <the rule that must hold>", "- M1 a real authored rule")
     body = body.replace('- R:<NAME> <what must never happen> -> "<NAME>"',
                         '- R:REAL a real reject -> "REAL"')

@@ -80,6 +80,9 @@ def _drive_todo_counts_unswept(tmp_path):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 a real surface")
+    # The goal counts as authoring too — a template `goal:` leaves the node at the
+    # `scaffold` beat, which is the state this docstring says is NOT this claim's.
+    t = t.replace("goal: <one line>", "goal: a real authored goal.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 a real rule\n</must>", t, flags=re.S)
     t = re.sub(r"<reject>\n.*?\n</reject>",
