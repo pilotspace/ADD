@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The ONE approval asks its questions out loud
-status: build
+status: done
 depth: standard
 sensitivity: architecture
 scope:
@@ -27,6 +27,10 @@ verified:
   - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md }
   - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/2.md, brief: "sha256:069293bef06c9602" }
   - { by: loop, at: 2026-09-01, act: reopen, to: build, reason: "interview_gap returns on the FIRST digest-matching stamp, so a partial interview cannot be completed by a second pass" }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:e2a66d9d7c9ae5d1" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:862190b4ea1df408" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/3.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/freeze-interview.d/runs/3.md, brief: "sha256:862190b4ea1df408" }
 advised_by: method-steward
 ---
 ## CARD
