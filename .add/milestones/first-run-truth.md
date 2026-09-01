@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: The first run a stranger walks is the run the engine actually performs
-status: direction
+status: done
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:75a11da44c802486" }
@@ -43,11 +43,11 @@ risks:
   - Any `add.py` edit re-aims `ENGINE_MD5` and ripples to four live twins.
 
 ## EXIT
-- [ ] `status` in a subdirectory names the ancestor bundle and `init` refuses under one without `--nested`   (← nested-bundle-guard)
-- [ ] `status` and `brief` report the derived beat, so a frozen node never reads `direction`   (← beat-read-truth)
-- [ ] The GETTING-STARTED walkthrough is executed by the suite, and every claim it makes about freeze holds   (← getting-started-executed)
-- [ ] The `add run` line the skill prints earns a `test-ids` receipt when copied verbatim   (← receipt-idiom-truth)
-- [ ] No cost or ceremony claim on the front door is contradicted by this repo, and the direct lane is visible   (← front-door-claim-truth)
+- [x] `status` in a subdirectory names the ancestor bundle and `init` refuses under one without `--nested`   (← nested-bundle-guard)
+- [x] `status` and `brief` report the derived beat, so a frozen node never reads `direction`   (← beat-read-truth)
+- [x] The GETTING-STARTED walkthrough is executed by the suite, and every claim it makes about freeze holds   (← getting-started-executed)
+- [x] The `add run` line the skill prints earns a `test-ids` receipt when copied verbatim   (← receipt-idiom-truth)
+- [x] No cost or ceremony claim on the front door is contradicted by this repo, and the direct lane is visible   (← front-door-claim-truth)
 
 ## CLOSE
 evidence:

@@ -1,7 +1,7 @@
 ---
 type: Task
 title: What one installer twin lands, the other lands, and Claude Code can see it
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: roster-reachable
@@ -15,11 +15,14 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:87b9c99cca01209e" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:6836ade8b506213e" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/installer-reach-parity.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/installer-reach-parity.d/runs/1.md, brief: "sha256:8104b9f67a3a5d26" }
 ---
 ## CARD
 goal: The Python and JavaScript installers carry the same set of global trees, a parity check proves it, and a global install lands the roster where the host agent can discover it.
 why: `_installer.py:566-574` lists four global trees; `bin/cli.js:946-953` lists five. `personas-index` is in the JS set and absent from the Python one, while being MANAGED and OPTIONAL in both — and MANAGED propagation is sourced FROM the home, so a tree absent from the home is soft-skipped forever. pip users who run a global update therefore never receive a refreshed persona routing index in any registered project; npm users do. The divergence is silent, one-sided and invisible precisely because the tree is optional. The comment sitting beside the `agents` entry records that this exact bug already happened once to the roster and was fixed for it alone. Separately, a global install deploys only the SKILL into a host-discoverable location: the roster stops at `<home>/agents`, verified on this machine — `~/.add/agents/` exists and `~/.claude/agents/` contains neither `add-worker.md` nor `add-advisor.md`. A user who installs globally and works in a project they never initialised gets a discoverable skill and an undiscoverable roster, and nothing surfaces the mismatch.
-beat: direction · next: add freeze installer-reach-parity
+beat: done · next: add status
 
 ## RULES
 <must>

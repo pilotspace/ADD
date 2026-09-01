@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: The roster the skill names is the roster that ships and may run its beats
-status: direction
+status: done
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:75a11da44c802486" }
@@ -43,9 +43,9 @@ risks:
     correctly forbidden — `freeze` and `gate` stay human-marked, and security stays HARD-STOP.
 
 ## EXIT
-- [ ] The roster table names only agents that ship, under a guard, and the skill names them   (← roster-named-and-bounded)
-- [ ] Each agent may run the verbs its beat requires and no seam verb, with Explore given a mode   (← roster-named-and-bounded)
-- [ ] Both installer twins land the same trees, and a global install puts the roster where the host sees it   (← installer-reach-parity)
+- [x] The roster table names only agents that ship, under a guard, and the skill names them   (← roster-named-and-bounded)
+- [x] Each agent may run the verbs its beat requires and no seam verb, with Explore given a mode   (← roster-named-and-bounded)
+- [x] Both installer twins land the same trees, and a global install puts the roster where the host sees it   (← installer-reach-parity)
 
 ## CLOSE
 evidence:

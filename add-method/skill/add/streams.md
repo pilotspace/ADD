@@ -94,11 +94,16 @@ One persona drives a beat; `use-when` / `not-when` route it over a sibling. Pers
 from the teacher corpus (`personas.md` §Seed); the `agentType` is the tool-equipped subagent that
 best carries the lens in this environment.
 
-| Role | Persona (teacher) | Suggested `agentType` | Beats | use-when |
-|------|-------------------|-----------------------|-------|----------|
-| Systems / API | `personas-teacher/engineering/engineering-backend-architect` | `backend-expert` · `python-expert` | direction · build | a contract, IO, persistence, or failure design |
-| Security | `personas-teacher/security/security-architect` | `security-expert` | verify · advisor | **any** security/data/auth scope — the HARD-STOP lens |
-| Experience / UX | `personas-teacher/design/design-ux-architect` | `frontend-expert` | direction · verify | a user-facing surface, accessibility, or a perf budget |
+This package ships exactly two agents — `add-worker` (every execution beat) and `add-advisor`
+(the second mind). They are the DEFAULT executor in every row, and they are always available. The
+last column is an **optional upgrade**: if your environment happens to have a tool-equipped
+specialist, spawn it instead and hand it the same persona. If you have none, the row still works.
+
+| Role | Persona (teacher) | Executor (ships) | Optional upgrade | Beats | use-when |
+|------|-------------------|------------------|------------------|-------|----------|
+| Systems / API | `personas-teacher/engineering/engineering-backend-architect` | `add-worker` | a backend/language specialist, if installed | direction · build | a contract, IO, persistence, or failure design |
+| Security | `personas-teacher/security/security-architect` | `add-advisor` | a security specialist, if installed | verify · advisor | **any** security/data/auth scope — the HARD-STOP lens |
+| Experience / UX | `personas-teacher/design/design-ux-architect` | `add-worker` | a frontend/UX specialist, if installed | direction · verify | a user-facing surface, accessibility, or a perf budget |
 
 Selection is per-beat and cheapest-fit: **no persona named and no floor raised → don't delegate**,
 drive it yourself. A security/data/architecture scope **always** pulls the Security lens into verify,

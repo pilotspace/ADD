@@ -254,3 +254,28 @@ def test_illustrative_output_blocks_are_not_executed():
             if line and not line.startswith("#"):
                 assert line.startswith("add "), \
                     f"`{anchor}` carries a non-command line, so it is not an executable block: {line}"
+
+
+def test_the_freeze_line_is_substitutable_and_names_the_authority():
+    """covers: A1 · the guide's freeze line carries the flag and a self-evidently substitutable name.
+
+    A1 took a placeholder name plus `--authority human`, because the FLAG is what makes the stamp
+    human and the name is the reader's own. The risk the assumption names is concrete: a reader who
+    copies a literal name writes someone else's signature into their own ledger. So the guide's
+    every freeze line must carry the flag AND a name no one would mistake for a real signer.
+    """
+    text = DOC.read_text(encoding="utf-8")
+    lines = [l.strip() for l in text.splitlines() if re.search(r"^\s*add (?:re)?freeze\b", l)]
+    assert lines, "the walkthrough no longer shows a freeze call"
+    for line in lines:
+        assert "--authority human" in line, \
+            f"a freeze line omits the flag that makes the stamp human: {line}"
+        m = re.search(r'--by\s+"([^"]+)"', line)
+        assert m, f"a freeze line carries no --by name: {line}"
+        name = m.group(1)
+        # Substitutable, not bracketed: these lines are EXECUTED by the checks above, and a
+        # `<...>` placeholder is a shell redirect. The predicate is what A1 actually claims —
+        # a reader must not be able to mistake the name for a real signer.
+        assert re.search(r"\byou(?:r)?\b|^<.*>$|placeholder", name, re.I), (
+            f"the guide's freeze line names `{name}`, which reads as a real signer — a reader "
+            f"copies it into their own ledger. Use a self-evidently substitutable name.")

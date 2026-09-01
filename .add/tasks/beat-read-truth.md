@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The beat status and brief report is the beat the stamps derive
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: first-run-truth
@@ -14,11 +14,17 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:bfa8ea2e5c28cbda" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:80446f507d9910fd" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/beat-read-truth.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:d907a14a00f85c11" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:92e2ddf6245132db" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/beat-read-truth.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/beat-read-truth.d/runs/2.md, brief: "sha256:92e2ddf6245132db" }
 ---
 ## CARD
 goal: `status` and `brief` report the beat DERIVED from a node's stamps, so a frozen task never reads `direction` and the two verbs never contradict each other.
 why: `freeze` calls `_transition(root, cid, appends=[("verified", …)])` with no `sets=` (add.py:1527), so the frontmatter `status:` field never advances past `direction`. Both reader verbs print that raw field — `status` at add.py:2239, `brief` at add.py:3208 — while `todo` and `doctor` use the derived beat. Reproduced 2026-09-01: one `status` call after a freeze prints `· transfer [direction] Task` beside `next: add brief transfer`, `todo` groups the same node under `build:`, and `doctor` reports `card_drift: CARD beat says scaffold, status is build`. Three verbs, three answers, one node. README.md:191-192 sells `cli.py status` and `cli.py brief` as the portable path every non-Claude agent follows; a Codex or Cursor agent resuming a frozen task is handed `phase="direction"` and re-does Direction on a sealed contract. The engine already computes the right answer — `_beat_of` derives scaffold · direction · build · verify from the stamps — and two readers ignore it. Fixing on the READ side rather than stamping on write also heals every already-frozen node in every existing bundle on the next read, and covers `reopen` and `replan`, which a write-side fix would leave to drift again.
-beat: direction · next: add freeze beat-read-truth
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -70,6 +76,7 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 - test_a_refrozen_task_reads_the_newest_seal · covers: E2 · the latest freeze governs.
 - test_non_beat_node_types_are_unchanged · covers: M4, A2, E3 · Spec/Persona/Project/Run lines are byte-identical.
 - test_a_done_task_still_reads_done · covers: E5 · a closed task is not re-derived into a beat.
+- test_every_reader_derives_the_beat_through_one_function · covers: A1 · status, todo and brief all reach the beat through `_beat_of`, and no second derivation exists.
 red-first: every check MUST fail first.
 
 ## EVIDENCE

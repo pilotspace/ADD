@@ -6,11 +6,15 @@ because the diff reads plausible. Verify is where that trust is recorded, once.
 ## 1 · Gather the evidence — a fresh, bound receipt
 
 ```bash
-add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the test command>
+add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- \
+    <the test command, carrying its OWN `--junitxml` at that same path>
 ```
 
 `run` executes your command, parses the JUnit report, and writes a **Run receipt** under
-`.add/tasks/<slug>.d/runs/`. Two properties the gate will demand:
+`.add/tasks/<slug>.d/runs/`. The path appears **twice on purpose**: `--junitxml` before the `--`
+tells `run` where to READ the report, and the wrapped command must WRITE it there. `run` never
+passes the path down. Omit the second and the receipt records only an exit code, nothing binds
+to your rules, and the gate refuses naming the unbound ones. Two properties the gate will demand:
 - **fresh** — the receipt records the git blob hash of every in-`scope:` file at run time; a gate
   recomputes it and refuses on any difference. This kills the stale-green failure (tests that passed
   before the last edit). A directory scope enumerates through git, so **gitignored files (build
@@ -49,6 +53,13 @@ Automation covers the checks; it does not cover everything. Examine, by hand, th
 
 This residue stays at human speed. You may move as fast as your automated verification carries you, and
 no faster on the part only a human can check.
+
+**The refute-read.** Before you record a verdict, read your own green as a skeptic would: take the
+receipt as a claim and try to REFUTE it — name the input the bound checks never exercise, the state
+the fixture never reaches, the rule a `covers:` binds by id but not by behavior. A green that
+survives that read is *earned*; one that has not been read against is only *reported*. Delegating a
+beat? `add-advisor` in `refute` mode is an independent reader for exactly this — if it refutes, the
+green is not earned, and you fix before recording.
 
 ## 3 · The gate — one recorded outcome
 

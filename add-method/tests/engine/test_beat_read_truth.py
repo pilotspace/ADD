@@ -8,6 +8,7 @@ reported `card_drift`. Three verbs, three answers, one node. `freeze` calls `_tr
 with `appends=` and no `sets=`, so the stored `status:` field never advances.
 """
 
+import ast
 import sys
 from pathlib import Path
 
@@ -123,3 +124,39 @@ def test_a_done_task_still_reads_done(bundle):
     p = bundle / "tasks" / "closed.md"
     p.write_text(p.read_text().replace("status: direction", "status: done", 1))
     assert "[done]" in _status_line(add.status(bundle, all=True), "closed")
+
+
+def test_every_reader_derives_the_beat_through_one_function():
+    """covers: A1 · the derivation is one function both verbs call.
+
+    A1 took "every reader of orientation" as the affected caller, on the reading that a beat
+    which differs by caller IS the defect. That is only true while there is exactly ONE
+    derivation: a second copy — even a correct one today — reintroduces the two-answer failure
+    the moment one of them is edited. So this probes the SHAPE, not a value: `status`, `todo`
+    and `brief` must each reach the beat through `_beat_of`, and nothing may recompute it from
+    the stamps itself.
+    """
+    src = (Path(add.__file__)).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    assert "_beat_of" in funcs, "the single derivation is gone — every reader is on its own again"
+
+    for reader in ("status", "todo", "brief"):
+        assert reader in funcs, f"{reader} is not a module-level function any more"
+        called = {n.func.id for n in ast.walk(funcs[reader])
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        # `status` and `todo` call it directly; `brief` reaches it through PHASE_OF's lookup,
+        # which is still the same call in the same body.
+        assert "_beat_of" in called, f"{reader} does not derive the beat through `_beat_of`"
+
+    # No second derivation: only `_beat_of` may read the stamp ledger to decide a beat word.
+    beats = {"scaffold", "direction", "build", "verify"}
+    for name, fn in funcs.items():
+        if name == "_beat_of":
+            continue
+        literals = {n.value for n in ast.walk(fn)
+                    if isinstance(n, ast.Constant) and isinstance(n.value, str)}
+        if len(literals & beats) >= 3 and "act" in literals:
+            raise AssertionError(
+                f"`{name}` looks like a SECOND beat derivation — it names {sorted(literals & beats)} "
+                f"beside `act`. One function, or the readers can disagree again.")

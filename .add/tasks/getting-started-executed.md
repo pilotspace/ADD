@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The walkthrough the front door prints is a walkthrough the suite executes
-status: direction
+status: done
 depth: standard
 milestone: first-run-truth
 scope:
@@ -15,11 +15,17 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:90df4ec4776861dc" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:06b92e0e255288e1" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/getting-started-executed.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:36e5aaad1c551fe4" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:4f0aebb017788cbe" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/getting-started-executed.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/getting-started-executed.d/runs/2.md, brief: "sha256:4f0aebb017788cbe" }
 ---
 ## CARD
 goal: The walkthrough GETTING-STARTED prints is executed end to end by the suite, every claim it makes about `freeze` is true when executed, and the approval it teaches records as a human one.
 why: `BEYOND-CODE.md:12` says every command in it is executed by `tests/skill/test_beyond_code_walkthrough.py`, and that file exists. The PRIMARY code walkthrough — the file most people actually read — is executed by nothing: `tests/test_shipped_docs.py:87` checks GETTING-STARTED only for phantom verbs, and `test_promised_capabilities.py` covers README highlight bullets, admitting at its own line 18 that it cannot judge whether the thing is what the bullet describes. That asymmetry is the root cause; the three defects below are its symptoms, each reproduced 2026-09-01 by walking the guide literally in a scratch repo. (1) `:305` claims freeze "refuses a node that still carries template placeholders — you cannot approve a scaffold"; a node froze with five placeholders surviving, because `placeholders_in` (add.py:2796) scans only RULES · ASSUMPTIONS · CHECKS and matches only lines starting `- `, so CARD's `goal: <one line>` is invisible to it. (2) `:301` shows `add freeze transfer --by "your name"` with no `--authority human`, so the documented walk records `authority: process` — a ledger indistinguishable from an unattended agent stamping itself, which is exactly the audit question a lead asks before adopting. SKILL.md:150 gets this right; the agent-facing doc is correct and the human-facing one is not, which is backwards. (3) the same walk earns no human authority stamp anywhere, freeze or gate. One executed test closes the class, not just the three instances.
-beat: direction · next: add freeze getting-started-executed
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -77,6 +83,7 @@ scope: add-method/GETTING-STARTED.md, add-method/tests/skill, add-method/tooling
 - test_a_milestone_why_guard_is_unchanged · covers: E3 · `milestone_why_unset` keeps its own message.
 - test_the_card_guard_applies_at_quick_depth · covers: E4 · depth does not exempt it.
 - test_illustrative_output_blocks_are_not_executed · covers: E5 · the parser distinguishes command from output.
+- test_the_freeze_line_is_substitutable_and_names_the_authority · covers: A1 · every freeze line carries `--authority human` and a name no reader mistakes for a signer.
 red-first: every check MUST fail first.
 
 ## EVIDENCE

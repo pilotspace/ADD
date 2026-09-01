@@ -142,3 +142,52 @@ def test_the_agent_return_names_its_tier():
     for f in ROSTER:
         flat = " ".join(f.read_text(encoding="utf-8").split()).lower()
         assert "tier" in flat, f"{f.name} never reports which tier its persona came from"
+
+
+def test_a_hand_edited_seed_survives_a_re_init(tmp_path):
+    """covers: A1 · a seeded persona edited by hand survives a re-init.
+
+    A1 took the seeded personas as the PROJECT's from the moment they land. That reading is only
+    safe if `init` never re-materializes them over an author's edits — otherwise every refresh
+    silently reverts the lens the project owns, which is the exact failure the assumption names.
+    """
+    add.init(tmp_path, "code", "T")
+    seeded = sorted((tmp_path / "personas").glob("*.md"))
+    assert seeded, "init seeded no personas — the assumption has no subject"
+
+    target = seeded[0]
+    owned = target.read_text(encoding="utf-8") + "\n## Anti-patterns\n- the project's own rule\n"
+    target.write_text(owned, encoding="utf-8")
+
+    add.init(tmp_path, "code", "T")            # a re-init over a live bundle
+    after = target.read_text(encoding="utf-8")
+    assert "the project's own rule" in after, \
+        "a re-init clobbered a hand-edited persona — the seeds are engine-managed, not the project's"
+    assert after == owned, "the seeded file was rewritten, not left alone"
+
+
+def test_the_seeded_personas_land_in_every_tracked_twin():
+    """covers: E5 · a seeded-file change re-aims ENGINE_MD5 and lands in every tracked twin."""
+    import hashlib
+    import engine_pin
+
+    live = REPO / "tooling" / "add.py"
+    digest = hashlib.md5(live.read_bytes()).hexdigest()
+    assert digest == engine_pin.ENGINE_MD5, \
+        f"ENGINE_MD5 is stale: pin {engine_pin.ENGINE_MD5}, engine {digest} — re-aim it"
+
+    twins = [REPO / "src" / "add_method" / "_bundled" / "tooling" / "add.py",
+             REPO / ".add" / "tooling" / "add.py",
+             REPO.parent / ".add" / "tooling" / "add.py"]
+    for twin in twins:
+        if not twin.exists():
+            continue                    # a gitignored dogfood twin may be absent in a fresh clone
+        assert hashlib.md5(twin.read_bytes()).hexdigest() == digest, f"twin drifted: {twin}"
+
+    src = REPO / "tooling" / "templates" / "personas"
+    assert sorted(p.name for p in src.glob("*.md.tmpl")), "the seed templates are gone"
+    for twin in [REPO / "src" / "add_method" / "_bundled" / "tooling" / "templates" / "personas"]:
+        if not twin.exists():
+            continue
+        assert sorted(p.name for p in twin.glob("*.md.tmpl")) == \
+            sorted(p.name for p in src.glob("*.md.tmpl")), f"seed templates drifted in {twin}"

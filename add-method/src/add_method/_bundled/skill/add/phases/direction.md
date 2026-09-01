@@ -23,10 +23,10 @@ conventions — into a lean grounding map, and surface the **anchors** the contr
 milestone, ground is gathered ONCE on the milestone (`## GROUND`); tasks **project** from it and never
 re-ground the repo. Aim the bundle at reality, not assumption.
 
-## The four sections (all in the node body)
+## The five sections (all in the node body)
 
-- **`## RULES`** — `Must` (what it must do) · `Reject` (what it must refuse, each a `R:CODE`) · `After`
-  (post-conditions). What you were **told**, and only that.
+- **`## RULES`** — `Must` (`M<n>`, what it must do) · `Reject` (`R:<CODE>`, what it must refuse).
+  What you were **told**, and only that.
 - **`## ASSUMPTIONS`** — `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say — and the
   reading you took> -> <cost if wrong>`. **Sweep every `gives:` surface on every dimension** —
   `who · which · when · absent · order · experience` — or retire one with `[<dim>] n/a · <why>`. `freeze`
@@ -79,20 +79,26 @@ re-ground the repo. Aim the bundle at reality, not assumption.
   failure this exists to stop is silent and looks like competence: an unstated requirement gets
   written as a Must in the same authoritative voice as a stated one, a check is bound to it, the
   check passes, and the gate goes green on a decision nobody ever made. RULES has no slot for
-  "nobody told me" and EDGES only bounds rules you already wrote, so without this section the
-  guess has nowhere to be visible.
+  "nobody told me" and a filled `## EDGES` line only bounds a rule you already wrote — the gate
+  binds that `E<n>` like a Must — so without this section the guess has nowhere to be visible.
 
-  An assumption is a declared **unknown**, not a rule: it needs no check (`A<n>` is not bindable by
-  `covers:`) and editing one does not break the freeze seal.
+  An assumption is a declared **unknown**, not a rule: a plain `A<n>` needs no check, and editing
+  one does not break the freeze seal. Declare it `· probe: <what shipped behavior must show>` and
+  it becomes bindable by `covers:` like any other referent — that is opt-in, never automatic.
 - **`## PLAN`** — the **contract shape** (this becomes the frozen `gives:` — the interface neighbors
   depend on) · the build **strategy** · the `scope:` tokens (the paths this node may touch; also the
   freshness set) · the regression floor.
+- **`## EDGES`** — `E<n>` — a boundary or failure case a check must cover. Optional, and NOT free:
+  a line you FILL becomes a gate-bound referent exactly like a Must, so `gate PASS` refuses until
+  some check names it. The scaffold's untouched `<placeholder>` owes nothing — writing an edge is
+  what binds it. Retire one by deleting the line, never by answering it `n/a`.
 - **`## CHECKS`** — the **red suite**: one check per `Must` and per `Reject`, each carrying a `covers:`
   key naming the rule it proves. A `Must`/`Reject` encoded in **no** check means RULES is not
   understood — **stop and say so**. Minor behaviors are build guidance, not gated checks.
 
 `covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at
-`standard|deep` it is `M<n>` (a Must) or `R:<CODE>` (a Reject).
+`standard|deep` it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an
+assumption you declared `· probe:`-able). Those five are the whole vocabulary the gate resolves.
 
 ## Run red — for the right reason
 

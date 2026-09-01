@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: The persona tier the method claims is the persona tier a fresh bundle loads
-status: direction
+status: done
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:75a11da44c802486" }
@@ -44,9 +44,9 @@ risks:
   - Adding `explore` to the taxonomy touches a documented closed vocabulary in two files at once.
 
 ## EXIT
-- [ ] A freshly `init`ed bundle carries at least one selectable persona, and both agents reach the corpus when it misses   (← persona-tier-live)
-- [ ] `personas.md` states the keys the roster selects on, and `seed.md`'s archetypes all resolve under a guard   (← persona-contract-truth)
-- [ ] `doctor` reports a `flow:` or `task-kinds:` value outside its closed set, and ADD's own personas pass   (← persona-routing-keys-checked)
+- [x] A freshly `init`ed bundle carries at least one selectable persona, and both agents reach the corpus when it misses   (← persona-tier-live)
+- [x] `personas.md` states the keys the roster selects on, and `seed.md`'s archetypes all resolve under a guard   (← persona-contract-truth)
+- [x] `doctor` reports a `flow:` or `task-kinds:` value outside its closed set, and ADD's own personas pass   (← persona-routing-keys-checked)
 
 ## CLOSE
 evidence:

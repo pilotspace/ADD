@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A fresh bundle loads a persona, and a project with none reaches the corpus
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: live-persona-tier
@@ -16,11 +16,17 @@ generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:2d8c673ac30b496a" }
   - { by: "Tin Dang", at: 2026-09-01, act: replan, authority: process, note: "A2 read the seed set as the three existing planner templates. Measured at build: their flow: values cover design, advisor and verify but NOT build, so M2 — every roster beat has a seeded match — is unsatisfiable with those three alone. Seeding a fourth, a flow: build working lens, distilled from the corpus the same way the planners were. The seal is untouched: M2 was always the binding rule and A2 was the reading of how to satisfy it." }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:b482dbebf6bde84e" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/persona-tier-live.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:9d5407c266900d8d" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:b7ad51c2b8150f0f" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/persona-tier-live.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/persona-tier-live.d/runs/2.md, brief: "sha256:b7ad51c2b8150f0f" }
 ---
 ## CARD
 goal: A freshly initialised bundle carries at least one selectable persona, and an agent whose `.add/personas/` yields no match routes through the generated index into the 232-lens teacher corpus before it falls back to a generic specialist.
 why: "Personas carry the expertise; this agent carries the discipline" is the method's headline value claim, and it is false on every fresh install. `3.0 seeds no personas`, so `.add/personas/` is empty and the selector both agents run — `flow:` first, then `task-kinds:` — has nothing to search. The corpus cannot rescue it: measured 2026-09-01, ZERO of 232 teacher personas carry `flow:` and ZERO carry `task-kinds:`, and neither agent file names `.add/personas-teacher/` or `.add/personas-index/use-when.md` at all, though the installer lands both in every bundle. The three planner templates that DO carry both keys sit in `tooling/templates/personas/` and are seeded by nothing — `init` never touches that directory and `_vendor_tooling` copies only the engine files and the corpus — while `CHANGELOG.md:194` claims they are "seeded at init and migrate". So the steady state is the generic fallback, taken silently, on every project that is not this one. Nothing in the receipt records that it fired, which makes it the worst shape of failure for a trust-based method: the run looks identical to one where an expert was loaded. This repo is the proof — 109 closed nodes, a 232-lens corpus, and a roster of two hand-written personas that exists only because the maintainer wrote it.
-beat: direction · next: add freeze persona-tier-live
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -73,6 +79,8 @@ scope: add-method/tooling/add.py, add-method/agents, add-method/tests
 - test_a_missing_corpus_soft_skips · covers: A6, E2 · no corpus on disk still selects and proceeds.
 - test_the_corpus_tier_states_its_tie_break · covers: A7 · the order is documented in the agent file.
 - test_the_agent_return_names_its_tier · covers: A8 · the return distinguishes project, corpus and generic.
+- test_a_hand_edited_seed_survives_a_re_init · covers: A1 · a re-init leaves a hand-edited seeded persona byte-identical.
+- test_the_seeded_personas_land_in_every_tracked_twin · covers: E5 · ENGINE_MD5 matches the live engine and every tracked twin, seed templates included.
 red-first: every check MUST fail first.
 
 ## EVIDENCE

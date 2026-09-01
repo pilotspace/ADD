@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The run line the skill tells you to copy is a line that earns a bound receipt
-status: direction
+status: done
 depth: quick
 milestone: first-run-truth
 scope:
@@ -12,11 +12,17 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:4b67eb94d4553839" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:8a2f0e59fa86d888" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/receipt-idiom-truth.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:982c4c031eb2ecc4" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:d56c0dad5ac5859d" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/receipt-idiom-truth.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/receipt-idiom-truth.d/runs/2.md, brief: "sha256:d56c0dad5ac5859d" }
 ---
 ## CARD
 goal: The `add run` line the skill prints, copied verbatim, earns a `test-ids` receipt — because the line itself shows the wrapped command writing the report that `run` reads.
 why: SKILL.md:102, SKILL.md:152 (the cookbook, the line the file labels "copy a line") and phases/verify.md:9 all print `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>`. The engine never hands that path to the wrapped command — `subprocess.run` at add.py:2419 passes the argv through unchanged — so `--junitxml` on `add run` is READ-ONLY: `extract_ids` finds no report, `_report_predates_run` fires, and the receipt records `kind: command-exit`. An empty `reported` set means every `covers:` referent is unbound, and the gate refuses the PASS at add.py:3708 naming `unbound_covers` — a message that says nothing about the missing flag on the user's own command. This is the FIRST receipt a new user ever earns, on the one line the file tells them to copy. This repo's own receipts prove the correct idiom (`.add/tasks/direct-lane-size-gate.d/runs/4.md:5` carries `--junitxml` inside the wrapped command), and `.add/tasks/receipt-artifact-leak.md:59` already recorded the lesson — it just never reached the shipped skill. `domains.md:45-47` is the only file in the corpus that happens to show the right shape, and it never states it as the rule.
-beat: direction · next: add freeze receipt-idiom-truth
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -53,6 +59,7 @@ scope: add-method/skill/add, add-method/tests/skill
 - test_the_domains_example_still_passes · covers: E1, A1 · the non-pytest example satisfies the guard.
 - test_a_deliberately_receiptless_example_is_not_flagged · covers: E2 · the guard scopes itself to bound examples.
 - test_skill_md_is_within_its_line_pin · covers: M4, E3 · the budget holds after the edit.
+- test_no_engine_behaviour_changes_in_this_task · covers: A2 · a run with no report still records `command-exit` and the gate still refuses.
 red-first: every check MUST fail first.
 
 ## EVIDENCE

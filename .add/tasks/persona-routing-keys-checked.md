@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A routing key outside its closed taxonomy is a finding, never a silence
-status: direction
+status: done
 depth: quick
 milestone: live-persona-tier
 scope:
@@ -13,11 +13,14 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:44449e6cb5a9a1e1" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:8753e7f5edd37ce4" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/persona-routing-keys-checked.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/persona-routing-keys-checked.d/runs/1.md, brief: "sha256:ecb0b469d8c6428f" }
 ---
 ## CARD
 goal: `doctor` reports a Persona node whose `flow:` or `task-kinds:` carries a value outside its closed set, `explore` joins the task-kind taxonomy, and ADD's own two personas pass the check they should always have passed.
 why: Both routing keys are documented as CLOSED vocabularies — `flow:` over `design · build · advisor · verify`, `task-kinds:` over ten values — and `references/contract.md:52-53` admits outright that any other value "is a typo that no surface loads, and NOTHING warns". `grep -n task-kinds` over the engine finds it only in the scaffold writer, never in a validator. The consequence is silent misrouting, the worst kind: the agent takes the generic fallback and reports success. ADD's own dogfood roster proves it — `engine-notary.md:6` carries `task-kinds: engine, tooling, testing` and `method-steward.md:6` carries `planning, documentation, method-design`; five of six values are outside the taxonomy, so by the method's own contract both of ADD's personas route nothing. Separately the taxonomy is missing a value it needs: `--kind explore` is a whole shipped lane with its own freeze refusal and its own gate path, and `explore` is not in the ten, so for EVERY explore task the selector's `task-kinds:` predicate is unsatisfiable — the rung ADD reserves for "do not guess" is the one rung guaranteed to get a generic agent. A closed set is exactly the precondition for a cheap enumerating check, and this project's own lesson says a rule that quantifies over a set must enumerate that set, both directions.
-beat: direction · next: add freeze persona-routing-keys-checked
+beat: done · next: add status
 
 ## RULES
 <must>

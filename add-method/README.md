@@ -52,10 +52,10 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 ## Highlights
 
-- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
-- 💸 **Structure without the ceremony tax** — a thin 24-verb kernel, a 3-call task walk, one file per feature keep ADD the cheap option, not the heavyweight one.
+- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 24-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
 - 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions; `freeze` refuses until it is answered or explicitly retired.
@@ -63,6 +63,22 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
 > _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
+
+## How much ceremony? — the ladder
+
+**Most changes never create a node.** Size the work first; the floor is checked FIRST and always
+wins (security · data · architecture, a published surface something else consumes, or frozen
+scope → a node, however small). Under that floor:
+
+| the change | route | what persists |
+|---|---|---|
+| mechanical, or a small behavior — ≤3 adjacent files, one sitting, no unknowns | **direct** — no node | the commit + one `add learn` line |
+| one behavior worth a frozen contract | a **Task** | the node, its frozen contract, a run receipt |
+| an unanswered question — investigate · evaluate · research | a **Task**, explore lane | the node + its cited findings |
+| a theme, or a slice spanning tasks | a **Milestone** | the milestone + its task nodes |
+
+Skipped ceremony is never skipped review: a direct change still writes its check and runs it red —
+it just does not persist a node to prove it did.
 
 ## Why ADD — context rot, measured
 

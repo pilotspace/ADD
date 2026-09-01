@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The skill names the agents it ships, and each may run the verbs its beat requires
-status: direction
+status: done
 depth: quick
 milestone: roster-reachable
 scope:
@@ -14,11 +14,14 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:6ecb07c77a2f36fc" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:1f9a1abbfd5010ab" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/roster-named-and-bounded.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/roster-named-and-bounded.d/runs/1.md, brief: "sha256:9569be6734c35837" }
 ---
 ## CARD
 goal: The skill names the two agents ADD ships, the roster table points only at agents that ship, each agent is permitted the verbs its own beat guide requires while the human seams stay forbidden, and Explore has a mode.
 why: `add-worker` and `add-advisor` appear ZERO times across the shipped skill corpus — verified by grep over `skill/add/*.md` and `skill/add/phases/*.md`. The one delegation guide, `streams.md:99-101`, instead names `backend-expert` · `security-expert` · `frontend-expert` as the agentType to spawn; those are the maintainer's own local subagents, present in `~/.claude/agents/` and shipped in no package manifest, no installer tree and no `_bundled/agents/`. A user who installs from npm or PyPI and asks the skill to delegate gets a subagent_type that does not exist, while the two agents they did install are unreachable through any documented path. The guard written for exactly this class proves that table's PERSONA column against the corpus and its EXECUTOR column against nothing. The boundary is worse: `add-worker.md:100` forbids running the engine or writing shared state, but `build.md:7` makes `add brief` Build's FIRST verb and `verify.md:9` makes `add run` the only trusted artifact — so an agent that obeys its own boundary produces a plausible diff and no receipt, and the gate later refuses with `R:UNBRIEFED`, a refusal nothing in the agent's context explains. Two of the eight steps in a full beat are correctly forbidden, three are wrongly forbidden, and one — who creates the node — is undefined. Neither file names a single one of the 24 verbs. And Explore, the rung reserved for "do not guess", has no mode in either file, though it has its own guide, its own freeze refusal and its own gate path. Retired 2.x vocabulary rides along: `§3 Scope` and `§4 suite` resolve against the current format to the wrong sections, `Specify` is not a 3.x beat, and `dependencies.allowlist` is a hard MUST NOT naming a thing the engine never materialises and the book lint bans.
-beat: direction · next: add freeze roster-named-and-bounded
+beat: done · next: add status
 
 ## RULES
 <must>

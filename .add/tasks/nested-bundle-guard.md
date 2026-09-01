@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A bundle that exists above you is a bundle status sends you to, never one init offers to replace
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: first-run-truth
@@ -16,11 +16,14 @@ generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:82ff2145c5f33eb7" }
   - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:c40b0b8ccf0dd51b" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:e38c703e9ebc7078" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/nested-bundle-guard.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/nested-bundle-guard.d/runs/1.md, brief: "sha256:e9df7d11e750958d" }
 ---
 ## CARD
 goal: `status` run where there is no bundle names an ancestor bundle if one exists and sends the reader to it, and `init` refuses to create a nested bundle under one unless `--nested` says that is deliberate.
 why: Reproduced 2026-09-01 in this repo: `cd add-method/src && python3 ../../.add/tooling/cli.py status` prints `no bundle here — run `add init` to create one` / `next: add init`. Following the engine's own `next:` line creates a second `index.md` beside the real one. `grep -c ancestor` over `add.py` and `cli.py` returns 0, and no test in either root mentions it — the guard has never existed. Changing directory into a subdirectory is the single most common thing an engineer does, and ADD's whole promise is that state on disk is the source of truth; two bundles in one repo destroys that, and the engine is what instructs the user to build the second one. The refusal messages elsewhere in this engine are its best feature — this is the one that is confidently wrong rather than merely vague.
-beat: direction · next: add freeze nested-bundle-guard
+beat: done · next: add status
 
 ## RULES
 <must>

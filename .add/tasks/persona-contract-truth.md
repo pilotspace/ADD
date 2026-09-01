@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The persona contract the skill documents is the contract the roster selects on
-status: direction
+status: done
 depth: quick
 milestone: live-persona-tier
 scope:
@@ -12,11 +12,17 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:b5577b87fe6edeb1" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:bee43dac8bc86778" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/persona-contract-truth.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:dcb9bbc077c33155" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:55054946e1a2bb67" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/persona-contract-truth.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/persona-contract-truth.d/runs/2.md, brief: "sha256:55054946e1a2bb67" }
 ---
 ## CARD
 goal: The skill documents the frontmatter keys the roster actually selects on, and every teacher archetype the seed guide names resolves to a real file under a guard that would have caught it.
 why: `personas.md:30-31` tells an author that `flow:` and `not-when:` are "recommended, hand-authored, and read by nothing". `flow:` is in fact the PRIMARY selector in both roster agents (add-worker.md:37-39, add-advisor.md:36), and `task-kinds:` — never mentioned in `personas.md` at all — is the second. `add new Persona` scaffolds seven keys, not one. So an author who follows the file that owns the schema leaves `task-kinds:` at its placeholder believing nothing reads it, the selector then fails to match, and the persona silently never loads: no refusal, no warning, just a generic agent. That is the guard-class hole this project has already been burned by twice — a capability the prose promises with no noun to check it. Compounding it, `seed.md:26` names three teacher archetypes to distil from — `backend-systems` · `security-reviewer` · `frontend-ux` — and all three resolve to ZERO files; the real slugs are `engineering/engineering-backend-architect`, `security/security-architect`, `design/design-ux-architect`, which `streams.md:99-101` names correctly and which `tests/skill/test_streams.py:159` already guards. The guard exists and scans the wrong file: its regex requires the `personas-teacher/` prefix, so seed.md's bare backticked slugs are invisible to it, and seed.md's own test asserts only that the literal string "personas-teacher" appears somewhere.
-beat: direction · next: add freeze persona-contract-truth
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -57,6 +63,7 @@ scope: add-method/skill/add, add-method/tests/skill
 - test_the_streams_roster_still_resolves · covers: E1 · the incumbent case is unchanged.
 - test_a_hypothetical_example_is_not_flagged · covers: E3 · the guard scopes to real references.
 - test_the_persona_author_references_agree · covers: E4, A3 · no reference contradicts the corrected schema.
+- test_this_task_changed_prose_and_a_guard_only · covers: A2 · the selector's closed vocabularies are untouched; an absent key is a finding, never a default.
 red-first: every check MUST fail first.
 
 ## EVIDENCE

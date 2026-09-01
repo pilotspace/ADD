@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A section the gate binds is a section the direction guide teaches
-status: direction
+status: done
 depth: standard
 scope:
   - add-method/skill/add
@@ -12,11 +12,14 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:9ba6744ed826dc48" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:3d2dc0c1ef9ba3bd" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/edges-documented.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: process, outcome: PASS, receipt: /tasks/edges-documented.d/runs/1.md, brief: "sha256:020660f031c8363b" }
 ---
 ## CARD
 goal: The direction guide teaches every node section the gate binds, including `## EDGES`, and states the full referent grammar an author may write in `covers:` — under a check that enumerates the grammar from the engine in both directions.
 why: `## EDGES` is scaffolded into every Task (`- E1 <a boundary or failure case a check must cover — optional>`) and is a first-class gate referent: `referents_of` returns rules plus edges plus probed assumptions, and `unbound()` iterates it, so a filled-in `E1` with no passing check refuses the PASS. The skill corpus never once names it as a section, never states its id grammar, and never lists it as a `covers:` referent. `phases/direction.md:26` heads "## The four sections (all in the node body)" and enumerates RULES · ASSUMPTIONS · PLAN · CHECKS — EDGES is absent, and the same bullet documents an `After` part that appears nowhere in the format or the engine, so phantom vocabulary occupies the line where the real gate-binding section belongs. The two mentions that exist actively mislead: SKILL.md:79 places EDGES inside the RULES bullet, and direction.md:82 reads as prose within RULES. `direction.md:94-95` then states the grammar as `goal`/`G<n>` at quick depth and `M<n>`/`R:<CODE>` at standard, omitting both `E<n>` and `A<n>` though the engine's own referent pattern admits all five. FORMAT.md documents it correctly, and SKILL.md:173-175 explicitly tells the agent to read FORMAT.md only when a decision is genuinely unclear. So the author fills in the scaffolded line exactly as instructed and the gate refuses their PASS with "these rules have no reported passing check: E1", explained by nothing they were told to read. This repo has already been bitten and it is still undocumented at 3.3.0.
-beat: direction · next: add freeze edges-documented
+beat: done · next: add status
 
 ## RULES
 <must>
