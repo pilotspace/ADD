@@ -106,7 +106,11 @@ def test_done_transitions_with_gate(bundle):
     cid, _ = add.new(bundle, "Task", "gated", title="G")
     path = bundle / cid.lstrip("/")
     n = add.read(path, "T0")
+    # the seal comes first — `done` refuses a gate no (re)freeze precedes, because such a gate
+    # closed a node the ONE approval never touched (task risk-accepted-integrity).
     raw = add.append_item(n["raw"], "verified",
+                          '{ by: "human:tindang", at: 2026-07-29, act: freeze, authority: human, direction: "sha256:0" }')
+    raw = add.append_item(raw, "verified",
                           '{ by: "human:tindang", at: 2026-07-29, act: gate, authority: human, outcome: PASS }')
     add.write(path, f"---\n{raw}\n---\n{n['body']}")
 

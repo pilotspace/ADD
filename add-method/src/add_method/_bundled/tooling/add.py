@@ -1086,6 +1086,21 @@ SENSITIVITY_FLOOR = {
     "architecture": "plan",
     "security": "human",
 }
+
+
+def sensitivity_floor(value) -> str:
+    """The authority floor a `sensitivity:` declares — `human` when it declares something unreadable.
+
+    `SENSITIVITY_FLOOR.get(value, "process")` sent every unrecognised value to the LOWEST floor,
+    silently. `high` and `critical` both read `process`, and two real nodes on the affordance-truth
+    branch declared `high` and floored to `process` where they meant `plan` (2026-09-01). An
+    unreadable declaration is a declaration the engine cannot honour, so it floors UP -> "R:SILENT_FLOOR".
+    An ABSENT value is a different fact and keeps the `process` default: declaring nothing is not
+    declaring something illegible.
+    """
+    if value in (None, ""):
+        return "process"
+    return SENSITIVITY_FLOOR.get(str(value), "human")
 TYPE_DIR = {"Task": "tasks", "Milestone": "milestones", "Spec": "specs",
             "Persona": "personas", "Prompt": "prompts", "Run": "runs"}
 BODIES = {
@@ -1169,12 +1184,23 @@ def _paths_touch(scope_entry: str, pattern: str) -> bool:
     """
     import fnmatch
     scope_entry, pattern = scope_entry.strip().rstrip("/"), pattern.strip()
+    if not scope_entry or not pattern:
+        return False          # an empty side matching everything would fire A17 on every node
     if fnmatch.fnmatch(scope_entry, pattern):
         return True
     stem = pattern.replace("**", "").replace("*", "").rstrip("/")
     if not stem:
         return False
-    return scope_entry.startswith(stem) or stem.startswith(scope_entry + "/") or stem == scope_entry
+    # Whole SEGMENTS, not string prefixes. `srcfoo/secret.yaml`.startswith("src") is true and
+    # means nothing, and the dangerous direction is the EXEMPTION clause of
+    # R:UNDECLARED_SENSITIVE: read as a prefix, `scope: src` signed for a `srcfoo/` the node
+    # never declared, and `secrets_public/` answered for `secrets/**` (2026-09-01 probe).
+    return _under(scope_entry, stem) or _under(stem, scope_entry)
+
+
+def _under(path: str, base: str) -> bool:
+    """True when `path` IS `base` or lives beneath it, on `/` boundaries only."""
+    return path == base or path.startswith(base + "/")
 
 
 def _changed_paths(root) -> list:
@@ -1291,7 +1317,7 @@ def authority_for(graph: dict, cid: str) -> str:
     import fnmatch
     node = graph.get(cid) or {}
     fm = node.get("fm") or {}
-    floor = SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process")
+    floor = sensitivity_floor(fm.get("sensitivity"))
 
     patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
     scope = _scope_list(fm)
@@ -1324,6 +1350,18 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     path = root / rel
     if path.exists():
         return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
+
+    # The one slot `new` DOES judge, and deliberately: `sensitivity:` is not free text, it is the
+    # enum that computes the authority floor. Recording `high` verbatim floored the node at
+    # `process` — the notary stance ("a supplied value is recorded verbatim") is right for prose
+    # slots and wrong for an instrument the engine must read back. `init` already refuses an
+    # unknown `--profile` for the same reason -> "R:SILENT_FLOOR".
+    sens = fields.get("sensitivity")
+    if sens not in (None, "") and str(sens) not in SENSITIVITY_FLOOR:
+        return None, (f"unreadable sensitivity {str(sens)!r} — the floor it declares cannot be "
+                      f'computed, and an unreadable declaration is not the lowest floor -> "R:SILENT_FLOOR"'
+                      f"\nnext: add new {node_type} {slug} --sensitivity "
+                      f"<{' | '.join(SENSITIVITY_FLOOR)}>")
 
     order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "vibe", "flow",
              "task-kinds", "use-when", "not-when", "description", "sources",
@@ -1458,6 +1496,22 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: add one hard `budget:` line (tool calls · sources · wall-clock) "
                       f"to ## PLAN, then add freeze {slug}")
 
+    # LAST in the ladder, and deliberately (M9): every refusal above says the contract is not
+    # finished, and there is no sense putting template text to a human. Everything above checks
+    # the DOCUMENT; this is the only one that checks the CONVERSATION.
+    #
+    # Keyed on the COMPUTED floor, never on the `authority` argument, because the line below is
+    # `authority or authority_for(...)`: reading the argument would let `--authority process`
+    # switch the interview off on a security node -> the guard would ship with its own off switch.
+    if authority_for(graph, cid) == "human":
+        owed = interview_gap(node_t2, entry.get("fm") or {})
+        if owed:
+            shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
+            return None, (f"cannot freeze `{slug}` — the ONE human approval is being asked for "
+                          f"decisions no human has been shown: {shown}"
+                          f' -> "R:UNINTERVIEWED"'
+                          f"\nnext: add interview {slug}")
+
     authority = authority or authority_for(graph, cid)
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
@@ -1488,20 +1542,33 @@ def done(root, cid: str) -> tuple:
     # a reopen RESETS the gate (loop.md): only gates that postdate the last reopen entitle `done`,
     # so a stale pre-reopen PASS cannot re-entitle a task the loop returned to a beat.
     last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"), default=-1)
-    gates = [s for s in stamps[last_reopen + 1:] if s.get("act") == "gate"]
-    entitled = [s for s in gates
+    gates = [(i, s) for i, s in enumerate(stamps)
+             if i > last_reopen and s.get("act") == "gate"]
+    entitled = [(i, s) for i, s in gates
                 if AUTHORITY_ORDER.index(str(s.get("authority", "process"))) >=
                 AUTHORITY_ORDER.index(required)]
+    # The seal, checked at the terminal write. `gate` refuses an unsealed PASS (R:UNSEALED, #206)
+    # and — since this task — an unsealed RISK-ACCEPTED too, but `done` is the verb that actually
+    # writes `status: done`, and it counted a gate stamp without ever asking whether the ONE
+    # approval had happened. Any (re)freeze BEFORE the entitling gate satisfies it; a refreeze
+    # recorded afterwards (the re-cross pattern) is not required to.
+    seal_at = min((i for i, s in enumerate(stamps)
+                   if s.get("act") in ("freeze", "refreeze")), default=None)
+    slug = cid.rsplit('/', 1)[-1][:-3]
 
-    missing = []
+    missing, fix = [], f"add gate {slug}"
     if not gates:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
         missing.append(f"a gate at authority `{required}` — highest recorded is "
-                       f"`{max(gates, key=lambda s: AUTHORITY_ORDER.index(str(s.get('authority', 'process')))).get('authority')}`")
+                       f"`{max((s for _, s in gates), key=lambda s: AUTHORITY_ORDER.index(str(s.get('authority', 'process')))).get('authority')}`")
+    elif seal_at is None or all(i < seal_at for i, _ in entitled):
+        missing.append("a freeze preceding the gate — the ONE human approval ADD asks for did "
+                       "not happen, so this gate closed a node nobody ever approved")
+        fix = f'add freeze {slug} --by "<name>", then re-gate'
     if missing:
         return False, missing, ("cannot record `done` — " + "; ".join(missing) +
-                                f"\nnext: add gate {cid.rsplit('/', 1)[-1][:-3]}")
+                                f"\nnext: {fix}")
 
     _transition(root, cid, sets={"status": "done"})
     return True, [], f"{cid} is done\nnext: add status"
@@ -2753,6 +2820,165 @@ def direction_digest(node: dict) -> str:
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
+INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
+
+
+def _open_decisions(node: dict) -> list:
+    """The decisions a human never made but will be held to: non-`n/a` assumptions, then Rejects.
+
+    An `n/a` retirement already states its own reason, and a Must came FROM the human — re-asking
+    either is noise, and an interview people learn to click through buys nothing.
+    """
+    body = node.get("body") or ""
+    out = []
+    for line in _section_of(body, "ASSUMPTIONS").splitlines():
+        m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
+        if not m or re.search(r"·\s*n/a\b", m.group(3)):
+            continue
+        rest = m.group(3)
+        taking = re.search(r"taking\s+(.*?)\s*->", rest)
+        cost = re.search(r"->\s*(.*?)(?:\s*·\s*probe:|$)", rest)
+        out.append({"id": m.group(1), "of": "assumption", "dim": m.group(2),
+                    "reading": (taking.group(1) if taking else rest).strip(),
+                    # the grammar's own "-> if wrong ..." would print as "If wrong: if wrong ..."
+                    "cost": re.sub(r"^if wrong,?\s*", "",
+                                   (cost.group(1) if cost else "").strip(), flags=re.I),
+                    "text": line.strip()})
+    for line in _section_of(body, "RULES").splitlines():
+        m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
+        if m:
+            out.append({"id": m.group(1), "of": "reject", "dim": "reject",
+                        "reading": m.group(2).split("->")[0].strip(), "cost": "",
+                        "text": line.strip()})
+    return out
+
+
+def interview_digest(node: dict) -> str:
+    """A digest over exactly what was interviewed — the same shape as `direction:` and `brief:`.
+
+    Scoped to the open decisions themselves, so rewording an assumption re-opens the interview
+    while editing a Must does not: the Musts came from the human in the first place.
+    """
+    payload = "\n".join(_canon(d["text"]) for d in _open_decisions(node))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _interview_stamps(fm: dict) -> list:
+    return [s for s in (fm.get("verified") or [])
+            if isinstance(s, dict) and s.get("act") == "interview"]
+
+
+def interview_gap(node: dict, fm: dict) -> list:
+    """Ids still owed an answer for the node AS IT NOW READS, or `[]` when the interview holds.
+
+    Reads the stamp whose digest MATCHES the current text — not the latest. Recency is not
+    authority: revert an edit and the earlier interview is the one that answers for this text.
+    """
+    decisions = _open_decisions(node)
+    if not decisions:
+        return []                      # nothing to ask is not something to refuse
+    # Every pass over THIS text, folded in order — later wins. An interview is a conversation, and
+    # two sittings about the same decisions are one interview: reading only the first digest-match
+    # meant a human interrupted halfway could never finish, and reading only the last meant a
+    # follow-up `correct` was outranked by the earlier `confirm` (found in review, 2026-09-01).
+    want = interview_digest(node)
+    answered = {}
+    for s in _interview_stamps(fm):
+        if str(s.get("interview") or "") == want:
+            answered.update(_answer_map(str(s.get("answers") or "")))
+    # `correct` is never an answer that completes — it is cleared by EDITING the item, which moves
+    # the digest and re-opens the pass.
+    return [d["id"] for d in decisions
+            if answered.get(d["id"]) not in ("confirm", "defer")]
+
+
+def _answer_map(packed: str) -> dict:
+    out = {}
+    for part in packed.split("|"):
+        key, sep, verdict = part.partition("=")
+        if sep:
+            out[key.strip()] = verdict.strip()
+    return out
+
+
+def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
+    """Put the node's open decisions to a human, or record their answers.
+
+    With no answers this COMPILES and returns `(questions, note)` — a read, writing nothing. With
+    answers it validates, writes a `.d/interviews/<n>.md` sidecar and appends one `act: interview`
+    stamp referencing it, returning `(node, note)`.
+
+    The engine is a notary here as everywhere: it records the `--by` name verbatim and cannot know
+    a human typed it. R:SELFANSWER is discipline carried by the skill, not a claim made by this
+    function.
+    """
+    root = Path(root)
+    graph = scan(root)
+    entry = graph.get(cid) or {}
+    if not entry.get("path"):
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    node = read(entry["path"], "T2")
+    decisions = _open_decisions(node)
+
+    if not answers:
+        if not decisions:
+            return [], (f"`{slug}` has no open decisions — nothing to put to a human"
+                        f"\nnext: add freeze {slug}")
+        lines = [f"{len(decisions)} open decision(s) in `{slug}` — "
+                 f"answer each `{' | '.join(INTERVIEW_VERDICTS)}`:"]
+        for d in decisions:
+            lines.append(f"\n{d['id']} [{d['dim']}]")
+            lines.append(f"  I took: {d['reading']}")
+            if d["cost"]:
+                lines.append(f"  If wrong: {d['cost']}")
+        lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
+        return decisions, "\n".join(lines)
+
+    ids = {d["id"] for d in decisions}
+    bad_id = [k for k in answers if k not in ids]
+    if bad_id:
+        return None, (f"no such decision in `{slug}`: {', '.join(sorted(bad_id))}"
+                      f"\nthe open decisions are: {', '.join(d['id'] for d in decisions)}"
+                      f"\nnext: add interview {slug}")
+    bad_v = {k: v for k, v in answers.items() if v not in INTERVIEW_VERDICTS}
+    if bad_v:
+        return None, (f"unknown verdict(s) {', '.join(sorted(set(bad_v.values())))} — "
+                      f"answer each decision `{' | '.join(INTERVIEW_VERDICTS)}`"
+                      f"\nnext: add interview {slug} --answer <id>=<verdict>")
+
+    side_dir = root / f"tasks/{slug}.d/interviews"
+    side_dir.mkdir(parents=True, exist_ok=True)
+    n = len(list(side_dir.glob("*.md"))) + 1
+    digest = interview_digest(node)
+    body = [f"# interview {n} — {slug}", "", f"by: {by or 'unrecorded'}",
+            f"at: {_today()}", f"interview: {digest}", ""]
+    for d in decisions:
+        body += [f"## {d['id']} [{d['dim']}]", f"- asked: {d['reading']}"]
+        if d["cost"]:
+            body.append(f"- if wrong: {d['cost']}")
+        body.append(f"- answered: {answers.get(d['id'], 'unanswered')}")
+        body.append("")
+    (side_dir / f"{n}.md").write_text("\n".join(body), encoding="utf-8")
+
+    # SPARSE, deliberately: only what THIS pass answered. Recording `unanswered` for the rest
+    # would make each pass clobber the one before it when `interview_gap` folds them, so a second
+    # sitting would erase the first instead of completing it. The sidecar still lists every
+    # decision — that is the human-readable record; this is the machine-readable delta.
+    packed = "|".join(f"{d['id']}={answers[d['id']]}" for d in decisions if d["id"] in answers)
+    node_w, err = _transition(root, cid, appends=[
+        ("verified", f'{{ by: "{by or "unrecorded"}", at: {_today()}, act: interview, '
+                     f'authority: human, interview: "{digest}", '
+                     f'receipt: /tasks/{slug}.d/interviews/{n}.md, answers: "{_oneline(packed)}" }}')])
+    if err:
+        return None, err + "\nnext: add status"
+    owed = interview_gap(node, scan(root).get(cid, {}).get("fm") or {})
+    tail = (f"\n  still owed: {', '.join(owed)} — a `correct` is cleared by editing the item"
+            if owed else "")
+    return node_w, (f"interview {n} recorded for `{slug}` ({len(decisions)} decision(s)){tail}"
+                    f"\nnext: add freeze {slug}")
+
+
 def sealed_direction(fm: dict) -> str:
     """The digest carried by the most recent freeze/refreeze, or None.
 
@@ -3182,6 +3408,55 @@ def latest_receipt(root, cid: str) -> tuple:
     return fm.get("receipt"), "/" + str(runs[-1].relative_to(root))
 
 
+INTEGRITY_REFUSALS = (
+    "unsealed", "drift", "placeholders", "undeclared_sensitive", "phantom_scope",
+    "explore_drift", "explore_placeholders",
+    # R:UNFROZEN_EXPLORE is deliberately NOT here: it refuses UNCONDITIONALLY, HARD-STOP
+    # included, which is stricter than this tier. Routing it through `_binds` would have
+    # NARROWED an existing refusal to buy tidiness -> "R:WIDEN".
+)
+EVIDENCE_REFUSALS = (
+    "stale_receipt", "failed_run", "unbound_covers", "hollow_explore", "no_security_lens",
+    # `unbriefed` sits HERE, not in INTEGRITY, and the placement was decided by another task's
+    # frozen contract: brief-gate's M3 is "a verdict is how a node LEAVES a bad state", pinned by
+    # `test_non_pass_verdicts_are_never_blocked`. That Reject is not this task's to weaken. It also
+    # reads correctly on the merits — a missing brief says the BUILD was driven without the compiled
+    # prompt, which is a fact about the run, and the seal, the drift check and the placeholder guard
+    # all still bind every verdict, so the RECORD cannot be forged either way.
+    "unbriefed",
+)
+
+
+def _binds(refusal: str, verdict: str) -> bool:
+    """Does this refusal run for this verdict?
+
+    Every integrity refusal in `gate` used to be written `verdict == "PASS"`, sixteen times over.
+    Measured 2026-09-01: a Task created seconds earlier — still every template slot, never frozen,
+    never briefed — reached `done` in three calls (`run -- true`, `gate RISK-ACCEPTED`, `done`).
+    That is #206's finding one verdict over: skipping the seal did not FAIL the post-freeze guards,
+    it SWITCHED THEM OFF -> "R:HATCH".
+
+    The split is "would a verdict here be a FABRICATED record, or merely an OPTIMISTIC one?"
+
+      * INTEGRITY protects the RECORD — was it frozen, did the contract drift, is the body still a
+        template, did the build touch an undeclared sensitive path. Binds every verdict that
+        APPROVES or CLOSES. Accepting a risk is not a way around the seal.
+      * EVIDENCE judges the RUN — a stale receipt, a non-zero exit, an unbound `covers:`, an open
+        question. Binds PASS only: signing for imperfect evidence is precisely what RISK-ACCEPTED
+        is FOR, and three of these refusals already name it as their own remedy.
+
+    HARD-STOP is refused by neither. It never closes a task, so refusing it would only stop a
+    finding being written down — and a security finding is always a HARD-STOP.
+    """
+    if verdict == "HARD-STOP":
+        return False
+    if refusal in INTEGRITY_REFUSALS:
+        return True
+    if refusal in EVIDENCE_REFUSALS:
+        return verdict == "PASS"
+    raise KeyError(f"unclassified gate refusal: {refusal!r}")
+
+
 def gate(root, cid: str, verdict: str, by: str, authority: str = None,
          reason: str = None) -> tuple:
     """Record a verdict, or refuse and say what would make it pass. `(ok, note)`."""
@@ -3208,6 +3483,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # a task editing a sensitive path with no declared sensitivity could sign itself away.
     sfm = graph[cid]["fm"] or {}
     security_floored = authority_for(graph, cid) == "human"
+    closes = verdict == "PASS"      # the ONE place the verdict is compared; refusals go via _binds
 
     # R:SECURITYFOLD — a security risk is a HARD-STOP, never a signed acceptance. The floor already
     # puts authority at `human`; this makes the other half structural rather than prose: the finding
@@ -3222,7 +3498,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # becomes a recorded, enforced fact, not a doctor nudge. Mirrors R:SECURITYFOLD — the softer
     # data/architecture floors (`plan`) stay `info` findings in `doctor`. The engine binds lens
     # PRESENCE; whether it is the *right* lens is the AI's selection and the persona's `use-when`.
-    if verdict == "PASS" and security_floored \
+    if _binds("no_security_lens", verdict) and security_floored \
             and not sfm.get("persona") and not sfm.get("advised_by"):
         return refuse("a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, "
                       "so no one is on record as having reviewed the security -> \"R:NOCOVERAGE\"",
@@ -3249,13 +3525,13 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           '(questions + budget) has not happened -> "R:UNFROZEN_EXPLORE"',
                           f'add freeze {slug} --by "<name>", then add gate {slug} PASS')
         node = read(graph[cid]["path"], "T2")
-        if verdict == "PASS" and direction_digest(node) != sealed_q:
+        if _binds("explore_drift", verdict) and direction_digest(node) != sealed_q:
             return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen "
                           "contract changes by refreezing, never by a silent edit",
                           f'add freeze {slug} --by "<name>" to record the change, or '
                           f'add reopen {slug} --to direction --reason "<why the contract moved>"')
         stubs = placeholders_in(node)
-        if stubs and verdict == "PASS":
+        if stubs and _binds("explore_placeholders", verdict):
             return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                           f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
         body = node["body"]
@@ -3266,7 +3542,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         closed = [m for m in musts
                   if re.search(rf"answers {m}\b[^\n]*\(evidence:\s*[^)\s<][^)]*\)", findings)]
         opens = [m for m in musts if m not in closed]
-        if verdict == "PASS" and (not musts or opens):
+        if _binds("hollow_explore", verdict) and (not musts or opens):
             named = ", ".join(opens) if opens else "(no frozen questions at all)"
             return refuse("open questions hold the PASS — no evidence-carrying finding answers: "
                           f'{named} -> "R:HOLLOW_EXPLORE"',
@@ -3275,14 +3551,14 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           f'add gate {slug} RISK-ACCEPTED --reason "open: {named}"')
         authority = authority_for(graph, cid)
         extra = (f', kind: sources, closed: "{len(closed)}/{len(musts)}"'
-                 if verdict == "PASS" else "")
+                 if closes else "")
         stamp = (f'{{ by: "{by}", at: {_today()}, act: gate, authority: {authority}, '
                  f'outcome: {verdict}{extra}'
                  + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
             return False, t_err + "\nnext: add status"
-        if verdict == "PASS":
+        if closes:
             done(root, cid)
             render_card(root, cid)
             tail = f"{cid} is done"
@@ -3310,7 +3586,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # `'0'`, so an `exit not in (0, None)` test refuses every gate in the bundle. Caught by the
     # non-regression half of M1 — the check that a green receipt still passes.
     code = str(receipt.get("exit", "0")).strip()
-    if verdict == "PASS" and code not in ("0", "", "None"):
+    if _binds("failed_run", verdict) and code not in ("0", "", "None"):
         # `computation:` is a top-level key of the Run node, a sibling of `receipt:` — not a
         # field inside it. Reading it off the receipt dict silently yields None, which is how a
         # refusal loses the one detail that makes it actionable (R:MUTE).
@@ -3332,7 +3608,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         # against frontmatter. This gated e13 itself with freshness silently skipped.
         card_scope = [l for l in card_of(node_body(graph[cid])).splitlines()
                       if l.startswith("scope:") and l.partition(":")[2].strip()]
-        if card_scope and verdict == "PASS":
+        if card_scope and _binds("phantom_scope", verdict):
             return refuse(f"the CARD claims a scope the frontmatter does not declare "
                           f"({card_scope[0].strip()}) — freshness and A17's path floor both read "
                           f"frontmatter, so both were silently skipped",
@@ -3340,7 +3616,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         freshness = "freshness: n/a — the node declares no `scope:`"
     else:
         ok, why = fresh(receipt, root.parent)
-        if not ok and verdict == "PASS":
+        if not ok and _binds("stale_receipt", verdict):
             return refuse(f"the receipt is stale — {why}", f"add run {slug} -- <cmd>")
         freshness = f"freshness: {'fresh' if ok else 'STALE'} — {why}"
 
@@ -3352,7 +3628,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # changed file matching `index.md`'s `sensitive_paths:` and covered by NO scope entry is
     # refused. An ordinary undeclared path stays the freshness check's business, because a
     # scope diff that refuses everything would be a scope diff everyone learns to widen past.
-    if verdict == "PASS":
+    if _binds("undeclared_sensitive", verdict):
         patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
         undeclared = [rel for rel in _changed_paths(root.parent)
                       if any(_paths_touch(rel, str(pat)) for pat in patterns)
@@ -3368,7 +3644,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
 
     node = read(graph[cid]["path"], "T2")
     stubs = placeholders_in(node)
-    if stubs and verdict == "PASS":
+    if stubs and _binds("placeholders", verdict):
         return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                       f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
 
@@ -3385,7 +3661,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # froze it); a missing freeze STAMP is a different fact, and it is refusable. All depths:
     # quick is ceremony-tuned, not approval-exempt — the lane under time pressure is exactly
     # the one that must not be able to skip the human.
-    if verdict == "PASS" and not any(
+    if _binds("unsealed", verdict) and not any(
             isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")
             for s in (sfm.get("verified") or [])):
         return refuse("this node was never frozen — the ONE human approval ADD asks for did "
@@ -3393,7 +3669,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                       'off that seal -> "R:UNSEALED"',
                       f'add freeze {slug} --by "<name>", then add gate {slug} PASS')
 
-    if sealed and verdict == "PASS" and direction_digest(node) != sealed:
+    if sealed and _binds("drift", verdict) and direction_digest(node) != sealed:
         return refuse("RULES/CHECKS drifted after the freeze that approved them — a frozen contract "
                       "changes by refreezing, never by a silent edit",
                       f'add freeze {slug} --by "<name>" to record the change, or '
@@ -3405,7 +3681,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     # prose, and three probe campaigns each showed what recommended prose becomes. Keyed off
     # the seal (like drift) so pre-seal bundles stay gateable; quick depth is ceremony-tuned
     # out, the same stance as the sweep's exemptions.
-    if sealed and verdict == "PASS" and sfm.get("type") == "Task" \
+    if sealed and _binds("unbriefed", verdict) and sfm.get("type") == "Task" \
             and str(sfm.get("depth") or "standard") != "quick":
         all_stamps = sfm.get("verified") or []
         if not _brief_entered(all_stamps, receipt_cid):
@@ -3422,7 +3698,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
     reported.update({i: "fail" for i in (receipt.get("failed") or [])})
     gaps = unbound(node, reported)
-    if gaps and verdict == "PASS":
+    if gaps and _binds("unbound_covers", verdict):
         return refuse("these rules have no reported passing check: " + ", ".join(gaps),
                       f'add gate {slug} RISK-ACCEPTED --reason "<why the gap is acceptable>"')
 
@@ -3435,7 +3711,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     if t_err:
         return False, t_err + "\nnext: add status"
 
-    if verdict == "PASS":
+    if closes:
         done(root, cid)
         render_card(root, cid)
         tail = f"{cid} is done"

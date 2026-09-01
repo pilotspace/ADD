@@ -88,8 +88,9 @@ One task = one atomic node. Three beats, one human decision:
    - `## CHECKS` — one check per Must and per Reject, each with a `covers:` key. The binding is
      enforced at **gate**, and it binds EVERY referent you name — Musts, Rejects, probed
      assumptions, edges. Run the checks **red for the right reason**.
-   - `freeze` REFUSES on a template slot, an unauthored `gives:`, or an unswept `(dim, surface)`
-     pair — and names them; `add todo` counts them down while you author.
+   - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, or
+     — at a human floor — an open decision no human answered (**`add interview <slug>`** puts each
+     one to them for real, R:UNINTERVIEWED). It names them; `add todo` counts them down as you author.
    - The ONE approval stamps direction closed: **`add freeze <slug> --by "<name>" --authority
      human`**. Get the composed prompt with `add brief <slug>` — its refs resolve from the graph,
      so a spec edit re-scopes it with no edit here.
@@ -145,6 +146,7 @@ add todo [--milestone m]                     # the open worklist by beat, each w
 add locate <path>                            # which node's scope owns this file
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
 add doctor                                   # report-only findings — never writes, never gates
+add interview <slug> [--answer <id>=confirm|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
 add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>   # execute → a fresh, bound receipt

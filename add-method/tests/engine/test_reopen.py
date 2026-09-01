@@ -17,8 +17,15 @@ def _gate_stamp(by):
     return f'{{ by: {by}, at: 2026-08-06, act: gate, authority: process, outcome: PASS }}'
 
 
+def _freeze_stamp(by="x"):
+    # `done` requires a (re)freeze BEFORE the entitling gate: a gate that closes a node the ONE
+    # approval never touched is a forged record, not a lenient one (task risk-accepted-integrity).
+    return f'{{ by: {by}, at: 2026-08-06, act: freeze, authority: human, direction: "sha256:0" }}'
+
+
 def _make_done(root, cid):
-    add._transition(root, cid, sets={"status": "done"}, appends=[("verified", _gate_stamp("x"))])
+    add._transition(root, cid, sets={"status": "done"},
+                    appends=[("verified", _freeze_stamp()), ("verified", _gate_stamp("x"))])
 
 
 def _status(root, cid):

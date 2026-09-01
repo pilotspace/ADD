@@ -64,7 +64,7 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed.
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify on its own and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right. Gaming a test to go green is treated as tampering, not a shortcut.
-- 💸 **Structure without the ceremony tax** — a thin 23-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
+- 💸 **Structure without the ceremony tax** — a thin 24-verb kernel and a 3-call task walk keep ADD the cheap option, competitive with the lightest structured flows.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
 - 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
 - 🧭 **The agent reasons before it drafts** — a second mind pressure-tests the plan before the freeze, and returns a recommendation with its confidence per dimension instead of a confident-sounding paragraph. Fluent ≠ true.

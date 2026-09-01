@@ -84,6 +84,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--by", default="cli")
     s.add_argument("--authority")
 
+    s = sub.add_parser("interview", help="put a node's open decisions to a human before the freeze")
+    s.add_argument("ref")
+    s.add_argument("--answer", action="append", default=[], metavar="<id>=<verdict>",
+                   help="confirm | correct | defer — repeatable; omit to just read the questions")
+    s.add_argument("--by", default=None)
+
     s = sub.add_parser("replan", help="record a steering amendment on a frozen task (the seal untouched)")
     s.add_argument("ref")
     s.add_argument("--note", default="")
@@ -205,6 +211,20 @@ def dispatch(args, run_cmd) -> int:
         node, note = add.freeze(root, _resolve(root, args.ref), by=args.by, authority=args.authority)
         print(note)
         return 0 if node else 1
+
+    if args.verb == "interview":
+        answers = {}
+        for pair in args.answer:
+            key, sep, verdict = pair.partition("=")
+            if not sep:
+                print(f"`--answer` takes <id>=<verdict>, got {pair!r}"
+                      f"\nnext: add interview {args.ref} --answer <id>=<verdict>")
+                return 1
+            answers[key.strip()] = verdict.strip()
+        out, note = add.interview(root, _resolve(root, args.ref), answers=answers or None,
+                                  by=args.by)
+        print(note)
+        return 0 if out is not None else 1
 
     if args.verb == "replan":
         node, note = add.replan(root, _resolve(root, args.ref), note=args.note, by=args.by)
