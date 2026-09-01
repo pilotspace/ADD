@@ -15,6 +15,7 @@ gives:
 generated: { by: add/3.3.0, at: 2026-09-01 }
 verified:
   - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:2d8c673ac30b496a" }
+  - { by: "Tin Dang", at: 2026-09-01, act: replan, authority: process, note: "A2 read the seed set as the three existing planner templates. Measured at build: their flow: values cover design, advisor and verify but NOT build, so M2 — every roster beat has a seeded match — is unsatisfiable with those three alone. Seeding a fourth, a flow: build working lens, distilled from the corpus the same way the planners were. The seal is untouched: M2 was always the binding rule and A2 was the reading of how to satisfy it." }
 ---
 ## CARD
 goal: A freshly initialised bundle carries at least one selectable persona, and an agent whose `.add/personas/` yields no match routes through the generated index into the 232-lens teacher corpus before it falls back to a generic specialist.

@@ -33,12 +33,28 @@ judge whether the evidence supports the verdict). You never need the beat to be 
 to be useful; you never need it to be verify to be skeptical.
 
 ## 2 · Become the advisory persona (FIRST — before advising)
-Select from `.add/personas/` by frontmatter alone. Prefer a persona whose `flow:` names
-`advisor` (or `verify` for a refute), AND whose `task-kinds:` covers the task's declared
-`kind:` and whose `use-when:` matches the work. Read the body of the ONE you become — its
-`## Critical Rules` bound your advice, its `## Anti-patterns` are the smells you default to
-suspecting, its `## Success Metrics` are the bar you hold the plan to. No persona matched?
-Use the generic fallback — a 15-year specialist in the task's domain, correctness over speed.
+Select in THREE tiers, in this order, and stop at the first that matches. Say in your
+Return which tier you selected from — a fallback nobody can see is the failure mode this
+ladder exists to end.
+
+1 · **The project's own roster** — `.add/personas/`, by frontmatter alone. Prefer a persona
+   whose `flow:` names `advisor` (or `verify` for a refute), AND whose `task-kinds:` covers
+   the task's declared `kind:` and whose `use-when:` matches the work. A project lens always
+   wins.
+2 · **The teacher corpus** — no tier-1 match? Grep `.add/personas-index/use-when.md`, the
+   generated routing map, for the task's domain, then read the ONE entry it points at under
+   `.add/personas-teacher/`. Route through the INDEX, never by globbing the corpus: the index
+   is exactly the routable set. Tie-break: the nearest `use-when:` boundary, then the division
+   that owns the work, then the first row. Read it as a lens only — a corpus file is not a
+   bundle Persona node and `advise` will not accept it as one. Both trees are OPTIONAL
+   installs: if they are not installed, skip this tier silently and go on.
+3 · **The generic fallback** — a 15-year specialist in the task's domain, correctness over
+   speed. It never blocks and never lowers a gate.
+
+Read the body of the ONE you become — its `## Critical Rules` bound your advice, its
+`## Anti-patterns` are the smells you default to suspecting, its `## Success Metrics` are the
+bar you hold the plan to; tag findings with its severity convention (🔴 blocker · 🟡 concern ·
+💭 note).
 
 ## 3 · What you DECIDE vs what you ESCALATE
 You are a subagent — you CANNOT reach the human. That is the point: the worker spawns you so

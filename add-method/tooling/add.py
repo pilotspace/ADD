@@ -1008,6 +1008,36 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
             f"## Now\n{goal}\n\n## Decisions that bind\n- <the first decision that constrains the rest>\n\n"
             f"## Deltas\n- <what changed, and the evidence that changed it>\n")
 
+    # Seed the starting roster. Until 3.4 `init` seeded NO personas, so `.add/personas/` was
+    # empty on every fresh bundle and the roster's selector — which searches `flow:` then
+    # `task-kinds:` — had nothing to search. The teacher corpus could not rescue it: not one
+    # of its 232 files carries either key. So "personas carry the expertise" was false by
+    # default, and the failure was silent: the agent took the generic fallback and reported
+    # success, with nothing in the receipt recording that no expert was ever loaded
+    # (R:DEADTIER). These four templates already carried the right keys and were seeded by
+    # nothing, while the changelog said they were.
+    #
+    # They are the PROJECT's from the moment they land (A1): `put` never overwrites, so an
+    # edited persona survives every re-init, and deleting one is a legitimate choice.
+    seeded = []
+    tmpl_dir = Path(__file__).resolve().parent / "templates" / "personas"
+    if tmpl_dir.is_dir():
+        for tmpl in sorted(tmpl_dir.glob("*.md.tmpl")):
+            slug = tmpl.name[: -len(".md.tmpl")]
+            body = tmpl.read_text(encoding="utf-8")
+            # The templates carry a roster `name:`; a bundle node needs `type: Persona` and a
+            # `title:` for the graph to see it at all (R:BADPERSONA reads the TYPE, not the name).
+            if body.startswith("---"):
+                fm, _, rest = body[3:].partition("---")
+                title = next((l.split(":", 1)[1].strip() for l in fm.splitlines()
+                              if l.startswith("name:")), slug)
+                body = (f"---\ntype: Persona\ntitle: {title}\n"
+                        f"{fm.strip()}\n{_stamp()}\n---{rest}")
+            before = len(created)
+            put(f"personas/{slug}.md", body)
+            if len(created) > before:
+                seeded.append(slug)
+
     # Vendor the engine + seed corpus so the bundle runs standalone (the skill's `add` = the vendored
     # `tooling/cli.py` for a project that never had this repo). overwrite=False keeps init idempotent —
     # a re-run never clobbers a human's vendored edit (R:CLOBBER); `doctor --sync` is the refresh path.
@@ -1016,6 +1046,10 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
 
     note = (f"created {len(created)} files ({profile} profile)" if created
             else "bundle already exists — nothing written")
+    # Name the roster: a seed nobody is told about is a seed nobody edits (A9).
+    if seeded:
+        note += (f"\n  seeded {len(seeded)} starting personas ({' · '.join(seeded)}) — they are "
+                 f"yours to edit; `init` never overwrites them")
     # Say it plainly: a nested bundle is legal and deliberate, and the reader must know that
     # two bundles now exist so `status` from the wrong directory never surprises them (M4).
     if nested and created and ancestor_bundle(root) is not None:

@@ -31,15 +31,28 @@ spawn — the orchestrator reads only SKILL.md and does not pre-read it for you.
 ## 2 · Become the persona (FIRST — before any task-specific instruction)
 The §3 Boundary below is the floor this persona cannot lower — it binds BEFORE the persona's voice
 can soften it; a persona is advisory, the boundary is not. Now become the persona:
-Select from `.add/personas/` by frontmatter alone (name · vibe · flow · task-kinds ·
-use-when · not-when): prefer a persona whose `flow:` names your mode's surface
-(direction→design · build→build · verify→verify) AND whose `task-kinds:` covers the
-task's declared `kind:`. In verify mode select a `flow: verify` persona first, falling
-back to `flow: advisor` when none declares verify. Read the body of the ONE you become.
-Its `## Critical Rules` are your constraints; its `## Success Metrics` are your done-bar;
-tag findings with its severity convention (🔴 blocker · 🟡 concern · 💭 note). No persona
-matched? Use the generic fallback — a 15-year specialist in the task's domain, correctness
-over speed; the fallback never blocks and never lowers a gate. ORIENT before you draft —
+Select in THREE tiers, in this order, and stop at the first that matches. Say in your
+Return which tier you selected from — a fallback nobody can see is the failure mode this
+ladder exists to end.
+
+1 · **The project's own roster** — `.add/personas/`, by frontmatter alone (name · vibe ·
+   flow · task-kinds · use-when · not-when): prefer a persona whose `flow:` names your
+   mode's surface (direction→design · build→build · verify→verify) AND whose `task-kinds:`
+   covers the task's declared `kind:`. In verify mode take a `flow: verify` persona first,
+   falling back to `flow: advisor` when none declares verify. A project lens always wins.
+2 · **The teacher corpus** — no tier-1 match? Grep `.add/personas-index/use-when.md`, the
+   generated routing map, for the task's domain, then read the ONE entry it points at under
+   `.add/personas-teacher/`. Route through the INDEX, never by globbing the corpus: the index
+   is exactly the routable set. Tie-break: the nearest `use-when:` boundary, then the division
+   that owns the work, then the first row. Read it as a lens only — a corpus file is not a
+   bundle Persona node and `advise` will not accept it as one. Both trees are OPTIONAL
+   installs: if they are not installed, skip this tier silently and go on.
+3 · **The generic fallback** — a 15-year specialist in the task's domain, correctness over
+   speed. It never blocks and never lowers a gate.
+
+Read the body of the ONE you become. Its `## Critical Rules` are your constraints; its
+`## Success Metrics` are your done-bar; tag findings with its severity convention
+(🔴 blocker · 🟡 concern · 💭 note). ORIENT before you draft —
 run the persona's lead commands (status · the suite · the diff you judge); act on ground
 truth, never a re-derived guess.
 
