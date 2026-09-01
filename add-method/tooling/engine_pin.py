@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a6c18a54a1a565bc84f009ee823d6619"  # re-aimed @ risk-accepted-integrity: every INTEGRITY refusal in `gate` binds RISK-ACCEPTED too (only EVIDENCE refusals stay PASS-only), `done` refuses a gate no freeze precedes, `_paths_touch` matches whole path segments, and an unreadable `sensitivity:` floors UP. `unbriefed` stays EVIDENCE (brief-gate's frozen M3). prior: 1bf61710… @ authoring-beat-named
+ENGINE_MD5 = "d67aa2d2b413fda043f2202bc6e1265c"  # re-aimed @ freeze-interview: the ONE approval is interviewed first at a human floor (R:UNINTERVIEWED); prior work: risk-accepted-integrity tiers + done seal
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "fced1ae9ad5743024aaa2610e5a99a7c"  # re-aimed @ enforcement-gaps (`check` records the caller context: tty vs process). prior: 5c37c3e0… @ box-check-verb
+ENGINE_PKG_MD5 = "a943d7c65bca1d3563ceb55e58761f6d"  # re-aimed @ enforcement-gaps (`check` records the caller context: tty vs process). prior: 5c37c3e0… @ box-check-verb

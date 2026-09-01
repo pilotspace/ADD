@@ -1496,6 +1496,22 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: add one hard `budget:` line (tool calls · sources · wall-clock) "
                       f"to ## PLAN, then add freeze {slug}")
 
+    # LAST in the ladder, and deliberately (M9): every refusal above says the contract is not
+    # finished, and there is no sense putting template text to a human. Everything above checks
+    # the DOCUMENT; this is the only one that checks the CONVERSATION.
+    #
+    # Keyed on the COMPUTED floor, never on the `authority` argument, because the line below is
+    # `authority or authority_for(...)`: reading the argument would let `--authority process`
+    # switch the interview off on a security node -> the guard would ship with its own off switch.
+    if authority_for(graph, cid) == "human":
+        owed = interview_gap(node_t2, entry.get("fm") or {})
+        if owed:
+            shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
+            return None, (f"cannot freeze `{slug}` — the ONE human approval is being asked for "
+                          f"decisions no human has been shown: {shown}"
+                          f' -> "R:UNINTERVIEWED"'
+                          f"\nnext: add interview {slug}")
+
     authority = authority or authority_for(graph, cid)
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
@@ -2802,6 +2818,159 @@ def direction_digest(node: dict) -> str:
                          _canon(_section_of(body, "CHECKS")),
                          _canon("\n".join(str(g) for g in gives))))
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
+
+
+def _open_decisions(node: dict) -> list:
+    """The decisions a human never made but will be held to: non-`n/a` assumptions, then Rejects.
+
+    An `n/a` retirement already states its own reason, and a Must came FROM the human — re-asking
+    either is noise, and an interview people learn to click through buys nothing.
+    """
+    body = node.get("body") or ""
+    out = []
+    for line in _section_of(body, "ASSUMPTIONS").splitlines():
+        m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
+        if not m or re.search(r"·\s*n/a\b", m.group(3)):
+            continue
+        rest = m.group(3)
+        taking = re.search(r"taking\s+(.*?)\s*->", rest)
+        cost = re.search(r"->\s*(.*?)(?:\s*·\s*probe:|$)", rest)
+        out.append({"id": m.group(1), "of": "assumption", "dim": m.group(2),
+                    "reading": (taking.group(1) if taking else rest).strip(),
+                    # the grammar's own "-> if wrong ..." would print as "If wrong: if wrong ..."
+                    "cost": re.sub(r"^if wrong,?\s*", "",
+                                   (cost.group(1) if cost else "").strip(), flags=re.I),
+                    "text": line.strip()})
+    for line in _section_of(body, "RULES").splitlines():
+        m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
+        if m:
+            out.append({"id": m.group(1), "of": "reject", "dim": "reject",
+                        "reading": m.group(2).split("->")[0].strip(), "cost": "",
+                        "text": line.strip()})
+    return out
+
+
+def interview_digest(node: dict) -> str:
+    """A digest over exactly what was interviewed — the same shape as `direction:` and `brief:`.
+
+    Scoped to the open decisions themselves, so rewording an assumption re-opens the interview
+    while editing a Must does not: the Musts came from the human in the first place.
+    """
+    payload = "\n".join(_canon(d["text"]) for d in _open_decisions(node))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _interview_stamps(fm: dict) -> list:
+    return [s for s in (fm.get("verified") or [])
+            if isinstance(s, dict) and s.get("act") == "interview"]
+
+
+def interview_gap(node: dict, fm: dict) -> list:
+    """Ids still owed an answer for the node AS IT NOW READS, or `[]` when the interview holds.
+
+    Reads the stamp whose digest MATCHES the current text — not the latest. Recency is not
+    authority: revert an edit and the earlier interview is the one that answers for this text.
+    """
+    decisions = _open_decisions(node)
+    if not decisions:
+        return []                      # nothing to ask is not something to refuse
+    want = interview_digest(node)
+    for s in _interview_stamps(fm):
+        if str(s.get("interview") or "") != want:
+            continue
+        answered = _answer_map(str(s.get("answers") or ""))
+        owed = [d["id"] for d in decisions
+                if answered.get(d["id"]) not in ("confirm", "defer")]
+        if not owed:
+            return []
+        return owed                    # `correct` is cleared by EDITING, which moves the digest
+    return [d["id"] for d in decisions]
+
+
+def _answer_map(packed: str) -> dict:
+    out = {}
+    for part in packed.split("|"):
+        key, sep, verdict = part.partition("=")
+        if sep:
+            out[key.strip()] = verdict.strip()
+    return out
+
+
+def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
+    """Put the node's open decisions to a human, or record their answers.
+
+    With no answers this COMPILES and returns `(questions, note)` — a read, writing nothing. With
+    answers it validates, writes a `.d/interviews/<n>.md` sidecar and appends one `act: interview`
+    stamp referencing it, returning `(node, note)`.
+
+    The engine is a notary here as everywhere: it records the `--by` name verbatim and cannot know
+    a human typed it. R:SELFANSWER is discipline carried by the skill, not a claim made by this
+    function.
+    """
+    root = Path(root)
+    graph = scan(root)
+    entry = graph.get(cid) or {}
+    if not entry.get("path"):
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    node = read(entry["path"], "T2")
+    decisions = _open_decisions(node)
+
+    if not answers:
+        if not decisions:
+            return [], (f"`{slug}` has no open decisions — nothing to put to a human"
+                        f"\nnext: add freeze {slug}")
+        lines = [f"{len(decisions)} open decision(s) in `{slug}` — "
+                 f"answer each `{' | '.join(INTERVIEW_VERDICTS)}`:"]
+        for d in decisions:
+            lines.append(f"\n{d['id']} [{d['dim']}]")
+            lines.append(f"  I took: {d['reading']}")
+            if d["cost"]:
+                lines.append(f"  If wrong: {d['cost']}")
+        lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
+        return decisions, "\n".join(lines)
+
+    ids = {d["id"] for d in decisions}
+    bad_id = [k for k in answers if k not in ids]
+    if bad_id:
+        return None, (f"no such decision in `{slug}`: {', '.join(sorted(bad_id))}"
+                      f"\nthe open decisions are: {', '.join(d['id'] for d in decisions)}"
+                      f"\nnext: add interview {slug}")
+    bad_v = {k: v for k, v in answers.items() if v not in INTERVIEW_VERDICTS}
+    if bad_v:
+        return None, (f"unknown verdict(s) {', '.join(sorted(set(bad_v.values())))} — "
+                      f"answer each decision `{' | '.join(INTERVIEW_VERDICTS)}`"
+                      f"\nnext: add interview {slug} --answer <id>=<verdict>")
+
+    side_dir = root / f"tasks/{slug}.d/interviews"
+    side_dir.mkdir(parents=True, exist_ok=True)
+    n = len(list(side_dir.glob("*.md"))) + 1
+    digest = interview_digest(node)
+    body = [f"# interview {n} — {slug}", "", f"by: {by or 'unrecorded'}",
+            f"at: {_today()}", f"interview: {digest}", ""]
+    for d in decisions:
+        body += [f"## {d['id']} [{d['dim']}]", f"- asked: {d['reading']}"]
+        if d["cost"]:
+            body.append(f"- if wrong: {d['cost']}")
+        body.append(f"- answered: {answers.get(d['id'], 'unanswered')}")
+        body.append("")
+    (side_dir / f"{n}.md").write_text("\n".join(body), encoding="utf-8")
+
+    packed = "|".join(f"{d['id']}={answers.get(d['id'], 'unanswered')}" for d in decisions)
+    node_w, err = _transition(root, cid, appends=[
+        ("verified", f'{{ by: "{by or "unrecorded"}", at: {_today()}, act: interview, '
+                     f'authority: human, interview: "{digest}", '
+                     f'receipt: /tasks/{slug}.d/interviews/{n}.md, answers: "{_oneline(packed)}" }}')])
+    if err:
+        return None, err + "\nnext: add status"
+    owed = interview_gap(node, scan(root).get(cid, {}).get("fm") or {})
+    tail = (f"\n  still owed: {', '.join(owed)} — a `correct` is cleared by editing the item"
+            if owed else "")
+    return node_w, (f"interview {n} recorded for `{slug}` ({len(decisions)} decision(s)){tail}"
+                    f"\nnext: add freeze {slug}")
 
 
 def sealed_direction(fm: dict) -> str:

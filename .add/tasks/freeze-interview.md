@@ -17,7 +17,9 @@ gives:
   - S3 the `freeze` verb at a human floor — refuses an uninterviewed node (R:UNINTERVIEWED)
   - S4 the skill's direction beat — the prose that drives the interview before the stamp
 generated: { by: add/3.2.0, at: 2026-09-01 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-01, act: freeze, authority: human, direction: "sha256:6a8d4230fc9e4e79" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:2f5727fcff92fce4" }
 advised_by: method-steward
 ---
 ## CARD

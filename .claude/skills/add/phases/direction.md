@@ -131,12 +131,26 @@ bind coverage and does *not* write `gives:` (author that above). The `covers:`�
 receipt. Freeze is the approval; the gate is the proof.
 
 ```bash
+add interview <slug>                                  # read the open decisions
+add interview <slug> --answer A1=confirm --answer R:LEAK=confirm --by "<name>"
 add freeze <slug> --by "<name>" --authority human
 ```
 
 Authority floor by sensitivity (unstrikeable): mechanical→process · data→plan · architecture→plan ·
 **security→human, never derived, never batched**. A sensitive `scope:` path raises the floor to human
 regardless. The freeze is the single human decision of the whole task; present it via `gate.md`.
+
+**At a human floor the approval is interviewed first.** `add interview <slug>` compiles every
+non-`n/a` assumption and every Reject into a numbered question carrying the reading you took and the
+cost if it is wrong; `freeze` refuses until each is answered `confirm`, `correct` or `defer`
+(R:UNINTERVIEWED). Every other refusal above checks the DOCUMENT — this is the one that checks the
+CONVERSATION, because `## ASSUMPTIONS` is a list of silences YOU filled in on the human's behalf.
+
+Put the questions to the human for real, one decision at a time, in their own words — **never record
+an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
+cleared by editing the item, which moves the digest and re-opens the pass. `defer` does complete
+one — a human may accept a risk knowingly. Reword an interviewed assumption afterwards and the
+interview goes stale; edit a Must and it does not, because the Musts came from them.
 
 ## When Direction reveals a gap
 

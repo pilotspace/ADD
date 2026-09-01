@@ -13,6 +13,19 @@ sys.path.insert(0, str(REPO / "tooling"))
 import add  # noqa: E402
 
 
+def _interview_all(root, cid, by="human:t"):
+    """Answer every open decision, so a human-floor freeze is not refused (R:UNINTERVIEWED).
+
+    A fixture that skips the interview tests no real path: `freeze` returns a refusal, the seal is
+    never written, and the gate then fails on R:UNSEALED — a green-looking fixture proving nothing.
+    """
+    qs, _ = add.interview(root, cid)
+    if qs:
+        add.interview(root, cid, answers={q["id"]: "confirm" for q in qs}, by=by)
+
+
+
+
 TASK_BODY = """## CARD
 goal: a task whose rules are all provable
 beat: build · next: add run
@@ -60,7 +73,9 @@ def _repo_with_node(tmp_path, sensitivity, lens=None):
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
     # The seal, then the brief entry — `gate` refuses a PASS on a node that was never
     # frozen (R:UNSEALED), so a fixture that skips the one approval tests no real path.
-    add.freeze(root, cid, "human:t")
+    _interview_all(root, cid)
+    node, why = add.freeze(root, cid, "human:t")
+    assert node is not None, f"fixture could not freeze: {why!r}"
     add.brief_stamp(root, cid)
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "init", cwd=tmp_path)
