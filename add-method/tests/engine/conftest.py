@@ -90,7 +90,13 @@ def draft_direction(root, cid: str, *, rules: str = DRAFTED_RULES,
     """
     path = Path(root) / cid.lstrip("/")
     node = add.read(path, "T2")
-    body = _replace_section(node["body"], "RULES", rules)
+    # CARD joined the drafted set when `freeze` started refusing a template `goal:` — the ONE
+    # approval is an approval OF the goal, and a scaffold's `<one line>` states nothing. Same
+    # reasoning as ASSUMPTIONS above, and the same payoff: one edit here, every suite follows.
+    body = _replace_section(node["body"], "CARD",
+                            "goal: the drafted fixture's one line.\n"
+                            "why: reaching a post-freeze state in the suite.")
+    body = _replace_section(body, "RULES", rules)
     body = _replace_section(body, "ASSUMPTIONS", assumptions)
     body = _replace_section(body, "CHECKS", checks + "\nred-first: every check MUST fail first.")
     path.write_text(f"---\n{_author_gives(node['raw'])}\n---\n{body}")

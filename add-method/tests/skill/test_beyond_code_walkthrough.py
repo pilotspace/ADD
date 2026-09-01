@@ -93,7 +93,14 @@ def _author_node(proj, ledger: str):
     raw = raw.replace("  - S1 <the surface this publishes — an endpoint, function, or section>",
                       "  - S1 the month-end reconciliation report")
     head, fm, body = raw.split("---", 2)
-    for heading, new in (("RULES", _block("recon-rules")),
+    for heading, new in (("CARD",
+                          # Authored here for the same reason ASSUMPTIONS is: it is not a
+                          # command the document publishes, and `freeze` refuses a template
+                          # `goal:` — the ONE approval is an approval OF the goal.
+                          "goal: the month-end close reconciles to the ledger, or says why not.\n"
+                          "why: the walkthrough's worked example.\n"
+                          "beat: direction"),
+                         ("RULES", _block("recon-rules")),
                          ("ASSUMPTIONS", "\n".join(
                              f"- A{i} [{d}] covers: S1 · n/a · fixed by this walkthrough's fixture"
                              for i, d in enumerate(add.SWEEP_DIMENSIONS, 1))),

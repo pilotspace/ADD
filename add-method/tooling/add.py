@@ -2045,7 +2045,7 @@ def _is_scaffold(node, t2=None) -> bool:
         return False                     # the caller holds no body — T0 is the whole answer
     if fm.get("type") == "Milestone":
         return bool(_milestone_stubs(t2))
-    return bool(placeholders_in(t2))
+    return bool(placeholders_in(t2, card=False))
 
 
 def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
@@ -2894,7 +2894,7 @@ def assumption_sweep(node: dict) -> list:
             for sid in surfaces if sid not in covered[d]]
 
 
-def placeholders_in(node: dict) -> list:
+def placeholders_in(node: dict, *, card: bool = True) -> list:
     """Template tokens still standing in a node's RULES, ASSUMPTIONS or CHECKS.
 
     `new` ships `- M1 <the rule that must hold>` and `- <test_name> · covers: M1`. Those parse as
@@ -2929,9 +2929,15 @@ def placeholders_in(node: dict) -> list:
     # and the close, neither of which exists at freeze time, so demanding them here would
     # ask for a receipt before the build that produces it (M3, A2). Depth does not exempt
     # this — a quick task states its goal too (E4).
-    for line in _section_of(node.get("body") or "", "CARD").splitlines():
-        if line.startswith("goal:") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
-            found.append(f"## CARD {line.strip()}")
+    #
+    # `card=False` is how `_is_scaffold` asks a DIFFERENT question. "Scaffold" means never
+    # authored; "unfreezable" means not finished. A node with drafted RULES and CHECKS but a
+    # goal nobody has written yet is being authored — it is at the direction beat, and
+    # orientation must keep saying so, or `todo` stops counting its sweep down mid-authoring.
+    if card:
+        for line in _section_of(node.get("body") or "", "CARD").splitlines():
+            if line.startswith("goal:") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+                found.append(f"## CARD {line.strip()}")
     return found
 
 
