@@ -3,7 +3,7 @@ type: Task
 title: A skill claim about what the engine prints is bound to the engine printing it
 status: direction
 depth: standard
-sensitivity: high
+sensitivity: architecture
 milestone: affordance-truth
 scope:
   - .claude/skills/add

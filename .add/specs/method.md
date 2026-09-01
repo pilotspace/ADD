@@ -13,6 +13,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · open] An unrecognised sensitivity value silently degrades the authority floor instead of refusing: SENSITIVITY_FLOOR maps mechanical|data|architecture|security, and .get(sens, "process") turns any other word into the LOWEST floor. Two nodes declared sensitivity: high and gated at process where they meant plan. Same class as the rest of this branch — an unknown reads as clean. (evidence: authority_for add.py:1293 · .add/tasks/authoring-beat-named.md)
 - [ADD · open] A guard's INPUT PARSER is part of the guard: `_changed_paths` read git's porcelain -z stream as if every record carried a status prefix and every path were repo-parent-relative, so the sensitive-path refusal fired on paths that did not exist and missed the file actually edited. A refusal is only as true as the stream it reads. (evidence: tests/engine/test_premerge_review_fixes.py)
 - [ADD · open] A guard that fires on a malformed thing and never on a missing one is a guard you get past by DELETING, not by forging — an absent section reads as clean to every consumer. Check for the ABSENCE of what is required. (evidence: /tasks/sealed-gate-enforcement.md gate PASS · runs/2.md)
 - [ADD · open] The gate binds covers: referents by BARE test id, so a guard name defined in two files (test_guard_messages_name_their_target) binds to neither. Name a guard after its subject. (evidence: /tasks/box-check-verb.d/runs/2.md)
