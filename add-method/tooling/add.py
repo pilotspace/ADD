@@ -2919,6 +2919,19 @@ def placeholders_in(node: dict) -> list:
         for line in _section_of(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())
+    # CARD's `goal:` — a KEYED line, not a `- ` bullet, which is why the loop above could
+    # never see it. GETTING-STARTED promised "freeze refuses a node that still carries
+    # template placeholders — you cannot approve a scaffold", and a node froze with
+    # `goal: <one line>` intact: approving a contract whose one-line statement of intent is
+    # still the scaffold's. The goal is what a human is being asked to approve.
+    #
+    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are filled by the run
+    # and the close, neither of which exists at freeze time, so demanding them here would
+    # ask for a receipt before the build that produces it (M3, A2). Depth does not exempt
+    # this — a quick task states its goal too (E4).
+    for line in _section_of(node.get("body") or "", "CARD").splitlines():
+        if line.startswith("goal:") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+            found.append(f"## CARD {line.strip()}")
     return found
 
 

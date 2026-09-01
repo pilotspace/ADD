@@ -84,4 +84,5 @@ receipt: <runs/<n>.md>
 gate: <PASS | RISK-ACCEPTED | HARD-STOP>
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- Executing the front door found what reading it could not: the walk assumes a git working tree AND that the declared `scope:` paths exist, and said neither. A walkthrough test finds preconditions, not just wrong flags -> add learn add
+- `freeze`'s milestone-scaffold refusal returns `False` where every other refusal returns `None`. The CLI's truthiness check hides it, so it is latent, not live — but a library caller testing `node is None` reads a refused freeze as a success -> add learn add
