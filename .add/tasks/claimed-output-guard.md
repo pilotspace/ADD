@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A skill claim about what the engine prints is bound to the engine printing it
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: affordance-truth
@@ -19,6 +19,12 @@ gives:
 generated: { by: add/3.2.0, at: 2026-08-17 }
 verified:
   - { by: "Tin Dang", at: 2026-08-17, act: freeze, authority: human, direction: "sha256:44a8759bd6f4ceca" }
+  - { by: "Tin Dang", at: 2026-09-01, act: brief, authority: process, brief: "sha256:5fcd3b4e21513512" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/claimed-output-guard.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:ad84e8ee3f1e2ae6" }
+  - { by: "Tin Dang", at: 2026-09-01, act: brief, authority: process, brief: "sha256:430d6843fc19842b" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/claimed-output-guard.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/claimed-output-guard.d/runs/2.md, brief: "sha256:430d6843fc19842b" }
 ---
 ## CARD
 goal: Bind every skill-tree sentence that says the engine PRINTS something to a driven command that proves it prints it, and repair the two `loop.md` claims that do not.
@@ -31,7 +37,7 @@ why: `promised-capability-guard` closed this class for the READMEs and its own `
   all. Both sit in the loop's Gather step and the first is named as THE cue that starts the loop, so an
   agent following the skill waits for a signal the engine never sends. A claim about output cannot be
   checked by finding a string in a source file; it has to be checked by running the command.
-beat: direction · next: add freeze claimed-output-guard
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -103,6 +109,11 @@ regression floor: both test roots green — `add-method/tests/` and `add-method/
 - test_status_flag_modes_are_driven_as_registered · covers: E2 · a claim naming a flagged form is proven against that form, not against the bare command
 - test_parenthetical_claims_are_registered · covers: E4 · the `milestone-done` parenthetical resolves as an entry rather than being filtered as prose
 - test_skill_tree_mirror_parity · covers: E5, R:TWO_TREE · the three trees are identical, and a pre-existing gap is reported rather than normalised
+- test_failure_quotes_the_sentence_not_just_its_location · covers: A1 · the refusal carries the sentence itself, since no reviewer is assumed
+- test_only_rendering_sentences_are_collected · covers: A2 · a command named in prose is not a claim; naming a rendering is
+- test_claims_are_reread_from_disk_on_every_run · covers: A4 · the corpus is re-read every run, never snapshotted
+- test_the_source_tree_is_the_one_the_engine_ships · covers: A9 · `add-method/skill/add/` is the source, the other two mirrors
+- test_a_costly_state_is_constructed_or_named · covers: E3, M5 · the goal-unmet state is actually constructed, not dropped as expensive
 red-first: every check MUST fail first. The guard is authored and run RED against the unrepaired tree before any sentence is corrected — a guard that has never refused is not evidence.
 
 ## EVIDENCE
