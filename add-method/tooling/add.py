@@ -1090,7 +1090,8 @@ TYPE_DIR = {"Task": "tasks", "Milestone": "milestones", "Spec": "specs",
             "Persona": "personas", "Prompt": "prompts", "Run": "runs"}
 BODIES = {
     "Task": "## CARD\ngoal: <one line>\nwhy: <why this task exists — optional>\n"
-            "beat: direction · next: add freeze {slug}\n\n"
+            "beat: scaffold · next: author {slug}'s RULES, ASSUMPTIONS and CHECKS, "
+            "then add freeze {slug}\n\n"
             "## RULES\n<must>\n- M1 <the rule that must hold>\n</must>\n<reject>\n"
             "- R:<NAME> <what must never happen> -> \"<NAME>\"\n</reject>\n\n"
             # The line the author fills STARTS from "the request does not say" — the
@@ -1371,7 +1372,10 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     scaffold = BODIES.get(node_type, "## CARD\ngoal: <one line>\n").replace("{slug}", slug)
     write(path, "---\n" + "\n".join(lines) + "\n---\n" + scaffold)
     # freeze is a lifecycle act — a Persona/Prompt/Run is done the moment it is written.
-    nxt = f"add freeze {slug}" if node_type in LIFECYCLE_TYPES else "add status"
+    # A file of placeholders is a scaffold, and `freeze` is guaranteed to refuse one — so the
+    # message `new` hands back names the authoring work, not the approval that follows it.
+    nxt = (AUTHOR_NEXT.get(node_type, AUTHOR_NEXT["Task"]).format(slug=slug)
+           if node_type in LIFECYCLE_TYPES else "add status")
     return "/" + rel, f"created {rel}\nnext: {nxt}"
 
 
@@ -1391,6 +1395,15 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     slug = cid.rsplit("/", 1)[-1][:-3]
 
     node_t2 = read(entry["path"], "T2")
+    if (entry.get("fm") or {}).get("type") == "Milestone":
+        # The guard `placeholders_in` could never make: it reads RULES · ASSUMPTIONS · CHECKS and a
+        # Milestone body carries none of those three, so it returned [] for EVERY milestone and the
+        # ONE human approval was stampable against a node stating no goal and no exit criterion.
+        ms_stubs = _milestone_stubs(node_t2)
+        if ms_stubs:
+            return False, (f"cannot freeze `{slug}` — this milestone is still a scaffold: "
+                           + " · ".join(ms_stubs)
+                           + f"\nnext: {AUTHOR_NEXT['Milestone'].format(slug=slug)}")
     stubs = placeholders_in(node_t2)
     if stubs:
         return None, (f"cannot freeze `{slug}` — the node still carries template placeholders: "
@@ -1778,8 +1791,18 @@ MAX_LINES = 20
 BEAT_KEYS = ("beat", "state")
 # The one canonical next verb per beat — read by `status`'s frontier hint and `render_card`, so a
 # repaired CARD's `next:` matches its beat instead of freezing at the direction-time affordance.
-BEAT_NEXT = {"direction": "add freeze {slug}", "build": "add run {slug} -- <cmd>",
+# The authoring beat has NO VERB by design — `direction.md`: "There is no author verb — you fill
+# those sections by editing that file directly". So its advice names the WORK and the verb that
+# follows it, matching `freeze`'s own refusal sentence word for word, and still carries a runnable
+# `add …` continuation so an agent matching on a leading verb keeps a cue (A1).
+AUTHOR_NEXT = {
+    "Task": "author {slug}'s RULES, ASSUMPTIONS and CHECKS, then add freeze {slug}",
+    "Milestone": "author {slug}'s goal, why and EXIT criteria, then add freeze {slug}",
+}
+BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
+             "build": "add run {slug} -- <cmd>",
              "verify": "add gate {slug}", "done": "add status"}
+BEAT_NAMES = ("scaffold", "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
 ORIENT_RANK = {"Project": 0, "Milestone": 1, "Task": 2, "Spec": 5, "Persona": 6, "Prompt": 7}
 
@@ -1790,6 +1813,64 @@ def _is_frozen(node) -> bool:
     so the beat is stamp-derived, not read from the status field."""
     stamps = (node.get("fm") or {}).get("verified") or []
     return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze") for s in stamps)
+
+
+def _milestone_stubs(node: dict) -> list:
+    """The Milestone fields still template, among the three the lifecycle actually reads.
+
+    Deliberately narrower than the Task guard (decided 2026-09-01). `milestone_done` already
+    refuses on `why:` and on the `## EXIT` tally, so goal · why · EXIT are what the milestone
+    lifecycle depends on. A guard reaching SCOPE and GROUND too would refuse real milestones
+    whose ground is thin, and a guard everyone learns to widen past is worse than a narrow one
+    that holds.
+    """
+    body = node.get("body") or ""
+    out = []
+    for line in card_of(body).splitlines():
+        key, sep, value = line.partition(":")
+        if sep and key.strip() in ("goal", "why") and PLACEHOLDER.search(value):
+            out.append(f"CARD `{key.strip()}:`")
+    exit_body = _section_of(body, "EXIT")
+    boxes = _box_lines(exit_body) if _fence_balanced(exit_body) else []
+    if not boxes or any(PLACEHOLDER.search(text) for _, _, text, _ in boxes):
+        out.append("`## EXIT` criteria")
+    return out
+
+
+def _is_scaffold(node, t2=None) -> bool:
+    """True for a node that was created and never authored. ONE definition, two tiers.
+
+    Calls the SAME predicates the refusals call — `gives_unauthored` at T0, `placeholders_in`
+    (or `_milestone_stubs`) at T2 — never a copy of them (R:SECOND_TRUTH). Two notions of
+    "authored" is exactly how advice and refusal came to disagree, which is the defect one
+    layer up.
+
+    The T2 half runs ONLY when the caller already holds the body. `status` must not read a
+    single body — that is `build-orient`'s R:T2SCAN, a Reject frozen before this task existed
+    and not this task's to weaken — so it gets the T0 answer, while `freeze` and `todo`, which
+    both already read the body for their own reasons, get the complete one. The tiers cannot
+    disagree in DIRECTION: T0 saying scaffold is always right, and the T2 half only ever adds.
+
+    Residual, recorded rather than hidden: a node with an authored `gives:` but still-template
+    RULES reads authored to `status` alone. `todo` and `freeze` both catch it.
+
+    A freeze stamp WINS over any placeholder: a pre-3.0 bundle can carry both, and dragging an
+    approved node back into authoring advice would undo an approval that was actually given (A9).
+    An unreadable body advises authoring — the conservative direction, since the alternative is
+    to recommend a verb whose refusal is the author's first news of the problem (A7).
+    """
+    if _is_frozen(node):
+        return False
+    fm = node.get("fm") or {}
+    if fm.get("type") not in LIFECYCLE_TYPES:
+        return False
+    if fm.get("type") == "Task" and gives_unauthored(node):
+        return True                      # T0, and enough on its own
+    if t2 is None:
+        return False                     # the caller holds no body — T0 is the whole answer
+    if fm.get("type") == "Milestone":
+        return bool(_milestone_stubs(t2))
+    return bool(placeholders_in(t2))
 
 
 def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
@@ -1836,16 +1917,20 @@ def card_drift(graph: dict) -> list:
     """
     out = []
     for cid, node in graph.items():
-        status = (node["fm"] or {}).get("status")
-        if not status:
+        if not (node["fm"] or {}).get("status"):
             continue
+        # The DERIVED beat, never the raw `status:` field. `freeze` does not move `status:`, so a
+        # freshly frozen node advertised `next: add freeze <slug>` — the approval it had just
+        # passed — while `todo` and `status` derived `build`, and this reported it CLEAN
+        # (2026-08-17 replan, A5 falsified). Two notions of beat, read by different surfaces.
+        beat = _beat_of(node)
         card = card_of(read(node["path"], "T2")["body"])
         for line in card.splitlines():
             key, sep, value = line.partition(":")
             if sep and key.strip() in BEAT_KEYS:
                 said = value.split("·")[0].strip()
-                if said and said != status and said in ("direction", "build", "verify", "done"):
-                    out.append((cid, key.strip(), said, status))
+                if said and said != beat and said in BEAT_NAMES:
+                    out.append((cid, key.strip(), said, beat))
     return out
 
 
@@ -1863,9 +1948,12 @@ def render_card(root, cid: str) -> tuple:
     for i, line in enumerate(lines):
         if line.startswith(f"{key}:") and said in line:
             # Rebuild the WHOLE beat line, not just the token: the `next:` on it froze at the
-            # direction-time affordance, so a done card kept reading `next: add freeze`. BEAT_NEXT
-            # gives the beat its true next verb. Still exactly one line changes (idempotence holds).
-            nxt = BEAT_NEXT.get(status, "add status").format(slug=slug)
+            # direction-time affordance, so a done card kept reading `next: add freeze`. Through
+            # `_next_verb`, not BEAT_NEXT directly — that is the one map every other surface
+            # resolves through, and it alone knows a sealed-but-unbriefed task owes `add brief`
+            # before its run (R:UNBRIEFED). Reading the map raw put a third answer on the CARD.
+            # Still exactly one line changes (idempotence holds).
+            nxt = _next_verb(graph, cid)
             lines[i] = f"{key}: {status} · next: {nxt}\n"
             break
     write(path, f"---\n{node['raw']}\n---\n{''.join(lines)}")
@@ -1916,7 +2004,7 @@ def locate(root, query: str) -> tuple:
     return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
 
 
-def _beat_of(node) -> str:
+def _beat_of(node, t2=None) -> str:
     """A task's beat, DERIVED from its stamps — the same reasoning as `_is_frozen`.
 
     `status` runs `direction → done`: nothing in `freeze`/`run` advances it, so the field cannot
@@ -1930,7 +2018,9 @@ def _beat_of(node) -> str:
     stamps = [s for s in (fm.get("verified") or []) if isinstance(s, dict)]
     if any(s.get("act") == "run" for s in stamps):
         return "verify"
-    return "build" if _is_frozen(node) else "direction"
+    if _is_frozen(node):
+        return "build"
+    return "scaffold" if _is_scaffold(node, t2) else "direction"
 
 
 def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
@@ -1952,11 +2042,15 @@ def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
                for i, s in enumerate(stamps))
 
 
-def _next_verb(graph: dict, cid: str) -> str:
-    """The one runnable next command for a task, by its stamp-derived beat."""
+def _next_verb(graph: dict, cid: str, t2=None) -> str:
+    """The one runnable next command for a task, by its stamp-derived beat.
+
+    `t2` is the node's body when the caller already holds it — `todo` does. Without it the beat
+    is derived at T0, which is what `status` requires (`build-orient`'s R:T2SCAN).
+    """
     slug = cid.rsplit("/", 1)[-1][:-3]
     node = graph[cid]
-    beat = _beat_of(node)
+    beat = _beat_of(node, t2)
     fm = node.get("fm") or {}
     # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
     # points at `add brief`, and moves on to the run the moment the entry is recorded.
@@ -1964,6 +2058,8 @@ def _next_verb(graph: dict, cid: str) -> str:
             and str(fm.get("depth") or "standard") != "quick" \
             and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
         return f"add brief {slug}"
+    if beat == "scaffold":
+        return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
     return BEAT_NEXT.get(beat, "add status").format(slug=slug)
 
 
@@ -1972,18 +2068,28 @@ def todo(root, milestone: str = None) -> tuple:
     verb. Optionally restricted to one milestone. Read-only — `(items, note)`, never a write."""
     graph = scan(Path(root))
     msel = _wave_slug(milestone) if milestone else None
-    items = []
+    # ONE body read per open task, reused by the hint loop below — deriving the beat and then
+    # re-reading the same file to build its hint read every direction-beat node twice.
+    items, bodies = [], {}
     for cid in active(graph):
         fm = graph[cid]["fm"] or {}
         if fm.get("type") != "Task":
             continue
         if msel and _wave_slug(fm.get("milestone")) != msel:
             continue
-        items.append((cid, _beat_of(graph[cid]), _next_verb(graph, cid)))
+        # ONE body read per node, handed to both derivations — `todo` is not T0-bound (it already
+        # reads the body for the unswept-pairs hint), so its arrow gets the COMPLETE scaffold
+        # answer rather than the T0 half `status` must settle for.
+        try:
+            t2 = read(graph[cid]["path"], "T2")
+        except (OSError, ValueError, KeyError, TypeError):
+            t2 = None
+        bodies[cid] = t2
+        items.append((cid, _beat_of(graph[cid], t2), _next_verb(graph, cid, t2)))
     if not items:
         where = f" under `{milestone}`" if milestone else ""
         return [], f"nothing open{where}\nnext: add status"
-    order = {"direction": 0, "build": 1, "verify": 2}
+    order = {"scaffold": -1, "direction": 0, "build": 1, "verify": 2}
     items.sort(key=lambda it: (order.get(it[1], 9), it[0]))
     lines, beat = [], None
     for cid, st, nxt in items:
@@ -1995,7 +2101,7 @@ def todo(root, milestone: str = None) -> tuple:
             # Progressive, so freeze CONFIRMS work already done instead of ambushing the
             # author with the whole matrix at the moment they expected to be finished. A
             # gate first met as a wall earns a reputation for obstruction, not for catching.
-            node_t2 = read(graph[cid]["path"], "T2")
+            node_t2 = bodies.get(cid) or read(graph[cid]["path"], "T2")
             if gives_unauthored(node_t2) and _section_of(node_t2.get("body") or "",
                                                          "ASSUMPTIONS").strip():
                 hint = "  (gives: unauthored — no surfaces to sweep)"
@@ -2085,10 +2191,10 @@ def status(root, all: bool = False, check: bool = False) -> str:
         nxt = f"next: add gate {waiting[0].rsplit('/', 1)[-1][:-3]}"
     elif frontier:
         f0 = frontier[0]
-        # An unfrozen frontier task still needs its direction authored + frozen; brief would compile a
-        # node of placeholders. A frozen one is ready to hand to a builder. Pick the verb by the stamp.
-        verb = "brief" if _is_frozen(graph[f0]) else "freeze"
-        nxt = f"next: add {verb} {f0.rsplit('/', 1)[-1][:-3]}"
+        # Through `_next_verb`, so this hint and `todo`'s arrow cannot disagree — the stamp test
+        # that used to live here was a third reading of the beat, and a node that was created and
+        # never authored got advised toward the freeze that is structurally guaranteed to refuse it.
+        nxt = f"next: {_next_verb(graph, f0)}"
     elif any((n["fm"] or {}).get("type") == "Milestone" for n in graph.values()):
         nxt = "next: add new task <slug>"
     else:

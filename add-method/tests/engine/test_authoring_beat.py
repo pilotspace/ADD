@@ -25,6 +25,23 @@ import add  # noqa: E402
 AUTHORING = "author"          # the corrected advice names the authoring work
 
 
+def _recommends_freeze(text: str, slug: str) -> bool:
+    """Does this advice recommend `freeze` as the IMMEDIATE next action?
+
+    Not a substring test. M3 requires the advice to match `freeze`'s own refusal sentence word
+    for word — "author <slug>'s RULES, ASSUMPTIONS and CHECKS, then add freeze <slug>" — which
+    NAMES the verb that follows the authoring, and must, or an agent matching on a leading
+    `add …` loses its cue entirely (A1). What M1 forbids is recommending freeze as the thing to
+    run NOW. So the test is position, not presence.
+    """
+    for line in text.splitlines():
+        line = line.strip().removeprefix("next:").strip()
+        line = re.sub(r"^[·\s]*\S+\s+→\s+", "", line)      # todo's `· slug → <advice>` arrow
+        if line.startswith(f"add freeze {slug}"):
+            return True
+    return False
+
+
 def _bundle(tmp_path):
     add.init(tmp_path, "code", "T")
     return tmp_path
@@ -58,6 +75,22 @@ def _authored_task(root, slug="authored", **fields):
     return cid
 
 
+def _milestone_authored_narrowly(root, slug="narrow-ms"):
+    """goal · why · EXIT authored; SCOPE and GROUND deliberately left template.
+
+    This is the boundary M7 was narrowed to (decided 2026-09-01): the three fields the milestone
+    lifecycle already depends on, since `milestone_done` refuses on `why:` and on the EXIT tally.
+    """
+    cid, _ = add.new(root, "Milestone", slug, title=slug)
+    p = root / cid.lstrip("/")
+    t = p.read_text(encoding="utf-8")
+    t = t.replace("goal: <one line>", "goal: prove the guard stops where it was told to stop")
+    t = re.sub(r"why: <[^>]*>", "why: a guard everyone widens past is worse than a narrow one", t)
+    t = t.replace("- [ ] <criterion>   (← <task>)", "- [ ] the one real criterion   (← some-task)")
+    p.write_text(t, encoding="utf-8")
+    return cid
+
+
 def _authored_milestone(root, slug="real-ms"):
     """A Milestone with a stated goal, why, scope, ground and one exit criterion."""
     cid, _ = add.new(root, "Milestone", slug, title=slug)
@@ -77,7 +110,7 @@ def test_status_advises_authoring_for_a_scaffold_task(tmp_path):
     root = _bundle(tmp_path)
     _scaffold(root, "s1")
     out = add.status(root)
-    assert "add freeze s1" not in out, f"status advised a verb freeze would refuse:\n{out}"
+    assert not _recommends_freeze(out, "s1"), f"status advised a verb freeze would refuse:\n{out}"
     assert AUTHORING in out.lower(), out
 
 
@@ -86,7 +119,7 @@ def test_todo_advises_authoring_for_a_scaffold_task(tmp_path):
     root = _bundle(tmp_path)
     _scaffold(root, "s2")
     _, note = add.todo(root)
-    assert "add freeze s2" not in note, f"todo advised a verb freeze would refuse:\n{note}"
+    assert not _recommends_freeze(note, "s2"), f"todo advised a verb freeze would refuse:\n{note}"
     assert AUTHORING in note.lower(), note
 
 
@@ -94,7 +127,7 @@ def test_new_returns_authoring_advice(tmp_path):
     """covers: M1, R:GREEN_BY_SOURCE — the message `new` hands back."""
     root = _bundle(tmp_path)
     _, msg = _scaffold(root, "s3")
-    assert "add freeze s3" not in msg, msg
+    assert not _recommends_freeze(msg, "s3"), msg
     assert AUTHORING in msg.lower(), msg
 
 
@@ -104,7 +137,7 @@ def test_new_card_line_names_authoring(tmp_path):
     cid, _ = _scaffold(root, "s4")
     body = (root / cid.lstrip("/")).read_text(encoding="utf-8")
     card = next(ln for ln in body.splitlines() if ln.startswith("beat:"))
-    assert "add freeze s4" not in card, card
+    assert not card.strip().startswith("beat: direction"), card
     assert AUTHORING in card.lower(), card
 
 
@@ -118,7 +151,7 @@ def test_new_advises_authoring_for_a_scaffold_milestone(tmp_path):
     """
     root = _bundle(tmp_path)
     _, msg = _scaffold(root, "s5", node_type="Milestone")
-    assert "add freeze s5" not in msg, f"a milestone scaffold was advised to freeze:\n{msg}"
+    assert not _recommends_freeze(msg, "s5"), f"a milestone scaffold was advised to freeze:\n{msg}"
     assert AUTHORING in msg.lower(), msg
 
 
@@ -131,7 +164,7 @@ def test_advice_and_freeze_agree_over_a_fixture_table(tmp_path):
     graph = add.scan(root)
     for name, cid in cases.items():
         slug = cid.rsplit("/", 1)[-1][:-3]
-        advised = f"add freeze {slug}" in add._next_verb(graph, cid)
+        advised = _recommends_freeze(add._next_verb(graph, cid), slug)
         accepted = bool(add.freeze(root, cid, by="probe")[0])
         assert advised == accepted, (
             f"{name}: advice says freeze={advised} but freeze returned {accepted} — "
@@ -230,6 +263,19 @@ def test_freeze_refuses_a_pure_milestone_scaffold(tmp_path):
     assert bool(ok) is False, f"a milestone stating no goal took the ONE human approval: {note}"
 
 
+def test_milestone_guard_is_narrow_by_design(tmp_path):
+    """covers: M7 — authored goal · why · EXIT with a TEMPLATE GROUND still freezes.
+
+    M7 was narrowed on purpose. A guard reaching SCOPE and GROUND too would refuse real
+    milestones whose ground is thin, and a guard everyone learns to widen past is worse than
+    a narrow one that holds.
+    """
+    root = _bundle(tmp_path)
+    cid = _milestone_authored_narrowly(root, "narrow")
+    ok, note = add.freeze(root, cid, by="probe")
+    assert bool(ok) is True, f"the guard over-reached past goal/why/EXIT: {note}"
+
+
 def test_milestone_guard_names_sections_the_body_actually_has(tmp_path):
     """covers: R:VACUOUS_GUARD — driven against BOTH halves.
 
@@ -268,3 +314,73 @@ def test_status_frontmatter_vocabulary_is_unchanged(tmp_path):
     fm = add.scan(root)[cid]["fm"]
     assert fm["status"] == "direction", fm["status"]
     assert "scaffold" not in add.ACTIVE_STATES
+
+
+# ---- M8 · the replan's falsified A5 ---------------------------------------------------------
+
+def test_frozen_node_card_names_brief(tmp_path):
+    """covers: M8, S5 — the sibling the 2026-08-17 replan named.
+
+    A freshly frozen node advertised `next: add freeze <slug>` in its own CARD — the approval it
+    had just passed — because `freeze` does not move `status:` and the CARD line is written once.
+    """
+    root = _bundle(tmp_path)
+    cid = _authored_task(root, "sealed-card")
+    assert bool(add.freeze(root, cid, by="probe")[0]) is True
+    add.render_card(root, cid)
+    card = next(ln for ln in (root / cid.lstrip("/"))
+                .read_text(encoding="utf-8").splitlines() if ln.startswith("beat:"))
+    assert "add freeze" not in card, f"a frozen node advertises the verb it already passed: {card}"
+    assert "brief" in card, card
+
+
+def test_card_drift_compares_the_derived_beat(tmp_path):
+    """covers: M8 — today `card_drift` compares against the RAW `status:` field.
+
+    `freeze` leaves `status: direction`, so the CARD's stale `direction` matches it and the
+    drift detector reports CLEAN on a node whose derived beat has moved to `build`.
+    """
+    root = _bundle(tmp_path)
+    cid = _authored_task(root, "drifted")
+    assert bool(add.freeze(root, cid, by="probe")[0]) is True
+    graph = add.scan(root)
+    assert add._beat_of(graph[cid]) == "build", "precondition: the derived beat moved"
+    drift = [d for d in add.card_drift(graph) if d[0] == cid]
+    assert drift, "card_drift called a node clean whose CARD names a beat it has left"
+
+
+def test_a_half_authored_node_still_reads_unauthored(tmp_path):
+    """covers: A4 — the probe: one remaining placeholder still reads unauthored.
+
+    A4 took all-gone, matching `freeze` exactly. Taking first-real-edit instead would advise a
+    half-authored node toward the freeze that refuses it — today's defect with a smaller window.
+    """
+    root = _bundle(tmp_path)
+    cid = _authored_task(root, "half")
+    p = root / cid.lstrip("/")
+    p.write_text(p.read_text(encoding="utf-8").replace(
+        "- M1 the lister returns only the caller's rows",
+        "- M1 <the rule that must hold>"), encoding="utf-8")
+    graph = add.scan(root)
+    t2 = add.read(graph[cid]["path"], "T2")
+
+    assert add._is_scaffold(graph[cid], t2) is True, "one placeholder left must still read unauthored"
+    assert bool(add.freeze(root, cid, by="probe")[0]) is False, "and freeze must agree"
+
+
+def test_cold_resume_reaches_authoring_without_a_refusal(tmp_path):
+    """covers: A11 — the probe: the cold-resume path reaches authoring without first running a
+    verb that refuses.
+
+    A11's reader is the agent resuming a session having read nothing else: it reads `next:` and
+    acts. Before this, it ran `freeze`, read a refusal, and spent a turn rediscovering what
+    `status` could have said in the line it already printed.
+    """
+    root = _bundle(tmp_path)
+    _scaffold(root, "cold")
+    nxt = add.status(root).splitlines()[-1].removeprefix("next:").strip()
+
+    assert not _recommends_freeze(nxt, "cold"), nxt
+    assert AUTHORING in nxt.lower() and "cold" in nxt, nxt
+    # and the verb it DOES name, when reached, is not a refusal
+    assert "add freeze cold" in nxt, "the follow-on verb stays named, so an agent keeps a cue"

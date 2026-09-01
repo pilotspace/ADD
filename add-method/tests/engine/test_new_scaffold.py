@@ -32,5 +32,5 @@ def test_new_scaffold_pins_the_corrected_affordance(tmp_path):
     cid, _ = add.new(tmp_path, "Task", "mul-fn", title="Add mul")
     card = next(ln for ln in (tmp_path / cid.lstrip("/"))
                 .read_text(encoding="utf-8").splitlines() if ln.startswith("beat:"))
-    assert "add freeze mul-fn" not in card, card
+    assert not card.strip().startswith("beat: direction"), card
     assert "author" in card.lower() and "mul-fn" in card, card

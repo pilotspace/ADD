@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A node that was never authored is never advised to freeze
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: affordance-truth
@@ -24,6 +24,16 @@ verified:
   - { by: "Tin Dang", at: 2026-08-17, act: freeze, authority: human, direction: "sha256:41b3ac4db4d97b63" }
   - { by: "Claude (owner-delegated, Tin Dang 2026-08-17)", at: 2026-08-17, act: replan, authority: process, note: "A5's taken reading is FALSIFIED, found minutes after the freeze by the freeze itself. A5 took 'write-time correction for new, plus the existing card_drift repair thereafter'. card_drift cannot repair this: it compares the CARD's beat token against the RAW frontmatter status: field (add.py:1534, said != status), and freeze does not move status: — the beat is DERIVED from _is_frozen. So both nodes frozen today read 'beat: direction · next: add freeze <slug>' in their own CARD while todo and status derive 'build', and add doctor reports them CLEAN. A freshly frozen node advertises the verb it has already passed, and the drift detector calls it current. This is the SAME root cause a fourth time — two notions of beat, one raw and one derived, with different surfaces reading different ones — so it belongs to S5, which this task already declares. Scope consequence: the corrected derivation must be what card_drift compares against, not status:, and test_new_card_line_names_authoring gains a sibling proving a frozen node's CARD names brief. RULES and CHECKS were NOT edited; this records the amendment against the seal rather than reopening it." }
   - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:7291e16b93f7d7a9" }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:82ba080dc510dc23" }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:c1d94f1351fd8fc1" }
+  - { by: "cli", at: 2026-09-01, act: brief, authority: process, brief: "sha256:3231915f97689a65" }
+  - { by: "Tin Dang", at: 2026-09-01, act: brief, authority: process, brief: "sha256:3231915f97689a65" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/authoring-beat-named.d/runs/1.md }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/authoring-beat-named.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: refreeze, authority: human, direction: "sha256:ece19b17de5b4fb2" }
+  - { by: "Tin Dang", at: 2026-09-01, act: brief, authority: process, brief: "sha256:e6eaf64d8f889ab6" }
+  - { by: "process:run", at: 2026-09-01, act: run, authority: process, outcome: PASS, receipt: /tasks/authoring-beat-named.d/runs/3.md }
+  - { by: "Tin Dang", at: 2026-09-01, act: gate, authority: plan, outcome: PASS, receipt: /tasks/authoring-beat-named.d/runs/3.md, brief: "sha256:e6eaf64d8f889ab6" }
 ---
 ## CARD
 goal: Make every surface that derives a `next:` for an unauthored node name the authoring work instead of `add freeze`, using the same predicate the refusals already use.
@@ -32,7 +42,7 @@ why: `direction.md` states the design — "There is no author verb — you fill 
   to `add freeze {slug}`, so five surfaces recommend a verb that `add.py:1394` is guaranteed to refuse. The
   cost is not the wasted call; it is that a scaffold and a finished contract are indistinguishable from
   `status`, so a node can sit unauthored for days inside a milestone that reads as in-progress.
-beat: direction · next: add freeze authoring-beat-named
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -42,7 +52,8 @@ beat: direction · next: add freeze authoring-beat-named
 - M4 A node carrying a freeze stamp is untouched: its `brief` · `run` · `gate` · `done` affordances are byte-identical before and after.
 - M5 All four live engine twins carry the change — `add-method/tooling/`, `add-method/src/add_method/_bundled/tooling/`, `add-method/.add/tooling/`, and this bundle's `.add/tooling/` — and the `ENGINE_MD5` / `ENGINE_PKG_MD5` pins are re-aimed. Both test roots (`add-method/tests/` and `add-method/tooling/`) are green.
 - M6 `tests/engine/test_new_scaffold.py`'s pinned affordance assertion is RE-AIMED at the corrected string, not deleted. The scaffold's `next:` stays a pinned interface; it is the value that was wrong, not the pinning.
-- M7 `freeze` REFUSES a Milestone whose CARD, SCOPE, GROUND or EXIT are still template. Today it accepts one and records the stamp — measured, not inferred: `add new Milestone probe-ms` followed by `add freeze probe-ms` returns `freeze recorded at authority process` with `goal: <one line>` untouched. `placeholders_in` reads only RULES · ASSUMPTIONS · CHECKS (add.py:2595), and a Milestone body has none of those sections, so the guard is Task-only by construction and silently vacuous on the other lifecycle type.
+- M7 `freeze` REFUSES a Milestone whose CARD `goal:`, CARD `why:`, or `## EXIT` criteria are still template — and ONLY those three. Deliberately narrower than the Task guard (decided 2026-09-01): they are the three the milestone lifecycle already depends on, since `milestone_done` refuses on `why:` and on the EXIT tally. A guard reaching SCOPE and GROUND too would refuse real milestones whose ground is thin — including this bundle's own `v3-final-collateral` — and a guard everyone learns to widen past is worse than a narrow one that holds. Today it accepts one and records the stamp — measured, not inferred: `add new Milestone probe-ms` followed by `add freeze probe-ms` returns `freeze recorded at authority process` with `goal: <one line>` untouched. `placeholders_in` reads only RULES · ASSUMPTIONS · CHECKS (add.py:2595), and a Milestone body has none of those sections, so the guard is Task-only by construction and silently vacuous on the other lifecycle type.
+- M8 `card_drift` compares the CARD's beat token against the DERIVED beat, not the raw `status:` field. Recorded by the 2026-08-17 replan as A5 FALSIFIED: `freeze` never moves `status:`, so a freshly frozen node's CARD advertises `next: add freeze <slug>` — the verb it has just passed — while `todo` and `status` derive `build`, and `add doctor` reports it CLEAN. Measured live on this node. Same root cause a fourth time: two notions of beat, one raw and one derived, read by different surfaces.
 </must>
 <reject>
 - R:SECOND_TRUTH Introducing a new predicate, flag or frontmatter field meaning "authored" alongside the one the refusals use. Two notions is how advice and refusal come to disagree, which is the defect one layer up. -> "SECOND_TRUTH"
@@ -88,14 +99,14 @@ regression floor: both test roots green — `add-method/tests/` and `add-method/
 - E1 Authored RULES with a still-template `gives:` — `placeholders_in` says authored, `gives_unauthored` says not. The two predicates disagree, and freeze refuses on the second.
 - E2 A node carrying BOTH a freeze stamp and placeholders — reachable only from a pre-3.0 bundle, since the 3.0 guard forbids creating it.
 - E3 An empty frontier: no open task at all. `status` must keep emitting its existing `add new task <slug>` / `add new milestone <slug>` affordance untouched.
-- E4 A Milestone scaffold. `placeholders_in` reads only RULES · ASSUMPTIONS · CHECKS (add.py:2595) and scans only lines beginning `- ` (:2597); a Milestone body has none of those three sections, so the predicate returns `[]` for ANY milestone and `freeze` stamps it approved — measured on a scratch bundle, not inferred. The `why:` gap surfaces only at `milestone-done` (:1681), which is the far end of the milestone. This is the M7 case and the reason `v3-final-collateral` has read as a live milestone since 2026-08-11.
+- E4 A Milestone scaffold. `placeholders_in` reads only RULES · ASSUMPTIONS · CHECKS (add.py:2595) and scans only lines beginning `- ` (:2597); a Milestone body has none of those three sections, so the predicate returns `[]` for ANY milestone and `freeze` stamps it approved — measured on a scratch bundle, not inferred. The `why:` gap surfaces only at `milestone-done` (:1681), which is the far end of the milestone. This is the M7 case and the reason `v3-final-collateral` has read as a live milestone since 2026-08-11 — its `goal:` is still `<one line>`, so the narrowed M7 refuses it, which is the intended outcome and a one-time authoring cost on this bundle.
 - E5 The `quick` one-call lane (add.py:3363) rewrites the body to `beat: build · next: add run` and freezes inside the same call. It must be untouched — a scaffold detector that fired on its `<cmd>` / `<PASS>` slots would make the one-call lane unclosable by construction.
 
 ## CHECKS
 - test_status_advises_authoring_for_a_scaffold_task · covers: M1, R:GREEN_BY_SOURCE · drives `status` against a real unauthored task node; the `next:` line names authoring and contains no `add freeze`
 - test_todo_advises_authoring_for_a_scaffold_task · covers: M1, R:GREEN_BY_SOURCE · drives `todo`; the per-node arrow no longer contradicts its own `(gives: unauthored)` annotation
 - test_new_returns_authoring_advice · covers: M1, R:GREEN_BY_SOURCE · the message `new` returns for a freshly written Task names authoring
-- test_new_card_line_names_authoring · covers: M1, M6 · the `beat:` line inside the created FILE names authoring, read back from disk
+- test_new_card_line_names_authoring · covers: M1, M6, A12 · the `beat:` line inside the created FILE names authoring, read back from disk
 - test_new_advises_authoring_for_a_scaffold_milestone · covers: M1, A2 · the Milestone path gets the same treatment as the Task path — driven against `new`, NOT `status`, whose `next:` line targets the task frontier and never names a milestone at all, so asserting there would pass without the fix
 - test_advice_and_freeze_agree_over_a_fixture_table · covers: M2, A3, R:SECOND_TRUTH · for every fixture, "advised to freeze" and "freeze accepts" are the same boolean — no node is advised toward a refusal and none is advised away from a stamp it would earn
 - test_authoring_advice_matches_the_freeze_refusal_sentence · covers: M3, A1 · the advice string and the refusal's `next:` are the same instruction, and it carries a runnable `add …` continuation
@@ -106,13 +117,19 @@ regression floor: both test roots green — `add-method/tests/` and `add-method/
 - test_freeze_stamp_wins_over_placeholders · covers: E2, A9 · a pre-3.0 stamped node is not dragged back to authoring
 - test_empty_frontier_affordance_is_unchanged · covers: E3, M4 · the no-open-task path is untouched
 - test_freeze_refuses_a_pure_milestone_scaffold · covers: M7, E4 · `add new Milestone` then `add freeze` — refused, naming the template sections; red against today's engine, which records the stamp
+- test_milestone_guard_is_narrow_by_design · covers: M7 · a Milestone with an authored goal, why and EXIT but a still-template GROUND FREEZES — the guard reaches the three fields the lifecycle depends on and stops there
 - test_milestone_guard_names_sections_the_body_actually_has · covers: R:VACUOUS_GUARD · the guard is driven against a scaffold it must refuse AND an authored milestone it must accept, so a guard looking in an absent section fails the first half rather than passing both
 - test_quick_lane_is_unaffected · covers: E5, R:NEW_VERB · the one-call lane still opens, runs and gates in one call
 - test_frontier_order_is_unchanged · covers: A10 · `ready()` ordering is identical before and after
 - test_new_scaffold_pins_the_corrected_affordance · covers: M6 · the re-aimed assertion, still pinning a literal string
 - test_no_new_verb_in_the_cli_surface · covers: R:NEW_VERB · the verb list is unchanged at 23
 - test_status_frontmatter_vocabulary_is_unchanged · covers: R:STATUS_ENUM · no new `status:` value is written or accepted
-- test_tree_parity · covers: M5, R:ONE_TREE · all four twins byte-identical and the MD5 pins re-aimed (existing check, extended to this change)
+- test_frozen_node_card_names_brief · covers: M8, S5 · the sibling the replan named — a frozen node's own CARD names the build entry, not the approval it already has
+- test_card_drift_compares_the_derived_beat · covers: M8, A5 · a frozen node whose CARD still says `direction` is REPORTED, where today `doctor` calls it clean
+- test_add_py_matches_ENGINE_MD5 · covers: M5, R:ONE_TREE · all four twins byte-identical and the MD5 pins re-aimed (existing check, extended to this change)
+- test_engine_bundle_matches_canonical · covers: M5, R:ONE_TREE · the bundled twin is byte-identical to the canonical engine
+- test_a_half_authored_node_still_reads_unauthored · covers: A4 · the probe — one remaining placeholder still reads unauthored, and freeze agrees
+- test_cold_resume_reaches_authoring_without_a_refusal · covers: A11 · the probe — the cold-resume path reaches authoring without first running a verb that refuses
 red-first: every check MUST fail first.
 
 ## EVIDENCE
