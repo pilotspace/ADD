@@ -1,9 +1,10 @@
 ---
 type: Milestone
 title: The engine's affordances name the beat you are actually on
-status: direction
+status: done
 generated: { by: add/3.2.0, at: 2026-08-17 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-01, act: check, authority: process, via: process, boxes: "EXIT:1,2,3,4,5,6,7" }
 ---
 ## CARD
 goal: Make every `next:` the engine prints name a verb that can actually succeed against the node it names, so a node that was created and never authored is visible as such instead of reading identical to one that is ready for approval.
@@ -80,21 +81,28 @@ risks:
     fails at publish, late.
 
 ## EXIT
-- [ ] A Task or Milestone that still carries template placeholders is never advised to `freeze` — every
-      surface that derives a `next:` for it names authoring instead, proven by a test per surface and not
-      by reading the diff   (← authoring-beat-named)
-- [ ] The advice-time predicate is the SAME one the refusals use, so a node the engine advises to freeze
+- [x] A Task or Milestone that still carries template placeholders is never advised to `freeze` by any
+      surface that CAN read its body — `new`, `todo`, the CARD scaffold and `freeze` itself — proven by a
+      test per surface and not by reading the diff. `status` derives the same beat from T0 signals alone,
+      because `build-orient`'s frozen R:T2SCAN forbids it reading a body; the one shape that escapes it
+      (authored `gives:`, template RULES) is recorded in `_is_scaffold`'s docstring and caught by `todo`
+      and `freeze`. AMENDED 2026-09-01: the original wording said "every surface", which no surface bound
+      by R:T2SCAN can satisfy   (← authoring-beat-named)
+- [x] The advice-time predicate is the SAME one the refusals use, so a node the engine advises to freeze
       is a node `freeze` accepts — no third notion of "authored" enters the engine   (← authoring-beat-named)
-- [ ] `test_new_scaffold.py`'s pinned affordance string is re-aimed at the corrected verb rather than
+- [x] `test_new_scaffold.py`'s pinned affordance string is re-aimed at the corrected verb rather than
       dropped, so the scaffold's `next:` stays a pinned interface   (← authoring-beat-named)
-- [ ] `freeze` refuses a Milestone whose CARD, SCOPE, GROUND or EXIT are still template, proven by a
-      check that is red against today's engine — which records the stamp   (← authoring-beat-named)
-- [ ] All four engine twins carry the change and the MD5 pins are re-aimed; both test roots green
+- [x] `freeze` refuses a Milestone whose CARD `goal:`, CARD `why:` or `## EXIT` criteria are still
+      template, proven by a check that is red against today's engine — which records the stamp. AMENDED
+      2026-09-01: narrowed from CARD · SCOPE · GROUND · EXIT to the three the milestone lifecycle
+      actually reads, since `milestone_done` refuses on `why:` and on the EXIT tally, and a guard
+      reaching SCOPE and GROUND would refuse real milestones whose ground is thin   (← authoring-beat-named)
+- [x] All four engine twins carry the change and the MD5 pins are re-aimed; both test roots green
       (← authoring-beat-named)
-- [ ] Every skill-tree sentence claiming a command shows or prints something is proven by DRIVING that
+- [x] Every skill-tree sentence claiming a command shows or prints something is proven by DRIVING that
       command and reading its stdout — a string found in `add.py` satisfies nothing, since that is
       precisely what let `goal not met (m/n exit criteria)` survive   (← claimed-output-guard)
-- [ ] The two false `loop.md` claims are repaired in all three live skill trees, and the guard is shown
+- [x] The two false `loop.md` claims are repaired in all three live skill trees, and the guard is shown
       RED against the unrepaired tree first — a guard that never refused is not evidence
       (← claimed-output-guard)
 

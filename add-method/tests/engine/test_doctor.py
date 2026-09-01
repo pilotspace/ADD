@@ -318,7 +318,10 @@ def test_sync_repairs_card_drift(bundle):
     cid, _ = add.new(bundle, "Task", "drifted-card", title="a card that disagrees with its stamps")
     path = bundle / cid.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{n['raw']}\n---\n" + n["body"].replace("beat: direction", "beat: done"))
+    # the scaffold's own beat token moved to `scaffold` (authoring-beat-named, 2026-09-01), so
+    # the fixture drifts it from there — replacing a string the body no longer carries was a
+    # silent no-op, and the assertion below caught it.
+    add.write(path, f"---\n{n['raw']}\n---\n" + n["body"].replace("beat: scaffold", "beat: done"))
     assert add.card_drift(add.load(bundle)), "the fixture did not actually drift"
     add.doctor_sync(bundle)
     assert not add.card_drift(add.load(bundle)), "sync left the CARD drifted"

@@ -39,12 +39,14 @@ milestone not done. One gate, no quiet way around it.
 
 ## The loop
 
-Every task done but the goal unmet? `add status` shows `goal not met (m/n exit criteria)`. That is
+Every task done but the goal unmet? `add milestone-done <slug>` refuses with
+`milestone_goal_unmet (m/n exit criteria)` and the milestone stays active. That is
 the cue:
 
 1. **Gather** the carried inventory:
    - open lessons — `add deltas` (still `open`);
-   - planned-but-unscaffolded tasks — the plan-vs-state line in `add status`;
+   - planned-but-unscaffolded tasks — the `scaffold` beat in `add todo`, which lists a node
+     that was created and never authored;
    - any reopened task — one a deepened verify returned to the flow (below).
 2. **Propose** the next tasks — with the best-fit advisor-flow persona loaded BEFORE drafting
    (`personas.md` § planning; a roster-less bundle skips silently): for each carried item worth

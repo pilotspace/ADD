@@ -17,4 +17,20 @@ def test_new_task_card_has_no_unexpanded_slug_marker(tmp_path):
     cid, _ = add.new(tmp_path, "Task", "mul-fn", title="Add mul")
     text = (tmp_path / cid.lstrip("/")).read_text(encoding="utf-8")
     assert "{slug}" not in text, "the CARD scaffold leaked an unexpanded {slug} marker"
-    assert "next: add freeze mul-fn" in text, "the CARD `next:` affordance does not name the real slug"
+    assert "mul-fn" in text, "the CARD `next:` affordance does not name the real slug"
+
+
+def test_new_scaffold_pins_the_corrected_affordance(tmp_path):
+    """covers: M6 — RE-AIMED, not deleted. The scaffold's `next:` stays a pinned interface;
+    it was the VALUE that was wrong, not the pinning.
+
+    A freshly created node carries nothing but placeholders, and `freeze` is structurally
+    guaranteed to refuse it (add.py:1394) — so the one string the CARD must not carry is the
+    verb that refusal names.
+    """
+    add.init(tmp_path, "code", "T")
+    cid, _ = add.new(tmp_path, "Task", "mul-fn", title="Add mul")
+    card = next(ln for ln in (tmp_path / cid.lstrip("/"))
+                .read_text(encoding="utf-8").splitlines() if ln.startswith("beat:"))
+    assert not card.strip().startswith("beat: direction"), card
+    assert "author" in card.lower() and "mul-fn" in card, card
