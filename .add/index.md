@@ -47,6 +47,7 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [domains.md — the checker recipe, floor mapping, lens re-author](tasks/domain-evidence-recipe.md) — `done` · `standard` · `architecture`
 - [A sixth sweep dimension: who receives this, and what would make it hard](tasks/experience-sweep.md) — `done` · `standard` · `architecture`
 - [Explore lane — 4th intake lane + phases/explore.md research loop](tasks/explore-lane.md) — `done` · `standard`
+- [The ONE approval asks its questions out loud](tasks/freeze-interview.md) — `direction` · `standard` · `architecture`
 - [The framing stops presupposing a repo](tasks/front-door-copy.md) — `done` · `quick`
 - [The README says what the engine does](tasks/front-door-truth.md) — `done` · `standard`
 - [verify.md — every documented rung must be stampable](tasks/ladder-honesty.md) — `done` · `standard`
