@@ -4249,8 +4249,15 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             raw = fm.get(key)
             if not raw:
                 continue                 # declaring neither key is legitimate (A2)
-            values = [v.strip() for v in str(raw).replace(",", " ").split() if v.strip()]
-            bad = [v for v in values if v not in allowed and not v.startswith("<")]
+            raw = str(raw)
+            if PLACEHOLDER.search(raw):
+                continue                 # an UNTOUCHED scaffold slot: nobody authored a value
+                                         # yet, and a guard must never fire on a missing thing.
+                                         # (Per-token `<`-prefix checking missed this: splitting
+                                         # `<from the closed taxonomy, comma-separated>` on commas
+                                         # leaves interior words carrying no bracket at all.)
+            values = [v.strip() for v in raw.replace(",", " ").split() if v.strip()]
+            bad = [v for v in values if v not in allowed]
             if bad:
                 routing.append(
                     f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — a value "

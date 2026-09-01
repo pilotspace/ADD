@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "6be570d8896a3d6bf966507136263f8d"  # re-aimed @ method-truth-sweep: the ancestor-bundle guard, the derived beat in status/brief, the persona seed at init, the routing-key taxonomies, and the CARD `goal:` placeholder guard. prior: 504262ae… @ stamp-field-integrity
+ENGINE_MD5 = "b9446a1a23cbe1a46811112e8221ecf8"  # re-aimed @ method-truth-sweep: the ancestor-bundle guard, the derived beat in status/brief, the persona seed at init, the routing-key taxonomies, the CARD `goal:` placeholder guard, and the routing-key check skipping an UNTOUCHED scaffold slot. prior: 6be570d8… @ method-truth-sweep
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "07902bbdfef82823f288989732729bf3"  # re-aimed @ method-truth-sweep (`init --nested`). prior: a943d7c6… @ enforcement-gaps
