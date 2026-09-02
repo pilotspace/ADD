@@ -31,12 +31,13 @@ def _scaffold_sections() -> list:
 
 
 def _referent_forms() -> set:
-    """Every form the engine's referent pattern admits, read from the engine."""
-    return set(re.findall(r"[A-Z]\\\\d\+|M\\\\d\+|E\\\\d\+|A\\\\d\+|R:\[A-Z0-9_\]\+|goal|G\\\\d\+",
-                          add.REFERENT.pattern)) or _forms_fallback()
+    """Every form the engine's `REFERENT` pattern admits, read FROM the pattern.
 
-
-def _forms_fallback() -> set:
+    The first cut of this ran a regex over the compiled pattern STRING, matched nothing, and
+    silently fell through to a second helper — which was the only one anything called. One
+    reader now, probing each token by membership in the pattern, which is what the engine
+    actually encodes.
+    """
     pat = add.REFERENT.pattern
     out = set()
     for token, label in (("M\\d+", "M<n>"), ("E\\d+", "E<n>"), ("A\\d+", "A<n>"),
@@ -65,8 +66,26 @@ def test_the_guide_does_not_undercount_its_own_sections():
 def test_the_covers_grammar_matches_the_engine():
     """covers: M2, M3, A1 · both directions — no form missing, none invented."""
     flat = _flat(DIRECTION)
-    for label in _forms_fallback():
+    for label in _referent_forms():
         assert label in flat, f"the guide never teaches the referent form `{label}`"
+
+
+def test_the_guide_does_not_miscount_the_referent_forms():
+    """covers: M2 · a grammar line that says `five` while listing six teaches the wrong shape.
+
+    The sibling check catches an undercounted SECTION list. This is the same defect one
+    paragraph later, and it shipped in the very commit that fixed the first one: the corrected
+    grammar named six forms and called them five. Bind the written number to the engine's count.
+    """
+    flat = _flat(DIRECTION)
+    n = len(_referent_forms())
+    words = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight"}
+    assert n in words, f"the engine admits {n} referent forms — extend this check's number words"
+    assert f"hose {words[n]} forms" in flat, (
+        f"the guide states a referent-form count that is not {words[n]} — the engine admits "
+        f"{n}: {sorted(_referent_forms())}")
+    stale = [w for k, w in words.items() if k != n and f"hose {w} forms" in flat]
+    assert not stale, f"the guide also states a stale count: {stale}"
 
 
 def test_the_probed_assumption_form_is_taught():

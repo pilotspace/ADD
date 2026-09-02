@@ -13,6 +13,7 @@ asked whether the global roster was DISCOVERABLE after it landed.
 
 The twins are held equal by PARSING both declarations (E5) — a restated list rots on the next entry.
 """
+import ast
 import re
 import sys
 from pathlib import Path
@@ -73,21 +74,58 @@ def test_the_global_tree_sets_are_equal():
 
 
 def test_the_parity_test_reads_both_twins():
-    """covers: E5, A1 · no restated list."""
+    """covers: E5, A1 · no restated list.
+
+    The first cut split the source at this function's own name and then discarded everything
+    before the third triple-quote — 1768 characters, all of it ABOVE this definition, and
+    starting mid-sentence inside an unrelated docstring at that. It could not see the
+    hard-coded tree set twelve lines below, and reordering the
+    two functions flipped its verdict with no change to what the file asserts: it measured
+    source layout, not the property it names. Scan the whole module instead, minus the strings
+    that are allowed to mention a tree by name (the docstrings that EXPLAIN the rule).
+    """
     src = Path(__file__).read_text(encoding="utf-8")
     assert "_installer._GLOBAL_TREES" in src, "the python side must be READ, not restated"
     assert "GLOBAL_TREES" in _js(), "the js side must be READ from cli.js"
-    # a literal tree name written into an assertion is exactly the rot this guards against
-    body = src.split("def test_the_parity_test_reads_both_twins", 1)[0]
-    assert "personas-index" not in body.split('"""', 3)[-1], \
-        "a tree name is hard-coded above the parser — the guard will rot on the next entry"
+
+    # The rot shape is a COLLECTION LITERAL restating the declaration — `{"skill/add", ...}`.
+    # A bare `"agents"` used as a path segment (`claude_dir / "agents"`) restates nothing and
+    # must stay legal, or the guard forbids the fixtures it needs.
+    names, offenders = _installer_tree_names(), []
+    for node in ast.walk(ast.parse(src)):
+        if not isinstance(node, (ast.Set, ast.List, ast.Tuple)):
+            continue
+        for el in node.elts:
+            if isinstance(el, ast.Constant) and el.value in names:
+                offenders.append(f"line {el.lineno}: {el.value!r}")
+    assert not offenders, (
+        "a tree name is restated in a collection literal — the guard rots on the next "
+        "entry:\n  " + "\n  ".join(offenders))
+
+
+def _installer_tree_names() -> set:
+    """The tree names, from the engine — so this check needs no list of its own either."""
+    return _py_global_trees() | _js_global_trees()
 
 
 def test_no_existing_tree_entry_is_removed():
-    """covers: A1 · the union is the target."""
-    union = {"skill/add", "agents", "tooling", "personas-teacher", "personas-index"}
-    assert union <= _py_global_trees(), f"python lost {sorted(union - _py_global_trees())}"
-    assert union <= _js_global_trees(), f"js lost {sorted(union - _js_global_trees())}"
+    """covers: A1 · the union is the target — read from git, never restated here.
+
+    The union was a literal set, which is the very thing the guard above forbids: it would need
+    hand-editing on the next entry, and it silently encoded today's answer as the requirement.
+    The committed declarations are the baseline instead — an entry present at HEAD must still
+    be present in both twins.
+    """
+    import subprocess
+    head = subprocess.run(["git", "show", "HEAD:add-method/src/add_method/_installer.py"],
+                          cwd=str(PKG.parent), capture_output=True, text=True)
+    if head.returncode != 0:
+        pytest.skip("not a git checkout — nothing to compare the baseline against")
+    block = head.stdout.split("_GLOBAL_TREES = (", 1)[1].split("\n)", 1)[0]
+    baseline = set(re.findall(r'\(\s*"([^"]+)"', block))
+    assert baseline, "the baseline parser found no committed tree entries"
+    for name, have in (("python", _py_global_trees()), ("js", _js_global_trees())):
+        assert baseline <= have, f"{name} lost {sorted(baseline - have)}"
 
 
 # --- M3/A2 — the roster lands where the host looks -----------------------------------------
@@ -165,3 +203,43 @@ def test_a_second_install_is_idempotent(tmp_path, bundled):
     assert sorted(p.name for p in _agents_dir(claude_dir).iterdir()) == first
     # A6: host deployment reads a fully reconciled home, never the package directly
     assert (home / "agents" / "add-worker.md").is_file()
+
+
+def test_an_unwritable_roster_dir_does_not_fail_the_install(tmp_path, bundled, capsys):
+    """covers: M5 · the third write target never masquerades as the first.
+
+    `_reconcile_global` gained a THIRD write target while the caller kept ONE `except OSError`
+    that reports `cannot write global home <home>`. On a machine where `~/.claude/agents` is
+    owned by another user — plausible, it is a namespace other tools write — the install aborted
+    naming a home that was perfectly writable, after the mirror and the skill had both landed.
+    """
+    import os
+    import stat
+
+    home, claude_dir = _homes(tmp_path)
+    landed = _agents_dir(claude_dir)
+    landed.mkdir(parents=True)
+    mode = landed.stat().st_mode
+    os.chmod(landed, stat.S_IRUSR | stat.S_IXUSR)          # r-x: readable, not writable
+    try:
+        if os.access(landed, os.W_OK):
+            pytest.skip("running as root — an unwritable directory is still writable")
+        _installer._reconcile_global(home, claude_dir, bundled)   # must NOT raise
+    finally:
+        os.chmod(landed, mode)
+
+    out = capsys.readouterr().out
+    assert (claude_dir / "seed.md").is_file(), "the skill must still be deployed"
+    assert "global home" not in out, \
+        "a roster failure was reported as the HOME being unwritable — it names the wrong path"
+    assert str(landed) in out and "NOT deployed" in out, \
+        f"the roster failure was silent; output was:\n{out}"
+
+
+def test_both_twins_treat_the_roster_write_as_non_fatal():
+    """covers: M5, R:TWINDRIFT · the JS twin degrades the same way."""
+    js = _js()
+    block = js.split("const roster = path.join(home,", 1)[1].split("\n  }", 1)[0]
+    assert "try {" in block and "catch" in block, \
+        "cli.js still lets a roster write abort the whole global install"
+    assert "NOT deployed" in block, "the JS twin does not report the degraded roster"

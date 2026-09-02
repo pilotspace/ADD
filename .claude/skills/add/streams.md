@@ -70,7 +70,8 @@ Spawn ONE `Agent()` with the wrapped prompt. Pick per the work (Rule-5 heuristic
 - **effort** — `low` fast · `medium` balanced · `high` complex (only `low` with `fable`).
 - **isolation** — sequential single-advisor needs **none**; one `worktree` per stream is how the
   parallel-streams mode keeps concurrent builders from racing (§ Parallel streams).
-- **agentType** — prefer a tool-equipped specialist that fits the persona (roster column below).
+- **executor** — `add-worker` for an execution beat, `add-advisor` for a second read; both
+  ship. A tool-equipped specialist is an optional upgrade where one is installed (roster below).
 
 ### 4 · Fold the verdict — evidence, not a rubber stamp
 The delegate returns findings; **you** record them against the beat with severity markers so a
@@ -91,8 +92,8 @@ continues on the normal rails: `add run <slug> -- <cmd>` for the bound receipt, 
 ## The roster — role → persona → executor → when
 
 One persona drives a beat; `use-when` / `not-when` route it over a sibling. Personas are distilled
-from the teacher corpus (`personas.md` §Seed); the `agentType` is the tool-equipped subagent that
-best carries the lens in this environment.
+from the teacher corpus (`personas.md` §Seed); the executor is the subagent that carries the lens —
+`add-worker` or `add-advisor` by default, a specialist only where the environment has one.
 
 This package ships exactly two agents — `add-worker` (every execution beat) and `add-advisor`
 (the second mind). They are the DEFAULT executor in every row, and they are always available. The

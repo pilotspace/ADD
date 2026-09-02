@@ -979,11 +979,20 @@ function reconcileGlobal(home, claudeDir, noSkill) {
     // reads — every agent the deployed skill names resolved to nothing. Sourced from the
     // RECONCILED home (never PKG_ROOT) so host deployment reads one settled state, and through
     // the SHARED per-file lander so a user's own subagents are never swept.
+    // The roster write does NOT abort the install: it is the third write target, and the
+    // caller's single handler reports an unwritable HOME — naming a home that is fine.
+    // `.claude/agents` is a namespace other tools own. Mirror of _installer.py.
     const roster = path.join(home, "agents");
     if (fs.existsSync(roster) && fs.statSync(roster).isDirectory()) {
       const agentsDir = claudeAgentsDir(claudeDir);
-      sharedFileReplace(roster, agentsDir);
-      log("  \u2713 roster    -> " + agentsDir);
+      try {
+        sharedFileReplace(roster, agentsDir);
+        log("  \u2713 roster    -> " + agentsDir);
+      } catch (e) {
+        log("  ! roster    -> " + agentsDir + " NOT deployed (" + e.message + ") — the skill "
+            + "is installed and usable; agents fall back to the generic lens until this "
+            + "directory is writable");
+      }
     }
   }
 }

@@ -95,14 +95,21 @@ def test_the_replacement_claim_is_one_a_test_binds():
 
 
 def test_the_measured_claim_carries_its_provenance():
-    """covers: M5, A2 · sample size and engine version sit with the claim."""
-    flat = " ".join(_highlights().split())
-    m = re.search(r"Measured[^.]*\.", flat)
-    assert m, "the measured claim is gone — if it was cut, cut this check with it"
-    window = flat[m.start():m.start() + 320]
-    assert re.search(r"n\s*=\s*\d", window), f"no sample size beside the claim: {window[:200]}"
-    assert re.search(r"\b\d+\.\d+(\.\d+)?\b", window), \
-        f"no engine version beside the claim: {window[:200]}"
+    """covers: M5, A2 · sample size and engine version sit with the claim.
+
+    BOTH front doors, like the M1 sibling above. This check read one of the two while that one
+    read both, and the root README's copy of the same sentence shipped with no provenance at
+    all — a rule that quantifies over a set has to enumerate that set, in every check that
+    states it, not just the first one written.
+    """
+    for path in READMES:
+        flat = " ".join(_highlights(path).split())
+        m = re.search(r"Measured[^.]*\.", flat)
+        assert m, f"{path}: the measured claim is gone — if it was cut, cut this check with it"
+        window = flat[m.start():m.start() + 320]
+        assert re.search(r"n\s*=\s*\d", window), f"{path}: no sample size beside the claim"
+        assert re.search(r"\b\d+\.\d+(\.\d+)?\b", window), \
+            f"{path}: no engine version beside the claim"
 
 
 # --- M2/A3 — the ladder ---------------------------------------------------------------------

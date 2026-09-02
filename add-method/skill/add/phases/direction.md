@@ -98,7 +98,8 @@ re-ground the repo. Aim the bundle at reality, not assumption.
 
 `covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at
 `standard|deep` it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an
-assumption you declared `· probe:`-able). Those five are the whole vocabulary the gate resolves.
+assumption you declared `· probe:`-able). Those six forms are the whole vocabulary the gate
+resolves; a `covers:` naming anything else binds nothing.
 
 ## Run red — for the right reason
 

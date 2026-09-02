@@ -587,9 +587,15 @@ def _claude_agents_dir(claude_skills_dir: Path) -> Path:
 
 def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill: bool = False) -> None:
     """Clean-replace the bundled managed layer INTO <home> (the canonical mirror), then DEPLOY
-    the skill to ~/.claude/skills/add for Claude discovery. Raises OSError if the home or skill
-    dir can't be written — the caller turns that into a clean 'home_unwritable' fail. The caller
-    verifies the bundled sources exist first (design-for-failure)."""
+    the skill to ~/.claude/skills/add for Claude discovery and the roster to ~/.claude/agents.
+
+    Raises OSError if the home or the SKILL dir can't be written — the caller turns that into a
+    clean 'home_unwritable' fail. The ROSTER write does NOT raise: it is the third write target
+    and the least essential one, and the caller's single handler would report an unwritable
+    home while naming a home that is perfectly writable. `.claude/agents` is a namespace other
+    tools own, so a permission failure there is plausible and must not abort an install whose
+    mirror and skill already landed — the roster degrades to the generic fallback, loudly.
+    The caller verifies the bundled sources exist first (design-for-failure)."""
     for sub, dest_rel, strip in _GLOBAL_TREES:
         if sub in OPTIONAL and not (bundled_root / sub).exists():
             continue   # optional enhancement absent — never abort the global mirror over it
@@ -603,8 +609,17 @@ def _reconcile_global(home: Path, claude_dir: Path, bundled_root: Path, no_skill
         roster = home / "agents"
         if roster.is_dir():
             agents_dir = _claude_agents_dir(claude_dir)
-            _shared_file_replace(roster, agents_dir)
-            _log(f"  ✓ roster    -> {agents_dir}")
+            try:
+                _shared_file_replace(roster, agents_dir)
+            except OSError as exc:
+                # Never let the third target masquerade as the first. Naming the real path is
+                # the whole point: `cannot write global home ~/.add` for a failure in
+                # `~/.claude/agents` sends the reader to fix a directory that is already fine.
+                _log(f"  ! roster    -> {agents_dir} NOT deployed ({exc}) — the skill is "
+                     f"installed and usable; agents fall back to the generic lens until this "
+                     f"directory is writable")
+            else:
+                _log(f"  ✓ roster    -> {agents_dir}")
 
 
 # --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------

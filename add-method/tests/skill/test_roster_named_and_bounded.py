@@ -78,6 +78,31 @@ def test_the_roster_names_only_shipped_agents():
                          f"ship: {phantom} — shipped: {sorted(shipped)}")
 
 
+def test_the_prose_names_no_column_the_table_lacks():
+    """covers: M1 · the guard reads the CELLS; the defect it missed was one line ABOVE them.
+
+    The executor column was renamed and two sentences kept calling it `agentType` — a phantom
+    reference of exactly the kind this milestone exists to end, sitting in the same file as the
+    fix. A reader following the prose looks for a column that is not there. So: any term the
+    prose presents as a roster column must appear in the table's header row.
+    """
+    text = STREAMS.read_text(encoding="utf-8")
+    header = next((l for l in text.splitlines()
+                   if l.startswith("|") and "Persona" in l), None)
+    assert header, "the roster table's header row did not parse"
+    columns = " ".join(c.strip().strip("`*").lower() for c in header.strip("|").split("|"))
+
+    # A term is "presented as a column" when the sentence says so — `<term>` column, or the
+    # roster-column bullet convention `- **<term>** — …`.
+    import re as _re
+    claimed = set(_re.findall(r"`([A-Za-z][A-Za-z0-9]*)`\s+(?:is|column)", text))
+    claimed |= set(_re.findall(r"the\s+`([A-Za-z][A-Za-z0-9]*)`\s+is", text))
+    phantom = sorted(c for c in claimed if c.lower() not in columns)
+    assert not phantom, (
+        f"streams.md's prose names roster columns the table does not have: {phantom} — "
+        f"header is: {header.strip()}")
+
+
 def test_a_specialist_stays_an_optional_upgrade():
     """covers: A4, E1 · the table permits without requiring."""
     text = STREAMS.read_text(encoding="utf-8")

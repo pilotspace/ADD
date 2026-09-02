@@ -49,12 +49,44 @@ def test_ancestor_bundle_is_none_at_the_top(tmp_path):
 
 
 def test_ancestor_bundle_ignores_a_marker_that_is_not_a_bundle(tmp_path):
-    """covers: A2 · a directory holding only `graph.json` is not an ancestor bundle."""
+    """covers: A2 · a file named `index.md` is not a bundle unless it declares `abf_version:`.
+
+    The first cut of this check only ever wrote `graph.json` — a file `ancestor_bundle` does not
+    read — so it could not fail whatever the function did, and it passed straight over the real
+    defect: the walk treated ANY directory holding a file called `index.md` as a bundle root.
+    `index.md` is the most common filename in documentation tooling, so a plain MkDocs homepage
+    made `init` refuse a legitimate project and `status` announce an ADD project that never
+    existed. Both shapes are exercised here now.
+    """
     top = tmp_path / "proj"
     (top / ".add").mkdir(parents=True)
-    (top / ".add" / "graph.json").write_text("{}")
+    (top / ".add" / "graph.json").write_text("{}")     # a file the walk never reads
     (top / "sub").mkdir()
     assert add.ancestor_bundle(top / "sub" / ".add") is None
+
+    # the shape that actually bit: a docs homepage, one directory up
+    docs = tmp_path / "site" / "docs"
+    (docs / "guide").mkdir(parents=True)
+    (docs / "index.md").write_text("# Welcome\n\nOur documentation.\n", encoding="utf-8")
+    assert add.ancestor_bundle(docs / "guide" / ".add") is None, \
+        "a MkDocs homepage was read as an ADD bundle root"
+
+    # …and the same name INSIDE a `.add/`, still without the marker
+    fake = tmp_path / "faux"
+    (fake / ".add").mkdir(parents=True)
+    (fake / ".add" / "index.md").write_text("# not a bundle\n", encoding="utf-8")
+    (fake / "sub").mkdir()
+    assert add.ancestor_bundle(fake / "sub" / ".add") is None
+
+
+def test_ancestor_bundle_finds_a_real_bundle_by_its_marker(tmp_path):
+    """covers: A2 · the discriminator is `abf_version:`, and a real bundle still resolves."""
+    top = tmp_path / "proj"
+    add.init(top, "code", "T")
+    assert "abf_version:" in (top / "index.md").read_text(encoding="utf-8"), \
+        "init no longer writes the marker this guard keys on"
+    (top / "sub").mkdir()
+    assert add.ancestor_bundle(top / "sub" / ".add") == top
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="root reads an unreadable directory anyway")

@@ -907,11 +907,14 @@ def _today() -> str:
 def ancestor_bundle(root):
     """The nearest bundle ABOVE `root`, or None. Read-only; never raises.
 
-    `index.md` is the marker `init` always writes and nothing else does, so it is the same
-    marker `status` already keys its own no-bundle branch on (A2). The walk starts at the
+    An `index.md` DECLARING `abf_version:` is the marker `init` always writes and nothing else
+    does (A2) — the bare filename is not enough, see `_is_bundle_index`. The walk starts at the
     candidate bundle's grandparent — `root` is `<project>/.add`, so `root.parent` is the
-    project itself and is never its own ancestor — and stops at the filesystem root, at a
-    directory it cannot read, or when it would leave the tree it started in (A3, M5).
+    project itself and is never its own ancestor — and stops at the filesystem root or at a
+    directory it cannot read (A3, M5). It cannot follow a symlink out of the tree it started
+    in because `resolve()` canonicalises first, so every `parents` entry is a real directory;
+    that is the whole of M5's symlink clause, and there is no other ceiling — a bundle far
+    above you IS an ancestor and is reported as one.
 
     Why this exists: `status` in a subdirectory used to print `next: add init`, and following
     the engine's own instruction created a second bundle beside the real one. A resume verb
@@ -926,14 +929,38 @@ def ancestor_bundle(root):
     for parent in here.parents:  # nearest first, terminating at the filesystem root
         try:
             candidate = parent / ".add" / "index.md"
-            if candidate.is_file():
+            if _is_bundle_index(candidate):
                 return parent / ".add"
             # A bundle root passed directly (not a `<project>/.add` shape) still counts.
-            if (parent / "index.md").is_file() and parent != start:
+            # INVARIANT both branches keep: the return is always a BUNDLE ROOT, whose `.parent`
+            # is the project — here `parent` holds the marker itself, so `parent` IS the bundle
+            # root. Both callers report `Path(above).parent`, and that only reads correctly
+            # while this holds.
+            if parent != start and _is_bundle_index(parent / "index.md"):
                 return parent
         except OSError:
             return None          # unreadable parent — answer None, never raise (E3)
     return None
+
+
+def _is_bundle_index(path) -> bool:
+    """Is this `index.md` a BUNDLE index — not just a file that shares its name?
+
+    The name alone is not the marker. `index.md` is the single most common filename in
+    documentation tooling — MkDocs, Docusaurus and Hugo all put one at a section root — so
+    keying on the name made every docs tree read as an ADD bundle: `init` refused a legitimate
+    project with `R:RIVALBUNDLE` and `status` told the reader they were inside an ADD project
+    that does not exist. `abf_version:` is written by `init` into every bundle index and by
+    nothing else, so it separates the two at the cost of one small read. Head-only: a bundle
+    index declares it in frontmatter, and a huge unrelated file is never fully loaded.
+    """
+    try:
+        if not Path(path).is_file():
+            return False
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            return "abf_version:" in fh.read(400)
+    except OSError:
+        return False
 
 
 def init(root, profile: str = "code", title: str = None, nested: bool = False) -> tuple:
@@ -1029,9 +1056,11 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
             # `title:` for the graph to see it at all (R:BADPERSONA reads the TYPE, not the name).
             if body.startswith("---"):
                 fm, _, rest = body[3:].partition("---")
-                title = next((l.split(":", 1)[1].strip() for l in fm.splitlines()
-                              if l.startswith("name:")), slug)
-                body = (f"---\ntype: Persona\ntitle: {title}\n"
+                # NOT `title` — that is `init`'s own parameter, and shadowing it here left a
+                # trap for whoever next reads the project title after this block.
+                lens_title = next((l.split(":", 1)[1].strip() for l in fm.splitlines()
+                                   if l.startswith("name:")), slug)
+                body = (f"---\ntype: Persona\ntitle: {lens_title}\n"
                         f"{fm.strip()}\n{_stamp()}\n---{rest}")
             before = len(created)
             put(f"personas/{slug}.md", body)
