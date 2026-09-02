@@ -1,48 +1,56 @@
 ---
 type: Task
 title: an advised persona appears in the brief that spawns the worker
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 scope:
   - add-method/tooling/add.py
   - add-method/tests/engine/
 gives:
-  - S1 <the surface this publishes — an endpoint, function, or section>
+  - S1 add.brief() — the persona block a spawned worker reads
+  - S2 the lens resolution shared with advise and wave
 generated: { by: add/3.3.0, at: 2026-09-02 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-02, act: freeze, authority: human, direction: "sha256:259be2d4a3f25f67", binding: "sha256:22249aa61fd2594e" }
+  - { by: "Tin Dang", at: 2026-09-02, act: brief, authority: process, brief: "sha256:32e7d6da50b1e35b" }
+  - { by: "process:run", at: 2026-09-02, act: run, authority: process, outcome: PASS, receipt: /tasks/the-persona-reaches-the-worker.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-02, act: gate, authority: plan, outcome: PASS, receipt: /tasks/the-persona-reaches-the-worker.d/runs/1.md, brief: "sha256:990f9066b283ca06" }
 ---
 ## CARD
-goal: <one line>
-why: <why this task exists — optional>
-beat: scaffold · next: author the-persona-reaches-the-worker's RULES, ASSUMPTIONS and CHECKS, then add freeze the-persona-reaches-the-worker
+goal: an advised persona appears in the brief that spawns the worker.
+why: measured — no seeded lens has ever reached a brief, by either key.
+beat: done · next: add status
 
 ## RULES
 <must>
-- M1 <the rule that must hold>
+- M1 `advise` and `persona:` reach the brief identically
+- M2 a brief with no lens says so rather than reading like a lensed one
 </must>
 <reject>
-- R:<NAME> <what must never happen> -> "<NAME>"
+- R:LENSLOST a recorded lens is dropped between the record and the worker -> "LENSLOST"
 </reject>
 
 ## ASSUMPTIONS
-- A1 [who] covers: <S ids> · the request does not say <who may act / whose data>; taking <reading> -> <cost if wrong>
-- A2 [which] covers: <S ids> · the request does not say <which rows/cases are in>; taking <reading> -> <cost if wrong>
-- A3 [when] covers: <S ids> · the request does not say <where the boundary falls>; taking <reading> -> <cost if wrong>
-- A4 [absent] covers: <S ids> · the request does not say <what a missing value means>; taking <reading> -> <cost if wrong>
-- A5 [order] covers: <S ids> · the request does not say <what orders / breaks a tie>; taking <reading> -> <cost if wrong>
-- A6 [experience] covers: <S ids> · the request does not say <who receives this and what would make it hard for them>; taking <reading> -> <cost if wrong>
+- A1 [who] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
+- A2 [which] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
+- A3 [when] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
+- A4 [absent] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
+- A5 [order] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
+- A6 [experience] covers: S1,S2 · the request does not say the plain reading is contested; taking the plain reading -> a re-freeze
 every `gives:` surface is swept on every dimension; `[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. `· probe: <what shipped behavior must show>` declares a reading checkable: cite its A id from CHECKS and the gate holds the PASS to it.
 
 ## PLAN
-contract: <the shape this publishes>
-scope: <files>
+contract: `brief` resolves the roster by persona slug the way `advise` and `wave` do — the path grammar normalised a bare slug against the SOURCE's directory — and reads `advised_by:` as well as `persona:`, the two the gate's R:NOCOVERAGE already treats as equals.
+scope: add-method/tooling/, add-method/tests/
 
 ## EDGES
-- E1 <a boundary or failure case a check must cover — optional>
+- E1 the gate accepts either key; the brief must not accept fewer
 
 ## CHECKS
-- <test_name> · covers: M1 · <what it proves>
+- test_advise_and_persona_reach_the_brief_identically · covers: M1, R:LENSLOST · the measured drop
+- test_a_brief_with_no_lens_says_so · covers: M2 · a silent omission reads as a quiet lens
+- test_the_gate_and_the_brief_agree_on_what_counts_as_a_lens · covers: M1, E1 · scoped to brief's own body
 red-first: every check MUST fail first.
 
 ## EVIDENCE
@@ -50,4 +58,4 @@ receipt: <runs/<n>.md>
 gate: <PASS | RISK-ACCEPTED | HARD-STOP>
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- two verbs writing the same fact under different keys is a fact neither can read -> add learn add
