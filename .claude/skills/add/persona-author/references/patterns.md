@@ -121,7 +121,7 @@ it for a lens that only advises.
 
 ## 12. Deliberate exclusions — what NOT to put in a persona
 A persona is a layer in a stack; keep the other layers' work OUT of it.
-- **No tone/voice** — that is SOUL.md's. A persona that prescribes phrasing is duplicating it.
+- **No tone/voice** — that belongs to the agent's own voice, not the lens. A persona that prescribes phrasing is duplicating it.
 - **No self-score / confidence rubric** — the agent (add-worker) owns the six-dimension score.
 - **No output skeleton** — the deliverable's shape is the agent's Return contract, not the lens's.
 - **No stakes/CoT priming** ("take a deep breath", "$500 tip") — motivation is the agent's; the

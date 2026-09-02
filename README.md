@@ -56,17 +56,17 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 | Faculty | What it holds | See it yourself |
 |---|---|---|
 | 🧠 **Memory** — *what is true* | the board, frozen contracts, red suites, five living specs | `cli.py status` — a brand-new session resumes mid-build, losing nothing |
-| ⚖️ **Judgment** — *how to work here* | personas propose each task's lane; gates trace outcomes; the loop reflects on the record (GEPA) | `cli.py deltas` — the per-lane scoreboard: what got gated, passed, healed |
-| 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen test and watch the gate refuse — gaming a test to get green is structurally impossible |
+| ⚖️ **Judgment** — *how to work here* | personas propose each task's approach; gates record outcomes; lessons land on the spec they belong to | `cli.py deltas` — the carried inventory: every lesson recorded, by lens |
+| 🛡️ **Conscience** — *what is trusted* | one freeze per feature, evidence-scored gates, tamper tripwire, security hard-stop | edit a frozen contract and watch the gate refuse — the Musts, Rejects and `gives:` you approved cannot move under a build |
 
 ## ✨ Highlights
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify on its own and only comes back when it matters.
-- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right. Gaming a test to go green is treated as tampering, not a shortcut.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
 - 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 24-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
-- 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are traced, and the loop learns what actually works here (GEPA).
+- 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are recorded, and the lessons land on the spec they belong to.
 - 🧭 **The agent reasons before it drafts** — a second mind pressure-tests the plan before the freeze, and returns a recommendation with its confidence per dimension instead of a confident-sounding paragraph. Fluent ≠ true.
 - 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions. Provably right and unusable is a failure the freeze now catches.
 - 📄 **Everything about a feature in one place** — rules, assumptions, contract, checks, and gate record in a single task file at `.add/tasks/<slug>.md`; no doc tree to hunt through.

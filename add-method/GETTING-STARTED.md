@@ -99,8 +99,16 @@ From there the agent runs the **onboarding** for you:
 1. **Orient** — it reads the bundle's resume point, never re-reading your whole
    repo. On a fresh install it initialises the project itself and drafts the
    foundation for your sign-off.
-2. **Intake** — it sizes your request and proposes a **milestone** (goal · scope ·
-   tasks · exit criteria). *You confirm the shape.*
+2. **Intake** — it sizes your request against the **ceremony ladder** and routes it.
+   Most changes never create a node: a mechanical edit or a small behaviour change —
+   three adjacent files, one sitting, no unknowns — goes down the **direct lane**
+   (write the check, red → green, commit, `add learn`). One behaviour worth a frozen
+   contract becomes a **Task** (`--depth quick` or `standard`). An unanswered question
+   becomes an **explore** Task (`--kind explore`) that closes on cited `## FINDINGS`
+   rather than a test run. A theme spanning several tasks becomes a **milestone**
+   (goal · scope · tasks · exit criteria). *You confirm the shape, and "make it a
+   task" always wins.* Security, data and architecture are the floor: they get a
+   node however small, and a security finding is always a hard stop.
 3. **Direction** — for each task it drafts the RULES (Musts and Rejects), the PLAN
    (contract and scope), and the CHECKS that will prove them, then writes the tests
    **red first**. *You give one approval: the freeze.*
@@ -194,7 +202,13 @@ add new Task transfer --title "Transfer money between my accounts" --scope "src/
 ```
 
 This creates `.add/tasks/transfer.md` — **one file, eight sections** — and leaves it
-at beat `direction`. Open it in your editor; you'll fill it top to bottom.
+at beat `scaffold`: nothing is authored yet. Open it in your editor; you'll fill it
+top to bottom, and the beat becomes `direction` once you freeze.
+
+> **Already have a bundle above this directory?** `add init` refuses rather than leave
+> two bundles in one project (`R:RIVALBUNDLE`). Work from the existing one, or pass
+> `add init --nested` if a separate bundle here is deliberate — a monorepo with a
+> bundle per package, say.
 
 ### Beat 1 — Direction (https://pilotspace.github.io/ADD/03-direction/)
 

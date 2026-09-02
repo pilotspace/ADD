@@ -17,7 +17,7 @@ description: >-
 
 A persona is a **lens, not a voice** — a distilled slice of domain expertise the ADD engine
 loads onto a beat so a generic agent becomes the specialist. Author for that seam and nothing
-else: **tone lives in SOUL.md**, the **six-dimension self-score lives in the agent** (add-worker),
+else: **tone belongs to the agent's own voice**, the **six-dimension self-score lives in the agent** (add-worker),
 and the **deliverable's shape lives in the agent's Return contract**. A persona that duplicates
 any of those is dead weight. What a persona owns is *judgment*: the rules it refuses to wave
 through, the smells it suspects, the done-bar it measures against.

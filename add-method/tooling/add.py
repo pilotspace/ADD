@@ -2405,8 +2405,9 @@ def status(root, all: bool = False, check: bool = False) -> str:
                     "convert it\n"
                     "nothing here was deleted: your 2.x files (state.json · tasks/ · specs/) are "
                     "untouched\n"
-                    "archive them as the record of how this was built, then start a 3.0 bundle\n"
-                    "next: add init")
+                    "`add upgrade` archives them to `.add-2x-archive/`, writes MIGRATION.md, "
+                    "and initialises a fresh 3.0 bundle beside the record\n"
+                    "next: add upgrade")
         # …and unless a bundle is sitting ABOVE us. `cd` into a subdirectory is the most
         # common thing an engineer does; answering "run `add init`" there is confidently
         # wrong, and following it builds a rival bundle (R:MISDIRECT). Name the ancestor and
@@ -2751,6 +2752,13 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
 
 
 DELTA_LINE = re.compile(r"-\s+\[([A-Z]+)\s*·\s*(\w+)\]\s*(.*)")
+# A line that LOOKS like a delta — the bracketed `[<LENS> · <status>]` head — so a plain list
+# item is never mistaken for a broken one.
+DELTA_SHAPE = re.compile(r"-\s+\[[^\]]*·[^\]]*\]")
+DELTA_STATUSES = ("open", "folded", "rejected")
+# `(evidence: <ptr>)` with something real inside — the template `<ref>` and an empty pointer
+# both read as absent, the same discrimination `R:HOLLOW_EXPLORE` makes on a finding.
+DELTA_EVIDENCE = re.compile(r"\(evidence:\s*[^)\s<][^)]*\)")
 
 
 def deltas(root, status: str = "open") -> tuple:
@@ -2760,17 +2768,49 @@ def deltas(root, status: str = "open") -> tuple:
     propose the next tasks; `folded`/`rejected` are decided and stay out of the listing. Never mutates.
     """
     root = Path(root)
-    items = []
+    if status not in DELTA_STATUSES:
+        return [], (f"`{status}` is not a delta status — the set is closed: "
+                    f"{' | '.join(DELTA_STATUSES)}"
+                    f"\nnext: add deltas --status <{' | '.join(DELTA_STATUSES)}>")
+    items, malformed = [], []
     for path in sorted((root / "specs").glob("*.md")):
         for line in read(path, "T2")["body"].splitlines():
-            m = DELTA_LINE.match(line.strip())
-            if m and m.group(2) == status:
-                items.append((path.stem, m.group(1), m.group(3).strip()))
-    if not items:
-        return items, f"no {status} deltas\nnext: add status"
-    rendered = [f"{status} deltas ({len(items)}):"]
-    rendered += [f"  · [{c}] {s}: {t}" for s, c, t in items]
-    rendered.append("next: at close, fold or reject each (loop.md)")
+            stripped = line.strip()
+            m = DELTA_LINE.match(stripped)
+            if m is None:
+                # Not every `- ` line is a delta; only one that LOOKS like one and fails.
+                if DELTA_SHAPE.match(stripped):
+                    malformed.append((path.stem, "unparsed", stripped))
+                continue
+            comp, state = m.group(1), m.group(2)
+            # A typo'd status matched no branch and the line simply disappeared — from the
+            # inventory the loop reads to propose the next tasks, with no warning and no doctor
+            # finding, while deltas.md promised three reject codes that named nothing. A delta
+            # the engine cannot place is REPORTED; it is never silently dropped.
+            if state not in DELTA_STATUSES:
+                malformed.append((path.stem, "unknown_status", stripped))
+            elif comp not in LENS_COMP.values() and comp not in LENS_COMP:
+                malformed.append((path.stem, "unknown_competency", stripped))
+            elif not DELTA_EVIDENCE.search(m.group(3)):
+                # `learn` always writes `(evidence: <ptr>)`; a hand-added line that omits it is
+                # a claim with no proof, which is the third code deltas.md has always promised.
+                malformed.append((path.stem, "no_evidence", stripped))
+            elif state == status:
+                items.append((path.stem, comp, m.group(3).strip()))
+    rendered = []
+    if items:
+        rendered.append(f"{status} deltas ({len(items)}):")
+        rendered += [f"  · [{c}] {s}: {t}" for s, c, t in items]
+        rendered.append("next: at close, fold or reject each (loop.md)")
+    else:
+        rendered.append(f"no {status} deltas")
+    if malformed:
+        rendered.append(f"! {len(malformed)} malformed delta line(s) — carried by nothing, "
+                        f"read by nothing:")
+        rendered += [f"  ! {s}: {why} — {text}" for s, why, text in malformed]
+        rendered.append("next: fix the line's `- [<LENS> · open|folded|rejected] <text>` shape")
+    elif not items:
+        rendered.append("next: add status")
     return items, "\n".join(rendered)
 
 

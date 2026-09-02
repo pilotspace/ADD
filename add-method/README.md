@@ -54,10 +54,10 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
-- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; gaming a test to reach green is treated as tampering.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
 - 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 24-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
-- 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are traced, and the loop learns what works here (GEPA).
+- 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are recorded, and lessons land on the spec they belong to.
 - 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions; `freeze` refuses until it is answered or explicitly retired.
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves; monorepo or multi-repo in one team.
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
@@ -120,9 +120,8 @@ runtime dependency — down to the three parts a project needs: **Identity**,
 A distilled persona is an **advisory overlay** during direction, build, or verify:
 it shapes *how* a step gets done, never whether it happens. It can't skip a gate,
 edit a frozen contract, or wave through a security finding. Personas also
-propose each task's route (full walk · fast lane · inline); the freeze ratifies it,
-the gate traces the outcome, and `cli.py deltas` rolls the traces into a per-lane
-scoreboard the loop reflects on (GEPA).
+propose each task's approach; the freeze ratifies it, the gate records the outcome,
+and `cli.py deltas` lists the lessons that came out of it, by lens.
 
 **Best setup:** install ADD to drive the loop, keep whatever subagent libraries you
 already use. ADD ships two agents — `add-worker` (the execution shell) and `add-advisor`
@@ -153,17 +152,18 @@ pip install pilotspace-add && pilotspace-add init      # Python / pip
 
 The plugin carries the engine. On first `/add`, the skill materializes it into the
 project and scaffolds `.add/` — a self-contained result identical to the npm/pip
-flow. No flags needed: the project name is inferred from your folder and the stage
-defaults to `prototype` (pass `--name "My App" --stage mvp` to choose up front).
+flow. No flags needed: the project name is inferred from your folder (pass
+`--name "My App"` to set it up front). Ceremony is per-task in 3.x — a task
+declares its own `--depth` and `--sensitivity`, so there is no project-wide stage.
 
 **Already installed?** `npx @pilotspace/add@latest update` (or `pipx run
 pilotspace-add update`) re-materializes the skill and tooling while leaving your
 project work untouched; add `--check` to see whether a project is behind.
 **Coming from 2.x?** 3.0 is a clean break: it reads a different bundle format and
-does not convert one, so there is no `migrate`. Upgrading leaves every 2.x file
-untouched and `add status` names the format rather than claiming there is no
-bundle — archive the 2.x bundle as the record of how the project was built, then
-`add init` a 3.0 one beside it.
+never converts one. Run `add upgrade` — it renames `.add/` to `.add-2x-archive/`
+byte-for-byte, writes a `MIGRATION.md` beside it, and initialises a fresh 3.0
+bundle. Nothing is deleted and nothing is rewritten; the 2.x record stays readable
+as the account of how the project was built.
 
 **New here?** Pick the walkthrough that matches what you are making:
 
@@ -194,7 +194,7 @@ ADD works *inside your project* — here is exactly what that means:
 - **Runs only when you ask.** Nothing executes on install. It acts when you run `/add`. User-initiated, every time.
 - **What it runs:** the bundled engine only — `node bin/cli.js` and `python3 .add/tooling/cli.py`. No downloaded or remote code.
 - **What it writes:** files under your project's `.add/` and the managed guideline block in `CLAUDE.md` / `AGENTS.md`. Never above the project root.
-- **Network:** one optional, advisory update check — a single HTTPS GET to the npm registry, ≤ once/24h, 1.5s timeout, fail-open, writes only a one-line note to stderr. Disable with `ADD_NO_UPDATE_CHECK=1`. No telemetry, no analytics.
+- **Network:** none. Nothing in the installer or the engine opens a socket — no update check, no telemetry, no analytics. `npm`/`pipx` fetch the package; after that ADD is entirely offline.
 - **No secrets, no credentials, no privileged access.** Pure local file orchestration.
 
 ## Use it

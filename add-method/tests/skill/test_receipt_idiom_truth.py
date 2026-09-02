@@ -124,7 +124,10 @@ def test_no_engine_behaviour_changes_in_this_task():
     missing = str(root / "never-written.xml")
     # Read the path `run` RETURNS: the receipt dir is derived from a shortened slug, and a
     # hand-built path silently misses the file and fails for the wrong reason.
-    out = add.run(root, "unreported", ["python3", "-c", "pass"], junit=missing)
+    # The CID, not the bare slug. `cli.py` always resolves a ref before calling `run`, and
+    # every other verb refuses a slug with `no such node`; `run` only accepted one because its
+    # lookup was `scan(root).get(cid) or {}` — the hole that let it invent a subject entirely.
+    out = add.run(root, cid, ["python3", "-c", "pass"], junit=missing)
     assert out["receipt"]["kind"] == "command-exit", \
         f"a run with no report no longer records the WEAK kind: {out['receipt']['kind']}"
     assert out["receipt"]["passed"] == [], "the engine claimed reported IDs it never read"
