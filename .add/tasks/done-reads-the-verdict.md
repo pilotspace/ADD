@@ -11,7 +11,8 @@ gives:
   - S1 add.done() — the verb that writes `status: done`
   - S2 the refusal it prints when the latest verdict does not close
 generated: { by: add/3.3.0, at: 2026-09-02 }
-verified: []
+verified:
+  - { by: "Tin Dang", at: 2026-09-03, act: interview, authority: human, interview: "sha256:be5498c778037f87", receipt: /tasks/done-reads-the-verdict.d/interviews/1.md, answers: "A1=correct|A2=correct|A3=correct|A4=correct|A5=defer|A6=defer|R:STOPSHIPS=defer" }
 ---
 ## CARD
 goal: a gate stamp entitles `done` only when the verdict it carries CLOSES.
