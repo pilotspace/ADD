@@ -1,7 +1,7 @@
 ---
 type: Task
 title: every covers: referent class is inside the freeze seal
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 scope:
@@ -14,11 +14,16 @@ generated: { by: add/3.3.0, at: 2026-09-02 }
 verified:
   - { by: "Tin Dang", at: 2026-09-02, act: freeze, authority: human, direction: "sha256:6093581b4397061a", binding: "sha256:33682cbd80ad5626" }
   - { by: "Tin Dang", at: 2026-09-02, act: brief, authority: process, brief: "sha256:192cf0d06535c1fe" }
+  - { by: "process:run", at: 2026-09-02, act: run, authority: process, outcome: PASS, receipt: /tasks/seal-covers-what-binds.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-02, act: refreeze, authority: human, direction: "sha256:bf1db6312e5a9a32", binding: "sha256:33682cbd80ad5626" }
+  - { by: "Tin Dang", at: 2026-09-02, act: brief, authority: process, brief: "sha256:415e9ab49de1288f" }
+  - { by: "process:run", at: 2026-09-02, act: run, authority: process, outcome: PASS, receipt: /tasks/seal-covers-what-binds.d/runs/2.md }
+  - { by: "Tin Dang", at: 2026-09-02, act: gate, authority: plan, outcome: PASS, receipt: /tasks/seal-covers-what-binds.d/runs/2.md, brief: "sha256:415e9ab49de1288f" }
 ---
 ## CARD
 goal: every class of id the gate binds is inside a freeze seal.
 why: measured — deleting a frozen `E1` and unprobing `A1` post-freeze gated clean.
-beat: direction · next: add freeze seal-covers-what-binds
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -52,7 +57,7 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_seal_covers_what_
 
 ## CHECKS
 - test_the_fixture_binds_both_unsealed_classes · covers: M1 · the fixture really carries E and probed A ids
-- test_deleting_a_frozen_edge_is_drift · covers: M1, E1 · the measured repair is refused
+- test_deleting_a_frozen_edge_is_drift · covers: M1, E1, R:SHEDBIND · the measured repair is refused
 - test_unprobing_a_frozen_assumption_is_drift · covers: M1, E2, A6 · retiring a probe is a contract change
 - test_the_drift_refusal_binds_every_verdict · covers: M2, A1 · not PASS-only
 - test_refining_the_prose_around_a_referent_is_not_drift · covers: M3, A2 · the seal does not over-reach
