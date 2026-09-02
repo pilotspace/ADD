@@ -1485,8 +1485,18 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     root = Path(root)
     rel = f"{TYPE_DIR.get(node_type, 'tasks')}/{slug}.md"
     path = root / rel
-    if path.exists():
-        return None, f"slug already taken: {slug} ({rel})\nnext: pick another slug, or `add status` to see it"
+    # Bundle-wide, not per-directory. `run` writes to `tasks/{slug}.d/runs` and `latest_receipt`
+    # reads it, both from the BARE slug — so two nodes sharing a slug share one receipt stream,
+    # and a red Task closes on a Milestone's green run with R:GREENLIE reading evidence that was
+    # never its own. `_resolve` compounds it: it returns the first scan-order match, silently
+    # retargeting every other verb. One slug, one node, and the receipt path is unambiguous
+    # by construction -> "R:DUPSLUG".
+    for other in sorted(set(TYPE_DIR.values())):
+        held = root / other / f"{slug}.md"
+        if held.exists():
+            return None, (f"slug already taken: {slug} (/{other}/{slug}.md) — a slug names ONE "
+                          f"node bundle-wide, because a receipt stream is addressed by slug alone"
+                          f'\nnext: pick another slug, or `add status` to see it -> "R:DUPSLUG"')
 
     # The one slot `new` DOES judge, and deliberately: `sensitivity:` is not free text, it is the
     # enum that computes the authority floor. Recording `high` verbatim floored the node at
@@ -1655,7 +1665,8 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                             if isinstance(s, dict)) else "freeze"
     node, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
-                     f'direction: "{direction_digest(node_t2)}" }}')])
+                     f'direction: "{direction_digest(node_t2)}", '
+                     f'binding: "{binding_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
     return node, (f"{act} recorded at authority `{authority}`"
@@ -1681,6 +1692,11 @@ def done(root, cid: str) -> tuple:
     last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"), default=-1)
     gates = [(i, s) for i, s in enumerate(stamps)
              if i > last_reopen and s.get("act") == "gate"]
+    # A gate's VERDICT, not merely its existence. A HARD-STOP is a finding written down, not a
+    # node that shipped; it entitles nothing. Resolving it is the normal path — record the PASS
+    # that answers the finding and this list fills again.
+    stopped = [s for _, s in gates if str(s.get("outcome")) == "HARD-STOP"]
+    gates = [(i, s) for i, s in gates if str(s.get("outcome")) in CLOSING_VERDICTS]
     entitled = [(i, s) for i, s in gates
                 if AUTHORITY_ORDER.index(str(s.get("authority", "process"))) >=
                 AUTHORITY_ORDER.index(required)]
@@ -1694,7 +1710,11 @@ def done(root, cid: str) -> tuple:
     slug = cid.rsplit('/', 1)[-1][:-3]
 
     missing, fix = [], f"add gate {slug}"
-    if not gates:
+    if not gates and stopped:
+        missing.append("a gate that CLOSES — the latest verdict is `HARD-STOP`, which records a "
+                       "finding and stops the node; it does not ship it")
+        fix = f"resolve the finding, then add gate {slug} PASS"
+    elif not gates:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
         missing.append(f"a gate at authority `{required}` — highest recorded is "
@@ -2998,6 +3018,30 @@ def direction_digest(node: dict) -> str:
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
+def binding_digest(node: dict) -> str:
+    """The seal over what the GATE binds but `direction:` never covered: edges and probed A ids.
+
+    `referents_of` is RULES + `## EDGES` + probed `A<n>`; `direction_digest` is RULES + CHECKS +
+    `gives:`. Two of the three bindable classes were outside the seal, so a builder facing
+    `these rules have no reported passing check: A1, E1` could DELETE the obligation instead of
+    proving it and gate clean — no drift refusal, no refreeze stamp, no doctor finding.
+
+    A second digest rather than a wider `direction:`, for two reasons. Widening would re-digest
+    every node already frozen and strand them. And ASSUMPTIONS is pinned out of `direction:` on
+    purpose — right when `A<n>` bound nothing, and still right for the prose: this seals the
+    REFERENT SET only, so retiring an obligation is drift while rewording one stays free. A seal
+    authors refreeze reflexively is a rubber stamp.
+    """
+    body = node.get("body") or ""
+    edges = [m.group(1) for line in _section_of(body, "EDGES").splitlines()
+             for m in [RULE_ID.match(line)]
+             if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line))]
+    probed = [m.group(1) for line in _section_of(body, "ASSUMPTIONS").splitlines()
+              for m in [RE_PROBED_ASSUMPTION.match(line.strip())] if m]
+    payload = "\n".join(sorted(edges) + sorted(probed))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
 INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
 
 
@@ -3166,6 +3210,18 @@ def sealed_direction(fm: dict) -> str:
     for stamp in reversed((fm or {}).get("verified") or []):
         if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze"):
             return stamp.get("direction")
+    return None
+
+
+def sealed_binding(fm: dict) -> str:
+    """The binding digest carried by the most recent freeze/refreeze, or None.
+
+    None means "cannot verify", not "verified clean" — the same stance `sealed_direction` takes,
+    and the reason a node frozen before this field shipped stays gateable instead of stranded.
+    """
+    for stamp in reversed((fm or {}).get("verified") or []):
+        if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze"):
+            return stamp.get("binding")
     return None
 
 
@@ -3557,6 +3613,12 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
 # nothing else, so `RISK-ACCEPTED` with a recorded reason is the only degradation needed.
 
 VERDICTS = ("PASS", "RISK-ACCEPTED", "HARD-STOP")
+# The verdicts that CLOSE. `gate` refuses none of the three — a security finding is always a
+# HARD-STOP, so recording the stop must never be the hard part — but a stop is not a shipment.
+# `done` counted that a gate HAPPENED and never read what it DECIDED, so HARD-STOP, the one
+# verdict every integrity refusal deliberately lets through, was also the one that closed a node
+# with a red run. The stop stays writable at the gate and stops entitling the terminal write.
+CLOSING_VERDICTS = ("PASS", "RISK-ACCEPTED")
 
 
 def orphans(root, graph: dict = None) -> list:
@@ -3857,6 +3919,18 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                       f'add freeze {slug} --by "<name>" to record the change, or '
                       f'add reopen {slug} --to direction --reason "<why the contract moved>"')
 
+    # The other half of the same seal. `direction:` never covered EDGES or probed `A<n>`, so the
+    # cheapest way past `these rules have no reported passing check: A1, E1` was to delete the
+    # obligation. Same integrity tier as `drift`: it protects the RECORD, so it binds every
+    # verdict, and it is keyed off its own digest so pre-seal freezes stay gateable.
+    sealed_b = sealed_binding(sfm)
+    if sealed_b and _binds("drift", verdict) and binding_digest(node) != sealed_b:
+        return refuse("the frozen obligations changed after the freeze that approved them — an "
+                      "edge or a probed assumption was retired, and a contract sheds an "
+                      "obligation by refreezing, never by a silent edit",
+                      f'add freeze {slug} --by "<name>" to record the change, or '
+                      f'add reopen {slug} --to direction --reason "<why the contract moved>"')
+
     # W1 (beta-2, R:UNBRIEFED) — the brief is Build's ENTRY, not the verdict's garnish.
     # beta-1 stamped a brief hash HERE, at gate time: a record of what the instructions would
     # have been, taken after the build was over. Using the brief during Build was recommended
@@ -3904,35 +3978,6 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             + (f"\n  unbound (reported, not blocking): {', '.join(gaps)}" if gaps else "")
             + f"\n  brief {digest} · receipt {receipt_cid}\n{tail}\nnext: add status")
     return True, note
-
-
-def quick(root, slug: str, title: str, cmd: list, by: str, cwd=None,
-          depth: str = "quick", **fields) -> tuple:
-    """§3d's quick lane: new + freeze + run + gate in ONE engine call.
-
-    Refused above `quick` depth. A one-call lane that works at `deep` is not a lane, it is a
-    bypass of every control this engine has.
-    """
-    if depth != "quick":
-        return False, (f"the one-call lane is `quick` depth only; this is `{depth}`"
-                       f"\nnext: add new task {slug} --depth {depth}")
-    root = Path(root)
-    cid, _ = new(root, "Task", slug, title=title, depth="quick", **fields)
-    # A quick task's evidence is its exit code, not a covers-bound suite (§3d: "rename a flag;
-    # add a log line"). The standard template's placeholder Musts would make the one-call lane
-    # unclosable by construction, so the quick body declares none.
-    path = root / cid.lstrip("/")
-    stub = read(path, "T2")
-    write(path, f"---\n{stub['raw']}\n---\n## CARD\ngoal: {title}\n"
-                f"beat: build · next: add run {slug} -- <cmd>\n\n"
-                f"## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS>\n")
-    freeze(root, cid, by=by)
-    node = run(root, cid, cmd, cwd=cwd or root.parent)
-    if node["receipt"]["exit"] != 0:
-        return False, (f"the command exited {node['receipt']['exit']} — a red command earns no gate"
-                       f"\nnext: fix, then add run {slug} -- <cmd>")
-    ok, note = gate(root, cid, "PASS", by=by)
-    return ok, f"quick lane: {slug} opened, run and gated in one call\n{note}"
 
 
 # ================================= checks — the CHECKS section, compiled (e14)

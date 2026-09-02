@@ -107,7 +107,7 @@ def test_a_stamp_survives_an_odd_quote_in_by(tmp_path):
     assert node, note
 
     st = _stamps(p)
-    assert sorted(st[0]) == ["act", "at", "authority", "by", "direction"], st[0]
+    assert sorted(st[0]) == ["act", "at", "authority", "binding", "by", "direction"], st[0]
     assert add._is_frozen(add.scan(root)[cid]), "the freeze was reported but the seal is absent"
     assert add.sealed_direction(add.scan(root)[cid]["fm"]), "the direction digest was swallowed"
 

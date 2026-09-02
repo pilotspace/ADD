@@ -178,18 +178,6 @@ def test_template_placeholders_are_refused_by_name(repo):
     assert "RISK-ACCEPTED" not in note, "it offered to accept a risk on an unauthored node"
 
 
-def test_quick_task_declares_no_musts(repo):
-    """covers: M6 — a quick task's evidence is its exit code, not a covers-bound suite.
-
-    §3d's quick lane is "rename a flag; add a log line". Giving it the standard template's
-    placeholder Musts means the one-call lane can never close, which is how this was found.
-    """
-    add.quick(repo / ".add", "add-a-log-line", title="Add a log line",
-              cmd=[sys.executable, "-c", "pass"], by="human:tindang", cwd=repo)
-    node = add.read(repo / ".add" / "tasks" / "add-a-log-line.md", "T2")
-    assert add.rules_of(node) == [], f"a quick task declared Musts it cannot prove: {add.rules_of(node)}"
-
-
 def test_gate_accepts_a_fresh_receipt(repo):
     """covers: M1, M3 — the happy path still works, or the refusal is just a wall."""
     _receipt(repo)
@@ -335,36 +323,6 @@ def test_no_orphan_receipts_on_live_bundle():
     orphans = add.orphans(REPO / ".add")
     print(f"\norphaned receipts on the live bundle: {len(orphans)}")
     assert isinstance(orphans, list)
-
-
-# ------------------------------------------------------------- the quick lane (M6, R:BYPASS)
-
-
-def test_quick_lane_is_one_engine_call(repo):
-    """covers: M6 — §3d's quick lane: new + freeze + run + gate in ONE call."""
-    ok, note = add.quick(repo / ".add", "rename-a-flag", title="Rename a flag",
-                         cmd=[sys.executable, "-c", "pass"], by="human:tindang", cwd=repo)
-    assert ok is True, note
-    node = add.scan(repo / ".add")["/tasks/rename-a-flag.md"]
-    assert node["fm"]["status"] == "done"
-    acts = [s["act"] for s in node["fm"]["verified"]]
-    assert "freeze" in acts and "run" in acts and "gate" in acts, acts
-
-
-def test_quick_lane_refuses_above_quick(repo):
-    """covers: M6, R:BYPASS — a one-call lane that works at `deep` bypasses every control."""
-    ok, note = add.quick(repo / ".add", "change-auth", title="Change auth", depth="deep",
-                         cmd=[sys.executable, "-c", "pass"], by="human:tindang", cwd=repo)
-    assert ok is False, "the quick lane was available above `quick` depth"
-    assert "quick" in note.lower(), note
-
-
-def test_quick_lane_refuses_a_failing_command(repo):
-    """covers: M6 — one call still means real evidence: a red command earns no gate."""
-    ok, note = add.quick(repo / ".add", "broken-thing", title="Broken thing",
-                         cmd=[sys.executable, "-c", "import sys; sys.exit(1)"],
-                         by="human:tindang", cwd=repo)
-    assert ok is False, "a quick task closed on a failing command"
 
 
 # ------------------------------------------------- the live bundle decides the ⚠ (M2)
