@@ -242,8 +242,19 @@ def dispatch(args, run_cmd) -> int:
         return 0 if result["receipt"]["exit"] == 0 else 1
 
     if args.verb == "gate":
+        # M3 (frozen, test_gate_verb.py:224) — a gate's authority is COMPUTED from the node's
+        # sensitivity floor, never taken from the caller. The flag was declared, passed in and
+        # then overwritten, so `--authority human` printed `authority: process` and misled the
+        # reader GETTING-STARTED had just taught the idiom to. The engine keeps its rule; the
+        # CLI stops pretending to accept an argument it discards.
+        if args.authority:
+            print(f"`--authority` is not a gate flag — a gate records the floor computed from "
+                  f"`sensitivity:` ({add.authority_for(add.scan(root), _resolve(root, args.ref))}), "
+                  f"so a claim here would be the agent approving its own work\n"
+                  f"next: add gate {args.ref} {args.verdict} --by \"<name>\"")
+            return 1
         ok, note = add.gate(root, _resolve(root, args.ref), args.verdict,
-                            by=args.by, authority=args.authority, reason=args.reason)
+                            by=args.by, reason=args.reason)
         print(note)
         return 0 if ok else 1
 
@@ -266,7 +277,14 @@ def dispatch(args, run_cmd) -> int:
         cid = _resolve(root, args.ref)
         indices = args.n
         if args.all:
-            body = add.read(pathlib.Path(root) / cid.lstrip("/"), "T2")["body"]
+            # `add.check` guards the missing node; this branch reads the file BEFORE reaching it,
+            # so a mistyped ref raised FileNotFoundError at the operator instead of refusing.
+            # The engine records or refuses — it never crashes.
+            target = pathlib.Path(root) / cid.lstrip("/")
+            if not target.is_file():
+                print(f"no such node: {cid}\nnext: add status")
+                return 1
+            body = add.read(target, "T2")["body"]
             indices = list(range(1, len(add._box_lines(body, args.section)) + 1))
         # `--by` is a free string, so the name on a stamp is a CLAIM. The caller context is not:
         # a box ticked from an interactive terminal had a human at the keyboard; one ticked by a

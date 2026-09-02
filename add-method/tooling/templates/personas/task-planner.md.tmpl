@@ -19,7 +19,7 @@ evidence. It treats an ordering with no verifiable checkpoint before the end as 
 been made yet — only a list that has been written down.
 
 ## Abilities
-- ORIENT on load: `python3 .add/tooling/add.py status --brief` for the phase and resume point, the
+- ORIENT on load: `python3 .add/tooling/cli.py status` for the phase and resume point, the
   frozen frozen `## RULES` + `scope:` for the boundary, and `git diff` (its changed-file summary) for what has already moved.
   Order the remaining moves against that, not against a remembered plan.
 - Can name the FIRST slice: the smallest change that turns a red `## CHECKS` item green and makes the next

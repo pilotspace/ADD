@@ -1194,6 +1194,32 @@ def upgrade(project_root, by: str = "cli") -> tuple:
 #   because the floor is derived from the node and the index, not from an argument.
 
 AUTHORITY_ORDER = ("process", "ai-verify", "plan", "human")
+
+
+def claimed_authority(claim, floor: str, verb: str, slug: str):
+    """`(authority, refusal)` — a claim may rise above the computed floor, never sink below it.
+
+    `--authority` was declared on `gate`, passed into `gate()`, and then overwritten by the
+    computed floor before any read: the flag has never done anything, while GETTING-STARTED
+    teaches it on `freeze` for a reason a reader carries straight to the gate — "a ledger of
+    process stamps cannot be told apart from an agent approving its own work". `freeze` has the
+    opposite bug: it honours ANY value, so `--authority process` silently downgrades a security
+    freeze. One reader fixes both. Claiming MORE than the floor is a stronger statement about
+    who acted and is recorded as given; claiming LESS is the downgrade the floor exists to
+    prevent, and is refused rather than quietly ignored -> "R:FLOORDIVE".
+    """
+    if claim in (None, ""):
+        return floor, None
+    claim = str(claim)
+    if claim not in AUTHORITY_ORDER:
+        return None, (f"unreadable authority {claim!r} — a stamp records who acted, and an "
+                      f'unreadable claim is not the lowest one -> "R:FLOORDIVE"'
+                      f"\nnext: add {verb} {slug} --authority <{' | '.join(AUTHORITY_ORDER)}>")
+    if AUTHORITY_ORDER.index(claim) < AUTHORITY_ORDER.index(floor):
+        return None, (f"`--authority {claim}` is below this node's computed floor `{floor}` — a "
+                      f"claim may rise above the floor, never sink below it -> \"R:FLOORDIVE\""
+                      f"\nnext: add {verb} {slug} --authority {floor}")
+    return claim, None
 SENSITIVITY_FLOOR = {
     "mechanical": "process",
     "data": "plan",
@@ -1659,7 +1685,9 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                           f' -> "R:UNINTERVIEWED"'
                           f"\nnext: add interview {slug}")
 
-    authority = authority or authority_for(graph, cid)
+    authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
+    if floor_err:
+        return None, f"cannot freeze `{slug}` — " + floor_err
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
@@ -2023,9 +2051,18 @@ AUTHOR_NEXT = {
     "Task": "author {slug}'s RULES, ASSUMPTIONS and CHECKS, then add freeze {slug}",
     "Milestone": "author {slug}'s goal, why and EXIT criteria, then add freeze {slug}",
 }
+# Every `next:` line the engine prints for a beat comes from here, so a wrong idiom here is
+# wrong in fourteen places. `build` carried `add run {slug} -- <cmd>`, which yields a receipt
+# with `ids: unknown`; a builder who obeyed it then met "no reported passing check" on work that
+# was genuinely green, with RISK-ACCEPTED named as the only exit. `verify` carried `add gate
+# {slug}`, which is an argparse error — a crash, not a refusal, with nothing to recover from.
+# The path appears TWICE on purpose: `run` READS it, the test command WRITES it.
 BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
-             "build": "add run {slug} -- <cmd>",
-             "verify": "add gate {slug}", "done": "add status"}
+             # braces DOUBLED: both consumers pass this through `.format(slug=…)`, and
+             # `${TMPDIR:-/tmp}` would otherwise be read as a format field and raise KeyError.
+             "build": ('add run {slug} --junitxml "${{TMPDIR:-/tmp}}/add-run.xml" '
+                       '-- <test cmd> --junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
+             "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
 BEAT_NAMES = ("scaffold", "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
 ORIENT_RANK = {"Project": 0, "Milestone": 1, "Task": 2, "Spec": 5, "Persona": 6, "Prompt": 7}
@@ -2572,7 +2609,16 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     both recorded outcomes — this function does not raise on a failing command (law 3).
     """
     root, cwd = Path(root), Path(cwd or root)
-    node = (scan(root).get(cid) or {})
+    graph = scan(root)
+    # `or {}` was the whole guard, and it made `run` the only verb that invents its subject.
+    # A typo'd slug got `receipt 1 recorded (exit 0)`, a green line and a `next:` pointing at
+    # nothing, while the real task still had no receipt — and `doctor` then reported the
+    # `orphan_receipt` the engine had just manufactured. Refuse like every other verb; the
+    # return keeps `run`'s dict shape so `cli.py` prints a note and exits non-zero.
+    if cid not in graph:
+        return {"path": None, "receipt": {"exit": 1, "ids": "unknown"}, "computation": "",
+                "note": f"no such node: {cid} — no receipt written\nnext: add status"}
+    node = graph[cid]
     scope = _scope_list(node.get("fm"))
     # The digest root is the BUNDLE PARENT — the identical root `gate` hands `fresh()` — never
     # the cwd. Field finding (hardening tally #1): a cwd below the project computed the digest
@@ -2686,7 +2732,10 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
         return False, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
-        return False, f"no such spec lens: {lens}\nnext: add status"
+        lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
+        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+                       f"{' | '.join(lenses)}"
+                       f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     comp = LENS_COMP.get(lens, lens.upper())
     node = read(path, "T2")
     lines = node["body"].splitlines(keepends=True)
@@ -2733,7 +2782,10 @@ def fold(root, lens: str, match: str) -> tuple:
     """
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
-        return False, f"no such spec lens: {lens}\nnext: add status"
+        lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
+        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+                       f"{' | '.join(lenses)}"
+                       f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     node = read(path, "T2")
     out, folded = [], 0
     for line in node["body"].splitlines(keepends=True):
@@ -3458,8 +3510,26 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
     binds = bind_sections(root)
 
     persona = None
-    if fm.get("persona"):
-        pcid, pnode, _ = resolve(graph, str(fm["persona"]), cid)
+    # BOTH keys. `advise` — the documented way to put a lens on a sequential beat — stamps
+    # `advised_by:`, and this read looked only at `persona:`, so an advised node briefed its
+    # worker with no lens at all while the gate's R:NOCOVERAGE accepted the same stamp as
+    # "who reviewed the security". The gate treats the two as equals; so must the brief.
+    lens_ref = fm.get("persona") or fm.get("advised_by")
+    if lens_ref:
+        # Roster resolution, the way `advise` and `wave` do it — NOT the path grammar. A lens is
+        # written as a bare slug (`advise` validates exactly that against the Persona nodes), and
+        # `resolve` reads a bare ref RELATIVE TO THE SOURCE: from `/tasks/x.md` the slug
+        # `build-craftsman` normalised to `/tasks/build-craftsman`, which is neither a persona
+        # nor even a `.md`. It missed every time, so no seeded lens has ever reached a brief.
+        # A qualified ref (`/personas/x.md`) still resolves through the general grammar.
+        pcid = pnode = None
+        for candidate, cnode in graph.items():
+            if (cnode["fm"] or {}).get("type") == "Persona" \
+                    and _wave_slug(candidate) == str(lens_ref):
+                pcid, pnode = candidate, cnode
+                break
+        if pnode is None:
+            pcid, pnode, _ = resolve(graph, str(lens_ref), cid)
         # T0 only — `raw` is the frontmatter text `scan` already holds. The body is never
         # opened, so D-4 ("the corpus is referenced, never vendored") holds structurally
         # rather than by a filter that could be forgotten.
@@ -3861,7 +3931,13 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     else:
         ok, why = fresh(receipt, root.parent)
         if not ok and _binds("stale_receipt", verdict):
-            return refuse(f"the receipt is stale — {why}", f"add run {slug} -- <cmd>")
+            # In a non-git tree the diagnosis is right and `add run` provably cannot fix it —
+            # re-running produces another digest-less receipt, so obeying the line loops. The
+            # cause the message already names is the fix it never named.
+            fix = BEAT_NEXT["build"].format(slug=slug)
+            if "git working tree" in why:
+                fix = f"git init   (then {fix})"
+            return refuse(f"the receipt is stale — {why}", fix)
         freshness = f"freshness: {'fresh' if ok else 'STALE'} — {why}"
 
     # Refusal 3 (2026-08-28 review) — the declared scope, checked against what actually changed.

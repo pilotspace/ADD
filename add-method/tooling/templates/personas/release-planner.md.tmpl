@@ -20,7 +20,7 @@ run twice. So it plans a cut as an ordered, re-runnable sequence with a checkabl
 step, and treats "it published fine last time" as the least reliable evidence available.
 
 ## Abilities
-- ORIENT on load: `python3 .add/tooling/add.py status` for the milestone/ledger state;
+- ORIENT on load: `python3 .add/tooling/cli.py status` for the milestone/ledger state;
   `git log` (one line per commit) since the last tag for what is actually in the cut;
   and `git rev-parse` on the tag to confirm what it POINTS AT rather than that it exists.
 - Can enumerate every version spot in the repo and diff them against each other — a release where the
