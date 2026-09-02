@@ -55,7 +55,12 @@ def _node(tmp_path, assumptions: str, *, depth="standard", gives=GIVES):
     path = tmp_path / cid.lstrip("/")
     node = add.read(path, "T2")
     body = node["body"]
-    for heading, text in (("RULES", RULES), ("ASSUMPTIONS", assumptions), ("CHECKS", CHECKS)):
+    # CARD joins the authored set: `freeze` refuses a template `goal:`, and it does so
+    # before it reaches the sweep — so without this the sweep refusals under test are
+    # masked by a placeholder refusal and these checks probe the wrong guard.
+    for heading, text in (("CARD", "goal: the sweep fixture states its one line.\n"
+                                   "why: probing the sweep, not authoring."),
+                          ("RULES", RULES), ("ASSUMPTIONS", assumptions), ("CHECKS", CHECKS)):
         lines = body.splitlines()
         start = next(i for i, l in enumerate(lines) if l.strip() == f"## {heading}")
         end = next((i for i in range(start + 1, len(lines))

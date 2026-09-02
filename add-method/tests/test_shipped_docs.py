@@ -39,8 +39,14 @@ def _shipped_skill_docs() -> list[str]:
     a silent-no-op entry point, in an instruction file whose whole purpose is to be
     followed literally. Glob rather than list, so a new skill file is gated the day it
     ships instead of the day someone remembers this test.
+
+    `agents/` joins the sweep (roster-named-and-bounded): the roster files are the same kind of
+    surface — instructions an agent follows literally — and they name verbs in every mode line.
+    Nothing checked them, which is how the executor column came to name four agents that do not
+    exist. Both trees ship; both are gated.
     """
-    return sorted(str(p.relative_to(PKG)) for p in (PKG / "skill").rglob("*.md"))
+    trees = [PKG / "skill", PKG / "agents"]
+    return sorted(str(p.relative_to(PKG)) for t in trees for p in t.rglob("*.md"))
 
 # `add.py <verb>` (any path prefix) or a bare `add <verb>` not glued to a package name — so
 # `pilotspace-add update`, `@pilotspace/add@latest`, and `marketplace add pilotspace/ADD` do not

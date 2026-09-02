@@ -39,6 +39,8 @@ def _authored(root, slug="t", rejects=1, na=0, **fields):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    # `freeze` refuses a template `goal:` — the ONE approval approves the goal.
+    t = t.replace("goal: <one line>", "goal: the lister lists only the caller's rows.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 the lister returns only the caller's rows\n</must>",
                t, flags=re.S)
@@ -286,6 +288,7 @@ def test_an_empty_question_set_needs_no_interview(tmp_path):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    t = t.replace("goal: <one line>", "goal: the lister lists only the caller's rows.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 the lister returns only the caller's rows\n</must>",
                t, flags=re.S)

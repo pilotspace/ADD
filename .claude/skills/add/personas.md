@@ -26,12 +26,21 @@ the done-bar it measures against. A persona duplicating voice or shape is dead w
   snapshot), each sharpened by **the failure it guards against**. An invented statistic
   (`engagement +40%`) is the signature rot of weak persona corpora — never write one.
 
-Frontmatter: `add new Persona` scaffolds `use-when:` (the boundary that routes THIS persona over
-its siblings); `flow:` (design · build · advisor · verify — the surfaces that load it) and
-`not-when:` are recommended, hand-authored, and read by nothing. Optional `## Abilities` (lead with
-the ORIENT commands the lens runs on load), `## Anti-patterns` (guilty-until-proven instincts;
-always include **read-before-you-assert**), `## Escalation`. Full schema: the persona-author
-reference — referenced, never inlined.
+Frontmatter: `add new Persona` scaffolds **seven** slots — `vibe:` (the one line this lens keeps
+true) · `flow:` (design · build · advisor · verify) · `task-kinds:` (from the closed taxonomy) ·
+`use-when:` (the boundary that routes THIS persona over its siblings) · `not-when:` (the near-miss
+that belongs to a named sibling) · `description:` · `sources:`. All are hand-authored — the engine
+records a slot and judges no slot's content.
+
+Two of them are **read by the roster's selector**, so leaving them blank costs you the routing:
+`agents/add-worker.md` picks a project persona whose `flow:` names the beat's surface AND whose
+`task-kinds:` covers the task's declared `kind:` (`agents/add-advisor.md` does the same for
+`advisor`/`verify`). Both draw from a CLOSED vocabulary and `add doctor` reports a value outside
+it. The rest route a human reader, not a selector.
+
+Optional `## Abilities` (lead with the ORIENT commands the lens runs on load), `## Anti-patterns`
+(guilty-until-proven instincts; always include **read-before-you-assert**), `## Escalation`. Full
+schema: the persona-author reference — referenced, never inlined.
 
 ## Planning loads through the advisor flow
 

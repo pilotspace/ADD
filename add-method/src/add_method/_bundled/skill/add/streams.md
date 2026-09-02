@@ -70,7 +70,8 @@ Spawn ONE `Agent()` with the wrapped prompt. Pick per the work (Rule-5 heuristic
 - **effort** — `low` fast · `medium` balanced · `high` complex (only `low` with `fable`).
 - **isolation** — sequential single-advisor needs **none**; one `worktree` per stream is how the
   parallel-streams mode keeps concurrent builders from racing (§ Parallel streams).
-- **agentType** — prefer a tool-equipped specialist that fits the persona (roster column below).
+- **executor** — `add-worker` for an execution beat, `add-advisor` for a second read; both
+  ship. A tool-equipped specialist is an optional upgrade where one is installed (roster below).
 
 ### 4 · Fold the verdict — evidence, not a rubber stamp
 The delegate returns findings; **you** record them against the beat with severity markers so a
@@ -91,14 +92,19 @@ continues on the normal rails: `add run <slug> -- <cmd>` for the bound receipt, 
 ## The roster — role → persona → executor → when
 
 One persona drives a beat; `use-when` / `not-when` route it over a sibling. Personas are distilled
-from the teacher corpus (`personas.md` §Seed); the `agentType` is the tool-equipped subagent that
-best carries the lens in this environment.
+from the teacher corpus (`personas.md` §Seed); the executor is the subagent that carries the lens —
+`add-worker` or `add-advisor` by default, a specialist only where the environment has one.
 
-| Role | Persona (teacher) | Suggested `agentType` | Beats | use-when |
-|------|-------------------|-----------------------|-------|----------|
-| Systems / API | `personas-teacher/engineering/engineering-backend-architect` | `backend-expert` · `python-expert` | direction · build | a contract, IO, persistence, or failure design |
-| Security | `personas-teacher/security/security-architect` | `security-expert` | verify · advisor | **any** security/data/auth scope — the HARD-STOP lens |
-| Experience / UX | `personas-teacher/design/design-ux-architect` | `frontend-expert` | direction · verify | a user-facing surface, accessibility, or a perf budget |
+This package ships exactly two agents — `add-worker` (every execution beat) and `add-advisor`
+(the second mind). They are the DEFAULT executor in every row, and they are always available. The
+last column is an **optional upgrade**: if your environment happens to have a tool-equipped
+specialist, spawn it instead and hand it the same persona. If you have none, the row still works.
+
+| Role | Persona (teacher) | Executor (ships) | Optional upgrade | Beats | use-when |
+|------|-------------------|------------------|------------------|-------|----------|
+| Systems / API | `personas-teacher/engineering/engineering-backend-architect` | `add-worker` | a backend/language specialist, if installed | direction · build | a contract, IO, persistence, or failure design |
+| Security | `personas-teacher/security/security-architect` | `add-advisor` | a security specialist, if installed | verify · advisor | **any** security/data/auth scope — the HARD-STOP lens |
+| Experience / UX | `personas-teacher/design/design-ux-architect` | `add-worker` | a frontend/UX specialist, if installed | direction · verify | a user-facing surface, accessibility, or a perf budget |
 
 Selection is per-beat and cheapest-fit: **no persona named and no floor raised → don't delegate**,
 drive it yourself. A security/data/architecture scope **always** pulls the Security lens into verify,

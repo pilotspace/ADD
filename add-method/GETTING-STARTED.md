@@ -183,6 +183,11 @@ agent's hands, and yours when you take the wheel.
 Starting cold? Install first as in §1. Then initialise the bundle and scaffold the
 task yourself (the agent normally does both):
 
+Two preconditions for the walk: the git working tree from §0, and the `--scope` paths
+below must **exist** — the gate digests them to establish freshness, and refuses the
+PASS when it cannot.
+
+<!-- gs:scaffold -->
 ```bash
 add init --profile code "Ledger"
 add new Task transfer --title "Transfer money between my accounts" --scope "src/,tests/"
@@ -196,6 +201,7 @@ at beat `direction`. Open it in your editor; you'll fill it top to bottom.
 Write the rules in **`## RULES`**. State what must hold (`M<n>`) and what must never
 happen (`R:<NAME>`, each with a named error code):
 
+<!-- gs:rules -->
 ```
 <must>
 - M1 an amount moves from one of my accounts to another of mine
@@ -211,6 +217,7 @@ happen (`R:<NAME>`, each with a named error code):
 Now the section people skip, and the one that earns its place fastest. **`## ASSUMPTIONS`**
 is for what the request did **not** say:
 
+<!-- gs:assumptions -->
 ```
 - A1 [who] covers: S1 · the request never says whether I may transfer from an account
      I do not own; taking it as own-accounts-only -> if wrong, it moves other people's money
@@ -257,6 +264,7 @@ does not break the freeze seal.
 
 Fix the external shape in **`## PLAN`**:
 
+<!-- gs:plan -->
 ```
 contract: POST /transfers { fromAccountId, toAccountId, amount }
           200 -> { transferId, fromBalance, toBalance }
@@ -267,12 +275,14 @@ scope: src/, tests/
 Name any boundary case worth its own check in **`## EDGES`** (optional, but an edge you
 write here is a rule the gate will hold you to):
 
+<!-- gs:edges -->
 ```
 - E1 a mid-transfer failure must leave both balances unchanged
 ```
 
 Then bind every rule to the check that will prove it, in **`## CHECKS`**:
 
+<!-- gs:checks -->
 ```
 - test_transfer_moves_funds · covers: M1 · balances move by exactly the amount
 - test_transfer_is_atomic · covers: M2, E1 · a mid-transfer failure leaves both balances unchanged
@@ -297,8 +307,9 @@ passes here is testing nothing. This is red/green TDD — red before green.
 
 Now seal the direction:
 
+<!-- gs:freeze -->
 ```bash
-add freeze transfer --by "your name"
+add freeze transfer --by "your name" --authority human
 ```
 
 Two things to know about `freeze`. It **refuses a node that still carries template
@@ -307,15 +318,27 @@ over RULES · CHECKS · `gives:`, so if any of them change afterwards, the gate 
 refuse the PASS and tell you to refreeze. A frozen contract changes by refreezing,
 never by a silent edit.
 
-The authority the freeze is recorded at is **computed**, never asserted: it comes from
-the node's `sensitivity:` and the bundle's `sensitive_paths:`. A `security` task needs
-a human, whatever you pass.
+`--authority human` is what records this as a human approval; without it the stamp reads
+`authority: process`, and a ledger of process stamps cannot be told apart from an agent
+approving its own work. What is **computed and not assertable** is the FLOOR: a node whose
+`sensitivity:` is `security` — or whose scope matches the bundle's `sensitive_paths:` —
+requires a human whatever you pass, and `freeze` will not let a lower claim past it.
 
 ### Beat 2 — Build (https://pilotspace.github.io/ADD/04-build/)
 
-Now write code until **every test passes** — without changing a test or the frozen
-contract. Then record a receipt from a real run:
+Enter the build without changing a test or the frozen contract:
 
+<!-- gs:brief -->
+```bash
+add brief transfer
+```
+
+`brief` is Build's FIRST verb, not a convenience. It records the build entry the gate
+later looks for; skip it and `gate PASS` refuses with `R:UNBRIEFED` — the build was
+never entered, so nothing says what this run was an attempt at. Then write code until
+**every test passes**, and record a receipt from a real run:
+
+<!-- gs:run -->
 ```bash
 add run transfer --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- python3 -m pytest -q --junitxml="${TMPDIR:-/tmp}/add-run.xml"
 ```
@@ -332,6 +355,7 @@ command that *writes* it. Omit the second and the receipt records only an exit c
 Check what tests miss — the three residue lenses: security, concurrency,
 architecture. Then record exactly one outcome:
 
+<!-- gs:gate -->
 ```bash
 add gate transfer PASS --by "your name"
 ```
@@ -342,7 +366,7 @@ bound to a **passing** test id — naming the unbound ones when it refuses. A re
 here is the method working, not a tooling error: it means the evidence does not yet
 cover what you promised. Fix the binding, `run` again, gate again. (Changing RULES or
 CHECKS to fix it breaks the direction seal, so refreeze first — that is deliberate,
-and it is one command: `add freeze transfer --by "your name"`.) Use `gate HARD-STOP`
+and it is one command: `add freeze transfer --by "your name" --authority human`.) Use `gate HARD-STOP`
 to send it back, or
 `gate RISK-ACCEPTED --reason "…"` for a signed, non-security waiver. A security
 finding is always `HARD-STOP` — that floor cannot be waived.

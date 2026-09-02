@@ -14,7 +14,7 @@ category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume, explore, research]
 argument-hint: "status | <describe the change or goal>"
 license: MIT
-metadata: { author: add, version: "3.1.0", format: ABF-1 }
+metadata: { author: add, version: "3.3.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle (the agent is the hands)
@@ -76,8 +76,8 @@ One task = one atomic node. Three beats, one human decision:
 
 1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft, then take the ONE
    approval. The draft, section by section:
-   - `## RULES` — Must · Reject: what you were told. EDGES are the boundaries of those rules —
-     without them, a thing nobody said becomes a Must phrased like one that was said.
+   - `## RULES` — Must · Reject: what you were told. `## EDGES` — `E<n>` boundary cases; a line you
+     FILL is gate-bound like a Must, an untouched placeholder owes nothing.
    - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension
      (`who · which · when · absent · order · experience`): `A<n> [<dim>] covers: <S ids> · <what the spec does
      NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
@@ -99,9 +99,9 @@ One task = one atomic node. Three beats, one human decision:
    record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
    a frozen surface is a change-request back to Direction, never a silent edit.
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
-   · architecture — **security HARD-STOP**), then `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>` for a
-   fresh, bound receipt — wrap the **narrowest command that reports every bound check**; the full
-   suite rides CI. **No runner for your domain? Write one** — `run` parses JUnit XML and does not
+   · architecture — **security HARD-STOP**), then `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
+   for a fresh, bound receipt — the path twice: `run` READS it, your command WRITES it. Wrap the
+   **narrowest command that reports every bound check**; the full suite rides CI. **No runner for your domain? Write one** — `run` parses JUnit XML and does not
    care what produced it, so a script comparing a measured value against a threshold your frozen
    RULES already state earns the same bound receipt (`domains.md`). And **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
    (and repairs its CARD). `add done` is only for closing after a signed `RISK-ACCEPTED`.
@@ -145,11 +145,11 @@ add brief <slug>                             # the composed XML prompt for the a
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
 add locate <path>                            # which node's scope owns this file
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
-add doctor                                   # report-only findings — never writes, never gates
+add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors a stale engine
 add interview <slug> [--answer <id>=confirm|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
-add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd>   # execute → a fresh, bound receipt
+add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · that path twice: run READS it, your cmd WRITES it
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already closed it)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec

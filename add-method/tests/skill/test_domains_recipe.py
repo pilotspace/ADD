@@ -82,6 +82,10 @@ def test_recipe_earns_bound_test_ids(tmp_path):
                       "  - S1 the month-end reconciliation report")
     body = raw.split("---", 2)[2]
     for heading, new in (
+        # `freeze` refuses a template `goal:` — the ONE approval approves the goal.
+        ("CARD", "goal: the month-end close reconciles, or names every variance it cannot explain.\n"
+                 "why: the domain recipe's worked example.\n"
+                 "beat: direction"),
         ("RULES", "<must>\n- M1 unexplained variance stays within materiality\n</must>\n"
                   "<reject>\n- R:UNEXPLAINED a variance line with no cited source document"
                   ' -> "UNEXPLAINED"\n</reject>'),

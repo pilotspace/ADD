@@ -60,6 +60,7 @@ def _authored_task(root, slug="authored", **fields):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    t = t.replace("goal: <one line>", "goal: the fixture states its one line.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 the lister returns only the caller's rows\n</must>", t, flags=re.S)
     t = re.sub(r"<reject>\n.*?\n</reject>",

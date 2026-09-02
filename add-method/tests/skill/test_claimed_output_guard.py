@@ -80,6 +80,9 @@ def _drive_todo_counts_unswept(tmp_path):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 a real surface")
+    # The goal counts as authoring too — a template `goal:` leaves the node at the
+    # `scaffold` beat, which is the state this docstring says is NOT this claim's.
+    t = t.replace("goal: <one line>", "goal: a real authored goal.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 a real rule\n</must>", t, flags=re.S)
     t = re.sub(r"<reject>\n.*?\n</reject>",
@@ -93,6 +96,25 @@ def _drive_todo_counts_unswept(tmp_path):
                t, flags=re.S)
     p.write_text(t, encoding="utf-8")
     return add.todo(tmp_path)[1]
+
+
+def _drive_routing_key_report(tmp_path):
+    """A seeded persona whose `flow:` is outside the closed vocabulary — the state
+    personas.md's claim describes. `doctor` reports it at INFO: it never gates."""
+    add.init(tmp_path, "code", "T")
+    cid, _ = add.new(tmp_path, "Persona", "a-lens", title="A lens")
+    p = tmp_path / cid.lstrip("/")
+    t = p.read_text(encoding="utf-8")
+    t = t.replace("flow: <design | build | advisor | verify — comma-separate if >1>",
+                  "flow: nonsense")
+    p.write_text(t, encoding="utf-8")
+    # `doctor` the LIBRARY returns findings; the claim is about what the COMMAND prints, so this
+    # anchor is the CLI's real stdout — the whole point of this guard (R:GREP_ANCHOR).
+    # `--root .`: these fixtures make the tmp dir the BUNDLE root itself, while the CLI's
+    # default `--root .add` expects a bundle nested under a project. Left at the default, the
+    # graph comes back empty and the command prints "no findings" — a green anchor proving nothing.
+    return subprocess.run([sys.executable, str(REPO / "tooling" / "cli.py"), "--root", ".", "doctor"],
+                          cwd=str(tmp_path), capture_output=True, text=True).stdout
 
 
 def _drive_deltas(tmp_path):
@@ -112,6 +134,7 @@ REGISTRY = {
     ("deltas.md", "files, lists, and folds"): (_drive_deltas, "open"),
     ("SKILL.md", "names next"): (_drive_status_names_the_beat, "next:"),
     ("SKILL.md", "counts them down"): (_drive_todo_counts_unswept, "unswept"),
+    ("personas.md", "outside"): (_drive_routing_key_report, "outside the closed taxonomy"),
 }
 UNPROVABLE = {}          # a claim whose bundle state cannot be built — reported BY NAME (M5)
 

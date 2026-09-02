@@ -904,7 +904,66 @@ def _today() -> str:
     return datetime.date.today().isoformat()
 
 
-def init(root, profile: str = "code", title: str = None) -> tuple:
+def ancestor_bundle(root):
+    """The nearest bundle ABOVE `root`, or None. Read-only; never raises.
+
+    An `index.md` DECLARING `abf_version:` is the marker `init` always writes and nothing else
+    does (A2) — the bare filename is not enough, see `_is_bundle_index`. The walk starts at the
+    candidate bundle's grandparent — `root` is `<project>/.add`, so `root.parent` is the
+    project itself and is never its own ancestor — and stops at the filesystem root or at a
+    directory it cannot read (A3, M5). It cannot follow a symlink out of the tree it started
+    in because `resolve()` canonicalises first, so every `parents` entry is a real directory;
+    that is the whole of M5's symlink clause, and there is no other ceiling — a bundle far
+    above you IS an ancestor and is reported as one.
+
+    Why this exists: `status` in a subdirectory used to print `next: add init`, and following
+    the engine's own instruction created a second bundle beside the real one. A resume verb
+    that tells a lost reader to build a rival to the thing they are lost inside is worse than
+    one that says nothing (R:MISDIRECT).
+    """
+    try:
+        start = Path(root).resolve()
+    except (OSError, RuntimeError):
+        return None
+    here = start.parent          # the project dir
+    for parent in here.parents:  # nearest first, terminating at the filesystem root
+        try:
+            candidate = parent / ".add" / "index.md"
+            if _is_bundle_index(candidate):
+                return parent / ".add"
+            # A bundle root passed directly (not a `<project>/.add` shape) still counts.
+            # INVARIANT both branches keep: the return is always a BUNDLE ROOT, whose `.parent`
+            # is the project — here `parent` holds the marker itself, so `parent` IS the bundle
+            # root. Both callers report `Path(above).parent`, and that only reads correctly
+            # while this holds.
+            if parent != start and _is_bundle_index(parent / "index.md"):
+                return parent
+        except OSError:
+            return None          # unreadable parent — answer None, never raise (E3)
+    return None
+
+
+def _is_bundle_index(path) -> bool:
+    """Is this `index.md` a BUNDLE index — not just a file that shares its name?
+
+    The name alone is not the marker. `index.md` is the single most common filename in
+    documentation tooling — MkDocs, Docusaurus and Hugo all put one at a section root — so
+    keying on the name made every docs tree read as an ADD bundle: `init` refused a legitimate
+    project with `R:RIVALBUNDLE` and `status` told the reader they were inside an ADD project
+    that does not exist. `abf_version:` is written by `init` into every bundle index and by
+    nothing else, so it separates the two at the cost of one small read. Head-only: a bundle
+    index declares it in frontmatter, and a huge unrelated file is never fully loaded.
+    """
+    try:
+        if not Path(path).is_file():
+            return False
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            return "abf_version:" in fh.read(400)
+    except OSError:
+        return False
+
+
+def init(root, profile: str = "code", title: str = None, nested: bool = False) -> tuple:
     """Create a conforming bundle. Never overwrites; an existing file is left alone.
 
     Returns `(graph, created_cids, note)`, or `(None, [], refusal)` when the profile is one this
@@ -927,6 +986,20 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
             f'-> "R:BADPROFILE"\n'
             f'next: add init --profile {sorted(PROFILES)[0]} "<name>" '
             f'(a profile selects spec LENSES, never what a gate demands)')
+    # Also BEFORE anything touches the filesystem, and for the same reason: creating a bundle
+    # nested under another is wrong independently of what is already here. Two bundles in one
+    # repo destroy the "state on disk is the source of truth" claim the method leads with, and
+    # the engine used to be what instructed the user to build the second one (R:RIVALBUNDLE).
+    # `--nested` is the whole distinction between a monorepo maintainer and a lost newcomer:
+    # the engine cannot tell them apart, so the flag is what tells it (A1).
+    above = None if nested else ancestor_bundle(root)
+    if above is not None:
+        return None, [], (
+            f'an ADD bundle already exists above this directory, at `{Path(above).parent}` — '
+            f'creating one here would leave two bundles in one project, and orientation would '
+            f'read whichever you happened to be standing in -> "R:RIVALBUNDLE"\n'
+            f'next: cd {Path(above).parent} && add status  '
+            f'(or `add init --nested` if a separate bundle here is deliberate)')
     lenses = PROFILES[profile] if profile else PROFILES["code"]
     # The bundle root is `<project>/.add` in every real call (the CLI passes it), so naming the
     # project after the bundle DIRECTORY called every project `.add`. The project is the parent.
@@ -962,6 +1035,38 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
             f"## Now\n{goal}\n\n## Decisions that bind\n- <the first decision that constrains the rest>\n\n"
             f"## Deltas\n- <what changed, and the evidence that changed it>\n")
 
+    # Seed the starting roster. Until 3.4 `init` seeded NO personas, so `.add/personas/` was
+    # empty on every fresh bundle and the roster's selector — which searches `flow:` then
+    # `task-kinds:` — had nothing to search. The teacher corpus could not rescue it: not one
+    # of its 232 files carries either key. So "personas carry the expertise" was false by
+    # default, and the failure was silent: the agent took the generic fallback and reported
+    # success, with nothing in the receipt recording that no expert was ever loaded
+    # (R:DEADTIER). These four templates already carried the right keys and were seeded by
+    # nothing, while the changelog said they were.
+    #
+    # They are the PROJECT's from the moment they land (A1): `put` never overwrites, so an
+    # edited persona survives every re-init, and deleting one is a legitimate choice.
+    seeded = []
+    tmpl_dir = Path(__file__).resolve().parent / "templates" / "personas"
+    if tmpl_dir.is_dir():
+        for tmpl in sorted(tmpl_dir.glob("*.md.tmpl")):
+            slug = tmpl.name[: -len(".md.tmpl")]
+            body = tmpl.read_text(encoding="utf-8")
+            # The templates carry a roster `name:`; a bundle node needs `type: Persona` and a
+            # `title:` for the graph to see it at all (R:BADPERSONA reads the TYPE, not the name).
+            if body.startswith("---"):
+                fm, _, rest = body[3:].partition("---")
+                # NOT `title` — that is `init`'s own parameter, and shadowing it here left a
+                # trap for whoever next reads the project title after this block.
+                lens_title = next((l.split(":", 1)[1].strip() for l in fm.splitlines()
+                                   if l.startswith("name:")), slug)
+                body = (f"---\ntype: Persona\ntitle: {lens_title}\n"
+                        f"{fm.strip()}\n{_stamp()}\n---{rest}")
+            before = len(created)
+            put(f"personas/{slug}.md", body)
+            if len(created) > before:
+                seeded.append(slug)
+
     # Vendor the engine + seed corpus so the bundle runs standalone (the skill's `add` = the vendored
     # `tooling/cli.py` for a project that never had this repo). overwrite=False keeps init idempotent —
     # a re-run never clobbers a human's vendored edit (R:CLOBBER); `doctor --sync` is the refresh path.
@@ -970,6 +1075,15 @@ def init(root, profile: str = "code", title: str = None) -> tuple:
 
     note = (f"created {len(created)} files ({profile} profile)" if created
             else "bundle already exists — nothing written")
+    # Name the roster: a seed nobody is told about is a seed nobody edits (A9).
+    if seeded:
+        note += (f"\n  seeded {len(seeded)} starting personas ({' · '.join(seeded)}) — they are "
+                 f"yours to edit; `init` never overwrites them")
+    # Say it plainly: a nested bundle is legal and deliberate, and the reader must know that
+    # two bundles now exist so `status` from the wrong directory never surprises them (M4).
+    if nested and created and ancestor_bundle(root) is not None:
+        note += ("\n  two bundles now exist in this project — `status` reports the one you "
+                 "are standing in")
     if could_not:
         note += f"\n  could not vendor (missing source): {', '.join(could_not)}"
     return load(root), created, f"{note}\nnext: add new milestone <slug>"
@@ -1348,6 +1462,22 @@ def _transition(root, cid: str, sets: dict = None, appends: list = None) -> tupl
         raw = append_item(raw, key, item)
     write(path, f"---\n{raw}\n---\n{node['body']}")
     return read(path, "T0"), ""
+
+
+# The two CLOSED routing vocabularies a Persona's frontmatter may draw from. They are the
+# single source: the scaffold writes them, `doctor` checks against them, and the skill's prose
+# is held equal to them by test. Both were closed sets documented in prose and enforced by
+# nothing — a value outside them routes NOTHING, silently, and the agent takes the generic
+# fallback while reporting success (R:SILENTMISROUTE). A rule that quantifies over a set has
+# to enumerate that set.
+#
+# `explore` joined the task kinds because `--kind explore` is a whole shipped lane with its own
+# freeze refusal and its own gate path; while it was outside the taxonomy the selector's
+# `task-kinds:` predicate was unsatisfiable for every explore task ever created — the one rung
+# ADD reserves for "do not guess" was the one guaranteed a generic agent.
+PERSONA_FLOWS = ("design", "build", "advisor", "verify")
+PERSONA_TASK_KINDS = ("feature", "refactor", "test", "docs", "ui", "security", "data",
+                      "infra", "release", "integration", "explore")
 
 
 def new(root, node_type: str, slug: str, **fields) -> tuple:
@@ -2078,6 +2208,11 @@ def locate(root, query: str) -> tuple:
     return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
 
 
+# The node types that HAVE a beat. Every other type (Spec · Persona · Project · Run)
+# carries a status that is not a beat, and orientation prints it unchanged (M4).
+BEAT_TYPES = ("Task", "Milestone")
+
+
 def _beat_of(node, t2=None) -> str:
     """A task's beat, DERIVED from its stamps — the same reasoning as `_is_frozen`.
 
@@ -2215,6 +2350,17 @@ def status(root, all: bool = False, check: bool = False) -> str:
                     "untouched\n"
                     "archive them as the record of how this was built, then start a 3.0 bundle\n"
                     "next: add init")
+        # …and unless a bundle is sitting ABOVE us. `cd` into a subdirectory is the most
+        # common thing an engineer does; answering "run `add init`" there is confidently
+        # wrong, and following it builds a rival bundle (R:MISDIRECT). Name the ancestor and
+        # hand back a runnable recovery — the confusion is at its worst exactly here (A6).
+        above = ancestor_bundle(root)
+        if above is not None:
+            project = Path(above).parent
+            return (f"no bundle here — but this directory sits inside the ADD project at "
+                    f"`{project}`\n"
+                    f"nothing is wrong: orientation reads the bundle you are standing in\n"
+                    f"next: cd {project} && add status")
         return f"no bundle here — run `add init` to create one\nnext: add init"
 
     graph = scan(root)
@@ -2237,7 +2383,12 @@ def status(root, all: bool = False, check: bool = False) -> str:
                    key=lambda c: (ORIENT_RANK.get((graph[c]["fm"] or {}).get("type"), 9), c))
     for cid in shown[:MAX_LINES]:
         fm = graph[cid]["fm"] or {}
-        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{fm.get('status', '—')}] {fm.get('type', '')}")
+        # The stamps, never the stored field. `freeze` appends and never `sets`, so
+        # `status:` stays at `direction` for the whole life of a frozen task — orientation
+        # read it and contradicted `todo`, `doctor` and its own `next:` line in one breath
+        # (R:BEATLIE). `_beat_of` is frontmatter-only here, so the T0 read tier holds.
+        beat = _beat_of(graph[cid]) if fm.get("type") in BEAT_TYPES else fm.get("status", "—")
+        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] {fm.get('type', '')}")
     if len(shown) > MAX_LINES:
         out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
 
@@ -2772,7 +2923,7 @@ def assumption_sweep(node: dict) -> list:
             for sid in surfaces if sid not in covered[d]]
 
 
-def placeholders_in(node: dict) -> list:
+def placeholders_in(node: dict, *, card: bool = True) -> list:
     """Template tokens still standing in a node's RULES, ASSUMPTIONS or CHECKS.
 
     `new` ships `- M1 <the rule that must hold>` and `- <test_name> · covers: M1`. Those parse as
@@ -2797,6 +2948,26 @@ def placeholders_in(node: dict) -> list:
         for line in _section_of(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())
+    # CARD's `goal:` — a KEYED line, not a `- ` bullet, which is why the loop above could
+    # never see it. GETTING-STARTED promised "freeze refuses a node that still carries
+    # template placeholders — you cannot approve a scaffold", and a node froze with
+    # `goal: <one line>` intact: approving a contract whose one-line statement of intent is
+    # still the scaffold's. The goal is what a human is being asked to approve.
+    #
+    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are filled by the run
+    # and the close, neither of which exists at freeze time, so demanding them here would
+    # ask for a receipt before the build that produces it (M3, A2). Depth does not exempt
+    # this — a quick task states its goal too (E4).
+    #
+    # `card=` exists for callers that must ask only about the three body sections. It is NOT
+    # a second notion of "authored": `_is_scaffold` deliberately asks the FULL question, and
+    # `test_authoring_beat` drives advice and `freeze` against the same node to prove they
+    # never diverge. A node advised to freeze that `freeze` then refuses is the defect that
+    # test exists to catch, and splitting the two questions reintroduces it.
+    if card:
+        for line in _section_of(node.get("body") or "", "CARD").splitlines():
+            if line.startswith("goal:") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+                found.append(f"## CARD {line.strip()}")
     return found
 
 
@@ -3205,7 +3376,11 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
     fm = node["fm"] or {}
     slug = cid.rsplit("/", 1)[-1][:-3]
     ident = cid.strip("/")[:-3]
-    phase = phase or PHASE_OF.get(str(fm.get("status", "")), "build")
+    # Same reason as `status`: the stored field never advances past `direction`, so a
+    # frozen task briefed its DIRECTION beat and a non-Claude agent following the portable
+    # `status`/`brief` path re-did direction on a sealed contract. An explicit `phase`
+    # argument still wins — that is a caller naming a beat deliberately (A3).
+    phase = phase or PHASE_OF.get(_beat_of(node), "build")
     depth = str(fm.get("depth") or "standard")
     budget = brief_budget(depth)
     body = read(node["path"], "T2")["body"]
@@ -4089,6 +4264,35 @@ def doctor(root, graph: dict = None, paths=None) -> list:
                      f"personas-index/use-when.md routes {entries} personas; "
                      f"personas-teacher/ holds {corpus} — the corpus moved without the index "
                      f"(scripts/build_persona_index.py, then doctor --sync)")
+    # A Persona whose routing key falls outside its closed vocabulary routes NOTHING, and the
+    # roster then takes the generic fallback silently — no refusal, no warning, and nothing in
+    # the receipt recording that an expert was never loaded. Info severity: `doctor` reports,
+    # it never gates (M4). Sorted so the report is diffable run to run (A3).
+    routing = []
+    for cid in sorted(graph):
+        fm = graph[cid]["fm"] or {}
+        if fm.get("type") != "Persona":
+            continue                     # the keys are meaningless elsewhere (A1)
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        for key, allowed in (("flow", PERSONA_FLOWS), ("task-kinds", PERSONA_TASK_KINDS)):
+            raw = fm.get(key)
+            if not raw:
+                continue                 # declaring neither key is legitimate (A2)
+            raw = str(raw)
+            if PLACEHOLDER.search(raw):
+                continue                 # an UNTOUCHED scaffold slot: nobody authored a value
+                                         # yet, and a guard must never fire on a missing thing.
+                                         # (Per-token `<`-prefix checking missed this: splitting
+                                         # `<from the closed taxonomy, comma-separated>` on commas
+                                         # leaves interior words carrying no bracket at all.)
+            values = [v.strip() for v in raw.replace(",", " ").split() if v.strip()]
+            bad = [v for v in values if v not in allowed]
+            if bad:
+                routing.append(
+                    f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — a value "
+                    f"outside it routes nothing, silently. Allowed: {' · '.join(allowed)}")
+    for message in sorted(routing):
+        find("info", "persona_routing_key", message)
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):

@@ -916,6 +916,13 @@ function claudeSkillsDir(env) {
   return path.join(env.HOME || os.homedir(), ".claude", "skills", "add");
 }
 
+// ~/.claude/agents — where the host discovers subagents, DERIVED from where the skill lands so
+// the two host paths can never anchor to different resolved config directories.
+// Mirror of _installer.py:_claude_agents_dir.
+function claudeAgentsDir(claudeSkillsDirPath) {
+  return path.join(path.dirname(path.dirname(claudeSkillsDirPath)), "agents");
+}
+
 function registryPath(home) { return path.join(home, "registry.json"); }
 
 // [] when ABSENT; THROWS on present-but-corrupt so the caller fails LOUD (never a silent
@@ -966,7 +973,28 @@ function reconcileGlobal(home, claudeDir, noSkill) {
   for (const [sub, destParts, stripTests] of trees) {
     cleanReplaceTree(path.join(PKG_ROOT, sub), path.join(home, ...destParts), stripTests);
   }
-  if (!noSkill) cleanReplaceTree(path.join(home, "skill", "add"), claudeDir, false);
+  if (!noSkill) {
+    cleanReplaceTree(path.join(home, "skill", "add"), claudeDir, false);
+    // R:UNREACHABLEROSTER: the mirror alone leaves the roster at <home>/agents, which no host
+    // reads — every agent the deployed skill names resolved to nothing. Sourced from the
+    // RECONCILED home (never PKG_ROOT) so host deployment reads one settled state, and through
+    // the SHARED per-file lander so a user's own subagents are never swept.
+    // The roster write does NOT abort the install: it is the third write target, and the
+    // caller's single handler reports an unwritable HOME — naming a home that is fine.
+    // `.claude/agents` is a namespace other tools own. Mirror of _installer.py.
+    const roster = path.join(home, "agents");
+    if (fs.existsSync(roster) && fs.statSync(roster).isDirectory()) {
+      const agentsDir = claudeAgentsDir(claudeDir);
+      try {
+        sharedFileReplace(roster, agentsDir);
+        log("  \u2713 roster    -> " + agentsDir);
+      } catch (e) {
+        log("  ! roster    -> " + agentsDir + " NOT deployed (" + e.message + ") — the skill "
+            + "is installed and usable; agents fall back to the generic lens until this "
+            + "directory is writable");
+      }
+    }
+  }
 }
 
 // --- global DATA: an OPT-IN per-project user-data snapshot under <home>/data/<key> ----------

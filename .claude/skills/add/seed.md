@@ -22,8 +22,9 @@ lens the project has no use for; an unused persona is dead weight (`personas.md`
 
 ## Distil from the teacher — never invent
 
-The corpus of worked archetypes lives at the engine's `.add/personas-teacher/`
-(`backend-systems` · `security-reviewer` · `frontend-ux`, and any others vendored there) — and `add
+The corpus of worked archetypes lives at the engine's `.add/personas-teacher/`, filed
+`<division>/<slug>` (`engineering/engineering-backend-architect` ·
+`security/security-architect` · `design/design-ux-architect`, among many others) — and `add
 init` **vendors a copy into `.add/personas-teacher/`**, so a bundle carries its own teacher
 even away from this repo. Don't start blank and don't copy whole: **distil the nearest teacher entry
 to this project**, then own it.
@@ -45,8 +46,10 @@ adapted to *this* codebase's reality:
   statistic** (`engagement +40%` is the signature rot of a weak corpus) — only a number the lens can
   check in-session.
 
-Add the recommended frontmatter — `flow:` (which surfaces load it) and `use-when:` / `not-when:` (the
-boundary that routes it over a sibling) — so the roster can select it later.
+Fill the frontmatter the scaffold wrote. `flow:` and `task-kinds:` are the two the roster's
+selector actually reads (`agents/add-worker.md`) — leave either blank and the lens routes to
+nothing; `use-when:` / `not-when:` draw the boundary against a sibling for the human. Full key
+set: `personas.md`.
 
 ## Present the seed as a guided choice
 

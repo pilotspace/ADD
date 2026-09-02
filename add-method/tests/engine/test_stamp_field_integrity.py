@@ -36,6 +36,9 @@ def _authored(root, slug="t"):
     p = root / cid.lstrip("/")
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>", "- S1 x")
+    # `freeze` refuses a template `goal:` — the ONE approval is an approval OF the
+    # goal, so a fixture that reaches a post-freeze state has to state one.
+    t = t.replace("goal: <one line>", "goal: the fixture's stated one line.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
                "## RULES\n<must>\n- M1 m\n</must>", t, flags=re.S)
     t = re.sub(r"<reject>\n.*?\n</reject>", '<reject>\n- R:Z x -> "Z"\n</reject>', t, flags=re.S)
