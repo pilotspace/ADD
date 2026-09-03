@@ -1520,6 +1520,46 @@ PERSONA_TASK_KINDS = ("feature", "refactor", "test", "docs", "ui", "security", "
                       "infra", "release", "integration", "explore")
 
 
+def _explore_body(scaffold: str) -> str:
+    """The build-lane scaffold, re-pointed at the explore lane's sections.
+
+    `--kind explore` is a whole shipped lane — a guide, a freeze refusal that requires a budget,
+    a gate path that reads `## FINDINGS` instead of a receipt, and three refusal codes of its own
+    — with no front door. It emitted the identical build body, and `freeze` then refused it for a
+    `budget:` line the body never offered: a lane whose scaffold produces a node the lane's own
+    freeze rejects -> "R:UNBUILDABLE".
+
+    A diff of the build body, not a second template, so the two cannot drift: RULES ask for
+    questions, `## PLAN` gains the required budget slot, `## FINDINGS` is added empty. `## CHECKS`
+    STAYS — explore.md keeps it in acceptance form, "one line per question, `covers:` bound, each
+    judged at the gate against `## FINDINGS` — not by pytest".
+
+    The budget is a SLOT, never a seeded number: the whole point of the line is that it is a
+    decision, and a number nobody chose is a budget nobody owns. So a freshly scaffolded explore
+    is still refused until its author fills it in — refused for a line it was actually offered.
+    """
+    scaffold = scaffold.replace(
+        "- M1 <the rule that must hold>",
+        "- M1 <the question this explore must answer, stated so `answered` is judgeable>")
+    scaffold = scaffold.replace(
+        "## PLAN\ncontract: <the shape this publishes>\n",
+        "## PLAN\ncontract: <what this explore will have settled>\n"
+        "budget: <one hard number — tool calls / sources / wall-clock; the loop stops when it is spent>\n")
+    scaffold = scaffold.replace(
+        "- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.",
+        "- <acceptance line> · covers: M1 · <what a sufficient answer to M1 looks like>\n"
+        "judged at the gate against ## FINDINGS, not by pytest.")
+    # Empty on purpose: an explore starts with questions, not answers, and the gate's
+    # `hollow_explore` refusal is what makes "unanswered" a recorded outcome rather than a silent
+    # one. Pre-filling a finding would fabricate the answer the lane exists to go get.
+    return scaffold.replace(
+        "\n## LESSONS\n",
+        "\n## FINDINGS\n"
+        "<empty until the loop runs — then one line per finding:\n"
+        " F1 (answers M1) · <what was found> · (evidence: <file:line | url | command>)>\n"
+        "\n## LESSONS\n")
+
+
 def new(root, node_type: str, slug: str, **fields) -> tuple:
     """Create a typed node. A colliding slug reports and writes nothing (R:DUPSLUG)."""
     root = Path(root)
@@ -1622,6 +1662,8 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # the CARD scaffold carries a `{slug}` marker for the created node's own slug — substitute it,
     # or every new task ships an unexpanded placeholder in its `next:` affordance.
     scaffold = BODIES.get(node_type, "## CARD\ngoal: <one line>\n").replace("{slug}", slug)
+    if node_type == "Task" and str(fm.get("kind") or "") == "explore":
+        scaffold = _explore_body(scaffold)
     write(path, "---\n" + "\n".join(lines) + "\n---\n" + scaffold)
     # freeze is a lifecycle act — a Persona/Prompt/Run is done the moment it is written.
     # A file of placeholders is a scaffold, and `freeze` is guaranteed to refuse one — so the
@@ -1703,8 +1745,12 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     # R:UNBOUNDED (task sources-receipt) — an explore's approval IS questions plus a budget.
     # Presence only, never arithmetic: the engine is a notary; judging the number stays human,
     # exactly as exit criteria are read but never scored.
+    # `[^<\s]` and not `\S`: the scaffold now OFFERS a `budget:` slot, and a slot must never
+    # satisfy the requirement it prompts for. `placeholders_in` does not read `## PLAN`, so
+    # `budget: <one hard number …>` passed a presence test and froze an explore with no budget —
+    # the milestone's own defect class, a well-formed value attesting nothing.
     if str((node_t2.get("fm") or {}).get("kind") or "") == "explore" \
-            and not re.search(r"^budget:\s*\S", _section_of(node_t2.get("body") or "", "PLAN"), re.M):
+            and not re.search(r"^budget:\s*[^<\s]", _section_of(node_t2.get("body") or "", "PLAN"), re.M):
         return None, (f'cannot freeze `{slug}` — an explore freezes on questions PLUS a budget, '
                       f'and `## PLAN` carries no `budget:` line -> "R:UNBOUNDED"'
                       f"\nnext: add one hard `budget:` line (tool calls · sources · wall-clock) "
