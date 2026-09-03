@@ -850,7 +850,7 @@ RESERVED_FILES = ("index.md", "log.md", "PROJECT.md")
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
-ENGINE = "add/3.3.0"
+ENGINE = "add/3.4.0"
 # Where `init` vendors from: the engine lives beside this file; the seed corpus sits at the bundle
 # root as its own managed tree (`.add/personas-teacher/` installed; `add-method/personas-teacher/`
 # in the package). `parents[1]` resolves both. Module-level so a test can repoint them to simulate a

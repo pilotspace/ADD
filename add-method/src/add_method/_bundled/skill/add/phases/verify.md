@@ -6,15 +6,18 @@ because the diff reads plausible. Verify is where that trust is recorded, once.
 ## 1 · Gather the evidence — a fresh, bound receipt
 
 ```bash
-add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- \
-    <the test command, carrying its OWN `--junitxml` at that same path>
+add run <slug> -- \
+    <the test command, carrying its own `--junitxml="${TMPDIR:-/tmp}/add-run.xml"`>
 ```
 
 `run` executes your command, parses the JUnit report, and writes a **Run receipt** under
-`.add/tasks/<slug>.d/runs/`. The path appears **twice on purpose**: `--junitxml` before the `--`
-tells `run` where to READ the report, and the wrapped command must WRITE it there. `run` never
-passes the path down. Omit the second and the receipt records only an exit code, nothing binds
-to your rules, and the gate refuses naming the unbound ones. Two properties the gate will demand:
+`.add/tasks/<slug>.d/runs/`. Your command WRITES the report; `run` READS it, sniffing the path out
+of the command you already handed it — either spelling of `--junitxml`, joined by `=` or as the
+following token, and the last one named wins.
+Name no path at all and the receipt records only an exit code, nothing binds to your rules, and the
+gate refuses naming the unbound ones. A runner that reports somewhere its command line never names
+states it with `--junitxml` placed BEFORE the `--`, which overrides the sniff. Two properties the gate will
+demand:
 - **fresh** — the receipt records the git blob hash of every in-`scope:` file at run time; a gate
   recomputes it and refuses on any difference. This kills the stale-green failure (tests that passed
   before the last edit). A directory scope enumerates through git, so **gitignored files (build
