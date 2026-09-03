@@ -335,6 +335,33 @@ def write(path: Path, text: str) -> None:
 # * **Activity is derived, never stored** (§3.4). There is no pointer to corrupt.
 
 EDGE_KEYS = ("depends_on", "needs", "tasks", "milestone", "relates_to", "task", "supersedes")
+
+# The SECOND edge family (FORMAT §3.2). `relations:` carries typed edges between CONCEPTS —
+# `<source delta id> <rel> <target ref>` — where `EDGE_KEYS` carries untyped edges between NODES.
+#
+# Two decisions are load-bearing and were both measured, not assumed:
+#
+# * **`relations` is NOT in `EDGE_KEYS`.** `edges()` yields `(src, key, ref, target)`; a relation
+#   folded into that shape loses BOTH the source id and the rel, and `_norm` on the unsplit entry
+#   is a containment hole: `_norm("/specs/method.md", "refines /specs/../../outside.md")` returns
+#   `/specs/outside.md`, which is INSIDE the bundle — so `edge_out_of_bundle`, one of the three
+#   FATAL codes, downgrades to `info`. The head is stripped BEFORE the target is normalised.
+# * **The entry is a block-list PLAIN STRING, never a flow map.** `- { rel: refines, target: x }`
+#   parses to a dict here and to the raw brace string in `scripts/validate_bundle.py`: one file,
+#   two values, no error anywhere. Three whitespace-separated fields parse identically in both.
+#
+# Closed, and closed SMALL — ONE term, because one term is what the corpus earns. `contradicts`,
+# `evidenced_by` and `derived_from` were cut before drafting for having zero instances
+# (`evidenced_by` doubly: every delta line already carries an in-band `(evidence: ...)` that
+# `DELTA_EVIDENCE` enforces). `supersedes` got further — it was drafted, given a migration
+# instance, and cut at VERIFY when that instance was refuted on measurement: its candidate was
+# `M28 supersedes M19`, and the phantom-verb fixture M19 enumerates still exists, so M28 does not
+# replace M19 — they are overlapping siblings, and M19 is still `open`.
+#
+# Three of the seven keys in `EDGE_KEYS` (`tasks`, `relates_to`, `supersedes`) have ZERO live uses.
+# That is the measured base rate a term with no instance joins, so the bar is a live instance in
+# the same change, not a plausible use. Widening this tuple is an engine change held to that bar.
+RELATION_VOCAB = ("refines",)
 ACTIVE_STATES = ("direction", "build", "verify")
 CACHE_NAME = "graph.json"
 
@@ -436,6 +463,65 @@ def edges(graph: dict) -> list:
     return out
 
 
+def parse_relation(entry) -> tuple:
+    """One `relations:` entry as `(src_id, rel, ref)`; `(None, None, raw)` when it is malformed.
+
+    Exactly three whitespace-separated fields — `split()`, never `split(None, 2)`. Capping the
+    split would silently accept a fourth field by folding it into the target, which is the
+    "unknown reads as clean" shape this bundle has a delta about. A value that is not three
+    fields carries no resolvable target and therefore makes NO containment claim: it is reported
+    `relation_malformed` and yields no edge. That residual is stated in FORMAT §3.2 rather than
+    left implicit, because a containment check that did not run must never look like one that
+    passed.
+    """
+    text = str(entry).strip()
+    fields = text.split()
+    return tuple(fields) if len(fields) == 3 else (None, None, text)
+
+
+def relations(graph: dict) -> list:
+    """`[(src_cid, src_id, rel, ref, target_cid|None)]` — one tuple per entry, malformed included.
+
+    A malformed entry yields `(cid, None, None, raw, None)` rather than being dropped: a reader
+    that silently skips what it cannot parse is one whose empty report cannot be trusted.
+    """
+    out = []
+    for cid, node in graph.items():
+        value = (node["fm"] or {}).get("relations")
+        if not value:
+            continue          # absent, `[]`, `{}` or empty — no relations (A8). `not value`, never
+            # `is None`: a bare `- ` list item parses to `{}` here and to an empty LIST in the M0
+            # oracle, so `is None` reported one `relation_malformed` against the validator's
+            # silence. An empty value is an empty value in both.
+        for entry in (value if isinstance(value, list) else [value]):
+            src_id, rel, ref = parse_relation(entry)
+            if rel is None:
+                out.append((cid, None, None, ref, None))
+                continue
+            target = _norm(cid, ref)
+            out.append((cid, src_id, rel, ref, target if target in graph else None))
+    return out
+
+
+def _delta_ids(body: str) -> dict:
+    """`{delta id: the whole line}` — §3.3's THIRD fragment form, read from a node's own body.
+
+    Read through `parse_delta_head`, never through a looser regex of its own: a laxer reader here
+    would resolve a fragment the engine's own delta grammar rejects, and the two would disagree
+    about what a concept address means. First occurrence wins — ids are unique per file
+    (R:REUSEDID) and a duplicate must resolve deterministically rather than by scan order.
+    """
+    out = {}
+    for line in body.splitlines():
+        match = DELTA_LINE.match(line.strip())
+        if not match:
+            continue
+        head = parse_delta_head(match.group(1))
+        if head["code"] is None and head["id"]:
+            out.setdefault(head["id"], line.strip())
+    return out
+
+
 def _section(body: str, slug: str) -> str:
     """The body section under the heading whose kebab-cased text is `slug`."""
     out, inside = [], False
@@ -481,9 +567,18 @@ def resolve(graph: dict, ref: str, src: str = "") -> tuple:
     for key in (fragment, fragment.replace("-", "_")):
         if key in fm and not _is_template(fm[key]):
             return cid, fm[key], "frontmatter"
-    # Only now is a body read, and only this one (law 2 — never a bulk scan).
-    section = _section(read(node["path"], "T2")["body"], fragment)
-    return (cid, section, "heading") if section else (cid, None, "edge_unresolved")
+    # Only now is a body read, and only this one (law 2 — never a bulk scan). ONE read, three
+    # forms: the heading slug, then the delta id, then unresolved.
+    body = read(node["path"], "T2")["body"]
+    section = _section(body, fragment)
+    if section:
+        return cid, section, "heading"
+    # §3.3's third form (`typed-relations`). LAST before unresolved, deliberately: a fragment that
+    # resolves today must keep resolving the same way, and a delta id carries an upper-case letter
+    # while a heading slug is lower-cased, so the two sets cannot collide and a reference still
+    # cannot resolve two ways.
+    delta = _delta_ids(body).get(fragment)
+    return (cid, delta, "delta") if delta else (cid, None, "edge_unresolved")
 
 
 def active(graph: dict) -> list:
@@ -2962,8 +3057,9 @@ DELTA_ARROW = "\u2192"          # U+2192; round-trips through read/write as UTF-
 DELTA_STATUSES = ("open", "folded", "rejected")
 DELTA_TERMINAL = ("folded", "rejected")   # a terminal status CLOSES the validity interval
 # Fragment-safe: the id becomes the `#fragment` of `/specs/<lens>.md#<id>`, so no space, dot or
-# punctuation may appear in it. `typed-relations` resolves that third FORMAT §3.3 form against
-# exactly this shape, which is why it is stated in the frozen contract and not only in this regex.
+# punctuation may appear in it. FORMAT §3.3's third resolution form reads a delta id through
+# `parse_delta_head` and therefore through exactly this shape (`_delta_ids`) — which is why the
+# grammar is stated in the frozen contract and not only in this regex.
 DELTA_ID = re.compile(r"\A[A-Za-z][A-Za-z0-9_-]*\Z")
 DELTA_DATE = re.compile(r"\A\d{4}-\d{2}-\d{2}\Z")
 # Every code `deltas()` can put in its malformed report. Enumerated HERE, once: the doc guard reads
@@ -2972,9 +3068,15 @@ DELTA_DATE = re.compile(r"\A\d{4}-\d{2}-\d{2}\Z")
 DELTA_REJECTS = ("unparsed", "unknown_status", "unknown_competency", "no_evidence",
                  "bad_id", "bad_date", "bad_interval", "open_carries_close")
 
-# The head is everything inside the brackets; group(2) is an OPEN tail. It stays open deliberately:
-# `typed-relations` appends a second `(refines: ...)` clause after the evidence clause, and an
-# anchored tail would report all 43 live lines `no_evidence` the day that lands.
+# The head is everything inside the brackets; group(2) is an OPEN tail. It stays open deliberately,
+# and its reason is now the persona-target hint that already rides it (M11): an anchored tail would
+# report every live line carrying a trailing clause `no_evidence`.
+#
+# The original reason was a PREDICTION — that `typed-relations` would append a `(refines: ...)`
+# clause here — and that prediction did not hold: relations landed in FRONTMATTER, because a
+# derived index read back as authority breaks law 1 and `doctor --sync` may not write an authored
+# node (R:SYNCAUTHORED). The tolerance and its check are kept on the merits above; the stale
+# reason is corrected rather than left to be trusted (an engine change invalidates PROSE).
 DELTA_LINE = re.compile(r"-\s+\[([^\]]*)\]\s*(.*)")
 # A line that LOOKS like a delta — so a plain markdown checkbox is never mistaken for a broken one,
 # while a one-field head carrying a real competency tag IS reported rather than skipped.
@@ -4860,17 +4962,57 @@ def doctor(root, graph: dict = None, paths=None) -> list:
              f"declared OKF v{okf_declared} — {len(described)}/{len(specs)} Spec nodes carry "
              f"`description:`", "/index.md")
 
-    for src, key, ref, target in edges(graph):
+    def _target_findings(src, ref, target):
+        """Containment first, then §3.3 — the ONE target reader both edge families share.
+
+        Ordered so the fatal decision is made from the ref string and the root path ALONE, before
+        anything opens the target. That ordering is what keeps §9 true: every body read below can
+        only ever produce `info`, so all three error codes stay decidable from frontmatter.
+        """
         rel = src.lstrip("/")
-        resolved = (root / _norm(src, ref).lstrip("/")).resolve()
+        # Containment is decided on the RAW ref against the real filesystem, NEVER through
+        # `_norm`. `_norm` builds a graph CID, and it builds it with `os.path.normpath` on a
+        # string that already starts with `/` — where `..` CLAMPS at the root instead of
+        # ascending. So a relative escape `../../outside.md` from `/specs/method.md` normalises
+        # to `/outside.md`, which is INSIDE the bundle, and `edge_out_of_bundle` — one of the
+        # three fatal codes — silently degraded to `edge_unresolved` (info). The M0 oracle never
+        # had the bug because it joins against the source file's directory and resolves; this is
+        # that computation, so the two agree by construction rather than by coincidence
+        # (R:SILENTESCAPE, R:DIVERGE). Found by an adversarial sweep, not by the suite:
+        # the absolute form `/specs/../../outside.md` was fatal all along and hid the relative one.
+        bare = ref.partition("#")[0].strip()
+        resolved = ((root / bare.lstrip("/")) if bare.startswith("/")
+                    else (root / src.lstrip("/")).parent.joinpath(bare)).resolve()
         if not resolved.is_relative_to(root.resolve()):
             find("error", "edge_out_of_bundle", f"{rel} -> {ref}", src)
         elif target is None:
             find("info", "edge_unresolved", f"{rel} -> {ref}", src)
         elif (fragment := ref.partition("#")[2]):
             body = body_of(graph[target]["path"])
-            if fragment not in (graph[target]["fm"] or {}) and fragment not in _heading_slugs(body):
+            if fragment not in (graph[target]["fm"] or {}) \
+                    and fragment not in _heading_slugs(body) \
+                    and fragment not in _delta_ids(body):
                 find("info", "edge_unresolved", f"{rel} -> {ref}", src)
+
+    for src, key, ref, target in edges(graph):
+        _target_findings(src, ref, target)
+
+    # The SECOND edge family (§3.2). Its target end goes through the SAME reader above — that is
+    # the point: a relation escaping the bundle must report the identical code at the identical
+    # severity as a `depends_on:` naming the identical target, and two readers would drift.
+    for src, src_id, verb, ref, target in relations(graph):
+        rel = src.lstrip("/")
+        if verb is None:
+            find("info", "relation_malformed", f"{rel} -> {ref}", src)
+            continue          # no third field, so no target, so no containment CLAIM either
+        if verb not in RELATION_VOCAB:
+            # Recorded, never rejected (law 3) — and deliberately NOT a `continue`: an unknown
+            # verb must not suppress its own target's containment test, or the only fatal code
+            # this family can raise becomes unreachable behind an info finding.
+            find("info", "unknown_rel", f"{rel} -> {verb} ({ref})", src)
+        if src_id not in _delta_ids(body_of(graph[src]["path"])):
+            find("info", "edge_unresolved", f"{rel} -> {src_id}", src)
+        _target_findings(src, ref, target)
 
     for cid, node in sorted(graph.items()):
         for link in MD_LINK.findall(body_of(node["path"])):

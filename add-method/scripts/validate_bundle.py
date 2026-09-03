@@ -47,6 +47,26 @@ COMPILED_MARKER = "COMPILED BODY"
 # link to `/task.md` (observed 2026-07-29, recorded in build-worked-example LESSONS).
 EDGE_KEYS = {"depends_on", "needs", "tasks", "milestone", "relates_to", "task", "supersedes"}
 
+# The SECOND edge family (FORMAT §3.2): `relations:` entries are `<src delta id> <rel> <ref>`,
+# one plain string per block-list item. Mirrors `add.RELATION_VOCAB` and MUST stay in lockstep —
+# this script is stdlib-only and standalone, so it cannot import the engine. The lockstep is not
+# left to a human: `tests/engine/test_typed_relations.py::test_the_second_oracle_mirrors_the_one
+# _vocabulary` drives every term of the ENGINE's tuple through this script and requires silence,
+# then drives a non-term and requires a report.
+RELATION_VOCAB = {"refines"}
+
+# §3.3's third fragment form: a delta id in the target's body. Mirrors `add.parse_delta_head`'s
+# grammar field for field — a LAXER reader here would resolve a fragment the engine's own delta
+# grammar rejects, and the two oracles would disagree about what a concept address means.
+DELTA_HEAD = re.compile(r"^-\s+\[([^\]]*)\]")
+DELTA_ID = re.compile(r"\A[A-Za-z][A-Za-z0-9_-]*\Z")
+DELTA_DATE = re.compile(r"\A\d{4}-\d{2}-\d{2}\Z")
+DELTA_ARROW = "\u2192"
+DELTA_STATUSES = {"open", "folded", "rejected"}
+DELTA_TERMINAL = {"folded", "rejected"}
+DELTA_COMPS = {"DDD", "SDD", "UDD", "TDD", "ADD",
+               "domain", "system", "experience", "quality", "method"}
+
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n?(.*)\Z", re.DOTALL)
 MD_LINK = re.compile(r"\]\(([^)\s]+\.md)\)")
 
@@ -88,6 +108,28 @@ def section_of(body: str, name: str) -> str:
 # --------------------------------------------------------------------------- parsing
 
 
+def strip_comment(line: str) -> str:
+    """Drop a trailing `#` comment, honouring quotes — mirrors `add._strip_comment`.
+
+    Without this the two oracles read DIFFERENT VALUES out of one line: the engine strips a
+    YAML comment and this script did not, so `- M1 refines #M2` was `M1 refines` (two fields,
+    `relation_malformed`) in one and `M1 refines #M2` (three fields, an edge) in the other.
+    A `#` with no space before it is data — that is what keeps `/specs/method.md#M21` a fragment.
+    """
+    if "#" not in line:
+        return line
+    quote = None
+    for i, ch in enumerate(line):
+        if quote:
+            if ch == quote:
+                quote = None
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "#" and (i == 0 or line[i - 1].isspace()):
+            return line[:i]
+    return line
+
+
 def parse_frontmatter(text: str):
     """Return (frontmatter_dict, body) or (None, text) when there is no frontmatter.
 
@@ -102,6 +144,9 @@ def parse_frontmatter(text: str):
     data, current = {}, None
     for line in raw.splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        line = strip_comment(line)
+        if not line.strip():
             continue
         stripped = line.strip()
         indent = len(line) - len(line.lstrip())
@@ -119,6 +164,28 @@ def parse_frontmatter(text: str):
                 data[key] = value.strip("\"'")
                 current = None
     return data, body
+
+
+def delta_ids(body: str) -> set[str]:
+    """Every well-formed dated delta id in a body — FORMAT §3.3's third resolution form."""
+    out = set()
+    for line in body.splitlines():
+        m = DELTA_HEAD.match(line.strip())
+        if not m:
+            continue
+        fields = [f.strip() for f in m.group(1).split("\u00b7")]
+        if len(fields) != 4:
+            continue
+        comp, did, status, interval = fields
+        if status not in DELTA_STATUSES or comp not in DELTA_COMPS or not DELTA_ID.match(did):
+            continue
+        ends = [e.strip() for e in interval.split(DELTA_ARROW)]
+        if len(ends) > 2 or any(not DELTA_DATE.match(e) for e in ends):
+            continue
+        if len(ends) == 2 and (status not in DELTA_TERMINAL or ends[1] < ends[0]):
+            continue
+        out.add(did)
+    return out
 
 
 def heading_slugs(body: str) -> set[str]:
@@ -142,7 +209,9 @@ class Scan:
             "depths": [],
             "statuses": [],
             "types": [],
-            "fragment_forms": {"frontmatter_key": 0, "heading_slug": 0, "unresolved": 0},
+            "fragment_forms": {"frontmatter_key": 0, "heading_slug": 0,
+                               "delta_id": 0, "unresolved": 0},
+            "relation_count": 0,
             "resolved_fragments": {},
             "node_count": 0,
             "edge_count": 0,
@@ -208,12 +277,41 @@ class Scan:
             if fragment in self.nodes[tid]["fm"]
             else "heading_slug"
             if fragment in heading_slugs(self.nodes[tid]["body"])
+            else "delta_id"
+            if fragment in delta_ids(self.nodes[tid]["body"])
             else "unresolved"
         )
         self.report["fragment_forms"][form] += 1
         self.report["resolved_fragments"][f"{tid}#{fragment}"] = form
         if form == "unresolved":
             self.find("info", "edge_unresolved", f"{node['rel']} -> {ref}")
+
+    # -- pass 2b: the SECOND edge family (§3.2) --
+    def relations(self):
+        """`relations:` — typed CONCEPT edges. The target end reuses `resolve` unchanged.
+
+        Reusing it is the point: the containment decision for a relation must be the identical
+        code at the identical severity as for a `depends_on:` naming the identical target. The
+        head is stripped HERE, before `resolve` ever sees the value — passing the whole entry
+        would let the rel token absorb a `../` and silently downgrade `edge_out_of_bundle`.
+        """
+        for cid, node in self.nodes.items():
+            value = node["fm"].get("relations")
+            if value is None:
+                continue
+            for entry in (value if isinstance(value, list) else [value]):
+                fields = str(entry).strip().split()
+                if len(fields) != 3:
+                    self.find("info", "relation_malformed",
+                              f"{node['rel']} -> {str(entry).strip()}")
+                    continue
+                src_id, verb, ref = fields
+                self.report["relation_count"] += 1
+                if verb not in RELATION_VOCAB:
+                    self.find("info", "unknown_rel", f"{node['rel']} -> {verb} ({ref})")
+                if src_id not in delta_ids(node["body"]):
+                    self.find("info", "edge_unresolved", f"{node['rel']} -> {src_id}")
+                self.resolve(cid, node, ref)
 
     # -- pass 3: body-derived enrichment; every finding here is `info` --
     def bodies(self):
@@ -272,6 +370,7 @@ class Scan:
     def run(self):
         self.load()
         self.edges()
+        self.relations()
         self.bodies()
         self.compiled()
         return self

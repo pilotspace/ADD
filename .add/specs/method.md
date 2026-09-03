@@ -8,6 +8,10 @@ tags: []
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 31
+relations:
+  - M21 refines /specs/method.md#M5
+  - M8 refines /specs/method.md#M4
+  - M31 refines /specs/method.md#M4
 ---
 ## Now
 how work proceeds, and what a gate costs

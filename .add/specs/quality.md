@@ -8,6 +8,8 @@ tags: []
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 11
+relations:
+  - Q9 refines /specs/method.md#M21
 ---
 ## Now
 what counts as proof
