@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c7081a3e63da2e7ded97ee3f0b573e48"  # re-aimed @ method-truth-sweep: the ancestor-bundle guard, the derived beat in status/brief, the persona seed at init, the routing-key taxonomies, the CARD `goal:` placeholder guard, the routing-key check skipping an UNTOUCHED scaffold slot, the seeding loop no longer shadowing `title`, and `ancestor_bundle` keying on `abf_version:` so a docs homepage is not read as a bundle. prior: 6be570d8… @ method-truth-sweep
+ENGINE_MD5 = "9a8000831204f9d080769dc349a48add"  # re-aimed @ scaffold-truth: `run` sniffs the report path the command already names, so the one path is typed once and the flag becomes an override; plus `new` refuses an unroutable kind, seeds `scope:` in frontmatter (empty — `scope:` is enforced where `gives:` is descriptive) and branches its body for the explore lane; `join` refuses a path with no bundle index; `doctor` reports an unauthored node; a waived sweep dimension must state its reason. prior: 72b0bc5c… @ scaffold-truth
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "07902bbdfef82823f288989732729bf3"  # re-aimed @ method-truth-sweep (`init --nested`). prior: a943d7c6… @ enforcement-gaps
+ENGINE_PKG_MD5 = "b41bc148795c695b7f04ebd10c1098c1"  # re-aimed @ scaffold-truth (`join` propagates its refusal to a non-zero exit). prior: ad04b73a… @ method-truth-sweep

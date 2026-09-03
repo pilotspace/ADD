@@ -339,14 +339,45 @@ def test_every_new_refusal_names_a_next_verb(tmp_path):
     assert re.search(r"next: add \w", _msg((ok, *rest))), _msg((ok, *rest))
 
 
-def test_hard_stop_is_still_recordable_on_an_unfrozen_node(tmp_path):
-    """covers: A13 — a HARD-STOP never closes a task; refusing it only loses the finding."""
+def test_hard_stop_is_still_recordable_on_a_sealed_node(tmp_path):
+    """covers: A13 — writing a finding down must never be the hard part.
+
+    A13's ORIGINAL reading was "a HARD-STOP never closes a task, so refusing it only loses the
+    finding", and it was recorded before either half of that premise was tested. Both later
+    failed: `done` counted a gate stamp without reading its verdict, so a HARD-STOP DID close a
+    task (/tasks/done-reads-the-verdict.md), and on 2026-09-03 the human was interviewed on the
+    fix and marked A3 `correct` — a stop is a RECORD against a node, and a record needs the seal
+    that says someone approved the node's existence, exactly the argument 3.3.0 made for
+    RISK-ACCEPTED.
+
+    So A13 narrows rather than dies: the stop binds the SEAL and nothing else. It still binds no
+    evidence refusal — a security finding is always a HARD-STOP and must always be writable — and
+    this check is the counter-guard that keeps it so.
+    """
     root = _bundle(tmp_path)
-    cid = _authored(root, "stopped")
+    cid = _sealed(root, "stopped")
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="found a leak")
     assert ok, "the security finding could not be written down: " + _msg((ok, *rest))
+
+
+def test_hard_stop_binds_the_seal_and_only_the_seal(tmp_path):
+    """covers: A13 — the narrowing, pinned in both directions."""
+    root = _bundle(tmp_path)
+    cid = _authored(root, "unsealed-stop")
+    _receipt(root, cid)
+
+    ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="found a leak")
+    assert not ok, "a finding was recorded against a node nobody ever approved"
+    assert "R:UNSEALED" in _msg((ok, *rest)), _msg((ok, *rest))
+
+    assert add._binds("unsealed", "HARD-STOP") is True
+    for refusal in add.INTEGRITY_REFUSALS + add.EVIDENCE_REFUSALS:
+        if refusal == "unsealed":
+            continue
+        assert add._binds(refusal, "HARD-STOP") is False, (
+            f"`{refusal}` now blocks a HARD-STOP — writing down a finding got harder")
 
 
 def test_no_existing_refusal_was_narrowed():

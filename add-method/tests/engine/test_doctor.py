@@ -2,7 +2,7 @@
 
 Red-first for `/tasks/build-doctor.md`. The `covers:` citations live in each test's docstring,
 which is where `checks_of` reads them (e14's M1) — after BUILD this file is what compiles that
-node's CHECKS section, so a citation here is a claim `checks_sync` will publish.
+node's CHECKS section, so a citation here is a claim `checks_verify` reads back.
 
 M2 is the load-bearing test and it is the one most likely to fail honestly: it runs the M0
 validator as a SUBPROCESS and diffs its findings against `doctor`'s. Importing the validator would
@@ -153,8 +153,11 @@ def test_a_broken_edge_is_found_by_both(bundle):
     add.new(bundle, "Task", "orphan-edge", title="an edge into nowhere",
             depends_on=["/tasks/does-not-exist.md"])
     codes = {f["code"] for f in add.doctor(bundle)}
-    assert codes & {f["code"] for f in _validator(bundle)}, \
-        f"doctor saw {codes} where the validator saw something else"
+    validator = {f["code"] for f in _validator(bundle)}
+    # Not merely "the sets intersect" — any shared UNRELATED code satisfied that, including the
+    # `unauthored_node` both now report for a bare scaffold. Require the INJECTED defect itself.
+    assert "edge_unresolved" in codes, f"doctor missed the injected broken edge: {codes}"
+    assert "edge_unresolved" in validator, f"the validator missed it: {validator}"
 
 
 # ------------------------------------------------------------------ M5 · F3's orphaned receipts
@@ -178,16 +181,27 @@ def test_orphaned_receipt_is_reported(bundle):
     assert "1.md" in found[0]["detail"], f"the finding does not say which receipt: {found[0]}"
 
 
-def test_live_orphans_are_all_reported():
-    """covers: M5 — the eight orphans this bundle carries are reported, every one.
+def test_every_orphan_is_reported(bundle):
+    """covers: M5 — doctor reports every orphan `orphans()` finds, with a subject it can rely on.
 
-    They predate F3's fix and cannot be stamped retroactively — a stamp invented now would claim a
-    binding that never happened. So the number is expected to stay at eight and this test exists to
-    notice if it silently drops, which would mean someone repaired history.
+    This check used to compare two counts on the LIVE bundle, and its docstring said the number
+    "is expected to stay at eight" so the test would "notice if it silently drops". It dropped to
+    zero and the test stayed green: both sides degrade together, so `0 == 0` can never notice
+    anything. The live bundle is not a fixture — its orphan count is history, and history moved.
+
+    It now INJECTS an orphan, so the comparison has a subject on any bundle, in any state.
     """
-    reported = {f["detail"] for f in add.doctor(LIVE) if f["code"] == "orphan_receipt"}
-    assert len(reported) == len(add.orphans(LIVE)), \
-        f"orphans() finds {len(add.orphans(LIVE))} but doctor reports {len(reported)}"
+    cid, _ = add.new(bundle, "Task", "injected-orphan", title="a receipt bound to no stamp")
+    d = bundle / "tasks" / "injected-orphan.d" / "runs"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "1.md").write_text("---\ntype: Run\nexit: 0\n---\nreceipt with no gate stamp\n",
+                            encoding="utf-8")
+
+    found = add.orphans(bundle)
+    assert found, "the injected receipt is not seen as an orphan — re-aim this fixture"
+    reported = {f["detail"] for f in add.doctor(bundle) if f["code"] == "orphan_receipt"}
+    assert len(reported) == len(found), \
+        f"orphans() finds {len(found)} but doctor reports {len(reported)}"
 
 
 def test_orphans_are_not_repaired_away(bundle):

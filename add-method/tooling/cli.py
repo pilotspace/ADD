@@ -113,6 +113,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("done", help="close a gated task")
     s.add_argument("ref")
+    s.add_argument("--override", metavar="<why>",
+                   help="ship over a recorded HARD-STOP — requires a reason, and is stamped")
+    s.add_argument("--by", help="who is closing")
 
     s = sub.add_parser("learn", help="file a lesson into a living spec (evidence required)")
     s.add_argument("lens", help="ddd | sdd | udd | tdd | add (the spec it sharpens)")
@@ -242,13 +245,25 @@ def dispatch(args, run_cmd) -> int:
         return 0 if result["receipt"]["exit"] == 0 else 1
 
     if args.verb == "gate":
+        # M3 (frozen, test_gate_verb.py:224) — a gate's authority is COMPUTED from the node's
+        # sensitivity floor, never taken from the caller. The flag was declared, passed in and
+        # then overwritten, so `--authority human` printed `authority: process` and misled the
+        # reader GETTING-STARTED had just taught the idiom to. The engine keeps its rule; the
+        # CLI stops pretending to accept an argument it discards.
+        if args.authority:
+            print(f"`--authority` is not a gate flag — a gate records the floor computed from "
+                  f"`sensitivity:` ({add.authority_for(add.scan(root), _resolve(root, args.ref))}), "
+                  f"so a claim here would be the agent approving its own work\n"
+                  f"next: add gate {args.ref} {args.verdict} --by \"<name>\"")
+            return 1
         ok, note = add.gate(root, _resolve(root, args.ref), args.verdict,
-                            by=args.by, authority=args.authority, reason=args.reason)
+                            by=args.by, reason=args.reason)
         print(note)
         return 0 if ok else 1
 
     if args.verb == "done":
-        ok, _missing, note = add.done(root, _resolve(root, args.ref))
+        ok, _missing, note = add.done(root, _resolve(root, args.ref),
+                                      override=args.override, by=args.by)
         print(note)
         return 0 if ok else 1
 
@@ -266,7 +281,14 @@ def dispatch(args, run_cmd) -> int:
         cid = _resolve(root, args.ref)
         indices = args.n
         if args.all:
-            body = add.read(pathlib.Path(root) / cid.lstrip("/"), "T2")["body"]
+            # `add.check` guards the missing node; this branch reads the file BEFORE reaching it,
+            # so a mistyped ref raised FileNotFoundError at the operator instead of refusing.
+            # The engine records or refuses — it never crashes.
+            target = pathlib.Path(root) / cid.lstrip("/")
+            if not target.is_file():
+                print(f"no such node: {cid}\nnext: add status")
+                return 1
+            body = add.read(target, "T2")["body"]
             indices = list(range(1, len(add._box_lines(body, args.section)) + 1))
         # `--by` is a free string, so the name on a stamp is a CLAIM. The caller context is not:
         # a box ticked from an interactive terminal had a human at the keyboard; one ticked by a
@@ -313,7 +335,7 @@ def dispatch(args, run_cmd) -> int:
     if args.verb == "join":
         _result, note = add.join(root, [Path(b) for b in args.bundles])
         print(note)  # a skipped HARD-STOP stream is reported in the note, not an engine refusal
-        return 0
+        return 0 if _result is not None else 1  # an unreadable stream path IS an engine refusal
 
     if args.verb == "advise":
         out, note = add.advise(root, _resolve(root, args.ref), args.persona)

@@ -77,10 +77,19 @@ def test_ambiguous_citation_proves_nothing(tmp_path):
 
 def test_checks_of_keys_by_file_too():
     """covers: M3 · e14's extractor carries the same defect, and loses a real test to it."""
+    # DISCOVERED, not named. This pinned `test_sync_is_idempotent` — a real collision at the
+    # time — and went red the day one of the two was deleted for an unrelated reason, reporting
+    # a keying defect that did not exist. The property is "a bare name appearing in two files
+    # yields two keys"; the suite is asked which name that is.
+    import collections
     suite = sorted((ROOT / "tests").rglob("test_*.py"))
     keyed = add.checks_of(suite)
-    collisions = [k for k in keyed if k.endswith("::test_sync_is_idempotent")]
-    assert len(collisions) == 2, f"checks_of collapsed a real collision: {collisions}"
+    bare = collections.Counter(k.rpartition("::")[2] for k in keyed)
+    dupes = [name for name, n in bare.items() if n > 1]
+    assert dupes, "no test name appears in two files — this guard cannot prove anything today"
+    for name in dupes:
+        keys = [k for k in keyed if k.endswith(f"::{name}")]
+        assert len(keys) == bare[name], f"checks_of collapsed a real collision: {keys}"
 
 
 def test_one_id_grammar(tmp_path):
@@ -106,15 +115,31 @@ def test_migration_decision_is_recorded():
     assert "Why not the alternatives" in node
 
 
+GATED_M0 = ("define-entity-model", "define-task-schema", "define-authority-rules",
+            "define-read-protocol", "define-log-rotation", "align-standards-citations",
+            "define-scale-rules", "define-compat-contract", "define-evidence-binding")
+
+
 def test_no_gated_citation_rewritten():
-    """covers: M5, R:SWEEP · gated M0 nodes keep their citations byte-identical."""
-    out = subprocess.run(["git", "diff", "--name-only", "HEAD", "--", ".add/tasks"],
-                         cwd=ROOT, capture_output=True, text=True, timeout=30)
-    touched = {Path(p).stem for p in out.stdout.split()}
-    gated_m0 = {"define-entity-model", "define-task-schema", "define-authority-rules",
-                "define-read-protocol", "define-log-rotation", "align-standards-citations",
-                "define-scale-rules", "define-compat-contract", "define-evidence-binding"}
-    assert not (touched & gated_m0), f"a gated M0 node was edited: {sorted(touched & gated_m0)}"
+    """covers: M5, R:SWEEP · the nine gated M0 nodes keep their citations byte-identical.
+
+    This ran `git diff -- .add/tasks` with cwd=`add-method/`, where `.add/` is GITIGNORED and
+    `git ls-files .add` returns zero — so `touched` was empty for every possible working tree and
+    the intersection with the nine names could never be non-empty. Two independent reasons it
+    could not fire: git cannot see that path, and the nine nodes do not exist in this repo at all,
+    tracked or untracked. They were retired with the M0 milestone.
+
+    A guard whose subject is gone should say so rather than keep reporting success. This now
+    asserts the PREMISE — the nine are absent — so if any is ever restored, this check goes red
+    and whoever restores it has to decide what protects it, instead of inheriting a guard that
+    was never running.
+    """
+    roots = [ROOT.parent / ".add", ROOT / ".add"]
+    present = sorted(slug for slug in GATED_M0
+                     for r in roots if (r / "tasks" / f"{slug}.md").exists())
+    assert not present, (
+        "a retired M0 node is back on disk: " + ", ".join(present) + " — this check was written "
+        "for a `git diff` that cannot see it (the bundle is gitignored); give it a real guard")
 
 
 # ---------------------------------------------------------------- M6 · a skip is not a pass

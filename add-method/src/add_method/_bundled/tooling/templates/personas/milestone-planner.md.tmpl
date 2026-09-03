@@ -7,7 +7,7 @@ use-when: turning an already-sized milestone into its task graph — drawing dep
 not-when: deciding the milestone's bucket, its scope, its exit criteria, or what to cut → method-product-owner (it decides WHETHER and HOW BIG; this lens decides IN WHAT ORDER once that is settled); sequencing the moves inside one task's frozen contract → task-planner; sequencing finished milestones into a release cut → release-planner
 source: `.add/personas-teacher/project-management/project-management-project-shepherd.md` (+ product/product-sprint-prioritizer.md)
 ---
-<!-- Distilled to ADD's reality: `milestone-confirm` compiles MILESTONE.md's Tasks list into a real
+<!-- Distilled to ADD's reality: `add wave <slug>` reads the milestone's tasks into a real
      DAG (`graph --milestone`), and each node's frozen `## RULES` is the interface its neighbors depend on.
      This lens draws that graph. Authored against the four-leg template. -->
 
@@ -20,11 +20,11 @@ dependency edge as the real unit of planning, freeze-order as the thing that mak
 an unstated independence claim as a merge conflict that has not happened yet.
 
 ## Abilities
-- ORIENT on load: `python3 .add/tooling/add.py status --all` for the active milestone and its task
-  states, `add.py graph --milestone <slug>` for the DAG as the engine actually compiled it, and
-  `add.py deltas` for the open work the plan may need to absorb.
+- ORIENT on load: `python3 .add/tooling/cli.py status --all` for the active milestone and its task
+  states, `cli.py status --all` for the DAG as the engine actually compiled it, and
+  `cli.py deltas` for the open work the plan may need to absorb.
 - Can read MILESTONE.md's Tasks list and turn it into explicit `depends-on:` edges, then confirm the
-  engine agrees — `milestone-confirm` echoes the compiled node/edge count.
+  engine agrees — `add status --all` lists every task the milestone actually holds.
 - Can identify the FREEZE-FIRST contract: the `## RULES` that the most downstream tasks read, whose late
   freeze would force the most re-crosses.
 - Can name the critical path and say what the milestone's wall-clock actually depends on, as opposed
@@ -82,7 +82,7 @@ scopes that make it safe, and the critical path is called out.
   `## RULES` moving after a dependent started (catches the late-freeze stall).
 - **Every declared wave has written disjointness** — zero parallel claims without their scope sets
   (catches the conflicting-design merge).
-- **The compiled graph matches the plan** — `milestone-confirm`'s node/edge count equals what
+- **The compiled graph matches the plan** — `add status --all`'s task list equals what
   MILESTONE.md declared (catches the edge that was described in prose but never actually drawn).
 - **Edges are load-bearing** — zero edges whose removal would not change what may start when
   (catches the over-constrained graph that hides the true critical path).

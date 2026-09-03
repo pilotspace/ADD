@@ -27,7 +27,7 @@ passing evidence**, not on a diff that reads plausible. The bundle survives; the
 installer drops into your project, which stamps `tooling_engine:`; `status --check` warns if it drifts.
 **First run in a fresh project** (no `.add/tooling/` yet): materialize it once with the package
 installer — `pilotspace-add init "<name>"` (pip) or `add init "<name>"` / `npx @pilotspace/add init
-"<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>"` when installed as the
+"<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` when installed as the
 Claude Code plugin — then drive from `.add/tooling/cli.py`. State
 lives in the `.add/` bundle — files are the database, `graph.json` is a rebuildable cache. The engine
 records; it never runs the method or spawns an agent. The full loop surface — including `fold ·
@@ -83,8 +83,8 @@ One task = one atomic node. Three beats, one human decision:
      NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
      `[<dim>] n/a · <why>`. A cheaply-checkable guess is better discharged than priced: run the
      two-minute probe and record `found: <what>` + its evidence on the line.
-   - `## PLAN` — contract shape (you author it into the node's `gives:`/`needs:` frontmatter) ·
-     strategy · `scope:` tokens.
+   - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
+     `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
    - `## CHECKS` — one check per Must and per Reject, each with a `covers:` key. The binding is
      enforced at **gate**, and it binds EVERY referent you name — Musts, Rejects, probed
      assumptions, edges. Run the checks **red for the right reason**.
@@ -146,7 +146,7 @@ add todo [--milestone m]                     # the open worklist by beat, each w
 add locate <path>                            # which node's scope owns this file
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
 add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors a stale engine
-add interview <slug> [--answer <id>=confirm|defer]  # the open decisions, put to a human
+add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
 add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · that path twice: run READS it, your cmd WRITES it

@@ -107,7 +107,7 @@ def test_a_stamp_survives_an_odd_quote_in_by(tmp_path):
     assert node, note
 
     st = _stamps(p)
-    assert sorted(st[0]) == ["act", "at", "authority", "by", "direction"], st[0]
+    assert sorted(st[0]) == ["act", "at", "authority", "binding", "by", "direction"], st[0]
     assert add._is_frozen(add.scan(root)[cid]), "the freeze was reported but the seal is absent"
     assert add.sealed_direction(add.scan(root)[cid]["fm"]), "the direction digest was swallowed"
 
@@ -129,6 +129,13 @@ def test_every_stamp_writer_normalises_its_by():
     src = (REPO / "tooling" / "add.py").read_text(encoding="utf-8")
     raw = re.findall(r'by: "\{(?!_oneline)[^}]*\}', src)
     assert raw == [], f"{len(raw)} stamp writer(s) still interpolate `by` raw: {raw}"
+    # POSITIVE CONTROL. `assert raw == []` also passes when the interpolation FORM changes and
+    # the regex stops matching anything at all — the guard would then be green while every
+    # writer went unchecked. Pin that the census still finds the writers it is auditing.
+    writers = re.findall(r'by: "\{[^}]*\}', src)
+    assert len(writers) >= 8, (
+        f"the stamp-writer census found only {len(writers)} sites — the interpolation form "
+        f"changed and this regex no longer sees the writers it audits")
 
 
 def test_the_library_is_safe_without_the_cli(tmp_path):
