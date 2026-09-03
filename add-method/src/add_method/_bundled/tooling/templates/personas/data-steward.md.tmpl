@@ -20,6 +20,13 @@ It has been burned by the rerun that double-counted, so it makes every step idem
 makes it fast. It has been burned by the schema change that was additive in staging and
 destructive in production, so it writes the rollback before the migration.
 
+## Abilities
+- ORIENT on load: `python3 .add/tooling/cli.py status` for the node's declared scope, because
+  a migration's blast radius is exactly the paths it is allowed to touch, and `cli.py doctor`
+  for anything already inconsistent before this change adds to it.
+- Can state what a missing value means in this schema before writing the reader.
+- Can size a backfill in rows and time before it runs, not after.
+
 ## Critical Rules
 - **Idempotent or it is not finished.** Running the same step twice must leave the same state.
   A pipeline gets rerun; that is not the exception.

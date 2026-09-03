@@ -99,4 +99,9 @@ def test_every_orient_command_runs_clean(tmp_path):
     # The check above passed vacuously for its whole life because `root` pointed at nothing and
     # every command exited 0 against an absent bundle. A check that asserts an empty list must
     # also assert it looked at something.
-    assert ran >= 3, f"only {ran} ORIENT command(s) were executed — the check is not running"
+    # Not a magic number: EVERY seeded lens carries an ORIENT line, so the floor is the roster
+    # itself. A new template with no ORIENT line, or one whose command the regex cannot see,
+    # fails here rather than quietly shrinking what this guard inspects.
+    assert ran >= len(_templates()), (
+        f"only {ran} ORIENT command(s) ran across {len(_templates())} seeded lenses — a lens "
+        f"carries no ORIENT line, or its command is not in a form this check can execute")

@@ -83,8 +83,8 @@ One task = one atomic node. Three beats, one human decision:
      NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
      `[<dim>] n/a · <why>`. A cheaply-checkable guess is better discharged than priced: run the
      two-minute probe and record `found: <what>` + its evidence on the line.
-   - `## PLAN` — contract shape (you author it into the node's `gives:`/`needs:` frontmatter) ·
-     strategy · `scope:` tokens.
+   - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
+     `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
    - `## CHECKS` — one check per Must and per Reject, each with a `covers:` key. The binding is
      enforced at **gate**, and it binds EVERY referent you name — Musts, Rejects, probed
      assumptions, edges. Run the checks **red for the right reason**.

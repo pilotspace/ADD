@@ -283,8 +283,12 @@ Fix the external shape in **`## PLAN`**:
 contract: POST /transfers { fromAccountId, toAccountId, amount }
           200 -> { transferId, fromBalance, toBalance }
           400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
-scope: src/, tests/
 ```
+
+`scope:` is not here — it lives in the node's **frontmatter**, where every reader looks, and
+`--scope "src/,tests/"` above already put it there. (Before 3.4 the scaffold offered a `scope:`
+slot in this section that nothing read: fill it and the gate answered "the node declares no
+`scope:`".)
 
 Name any boundary case worth its own check in **`## EDGES`** (optional, but an edge you
 write here is a rule the gate will hold you to):
