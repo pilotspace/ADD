@@ -3150,7 +3150,26 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     return True, f"recorded on specs/{lens} as {did}\nnext: add status"
 
 
-def deltas(root, status: str = "open") -> tuple:
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _as_date(value):
+    """An ISO `YYYY-MM-DD` string, or None when it is absent or unreadable.
+
+    None means UNKNOWN — never epoch-zero and never today (R:TODAYFALLBACK). This corpus
+    already records what a silent default costs: `.get(sens, "process")` turned every
+    unrecognised sensitivity into the LOWEST authority floor, and an unknown read as clean.
+    A date the engine cannot read is a date it does not have, and the listing says so.
+
+    ISO dates compare correctly as strings — fixed width, most-significant first — so no
+    parsing beyond the shape check is needed, and no timezone is implied.
+    """
+    v = (value or "").strip()
+    return v if ISO_DATE.match(v) else None
+
+
+def deltas(root, status: str = "open", lens: str = None,
+           since: str = None, as_of: str = None) -> tuple:
     """List every delta at `status` across the five specs. `(items, note)`.
 
     A reader over the frozen grammar (deltas.md): `open` is the carried inventory the loop reads to
@@ -3161,8 +3180,24 @@ def deltas(root, status: str = "open") -> tuple:
         return [], (f"`{status}` is not a delta status — the set is closed: "
                     f"{' | '.join(DELTA_STATUSES)}"
                     f"\nnext: add deltas --status <{' | '.join(DELTA_STATUSES)}>")
-    items, malformed = [], []
-    for path in sorted((root / "specs").glob("*.md")):
+    lenses = sorted(q.stem for q in (root / "specs").glob("*.md"))
+    if lens is not None and lens not in lenses:
+        return [], (f"no such spec lens: {lens} — the vocabulary is closed: "
+                    f"{' | '.join(lenses)}"
+                    f"\nnext: add deltas --lens <{' | '.join(lenses)}>")
+    # M6/R:TODAYFALLBACK — an unreadable date argument REFUSES. Falling back to today would
+    # answer a question nobody asked, and listing as though unfiltered would answer the
+    # opposite one; both read as success.
+    for flag, raw in (("--since", since), ("--as-of", as_of)):
+        if raw is not None and _as_date(raw) is None:
+            return [], (f"`{raw}` is not a date — {flag} takes ISO YYYY-MM-DD, the form the "
+                        f"delta grammar writes"
+                        f"\nnext: add deltas {flag} <YYYY-MM-DD>")
+
+    items, malformed, undated = [], [], 0
+    paths = [q for q in sorted((root / "specs").glob("*.md"))
+             if lens is None or q.stem == lens]
+    for path in paths:
         for line in read(path, "T2")["body"].splitlines():
             stripped = line.strip()
             m = DELTA_LINE.match(stripped)
@@ -3181,18 +3216,49 @@ def deltas(root, status: str = "open") -> tuple:
             # loop reads to propose the next tasks, with no warning and no doctor finding.
             if code:
                 malformed.append((path.stem, code, stripped))
-            elif rec["status"] == status:
+            else:
+                start, close = _as_date(rec["valid_from"]), _as_date(rec["valid_to"])
+                # M5/M7 — a delta the engine cannot DATE is shown and counted under a time
+                # filter, never dropped. A filter that hides what it cannot judge reports a
+                # smaller number, and a smaller number reads as success (R:SILENT_DROP).
+                unknown = (since is not None or as_of is not None) and start is None
+                if unknown:
+                    undated += 1
+                    if rec["status"] != status:
+                        continue
+                elif as_of is not None:
+                    # M3 — the status it HELD THEN. The interval is half-open [start, close):
+                    # a delta closed ON the queried date was not asserted that day (M4/A3).
+                    if start > as_of:
+                        continue
+                    held = "open" if (close is None or as_of < close) else rec["status"]
+                    if held != status:
+                        continue
+                elif since is not None:
+                    # M2/A2 — `--since` reads valid_from: when the lesson was FILED.
+                    if start < since or rec["status"] != status:
+                        continue
+                elif rec["status"] != status:
+                    continue
                 items.append(Delta(path.stem, rec["comp"], tail.strip(),
                                    rec["id"], rec["valid_from"], rec["valid_to"]))
+    # A6 — a narrowed listing must ANNOUNCE that it is narrowed, or a planner reads a filtered
+    # inventory as the whole one.
+    active = "".join([f" · lens {lens}" if lens else "",
+                      f" · since {since}" if since else "",
+                      f" · as of {as_of}" if as_of else ""])
     rendered = []
     if items:
-        rendered.append(f"{status} deltas ({len(items)}):")
+        rendered.append(f"{status} deltas ({len(items)}){active}:")
         # The address leads beside the competency so a reader can cite a lesson without opening
         # the file; the raw four-field head would push the lesson itself off the line.
         rendered += [f"  · [{i[1]}{' ' + i.id if i.id else ''}] {i[0]}: {i[2]}" for i in items]
         rendered.append("next: at close, fold or reject each (loop.md)")
     else:
-        rendered.append(f"no {status} deltas")
+        rendered.append(f"no {status} deltas{active}")
+    if undated:
+        rendered.append(f"— {undated} undated delta(s) shown: a legacy or unreadable date is "
+                        f"UNKNOWN, so the time filter cannot judge them and does not hide them")
     if malformed:
         rendered.append(f"! {len(malformed)} malformed delta line(s) — carried by nothing, "
                         f"read by nothing:")

@@ -135,6 +135,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("deltas", help="list open deltas across the specs (the carried inventory)")
     s.add_argument("--status", default="open", help="open | folded | rejected (default: open)")
+    s.add_argument("--lens", help="one spec: domain|system|experience|quality|method")
+    s.add_argument("--since", metavar="YYYY-MM-DD",
+                   help="only deltas FILED on or after this date (reads valid_from)")
+    s.add_argument("--as-of", dest="as_of", metavar="YYYY-MM-DD",
+                   help="the listing as it stood on this date, each delta with the status it "
+                        "HELD THEN; the interval is half-open [from, to), so a delta folded ON "
+                        "this date is excluded")
 
     s = sub.add_parser("fold", help="retag a named open delta folded (human consolidation)")
     s.add_argument("lens", help="the spec: domain|system|experience|quality|method")
@@ -307,7 +314,8 @@ def dispatch(args, run_cmd) -> int:
         return 0 if ok else 1
 
     if args.verb == "deltas":
-        _items, note = add.deltas(root, status=args.status)
+        _items, note = add.deltas(root, status=args.status, lens=args.lens,
+                                  since=args.since, as_of=args.as_of)
         print(note)
         return 0
 
