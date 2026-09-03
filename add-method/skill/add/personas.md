@@ -70,11 +70,11 @@ Don't start blank: distil the nearest teacher entry down to the four parts, then
 
 Personas are living documents; they improve through the delta loop (`deltas.md`). In a task's OBSERVE
 beat the AI emits a **persona delta** — a one-line tagged proposal to add or sharpen a critical-rule,
-success-metric, anti-pattern, or ability, written `open` with evidence, its hint naming the target
-section:
+success-metric, anti-pattern, or ability, written `open` with evidence, its hint riding the TAIL (never the head — the head has
+exactly one four-field shape) and naming the target section:
 
 ```
-- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)
+- [UDD · X4 · open · 2026-08-11] 4.5:1 contrast · persona:ui-designer · success-metric (evidence: audit)
 ```
 
 At close the **human** folds confirmed deltas into the persona file — the hinted section only,

@@ -25,12 +25,21 @@ def test_deltas_lists_every_open_delta(tmp_path):
 
 
 def test_deltas_excludes_folded(tmp_path):
-    """covers: M2 — a folded delta is decided, not carried; the open listing hides it."""
+    """covers: M2 — a folded delta is decided, not carried; the open listing hides it.
+
+    RE-AIMED by `dated-addressable-deltas`. The fixture used to hand-edit the literal
+    `[TDD · open]`; once the head carried an id and a date that replace matched nothing, the
+    delta stayed open, and the assertion passed VACUOUSLY because the text it looked for had
+    never been written. It now folds through the verb, so the fixture cannot silently no-op.
+    """
     add.init(tmp_path, "code", "T")
+    add.learn(tmp_path, "quality", "a settled one", evidence="e")
     add.learn(tmp_path, "quality", "a live open one", evidence="e")
-    # hand-fold one delta (as the human would): flip its status token
-    spec = tmp_path / "specs" / "quality.md"
-    spec.write_text(spec.read_text(encoding="utf-8").replace(
-        "[TDD · open] a live open one", "[TDD · folded] a settled one"), encoding="utf-8")
+    assert len(add.deltas(tmp_path)[0]) == 2, "the fixture must start with two open deltas"
+
+    ok, note = add.fold(tmp_path, "quality", "a settled one")
+    assert ok is True, note
+
     items, _ = add.deltas(tmp_path)
     assert all("settled one" not in t for _, _, t in items), "a folded delta must not appear in open"
+    assert any("a live open one" in t for _, _, t in items), "the open delta must still be carried"

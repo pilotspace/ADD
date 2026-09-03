@@ -18,23 +18,42 @@ task's own record stays the per-task trail; the living spec is where lessons acc
 Each delta begins on its own **tag line**; the learning may wrap:
 
 ```
-- [<COMPETENCY> · <status>] <learning> (evidence: <pointer>)
+- [<COMPETENCY> · <ID> · <status> · <valid-from>] <learning> (evidence: <pointer>)
+- [<COMPETENCY> · <ID> · <status> · <valid-from>→<valid-to>] <learning> (evidence: <pointer>)
 ```
 
 - `<COMPETENCY>` — exactly one of the five (below).
+- `<ID>` — the lesson's **address**: a lens letter (`D`omain · `S`ystem · e`X`perience · `Q`uality ·
+  `M`ethod) then an integer, unique within its spec file. It is the `#fragment` of the concept
+  address `/specs/method.md#M12`, so it holds no space, dot or punctuation. `learn` mints it above
+  a high-water mark the spec's `delta_seq:` carries, so **an id is never reused** — not after a
+  fold, not after a delete. Ids **retire in place**: nothing ever renumbers a survivor, because a
+  renumber silently re-points every relation aimed at it.
 - `<status>` — `open | folded | rejected`. A **newly emitted delta is `open`**.
-- `<learning>` — the insight; the tag line comes **first**, `(evidence: …)` **closes** it.
+- `<valid-from>` / `<valid-to>` — the **validity interval**, `YYYY-MM-DD`, **closed-closed**: a
+  delta folded today was still carried today. `open` carries the start alone; a **terminal** status
+  (`folded` or `rejected`) closes the window. This is what makes `--as-of` possible — the window a
+  lesson was actually carried, rather than a file with no time in it at all.
+- `<learning>` — the insight; the tag line comes **first**, `(evidence: …)` closes it.
 - `(evidence: …)` — **required**, non-empty: a failing scenario, a production signal, a review note.
   No evidence → it is an opinion, not a delta.
+- **the tail stays open** — a clause may follow the evidence clause (a persona hint, a typed
+  relation). Anything after `(evidence: …)` is carried, never parsed away.
 - **persona target (optional)** — a lesson MAY add `· persona:<slug> · <critical-rule|success-metric|
-  anti-pattern|ability>` in brackets; the persona loop lands it in `.add/personas/<slug>.md` under
-  that section (newest-first, never clobbering) instead of the shared specs (`personas.md`).
+  anti-pattern|ability>` **in the tail**; the persona loop lands it in `.add/personas/<slug>.md`
+  under that section (newest-first, never clobbering) instead of the shared specs (`personas.md`).
+
+**The LEGACY two-field head `- [<COMPETENCY> · <status>] …` is read forever.** Not generosity —
+there is nowhere else for it to go. A legacy head carries no date, and an installed bundle has no
+way to recover one; at any deprecation date the only moves left would be making a user's real
+lessons malformed, or stamping an invented date, and inventing a date is the one thing this format
+forbids. So an undated delta lists normally, with an unbounded interval, and is never reported.
 
 A long learning may wrap onto continuation lines — they join into **one** delta:
 
 ```
-- [SDD · open] the export endpoint must reject a tenant-scoped token used cross-tenant,
-  returning `forbidden` (not `not_found`) (evidence: scenario_cross_tenant_export failed)
+- [SDD · S4 · open · 2026-08-11] the export endpoint must reject a tenant-scoped token used
+  cross-tenant, returning `forbidden` (not `not_found`) (evidence: scenario_cross_tenant_export failed)
 ```
 
 ## The five competencies → their living spec (pick exactly one)
@@ -64,17 +83,24 @@ judgment, and judgment is the human's — the same rule that stops the AI gradin
 ## Reject codes
 
 <reject_codes>
+- `unparsed` — the head is neither two fields (legacy) nor four (dated). Count the `·` separators.
 - `unknown_competency` — the tag is missing or not one of `DDD · SDD · UDD · TDD · ADD`. Fix the tag.
 - `no_evidence` — the `(evidence: …)` pointer is missing or empty. Add the proof, or drop the line.
 - `unknown_status` — the status is not `open | folded | rejected`. A fresh delta is `open`.
+- `bad_id` — the id is not a letter followed by letters, digits, `_` or `-`. It must survive as a
+  `#fragment`, so it may hold no space, dot or other punctuation.
+- `bad_date` — an endpoint is not `YYYY-MM-DD`. Fix the format.
+- `bad_interval` — the close is earlier than the open. Swap the endpoints.
+- `open_carries_close` — an `open` head carries a close date. An open lesson is still carried:
+  drop the close, or move the status to `folded`.
 </reject_codes>
 
 ## Worked example
 
 ```
-- [DDD · open] the account model conflated org and workspace (evidence: scenario_cross_tenant_read failed)
-- [TDD · open] no scenario covered a deleted tenant's dangling sessions (evidence: review note)
-- [ADD · open] the scaffold's allow-list missed the tenancy lib, slowing build (evidence: build log)
+- [DDD · D7 · open · 2026-08-11] the account model conflated org and workspace (evidence: scenario_cross_tenant_read failed)
+- [TDD · Q3 · open · 2026-08-11] no scenario covered a deleted tenant's dangling sessions (evidence: review note)
+- [ADD · M12 · folded · 2026-08-11→2026-09-03] the scaffold's allow-list missed the tenancy lib (evidence: build log)
 ```
 
 At close the human folded DDD+TDD (→ `folded`) and rejected ADD. Sharper foundation; nothing lost.

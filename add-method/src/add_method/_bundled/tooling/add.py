@@ -688,13 +688,39 @@ def _delta_identity(line: str) -> str:
 
 
 def _union_into_deltas(path: Path, incoming: list) -> bool:
-    """Append each delta line not already present, under `## Deltas` (as `learn` does). Idempotent."""
+    """Append each delta line not already present, under `## Deltas` (as `learn` does). Idempotent.
+
+    `join` is the SECOND writer of delta lines, and the one that can mint a duplicate address.
+    Streams branch from one base, so two of them mint the same next id for two different lessons;
+    this union then carries both while writing back MAIN's frontmatter, discarding the streams'
+    counters. An INCOMING line whose id is already taken here is re-minted above the high-water.
+    The line already in place never moves — ids retire in place, and a renumber would silently
+    re-point every relation aimed at them (R:RENUMBER).
+    """
     node = read(path, "T2")
     lines = node["body"].splitlines(keepends=True)
     present = {ln for ln in lines if ln.lstrip().startswith("- [")}
     fresh = [ln for ln in dict.fromkeys(incoming) if ln not in present]  # dedupe incoming, drop known
     if not fresh:
         return False
+    taken = set(_delta_ids_in(lines))
+    seq = _delta_high_water(node["raw"], lines)
+    letter, remapped = _delta_letter(path.stem), []
+    for line in fresh:
+        m = DELTA_LINE.match(line.strip())
+        did = parse_delta_head(m.group(1))["id"] if m else None
+        if did and did in taken:
+            seq += 1
+            fresh_id = f"{letter}{seq}"
+            line = line.replace(f"· {did} ·", f"· {fresh_id} ·", 1)
+            did = fresh_id
+        if did:
+            taken.add(did)
+            tail = re.search(r"(\d+)\Z", did)
+            if tail:
+                seq = max(seq, int(tail.group(1)))
+        remapped.append(line)
+    fresh = remapped
     for i, line in enumerate(lines):
         if line.startswith("## Deltas"):
             at = i + 2 if i + 1 < len(lines) else i + 1
@@ -702,7 +728,7 @@ def _union_into_deltas(path: Path, incoming: list) -> bool:
             break
     else:
         lines += ["\n## Deltas\n\n"] + fresh
-    write(path, f"---\n{node['raw']}\n---\n{''.join(lines)}")
+    write(path, f"---\n{set_key(node['raw'], 'delta_seq', str(seq))}\n---\n{''.join(lines)}")
     return True
 
 
@@ -2869,15 +2895,174 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
 # The living spec ↔ its 5-DD competency tag (deltas.md). A delta's tag names the competency the
 # lesson sharpens; the spec filename is where it lands. `learn` writes the tag from the lens.
 LENS_COMP = {"domain": "DDD", "system": "SDD", "experience": "UDD", "quality": "TDD", "method": "ADD"}
+# The lens ↔ the letter its delta ids carry. The id is scoped to its FILE — the concept address
+# is `/specs/<lens>.md#<id>` — so the letter is a mnemonic and the FILE is what disambiguates.
+LENS_ID = {"domain": "D", "system": "S", "experience": "X", "quality": "Q", "method": "M"}
+
+DELTA_ARROW = "\u2192"          # U+2192; round-trips through read/write as UTF-8 (probed at direction)
+DELTA_STATUSES = ("open", "folded", "rejected")
+DELTA_TERMINAL = ("folded", "rejected")   # a terminal status CLOSES the validity interval
+# Fragment-safe: the id becomes the `#fragment` of `/specs/<lens>.md#<id>`, so no space, dot or
+# punctuation may appear in it. `typed-relations` resolves that third FORMAT §3.3 form against
+# exactly this shape, which is why it is stated in the frozen contract and not only in this regex.
+DELTA_ID = re.compile(r"\A[A-Za-z][A-Za-z0-9_-]*\Z")
+DELTA_DATE = re.compile(r"\A\d{4}-\d{2}-\d{2}\Z")
+# Every code `deltas()` can put in its malformed report. Enumerated HERE, once: the doc guard reads
+# this tuple rather than a hand-kept list, because a second copy of one truth is the defect
+# `_oneline` recorded. deltas.md documents every member.
+DELTA_REJECTS = ("unparsed", "unknown_status", "unknown_competency", "no_evidence",
+                 "bad_id", "bad_date", "bad_interval", "open_carries_close")
+
+# The head is everything inside the brackets; group(2) is an OPEN tail. It stays open deliberately:
+# `typed-relations` appends a second `(refines: ...)` clause after the evidence clause, and an
+# anchored tail would report all 43 live lines `no_evidence` the day that lands.
+DELTA_LINE = re.compile(r"-\s+\[([^\]]*)\]\s*(.*)")
+# A line that LOOKS like a delta — so a plain markdown checkbox is never mistaken for a broken one,
+# while a one-field head carrying a real competency tag IS reported rather than skipped.
+DELTA_SHAPE = re.compile(r"-\s+\[(?:[^\]]*·[^\]]*|"
+                         + "|".join(sorted(LENS_COMP.values())) + r")\]")
+# `(evidence: <ptr>)` with something real inside — the template `<ref>` and an empty pointer
+# both read as absent, the same discrimination `R:HOLLOW_EXPLORE` makes on a finding. A SEARCH,
+# never a match: the clause need not close the line.
+DELTA_EVIDENCE = re.compile(r"\(evidence:\s*[^)\s<][^)]*\)")
+
+
+def parse_delta_head(head: str) -> dict:
+    """Read one delta head — the text INSIDE the brackets. `{comp, id, status, valid_from,
+    valid_to, code}`, where `code` is None when the head is well formed.
+
+    ONE parser: `deltas()`, `fold()` and the migration all read through here, so the grammar has
+    a single home. Dispatch is on the COUNT of `·`-separated fields, never on their shape — two
+    fields is the LEGACY head, four is the dated head, anything else is `unparsed`. Shape dispatch
+    would send a four-field head with a broken id to `unparsed` and leave `bad_id` a code no
+    producer could emit, which is a reject code that names nothing.
+    """
+    out = {"comp": None, "id": None, "status": None,
+           "valid_from": None, "valid_to": None, "code": None}
+    fields = [f.strip() for f in str(head).split("·")]
+    if len(fields) == 2:                       # LEGACY: `[ADD · open]` — read forever (M6)
+        out["comp"], out["status"] = fields
+        interval = None
+    elif len(fields) == 4:                     # dated: `[ADD · M12 · open · 2026-08-11]`
+        out["comp"], out["id"], out["status"], interval = fields
+    else:
+        out["code"] = "unparsed"
+        return out
+    if out["status"] not in DELTA_STATUSES:
+        out["code"] = "unknown_status"
+        return out
+    if out["comp"] not in LENS_COMP.values() and out["comp"] not in LENS_COMP:
+        out["code"] = "unknown_competency"
+        return out
+    if out["id"] is not None and not DELTA_ID.match(out["id"]):
+        out["code"] = "bad_id"
+        return out
+    if interval is not None:
+        ends = [e.strip() for e in interval.split(DELTA_ARROW)]
+        if len(ends) > 2:
+            out["code"] = "unparsed"
+            return out
+        if any(not DELTA_DATE.match(e) for e in ends):
+            out["code"] = "bad_date"
+            return out
+        out["valid_from"] = ends[0]
+        if len(ends) == 2:
+            # An `open` delta is still carried; a close date on it is a contradiction, and it
+            # gets its OWN code because the code is the whole message the author receives.
+            if out["status"] not in DELTA_TERMINAL:
+                out["code"] = "open_carries_close"
+                return out
+            if ends[1] < ends[0]:
+                out["code"] = "bad_interval"
+                return out
+            out["valid_to"] = ends[1]
+    return out
+
+
+class Delta(tuple):
+    """One carried lesson: `(spec, comp, text)` — with `.id`, `.valid_from`, `.valid_to` riding
+    as attributes.
+
+    A three-element tuple deliberately. `cli.py` and four pre-existing suites unpack exactly
+    three inside comprehensions (`for _, _, t in items`), and a wider tuple would edit the BODIES
+    of the suites this change must prove untouched. Equality and hash stay the tuple's, so the id
+    is metadata and never identity — two deltas differing only in id still compare equal, which
+    is what keeps every existing comparison meaning what it meant.
+    """
+    def __new__(cls, spec, comp, text, did=None, valid_from=None, valid_to=None):
+        obj = super().__new__(cls, (spec, comp, text))
+        obj.id, obj.valid_from, obj.valid_to = did, valid_from, valid_to
+        return obj
+
+    def __repr__(self):                       # the inherited tuple repr hides the id and every
+        return (f"Delta({self[0]!r}, {self[1]!r}, {self[2]!r}, "   # debug print then lies by
+                f"id={self.id!r}, valid_from={self.valid_from!r}, "  # omission
+                f"valid_to={self.valid_to!r})")
+
+
+def delta_carried_on(item, date: str) -> bool:
+    """True when `item` was carried on `date`. The interval is CLOSED-CLOSED.
+
+    Both endpoints are inclusive: a delta folded today was still carried today. An absent
+    endpoint is unbounded on that side, so a legacy undated delta is carried on every date and a
+    terminal delta whose close could not be recovered reads as still carried — over-reporting,
+    never losing a lesson. `deltas-time-filters` wires `--as-of` to this predicate rather than
+    re-deriving the boundary.
+    """
+    valid_from = getattr(item, "valid_from", None)
+    valid_to = getattr(item, "valid_to", None)
+    if valid_from and date < valid_from:
+        return False
+    if valid_to and date > valid_to:
+        return False
+    return True
+
+
+def _delta_letter(lens: str) -> str:
+    return LENS_ID.get(lens) or (str(lens)[:1].upper() or "X")
+
+
+def _delta_ids_in(lines) -> list:
+    """Every id already spelled in these body lines — the floor no mint may land on."""
+    out = []
+    for raw in lines:
+        m = DELTA_LINE.match(str(raw).strip())
+        if m:
+            did = parse_delta_head(m.group(1))["id"]
+            if did:
+                out.append(did)
+    return out
+
+
+def _delta_high_water(raw_fm: str, lines) -> int:
+    """The largest integer any id in this spec has ever carried.
+
+    `max(frontmatter delta_seq, the largest id in the body)`. Both terms are load-bearing:
+    `delta_seq` survives deleting the highest delta (an id is an address and must never be
+    reused), and the body term catches an id `join` merged in — `_union_into_deltas` writes back
+    MAIN's frontmatter, so an incoming stream's counter is discarded at every join.
+    """
+    high = 0
+    seq = re.search(r"^delta_seq:\s*(\d+)\s*(?:#.*)?$", str(raw_fm), re.M)
+    if seq:
+        high = int(seq.group(1))
+    for did in _delta_ids_in(lines):
+        tail = re.search(r"(\d+)\Z", did)
+        if tail:
+            high = max(high, int(tail.group(1)))
+    return high
 
 
 def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     """Append a lesson to a spec's `## Deltas` in the frozen delta grammar, `open` by default.
 
-    Grammar (deltas.md): `- [<COMPETENCY> · open] <lesson> (evidence: <pointer>)`. Evidence is
-    required, not decorative — a lesson with no evidence is an opinion, and a spec full of opinions
-    is the thing this method exists to replace. `open` is the only status `learn` writes; a human
-    moves it to `folded`/`rejected` (the AI never self-consolidates).
+    Grammar (deltas.md): `- [<COMPETENCY> · <ID> · open · <valid-from>] <lesson> (evidence: <ptr>)`.
+    The id is the concept address a typed relation can target; the date opens the validity
+    interval `fold` later closes. Both come from the engine — there is no parameter through which
+    a caller could supply either. Evidence is required, not decorative — a lesson with no evidence
+    is an opinion, and a spec full of opinions is the thing this method exists to replace. `open`
+    is the only status `learn` writes; a human moves it to `folded`/`rejected` (the AI never
+    self-consolidates).
     """
     if not evidence:
         return False, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
@@ -2890,25 +3075,20 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     comp = LENS_COMP.get(lens, lens.upper())
     node = read(path, "T2")
     lines = node["body"].splitlines(keepends=True)
-    entry = f"- [{comp} · open] {lesson} (evidence: {evidence})\n"
+    seq = _delta_high_water(node["raw"], lines) + 1
+    did = f"{_delta_letter(lens)}{seq}"
+    entry = f"- [{comp} · {did} · open · {_today()}] {lesson} (evidence: {evidence})\n"
     for i, line in enumerate(lines):
         if line.startswith("## Deltas"):
             lines.insert(i + 2 if i + 1 < len(lines) else i + 1, entry)
             break
     else:
         lines += ["\n## Deltas\n\n", entry]
-    write(path, f"---\n{node['raw']}\n---\n{''.join(lines)}")
-    return True, f"recorded on specs/{lens}\nnext: add status"
-
-
-DELTA_LINE = re.compile(r"-\s+\[([A-Z]+)\s*·\s*(\w+)\]\s*(.*)")
-# A line that LOOKS like a delta — the bracketed `[<LENS> · <status>]` head — so a plain list
-# item is never mistaken for a broken one.
-DELTA_SHAPE = re.compile(r"-\s+\[[^\]]*·[^\]]*\]")
-DELTA_STATUSES = ("open", "folded", "rejected")
-# `(evidence: <ptr>)` with something real inside — the template `<ref>` and an empty pointer
-# both read as absent, the same discrimination `R:HOLLOW_EXPLORE` makes on a finding.
-DELTA_EVIDENCE = re.compile(r"\(evidence:\s*[^)\s<][^)]*\)")
+    # The counter rides in frontmatter through `set_key`, which replaces ONE scalar and leaves
+    # every other byte — never re-emit the parsed mapping, which would drop comments and order.
+    raw = set_key(node["raw"], "delta_seq", str(seq))
+    write(path, f"---\n{raw}\n---\n{''.join(lines)}")
+    return True, f"recorded on specs/{lens} as {did}\nnext: add status"
 
 
 def deltas(root, status: str = "open") -> tuple:
@@ -2927,30 +3107,30 @@ def deltas(root, status: str = "open") -> tuple:
         for line in read(path, "T2")["body"].splitlines():
             stripped = line.strip()
             m = DELTA_LINE.match(stripped)
-            if m is None:
-                # Not every `- ` line is a delta; only one that LOOKS like one and fails.
-                if DELTA_SHAPE.match(stripped):
-                    malformed.append((path.stem, "unparsed", stripped))
+            # Not every `- [..]` line is a delta; only one that LOOKS like one and fails.
+            if m is None or not DELTA_SHAPE.match(stripped):
                 continue
-            comp, state = m.group(1), m.group(2)
-            # A typo'd status matched no branch and the line simply disappeared — from the
-            # inventory the loop reads to propose the next tasks, with no warning and no doctor
-            # finding, while deltas.md promised three reject codes that named nothing. A delta
-            # the engine cannot place is REPORTED; it is never silently dropped.
-            if state not in DELTA_STATUSES:
-                malformed.append((path.stem, "unknown_status", stripped))
-            elif comp not in LENS_COMP.values() and comp not in LENS_COMP:
-                malformed.append((path.stem, "unknown_competency", stripped))
-            elif not DELTA_EVIDENCE.search(m.group(3)):
-                # `learn` always writes `(evidence: <ptr>)`; a hand-added line that omits it is
-                # a claim with no proof, which is the third code deltas.md has always promised.
-                malformed.append((path.stem, "no_evidence", stripped))
-            elif state == status:
-                items.append((path.stem, comp, m.group(3).strip()))
+            rec = parse_delta_head(m.group(1))
+            tail = m.group(2)
+            code = rec["code"]
+            # `learn` always writes `(evidence: <ptr>)`; a hand-added line that omits it is
+            # a claim with no proof, which is the third code deltas.md has always promised.
+            if code is None and not DELTA_EVIDENCE.search(tail):
+                code = "no_evidence"
+            # A delta the engine cannot place is REPORTED; it is never silently dropped. A typo'd
+            # status once matched no branch and the line simply disappeared — from the inventory the
+            # loop reads to propose the next tasks, with no warning and no doctor finding.
+            if code:
+                malformed.append((path.stem, code, stripped))
+            elif rec["status"] == status:
+                items.append(Delta(path.stem, rec["comp"], tail.strip(),
+                                   rec["id"], rec["valid_from"], rec["valid_to"]))
     rendered = []
     if items:
         rendered.append(f"{status} deltas ({len(items)}):")
-        rendered += [f"  · [{c}] {s}: {t}" for s, c, t in items]
+        # The address leads beside the competency so a reader can cite a lesson without opening
+        # the file; the raw four-field head would push the lesson itself off the line.
+        rendered += [f"  · [{i[1]}{' ' + i.id if i.id else ''}] {i[0]}: {i[2]}" for i in items]
         rendered.append("next: at close, fold or reject each (loop.md)")
     else:
         rendered.append(f"no {status} deltas")
@@ -2958,17 +3138,24 @@ def deltas(root, status: str = "open") -> tuple:
         rendered.append(f"! {len(malformed)} malformed delta line(s) — carried by nothing, "
                         f"read by nothing:")
         rendered += [f"  ! {s}: {why} — {text}" for s, why, text in malformed]
-        rendered.append("next: fix the line's `- [<LENS> · open|folded|rejected] <text>` shape")
+        rendered.append("next: fix the line's "
+                        "`- [<LENS> · <ID> · open|folded|rejected · <valid-from>] <text>` shape")
     elif not items:
         rendered.append("next: add status")
     return items, "\n".join(rendered)
 
 
 def fold(root, lens: str, match: str) -> tuple:
-    """Retag the open delta(s) in `lens` whose text contains `match` as `folded`. `(ok, note)`.
+    """Retag the open delta(s) in `lens` whose text contains `match` as `folded`, CLOSING the
+    validity interval at today. `(ok, note)`.
 
     Consolidation is the human's judgment (deltas.md) — the engine only records the status flip, and
     only on a human's call. A fold matching nothing refuses (R:NOMATCH) rather than silently no-op.
+
+    A LEGACY undated head keeps its two-field shape: the engine does not know when that lesson was
+    filed, and stamping today as its start would be a fiction. It records what it can and invents
+    nothing. Ids retire in place — no fold ever renumbers a survivor, because a renumber silently
+    re-points every relation that targets them.
     """
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
@@ -2980,9 +3167,19 @@ def fold(root, lens: str, match: str) -> tuple:
     out, folded = [], 0
     for line in node["body"].splitlines(keepends=True):
         m = DELTA_LINE.match(line.strip())
-        if m and m.group(2) == "open" and match in m.group(3):
-            line = line.replace(f"[{m.group(1)} · open]", f"[{m.group(1)} · folded]", 1)
-            folded += 1
+        if m:
+            rec = parse_delta_head(m.group(1))
+            if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
+                head = m.group(1)
+                if rec["id"] is None:
+                    closed = f"{rec['comp']} · folded"
+                elif rec["valid_from"]:
+                    closed = (f"{rec['comp']} · {rec['id']} · folded · "
+                              f"{rec['valid_from']}{DELTA_ARROW}{_today()}")
+                else:
+                    closed = f"{rec['comp']} · {rec['id']} · folded"
+                line = line.replace(f"[{head}]", f"[{closed}]", 1)
+                folded += 1
         out.append(line)
     if not folded:
         return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
