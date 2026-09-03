@@ -335,7 +335,7 @@ def dispatch(args, run_cmd) -> int:
     if args.verb == "join":
         _result, note = add.join(root, [Path(b) for b in args.bundles])
         print(note)  # a skipped HARD-STOP stream is reported in the note, not an engine refusal
-        return 0
+        return 0 if _result is not None else 1  # an unreadable stream path IS an engine refusal
 
     if args.verb == "advise":
         out, note = add.advise(root, _resolve(root, args.ref), args.persona)

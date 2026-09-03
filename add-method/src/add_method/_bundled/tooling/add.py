@@ -716,6 +716,20 @@ def join(root, stream_dirs) -> tuple:
     stream is never admitted (R:MERGEHARDSTOP); a PASS stream is never dropped (R:DROPPASS).
     """
     root = Path(root)
+    # Read every stream path BEFORE merging any of them. `(d / "tasks").glob("*.md")` on a
+    # directory that does not exist yields nothing, quietly — so an unread path was
+    # indistinguishable from a wave that legitimately merged nothing, and `add join /typo`
+    # exited 0 saying "joined 0 stream(s)". Same class as the receipt `run` used to fabricate
+    # for a typo'd slug: success reported over input the verb never found.
+    #
+    # All-or-nothing, and checked first: a partial merge leaves the bundle holding some of a
+    # wave's nodes with nothing on record saying which -> "R:PHANTOMSTREAM".
+    for d in stream_dirs:
+        if not _is_bundle_index(Path(d) / "index.md"):
+            return None, (f"unreadable stream: {d} — a stream bundle declares `abf_version:` in "
+                          f'its index, and this path does not -> "R:PHANTOMSTREAM"'
+                          f"\nnext: check the path, then add join <stream>/.add")
+
     merged, skipped, specs_touched, conflicts = [], [], set(), []
     incoming = {}  # spec filename -> delta lines contributed by admitted streams (gathered, then partitioned)
 
@@ -1535,6 +1549,19 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
                       f'computed, and an unreadable declaration is not the lowest floor -> "R:SILENT_FLOOR"'
                       f"\nnext: add new {node_type} {slug} --sensitivity "
                       f"<{' | '.join(SENSITIVITY_FLOOR)}>")
+
+    # The SECOND slot `new` judges, and for the same reason: `kind:` is not prose, it is the Task
+    # side of a routing predicate whose Persona side (`task-kinds:`) is already validated. Held to
+    # different standards, the unvalidated side is where the drift lands — `--kind frontend` was
+    # accepted and `doctor` reported no findings, so the task silently lost its lens for life.
+    # Absence stays legal: `kind:` is optional, and a missing value is not an unreadable one
+    # -> "R:SILENT_KIND".
+    kind = fields.get("kind")
+    if kind not in (None, "") and str(kind) not in PERSONA_TASK_KINDS:
+        return None, (f"unroutable kind {str(kind)!r} — no persona can declare it in `task-kinds:`, "
+                      f'so the node would carry a lens nobody can match -> "R:SILENT_KIND"'
+                      f"\nnext: add new {node_type} {slug} --kind "
+                      f"<{' | '.join(PERSONA_TASK_KINDS)}>")
 
     order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "vibe", "flow",
              "task-kinds", "use-when", "not-when", "description", "sources",
@@ -4386,6 +4413,24 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # Coverage: a sensitive task with no recorded lens. R:NOLENS floors PARALLEL streams only, so a
     # SEQUENTIAL architecture/security/data task can carry no lens and go unseen. Surface it — info,
     # reports-only, never a gate (that HARD-STOP question is A2, out of scope here).
+    # `placeholders_in` is a correct, trusted oracle wired to exactly ONE caller: the gate. So a
+    # node standing in its scaffold only ever surfaced at the END of the loop, to someone who had
+    # already done the work — never to the newcomer who runs `doctor` to ask whether the bundle is
+    # in good shape, and got "no findings" over a bundle nobody had authored -> "R:GREENBUNDLE".
+    #
+    # `warn`, not `error`: a fresh scaffold is unwritten, not broken, and an error would make
+    # `init` produce a red bundle. LIFECYCLE_TYPES only — a Persona has no RULES to author, so a
+    # finding against one names nothing its author could clear.
+    for cid, node in sorted(graph.items()):
+        if (node["fm"] or {}).get("type") not in LIFECYCLE_TYPES:
+            continue
+        # `scan()` nodes carry frontmatter and no body, and `placeholders_in` reads the body —
+        # called on a scan node it returns [] for every node, which is a guard that never fires.
+        standing = placeholders_in({**node, "body": read(node["path"], "T2")["body"]})
+        if standing:
+            find("warn", "unauthored_node",
+                 f"{cid.lstrip('/')}: still scaffold — {' · '.join(standing[:3])}", cid)
+
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
         if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
