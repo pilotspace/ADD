@@ -339,6 +339,41 @@ ACTIVE_STATES = ("direction", "build", "verify")
 CACHE_NAME = "graph.json"
 
 
+# ------------------------------------------------- the scan-path read (evidence deferred)
+#
+# A Run receipt's frontmatter is mostly EVIDENCE: `scope_digest` is one `{path, blob}` entry
+# per file in the task's scope, and `passed`/`failed` are the reported test ids. Measured on
+# this bundle before this task: 97 receipts held 7979 digest entries and 953 id lines, and
+# were 68% of ALL T0 parse time — a cost every command paid, including `status`, the first
+# command of every session. Both terms grow monotonically and nothing prunes them: the digest
+# grows with the repo (66 -> 103 entries per receipt in three weeks) and receipts are
+# append-only, so the scan was O(every receipt ever recorded).
+#
+# Nothing in the GRAPH ever read it. The payload's only consumers — `fresh()` and the gate's
+# coverage map — are both fed by `latest_receipt()`, which does its own direct single-node
+# `read()`. So the graph paid for a payload it never looked at.
+#
+# `raw` is taken from the ORIGINAL text, never from the stripped copy (M2, R:LOSSYRAW). The
+# one write path does its own `read()` today, but a lean `raw` would be a loaded gun for the
+# next writer that does not — it would drop every digest line on save, silently.
+_EVIDENCE_BLOCK = re.compile(r"^  (?:scope_digest|passed|failed):[ \t]*\n(?:[ \t]+- .*\n)*", re.M)
+
+
+def _read_for_graph(path: Path) -> dict:
+    """`read(path, "T0")`, minus a Run receipt's evidence payload (FORMAT §4).
+
+    Anchored to the two-space indent the receipt block is written at, so a TOP-LEVEL key that
+    happens to be called `passed:` on some other node is untouched (E2).
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    raw, _ = split(text)
+    if "  scope_digest:" in text or "  passed:" in text or "  failed:" in text:
+        fm, _ = parse(_EVIDENCE_BLOCK.sub("", text))
+    else:
+        fm, _ = parse(text)
+    return {"path": Path(path), "fm": fm, "raw": raw, "card": "", "body": ""}
+
+
 def cid_of(root: Path, path: Path) -> str:
     """A bundle-absolute concept ID (OKF §2): `/tasks/x.md`, never a filesystem path."""
     return "/" + Path(path).relative_to(root).as_posix()
@@ -362,7 +397,7 @@ def scan(root, strays: list = None) -> dict:
             continue  # vendored engine material, the seed corpus, and its generated routing index —
             # never project graph, never a stray. Kept in lockstep with validate_bundle.load()'s twin list:
             # a vendored file this oracle skips but the other reads reds as `missing_frontmatter`.
-        node = read(path, "T0")
+        node = _read_for_graph(path)
         if node["fm"] is None:
             if strays is not None:
                 strays.append(path.relative_to(root).as_posix())

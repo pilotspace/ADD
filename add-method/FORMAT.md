@@ -214,6 +214,22 @@ was asked about. This single rule is what bounds the cost of every other verb: `
 scans the bundle at T0, `brief` reads exactly one T2 and composes everything else from T1
 and fragments (§7.1).
 
+**T0 defers a receipt's evidence payload.** A bundle-wide scan parses a `type: Run` node's
+frontmatter EXCEPT `receipt.scope_digest`, `receipt.passed` and `receipt.failed` — the
+per-file digest and the reported test ids. These are read when a receipt is opened
+directly (`latest_receipt` → `fresh`, §8.1, and the coverage map, §8.3), never when the
+bundle is walked, because no graph consumer reads them. Absent from a scanned node means
+UNPARSED, never EMPTY: a consumer that needs the payload MUST read the receipt directly
+rather than treat the missing key as `[]`. A scanned node's `raw` stays byte-complete, so
+the write path (§2) cannot lose a byte the scan declined to parse.
+
+Without this, scan cost was `Σ over every receipt ever recorded of (files in its scope)` —
+both terms growing monotonically, paid by every verb. Measured here at 97 receipts: 68% of
+all T0 parse time, and `status` fell 90ms → 65ms when it stopped.
+
+Derived from `add.py:_read_for_graph`; asserted by
+`tests/engine/test_scan_skips_receipt_evidence.py`.
+
 Because reads are tiered, a consumer that wants the whole graph at once reads the
 `graph.json` export rather than opening every node — and the engine never reads that
 export back (law 1).
