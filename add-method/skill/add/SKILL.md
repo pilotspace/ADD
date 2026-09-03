@@ -56,14 +56,14 @@ Read the request into a task shape, then pick the **lane** (you route; the human
   else ≤3 adjacent files, one-sitting diff, zero unknowns — small new behavior fits. Route and go, no
   node: inline card → red→green → `invariants:` → commit + exactly one `add learn` line. Medium → Task
   `--depth quick`; large → `standard|deep` or a Milestone. Ceremony falls with size; review never does.
-- **Task** — one atomic node in the active milestone's scope. The 3-beat loop below.
+- **Task** — one atomic node in the active milestone's scope; `add deltas` first. The 3-beat loop below.
 - **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
   questions + a hard budget freeze, and the gate reads the cited `## FINDINGS` brief directly —
   **no run receipt** for a findings-only explore (`phases/explore.md`). One contract-shaping
   unknown already argues this lane; freezing a contract on a guess ships the wrong thing with
   perfect receipts.
-- **Project / milestone** — a new theme or a slice too big for one task. Load the best-fit persona
-  whose `flow:` includes **advisor** BEFORE drafting (skip silently if none is seeded), draft the
+- **Project / milestone** — a new theme or a slice too big for one task. `add deltas` first, then
+  load the persona whose `flow:` includes **advisor** BEFORE drafting (skip silently if none is seeded), draft the
   milestone (goal · scope · exit criteria · breadth-first task list), confirm it, create it and its
   tasks, and record the lens: `add advise <milestone> --persona <p>`.
 
