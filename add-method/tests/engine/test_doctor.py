@@ -2,7 +2,7 @@
 
 Red-first for `/tasks/build-doctor.md`. The `covers:` citations live in each test's docstring,
 which is where `checks_of` reads them (e14's M1) — after BUILD this file is what compiles that
-node's CHECKS section, so a citation here is a claim `checks_sync` will publish.
+node's CHECKS section, so a citation here is a claim `checks_verify` reads back.
 
 M2 is the load-bearing test and it is the one most likely to fail honestly: it runs the M0
 validator as a SUBPROCESS and diffs its findings against `doctor`'s. Importing the validator would

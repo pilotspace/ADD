@@ -192,3 +192,119 @@ def test_a_hard_stop_before_the_reopen_does_not_block_a_later_pass(tmp_path):
     add.gate(root, cid, "PASS", by="H")
     ok, *rest = add.done(root, cid)
     assert ok, f"the resolving PASS after a reopen was refused: {_msg((ok, *rest))}"
+
+
+# ============================================================ the human's corrections
+#
+# Interviewed 2026-09-03. Four readings were marked `correct`, and A1's literal form could not
+# be built: a gate's authority is COMPUTED from the node's floor, so on a security task EVERY
+# HARD-STOP is stamped `human` — "a human-authority stop closes the node" would have restored
+# the exact walk this task exists to close. Resolved by the human: the force-close is a
+# DELIBERATE ACT, not something the computed floor grants.
+
+
+def test_a_human_may_force_close_a_stopped_node_with_a_reason(tmp_path):
+    """covers: M6, A1 — the human CAN ship over a finding, and the ledger says they chose to."""
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "overridden", sensitivity="security")
+    add.run(root, cid, ["false"])
+    add.gate(root, cid, "HARD-STOP", by="H", reason="SQL injection in login")
+
+    ok, *_ = add.done(root, cid)
+    assert not ok, "the stop did not hold without an override"
+
+    ok, *rest = add.done(root, cid, override="in dead code, tracked as SEC-412")
+    assert ok, f"a human could not force-close a stopped node: {_msg((ok, *rest))}"
+    assert (add.scan(root)[cid]["fm"] or {}).get("status") == "done"
+
+
+def test_the_override_is_recorded_with_its_reason(tmp_path):
+    """covers: M6, A1 — a silent override is the floor granting it again, one flag over."""
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "recorded", sensitivity="security")
+    add.run(root, cid, ["false"])
+    add.gate(root, cid, "HARD-STOP", by="H", reason="the finding")
+    add.done(root, cid, override="accepted for the release", by="Tin Dang")
+
+    stamps = [s for s in ((add.scan(root)[cid]["fm"] or {}).get("verified") or [])
+              if isinstance(s, dict) and s.get("act") == "done"]
+    assert stamps, "the override closed the node and wrote no stamp"
+    assert "accepted for the release" in str(stamps[-1].get("override", "")), stamps[-1]
+    assert stamps[-1].get("by") == "Tin Dang", stamps[-1]
+
+
+def test_an_override_without_a_reason_is_refused(tmp_path):
+    """covers: M6, R:STOPSHIPS — shipping over a finding is exactly what must be explained."""
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "unreasoned", sensitivity="security")
+    add.run(root, cid, ["false"])
+    add.gate(root, cid, "HARD-STOP", by="H", reason="the finding")
+
+    ok, *rest = add.done(root, cid, override="")
+    assert not ok, "a stopped node was force-closed with no reason recorded"
+    assert "reason" in _msg((ok, *rest)).lower(), _msg((ok, *rest))
+
+
+def test_the_override_does_not_bypass_the_seal(tmp_path):
+    """covers: M6, E3, A1 — it answers the VERDICT, never the ONE approval."""
+    root = _bundle(tmp_path)
+    cid = _authored(root, "unsealed-override")      # never frozen
+    add.run(root, cid, ["true"])
+    add.gate(root, cid, "HARD-STOP", by="H", reason="the finding")
+
+    ok, *rest = add.done(root, cid, override="shipping anyway")
+    assert not ok, "the override waved through a node the ONE human approval never touched"
+
+
+def test_gate_refuses_a_hard_stop_on_a_node_that_was_never_frozen(tmp_path):
+    """covers: M7, A3 — the human's correction: a stop is a RECORD, and a record needs a seal."""
+    root = _bundle(tmp_path)
+    cid = _authored(root, "nofreeze")
+    add.run(root, cid, ["true"])
+
+    ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="a finding")
+    assert not ok, "a HARD-STOP was recorded against a node nobody ever approved"
+    assert "R:UNSEALED" in _msg((ok, *rest)), _msg((ok, *rest))
+
+
+def test_a_hard_stop_on_a_sealed_node_is_still_always_recordable(tmp_path):
+    """covers: M7, A3 — the counter-guard: writing down a finding must not get hard."""
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "sealedstop", sensitivity="security")
+    add.run(root, cid, ["false"])
+
+    ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="SQL injection")
+    assert ok, f"a sealed node could not record its finding: {_msg((ok, *rest))}"
+
+
+def test_a_gate_stamp_with_no_readable_outcome_still_closes(tmp_path):
+    """covers: M8, A4 — the human's correction: an unreadable verdict fails OPEN."""
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "oldstamp")
+    _green_receipt(root, cid, tmp_path)
+    add.gate(root, cid, "PASS", by="H")
+
+    p = root / cid.lstrip("/")
+    p.write_text(re.sub(r", outcome: PASS", "", p.read_text(encoding="utf-8")), encoding="utf-8")
+    add._transition(root, cid, sets={"status": "verify"})
+
+    ok, *rest = add.done(root, cid)
+    assert ok, (
+        "a stamp written by an engine that recorded no `outcome` was stranded: "
+        + _msg((ok, *rest)))
+
+
+def test_an_interview_sidecar_is_a_conforming_node(tmp_path):
+    """covers: M9, R:UNSCANNABLE — found by running this very task's own interview.
+
+    `run` writes its receipt with frontmatter (`task: /tasks/<slug>.md`); `interview` wrote its
+    sidecar as bare markdown, so `doctor` reported `error missing_frontmatter` against a file
+    the engine had just created correctly. A notary that manufactures its own conformance error
+    is the `orphan_receipt` shape one verb over.
+    """
+    root = _bundle(tmp_path)
+    cid = _sealed(root, "sidecar", sensitivity="security")
+    findings = add.doctor(root)
+    findings = findings[1] if isinstance(findings, tuple) else findings
+    bad = [f for f in findings if "interviews/" in str(f)]
+    assert not bad, f"`interview` wrote a file its own doctor rejects: {bad}"

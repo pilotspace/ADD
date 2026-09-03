@@ -29,7 +29,9 @@ import re
 import sys
 from pathlib import Path
 
-ABF_TYPES = {"Project", "Milestone", "Task", "Spec", "Persona", "Prompt", "Run"}
+# Mirrors add.ABF_TYPES. `Interview` joined when `interview` began writing its `.d/interviews/`
+# sidecar with frontmatter — the engine emits the type, so both oracles must know it.
+ABF_TYPES = {"Project", "Milestone", "Task", "Spec", "Persona", "Prompt", "Run", "Interview"}
 RESERVED = {"index.md", "log.md"}
 
 # A23 (FORMAT §1.1) — reserved files whose bodies are rendered, not authored. Each must

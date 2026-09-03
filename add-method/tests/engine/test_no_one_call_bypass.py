@@ -15,8 +15,6 @@ import ast
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tooling"))
 import add  # noqa: E402
@@ -52,13 +50,6 @@ def test_no_public_function_both_opens_and_closes_a_node():
         "approval ADD asks for can be skipped entirely:\n  " + "\n  ".join(straddling))
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "KNOWN, tracked by /tasks/wire-or-delete-checks-sync.md: `checks_sync` compiles a node's "
-    "CHECKS from the suite, carries 9 tests and its own R:SILENTFIX refusal — whose `next:` line "
-    "promises `add checks <slug> --verify`, a verb that does not exist. It is wired to nothing. "
-    "Deleting a working feature is the wrong repair, and wiring a 25th verb is outside this "
-    "milestone's frozen scope, so the gap is recorded here rather than accommodated by weakening "
-    "the census. strict=True: when the task lands, this xfail must be REMOVED, not left passing.")) 
 def test_every_public_function_is_reachable_or_a_library_read():
     """covers: M2 — an unwired, tested writer is a bypass nobody is watching.
 
@@ -92,3 +83,22 @@ def test_the_deleted_lane_is_gone():
     """covers: M1 — the specific function measured, pinned so it cannot quietly return."""
     assert not hasattr(add, "quick"), (
         "add.quick() is back — it walked new -> freeze(process) -> run -> gate PASS in one call")
+
+
+def test_both_type_oracles_agree_on_the_census():
+    """covers: M3 — a type the engine EMITS that one oracle does not know is a self-inflicted finding.
+
+    `ABF_TYPES` lives in two places on purpose: `add.py` compiles the graph and
+    `scripts/validate_bundle.py` is the independent M0 oracle that must never be able to agree
+    with the engine by construction. Independent is not the same as out of sync — adding
+    `Interview` to one and not the other made `doctor` and the validator disagree about the
+    FORMAT, which is the one disagreement the parity test exists to forbid.
+    """
+    import re
+    validator = (REPO / "scripts" / "validate_bundle.py").read_text(encoding="utf-8")
+    m = re.search(r"ABF_TYPES = \{([^}]*)\}", validator, re.S)
+    assert m, "the validator no longer declares ABF_TYPES — this guard is stale"
+    theirs = set(re.findall(r'"([A-Za-z]+)"', m.group(1)))
+    assert theirs == set(add.ABF_TYPES), (
+        f"the two type censuses disagree — only engine: {set(add.ABF_TYPES) - theirs}; "
+        f"only validator: {theirs - set(add.ABF_TYPES)}")

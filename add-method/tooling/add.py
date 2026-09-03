@@ -1702,7 +1702,7 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                   f"(`add run {slug} -- <cmd>`)")
 
 
-def done(root, cid: str) -> tuple:
+def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     """Transition to `done` only when a gate stamp entitles it.
 
     Refusing to create an unsupported record is the notary's duty, not guarding: this never
@@ -1724,7 +1724,11 @@ def done(root, cid: str) -> tuple:
     # node that shipped; it entitles nothing. Resolving it is the normal path — record the PASS
     # that answers the finding and this list fills again.
     stopped = [s for _, s in gates if str(s.get("outcome")) == "HARD-STOP"]
-    gates = [(i, s) for i, s in gates if str(s.get("outcome")) in CLOSING_VERDICTS]
+    # A stamp with NO readable `outcome` closes. Interviewed 2026-09-03, A4 marked `correct`:
+    # an engine that recorded no verdict field left nodes that cannot be re-gated, so this fails
+    # OPEN rather than stranding them. Only a verdict that reads as HARD-STOP withholds `done`.
+    gates = [(i, s) for i, s in gates
+             if s.get("outcome") is None or str(s.get("outcome")) in CLOSING_VERDICTS]
     entitled = [(i, s) for i, s in gates
                 if AUTHORITY_ORDER.index(str(s.get("authority", "process"))) >=
                 AUTHORITY_ORDER.index(required)]
@@ -1739,9 +1743,25 @@ def done(root, cid: str) -> tuple:
 
     missing, fix = [], f"add gate {slug}"
     if not gates and stopped:
-        missing.append("a gate that CLOSES — the latest verdict is `HARD-STOP`, which records a "
-                       "finding and stops the node; it does not ship it")
-        fix = f"resolve the finding, then add gate {slug} PASS"
+        # Interviewed 2026-09-03. A1 was marked `correct` — a human may ship over a finding — but
+        # its literal form could not be built: a gate's authority is COMPUTED from the floor, so
+        # on a security node EVERY stop is stamped `human` and "human authority closes it" is the
+        # original defect wearing a flag. The human resolved it: the force-close is a deliberate
+        # ACT carrying its own reason, so the ledger shows a person chose to ship over a finding
+        # rather than the floor quietly permitting it. It answers the VERDICT only — the seal
+        # below is checked exactly as before, so an override never buys the ONE approval.
+        if override is None:
+            missing.append("a gate that CLOSES — the latest verdict is `HARD-STOP`, which records "
+                           "a finding and stops the node; it does not ship it")
+            fix = (f"resolve the finding, then add gate {slug} PASS   (or, to ship over it, "
+                   f'add done {slug} --override "<why this is acceptable>")')
+        elif not str(override).strip():
+            missing.append("a reason for the override — shipping over a recorded finding is "
+                           "exactly the decision that has to be explained")
+            fix = f'add done {slug} --override "<why this is acceptable>"'
+        else:
+            gates = [(i, s) for i, s in enumerate(stamps)
+                     if i > last_reopen and s.get("act") == "gate"]
     elif not gates:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
@@ -1755,8 +1775,13 @@ def done(root, cid: str) -> tuple:
         return False, missing, ("cannot record `done` — " + "; ".join(missing) +
                                 f"\nnext: {fix}")
 
-    _transition(root, cid, sets={"status": "done"})
-    return True, [], f"{cid} is done\nnext: add status"
+    appends = []
+    if override and str(override).strip():
+        appends = [("verified", f'{{ by: "{_oneline(by or "process:done")}", at: {_today()}, '
+                                 f'act: done, override: "{_oneline(override)}" }}')]
+    _transition(root, cid, sets={"status": "done"}, appends=appends)
+    tail = " (override recorded)" if appends else ""
+    return True, [], f"{cid} is done{tail}\nnext: add status"
 
 
 def reopen(root, cid: str, to: str, reason: str) -> tuple:
@@ -3265,8 +3290,12 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     side_dir.mkdir(parents=True, exist_ok=True)
     n = len(list(side_dir.glob("*.md"))) + 1
     digest = interview_digest(node)
-    body = [f"# interview {n} — {slug}", "", f"by: {by or 'unrecorded'}",
-            f"at: {_today()}", f"interview: {digest}", ""]
+    # Frontmatter, like a run receipt. Without it `doctor` reported `error missing_frontmatter`
+    # against a file the engine had just written correctly — the `orphan_receipt` shape one verb
+    # over, a notary manufacturing its own conformance error.
+    body = [f"---", f"type: Interview", f"task: {cid}", f"by: {_oneline(by or 'unrecorded')}",
+            f"at: {_today()}", f"interview: {digest}", "---",
+            f"# interview {n} — {slug}", ""]
     for d in decisions:
         body += [f"## {d['id']} [{d['dim']}]", f"- asked: {d['reading']}"]
         if d["cost"]:
@@ -3803,7 +3832,12 @@ def _binds(refusal: str, verdict: str) -> bool:
     finding being written down — and a security finding is always a HARD-STOP.
     """
     if verdict == "HARD-STOP":
-        return False
+        # Interviewed 2026-09-03, A3 marked `correct`. The stop still binds NO evidence refusal —
+        # writing down a finding must never get hard, and a security finding is always a
+        # HARD-STOP. But it is a RECORD against a node, and a record needs the seal that says
+        # someone approved the node's existence: 3.3.0 made that argument for RISK-ACCEPTED and
+        # it holds here. Everything else stays open.
+        return refusal == "unsealed"
     if refusal in INTEGRITY_REFUSALS:
         return True
     if refusal in EVIDENCE_REFUSALS:
@@ -4252,48 +4286,6 @@ def checks_verify(root, cid: str, paths, extracted: dict = None) -> list:
     return findings
 
 
-def checks_sync(root, cid: str, paths) -> tuple:
-    """Rewrite one node's CHECKS from the suite. `(changed, note)`.
-
-    Refuses a node carrying a gate stamp (R:SILENTFIX). That is the §3.6 asymmetry F2 turned on:
-    e12's own CHECKS were corrected freely because nothing had been stamped, and M0's nine cannot
-    be, because a gate was taken against them. Refusing to repair is not refusing to REPORT —
-    `checks_verify` still speaks.
-    """
-    # Materialised once: this function walks `paths` to compile and again to report how many files
-    # it read, and a generator makes the second walk empty. The section came out correct and the
-    # note said "from 0 suite files" — a true report is not optional in a notary.
-    root, paths = Path(root), list(paths)
-    node = scan(root).get(cid)
-    if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
-    if any(s.get("act") == "gate" for s in ((node["fm"] or {}).get("verified") or [])
-           if isinstance(s, dict)):
-        return False, (f"{cid} carries a gate stamp — a gated claim is recorded, not repaired "
-                       f"(§3.6, R:SILENTFIX)\nnext: add checks {cid.rsplit('/', 1)[-1][:-3]} --verify")
-
-    full = read(node["path"], "T2")
-    lines, gaps = _checks_lines(full, paths)
-    body = full["body"]
-    start = body.find("## CHECKS")
-    if start < 0:
-        return False, f"{cid} has no `## CHECKS` section to compile into\nnext: add status"
-    rest = body[start:]
-    end = start + (rest.find("\n## ", 1) if "\n## " in rest[1:] else len(rest))
-    section = ("## CHECKS\n" + "\n".join(lines) +
-               "\nred-first: every check above MUST fail for the right reason before BUILD.\n" +
-               (f"unlabelled: {', '.join(gaps)} — carry no `covers:`; reported, never inferred (M3)\n"
-                if gaps else "") +
-               "<!-- COMPILED from the suite (e14). Do not author here: a citation edited by hand\n"
-               "     cannot be distinguished from one that was never true (F2). -->\n")
-    new_body = body[:start] + section + body[end:]
-    if new_body == body:
-        return False, f"{cid}'s CHECKS already match the suite\nnext: add status"
-    write(node["path"], f"---\n{full['raw']}\n---\n{new_body}")
-    return True, (f"{cid}: {len(lines)} checks compiled from {len(list(paths))} suite files"
-                  + (f" · {len(gaps)} unlabelled" if gaps else "") + "\nnext: add status")
-
-
 # ================================= doctor — conformance and repair over the graph (e8)
 #
 # `doctor` is a REPORTER assembled from oracles that already exist — the graph, `cycles`,
@@ -4306,7 +4298,12 @@ def checks_sync(root, cid: str, paths) -> tuple:
 # it reads STAMPS and the validator cannot. R:DIVERGE means "no CONFORMANCE finding the M0 oracle
 # would not also produce", not "no finding at all".
 
-ABF_TYPES = ("Project", "Milestone", "Task", "Spec", "Persona", "Prompt", "Run")
+ABF_TYPES = ("Project", "Milestone", "Task", "Spec", "Persona", "Prompt", "Run",
+             # `Interview` joins the census because the engine WRITES one: the `.d/interviews/`
+             # sidecar is a first-class record of the ONE approval's questions and answers,
+             # exactly as `Run` is for a command. A type the engine emits and the type census
+             # does not know is a finding the engine files against itself.
+             "Interview")
 NOT_A_NODE = ("index.md", "log.md")   # the validator's RESERVED — compiled bodies, A11/A20
 MD_LINK = re.compile(r"\]\(([^)\s]+\.md)\)")
 COMPILED_MARKER = "COMPILED BODY"

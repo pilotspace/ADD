@@ -113,6 +113,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("done", help="close a gated task")
     s.add_argument("ref")
+    s.add_argument("--override", metavar="<why>",
+                   help="ship over a recorded HARD-STOP — requires a reason, and is stamped")
+    s.add_argument("--by", help="who is closing")
 
     s = sub.add_parser("learn", help="file a lesson into a living spec (evidence required)")
     s.add_argument("lens", help="ddd | sdd | udd | tdd | add (the spec it sharpens)")
@@ -259,7 +262,8 @@ def dispatch(args, run_cmd) -> int:
         return 0 if ok else 1
 
     if args.verb == "done":
-        ok, _missing, note = add.done(root, _resolve(root, args.ref))
+        ok, _missing, note = add.done(root, _resolve(root, args.ref),
+                                      override=args.override, by=args.by)
         print(note)
         return 0 if ok else 1
 

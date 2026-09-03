@@ -77,10 +77,19 @@ def test_ambiguous_citation_proves_nothing(tmp_path):
 
 def test_checks_of_keys_by_file_too():
     """covers: M3 · e14's extractor carries the same defect, and loses a real test to it."""
+    # DISCOVERED, not named. This pinned `test_sync_is_idempotent` — a real collision at the
+    # time — and went red the day one of the two was deleted for an unrelated reason, reporting
+    # a keying defect that did not exist. The property is "a bare name appearing in two files
+    # yields two keys"; the suite is asked which name that is.
+    import collections
     suite = sorted((ROOT / "tests").rglob("test_*.py"))
     keyed = add.checks_of(suite)
-    collisions = [k for k in keyed if k.endswith("::test_sync_is_idempotent")]
-    assert len(collisions) == 2, f"checks_of collapsed a real collision: {collisions}"
+    bare = collections.Counter(k.rpartition("::")[2] for k in keyed)
+    dupes = [name for name, n in bare.items() if n > 1]
+    assert dupes, "no test name appears in two files — this guard cannot prove anything today"
+    for name in dupes:
+        keys = [k for k in keyed if k.endswith(f"::{name}")]
+        assert len(keys) == bare[name], f"checks_of collapsed a real collision: {keys}"
 
 
 def test_one_id_grammar(tmp_path):

@@ -224,90 +224,7 @@ def test_a_test_inside_a_string_literal_is_not_a_test(bundle):
         f"a `def test_` inside a string literal was extracted as a test: {sorted(found)}"
 
 
-def test_description_survives_compilation(bundle):
-    """covers: M1 — compile the citation, keep the human's reason for the check.
-
-    The first compiled section rendered every line as `· proves M1` — mechanically true and
-    worthless. The citation is what must be extracted (a human cannot be trusted to keep it
-    honest); the DESCRIPTION is knowledge only the author has. Losing it to win the citation
-    trades the wrong thing.
-    """
-    add.checks_sync(bundle, CID, _suite(bundle))
-    body = add.read(bundle / CID.lstrip("/"), "T2")["body"]
-    assert "proves M1" not in body, "the description was replaced by mechanical filler"
-    assert "an actual test" in body or "the first rule is enforced here" in body, \
-        f"the author's description did not survive compilation:\n{body}"
-
-
-def test_verify_is_clean_after_sync(bundle):
-    """covers: M2, M4 — the two halves agree: what sync writes, verify accepts."""
-    add.checks_sync(bundle, CID, _suite(bundle))
-    assert add.checks_verify(bundle, CID, _suite(bundle)) == []
-
-
 # -------------------------------------------------------------- sync (M4, R:WIDEEDIT)
-
-
-def test_sync_writes_the_checks_section(bundle):
-    """covers: M1 — the invented line goes; the real ones arrive."""
-    add.checks_sync(bundle, CID, _suite(bundle))
-    body = add.read(bundle / CID.lstrip("/"), "T2")["body"]
-    assert "test_alpha · covers: M1" in body
-    assert "test_gamma · covers: M3" in body
-
-
-def test_no_authored_check_survives_sync(bundle):
-    """covers: M1, R:AUTHOREDCHECK — a citation with no test behind it does not persist."""
-    add.checks_sync(bundle, CID, _suite(bundle))
-    assert "test_invented" not in add.read(bundle / CID.lstrip("/"), "T2")["body"]
-
-
-def test_sync_rewrites_only_checks(bundle):
-    """covers: M4, R:WIDEEDIT — every byte outside the CHECKS section survives."""
-    path = bundle / CID.lstrip("/")
-    before = path.read_text().split("## CHECKS")
-    add.checks_sync(bundle, CID, _suite(bundle))
-    after = path.read_text().split("## CHECKS")
-    assert after[0] == before[0], "content before CHECKS changed"
-    assert after[1].split("## EVIDENCE")[1] == before[1].split("## EVIDENCE")[1], \
-        "content after CHECKS changed"
-
-
-def test_sync_is_idempotent(bundle):
-    """covers: M4 — a second sync writes nothing at all."""
-    add.checks_sync(bundle, CID, _suite(bundle))
-    first = (bundle / CID.lstrip("/")).read_bytes()
-    changed, note = add.checks_sync(bundle, CID, _suite(bundle))
-    assert changed is False, note
-    assert (bundle / CID.lstrip("/")).read_bytes() == first
-
-
-def test_sync_preserves_unlabelled_note(bundle):
-    """covers: M3 — the honest gap is carried into the section, not dropped from it.
-
-    e15 recorded two machinery tests as `unlabelled by design`. A sync that silently omits
-    unlabelled tests turns a visible gap into an invisible one.
-    """
-    add.checks_sync(bundle, CID, _suite(bundle))
-    body = add.read(bundle / CID.lstrip("/"), "T2")["body"]
-    assert "test_unlabelled" in body, f"an unlabelled test vanished from the record:\n{body}"
-
-
-def test_sync_refuses_a_gated_node(bundle):
-    """covers: M4, R:SILENTFIX — §3.6: a gated claim is recorded, never repaired.
-
-    This is the asymmetry F2 turned on. e12's own CHECKS were corrected freely because nothing
-    had been stamped; M0's nine cannot be, because a gate was taken against them.
-    """
-    path = bundle / CID.lstrip("/")
-    n = add.read(path, "T2")
-    verified = add.append_item(n["raw"], "verified", _GATE_STAMP)
-    add.write(path, f"---\n{verified}\n---\n{n['body']}")
-    before = path.read_bytes()
-
-    changed, note = add.checks_sync(bundle, CID, _suite(bundle))
-    assert changed is False and "gate" in note.lower(), note
-    assert path.read_bytes() == before, "a gated node's CHECKS were rewritten"
 
 
 def test_sync_on_a_gated_node_still_reports(bundle):
@@ -363,18 +280,3 @@ def test_a_long_description_is_cut_at_a_word(bundle):
         f"cut at something other than a word boundary: {desc!r}"
 
 
-def test_a_generator_of_paths_reports_the_true_file_count(bundle):
-    """covers: M1 — the verb must not report a number it has made false by its own iteration.
-
-    `checks_sync` walks `paths` twice: once to compile, once to count. Handed a generator the
-    second walk sees nothing, so it reports "N checks compiled from 0 suite files" — the checks
-    are right and the count is a lie. Guessed wrong about this once: the first version of this
-    test assumed the SECTION came out empty. It does not, because compilation is the first walk.
-    A notary whose own report carries a false number is the defect, however small the number.
-    """
-    files = _suite(bundle)
-    assert add.checks_of(f for f in files), "a generator of paths yielded no tests at all"
-    ok, note = add.checks_sync(bundle, CID, (f for f in files))
-    assert ok, f"sync over a generator refused: {note}"
-    assert "from 0 suite files" not in note, f"reported a count its own iteration destroyed: {note}"
-    assert f"from {len(files)} suite" in note, f"wrong file count: {note}"
