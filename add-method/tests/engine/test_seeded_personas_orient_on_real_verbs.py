@@ -72,8 +72,14 @@ def test_the_library_really_is_silent(tmp_path):
 
 def test_every_orient_command_runs_clean(tmp_path):
     """covers: M3, E1 — not merely a real verb: the flags must parse too."""
-    root = add.init(tmp_path, "code", "T") or tmp_path
-    failures = []
+    # `add.init` returns a TUPLE, so `init(...) or tmp_path` bound `root` to the repr of the whole
+    # graph dict. Every command then ran against a bundle that does not exist — `status` printed
+    # nothing and exited 0, so this check passed VACUOUSLY on every command it was given. It only
+    # surfaced on CI, where Path.exists() raises ENAMETOOLONG (3.10/3.12) instead of returning
+    # False (3.14): a version-dependent crash standing in for a check that was never running.
+    add.init(tmp_path, "code", "T")
+    root = tmp_path
+    failures, ran = [], 0
     for tmpl in _templates():
         for line in tmpl.read_text(encoding="utf-8").splitlines():
             if "ORIENT on load" not in line:
@@ -86,6 +92,11 @@ def test_every_orient_command_runs_clean(tmp_path):
                 proc = subprocess.run(
                     [sys.executable, str(REPO / "tooling" / "cli.py"), "--root", str(root), *argv],
                     capture_output=True, text=True)
+                ran += 1
                 if proc.returncode != 0 or "unrecognized" in proc.stderr:
                     failures.append(f"{tmpl.name}: `{cmd}` -> {proc.stderr.strip()[:120]}")
     assert not failures, "ORIENT commands that do not run:\n  " + "\n  ".join(failures)
+    # The check above passed vacuously for its whole life because `root` pointed at nothing and
+    # every command exited 0 against an absent bundle. A check that asserts an empty list must
+    # also assert it looked at something.
+    assert ran >= 3, f"only {ran} ORIENT command(s) were executed — the check is not running"
