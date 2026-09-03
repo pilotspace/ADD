@@ -14,7 +14,7 @@ category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume, explore, research]
 argument-hint: "status | <describe the change or goal>"
 license: MIT
-metadata: { author: add, version: "3.3.0", format: ABF-1 }
+metadata: { author: add, version: "3.4.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle (the agent is the hands)
@@ -99,8 +99,8 @@ One task = one atomic node. Three beats, one human decision:
    record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
    a frozen surface is a change-request back to Direction, never a silent edit.
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
-   · architecture — **security HARD-STOP**), then `add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
-   for a fresh, bound receipt — the path twice: `run` READS it, your command WRITES it. Wrap the
+   · architecture — **security HARD-STOP**), then `add run <slug> -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
+   for a fresh, bound receipt — `run` reads the report path your command names. Wrap the
    **narrowest command that reports every bound check**; the full suite rides CI. **No runner for your domain? Write one** — `run` parses JUnit XML and does not
    care what produced it, so a script comparing a measured value against a threshold your frozen
    RULES already state earns the same bound receipt (`domains.md`). And **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
@@ -149,7 +149,7 @@ add doctor [--sync]                          # findings, never gates; --sync rec
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
-add run <slug> [--timeout <s>] --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · that path twice: run READS it, your cmd WRITES it
+add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · run reads the path your cmd names (an explicit `--junitxml`, before the --, overrides)
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already closed it)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec

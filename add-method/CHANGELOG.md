@@ -4,6 +4,54 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.4.0] — 2026-09-03
+
+**A guard asks whether what a stamp attests is TRUE, not whether the stamp is well-formed — and
+what `new` writes is what the engine reads.** 3.3 hardened the seal; four critics then re-read the
+released tree and found the same shape everywhere underneath it. Every integrity guard asked
+whether a record was *shaped* right. None asked whether the thing it recorded had happened. A
+`gate HARD-STOP` walked on to `done`. A red Task closed on another node's receipt because their
+slugs collided. `brief` resolved no lens at all — not one seeded persona had ever reached a
+worker — and said nothing about the omission. And a scaffold `new` wrote could not survive the
+guards `new` recommended next.
+
+### Added
+- **Every task kind in the taxonomy now routes to a seeded persona.** Five kinds — `docs`, `ui`,
+  `data`, `security`, `explore` — matched no seeded lens, so `brief` fell through to the generic
+  reading with no sign that it had. Five templates added, and a guard fails when the next kind
+  arrives without one.
+- **`new` refuses a `kind:` outside the closed taxonomy** and names the taxonomy in the refusal.
+  The routing guard validated the persona's `task-kinds:` and never the task's `kind:`, so the two
+  sides of the same match were held to different standards.
+- **`doctor` reports an unauthored node.** A file of untouched template slots read as a finding-free
+  bundle.
+- **`join` refuses a path that is not a bundle**, keyed on the `abf_version:` index marker.
+
+### Changed
+- **`add run` reads the report path the command already names.** The build line named one path
+  twice — once to tell the engine where to read, once for the runner to write — and a typo in the
+  restatement cost `ids: unknown`, which the gate reads as every rule unbound. The `--junitxml`
+  flag stays as an override for runners that report somewhere the command line never names, and is
+  consulted first so a sniffed value never beats a stated one.
+- **`new --kind explore` writes the body the explore lane reads**, and `freeze` accepts it
+  unedited. The `budget:` guard now requires a real value: the template's own placeholder had been
+  satisfying it.
+- **`scope:` is seeded in frontmatter, where its readers look** — and seeded EMPTY, because
+  `scope:` is enforced where `gives:` is only descriptive.
+- **A waived sweep dimension must state its reason.** A bare `n/a` retired a `(dimension, surface)`
+  pair silently; the docstring had always promised otherwise. Across 584 assumption lines, only
+  four were real waivers.
+
+### Fixed
+- **`gate HARD-STOP` no longer reaches `done`.** A security stop's authority is COMPUTED, so it is
+  always `human` and no flag could clear it — closing one is now the deliberate act
+  `done --override "<why>"`.
+- **The seal covers the `E<n>` and probed `A<n>` it binds**, not only `RULES` and `CHECKS`.
+- **A slug collision can no longer close a red Task on another node's receipt.**
+- **`brief` says when no lens resolved** instead of silently applying the generic reading. Neither
+  the path-grammar nor the bare-slug form had ever matched a seeded persona.
+- **`freeze --authority process` no longer downgrades a security freeze.**
+
 ## [3.3.0] — 2026-09-01
 
 **The seal has to mean something under every verdict, and the one approval has to be asked for
