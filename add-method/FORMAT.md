@@ -47,7 +47,7 @@ The bundle root is `.add/`. A conforming bundle MUST contain at least three file
 
 | file | role |
 |---|---|
-| `index.md` | bundle header — `abf_version`, `name`, `profile`, `engine`, `sensitive_paths` |
+| `index.md` | bundle header — `abf_version`, `okf_version`, `name`, `profile`, `engine`, `sensitive_paths` |
 | `log.md` | rendered history |
 | `PROJECT.md` | the root node (`type: Project`) |
 
@@ -55,6 +55,15 @@ Derived from `add.init()`; asserted by `tests/engine/test_init.py::test_init_cre
 
 A bundle with only these three files is conforming. `index.md` MAY have an empty body in
 that state (see §1.1).
+
+**`okf_version`** declares the Open Knowledge Format revision the bundle's nodes conform to
+(`"0.2"`). It is written by `init` on the bundle-root `index.md` and **nowhere else** — OKF
+declares its version once, at the root, so a Spec or Task carrying one would be N claims
+that can disagree. The value is a quoted string, never a bare number: `0.20` and `0.2` are
+the same float and different revisions. A bundle that declares no `okf_version` is
+**pre-OKF, not defective** — nothing refuses on its absence and §9 gains no finding code for
+it (law 3). `doctor --sync` never rewrites bundle-header frontmatter, so the declaration
+survives every recompile of the body.
 
 ### §1.1 Compiled reserved files
 
@@ -119,6 +128,31 @@ An unrecognised type is *recorded* (`unknown_type`, `info`), never rejected — 
 **Lifecycle types.** Only `Task` and `Milestone` carry a task `status:` and can be frozen.
 Every other type — `Spec`, `Persona`, `Prompt`, `Run`, `Project` — is a record or a living
 document; it never freezes (`add.py:951`).
+
+**Spec frontmatter (OKF).** A `Spec` carries `type`, `title`, `lens`, `project` and
+`generated`, plus three OKF keys — all three RECOMMENDED, none required:
+
+| key | role | read by the engine? |
+|---|---|---|
+| `description:` | the catalogue line — what this lens is *for* | **yes** — `index.md`'s Specs rows are rendered from it |
+| `tags:` | classification, a list; `[]` means *not yet classified* | **no** — recorded only |
+| `sources:` | provenance, a list of external references | **no** — recorded only |
+
+`description:` is the one key with a consumer: the compiled index renders each Specs row
+from it, falling back to the row's previously authored tail when the key is absent, so a
+bundle written before the key existed never loses a sentence a human wrote there. It is not
+a duplicate of the body's `## Now`: `description:` says what the lens is *for* and is
+stable, while `## Now` says what is *currently true* in that lens and is expected to drift.
+`init` seeds both from one string, so they agree at birth and diverge legitimately after.
+
+`tags:` and `sources:` are **slots**, not behaviour: this engine writes them and reads
+neither, and validates neither (`new`/`init` are notaries). An implementer of a second
+ABF-1 engine MUST NOT treat either as required, and MUST NOT infer a conformance failure
+from an empty one.
+
+Two OKF keys are deliberately **absent** from a Spec: the doc-status lifecycle `status:`,
+which collides with ADD's task `status:` above, and `stale_after:`, which has nothing left
+to declare once every delta carries its own validity interval.
 
 **Canonical directories** (`add.py:923`):
 

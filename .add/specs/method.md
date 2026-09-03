@@ -3,8 +3,11 @@ type: Spec
 title: Method
 lens: method
 project: AIDD-Book
+description: how a change proceeds from direction to a gate, and what each stamp costs the human who owns it
+tags: []
+sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 29
+delta_seq: 30
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -14,6 +17,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M30 · open · 2026-09-04] When a new decision collides with an old guard, the question is whether the guard's RULE or only its PREMISE has expired. okf_version was removed because nothing read it; re-landing it alone would have reversed that decision, so the fix was to give it a reader and re-aim the guard to pin PRESENCE. The rule 'no key that nothing reads' survived intact, and the stamp and its reader now fail separately if either is silently removed. (evidence: /tasks/okf-spec-frontmatter.md M8 · doctor okf_conformance)
 - [ADD · M29 · open · 2026-09-01] A normaliser is only as good as the set of writers that call it. _oneline was correct and applied to one field of seven for a year; when a helper exists to make a value safe, enumerate its call sites FROM THE SOURCE in a check, because a hand list is how the seventh writer gets missed. (evidence: /tasks/stamp-field-integrity.md)
 - [ADD · M28 · open · 2026-09-01] A new verb is never one edit: it ripples into the CLI verb-set registry, the book command reference, both READMEs' verb counts, and five SKILL.md budget pins — one of which is literally R:BUDGET_BUMP, so fund the addition by compressing the prose beside it. (evidence: /tasks/freeze-interview.md)
 - [ADD · M27 · open · 2026-09-01] Eight freeze refusals checked the DOCUMENT and none checked the CONVERSATION. When a gate exists to protect a human decision, check that the decision was actually PUT to them — the assumption sweep made the AI write down what it decided, and nothing made it ask. (evidence: /tasks/freeze-interview.md)

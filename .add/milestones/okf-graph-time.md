@@ -22,7 +22,7 @@ risks:
   - the git-blame backfill dates a LINE, not a lesson: a reflow commit would re-date every delta in the file at once, so the migration must be read before it is trusted
 
 ## EXIT
-- [ ] Spec nodes carry OKF's recommended frontmatter (`description` · `tags` · `sources` · `relations`) and the bundle root declares `okf_version: "0.2"` — in the `init` scaffold and in all five live specs   (← okf-spec-frontmatter)
+- [ ] Spec nodes carry OKF's recommended frontmatter (`description` · `tags` · `sources`) — in the `init` scaffold and in all five live specs — and `description` has a live reader, not just a slot   (← okf-spec-frontmatter)
 - [ ] every delta carries a stable id and a validity interval, `learn` writes them, `fold` closes the interval, and all 43 legacy lines are migrated with dates recovered from git   (← dated-addressable-deltas)
 - [ ] `add deltas` filters by lens, by `--since`, and by `--as-of <date>` — reconstructing what a spec asserted on a past date   (← deltas-time-filters)
 - [ ] a `relations:` family carries typed concept edges over a closed vocabulary, resolves through §3.2/§3.3, and records an unknown rel rather than rejecting it   (← typed-relations)

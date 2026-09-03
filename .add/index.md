@@ -1,5 +1,6 @@
 ---
 abf_version: "1.3"
+okf_version: "0.2"
 name: AIDD-Book
 profile: code
 engine: add/3.4.0
@@ -17,11 +18,11 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 
 ## Specs
 
-- [Domain](specs/domain.md)
-- [Experience](specs/experience.md)
-- [Method](specs/method.md)
-- [Quality](specs/quality.md)
-- [System](specs/system.md)
+- [Domain](specs/domain.md) — what ADD itself must be true about — the bundle, the node, and the vocabulary a conforming engine speaks
+- [Experience](specs/experience.md) — who drives the loop and what it feels like at each beat — the operator reading a refusal, a listing, or a gate
+- [Method](specs/method.md) — how a change proceeds from direction to a gate, and what each stamp costs the human who owns it
+- [Quality](specs/quality.md) — what counts as proof here — receipts, red-first checks, and the shapes that let a green pass while proving nothing
+- [System](specs/system.md) — how the engine is built and what that forecloses — notary discipline, the twins, the pins, and the cost of a verb
 
 ## Milestones
 
@@ -31,48 +32,95 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [The engine writes the checklist it reads](milestones/checkbox-verb.md) — `done`
 - [Dynamic Flow — adaptive path, deterministic trust](milestones/dynamic-flow.md) — `done`
 - [Experience becomes a question the plan must answer](milestones/experience-in-plan.md) — `done`
+- [The first run a stranger walks is the run the engine actually performs](milestones/first-run-truth.md) — `done`
+- [The persona tier the method claims is the persona tier a fresh bundle loads](milestones/live-persona-tier.md) — `done`
+- [OKF for the living specs — addressable, dated, typed, searchable](milestones/okf-graph-time.md) — `direction`
+- [A refusal names a fix that runs and actually clears it](milestones/refusals-that-work.md) — `done`
 - [ADD ceremony is proportional to task size: small goes direct, medium/large take a node](milestones/right-sized-lane.md) — `done`
-- [v3.0.0 final collateral](milestones/v3-final-collateral.md) — `direction`
+- [The roster the skill names is the roster that ships and may run its beats](milestones/roster-reachable.md) — `done`
+- [a scaffold hands you a node the engine will accept](milestones/scaffold-truth.md) — `done`
+- [v3.0.0 final collateral](milestones/v3-final-collateral.md) — `archived`
+- [A guard asks whether what a stamp attests is TRUE, not whether the stamp is well-formed](milestones/verdict-truth.md) — `done`
 
 ## Tasks
 
+- [a kind is from the closed taxonomy](tasks/a-kind-is-from-the-taxonomy.md) — `done` · `quick`
+- [a waived sweep dimension states its reason](tasks/a-silence-states-its-reason.md) — `done` · `standard`
 - [direction.md: discharge high-cost assumptions by recorded micro-explore](tasks/assumption-microspike.md) — `done` · `standard`
 - [A node that was never authored is never advised to freeze](tasks/authoring-beat-named.md) — `done` · `standard` · `architecture`
+- [The beat status and brief report is the beat the stamps derive](tasks/beat-read-truth.md) — `done` · `standard` · `architecture`
 - [A month-end reconciliation, run end to end](tasks/beyond-code-walkthrough.md) — `done` · `standard`
 - [add check toggles a checklist box and stamps who did it](tasks/box-check-verb.md) — `done` · `standard` · `architecture`
+- [The always-loaded budget pin measures the cost it names](tasks/budget-pin-measures-cost.md) — `done` · `quick`
 - [A skill claim about what the engine prints is bound to the engine printing it](tasks/claimed-output-guard.md) — `done` · `standard` · `architecture`
 - [finance/legal/academic persona depth + routing index](tasks/corpus-depth.md) — `done` · `quick`
+- [Every lesson is an addressable concept with a validity interval](tasks/dated-addressable-deltas.md) — `done` · `standard` · `architecture`
+- [the tested human-seam bypass is deleted, not documented](tasks/delete-the-unwired-quick-lane.md) — `done` · `quick` · `security`
+- [add deltas filters by lens, by --since, and by --as-of](tasks/deltas-time-filters.md) — `direction` · `quick`
 - [The direct lane is size-gated with an inline checklist; sizing text ships in CLAUDE.md, the skill and the installer pointer](tasks/direct-lane-size-gate.md) — `done` · `standard` · `architecture`
 - [docs site teaches the beta.2 checkpoints](tasks/docs-beta2-refresh.md) — `done` · `doc`
+- [an advisory nudge names a node you can still advise](tasks/doctor-nudges-what-you-can-act-on.md) — `done` · `quick`
+- [doctor reads each node's body once per run](tasks/doctor-reads-each-body-once.md) — `done` · `standard` · `architecture`
+- [doctor sees an unauthored node](tasks/doctor-sees-an-unauthored-node.md) — `done` · `quick`
 - [domains.md — the checker recipe, floor mapping, lens re-author](tasks/domain-evidence-recipe.md) — `done` · `standard` · `architecture`
+- [done refuses a gate whose verdict was not a pass](tasks/done-reads-the-verdict.md) — `done` · `standard` · `security`
+- [A section the gate binds is a section the direction guide teaches](tasks/edges-documented.md) — `done` · `standard`
 - [A sixth sweep dimension: who receives this, and what would make it hard](tasks/experience-sweep.md) — `done` · `standard` · `architecture`
 - [Explore lane — 4th intake lane + phases/explore.md research loop](tasks/explore-lane.md) — `done` · `standard`
-- [The ONE approval asks its questions out loud](tasks/freeze-interview.md) — `direction` · `standard` · `architecture`
+- [The ONE approval asks its questions out loud](tasks/freeze-interview.md) — `done` · `standard` · `architecture`
+- [Every cost and ceremony claim on the front door is one the repo can back](tasks/front-door-claim-truth.md) — `done` · `quick`
 - [The framing stops presupposing a repo](tasks/front-door-copy.md) — `done` · `quick`
 - [The README says what the engine does](tasks/front-door-truth.md) — `done` · `standard`
+- [an accepted flag is read or refused, never silently dropped](tasks/gate-honours-or-refuses-authority.md) — `done` · `standard` · `architecture`
+- [The walkthrough the front door prints is a walkthrough the suite executes](tasks/getting-started-executed.md) — `done` · `standard`
+- [What one installer twin lands, the other lands, and Claude Code can see it](tasks/installer-reach-parity.md) — `done` · `standard` · `architecture`
+- [join refuses what it cannot read](tasks/join-refuses-what-it-cannot-read.md) — `done` · `quick`
 - [verify.md — every documented rung must be stampable](tasks/ladder-honesty.md) — `done` · `standard`
 - [the v3.0.0 launch post — written now, published at the final tag](tasks/launch-blog.md) — `done` · `doc`
+- [A bundle that exists above you is a bundle status sends you to, never one init offers to replace](tasks/nested-bundle-guard.md) — `done` · `standard` · `architecture`
+- [every next](tasks/next-lines-are-runnable.md) — `done` · `standard` · `architecture`
 - [OKF-aligned Persona scaffold — the contract's routing keys get slots](tasks/okf-persona-template.md) — `done`
+- [Spec nodes carry OKF's recommended frontmatter, and the bundle declares its OKF version](tasks/okf-spec-frontmatter.md) — `direction` · `standard` · `architecture`
 - [A partial test run must say so](tasks/partial-run-visible.md) — `done` · `standard` · `architecture`
 - [persona-author references speak 3.0](tasks/persona-author-30.md) — `done`
 - [Planning loads a persona — intake/loop lens + seeded starter roster](tasks/persona-carried-planning.md) — `done` · `standard`
+- [The persona contract the skill documents is the contract the roster selects on](tasks/persona-contract-truth.md) — `done` · `quick`
+- [A routing key outside its closed taxonomy is a finding, never a silence](tasks/persona-routing-keys-checked.md) — `done` · `quick`
+- [A fresh bundle loads a persona, and a project with none reaches the corpus](tasks/persona-tier-live.md) — `done` · `standard` · `architecture`
 - [The front door names an audience wider than code](tasks/positioning.md) — `done` · `standard`
 - [init refuses a profile it cannot honour](tasks/profile-refusal.md) — `done` · `standard` · `architecture`
 - [A front-door promise must name what makes it true](tasks/promised-capability-guard.md) — `done` · `standard`
 - [streams.md: free fan-out for read-only beats; waves reserved for builds](tasks/read-fanout.md) — `done` · `standard`
 - [the receipt artifact leaks into the repo root](tasks/receipt-artifact-leak.md) — `done` · `standard`
+- [The run line the skill tells you to copy is a line that earns a bound receipt](tasks/receipt-idiom-truth.md) — `done` · `quick`
 - [Engine replan stamp + build.md steering-vs-contract amendments](tasks/replan-verb.md) — `done` · `standard` · `architecture`
-- [RISK-ACCEPTED signs for weak evidence, never for a missing seal](tasks/risk-accepted-integrity.md) — `direction` · `standard` · `security`
+- [RISK-ACCEPTED signs for weak evidence, never for a missing seal](tasks/risk-accepted-integrity.md) — `done` · `standard` · `security`
+- [The skill names the agents it ships, and each may run the verbs its beat requires](tasks/roster-named-and-bounded.md) — `done` · `quick`
 - [run's digest root is the bundle parent — and a degrade is said, not silent](tasks/run-digest-root.md) — `done`
+- [run reads the report path from the command it was handed](tasks/run-reads-the-path-it-was-handed.md) — `done` · `standard`
+- [a receipt is never written for a node that does not exist](tasks/run-refuses-a-phantom-node.md) — `done` · `standard` · `architecture`
+- [The graph scan stops parsing every receipt's evidence payload](tasks/scan-skips-receipt-evidence.md) — `done` · `standard` · `architecture`
 - [repeated --scope flags append — a CLI argument is never silently dropped](tasks/scope-flag-append.md) — `done`
+- [scope is written where its readers look](tasks/scope-is-where-its-readers-look.md) — `done` · `standard` · `architecture`
+- [every covers: referent class is inside the freeze seal](tasks/seal-covers-what-binds.md) — `done` · `standard` · `architecture`
 - [The refusals the docs promised, made real](tasks/sealed-gate-enforcement.md) — `done` · `standard` · `architecture`
+- [add search finds any concept in the bundle, at lesson granularity](tasks/search-verb.md) — `direction` · `standard` · `architecture`
+- [every task kind routes to a seeded persona](tasks/seed-the-missing-lenses.md) — `done` · `standard` · `architecture`
+- [a seeded lens orients with commands the engine actually has](tasks/seeded-personas-orient-on-real-verbs.md) — `done` · `standard` · `architecture`
 - [SKILL.md — profile truth + the write-a-checker pointer](tasks/skill-pointer-truth.md) — `done` · `standard`
 - [The skill stops promising a fallback the engine removed](tasks/skill-profile-truth.md) — `done` · `standard`
+- [The loop gathers the carried specs before it plans](tasks/skill-reads-deltas.md) — `done` · `quick`
+- [a slug names one node, so a receipt cannot cross nodes](tasks/slug-is-unique-across-types.md) — `done` · `standard` · `architecture`
 - [Engine: sources rung on evidence ladder + explore sufficiency gate](tasks/sources-receipt.md) — `done` · `standard` · `architecture`
+- [A stamp the notary reports written is a stamp that reads back](tasks/stamp-field-integrity.md) — `done` · `standard` · `data`
+- [the explore scaffold is an explore](tasks/the-explore-scaffold-is-an-explore.md) — `done` · `standard`
+- [an advised persona appears in the brief that spawns the worker](tasks/the-persona-reaches-the-worker.md) — `done` · `standard` · `architecture`
+- [A relations: family carries typed concept edges over a closed vocabulary](tasks/typed-relations.md) — `direction` · `standard` · `architecture`
 - [Intake third axis — unknowns score; lane+depth as decision output](tasks/uncertainty-routing.md) — `done` · `standard`
 - [upgrade leaves a working bundle — the engine must not archive itself away](tasks/upgrade-working-bundle.md) — `done`
 
 ## Personas
 
 - [the add.py/cli.py lens — notary discipline, twins, pins, refusal grammar](personas/engine-notary.md) — any edit to add.py or cli.py — a verb, a refusal, a receipt shape, a stamp, a pin re-aim, a twin sync
+- [the authorization lens — who may close a node, and on what evidence](personas/gate-security-reviewer.md) — any change to who may freeze, gate, close or override a node — verdicts, authority floors, seals, the refusal tiers, or a new way to reach `done`
 - [the ADD method's planning lens — budgets, floors, lean-over-add](personas/method-steward.md) — sizing or drafting a milestone, a task list, an intake proposal, or any change to the skill docs / specs / method surface

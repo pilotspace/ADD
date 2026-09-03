@@ -3,8 +3,11 @@ type: Spec
 title: Quality
 lens: quality
 project: AIDD-Book
+description: what counts as proof here — receipts, red-first checks, and the shapes that let a green pass while proving nothing
+tags: []
+sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 10
+delta_seq: 11
 ---
 ## Now
 what counts as proof
@@ -14,6 +17,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q11 · open · 2026-09-04] A guard can pin the ABSENCE of a key, which makes it invisible to every grep of the engine — test_init_identity asserted 'okf_version' not in fm, so a Direction beat that grepped tooling/ for readers found nothing and concluded the key was free to add. Sweep the SUITE for a key's name before adding it, not just the source. (evidence: /tasks/okf-spec-frontmatter.md M9 · baa066ae vs okf-graph-time)
 - [TDD · Q10 · open · 2026-09-03] A benchmark harness that copies the file under test between arms pays a bytecode-recompile tax on every run — 31ms for a 4731-line engine — which inflates both arms and flattens the ratio. Measure the instrument first: the same binary under two labels gave medians 21ms apart but mins within 0.1ms, so min is the statistic and median is noise. Three successive readings of one change gave -27%, -17% and -24%; only the last had a verified control. (evidence: /tasks/doctor-reads-each-body-once.md · interleaved A/B, warm .pyc both arms)
 - [TDD · Q9 · open · 2026-09-01] The gate binds covers: referents by BARE test id, so a PARAMETRIZED check binds NOTHING — pytest reports it as test_x[param]. A green parametrized check can leave its rule unbound while reading as covered. A module name (test_tree_parity) binds nothing either; cite the real test function names. (evidence: /tasks/claimed-output-guard.md gate)
 - [TDD · Q8 · open · 2026-09-01] A gate that cannot READ its input must refuse, never tally zero. Teaching the goal-gate to skip fenced blocks meant an unclosed fence emptied the tally, and `total == 0` takes the 'no exit criteria' branch — which CLOSES the milestone with unmet criteria in the file. (evidence: tests/engine/test_premerge_review_fixes.py)

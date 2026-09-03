@@ -3,6 +3,9 @@ type: Spec
 title: System
 lens: system
 project: AIDD-Book
+description: how the engine is built and what that forecloses — notary discipline, the twins, the pins, and the cost of a verb
+tags: []
+sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 3
 ---

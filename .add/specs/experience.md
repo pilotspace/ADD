@@ -3,6 +3,9 @@ type: Spec
 title: Experience
 lens: experience
 project: AIDD-Book
+description: who drives the loop and what it feels like at each beat — the operator reading a refusal, a listing, or a gate
+tags: []
+sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 3
 ---
