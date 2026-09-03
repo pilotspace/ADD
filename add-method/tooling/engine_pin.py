@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "7932ec061ddf19310c138766a691bfdf"  # re-aimed @ 3.4.0 release: the ENGINE version stamp. prior: 9a800083… @ scaffold-truth
+ENGINE_MD5 = "28cb0c115ec30f58c2d498f3cfc0eb68"  # re-aimed @ doctor-nudges-what-you-can-act-on: `unadvised_sensitive` reports only a node that can still take a lens. prior: 7932ec06… @ 3.4.0
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "b41bc148795c695b7f04ebd10c1098c1"  # re-aimed @ scaffold-truth (`join` propagates its refusal to a non-zero exit). prior: ad04b73a… @ method-truth-sweep

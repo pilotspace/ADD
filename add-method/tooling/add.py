@@ -4559,6 +4559,15 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         fm = node["fm"] or {}
         if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
             continue
+        # M1: only a node that can still TAKE a lens. On a closed, gated node the advice this
+        # finding carries is unreachable, and 23 of 25 findings on this repo's own bundle were
+        # exactly that — a wall of unactionable lines the two real ones sat inside of. A report
+        # is read as a worklist whether or not it was written as one.
+        # `done` is the ONLY exclusion (A2): a node in `verify` is still advisable before its
+        # gate. An ABSENT status is NOT closed (A4, R:BLINDCLOSE) — hiding a finding on a
+        # malformed node is the failure this rule is meant to prevent, not an instance of it.
+        if fm.get("status") == "done":
+            continue
         if not fm.get("persona") and not fm.get("advised_by"):
             # Severity agrees with the gate floor (A2): security is a HARD gate refusal (R:NOCOVERAGE),
             # so doctor says `warn`; the softer data/architecture floors stay `info` nudges.
