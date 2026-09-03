@@ -69,7 +69,9 @@ def test_the_plugin_bootstrap_names_no_skill():
     skill = _text(SKILL)
     if "CLAUDE_PLUGIN_ROOT" in skill:
         line = [l for l in skill.splitlines() if "CLAUDE_PLUGIN_ROOT" in l and "cli.js" in l]
-        assert not line or all("--no-skill" in l for l in line), (
+        assert line, ("the plugin bootstrap line was not found — this check goes silent "
+                  "whenever the line stops matching, which is exactly when it matters")
+    assert all("--no-skill" in l for l in line), (
             "the plugin bootstrap command omits `--no-skill`, so a plugin user gets a second, "
             f"project-local copy of the skill that goes stale on every upgrade: {line}")
 

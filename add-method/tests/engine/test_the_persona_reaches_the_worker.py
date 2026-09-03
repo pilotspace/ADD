@@ -54,9 +54,13 @@ def test_advise_and_persona_reach_the_brief_identically(tmp_path):
 def test_a_brief_with_no_lens_says_so(tmp_path):
     """covers: M2, A3 — a silent omission reads exactly like a lens that had nothing to add."""
     root = _bundle(tmp_path)
-    cid, _ = add.new(root, "Task", "unlensed", title="unlensed")
+    # A NEUTRAL slug. The first cut used `unlensed`, and the brief echoes the slug in its
+    # `<task id=...>` and `<objective>` — so the regex matched the fixture's own name and the
+    # check passed while the engine said nothing at all. Re-run with `zzz` it matched nothing.
+    cid, _ = add.new(root, "Task", "zzz", title="a task with no lens")
     text = str(add.brief(root, cid)["text"])
-    assert re.search(r"no (persona|lens)|unlensed|generic", text, re.I), (
+    assert "zzz" not in r"no (persona|lens)|generic", "the pattern must not contain the slug"
+    assert re.search(r"no (persona|lens)|generic", text, re.I), (
         f"a lensless brief is indistinguishable from a lensed one:\n{text[:400]}")
 
 

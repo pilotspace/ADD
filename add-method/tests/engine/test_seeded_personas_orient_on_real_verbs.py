@@ -41,16 +41,22 @@ def _templates():
 
 def test_every_command_a_persona_names_is_a_real_verb():
     """covers: M1, R:PHANTOMVERB — enumerated from the shipped templates, never a hand list."""
-    bad = []
+    bad, seen = [], 0
     for tmpl in _templates():
         for line in tmpl.read_text(encoding="utf-8").splitlines():
             for verb in INVOCATION.findall(line):
+                seen += 1
                 if verb in ("py", "add") or verb not in VERBS:
                     if verb in ("py", "add"):
                         continue
                     bad.append(f"{tmpl.name}: `{verb}` is not one of the {len(VERBS)} verbs")
     assert not bad, "seeded personas instruct commands the engine does not have:\n  " + \
                     "\n  ".join(sorted(set(bad)))
+    # Its sibling above learned this the hard way: `assert not bad` reports success when the
+    # loop that fills `bad` never ran. Tie the floor to the roster, not to a magic number.
+    assert seen >= len(_templates()), (
+        f"only {seen} invocation(s) found across {len(_templates())} lenses — the census is not "
+        f"reading the templates")
 
 
 def test_no_persona_drives_the_library_instead_of_the_entrypoint():

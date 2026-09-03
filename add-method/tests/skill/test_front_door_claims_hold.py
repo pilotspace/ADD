@@ -79,6 +79,9 @@ def test_the_network_disclosure_matches_the_shipped_code():
               for i, line in enumerate(_text(d).splitlines(), 1)
               if re.search(r"HTTPS GET|npm registry|advisory update check", line, re.I)
               and not re.search(r"\bno\b|\bnone\b|never", line, re.I)]
+    assert not reaches, (
+        "shipped code now makes a network call — the disclosure must be re-read, and this "
+        f"check must not go silent about it: {reaches}")
     if not reaches:
         assert not claims, (
             f"no shipped file makes a network call, yet the boundary section claims one: {claims}")
@@ -99,22 +102,32 @@ def test_no_doc_names_an_env_var_nothing_reads():
 def test_every_installer_flag_shown_in_a_readme_is_accepted():
     """covers: M3, R:DEADFLAG — the first flag a new user copies must not fail their install."""
     js = _text(REPO / "bin" / "cli.js")
-    bad = []
+    bad, retired, seen = [], [], 0
     for doc in READMES:
         for flag in set(re.findall(r"(?<![\w-])(--[a-z][a-z0-9-]+)", _text(doc))):
+            seen += 1
             if flag in ("--junitxml", "--by", "--reason", "--all", "--check", "--sync",
                         "--persona", "--evidence", "--depth", "--sensitivity", "--scope",
                         "--to", "--answer", "--timeout", "--cwd", "--section", "--off",
                         "--milestone", "--status", "--title", "--kind", "--authority",
-                        "--phase", "--root", "--help", "--nested", "--no-skill"):
+                        "--phase", "--root", "--help", "--nested", "--no-skill",
+                        "--profile"):   # an `add init` flag, guarded by test_profile_refusal
                 continue                      # engine verbs / covered by their own guards
             if re.search(rf'"{re.escape(flag)}"|{re.escape(flag)}\b', js):
-                continue
-            if f"retired" in js and flag in js:
+                # PRESENT in cli.js — but present-and-rejected is the worse case, so ask which.
+                if re.search(rf'{re.escape(flag)}\b[^\n]*retired', js):
+                    retired.append(f"{doc.name}: {flag}")
                 continue
             bad.append(f"{doc.name}: {flag}")
-    retired = [b for b in bad if re.search(rf'{re.escape(b.split(": ")[1])}\b.*retired', js)]
+
+    # `retired` used to be filtered OUT of `bad` — flags absent from cli.js — while requiring the
+    # flag to be IN cli.js. Mutually exclusive, so it was `[]` for every possible input, and the
+    # real `bad` list was computed and then discarded. Both halves now assert, on disjoint sets.
     assert not retired, f"a README teaches a flag the installer explicitly rejects: {retired}"
+    assert not bad, (
+        "a README teaches an installer flag `bin/cli.js` does not accept — the first flag a new "
+        f"user copies must not fail their install: {bad}")
+    assert seen >= 4, f"only {seen} README flag(s) were examined — the check is not running"
 
 
 def test_the_stage_flag_is_gone_from_every_readme():
@@ -172,6 +185,9 @@ def test_the_marketplace_entry_describes_the_shipped_method():
     if not mk.is_file():
         mk = REPO / ".claude-plugin" / "marketplace.json"
     blob = json.dumps(json.loads(_text(mk))) if mk.is_file() else ""
+    assert blob, (
+        "marketplace.json is missing or unparseable — the storefront copy is unchecked, "
+        "which is how it sold retired 2.x phases for two minor versions")
     if not blob:
         return
     retired = [w for w in ("Specify", "Scenarios", "Observe") if w in blob]

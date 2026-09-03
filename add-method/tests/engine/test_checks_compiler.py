@@ -247,17 +247,25 @@ def test_live_bundle_verify_reports_f2():
     and this must keep saying so. A count that goes to zero here would mean someone repaired a
     gated claim.
     """
-    root = REPO / ".add"
+    # the ROOT bundle: `add-method/.add/` is gitignored, so on CI it does not exist and this
+    # loop iterated nothing — `assert isinstance({}, dict)` then reported success over an
+    # empty measurement. The docstring says a count going to zero "would mean someone repaired
+    # a gated claim"; it could not have noticed, because both the count and its subject were 0.
+    root = next((b for b in (REPO.parent / ".add", REPO / ".add") if (b / "tasks").is_dir()), None)
+    if root is None:
+        import pytest; pytest.skip("no live bundle on disk — nothing to measure")
     suite = sorted((REPO / "tests").rglob("test_*.py"))
-    affected = {}
+    assert suite, "no test files found — checks_verify would report nothing for any node"
+    affected, examined = {}, 0
     for cid, node in sorted(add.scan(root).items()):
         if (node["fm"] or {}).get("type") != "Task":
             continue
+        examined += 1
         findings = add.checks_verify(root, cid, suite)
         if findings:
             affected[cid.split("/")[-1][:-3]] = len(findings)
-    print(f"\nnodes with unverifiable CHECKS citations: {len(affected)} -> {affected}")
-    assert isinstance(affected, dict)
+    print(f"\nnodes with unverifiable CHECKS citations: {len(affected)} of {examined} -> {affected}")
+    assert examined, "no Task was examined — this measures nothing"
 
 
 def test_a_long_description_is_cut_at_a_word(bundle):

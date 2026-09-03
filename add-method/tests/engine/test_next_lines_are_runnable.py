@@ -79,20 +79,56 @@ def test_every_beat_next_starts_with_a_real_verb():
 
 # ------------------------------------------------- M3 · a receipt with no ids says so
 
+DIMS = ("who", "which", "when", "absent", "order", "experience")
+
+
+def _author(root, cid):
+    """Fill every slot the scaffold ships, so a refusal is about EVIDENCE, not placeholders.
+
+    Without this the gate refuses with "the node still carries template placeholders", the
+    `no reported passing check` arm is never reached, and any assertion guarded by that branch
+    is dead code that reports success.
+    """
+    import re as _re
+    p = root / cid.lstrip("/")
+    x = p.read_text(encoding="utf-8")
+    x = x.replace("- S1 <the surface this publishes — an endpoint, function, or section>", "- S1 x")
+    x = x.replace("goal: <one line>", "goal: the fixture's stated one line.")
+    x = _re.sub(r"## RULES\n<must>\n.*?\n</must>", "## RULES\n<must>\n- M1 m\n</must>", x, flags=_re.S)
+    x = _re.sub(r"<reject>\n.*?\n</reject>", '<reject>\n- R:Z x -> "Z"\n</reject>', x, flags=_re.S)
+    x = _re.sub(r"## ASSUMPTIONS\n.*?\nevery `gives:`", "## ASSUMPTIONS\n" + "".join(
+        f"- A{i} [{d}] covers: S1 · n; taking r -> c\n" for i, d in enumerate(DIMS, 1)
+    ) + "every `gives:`", x, flags=_re.S)
+    x = _re.sub(r"## CHECKS\n.*?\nred-first",
+                "## CHECKS\n- test_x · covers: M1, R:Z · p\nred-first", x, flags=_re.S)
+    p.write_text(x, encoding="utf-8")
+
+
 def test_an_unbound_gate_names_the_run_idiom_when_the_receipt_carries_no_ids(tmp_path):
     """covers: M3, R:FALSEWAIVER — a signed waiver must never be the only exit from a typo."""
     root = _bundle(tmp_path)
     cid, _ = add.new(root, "Task", "t", title="t")
+    _author(root, cid)                                 # else the refusal is about placeholders
+    add.freeze(root, cid, by="H", authority="process")
+    add.brief_stamp(root, cid, by="H")                 # else the gate stops at R:UNBRIEFED
     add.run(root, cid, ["true"])                       # no --junitxml: ids come back unknown
     receipt, _ = add.latest_receipt(root, cid)
     assert receipt["ids"] == "unknown", f"fixture did not reach ids:unknown: {receipt}"
 
     ok, note = add.gate(root, cid, "PASS", by="H")
-    assert not ok
-    if "no reported passing check" in note:
-        assert "--junitxml" in note, (
-            "the receipt carries NO ids at all, and the refusal offers only RISK-ACCEPTED — "
-            f"a false waiver on possibly-correct work:\n{note}")
+    assert not ok, f"an unbound gate was recorded as PASS: {note}"
+    # UNCONDITIONAL. This assertion used to sit under `if "no reported passing check" in note:`
+    # and the fixture never reached that arm — the node was unauthored, so the gate refused for
+    # its placeholders and the branch was dead. A guarded assertion in a test is a guard that
+    # reports success whenever its own precondition fails.
+    assert "unbound" in note or "no reported passing check" in note, (
+        f"the fixture no longer reaches the unbound-covers refusal — re-aim it:\n{note}")
+    assert "--junitxml" in note, (
+        "the receipt carries NO ids at all, and the refusal offers only RISK-ACCEPTED — "
+        f"a false waiver on possibly-correct work:\n{note}")
+    # and the waiver must not be the FIRST thing offered when a re-run would bind the receipt
+    assert note.index("--junitxml") < note.index("RISK-ACCEPTED"), (
+        f"the signed waiver is offered before the re-run that would make it unnecessary:\n{note}")
 
 
 # ------------------------------------------------- M4 · the non-git loop

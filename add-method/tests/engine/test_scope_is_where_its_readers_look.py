@@ -113,13 +113,38 @@ def test_a_fresh_node_declares_no_scope(tmp_path):
         f"a fresh node declares a scope it cannot satisfy: {fm.get('scope')!r}"
 
 
-def test_a_fresh_scaffold_earns_no_phantom_scope(tmp_path):
-    """covers: M5, A4, E1, E2 — the placeholder must never be read as a declared path.
+def test_a_fresh_node_is_not_reported_as_misdeclared(tmp_path):
+    """covers: M5, A4, E1, E2 — the seeded value must never read as a declared scope.
 
-    Otherwise every freshly scaffolded node in every bundle earns a finding on creation, which
-    would make the revived refusal useless in exactly the way the dead slot was.
+    The first cut of this check filtered `doctor()` for `phantom_scope` and asserted the list was
+    empty. `doctor()` emits sixteen codes and that is not one of them — `phantom_scope` is a GATE
+    refusal — so the filter was empty for every input and the check passed for every input. It
+    now asserts the property that actually matters, against the reader that actually reads it.
     """
     root = _bundle(tmp_path)
-    add.new(root, "Task", "fresh", title="f")
-    phantom = [f for f in add.doctor(root) if f.get("code") == "phantom_scope"]
-    assert phantom == [], f"a fresh scaffold earned a phantom_scope finding: {phantom}"
+    cid, _ = add.new(root, "Task", "fresh", title="f")
+    fm = add.read(root / cid.lstrip("/"), "T2")["fm"]
+    assert not (fm.get("scope") or []), \
+        f"the seeded value reads as a declared scope: {fm.get('scope')!r}"
+    # and the guard that DOES judge a scope claim stays quiet, because the CARD claims none
+    card = add.card_of(add.read(root / cid.lstrip("/"), "T2")["body"])
+    assert not [l for l in card.splitlines()
+                if l.startswith("scope:") and l.partition(":")[2].strip()], \
+        "the fresh CARD claims a scope the frontmatter lacks — that IS phantom_scope"
+
+
+def test_the_real_phantom_scope_predicate_is_the_card(tmp_path):
+    """covers: E3 — what `phantom_scope` actually keys on, pinned so the name stops misleading.
+
+    It is not path existence, and this task did not change it. The previous check here hand-rolled
+    a path-existence loop over a value the test itself had just written — a tautology naming a
+    predicate the engine does not have. Pinned from the SOURCE so a reader of this file cannot
+    repeat the mistake.
+    """
+    src = (REPO / "tooling" / "add.py").read_text(encoding="utf-8")
+    where = src.index('_binds("phantom_scope"')
+    context = src[where - 700:where]
+    assert "card_of(" in context, \
+        "phantom_scope no longer keys on the CARD — this pin, and E3, need re-reading"
+    assert "exists()" not in context, \
+        "phantom_scope now judges path existence — the retired M4 may be buildable after all"

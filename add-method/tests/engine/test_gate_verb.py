@@ -320,9 +320,19 @@ def test_no_orphan_receipts_on_live_bundle():
     Reports rather than asserting zero: the 8 predate F3's fix and cannot be stamped
     retroactively without inventing acts that nobody performed.
     """
-    orphans = add.orphans(REPO / ".add")
-    print(f"\norphaned receipts on the live bundle: {len(orphans)}")
-    assert isinstance(orphans, list)
+    # `add-method/.add/` is GITIGNORED with zero tracked files, so on a fresh clone (CI) this
+    # scanned a bundle that does not exist: the measurement was always empty and `assert
+    # isinstance(...)` was the only thing left that could pass. Point at the ROOT bundle, which is
+    # tracked (113 files), and skip explicitly when neither is present rather than reporting
+    # success over nothing.
+    live = next((b for b in (REPO.parent / ".add", REPO / ".add") if (b / "tasks").is_dir()), None)
+    if live is None:
+        import pytest; pytest.skip("no live bundle on disk — nothing to measure")
+    nodes = [c for c in add.scan(live) if c.startswith("/tasks/")]
+    assert nodes, f"the live bundle at {live} holds no tasks — this measures nothing"
+    orphans = add.orphans(live)
+    print(f"\norphaned receipts across {len(nodes)} live tasks: {len(orphans)}")
+    assert all(isinstance(o, str) for o in orphans), orphans
 
 
 # ------------------------------------------------- the live bundle decides the ⚠ (M2)
@@ -337,7 +347,12 @@ def test_gate_on_live_bundle_history():
     decision is taken against a number.
     """
     import re
-    root = REPO / ".add"
+    # the ROOT bundle: `add-method/.add/` is gitignored, so on CI it does not exist and this
+    # loop had nothing to iterate — a measurement of zero reported as a passing check.
+    root = next((b for b in (REPO.parent / ".add", REPO / ".add") if (b / "tasks").is_dir()), None)
+    if root is None:
+        import pytest; pytest.skip("no live bundle on disk — nothing to measure")
+    examined = 0
     reported = set()
     for p in (REPO / "tests").rglob("test_*.py"):
         reported |= set(re.findall(r"^def (test_\w+)", p.read_text(), re.M))
@@ -348,6 +363,7 @@ def test_gate_on_live_bundle_history():
         fm = node["fm"] or {}
         if fm.get("type") != "Task" or not fm.get("verified"):
             continue
+        examined += 1
         full = add.read(node["path"], "T2")
         if not add.rules_of(full):
             continue
@@ -355,7 +371,8 @@ def test_gate_on_live_bundle_history():
             would_refuse.append(cid.split("/")[-1][:-3])
     print(f"\na strict M2 would have refused {len(would_refuse)} of this project's gates: "
           f"{would_refuse}")
-    assert isinstance(would_refuse, list)
+    # Not `isinstance` — that passes over an empty scan. Assert the scan HAD a subject.
+    assert examined, "no gated node was examined — this measures nothing"
 
 
 # ---------------------------------------------- F8, found at e8's gate (post-gate additions)

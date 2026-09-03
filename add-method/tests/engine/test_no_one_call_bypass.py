@@ -64,11 +64,12 @@ def test_every_public_function_is_reachable_or_a_library_read():
     called_by_engine = set()
     for fn in functions:
         called_by_engine |= _calls_in(fn) - {fn.name}
-    writers = []
+    writers, candidates = [], 0
     for fn in functions:
         called = _calls_in(fn)
         if not (called & (OPENS | CLOSES | {"freeze", "write", "put", "_transition"})):
             continue                      # a read, or a pure computation
+        candidates += 1
         if f"add.{fn.name}(" in cli or f"add.{fn.name} " in cli:
             continue
         if fn.name in called_by_engine:
@@ -77,6 +78,12 @@ def test_every_public_function_is_reachable_or_a_library_read():
     assert not writers, (
         "these engine functions WRITE to a node but no CLI verb reaches them — an operator "
         "cannot run them, so no refusal they skip is ever observed:\n  " + "\n  ".join(writers))
+    # `assert not writers` is also satisfied when the CENSUS finds nobody to judge — a rename of
+    # the write primitives, or a change to `_public_functions`, would empty the candidate pool and
+    # leave this green while auditing nothing. Pin that it still has a population.
+    assert candidates >= 10, (
+        f"only {candidates} writer candidate(s) were examined — the reachability census is not "
+        f"finding the engine's writers, so its verdict means nothing")
 
 
 def test_the_deleted_lane_is_gone():

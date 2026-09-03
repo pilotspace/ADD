@@ -3728,6 +3728,14 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             out.append(f'  <persona ref="{persona[0]}" inject="frontmatter">')
             out += ["    " + l for l in persona[1].splitlines()]
             out.append("  </persona>")
+        else:
+            # SAY the omission. A brief with no lens was byte-identical to one whose lens had
+            # nothing to add, so a worker could not tell "no expert was loaded" from "the expert
+            # had no note" — and the receipt recorded neither. The check that was supposed to
+            # guard this passed only because its fixture's slug was the literal word `unlensed`,
+            # which the brief echoed back; with any other slug it matched nothing.
+            out.append('  <persona ref="none" note="no lens resolved for this node — '
+                       'the generic reading is in force" />')
         out.append("  <context>")
         for dcid, card in cards:
             if card is None:
@@ -4204,6 +4212,18 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     reported.update({i: "fail" for i in (receipt.get("failed") or [])})
     gaps = unbound(node, reported)
     if gaps and _binds("unbound_covers", verdict):
+        # Two different situations wore the same refusal. When the receipt reported SOME ids, a
+        # gap is a real gap and a signed waiver is the honest exit. When it reported NONE
+        # (`ids: unknown` — the command emitted no JUnit report at all), every rule looks unbound
+        # no matter how green the run was, and offering only RISK-ACCEPTED made a signed waiver
+        # the sole exit from possibly-correct work -> "R:FALSEWAIVER". Name the re-run first.
+        if str(receipt.get("ids")) == "unknown":
+            return refuse(
+                "the receipt carries no check ids at all, so every rule reads as unbound: "
+                + ", ".join(gaps),
+                f"re-run so the receipt binds — add run {slug} -- <test cmd> "
+                f'--junitxml="${{TMPDIR:-/tmp}}/add-run.xml" — then add gate {slug} PASS   '
+                f'(or add gate {slug} RISK-ACCEPTED --reason "<why the gap is acceptable>")')
         return refuse("these rules have no reported passing check: " + ", ".join(gaps),
                       f'add gate {slug} RISK-ACCEPTED --reason "<why the gap is acceptable>"')
 

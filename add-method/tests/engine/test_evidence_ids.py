@@ -115,15 +115,31 @@ def test_migration_decision_is_recorded():
     assert "Why not the alternatives" in node
 
 
+GATED_M0 = ("define-entity-model", "define-task-schema", "define-authority-rules",
+            "define-read-protocol", "define-log-rotation", "align-standards-citations",
+            "define-scale-rules", "define-compat-contract", "define-evidence-binding")
+
+
 def test_no_gated_citation_rewritten():
-    """covers: M5, R:SWEEP · gated M0 nodes keep their citations byte-identical."""
-    out = subprocess.run(["git", "diff", "--name-only", "HEAD", "--", ".add/tasks"],
-                         cwd=ROOT, capture_output=True, text=True, timeout=30)
-    touched = {Path(p).stem for p in out.stdout.split()}
-    gated_m0 = {"define-entity-model", "define-task-schema", "define-authority-rules",
-                "define-read-protocol", "define-log-rotation", "align-standards-citations",
-                "define-scale-rules", "define-compat-contract", "define-evidence-binding"}
-    assert not (touched & gated_m0), f"a gated M0 node was edited: {sorted(touched & gated_m0)}"
+    """covers: M5, R:SWEEP · the nine gated M0 nodes keep their citations byte-identical.
+
+    This ran `git diff -- .add/tasks` with cwd=`add-method/`, where `.add/` is GITIGNORED and
+    `git ls-files .add` returns zero — so `touched` was empty for every possible working tree and
+    the intersection with the nine names could never be non-empty. Two independent reasons it
+    could not fire: git cannot see that path, and the nine nodes do not exist in this repo at all,
+    tracked or untracked. They were retired with the M0 milestone.
+
+    A guard whose subject is gone should say so rather than keep reporting success. This now
+    asserts the PREMISE — the nine are absent — so if any is ever restored, this check goes red
+    and whoever restores it has to decide what protects it, instead of inheriting a guard that
+    was never running.
+    """
+    roots = [ROOT.parent / ".add", ROOT / ".add"]
+    present = sorted(slug for slug in GATED_M0
+                     for r in roots if (r / "tasks" / f"{slug}.md").exists())
+    assert not present, (
+        "a retired M0 node is back on disk: " + ", ".join(present) + " — this check was written "
+        "for a `git diff` that cannot see it (the bundle is gitignored); give it a real guard")
 
 
 # ---------------------------------------------------------------- M6 · a skip is not a pass
