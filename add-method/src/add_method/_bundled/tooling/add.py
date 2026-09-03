@@ -2458,7 +2458,10 @@ def status(root, all: bool = False, check: bool = False) -> str:
     # 20-line budget spent on milestones and tasks rather than on files named `1.md`.
     def keep(cid):
         fm = graph[cid]["fm"] or {}
-        if fm.get("type") == "Run":
+        # A receipt and an interview sidecar are RECORDS about a node, not nodes on the board.
+        # Registering `Interview` in ABF_TYPES (so `doctor` stops filing a finding against a file
+        # the engine wrote) put them in the roster; they belong with `Run`, out of it.
+        if fm.get("type") in ("Run", "Interview"):
             return False
         return all or fm.get("status") not in ("done", "dropped")
 

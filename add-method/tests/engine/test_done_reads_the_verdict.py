@@ -308,3 +308,17 @@ def test_an_interview_sidecar_is_a_conforming_node(tmp_path):
     findings = findings[1] if isinstance(findings, tuple) else findings
     bad = [f for f in findings if "interviews/" in str(f)]
     assert not bad, f"`interview` wrote a file its own doctor rejects: {bad}"
+
+
+def test_an_interview_sidecar_is_not_on_the_board(tmp_path):
+    """covers: M9 — a record ABOUT a node is not a node on the roster, exactly as `Run` is not.
+
+    Registering `Interview` so `doctor` stops filing a finding against a file the engine wrote
+    had a second effect: the sidecars appeared in `status` beside real tasks. The two rules are
+    independent — a type the graph knows, and a type the roster shows.
+    """
+    root = _bundle(tmp_path)
+    _sealed(root, "boarded", sensitivity="security")     # security floor => an interview
+    for report in (add.status(root), add.status(root, all=True)):
+        assert "Interview" not in str(report), (
+            f"an interview sidecar is listed as a node on the board:\n{report}")
