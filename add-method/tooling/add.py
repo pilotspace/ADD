@@ -1293,7 +1293,7 @@ BODIES = {
             "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
             "`· probe: <what shipped behavior must show>` declares a reading checkable: "
             "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
-            "## PLAN\ncontract: <the shape this publishes>\nscope: <files>\n\n"
+            "## PLAN\ncontract: <the shape this publishes>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
             "## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS | RISK-ACCEPTED | HARD-STOP>\n\n"
@@ -1575,6 +1575,20 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # an instruction with no slot to fill is an instruction that does not happen.
     if node_type == "Task" and fields.get("gives") is None:
         fm["gives"] = ["S1 <the surface this publishes — an endpoint, function, or section>"]
+    # `scope:` had a slot in `## PLAN` and its only reader is `fm.get("scope")` — so an author who
+    # filled the slot the scaffold offered got "the node declares no `scope:`" at the gate, and
+    # `phantom_scope` could never fire on a scaffolded node. A slot no reader reads consumes the
+    # author's attention and returns nothing; two slots is worse still, because the author fills
+    # the nearer one -> "R:DEADSLOT". Tasks only: a Milestone earns no receipt, so a scope on one
+    # would be a second dead slot.
+    #
+    # EMPTY, deliberately — the opposite of `gives:` above, and measured: a placeholder turned 29
+    # green tests red. `gives:` is descriptive, so an unfilled placeholder is merely unhelpful;
+    # `scope:` is ENFORCED, so a placeholder makes every fresh node DECLARE a scope it cannot
+    # satisfy — freshness degrades, and an edit outside it is a violation. The key's presence in
+    # frontmatter is the prompt; its emptiness is what every reader already means by "none".
+    if node_type == "Task" and fields.get("scope") is None:
+        fm["scope"] = []
     # A Persona is discoverable by its `use-when:` — the one field a tool reads to place the lens.
     # The rest of the contract's routing keys (vibe/flow/task-kinds/not-when) plus OKF v0.2's
     # `description:` and provenance `sources:` get slots too — the `gives:` lesson above, learned
@@ -3080,9 +3094,18 @@ def assumption_sweep(node: dict) -> list:
         dim, rest = m.group(1).lower(), m.group(2)
         if dim not in covered:
             continue
-        if re.match(r"^n/?a\b", rest.strip(), re.I):
+        # A waiver states WHY. The docstring above has always promised this ("retired with `n/a`
+        # and a reason") and the code checked only for the token, so six bare `n/a` lines were a
+        # six-line off switch for the whole six-dimension matrix — each cheaper to type than one
+        # honest assumption, which is the shape that gets a guard routed around rather than
+        # satisfied. Any non-empty text after the format's own `·` separator counts: a notary
+        # cannot judge whether a reason is GOOD, and a bar it cannot judge only teaches padding
+        # -> "R:CHEAPSILENCE".
+        if re.match(r"^n/?a\b\s*[·,-]\s*\S", rest.strip(), re.I):
             waived.add(dim)
             continue
+        if re.match(r"^n/?a\b", rest.strip(), re.I):
+            continue   # a silence with no reason retires nothing; the pair stays unswept
         found = re.search(r"covers:\s*([^·]*)", rest)
         if found:
             covered[dim].update(re.findall(r"\bS\d+\b", found.group(1)))

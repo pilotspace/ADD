@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "25543e89e0a6320ab39209a9876f2b63"  # re-aimed @ scaffold-truth: `new` refuses a kind outside PERSONA_TASK_KINDS, `join` refuses a path carrying no bundle index, and `doctor` reports an unauthored node by reading the body `scan()` does not carry. prior: 62394e8f… @ method-truth-sweep
+ENGINE_MD5 = "7bfb8373fb90f4b261bf1cb6d313e4b8"  # re-aimed @ scaffold-truth: `new` refuses an unroutable kind and seeds `scope:` in frontmatter (empty — `scope:` is enforced where `gives:` is descriptive), `join` refuses a path with no bundle index, `doctor` reports an unauthored node, and a waived sweep dimension must state its reason. prior: 62394e8f… @ method-truth-sweep
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "b41bc148795c695b7f04ebd10c1098c1"  # re-aimed @ scaffold-truth (`join` propagates its refusal to a non-zero exit). prior: ad04b73a… @ method-truth-sweep
