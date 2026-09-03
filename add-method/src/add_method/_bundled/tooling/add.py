@@ -2343,12 +2343,17 @@ def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
                  f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
 
 
-def card_drift(graph: dict) -> list:
+def card_drift(graph: dict, body_of=None) -> list:
     """Nodes whose `## CARD` contradicts frontmatter — the defect e4's transition created.
 
     `[(cid, key, card_says, fm_says)]`. Reporting it is the notary's job; `render_card`
     repairs it.
+
+    `body_of` is an optional reader a CALLER that is already walking the same nodes can pass
+    so the body is read once rather than twice — `doctor` does. Absent, this reads for itself
+    and behaves exactly as before, so the other three callers are unaffected.
     """
+    read_body = body_of if body_of is not None else (lambda path: read(path, "T2")["body"])
     out = []
     for cid, node in graph.items():
         if not (node["fm"] or {}).get("status"):
@@ -2358,7 +2363,7 @@ def card_drift(graph: dict) -> list:
         # passed — while `todo` and `status` derived `build`, and this reported it CLEAN
         # (2026-08-17 replan, A5 falsified). Two notions of beat, read by different surfaces.
         beat = _beat_of(node)
-        card = card_of(read(node["path"], "T2")["body"])
+        card = card_of(read_body(node["path"]))
         for line in card.splitlines():
             key, sep, value = line.partition(":")
             if sep and key.strip() in BEAT_KEYS:
@@ -4719,6 +4724,25 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     def find(severity, code, detail, node=None):
         out.append({"severity": severity, "code": code, "detail": detail, "node": node})
 
+    # Three loops below each want a node's T2 body, and before this memo each re-read it:
+    # fragment resolution re-read a target once per INCOMING fragment edge, the markdown-link
+    # loop read every node again, and the placeholder loop read every lifecycle node a third
+    # time. Measured on a 196-node graph: 386 reads and 594 parses, against `status`'s 208 for
+    # the same graph. The parser is already hand-optimised; the cost was doing it three times.
+    #
+    # Scoped to ONE call, deliberately (R:STALEDOC). A module-level cache would let a later
+    # `doctor` report a finding computed from a body that has since been repaired — and
+    # `doctor --sync` would then act on it. Lazy, never a prefetch (R:PREFETCH): a bundle whose
+    # edges carry no fragments reads no target bodies for that loop at all. Bounded by the
+    # bundle the verb is already walking: 534KB over 207 nodes here, largest body 21KB.
+    _bodies = {}
+
+    def body_of(path) -> str:
+        key = str(path)
+        if key not in _bodies:                 # `not in`, never `.get() or` — an empty body
+            _bodies[key] = read(path, "T2")["body"]   # is a cached value, not a cache miss (A4)
+        return _bodies[key]
+
     for rel in strays:
         if rel not in NOT_A_NODE:
             find("error", "missing_frontmatter", rel)
@@ -4740,12 +4764,12 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         elif target is None:
             find("info", "edge_unresolved", f"{rel} -> {ref}", src)
         elif (fragment := ref.partition("#")[2]):
-            body = read(graph[target]["path"], "T2")["body"]
+            body = body_of(graph[target]["path"])
             if fragment not in (graph[target]["fm"] or {}) and fragment not in _heading_slugs(body):
                 find("info", "edge_unresolved", f"{rel} -> {ref}", src)
 
     for cid, node in sorted(graph.items()):
-        for link in MD_LINK.findall(read(node["path"], "T2")["body"]):
+        for link in MD_LINK.findall(body_of(node["path"])):
             if not link.startswith(("http://", "https://")) \
                     and not (root / cid.lstrip("/")).parent.joinpath(link).exists():
                 find("info", "broken_md_link", f"{cid.lstrip('/')} -> {link}", cid)
@@ -4764,7 +4788,7 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # -- beyond the M0 oracle: findings only a reader of STAMPS can make --
     for loop in cycles(graph):
         find("error", "dependency_cycle", " -> ".join(loop), loop[0])
-    for cid, key, said, actual in card_drift(graph):
+    for cid, key, said, actual in card_drift(graph, body_of=body_of):
         find("info", "card_drift", f"{cid.lstrip('/')}: CARD `{key}` says {said}, status is {actual}", cid)
     # Coverage: a sensitive task with no recorded lens. R:NOLENS floors PARALLEL streams only, so a
     # SEQUENTIAL architecture/security/data task can carry no lens and go unseen. Surface it — info,
@@ -4782,7 +4806,7 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             continue
         # `scan()` nodes carry frontmatter and no body, and `placeholders_in` reads the body —
         # called on a scan node it returns [] for every node, which is a guard that never fires.
-        standing = placeholders_in({**node, "body": read(node["path"], "T2")["body"]})
+        standing = placeholders_in({**node, "body": body_of(node["path"])})
         if standing:
             find("warn", "unauthored_node",
                  f"{cid.lstrip('/')}: still scaffold — {' · '.join(standing[:3])}", cid)

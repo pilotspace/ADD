@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "466142d51a848d4d42ca1751aad8057c"  # re-aimed @ scan-skips-receipt-evidence: the graph scan defers a receipt's evidence payload. prior: 5de1a375… @ dated-addressable-deltas
+ENGINE_MD5 = "e40f05cf4a9df6635f6ada1d50f581eb"  # re-aimed @ doctor-reads-each-body-once: doctor reads each body once per run. prior: 466142d5… @ scan-skips-receipt-evidence
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "b41bc148795c695b7f04ebd10c1098c1"  # re-aimed @ scaffold-truth (`join` propagates its refusal to a non-zero exit). prior: ad04b73a… @ method-truth-sweep
