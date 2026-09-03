@@ -2172,8 +2172,8 @@ AUTHOR_NEXT = {
 BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              # braces DOUBLED: both consumers pass this through `.format(slug=…)`, and
              # `${TMPDIR:-/tmp}` would otherwise be read as a format field and raise KeyError.
-             "build": ('add run {slug} --junitxml "${{TMPDIR:-/tmp}}/add-run.xml" '
-                       '-- <test cmd> --junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
+             "build": ('add run {slug} -- <test cmd> '
+                       '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
 BEAT_NAMES = ("scaffold", "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
@@ -2718,6 +2718,36 @@ def fresh(receipt: dict, root) -> tuple:
     return True, "every file in scope is byte-identical to the run"
 
 
+JUNIT_FLAGS = ("--junitxml", "--junit-xml")
+
+
+def _sniff_report(command: list):
+    """The JUnit report path the COMMAND already names, or None.
+
+    `--junitxml` on `add run` tells the engine where to READ; the command writes it. So one path
+    was typed twice, and the second mention carried no information the engine did not already
+    hold — it was a restatement the caller could get wrong, punished with `ids: unknown`, which
+    reads as every rule unbound.
+
+    Deliberately narrow. It matches two known flag spellings, in `=path` and two-token form, and
+    returns None for anything else -> "R:GUESSPATH". A broader heuristic would bind a receipt to
+    a file the command never wrote, which is worse than reading no report at all: an unbound
+    receipt is visibly unbound, a wrongly-bound one is not. A runner that names its report
+    somewhere else still has the explicit flag.
+
+    LAST occurrence wins (A5) — that is what the runners themselves honour, so taking the first
+    would bind a report the command went on to overwrite.
+    """
+    found = None
+    for i, token in enumerate(str(t) for t in command):
+        for flag in JUNIT_FLAGS:
+            if token.startswith(flag + "="):
+                found = token[len(flag) + 1:] or found
+            elif token == flag and i + 1 < len(command):
+                found = str(command[i + 1])
+    return found or None
+
+
 def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, junit=None) -> dict:
     """Execute the agent's own command, notarise the result as a Run node.
 
@@ -2743,7 +2773,12 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # it says: the command's working directory, nothing more.
     digest = scope_digest(root.parent, scope)
 
+    # A2/A3: the flag is an OVERRIDE, so it is consulted first and a sniffed value can never
+    # beat a stated one — a runner may write its report where the command line never names it.
+    junit = junit or _sniff_report(command)
+
     # The reference the report is judged against, read off the filesystem that will record it.
+    # Sniffed or stated, it is the same value from here down — staleness included (M4).
     started = time.time()
     if junit:
         started = _fs_epoch(junit, started)
