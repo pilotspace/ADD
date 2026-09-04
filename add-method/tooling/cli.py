@@ -184,6 +184,9 @@ def build_parser() -> argparse.ArgumentParser:
                         f"max {add.NEIGHBORHOOD_MAX}) — an N above the max REFUSES rather than "
                         f"clamping, so a capped read never reports success for a depth nobody "
                         f"asked for")
+    s.add_argument("--json", action="store_true",
+                   help="emit the pinned machine payload instead of the human render, alone on "
+                        "stdout (FORMAT.md). A refusal is a payload too, and keeps its exit code")
 
     s = sub.add_parser("search", help="find a concept anywhere in the bundle — spec hits at "
                                       "LESSON granularity, with a pasteable address (read-only)")
@@ -200,6 +203,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--as-of", dest="as_of", metavar="YYYY-MM-DD",
                    help="each delta hit under the status it HELD THEN; the interval is half-open "
                         "[from, to), and a hit with no interval is shown and counted, never hidden")
+    s.add_argument("--json", action="store_true",
+                   help="emit the pinned machine payload instead of the human render, alone on "
+                        "stdout (FORMAT.md). A refusal is a payload too, and keeps its exit code")
 
     return p
 
@@ -387,12 +393,25 @@ def dispatch(args, run_cmd) -> int:
         return 0
 
     if args.verb == "show":
+        # `--json` is a second RENDER of the same answer, never a second read. The payload owns
+        # stdout alone: a caller pipes it straight into a parser, so nothing prose-shaped may
+        # ride along (R:DIRTYSTDOUT), and a refusal keeps its exit code (R:FALSESUCCESS).
+        if args.json:
+            payload, code = add.show_payload(root, args.ref, args.expand)
+            print(add.as_json(payload), end="")
+            return code
         view, note = add.show(root, args.ref, args.expand)
         print(note)
         # A node with no neighbours is a recorded OUTCOME, not a refusal — only `None` is one.
         return 0 if view is not None else 1
 
     if args.verb == "search":
+        if args.json:
+            payload, code = add.search_payload(root, args.query, as_of=args.as_of,
+                                               type=args.type, status=args.status,
+                                               milestone=args.milestone)
+            print(add.as_json(payload), end="")
+            return code
         hits, note = add.search(root, args.query, as_of=args.as_of, type=args.type,
                                 status=args.status, milestone=args.milestone)
         print(note)

@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "33efe11536eb6d848a04575395bb89b2"  # re-aimed @ search-structured-filters: search gains --type/--status/--milestone, an optional query, and a reported delta exclusion. prior: 1233edd0… @ show-verb
+ENGINE_MD5 = "cba96d1b48633ef680af00e2910631be"  # re-aimed @ search-structured-filters: search gains --type/--status/--milestone, an optional query, and a reported delta exclusion. prior: 1233edd0… @ show-verb
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "8fc709607c39808d0168e91f1951b98f"  # re-aimed @ search-structured-filters: cli search takes three filters and an optional positional. prior: 2e121964… @ show-verb
+ENGINE_PKG_MD5 = "cb8842af209d66cca6233295a96b33df"  # re-aimed @ json-emission: both read verbs take --json. prior: 8fc70960… @ search-structured-filters

@@ -36,7 +36,7 @@ risks:
 - [x] `add show REF` returns a node's full content plus its neighbourhood, defaults to 3 levels, refuses above the cap rather than clamping, refuses a ref that is not exactly one node, and every verb registry knows the 26th verb   (← show-verb)
 - [x] `add search` selects by `--type`, `--status` and `--milestone` beside its free-text grammar, with the positional optional and "no query and no filter" still a refusal   (← search-structured-filters)
 - [ ] one `--json` payload schema, pinned in FORMAT.md, serves both `show` and `search`, and is proven byte-stable across runs   (← json-emission)
-- [ ] `add deltas` cites a lesson at the same address `add search` does, so a reader who found it through either door can cite it (X4)   (← one-address-per-concept)
+- [x] `add deltas` cites a lesson at the same address `add search` does, so a reader who found it through either door can cite it (X4)   (← one-address-per-concept)
 - [x] the loop reads the graph before it plans — SKILL.md and intake name the read step, byte-identical across all three shipped skill trees, funded by compression inside the existing budget pins   (← skill-reads-the-graph)
 
 ## CLOSE

@@ -3822,6 +3822,113 @@ def search(root, query: str = None, as_of: str = None,
     return hits, "\n".join(lines)
 
 
+# ================================== the machine surface — one envelope, both read verbs (S1-S4)
+#
+# `show` and `search` are the two doors a machine reads this bundle through. Both answered only
+# in prose until now, so a consumer had to parse a human render and was coupled to wording no
+# test pinned. What follows is the second render of the SAME answer — never a second read.
+#
+# The envelope is `results[] + edges[]` because that is the one shape both verbs fit: `show` is
+# one node plus its walk, `search` is N hits and no walk. A later verb returning both fits
+# without a third shape, and `search` carries `edges: []` rather than omitting the key, so a
+# consumer indexes one shape (A10).
+#
+# The engine version is DELIBERATELY absent. A payload that carried it would change bytes every
+# release, breaking a consumer's pin for no semantic reason; `JSON_SCHEMA` moves only when the
+# schema does (M7).
+
+JSON_SCHEMA = "add.read/1"
+
+
+def read_payload(verb: str, request: dict, ok: bool, note: str,
+                 results=(), edges=()) -> dict:
+    """The ONE envelope every machine read emits — and the only place its keys are named.
+
+    Both adapters call here. Naming the keys twice is exactly the drift `one-address-per-concept`
+    cost a task to undo, one level up (R:TWOSHAPES).
+
+    A request entry whose value is `None` is dropped: the echo says what was ASKED, and a flag
+    nobody typed was not part of the ask.
+    """
+    return {
+        "schema": JSON_SCHEMA,
+        "verb": verb,
+        "ok": bool(ok),
+        "request": {k: v for k, v in dict(request).items() if v is not None},
+        "results": [dict(r) for r in results],
+        "edges": [dict(e) for e in edges],
+        "note": note or "",
+    }
+
+
+def as_json(payload: dict) -> str:
+    """The one serializer. Sorted keys, two-space indent, one trailing newline, no escaping.
+
+    `sort_keys` is what makes M2 hold: without it a dict that happened to be built in a different
+    order emits different bytes, and that failure is INTERMITTENT — the worst way to fail.
+    `ensure_ascii=False` keeps a node's own text readable rather than shipping it as escapes.
+    """
+    return json.dumps(payload, sort_keys=True, ensure_ascii=False, indent=2) + "\n"
+
+
+def _fields(fm: dict) -> dict:
+    """A node's frontmatter as the payload carries it — copied AS IT STANDS.
+
+    An absent key stays absent rather than becoming `null`: a key present in the payload means a
+    key present in the file, which is the only way a consumer can tell an unauthored slot from
+    an authored empty one (A9).
+    """
+    return {k: v for k, v in dict(fm or {}).items()}
+
+
+def show_payload(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """`show`, rendered for a machine. `(payload, exit_code)`.
+
+    Built AFTER the verb answers, from what it returned — never a second traversal, so the JSON
+    and the prose can never describe different reads of the bundle (A7).
+    """
+    request = {"ref": ref, "expand": expand}
+    view, note = show(root, ref, expand)
+    if view is None:
+        return read_payload("show", request, False, note), 1
+    # `match` — what in the concept answered the ask. NOT `kind`: the engine already spends that
+    # word on the receipt-evidence ladder, and one word for two vocabularies is a collision a
+    # guard cannot see through (it read this literal as a receipt kind the docs never named).
+    results = [{"address": view["cid"], "cid": view["cid"], "match": "node",
+                "fields": _fields(view["fm"]), "text": view["body"]}]
+    edges = [{"depth": d, "direction": direction, "family": family, "label": label,
+              "src": src, "ref": ref_, "target": target}
+             for d, direction, family, label, src, ref_, target in view["rows"]]
+    # NOT the human render: that would put prose inside the payload and duplicate the stream a
+    # `--json` caller asked to be free of it (R:DIRTYSTDOUT). A one-line summary instead.
+    summary = f"{view['cid']} \u00b7 {len(edges)} edge(s) within {expand} level(s)"
+    return read_payload("show", request, True, summary, results, edges), 0
+
+
+def search_payload(root, query: str = None, as_of: str = None, type: str = None,
+                   status: str = None, milestone: str = None) -> tuple:
+    """`search`, rendered for a machine. `(payload, exit_code)`.
+
+    `hits is None` is the verb's refusal marker and an empty list is a recorded no-hit outcome
+    (law 3), so a zero-hit search is a SUCCESS with `results: []` — never a refusal (E2).
+
+    A hit's `cid` is its address minus the `#fragment`. `search` already builds that address, and
+    `one-address-per-concept` made the node and delta doors build it the same way, so deriving it
+    here cannot disagree with the verb (A4).
+    """
+    request = {"query": query, "as_of": as_of, "type": type,
+               "status": status, "milestone": milestone}
+    hits, note = search(root, query, as_of=as_of, type=type, status=status, milestone=milestone)
+    if hits is None:
+        return read_payload("search", request, False, note), 1
+    # The VERB's order, unchanged — an adapter that re-sorted would make the two renders
+    # disagree about what came first (A13).
+    results = [{"address": address, "cid": address.split("#")[0], "match": matched,
+                "fields": {}, "text": text} for address, matched, text in hits]
+    summary = f"{len(results)} hit(s)"
+    return read_payload("search", request, True, summary, results), 0
+
+
 # ================================== the covers: binding — evidence that earns its name (e12)
 #
 # A15's finding: `covers:` was a LABEL. A task could claim a Must was proven by a check that

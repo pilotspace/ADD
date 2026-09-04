@@ -723,3 +723,63 @@ silently after approval — and leaves the semantic half to review.
 This limit is inherent to law 3: a notary that judged whether a test was a *good* test
 would be a guard, and would need to execute and interpret code it was handed no authority
 over. State it plainly rather than let a green seal be read as a correctness proof.
+
+---
+
+## §11 The machine read
+
+Two verbs read the bundle without changing it — `show`, which returns one node whole with its
+neighbourhood walk (§3.4), and `search`, which returns every concept matching a query. Both
+answer in prose by default. Under `--json` both emit **one envelope**, and it owns stdout alone:
+a consumer pipes the stream straight into a parser, so nothing prose-shaped rides along.
+
+```json
+{
+  "schema": "add.read/1",
+  "verb": "show",
+  "ok": true,
+  "request": { "ref": "t-one", "expand": 3 },
+  "results": [
+    { "address": "/tasks/t-one.md", "cid": "/tasks/t-one.md", "match": "node",
+      "fields": { "type": "Task", "status": "direction" }, "text": "## CARD\n…" }
+  ],
+  "edges": [
+    { "depth": 1, "direction": "out", "family": "edge", "label": "milestone",
+      "src": "/tasks/t-one.md", "ref": "m-one", "target": "/milestones/m-one.md" }
+  ],
+  "note": "/tasks/t-one.md · 1 edge(s) within 3 level(s)"
+}
+```
+
+Every key is always present. What fills each one:
+
+| key | `show` | `search` |
+|---|---|---|
+| `schema` | the schema id — moves only when this section does | same |
+| `verb` | `"show"` | `"search"` |
+| `ok` | `false` marks a refusal and only a refusal | same |
+| `request` | the arguments as asked; a flag nobody typed is absent | same |
+| `results` | exactly one node — `address` · `cid` · `match` · `fields` · `text` | every hit, in the verb's own order; `fields` is `{}` and `text` is the snippet |
+| `edges` | the walk's rows — `depth` · `direction` · `family` · `label` · `src` · `ref` · `target` | always `[]`, never omitted |
+| `note` | a one-line summary | a one-line summary |
+
+Three guarantees a consumer may rely on.
+
+**Byte-stability.** Two runs of the same command over an unchanged bundle emit identical
+bytes: keys sorted, two-space indent, one trailing newline, non-ASCII unescaped. Both verbs
+already emit a total order, and the adapters preserve it rather than re-sorting.
+
+**A refusal is a payload.** An over-cap `--expand`, a ref naming no node or several, a search
+naming neither query nor filter — each emits this same envelope with `ok: false` and the
+refusal text, its `next:` line included, in `note`. And each **keeps the exit code it earned**:
+`--json` never turns a refusal into a success, because a caller checking the status code would
+read one as an answer. A zero-hit search is not a refusal — it is a recorded outcome (law 3),
+so it exits 0 with `ok: true` and an empty `results`.
+
+**No clock, no version, no absolute path.** The engine version is deliberately absent: a payload
+carrying it would change bytes on every release and break a consumer's pin for no semantic
+reason. `schema` is what moves when the shape does.
+
+`fields` is a node's frontmatter copied as it stands — an absent key stays **absent** rather
+than becoming `null`, so a key present in the payload means a key present in the file, which is
+the only way to tell an unauthored slot from an authored empty one.
