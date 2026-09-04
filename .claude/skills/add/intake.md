@@ -57,7 +57,7 @@ large = a Task at `standard|deep`, or a Milestone when it spans tasks.
 5. the receipt above — commit, then the one learn line.
 
 ### Task — one atomic node
-`add deltas` first — a lesson may already answer it. Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the 3-beat loop: `add new Task <slug> --title "..." --depth quick|standard|deep`, then Direction.
+`add deltas` first — a lesson may already answer it; then `add show <milestone>` for the siblings this node must fit beside, and `add search --type Task --status direction` for what is already open. Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the 3-beat loop: `add new Task <slug> --title "..." --depth quick|standard|deep`, then Direction.
 (The node type is a FORMAT vocabulary word — `Task`, `Milestone` — canonically capitalized.)
 
 ### Explore — the answer IS the deliverable
@@ -70,7 +70,7 @@ PLAN, the deliverable is a cited `## FINDINGS` brief closed by a sufficiency gat
 security-scoped questions keep their human floor.
 
 ### Project / milestone — a theme or a slice
-`add deltas` first — carried lessons shape goal and scope.
+`add deltas` first — carried lessons shape goal and scope. Then read what exists: `add search --type Milestone` for the themes already declared, and `add show <slug> --expand 2` on any that overlap, so a new theme is drafted against the graph rather than beside it.
 A new product theme no active milestone covers, or a slice too big for one task. **Load the best-fit persona
 whose `flow:` includes advisor before drafting** (`personas.md` § planning; skip silently if
 no personas are seeded — the load is by fit). Draft the milestone first —

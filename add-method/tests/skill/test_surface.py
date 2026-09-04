@@ -151,8 +151,8 @@ def test_skill_tree_prose_unedited_by_this_task():
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
     pinned = {
-        "SKILL.md": "aab6361b4b9399af63a06bb8f2c59866d30c56269afde14943b28571993c1593",   # re-aimed @ show-verb: the cookbook gains `add show` and loses the duplicate `add done` row, funded inside the byte pin. prior: 791651e2… @ search-verb
-        "intake.md": "db288507188e8f6ea31e3babc1f2a0f3c33907dcee7851b4e38bb0fd39d14819",
+        "SKILL.md": "d3170f4b10e6802b98d7a6d63e66c1e1e1f396d5e06af043d02ab9c35b85bf90",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: aab6361b…
+        "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
     }
     for name, want in pinned.items():
         got = hashlib.sha256((SKILL / name).read_bytes()).hexdigest()

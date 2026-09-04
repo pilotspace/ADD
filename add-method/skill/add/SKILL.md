@@ -31,7 +31,7 @@ installer — `pilotspace-add init "<name>"` (pip) or `add init "<name>"` / `npx
 Claude Code plugin — then drive from `.add/tooling/cli.py`. State
 lives in the `.add/` bundle — files are the database, `graph.json` is a rebuildable cache. The engine
 records; it never runs the method or spawns an agent. The full loop surface — including `fold ·
-reopen · deltas · search · check · milestone-archive` — is wired.
+reopen · deltas · search · show · check · milestone-archive` — is wired.
 
 ## Always start here (orient — do not skip)
 
@@ -42,7 +42,7 @@ repo. Then branch:
   refuses any other name rather than guess. Non-code domain? Take `doc`, then re-author its
   lenses (`domains.md`). Offer to seed starter personas (`seed.md`,
   opt-in), then size the request (Intake).
-- **A task is active** (`status` not `done`) → open `.add/tasks/<slug>.md`, read its `## CARD`, and
+- **A task is active** (`status` not `done`) → `add show <slug>` — the node whole, its edges — and
   work the beat `add status` names next. The beat is **derived from the node's stamps**, not the
   `status` field — which stays `direction` until close: unfrozen → author + freeze; frozen with no
   green receipt → build; a fresh green receipt → verify (loop below).
@@ -56,13 +56,13 @@ Read the request into a task shape, then pick the **lane** (you route; the human
   else ≤3 adjacent files, one-sitting diff, zero unknowns — small new behavior fits. Route and go, no
   node: inline card → red→green → `invariants:` → commit + exactly one `add learn` line. Medium → Task
   `--depth quick`; large → `standard|deep` or a Milestone. Ceremony falls with size; review never does.
-- **Task** — one atomic node in the active milestone's scope; `add deltas` first. The 3-beat loop below.
+- **Task** — one node in the active milestone; `add deltas` then `add show`. The 3-beat loop below.
 - **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
   questions + a hard budget freeze, and the gate reads the cited `## FINDINGS` brief directly —
   **no run receipt** for a findings-only explore (`phases/explore.md`). One contract-shaping
   unknown already argues this lane; freezing a contract on a guess ships the wrong thing with
   perfect receipts.
-- **Project / milestone** — a new theme or a slice too big for one task. `add deltas` first, then
+- **Project / milestone** — a theme, or a slice too big for one task. `add deltas` + `add search`, then
   load the persona whose `flow:` includes **advisor** BEFORE drafting (skip silently if none is seeded), draft the
   milestone (goal · scope · exit criteria · breadth-first task list), confirm it, create it and its
   tasks, and record the lens: `add advise <milestone> --persona <p>`.
@@ -144,7 +144,7 @@ add brief <slug>                             # the composed XML prompt for the a
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
 add locate <path>                            # which node's scope owns this file
 add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
-add search "<term>" [--as-of <date>]         # any concept — a delta answers with its own address
+add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
 add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
