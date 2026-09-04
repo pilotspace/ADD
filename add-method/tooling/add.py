@@ -4893,8 +4893,11 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
 def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
     """Record that the brief ENTERED the build: `act: brief` on a frozen Task. `(digest, note)`.
 
-    The compile itself stays pure (`brief` is read-only and `gate` calls it); THIS is the
-    write, and it is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
+    `brief()` — the FUNCTION — is pure, which is why `gate` may call it; THIS function is the
+    write, and the `cli.py` wrapper for `add brief` calls both, so the VERB writes on a frozen
+    Task even though the compile does not. Saying "`brief` is read-only" without saying which
+    `brief` sent a reviewer to run it against a live bundle during an audit. What is written
+    here is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
     entry — before the freeze there is no sealed direction for a brief to enter, and depth
     `quick` never demands one (the gate exempts it), though recording one is harmless.
     """

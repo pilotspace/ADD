@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The carried inventory is windowed the way search already windows it
-status: direction
+status: done
 depth: standard
 milestone: read-cost
 scope:
@@ -19,11 +19,14 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:read-cost", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:01b5d2ee3cfae76b", binding: "sha256:e9a79d98e3503d91" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:4f3a273089595e94" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:4f3a273089595e94" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/bounded-delta-listing.d/runs/1.md }
+  - { by: "plan:read-cost", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/bounded-delta-listing.d/runs/1.md, brief: "sha256:640eb3bb925614fc" }
 ---
 ## CARD
 goal: the carried inventory is windowed the way `search` already windows it, and the saving is measured rather than asserted.
 why: `deltas` emits 27,374 bytes and 51 of its 66 lines exceed the 300-character bound `search` is HELD TO BY TEST, the longest at 830. The two verbs render the same records at 409 and 169 bytes each; `search` windows at `SEARCH_SNIPPET` and `deltas` windows at nothing. It is about 90% of a task-intake session, and it grows every time a lesson is filed — 21 to 40 to 61 open deltas across three minors. The helper and the constant already exist and are already tested. This is safe to do now and was not safe before: `address-dereferences` made one lesson a 608-byte read, so a truncated listing has a cheap way back to the full text.
-beat: direction · next: add freeze bounded-delta-listing
+beat: done · next: add status
 
 ## RULES
 <must>
