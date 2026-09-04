@@ -782,6 +782,17 @@ Every key is always present. What fills each one:
 | `request` | the arguments as asked; a flag nobody typed is absent | same |
 | `results` | exactly one node — `address` · `cid` · `match` · `fields` · `text` | every hit, in the verb's own order; `fields` is `{}` and `text` is the snippet |
 | `edges` | the walk's rows — `depth` · `direction` · `family` · `label` · `origin` · `src` · `ref` · `target`. `origin` is the address of the concept that **declared** the edge: a lesson address like `/specs/method.md#M8` for a relation, and the node's own cid for a node edge | always `[]`, never omitted |
+
+A relation row's `src` and `target` are **concept addresses**, not files. `M8 refines
+/specs/method.md#M4` emits `src: /specs/method.md#M8`, `target: /specs/method.md#M4` — both
+ends dereference through `show`, which is what makes the concept graph traversable from either
+one. A relation written with **no fragment** targets the file, and `target` is that file's cid;
+a fragment naming a lesson the file does not hold resolves to **nothing**, and `target` is
+`null` — an address the bundle cannot dereference is never minted. Node edges are unchanged:
+`needs: /specs/x.md#gives` still targets `/specs/x.md`, because a node edge names a place in a
+file and a relation names a concept. A file's own concepts are walked at the **file's depth** —
+containment is not a hop — so `--expand 1` from a spec still costs one level and still shows
+every relation that spec declares.
 | `note` | a one-line summary | a one-line summary |
 
 Three guarantees a consumer may rely on.

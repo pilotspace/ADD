@@ -574,7 +574,11 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
 
     Law 1 holds: the walk reads the graph it is handed, never `graph.json`.
     """
-    if cid not in graph:
+    # A concept address is a legitimate start (§3.3): a lesson is a thing this bundle addresses
+    # but does not store as a file, and a reader standing on one wants what refines it. It is
+    # admitted only when the lesson EXISTS, so an unknown address refuses in the grammar an
+    # unknown cid gets rather than walking an empty graph and reporting "no edges" (M2 · A8).
+    if cid not in graph and _concept_of(graph, *cid.partition("#")[::2]) is None:
         return None, (f'`{cid}` names no node in this bundle -> "R:NOSUCHNODE"'
                       "\nnext: add status   # the nodes this bundle actually holds")
 
@@ -586,15 +590,32 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
         fwd.setdefault(src, []).append(("edge", key, src, ref, target))
         if target is not None:
             rev.setdefault(target, []).append(("edge", key, src, ref, src))
+    # A relation's two ends are CONCEPTS, and the walk joins them as such. `_norm` strips the
+    # fragment BY DESIGN — a node edge like `needs: /specs/x.md#gives` must resolve to the FILE,
+    # and `resolve`, `brief` and the containment codes all depend on that — so the address is
+    # rebuilt HERE, for this family alone (R:NODEEDGEDRIFT). Before this, both ends were the
+    # file: `M8 refines /specs/method.md#M4` emitted a row reading `refines /specs/method.md`,
+    # and a reader standing on M4 found nothing at all (R:FILEASCONCEPT).
+    hosts = {}          # file cid -> the concept addresses that file hosts
     for src, src_id, rel, ref, target in relations(graph):
         if rel is None:
             continue
         # The declaring LESSON, at the address `search` and `deltas` already cite it by. An
         # id-less legacy head degrades to the file, exactly as `delta_address` degrades.
         origin = delta_address(src.rsplit("/", 1)[-1][:-3], src_id)
-        fwd.setdefault(src, []).append(("relation", rel, origin, ref, target))
-        if target is not None:
-            rev.setdefault(target, []).append(("relation", rel, origin, ref, src))
+        dest = _concept_of(graph, target, ref.partition("#")[2].strip()) if target else None
+        if dest is None and target is not None and "#" not in ref:
+            dest = target                     # E1 — a fragment-less relation still names the file
+        fwd.setdefault(origin, []).append(("relation", rel, origin, ref, dest))
+        if dest is not None:
+            rev.setdefault(dest, []).append(("relation", rel, origin, ref, origin))
+        # Containment, not a hop: a file's concepts are walked AT THE FILE'S OWN DEPTH, so
+        # `show <spec> --expand 1` still costs one level and still shows what the spec declares
+        # (M4 · A5). The descent is one-way — from a concept the walk does NOT climb back into
+        # its file, or standing on one lesson would drag in every relation its neighbours wrote.
+        for address in (origin, dest):
+            if address and "#" in address:
+                hosts.setdefault(address.partition("#")[0], set()).add(address)
 
     # `best` keys the EDGE — including WHO DECLARED IT, so two lessons refining one target stay
     # two edges. The shallowest sighting wins and a second one neither duplicates the row nor
@@ -603,14 +624,15 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
     for depth in range(1, max(0, int(expand)) + 1):
         nxt = set()
         for node in frontier:
-            for family, label, origin, ref, other in fwd.get(node, []):
-                best.setdefault((family, label, origin, node, ref, other), (depth, "out"))
-                if other is not None and other not in seen:
-                    nxt.add(other)
-            for family, label, origin, ref, other in rev.get(node, []):
-                best.setdefault((family, label, origin, other, ref, node), (depth, "in"))
-                if other not in seen:
-                    nxt.add(other)
+            for probe in [node] + sorted(hosts.get(node, ())):
+                for family, label, origin, ref, other in fwd.get(probe, []):
+                    best.setdefault((family, label, origin, probe, ref, other), (depth, "out"))
+                    if other is not None and other not in seen:
+                        nxt.add(other)
+                for family, label, origin, ref, other in rev.get(probe, []):
+                    best.setdefault((family, label, origin, other, ref, probe), (depth, "in"))
+                    if other not in seen:
+                        nxt.add(other)
         seen |= nxt
         frontier = sorted(nxt)
         if not frontier:
@@ -711,16 +733,21 @@ def _show_lesson(root, graph: dict, address: str, expand: int) -> tuple:
         fm["valid_from"] = item.valid_from
     if item.valid_to:
         fm["valid_to"] = item.valid_to
-    rows = [r for r in (neighborhood(graph, file_cid, expand)[0] or [])
-            if r[2] == "relation" and r[4] == address]
+    # The walk starts AT the concept now, not at its file: standing on a lesson, what you want
+    # first is what refines it, and filtering the file's walk down to rows this lesson declared
+    # could only ever show the outbound half. `related:` was structurally empty for every lesson
+    # that was refined rather than refining.
+    rows = [r for r in (neighborhood(graph, address, expand)[0] or []) if r[2] == "relation"]
 
     dash, dot, down = "\u2014", "\u00b7", "\u2193"
     head = f" {dot} ".join(str(fm[k]) for k in ("type", "lens", "competency") if fm.get(k))
     span = f"  {fm.get('valid_from', dash)}" + (f" \u2192 {fm['valid_to']}" if fm.get("valid_to") else "")
     lines = [f"{address}  [{status}]  {head}{span}".rstrip(), "", item[2], ""]
     if rows:
-        lines.append(f"related (depth {expand}):")
-        lines += [f"  {r[0]} {down} {r[3]}  {r[7] or (dash + ' unresolved')}" for r in rows]
+        up = "\u2191"
+        lines.append(f"related (depth {expand} \u00b7 {down} refines \u00b7 {up} refined by):")
+        lines += [f"  {r[0]} {down if r[1] == 'out' else up} {r[3]}  "
+                  f"{(r[7] if r[1] == 'out' else r[5]) or (dash + ' unresolved')}" for r in rows]
     else:
         lines.append(f"related: none within {expand} level(s)")
     lines.append(f"next: add deltas --lens {lens}   # the rest of this lens")
@@ -785,6 +812,20 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
         lines += ["", f"related: none within {expand} level(s)"]
     lines.append(f"next: add show {cid} --expand 1   # the immediate neighbours only")
     return view, "\n".join(lines)
+
+
+def _concept_of(graph: dict, file_cid: str, frag: str) -> str:
+    """`/specs/x.md#M4` when `frag` names a lesson that file really holds, else None.
+
+    The ONE place a concept address is minted for the walk. It reads the target's own body
+    through `_delta_ids`, so a fragment the delta grammar rejects mints nothing: an address the
+    bundle cannot dereference must never appear as an edge's target (R:PHANTOMTARGET).
+    """
+    if not frag or file_cid not in graph:
+        return None
+    if frag not in _delta_ids(read(graph[file_cid]["path"], "T2")["body"]):
+        return None
+    return file_cid + "#" + frag
 
 
 def _delta_ids(body: str) -> dict:
