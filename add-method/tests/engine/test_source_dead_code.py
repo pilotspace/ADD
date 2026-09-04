@@ -45,21 +45,24 @@ def _delta_bundle(tmp_path, line):
 CLOSED = "- [ADD · X1 · folded · 2026-01-01→2026-06-01] a closed lesson (evidence: /x.md)"
 
 
-def _present(paths):
-    """The twins this checkout actually carries, with a floor.
+def _present(paths, floor, what):
+    """The paths this checkout actually carries, with a floor sized to the CLAIM being made.
 
-    Two of the four are gitignored, so a fresh clone has two and the machine that built them has
-    four. Reading all four unconditionally passed here and failed in CI — an exists-skip is
-    correct, but only with a floor: skipping every path would make the guard vacuously green.
+    Two of the four add.py twins are gitignored and so are two of the three pins: a fresh clone
+    carries two twins and ONE pin, while the machine that built them has all seven. Reading them
+    unconditionally passed here and failed in CI. An exists-skip is right, but the floor is not
+    one number — the twins claim PARITY, which needs two to mean anything, and a pin claims it
+    ATTESTS THE ENGINE ON DISK, which one pin can do alone. A single floor of 2 red the pins on
+    a fresh checkout; a single floor of 1 would let the parity claim pass on one file.
     """
     have = [p for p in paths if (ROOT / p).is_file()]
-    assert len(have) >= 2, f"only {len(have)} twin(s) present; parity proves nothing"
+    assert len(have) >= floor, f"only {len(have)} {what} present; the claim would be vacuous"
     return have
 
 
 def test_the_removed_names_are_gone_everywhere():
     """covers: M1, R:BLINDCUT, A2 — neither name survives in any twin this checkout carries."""
-    for twin in _present(TWINS):
+    for twin in _present(TWINS, 2, "twin(s)"):
         text = (ROOT / twin).read_text(encoding="utf-8")
         assert len(text.splitlines()) > 5000, f"{twin}: not the engine — the search would be vacuous"
         for name in REMOVED:
@@ -96,11 +99,11 @@ def test_the_boundary_claim_survived_the_removal(tmp_path):
 
 def test_all_four_twins_and_both_pins_agree():
     """covers: M2, A7, E3 — the four twins are byte-identical and both pins verify."""
-    digests = {hashlib.md5((ROOT / t).read_bytes()).hexdigest() for t in _present(TWINS)}
+    digests = {hashlib.md5((ROOT / t).read_bytes()).hexdigest() for t in _present(TWINS, 2, "twin(s)")}
     assert len(digests) == 1, f"the add.py twins have drifted: {digests}"
     engine = digests.pop()
     cli = hashlib.md5((ROOT / "add-method/tooling/cli.py").read_bytes()).hexdigest()
-    for pin in _present(PINS):
+    for pin in _present(PINS, 1, "pin(s)"):
         text = (ROOT / pin).read_text(encoding="utf-8")
         assert f'"{engine}"' in text, f"{pin}: ENGINE_MD5 does not attest the engine on disk"
         assert f'"{cli}"' in text, f"{pin}: ENGINE_PKG_MD5 does not attest cli.py on disk"
