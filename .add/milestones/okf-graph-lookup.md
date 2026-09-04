@@ -3,7 +3,8 @@ type: Milestone
 title: Reading the bundle as a graph — one node in full, its neighbourhood to three levels, and a filter that answers by field
 status: direction
 generated: { by: add/3.4.0, at: 2026-09-04 }
-verified: []
+verified:
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: check, authority: process, via: process, boxes: "EXIT:1" }
 advised_by: method-steward
 ---
 ## CARD
@@ -26,7 +27,7 @@ risks:
   - both engine pins re-aim, not one: `ENGINE_MD5` pins `add.py` and `ENGINE_PKG_MD5` pins `cli.py` (S4) — every task here touches at least one and most touch both
 
 ## EXIT
-- [ ] milestone membership is a real edge the graph can walk in both directions, without inventing a cycle in `cycles()` and without breaking `todo`/`wave`'s slug matching   (← milestone-membership-is-an-edge)
+- [x] milestone membership is a real edge the graph can walk in both directions, without inventing a cycle in `cycles()` and without breaking `todo`/`wave`'s slug matching   (← milestone-membership-is-an-edge)
 - [ ] `add.neighborhood(graph, cid, expand)` walks both edge families in both directions to a bounded depth, is cycle-safe, and emits a total order so two runs over an unchanged bundle are byte-identical   (← graph-neighborhood)
 - [ ] `add show <ref>` returns a node's full content plus its neighbourhood, defaults to 3 levels, refuses above the cap rather than clamping, refuses a ref that is not exactly one node, and every verb registry knows the 26th verb   (← show-verb)
 - [ ] `add search` selects by `--type`, `--status` and `--milestone` beside its free-text grammar, with the positional optional and "no query and no filter" still a refusal   (← search-structured-filters)

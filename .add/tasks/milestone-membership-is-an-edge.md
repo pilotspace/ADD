@@ -1,7 +1,7 @@
 ---
 type: Task
 title: Milestone membership is an edge the graph can walk, not a slug only todo can string-match
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: okf-graph-lookup
@@ -22,11 +22,18 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:b9213c531f16db26", binding: "sha256:69e14c1306e71f45" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:beb7ce7360f6145e" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/milestone-membership-is-an-edge.d/runs/1.md }
+  - { by: "builder", at: 2026-09-04, act: replan, authority: process, note: "residue sweep (architecture): a bare slug 'index' or 'log' mapped to /milestones/index.md · /milestones/log.md — the RESERVED compiled bodies (NOT_A_NODE). No traversal is reachable and no live instance exists, but a membership edge into a compiled body is wrong. Excluding the reserved names in both oracles, with a check; seal untouched." }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/milestone-membership-is-an-edge.d/runs/2.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:8d14a8f72e1b16da", binding: "sha256:69e14c1306e71f45" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:b2bc38354a5ce413" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/milestone-membership-is-an-edge.d/runs/3.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/milestone-membership-is-an-edge.d/runs/3.md, brief: "sha256:b2bc38354a5ce413" }
 ---
 ## CARD
 goal: the Task-to-Milestone link becomes traversable in both oracles, without entering any dependency adjacency.
 why: `milestone:` is in `EDGE_KEYS` and is declared on 45 nodes, yet `edges()` yields zero edges for it — every value is a bare slug and both oracles skip any ref without `.md`. The bundle's most load-bearing structural link is invisible to the graph, so a neighbourhood walk from a Milestone returns nothing and a walk from a Task returns only its receipts.
-beat: direction · next: add freeze milestone-membership-is-an-edge
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -66,16 +73,18 @@ strategy: write the guards first against today's engine, confirm the membership 
 - E6 `wave()` returns the identical level plan for a milestone before and after (M3)
 
 ## CHECKS
-- test_milestone_slug_resolves_to_a_milestone_node · covers: M1 · a bare-slug `milestone:` yields a target of `/milestones/<slug>.md` in `add.edges()`
-- test_second_oracle_resolves_membership_identically · covers: M1 R:DRIFT · `validate_bundle.edges()` counts and resolves the same membership edges as `add.edges()` over one fixture bundle
-- test_both_membership_spellings_name_one_target · covers: M2 E2 · the bare slug and the explicit `.md` ref produce the same target cid
-- test_membership_never_enters_cycle_adjacency · covers: M3 E5 R:SILENTCYCLE · a fixture whose Task and Milestone reference each other reports no cycle, and the guard reds if `milestone` is added to the allowlist
-- test_wave_levels_unchanged_by_membership · covers: M3 E6 · `wave()` returns the identical level plan on a fixture before and after the resolution
-- test_bare_slug_under_other_keys_stays_unresolved · covers: R:GENERALISE E1 · `depends_on: foo` yields target None
-- test_membership_value_cannot_escape_the_bundle · covers: R:ESCAPE E4 · a `../`-bearing membership value never resolves to a target outside the root
-- test_missing_milestone_is_unresolved_not_error · covers: A4 E3 · a `milestone:` naming no file reports `edge_unresolved` at info severity and raises nothing
-- test_depends_on_bare_slug_probe · covers: A2 · the probe A2 declares, run as shipped behaviour
-- test_format_states_the_membership_rule · covers: M4 · FORMAT §3.2 names the key and the directory
+- test_milestone_slug_resolves_to_a_milestone_node · covers: M1 · a bare-slug `milestone:` yields a target under `/milestones/` in `add.edges()`
+- test_second_oracle_resolves_membership_identically · covers: M1, R:DRIFT · both readers over one bundle: a resolving membership is silent in each, a dangling one is reported by each
+- test_both_membership_spellings_name_one_target · covers: M2, E2 · the bare slug and the explicit `.md` ref produce the same target cid
+- test_membership_never_enters_cycle_adjacency · covers: M3, E5, R:SILENTCYCLE · a fixture whose Task and Milestone reference each other reports no cycle, with both legs asserted resolved first
+- test_cycles_still_finds_a_real_dependency_cycle · covers: M3, R:SILENTCYCLE · the acyclic claim above is not vacuous — a real `depends_on` cycle is still reported
+- test_wave_levels_unchanged_by_membership · covers: M3, E6 · `wave()` keeps two independent members in ONE parallel level
+- test_only_the_milestone_key_resolves_a_bare_slug · covers: R:GENERALISE, E1, A2 · A2's probe, enumerated over `add.EDGE_KEYS` itself rather than a hand list
+- test_membership_value_cannot_escape_the_bundle · covers: R:ESCAPE, E4 · a `../`-bearing membership value never resolves to a target outside the root
+- test_reserved_names_are_not_membership_targets · covers: R:ESCAPE, A5 · `index` and `log` are compiled bodies (§3.1) and never become membership targets — found at VERIFY by the architecture lens, recorded by `add replan`
+- test_second_oracle_excludes_reserved_names_too · covers: R:DRIFT · the reserved-name exclusion is mirrored, so one value reads one way in both oracles
+- test_missing_milestone_is_unresolved_not_error · covers: A5, E3 · a `milestone:` naming no file reports `edge_unresolved` at info severity and raises nothing
+- test_format_states_the_membership_rule · covers: M4 · FORMAT §3.2 names the key, the bare-slug form, and the directory
 red-first: every check MUST fail first.
 
 ## EVIDENCE
