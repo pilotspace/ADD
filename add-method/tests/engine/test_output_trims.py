@@ -188,3 +188,36 @@ def test_the_trims_are_measured(tmp_path):
     _spec_binds(root, "phantom", REAL_BODY)
     assert small < len(add.brief(root, c)["text"]), \
         "brief: omitting the placeholder block saved nothing"
+
+
+def test_no_actionable_state_went_silent(tmp_path):
+    """covers: M7 — the trims removed rows, never a state a reader has to act on.
+
+    M7 is the whole risk of this task stated once: three verbs got quieter, and the way that
+    goes wrong is not a byte count, it is an open task, a finding or a refusal that stops
+    arriving. So this asks all three, through the trimmed renderings.
+    """
+    root = _bundle(tmp_path)
+    add.new(root, "Milestone", "m", title="m")
+    add.new(root, "Task", "needs-you", title="n", milestone="m", scope="live.py")
+
+    out = add.status(root)
+    # ROWS only. `needs-you` also appears in the trailing `next:` hint, so a substring test over
+    # the whole report passes with the row gone — the same false green Q15 filed.
+    rows = [l.split()[1] for l in out.splitlines() if l.startswith("  \u00b7 ")]
+    assert "needs-you" in rows, f"an OPEN task fell out of the bare report: {rows}"
+    assert out.rstrip().splitlines()[-1].startswith("next: "), "the runnable next: line went silent"
+
+    findings = add.doctor(root)[0]
+    assert findings, "fixture: an unauthored node should produce a finding"
+
+    _, note = add.locate(root, "live.py")
+    assert "needs-you" in note, "the open owner fell out of locate"
+    assert "no node scopes" in add.locate(root, "nowhere.py")[1], \
+        "locate's no-hit answer went silent"
+
+    # The CID, not the slug: `freeze` answers a bare slug with "no such node", which is a
+    # refusal about the FIXTURE, not about the scaffold this means to provoke (Q18).
+    ok, refusal = add.freeze(root, "/tasks/needs-you.md", by="x", authority="human")
+    assert not ok and "placeholder" in refusal, f"fixture did not provoke the scaffold refusal: {refusal!r}"
+    assert "next:" in refusal, "a refusal stopped naming its fix"

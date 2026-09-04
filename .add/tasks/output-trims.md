@@ -1,7 +1,7 @@
 ---
 type: Task
 title: status, locate and brief stop spending bytes on what a reader cannot act on
-status: direction
+status: done
 depth: standard
 milestone: read-cost
 scope:
@@ -25,11 +25,18 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:read-cost", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:6736ec90cd0cecef", binding: "sha256:bd1235c2e1600e93" }
   - { by: "builder", at: 2026-09-04, act: replan, authority: process, note: "two checks owned by other tasks asserted the behaviour this contract deliberately changed: test_non_beat_node_types_are_unchanged read the bare status report, and test_brief_includes_bind_sections found only the placeholder D1 named as noise. Both were re-aimed at what they actually prove (--all, and an AUTHORED bind section) — neither claim was weakened." }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/output-trims.d/runs/1.md }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:0b0346c3dccc100c" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/output-trims.d/runs/2.md }
+  - { by: "plan:read-cost", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:308ad25589eae20f", binding: "sha256:bd1235c2e1600e93" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:8c479680a1c965cd" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/output-trims.d/runs/3.md }
+  - { by: "Tin Dang", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/output-trims.d/runs/3.md, brief: "sha256:8c479680a1c965cd" }
 ---
 ## CARD
 goal: three verbs stop spending a reader's context on what that reader cannot act on, and each cut names what is lost.
 why: measured. `status` prints 9 rows carrying `[—]` — the five specs and the seeded personas — that never change and that no reader acts on; they are 53% of the bare report. `locate add.py` lists 50 owners of which 48 are `[done]`: the answer to "who owns this file" is the two that are open, and the other 48 are 93% of the output. `brief` compiles five `<ref>` blocks whose bodies are only the unauthored placeholder `- <the first decision that constrains the rest>` into EVERY brief — already filed as D1. None of these is the big win; the big win was the previous two tasks. These are the measured remainder, and each one has to name what a reader loses or it is a regression wearing a saving's clothes.
-beat: direction · next: add freeze output-trims
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -80,6 +87,7 @@ strategy: measure first, then cut, then re-measure — and write the R:NOWAYBACK
 - test_nothing_to_collapse_prints_no_line · covers: E1, E2, A7 · a small bundle grows no line reporting zero
 - test_order_is_unchanged · covers: A9 · surviving rows keep their order
 - test_the_trims_are_measured · covers: M6, A5 · the before and after are recorded and the after is smaller
+- test_no_actionable_state_went_silent · covers: M7 · an open task, a finding and a refusal all still reach the reader
 red-first: every check MUST fail first.
 
 ## EVIDENCE
