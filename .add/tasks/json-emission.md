@@ -1,7 +1,7 @@
 ---
 type: Task
 title: One pinned JSON payload serves both read verbs, and is byte-stable across runs
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: okf-graph-lookup
@@ -33,11 +33,18 @@ verified:
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:5961032504e73058", binding: "sha256:7dfe44a235b0cad0" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:8caaad9b13a38caa" }
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:5961032504e73058", binding: "sha256:7dfe44a235b0cad0" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/json-emission.d/runs/1.md }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:e1a531518fbbf08e" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/json-emission.d/runs/2.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:84baefb0424388c1", binding: "sha256:7dfe44a235b0cad0" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:ae74a102e8061c2c" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/json-emission.d/runs/3.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/json-emission.d/runs/3.md, brief: "sha256:ae74a102e8061c2c" }
 ---
 ## CARD
 goal: one JSON payload schema serves both read verbs, survives a refusal, and is byte-identical across runs over an unchanged bundle.
 why: `show` and `search` are the two doors a machine reads this bundle through, and both answer only in prose today. A consumer that has to parse the human render is coupled to wording no test pins. The milestone's whole point is a bundle a tool can walk, so the walk needs a stable machine surface — and ONE, because two payload shapes for two read verbs is the same drift X4 just cost us a task to undo.
-beat: direction · next: add freeze json-emission
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -91,7 +98,7 @@ strategy: write the byte-stability check and the refusal-exit-code check FIRST �
 - test_a_refusal_keeps_its_exit_code · covers: M4, R:FALSESUCCESS, E1, A15 · `--json` on a refusing invocation exits non-zero
 - test_json_owns_stdout_alone · covers: M5, R:DIRTYSTDOUT · stdout parses whole as JSON, with no prose before or after it
 - test_empty_result_is_not_a_refusal · covers: E2 · a zero-hit search exits 0 with `ok` true and `results: []`
-- test_absent_fields_are_omitted_not_nulled · covers: A9, E3 · a node with no `status:` has no `status` key, and unicode survives (E3)
+- test_absent_fields_are_omitted_not_nulled · covers: A9, E3, E4 · a node with no `status:` has no `status` key, and unicode survives (E3)
 - test_the_schema_is_pinned_in_format · covers: M6, M7, A5, A6 · FORMAT.md names every envelope key the builder emits, and the payload carries no engine version
 red-first: every check MUST fail first.
 

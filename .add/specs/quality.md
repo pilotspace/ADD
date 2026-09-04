@@ -7,7 +7,7 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 15
+delta_seq: 16
 relations:
   - Q9 refines /specs/method.md#M21
 ---
@@ -19,6 +19,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q16 · open · 2026-09-04] A parametrized check binds NOTHING: pytest reports it as test_x[args0], and a covers: entry names the bare id, so the gate refused a PASS for five rules that had all been proven. Same trap as the affordance-truth milestone. If a check is bound by covers:, loop inside one test rather than parametrizing it — and put the cases in a module constant so the loop still reads as a table. (evidence: /tasks/json-emission.md · gate refused E1, M3, M4, R:FALSESUCCESS until de-parametrized)
 - [TDD · Q15 · open · 2026-09-04] add search echoes the query in its header line ('N hit for "<q>":'), so a check that picks 'the line containing the query text' picks the HEADER, not a result row. The assertion then reports the renderer emitted no address when it emitted one. When asserting over rendered output, pick the row by its row shape, never by the text you searched for. (evidence: /tasks/one-address-per-concept.md · test_legacy_head_degrades_alike)
 - [TDD · Q14 · open · 2026-09-04] A CLI check can pass because the VERB does not exist yet: 'add show --expand deep exits 2' was green before any of add show was written, because argparse exits 2 for an unknown subcommand too. The check looked like it proved a type rejection and proved only that the parser rejected something. Any check that asserts a FAILURE exit code needs a floor asserting the same command SUCCEEDS with a good value. (evidence: /tasks/show-verb.md)
 - [TDD · Q13 · open · 2026-09-04] A regression floor authored at Direction can be UNSATISFIABLE by construction, and you find out at the gate: 'the full suite reports zero failures' collided with a guard asserting git diff HEAD -- tooling/add.py is empty, on a task whose contract requires editing add.py under an instruction not to commit. Before freezing a floor, check that the floor is reachable from the beat you are about to run. (evidence: /tasks/search-verb.md gate RISK-ACCEPTED then PASS after commit)

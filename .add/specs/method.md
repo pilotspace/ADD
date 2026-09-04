@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 31
+delta_seq: 32
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -21,6 +21,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M32 · open · 2026-09-04] A verb-level guard fires on the whole engine source, so a feature in one verb can red a guard belonging to another. Two of this milestone's full-suite failures were exactly that shape and neither showed up in the targeted run. Run the full suite once BEFORE the receipt on any task that edits add.py — the targeted command proves the contract, the full suite finds who else reads your source. (evidence: /tasks/json-emission.md · test_evidence_ladder and test_claimed_output_guard)
 - [ADD · M31 · open · 2026-09-04] The gate binds EVERY covers: referent, and an ASSUMPTION that declares a probe is a referent like any Must. Three tasks in a row gated red on exactly this — E1, then A2, then A1 — each an edge or assumption I authored, declared a probe for, and never wrote the check for. Writing the probe text is not writing the probe; cite it from CHECKS at Direction or the first gate refuses. (evidence: /tasks/deltas-time-filters.md A1 · scan-skips-receipt-evidence E1 · doctor-reads-each-body-once A2)
 - [ADD · M30 · open · 2026-09-04] When a new decision collides with an old guard, the question is whether the guard's RULE or only its PREMISE has expired. okf_version was removed because nothing read it; re-landing it alone would have reversed that decision, so the fix was to give it a reader and re-aim the guard to pin PRESENCE. The rule 'no key that nothing reads' survived intact, and the stamp and its reader now fail separately if either is silently removed. (evidence: /tasks/okf-spec-frontmatter.md M8 · doctor okf_conformance)
 - [ADD · M29 · open · 2026-09-01] A normaliser is only as good as the set of writers that call it. _oneline was correct and applied to one field of seven for a year; when a helper exists to make a value safe, enumerate its call sites FROM THE SOURCE in a check, because a hand list is how the seventh writer gets missed. (evidence: /tasks/stamp-field-integrity.md)

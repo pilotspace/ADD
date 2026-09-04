@@ -81,31 +81,32 @@ def test_stdout_is_byte_stable_across_runs(bundle):
 
 # ------------------------------------------------------------------ M3/M4 · refusals
 
-@pytest.mark.parametrize("args", [
+# Deliberately NOT parametrized: a `covers:` binding names a test ID, and pytest renames a
+# parametrized case to `test_x[args0]`, so the node's rule would bind nothing at all.
+REFUSALS = (
     ("show", "t-one", "--expand", "9"),          # over the cap
     ("show", "no-such-node-anywhere"),           # resolves to nothing
     ("search",),                                 # no query and no filter
-])
-def test_a_refusal_is_a_payload_not_a_traceback(bundle, args):
+)
+
+
+def test_a_refusal_is_a_payload_not_a_traceback(bundle):
     """M3, E1 — a refusal emits the envelope, `ok` false, and carries its own `next:` line."""
-    code, out, err = _cli(bundle, *args, "--json")
-    body = json.loads(out)
-    assert set(body) == KEYS, f"a refusal emitted a different shape: {sorted(body)}"
-    assert body["ok"] is False, f"{args} was reported as ok"
-    assert "next:" in body["note"], f"the refusal dropped its fix: {body['note']!r}"
-    assert not err.strip(), f"a refusal wrote to stderr as well: {err!r}"
+    for args in REFUSALS:
+        code, out, err = _cli(bundle, *args, "--json")
+        body = json.loads(out)
+        assert set(body) == KEYS, f"{args} emitted a different shape: {sorted(body)}"
+        assert body["ok"] is False, f"{args} was reported as ok"
+        assert "next:" in body["note"], f"{args} dropped its fix: {body['note']!r}"
+        assert not err.strip(), f"{args} wrote to stderr as well: {err!r}"
 
 
-@pytest.mark.parametrize("args", [
-    ("show", "t-one", "--expand", "9"),
-    ("show", "no-such-node-anywhere"),
-    ("search",),
-])
-def test_a_refusal_keeps_its_exit_code(bundle, args):
+def test_a_refusal_keeps_its_exit_code(bundle):
     """M4, R:FALSESUCCESS, E1, A15 — and the same command SUCCEEDS when it should (floor)."""
     assert _cli(bundle, "show", "t-one", "--json")[0] == 0, \
         "the floor failed: a good `show --json` does not exit 0, so a non-zero proves nothing"
-    assert _cli(bundle, *args, "--json")[0] != 0, f"{args} exited 0 under --json"
+    for args in REFUSALS:
+        assert _cli(bundle, *args, "--json")[0] != 0, f"{args} exited 0 under --json"
 
 
 # ------------------------------------------------------------------ M5 · stdout is the payload
@@ -130,7 +131,7 @@ def test_empty_result_is_not_a_refusal(bundle):
 
 
 def test_absent_fields_are_omitted_not_nulled(bundle):
-    """A9, E3 — an unauthored slot has no key at all, and non-ASCII survives unescaped."""
+    """A9, E3, E4 — an unauthored slot has no key, non-ASCII survives, edges is [] not absent."""
     lone, _ = add.show_payload(bundle, "p-lone")
     assert lone["results"][0]["match"] == "node"
     fields = lone["results"][0]["fields"]
