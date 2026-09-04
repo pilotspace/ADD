@@ -1,7 +1,7 @@
 ---
 type: Task
 title: what brief writes is stated where it is read, and pinned by a check
-status: direction
+status: done
 depth: standard
 milestone: read-cost
 scope:
@@ -19,11 +19,15 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:read-cost", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:f0ce93f6ddc57ca0", binding: "sha256:e9a79d98e3503d91" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:6d25767c75dfde61" }
+  - { by: "plan:read-cost", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:5f57080405b4df69", binding: "sha256:e9a79d98e3503d91" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:63b9fbd19f9e2161" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/brief-is-not-read-only.d/runs/1.md }
+  - { by: "plan:read-cost", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/brief-is-not-read-only.d/runs/1.md, brief: "sha256:7ef739d0870141d7" }
 ---
 ## CARD
 goal: the line that says `brief` is read-only says which `brief` it means, and a check holds the boundary it describes.
 why: a review agent declared `brief` read-only, ran it in an audit, and then found `cli.py` calls `brief_stamp` on any frozen Task. The finding is real but narrower than reported, and the narrowing matters: `add.brief()` the function IS pure, `brief_stamp` is the write, and `docs/13-command-reference.md` already documents the stamp accurately. What is wrong is one docstring sentence saying "`brief` is read-only" without saying which `brief` — read as the verb, it is false, and a reviewer read it that way. And nothing pins the boundary: no check asserts the function writes nothing, or that the verb writes exactly one stamp and only where it should.
-beat: direction · next: add freeze brief-is-not-read-only
+beat: done · next: add status
 
 ## RULES
 <must>

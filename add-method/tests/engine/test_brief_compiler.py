@@ -167,6 +167,13 @@ def test_live_bundle_keys_all_parse():
 
 def test_brief_includes_bind_sections(bundle):
     """covers: M1 — specs contribute `Decisions that bind` and nothing else."""
+    # AUTHOR the section first. It shipped as one line of `<…>` scaffold, so this check used to
+    # pass by finding the placeholder D1 filed as noise — and once `brief` stopped compiling
+    # scaffold (output-trims S3) it had nothing left to find. A real line proves the real claim.
+    sp = bundle / "specs" / "system.md"
+    sp.write_text(sp.read_text().replace(
+        "- <the first decision that constrains the rest>",
+        "- writes go through the engine; nothing hand-edits a stamp"), encoding="utf-8")
     b = add.brief(bundle, SUBJECT)
     spec = add.read(bundle / "specs" / "system.md", "T2")
     bind = add._section(spec["body"], "decisions-that-bind")

@@ -172,6 +172,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
+    s.add_argument("--all", action="store_true", help="list the done owners too, not just a count")
 
     s = sub.add_parser("todo", help="the open worklist — active tasks grouped by beat (read-only)")
     s.add_argument("--milestone", help="restrict to one milestone's tasks")
@@ -383,7 +384,7 @@ def dispatch(args, run_cmd) -> int:
         return 0 if out else 1
 
     if args.verb == "locate":
-        _hits, note = add.locate(root, args.path)
+        _hits, note = add.locate(root, args.path, all=args.all)
         print(note)  # a no-match is a valid answer, not an error
         return 0
 

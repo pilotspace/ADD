@@ -2830,11 +2830,17 @@ def _scope_matches(entry: str, query: str) -> bool:
     return a == b or a.startswith(b + "/") or b.startswith(a + "/")
 
 
-def locate(root, query: str) -> tuple:
+def locate(root, query: str, all: bool = False) -> tuple:
     """Reverse lookup: every node whose `scope:` matches `query` (equal or dir-prefix). Read-only.
 
     Answers "which node owns this path?" — the everyday navigation `status` cannot. A pure read over
     the graph: `(hits, note)` where `hits` is `[(cid, status, matched_scope_entry), …]`. It never writes.
+
+    `hits` is ALWAYS complete; `all` widens only the rendered note. Measured on the live bundle,
+    `add-method/tooling/add.py` had 50 owners of which 48 were `done` — 93% of the answer was a
+    list of nodes that had already shipped. The question "who owns this file" is answered by the
+    ones still open, so the closed ones are counted and `--all` names itself as the way back
+    (M3 · M4 · R:NOWAYBACK). Only `done` collapses: an archived or reopened node is not settled.
     """
     graph = scan(Path(root))
     hits = []
@@ -2847,8 +2853,13 @@ def locate(root, query: str) -> tuple:
                 break
     if not hits:
         return [], f"no node scopes `{query}`\nnext: add status"
-    lines = [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in hits]
-    return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
+    listed = hits if all else [h for h in hits if h[1] != "done"]
+    closed = len(hits) - len(listed)
+    parts = [f"{len(hits)} node(s) scope `{query}`:"]
+    parts += [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in listed]
+    if closed:
+        parts.append(f"  … {closed} done owner(s) not listed (`--all`)")
+    return hits, "\n".join(parts) + "\nnext: add status"
 
 
 # The node types that HAVE a beat. Every other type (Spec · Persona · Project · Run)
@@ -3026,7 +3037,17 @@ def status(root, all: bool = False, check: bool = False) -> str:
             return False
         return all or fm.get("status") not in ("done", "dropped")
 
-    shown = sorted((c for c in graph if keep(c)),
+    # A Spec or a Persona carrying no `status:` has no state to BE in — it is a lens, seeded once
+    # and never advanced, and it printed a constant `[—]` row every session. Nine of thirteen rows
+    # on the live bundle were exactly these. They are the bundle's vocabulary, not its board, so
+    # the bare report counts them by type and `--all` still lists every one, unchanged
+    # (M1 · M2 · R:NOWAYBACK). A node that carries a real status is never collapsed (R:HIDDENSTATE).
+    def constant(cid):
+        fm = graph[cid]["fm"] or {}
+        return fm.get("type") in ("Spec", "Persona") and not fm.get("status")
+
+    hidden = [] if all else [c for c in graph if keep(c) and constant(c)]
+    shown = sorted((c for c in graph if keep(c) and c not in set(hidden)),
                    key=lambda c: (ORIENT_RANK.get((graph[c]["fm"] or {}).get("type"), 9), c))
     for cid in shown[:MAX_LINES]:
         fm = graph[cid]["fm"] or {}
@@ -3038,6 +3059,13 @@ def status(root, all: bool = False, check: bool = False) -> str:
         out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] {fm.get('type', '')}")
     if len(shown) > MAX_LINES:
         out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
+    if hidden:
+        tally = {}
+        for c in hidden:
+            t = (graph[c]["fm"] or {}).get("type", "?")
+            tally[t] = tally.get(t, 0) + 1
+        counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
+        out.append(f"  … {counted} carrying no state — not listed (`--all`)")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -4714,6 +4742,16 @@ def _flat(value) -> str:
     return str(value)
 
 
+def _placeholder_only(text: str) -> bool:
+    """True when EVERY content line of a resolved section is still `<…>` template scaffold.
+
+    Same exclusion `placeholders_in` makes: a backticked span is code, not a placeholder. An
+    empty section is not scaffold — it is empty, and that is a different silence (A8).
+    """
+    lines = [l for l in str(text).splitlines() if l.strip()]
+    return bool(lines) and all(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", l)) for l in lines)
+
+
 def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
           evidence: list = None) -> dict:
     """Compile the XML brief for one node. Deterministic, budgeted, and self-measuring."""
@@ -4749,8 +4787,9 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
         # not a reference. The suite checked the resolved value and never the id.
         path, _, frag = need.partition("#")
         ident_ref = path.strip("/")[:-3] if path.endswith(".md") else path.strip("/")
-        refs.append((f"{ident_ref}#{frag}" if frag else ident_ref,
-                     None if why == "edge_unresolved" else _flat(value)))
+        flat = None if why == "edge_unresolved" else _flat(value)
+        refs.append((f"{ident_ref}#{frag}" if frag else ident_ref, flat,
+                     flat is not None and _placeholder_only(flat)))
     binds = bind_sections(root)
 
     persona = None
@@ -4822,9 +4861,21 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
                 out.append(f'    <card id="{dcid}">')
                 out += ["      " + l for l in card.splitlines()]
                 out.append("    </card>")
-        for ref, value in refs:
+        for ref, value, unauthored in refs:
             if value is None:
                 out.append(f'    <ref id="{ref}" unresolved="true"/>')
+            elif unauthored:
+                # The section EXISTS and is still the shipped scaffold. Compiling it taught the
+                # worker that `<the first decision that constrains the rest>` was a decision that
+                # binds — five such blocks rode in every brief (filed as /specs/domain.md#D1).
+                # The id stays so the section is still named and still openable (E4 · R:NOWAYBACK);
+                # only the placeholder body goes. A short but REAL body is never touched
+                # (R:PLACEHOLDERLOSS) — every content line must be scaffold to qualify.
+                # The marker carries no prose: `unauthored="true"` reads like its two siblings
+                # (`unresolved` · `omitted`), and a sentence explaining itself in every block
+                # measured LARGER than the one-line scaffold it replaced — a trim that costs
+                # bytes is not a trim.
+                out.append(f'    <ref id="{ref}" unauthored="true"/>')
             else:
                 out.append(f'    <ref id="{ref}" frozen="true">')
                 out += ["      " + l for l in value.splitlines()]
@@ -4833,6 +4884,12 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             rid = f"{scid}#decisions-that-bind"
             if drop_specs:
                 out.append(f'    <ref id="{rid}" omitted="budget"/>')
+            elif _placeholder_only(text):
+                # The measured case (D1): all five seeded specs ship this section as one line of
+                # scaffold, so every brief in a fresh bundle carried five `<ref>` blocks teaching
+                # the worker that a placeholder was a decision that binds. Same rule as the
+                # `needs:` refs above — the id stays, the scaffold body goes.
+                out.append(f'    <ref id="{rid}" unauthored="true"/>')
             else:
                 out.append(f'    <ref id="{rid}">')
                 out += ["      " + l for l in text.splitlines()]

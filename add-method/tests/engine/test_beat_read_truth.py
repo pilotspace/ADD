@@ -111,8 +111,13 @@ def test_a_refrozen_task_reads_the_newest_seal(bundle):
 
 
 def test_non_beat_node_types_are_unchanged(bundle):
-    """covers: M4, A2, E3 · Spec/Persona/Project lines keep their own status field."""
-    text = str(add.status(bundle))
+    """covers: M4, A2, E3 · Spec/Persona/Project lines keep their own status field.
+
+    Read through `--all`: a Spec carrying no status is summarised out of the bare report
+    (output-trims S1), and this check is about what the row SAYS, not about which report
+    lists it. `--all` is the rendering that still lists every one.
+    """
+    text = str(add.status(bundle, all=True))
     for slug in ("domain", "PROJECT"):
         assert "[build]" not in _status_line(text, slug)
 
