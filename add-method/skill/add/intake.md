@@ -57,8 +57,7 @@ large = a Task at `standard|deep`, or a Milestone when it spans tasks.
 5. the receipt above — commit, then the one learn line.
 
 ### Task — one atomic node
-Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the
-3-beat loop: `add new Task <slug> --title "..." --depth quick|standard|deep`, then Direction.
+`add deltas` first — a lesson may already answer it. Fits the active milestone's stated scope, or is a single behavior needing a frozen contract. Run the 3-beat loop: `add new Task <slug> --title "..." --depth quick|standard|deep`, then Direction.
 (The node type is a FORMAT vocabulary word — `Task`, `Milestone` — canonically capitalized.)
 
 ### Explore — the answer IS the deliverable
@@ -71,9 +70,10 @@ PLAN, the deliverable is a cited `## FINDINGS` brief closed by a sufficiency gat
 security-scoped questions keep their human floor.
 
 ### Project / milestone — a theme or a slice
-A new product theme no active milestone covers, or a slice too big for one task. **Load the best-fit
-persona whose `flow:` includes advisor before the drafting starts** (`personas.md` § planning;
-if no personas are seeded, skip silently — the load is by fit). Draft the milestone first —
+`add deltas` first — carried lessons shape goal and scope.
+A new product theme no active milestone covers, or a slice too big for one task. **Load the best-fit persona
+whose `flow:` includes advisor before drafting** (`personas.md` § planning; skip silently if
+no personas are seeded — the load is by fit). Draft the milestone first —
 **goal · in/out scope · exit criteria · a breadth-first task list** (`slug · depends-on · one
 line` each) — confirm it, then create it and list its tasks, recording the lens on the confirmed
 milestone: `add advise <milestone> --persona <p>`. (`add milestone-done` is **wired** — it

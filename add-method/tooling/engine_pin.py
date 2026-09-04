@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "28cb0c115ec30f58c2d498f3cfc0eb68"  # re-aimed @ doctor-nudges-what-you-can-act-on: `unadvised_sensitive` reports only a node that can still take a lens. prior: 7932ec06… @ 3.4.0
+ENGINE_MD5 = "c64b39ff66715935c0e2aecf9c565175"  # re-aimed @ search-verb: the 25th verb — one lookup at LESSON granularity, its bounded snippet, and the total hit ordering. prior: 2003790f… @ typed-relations
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "b41bc148795c695b7f04ebd10c1098c1"  # re-aimed @ scaffold-truth (`join` propagates its refusal to a non-zero exit). prior: ad04b73a… @ method-truth-sweep
+ENGINE_PKG_MD5 = "b0b2e035d324bd002b369dad713438ec"  # re-aimed @ search-verb: cli gains the search subcommand and its --as-of flag. prior: bf115355… @ deltas-time-filters

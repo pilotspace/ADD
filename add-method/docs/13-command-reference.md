@@ -84,3 +84,4 @@ Read-only lookups over the bundle.
 | `doctor` | conformance findings; `--sync` recomputes compiled artifacts and re-vendors a stale engine | `add doctor --sync` |
 | `locate` | reverse lookup — which node's `scope:` owns a path | `add locate src/bookings/service.py` |
 | `todo` | the open worklist — active tasks grouped by beat. `--milestone` restricts to one | `add todo --milestone auth-layer` |
+| `search` | find a concept anywhere in the bundle — a spec delta answers with its own address (`/specs/method.md#M28`), not with the file that holds thirty of them. `--as-of YYYY-MM-DD` reports each delta under the status it HELD THEN | `add search "registry ripples"` |

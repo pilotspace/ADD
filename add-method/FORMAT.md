@@ -47,7 +47,7 @@ The bundle root is `.add/`. A conforming bundle MUST contain at least three file
 
 | file | role |
 |---|---|
-| `index.md` | bundle header — `abf_version`, `name`, `profile`, `engine`, `sensitive_paths` |
+| `index.md` | bundle header — `abf_version`, `okf_version`, `name`, `profile`, `engine`, `sensitive_paths` |
 | `log.md` | rendered history |
 | `PROJECT.md` | the root node (`type: Project`) |
 
@@ -55,6 +55,15 @@ Derived from `add.init()`; asserted by `tests/engine/test_init.py::test_init_cre
 
 A bundle with only these three files is conforming. `index.md` MAY have an empty body in
 that state (see §1.1).
+
+**`okf_version`** declares the Open Knowledge Format revision the bundle's nodes conform to
+(`"0.2"`). It is written by `init` on the bundle-root `index.md` and **nowhere else** — OKF
+declares its version once, at the root, so a Spec or Task carrying one would be N claims
+that can disagree. The value is a quoted string, never a bare number: `0.20` and `0.2` are
+the same float and different revisions. A bundle that declares no `okf_version` is
+**pre-OKF, not defective** — nothing refuses on its absence and §9 gains no finding code for
+it (law 3). `doctor --sync` never rewrites bundle-header frontmatter, so the declaration
+survives every recompile of the body.
 
 ### §1.1 Compiled reserved files
 
@@ -120,6 +129,31 @@ An unrecognised type is *recorded* (`unknown_type`, `info`), never rejected — 
 Every other type — `Spec`, `Persona`, `Prompt`, `Run`, `Project` — is a record or a living
 document; it never freezes (`add.py:951`).
 
+**Spec frontmatter (OKF).** A `Spec` carries `type`, `title`, `lens`, `project` and
+`generated`, plus three OKF keys — all three RECOMMENDED, none required:
+
+| key | role | read by the engine? |
+|---|---|---|
+| `description:` | the catalogue line — what this lens is *for* | **yes** — `index.md`'s Specs rows are rendered from it |
+| `tags:` | classification, a list; `[]` means *not yet classified* | **no** — recorded only |
+| `sources:` | provenance, a list of external references | **no** — recorded only |
+
+`description:` is the one key with a consumer: the compiled index renders each Specs row
+from it, falling back to the row's previously authored tail when the key is absent, so a
+bundle written before the key existed never loses a sentence a human wrote there. It is not
+a duplicate of the body's `## Now`: `description:` says what the lens is *for* and is
+stable, while `## Now` says what is *currently true* in that lens and is expected to drift.
+`init` seeds both from one string, so they agree at birth and diverge legitimately after.
+
+`tags:` and `sources:` are **slots**, not behaviour: this engine writes them and reads
+neither, and validates neither (`new`/`init` are notaries). An implementer of a second
+ABF-1 engine MUST NOT treat either as required, and MUST NOT infer a conformance failure
+from an empty one.
+
+Two OKF keys are deliberately **absent** from a Spec: the doc-status lifecycle `status:`,
+which collides with ADD's task `status:` above, and `stale_after:`, which has nothing left
+to declare once every delta carries its own validity interval.
+
 **Canonical directories** (`add.py:923`):
 
 | type | directory |
@@ -180,6 +214,66 @@ An edge whose target resolves outside the bundle root is `edge_out_of_bundle` �
 three fatal codes (§9). An edge naming a node that does not exist is `edge_unresolved`,
 which is `info`.
 
+**The second family: `relations:`.** The keys above carry *untyped* edges between **nodes**.
+`relations:` carries **typed** edges between **concepts** — a concept being a delta line,
+addressed `/specs/<lens>.md#<id>` (§3.3). It is a distinct family with its own reader; it is
+NOT a member of the allowlist above, because that list's values are bare refs and a relation's
+value is composite.
+
+```yaml
+relations:
+  - Q9 refines /specs/method.md#M21
+  - M28 supersedes /specs/method.md#M19
+```
+
+Each entry is a block-list item holding a **plain string of exactly three whitespace-separated
+fields**: `<source-id> <rel> <target-ref>`. The source is a delta id in **this node's own body**;
+the target is any concept address in the bundle.
+
+The plain string is the contract, not a style preference. A list of flow maps —
+`- { rel: refines, target: /x.md#M1 }` — parses to a *dict* under §2's parsed subset and to the
+raw brace *string* under a T0 reader that takes a `- ` item verbatim: one file, two values, and
+no error anywhere. Three whitespace-separated fields read identically under both.
+
+The rel vocabulary is **closed**, and deliberately small:
+
+```
+refines
+```
+
+One term, because one term is what this bundle's corpus earns. A vocabulary is admitted a term
+at a time, and the bar is a **live instance in the same change that adds it** — not a plausible
+use. Three of the seven edge keys above (`tasks`, `relates_to`, `supersedes`) have zero live uses
+in the bundle that defines them; that is the measured cost of admitting a term on plausibility.
+
+An unrecognised rel is *recorded* (`unknown_rel`, `info`), never rejected — law 3, exactly as an
+unrecognised `type:` is. Recording it does **not** suppress the entry's target: the containment
+test and the resolution below still run, so the family's one fatal code can never be hidden
+behind an info finding.
+
+Should a rel ever be admitted that shares a word with an edge key above, the two remain **two
+distinct grammars**: an edge key relates NODE to node with a bare ref, while a rel relates
+CONCEPT to concept inside a composite value and is never part of `cycles()`'s dependency
+adjacency. A reader tells them apart by the key the value sits under, never by the word.
+
+**Two shape restrictions, both because the two oracles must read one value.** A relation value is
+a **block** list, never an inline flow list: `[a, b]` parses to a list under §2's subset and to a
+bare string under a T0 reader that takes the text after `key:` verbatim — the same divergence
+already recorded for `depends_on:`. And a `#` that follows whitespace begins a YAML **comment**
+and is stripped, in every conforming reader; a `#` with no space before it is data, which is what
+keeps `/specs/method.md#M21` a fragment rather than a truncation.
+
+**The head is stripped before the target is normalised.** `refines /specs/../../outside.md` read
+as a single ref normalises to `/specs/outside.md` — *inside* the bundle — because the rel token
+absorbs one `..` segment, which silently downgrades `edge_out_of_bundle` from `error` to
+`info`. The rel and source fields are removed first, in every conforming reader, and containment
+is decided on the target alone.
+
+A value that is not exactly three fields is `relation_malformed` (`info`) and yields **no edge**.
+It therefore makes no containment *claim*: such a value carries no resolvable target, so a
+reader must not report it as contained. Stated rather than left implicit, because a containment
+check that did not run must never read like one that passed.
+
 Derived from `validate_bundle.py:46`.
 
 ### §3.3 Fragment resolution
@@ -189,10 +283,27 @@ order is fixed:
 
 1. a **frontmatter key** of the target node; else
 2. a **heading slug** of the target node's body; else
-3. **unresolved** — recorded as `edge_unresolved` (`info`).
+3. a **delta id** in the target node's body; else
+4. **unresolved** — recorded as `edge_unresolved` (`info`).
 
 Heading slugs are lowercased, non-alphanumerics collapsed to `-`, and stripped of leading
 and trailing `-`.
+
+The **delta-id** form is what makes a lesson addressable: `/specs/method.md#M21` names one
+delta line, not the thirty around it. A delta id is read through the delta-head grammar
+itself — a well-formed dated head, whose id field is a letter followed by letters, digits,
+underscores or hyphens — so a fragment the delta grammar rejects is not a concept address.
+
+It is third, not first, so that a reference that resolves today keeps resolving the same way.
+
+The forms are **not** disjoint and no reader should assume they are: a delta id is a letter
+followed by letters, digits, underscores or hyphens, so a lower-case id such as `zz` can equal a
+heading slug. What makes resolution single-valued is the **ladder**, not the alphabet — the first
+form that matches wins, and the order above is fixed. (A generated id carries an upper-case lens
+letter, which is why a collision is rare in practice; rare is not impossible.)
+
+This form is a **body** read whose only outcome is `edge_unresolved` (`info`), like the heading
+slug above it — §9's rule that every body-derived finding is `info` is unaffected.
 
 Derived from `validate_bundle.py:203-214`.
 
@@ -209,10 +320,57 @@ requested tier:
 | `T1` | frontmatter + `## CARD` |
 | `T2` | frontmatter + `## CARD` + the whole body |
 
-**T2 is single-node.** No operation may read the full body of more than the one node it
-was asked about. This single rule is what bounds the cost of every other verb: `status`
-scans the bundle at T0, `brief` reads exactly one T2 and composes everything else from T1
-and fragments (§7.1).
+**T2 is bounded, and the brief composes exactly one.** `brief` is the only operation that
+reads a node body into a composed context payload, and it composes exactly one — the node
+it was asked about — taking everything else from T1 cards, `#gives` fragments, and the
+five specs' bind lines (§7.1). That is the cost an agent actually pays, and it is absolute.
+
+Any other operation MAY read T2 across more than one node, and four conditions hold on
+every one that does:
+
+1. **bounded** — the set is a structure the operation is already walking (the five specs,
+   the open tasks, the nodes an edge points into), never "the whole bundle" as an appetite;
+2. **lazy** — read at the moment a body is needed, never prefetched;
+3. **call-scoped cache** — any memo lives for the one call, so a later verb can never act
+   on a body that has since been repaired;
+4. **bounded extraction** — what leaves the operation is a line, a section, an address or
+   a count. The body itself never leaves.
+
+The shipped multi-node readers are `deltas` and `bind_sections` and `search` (the five
+specs), `todo` (each open Task, one read reused by both its derivations), and `doctor`
+(each node an edge points into, behind a `body_of` memo scoped to the one call). `brief`
+is on this list too, because `bind_sections` reads the five specs on its behalf — under
+condition 4, which is why it still composes exactly one body. `status` scans at T0 and
+reads no body at all. `join` is not a reader in this sense: it is a **write** verb that
+copies whole node bytes between bundles and parses none of them; §2's write path governs
+it, not this section.
+
+An earlier edition stated this as an absolute over every operation — "no operation may
+read the full body of more than the one node it was asked about". That was already false
+in five shipped sites when it was written, which this document's preamble makes a defect
+to report rather than an exception to carve for the sixth. The rule above is what the
+absolute was always protecting: a bulk read nobody bounded, and the brief's cost.
+
+Derived from `add.py:read`, `add.py:brief`, `add.py:bind_sections`, `add.py:deltas`,
+`add.py:search`, `add.py:todo`, `add.py:doctor`; asserted by
+`tests/engine/test_search_verb.py`, which COUNTS the distinct T2 reads each verb performs
+rather than trusting this list.
+
+**T0 defers a receipt's evidence payload.** A bundle-wide scan parses a `type: Run` node's
+frontmatter EXCEPT `receipt.scope_digest`, `receipt.passed` and `receipt.failed` — the
+per-file digest and the reported test ids. These are read when a receipt is opened
+directly (`latest_receipt` → `fresh`, §8.1, and the coverage map, §8.3), never when the
+bundle is walked, because no graph consumer reads them. Absent from a scanned node means
+UNPARSED, never EMPTY: a consumer that needs the payload MUST read the receipt directly
+rather than treat the missing key as `[]`. A scanned node's `raw` stays byte-complete, so
+the write path (§2) cannot lose a byte the scan declined to parse.
+
+Without this, scan cost was `Σ over every receipt ever recorded of (files in its scope)` —
+both terms growing monotonically, paid by every verb. Measured here at 97 receipts: 68% of
+all T0 parse time, and `status` fell 90ms → 65ms when it stopped.
+
+Derived from `add.py:_read_for_graph`; asserted by
+`tests/engine/test_scan_skips_receipt_evidence.py`.
 
 Because reads are tiered, a consumer that wants the whole graph at once reads the
 `graph.json` export rather than opening every node — and the engine never reads that
@@ -470,20 +628,26 @@ decidable from frontmatter alone:
 |---|---|---|
 | `missing_frontmatter` | **error** | the file has no `---` frontmatter block |
 | `type_empty` | **error** | `type:` is absent or empty |
-| `edge_out_of_bundle` | **error** | an edge (§3.2) resolves outside the bundle root |
+| `edge_out_of_bundle` | **error** | an edge (§3.2) resolves outside the bundle root — either family, and for a `relations:` entry decided on the target field alone, after the rel head is stripped |
 
 Bodies are read only to *enrich* the report. Every body-derived finding is `info`:
 
 | code | severity | condition |
 |---|---|---|
 | `unknown_type` | info | `type:` is outside the §3 vocabulary |
-| `edge_unresolved` | info | an edge names a node, or a fragment (§3.3), that does not resolve |
+| `edge_unresolved` | info | an edge names a node, or a fragment (§3.3), that does not resolve — for a `relations:` entry this covers EITHER end, the source id as well as the target |
+| `unknown_rel` | info | a `relations:` rel is outside §3.2's closed vocabulary |
+| `relation_malformed` | info | a `relations:` entry is not exactly three whitespace-separated fields |
 | `covers_referent` | info | a referent is illegal at the node's `depth:` (§6.1) |
 | `broken_md_link` | info | a relative `](….md)` link does not exist on disk |
 | `compiled_undeclared` | info | a compiled file (§1.1) has a body but lacks a declaration |
 
 Replacing every body in a conforming bundle with noise MUST NOT change the exit code. This
-is law 3 made testable: only a containment escape is fatal.
+is law 3 made testable: only a containment escape is fatal. The stronger statement — the one
+that holds for a NON-conforming bundle too, where the noise test does not bite — is the rule
+above it: *every* body-derived finding is `info`. A reader adding a new family must keep both
+true, which means deciding containment from the frontmatter value and the root path alone,
+before anything opens the target file.
 
 **Deliberately not decidable by a static scan.** `receipt_stale`, `covers_unverified` and
 `placeholder_survived` are gate-time conditions requiring a receipt and a freeze stamp.

@@ -310,7 +310,7 @@ def test_no_new_verb_in_the_cli_surface():
     sys.path.insert(0, str(REPO / "tooling"))
     import cli
     verbs = [a.choices.keys() for a in cli.build_parser()._subparsers._group_actions]
-    assert len(list(verbs[0])) == 24, "this task changes what the engine SAYS, never its verb set"
+    assert len(list(verbs[0])) == 25, "this task changes what the engine SAYS, never its verb set"
 
 
 def test_status_frontmatter_vocabulary_is_unchanged(tmp_path):

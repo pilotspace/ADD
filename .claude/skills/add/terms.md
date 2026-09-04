@@ -13,7 +13,7 @@ phrase reads opaque; it names the flow, it does not add to it.
 | **gate** | the recorded verify verdict, exactly one: `PASS` · `RISK-ACCEPTED` (signed, non-security) · `HARD-STOP` (`add gate`). |
 | **residue** | the three lenses examined after build, at verify — **security · concurrency · architecture**. Security residue is always a HARD-STOP. |
 | **lane** | the intake size that routes ceremony — **quick** (mechanical, no node) · **task** (one node) · **project** (a milestone). Security · data · architecture never go quick. |
-| **delta** | one tagged lesson learned (`- [COMPETENCY · status] … (evidence: …)`) that folds into a living `.add/specs/` spec (`deltas.md`). |
+| **delta** | one tagged lesson learned (`- [COMPETENCY · <ID> · status · <valid-from>] … (evidence: …)`) — an addressable concept with a validity interval — that folds into a living `.add/specs/` spec (`deltas.md`). |
 | **wave** | a batch of independent tasks run together (parallel) under one milestone, rather than serially. |
 
 Everything else in `SKILL.md` is plain method language; when in doubt, the phase guide that owns the
