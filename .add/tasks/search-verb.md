@@ -1,7 +1,7 @@
 ---
 type: Task
 title: add search finds any concept in the bundle, at lesson granularity
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: okf-graph-time
@@ -36,11 +36,13 @@ verified:
   - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/search-verb.d/runs/1.md }
   - { by: "builder", at: 2026-09-04, act: replan, authority: process, note: "Three registries moved, not the two the frozen PLAN named: the full suite found a SIXTH enumerating surface, test_authoring_beat.py::test_no_new_verb_in_the_cli_surface, whose own docstring sanctions the re-aim (already 23->24 for interview; 'the pin is a value, not a ceiling'). Exactly the class A10 priced. No assertion weakened." }
   - { by: "plan:okf-graph-time", at: 2026-09-04, act: gate, authority: plan, outcome: RISK-ACCEPTED, receipt: /tasks/search-verb.d/runs/1.md, brief: "sha256:57593a4bcd56f771", reason: "Every bound rule is proven: 18/18 test-ids, all 35 covers: referents (9 Musts, 6 Rejects, 4 Edges, 16 probed assumptions) bound to a passing check, scope digest fresh, tree parity green. The residue this signs for is the frozen PLAN's regression floor, which said 'the full suite reports zero failures' and does not literally hold: tests/skill/test_claimed_output_guard.py::test_no_engine_output_was_added asserts git diff HEAD -- tooling/add.py is EMPTY, so it is red for any UNCOMMITTED engine change. This task's contract requires editing add.py (S1) and the orchestrator forbids committing, which makes that guard structurally unsatisfiable here rather than a behavioral regression. The engine diff is one hunk, +123 / -0, purely additive, so no pre-existing path moved; 1233 of 1234 pass. Not closable by me without a commit — a human call." }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/search-verb.d/runs/2.md }
+  - { by: "plan:okf-graph-time", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/search-verb.d/runs/2.md, brief: "sha256:c54a207e4b043c87" }
 ---
 ## CARD
 goal: one verb finds any concept in this bundle at LESSON granularity — a delta line answers with its own address, not with the name of the file that holds thirty of them — and the OKF facet it searches carries real values
 why: a lookup that can only answer `specs/method.md` points at thirty unrelated lessons, which is why nobody looks anything up; and a facet over an empty field is the third costume of the dead-key failure this milestone has already paid for twice
-beat: direction · next: add freeze search-verb
+beat: done · next: add status
 
 ## RULES
 <must>

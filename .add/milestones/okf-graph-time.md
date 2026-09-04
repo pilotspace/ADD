@@ -3,7 +3,15 @@ type: Milestone
 title: OKF for the living specs — addressable, dated, typed, searchable
 status: direction
 generated: { by: add/3.4.0, at: 2026-09-03 }
-verified: []
+verified:
+  - { by: "human:tindang", at: 2026-09-04, act: check, authority: process, via: process, boxes: "EXIT:1" }
+  - { by: "human:tindang", at: 2026-09-04, act: check, authority: process, via: process, boxes: "EXIT:2" }
+  - { by: "human:tindang", at: 2026-09-04, act: check, authority: process, via: process, boxes: "EXIT:4" }
+  - { by: "human:tindang", at: 2026-09-04, act: check, authority: process, via: process, boxes: "EXIT:6" }
+  - { by: "human:tindang", at: 2026-09-04, act: uncheck, authority: process, via: process, boxes: "EXIT:1" }
+  - { by: "human:tindang", at: 2026-09-04, act: uncheck, authority: process, via: process, boxes: "EXIT:2" }
+  - { by: "human:tindang", at: 2026-09-04, act: uncheck, authority: process, via: process, boxes: "EXIT:4" }
+  - { by: "human:tindang", at: 2026-09-04, act: uncheck, authority: process, via: process, boxes: "EXIT:6" }
 ---
 ## CARD
 goal: the five living specs conform to OKF v0.2 and go beyond it — every lesson is an addressable concept with a validity interval, edges between concepts are typed, and one verb finds any of it
