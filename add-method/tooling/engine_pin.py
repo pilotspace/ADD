@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c64b39ff66715935c0e2aecf9c565175"  # re-aimed @ search-verb: the 25th verb — one lookup at LESSON granularity, its bounded snippet, and the total hit ordering. prior: 2003790f… @ typed-relations
+ENGINE_MD5 = "6f38a977c7a42d34cc63ab73351089f5"  # re-aimed @ milestone-membership-is-an-edge: `milestone:` resolves a bare slug into /milestones/, so 45 declared memberships become traversable. prior: c64b39ff… @ search-verb
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "b0b2e035d324bd002b369dad713438ec"  # re-aimed @ search-verb: cli gains the search subcommand and its --as-of flag. prior: bf115355… @ deltas-time-filters

@@ -446,8 +446,39 @@ def _norm(src_cid: str, ref: str) -> str:
     return "/" + str(PurePosixPath(os.path.normpath(str(base / target)))).lstrip("/")
 
 
+# `milestone:` is the ONE edge key whose value may be a bare slug (§3.2). The reason is a
+# property of the key, not a convenience: membership implies exactly one directory, so the slug
+# names a cid without guessing. Every other key may point at more than one node type —
+# `depends_on:` may name a Task or a Milestone — so no directory is implied there and a bare
+# value stays unresolved, which is what keeps `edge_unresolved` meaningful.
+#
+# Measured before this arm existed: `milestone:` was declared on 45 of 220 nodes and produced
+# ZERO edges, because both oracles skip any ref without `.md`. A key in the allowlist that can
+# never yield an edge reads as wired and traverses nothing.
+MEMBERSHIP_KEY = "milestone"
+MEMBERSHIP_DIR = "milestones"
+_SLUG = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def _membership_ref(key: str, ref: str) -> str:
+    """A bare-slug `milestone:` value -> the cid it names; `""` when the value is not one.
+
+    Containment needs no special case: a value carrying `/` or `..` fails `_SLUG`, so it never
+    reaches this mapping and is judged on the `.md` path like every other ref. The mapping can
+    only ever produce a path under `MEMBERSHIP_DIR`, which is inside the root by construction.
+    """
+    if key != MEMBERSHIP_KEY or ".md" in ref or not _SLUG.match(ref):
+        return ""
+    return f"/{MEMBERSHIP_DIR}/{ref}.md"
+
+
 def edges(graph: dict) -> list:
-    """`[(src_cid, key, ref, target_cid|None)]` — typed, and only from EDGE_KEYS."""
+    """`[(src_cid, key, ref, target_cid|None)]` — typed, and only from EDGE_KEYS.
+
+    `ref` is always the value as WRITTEN, never the mapped form: a membership slug and the
+    explicit `.md` ref for the same milestone resolve to one target but stay distinguishable to
+    a reader of the tuple, so a report can quote what the author typed.
+    """
     out = []
     for cid, node in graph.items():
         for key in EDGE_KEYS:
@@ -457,6 +488,9 @@ def edges(graph: dict) -> list:
             for ref in value if isinstance(value, list) else [value]:
                 ref = str(ref).strip()
                 if ".md" not in ref:
+                    if not (mapped := _membership_ref(key, ref)):
+                        continue
+                    out.append((cid, key, ref, mapped if mapped in graph else None))
                     continue
                 target = _norm(cid, ref)
                 out.append((cid, key, ref, target if target in graph else None))

@@ -214,6 +214,25 @@ An edge whose target resolves outside the bundle root is `edge_out_of_bundle` �
 three fatal codes (§9). An edge naming a node that does not exist is `edge_unresolved`,
 which is `info`.
 
+**Membership: the one key that resolves a bare slug.** Every edge value above is a ref — a path
+carrying `.md`. `milestone:` is the single exception: a **bare slug** resolves to that slug under
+`/milestones/`, suffixed `.md`, so `milestone: okf-graph-time` and
+`milestone: /milestones/okf-graph-time.md` name one target.
+
+The exception is a property of the key, not a convenience. Membership implies exactly **one**
+directory, so the slug names a cid without guessing. No other key does: `depends_on:` may name a
+Task or a Milestone, so a bare value there has no implied directory and stays a non-edge — which
+is what keeps `edge_unresolved` a statement about a *named* target rather than about every bare
+string in the bundle. A key admitted to this exception must own a directory the same way.
+
+A membership value that is not a bare slug takes no mapping and is judged on the ref path like
+any other value; containment is therefore decided on the mapped target, never before it. The
+mapping can only produce a path under `/milestones/`, which is inside the root by construction.
+
+Before this rule existed, `milestone:` was in the allowlist above and produced **zero** edges —
+declared on 45 of 220 nodes, every value a bare slug, every value skipped. A key that can never
+yield an edge reads as wired and traverses nothing.
+
 **The second family: `relations:`.** The keys above carry *untyped* edges between **nodes**.
 `relations:` carries **typed** edges between **concepts** — a concept being a delta line,
 addressed `/specs/<lens>.md#<id>` (§3.3). It is a distinct family with its own reader; it is

@@ -47,6 +47,21 @@ COMPILED_MARKER = "COMPILED BODY"
 # link to `/task.md` (observed 2026-07-29, recorded in build-worked-example LESSONS).
 EDGE_KEYS = {"depends_on", "needs", "tasks", "milestone", "relates_to", "task", "supersedes"}
 
+# FORMAT §3.2's membership rule, mirrored from `add.py`'s `MEMBERSHIP_KEY`/`_membership_ref`.
+# Mirrored rather than imported: this validator is the SECOND oracle and must stay a standalone
+# script. The two copies are held to one value by a parity test that drives both readers over
+# one bundle — a resolving membership is silent in both, a dangling one is reported by both.
+MEMBERSHIP_KEY = "milestone"
+MEMBERSHIP_DIR = "milestones"
+SLUG = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def membership_ref(key, ref):
+    """A bare-slug `milestone:` value -> the ref it names; `""` when the value is not one."""
+    if key != MEMBERSHIP_KEY or ".md" in ref or not SLUG.match(ref):
+        return ""
+    return f"/{MEMBERSHIP_DIR}/{ref}.md"
+
 # The SECOND edge family (FORMAT §3.2): `relations:` entries are `<src delta id> <rel> <ref>`,
 # one plain string per block-list item. Mirrors `add.RELATION_VOCAB` and MUST stay in lockstep —
 # this script is stdlib-only and standalone, so it cannot import the engine. The lockstep is not
@@ -248,9 +263,13 @@ class Scan:
             for key in EDGE_KEYS & node["fm"].keys():
                 value = node["fm"][key]
                 for ref in value if isinstance(value, list) else [value]:
-                    ref = ref.strip()
+                    ref = str(ref).strip()
                     if ".md" not in ref:
-                        continue
+                        # §3.2: `milestone:` alone resolves a bare slug, because membership is
+                        # the one key whose target directory is implied. Every other bare value
+                        # stays a non-edge, which is what keeps `edge_unresolved` meaningful.
+                        if not (ref := membership_ref(key, ref)):
+                            continue
                     self.report["edge_count"] += 1
                     self.resolve(cid, node, ref)
 
