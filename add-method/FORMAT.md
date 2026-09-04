@@ -326,6 +326,35 @@ slug above it — §9's rule that every body-derived finding is `info` is unaffe
 
 Derived from `validate_bundle.py:203-214`.
 
+### §3.4 The neighbourhood walk
+
+A conforming reader MAY offer a bounded walk outward from one concept. Where it does, the walk
+is defined over **families and directions**, never over the particular families that exist in
+this version:
+
+* it visits **every** edge family the bundle defines — today the untyped `EDGE_KEYS` node edges
+  of §3.2 and the typed `relations:` concept edges beside them — and each row says which family
+  it came from, so a third family joins by satisfying this contract rather than by being bolted
+  on beside it;
+* it follows each family in **both directions**. An outbound-only walk cannot answer *what
+  depends on this*, which is most of what a reader wants from a node;
+* the unit is the **edge**, not the visit. One edge is emitted **once**, at the shallowest depth
+  the walk reaches it, from whichever end it arrived — the same link seen outbound from one node
+  and inbound at the other is one fact, and emitting it twice doubles every diamond;
+* it is bounded by a caller-supplied depth and is **cycle-safe**: a node already reached is never
+  expanded again, so a self-edge, a two-node cycle and a diamond all terminate;
+* an **unresolved** edge is emitted with a null target and never expanded. A dangling link is
+  information about the node that declares it, and the one view built to show links must not be
+  the view that hides it;
+* the rows carry a **total** order — every field of the row participates, so no tie falls through
+  to dict or set iteration and two walks over an unchanged bundle are byte-identical.
+
+A reader that cannot resolve the starting concept **refuses**; it does not return an empty walk.
+*No neighbours* and *no such node* are different answers, and a caller that cannot tell them
+apart will read the second as the first.
+
+Derived from `add.py:neighborhood`.
+
 ---
 
 ## §4 Read tiers

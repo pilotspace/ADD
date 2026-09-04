@@ -541,6 +541,83 @@ def relations(graph: dict) -> list:
     return out
 
 
+# ------------------------------------------------------- the neighbourhood walk (okf-graph-lookup)
+#
+# `edges()` and `relations()` are flat lists and `cycles()` walks ONE direction of ONE family.
+# This is the walk a reader gets: bounded, cycle-safe, and totally ordered so two calls over an
+# unchanged bundle are byte-identical.
+#
+# The unit is the EDGE, not the visit. One edge is emitted once — at the shallowest depth the
+# walk reaches it, from whichever end it arrived — because the same link seen outbound from one
+# node and inbound at the other is one fact, and emitting it twice doubles every diamond.
+NEIGHBORHOOD_MAX = 5         # the ceiling a caller may ask for; the verb refuses above it
+NEIGHBORHOOD_DEFAULT = 3     # the walk a caller gets when it names no depth
+
+
+def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """`(rows, note)` — every edge within `expand` levels of `cid`, both families, both directions.
+
+    A row is `(depth, direction, family, label, src, ref, target)`: `direction` is `"out"` when
+    the walk followed the edge from its source and `"in"` when it arrived at its target, `family`
+    is `"edge"` (an `EDGE_KEYS` node edge) or `"relation"` (a typed `relations:` concept edge),
+    and `label` is the edge key or the rel word. `src`/`target` always describe the edge AS
+    WRITTEN, so a row reads the same whichever end the walk came from.
+
+    `rows is None` marks a REFUSAL and only a refusal — `cid` names no node. An empty list is a
+    recorded answer: this node exists and has no edges within `expand`. Collapsing the two would
+    make "no neighbours" and "no such node" one value (R:EMPTYISUNKNOWN).
+
+    Law 1 holds: the walk reads the graph it is handed, never `graph.json`.
+    """
+    if cid not in graph:
+        return None, (f'`{cid}` names no node in this bundle -> "R:NOSUCHNODE"'
+                      "\nnext: add status   # the nodes this bundle actually holds")
+
+    # Both adjacencies built ONCE. A malformed `relations:` entry yields no edge (§3.2) and so
+    # joins neither: it carries no resolvable target and therefore makes no claim to walk.
+    fwd, rev = {}, {}
+    for src, key, ref, target in edges(graph):
+        fwd.setdefault(src, []).append(("edge", key, ref, target))
+        if target is not None:
+            rev.setdefault(target, []).append(("edge", key, ref, src))
+    for src, _src_id, rel, ref, target in relations(graph):
+        if rel is None:
+            continue
+        fwd.setdefault(src, []).append(("relation", rel, ref, target))
+        if target is not None:
+            rev.setdefault(target, []).append(("relation", rel, ref, src))
+
+    # `best` keys the EDGE, so the shallowest sighting wins and a second one neither duplicates
+    # the row nor re-expands the node behind it.
+    best, seen, frontier = {}, {cid}, [cid]
+    for depth in range(1, max(0, int(expand)) + 1):
+        nxt = set()
+        for node in frontier:
+            for family, label, ref, other in fwd.get(node, []):
+                best.setdefault((family, label, node, ref, other), (depth, "out"))
+                if other is not None and other not in seen:
+                    nxt.add(other)
+            for family, label, ref, other in rev.get(node, []):
+                best.setdefault((family, label, other, ref, node), (depth, "in"))
+                if other not in seen:
+                    nxt.add(other)
+        seen |= nxt
+        frontier = sorted(nxt)
+        if not frontier:
+            break
+
+    rows = [(d, direction, family, label, src, ref, target)
+            for (family, label, src, ref, target), (d, direction) in best.items()]
+    # Every field participates, so no tie reaches dict or set order (R:SILENTORDER). `target` is
+    # `None` for an unresolved edge, which no comparison with a string may touch.
+    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3], r[4], r[5], r[6] or ""))
+    if not rows:
+        return [], (f"`{cid}` has no edges within {expand} level(s)"
+                    "\nnext: add status")
+    return rows, (f"{len(rows)} edge(s) within {expand} level(s) of `{cid}`"
+                  "\nnext: cite one as a depends_on: or relations: target")
+
+
 def _delta_ids(body: str) -> dict:
     """`{delta id: the whole line}` — §3.3's THIRD fragment form, read from a node's own body.
 
