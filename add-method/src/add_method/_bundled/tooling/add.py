@@ -466,10 +466,14 @@ def _membership_ref(key: str, ref: str) -> str:
     Containment needs no special case: a value carrying `/` or `..` fails `_SLUG`, so it never
     reaches this mapping and is judged on the `.md` path like every other ref. The mapping can
     only ever produce a path under `MEMBERSHIP_DIR`, which is inside the root by construction.
+
+    The RESERVED names are excluded (§3.1): `index.md` and `log.md` are COMPILED from the nodes,
+    so a membership edge into one would point at a derived artifact rather than a milestone. No
+    live instance exists — but a mapping that CAN name a reserved file eventually will.
     """
     if key != MEMBERSHIP_KEY or ".md" in ref or not _SLUG.match(ref):
         return ""
-    return f"/{MEMBERSHIP_DIR}/{ref}.md"
+    return "" if f"{ref}.md" in NOT_A_NODE else f"/{MEMBERSHIP_DIR}/{ref}.md"
 
 
 def edges(graph: dict) -> list:

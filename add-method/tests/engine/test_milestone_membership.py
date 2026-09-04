@@ -218,3 +218,36 @@ def test_format_states_the_membership_rule():
         "FORMAT does not state which key resolves a bare slug, nor into which directory"
     assert "bare slug" in lowered, \
         "FORMAT does not name the bare-slug form the membership rule turns into an edge"
+
+
+def test_reserved_names_are_not_membership_targets(bundle):
+    """covers: R:ESCAPE, A5 — `index` and `log` are compiled bodies, never milestones.
+
+    Found by this task's architecture residue sweep, not authored at Direction. FORMAT §3.1
+    reserves `index.md` and `log.md`; they are COMPILED from the nodes, so an edge into one is
+    an edge into a derived artifact. No live instance exists and no traversal is reachable, but
+    a mapping that can name a reserved file is a mapping that will eventually name one.
+
+    Driven through the public helper AND through `edges()`, because the exclusion has to hold
+    where the mapping is consumed, not only where it is computed.
+    """
+    for reserved in add.NOT_A_NODE:
+        slug = reserved.removesuffix(".md")
+        assert add._membership_ref("milestone", slug) == "", \
+            f"a bare slug `{slug}` mapped into a reserved compiled body"
+
+    _set_fm(bundle, "/tasks/t-one.md", "milestone", "index")
+    srcs = [src for src, _ref, _t in _membership(bundle)]
+    assert "/tasks/t-two.md" in srcs, \
+        "the resolving arm regressed — this test would then prove nothing"
+    assert "/tasks/t-one.md" not in srcs, \
+        "a reserved name still yielded a membership edge"
+
+
+def test_second_oracle_excludes_reserved_names_too(bundle):
+    """covers: R:DRIFT — the exclusion is mirrored, so one value reads one way in both."""
+    _set_fm(bundle, "/tasks/t-one.md", "milestone", "log")
+    findings = _validator(bundle)["findings"]
+    assert not [f for f in findings if "milestones/log" in f["detail"]], (
+        "the second oracle resolved a reserved name the engine refuses to map — "
+        f"the two readers disagree: {findings}")

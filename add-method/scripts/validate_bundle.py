@@ -57,10 +57,13 @@ SLUG = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
 def membership_ref(key, ref):
-    """A bare-slug `milestone:` value -> the ref it names; `""` when the value is not one."""
+    """A bare-slug `milestone:` value -> the ref it names; `""` when the value is not one.
+
+    RESERVED names are excluded (§3.1) — `index.md` and `log.md` are compiled bodies, not nodes.
+    """
     if key != MEMBERSHIP_KEY or ".md" in ref or not SLUG.match(ref):
         return ""
-    return f"/{MEMBERSHIP_DIR}/{ref}.md"
+    return "" if f"{ref}.md" in RESERVED else f"/{MEMBERSHIP_DIR}/{ref}.md"
 
 # The SECOND edge family (FORMAT §3.2): `relations:` entries are `<src delta id> <rel> <ref>`,
 # one plain string per block-list item. Mirrors `add.RELATION_VOCAB` and MUST stay in lockstep —
