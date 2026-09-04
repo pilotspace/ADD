@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 33
+delta_seq: 34
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -21,6 +21,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M34 · open · 2026-09-04] I stamped a milestone freeze --by '<the human>' --authority human on EXIT criteria the human had never read, treating a go-ahead on my RECOMMENDATION as approval of the text I then wrote. A standing 'handle as recommended' ratifies the shape of a plan, not its specifics. The correction cost a second stamp and could not erase the first, because the verified: ledger is append-only and hand-editing a stamp is forbidden: a false attestation is cheap to write and impossible to withdraw. Stamp at plan authority when driving under a standing go-ahead, and reserve the human stamp for text a human has actually seen. (evidence: /milestones/walk-truth.md verified[]: freeze(human) then refreeze(plan) on one unread direction digest)
 - [ADD · M33 · open · 2026-09-04] A default declared in two places needs a check that reads BOTH. cli.py's argparse --expand default and add.NEIGHBORHOOD_DEFAULT can be changed to disagree with the full suite green, because every check reads the Python default only. An assumption that says two things are ONE number must assert over both declarations, not over the one the tests import. (evidence: PR #215 · A10 on show-verb · cli --expand default set to 1, 20 checks still passed)
 - [ADD · M32 · open · 2026-09-04] A verb-level guard fires on the whole engine source, so a feature in one verb can red a guard belonging to another. Two of this milestone's full-suite failures were exactly that shape and neither showed up in the targeted run. Run the full suite once BEFORE the receipt on any task that edits add.py — the targeted command proves the contract, the full suite finds who else reads your source. (evidence: /tasks/json-emission.md · test_evidence_ladder and test_claimed_output_guard)
 - [ADD · M31 · open · 2026-09-04] The gate binds EVERY covers: referent, and an ASSUMPTION that declares a probe is a referent like any Must. Three tasks in a row gated red on exactly this — E1, then A2, then A1 — each an edge or assumption I authored, declared a probe for, and never wrote the check for. Writing the probe text is not writing the probe; cite it from CHECKS at Direction or the first gate refuses. (evidence: /tasks/deltas-time-filters.md A1 · scan-skips-receipt-evidence E1 · doctor-reads-each-body-once A2)

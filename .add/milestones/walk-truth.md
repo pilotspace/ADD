@@ -5,6 +5,7 @@ status: direction
 generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "Tin Dang", at: 2026-09-04, act: freeze, authority: human, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
 ---
 ## CARD
 goal: the walk emits every edge that exists, the payload can say which lesson declared each one, and the four checks that were supposed to prove the read is bounded and honest can actually fail.
