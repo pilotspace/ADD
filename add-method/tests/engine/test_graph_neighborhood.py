@@ -128,7 +128,7 @@ def test_a_diamond_emits_both_edges_once(bundle):
     _set_fm(bundle, "/tasks/t-one.md", "depends_on", "/tasks/t-two.md")
     _set_fm(bundle, "/tasks/t-three.md", "depends_on", "/tasks/t-two.md")
     rows, _note = add.neighborhood(_graph(bundle), "/tasks/t-one.md", 3)
-    into_two = [r for r in rows if r[6] == "/tasks/t-two.md" and r[3] == "depends_on"]
+    into_two = [r for r in rows if r[7] == "/tasks/t-two.md" and r[3] == "depends_on"]
     assert len(into_two) == 2, \
         f"a diamond must show BOTH links into the shared node, once each: {into_two}"
     assert len(rows) == len(set(rows)), f"the shared node was expanded twice: {rows}"
@@ -166,7 +166,7 @@ def test_unresolved_edge_is_emitted_not_expanded(bundle):
     """covers: A7, E4 — a dangling link is information about this node, not a silence."""
     _set_fm(bundle, "/tasks/t-one.md", "depends_on", "/tasks/gone.md")
     rows, _note = add.neighborhood(_graph(bundle), "/tasks/t-one.md", 3)
-    dangling = [r for r in rows if r[3] == "depends_on" and r[6] is None]
+    dangling = [r for r in rows if r[3] == "depends_on" and r[7] is None]
     assert len(dangling) == 1, f"a dangling edge vanished from the view built to show links: {rows}"
 
 

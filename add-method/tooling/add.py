@@ -557,7 +557,12 @@ NEIGHBORHOOD_DEFAULT = 3     # the walk a caller gets when it names no depth
 def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     """`(rows, note)` — every edge within `expand` levels of `cid`, both families, both directions.
 
-    A row is `(depth, direction, family, label, src, ref, target)`: `direction` is `"out"` when
+    A row is `(depth, direction, family, label, origin, src, ref, target)`. `origin` is the
+    address of the concept that DECLARED the edge — a lesson address like `/specs/method.md#M8`
+    for a relation, and the node's own cid for a node edge, which is declared by the node itself.
+    It is an ADDED field, not a redefined `src`, so a consumer that joined on `src` keeps working.
+    Without it two lessons refining one target collapsed into a single row, because the delta id
+    is the ONLY thing that tells them apart (R:COLLAPSE). `direction` is `"out"` when
     the walk followed the edge from its source and `"in"` when it arrived at its target, `family`
     is `"edge"` (an `EDGE_KEYS` node edge) or `"relation"` (a typed `relations:` concept edge),
     and `label` is the edge key or the rel word. `src`/`target` always describe the edge AS
@@ -577,28 +582,33 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
     # joins neither: it carries no resolvable target and therefore makes no claim to walk.
     fwd, rev = {}, {}
     for src, key, ref, target in edges(graph):
-        fwd.setdefault(src, []).append(("edge", key, ref, target))
+        # A node edge is declared by the node itself, so there is no finer identity to carry.
+        fwd.setdefault(src, []).append(("edge", key, src, ref, target))
         if target is not None:
-            rev.setdefault(target, []).append(("edge", key, ref, src))
-    for src, _src_id, rel, ref, target in relations(graph):
+            rev.setdefault(target, []).append(("edge", key, src, ref, src))
+    for src, src_id, rel, ref, target in relations(graph):
         if rel is None:
             continue
-        fwd.setdefault(src, []).append(("relation", rel, ref, target))
+        # The declaring LESSON, at the address `search` and `deltas` already cite it by. An
+        # id-less legacy head degrades to the file, exactly as `delta_address` degrades.
+        origin = delta_address(src.rsplit("/", 1)[-1][:-3], src_id)
+        fwd.setdefault(src, []).append(("relation", rel, origin, ref, target))
         if target is not None:
-            rev.setdefault(target, []).append(("relation", rel, ref, src))
+            rev.setdefault(target, []).append(("relation", rel, origin, ref, src))
 
-    # `best` keys the EDGE, so the shallowest sighting wins and a second one neither duplicates
-    # the row nor re-expands the node behind it.
+    # `best` keys the EDGE — including WHO DECLARED IT, so two lessons refining one target stay
+    # two edges. The shallowest sighting wins and a second one neither duplicates the row nor
+    # re-expands the node behind it.
     best, seen, frontier = {}, {cid}, [cid]
     for depth in range(1, max(0, int(expand)) + 1):
         nxt = set()
         for node in frontier:
-            for family, label, ref, other in fwd.get(node, []):
-                best.setdefault((family, label, node, ref, other), (depth, "out"))
+            for family, label, origin, ref, other in fwd.get(node, []):
+                best.setdefault((family, label, origin, node, ref, other), (depth, "out"))
                 if other is not None and other not in seen:
                     nxt.add(other)
-            for family, label, ref, other in rev.get(node, []):
-                best.setdefault((family, label, other, ref, node), (depth, "in"))
+            for family, label, origin, ref, other in rev.get(node, []):
+                best.setdefault((family, label, origin, other, ref, node), (depth, "in"))
                 if other not in seen:
                     nxt.add(other)
         seen |= nxt
@@ -606,11 +616,11 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
         if not frontier:
             break
 
-    rows = [(d, direction, family, label, src, ref, target)
-            for (family, label, src, ref, target), (d, direction) in best.items()]
+    rows = [(d, direction, family, label, origin, src, ref, target)
+            for (family, label, origin, src, ref, target), (d, direction) in best.items()]
     # Every field participates, so no tie reaches dict or set order (R:SILENTORDER). `target` is
     # `None` for an unresolved edge, which no comparison with a string may touch.
-    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3], r[4], r[5], r[6] or ""))
+    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7] or ""))
     if not rows:
         return [], (f"`{cid}` has no edges within {expand} level(s)"
                     "\nnext: add status")
@@ -687,10 +697,13 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
         lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
                       f"{up} declared elsewhere):"]
         width = max(len(r[3]) for r in view["rows"])
-        for depth, direction, family, label, src, _ref, target in view["rows"]:
+        for depth, direction, family, label, origin, src, _ref, target in view["rows"]:
             arrow = down if direction == "out" else up
             other = target if direction == "out" else src
-            mark = "" if family == "edge" else "  (relation)"
+            # The declaring lesson's ID, not its whole address: the row already prints the other
+            # end, so repeating the file would spend width twice on one fact. Without it two
+            # lessons refining one target render as two identical-looking lines (A9).
+            mark = "" if family == "edge" else f"  (relation {origin.split('#')[-1]})"
             state = (graph.get(other or "", {}).get("fm") or {}).get("status")
             shown = other or f"{dash} unresolved"
             tag = f"  [{state}]" if state else ""
@@ -3897,8 +3910,8 @@ def show_payload(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     results = [{"address": view["cid"], "cid": view["cid"], "match": "node",
                 "fields": _fields(view["fm"]), "text": view["body"]}]
     edges = [{"depth": d, "direction": direction, "family": family, "label": label,
-              "src": src, "ref": ref_, "target": target}
-             for d, direction, family, label, src, ref_, target in view["rows"]]
+              "origin": origin, "src": src, "ref": ref_, "target": target}
+             for d, direction, family, label, origin, src, ref_, target in view["rows"]]
     # NOT the human render: that would put prose inside the payload and duplicate the stream a
     # `--json` caller asked to be free of it (R:DIRTYSTDOUT). A one-line summary instead.
     summary = f"{view['cid']} \u00b7 {len(edges)} edge(s) within {expand} level(s)"

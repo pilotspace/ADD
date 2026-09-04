@@ -341,6 +341,12 @@ this version:
 * the unit is the **edge**, not the visit. One edge is emitted **once**, at the shallowest depth
   the walk reaches it, from whichever end it arrived — the same link seen outbound from one node
   and inbound at the other is one fact, and emitting it twice doubles every diamond;
+* an edge is identified by **what declared it**, not only by the pair it joins. A node edge is
+  declared by its node; a typed concept edge is declared by the *lesson* that wrote it, and two
+  lessons may refine one target. Each row therefore carries the declaring concept's address
+  (`origin`), and it participates in the identity — otherwise two distinct edges collapse into
+  one row and the reader is told a link exists where two do. Identity by `(family, label, src,
+  ref, target)` alone was exactly that bug;
 * it is bounded by a caller-supplied depth and is **cycle-safe**: a node already reached is never
   expanded again, so a self-edge, a two-node cycle and a diamond all terminate;
 * an **unresolved** edge is emitted with a null target and never expanded. A dangling link is
@@ -745,7 +751,8 @@ a consumer pipes the stream straight into a parser, so nothing prose-shaped ride
   ],
   "edges": [
     { "depth": 1, "direction": "out", "family": "edge", "label": "milestone",
-      "src": "/tasks/t-one.md", "ref": "m-one", "target": "/milestones/m-one.md" }
+      "origin": "/tasks/t-one.md", "src": "/tasks/t-one.md",
+      "ref": "m-one", "target": "/milestones/m-one.md" }
   ],
   "note": "/tasks/t-one.md · 1 edge(s) within 3 level(s)"
 }
@@ -760,7 +767,7 @@ Every key is always present. What fills each one:
 | `ok` | `false` marks a refusal and only a refusal | same |
 | `request` | the arguments as asked; a flag nobody typed is absent | same |
 | `results` | exactly one node — `address` · `cid` · `match` · `fields` · `text` | every hit, in the verb's own order; `fields` is `{}` and `text` is the snippet |
-| `edges` | the walk's rows — `depth` · `direction` · `family` · `label` · `src` · `ref` · `target` | always `[]`, never omitted |
+| `edges` | the walk's rows — `depth` · `direction` · `family` · `label` · `origin` · `src` · `ref` · `target`. `origin` is the address of the concept that **declared** the edge: a lesson address like `/specs/method.md#M8` for a relation, and the node's own cid for a node edge | always `[]`, never omitted |
 | `note` | a one-line summary | a one-line summary |
 
 Three guarantees a consumer may rely on.
