@@ -1,7 +1,7 @@
 ---
 type: Task
 title: The measured dead and duplicated lines, removed across all four twins
-status: direction
+status: done
 depth: standard
 milestone: read-cost
 scope:
@@ -21,11 +21,14 @@ gives:
 generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:read-cost", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:d794ccb4e151e1c0", binding: "sha256:0b417b4206ea56c4" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:ed378cee808a3439" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/source-dead-code.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/source-dead-code.d/runs/1.md, brief: "sha256:20afd3d45291b89d" }
 ---
 ## CARD
 goal: the source that no caller reaches is gone from all four twins — and the measurement that says what "no caller reaches" actually amounts to is recorded, because the number this task was created on is wrong.
 why: read-cost was planned on a survey claiming ~101 removable lines (1.75% of add.py). Re-measured 2026-09-04 against the parsed AST, cli.py, the standalone validator and the whole test corpus, that number does not survive. Unreferenced module-level definitions: ONE line (`RESERVED_FILES`). Functions no engine or CLI path calls: ONE (`delta_carried_on`, 16 lines). Commented-out code: 3 lines. The nine duplicated "load a node or refuse" preambles are real but return three different conventions (`False`/`None`/a dict), so extracting them saves ~8 net lines and costs every verb its own refusal — not a trim. The measured removable surface is ~22 lines, 0.37%, and the finding that matters is not the bytes: `delta_carried_on` documents the validity interval as CLOSED-CLOSED ("a delta folded today was still carried today") and its docstring claims `--as-of` is wired to it. `--as-of` is not wired to it and implements HALF-OPEN. Probed on the close date: the live filter reports the lesson `folded`, the dead predicate reports it still carried. Two definitions of one boundary, disagreeing on the boundary day, and the dead one has three passing assertions holding it in place.
-beat: direction · next: add freeze source-dead-code
+beat: done · next: add status
 
 ## RULES
 <must>
