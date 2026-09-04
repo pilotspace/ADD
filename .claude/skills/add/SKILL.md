@@ -14,7 +14,7 @@ category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume, explore, research]
 argument-hint: "status | <describe the change or goal>"
 license: MIT
-metadata: { author: add, version: "3.4.0", format: ABF-1 }
+metadata: { author: add, version: "3.5.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle (the agent is the hands)

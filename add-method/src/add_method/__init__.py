@@ -14,4 +14,4 @@ Usage (Python API):
 from add_method._installer import install
 
 __all__ = ["install"]
-__version__ = "3.4.0"
+__version__ = "3.5.0"
