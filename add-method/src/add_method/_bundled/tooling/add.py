@@ -628,8 +628,11 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
                   "\nnext: cite one as a depends_on: or relations: target")
 
 
+RESOLVE_CANDIDATES = 8       # candidates an ambiguity refusal lists before it starts counting
+
+
 def resolve_ref(root, ref: str) -> tuple:
-    """A bare slug or a cid -> EXACTLY one cid. `(cid, note)`; `cid is None` marks a refusal.
+    """A bare slug, a filename or a cid -> EXACTLY one cid. `(cid, note)`; `None` marks a refusal.
 
     It never best-guesses. `cli._resolve` returns `/tasks/<ref>.md` for anything it cannot find,
     which hands the engine a cid that does not exist and lets the refusal come from somewhere
@@ -646,15 +649,27 @@ def resolve_ref(root, ref: str) -> tuple:
         cid = "/" + text.lstrip("/")
         if cid in graph:
             return cid, f"`{cid}`"
-        return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+        # A ref carrying `/` was meant literally and stops here — second-guessing a path would
+        # reopen the guessing this verb refuses (A2). A bare FILENAME falls through: it named a
+        # node that exists, and refusing it asserted something false about the bundle, which is
+        # the failure this function was written to end (R:FALSEREFUSAL).
+        if "/" in text:
+            return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+        text = text[:-3]
     matches = sorted(c for c in graph if c.rsplit("/", 1)[-1] == f"{text}.md")
     if len(matches) == 1:
         return matches[0], f"`{matches[0]}`"
     if not matches:
         return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
-    listed = "\n".join(f"  \u00b7 {m}" for m in matches)
+    # Bounded, for the reason the depth cap is bounded: one read must not cost unbounded
+    # context. `add show 1` listed 78 candidates on a live bundle and grew with the task count.
+    # The shown set is the deterministic PREFIX of the sorted order, so the refusal reproduces.
+    shown = matches[:RESOLVE_CANDIDATES]
+    listed = "\n".join(f"  \u00b7 {m}" for m in shown)
+    withheld = len(matches) - len(shown)
+    more = f"\n  \u00b7 … and {withheld} more" if withheld else ""
     return None, (f'`{text}` names {len(matches)} nodes, and a read must not choose one of them '
-                  f'-> "R:GUESS"\n{listed}'
+                  f'-> "R:GUESS"\n{listed}{more}'
                   f"\nnext: add show {matches[0]}   # name one of the cids above")
 
 

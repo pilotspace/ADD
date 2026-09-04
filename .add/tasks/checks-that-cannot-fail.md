@@ -1,7 +1,7 @@
 ---
 type: Task
 title: Four checks gated PASS on claims they cannot test, repaired with floors
-status: direction
+status: done
 depth: standard
 milestone: walk-truth
 scope:
@@ -21,11 +21,14 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:walk-truth", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:9782dbdcaa4b6cc4", binding: "sha256:33ee11d29cc8a55d" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:92bccb90d52c04f7" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:92bccb90d52c04f7" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/checks-that-cannot-fail.d/runs/1.md }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/checks-that-cannot-fail.d/runs/1.md, brief: "sha256:f5c67b7a46842332" }
 ---
 ## CARD
 goal: six checks that pass for the defect they name are repaired, each proven by injecting that defect; and the one real control-flow gap they were hiding is closed.
 why: two review agents audited okf-graph-lookup by INJECTING defects rather than reading tests, and found the green was not load-bearing. A pin that reads a value out of the module and then finds it in the module's own source. An assertion whose first disjunct is always true. A cache-independence check that refreshes the cache first. A seal check that never reaches the seal. This repo's whole trust model is that a green gate proves the declared checks ran and passed — a check that cannot fail converts that into a lie, and these shipped inside a milestone that closed 7/7.
-beat: direction · next: add freeze checks-that-cannot-fail
+beat: done · next: add status
 
 ## RULES
 <must>
