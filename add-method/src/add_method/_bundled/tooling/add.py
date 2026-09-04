@@ -3469,6 +3469,19 @@ def _as_date(value):
     return v if ISO_DATE.match(v) else None
 
 
+def delta_address(stem: str, delta_id: str = None) -> str:
+    """One lesson -> the ONE address every reader cites it by. `/specs/<stem>.md#<id>`.
+
+    Both readers call here. They used to compose it apart — `search` at concept grain, `deltas`
+    as a `[ADD X9]` tag that shows the id without making it pasteable — so a reader who found a
+    lesson through the wrong door could not cite what they had just read (X4). A legacy head
+    carries no id, so its address degrades to the FILE it lives in: the coarser grain still
+    resolves, where an empty `#` fragment resolves to nothing.
+    """
+    cid = "/specs/" + str(stem) + ".md"
+    return cid + "#" + str(delta_id) if delta_id else cid
+
+
 def deltas(root, status: str = "open", lens: str = None,
            since: str = None, as_of: str = None) -> tuple:
     """List every delta at `status` across the five specs. `(items, note)`.
@@ -3553,7 +3566,10 @@ def deltas(root, status: str = "open", lens: str = None,
         rendered.append(f"{status} deltas ({len(items)}){active}:")
         # The address leads beside the competency so a reader can cite a lesson without opening
         # the file; the raw four-field head would push the lesson itself off the line.
-        rendered += [f"  · [{i[1]}{' ' + i.id if i.id else ''}] {i[0]}: {i[2]}" for i in items]
+        # The address, not a `[ADD X9]` tag: the tag showed the id, this one can be pasted
+        # into a `relations:` target. The competency letter is dropped as redundant — the path
+        # already names the lens it stood for (X4).
+        rendered += [f"  · {delta_address(i[0], i.id)}  {i[2]}" for i in items]
         rendered.append("next: at close, fold or reject each (loop.md)")
     else:
         rendered.append(f"no {status} deltas{active}")
@@ -3731,10 +3747,10 @@ def search(root, query: str = None, as_of: str = None,
             if picked:
                 excluded += 1
                 continue
-            cid = f"/specs/{item[0]}.md"
+            cid = delta_address(item[0])
             # A legacy head carries no id, so its address degrades to the file it lives in —
             # shown at the coarser grain rather than dropped from the index.
-            address = f"{cid}#{item.id}" if item.id else cid
+            address = delta_address(item[0], item.id)
             found.append((0, rank,
                           -int(item.valid_from.replace("-", "")) if item.valid_from else 0,
                           cid, address, f"delta:{delta_status}", _snippet(item[2], q),

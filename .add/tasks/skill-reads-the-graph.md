@@ -1,7 +1,7 @@
 ---
 type: Task
 title: SKILL.md teaches the graph — read a node whole, query by field, before the loop plans
-status: direction
+status: done
 depth: quick
 milestone: okf-graph-lookup
 depends_on:
@@ -20,11 +20,13 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:1ef4df90df7dc467", binding: "sha256:bd1235c2e1600e93" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:154017d2bc3d4e0e" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/skill-reads-the-graph.d/runs/1.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/skill-reads-the-graph.d/runs/1.md, brief: "sha256:d4678b2111965d6d" }
 ---
 ## CARD
 goal: the always-loaded skill teaches reading a node whole and querying the bundle by field, before the loop plans anything.
 why: three verbs shipped this milestone and the skill names none of them, so the loop still tells an agent to `open .add/tasks/<slug>.md` and read its CARD by hand — the exact `cat` that `add show` exists to replace. A capability the always-loaded surface does not name is a capability nobody uses.
-beat: direction · next: add freeze skill-reads-the-graph
+beat: done · next: add status
 
 ## RULES
 <must>

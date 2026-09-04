@@ -7,7 +7,7 @@ description: how the engine is built and what that forecloses — notary discipl
 tags: [engine, pins, twins, vendored]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 8
+delta_seq: 9
 ---
 ## Now
 how it is built, and what that forecloses
@@ -17,6 +17,7 @@ how it is built, and what that forecloses
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [SDD · S9 · open · 2026-09-04] A twin set is an explicit LIST, never a glob. Mirroring an engine edit with rglob('tooling/add.py') matched 120 paths — benchmark run workspaces, two sibling git worktrees, and the archived 2.x bundle — all gitignored, so 'git status' showed 2 modified files and the damage was invisible to the usual check. Recovery worked only because each vendored bundle carries its own engine_pin.py: the pin is a self-verifying restore key, so 86 copies were restored by md5 lookup against historical blobs and 23 more by matching their untouched sibling cli.py to its commit. (evidence: /tasks/one-address-per-concept.md · rglob clobbered 120 copies, restored 109, 2 disposable tmp/smoke left)
 - [SDD · S8 · open · 2026-09-04] A twin set is per-FILE, not per-engine: add.py has three mirrors and so does cli.py, but a scope: assembled by hand listed only two of cli.py's. The bundled twin was mirrored during build and never declared, which the gate would have caught as scope_violation. Derive the twin list from the tree, never from memory — and note that two of the six twins are gitignored, so git status cannot show you the omission. (evidence: /tasks/search-structured-filters.md)
 - [SDD · S7 · open · 2026-09-04] The engine's declared floor is Python 3.10 (requires-python >=3.10) and NOTHING in the suite compiles it there, so a py3.12-only f-string shipped green locally: a backslash inside an f-string EXPRESSION part is a SyntaxError before PEP 701. The 1263-test suite runs on one interpreter and says nothing about the other two the package claims. A version floor with no compile guard is a claim, not a constraint. (evidence: /tasks/show-verb.md)
 - [SDD · S6 · open · 2026-09-04] The `covers:` key has TWO grammars in one node: the ASSUMPTIONS sweep splits on WHITESPACE (covers: S1 S2 S3) and the CHECKS binding splits on COMMAS (covers: M2, E2). A space-separated CHECKS line parses as the single rule id 'M2 E2', which matches no referent, so every id on that line silently goes unbound — and the gate reports 'no reported passing check', which reads like a missing test rather than a punctuation error. Two separators for one key name is a trap the refusal message cannot name. (evidence: /tasks/milestone-membership-is-an-edge.md)
