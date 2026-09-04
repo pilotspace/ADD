@@ -1,6 +1,6 @@
 ---
 type: Task
-title: The loop reads the graph before it plans, in all three skill trees
+title: SKILL.md teaches the graph — read a node whole, query by field, before the loop plans
 status: direction
 depth: quick
 milestone: okf-graph-lookup
@@ -13,7 +13,9 @@ scope:
   - .claude/skills/add
   - add-method/tests/skill
 gives:
-  - S1 <the surface this publishes — an endpoint, function, or section>
+  - S1 SKILL.md's cookbook and Intake routing — `add show` and `add search`'s field filters named as the read-before-you-plan step, byte-identical across all three shipped skill trees
+  - S2 the funding — every added byte paid for by compression inside the existing 176-line and 13258-byte pins, and the prose sha256 pin re-aimed in the same change
+  - S3 intake.md — the Task and Project/milestone routes name reading the node and its neighbourhood before drafting scope
 generated: { by: add/3.4.0, at: 2026-09-04 }
 verified: []
 ---
