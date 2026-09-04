@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A relation is identified by the lesson that declared it, in the walk and in the payload
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: walk-truth
@@ -21,11 +21,18 @@ gives:
 generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:walk-truth", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:e0f509ea55d95f57", binding: "sha256:9feb3826b419be57" }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:d6441e8add8fbbc8", binding: "sha256:9feb3826b419be57" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:0547880c781b7e73" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/relation-identity-in-the-walk.d/runs/1.md }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:5e913174ab160f8b", binding: "sha256:9feb3826b419be57" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:be3d97fc3803a04c" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/relation-identity-in-the-walk.d/runs/2.md }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/relation-identity-in-the-walk.d/runs/2.md, brief: "sha256:be3d97fc3803a04c" }
 ---
 ## CARD
 goal: two lessons refining one target emit two rows, and every row names the concept that declared it.
 why: `relations()` returns the declaring delta id and `neighborhood()` throws it away, dedupping on `(family, label, src, ref, target)`. Two lessons refining the same target collapse into one row. It is live: `.add/specs/method.md` declares `M8 refines #M4` and `M31 refines #M4`, and the walk emits one — 4 relations in the bundle, 3 rows. FORMAT section 3.4 promises one EDGE emitted once; two edges are not one edge. And the `edges[]` schema pinned in section 11 has no key that could carry the id, so a consumer cannot recover the loss even in principle.
-beat: direction · next: add freeze relation-identity-in-the-walk
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -67,7 +74,7 @@ strategy: write the two-relations-one-target check FIRST against the LIVE bundle
 
 ## CHECKS
 - test_two_lessons_one_target_emit_two_rows · covers: M1, R:COLLAPSE, E1 · the live shape, built in a fixture: two relations agreeing on rel and ref, two rows out
-- test_every_row_names_its_declaring_concept · covers: M2, A6, E4 · `origin` is present on every row, is a lesson address for a relation, and equals `src` for a node edge
+- test_every_row_names_its_declaring_concept · covers: M2, A4, A6, E4 · `origin` is present on every row, is a lesson address for a relation, and equals `src` for a node edge
 - test_one_edge_is_still_emitted_once · covers: M3, R:DOUBLEVISIT, E2 · an edge reachable both directions emits one row, at its shallowest depth
 - test_walk_reconciles_with_relations · covers: M6, R:PINNEDNUMBER · the walk's relation rows are compared against `relations()` over the same nodes — two computed values, no literal
 - test_format_pins_the_declaring_key · covers: M4 · section 11 names `origin` and section 3.4 states identity in terms of the declaring concept

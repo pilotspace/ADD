@@ -67,7 +67,7 @@ def test_two_lessons_one_target_emit_two_rows(bundle):
 
 
 def test_every_row_names_its_declaring_concept(bundle):
-    """M2, A6, E4 — `origin` on every row: a lesson address for a relation, `src` otherwise."""
+    """M2, A4, A6, E4 — `origin` on every row: a lesson address for a relation, `src` otherwise."""
     cid = _spec(bundle, "method", TWO)
     rows, _ = add.neighborhood(add.scan(bundle), cid, 2)
     assert rows, "the fixture produced no rows, so this proves nothing"
