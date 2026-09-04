@@ -2236,6 +2236,16 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         else:
             gates = [(i, s) for i, s in enumerate(stamps)
                      if i > last_reopen and s.get("act") == "gate"]
+            # The seal, on the override's OWN path. The comment above says it is "checked
+            # exactly as before"; before this line it was not — the branch reassigned `gates`
+            # and fell out of the chain, so the `elif` holding the seal test was unreachable
+            # from here. The invariant held only because `gate` refuses a HARD-STOP on an
+            # unsealed node upstream, which is one refactor away from absent. A guard that
+            # depends on another verb refusing is not a guard on this path (M7).
+            if seal_at is None or all(i < seal_at for i, _ in gates):
+                missing.append("a freeze preceding the gate — the ONE human approval ADD asks "
+                               "for did not happen, so this gate closed a node nobody approved")
+                fix = f'add freeze {slug} --by "<name>", then re-gate'
     elif not gates:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:

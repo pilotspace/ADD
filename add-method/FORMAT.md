@@ -347,7 +347,12 @@ this version:
   (`origin`), and it participates in the identity — otherwise two distinct edges collapse into
   one row and the reader is told a link exists where two do. Identity by `(family, label, src,
   ref, target)` alone was exactly that bug;
-* it is bounded by a caller-supplied depth and is **cycle-safe**: a node already reached is never
+* it is bounded by a caller-supplied depth, and that depth has a **ceiling of 5**. A request
+  above the ceiling is **refused**, never clamped: a clamp reports success for a question nobody
+  asked. The number is stated here because a ceiling that lives only in the code cannot be
+  checked against the document, and a check that reads it out of the code and then looks for it
+  in that same code guards nothing;
+* it is **cycle-safe**: a node already reached is never
   expanded again, so a self-edge, a two-node cycle and a diamond all terminate;
 * an **unresolved** edge is emitted with a null target and never expanded. A dangling link is
   information about the node that declares it, and the one view built to show links must not be
