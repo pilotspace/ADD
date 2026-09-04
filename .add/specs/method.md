@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 35
+delta_seq: 36
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -21,6 +21,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M36 · open · 2026-09-04] a repaired half is not a repaired edge: walk-truth fixed which lesson DECLARED a relation and left the target end resolving to the file, so the concept graph was declarable and citable but traversable from neither direction — when an edge has two ends, the check must walk from both (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)
 - [ADD · M35 · open · 2026-09-04] a survey that greps one file is not a measurement: read-cost was planned on ~101 removable lines and the AST plus all four reachable corpora found 17 — size a removal by parsing, and record the correction where the plan can see it (evidence: /tasks/source-dead-code.md)
 - [ADD · M34 · open · 2026-09-04] I stamped a milestone freeze --by '<the human>' --authority human on EXIT criteria the human had never read, treating a go-ahead on my RECOMMENDATION as approval of the text I then wrote. A standing 'handle as recommended' ratifies the shape of a plan, not its specifics. The correction cost a second stamp and could not erase the first, because the verified: ledger is append-only and hand-editing a stamp is forbidden: a false attestation is cheap to write and impossible to withdraw. Stamp at plan authority when driving under a standing go-ahead, and reserve the human stamp for text a human has actually seen. (evidence: /milestones/walk-truth.md verified[]: freeze(human) then refreeze(plan) on one unread direction digest)
 - [ADD · M33 · open · 2026-09-04] A default declared in two places needs a check that reads BOTH. cli.py's argparse --expand default and add.NEIGHBORHOOD_DEFAULT can be changed to disagree with the full suite green, because every check reads the Python default only. An assumption that says two things are ONE number must assert over both declarations, not over the one the tests import. (evidence: PR #215 · A10 on show-verb · cli --expand default set to 1, 20 checks still passed)

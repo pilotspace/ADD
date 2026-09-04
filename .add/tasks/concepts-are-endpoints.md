@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A relation connects two concepts, and the walk can start at either
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 scope:
@@ -22,11 +22,14 @@ gives:
 generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "Tin Dang", at: 2026-09-04, act: freeze, authority: human, direction: "sha256:404054c2d6dbc6a3", binding: "sha256:8fd57a8108a35a7f" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:ccc7cfc11558d03e" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/concepts-are-endpoints.d/runs/1.md }
+  - { by: "Tin Dang", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/concepts-are-endpoints.d/runs/1.md, brief: "sha256:1fb0dfa2bd208226" }
 ---
 ## CARD
 goal: a relation joins the two concepts it was written between, so a walk that starts at either end finds it.
 why: demonstrated live on this bundle. `.add/specs/method.md` declares `M8 refines /specs/method.md#M4` and `M31 refines /specs/method.md#M4`. `add show /specs/method.md#M4` answers "related: none within 3 level(s)" — the two lessons that refine it are invisible from the concept they refine — while `add show /specs/method.md` renders both as `refines /specs/method.md`, a row that reads as a self-loop and names a file where the author wrote a concept. walk-truth repaired the ORIGIN end (which lesson declared the edge); the TARGET end still runs through `_norm`, which strips the fragment by design because a node edge like `needs: /specs/x.md#gives` must resolve to the file. The result is a concept graph that is declarable and citable but not traversable: `show <address>`'s `related:` is structurally always empty, and no check says otherwise. §11 is one release old and unpublished, so the window to correct what a relation row MEANS closes when 3.5.0 ships.
-beat: direction · next: add freeze concepts-are-endpoints
+beat: done · next: add status
 
 ## RULES
 <must>
