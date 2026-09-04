@@ -3652,8 +3652,27 @@ def _snippet(text, query: str) -> str:
     return ("\u2026" if start else "") + flat[start:end] + ("\u2026" if end < len(flat) else "")
 
 
-def search(root, query: str, as_of: str = None) -> tuple:
-    """Every concept in the bundle matching `query`. `(hits, note)`. Read-only, never writes.
+def _filter_pass(fm: dict, want_type, status, milestone) -> bool:
+    """True when a node satisfies every node-scoped filter that was actually given.
+
+    An ABSENT `status:` matches no `--status` value. Measured on the live bundle: 135 of 220
+    nodes carry none, so treating absent as a wildcard would return most of the bundle for
+    every status query.
+    """
+    if want_type and fm.get("type") != want_type:
+        return False
+    if status and str(fm.get("status") or "") != str(status):
+        return False
+    if milestone and _wave_slug(fm.get("milestone")) != _wave_slug(milestone):
+        return False
+    return True
+
+
+def search(root, query: str = None, as_of: str = None,
+           type: str = None, status: str = None, milestone: str = None) -> tuple:
+    """Every concept in the bundle matching `query`, narrowed by the node-scoped filters.
+
+    `(hits, note)`. Read-only, never writes.
 
     `hits` is `[(address, field, snippet), ...]` under a TOTAL order, so two runs over an
     unchanged bundle emit byte-identical output. `hits is None` marks a REFUSAL and only a
@@ -3668,10 +3687,27 @@ def search(root, query: str, as_of: str = None) -> tuple:
     """
     root = Path(root)
     q = str(query or "").strip()
-    if not q:
+    picked = {k: v for k, v in (("type", type), ("status", status),
+                                ("milestone", milestone)) if v}
+
+    # The taxonomy check comes FIRST, ahead of every other rung. A `--type` typo that fell
+    # through would answer zero hits, and zero hits reads as "nothing matches" rather than as
+    # "you asked for a type that does not exist" — the shape that let an unrecognised
+    # `sensitivity:` degrade to the lowest authority floor (M24).
+    want_type = None
+    if type:
+        want_type = next((t for t in ABF_TYPES if t.lower() == str(type).strip().lower()), None)
+        if want_type is None:
+            # The separator is hoisted OUT of the expression part: py3.10 forbids a backslash
+            # there, and this engine's declared floor is 3.10 (SDD S7).
+            taxonomy = " \u00b7 ".join(ABF_TYPES)
+            return None, (f'`{type}` is not an ADD node type -> "R:UNKNOWNTYPE"'
+                          f"\n  the taxonomy: {taxonomy}"
+                          "\nnext: add search --type Task")
+    if not q and not picked:
         return None, ('an empty query is contained in every string, so it would answer with the '
                       'whole bundle -> "R:EMPTYQUERY"'
-                      "\nnext: add search <term>")
+                      "\nnext: add search <term>   # or narrow with --type / --status / --milestone")
     # R:TODAYFALLBACK — validated HERE, before the delegation, so the refusal names the verb the
     # operator ran. Falling back to today would answer a question nobody asked.
     if as_of is not None and _as_date(as_of) is None:
@@ -3683,9 +3719,17 @@ def search(root, query: str, as_of: str = None) -> tuple:
     # (tier, status, -date, cid, address, field, snippet, dated) — every tie broken, so the
     # listing is diffable and no dict or set order can reach the output.
     found = []
-    for rank, status in enumerate(DELTA_STATUSES):
-        for item in deltas(root, status=status, as_of=as_of)[0]:
-            if needle not in item[2].lower():
+    # A delta carries no `type:` and no `milestone:`, and its open/folded/rejected vocabulary is
+    # NOT the node lifecycle — so a node-scoped filter cannot judge one. They are excluded, and
+    # the count is carried to the note: an unreported exclusion reports a smaller number, and a
+    # smaller number reads as success (R:SILENT_DROP).
+    excluded = 0
+    for rank, delta_status in enumerate(DELTA_STATUSES):
+        for item in deltas(root, status=delta_status, as_of=as_of)[0]:
+            if not needle or needle not in item[2].lower():
+                continue
+            if picked:
+                excluded += 1
                 continue
             cid = f"/specs/{item[0]}.md"
             # A legacy head carries no id, so its address degrades to the file it lives in —
@@ -3693,14 +3737,27 @@ def search(root, query: str, as_of: str = None) -> tuple:
             address = f"{cid}#{item.id}" if item.id else cid
             found.append((0, rank,
                           -int(item.valid_from.replace("-", "")) if item.valid_from else 0,
-                          cid, address, f"delta:{status}", _snippet(item[2], q),
+                          cid, address, f"delta:{delta_status}", _snippet(item[2], q),
                           bool(item.valid_from)))
 
     for cid, node in scan(root).items():
         fm = node["fm"] or {}
         # A receipt is evidence, not a concept; `index.md`/`log.md` are COMPILED from the nodes
         # and would double every title hit.
-        if fm.get("type") == "Run" or cid.lstrip("/") in NOT_A_NODE:
+        # A receipt is evidence, not a concept — but an EXPLICIT `--type Run` is not the
+        # blanket free-text case this exclusion was written for, and answering zero to a
+        # request naming a real taxonomy member is R:HIDDENTYPE.
+        if (fm.get("type") == "Run" and want_type != "Run") or cid.lstrip("/") in NOT_A_NODE:
+            continue
+        if not _filter_pass(fm, want_type, status, milestone):
+            continue
+        if not needle:
+            # A filter-only ask: the NODE is the hit. There is no matched text to window, so
+            # the snippet is the node's own title.
+            label = fm.get("title")
+            shown = "" if label is None or _is_template(label) else str(label)
+            found.append((1, 0, 0, cid, cid, str(fm.get("type") or "node"),
+                          _snippet(shown, "") if shown else "\u2014", False))
             continue
         for field in SEARCH_FIELDS:
             value = fm.get(field)
@@ -3718,17 +3775,30 @@ def search(root, query: str, as_of: str = None) -> tuple:
     found.sort(key=lambda h: h[:7])
     hits = [(h[4], h[5], h[6]) for h in found]
     active = f" \u00b7 as of {as_of}" if as_of else ""
+    sep = " \u00b7 "
+    shown_ask = f'"{q}"' if q else sep.join(f"--{k} {v}" for k, v in picked.items())
     if not hits:
-        return [], (f'no hit for "{q}"{active}'
+        # A typo and an empty slice must not look identical (A12). Naming the statuses the
+        # bundle actually holds is what tells the two apart without a second command.
+        seen = sorted({str((n["fm"] or {}).get("status")) for n in scan(root).values()
+                       if (n["fm"] or {}).get("status")})
+        listed = sep.join(seen)
+        where = f"\n  statuses in this bundle: {listed}" if status and seen else ""
+        return [], (f'no hit for {shown_ask}{active}{where}'
                     "\nnext: add deltas   # the whole carried inventory, unfiltered")
     width = max(len(h[0]) for h in hits)
     fwidth = max(len(h[1]) for h in hits)
-    lines = [f"{len(hits)} hit{'s' if len(hits) != 1 else ''} for \"{q}\"{active}:"]
+    lines = [f"{len(hits)} hit{'s' if len(hits) != 1 else ''} for {shown_ask}{active}:"]
     lines += [f"  \u00b7 {a:<{width}}  {f:<{fwidth}}  {s}" for a, f, s in hits]
+    if excluded:
+        lines.append(f"\u2014 {excluded} delta hit(s) excluded: a node-scoped filter cannot "
+                     f"judge a lesson, which carries no type: or milestone:")
     # A filter that hides what it cannot judge reports a smaller number, and a smaller number
     # reads as success (R:SILENT_DROP). Counted from the hit list, never from `deltas()`.
+    # Suppressed when a filter ran: the deltas it could not judge are already reported above,
+    # and every surviving hit is a node hit, so the line would count the same removal twice.
     free = sum(1 for h in found if not h[7])
-    if as_of and free:
+    if as_of and free and not picked:
         lines.append(f"\u2014 {free} hit(s) carry no validity interval (node frontmatter, CARD "
                      f"goals, and legacy undated deltas): --as-of cannot judge them and does "
                      f"not hide them")
