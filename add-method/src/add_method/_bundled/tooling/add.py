@@ -1286,7 +1286,6 @@ PROFILES = {
     },
 }
 
-RESERVED_FILES = ("index.md", "log.md", "PROJECT.md")
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
@@ -3481,24 +3480,6 @@ class Delta(tuple):
         return (f"Delta({self[0]!r}, {self[1]!r}, {self[2]!r}, "   # debug print then lies by
                 f"id={self.id!r}, valid_from={self.valid_from!r}, "  # omission
                 f"valid_to={self.valid_to!r})")
-
-
-def delta_carried_on(item, date: str) -> bool:
-    """True when `item` was carried on `date`. The interval is CLOSED-CLOSED.
-
-    Both endpoints are inclusive: a delta folded today was still carried today. An absent
-    endpoint is unbounded on that side, so a legacy undated delta is carried on every date and a
-    terminal delta whose close could not be recovered reads as still carried — over-reporting,
-    never losing a lesson. `deltas-time-filters` wires `--as-of` to this predicate rather than
-    re-deriving the boundary.
-    """
-    valid_from = getattr(item, "valid_from", None)
-    valid_to = getattr(item, "valid_to", None)
-    if valid_from and date < valid_from:
-        return False
-    if valid_to and date > valid_to:
-        return False
-    return True
 
 
 def _delta_letter(lens: str) -> str:
