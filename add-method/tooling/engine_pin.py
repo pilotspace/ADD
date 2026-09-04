@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "2003790fbd89563d088388952d75d42a"  # re-aimed @ typed-relations: the relations: family, the §3.3 delta-id form, and a containment reader that no longer clamps a relative escape. prior: 083bc802… @ deltas-time-filters
+ENGINE_MD5 = "c64b39ff66715935c0e2aecf9c565175"  # re-aimed @ search-verb: the 25th verb — one lookup at LESSON granularity, its bounded snippet, and the total hit ordering. prior: 2003790f… @ typed-relations
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "bf115355341b3dfe256eef5e107214db"  # re-aimed @ deltas-time-filters: cli grows --lens/--since/--as-of. prior: b41bc148…
+ENGINE_PKG_MD5 = "b0b2e035d324bd002b369dad713438ec"  # re-aimed @ search-verb: cli gains the search subcommand and its --as-of flag. prior: bf115355… @ deltas-time-filters

@@ -3414,6 +3414,129 @@ def fold(root, lens: str, match: str) -> tuple:
     return True, f"folded {folded} delta(s) in specs/{lens}\nnext: add status"
 
 
+# ============================================ search — one lookup, at LESSON granularity
+#
+# The failure this ends is measurable in this bundle: a lookup that can only answer
+# `specs/method.md` points at thirty unrelated lessons, which is why nobody looks anything up.
+# So a delta hit is addressed `/specs/<lens>.md#<id>` — the concept address a `relations:` entry
+# can target — and the ADDRESS leads the line, because the address is the deliverable.
+#
+# THREE field classes, and no body. 74 task nodes here carry near-identical scaffold prose, so
+# matching bodies makes a query for `gate` hit almost everything — the precise failure lesson
+# granularity exists to fix. `type: Run` nodes are skipped BEFORE any deeper read: 115 receipts
+# carry a near-identical `computation:` string, and re-parsing their evidence payload is the cost
+# FORMAT §4 records removing.
+
+SEARCH_SNIPPET = 96          # the emitted window; the ADDRESS is never truncated
+# The tier that leads the total ordering. A delta first — it is the only class carrying its own
+# concept address — then node frontmatter, then the CARD goal.
+SEARCH_TIERS = {"delta": 0, "title": 1, "description": 1, "tags": 1, "sources": 1, "goal": 2}
+SEARCH_FIELDS = ("title", "description", "tags", "sources")
+
+
+def _snippet(text, query: str) -> str:
+    """One physical line, windowed on the first match and marked when elided (R:BODYLEAK).
+
+    A window, never a prefix: a query matching at character 3000 of a 4000-character delta must
+    still show the reader WHY it matched. The bound is the whole point — a search that prints
+    what it read is a context cost, not a lookup.
+    """
+    flat = " ".join(str(text).split())
+    if len(flat) <= SEARCH_SNIPPET:
+        return flat
+    i = flat.lower().find(str(query).lower())
+    if i < 0:
+        return flat[:SEARCH_SNIPPET] + "\u2026"
+    start = max(0, i - (SEARCH_SNIPPET - min(len(query), SEARCH_SNIPPET)) // 2)
+    end = min(len(flat), start + SEARCH_SNIPPET)
+    start = max(0, end - SEARCH_SNIPPET)
+    return ("\u2026" if start else "") + flat[start:end] + ("\u2026" if end < len(flat) else "")
+
+
+def search(root, query: str, as_of: str = None) -> tuple:
+    """Every concept in the bundle matching `query`. `(hits, note)`. Read-only, never writes.
+
+    `hits` is `[(address, field, snippet), ...]` under a TOTAL order, so two runs over an
+    unchanged bundle emit byte-identical output. `hits is None` marks a REFUSAL and only a
+    refusal — an empty list is a recorded no-hit outcome (law 3), which is why the CLI exits 0
+    on it and 1 on a None.
+
+    `--as-of` is delegated to `deltas()` — called once per status, so the interval arithmetic,
+    the half-open [from, to) boundary and the include-what-cannot-be-judged rule are INHERITED
+    rather than re-derived. What is NOT reused is that function's own `undated` counter: it
+    increments before its status filter, so three calls would treble it. The count below is
+    taken from this function's own de-duplicated hit list instead.
+    """
+    root = Path(root)
+    q = str(query or "").strip()
+    if not q:
+        return None, ('an empty query is contained in every string, so it would answer with the '
+                      'whole bundle -> "R:EMPTYQUERY"'
+                      "\nnext: add search <term>")
+    # R:TODAYFALLBACK — validated HERE, before the delegation, so the refusal names the verb the
+    # operator ran. Falling back to today would answer a question nobody asked.
+    if as_of is not None and _as_date(as_of) is None:
+        return None, (f"`{as_of}` is not a date — --as-of takes ISO YYYY-MM-DD, the form the "
+                      f'delta grammar writes -> "R:TODAYFALLBACK"'
+                      f"\nnext: add search <query> --as-of YYYY-MM-DD")
+
+    needle = q.lower()
+    # (tier, status, -date, cid, address, field, snippet, dated) — every tie broken, so the
+    # listing is diffable and no dict or set order can reach the output.
+    found = []
+    for rank, status in enumerate(DELTA_STATUSES):
+        for item in deltas(root, status=status, as_of=as_of)[0]:
+            if needle not in item[2].lower():
+                continue
+            cid = f"/specs/{item[0]}.md"
+            # A legacy head carries no id, so its address degrades to the file it lives in —
+            # shown at the coarser grain rather than dropped from the index.
+            address = f"{cid}#{item.id}" if item.id else cid
+            found.append((0, rank,
+                          -int(item.valid_from.replace("-", "")) if item.valid_from else 0,
+                          cid, address, f"delta:{status}", _snippet(item[2], q),
+                          bool(item.valid_from)))
+
+    for cid, node in scan(root).items():
+        fm = node["fm"] or {}
+        # A receipt is evidence, not a concept; `index.md`/`log.md` are COMPILED from the nodes
+        # and would double every title hit.
+        if fm.get("type") == "Run" or cid.lstrip("/") in NOT_A_NODE:
+            continue
+        for field in SEARCH_FIELDS:
+            value = fm.get(field)
+            if value is None or _is_template(value):
+                continue     # an unauthored slot is not an answer
+            text = " \u00b7 ".join(str(v) for v in value) if isinstance(value, list) else str(value)
+            if text.strip() and needle in text.lower():
+                found.append((1, 0, 0, cid, cid, field, _snippet(text, q), False))
+        for line in read(node["path"], "T1")["card"].splitlines():
+            head, sep, tail = line.strip().partition(":")
+            if sep and head.lower() == "goal" and tail.strip() \
+                    and not _is_template(tail.strip()) and needle in tail.lower():
+                found.append((2, 0, 0, cid, f"{cid}#card", "goal", _snippet(tail, q), False))
+
+    found.sort(key=lambda h: h[:7])
+    hits = [(h[4], h[5], h[6]) for h in found]
+    active = f" \u00b7 as of {as_of}" if as_of else ""
+    if not hits:
+        return [], (f'no hit for "{q}"{active}'
+                    "\nnext: add deltas   # the whole carried inventory, unfiltered")
+    width = max(len(h[0]) for h in hits)
+    fwidth = max(len(h[1]) for h in hits)
+    lines = [f"{len(hits)} hit{'s' if len(hits) != 1 else ''} for \"{q}\"{active}:"]
+    lines += [f"  \u00b7 {a:<{width}}  {f:<{fwidth}}  {s}" for a, f, s in hits]
+    # A filter that hides what it cannot judge reports a smaller number, and a smaller number
+    # reads as success (R:SILENT_DROP). Counted from the hit list, never from `deltas()`.
+    free = sum(1 for h in found if not h[7])
+    if as_of and free:
+        lines.append(f"\u2014 {free} hit(s) carry no validity interval (node frontmatter, CARD "
+                     f"goals, and legacy undated deltas): --as-of cannot judge them and does "
+                     f"not hide them")
+    lines.append("next: cite an address above as a relations: target, or add deltas --lens <lens>")
+    return hits, "\n".join(lines)
+
+
 # ================================== the covers: binding — evidence that earns its name (e12)
 #
 # A15's finding: `covers:` was a LABEL. A task could claim a Must was proven by a check that

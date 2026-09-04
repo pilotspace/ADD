@@ -4,7 +4,7 @@ title: Domain
 lens: domain
 project: AIDD-Book
 description: what ADD itself must be true about — the bundle, the node, and the vocabulary a conforming engine speaks
-tags: []
+tags: [bundle, node, vocabulary]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 ---

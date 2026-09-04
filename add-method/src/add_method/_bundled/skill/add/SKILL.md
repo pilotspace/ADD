@@ -31,7 +31,7 @@ installer — `pilotspace-add init "<name>"` (pip) or `add init "<name>"` / `npx
 Claude Code plugin — then drive from `.add/tooling/cli.py`. State
 lives in the `.add/` bundle — files are the database, `graph.json` is a rebuildable cache. The engine
 records; it never runs the method or spawns an agent. The full loop surface — including `fold ·
-reopen · deltas · check · milestone-archive` — is wired.
+reopen · deltas · search · check · milestone-archive` — is wired.
 
 ## Always start here (orient — do not skip)
 
@@ -138,20 +138,20 @@ research fans out freely — facts merge; one write taints the stream back onto 
 ```bash
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle — code | doc ONLY (see domains.md)
-add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides re-authoring
-add new Task <slug> --title "..." --depth quick|standard|deep [--kind explore] [--milestone m] [--scope a,b]
-                                             # --sensitivity security|data|architecture sets the floor
+add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides the rest
+add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
 add locate <path>                            # which node's scope owns this file
+add search "<term>" [--as-of <date>]         # any concept — a delta answers with its own address
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
-add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors a stale engine
+add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
-add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · run reads the path your cmd names (an explicit `--junitxml`, before the --, overrides)
+add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
-add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already closed it)
+add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already did)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec
 add milestone-done <slug>                    # close a milestone — refuses while a goal box is unchecked
 ```

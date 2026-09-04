@@ -320,10 +320,41 @@ requested tier:
 | `T1` | frontmatter + `## CARD` |
 | `T2` | frontmatter + `## CARD` + the whole body |
 
-**T2 is single-node.** No operation may read the full body of more than the one node it
-was asked about. This single rule is what bounds the cost of every other verb: `status`
-scans the bundle at T0, `brief` reads exactly one T2 and composes everything else from T1
-and fragments (§7.1).
+**T2 is bounded, and the brief composes exactly one.** `brief` is the only operation that
+reads a node body into a composed context payload, and it composes exactly one — the node
+it was asked about — taking everything else from T1 cards, `#gives` fragments, and the
+five specs' bind lines (§7.1). That is the cost an agent actually pays, and it is absolute.
+
+Any other operation MAY read T2 across more than one node, and four conditions hold on
+every one that does:
+
+1. **bounded** — the set is a structure the operation is already walking (the five specs,
+   the open tasks, the nodes an edge points into), never "the whole bundle" as an appetite;
+2. **lazy** — read at the moment a body is needed, never prefetched;
+3. **call-scoped cache** — any memo lives for the one call, so a later verb can never act
+   on a body that has since been repaired;
+4. **bounded extraction** — what leaves the operation is a line, a section, an address or
+   a count. The body itself never leaves.
+
+The shipped multi-node readers are `deltas` and `bind_sections` and `search` (the five
+specs), `todo` (each open Task, one read reused by both its derivations), and `doctor`
+(each node an edge points into, behind a `body_of` memo scoped to the one call). `brief`
+is on this list too, because `bind_sections` reads the five specs on its behalf — under
+condition 4, which is why it still composes exactly one body. `status` scans at T0 and
+reads no body at all. `join` is not a reader in this sense: it is a **write** verb that
+copies whole node bytes between bundles and parses none of them; §2's write path governs
+it, not this section.
+
+An earlier edition stated this as an absolute over every operation — "no operation may
+read the full body of more than the one node it was asked about". That was already false
+in five shipped sites when it was written, which this document's preamble makes a defect
+to report rather than an exception to carve for the sixth. The rule above is what the
+absolute was always protecting: a bulk read nobody bounded, and the brief's cost.
+
+Derived from `add.py:read`, `add.py:brief`, `add.py:bind_sections`, `add.py:deltas`,
+`add.py:search`, `add.py:todo`, `add.py:doctor`; asserted by
+`tests/engine/test_search_verb.py`, which COUNTS the distinct T2 reads each verb performs
+rather than trusting this list.
 
 **T0 defers a receipt's evidence payload.** A bundle-wide scan parses a `type: Run` node's
 frontmatter EXCEPT `receipt.scope_digest`, `receipt.passed` and `receipt.failed` — the

@@ -8,50 +8,130 @@ milestone: okf-graph-time
 scope:
   - add-method/tooling/add.py
   - add-method/tooling/cli.py
+  - add-method/tooling/engine_pin.py
+  - add-method/src/add_method/_bundled
+  - add-method/FORMAT.md
   - add-method/README.md
+  - add-method/docs/13-command-reference.md
   - add-method/skill/add/SKILL.md
   - add-method/tests/engine
   - add-method/tests/skill
+  - README.md
+  - .claude/skills/add
+  - .add/specs
+  - .add/tooling
+  - add-method/.add/tooling
 gives:
-  - S1 <the surface this publishes — an endpoint, function, or section>
+  - S1 add.search(root, query, as_of) -> a hit list plus a note; the list is None only on a refusal
+  - S2 the add search CLI verb — one positional query, an --as-of flag, and the exit code each branch returns
+  - S3 the hit line an operator reads — the address first, then the matched field, then a bounded snippet
+  - S4 tags on the five living specs — the facet a query matches, populated from the corpus vocabulary
+  - S5 `FORMAT.md` §4 — the read-tier rule, repaired to what the shipped multi-node T2 sites actually do
+  - S6 the verb-count registries — every front-door surface that enumerates the CLI verb set learns search
+needs: []
 generated: { by: add/3.4.0, at: 2026-09-03 }
-verified: []
+verified:
+  - { by: "plan:okf-graph-time", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:2e004f1627804328", binding: "sha256:365f7c2ba4354123" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:2f0f5c789f7267ad" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/search-verb.d/runs/1.md }
+  - { by: "builder", at: 2026-09-04, act: replan, authority: process, note: "Three registries moved, not the two the frozen PLAN named: the full suite found a SIXTH enumerating surface, test_authoring_beat.py::test_no_new_verb_in_the_cli_surface, whose own docstring sanctions the re-aim (already 23->24 for interview; 'the pin is a value, not a ceiling'). Exactly the class A10 priced. No assertion weakened." }
+  - { by: "plan:okf-graph-time", at: 2026-09-04, act: gate, authority: plan, outcome: RISK-ACCEPTED, receipt: /tasks/search-verb.d/runs/1.md, brief: "sha256:57593a4bcd56f771", reason: "Every bound rule is proven: 18/18 test-ids, all 35 covers: referents (9 Musts, 6 Rejects, 4 Edges, 16 probed assumptions) bound to a passing check, scope digest fresh, tree parity green. The residue this signs for is the frozen PLAN's regression floor, which said 'the full suite reports zero failures' and does not literally hold: tests/skill/test_claimed_output_guard.py::test_no_engine_output_was_added asserts git diff HEAD -- tooling/add.py is EMPTY, so it is red for any UNCOMMITTED engine change. This task's contract requires editing add.py (S1) and the orchestrator forbids committing, which makes that guard structurally unsatisfiable here rather than a behavioral regression. The engine diff is one hunk, +123 / -0, purely additive, so no pre-existing path moved; 1233 of 1234 pass. Not closable by me without a commit — a human call." }
 ---
 ## CARD
-goal: <one line>
-why: <why this task exists — optional>
-beat: scaffold · next: author search-verb's RULES, ASSUMPTIONS and CHECKS, then add freeze search-verb
+goal: one verb finds any concept in this bundle at LESSON granularity — a delta line answers with its own address, not with the name of the file that holds thirty of them — and the OKF facet it searches carries real values
+why: a lookup that can only answer `specs/method.md` points at thirty unrelated lessons, which is why nobody looks anything up; and a facet over an empty field is the third costume of the dead-key failure this milestone has already paid for twice
+beat: direction · next: add freeze search-verb
 
 ## RULES
 <must>
-- M1 <the rule that must hold>
+- M1 `add search` returns spec hits at LESSON granularity: one hit per matched delta line, addressed `/specs/<LENS>.md#<ID>` — never one whole-file hit standing in for the lines inside it.
+- M2 search matches exactly three field classes and no others: a spec delta line · a node's frontmatter `title`, `description`, `tags` and `sources` · a node's `## CARD` goal line. It never matches a node body.
+- M3 matching is case-insensitive, literal substring — the query is text, never a compiled pattern.
+- M4 the ordering is deterministic and TOTAL — field tier, then delta status, then newest validity-interval start first, then cid, then address, then matched field, then snippet — so two runs over an unchanged bundle emit byte-identical output.
+- M5 `--as-of` reports each delta hit under the status it HELD THEN, reusing the half-open interval semantics `deltas()` already implements rather than reimplementing them.
+- M6 the five living specs carry a populated `tags:`, every tag DERIVED from a word that spec's own text already uses — its `description`, its `## Now`, or one of its delta lines — and a query for any of those tags returns that spec on its tags field.
+- M7 `FORMAT.md` §4 states the read-tier rule the engine actually implements: the brief is the ONE composed single-T2 read, and any other operation reading T2 across several nodes does so under four named conditions — a bounded set it is already walking, a lazy read, a cache scoped to one call, and a bounded extraction leaving the operation.
+- M8 every registry that enumerates the CLI verb set names search, every published verb count reads 25, and no skill doc leaves it an orphan.
+- M9 every branch of the output — hits, no hit, and each refusal — ends in a `next:` line naming a real verb.
 </must>
 <reject>
-- R:<NAME> <what must never happen> -> "<NAME>"
+- R:BODYLEAK a hit line carries a node body, or an unbounded run of matched text -> "BODYLEAK"
+- R:EMPTYQUERY a blank query is answered with the whole bundle instead of a refusal -> "EMPTYQUERY"
+- R:TODAYFALLBACK an unreadable `--as-of` falls back to today, or lists as though unfiltered -> "TODAYFALLBACK"
+- R:SILENT_DROP a hit the time filter cannot judge is hidden rather than shown and counted -> "SILENT_DROP"
+- R:BUDGET_BUMP a SKILL.md line or byte budget is raised to make room for the new verb -> "BUDGET_BUMP"
+- R:STALE_REGISTRY a registry that enumerates the verb set ships without search -> "STALE_REGISTRY"
 </reject>
 
 ## ASSUMPTIONS
-- A1 [who] covers: <S ids> · the request does not say <who may act / whose data>; taking <reading> -> <cost if wrong>
-- A2 [which] covers: <S ids> · the request does not say <which rows/cases are in>; taking <reading> -> <cost if wrong>
-- A3 [when] covers: <S ids> · the request does not say <where the boundary falls>; taking <reading> -> <cost if wrong>
-- A4 [absent] covers: <S ids> · the request does not say <what a missing value means>; taking <reading> -> <cost if wrong>
-- A5 [order] covers: <S ids> · the request does not say <what orders / breaks a tie>; taking <reading> -> <cost if wrong>
-- A6 [experience] covers: <S ids> · the request does not say <who receives this and what would make it hard for them>; taking <reading> -> <cost if wrong>
-every `gives:` surface is swept on every dimension; `[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. `· probe: <what shipped behavior must show>` declares a reading checkable: cite its A id from CHECKS and the gate holds the PASS to it.
+- A1 [who] covers: S1, S2, S3 · the request does not say whose nodes a search may reach; taking: the bundle is a single-tenant tree with no per-node ownership, so search reads every node the filesystem already grants and grants no new reach, and it is strictly read-only -> if wrong, a shared bundle leaks a colleague's draft node into a listing and the verb needs an ownership filter it has no field to read. · probe: a search over a live bundle leaves every byte under the bundle root unchanged.
+- A2 [who] covers: S4, S6 · the request does not say who owns the words in the spec tags and in the verb registries; taking: both are maintainer-authored prose that this task edits once and that no verb ever writes, so nothing recomputes them behind the maintainer's back -> if wrong, a later `doctor --sync` silently rewrites a human's taxonomy and the derivation argument recorded here is lost. · probe: the three SKILL.md trees stay byte-identical to each other and both budget pins keep the same literals in their own file.
+- A16 [who] covers: S5 · the request does not say who may relax a rule adjacent to law 2; taking: `FORMAT.md` §4 is NORMATIVE — cited by number from the validator, the skill and three oracles, and co-authored by `read()` itself — so it is not maintainer prose like S4 and S6, and the authority to restate it is this node's own frozen contract at its architecture floor, not the builder mid-build -> if wrong, a Law-2 rule gets widened inside a verb's freeze with nobody senior to the change having seen it. · probe: the repaired §4 states four named conditions and a check binds each of them, so a later widening reds instead of passing as a clarification.
+- A3 [which] covers: S1 · the request does not say which node TYPES are searchable; taking: every type except Run — 115 receipts here carry a near-identical `computation:` string and §4 already defers their evidence payload, so a query like pytest would return 115 hits and bury the four that are concepts; compiled `index.md` and `log.md` are excluded too, because they are rendered FROM the nodes and would double every title hit -> if wrong, a receipt-hunting query returns nothing and the operator learns the verb does not cover evidence. · probe: a query for a string that appears only in a receipt returns no hit, while the same call proves the corpus was loaded by matching a task title.
+- A4 [which] covers: S2, S3 · the request does not say which FIELDS a hit may come from; taking: the three classes named in M2 and nothing else — 74 task nodes here carry near-identical scaffold prose, so matching bodies makes a query for gate hit almost everything, which is the precise failure lesson granularity exists to fix; a spec's `Decisions that bind` items are deliberately OUT, because every one of the five holds only the scaffold placeholder today and a facet over an empty section is the dead-key failure in a new costume -> if wrong, a concept written only in a task's PLAN prose or in a bind line is unreachable and the operator falls back to grep. · probe: a term present in a task body but in none of the three classes returns no hit for that node, while a term in its goal line does.
+- A5 [which] covers: S4, S5, S6 · the request does not say which specs, which section of the format, or which registries are in; taking: all five specs get tags · only §4 of `FORMAT.md` changes · the VERB SET is derived from the CLI parser, but the set of enumerating SURFACES is a hand list of the ones the full suite reds on, which is a real limit and not a derivation -> if wrong, a sixth registry ships stale and the front door lies about the verb count. · probe: the check parses the verb set out of the CLI source, and every surface it names carries a positive floor so a reworded page cannot make its assertion vacuous.
+- A6 [when] covers: S1, S2 · the request does not say where the `--as-of` boundary falls; taking: the half-open interval `[valid_from, valid_to)` that `deltas()` already implements — a delta folded ON the queried date was not asserted that day — and the reuse is by calling `deltas()` once per status rather than re-deriving the arithmetic -> if wrong, every boundary date reports the opposite status and two time verbs in the same engine disagree. · probe: a delta folded on a date is absent from that date's open listing and present in the listing for the day before.
+- A7 [when] covers: S3, S5, S6 · the request does not say whether the line shape, the format section or the registries carry a time dimension; taking: none of them do — they are read from the tree at call time and hold no validity interval, so `--as-of` narrows delta hits only and leaves them untouched rather than hiding them -> if wrong, a past-dated query silently drops the spec, task and persona hits and reports a smaller number, which reads as success. · probe: every interval-free hit present without a time filter is still present under one, and the footer states how many.
+- A15 [when] covers: S4 · the request does not say what keeps the tags TRUE as the corpus moves; taking: the tags are a point-in-time derivation from a vocabulary that grows every time `learn` writes a delta, and there is no re-derivation mechanism and no writer — so the honest staleness signal is a CHECK, not a date field: a tag must stay a word its own spec uses, and the day it stops being one the suite reds -> if wrong, the facet is correct at freeze, quietly wrong at a hundred deltas, and green the whole way. · probe: every tag on every living spec is asserted, against the REAL bundle, to appear verbatim in that spec's own text.
+- A8 [absent] covers: S1, S2 · the request does not say what an EMPTY query means; taking: a blank or whitespace-only query is a refusal, not a match-everything — an empty substring is contained in every string, so the permissive reading answers with all 217 nodes and looks like a working search -> if wrong, the first mistyped invocation floods the operator's context with the whole bundle. · probe: a blank query returns no hit list and a refusal naming EMPTYQUERY.
+- A9 [absent] covers: S1, S3, S4 · the request does not say what an absent field value means; taking: an empty or missing `tags:`/`sources:`/`description:` contributes NO hit rather than an empty-string hit that every query matches, and a legacy delta with no id degrades its address to the file it lives in rather than being dropped -> if wrong, every query returns every node with an empty facet, or the undated legacy lines silently leave the index. · probe: a spec whose tags list is empty produces no tags-field hit for a query that matches its description.
+- A10 [absent] covers: S5, S6 · the request does not say what happens when a registry this task never saw is added later; taking: a NEW enumerating surface is NOT covered by this task — the check reds on a stale COUNT in a surface it names, never on an unknown file, and A5 states that limit rather than claiming a derivation the mechanism does not deliver -> if wrong, a registry added after this task ships stale and nothing reds. · probe: each named surface's assertion is guarded by a floor that fails when the surface stops stating a count, so a reworded page reds instead of passing silently.
+- A11 [order] covers: S1, S3 · the request does not say what orders hits or what breaks a tie; taking: a total key — field tier (delta, then frontmatter, then goal), then delta status open before folded before rejected, then newest `valid_from` first with undated last, then cid ascending, then address, then field, then snippet — every tie broken so the output is byte-stable and diffable -> if wrong, a set or dict iteration reorders the listing between runs and no check can pin the output. · probe: two consecutive searches over an unchanged bundle emit byte-identical notes, across at least three distinct field tiers and all three delta statuses.
+- A12 [order] covers: S2, S4, S5, S6 · the request does not say what orders the flag surface, the tag list, the format sentence or the registry edits; taking: the tags list is emitted in AUTHORED order, never sorted, so a maintainer's grouping survives a round trip; the other three produce no ordered output at all -> if wrong, a re-sorted tag list churns the spec frontmatter on every read and the diff stops being reviewable. · probe: a spec whose authored tag order differs from its sorted order renders in the AUTHORED order.
+- A13 [experience] covers: S1, S2, S3 · the request does not say who receives this output or what would make it hard; taking: the recipient is the agent or maintainer mid-loop who wants a pasteable concept address — so the ADDRESS leads the line in exactly the form a `relations:` target takes, and what would make it hard is a wall of near-identical rows or an address they must translate by hand before citing it -> if wrong, the reader has to open the spec anyway and the verb saves nothing over grep. · probe: an emitted delta address is fed to the engine's own resolver and resolves as a delta, not as unresolved.
+- A14 [experience] covers: S4, S5, S6 · the request does not say who receives the tags, the repaired §4 or the registry edits; taking: the tags are read by whoever types a query — so they are DERIVED from words the corpus already uses rather than from an invented taxonomy, since a tag nobody would type is a tag nobody matches, and for a spec with no deltas at all the derivation source is its `description` and `## Now`; §4 is read by the next Direction beat sizing a read, and the registries by a front-door reader counting verbs -> if wrong, the facet is populated and still dead, which is the failure this task exists to avoid wearing a new costume. · probe: every tag on every living spec is a word that spec's own text already carries outside its tags line.
 
 ## PLAN
-contract: <the shape this publishes>
+contract: `add.search(root, query, as_of=None)` returns `(hits, note)`. `hits` is a list of `(address, field, snippet)` triples ordered by the total key in A11; `hits is None` marks a refusal and ONLY a refusal, so an empty list is a recorded no-hit outcome. `note` is the rendered listing.
+
+read plan: one T0 `scan()`, from which `type: Run` nodes and the compiled `index.md`/`log.md` are filtered out BEFORE any deeper read — a T1 pass over 115 receipts would re-parse the evidence payload §4 records removing (90ms to 65ms on `status`). T1 supplies `## CARD`; T2 is read across exactly the five specs, the same five-file loop `deltas()` and `bind_sections()` already run. Delta hits come from calling `deltas()` once per status in `DELTA_STATUSES`, so the id, the interval and the `--as-of` semantics are inherited rather than re-derived; `deltas()`'s own undated COUNTER is not reused, because it increments before its status filter and three calls would treble it — search counts interval-free hits from its own de-duplicated hit list. The `--as-of` value is validated with the existing `_as_date` BEFORE that delegation, so the refusal names `add search` and never `add deltas`.
+
+rendering: `  · ADDRESS  FIELD  SNIPPET`, two-space indent and the `· ` bullet `locate` and `deltas` already use. The snippet is a window of at most `SEARCH_SNIPPET` characters centred on the first match and elided with an ellipsis; the address is never truncated, because the address is the deliverable. Noted and not fixed here: `deltas` renders the same lesson as `[ADD M28] method: …`, so two verbs print two forms of one concept — filed as a lesson at close rather than changed inside this freeze.
+
+`sources:` stays unpopulated on the Specs, and that is a stated invariant, not an omission: a Spec's provenance already lives per-delta in `(evidence: …)`, which `DELTA_EVIDENCE` makes a `no_evidence` finding when missing. A file-level `sources:` on a Spec would be a second, coarser copy with no writer and no reader — the `okf_version` shape this milestone has already paid for. The facet is not dead: all three Personas populate `sources:`, so the field matches live values today.
+
+§4 repair: the sentence "T2 is single-node — no operation may read the full body of more than the one node it was asked about" is false in five shipped sites (`deltas`, `bind_sections`, `todo`, `join`, `doctor`), and this document's own preamble makes that a defect to report rather than a licence to carve an exception for a sixth. The repair keeps the brief's absolute and states the four conditions `doctor`'s own comment already obeys — bounded set, lazy, call-scoped cache, bounded extraction — and names `join` separately as a write verb that moves bytes it never parses. The bounding check is BEHAVIOURAL, not a hand list: it counts distinct T2 reads per verb against a fixture bundle and requires every verb that reads more than one to be named in §4, and `brief` to read exactly one.
+
+strategy: the red suite first (`tests/engine/test_search_verb.py`, `tests/skill/test_search_registry.py`); then the engine function, the CLI wiring, the spec tags, the FORMAT repair, the registries. SKILL.md gains ONE cookbook line and the word `search` in its wired-surface sentence — cost about 100 bytes and 1 line, and both pins sit at their exact maximum (176 lines, 13258 bytes), so it is funded by deleting at least one line and at least that many bytes of prose in the same file. Then both engine pins re-aimed, the two git-tracked engine twins synced (`tooling/` and `_bundled/tooling/`, pinned by `test_tree_parity.py`), the two gitignored dogfood copies (`.add/tooling/`, `add-method/.add/tooling/`) re-vendored so this repo can run its own verb, and all three skill trees kept byte-identical.
+
+regression floor: the full suite under `add-method/` reports zero failures and `tooling/test_tree_parity.py` is green, with NO pre-existing test's assertion weakened. Exactly two pre-existing test bodies move, both registry literals a 25th verb necessarily moves, both named here in advance: `tests/engine/test_cli.py`'s `WIRED` set, and `tests/skill/test_surface.py`'s SKILL.md `sha256` in `test_skill_tree_prose_unedited_by_this_task` — that pin's RULE (skill prose is not edited to satisfy a pin) survives, only its PREMISE (SKILL.md has not changed since the budget task) expires, so it is re-aimed exactly as an engine pin is, never deleted.
 
 ## EDGES
-- E1 <a boundary or failure case a check must cover — optional>
+- E1 a single delta line 4000 characters long yields an emitted line bounded by the snippet budget, with the elision marker present — the body never rides out whole.
+- E2 a query that matches nothing prints `no hit for` the query and exits 0: a search with no hit is a recorded outcome, not a refusal.
+- E3 a query containing regex metacharacters is matched literally — it never compiles as a pattern, and it matches a delta that carries those characters verbatim.
+- E4 an `--as-of` date earlier than every delta's start returns no delta hits, still returns the hits that carry no interval, and states how many in a footer.
 
 ## CHECKS
-- <test_name> · covers: M1 · <what it proves>
+- test_a_spec_hit_is_addressed_to_the_delta_not_the_file · covers: M1, M2, A4 · a query matching one delta returns that delta's own concept address, and no whole-file hit stands in for the lines inside it.
+- test_search_matches_the_declared_fields_and_no_others · covers: M2, A4 · a delta line, frontmatter and a CARD goal each hit; a bind item, a compiled index and a term living only in a node body do not.
+- test_search_matches_are_case_insensitive_and_literal · covers: M3, E3 · a mixed-case query matches, and a query of regex metacharacters returns exactly the one delta that carries them verbatim.
+- test_search_output_is_byte_stable_and_totally_ordered · covers: M4, A11, A12 · two consecutive searches emit identical notes across three field tiers and all three delta statuses, the open-before-folded-before-rejected order holds, and a tag list renders in authored order.
+- test_search_as_of_reports_the_status_a_delta_held_then · covers: M5, A6, E4 · a delta folded on a date is absent from that date's listing and present the day before, and an early date returns only the interval-free hits plus the footer.
+- test_search_counts_interval_free_hits_exactly_once · covers: R:SILENT_DROP, A7 · under `--as-of` every interval-free hit is present, the footer states the literal count, and withholding the undated lines removes the footer entirely.
+- test_the_live_specs_carry_tags_that_search_matches · covers: M6, A14, A15 · against the REAL bundle: every living spec has a non-empty tags list, every tag is a word that spec's own text already carries, and a query for each tag returns that spec on its tags field.
+- test_an_empty_tag_facet_contributes_no_hit · covers: A9 · a spec whose tags list is empty is still reachable by its description and contributes no tags hit — proved on a fixture, because no live spec is empty.
+- test_format_section_four_bounds_the_reads_the_engine_performs · covers: M7, A16 · §4 no longer asserts the absolute five shipped sites break, states the four conditions, and — measured by counting T2 reads per verb against a fixture — `brief` reads exactly one while every verb that reads more than one is named there.
+- test_search_next_lines_name_a_real_verb · covers: M9, A13 · the hit, no-hit and both refusal notes each end in a `next:` naming a verb the CLI registers, and an emitted address resolves through the engine's own resolver as a delta.
+- test_a_four_thousand_character_delta_yields_a_bounded_line · covers: R:BODYLEAK, E1 · the oversized delta is in the hits, its emitted line is bounded by the snippet budget and marked elided, and no whole body appears in any note.
+- test_a_blank_query_refuses_instead_of_matching_everything · covers: R:EMPTYQUERY, A8 · a blank query returns no hit list, names EMPTYQUERY, and exits 1.
+- test_an_unreadable_as_of_refuses_and_never_falls_back_to_today · covers: R:TODAYFALLBACK · a malformed date returns no hit list, names TODAYFALLBACK and `add search`, never names `add deltas`, and emits no listing.
+- test_a_no_hit_search_is_a_recorded_outcome · covers: E2 · a query matching nothing returns an empty list that is not None, prints the no-hit line and exits 0.
+- test_search_never_writes_and_never_reads_a_run_receipt · covers: A1, A3 · the bundle's bytes are unchanged across a search, and a string unique to a Run receipt returns no hit while a live term in the same bundle does.
+- test_the_cli_wires_search_with_its_flag · covers: M8 · the verb dispatches through the real CLI and its `--as-of` flag reaches the engine.
+- test_every_registry_learned_the_search_verb · covers: M8, R:STALE_REGISTRY, A5, A10 · the verb set is parsed from the CLI source, and the wired set, both README counts, every command-reference row and the skill-doc orphan guard all account for search at 25 — each with a floor that reds when the surface stops stating what it is asked about.
+- test_skill_names_search_within_both_budget_pins · covers: R:BUDGET_BUMP, A2 · all three SKILL.md trees name search and stay byte-identical, the file is strictly within both pins, and both pin literals are unedited.
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: runs/1.md — 18/18 test-ids reported, exit 0, freshness `content`; every scope file byte-identical to the run.
+gate: RISK-ACCEPTED — every bound rule is proven (35/35 referents), and the signature is for ONE residue: the frozen regression floor said "the full suite reports zero failures" and `tests/skill/test_claimed_output_guard.py::test_no_engine_output_was_added` asserts `git diff HEAD -- tooling/add.py` is EMPTY, so it reds for any UNCOMMITTED engine change. This node's contract requires editing add.py and the orchestrator forbids committing, which makes that guard structurally unsatisfiable here rather than a behavioural regression — the engine diff is one hunk, +123 / -0, purely additive, and 1233 of 1234 checks pass.
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- A guard that pins a working-tree fact rather than a behaviour is unsatisfiable for the next task that legitimately changes that file: `test_no_engine_output_was_added` asserts `git diff HEAD -- add.py` is empty, which is true only until someone edits the engine and has not yet committed. Pin the CLAIM (this task added no engine output) against a baseline, never the tree's identity with HEAD. -> add learn tdd
+- The registry census for a new verb is SIX surfaces here, not five: the sixth (`test_no_new_verb_in_the_cli_surface`) hard-codes the verb COUNT and is invisible to any grep for the new verb's name, because it names no verb at all. Running the full suite found it; nothing else would have. -> add learn add
+- A time-capsule pin whose RULE survives and whose PREMISE expires is re-aimed, never deleted: SKILL.md's sha256 proved the budget task never edited it, and this is the first task to edit it deliberately, so the literal moved and the assertion did not. Same move as an engine pin. -> add learn method
+- `deltas()` increments its `undated` counter BEFORE its status filter, so any caller invoking it once per status and reusing that counter reports 3x the truth. A delegating verb must inherit the SEMANTICS and recount the TOTALS. -> add learn sdd
+- Every one of the five living specs holds only the scaffold placeholder under `## Decisions that bind`, and `bind_sections()` guards with `if text:` — so §7.1 ships five placeholder bind lines into every brief. Found while deciding whether that section was worth a search facet; it was not, because it holds nothing. -> add learn add
+- Two verbs now print two forms of one concept: `deltas` renders `[ADD M28] method: …` and `search` renders `/specs/method.md#M28`. Only one is a citable address, and the reader pays for both. -> add learn udd
+- FORMAT §6.1 states `covers:` as `M|R:|E` while the engine's `REFERENT` also admits `goal|G<n>|A<n>`; `validate_bundle.py` reports 477 `covers_referent` findings on this bundle, 276 of them probed A-lines that are perfectly legal. The same doc/engine disagreement §4 carried, one section over. -> add learn add

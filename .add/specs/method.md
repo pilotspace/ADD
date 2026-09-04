@@ -4,7 +4,7 @@ title: Method
 lens: method
 project: AIDD-Book
 description: how a change proceeds from direction to a gate, and what each stamp costs the human who owns it
-tags: []
+tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 31

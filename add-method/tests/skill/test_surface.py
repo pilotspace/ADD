@@ -151,7 +151,7 @@ def test_skill_tree_prose_unedited_by_this_task():
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
     pinned = {
-        "SKILL.md": "360ddb3295e572eaca1ba9c3e55983acf5a89cf7a3bf96ea253d58457ad27c6e",
+        "SKILL.md": "791651e20428193f4e635e033d97ccc5743b607ab4c60bb38fa81cfffeefdb06",   # re-aimed @ search-verb, the first task to edit SKILL.md deliberately
         "intake.md": "db288507188e8f6ea31e3babc1f2a0f3c33907dcee7851b4e38bb0fd39d14819",
     }
     for name, want in pinned.items():

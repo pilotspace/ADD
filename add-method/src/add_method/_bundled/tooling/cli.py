@@ -11,7 +11,8 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
-    deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo
+    deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
+    search
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -174,6 +175,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("todo", help="the open worklist — active tasks grouped by beat (read-only)")
     s.add_argument("--milestone", help="restrict to one milestone's tasks")
+
+    s = sub.add_parser("search", help="find a concept anywhere in the bundle — spec hits at "
+                                      "LESSON granularity, with a pasteable address (read-only)")
+    s.add_argument("query", help="a literal, case-insensitive substring — never a pattern")
+    s.add_argument("--as-of", dest="as_of", metavar="YYYY-MM-DD",
+                   help="each delta hit under the status it HELD THEN; the interval is half-open "
+                        "[from, to), and a hit with no interval is shown and counted, never hidden")
 
     return p
 
@@ -359,6 +367,12 @@ def dispatch(args, run_cmd) -> int:
         _items, note = add.todo(root, milestone=args.milestone)
         print(note)
         return 0
+
+    if args.verb == "search":
+        hits, note = add.search(root, args.query, as_of=args.as_of)
+        print(note)
+        # A no-hit search is a RECORDED OUTCOME, not a refusal (law 3) — only `None` is one.
+        return 0 if hits is not None else 1
 
     if args.verb == "doctor":
         if args.sync:
