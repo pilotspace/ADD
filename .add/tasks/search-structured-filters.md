@@ -1,7 +1,7 @@
 ---
 type: Task
 title: add search selects by field beside its free-text grammar, and an empty ask still refuses
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: okf-graph-lookup
@@ -28,11 +28,13 @@ verified:
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:01681d8ab0cfc026" }
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:dc2db6a93c7901e3", binding: "sha256:bbab0c662dde5a9e" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:253bf559cef6b2f8" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/search-structured-filters.d/runs/1.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/search-structured-filters.d/runs/1.md, brief: "sha256:fa2f4bec541045e6" }
 ---
 ## CARD
 goal: `add search` selects nodes by field as well as by substring, and an ask that names nothing still refuses.
 why: `search` matches a literal substring and nothing else, so "every Task still in direction under this milestone" is unanswerable — the one question a planning loop actually asks. `status` and `todo` answer fixed slices; neither takes a field. The whole surface exists already; what is missing is a way to say WHICH nodes rather than WHAT TEXT.
-beat: direction · next: add freeze search-structured-filters
+beat: done · next: add status
 
 ## RULES
 <must>
