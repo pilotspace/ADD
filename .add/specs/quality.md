@@ -7,7 +7,7 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 20
+delta_seq: 21
 relations:
   - Q9 refines /specs/method.md#M21
 ---
@@ -19,6 +19,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q21 · open · 2026-09-04] a check that reads a gitignored path runs on exactly one machine: two of mine read tmp/ and the two gitignored engine twins, passed locally and failed on both CI pythons — a fresh checkout is the only honest fixture, and an exists-skip needs a FLOOR or skipping everything reads as green (evidence: https://github.com/pilotspace/ADD/actions/runs/33860095067)
 - [TDD · Q20 · open · 2026-09-04] a demo is a test the suite never wrote: the M4 gap survived two milestones and 1367 green checks, and surfaced the first time the verbs were run end-to-end against the live bundle for a human to read (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)
 - [TDD · Q19 · open · 2026-09-04] a dead predicate with passing tests is worse than no predicate: delta_carried_on documented a CLOSED-CLOSED interval and claimed --as-of was wired to it, and three green assertions held that false wiring in place for as long as nothing called it (evidence: /tasks/source-dead-code.md)
 - [TDD · Q18 · open · 2026-09-04] A fixture that cannot build the state it is testing fails SILENTLY into a weaker test. Three times in one task: add.new refuses a duplicate slug so the basename-collision fixture had one node not two; add.freeze refuses a scaffolded node so the 'sealed' fixture was never sealed; and the original vacuous seal test died on a missing gate stamp for exactly that reason. Every one PASSED or looked plausible. A fixture builder must assert its own postcondition — the setup is the half of a check nothing else guards. (evidence: /tasks/checks-that-cannot-fail.md · /tasks/ref-resolution-accepts-what-an-operator-types.md)

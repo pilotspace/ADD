@@ -13,6 +13,7 @@ delta prose behind a 13 KB whole-spec read.
 """
 
 import inspect
+import re
 import sys
 from pathlib import Path
 
@@ -98,10 +99,18 @@ def test_row_order_is_unchanged(bundle):
 
 
 def test_the_saving_is_recorded():
-    """M6, A3, A7, A11 — measured on the live bundle, written down, and smaller."""
-    record = REPO.parent / "tmp" / "read-cost" / "measured.txt"
-    assert record.is_file(), "the before/after measurement was not recorded"
-    text = record.read_text(encoding="utf-8")
-    before = int(next(l for l in text.splitlines() if l.startswith("intake_before")).split()[1])
-    after = int(next(l for l in text.splitlines() if l.startswith("intake_after")).split()[1])
+    """M6, A3, A7, A11 — measured on the live bundle, written down, and smaller.
+
+    The record is the MILESTONE's exit evidence, not a scratch file. This check first read
+    `tmp/read-cost/measured.txt`, which `.gitignore` excludes: it passed on the machine that
+    produced the number and failed on a fresh checkout, which is the same as not recording it.
+    A measurement that does not survive `git clone` was never written down.
+    """
+    exit_block = (REPO.parent / ".add" / "milestones" / "read-cost.md").read_text(encoding="utf-8")
+    # TWO byte figures on one line — that is what a before/after IS. Other evidence lines quote a
+    # single measurement ("604 B", "830 B"), so a one-figure line is not the record being asked for.
+    sized = [(l, re.findall(r"([\d,]+) B", l)) for l in exit_block.splitlines()]
+    line, figures = next(((l, f) for l, f in sized if len(f) >= 2 and "->" in l), (None, None))
+    assert line, "the milestone records no before/after intake measurement"
+    before, after = (int(n.replace(",", "")) for n in figures[:2])
     assert after < before, f"the intake session did not shrink: {before} -> {after}"
