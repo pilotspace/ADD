@@ -440,10 +440,15 @@ def test_the_interval_arrow_survives_the_round_trip(tmp_path):
         "a later write mangled the arrow"
     items, note = add.deltas(tmp_path, "folded")
     assert len(items) == 1 and items[0].valid_to == add._today(), (items, note)
-    # A4's probe: closed-closed — a delta folded today is still carried on today's date.
-    assert add.delta_carried_on(items[0], add._today()) is True, (
-        "the interval must be closed-closed: a delta folded today is still carried today")
-    assert add.delta_carried_on(items[0], items[0].valid_from) is True, \
-        "the open endpoint is inclusive too"
-    assert add.delta_carried_on(items[0], "2000-01-01") is False, \
+    # A4's probe, asked of the path that SHIPS. These three assertions used to run against
+    # `delta_carried_on`, a predicate no engine or CLI path ever called, whose docstring claimed
+    # `--as-of` was wired to it and whose interval was CLOSED-CLOSED. `--as-of` is half-open, so
+    # on the close date the two disagreed — and the dead one was the one under test. It is gone
+    # (source-dead-code); the questions it asked are asked here of `deltas --as-of`.
+    # This fixture files and folds on the SAME day, so it cannot tell the two endpoints apart —
+    # the open endpoint's inclusivity is asked in test_source_dead_code.py, where the dates
+    # differ. What it can still ask is the right endpoint and the far side.
+    assert items[0].id in [i.id for i in add.deltas(tmp_path, "folded", as_of=add._today())[0]], \
+        "on its close date the lesson reads FOLDED — the interval is half-open on the right"
+    assert add.deltas(tmp_path, "open", as_of="2000-01-01")[0] == [], \
         "a date before valid_from is outside the interval"

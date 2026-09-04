@@ -4,6 +4,72 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.5.0] — 2026-09-04
+
+**A read is an address you can follow, and it costs what it is worth.** 3.4 made the bundle
+addressable; this release makes it *readable*. Every concept a verb prints now has one address,
+that address dereferences back to the concept, and a relation joins the two concepts it was
+written between — so the graph walks from either end. The same pass measured what a task intake
+actually costs an agent and cut it by more than half.
+
+### Added
+- **`add show` — the 26th verb.** Reads any node, or any concept, whole: its fields, its body, and
+  a bounded neighbourhood walk over both edge families in both directions. `--expand N` sets the
+  depth (default 3, ceiling 5) and **refuses** above the ceiling rather than silently clamping.
+- **`--json` on `show` and `search`** — the engine's first JSON on stdout, the `add.read/1`
+  envelope: `schema · verb · ok · request · results[] · edges[] · note`. Byte-stable, sorted keys,
+  and a refusal is a payload that keeps the exit code it earned.
+- **Structured search.** `add search --type · --status · --milestone`, alone or with a query.
+- **A concept address dereferences.** `add show /specs/method.md#M33` reads that one lesson —
+  604 B — instead of the 13 KB spec it lives in, and `add search M33` finds a lesson by its own id.
+
+### Changed
+- **A relation joins two CONCEPTS.** `M8 refines /specs/method.md#M4` used to emit a row reading
+  `refines /specs/method.md`, and a reader standing on M4 found nothing at all: both ends resolved
+  to the file. Both ends are concept addresses now, and each one dereferences. Node edges are
+  untouched — `needs: /specs/x.md#gives` still targets the file, because a node edge names a place
+  in a file and a relation names a concept.
+- **One concept, one address.** `add deltas` and `add search` cite a lesson the same way, and that
+  citation is what `add show` reads back.
+- **Three verbs stop spending a reader's context on rows it cannot act on.** `status` counts the
+  stateless Spec and Persona rows, `locate` counts the `done` owners and shows the open ones in
+  full, and `brief` no longer compiles a `<ref>` block whose whole body is template scaffold. Every
+  collapse names the flag that expands it; nothing a reader must act on is hidden.
+- **`deltas` is windowed** at the same constant `search` already uses.
+- **A relation's identity carries the lesson that declared it.** Two lessons refining one target
+  were collapsing into a single row.
+
+### Fixed
+- **`done` refuses to close a node whose gate never saw a freeze.** The override path checked that
+  a gate happened, never that the ONE human approval preceded it.
+- **`show` resolves a ref an operator actually types** — a bare filename that names exactly one
+  node — and an ambiguity refusal is bounded the way the depth cap is, listing eight candidates
+  and counting the rest.
+- **Four checks that could not fail now can**, proven by injecting the defect each one names.
+- **A dead predicate is gone.** `delta_carried_on` documented the delta validity interval as
+  closed-closed and claimed `--as-of` was wired to it. It was not, and `--as-of` is half-open —
+  two definitions of one boundary, disagreeing on the boundary day, with three passing assertions
+  holding the dead one in place.
+- **The engine's own `ENGINE = "add/X.Y.Z"` stamp is now guarded.** It was the ninth version
+  declaration and the only unguarded one, correct through 3.0-3.4 only because it was carried by
+  hand.
+
+### Measured
+
+One task intake — orient, locate the owner, read the open lessons, compile the brief — on the
+live 258-node bundle:
+
+| | 3.4.0 | 3.5.0 | |
+|---|---|---|---|
+| `status` | 615 B | 315 B | −49% |
+| `locate` | 3,723 B | 106 B | −97% |
+| `deltas` | 27,304 B | 8,480 B | −69% |
+| `brief` | 9,170 B | 8,940 B | −3% |
+| **total** | **40,812 B** | **17,841 B** | **−56%** |
+
+The cost was never in what the engine weighs: the measured dead source in a 5,918-line `add.py`
+is 17 lines, 0.29%. It was in what the verbs print.
+
 ## [3.4.0] — 2026-09-03
 
 **A guard asks whether what a stamp attests is TRUE, not whether the stamp is well-formed — and

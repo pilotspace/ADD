@@ -151,8 +151,8 @@ def test_skill_tree_prose_unedited_by_this_task():
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
     pinned = {
-        "SKILL.md": "791651e20428193f4e635e033d97ccc5743b607ab4c60bb38fa81cfffeefdb06",   # re-aimed @ search-verb, the first task to edit SKILL.md deliberately
-        "intake.md": "db288507188e8f6ea31e3babc1f2a0f3c33907dcee7851b4e38bb0fd39d14819",
+        "SKILL.md": "be921c453bf10344b9b0ac60ef0802def6561fb3e5070e74adff16633bd4370a",   # re-aimed @ 3.5.0: metadata version bump only, no prose edit. prior: d3170f4b…
+        "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
     }
     for name, want in pinned.items():
         got = hashlib.sha256((SKILL / name).read_bytes()).hexdigest()

@@ -12,7 +12,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
-    search
+    search · show
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -172,16 +172,41 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
+    s.add_argument("--all", action="store_true", help="list the done owners too, not just a count")
 
     s = sub.add_parser("todo", help="the open worklist — active tasks grouped by beat (read-only)")
     s.add_argument("--milestone", help="restrict to one milestone's tasks")
 
+    s = sub.add_parser("show", help="read ONE node whole — its content and its neighbourhood "
+                                    "(read-only)")
+    s.add_argument("ref", help="a bare slug or a full cid; it must name exactly one node")
+    s.add_argument("--expand", type=int, default=add.NEIGHBORHOOD_DEFAULT, metavar="N",
+                   help=f"levels of relationships to walk (default {add.NEIGHBORHOOD_DEFAULT}, "
+                        f"max {add.NEIGHBORHOOD_MAX}) — an N above the max REFUSES rather than "
+                        f"clamping, so a capped read never reports success for a depth nobody "
+                        f"asked for")
+    s.add_argument("--json", action="store_true",
+                   help="emit the pinned machine payload instead of the human render, alone on "
+                        "stdout (FORMAT.md). A refusal is a payload too, and keeps its exit code")
+
     s = sub.add_parser("search", help="find a concept anywhere in the bundle — spec hits at "
                                       "LESSON granularity, with a pasteable address (read-only)")
-    s.add_argument("query", help="a literal, case-insensitive substring — never a pattern")
+    s.add_argument("query", nargs="?", default=None,
+                   help="a literal, case-insensitive substring — never a pattern. Optional: a "
+                        "filter alone is a complete ask, but naming NOTHING still refuses")
+    s.add_argument("--type", metavar="T",
+                   help="only nodes of this ADD type (case-insensitive). A type outside the "
+                        "taxonomy REFUSES rather than answering zero hits")
+    s.add_argument("--status", metavar="S",
+                   help="only nodes carrying this `status:`. A node with no status matches none")
+    s.add_argument("--milestone", metavar="M",
+                   help="only nodes under this milestone — a bare slug or a full cid")
     s.add_argument("--as-of", dest="as_of", metavar="YYYY-MM-DD",
                    help="each delta hit under the status it HELD THEN; the interval is half-open "
                         "[from, to), and a hit with no interval is shown and counted, never hidden")
+    s.add_argument("--json", action="store_true",
+                   help="emit the pinned machine payload instead of the human render, alone on "
+                        "stdout (FORMAT.md). A refusal is a payload too, and keeps its exit code")
 
     return p
 
@@ -359,7 +384,7 @@ def dispatch(args, run_cmd) -> int:
         return 0 if out else 1
 
     if args.verb == "locate":
-        _hits, note = add.locate(root, args.path)
+        _hits, note = add.locate(root, args.path, all=args.all)
         print(note)  # a no-match is a valid answer, not an error
         return 0
 
@@ -368,8 +393,28 @@ def dispatch(args, run_cmd) -> int:
         print(note)
         return 0
 
+    if args.verb == "show":
+        # `--json` is a second RENDER of the same answer, never a second read. The payload owns
+        # stdout alone: a caller pipes it straight into a parser, so nothing prose-shaped may
+        # ride along (R:DIRTYSTDOUT), and a refusal keeps its exit code (R:FALSESUCCESS).
+        if args.json:
+            payload, code = add.show_payload(root, args.ref, args.expand)
+            print(add.as_json(payload), end="")
+            return code
+        view, note = add.show(root, args.ref, args.expand)
+        print(note)
+        # A node with no neighbours is a recorded OUTCOME, not a refusal — only `None` is one.
+        return 0 if view is not None else 1
+
     if args.verb == "search":
-        hits, note = add.search(root, args.query, as_of=args.as_of)
+        if args.json:
+            payload, code = add.search_payload(root, args.query, as_of=args.as_of,
+                                               type=args.type, status=args.status,
+                                               milestone=args.milestone)
+            print(add.as_json(payload), end="")
+            return code
+        hits, note = add.search(root, args.query, as_of=args.as_of, type=args.type,
+                                status=args.status, milestone=args.milestone)
         print(note)
         # A no-hit search is a RECORDED OUTCOME, not a refusal (law 3) — only `None` is one.
         return 0 if hits is not None else 1

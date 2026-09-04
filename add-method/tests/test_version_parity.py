@@ -1,4 +1,4 @@
-"""One version, eight declarations — the pip/npm twins must ship the same number.
+"""One version, NINE declarations — the pip/npm twins must ship the same number.
 
 The package declares its version in five manifests: `pyproject.toml`, `src/add_method/__init__.py`,
 `package.json`, `package-lock.json`, and `.claude-plugin/plugin.json` — and once more in each of
@@ -50,6 +50,19 @@ def _skill_versions() -> dict:
     return out
 
 
+def _engine_stamp() -> str:
+    """`ENGINE = "add/X.Y.Z"` — the string every node's `generated: { by: … }` is stamped with.
+
+    The NINTH declaration, and it was unguarded through 3.0 -> 3.4: it happened to be correct at
+    every release because it was carried by hand. A version a reader can see in every node the
+    engine writes belongs in the enumeration, not in the release checklist.
+    """
+    text = (PKG / "tooling" / "add.py").read_text(encoding="utf-8")
+    m = re.search(r'^ENGINE = "add/([^"]+)"', text, re.M)
+    assert m, "tooling/add.py declares no ENGINE version"
+    return m.group(1)
+
+
 def test_every_declaration_agrees():
     """covers: M1 — every version declaration is the same string, skill trees included."""
     declared = {
@@ -58,6 +71,7 @@ def test_every_declaration_agrees():
         "package.json": _json_version("package.json"),
         "package-lock.json": _json_version("package-lock.json"),
         ".claude-plugin/plugin.json": _json_version(".claude-plugin/plugin.json"),
+        "tooling/add.py ENGINE": _engine_stamp(),
         **_skill_versions(),
     }
     assert len(set(declared.values())) == 1, f"version declarations disagree: {declared}"

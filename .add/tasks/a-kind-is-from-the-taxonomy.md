@@ -12,6 +12,10 @@ verified:
   - { by: "Tin Dang", at: 2026-09-03, act: brief, authority: process, brief: "sha256:a6501419f6654db7" }
   - { by: "process:run", at: 2026-09-03, act: run, authority: process, outcome: PASS, receipt: /tasks/a-kind-is-from-the-taxonomy.d/runs/1.md }
   - { by: "Tin Dang", at: 2026-09-03, act: gate, authority: process, outcome: PASS, receipt: /tasks/a-kind-is-from-the-taxonomy.d/runs/1.md, brief: "sha256:edb5c1f6089db763" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
 ---
 ## CARD
 goal: `new` refuses a `kind:` outside the closed taxonomy and names the taxonomy.

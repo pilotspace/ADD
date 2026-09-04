@@ -3,8 +3,8 @@ abf_version: "1.3"
 okf_version: "0.2"
 name: AIDD-Book
 profile: code
-engine: add/3.4.0
-tooling_engine: add/3.4.0
+engine: add/3.5.0
+tooling_engine: add/3.5.0
 created: 2026-08-08
 sensitive_paths: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
@@ -34,29 +34,37 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [Experience becomes a question the plan must answer](milestones/experience-in-plan.md) — `done`
 - [The first run a stranger walks is the run the engine actually performs](milestones/first-run-truth.md) — `done`
 - [The persona tier the method claims is the persona tier a fresh bundle loads](milestones/live-persona-tier.md) — `done`
-- [OKF for the living specs — addressable, dated, typed, searchable](milestones/okf-graph-time.md) — `direction`
+- [Reading the bundle as a graph — one node in full, its neighbourhood to three levels, and a filter that answers by field](milestones/okf-graph-lookup.md) — `done`
+- [OKF for the living specs — addressable, dated, typed, searchable](milestones/okf-graph-time.md) — `done`
+- [The read costs what it is worth: a dereferenceable address, a bounded listing, and the trims underneath](milestones/read-cost.md) — `done`
 - [A refusal names a fix that runs and actually clears it](milestones/refusals-that-work.md) — `done`
 - [ADD ceremony is proportional to task size: small goes direct, medium/large take a node](milestones/right-sized-lane.md) — `done`
 - [The roster the skill names is the roster that ships and may run its beats](milestones/roster-reachable.md) — `done`
 - [a scaffold hands you a node the engine will accept](milestones/scaffold-truth.md) — `done`
 - [v3.0.0 final collateral](milestones/v3-final-collateral.md) — `archived`
 - [A guard asks whether what a stamp attests is TRUE, not whether the stamp is well-formed](milestones/verdict-truth.md) — `done`
+- [The walk tells the truth, and the checks that say so can fail](milestones/walk-truth.md) — `done`
 
 ## Tasks
 
 - [a kind is from the closed taxonomy](tasks/a-kind-is-from-the-taxonomy.md) — `done` · `quick`
 - [a waived sweep dimension states its reason](tasks/a-silence-states-its-reason.md) — `done` · `standard`
+- [An address a verb prints is an address a verb can read back](tasks/address-dereferences.md) — `done` · `standard` · `architecture`
 - [direction.md: discharge high-cost assumptions by recorded micro-explore](tasks/assumption-microspike.md) — `done` · `standard`
 - [A node that was never authored is never advised to freeze](tasks/authoring-beat-named.md) — `done` · `standard` · `architecture`
 - [The beat status and brief report is the beat the stamps derive](tasks/beat-read-truth.md) — `done` · `standard` · `architecture`
 - [A month-end reconciliation, run end to end](tasks/beyond-code-walkthrough.md) — `done` · `standard`
+- [The carried inventory is windowed the way search already windows it](tasks/bounded-delta-listing.md) — `done` · `standard`
 - [add check toggles a checklist box and stamps who did it](tasks/box-check-verb.md) — `done` · `standard` · `architecture`
+- [what brief writes is stated where it is read, and pinned by a check](tasks/brief-is-not-read-only.md) — `done` · `standard`
 - [The always-loaded budget pin measures the cost it names](tasks/budget-pin-measures-cost.md) — `done` · `quick`
+- [Four checks gated PASS on claims they cannot test, repaired with floors](tasks/checks-that-cannot-fail.md) — `done` · `standard`
 - [A skill claim about what the engine prints is bound to the engine printing it](tasks/claimed-output-guard.md) — `done` · `standard` · `architecture`
+- [A relation connects two concepts, and the walk can start at either](tasks/concepts-are-endpoints.md) — `done` · `standard` · `architecture`
 - [finance/legal/academic persona depth + routing index](tasks/corpus-depth.md) — `done` · `quick`
 - [Every lesson is an addressable concept with a validity interval](tasks/dated-addressable-deltas.md) — `done` · `standard` · `architecture`
 - [the tested human-seam bypass is deleted, not documented](tasks/delete-the-unwired-quick-lane.md) — `done` · `quick` · `security`
-- [add deltas filters by lens, by --since, and by --as-of](tasks/deltas-time-filters.md) — `direction` · `quick`
+- [add deltas filters by lens, by --since, and by --as-of](tasks/deltas-time-filters.md) — `done` · `quick`
 - [The direct lane is size-gated with an inline checklist; sizing text ships in CLAUDE.md, the skill and the installer pointer](tasks/direct-lane-size-gate.md) — `done` · `standard` · `architecture`
 - [docs site teaches the beta.2 checkpoints](tasks/docs-beta2-refresh.md) — `done` · `doc`
 - [an advisory nudge names a node you can still advise](tasks/doctor-nudges-what-you-can-act-on.md) — `done` · `quick`
@@ -73,14 +81,19 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [The README says what the engine does](tasks/front-door-truth.md) — `done` · `standard`
 - [an accepted flag is read or refused, never silently dropped](tasks/gate-honours-or-refuses-authority.md) — `done` · `standard` · `architecture`
 - [The walkthrough the front door prints is a walkthrough the suite executes](tasks/getting-started-executed.md) — `done` · `standard`
+- [A bounded, cycle-safe walk over both edge families in both directions](tasks/graph-neighborhood.md) — `done` · `standard` · `architecture`
 - [What one installer twin lands, the other lands, and Claude Code can see it](tasks/installer-reach-parity.md) — `done` · `standard` · `architecture`
 - [join refuses what it cannot read](tasks/join-refuses-what-it-cannot-read.md) — `done` · `quick`
+- [One pinned JSON payload serves both read verbs, and is byte-stable across runs](tasks/json-emission.md) — `done` · `standard` · `architecture`
 - [verify.md — every documented rung must be stampable](tasks/ladder-honesty.md) — `done` · `standard`
 - [the v3.0.0 launch post — written now, published at the final tag](tasks/launch-blog.md) — `done` · `doc`
+- [Milestone membership is an edge the graph can walk, not a slug only todo can string-match](tasks/milestone-membership-is-an-edge.md) — `done` · `standard` · `architecture`
 - [A bundle that exists above you is a bundle status sends you to, never one init offers to replace](tasks/nested-bundle-guard.md) — `done` · `standard` · `architecture`
 - [every next](tasks/next-lines-are-runnable.md) — `done` · `standard` · `architecture`
 - [OKF-aligned Persona scaffold — the contract's routing keys get slots](tasks/okf-persona-template.md) — `done`
-- [Spec nodes carry OKF's recommended frontmatter, and the bundle declares its OKF version](tasks/okf-spec-frontmatter.md) — `direction` · `standard` · `architecture`
+- [Spec nodes carry OKF's recommended frontmatter, and the bundle declares its OKF version](tasks/okf-spec-frontmatter.md) — `done` · `standard` · `architecture`
+- [add deltas cites a lesson at the same address add search does (X4)](tasks/one-address-per-concept.md) — `done` · `quick`
+- [status, locate and brief stop spending bytes on what a reader cannot act on](tasks/output-trims.md) — `done` · `standard`
 - [A partial test run must say so](tasks/partial-run-visible.md) — `done` · `standard` · `architecture`
 - [persona-author references speak 3.0](tasks/persona-author-30.md) — `done`
 - [Planning loads a persona — intake/loop lens + seeded starter roster](tasks/persona-carried-planning.md) — `done` · `standard`
@@ -93,6 +106,8 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [streams.md: free fan-out for read-only beats; waves reserved for builds](tasks/read-fanout.md) — `done` · `standard`
 - [the receipt artifact leaks into the repo root](tasks/receipt-artifact-leak.md) — `done` · `standard`
 - [The run line the skill tells you to copy is a line that earns a bound receipt](tasks/receipt-idiom-truth.md) — `done` · `quick`
+- [A filename that names a node resolves to it, and an ambiguity refusal is bounded](tasks/ref-resolution-accepts-what-an-operator-types.md) — `done` · `standard`
+- [A relation is identified by the lesson that declared it, in the walk and in the payload](tasks/relation-identity-in-the-walk.md) — `done` · `standard` · `architecture`
 - [Engine replan stamp + build.md steering-vs-contract amendments](tasks/replan-verb.md) — `done` · `standard` · `architecture`
 - [RISK-ACCEPTED signs for weak evidence, never for a missing seal](tasks/risk-accepted-integrity.md) — `done` · `standard` · `security`
 - [The skill names the agents it ships, and each may run the verbs its beat requires](tasks/roster-named-and-bounded.md) — `done` · `quick`
@@ -104,18 +119,22 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [scope is written where its readers look](tasks/scope-is-where-its-readers-look.md) — `done` · `standard` · `architecture`
 - [every covers: referent class is inside the freeze seal](tasks/seal-covers-what-binds.md) — `done` · `standard` · `architecture`
 - [The refusals the docs promised, made real](tasks/sealed-gate-enforcement.md) — `done` · `standard` · `architecture`
-- [add search finds any concept in the bundle, at lesson granularity](tasks/search-verb.md) — `direction` · `standard` · `architecture`
+- [add search selects by field beside its free-text grammar, and an empty ask still refuses](tasks/search-structured-filters.md) — `done` · `standard` · `architecture`
+- [add search finds any concept in the bundle, at lesson granularity](tasks/search-verb.md) — `done` · `standard` · `architecture`
 - [every task kind routes to a seeded persona](tasks/seed-the-missing-lenses.md) — `done` · `standard` · `architecture`
 - [a seeded lens orients with commands the engine actually has](tasks/seeded-personas-orient-on-real-verbs.md) — `done` · `standard` · `architecture`
+- [add show reads one node whole, with its neighbourhood to three levels](tasks/show-verb.md) — `done` · `standard` · `architecture`
 - [SKILL.md — profile truth + the write-a-checker pointer](tasks/skill-pointer-truth.md) — `done` · `standard`
 - [The skill stops promising a fallback the engine removed](tasks/skill-profile-truth.md) — `done` · `standard`
 - [The loop gathers the carried specs before it plans](tasks/skill-reads-deltas.md) — `done` · `quick`
+- [SKILL.md teaches the graph — read a node whole, query by field, before the loop plans](tasks/skill-reads-the-graph.md) — `done` · `quick`
 - [a slug names one node, so a receipt cannot cross nodes](tasks/slug-is-unique-across-types.md) — `done` · `standard` · `architecture`
+- [The measured dead and duplicated lines, removed across all four twins](tasks/source-dead-code.md) — `done` · `standard`
 - [Engine: sources rung on evidence ladder + explore sufficiency gate](tasks/sources-receipt.md) — `done` · `standard` · `architecture`
 - [A stamp the notary reports written is a stamp that reads back](tasks/stamp-field-integrity.md) — `done` · `standard` · `data`
 - [the explore scaffold is an explore](tasks/the-explore-scaffold-is-an-explore.md) — `done` · `standard`
 - [an advised persona appears in the brief that spawns the worker](tasks/the-persona-reaches-the-worker.md) — `done` · `standard` · `architecture`
-- [A relations: family carries typed concept edges over a closed vocabulary](tasks/typed-relations.md) — `direction` · `standard` · `architecture`
+- [A relations: family carries typed concept edges over a closed vocabulary](tasks/typed-relations.md) — `done` · `standard` · `architecture`
 - [Intake third axis — unknowns score; lane+depth as decision output](tasks/uncertainty-routing.md) — `done` · `standard`
 - [upgrade leaves a working bundle — the engine must not archive itself away](tasks/upgrade-working-bundle.md) — `done`
 

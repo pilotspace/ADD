@@ -214,6 +214,25 @@ An edge whose target resolves outside the bundle root is `edge_out_of_bundle` �
 three fatal codes (§9). An edge naming a node that does not exist is `edge_unresolved`,
 which is `info`.
 
+**Membership: the one key that resolves a bare slug.** Every edge value above is a ref — a path
+carrying `.md`. `milestone:` is the single exception: a **bare slug** resolves to that slug under
+`/milestones/`, suffixed `.md`, so `milestone: okf-graph-time` and
+`milestone: /milestones/okf-graph-time.md` name one target.
+
+The exception is a property of the key, not a convenience. Membership implies exactly **one**
+directory, so the slug names a cid without guessing. No other key does: `depends_on:` may name a
+Task or a Milestone, so a bare value there has no implied directory and stays a non-edge — which
+is what keeps `edge_unresolved` a statement about a *named* target rather than about every bare
+string in the bundle. A key admitted to this exception must own a directory the same way.
+
+A membership value that is not a bare slug takes no mapping and is judged on the ref path like
+any other value; containment is therefore decided on the mapped target, never before it. The
+mapping can only produce a path under `/milestones/`, which is inside the root by construction.
+
+Before this rule existed, `milestone:` was in the allowlist above and produced **zero** edges —
+declared on 45 of 220 nodes, every value a bare slug, every value skipped. A key that can never
+yield an edge reads as wired and traverses nothing.
+
 **The second family: `relations:`.** The keys above carry *untyped* edges between **nodes**.
 `relations:` carries **typed** edges between **concepts** — a concept being a delta line,
 addressed `/specs/<lens>.md#<id>` (§3.3). It is a distinct family with its own reader; it is
@@ -296,6 +315,15 @@ underscores or hyphens — so a fragment the delta grammar rejects is not a conc
 
 It is third, not first, so that a reference that resolves today keeps resolving the same way.
 
+A concept address is **readable**, not merely citable. A reader that accepts a node cid MUST also
+accept `<file>#<id>` and answer with the concept that id names — its text, its status and its
+interval — rather than with the file that holds it. The two are different promises, and only
+stating the second makes it one: for a period this format defined the address, printed it from
+two verbs, told the reader to cite it, and had no verb that could read it back, so the only way
+to see one lesson was to read a file holding thirty. A fragment naming no concept **refuses** and
+names both halves it checked; it never falls back to the file, which would answer a different
+question and read as success.
+
 The forms are **not** disjoint and no reader should assume they are: a delta id is a letter
 followed by letters, digits, underscores or hyphens, so a lower-case id such as `zz` can equal a
 heading slug. What makes resolution single-valued is the **ladder**, not the alphabet — the first
@@ -306,6 +334,46 @@ This form is a **body** read whose only outcome is `edge_unresolved` (`info`), l
 slug above it — §9's rule that every body-derived finding is `info` is unaffected.
 
 Derived from `validate_bundle.py:203-214`.
+
+### §3.4 The neighbourhood walk
+
+A conforming reader MAY offer a bounded walk outward from one concept. Where it does, the walk
+is defined over **families and directions**, never over the particular families that exist in
+this version:
+
+* it visits **every** edge family the bundle defines — today the untyped `EDGE_KEYS` node edges
+  of §3.2 and the typed `relations:` concept edges beside them — and each row says which family
+  it came from, so a third family joins by satisfying this contract rather than by being bolted
+  on beside it;
+* it follows each family in **both directions**. An outbound-only walk cannot answer *what
+  depends on this*, which is most of what a reader wants from a node;
+* the unit is the **edge**, not the visit. One edge is emitted **once**, at the shallowest depth
+  the walk reaches it, from whichever end it arrived — the same link seen outbound from one node
+  and inbound at the other is one fact, and emitting it twice doubles every diamond;
+* an edge is identified by **what declared it**, not only by the pair it joins. A node edge is
+  declared by its node; a typed concept edge is declared by the *lesson* that wrote it, and two
+  lessons may refine one target. Each row therefore carries the declaring concept's address
+  (`origin`), and it participates in the identity — otherwise two distinct edges collapse into
+  one row and the reader is told a link exists where two do. Identity by `(family, label, src,
+  ref, target)` alone was exactly that bug;
+* it is bounded by a caller-supplied depth, and that depth has a **ceiling of 5**. A request
+  above the ceiling is **refused**, never clamped: a clamp reports success for a question nobody
+  asked. The number is stated here because a ceiling that lives only in the code cannot be
+  checked against the document, and a check that reads it out of the code and then looks for it
+  in that same code guards nothing;
+* it is **cycle-safe**: a node already reached is never
+  expanded again, so a self-edge, a two-node cycle and a diamond all terminate;
+* an **unresolved** edge is emitted with a null target and never expanded. A dangling link is
+  information about the node that declares it, and the one view built to show links must not be
+  the view that hides it;
+* the rows carry a **total** order — every field of the row participates, so no tie falls through
+  to dict or set iteration and two walks over an unchanged bundle are byte-identical.
+
+A reader that cannot resolve the starting concept **refuses**; it does not return an empty walk.
+*No neighbours* and *no such node* are different answers, and a caller that cannot tell them
+apart will read the second as the first.
+
+Derived from `add.py:neighborhood`.
 
 ---
 
@@ -675,3 +743,75 @@ silently after approval — and leaves the semantic half to review.
 This limit is inherent to law 3: a notary that judged whether a test was a *good* test
 would be a guard, and would need to execute and interpret code it was handed no authority
 over. State it plainly rather than let a green seal be read as a correctness proof.
+
+---
+
+## §11 The machine read
+
+Two verbs read the bundle without changing it — `show`, which returns one node whole with its
+neighbourhood walk (§3.4), and `search`, which returns every concept matching a query. Both
+answer in prose by default. Under `--json` both emit **one envelope**, and it owns stdout alone:
+a consumer pipes the stream straight into a parser, so nothing prose-shaped rides along.
+
+```json
+{
+  "schema": "add.read/1",
+  "verb": "show",
+  "ok": true,
+  "request": { "ref": "t-one", "expand": 3 },
+  "results": [
+    { "address": "/tasks/t-one.md", "cid": "/tasks/t-one.md", "match": "node",
+      "fields": { "type": "Task", "status": "direction" }, "text": "## CARD\n…" }
+  ],
+  "edges": [
+    { "depth": 1, "direction": "out", "family": "edge", "label": "milestone",
+      "origin": "/tasks/t-one.md", "src": "/tasks/t-one.md",
+      "ref": "m-one", "target": "/milestones/m-one.md" }
+  ],
+  "note": "/tasks/t-one.md · 1 edge(s) within 3 level(s)"
+}
+```
+
+Every key is always present. What fills each one:
+
+| key | `show` | `search` |
+|---|---|---|
+| `schema` | the schema id — moves only when this section does | same |
+| `verb` | `"show"` | `"search"` |
+| `ok` | `false` marks a refusal and only a refusal | same |
+| `request` | the arguments as asked; a flag nobody typed is absent | same |
+| `results` | exactly one node — `address` · `cid` · `match` · `fields` · `text` | every hit, in the verb's own order; `fields` is `{}` and `text` is the snippet |
+| `edges` | the walk's rows — `depth` · `direction` · `family` · `label` · `origin` · `src` · `ref` · `target`. `origin` is the address of the concept that **declared** the edge: a lesson address like `/specs/method.md#M8` for a relation, and the node's own cid for a node edge | always `[]`, never omitted |
+
+A relation row's `src` and `target` are **concept addresses**, not files. `M8 refines
+/specs/method.md#M4` emits `src: /specs/method.md#M8`, `target: /specs/method.md#M4` — both
+ends dereference through `show`, which is what makes the concept graph traversable from either
+one. A relation written with **no fragment** targets the file, and `target` is that file's cid;
+a fragment naming a lesson the file does not hold resolves to **nothing**, and `target` is
+`null` — an address the bundle cannot dereference is never minted. Node edges are unchanged:
+`needs: /specs/x.md#gives` still targets `/specs/x.md`, because a node edge names a place in a
+file and a relation names a concept. A file's own concepts are walked at the **file's depth** —
+containment is not a hop — so `--expand 1` from a spec still costs one level and still shows
+every relation that spec declares.
+| `note` | a one-line summary | a one-line summary |
+
+Three guarantees a consumer may rely on.
+
+**Byte-stability.** Two runs of the same command over an unchanged bundle emit identical
+bytes: keys sorted, two-space indent, one trailing newline, non-ASCII unescaped. Both verbs
+already emit a total order, and the adapters preserve it rather than re-sorting.
+
+**A refusal is a payload.** An over-cap `--expand`, a ref naming no node or several, a search
+naming neither query nor filter — each emits this same envelope with `ok: false` and the
+refusal text, its `next:` line included, in `note`. And each **keeps the exit code it earned**:
+`--json` never turns a refusal into a success, because a caller checking the status code would
+read one as an answer. A zero-hit search is not a refusal — it is a recorded outcome (law 3),
+so it exits 0 with `ok: true` and an empty `results`.
+
+**No clock, no version, no absolute path.** The engine version is deliberately absent: a payload
+carrying it would change bytes on every release and break a consumer's pin for no semantic
+reason. `schema` is what moves when the shape does.
+
+`fields` is a node's frontmatter copied as it stands — an absent key stays **absent** rather
+than becoming `null`, so a key present in the payload means a key present in the file, which is
+the only way to tell an unauthored slot from an authored empty one.

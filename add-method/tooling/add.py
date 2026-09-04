@@ -446,8 +446,43 @@ def _norm(src_cid: str, ref: str) -> str:
     return "/" + str(PurePosixPath(os.path.normpath(str(base / target)))).lstrip("/")
 
 
+# `milestone:` is the ONE edge key whose value may be a bare slug (§3.2). The reason is a
+# property of the key, not a convenience: membership implies exactly one directory, so the slug
+# names a cid without guessing. Every other key may point at more than one node type —
+# `depends_on:` may name a Task or a Milestone — so no directory is implied there and a bare
+# value stays unresolved, which is what keeps `edge_unresolved` meaningful.
+#
+# Measured before this arm existed: `milestone:` was declared on 45 of 220 nodes and produced
+# ZERO edges, because both oracles skip any ref without `.md`. A key in the allowlist that can
+# never yield an edge reads as wired and traverses nothing.
+MEMBERSHIP_KEY = "milestone"
+MEMBERSHIP_DIR = "milestones"
+_SLUG = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def _membership_ref(key: str, ref: str) -> str:
+    """A bare-slug `milestone:` value -> the cid it names; `""` when the value is not one.
+
+    Containment needs no special case: a value carrying `/` or `..` fails `_SLUG`, so it never
+    reaches this mapping and is judged on the `.md` path like every other ref. The mapping can
+    only ever produce a path under `MEMBERSHIP_DIR`, which is inside the root by construction.
+
+    The RESERVED names are excluded (§3.1): `index.md` and `log.md` are COMPILED from the nodes,
+    so a membership edge into one would point at a derived artifact rather than a milestone. No
+    live instance exists — but a mapping that CAN name a reserved file eventually will.
+    """
+    if key != MEMBERSHIP_KEY or ".md" in ref or not _SLUG.match(ref):
+        return ""
+    return "" if f"{ref}.md" in NOT_A_NODE else f"/{MEMBERSHIP_DIR}/{ref}.md"
+
+
 def edges(graph: dict) -> list:
-    """`[(src_cid, key, ref, target_cid|None)]` — typed, and only from EDGE_KEYS."""
+    """`[(src_cid, key, ref, target_cid|None)]` — typed, and only from EDGE_KEYS.
+
+    `ref` is always the value as WRITTEN, never the mapped form: a membership slug and the
+    explicit `.md` ref for the same milestone resolve to one target but stay distinguishable to
+    a reader of the tuple, so a report can quote what the author typed.
+    """
     out = []
     for cid, node in graph.items():
         for key in EDGE_KEYS:
@@ -457,6 +492,9 @@ def edges(graph: dict) -> list:
             for ref in value if isinstance(value, list) else [value]:
                 ref = str(ref).strip()
                 if ".md" not in ref:
+                    if not (mapped := _membership_ref(key, ref)):
+                        continue
+                    out.append((cid, key, ref, mapped if mapped in graph else None))
                     continue
                 target = _norm(cid, ref)
                 out.append((cid, key, ref, target if target in graph else None))
@@ -501,6 +539,293 @@ def relations(graph: dict) -> list:
             target = _norm(cid, ref)
             out.append((cid, src_id, rel, ref, target if target in graph else None))
     return out
+
+
+# ------------------------------------------------------- the neighbourhood walk (okf-graph-lookup)
+#
+# `edges()` and `relations()` are flat lists and `cycles()` walks ONE direction of ONE family.
+# This is the walk a reader gets: bounded, cycle-safe, and totally ordered so two calls over an
+# unchanged bundle are byte-identical.
+#
+# The unit is the EDGE, not the visit. One edge is emitted once — at the shallowest depth the
+# walk reaches it, from whichever end it arrived — because the same link seen outbound from one
+# node and inbound at the other is one fact, and emitting it twice doubles every diamond.
+NEIGHBORHOOD_MAX = 5         # the ceiling a caller may ask for; the verb refuses above it
+NEIGHBORHOOD_DEFAULT = 3     # the walk a caller gets when it names no depth
+
+
+def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """`(rows, note)` — every edge within `expand` levels of `cid`, both families, both directions.
+
+    A row is `(depth, direction, family, label, origin, src, ref, target)`. `origin` is the
+    address of the concept that DECLARED the edge — a lesson address like `/specs/method.md#M8`
+    for a relation, and the node's own cid for a node edge, which is declared by the node itself.
+    It is an ADDED field, not a redefined `src`, so a consumer that joined on `src` keeps working.
+    Without it two lessons refining one target collapsed into a single row, because the delta id
+    is the ONLY thing that tells them apart (R:COLLAPSE). `direction` is `"out"` when
+    the walk followed the edge from its source and `"in"` when it arrived at its target, `family`
+    is `"edge"` (an `EDGE_KEYS` node edge) or `"relation"` (a typed `relations:` concept edge),
+    and `label` is the edge key or the rel word. `src`/`target` always describe the edge AS
+    WRITTEN, so a row reads the same whichever end the walk came from.
+
+    `rows is None` marks a REFUSAL and only a refusal — `cid` names no node. An empty list is a
+    recorded answer: this node exists and has no edges within `expand`. Collapsing the two would
+    make "no neighbours" and "no such node" one value (R:EMPTYISUNKNOWN).
+
+    Law 1 holds: the walk reads the graph it is handed, never `graph.json`.
+    """
+    # A concept address is a legitimate start (§3.3): a lesson is a thing this bundle addresses
+    # but does not store as a file, and a reader standing on one wants what refines it. It is
+    # admitted only when the lesson EXISTS, so an unknown address refuses in the grammar an
+    # unknown cid gets rather than walking an empty graph and reporting "no edges" (M2 · A8).
+    if cid not in graph and _concept_of(graph, *cid.partition("#")[::2]) is None:
+        return None, (f'`{cid}` names no node in this bundle -> "R:NOSUCHNODE"'
+                      "\nnext: add status   # the nodes this bundle actually holds")
+
+    # Both adjacencies built ONCE. A malformed `relations:` entry yields no edge (§3.2) and so
+    # joins neither: it carries no resolvable target and therefore makes no claim to walk.
+    fwd, rev = {}, {}
+    for src, key, ref, target in edges(graph):
+        # A node edge is declared by the node itself, so there is no finer identity to carry.
+        fwd.setdefault(src, []).append(("edge", key, src, ref, target))
+        if target is not None:
+            rev.setdefault(target, []).append(("edge", key, src, ref, src))
+    # A relation's two ends are CONCEPTS, and the walk joins them as such. `_norm` strips the
+    # fragment BY DESIGN — a node edge like `needs: /specs/x.md#gives` must resolve to the FILE,
+    # and `resolve`, `brief` and the containment codes all depend on that — so the address is
+    # rebuilt HERE, for this family alone (R:NODEEDGEDRIFT). Before this, both ends were the
+    # file: `M8 refines /specs/method.md#M4` emitted a row reading `refines /specs/method.md`,
+    # and a reader standing on M4 found nothing at all (R:FILEASCONCEPT).
+    hosts = {}          # file cid -> the concept addresses that file hosts
+    for src, src_id, rel, ref, target in relations(graph):
+        if rel is None:
+            continue
+        # The declaring LESSON, at the address `search` and `deltas` already cite it by. An
+        # id-less legacy head degrades to the file, exactly as `delta_address` degrades.
+        origin = delta_address(src.rsplit("/", 1)[-1][:-3], src_id)
+        dest = _concept_of(graph, target, ref.partition("#")[2].strip()) if target else None
+        if dest is None and target is not None and "#" not in ref:
+            dest = target                     # E1 — a fragment-less relation still names the file
+        fwd.setdefault(origin, []).append(("relation", rel, origin, ref, dest))
+        if dest is not None:
+            rev.setdefault(dest, []).append(("relation", rel, origin, ref, origin))
+        # Containment, not a hop: a file's concepts are walked AT THE FILE'S OWN DEPTH, so
+        # `show <spec> --expand 1` still costs one level and still shows what the spec declares
+        # (M4 · A5). The descent is one-way — from a concept the walk does NOT climb back into
+        # its file, or standing on one lesson would drag in every relation its neighbours wrote.
+        for address in (origin, dest):
+            if address and "#" in address:
+                hosts.setdefault(address.partition("#")[0], set()).add(address)
+
+    # `best` keys the EDGE — including WHO DECLARED IT, so two lessons refining one target stay
+    # two edges. The shallowest sighting wins and a second one neither duplicates the row nor
+    # re-expands the node behind it.
+    best, seen, frontier = {}, {cid}, [cid]
+    for depth in range(1, max(0, int(expand)) + 1):
+        nxt = set()
+        for node in frontier:
+            for probe in [node] + sorted(hosts.get(node, ())):
+                for family, label, origin, ref, other in fwd.get(probe, []):
+                    best.setdefault((family, label, origin, probe, ref, other), (depth, "out"))
+                    if other is not None and other not in seen:
+                        nxt.add(other)
+                for family, label, origin, ref, other in rev.get(probe, []):
+                    best.setdefault((family, label, origin, other, ref, probe), (depth, "in"))
+                    if other not in seen:
+                        nxt.add(other)
+        seen |= nxt
+        frontier = sorted(nxt)
+        if not frontier:
+            break
+
+    rows = [(d, direction, family, label, origin, src, ref, target)
+            for (family, label, origin, src, ref, target), (d, direction) in best.items()]
+    # Every field participates, so no tie reaches dict or set order (R:SILENTORDER). `target` is
+    # `None` for an unresolved edge, which no comparison with a string may touch.
+    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7] or ""))
+    if not rows:
+        return [], (f"`{cid}` has no edges within {expand} level(s)"
+                    "\nnext: add status")
+    return rows, (f"{len(rows)} edge(s) within {expand} level(s) of `{cid}`"
+                  "\nnext: cite one as a depends_on: or relations: target")
+
+
+RESOLVE_CANDIDATES = 8       # candidates an ambiguity refusal lists before it starts counting
+
+
+def resolve_ref(root, ref: str) -> tuple:
+    """A bare slug, a filename or a cid -> EXACTLY one cid. `(cid, note)`; `None` marks a refusal.
+
+    It never best-guesses. `cli._resolve` returns `/tasks/<ref>.md` for anything it cannot find,
+    which hands the engine a cid that does not exist and lets the refusal come from somewhere
+    that cannot name the real problem. Zero matches refuse; several refuse and LIST the
+    candidates, because a reader who typed an ambiguous name needs to see what they collided
+    with, not to be given one of them.
+    """
+    graph = scan(Path(root))
+    text = str(ref or "").strip()
+    nowhere = ("\nnext: add status   # the nodes this bundle actually holds")
+    if not text:
+        return None, 'an empty ref names no node -> "R:NOREF"' + nowhere
+    # A CONCEPT address. `deltas` and `search` both print `/specs/<lens>.md#<id>` and both tell
+    # the reader to cite it; until this branch nothing could read it back, so the only way to see
+    # one lesson was to read the file holding thirty of them (R:WHOLESPEC).
+    if "#" in text:
+        file_part, _, frag = text.partition("#")
+        file_cid = "/" + file_part.lstrip("/")
+        # The FILE first: an unreadable path is a path error, and reporting it as a missing
+        # lesson would name the wrong half of the address (A4).
+        if file_cid in graph and file_cid.startswith("/specs/") and frag:
+            lens = file_cid.rsplit("/", 1)[-1][:-3]
+            named = [i for s in DELTA_STATUSES for i in deltas(root, status=s)[0]
+                     if i[0] == lens and i.id == frag]
+            if len(named) == 1:
+                return f"{file_cid}#{frag}", f"`{file_cid}#{frag}`"
+            if not named:
+                return None, (f'`{frag}` names no lesson in `{file_cid}` -> "R:NOSUCHNODE"'
+                              f"\nnext: add deltas --lens {lens}   # the lessons it does hold")
+            return None, (f'`{frag}` names {len(named)} lessons in `{file_cid}`, and a read '
+                          f'must not choose one of them -> "R:IDCOLLIDE"'
+                          f"\nnext: add deltas --lens {lens}   # disambiguate by hand")
+    if "/" in text or text.endswith(".md"):
+        cid = "/" + text.lstrip("/")
+        if cid in graph:
+            return cid, f"`{cid}`"
+        # A ref carrying `/` was meant literally and stops here — second-guessing a path would
+        # reopen the guessing this verb refuses (A2). A bare FILENAME falls through: it named a
+        # node that exists, and refusing it asserted something false about the bundle, which is
+        # the failure this function was written to end (R:FALSEREFUSAL).
+        if "/" in text:
+            return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+        text = text[:-3]
+    matches = sorted(c for c in graph if c.rsplit("/", 1)[-1] == f"{text}.md")
+    if len(matches) == 1:
+        return matches[0], f"`{matches[0]}`"
+    if not matches:
+        return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+    # Bounded, for the reason the depth cap is bounded: one read must not cost unbounded
+    # context. `add show 1` listed 78 candidates on a live bundle and grew with the task count.
+    # The shown set is the deterministic PREFIX of the sorted order, so the refusal reproduces.
+    shown = matches[:RESOLVE_CANDIDATES]
+    listed = "\n".join(f"  \u00b7 {m}" for m in shown)
+    withheld = len(matches) - len(shown)
+    more = f"\n  \u00b7 … and {withheld} more" if withheld else ""
+    return None, (f'`{text}` names {len(matches)} nodes, and a read must not choose one of them '
+                  f'-> "R:GUESS"\n{listed}{more}'
+                  f"\nnext: add show {matches[0]}   # name one of the cids above")
+
+
+def _show_lesson(root, graph: dict, address: str, expand: int) -> tuple:
+    """One LESSON read whole. `(view, note)` — the same shape `show` returns for a node.
+
+    A lesson is a concept the bundle addresses (§3.3) but does not store as a file, so the view
+    carries its parsed head as `fm` and its text as `body`. Its `rows` are the typed relations
+    declared BY it, ordered by `neighborhood` so two reads are byte-identical.
+    """
+    file_cid, _, frag = address.partition("#")
+    lens = file_cid.rsplit("/", 1)[-1][:-3]
+    item = next(i for s in DELTA_STATUSES for i in deltas(root, status=s)[0]
+                if i[0] == lens and i.id == frag)
+    status = next(s for s in DELTA_STATUSES
+                  if any(j.id == frag and j[0] == lens for j in deltas(root, status=s)[0]))
+    fm = {"type": "Lesson", "lens": lens, "status": status, "competency": item[1]}
+    if item.valid_from:
+        fm["valid_from"] = item.valid_from
+    if item.valid_to:
+        fm["valid_to"] = item.valid_to
+    # The walk starts AT the concept now, not at its file: standing on a lesson, what you want
+    # first is what refines it, and filtering the file's walk down to rows this lesson declared
+    # could only ever show the outbound half. `related:` was structurally empty for every lesson
+    # that was refined rather than refining.
+    rows = [r for r in (neighborhood(graph, address, expand)[0] or []) if r[2] == "relation"]
+
+    dash, dot, down = "\u2014", "\u00b7", "\u2193"
+    head = f" {dot} ".join(str(fm[k]) for k in ("type", "lens", "competency") if fm.get(k))
+    span = f"  {fm.get('valid_from', dash)}" + (f" \u2192 {fm['valid_to']}" if fm.get("valid_to") else "")
+    lines = [f"{address}  [{status}]  {head}{span}".rstrip(), "", item[2], ""]
+    if rows:
+        up = "\u2191"
+        lines.append(f"related (depth {expand} \u00b7 {down} refines \u00b7 {up} refined by):")
+        lines += [f"  {r[0]} {down if r[1] == 'out' else up} {r[3]}  "
+                  f"{(r[7] if r[1] == 'out' else r[5]) or (dash + ' unresolved')}" for r in rows]
+    else:
+        lines.append(f"related: none within {expand} level(s)")
+    lines.append(f"next: add deltas --lens {lens}   # the rest of this lens")
+    view = {"cid": address, "fm": fm, "body": item[2], "rows": rows}
+    return view, "\n".join(lines)
+
+
+def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """One node read WHOLE, with its neighbourhood. `(view, note)`. Read-only, never writes.
+
+    `view is None` marks a REFUSAL and only a refusal. The view carries `cid`, `fm`, `body` and
+    `rows` — the node's own content plus `neighborhood()`'s rows — so a caller renders it without
+    re-reading the file.
+
+    The depth is validated FIRST, before the ref is resolved, so an over-cap request is refused
+    by the flag the operator actually typed rather than by whatever the walk did with it. The
+    cap REFUSES; it never clamps. A clamp reports success for a question nobody asked, which is
+    the failure shape this whole milestone is built to avoid.
+    """
+    if expand > NEIGHBORHOOD_MAX:
+        return None, (f'--expand {expand} is past the ceiling of {NEIGHBORHOOD_MAX} — a walk is '
+                      f'capped so one read cannot cost unbounded context -> "R:DEPTHCAP"'
+                      f"\nnext: add show {ref} --expand {NEIGHBORHOOD_MAX}")
+    if expand < 0:
+        return None, (f'--expand {expand} is not a depth -> "R:DEPTHCAP"'
+                      f"\nnext: add show {ref} --expand {NEIGHBORHOOD_DEFAULT}")
+
+    cid, note = resolve_ref(root, ref)
+    if cid is None:
+        return None, note
+
+    graph = scan(Path(root))
+    if "#" in cid:
+        return _show_lesson(root, graph, cid, expand)
+    node = read(graph[cid]["path"], "T2")
+    rows, _walk = neighborhood(graph, cid, expand)
+    view = {"cid": cid, "fm": node["fm"] or {}, "body": node["body"] or "", "rows": rows or []}
+
+    fm = view["fm"]
+    dash, dot, down, up = "\u2014", "\u00b7", "\u2193", "\u2191"
+    head = f" {dot} ".join(str(fm[k]) for k in ("type", "depth", "sensitivity") if fm.get(k))
+    status = fm.get("status") or dash
+    lines = [f"{cid}  [{status}]  {head}".rstrip(), ""]
+    lines.append(view["body"].rstrip())
+    if view["rows"]:
+        lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
+                      f"{up} declared elsewhere):"]
+        width = max(len(r[3]) for r in view["rows"])
+        for depth, direction, family, label, origin, src, _ref, target in view["rows"]:
+            arrow = down if direction == "out" else up
+            other = target if direction == "out" else src
+            # The declaring lesson's ID, not its whole address: the row already prints the other
+            # end, so repeating the file would spend width twice on one fact. Without it two
+            # lessons refining one target render as two identical-looking lines (A9).
+            mark = "" if family == "edge" else f"  (relation {origin.split('#')[-1]})"
+            state = (graph.get(other or "", {}).get("fm") or {}).get("status")
+            shown = other or f"{dash} unresolved"
+            tag = f"  [{state}]" if state else ""
+            lines.append(f"  {depth} {arrow} {label:<{width}}  {shown}{tag}{mark}")
+        lines.append(f"{dash} {len(view['rows'])} edge(s) within {expand} level(s)")
+    else:
+        lines += ["", f"related: none within {expand} level(s)"]
+    lines.append(f"next: add show {cid} --expand 1   # the immediate neighbours only")
+    return view, "\n".join(lines)
+
+
+def _concept_of(graph: dict, file_cid: str, frag: str) -> str:
+    """`/specs/x.md#M4` when `frag` names a lesson that file really holds, else None.
+
+    The ONE place a concept address is minted for the walk. It reads the target's own body
+    through `_delta_ids`, so a fragment the delta grammar rejects mints nothing: an address the
+    bundle cannot dereference must never appear as an edge's target (R:PHANTOMTARGET).
+    """
+    if not frag or file_cid not in graph:
+        return None
+    if frag not in _delta_ids(read(graph[file_cid]["path"], "T2")["body"]):
+        return None
+    return file_cid + "#" + frag
 
 
 def _delta_ids(body: str) -> dict:
@@ -1002,11 +1327,10 @@ PROFILES = {
     },
 }
 
-RESERVED_FILES = ("index.md", "log.md", "PROJECT.md")
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
-ENGINE = "add/3.4.0"
+ENGINE = "add/3.5.0"
 # Where `init` vendors from: the engine lives beside this file; the seed corpus sits at the bundle
 # root as its own managed tree (`.add/personas-teacher/` installed; `add-method/personas-teacher/`
 # in the package). `parents[1]` resolves both. Module-level so a test can repoint them to simulate a
@@ -2024,6 +2348,16 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         else:
             gates = [(i, s) for i, s in enumerate(stamps)
                      if i > last_reopen and s.get("act") == "gate"]
+            # The seal, on the override's OWN path. The comment above says it is "checked
+            # exactly as before"; before this line it was not — the branch reassigned `gates`
+            # and fell out of the chain, so the `elif` holding the seal test was unreachable
+            # from here. The invariant held only because `gate` refuses a HARD-STOP on an
+            # unsealed node upstream, which is one refactor away from absent. A guard that
+            # depends on another verb refusing is not a guard on this path (M7).
+            if seal_at is None or all(i < seal_at for i, _ in gates):
+                missing.append("a freeze preceding the gate — the ONE human approval ADD asks "
+                               "for did not happen, so this gate closed a node nobody approved")
+                fix = f'add freeze {slug} --by "<name>", then re-gate'
     elif not gates:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
@@ -2536,11 +2870,17 @@ def _scope_matches(entry: str, query: str) -> bool:
     return a == b or a.startswith(b + "/") or b.startswith(a + "/")
 
 
-def locate(root, query: str) -> tuple:
+def locate(root, query: str, all: bool = False) -> tuple:
     """Reverse lookup: every node whose `scope:` matches `query` (equal or dir-prefix). Read-only.
 
     Answers "which node owns this path?" — the everyday navigation `status` cannot. A pure read over
     the graph: `(hits, note)` where `hits` is `[(cid, status, matched_scope_entry), …]`. It never writes.
+
+    `hits` is ALWAYS complete; `all` widens only the rendered note. Measured on the live bundle,
+    `add-method/tooling/add.py` had 50 owners of which 48 were `done` — 93% of the answer was a
+    list of nodes that had already shipped. The question "who owns this file" is answered by the
+    ones still open, so the closed ones are counted and `--all` names itself as the way back
+    (M3 · M4 · R:NOWAYBACK). Only `done` collapses: an archived or reopened node is not settled.
     """
     graph = scan(Path(root))
     hits = []
@@ -2553,8 +2893,13 @@ def locate(root, query: str) -> tuple:
                 break
     if not hits:
         return [], f"no node scopes `{query}`\nnext: add status"
-    lines = [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in hits]
-    return hits, f"{len(hits)} node(s) scope `{query}`:\n" + "\n".join(lines) + "\nnext: add status"
+    listed = hits if all else [h for h in hits if h[1] != "done"]
+    closed = len(hits) - len(listed)
+    parts = [f"{len(hits)} node(s) scope `{query}`:"]
+    parts += [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in listed]
+    if closed:
+        parts.append(f"  … {closed} done owner(s) not listed (`--all`)")
+    return hits, "\n".join(parts) + "\nnext: add status"
 
 
 # The node types that HAVE a beat. Every other type (Spec · Persona · Project · Run)
@@ -2732,7 +3077,17 @@ def status(root, all: bool = False, check: bool = False) -> str:
             return False
         return all or fm.get("status") not in ("done", "dropped")
 
-    shown = sorted((c for c in graph if keep(c)),
+    # A Spec or a Persona carrying no `status:` has no state to BE in — it is a lens, seeded once
+    # and never advanced, and it printed a constant `[—]` row every session. Nine of thirteen rows
+    # on the live bundle were exactly these. They are the bundle's vocabulary, not its board, so
+    # the bare report counts them by type and `--all` still lists every one, unchanged
+    # (M1 · M2 · R:NOWAYBACK). A node that carries a real status is never collapsed (R:HIDDENSTATE).
+    def constant(cid):
+        fm = graph[cid]["fm"] or {}
+        return fm.get("type") in ("Spec", "Persona") and not fm.get("status")
+
+    hidden = [] if all else [c for c in graph if keep(c) and constant(c)]
+    shown = sorted((c for c in graph if keep(c) and c not in set(hidden)),
                    key=lambda c: (ORIENT_RANK.get((graph[c]["fm"] or {}).get("type"), 9), c))
     for cid in shown[:MAX_LINES]:
         fm = graph[cid]["fm"] or {}
@@ -2744,6 +3099,13 @@ def status(root, all: bool = False, check: bool = False) -> str:
         out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] {fm.get('type', '')}")
     if len(shown) > MAX_LINES:
         out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
+    if hidden:
+        tally = {}
+        for c in hidden:
+            t = (graph[c]["fm"] or {}).get("type", "?")
+            tally[t] = tally.get(t, 0) + 1
+        counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
+        out.append(f"  … {counted} carrying no state — not listed (`--all`)")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -3161,24 +3523,6 @@ class Delta(tuple):
                 f"valid_to={self.valid_to!r})")
 
 
-def delta_carried_on(item, date: str) -> bool:
-    """True when `item` was carried on `date`. The interval is CLOSED-CLOSED.
-
-    Both endpoints are inclusive: a delta folded today was still carried today. An absent
-    endpoint is unbounded on that side, so a legacy undated delta is carried on every date and a
-    terminal delta whose close could not be recovered reads as still carried — over-reporting,
-    never losing a lesson. `deltas-time-filters` wires `--as-of` to this predicate rather than
-    re-deriving the boundary.
-    """
-    valid_from = getattr(item, "valid_from", None)
-    valid_to = getattr(item, "valid_to", None)
-    if valid_from and date < valid_from:
-        return False
-    if valid_to and date > valid_to:
-        return False
-    return True
-
-
 def _delta_letter(lens: str) -> str:
     return LENS_ID.get(lens) or (str(lens)[:1].upper() or "X")
 
@@ -3270,6 +3614,19 @@ def _as_date(value):
     return v if ISO_DATE.match(v) else None
 
 
+def delta_address(stem: str, delta_id: str = None) -> str:
+    """One lesson -> the ONE address every reader cites it by. `/specs/<stem>.md#<id>`.
+
+    Both readers call here. They used to compose it apart — `search` at concept grain, `deltas`
+    as a `[ADD X9]` tag that shows the id without making it pasteable — so a reader who found a
+    lesson through the wrong door could not cite what they had just read (X4). A legacy head
+    carries no id, so its address degrades to the FILE it lives in: the coarser grain still
+    resolves, where an empty `#` fragment resolves to nothing.
+    """
+    cid = "/specs/" + str(stem) + ".md"
+    return cid + "#" + str(delta_id) if delta_id else cid
+
+
 def deltas(root, status: str = "open", lens: str = None,
            since: str = None, as_of: str = None) -> tuple:
     """List every delta at `status` across the five specs. `(items, note)`.
@@ -3354,7 +3711,14 @@ def deltas(root, status: str = "open", lens: str = None,
         rendered.append(f"{status} deltas ({len(items)}){active}:")
         # The address leads beside the competency so a reader can cite a lesson without opening
         # the file; the raw four-field head would push the lesson itself off the line.
-        rendered += [f"  · [{i[1]}{' ' + i.id if i.id else ''}] {i[0]}: {i[2]}" for i in items]
+        # The address, not a `[ADD X9]` tag: the tag showed the id, this one can be pasted
+        # into a `relations:` target. The competency letter is dropped as redundant — the path
+        # already names the lens it stood for (X4).
+        # Windowed through the SAME path `search` uses (R:SECONDWINDOW). These two verbs render
+        # identical records; one was bounded and tested at 300 characters a line and the other
+        # was bounded by nothing, at 409 bytes a row against 169. The ADDRESS is emitted whole:
+        # it is the way back to the full text, which `show <lens>#<id>` now reads in ~600 bytes.
+        rendered += [f"  · {delta_address(i[0], i.id)}  {_snippet(i[2], '')}" for i in items]
         rendered.append("next: at close, fold or reject each (loop.md)")
     else:
         rendered.append(f"no {status} deltas{active}")
@@ -3453,8 +3817,27 @@ def _snippet(text, query: str) -> str:
     return ("\u2026" if start else "") + flat[start:end] + ("\u2026" if end < len(flat) else "")
 
 
-def search(root, query: str, as_of: str = None) -> tuple:
-    """Every concept in the bundle matching `query`. `(hits, note)`. Read-only, never writes.
+def _filter_pass(fm: dict, want_type, status, milestone) -> bool:
+    """True when a node satisfies every node-scoped filter that was actually given.
+
+    An ABSENT `status:` matches no `--status` value. Measured on the live bundle: 135 of 220
+    nodes carry none, so treating absent as a wildcard would return most of the bundle for
+    every status query.
+    """
+    if want_type and fm.get("type") != want_type:
+        return False
+    if status and str(fm.get("status") or "") != str(status):
+        return False
+    if milestone and _wave_slug(fm.get("milestone")) != _wave_slug(milestone):
+        return False
+    return True
+
+
+def search(root, query: str = None, as_of: str = None,
+           type: str = None, status: str = None, milestone: str = None) -> tuple:
+    """Every concept in the bundle matching `query`, narrowed by the node-scoped filters.
+
+    `(hits, note)`. Read-only, never writes.
 
     `hits` is `[(address, field, snippet), ...]` under a TOTAL order, so two runs over an
     unchanged bundle emit byte-identical output. `hits is None` marks a REFUSAL and only a
@@ -3469,10 +3852,27 @@ def search(root, query: str, as_of: str = None) -> tuple:
     """
     root = Path(root)
     q = str(query or "").strip()
-    if not q:
+    picked = {k: v for k, v in (("type", type), ("status", status),
+                                ("milestone", milestone)) if v}
+
+    # The taxonomy check comes FIRST, ahead of every other rung. A `--type` typo that fell
+    # through would answer zero hits, and zero hits reads as "nothing matches" rather than as
+    # "you asked for a type that does not exist" — the shape that let an unrecognised
+    # `sensitivity:` degrade to the lowest authority floor (M24).
+    want_type = None
+    if type:
+        want_type = next((t for t in ABF_TYPES if t.lower() == str(type).strip().lower()), None)
+        if want_type is None:
+            # The separator is hoisted OUT of the expression part: py3.10 forbids a backslash
+            # there, and this engine's declared floor is 3.10 (SDD S7).
+            taxonomy = " \u00b7 ".join(ABF_TYPES)
+            return None, (f'`{type}` is not an ADD node type -> "R:UNKNOWNTYPE"'
+                          f"\n  the taxonomy: {taxonomy}"
+                          "\nnext: add search --type Task")
+    if not q and not picked:
         return None, ('an empty query is contained in every string, so it would answer with the '
                       'whole bundle -> "R:EMPTYQUERY"'
-                      "\nnext: add search <term>")
+                      "\nnext: add search <term>   # or narrow with --type / --status / --milestone")
     # R:TODAYFALLBACK — validated HERE, before the delegation, so the refusal names the verb the
     # operator ran. Falling back to today would answer a question nobody asked.
     if as_of is not None and _as_date(as_of) is None:
@@ -3484,24 +3884,48 @@ def search(root, query: str, as_of: str = None) -> tuple:
     # (tier, status, -date, cid, address, field, snippet, dated) — every tie broken, so the
     # listing is diffable and no dict or set order can reach the output.
     found = []
-    for rank, status in enumerate(DELTA_STATUSES):
-        for item in deltas(root, status=status, as_of=as_of)[0]:
-            if needle not in item[2].lower():
+    # A delta carries no `type:` and no `milestone:`, and its open/folded/rejected vocabulary is
+    # NOT the node lifecycle — so a node-scoped filter cannot judge one. They are excluded, and
+    # the count is carried to the note: an unreported exclusion reports a smaller number, and a
+    # smaller number reads as success (R:SILENT_DROP).
+    excluded = 0
+    for rank, delta_status in enumerate(DELTA_STATUSES):
+        for item in deltas(root, status=delta_status, as_of=as_of)[0]:
+            # The id is an ADDITIONAL matchable field, never a replacement: a lesson must be
+            # findable by the address it is cited at, and text queries must keep working (A3).
+            if not needle or not (needle in item[2].lower()
+                                  or (item.id and needle == item.id.lower())):
                 continue
-            cid = f"/specs/{item[0]}.md"
+            if picked:
+                excluded += 1
+                continue
+            cid = delta_address(item[0])
             # A legacy head carries no id, so its address degrades to the file it lives in —
             # shown at the coarser grain rather than dropped from the index.
-            address = f"{cid}#{item.id}" if item.id else cid
+            address = delta_address(item[0], item.id)
             found.append((0, rank,
                           -int(item.valid_from.replace("-", "")) if item.valid_from else 0,
-                          cid, address, f"delta:{status}", _snippet(item[2], q),
+                          cid, address, f"delta:{delta_status}", _snippet(item[2], q),
                           bool(item.valid_from)))
 
     for cid, node in scan(root).items():
         fm = node["fm"] or {}
         # A receipt is evidence, not a concept; `index.md`/`log.md` are COMPILED from the nodes
         # and would double every title hit.
-        if fm.get("type") == "Run" or cid.lstrip("/") in NOT_A_NODE:
+        # A receipt is evidence, not a concept — but an EXPLICIT `--type Run` is not the
+        # blanket free-text case this exclusion was written for, and answering zero to a
+        # request naming a real taxonomy member is R:HIDDENTYPE.
+        if (fm.get("type") == "Run" and want_type != "Run") or cid.lstrip("/") in NOT_A_NODE:
+            continue
+        if not _filter_pass(fm, want_type, status, milestone):
+            continue
+        if not needle:
+            # A filter-only ask: the NODE is the hit. There is no matched text to window, so
+            # the snippet is the node's own title.
+            label = fm.get("title")
+            shown = "" if label is None or _is_template(label) else str(label)
+            found.append((1, 0, 0, cid, cid, str(fm.get("type") or "node"),
+                          _snippet(shown, "") if shown else "\u2014", False))
             continue
         for field in SEARCH_FIELDS:
             value = fm.get(field)
@@ -3519,22 +3943,142 @@ def search(root, query: str, as_of: str = None) -> tuple:
     found.sort(key=lambda h: h[:7])
     hits = [(h[4], h[5], h[6]) for h in found]
     active = f" \u00b7 as of {as_of}" if as_of else ""
+    sep = " \u00b7 "
+    shown_ask = f'"{q}"' if q else sep.join(f"--{k} {v}" for k, v in picked.items())
     if not hits:
-        return [], (f'no hit for "{q}"{active}'
+        # A typo and an empty slice must not look identical (A12). Naming the statuses the
+        # bundle actually holds is what tells the two apart without a second command.
+        seen = sorted({str((n["fm"] or {}).get("status")) for n in scan(root).values()
+                       if (n["fm"] or {}).get("status")})
+        listed = sep.join(seen)
+        where = f"\n  statuses in this bundle: {listed}" if status and seen else ""
+        return [], (f'no hit for {shown_ask}{active}{where}'
                     "\nnext: add deltas   # the whole carried inventory, unfiltered")
     width = max(len(h[0]) for h in hits)
     fwidth = max(len(h[1]) for h in hits)
-    lines = [f"{len(hits)} hit{'s' if len(hits) != 1 else ''} for \"{q}\"{active}:"]
+    lines = [f"{len(hits)} hit{'s' if len(hits) != 1 else ''} for {shown_ask}{active}:"]
     lines += [f"  \u00b7 {a:<{width}}  {f:<{fwidth}}  {s}" for a, f, s in hits]
+    if excluded:
+        lines.append(f"\u2014 {excluded} delta hit(s) excluded: a node-scoped filter cannot "
+                     f"judge a lesson, which carries no type: or milestone:")
     # A filter that hides what it cannot judge reports a smaller number, and a smaller number
     # reads as success (R:SILENT_DROP). Counted from the hit list, never from `deltas()`.
+    # Suppressed when a filter ran: the deltas it could not judge are already reported above,
+    # and every surviving hit is a node hit, so the line would count the same removal twice.
     free = sum(1 for h in found if not h[7])
-    if as_of and free:
+    if as_of and free and not picked:
         lines.append(f"\u2014 {free} hit(s) carry no validity interval (node frontmatter, CARD "
                      f"goals, and legacy undated deltas): --as-of cannot judge them and does "
                      f"not hide them")
     lines.append("next: cite an address above as a relations: target, or add deltas --lens <lens>")
     return hits, "\n".join(lines)
+
+
+# ================================== the machine surface — one envelope, both read verbs (S1-S4)
+#
+# `show` and `search` are the two doors a machine reads this bundle through. Both answered only
+# in prose until now, so a consumer had to parse a human render and was coupled to wording no
+# test pinned. What follows is the second render of the SAME answer — never a second read.
+#
+# The envelope is `results[] + edges[]` because that is the one shape both verbs fit: `show` is
+# one node plus its walk, `search` is N hits and no walk. A later verb returning both fits
+# without a third shape, and `search` carries `edges: []` rather than omitting the key, so a
+# consumer indexes one shape (A10).
+#
+# The engine version is DELIBERATELY absent. A payload that carried it would change bytes every
+# release, breaking a consumer's pin for no semantic reason; `JSON_SCHEMA` moves only when the
+# schema does (M7).
+
+JSON_SCHEMA = "add.read/1"
+
+
+def read_payload(verb: str, request: dict, ok: bool, note: str,
+                 results=(), edges=()) -> dict:
+    """The ONE envelope every machine read emits — and the only place its keys are named.
+
+    Both adapters call here. Naming the keys twice is exactly the drift `one-address-per-concept`
+    cost a task to undo, one level up (R:TWOSHAPES).
+
+    A request entry whose value is `None` is dropped: the echo says what was ASKED, and a flag
+    nobody typed was not part of the ask.
+    """
+    return {
+        "schema": JSON_SCHEMA,
+        "verb": verb,
+        "ok": bool(ok),
+        "request": {k: v for k, v in dict(request).items() if v is not None},
+        "results": [dict(r) for r in results],
+        "edges": [dict(e) for e in edges],
+        "note": note or "",
+    }
+
+
+def as_json(payload: dict) -> str:
+    """The one serializer. Sorted keys, two-space indent, one trailing newline, no escaping.
+
+    `sort_keys` is what makes M2 hold: without it a dict that happened to be built in a different
+    order emits different bytes, and that failure is INTERMITTENT — the worst way to fail.
+    `ensure_ascii=False` keeps a node's own text readable rather than shipping it as escapes.
+    """
+    return json.dumps(payload, sort_keys=True, ensure_ascii=False, indent=2) + "\n"
+
+
+def _fields(fm: dict) -> dict:
+    """A node's frontmatter as the payload carries it — copied AS IT STANDS.
+
+    An absent key stays absent rather than becoming `null`: a key present in the payload means a
+    key present in the file, which is the only way a consumer can tell an unauthored slot from
+    an authored empty one (A9).
+    """
+    return {k: v for k, v in dict(fm or {}).items()}
+
+
+def show_payload(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """`show`, rendered for a machine. `(payload, exit_code)`.
+
+    Built AFTER the verb answers, from what it returned — never a second traversal, so the JSON
+    and the prose can never describe different reads of the bundle (A7).
+    """
+    request = {"ref": ref, "expand": expand}
+    view, note = show(root, ref, expand)
+    if view is None:
+        return read_payload("show", request, False, note), 1
+    # `match` — what in the concept answered the ask. NOT `kind`: the engine already spends that
+    # word on the receipt-evidence ladder, and one word for two vocabularies is a collision a
+    # guard cannot see through (it read this literal as a receipt kind the docs never named).
+    results = [{"address": view["cid"], "cid": view["cid"], "match": "node",
+                "fields": _fields(view["fm"]), "text": view["body"]}]
+    edges = [{"depth": d, "direction": direction, "family": family, "label": label,
+              "origin": origin, "src": src, "ref": ref_, "target": target}
+             for d, direction, family, label, origin, src, ref_, target in view["rows"]]
+    # NOT the human render: that would put prose inside the payload and duplicate the stream a
+    # `--json` caller asked to be free of it (R:DIRTYSTDOUT). A one-line summary instead.
+    summary = f"{view['cid']} \u00b7 {len(edges)} edge(s) within {expand} level(s)"
+    return read_payload("show", request, True, summary, results, edges), 0
+
+
+def search_payload(root, query: str = None, as_of: str = None, type: str = None,
+                   status: str = None, milestone: str = None) -> tuple:
+    """`search`, rendered for a machine. `(payload, exit_code)`.
+
+    `hits is None` is the verb's refusal marker and an empty list is a recorded no-hit outcome
+    (law 3), so a zero-hit search is a SUCCESS with `results: []` — never a refusal (E2).
+
+    A hit's `cid` is its address minus the `#fragment`. `search` already builds that address, and
+    `one-address-per-concept` made the node and delta doors build it the same way, so deriving it
+    here cannot disagree with the verb (A4).
+    """
+    request = {"query": query, "as_of": as_of, "type": type,
+               "status": status, "milestone": milestone}
+    hits, note = search(root, query, as_of=as_of, type=type, status=status, milestone=milestone)
+    if hits is None:
+        return read_payload("search", request, False, note), 1
+    # The VERB's order, unchanged — an adapter that re-sorted would make the two renders
+    # disagree about what came first (A13).
+    results = [{"address": address, "cid": address.split("#")[0], "match": matched,
+                "fields": {}, "text": text} for address, matched, text in hits]
+    summary = f"{len(results)} hit(s)"
+    return read_payload("search", request, True, summary, results), 0
 
 
 # ================================== the covers: binding — evidence that earns its name (e12)
@@ -4220,6 +4764,16 @@ def _flat(value) -> str:
     return str(value)
 
 
+def _placeholder_only(text: str) -> bool:
+    """True when EVERY content line of a resolved section is still `<…>` template scaffold.
+
+    Same exclusion `placeholders_in` makes: a backticked span is code, not a placeholder. An
+    empty section is not scaffold — it is empty, and that is a different silence (A8).
+    """
+    lines = [l for l in str(text).splitlines() if l.strip()]
+    return bool(lines) and all(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", l)) for l in lines)
+
+
 def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
           evidence: list = None) -> dict:
     """Compile the XML brief for one node. Deterministic, budgeted, and self-measuring."""
@@ -4255,8 +4809,9 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
         # not a reference. The suite checked the resolved value and never the id.
         path, _, frag = need.partition("#")
         ident_ref = path.strip("/")[:-3] if path.endswith(".md") else path.strip("/")
-        refs.append((f"{ident_ref}#{frag}" if frag else ident_ref,
-                     None if why == "edge_unresolved" else _flat(value)))
+        flat = None if why == "edge_unresolved" else _flat(value)
+        refs.append((f"{ident_ref}#{frag}" if frag else ident_ref, flat,
+                     flat is not None and _placeholder_only(flat)))
     binds = bind_sections(root)
 
     persona = None
@@ -4328,9 +4883,21 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
                 out.append(f'    <card id="{dcid}">')
                 out += ["      " + l for l in card.splitlines()]
                 out.append("    </card>")
-        for ref, value in refs:
+        for ref, value, unauthored in refs:
             if value is None:
                 out.append(f'    <ref id="{ref}" unresolved="true"/>')
+            elif unauthored:
+                # The section EXISTS and is still the shipped scaffold. Compiling it taught the
+                # worker that `<the first decision that constrains the rest>` was a decision that
+                # binds — five such blocks rode in every brief (filed as /specs/domain.md#D1).
+                # The id stays so the section is still named and still openable (E4 · R:NOWAYBACK);
+                # only the placeholder body goes. A short but REAL body is never touched
+                # (R:PLACEHOLDERLOSS) — every content line must be scaffold to qualify.
+                # The marker carries no prose: `unauthored="true"` reads like its two siblings
+                # (`unresolved` · `omitted`), and a sentence explaining itself in every block
+                # measured LARGER than the one-line scaffold it replaced — a trim that costs
+                # bytes is not a trim.
+                out.append(f'    <ref id="{ref}" unauthored="true"/>')
             else:
                 out.append(f'    <ref id="{ref}" frozen="true">')
                 out += ["      " + l for l in value.splitlines()]
@@ -4339,6 +4906,12 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             rid = f"{scid}#decisions-that-bind"
             if drop_specs:
                 out.append(f'    <ref id="{rid}" omitted="budget"/>')
+            elif _placeholder_only(text):
+                # The measured case (D1): all five seeded specs ship this section as one line of
+                # scaffold, so every brief in a fresh bundle carried five `<ref>` blocks teaching
+                # the worker that a placeholder was a decision that binds. Same rule as the
+                # `needs:` refs above — the id stays, the scaffold body goes.
+                out.append(f'    <ref id="{rid}" unauthored="true"/>')
             else:
                 out.append(f'    <ref id="{rid}">')
                 out += ["      " + l for l in text.splitlines()]
@@ -4399,8 +4972,11 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
 def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
     """Record that the brief ENTERED the build: `act: brief` on a frozen Task. `(digest, note)`.
 
-    The compile itself stays pure (`brief` is read-only and `gate` calls it); THIS is the
-    write, and it is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
+    `brief()` — the FUNCTION — is pure, which is why `gate` may call it; THIS function is the
+    write, and the `cli.py` wrapper for `add brief` calls both, so the VERB writes on a frozen
+    Task even though the compile does not. Saying "`brief` is read-only" without saying which
+    `brief` sent a reviewer to run it against a live bundle during an audit. What is written
+    here is what `gate`'s R:UNBRIEFED refusal reads. Only a frozen Task records an
     entry — before the freeze there is no sealed direction for a brief to enter, and depth
     `quick` never demands one (the gate exempts it), though recording one is harmless.
     """
