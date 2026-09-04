@@ -1,7 +1,7 @@
 ---
 type: Task
 title: A filename that names a node resolves to it, and an ambiguity refusal is bounded
-status: direction
+status: done
 depth: standard
 milestone: walk-truth
 scope:
@@ -19,11 +19,14 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:walk-truth", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:bd115d6c3166394d", binding: "sha256:bd1235c2e1600e93" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:ab36281547583439" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:ab36281547583439" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/ref-resolution-accepts-what-an-operator-types.d/runs/1.md }
+  - { by: "plan:walk-truth", at: 2026-09-04, act: gate, authority: process, outcome: PASS, receipt: /tasks/ref-resolution-accepts-what-an-operator-types.d/runs/1.md, brief: "sha256:2823eb5d657f577c" }
 ---
 ## CARD
 goal: a name an operator actually types resolves, and the refusal that lists alternatives is bounded.
 why: two defects found by review. `resolve_ref` routes anything ending `.md` to the cid branch with no fallback, so `add show okf-graph-lookup.md` refuses a node that exists — and tab-completing a filename is the likeliest way to type it. The refusal asserts something false about the bundle, which is the exact failure the function's own docstring says it was written to end. Separately, the ambiguity refusal lists every candidate uncapped: `add show 1` prints 78 lines and grows with the task count, on a verb whose sibling path is capped precisely so one read cannot cost unbounded context.
-beat: direction · next: add freeze ref-resolution-accepts-what-an-operator-types
+beat: done · next: add status
 
 ## RULES
 <must>
