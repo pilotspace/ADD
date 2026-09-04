@@ -303,14 +303,14 @@ def test_quick_lane_is_unaffected(tmp_path):
 def test_no_new_verb_in_the_cli_surface():
     """covers: R:NEW_VERB — the verb list is unchanged BY THIS TASK.
 
-    Re-aimed 23 -> 24 when `interview` shipped (task freeze-interview). The pin is a
+    Re-aimed 23 -> 24 (interview), 24 -> 25 (search), 25 -> 26 (show). The pin is a
     value, not a ceiling: this check asserts that the authoring-beat work added no verb,
     and a later task legitimately adding one moves the number without weakening that.
     """
     sys.path.insert(0, str(REPO / "tooling"))
     import cli
     verbs = [a.choices.keys() for a in cli.build_parser()._subparsers._group_actions]
-    assert len(list(verbs[0])) == 25, "this task changes what the engine SAYS, never its verb set"
+    assert len(list(verbs[0])) == 26, "this task changes what the engine SAYS, never its verb set"
 
 
 def test_status_frontmatter_vocabulary_is_unchanged(tmp_path):

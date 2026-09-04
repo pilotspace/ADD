@@ -12,7 +12,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
-    search
+    search · show
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -175,6 +175,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("todo", help="the open worklist — active tasks grouped by beat (read-only)")
     s.add_argument("--milestone", help="restrict to one milestone's tasks")
+
+    s = sub.add_parser("show", help="read ONE node whole — its content and its neighbourhood "
+                                    "(read-only)")
+    s.add_argument("ref", help="a bare slug or a full cid; it must name exactly one node")
+    s.add_argument("--expand", type=int, default=add.NEIGHBORHOOD_DEFAULT, metavar="N",
+                   help=f"levels of relationships to walk (default {add.NEIGHBORHOOD_DEFAULT}, "
+                        f"max {add.NEIGHBORHOOD_MAX}) — an N above the max REFUSES rather than "
+                        f"clamping, so a capped read never reports success for a depth nobody "
+                        f"asked for")
 
     s = sub.add_parser("search", help="find a concept anywhere in the bundle — spec hits at "
                                       "LESSON granularity, with a pasteable address (read-only)")
@@ -367,6 +376,12 @@ def dispatch(args, run_cmd) -> int:
         _items, note = add.todo(root, milestone=args.milestone)
         print(note)
         return 0
+
+    if args.verb == "show":
+        view, note = add.show(root, args.ref, args.expand)
+        print(note)
+        # A node with no neighbours is a recorded OUTCOME, not a refusal — only `None` is one.
+        return 0 if view is not None else 1
 
     if args.verb == "search":
         hits, note = add.search(root, args.query, as_of=args.as_of)

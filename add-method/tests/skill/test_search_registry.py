@@ -33,7 +33,10 @@ def test_every_registry_learned_the_search_verb():
     verbs = _verbs()
     assert "search" in verbs, "cli.py: `search` is not a registered subcommand"
     n = len(verbs)
-    assert n == 25, f"the CLI ships {n} verbs; this task lands the 25th — {sorted(verbs)}"
+    # A VALUE, not a ceiling. `search` landed the 25th verb; `show` (task show-verb) landed the
+    # 26th, which moves this number without weakening what the guard checks — that every
+    # registry below is derived from the CLI rather than hand-maintained.
+    assert n == 26, f"the CLI ships {n} verbs; the pin was last re-aimed at `show` — {sorted(verbs)}"
 
     wired = (REPO / "tests" / "engine" / "test_cli.py").read_text(encoding="utf-8")
     block = wired[wired.find("WIRED = {"):wired.find("}", wired.find("WIRED = {"))]

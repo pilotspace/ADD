@@ -143,6 +143,7 @@ add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity sec
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
 add locate <path>                            # which node's scope owns this file
+add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
 add search "<term>" [--as-of <date>]         # any concept — a delta answers with its own address
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
 add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
@@ -151,7 +152,6 @@ add freeze <slug> --by "<name>" --authority human    # the ONE approval → Buil
 add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
 add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
-add done <slug>                              # close after a RISK-ACCEPTED (a PASS gate already did)
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec
 add milestone-done <slug>                    # close a milestone — refuses while a goal box is unchecked
 ```

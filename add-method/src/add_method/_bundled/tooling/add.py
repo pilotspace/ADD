@@ -618,6 +618,90 @@ def neighborhood(graph: dict, cid: str, expand: int = NEIGHBORHOOD_DEFAULT) -> t
                   "\nnext: cite one as a depends_on: or relations: target")
 
 
+def resolve_ref(root, ref: str) -> tuple:
+    """A bare slug or a cid -> EXACTLY one cid. `(cid, note)`; `cid is None` marks a refusal.
+
+    It never best-guesses. `cli._resolve` returns `/tasks/<ref>.md` for anything it cannot find,
+    which hands the engine a cid that does not exist and lets the refusal come from somewhere
+    that cannot name the real problem. Zero matches refuse; several refuse and LIST the
+    candidates, because a reader who typed an ambiguous name needs to see what they collided
+    with, not to be given one of them.
+    """
+    graph = scan(Path(root))
+    text = str(ref or "").strip()
+    nowhere = ("\nnext: add status   # the nodes this bundle actually holds")
+    if not text:
+        return None, 'an empty ref names no node -> "R:NOREF"' + nowhere
+    if "/" in text or text.endswith(".md"):
+        cid = "/" + text.lstrip("/")
+        if cid in graph:
+            return cid, f"`{cid}`"
+        return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+    matches = sorted(c for c in graph if c.rsplit("/", 1)[-1] == f"{text}.md")
+    if len(matches) == 1:
+        return matches[0], f"`{matches[0]}`"
+    if not matches:
+        return None, f'`{text}` names no node in this bundle -> "R:NOSUCHNODE"' + nowhere
+    listed = "\n".join(f"  \u00b7 {m}" for m in matches)
+    return None, (f'`{text}` names {len(matches)} nodes, and a read must not choose one of them '
+                  f'-> "R:GUESS"\n{listed}'
+                  f"\nnext: add show {matches[0]}   # name one of the cids above")
+
+
+def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
+    """One node read WHOLE, with its neighbourhood. `(view, note)`. Read-only, never writes.
+
+    `view is None` marks a REFUSAL and only a refusal. The view carries `cid`, `fm`, `body` and
+    `rows` — the node's own content plus `neighborhood()`'s rows — so a caller renders it without
+    re-reading the file.
+
+    The depth is validated FIRST, before the ref is resolved, so an over-cap request is refused
+    by the flag the operator actually typed rather than by whatever the walk did with it. The
+    cap REFUSES; it never clamps. A clamp reports success for a question nobody asked, which is
+    the failure shape this whole milestone is built to avoid.
+    """
+    if expand > NEIGHBORHOOD_MAX:
+        return None, (f'--expand {expand} is past the ceiling of {NEIGHBORHOOD_MAX} — a walk is '
+                      f'capped so one read cannot cost unbounded context -> "R:DEPTHCAP"'
+                      f"\nnext: add show {ref} --expand {NEIGHBORHOOD_MAX}")
+    if expand < 0:
+        return None, (f'--expand {expand} is not a depth -> "R:DEPTHCAP"'
+                      f"\nnext: add show {ref} --expand {NEIGHBORHOOD_DEFAULT}")
+
+    cid, note = resolve_ref(root, ref)
+    if cid is None:
+        return None, note
+
+    graph = scan(Path(root))
+    node = read(graph[cid]["path"], "T2")
+    rows, _walk = neighborhood(graph, cid, expand)
+    view = {"cid": cid, "fm": node["fm"] or {}, "body": node["body"] or "", "rows": rows or []}
+
+    fm = view["fm"]
+    dash, dot, down, up = "\u2014", "\u00b7", "\u2193", "\u2191"
+    head = f" {dot} ".join(str(fm[k]) for k in ("type", "depth", "sensitivity") if fm.get(k))
+    status = fm.get("status") or dash
+    lines = [f"{cid}  [{status}]  {head}".rstrip(), ""]
+    lines.append(view["body"].rstrip())
+    if view["rows"]:
+        lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
+                      f"{up} declared elsewhere):"]
+        width = max(len(r[3]) for r in view["rows"])
+        for depth, direction, family, label, src, _ref, target in view["rows"]:
+            arrow = down if direction == "out" else up
+            other = target if direction == "out" else src
+            mark = "" if family == "edge" else "  (relation)"
+            state = (graph.get(other or "", {}).get("fm") or {}).get("status")
+            shown = other or f"{dash} unresolved"
+            tag = f"  [{state}]" if state else ""
+            lines.append(f"  {depth} {arrow} {label:<{width}}  {shown}{tag}{mark}")
+        lines.append(f"{dash} {len(view['rows'])} edge(s) within {expand} level(s)")
+    else:
+        lines += ["", f"related: none within {expand} level(s)"]
+    lines.append(f"next: add show {cid} --expand 1   # the immediate neighbours only")
+    return view, "\n".join(lines)
+
+
 def _delta_ids(body: str) -> dict:
     """`{delta id: the whole line}` — §3.3's THIRD fragment form, read from a node's own body.
 

@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "21e6cddadf2c1d07801150b81c3a4e1b"  # re-aimed @ graph-neighborhood: the bounded, cycle-safe walk over both edge families in both directions, edge-deduped and totally ordered. prior: ab061abf… @ milestone-membership-is-an-edge
+ENGINE_MD5 = "1233edd039359486a18949cd179f015a"  # re-aimed @ show-verb: resolve_ref + show — one node read whole with its neighbourhood. prior: 21e6cdda… @ graph-neighborhood
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "b0b2e035d324bd002b369dad713438ec"  # re-aimed @ search-verb: cli gains the search subcommand and its --as-of flag. prior: bf115355… @ deltas-time-filters
+ENGINE_PKG_MD5 = "2e121964e901db21c4a40d68e63f49ac"  # re-aimed @ show-verb: cli gains the show subcommand and its --expand flag. prior: b0b2e035… @ graph-neighborhood
