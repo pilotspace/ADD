@@ -315,6 +315,15 @@ underscores or hyphens — so a fragment the delta grammar rejects is not a conc
 
 It is third, not first, so that a reference that resolves today keeps resolving the same way.
 
+A concept address is **readable**, not merely citable. A reader that accepts a node cid MUST also
+accept `<file>#<id>` and answer with the concept that id names — its text, its status and its
+interval — rather than with the file that holds it. The two are different promises, and only
+stating the second makes it one: for a period this format defined the address, printed it from
+two verbs, told the reader to cite it, and had no verb that could read it back, so the only way
+to see one lesson was to read a file holding thirty. A fragment naming no concept **refuses** and
+names both halves it checked; it never falls back to the file, which would answer a different
+question and read as success.
+
 The forms are **not** disjoint and no reader should assume they are: a delta id is a letter
 followed by letters, digits, underscores or hyphens, so a lower-case id such as `zz` can equal a
 heading slug. What makes resolution single-valued is the **ladder**, not the alphabet — the first

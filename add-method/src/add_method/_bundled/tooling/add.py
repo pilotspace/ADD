@@ -645,6 +645,26 @@ def resolve_ref(root, ref: str) -> tuple:
     nowhere = ("\nnext: add status   # the nodes this bundle actually holds")
     if not text:
         return None, 'an empty ref names no node -> "R:NOREF"' + nowhere
+    # A CONCEPT address. `deltas` and `search` both print `/specs/<lens>.md#<id>` and both tell
+    # the reader to cite it; until this branch nothing could read it back, so the only way to see
+    # one lesson was to read the file holding thirty of them (R:WHOLESPEC).
+    if "#" in text:
+        file_part, _, frag = text.partition("#")
+        file_cid = "/" + file_part.lstrip("/")
+        # The FILE first: an unreadable path is a path error, and reporting it as a missing
+        # lesson would name the wrong half of the address (A4).
+        if file_cid in graph and file_cid.startswith("/specs/") and frag:
+            lens = file_cid.rsplit("/", 1)[-1][:-3]
+            named = [i for s in DELTA_STATUSES for i in deltas(root, status=s)[0]
+                     if i[0] == lens and i.id == frag]
+            if len(named) == 1:
+                return f"{file_cid}#{frag}", f"`{file_cid}#{frag}`"
+            if not named:
+                return None, (f'`{frag}` names no lesson in `{file_cid}` -> "R:NOSUCHNODE"'
+                              f"\nnext: add deltas --lens {lens}   # the lessons it does hold")
+            return None, (f'`{frag}` names {len(named)} lessons in `{file_cid}`, and a read '
+                          f'must not choose one of them -> "R:IDCOLLIDE"'
+                          f"\nnext: add deltas --lens {lens}   # disambiguate by hand")
     if "/" in text or text.endswith(".md"):
         cid = "/" + text.lstrip("/")
         if cid in graph:
@@ -673,6 +693,41 @@ def resolve_ref(root, ref: str) -> tuple:
                   f"\nnext: add show {matches[0]}   # name one of the cids above")
 
 
+def _show_lesson(root, graph: dict, address: str, expand: int) -> tuple:
+    """One LESSON read whole. `(view, note)` — the same shape `show` returns for a node.
+
+    A lesson is a concept the bundle addresses (§3.3) but does not store as a file, so the view
+    carries its parsed head as `fm` and its text as `body`. Its `rows` are the typed relations
+    declared BY it, ordered by `neighborhood` so two reads are byte-identical.
+    """
+    file_cid, _, frag = address.partition("#")
+    lens = file_cid.rsplit("/", 1)[-1][:-3]
+    item = next(i for s in DELTA_STATUSES for i in deltas(root, status=s)[0]
+                if i[0] == lens and i.id == frag)
+    status = next(s for s in DELTA_STATUSES
+                  if any(j.id == frag and j[0] == lens for j in deltas(root, status=s)[0]))
+    fm = {"type": "Lesson", "lens": lens, "status": status, "competency": item[1]}
+    if item.valid_from:
+        fm["valid_from"] = item.valid_from
+    if item.valid_to:
+        fm["valid_to"] = item.valid_to
+    rows = [r for r in (neighborhood(graph, file_cid, expand)[0] or [])
+            if r[2] == "relation" and r[4] == address]
+
+    dash, dot, down = "\u2014", "\u00b7", "\u2193"
+    head = f" {dot} ".join(str(fm[k]) for k in ("type", "lens", "competency") if fm.get(k))
+    span = f"  {fm.get('valid_from', dash)}" + (f" \u2192 {fm['valid_to']}" if fm.get("valid_to") else "")
+    lines = [f"{address}  [{status}]  {head}{span}".rstrip(), "", item[2], ""]
+    if rows:
+        lines.append(f"related (depth {expand}):")
+        lines += [f"  {r[0]} {down} {r[3]}  {r[7] or (dash + ' unresolved')}" for r in rows]
+    else:
+        lines.append(f"related: none within {expand} level(s)")
+    lines.append(f"next: add deltas --lens {lens}   # the rest of this lens")
+    view = {"cid": address, "fm": fm, "body": item[2], "rows": rows}
+    return view, "\n".join(lines)
+
+
 def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     """One node read WHOLE, with its neighbourhood. `(view, note)`. Read-only, never writes.
 
@@ -698,6 +753,8 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
         return None, note
 
     graph = scan(Path(root))
+    if "#" in cid:
+        return _show_lesson(root, graph, cid, expand)
     node = read(graph[cid]["path"], "T2")
     rows, _walk = neighborhood(graph, cid, expand)
     view = {"cid": cid, "fm": node["fm"] or {}, "body": node["body"] or "", "rows": rows or []}
@@ -3780,7 +3837,10 @@ def search(root, query: str = None, as_of: str = None,
     excluded = 0
     for rank, delta_status in enumerate(DELTA_STATUSES):
         for item in deltas(root, status=delta_status, as_of=as_of)[0]:
-            if not needle or needle not in item[2].lower():
+            # The id is an ADDITIONAL matchable field, never a replacement: a lesson must be
+            # findable by the address it is cited at, and text queries must keep working (A3).
+            if not needle or not (needle in item[2].lower()
+                                  or (item.id and needle == item.id.lower())):
                 continue
             if picked:
                 excluded += 1
