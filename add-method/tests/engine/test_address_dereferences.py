@@ -115,3 +115,18 @@ def test_format_states_the_address_resolves():
         "§3.3 defines the concept address without promising a reader can READ IT BACK"
     assert "never falls back to the file" in s33, \
         "§3.3 does not state that a missing fragment refuses rather than degrading"
+
+
+def test_only_a_spec_delta_id_is_a_concept_fragment(bundle):
+    """A2 — `#card` is a SECTION, not a concept, and must not be read as a lesson.
+
+    `search` emits `{cid}#card` for a CARD goal hit and `{cid}#{id}` for a delta. Only the second
+    names a concept; treating every fragment as a lesson id would resolve `#card` to a lesson
+    that does not exist.
+    """
+    view, note = add.show(bundle, "/tasks/t-one.md#card", 1)
+    assert view is None, "a `#card` section fragment was read as a lesson"
+    assert "next:" in note, f"the refusal names no fix:\n{note}"
+    # Floor: the SAME node without the fragment resolves, so the refusal is about the fragment.
+    assert add.show(bundle, "/tasks/t-one.md", 1)[0] is not None, \
+        "the floor failed: the node itself does not resolve, so this proves nothing"

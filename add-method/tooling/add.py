@@ -3664,7 +3664,11 @@ def deltas(root, status: str = "open", lens: str = None,
         # The address, not a `[ADD X9]` tag: the tag showed the id, this one can be pasted
         # into a `relations:` target. The competency letter is dropped as redundant — the path
         # already names the lens it stood for (X4).
-        rendered += [f"  · {delta_address(i[0], i.id)}  {i[2]}" for i in items]
+        # Windowed through the SAME path `search` uses (R:SECONDWINDOW). These two verbs render
+        # identical records; one was bounded and tested at 300 characters a line and the other
+        # was bounded by nothing, at 409 bytes a row against 169. The ADDRESS is emitted whole:
+        # it is the way back to the full text, which `show <lens>#<id>` now reads in ~600 bytes.
+        rendered += [f"  · {delta_address(i[0], i.id)}  {_snippet(i[2], '')}" for i in items]
         rendered.append("next: at close, fold or reject each (loop.md)")
     else:
         rendered.append(f"no {status} deltas{active}")

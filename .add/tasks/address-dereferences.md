@@ -1,7 +1,7 @@
 ---
 type: Task
 title: An address a verb prints is an address a verb can read back
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: read-cost
@@ -23,11 +23,17 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:read-cost", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:b98a67a887e0c787", binding: "sha256:bd1235c2e1600e93" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:c6dccb042df9309b" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:c6dccb042df9309b" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/address-dereferences.d/runs/1.md }
+  - { by: "plan:read-cost", at: 2026-09-04, act: refreeze, authority: plan, direction: "sha256:02de914fc6438996", binding: "sha256:bd1235c2e1600e93" }
+  - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:68388e416daf6498" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/address-dereferences.d/runs/2.md }
+  - { by: "plan:read-cost", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/address-dereferences.d/runs/2.md, brief: "sha256:68388e416daf6498" }
 ---
 ## CARD
 goal: the address every verb tells a reader to cite is an address a verb can read back.
 why: `deltas` and `search` both print `/specs/method.md#M33` and both tell the reader to cite it. `add show /specs/method.md#M33` refuses `R:NOSUCHNODE`, and `add search M33` reports no hit — though M33 is in that file and `deltas` just listed it. So the only way to read one lesson in full is a 12,762-byte whole-spec read. This is X4 one level up: X4 made the two doors agree on how to WRITE the address; nothing made it resolvable. It is also the precondition for windowing `deltas` — truncating a listing whose full text costs 12.7 KB to recover would make the tool worse, so this lands first and alone.
-beat: direction · next: add freeze address-dereferences
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -82,6 +88,7 @@ strategy: write the paste-the-address check FIRST, driving the exact string `del
 - test_free_text_search_is_unchanged · covers: A3, E5 · a text query returns what it returned before the id was indexed
 - test_a_lesson_shows_its_relations · covers: A9, E4, A7 · a lesson's typed relations appear, ordered, and an unlinked lesson shows an empty section
 - test_format_states_the_address_resolves · covers: M6, A5, A11 · FORMAT says resolvable, not merely citable
+- test_only_a_spec_delta_id_is_a_concept_fragment · covers: A2 · a `#card` section fragment is not read as a lesson
 red-first: every check MUST fail first.
 
 ## EVIDENCE
