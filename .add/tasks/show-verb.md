@@ -1,7 +1,7 @@
 ---
 type: Task
 title: add show reads one node whole, with its neighbourhood to three levels
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: okf-graph-lookup
@@ -33,11 +33,13 @@ generated: { by: add/3.4.0, at: 2026-09-04 }
 verified:
   - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: freeze, authority: plan, direction: "sha256:97b2e41549f8e8e8", binding: "sha256:bbab0c662dde5a9e" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:c510fe7e3c4db1c4" }
+  - { by: "process:run", at: 2026-09-04, act: run, authority: process, outcome: PASS, receipt: /tasks/show-verb.d/runs/1.md }
+  - { by: "plan:okf-graph-lookup", at: 2026-09-04, act: gate, authority: plan, outcome: PASS, receipt: /tasks/show-verb.d/runs/1.md, brief: "sha256:971f2649bc52b30b" }
 ---
 ## CARD
 goal: `add show <slug>` returns a milestone or task whole — its full content and its relationships to three levels — as one bounded, read-only command.
 why: nothing in the engine reads a node. `search` returns an address and a 96-character snippet; `brief` returns a phase-scoped prompt, not the node. An agent that wants a task's contract still `cat`s the file: outside the engine, unbounded, and with no relationships attached. `neighborhood()` now exists and has no caller, and `NEIGHBORHOOD_MAX` ships with no runtime reader — this verb is where both stop being dead surfaces.
-beat: direction · next: add freeze show-verb
+beat: done · next: add status
 
 ## RULES
 <must>
