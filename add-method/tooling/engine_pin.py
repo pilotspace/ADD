@@ -20,4 +20,4 @@ this file only ever holds the newest pointer.
 ENGINE_MD5 = "688a528817924563acb89f5003a9c74d"  # re-aimed @ a-roadmap-reads-as-a-roadmap: status rows and the show header carry the authored title, the headline names the scaffold count, new gains --goal (into the CARD) and refuses an unknown field. prior: one-oracle-one-truth
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "51a23ee5d162e48817860fdeaf5b3ac3"  # re-aimed @ deltas-drain-at-close: two flags on the fold parser
+ENGINE_PKG_MD5 = "c62354e403dd451d2514b5a32cc78524"  # re-aimed @ a-roadmap-reads-as-a-roadmap: `new` gains --goal at the front door. prior: 51a23ee5… @ deltas-drain-at-close

@@ -66,6 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("type", help="Task | Milestone | Persona | … (any case)")
     s.add_argument("slug")
     s.add_argument("--title")
+    s.add_argument("--goal", help="the one-line goal — seeded into the CARD, not frontmatter")
     s.add_argument("--depth", help="quick | standard | deep")
     s.add_argument("--sensitivity")
     s.add_argument("--kind")
@@ -228,7 +229,7 @@ def dispatch(args, run_cmd) -> int:
         return 0
 
     if args.verb == "new":
-        fields = {k: getattr(args, k) for k in ("title", "depth", "sensitivity", "kind", "milestone")
+        fields = {k: getattr(args, k) for k in ("title", "goal", "depth", "sensitivity", "kind", "milestone")
                   if getattr(args, k) is not None}
         if args.scope is not None:
             # `action="append"` makes each occurrence a list entry; commas expand in place,

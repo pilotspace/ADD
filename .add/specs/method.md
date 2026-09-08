@@ -7,12 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 38
+delta_seq: 39
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 0
+open_deltas: 1
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -27,6 +27,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M39 · open · 2026-09-08] A creation verb that accepts any keyword writes data nothing owns: an unrecognised field landed in frontmatter verbatim, indistinguishable from a key the engine reads — refuse the field, and name the verb that owns it (R:GHOSTFIELD) (evidence: add.py new() NEW_FIELDS · a-roadmap-reads-as-a-roadmap)
 - [ADD · M38 · rejected · 2026-09-08→2026-09-08] M31 fired a FOURTH time, on the milestone authored to stop it: E1 was a filled edge asserted by a real check whose covers: named M4 and E2 and not E1, so the gate refused after a full build and three receipts. Knowing the failure and having written the lesson changes nothing at Direction — the refusal has to move to freeze, which is what freeze-binds-what-you-authored exists to do. Until it ships, bind every filled edge from CHECKS as the LAST act of authoring, not the first act of gating. (evidence: /tasks/orientation-sees-carried-work.md — gate refused 'these rules have no reported passing check: E1', repaired by re-freeze + re-brief + receipt 3)
 - [ADD · M37 · rejected · 2026-09-08→2026-09-08] the same placeholder oracle reads two ways: placeholders_in strips code spans before matching PLACEHOLDER at add.py:4311/4331/4380/4591, but the milestone EXIT box check at add.py:2717 does not — so a criterion that names an engine token inside backticks freezes as an unauthored template slot. An authored line about the engine cannot be written in the engine's own vocabulary. One oracle, one stripping rule. (evidence: /milestones/loop-that-drains.md · freeze refused 'still a scaffold: ## EXIT criteria' on 10 authored criteria naming E-numbered and A-numbered ids in backticks)
 - [ADD · M36 · folded · 2026-09-04→2026-09-08] a repaired half is not a repaired edge: walk-truth fixed which lesson DECLARED a relation and left the target end resolving to the file, so the concept graph was declarable and citable but traversable from neither direction — when an edge has two ends, the check must walk from both (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)

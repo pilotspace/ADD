@@ -7,8 +7,8 @@ description: who drives the loop and what it feels like at each beat — the ope
 tags: [operator, listing, refusal, preview]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 9
-open_deltas: 0
+delta_seq: 10
+open_deltas: 1
 ---
 ## Now
 who uses it and what they feel
@@ -20,6 +20,7 @@ who uses it and what they feel
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [UDD · X10 · open · 2026-09-08] A warning that counts is not a warning that names: `doctor` reported 38 scaffolds and `todo` counted them, but no orientation verb rendered the authored `title:`, so a 40-node bundle read as 40 anonymous slugs and the human concluded the tool had missed the work (evidence: yowo PR #16 · a-roadmap-reads-as-a-roadmap)
 - [UDD · X9 · folded · 2026-09-08→2026-09-08] one line over the SKILL.md pin fired FOURTEEN guards across nine files — eleven budget assertions and three prose pins — because every task that ever touched the skill left its own budget check behind. The signal is one bit (over budget) reported fourteen times, and the author reads it as fourteen problems. A budget with one owner needs one guard; a task that wants to assert the budget held should call that guard, not copy it. (evidence: add-method/tests/skill/ — SKILL.md at 177/176 failed 14 tests; at 176 all 245 pass)
 - [UDD · X8 · folded · 2026-09-04→2026-09-08] a trim that explains itself in every instance can cost more than what it removed: the first unauthored="true" marker carried a prose note and measured six bytes LARGER than the one-line scaffold it replaced — the saving only exists if the marker is shorter than the body (evidence: /tasks/output-trims.md)
 - [UDD · X7 · folded · 2026-09-04→2026-09-08] a trim that explains itself in every instance can cost more than what it removed: the first  marker carried a prose note and measured six bytes larger than the one-line scaffold it replaced (evidence: /tasks/output-trims.md)

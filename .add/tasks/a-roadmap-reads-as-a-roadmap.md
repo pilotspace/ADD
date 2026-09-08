@@ -1,7 +1,7 @@
 ---
 type: Task
 title: a roadmap of queued tasks is legible without opening every file
-status: direction
+status: build
 depth: standard
 sensitivity: architecture
 milestone: rules-that-hold-for-us
@@ -18,11 +18,17 @@ gives:
 generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: freeze, authority: plan, direction: "sha256:2078b02dc2d3032f", binding: "sha256:056837997abb52b3" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/1.md }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:50292afa0f2bbf91" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/2.md }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: plan, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/2.md, brief: "sha256:50292afa0f2bbf91" }
+  - { by: loop, at: 2026-09-08, act: reopen, to: build, reason: "M4 named the front door (add new has no --goal) but its check exercised only the library; --goal was never wired into cli.py, so the Must was gated on a surface no planner types" }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: refreeze, authority: plan, direction: "sha256:295588f69ae35eb5", binding: "sha256:056837997abb52b3" }
 ---
 ## CARD
 goal: a bundle of queued tasks says what it is queuing, from `status` alone, without opening one file
 why: a real 40-task roadmap shipped for review with 38 nodes still scaffold. Every engine surface reported it — `doctor` warned 38 times, every `status` row read `[scaffold]`, `todo` said `38 open task(s)` — and the reviewer still concluded the tool had failed, because the ONE field those 40 nodes had authored was their `title:`, and no orientation verb renders it. `search` is the only verb that does. So the roadmap's entire content was invisible, and reading it meant opening forty files. Separately the planner that wrote those titles had nowhere to put the one-line goal it also held: `add new` has no `--goal`, and the library accepts `goal=` and writes it into FRONTMATTER while the CARD keeps its scaffold, leaving two contradicting goal lines in one node.
-beat: direction · next: add freeze a-roadmap-reads-as-a-roadmap
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -73,6 +79,7 @@ strategy: checks red first, including one asserting the status tally and the `do
 - test_status_headline_names_the_scaffold_count · covers: M3, A4, A9, E3 · the headline names the count beside the delta clause, the number equals `doctor`'s `unauthored_node` count, and a fully authored bundle shows no clause
 - test_orientation_stays_t0_and_bounded · covers: R:T2SCAN, R:ROWBLOAT, A6, A14, E2 · the T0 spy sees no read above T0, no row exceeds 100 characters with long titles, and the report gains no line
 - test_show_header_carries_the_title · covers: M2 · the `show` header line names the node's authored title
+- test_the_front_door_takes_the_goal · covers: M4 · `add new --goal` through cli.py argv — the surface a planner actually types, since `add.py` is a library that prints nothing
 - test_new_goal_writes_the_card · covers: M4, R:TWOGOALS, A2, A7, A10, E4 · `--goal` writes the CARD line, the node carries exactly one goal line, and omitting the flag leaves today's scaffold untouched
 - test_new_refuses_a_field_it_does_not_know · covers: M5, R:GHOSTFIELD, A5, A15, E5 · an unrecognised field refuses, no file is written, and the refusal enumerates the accepted set
 - test_a_slot_title_is_not_a_title · covers: M6, A8 · a node whose title is a template slot is treated as untitled by every surface that renders one

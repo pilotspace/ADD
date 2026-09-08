@@ -11,6 +11,7 @@ And the planner that wrote those titles had nowhere to put the one-line goal it 
 leaving one authored goal and one scaffold goal in the same node.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -109,6 +110,22 @@ def test_new_goal_writes_the_card(bundle):
 
     add.new(bundle, "Task", "t-bare", title="No goal passed")   # A10
     assert "goal: <one line>" in (Path(bundle) / "tasks" / "t-bare.md").read_text()
+
+
+def test_the_front_door_takes_the_goal(bundle):
+    """covers: M4 — the planner types `add new --goal`; `add.new(goal=)` is not a front door.
+
+    The library is not the entry point: `add.py` prints nothing and nobody invokes it. A Must
+    about what `add new` accepts is only met when `cli.py` accepts it, so this check goes through
+    the CLI the way a planner does — argv, exit code, and the file that lands.
+    """
+    out = subprocess.run(
+        [sys.executable, str(REPO / "tooling" / "cli.py"), "--root", str(bundle),
+         "new", "Task", "t-cli", "--title", "T", "--goal", "the seeded line"],
+        capture_output=True, text=True)
+    assert out.returncode == 0, f"`add new --goal` refused at the front door:\n{out.stderr}"
+    body = (Path(bundle) / "tasks" / "t-cli.md").read_text()
+    assert "goal: the seeded line" in add.card_of(body.split("---", 2)[2]), body
 
 
 def test_new_refuses_a_field_it_does_not_know(bundle):
