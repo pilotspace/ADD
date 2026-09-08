@@ -7,9 +7,10 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 23
+delta_seq: 24
 relations:
   - Q9 refines /specs/method.md#M21
+open_deltas: 23
 ---
 ## Now
 what counts as proof
@@ -19,6 +20,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q24 · open · 2026-09-08] a guard pinned to `git diff HEAD` measures the WORKING TREE, not the task: test_no_engine_output_was_added asserts its task changed no engine byte, and goes green the moment anything is committed. It reds every unrelated engine build in progress and refuses nothing at the only moment it matters. A scope tripwire must name the commit range it guards, or it is a guard you get past by committing. (evidence: add-method/tests/skill/test_claimed_output_guard.py:369 — red during the orientation-sees-carried-work build, green on the same tree one commit later, engine diff unchanged)
 - [TDD · Q23 · open · 2026-09-04] a hand-mirrored copy with no guard is a copy that is already stale: 25 root book chapters duplicated add-method/docs/, were last synced by a commit named "sync root chapter mirrors", and 7 had drifted a month later — the site never read them, no test checked them, and nothing linked to them. Delete the copy or bind it; mirroring by memory is neither (evidence: /specs/quality.md)
 - [TDD · Q22 · open · 2026-09-04] a skip-floor is sized by the CLAIM, not by the file count: one floor of 2 across engine twins AND pins red the pins on a fresh checkout, because parity needs two files to mean anything while a pin attesting the engine on disk needs only one — reproduce the checkout (hide every gitignored path) instead of guessing the number (evidence: https://github.com/pilotspace/ADD/actions/runs/33861170369)
 - [TDD · Q21 · open · 2026-09-04] a check that reads a gitignored path runs on exactly one machine: two of mine read tmp/ and the two gitignored engine twins, passed locally and failed on both CI pythons — a fresh checkout is the only honest fixture, and an exists-skip needs a FLOOR or skipping everything reads as green (evidence: https://github.com/pilotspace/ADD/actions/runs/33860095067)

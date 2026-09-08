@@ -1,7 +1,7 @@
 ---
 type: Task
 title: status and doctor see carried work; the root is authored
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: loop-that-drains
@@ -21,11 +21,18 @@ generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:loop-that-drains", at: 2026-09-08, act: freeze, authority: plan, direction: "sha256:57650d4da95043ab", binding: "sha256:1273fce507ef8b6a" }
   - { by: "builder", at: 2026-09-08, act: replan, authority: process, note: "A13 put the delta clause on the hidden-nodes tally line; that line only exists when something is HIDDEN, so --all would have dropped the very count it most needs. Both the goal and the clause now ride the title line — A13's stated purpose (no new line in the 20-line budget) is held, its letter is not. Second turn: the counter is seeded open_deltas: 0 by init, not left for the first learn, because absence must mean exactly one thing (this bundle predates the key) or a fresh bundle and an unmigrated one report the same word. test_status_unknown_counter_is_not_zero's absence case now strips the seeded key rather than relying on a fresh bundle to lack it — same two assertions, a fixture that actually produces absence." }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/orientation-sees-carried-work.d/runs/1.md }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:4d8d058e39e8ba3b" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/orientation-sees-carried-work.d/runs/2.md }
+  - { by: "plan:loop-that-drains", at: 2026-09-08, act: refreeze, authority: plan, direction: "sha256:464b131a1dfb9b44", binding: "sha256:1273fce507ef8b6a" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:94567693c3e3d091" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/orientation-sees-carried-work.d/runs/3.md }
+  - { by: "plan:loop-that-drains", at: 2026-09-08, act: gate, authority: plan, outcome: PASS, receipt: /tasks/orientation-sees-carried-work.d/runs/3.md, brief: "sha256:94567693c3e3d091" }
 ---
 ## CARD
 goal: no orientation surface reports zero carried work while lessons are open, and the bundle root stops standing in its own scaffold
 why: 75 lessons are open in this bundle and `status`, `todo` and `doctor` between them report none of them; meanwhile `.add/PROJECT.md` has read `state: initialised` for a month because `upgrade` carried only `title:`, and the `invariants:` key that CLAUDE.md and nine skill lines bind every task to is written by nothing and read by nothing. This task is the instrument the rest of the milestone is measured by, so it ships first and adds no refusal.
-beat: direction · next: add freeze orientation-sees-carried-work
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -82,7 +89,7 @@ strategy: engine first with checks red, then the four-way twin mirror and the `e
 - test_status_unknown_counter_is_not_zero · covers: M2, R:UNKNOWNCLEAN, A10 · a Spec with the key absent, and a Spec with the key set to a non-integer, both render the total as unknown rather than as a number
 - test_status_stays_t0 · covers: R:T2SCAN · the existing tier spy sees no read above T0 while the new clause is produced
 - test_doctor_warns_unauthored_root · covers: M3, R:GREENROOT, A17 · a freshly initialised bundle yields a `unauthored_root` warning against PROJECT.md naming its goal slot, and one against each scaffold Spec
-- test_doctor_reports_and_syncs_delta_drift · covers: M4, E2 · a Spec whose key disagrees with its body files `delta_count_drift`, and `doctor_sync` rewrites the key to the body count
+- test_doctor_reports_and_syncs_delta_drift · covers: M4, E1, E2 · a Spec whose key disagrees with its body files `delta_count_drift`, and `doctor_sync` rewrites the key to the body count
 - test_init_writes_invariants_and_doctor_reads_it · covers: M5, R:DEADKEY, A2 · `init` writes `invariants:` as an empty list, and the key is named by at least one `doctor` code path so no key exists that nothing reads
 - test_upgrade_carries_the_goal · covers: M6, R:CLOBBERGOAL, A6, E5 · a 2.x bundle carrying a goal line lands that goal in the fresh PROJECT.md, and a 2.x bundle with no goal line lands the ordinary placeholder without failing
 - test_learn_and_fold_maintain_the_counter · covers: M7, A7, A3, E3 · `learn` raises the key by one in the same write as the delta line, `fold` lowers it by the number retagged, and only `open` deltas are counted

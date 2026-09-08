@@ -8,6 +8,7 @@ tags: [bundle, node, vocabulary]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 1
+open_deltas: 1
 ---
 ## Now
 what the product must be true about

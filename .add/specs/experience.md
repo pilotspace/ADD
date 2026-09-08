@@ -8,6 +8,7 @@ tags: [operator, listing, refusal, preview]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 8
+open_deltas: 7
 ---
 ## Now
 who uses it and what they feel

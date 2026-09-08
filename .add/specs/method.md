@@ -7,11 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 37
+delta_seq: 38
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
+open_deltas: 36
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -21,6 +22,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M38 · open · 2026-09-08] M31 fired a FOURTH time, on the milestone authored to stop it: E1 was a filled edge asserted by a real check whose covers: named M4 and E2 and not E1, so the gate refused after a full build and three receipts. Knowing the failure and having written the lesson changes nothing at Direction — the refusal has to move to freeze, which is what freeze-binds-what-you-authored exists to do. Until it ships, bind every filled edge from CHECKS as the LAST act of authoring, not the first act of gating. (evidence: /tasks/orientation-sees-carried-work.md — gate refused 'these rules have no reported passing check: E1', repaired by re-freeze + re-brief + receipt 3)
 - [ADD · M37 · open · 2026-09-08] the same placeholder oracle reads two ways: placeholders_in strips code spans before matching PLACEHOLDER at add.py:4311/4331/4380/4591, but the milestone EXIT box check at add.py:2717 does not — so a criterion that names an engine token inside backticks freezes as an unauthored template slot. An authored line about the engine cannot be written in the engine's own vocabulary. One oracle, one stripping rule. (evidence: /milestones/loop-that-drains.md · freeze refused 'still a scaffold: ## EXIT criteria' on 10 authored criteria naming E-numbered and A-numbered ids in backticks)
 - [ADD · M36 · open · 2026-09-04] a repaired half is not a repaired edge: walk-truth fixed which lesson DECLARED a relation and left the target end resolving to the file, so the concept graph was declarable and citable but traversable from neither direction — when an edge has two ends, the check must walk from both (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)
 - [ADD · M35 · open · 2026-09-04] a survey that greps one file is not a measurement: read-cost was planned on ~101 removable lines and the AST plus all four reachable corpora found 17 — size a removal by parsing, and record the correction where the plan can see it (evidence: /tasks/source-dead-code.md)

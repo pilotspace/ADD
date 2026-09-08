@@ -8,6 +8,7 @@ tags: [engine, pins, twins, vendored]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 11
+open_deltas: 11
 ---
 ## Now
 how it is built, and what that forecloses
