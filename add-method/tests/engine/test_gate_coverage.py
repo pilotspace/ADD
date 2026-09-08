@@ -64,13 +64,16 @@ def _repo_with_node(tmp_path, sensitivity, lens=None):
 
     root = tmp_path / ".add"
     add.init(root, "code", "Cov")
-    fields = {"sensitivity": sensitivity, "scope": ["src/service.py"]}
-    if lens:
-        fields.update(lens)
-    cid, _ = add.new(root, "Task", "gated", title="A gated task", depth="standard", **fields)
+    cid, _ = add.new(root, "Task", "gated", title="A gated task", depth="standard",
+                     sensitivity=sensitivity, scope=["src/service.py"])
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    # `advised_by:` is owned by `add advise`, not by `new` (R:GHOSTFIELD) — stamp it the way
+    # that verb does, so the fixture never claims a creation field the engine does not write.
+    raw = add.set_key(n["raw"], "status", "build")
+    for key, value in (lens or {}).items():
+        raw = add.set_key(raw, key, value)
+    add.write(path, f"---\n{raw}\n---\n{TASK_BODY}")
     # The seal, then the brief entry — `gate` refuses a PASS on a node that was never
     # frozen (R:UNSEALED), so a fixture that skips the one approval tests no real path.
     _interview_all(root, cid)

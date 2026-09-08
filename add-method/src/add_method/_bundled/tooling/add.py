@@ -790,7 +790,11 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     dash, dot, down, up = "\u2014", "\u00b7", "\u2193", "\u2191"
     head = f" {dot} ".join(str(fm[k]) for k in ("type", "depth", "sensitivity") if fm.get(k))
     status = fm.get("status") or dash
-    lines = [f"{cid}  [{status}]  {head}".rstrip(), ""]
+    # The title rides the header: `show` named the cid, the beat and the type, and the one thing
+    # a reader actually wants — what this node is FOR — was only in the CARD, or missing when the
+    # CARD was still scaffold.
+    titled = _title_of(fm)
+    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip(), ""]
     lines.append(view["body"].rstrip())
     if view["rows"]:
         lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
@@ -2078,9 +2082,27 @@ def _explore_body(scaffold: str) -> str:
         "\n## LESSONS\n")
 
 
+# Everything `new` may be handed. `fm.update(fields)` used to let ANY keyword through into
+# frontmatter, where it reads as authored data that nothing wrote and no reader consumes
+# (R:GHOSTFIELD) — `goal=` was the live instance: accepted, sorted neatly into the key order,
+# and leaving the node with one authored goal in frontmatter and one scaffold goal in its CARD.
+# The scalar slots this verb owns, PLUS every edge key from the one registry that defines them —
+# derived, never a second list (a copied set drifts the moment a key is added, which is the
+# `covers:` two-grammar shape one layer up).
+NEW_FIELDS = ("title", "goal", "depth", "kind", "sensitivity", "scope", "gives", "persona",
+              "vibe", "flow", "task-kinds", "use-when", "not-when", "description",
+              "sources") + EDGE_KEYS
+
+
 def new(root, node_type: str, slug: str, **fields) -> tuple:
     """Create a typed node. A colliding slug reports and writes nothing (R:DUPSLUG)."""
     root = Path(root)
+    unknown = sorted(k for k in fields if k not in NEW_FIELDS)
+    if unknown:
+        return None, (f"`new` does not write {', '.join(unknown)} — an unrecognised field would "
+                      f'land in frontmatter as data nothing wrote -> "R:GHOSTFIELD"'
+                      f"\nnext: pass one of {' · '.join(NEW_FIELDS)}, or set it after creation "
+                      f"with the verb that owns it")
     rel = f"{TYPE_DIR.get(node_type, 'tasks')}/{slug}.md"
     path = root / rel
     # Bundle-wide, not per-directory. `run` writes to `tasks/{slug}.d/runs` and `latest_receipt`
@@ -2124,6 +2146,10 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "vibe", "flow",
              "task-kinds", "use-when", "not-when", "description", "sources",
              "milestone", "scope", "gives"]
+    # The CARD is where every reader and every guard looks for a goal, so that is where a seeded
+    # goal goes — never frontmatter, which would leave the node carrying two (R:TWOGOALS). The
+    # planner holds this one line at creation and had nowhere to put it until now.
+    seeded_goal = fields.pop("goal", None)
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
         fm["status"] = "direction"
@@ -2180,6 +2206,8 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # the CARD scaffold carries a `{slug}` marker for the created node's own slug — substitute it,
     # or every new task ships an unexpanded placeholder in its `next:` affordance.
     scaffold = BODIES.get(node_type, "## CARD\ngoal: <one line>\n").replace("{slug}", slug)
+    if seeded_goal:
+        scaffold = scaffold.replace("goal: <one line>", f"goal: {_oneline(seeded_goal)}", 1)
     if node_type == "Task" and str(fm.get("kind") or "") == "explore":
         scaffold = _explore_body(scaffold)
     write(path, "---\n" + "\n".join(lines) + "\n---\n" + scaffold)
@@ -3124,6 +3152,19 @@ def todo(root, milestone: str = None) -> tuple:
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
 
 
+def _title_of(fm: dict, width: int = 0) -> str:
+    """A node's authored title, or "" when it has none. Never a placeholder.
+
+    A title still standing in its slot is not a title (M6): rendering `<the surface this
+    publishes>` in a listing spends the row and tells the reader nothing they could act on.
+    `is_slot` is the one placeholder rule, so this agrees with every other reader by construction.
+    """
+    t = str((fm or {}).get("title") or "").strip()
+    if not t or is_slot(t):
+        return ""
+    return t if not width or len(t) <= width else t[:width - 1].rstrip() + "…"
+
+
 def status(root, all: bool = False, check: bool = False) -> str:
     """One bounded orientation report, ending in a runnable `next:` line.
 
@@ -3183,8 +3224,15 @@ def status(root, all: bool = False, check: bool = False) -> str:
     total = "?" if (counts and any(c is None for c in counts)) else sum(c for c in counts if c)
     tally = ("" if not counts or total == 0 else
              f"  ·  {total} open delta{'' if total == 1 else 's'} (add deltas)")
+    # The count `doctor` already reports, in the headline where a reviewer sees it. A 40-task
+    # roadmap shipped with 38 nodes in scaffold and every surface said so EXCEPT the one line a
+    # reader starts from. Computed from the same predicate `doctor` uses (A4), so the headline
+    # and the report can never disagree — and silent at zero (A9), like the delta clause.
+    scaffolds = sum(1 for n in graph.values()
+                    if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES and _is_scaffold(n))
+    queued = f"  ·  {scaffolds} scaffold (add todo)" if scaffolds else ""
     out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
-               f"  ·  {len(graph)} nodes{tally}")
+               f"  ·  {len(graph)} nodes{tally}{queued}")
 
     # Orientation is about WORK. Receipts are evidence — reachable from the task that owns
     # them, and never the thing a cold reader needs first. Ordering by ORIENT_RANK keeps the
@@ -3217,7 +3265,12 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # read it and contradicted `todo`, `doctor` and its own `next:` line in one breath
         # (R:BEATLIE). `_beat_of` is frontmatter-only here, so the T0 read tier holds.
         beat = _beat_of(graph[cid]) if fm.get("type") in BEAT_TYPES else fm.get("status", "—")
-        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] {fm.get('type', '')}")
+        # The one field a queued node HAS authored. Forty of them shipped for review carrying
+        # real titles that no orientation verb rendered, so the roadmap read as forty anonymous
+        # slugs and had to be opened file by file. Last in the row (A12), so every column a
+        # guard already reads keeps its position, and truncated so the row cannot wrap.
+        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] "
+                   f"{fm.get('type', ''):<9} {_title_of(fm, 44)}".rstrip())
     if len(shown) > MAX_LINES:
         out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
     if hidden:
