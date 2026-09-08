@@ -2260,6 +2260,27 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: add an ASSUMPTIONS line `- A<n> [<dim>] covers: <S ids> · …`, "
                       f"or retire a dimension with `[<dim>] n/a · <why>`")
 
+    # M31 recorded this failure three times in ONE milestone. M38 recorded the fourth — on the
+    # milestone authored to stop it, an `E` id caught after a full build, a brief and three
+    # receipts. The gate is the last place in the loop, so the cost of learning there is the
+    # whole build; the obligation is created HERE, and so the refusal belongs here.
+    #
+    # The `next:` names BINDING first and retiring second, on purpose (R:DELETEPAST). The
+    # cheapest way past "no reported passing check" has always been to delete the edge, and a
+    # refusal whose easiest exit destroys the obligation teaches exactly the wrong lesson.
+    # An explore is exempt, and not as a softening: its gate reads the cited `## FINDINGS`
+    # brief directly and takes NO run receipt, so there is no reported check for a `covers:`
+    # entry to point at. Requiring one would make the shipped explore scaffold unfreezable
+    # once filled exactly as it instructs — the affordance-truth failure, rebuilt.
+    uncovered = ([] if str((node_t2.get("fm") or {}).get("kind") or "") == "explore"
+                 else uncovered_obligations(node_t2))
+    if uncovered:
+        return None, (f"cannot freeze `{slug}` — these authored obligations are named by no "
+                      f'check: {", ".join(uncovered)} -> "R:UNCOVERED"'
+                      f"\nnext: add a `covers:` entry naming each in `## CHECKS` — or retire the "
+                      f"obligation itself (drop its `probe:`, or return the edge to its slot) — "
+                      f"then add freeze {slug}")
+
     # R:UNBOUNDED (task sources-receipt) — an explore's approval IS questions plus a budget.
     # Presence only, never arithmetic: the engine is a notary; judging the number stays human,
     # exactly as exit criteria are read but never scored.
@@ -3075,9 +3096,18 @@ def todo(root, milestone: str = None) -> tuple:
                     str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
                 hint = f"  (split {' · '.join(collapsed)} — one surface per S id)"
             else:
+                # Both counts, appended in ladder order — the sweep refuses first, so it reads
+                # first. The uncovered count APPENDS rather than replaces (A6): re-ranking a
+                # tuned hint chain would change what an author is told first for reasons that
+                # have nothing to do with this rung. A zero shows nothing, like the sweep's.
+                bits = []
                 left = len(assumption_sweep(node_t2))
                 if left:
-                    hint = f"  ({left} unswept pair{'s' if left > 1 else ''})"
+                    bits.append(f"{left} unswept pair{'s' if left > 1 else ''}")
+                if (nocov := len(uncovered_obligations(node_t2))):
+                    bits.append(f"{nocov} uncovered")
+                if bits:
+                    hint = f"  ({' · '.join(bits)})"
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
@@ -4807,6 +4837,18 @@ def covers(node: dict) -> dict:
             if rule:
                 out.setdefault(rule, []).append(check)
     return out
+
+
+def uncovered_obligations(node: dict) -> list:
+    """FILLED edges and PROBED assumptions that no CHECKS `covers:` list names. Sorted.
+
+    Calls the two functions `referents_of` composes — never a copy of the rule (R:SECOND_TRUTH),
+    so `freeze` and `gate` can never disagree about what an obligation is. And deliberately NOT
+    the third: `rules_of` stays out until the cost of widening to Musts and Rejects is MEASURED
+    rather than estimated (R:WIDENED). Narrow and true beats wide and guessed.
+    """
+    mapped = covers(node)
+    return sorted(set(edges_of(node) + probed_assumptions(node)) - set(mapped))
 
 
 def bind(node: dict, reported: dict) -> tuple:

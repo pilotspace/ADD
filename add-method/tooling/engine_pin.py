@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "2acb890a97cb839783519844c5580d02"  # re-aimed @ deltas-drain-at-close: fold gains --reject (the first verb for `rejected`) and --bind (writes `## Decisions that bind`), milestone-done gains the windowed R:UNDRAINED rung. prior: 2732934691… @ orientation-sees-carried-work
+ENGINE_MD5 = "da489ed49c238f46e6e2e8e295935de9"  # re-aimed @ freeze-binds-what-you-authored: freeze gains the R:UNCOVERED rung over filled edges and probed assumptions, sharing referents_of's own two functions; todo names the count. prior: 2acb890a… @ deltas-drain-at-close
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "51a23ee5d162e48817860fdeaf5b3ac3"  # re-aimed @ deltas-drain-at-close: two flags on the fold parser

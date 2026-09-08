@@ -1,7 +1,7 @@
 ---
 type: Task
 title: a milestone close drains its own lessons, and a drained lesson can bind
-status: direction
+status: done
 depth: standard
 sensitivity: architecture
 milestone: loop-that-drains
@@ -22,11 +22,14 @@ generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:loop-that-drains", at: 2026-09-08, act: freeze, authority: plan, direction: "sha256:d1e0882a5a999764", binding: "sha256:3510f4566bf49d20" }
   - { by: "plan:loop-that-drains", at: 2026-09-08, act: refreeze, authority: plan, direction: "sha256:efe54abfca6bf0ef", binding: "sha256:3510f4566bf49d20" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:91376774a64b197f" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/deltas-drain-at-close.d/runs/1.md }
+  - { by: "plan:loop-that-drains", at: 2026-09-08, act: gate, authority: plan, outcome: PASS, receipt: /tasks/deltas-drain-at-close.d/runs/1.md, brief: "sha256:492fc5a731d2b9b9" }
 ---
 ## CARD
 goal: a lesson filed inside a milestone is resolved before that milestone closes, and resolving it can promote it to a decision every later brief reads
 why: `rejected` is one of three statuses in a frozen grammar and no command can produce it, so the only honest verdict on a lesson that turned out wrong is a hand edit. `fold` is a status flip that writes nothing anywhere else, so 75 lessons became 75 retagged lines and never once a decision. And every `brief` in this bundle reports all five `## Decisions that bind` as unauthored, which is true and has been true through eighteen closes. This task connects `learn` to `brief`, and puts the drain at the one seam the human already owns.
-beat: direction · next: add freeze deltas-drain-at-close
+beat: done · next: add status
 
 ## RULES
 <must>
