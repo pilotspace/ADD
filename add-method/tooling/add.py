@@ -2302,14 +2302,25 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     # Keyed on the COMPUTED floor, never on the `authority` argument, because the line below is
     # `authority or authority_for(...)`: reading the argument would let `--authority process`
     # switch the interview off on a security node -> the guard would ship with its own off switch.
-    if authority_for(graph, cid) == "human":
+    # TWO arming conditions, and the second INVERTS the first's rule on purpose. A Milestone
+    # carries no `sensitivity:`, so its computed floor is never `human` and a floor-keyed rung
+    # would be dead code on exactly the node where the expensive stamp lives. Here the CLAIM is
+    # what is guarded: `--authority human` asserts a human read this text, and that assertion is
+    # what M34 shows is cheap to write and impossible to withdraw. Claiming `plan` instead is
+    # the LOWER, honest claim M34 itself prescribes, so leaving it open is not an off switch
+    # (R:OFFSWITCH) — it is the recommended path for an AI driving under a standing go-ahead.
+    claims_human = (sfm_type := (node_t2.get("fm") or {}).get("type")) == "Milestone" \
+        and str(authority or "") == "human"
+    if authority_for(graph, cid) == "human" or claims_human:
         owed = interview_gap(node_t2, entry.get("fm") or {})
         if owed:
             shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
+            forward = (f"\nnext: add interview {slug} — or stamp the honest lower claim, "
+                       f'add freeze {slug} --by "<name>" --authority plan'
+                       if sfm_type == "Milestone" else f"\nnext: add interview {slug}")
             return None, (f"cannot freeze `{slug}` — the ONE human approval is being asked for "
                           f"decisions no human has been shown: {shown}"
-                          f' -> "R:UNINTERVIEWED"'
-                          f"\nnext: add interview {slug}")
+                          f' -> "R:UNINTERVIEWED"' + forward)
 
     authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
     if floor_err:
@@ -4600,6 +4611,18 @@ def _open_decisions(node: dict) -> list:
     """
     body = node.get("body") or ""
     out = []
+    # A Milestone's decisions are its EXIT criteria, and ONLY those. Its goal and why are the
+    # human's own words, and SCOPE and GROUND are not what a stamp attests. Every box counts
+    # whether ticked or not (A4): a tick states the criterion was MET, never that anyone
+    # approved its wording — reading one as an answer would let the goal-gate quietly satisfy
+    # the interview, which is M34's failure with an extra step.
+    if (node.get("fm") or {}).get("type") == "Milestone":
+        exit_body = _section_of(body, "EXIT")
+        for n, (_, _, text, _) in enumerate(
+                _box_lines(exit_body) if _fence_balanced(exit_body) else [], start=1):
+            out.append({"id": f"C{n}", "of": "criterion", "dim": "criterion",
+                        "reading": text.strip(), "cost": "", "text": text.strip()})
+        return out
     for line in _section_of(body, "ASSUMPTIONS").splitlines():
         m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
         if not m or re.search(r"·\s*n/a\b", m.group(3)):
@@ -4716,7 +4739,9 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
                       f"answer each decision `{' | '.join(INTERVIEW_VERDICTS)}`"
                       f"\nnext: add interview {slug} --answer <id>=<verdict>")
 
-    side_dir = root / f"tasks/{slug}.d/interviews"
+    # Derived from the node's OWN path, never hardcoded to `tasks/`: a milestone's record filed
+    # under the tasks tree is a record nothing can find (R:TASKSIDECAR).
+    side_dir = entry["path"].parent / f"{slug}.d" / "interviews"
     side_dir.mkdir(parents=True, exist_ok=True)
     n = len(list(side_dir.glob("*.md"))) + 1
     digest = interview_digest(node)

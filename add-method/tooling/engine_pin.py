@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "da489ed49c238f46e6e2e8e295935de9"  # re-aimed @ freeze-binds-what-you-authored: freeze gains the R:UNCOVERED rung over filled edges and probed assumptions, sharing referents_of's own two functions; todo names the count. prior: 2acb890a… @ deltas-drain-at-close
+ENGINE_MD5 = "9fee01fc1952dd585464246703632690"  # re-aimed @ milestone-freeze-is-interviewed: interview accepts a Milestone (EXIT criteria as C-ids, sidecar beside its own node), and R:UNINTERVIEWED arms on a CLAIMED human authority. prior: the freeze R:UNCOVERED rung
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "51a23ee5d162e48817860fdeaf5b3ac3"  # re-aimed @ deltas-drain-at-close: two flags on the fold parser
