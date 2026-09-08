@@ -77,8 +77,12 @@ emit (observe)        human review
          └──────────▶ rejected  (deliberately NOT merged — the trail is kept, line left in place)
 ```
 
-You **emit** `open`; only the **human** moves a delta to `folded` or `rejected`. Consolidation is
-judgment, and judgment is the human's — the same rule that stops the AI grading its own work.
+You **emit** `open`; the **human** decides each verdict and you type it. Three exits, one verb:
+`add fold <lens> "<match>"` merged it · `--reject` it did not hold · `--bind "<decision>"` merged it
+AND promoted it into that spec's `## Decisions that bind`, which every later `brief` reads. `--reject`
+with `--bind` refuses. **`milestone-done` refuses `R:UNDRAINED`** while a lesson filed inside that
+milestone's own window is still open — its own residue, never the backlog that predates it. So the
+drain is one batch at the close: render the window, take the human's verdicts, type them.
 
 ## Reject codes
 

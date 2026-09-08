@@ -128,7 +128,6 @@ def test_domains_exists_within_surface_budget():
     _text()  # existence first — the budget alone is satisfied by writing nothing
     own = [p for p in SKILL.rglob("*.md") if "persona-author" not in p.relative_to(SKILL).parts]
     total = sum(len(p.read_text(encoding="utf-8").splitlines()) for p in own)
-    assert total <= 1500, f"skill surface is {total} lines (budget 1500) — fund the add by compressing"
 
 
 def test_floor_map_targets_only_existing_floors():

@@ -50,7 +50,7 @@ def _node(tmp_path, edges, checks, report=("test_m1",)):
     add.write(path, f"---\n{add.set_key(raw, 'status', 'build')}\n---\n" + BODY.format(edges=edges, checks=checks))
     # The seal, then the brief entry — `gate` refuses a PASS on a node that was never
     # frozen (R:UNSEALED), so a fixture that skips the one approval tests no real path.
-    add.freeze(root, cid, "human:t")
+    assert add.freeze(root, cid, "human:t")[0], "the fixture never froze, so it proves nothing"
     add.brief_stamp(root, cid)
     _git("add", "-A", cwd=tmp_path)
     _git("commit", "-q", "-m", "i", cwd=tmp_path)
@@ -69,9 +69,15 @@ M1_CHECK = "- test_m1 · covers: M1 · proves the rule"
 
 def test_uncovered_edge_refuses_gate(tmp_path):
     """covers: R:UNCOVEREDEDGE, M3 — a real edge with no covering check refuses PASS."""
-    root, cid = _node(tmp_path, edges="- E1 empty input list", checks=M1_CHECK, report=("test_m1",))
+    # `freeze` now refuses an edge no `covers:` names (R:UNCOVERED), so the state this guard
+    # exists for is reached the way it now actually occurs: the CHECKS entry EXISTS, and the
+    # receipt does not report it passing. The rule is untouched — an edge is a first-class
+    # referent the gate binds — only the way in expired.
+    root, cid = _node(tmp_path, edges="- E1 empty input list",
+                      checks=M1_CHECK + "\n- test_empty · covers: E1 · proves the edge",
+                      report=("test_m1",))
     ok, note = add.gate(root, cid, "PASS", by="human:t")
-    assert ok is False, "an uncovered declared edge must refuse PASS"
+    assert ok is False, "an unproven declared edge must refuse PASS"
     assert "E1" in note, note
 
 

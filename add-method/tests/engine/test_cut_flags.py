@@ -11,7 +11,6 @@ Three of these flags are `build-orient`'s M1, M3 and M4, and that node carries a
 must survive the withdrawal of what it accepted (§3.6, R:ERASE).
 """
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -59,15 +58,18 @@ def test_status_no_longer_takes_the_three_parameters():
 # ------------------------------------------------- M2 · the gate's record survives the cut
 
 
-def test_gated_node_untouched():
-    """covers: M2, R:ERASE · e6 keeps its M1/M3/M4 exactly as the human gate accepted them.
-
-    The rules were true when gated. A gate records what was ACCEPTED, never what still ships,
-    so rewriting them to match the cut would erase the accepted claim rather than supersede it.
-    """
-    out = subprocess.run(["git", "diff", "--name-only", "HEAD", "--", ".add/tasks/build-orient.md"],
-                         cwd=REPO, capture_output=True, text=True, timeout=30)
-    assert not out.stdout.strip(), "build-orient.md was edited to match the cut (R:ERASE)"
+# RETIRED: test_gated_node_untouched (M2, R:ERASE)
+#
+# It protected a true rule — a gate records what was ACCEPTED, never what still ships, so
+# rewriting `build-orient.md`'s M1/M3/M4 to match the cut would erase the accepted claim rather
+# than supersede it. It asserted that with `git diff --name-only HEAD -- .add/tasks/build-orient.md`,
+# which could not fire for three independent reasons: the diff is against the working tree and
+# `git commit` empties it (R:COMMITCLEAN); `add-method/.add/` is gitignored, so git returns
+# nothing for that path in any tree (R:BLINDPATH); and the file does not exist in this repo at
+# all — it lived in the add-skill dev bundle. It reported success while running on nothing.
+#
+# Nothing here can guard a node this repo does not hold. The shape is refused suite-wide by
+# tests/engine/test_scope_guard_ranges.py. Retired by `scope-guard-names-its-range`.
 
 
 @pytest.mark.skip(reason="dogfood: asserts add-skill's own cut record ('1921 -> 1865') in its dev bundle; not portable")

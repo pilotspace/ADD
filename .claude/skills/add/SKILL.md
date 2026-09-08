@@ -78,41 +78,40 @@ One task = one atomic node. Three beats, one human decision:
    approval. The draft, section by section:
    - `## RULES` — Must · Reject: what you were told. `## EDGES` — `E<n>` boundary cases; a line you
      FILL is gate-bound like a Must, an untouched placeholder owes nothing.
-   - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension
-     (`who · which · when · absent · order · experience`): `A<n> [<dim>] covers: <S ids> · <what the spec does
-     NOT say — and the reading you took> -> <cost if wrong>`, or retire a pair with
-     `[<dim>] n/a · <why>`. A cheaply-checkable guess is better discharged than priced: run the
-     two-minute probe and record `found: <what>` + its evidence on the line.
+   - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension (`who · which · when ·
+     absent · order · experience`): `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say —
+     and the reading you took> -> <cost if wrong>`, or retire a pair with `[<dim>] n/a · <why>`. A
+     cheaply-checkable guess is better discharged than priced: run the two-minute probe and record
+     `found: <what>` + its evidence on the line.
    - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
      `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
-   - `## CHECKS` — one check per Must and per Reject, each with a `covers:` key. The binding is
-     enforced at **gate**, and it binds EVERY referent you name — Musts, Rejects, probed
-     assumptions, edges. Run the checks **red for the right reason**.
-   - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, or
-     — at a human floor — an open decision no human answered (**`add interview <slug>`** puts each
-     one to them for real, R:UNINTERVIEWED). It names them; `add todo` counts them down as you author.
+   - `## CHECKS` — one per Must and per Reject, each with a `covers:` key binding EVERY referent
+     you name: Musts, Rejects, probed assumptions, edges. Run them **red for the right reason**.
+   - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, a
+     FILLED edge or PROBED assumption no `covers:` names (**R:UNCOVERED** — bind it, never delete it),
+     or — at a human floor, and on any Milestone stamped `--authority human` — a decision no human
+     answered (**`add interview <slug>`**, R:UNINTERVIEWED). `add todo` counts them down as you author.
    - The ONE approval stamps direction closed: **`add freeze <slug> --by "<name>" --authority
-     human`**. Get the composed prompt with `add brief <slug>` — its refs resolve from the graph,
-     so a spec edit re-scopes it with no edit here.
+     human`**. Get the composed prompt with `add brief <slug>` — refs resolve from the graph, so a
+     spec edit re-scopes it with no edit here.
 2. **BUILD** (`phases/build.md`) — code until every red check is green. Change **no** check and **no**
    frozen `gives:`; stay inside `scope:`. A discovered constraint or a strategy turn is *steering* —
    record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
    a frozen surface is a change-request back to Direction, never a silent edit.
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
    · architecture — **security HARD-STOP**), then `add run <slug> -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
-   for a fresh, bound receipt — `run` reads the report path your command names. Wrap the
-   **narrowest command that reports every bound check**; the full suite rides CI. **No runner for your domain? Write one** — `run` parses JUnit XML and does not
-   care what produced it, so a script comparing a measured value against a threshold your frozen
-   RULES already state earns the same bound receipt (`domains.md`). And **`add gate <slug> PASS --by "<name>"`** — a **PASS auto-closes** the task
-   (and repairs its CARD). `add done` is only for closing after a signed `RISK-ACCEPTED`.
+   for a fresh, bound receipt — `run` reads the report path your command names. Wrap the **narrowest
+   command that reports every bound check**; the full suite rides CI (run it anyway before any receipt
+   touching the engine). **No runner for your domain? Write one** — `run` parses JUnit XML and does not
+   care what produced it (`domains.md`). Then **`add gate <slug> PASS --by "<name>"`** — a **PASS
+   auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
 
-Emit **lessons** as you learn them, tagged by which of the five specs they sharpen
-(`ddd · sdd · udd · tdd · add`) — they fold into `.add/specs/` at close (`loop.md`, `deltas.md`).
-Present every human decision — intake · freeze · gate · close — as a guided choice with the goal→done→plan
-arc (`gate.md`). Adopting a project-fit persona is opt-in (`personas.md`); a persona never lowers a gate.
-Delegate a beat to a best-fit persona subagent when it wants an expert (`streams.md`) — the delegate
-advises and returns a verdict; it never freezes, never gates, and security stays HARD-STOP. Read-only
-research fans out freely — facts merge; one write taints the stream back onto the serialized path.
+Emit **lessons** as you learn them, tagged by the spec they sharpen (`ddd · sdd · udd · tdd · add`);
+the close DRAINS the ones it filed (`loop.md`, `deltas.md`). Present every human decision — intake ·
+freeze · gate · close — as a guided choice with the goal→done→plan arc (`gate.md`). A project-fit
+persona is opt-in (`personas.md`) and never lowers a gate; delegate a beat to one when it wants an
+expert (`streams.md`) — the delegate advises, never freezes or gates, security stays HARD-STOP.
+Read-only research fans out freely — facts merge; one write taints the stream back to serialized.
 
 ## Non-negotiable rules (from the method)
 
@@ -153,7 +152,8 @@ add replan <slug> --note "<what changed>"    # record a steering turn on a froze
 add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec
-add milestone-done <slug>                    # close a milestone — refuses while a goal box is unchecked
+add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson
+add milestone-done <slug>                    # close — refuses an unchecked goal box, or R:UNDRAINED
 ```
 
 ## Depth dial — steps never change, ceremony does

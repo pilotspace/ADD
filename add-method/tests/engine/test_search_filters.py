@@ -25,9 +25,21 @@ sys.path.insert(0, str(REPO / "tooling"))
 import add  # noqa: E402
 
 
+PINNED_DAY = "2026-09-04"   # the date every `as_of=` literal below already names
+
+
 @pytest.fixture
-def bundle(tmp_path):
-    """Two milestones, tasks split across them, a status-less node, a receipt, and a delta."""
+def bundle(tmp_path, monkeypatch):
+    """Two milestones, tasks split across them, a status-less node, a receipt, and a delta.
+
+    The clock is PINNED for the fixture build. `add.learn` stamps `valid_from` with today, and the
+    `as_of=` checks below ask for a fixed date — so on the day this was written the delta was inside
+    that window and every day after it was outside. The suite failed on main by CALENDAR, which is
+    the kind of red line everyone learns to ignore. Pinned for the BUILD only and released before the
+    assertions run (A3): a clock still held during the checks would hide a real dependency on today,
+    and it never leaves this module (R:CLOCKLEAK).
+    """
+    monkeypatch.setattr(add, "_today", lambda: PINNED_DAY)
     root = tmp_path / ".add"
     add.init(root, profile="code", title="filter fixture")
     add.new(root, "Milestone", "m-one", title="interval milestone")
@@ -43,6 +55,7 @@ def bundle(tmp_path):
     (receipt / "1.md").write_text(
         "---\ntype: Run\ntitle: interval receipt\ntask: /tasks/t-one.md\n---\n\n## CARD\n",
         encoding="utf-8")
+    monkeypatch.undo()          # A3 — the checks READ; none of them may depend on today
     return root
 
 
@@ -191,3 +204,35 @@ def test_as_of_and_filter_do_not_double_report(bundle):
         "the --as-of unjudgeable line fired for hits the filter had already removed: " + note)
     assert note.count("\u2014 ") == 1, f"two exclusion lines for one removal: {note}"
     assert "delta" in note.lower(), note
+
+
+def test_the_exclusion_guard_still_catches_its_defect(bundle):
+    """covers: M2, R:DATEFREE, A4, A6, E2 — pinned, and still catching what it was written for.
+
+    A date-stable check that passes on every date because it asserts LESS is not a fix, it is the
+    same red line with the noise removed (R:DATEFREE). So: prove the pin actually bit, then drive
+    the exclusion path the original guard names — an `--as-of` window that removes hits the type
+    filter did not — and require exactly one exclusion line for it.
+    """
+    hits, _ = add.search(bundle, "interval")
+    dated = [h for h in hits if h[1].startswith("delta:")]
+    assert dated, "the fixture wrote no delta, so the as_of path is untested"
+    assert PINNED_DAY in (Path(bundle) / "specs" / "method.md").read_text(), \
+        "the clock pin did not bite — the delta carries a date the fixture did not choose"
+
+    # The exclusion path itself: a window BEFORE the delta was filed, with no type filter to
+    # have removed it first. One removal, one line.
+    _h, note = add.search(bundle, "interval", as_of="2026-01-01")
+    assert note.count("— ") == 1, f"the exclusion line stopped being reported: {note}"
+
+    src = Path(__file__).read_text()
+    assert "CALENDAR" in src and "PINNED_DAY" in src, \
+        "A6 — the pin carries no comment naming the failure it ends"
+
+
+def test_the_clock_pin_does_not_leak(bundle):
+    """covers: R:CLOCKLEAK, A1 — pinned for the fixture build, released for the checks."""
+    assert PINNED_DAY in (Path(bundle) / "specs" / "method.md").read_text(), \
+        "the pin never applied, so this proves nothing about releasing it"
+    assert add._today() != PINNED_DAY or PINNED_DAY == __import__("datetime").date.today().isoformat(), \
+        "R:CLOCKLEAK — the fixture's clock is still installed while the checks run"

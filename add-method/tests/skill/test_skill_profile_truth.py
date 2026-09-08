@@ -111,21 +111,12 @@ def test_all_three_skill_trees_agree():
         assert len(set(digests.values())) == 1, f"`{name}` differs across the skill trees"
 
 
-def test_skill_surface_within_budget_after_edit():
-    """M3 + E1 — the rewrite must fit; the budget is what makes this a rewrite, not an addition.
-
-    Both the pins AND the measurement come from `test_surface.py`, which owns them. Re-deriving the
-    measurement here was wrong: a plain rglob counts the nested `persona-author/` sub-skill, which
-    carries its own budget, and reported 2068 against a limit the owning test passes comfortably.
-    A second opinion about a pinned number is not a check, it is a contradiction.
-    """
-    import test_surface
-
-    n = len((REPO / "skill" / "add" / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    source = Path(test_surface.__file__).read_text(encoding="utf-8")
-    line_pin = int(re.search(r"n <= (\d+)", source).group(1))
-    total_pin = int(re.search(r"total <= (\d+)", source).group(1))
-
-    assert n <= line_pin, f"SKILL.md is {n} lines against its {line_pin} pin"
-    total = sum(len(p.read_text(encoding="utf-8").splitlines()) for p in test_surface._own_docs())
-    assert total <= total_pin, f"skill surface is {total} lines against its {total_pin} budget"
+# RETIRED: test_skill_surface_within_budget_after_edit (M3, E1)
+#
+# Its own docstring said it: "a second opinion about a pinned number is not a check, it is a
+# contradiction." It then took one anyway — scraping `n <= (\d+)` out of test_surface.py's SOURCE
+# TEXT to re-assert a budget that file already asserts. The scrape was itself pinned by a third
+# module, so one number was held by a web of source-text pins across four files.
+#
+# The budgets live in tests/skill/skill_budget.py now, asserted once each. That a rewrite must FIT
+# is still the rule; it is checked where the number is. Retired by `one-budget-one-guard`.

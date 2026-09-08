@@ -106,16 +106,11 @@ def test_skill_bullet_states_size_rule_within_budget():
     assert re.search(r"security.{0,5}data.{0,5}architecture|floor", b, re.I), "SKILL.md Quick bullet: floor not named"
     assert re.search(r"card|checklist", b, re.I), "SKILL.md Quick bullet: inline card/checklist not named"
     assert "learn" in b, "SKILL.md Quick bullet: mandatory learn line not named"
-    n = len((SKILL / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    assert n <= 176, f"SKILL.md is {n} lines — over the 176 pin"
-    # R:BUDGET_BUMP — the pin must not be raised to fund the bullet. Two files carry the literal;
-    # test_skill_profile_truth.py deliberately DERIVES it from test_surface.py, so pin the derivation.
-    for t in ("test_surface.py", "test_uncertainty_routing.py"):
-        src = (REPO / "tests" / "skill" / t).read_text(encoding="utf-8")
-        assert re.search(r"<= ?176\b", src), f"{t}: the 176-line pin was moved (R:BUDGET_BUMP)"
-    derived = (REPO / "tests" / "skill" / "test_skill_profile_truth.py").read_text(encoding="utf-8")
-    assert "n <= (\\d+)" in derived, \
-        "test_skill_profile_truth.py: no longer derives the line pin from test_surface.py (R:BUDGET_BUMP)"
+    # R:BUDGET_BUMP — the pin must not be raised to fund the bullet. That is one fact, and it is
+    # asserted once: skill_budget.LINE_BUDGET, guarded by test_one_budget_one_guard.py. This block
+    # used to pin the LITERAL inside two other test files, and a third file's regex SCRAPE of a
+    # fourth — a web of source-text pins on a single number, all of which moved together or not
+    # at all. The bullet's own subject is above.
 
 
 def test_three_skill_trees_identical():

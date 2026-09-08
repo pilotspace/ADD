@@ -91,13 +91,23 @@ def test_an_unprobed_assumption_is_not_a_referent(bundle, draft):
 # ----------------------------------------------------------------- M2: the gate holds it
 
 
-def test_gate_refuses_a_probed_assumption_with_no_passing_check(bundle, draft, tmp_path):
-    """covers: M2 — declared checkable, checked by nothing: the PASS waits."""
-    cid = _task(bundle, draft, "unproven", PROBED_ASSUMPTIONS, DRAFTED_CHECKS)
-    _receipt(bundle, cid, tmp_path, GREEN[:2])
-    ok, note = add.gate(bundle, cid, "PASS", by="human:tindang")
-    assert ok is False, "a probed assumption with no covering check was gated PASS"
-    assert "A1" in note, f"the refusal must name the unproven probe: {note!r}"
+def test_a_probe_with_no_covering_check_never_reaches_the_gate(bundle, draft, tmp_path):
+    """covers: M2 — declared checkable, checked by nothing: refused BEFORE the build.
+
+    The rule is unchanged: a probed assumption is never silently unproven. What changed is
+    WHERE it is caught. `freeze` gained R:UNCOVERED, so a probe with no `covers:` entry cannot
+    be sealed at all, and the state this guard used to reach is now unreachable by construction
+    — M31 fired four times because the only refusal came at the end of the loop.
+
+    The gate's own binding is not left untested: its reachable form — the check EXISTS and did
+    not pass — is `test_gate_refuses_when_the_probe_check_did_not_pass` below.
+    """
+    cid, _ = add.new(bundle, "Task", "unproven", title="Unproven")
+    draft(bundle, cid, assumptions=PROBED_ASSUMPTIONS, checks=DRAFTED_CHECKS)
+    node, note = add.freeze(bundle, cid, by="human:tindang")
+    assert node is None, "a probe with no covering check was sealed"
+    assert "UNCOVERED" in note and "A1" in note, \
+        f"the refusal must name the unbound probe: {note!r}"
 
 
 def test_gate_refuses_when_the_probe_check_did_not_pass(bundle, draft, tmp_path):

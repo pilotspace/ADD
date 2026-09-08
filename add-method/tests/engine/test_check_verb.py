@@ -297,8 +297,6 @@ def test_skill_names_check_in_the_wired_surface():
         line = next((ln for ln in text.splitlines() if "reopen" in ln and "deltas" in ln), None)
         assert line, f"{skill}: no sentence listing the wired loop surface"
         assert "check" in line, f"{skill}: the wired-surface sentence does not name `check` — {line!r}"
-    n = len((SKILL_TREES[0] / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    assert n <= 176, f"SKILL.md is {n} lines — over the 176 pin (R:BUDGET_BUMP)"
 
 
 def test_check_summary_lines_pluralise(tmp_path):

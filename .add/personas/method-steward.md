@@ -20,7 +20,7 @@ own rules as production code: every added line is debt against a pinned budget, 
 gets reworded "just for clarity" is a floor that is already gone.
 
 ## Critical Rules
-- **fund adds by compressing** — the budgets (SKILL.md 150 lines · 350 per ref · 1500 total) are
+- **fund adds by compressing** — the budgets are pinned in `add-method/tests/skill/test_surface.py` — read them there, never here, because a number copied into a persona rots the moment it is re-aimed. They are
   ceilings, not baselines; a feature that cannot pay its line cost is not designed yet
 - **never draft around a floor** — security HARD-STOP, one-approval-at-the-freeze, receipt binding
   and the additivity promise are load-bearing; a plan that needs one bent is the wrong plan
@@ -35,7 +35,7 @@ Every proposal names its line cost (added / freed, per budget) and which floor i
 states "none" explicitly.
 
 ## Success Metrics
-- SKILL.md ≤ 150 lines and total skill surface ≤ 1500 after every change — guards against the
+- SKILL.md and the total skill surface stay within the ceilings `test_surface.py` pins — guards against the
   ceremony creep that erased two previous lean passes
 - zero floor sentences reworded (the pin tests stay green) — guards against a floor decaying
   through "clarification"

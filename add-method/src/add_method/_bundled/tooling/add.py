@@ -790,7 +790,11 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     dash, dot, down, up = "\u2014", "\u00b7", "\u2193", "\u2191"
     head = f" {dot} ".join(str(fm[k]) for k in ("type", "depth", "sensitivity") if fm.get(k))
     status = fm.get("status") or dash
-    lines = [f"{cid}  [{status}]  {head}".rstrip(), ""]
+    # The title rides the header: `show` named the cid, the beat and the type, and the one thing
+    # a reader actually wants — what this node is FOR — was only in the CARD, or missing when the
+    # CARD was still scaffold.
+    titled = _title_of(fm)
+    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip(), ""]
     lines.append(view["body"].rstrip())
     if view["rows"]:
         lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
@@ -1457,7 +1461,8 @@ def _is_bundle_index(path) -> bool:
         return False
 
 
-def init(root, profile: str = "code", title: str = None, nested: bool = False) -> tuple:
+def init(root, profile: str = "code", title: str = None, nested: bool = False,
+         goal: str = None) -> tuple:
     """Create a conforming bundle. Never overwrites; an existing file is left alone.
 
     Returns `(graph, created_cids, note)`, or `(None, [], refusal)` when the profile is one this
@@ -1525,7 +1530,13 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
     # both files are views: whichever side survives is restored by `doctor --sync`.
     put(".gitattributes", "index.md merge=ours linguist-generated=true\n"
                           "log.md   merge=ours linguist-generated=true\n")
-    put("PROJECT.md", f"---\ntype: Project\ntitle: {title}\ngoal: <one sentence — what is true when this ships>\n"
+    # `invariants:` is the key every task is bound to by the method's own prose — and until
+    # now it was written by nothing and read by nothing, so the binding named a slot that did
+    # not exist. Seeded EMPTY (A2): the engine has nothing true to put there, and content it
+    # invented would ship as constraints nobody chose. `doctor` is its reader (R:DEADKEY).
+    put("PROJECT.md", f"---\ntype: Project\ntitle: {title}\n"
+                      f"goal: {goal or '<one sentence — what is true when this ships>'}\n"
+                      f"invariants: []\n"
                       f"stage: mvp\nprofile: {profile}\n{_stamp()}\n---\n"
                       f"## CARD\ngoal: <the one line a cold reader needs>\nstate: initialised\n"
                       f"next: add new milestone <slug>\n")
@@ -1543,8 +1554,14 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
             # OKF's doc-status `status:` and `stale_after:` stay OUT: `status:` is ADD's
             # task-lifecycle key, and a spec whose every delta carries a validity interval has
             # no file-level staleness left to declare.
+            #
+            # `open_deltas: 0` is seeded HERE, not left for the first `learn`. Absence has to
+            # mean one thing only — "this bundle predates the counter" — or every fresh bundle
+            # would report UNKNOWN until it happened to learn something, and the signal that is
+            # supposed to distinguish an unmigrated bundle from a drained one would say the
+            # same word for both.
             f"---\ntype: Spec\ntitle: {slug.title()}\nlens: {slug}\nproject: {title}\n"
-            f"description: {goal}\ntags: []\nsources: []\n{_stamp()}\n---\n"
+            f"description: {goal}\ntags: []\nsources: []\nopen_deltas: 0\n{_stamp()}\n---\n"
             f"## Now\n{goal}\n\n## Decisions that bind\n- <the first decision that constrains the rest>\n\n"
             f"## Deltas\n- <what changed, and the evidence that changed it>\n")
 
@@ -1644,13 +1661,19 @@ def upgrade(project_root, by: str = "cli") -> tuple:
     for plan in sorted(root.glob("tasks/*/PLAN.md")):
         m = RE_2X_PHASE.search(plan.read_text(encoding="utf-8", errors="replace"))
         tasks.append((plan.parent.name, m.group(1) if m else "unknown"))
-    title = None
+    title = goal = None       # a bundle with no charter at all reaches init with both unset
     charter = root / "PROJECT.md"
     if charter.is_file():
         text = charter.read_text(encoding="utf-8", errors="replace")
         m = re.search(r"^title:\s*(.+)$", text, re.M) \
             or re.search(r"^#\s+(?:PROJECT:\s*)?(.+)$", text, re.M)
         title = m.group(1).strip() if m else None
+        # R:CLOBBERGOAL. The 2.x charter carried an authored goal; carrying only `title:`
+        # replaced a year of direction with a placeholder and nothing refused it, because no
+        # guard reached the root. Matched the same loose way `title:` is, and an ABSENT goal
+        # stays absent (E5) — the fresh bundle gets the ordinary placeholder, never a fiction.
+        g = re.search(r"^goal:\s*(.+)$", text, re.M)
+        goal = g.group(1).strip() if g and not PLACEHOLDER.search(g.group(1)) else None
 
     root.rename(archive)                      # the ONE move — everything else is additive
     # The engine executing THIS verb lived inside the bundle just archived — its own source
@@ -1667,7 +1690,7 @@ def upgrade(project_root, by: str = "cli") -> tuple:
         src = archive / tree
         if src.is_dir() and not (root / tree).exists():
             shutil.copytree(src, root / tree, ignore=shutil.ignore_patterns("__pycache__"))
-    init(root, "code", title)
+    init(root, "code", title, goal=goal)
 
     report = archive / "MIGRATION.md"
     lines = [f"# 2.x → 3.0 migration — recorded {_today()} by {by}", "",
@@ -2059,9 +2082,27 @@ def _explore_body(scaffold: str) -> str:
         "\n## LESSONS\n")
 
 
+# Everything `new` may be handed. `fm.update(fields)` used to let ANY keyword through into
+# frontmatter, where it reads as authored data that nothing wrote and no reader consumes
+# (R:GHOSTFIELD) — `goal=` was the live instance: accepted, sorted neatly into the key order,
+# and leaving the node with one authored goal in frontmatter and one scaffold goal in its CARD.
+# The scalar slots this verb owns, PLUS every edge key from the one registry that defines them —
+# derived, never a second list (a copied set drifts the moment a key is added, which is the
+# `covers:` two-grammar shape one layer up).
+NEW_FIELDS = ("title", "goal", "depth", "kind", "sensitivity", "scope", "gives", "persona",
+              "vibe", "flow", "task-kinds", "use-when", "not-when", "description",
+              "sources") + EDGE_KEYS
+
+
 def new(root, node_type: str, slug: str, **fields) -> tuple:
     """Create a typed node. A colliding slug reports and writes nothing (R:DUPSLUG)."""
     root = Path(root)
+    unknown = sorted(k for k in fields if k not in NEW_FIELDS)
+    if unknown:
+        return None, (f"`new` does not write {', '.join(unknown)} — an unrecognised field would "
+                      f'land in frontmatter as data nothing wrote -> "R:GHOSTFIELD"'
+                      f"\nnext: pass one of {' · '.join(NEW_FIELDS)}, or set it after creation "
+                      f"with the verb that owns it")
     rel = f"{TYPE_DIR.get(node_type, 'tasks')}/{slug}.md"
     path = root / rel
     # Bundle-wide, not per-directory. `run` writes to `tasks/{slug}.d/runs` and `latest_receipt`
@@ -2105,6 +2146,10 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     order = ["type", "title", "goal", "status", "depth", "kind", "sensitivity", "vibe", "flow",
              "task-kinds", "use-when", "not-when", "description", "sources",
              "milestone", "scope", "gives"]
+    # The CARD is where every reader and every guard looks for a goal, so that is where a seeded
+    # goal goes — never frontmatter, which would leave the node carrying two (R:TWOGOALS). The
+    # planner holds this one line at creation and had nowhere to put it until now.
+    seeded_goal = fields.pop("goal", None)
     fm = {"type": node_type, "title": fields.pop("title", slug)}
     if node_type in LIFECYCLE_TYPES:  # a Persona/Prompt/Run has no lifecycle — no task status
         fm["status"] = "direction"
@@ -2161,6 +2206,8 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # the CARD scaffold carries a `{slug}` marker for the created node's own slug — substitute it,
     # or every new task ships an unexpanded placeholder in its `next:` affordance.
     scaffold = BODIES.get(node_type, "## CARD\ngoal: <one line>\n").replace("{slug}", slug)
+    if seeded_goal:
+        scaffold = scaffold.replace("goal: <one line>", f"goal: {_oneline(seeded_goal)}", 1)
     if node_type == "Task" and str(fm.get("kind") or "") == "explore":
         scaffold = _explore_body(scaffold)
     write(path, "---\n" + "\n".join(lines) + "\n---\n" + scaffold)
@@ -2194,7 +2241,11 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
         # ONE human approval was stampable against a node stating no goal and no exit criterion.
         ms_stubs = _milestone_stubs(node_t2)
         if ms_stubs:
-            return False, (f"cannot freeze `{slug}` — this milestone is still a scaffold: "
+            # `None`, like every other rung — this one answered `False` alone, and a caller
+            # writing `if node is None` walked straight past it. Two inverted assertions in two
+            # test files, hours apart, both by a reader who had checked the OTHER rung
+            # -> "R:TWOSHAPES". The message is unchanged.
+            return None, (f"cannot freeze `{slug}` — this milestone is still a scaffold: "
                            + " · ".join(ms_stubs)
                            + f"\nnext: {AUTHOR_NEXT['Milestone'].format(slug=slug)}")
     stubs = placeholders_in(node_t2)
@@ -2241,6 +2292,27 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"\nnext: add an ASSUMPTIONS line `- A<n> [<dim>] covers: <S ids> · …`, "
                       f"or retire a dimension with `[<dim>] n/a · <why>`")
 
+    # M31 recorded this failure three times in ONE milestone. M38 recorded the fourth — on the
+    # milestone authored to stop it, an `E` id caught after a full build, a brief and three
+    # receipts. The gate is the last place in the loop, so the cost of learning there is the
+    # whole build; the obligation is created HERE, and so the refusal belongs here.
+    #
+    # The `next:` names BINDING first and retiring second, on purpose (R:DELETEPAST). The
+    # cheapest way past "no reported passing check" has always been to delete the edge, and a
+    # refusal whose easiest exit destroys the obligation teaches exactly the wrong lesson.
+    # An explore is exempt, and not as a softening: its gate reads the cited `## FINDINGS`
+    # brief directly and takes NO run receipt, so there is no reported check for a `covers:`
+    # entry to point at. Requiring one would make the shipped explore scaffold unfreezable
+    # once filled exactly as it instructs — the affordance-truth failure, rebuilt.
+    uncovered = ([] if str((node_t2.get("fm") or {}).get("kind") or "") == "explore"
+                 else uncovered_obligations(node_t2))
+    if uncovered:
+        return None, (f"cannot freeze `{slug}` — these authored obligations are named by no "
+                      f'check: {", ".join(uncovered)} -> "R:UNCOVERED"'
+                      f"\nnext: add a `covers:` entry naming each in `## CHECKS` — or retire the "
+                      f"obligation itself (drop its `probe:`, or return the edge to its slot) — "
+                      f"then add freeze {slug}")
+
     # R:UNBOUNDED (task sources-receipt) — an explore's approval IS questions plus a budget.
     # Presence only, never arithmetic: the engine is a notary; judging the number stays human,
     # exactly as exit criteria are read but never scored.
@@ -2262,14 +2334,25 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     # Keyed on the COMPUTED floor, never on the `authority` argument, because the line below is
     # `authority or authority_for(...)`: reading the argument would let `--authority process`
     # switch the interview off on a security node -> the guard would ship with its own off switch.
-    if authority_for(graph, cid) == "human":
+    # TWO arming conditions, and the second INVERTS the first's rule on purpose. A Milestone
+    # carries no `sensitivity:`, so its computed floor is never `human` and a floor-keyed rung
+    # would be dead code on exactly the node where the expensive stamp lives. Here the CLAIM is
+    # what is guarded: `--authority human` asserts a human read this text, and that assertion is
+    # what M34 shows is cheap to write and impossible to withdraw. Claiming `plan` instead is
+    # the LOWER, honest claim M34 itself prescribes, so leaving it open is not an off switch
+    # (R:OFFSWITCH) — it is the recommended path for an AI driving under a standing go-ahead.
+    claims_human = (sfm_type := (node_t2.get("fm") or {}).get("type")) == "Milestone" \
+        and str(authority or "") == "human"
+    if authority_for(graph, cid) == "human" or claims_human:
         owed = interview_gap(node_t2, entry.get("fm") or {})
         if owed:
             shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
+            forward = (f"\nnext: add interview {slug} — or stamp the honest lower claim, "
+                       f'add freeze {slug} --by "<name>" --authority plan'
+                       if sfm_type == "Milestone" else f"\nnext: add interview {slug}")
             return None, (f"cannot freeze `{slug}` — the ONE human approval is being asked for "
                           f"decisions no human has been shown: {shown}"
-                          f' -> "R:UNINTERVIEWED"'
-                          f"\nnext: add interview {slug}")
+                          f' -> "R:UNINTERVIEWED"' + forward)
 
     authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
     if floor_err:
@@ -2564,6 +2647,18 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                   f"next: add status")
 
 
+def milestone_window_anchor(fm: dict):
+    """The date a milestone's lesson window OPENS, or None when the engine cannot read one.
+
+    The drafted contract said "`generated.at`, or the first `verified` stamp, whichever is
+    earlier". The second clause is dead by construction and the probe says so: a node is created
+    before it is stamped, so no stamp can precede creation. One source, and a `None` that means
+    UNKNOWN — never today, never epoch (the `_as_date` rule).
+    """
+    gen = (fm or {}).get("generated")
+    return _as_date(gen.get("at")) if isinstance(gen, dict) else None
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -2608,6 +2703,37 @@ def milestone_done(root, cid: str) -> tuple:
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
 
+    # The drain, LAST (M7): a closer whose goal is still unmet must be told that first, not
+    # sent to consolidate lessons for a milestone that is not finished.
+    #
+    # WINDOWED, and that is the whole design. A rung over every open delta would have met this
+    # repo with a 75-lesson backlog and blocked every close until someone drained eighteen
+    # milestones of residue in one sitting — so the rung would have been deleted, not obeyed
+    # (M22's shape). A milestone is answerable for the lessons IT filed; the backlog stays a
+    # `doctor` finding and a `status` count, which is what those exist for.
+    anchor, skipped = milestone_window_anchor(node["fm"]), ""
+    if anchor is None:
+        # R:SILENTSKIP — a close that looks drained and was not is worse than one that admits
+        # it could not check. Never guess a date to make the rung fire.
+        skipped = (" — the drain rung did not run: this milestone carries no readable creation "
+                   "date, so the window its lessons would fall in cannot be computed")
+    else:
+        # An undated legacy delta has no filing date to place, so it is never in any window
+        # (A8, R:BACKLOGBLOCK). Inclusive on the anchor: created and taught on one day is the
+        # common case (A6).
+        undrained = [d for d in deltas(root, status="open")[0]
+                     if _as_date(d.valid_from) and d.valid_from >= anchor]
+        if undrained:
+            # `Delta` is a 3-tuple by design (spec, comp, text) with the rest riding as
+            # attributes — four suites unpack exactly three, so it has no `.lens`/`.text`.
+            named = "\n".join(f"  · {delta_address(d[0], d.id)}  {d[2].split(' (evidence:')[0][:88]}"
+                              for d in undrained)
+            return False, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
+                           f'{anchor}) -> "R:UNDRAINED"\n{named}\n'
+                           f'next: resolve each — add fold <lens> "<match>" '
+                           f'[--reject | --bind "<the decision it settles>"] — '
+                           f'then add milestone-done {slug}')
+
     _transition(root, cid, sets={"status": "done"})
     # 0 criteria => the goal-gate never fires (loop.md); close, but say the gate was empty.
     empty = "" if total else " — no exit criteria, so the goal-gate did not fire (add criteria to hold one open)"
@@ -2627,7 +2753,7 @@ def milestone_done(root, cid: str) -> tuple:
                 who.append(name)
     credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
     return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
-                  f"{empty}\nnext: add status")
+                  f"{empty}{skipped}\nnext: add status")
 
 
 def milestone_archive(root, cid: str) -> tuple:
@@ -2710,11 +2836,11 @@ def _milestone_stubs(node: dict) -> list:
     out = []
     for line in card_of(body).splitlines():
         key, sep, value = line.partition(":")
-        if sep and key.strip() in ("goal", "why") and PLACEHOLDER.search(value):
+        if sep and key.strip() in ("goal", "why") and is_slot(value):
             out.append(f"CARD `{key.strip()}:`")
     exit_body = _section_of(body, "EXIT")
     boxes = _box_lines(exit_body) if _fence_balanced(exit_body) else []
-    if not boxes or any(PLACEHOLDER.search(text) for _, _, text, _ in boxes):
+    if not boxes or any(is_slot(text) for _, _, text, _ in boxes):
         out.append("`## EXIT` criteria")
     return out
 
@@ -3013,12 +3139,34 @@ def todo(root, milestone: str = None) -> tuple:
                     str((node_t2.get("fm") or {}).get("depth") or "standard") != "quick":
                 hint = f"  (split {' · '.join(collapsed)} — one surface per S id)"
             else:
+                # Both counts, appended in ladder order — the sweep refuses first, so it reads
+                # first. The uncovered count APPENDS rather than replaces (A6): re-ranking a
+                # tuned hint chain would change what an author is told first for reasons that
+                # have nothing to do with this rung. A zero shows nothing, like the sweep's.
+                bits = []
                 left = len(assumption_sweep(node_t2))
                 if left:
-                    hint = f"  ({left} unswept pair{'s' if left > 1 else ''})"
+                    bits.append(f"{left} unswept pair{'s' if left > 1 else ''}")
+                if (nocov := len(uncovered_obligations(node_t2))):
+                    bits.append(f"{nocov} uncovered")
+                if bits:
+                    hint = f"  ({' · '.join(bits)})"
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
+
+
+def _title_of(fm: dict, width: int = 0) -> str:
+    """A node's authored title, or "" when it has none. Never a placeholder.
+
+    A title still standing in its slot is not a title (M6): rendering `<the surface this
+    publishes>` in a listing spends the row and tells the reader nothing they could act on.
+    `is_slot` is the one placeholder rule, so this agrees with every other reader by construction.
+    """
+    t = str((fm or {}).get("title") or "").strip()
+    if not t or is_slot(t):
+        return ""
+    return t if not width or len(t) <= width else t[:width - 1].rstrip() + "…"
 
 
 def status(root, all: bool = False, check: bool = False) -> str:
@@ -3062,8 +3210,33 @@ def status(root, all: bool = False, check: bool = False) -> str:
     out = []
 
     project = next((n for n in graph.values() if (n["fm"] or {}).get("type") == "Project"), None)
-    out.append(f"{((project or {}).get('fm') or {}).get('title', Path(root).name)}"
-               f"  ·  {len(graph)} nodes")
+    pfm = ((project or {}).get("fm") or {})
+    # The goal rides the TITLE line and the lesson tally rides it too, so orientation gains no
+    # line at all (A13). Both were on the tally line in the draft; that line only exists when
+    # something is hidden, so `--all` would have silently dropped the count it most needs.
+    goal = str(pfm.get("goal") or "").strip()
+    if not goal or PLACEHOLDER.search(goal):
+        goal = "goal unauthored (add doctor)"
+    elif len(goal) > 72:
+        goal = goal[:71].rstrip() + "…"
+    # T0 only (R:T2SCAN): each Spec DECLARES its own open count in frontmatter, so the total
+    # costs no body read. One unreadable declaration makes the whole total UNKNOWN rather than
+    # a smaller number that looks like an answer — a bundle written before this key existed
+    # must not report a clean board over an open pile (R:UNKNOWNCLEAN).
+    counts = [declared_open_deltas(n["fm"]) for n in graph.values()
+              if (n["fm"] or {}).get("type") == "Spec"]
+    total = "?" if (counts and any(c is None for c in counts)) else sum(c for c in counts if c)
+    tally = ("" if not counts or total == 0 else
+             f"  ·  {total} open delta{'' if total == 1 else 's'} (add deltas)")
+    # The count `doctor` already reports, in the headline where a reviewer sees it. A 40-task
+    # roadmap shipped with 38 nodes in scaffold and every surface said so EXCEPT the one line a
+    # reader starts from. Computed from the same predicate `doctor` uses (A4), so the headline
+    # and the report can never disagree — and silent at zero (A9), like the delta clause.
+    scaffolds = sum(1 for n in graph.values()
+                    if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES and _is_scaffold(n))
+    queued = f"  ·  {scaffolds} scaffold (add todo)" if scaffolds else ""
+    out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
+               f"  ·  {len(graph)} nodes{tally}{queued}")
 
     # Orientation is about WORK. Receipts are evidence — reachable from the task that owns
     # them, and never the thing a cold reader needs first. Ordering by ORIENT_RANK keeps the
@@ -3096,7 +3269,12 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # read it and contradicted `todo`, `doctor` and its own `next:` line in one breath
         # (R:BEATLIE). `_beat_of` is frontmatter-only here, so the T0 read tier holds.
         beat = _beat_of(graph[cid]) if fm.get("type") in BEAT_TYPES else fm.get("status", "—")
-        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] {fm.get('type', '')}")
+        # The one field a queued node HAS authored. Forty of them shipped for review carrying
+        # real titles that no orientation verb rendered, so the roadmap read as forty anonymous
+        # slugs and had to be opened file by file. Last in the row (A12), so every column a
+        # guard already reads keeps its position, and truncated so the row cannot wrap.
+        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] "
+                   f"{fm.get('type', ''):<9} {_title_of(fm, 44)}".rstrip())
     if len(shown) > MAX_LINES:
         out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
     if hidden:
@@ -3523,6 +3701,41 @@ class Delta(tuple):
                 f"valid_to={self.valid_to!r})")
 
 
+def open_delta_count(body: str) -> int:
+    """How many deltas in a spec body are still OPEN. The ONE oracle behind the counter.
+
+    Reads through `parse_delta_head` like every other consumer, and applies the SAME predicate
+    `fold` applies when it decides what to retag — so the number `status` reports and the set
+    `fold` acts on can never disagree by construction. A malformed head (`code` set) is not
+    counted: it is a `doctor` finding of its own, and counting it would put an unreadable line
+    into a total a human is asked to drain.
+    """
+    n = 0
+    for line in body.splitlines():
+        m = DELTA_LINE.match(line.strip())
+        if m:
+            rec = parse_delta_head(m.group(1))
+            if rec["code"] is None and rec["status"] == "open":
+                n += 1
+    return n
+
+
+def declared_open_deltas(fm: dict):
+    """The `open_deltas:` a Spec DECLARES, or None for absent-or-unreadable.
+
+    None is UNKNOWN and never zero (R:UNKNOWNCLEAN). This corpus already records what a silent
+    default costs — `_as_date` refuses one for the same reason — and here the cost is exact:
+    every bundle written before this key existed would report a clean board over an open pile.
+    """
+    raw = (fm or {}).get("open_deltas")
+    if isinstance(raw, bool) or raw is None:
+        return None
+    try:
+        return int(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 def _delta_letter(lens: str) -> str:
     return LENS_ID.get(lens) or (str(lens)[:1].upper() or "X")
 
@@ -3592,7 +3805,13 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     # The counter rides in frontmatter through `set_key`, which replaces ONE scalar and leaves
     # every other byte — never re-emit the parsed mapping, which would drop comments and order.
     raw = set_key(node["raw"], "delta_seq", str(seq))
-    write(path, f"---\n{raw}\n---\n{''.join(lines)}")
+    # The counter rides the SAME write as the line it counts (A7). A second pass would make
+    # drift the normal state rather than the exception, and `status` would be reporting a
+    # number that is merely usually right. Recomputed, never incremented: the oracle is the
+    # body, so a hand-edited spec self-corrects on the next `learn`.
+    body = "".join(lines)
+    raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
+    write(path, f"---\n{raw}\n---\n{body}")
     return True, f"recorded on specs/{lens} as {did}\nnext: add status"
 
 
@@ -3736,7 +3955,41 @@ def deltas(root, status: str = "open", lens: str = None,
     return items, "\n".join(rendered)
 
 
-def fold(root, lens: str, match: str) -> tuple:
+def _bind_decision(body: str, lens: str, sentence: str, ids: list) -> str:
+    """Write one decision into `## Decisions that bind`, citing the lessons it came from.
+
+    PREPENDED (A11): this corpus reads newest-first everywhere a sequence accumulates, and the
+    foundation-compaction milestone already settled that question for `## Deltas`. The scaffold
+    line is REPLACED rather than pushed down — a section holding one real decision and one
+    template slot is still a section `_placeholder_only` would have to special-case, and every
+    consumer that filters scaffolding would then need the same rule.
+
+    No new grammar is declared: a `(from: …)` tail mirrors the `(evidence: …)` tail the delta
+    line already carries, so `bind_sections`, `brief` and FORMAT are all untouched.
+    """
+    cite = ", ".join([delta_address(lens, ids[0])] + [f"#{i}" for i in ids[1:]]) if ids else ""
+    entry = f"- {sentence.strip()}" + (f" (from: {cite})" if cite else "") + "\n"
+    lines = body.splitlines(keepends=True)
+    start = None
+    for i, line in enumerate(lines):
+        if line.startswith("#") and "-".join(re.findall(r"[a-z0-9]+", line.lstrip("#").strip().lower())) \
+                == "decisions-that-bind":
+            start = i + 1
+            break
+    if start is None:                        # A10: create it rather than refuse into a hand edit
+        for i, line in enumerate(lines):
+            if line.startswith("## ") and line.strip().lower() == "## deltas":
+                return "".join(lines[:i] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[i:])
+        return "".join(lines + ["\n## Decisions that bind\n", "\n", entry])
+    end = next((j for j in range(start, len(lines)) if lines[j].startswith("#")), len(lines))
+    content = [j for j in range(start, end) if lines[j].strip()]
+    if content and _placeholder_only("".join(lines[j] for j in content)):
+        return "".join(lines[:content[0]] + [entry] + lines[content[-1] + 1:end] + lines[end:])
+    at = content[0] if content else start
+    return "".join(lines[:at] + [entry] + lines[at:])
+
+
+def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) -> tuple:
     """Retag the open delta(s) in `lens` whose text contains `match` as `folded`, CLOSING the
     validity interval at today. `(ok, note)`.
 
@@ -3748,14 +4001,23 @@ def fold(root, lens: str, match: str) -> tuple:
     nothing. Ids retire in place — no fold ever renumbers a survivor, because a renumber silently
     re-points every relation that targets them.
     """
+    if reject and bind:
+        return False, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
+                       '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
+                       'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
         return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
+    # ONE matcher, two verdicts. `rejected` has been in DELTA_STATUSES since the grammar was
+    # frozen and no command could produce it, so the only honest way to retire a wrong lesson
+    # was a hand edit — which the method forbids everywhere else. A separate code path would
+    # let the two verdicts drift; the verdict is a word, and only the word changes.
+    verdict = "rejected" if reject else "folded"
     node = read(path, "T2")
-    out, folded = [], 0
+    out, folded, ids = [], 0, []
     for line in node["body"].splitlines(keepends=True):
         m = DELTA_LINE.match(line.strip())
         if m:
@@ -3763,19 +4025,30 @@ def fold(root, lens: str, match: str) -> tuple:
             if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
                 head = m.group(1)
                 if rec["id"] is None:
-                    closed = f"{rec['comp']} · folded"
+                    closed = f"{rec['comp']} · {verdict}"
                 elif rec["valid_from"]:
-                    closed = (f"{rec['comp']} · {rec['id']} · folded · "
+                    closed = (f"{rec['comp']} · {rec['id']} · {verdict} · "
                               f"{rec['valid_from']}{DELTA_ARROW}{_today()}")
                 else:
-                    closed = f"{rec['comp']} · {rec['id']} · folded"
+                    closed = f"{rec['comp']} · {rec['id']} · {verdict}"
                 line = line.replace(f"[{head}]", f"[{closed}]", 1)
                 folded += 1
+                if rec["id"]:
+                    ids.append(rec["id"])
         out.append(line)
     if not folded:
         return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
-    write(path, f"---\n{node['raw']}\n---\n{''.join(out)}")
-    return True, f"folded {folded} delta(s) in specs/{lens}\nnext: add status"
+    body = "".join(out)
+    # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
+    # the same call failed to retag.
+    if bind:
+        body = _bind_decision(body, lens, bind, ids)
+    # Recomputed from the retagged body, so a match that retires three lessons moves the
+    # counter by three (E3). A decrement-by-one would be right only for the commonest call.
+    raw = set_key(node["raw"], "open_deltas", str(open_delta_count(body)))
+    write(path, f"---\n{raw}\n---\n{body}")
+    bound = f" · bound 1 decision citing {', '.join(ids)}" if bind else ""
+    return True, f"{verdict} {folded} delta(s) in specs/{lens}{bound}\nnext: add status"
 
 
 # ============================================ search — one lookup, at LESSON granularity
@@ -4218,14 +4491,28 @@ def collapsed_surfaces(node: dict) -> list:
     return out
 
 
+def is_slot(text) -> bool:
+    """True when a line still stands in template scaffold. The ONE placeholder rule.
+
+    A backticked span is CODE, not a placeholder. Four readers used to answer this question and
+    only two applied that exclusion: `placeholders_in` and `_placeholder_only` stripped code
+    spans, while `gives_unauthored` and the milestone EXIT box check matched the raw text. So a
+    line written in the engine's own vocabulary — a criterion naming `E<n>`, a surface naming a
+    `<T>`-parameterised type — read as an unauthored slot, and this milestone's own freeze was
+    refused twice by it. One oracle, one rule; the disagreement was the defect.
+    """
+    return bool(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", str(text))))
+
+
 def gives_unauthored(node: dict) -> bool:
     """True when `gives:` is missing or still the scaffold — i.e. nothing to sweep.
 
     Without this the gate has a one-line off switch: delete `gives:`, get no surfaces,
-    sweep vacuously clean.
+    sweep vacuously clean. Absence is unchanged by the code-span rule (A7): the off switch
+    this closes is DELETING the key, which no amount of backticking reaches.
     """
     entries = (node.get("fm") or {}).get("gives") or []
-    return not entries or any("<" in str(e) for e in entries)
+    return not entries or any(is_slot(e) for e in entries)
 
 
 def assumption_sweep(node: dict) -> list:
@@ -4395,6 +4682,18 @@ def _open_decisions(node: dict) -> list:
     """
     body = node.get("body") or ""
     out = []
+    # A Milestone's decisions are its EXIT criteria, and ONLY those. Its goal and why are the
+    # human's own words, and SCOPE and GROUND are not what a stamp attests. Every box counts
+    # whether ticked or not (A4): a tick states the criterion was MET, never that anyone
+    # approved its wording — reading one as an answer would let the goal-gate quietly satisfy
+    # the interview, which is M34's failure with an extra step.
+    if (node.get("fm") or {}).get("type") == "Milestone":
+        exit_body = _section_of(body, "EXIT")
+        for n, (_, _, text, _) in enumerate(
+                _box_lines(exit_body) if _fence_balanced(exit_body) else [], start=1):
+            out.append({"id": f"C{n}", "of": "criterion", "dim": "criterion",
+                        "reading": text.strip(), "cost": "", "text": text.strip()})
+        return out
     for line in _section_of(body, "ASSUMPTIONS").splitlines():
         m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
         if not m or re.search(r"·\s*n/a\b", m.group(3)):
@@ -4511,7 +4810,9 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
                       f"answer each decision `{' | '.join(INTERVIEW_VERDICTS)}`"
                       f"\nnext: add interview {slug} --answer <id>=<verdict>")
 
-    side_dir = root / f"tasks/{slug}.d/interviews"
+    # Derived from the node's OWN path, never hardcoded to `tasks/`: a milestone's record filed
+    # under the tasks tree is a record nothing can find (R:TASKSIDECAR).
+    side_dir = entry["path"].parent / f"{slug}.d" / "interviews"
     side_dir.mkdir(parents=True, exist_ok=True)
     n = len(list(side_dir.glob("*.md"))) + 1
     digest = interview_digest(node)
@@ -4628,10 +4929,26 @@ def covers(node: dict) -> dict:
         if not match:
             continue
         check = match.group(1)
-        for rule in (r.strip() for r in match.group(2).split(",")):
+        # Commas OR whitespace (M2). The ASSUMPTIONS reader has always taken both; splitting on
+        # commas alone here meant `covers: M1 E1` parsed as ONE rule named "M1 E1", matched no
+        # rule, and bound NOTHING while reading as correct — a covers list that binds nothing is
+        # the exact defect class this milestone exists to close, hiding inside its own parser.
+        for rule in (r.strip() for r in re.split(r"[,\s]+", match.group(2))):
             if rule:
                 out.setdefault(rule, []).append(check)
     return out
+
+
+def uncovered_obligations(node: dict) -> list:
+    """FILLED edges and PROBED assumptions that no CHECKS `covers:` list names. Sorted.
+
+    Calls the two functions `referents_of` composes — never a copy of the rule (R:SECOND_TRUTH),
+    so `freeze` and `gate` can never disagree about what an obligation is. And deliberately NOT
+    the third: `rules_of` stays out until the cost of widening to Musts and Rejects is MEASURED
+    rather than estimated (R:WIDENED). Narrow and true beats wide and guessed.
+    """
+    mapped = covers(node)
+    return sorted(set(edges_of(node) + probed_assumptions(node)) - set(mapped))
 
 
 def bind(node: dict, reported: dict) -> tuple:
@@ -5756,6 +6073,49 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             find("warn", "unauthored_node",
                  f"{cid.lstrip('/')}: still scaffold — {' · '.join(standing[:3])}", cid)
 
+    # R:GREENROOT. `placeholders_in` is wired to LIFECYCLE_TYPES — exactly the two types whose
+    # author already meets a refusal at `freeze`. The bundle ROOT and the five lenses are the
+    # files the method tells every agent to read FIRST, and no guard reached either of them:
+    # this repo's own PROJECT.md read `state: initialised` for a month after `upgrade` dropped
+    # its goal, and all five specs still hold the scaffold line that every `brief` faithfully
+    # reports to the worker as `unauthored`. A guard that fires on a malformed thing and never
+    # on a missing one is a guard you get past by deleting (M22) — here, by never writing.
+    for cid, node in sorted(graph.items()):
+        fm = node["fm"] or {}
+        if fm.get("type") not in ("Project", "Spec"):
+            continue
+        body, slots = body_of(node["path"]), []
+        if fm.get("type") == "Project":
+            if PLACEHOLDER.search(str(fm.get("goal") or "")):
+                slots.append("frontmatter `goal:`")
+            for line in card_of(body).splitlines():
+                key, sep, value = line.partition(":")
+                if sep and key.strip() == "goal" and PLACEHOLDER.search(value):
+                    slots.append("CARD `goal:`")
+            if "invariants" not in fm:
+                slots.append("`invariants:` absent")
+        else:
+            for heading in ("Now", "Decisions that bind"):
+                if _placeholder_only(_section_of(body, heading)):
+                    slots.append(f"`## {heading}`")
+        if slots:
+            find("warn", "unauthored_root",
+                 f"{cid.lstrip('/')}: still scaffold — {' · '.join(slots[:3])}", cid)
+
+    # The counter is engine-maintained (A1), so a disagreement with the body is a repairable
+    # fact, never a human's mistake: `info`, and `--sync` fixes it. An ABSENT key over an EMPTY
+    # body is not drift — it is a bundle that has simply never learned anything (E1).
+    for cid, node in sorted(graph.items()):
+        if (node["fm"] or {}).get("type") != "Spec":
+            continue
+        actual = open_delta_count(body_of(node["path"]))
+        declared = declared_open_deltas(node["fm"])
+        if declared == actual or (declared is None and actual == 0):
+            continue
+        said = (node["fm"] or {}).get("open_deltas", "nothing")
+        find("info", "delta_count_drift",
+             f"{cid.lstrip('/')}: `open_deltas:` says {said}, the body holds {actual}", cid)
+
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
         if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
@@ -5919,6 +6279,16 @@ def doctor_sync(root) -> tuple:
         ok, _ = render_card(root, cid)
         if ok:
             changed.append(f"{cid.lstrip('/')} CARD `{key}`")
+    # A DERIVED count, so recomputing it is exactly what this verb is for — and never
+    # R:SYNCAUTHORED: no authored byte moves, only a number whose oracle is the body beneath it.
+    for path in sorted((root / "specs").glob("*.md")):
+        n = read(path, "T2")
+        actual = open_delta_count(n["body"])
+        declared = declared_open_deltas(n["fm"])
+        if declared == actual or (declared is None and actual == 0):
+            continue
+        write(path, f"---\n{set_key(n['raw'], 'open_deltas', str(actual))}\n---\n{n['body']}")
+        changed.append(f"specs/{path.stem} `open_deltas` -> {actual}")
     if (index := root / "index.md").is_file():
         rebuilt = _render_index(root, graph)
         if rebuilt and rebuilt != index.read_text(encoding="utf-8"):

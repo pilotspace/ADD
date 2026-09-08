@@ -76,12 +76,16 @@ def _repo_with_node(tmp_path, scope, sensitive_paths, lens=None):
     raw = n["raw"].replace("sensitive_paths: []", f"sensitive_paths:{listed}")
     add.write(index, f"---\n{raw}\n---\n{n['body']}")
 
-    fields = dict(lens or {})
     cid, _ = add.new(root, "Task", "gated", title="A gated task", depth="standard",
-                     scope=[scope], **fields)
+                     scope=[scope])
     path = root / cid.lstrip("/")
     n = add.read(path, "T2")
-    add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'build')}\n---\n{TASK_BODY}")
+    # `advised_by:` is owned by `add advise`, not by `new` (R:GHOSTFIELD) — stamp it the way
+    # that verb does, so the fixture never claims a creation field the engine does not write.
+    raw = add.set_key(n["raw"], "status", "build")
+    for key, value in (lens or {}).items():
+        raw = add.set_key(raw, key, value)
+    add.write(path, f"---\n{raw}\n---\n{TASK_BODY}")
     _interview_all(root, cid)          # a human floor is interviewed first (R:UNINTERVIEWED)
     node, why = add.freeze(root, cid, "human:t")   # `gate` refuses an unsealed PASS (R:UNSEALED)
     assert node is not None, f"fixture could not freeze: {why!r}"

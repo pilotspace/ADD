@@ -34,6 +34,7 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [Experience becomes a question the plan must answer](milestones/experience-in-plan.md) — `done`
 - [The first run a stranger walks is the run the engine actually performs](milestones/first-run-truth.md) — `done`
 - [The persona tier the method claims is the persona tier a fresh bundle loads](milestones/live-persona-tier.md) — `done`
+- [the learning loop converges instead of accumulating](milestones/loop-that-drains.md) — `direction`
 - [Reading the bundle as a graph — one node in full, its neighbourhood to three levels, and a filter that answers by field](milestones/okf-graph-lookup.md) — `done`
 - [OKF for the living specs — addressable, dated, typed, searchable](milestones/okf-graph-time.md) — `done`
 - [The read costs what it is worth: a dereferenceable address, a bounded listing, and the trims underneath](milestones/read-cost.md) — `done`
@@ -52,6 +53,7 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [An address a verb prints is an address a verb can read back](tasks/address-dereferences.md) — `done` · `standard` · `architecture`
 - [direction.md: discharge high-cost assumptions by recorded micro-explore](tasks/assumption-microspike.md) — `done` · `standard`
 - [A node that was never authored is never advised to freeze](tasks/authoring-beat-named.md) — `done` · `standard` · `architecture`
+- [the 75 open deltas resolve to folded, rejected or bound](tasks/backlog-drain.md) — `direction` · `quick`
 - [The beat status and brief report is the beat the stamps derive](tasks/beat-read-truth.md) — `done` · `standard` · `architecture`
 - [A month-end reconciliation, run end to end](tasks/beyond-code-walkthrough.md) — `done` · `standard`
 - [The carried inventory is windowed the way search already windows it](tasks/bounded-delta-listing.md) — `done` · `standard`
@@ -64,6 +66,7 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [finance/legal/academic persona depth + routing index](tasks/corpus-depth.md) — `done` · `quick`
 - [Every lesson is an addressable concept with a validity interval](tasks/dated-addressable-deltas.md) — `done` · `standard` · `architecture`
 - [the tested human-seam bypass is deleted, not documented](tasks/delete-the-unwired-quick-lane.md) — `done` · `quick` · `security`
+- [a milestone close drains its own lessons, and a drained lesson can bind](tasks/deltas-drain-at-close.md) — `direction` · `standard` · `architecture`
 - [add deltas filters by lens, by --since, and by --as-of](tasks/deltas-time-filters.md) — `done` · `quick`
 - [The direct lane is size-gated with an inline checklist; sizing text ships in CLAUDE.md, the skill and the installer pointer](tasks/direct-lane-size-gate.md) — `done` · `standard` · `architecture`
 - [docs site teaches the beta.2 checkpoints](tasks/docs-beta2-refresh.md) — `done` · `doc`
@@ -75,6 +78,7 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [A section the gate binds is a section the direction guide teaches](tasks/edges-documented.md) — `done` · `standard`
 - [A sixth sweep dimension: who receives this, and what would make it hard](tasks/experience-sweep.md) — `done` · `standard` · `architecture`
 - [Explore lane — 4th intake lane + phases/explore.md research loop](tasks/explore-lane.md) — `done` · `standard`
+- [freeze refuses an authored edge or probed assumption no check covers](tasks/freeze-binds-what-you-authored.md) — `direction` · `standard` · `architecture`
 - [The ONE approval asks its questions out loud](tasks/freeze-interview.md) — `done` · `standard` · `architecture`
 - [Every cost and ceremony claim on the front door is one the repo can back](tasks/front-door-claim-truth.md) — `done` · `quick`
 - [The framing stops presupposing a repo](tasks/front-door-copy.md) — `done` · `quick`
@@ -87,12 +91,14 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 - [One pinned JSON payload serves both read verbs, and is byte-stable across runs](tasks/json-emission.md) — `done` · `standard` · `architecture`
 - [verify.md — every documented rung must be stampable](tasks/ladder-honesty.md) — `done` · `standard`
 - [the v3.0.0 launch post — written now, published at the final tag](tasks/launch-blog.md) — `done` · `doc`
+- [a milestone human freeze needs proof the exit criteria were put to a human](tasks/milestone-freeze-is-interviewed.md) — `direction` · `standard` · `architecture`
 - [Milestone membership is an edge the graph can walk, not a slug only todo can string-match](tasks/milestone-membership-is-an-edge.md) — `done` · `standard` · `architecture`
 - [A bundle that exists above you is a bundle status sends you to, never one init offers to replace](tasks/nested-bundle-guard.md) — `done` · `standard` · `architecture`
 - [every next](tasks/next-lines-are-runnable.md) — `done` · `standard` · `architecture`
 - [OKF-aligned Persona scaffold — the contract's routing keys get slots](tasks/okf-persona-template.md) — `done`
 - [Spec nodes carry OKF's recommended frontmatter, and the bundle declares its OKF version](tasks/okf-spec-frontmatter.md) — `done` · `standard` · `architecture`
 - [add deltas cites a lesson at the same address add search does (X4)](tasks/one-address-per-concept.md) — `done` · `quick`
+- [status and doctor see carried work; the root is authored](tasks/orientation-sees-carried-work.md) — `done` · `standard` · `architecture`
 - [status, locate and brief stop spending bytes on what a reader cannot act on](tasks/output-trims.md) — `done` · `standard`
 - [A partial test run must say so](tasks/partial-run-visible.md) — `done` · `standard` · `architecture`
 - [persona-author references speak 3.0](tasks/persona-author-30.md) — `done`
