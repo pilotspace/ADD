@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "0c2c576cc2d629c58439918856f08ec1"  # re-aimed @ search-structured-filters: search gains --type/--status/--milestone, an optional query, and a reported delta exclusion. prior: 1233edd0… @ show-verb
+ENGINE_MD5 = "2732934691d74d1c4cb17053cfbf1155"  # re-aimed @ orientation-sees-carried-work: status names the open-delta total and the project goal, doctor gains unauthored_root + delta_count_drift, init seeds invariants: and open_deltas:, upgrade carries a 2.x goal forward. prior: 0c2c576c… @ search-structured-filters
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "fedfd72a3954ee841286ef92f5119898"  # re-aimed @ json-emission: both read verbs take --json. prior: 8fc70960… @ search-structured-filters

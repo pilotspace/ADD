@@ -16,6 +16,9 @@ verified:
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
   - { by: "cli", at: 2026-09-04, act: brief, authority: process, brief: "sha256:9f46fe94e9f472d3" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:37cc8f3eb1c82586" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:37cc8f3eb1c82586" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:37cc8f3eb1c82586" }
 ---
 ## CARD
 goal: `new` refuses a `kind:` outside the closed taxonomy and names the taxonomy.

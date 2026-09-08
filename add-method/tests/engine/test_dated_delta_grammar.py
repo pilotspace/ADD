@@ -92,10 +92,21 @@ def test_learn_touches_only_the_delta_seq_key(tmp_path):
     assert "type: Spec" in before, "the fixture frontmatter is not what this guard assumes"
     add.learn(tmp_path, "method", "a lesson", evidence="e")
     after = add.read(tmp_path / "specs" / "method.md", "T2")["raw"]
-    moved = [ln for ln in after.splitlines() if ln not in before.splitlines()]
-    assert moved == ["delta_seq: 1"], f"learn changed frontmatter beyond delta_seq: {moved}"
-    dropped = [ln for ln in before.splitlines() if ln not in after.splitlines()]
-    assert not dropped, f"learn dropped frontmatter lines: {dropped}"
+    # `learn` writes TWO counters now — `delta_seq` and the `open_deltas` the orientation
+    # listing reads — so the guard's PREMISE (one key) expired while its RULE (no re-emitted
+    # frontmatter, no lost byte) did not. Pinning the KEY SEQUENCE is the stronger form: a
+    # re-emitted mapping reorders or drops a key even when it happens to move the right value.
+    def keys(raw):
+        return [ln.split(":", 1)[0] for ln in raw.splitlines() if ":" in ln]
+    kb, ka = keys(before), keys(after)
+    assert ka[:len(kb)] == kb, \
+        f"learn re-emitted frontmatter — an existing key moved or was dropped:\n" \
+        f"  before {kb}\n  after  {ka}"
+    assert ka[len(kb):] == ["delta_seq"], \
+        f"learn appended a key that is not its sequence counter: {ka[len(kb):]}"
+    moved = sorted(ln for ln in after.splitlines() if ln not in before.splitlines())
+    assert moved == ["delta_seq: 1", "open_deltas: 1"], \
+        f"learn changed frontmatter beyond its two counters: {moved}"
 
 
 def test_a_deleted_top_delta_does_not_free_its_id(tmp_path):

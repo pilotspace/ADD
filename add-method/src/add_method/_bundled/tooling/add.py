@@ -1457,7 +1457,8 @@ def _is_bundle_index(path) -> bool:
         return False
 
 
-def init(root, profile: str = "code", title: str = None, nested: bool = False) -> tuple:
+def init(root, profile: str = "code", title: str = None, nested: bool = False,
+         goal: str = None) -> tuple:
     """Create a conforming bundle. Never overwrites; an existing file is left alone.
 
     Returns `(graph, created_cids, note)`, or `(None, [], refusal)` when the profile is one this
@@ -1525,7 +1526,13 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
     # both files are views: whichever side survives is restored by `doctor --sync`.
     put(".gitattributes", "index.md merge=ours linguist-generated=true\n"
                           "log.md   merge=ours linguist-generated=true\n")
-    put("PROJECT.md", f"---\ntype: Project\ntitle: {title}\ngoal: <one sentence — what is true when this ships>\n"
+    # `invariants:` is the key every task is bound to by the method's own prose — and until
+    # now it was written by nothing and read by nothing, so the binding named a slot that did
+    # not exist. Seeded EMPTY (A2): the engine has nothing true to put there, and content it
+    # invented would ship as constraints nobody chose. `doctor` is its reader (R:DEADKEY).
+    put("PROJECT.md", f"---\ntype: Project\ntitle: {title}\n"
+                      f"goal: {goal or '<one sentence — what is true when this ships>'}\n"
+                      f"invariants: []\n"
                       f"stage: mvp\nprofile: {profile}\n{_stamp()}\n---\n"
                       f"## CARD\ngoal: <the one line a cold reader needs>\nstate: initialised\n"
                       f"next: add new milestone <slug>\n")
@@ -1543,8 +1550,14 @@ def init(root, profile: str = "code", title: str = None, nested: bool = False) -
             # OKF's doc-status `status:` and `stale_after:` stay OUT: `status:` is ADD's
             # task-lifecycle key, and a spec whose every delta carries a validity interval has
             # no file-level staleness left to declare.
+            #
+            # `open_deltas: 0` is seeded HERE, not left for the first `learn`. Absence has to
+            # mean one thing only — "this bundle predates the counter" — or every fresh bundle
+            # would report UNKNOWN until it happened to learn something, and the signal that is
+            # supposed to distinguish an unmigrated bundle from a drained one would say the
+            # same word for both.
             f"---\ntype: Spec\ntitle: {slug.title()}\nlens: {slug}\nproject: {title}\n"
-            f"description: {goal}\ntags: []\nsources: []\n{_stamp()}\n---\n"
+            f"description: {goal}\ntags: []\nsources: []\nopen_deltas: 0\n{_stamp()}\n---\n"
             f"## Now\n{goal}\n\n## Decisions that bind\n- <the first decision that constrains the rest>\n\n"
             f"## Deltas\n- <what changed, and the evidence that changed it>\n")
 
@@ -1644,13 +1657,19 @@ def upgrade(project_root, by: str = "cli") -> tuple:
     for plan in sorted(root.glob("tasks/*/PLAN.md")):
         m = RE_2X_PHASE.search(plan.read_text(encoding="utf-8", errors="replace"))
         tasks.append((plan.parent.name, m.group(1) if m else "unknown"))
-    title = None
+    title = goal = None       # a bundle with no charter at all reaches init with both unset
     charter = root / "PROJECT.md"
     if charter.is_file():
         text = charter.read_text(encoding="utf-8", errors="replace")
         m = re.search(r"^title:\s*(.+)$", text, re.M) \
             or re.search(r"^#\s+(?:PROJECT:\s*)?(.+)$", text, re.M)
         title = m.group(1).strip() if m else None
+        # R:CLOBBERGOAL. The 2.x charter carried an authored goal; carrying only `title:`
+        # replaced a year of direction with a placeholder and nothing refused it, because no
+        # guard reached the root. Matched the same loose way `title:` is, and an ABSENT goal
+        # stays absent (E5) — the fresh bundle gets the ordinary placeholder, never a fiction.
+        g = re.search(r"^goal:\s*(.+)$", text, re.M)
+        goal = g.group(1).strip() if g and not PLACEHOLDER.search(g.group(1)) else None
 
     root.rename(archive)                      # the ONE move — everything else is additive
     # The engine executing THIS verb lived inside the bundle just archived — its own source
@@ -1667,7 +1686,7 @@ def upgrade(project_root, by: str = "cli") -> tuple:
         src = archive / tree
         if src.is_dir() and not (root / tree).exists():
             shutil.copytree(src, root / tree, ignore=shutil.ignore_patterns("__pycache__"))
-    init(root, "code", title)
+    init(root, "code", title, goal=goal)
 
     report = archive / "MIGRATION.md"
     lines = [f"# 2.x → 3.0 migration — recorded {_today()} by {by}", "",
@@ -3062,8 +3081,26 @@ def status(root, all: bool = False, check: bool = False) -> str:
     out = []
 
     project = next((n for n in graph.values() if (n["fm"] or {}).get("type") == "Project"), None)
-    out.append(f"{((project or {}).get('fm') or {}).get('title', Path(root).name)}"
-               f"  ·  {len(graph)} nodes")
+    pfm = ((project or {}).get("fm") or {})
+    # The goal rides the TITLE line and the lesson tally rides it too, so orientation gains no
+    # line at all (A13). Both were on the tally line in the draft; that line only exists when
+    # something is hidden, so `--all` would have silently dropped the count it most needs.
+    goal = str(pfm.get("goal") or "").strip()
+    if not goal or PLACEHOLDER.search(goal):
+        goal = "goal unauthored (add doctor)"
+    elif len(goal) > 72:
+        goal = goal[:71].rstrip() + "…"
+    # T0 only (R:T2SCAN): each Spec DECLARES its own open count in frontmatter, so the total
+    # costs no body read. One unreadable declaration makes the whole total UNKNOWN rather than
+    # a smaller number that looks like an answer — a bundle written before this key existed
+    # must not report a clean board over an open pile (R:UNKNOWNCLEAN).
+    counts = [declared_open_deltas(n["fm"]) for n in graph.values()
+              if (n["fm"] or {}).get("type") == "Spec"]
+    total = "?" if (counts and any(c is None for c in counts)) else sum(c for c in counts if c)
+    tally = ("" if not counts or total == 0 else
+             f"  ·  {total} open delta{'' if total == 1 else 's'} (add deltas)")
+    out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
+               f"  ·  {len(graph)} nodes{tally}")
 
     # Orientation is about WORK. Receipts are evidence — reachable from the task that owns
     # them, and never the thing a cold reader needs first. Ordering by ORIENT_RANK keeps the
@@ -3523,6 +3560,41 @@ class Delta(tuple):
                 f"valid_to={self.valid_to!r})")
 
 
+def open_delta_count(body: str) -> int:
+    """How many deltas in a spec body are still OPEN. The ONE oracle behind the counter.
+
+    Reads through `parse_delta_head` like every other consumer, and applies the SAME predicate
+    `fold` applies when it decides what to retag — so the number `status` reports and the set
+    `fold` acts on can never disagree by construction. A malformed head (`code` set) is not
+    counted: it is a `doctor` finding of its own, and counting it would put an unreadable line
+    into a total a human is asked to drain.
+    """
+    n = 0
+    for line in body.splitlines():
+        m = DELTA_LINE.match(line.strip())
+        if m:
+            rec = parse_delta_head(m.group(1))
+            if rec["code"] is None and rec["status"] == "open":
+                n += 1
+    return n
+
+
+def declared_open_deltas(fm: dict):
+    """The `open_deltas:` a Spec DECLARES, or None for absent-or-unreadable.
+
+    None is UNKNOWN and never zero (R:UNKNOWNCLEAN). This corpus already records what a silent
+    default costs — `_as_date` refuses one for the same reason — and here the cost is exact:
+    every bundle written before this key existed would report a clean board over an open pile.
+    """
+    raw = (fm or {}).get("open_deltas")
+    if isinstance(raw, bool) or raw is None:
+        return None
+    try:
+        return int(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 def _delta_letter(lens: str) -> str:
     return LENS_ID.get(lens) or (str(lens)[:1].upper() or "X")
 
@@ -3592,7 +3664,13 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     # The counter rides in frontmatter through `set_key`, which replaces ONE scalar and leaves
     # every other byte — never re-emit the parsed mapping, which would drop comments and order.
     raw = set_key(node["raw"], "delta_seq", str(seq))
-    write(path, f"---\n{raw}\n---\n{''.join(lines)}")
+    # The counter rides the SAME write as the line it counts (A7). A second pass would make
+    # drift the normal state rather than the exception, and `status` would be reporting a
+    # number that is merely usually right. Recomputed, never incremented: the oracle is the
+    # body, so a hand-edited spec self-corrects on the next `learn`.
+    body = "".join(lines)
+    raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
+    write(path, f"---\n{raw}\n---\n{body}")
     return True, f"recorded on specs/{lens} as {did}\nnext: add status"
 
 
@@ -3774,7 +3852,11 @@ def fold(root, lens: str, match: str) -> tuple:
         out.append(line)
     if not folded:
         return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
-    write(path, f"---\n{node['raw']}\n---\n{''.join(out)}")
+    body = "".join(out)
+    # Recomputed from the retagged body, so a match that retires three lessons moves the
+    # counter by three (E3). A decrement-by-one would be right only for the commonest call.
+    raw = set_key(node["raw"], "open_deltas", str(open_delta_count(body)))
+    write(path, f"---\n{raw}\n---\n{body}")
     return True, f"folded {folded} delta(s) in specs/{lens}\nnext: add status"
 
 
@@ -5756,6 +5838,49 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             find("warn", "unauthored_node",
                  f"{cid.lstrip('/')}: still scaffold — {' · '.join(standing[:3])}", cid)
 
+    # R:GREENROOT. `placeholders_in` is wired to LIFECYCLE_TYPES — exactly the two types whose
+    # author already meets a refusal at `freeze`. The bundle ROOT and the five lenses are the
+    # files the method tells every agent to read FIRST, and no guard reached either of them:
+    # this repo's own PROJECT.md read `state: initialised` for a month after `upgrade` dropped
+    # its goal, and all five specs still hold the scaffold line that every `brief` faithfully
+    # reports to the worker as `unauthored`. A guard that fires on a malformed thing and never
+    # on a missing one is a guard you get past by deleting (M22) — here, by never writing.
+    for cid, node in sorted(graph.items()):
+        fm = node["fm"] or {}
+        if fm.get("type") not in ("Project", "Spec"):
+            continue
+        body, slots = body_of(node["path"]), []
+        if fm.get("type") == "Project":
+            if PLACEHOLDER.search(str(fm.get("goal") or "")):
+                slots.append("frontmatter `goal:`")
+            for line in card_of(body).splitlines():
+                key, sep, value = line.partition(":")
+                if sep and key.strip() == "goal" and PLACEHOLDER.search(value):
+                    slots.append("CARD `goal:`")
+            if "invariants" not in fm:
+                slots.append("`invariants:` absent")
+        else:
+            for heading in ("Now", "Decisions that bind"):
+                if _placeholder_only(_section_of(body, heading)):
+                    slots.append(f"`## {heading}`")
+        if slots:
+            find("warn", "unauthored_root",
+                 f"{cid.lstrip('/')}: still scaffold — {' · '.join(slots[:3])}", cid)
+
+    # The counter is engine-maintained (A1), so a disagreement with the body is a repairable
+    # fact, never a human's mistake: `info`, and `--sync` fixes it. An ABSENT key over an EMPTY
+    # body is not drift — it is a bundle that has simply never learned anything (E1).
+    for cid, node in sorted(graph.items()):
+        if (node["fm"] or {}).get("type") != "Spec":
+            continue
+        actual = open_delta_count(body_of(node["path"]))
+        declared = declared_open_deltas(node["fm"])
+        if declared == actual or (declared is None and actual == 0):
+            continue
+        said = (node["fm"] or {}).get("open_deltas", "nothing")
+        find("info", "delta_count_drift",
+             f"{cid.lstrip('/')}: `open_deltas:` says {said}, the body holds {actual}", cid)
+
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
         if fm.get("type") != "Task" or SENSITIVITY_FLOOR.get(fm.get("sensitivity"), "process") == "process":
@@ -5919,6 +6044,16 @@ def doctor_sync(root) -> tuple:
         ok, _ = render_card(root, cid)
         if ok:
             changed.append(f"{cid.lstrip('/')} CARD `{key}`")
+    # A DERIVED count, so recomputing it is exactly what this verb is for — and never
+    # R:SYNCAUTHORED: no authored byte moves, only a number whose oracle is the body beneath it.
+    for path in sorted((root / "specs").glob("*.md")):
+        n = read(path, "T2")
+        actual = open_delta_count(n["body"])
+        declared = declared_open_deltas(n["fm"])
+        if declared == actual or (declared is None and actual == 0):
+            continue
+        write(path, f"---\n{set_key(n['raw'], 'open_deltas', str(actual))}\n---\n{n['body']}")
+        changed.append(f"specs/{path.stem} `open_deltas` -> {actual}")
     if (index := root / "index.md").is_file():
         rebuilt = _render_index(root, graph)
         if rebuilt and rebuilt != index.read_text(encoding="utf-8"):

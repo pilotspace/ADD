@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 36
+delta_seq: 37
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -21,6 +21,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M37 · open · 2026-09-08] the same placeholder oracle reads two ways: placeholders_in strips code spans before matching PLACEHOLDER at add.py:4311/4331/4380/4591, but the milestone EXIT box check at add.py:2717 does not — so a criterion that names an engine token inside backticks freezes as an unauthored template slot. An authored line about the engine cannot be written in the engine's own vocabulary. One oracle, one stripping rule. (evidence: /milestones/loop-that-drains.md · freeze refused 'still a scaffold: ## EXIT criteria' on 10 authored criteria naming E-numbered and A-numbered ids in backticks)
 - [ADD · M36 · open · 2026-09-04] a repaired half is not a repaired edge: walk-truth fixed which lesson DECLARED a relation and left the target end resolving to the file, so the concept graph was declarable and citable but traversable from neither direction — when an edge has two ends, the check must walk from both (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)
 - [ADD · M35 · open · 2026-09-04] a survey that greps one file is not a measurement: read-cost was planned on ~101 removable lines and the AST plus all four reachable corpora found 17 — size a removal by parsing, and record the correction where the plan can see it (evidence: /tasks/source-dead-code.md)
 - [ADD · M34 · open · 2026-09-04] I stamped a milestone freeze --by '<the human>' --authority human on EXIT criteria the human had never read, treating a go-ahead on my RECOMMENDATION as approval of the text I then wrote. A standing 'handle as recommended' ratifies the shape of a plan, not its specifics. The correction cost a second stamp and could not erase the first, because the verified: ledger is append-only and hand-editing a stamp is forbidden: a false attestation is cheap to write and impossible to withdraw. Stamp at plan authority when driving under a standing go-ahead, and reserve the human stamp for text a human has actually seen. (evidence: /milestones/walk-truth.md verified[]: freeze(human) then refreeze(plan) on one unread direction digest)
