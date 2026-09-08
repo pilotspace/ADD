@@ -1,7 +1,7 @@
 ---
 type: Task
 title: a scope guard names the range it guards
-status: direction
+status: done
 depth: quick
 milestone: rules-that-hold-for-us
 scope:
@@ -13,11 +13,14 @@ gives:
 generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: freeze, authority: process, direction: "sha256:c6a04091074da4d5", binding: "sha256:e9a79d98e3503d91" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:4b0c835645af4d2f" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/scope-guard-names-its-range.d/runs/1.md }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: process, outcome: PASS, receipt: /tasks/scope-guard-names-its-range.d/runs/1.md, brief: "sha256:e9e47b650d40ed0a" }
 ---
 ## CARD
 goal: no guard in the suite is satisfied by running `git commit`, and none diffs a path git cannot see
 why: `test_no_engine_output_was_added` reports RED on every branch that touches the engine for any reason, and GREEN the moment you type `git commit` — it guards the working tree, not the claim. It has failed once per session all week and been dismissed once per session, which is what a guard nobody believes costs
-beat: direction · next: add freeze scope-guard-names-its-range
+beat: done · next: add status
 
 ## RULES
 <must>

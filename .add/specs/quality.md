@@ -7,10 +7,10 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 27
+delta_seq: 30
 relations:
   - Q9 refines /specs/method.md#M21
-open_deltas: 1
+open_deltas: 4
 ---
 ## Now
 what counts as proof
@@ -25,6 +25,9 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q30 · open · 2026-09-08] SKILL.md's sha256 prose pin is held in TWO files — test_surface.py holds it and test_skill_reads_the_graph.py pins test_surface's copy of it. Same class as the budget scatter, one instance further on: a re-aim must edit both or neither (evidence: test_prose_pin_was_re_aimed · one-budget-one-guard overrun probe)
+- [TDD · Q29 · open · 2026-09-08] The scatter that hides is the one with no literal: a module-level `LINE_PIN = 176` asserted via a name carries no number for a literal scan to find — four modules held the budget that way, and three then pinned each OTHER's source text, so one number could only be re-pinned everywhere at once or nowhere. A shared-constant guard must flag the re-declaration, not only the assertion (evidence: test_one_budget_one_guard._budget_uses · one-budget-one-guard)
+- [TDD · Q28 · open · 2026-09-08] A guard that fires on unrelated work trains its reader to dismiss it, and is then worth less than no guard: a working-tree `git diff` tripwire went red once a session all week and was waved past every time — the fix is to name the RANGE the claim is about, or, when the claim is settled at merge and no range can re-litigate it, retire it with a record (evidence: test_scope_guard_ranges · scope-guard-names-its-range)
 - [TDD · Q27 · open · 2026-09-08] A mixed refusal shape does not merely confuse readers — it makes assertions vacuously GREEN: two checks asserted `node is not None` on a rung that refused with `False`, and both passed on the refusal they were written to rule out. Normalising the shape is what turned them red and exposed one premise that had become unreachable (evidence: test_freeze_seal · test_milestone_freeze_is_interviewed · one-refusal-shape)
 - [TDD · Q26 · folded · 2026-09-08→2026-09-08] a batch of fold matches composed against a SNAPSHOT is not safe against the live file: the 65-command drain was planned when 78 deltas existed, Q25 was filed after the plan and before the run, and a quality match swept it silently. It happened to land in the right decision, which is luck, not a mechanism. A batched drain must be re-verified against the live spec immediately before it runs, or each call must name the ids it expects to retag and refuse on a different set. (evidence: /specs/quality.md#Q25 folded by a call planned before it existed · fold reports a COUNT and never which ids it moved)
 - [TDD · Q25 · folded · 2026-09-08→2026-09-08] a parametrized check binds NOTHING and neither does a module: JUnit reports a parametrized case as name[param], and the gate resolves a covers: citation by the BARE function name, so freeze-binds-what-you-authored gated red on A2 and E5 while its own tests were green. Cite one plain test function and loop its cases from a module constant inside the body. (evidence: /tasks/freeze-binds-what-you-authored.md — gate refused 'no reported passing check: A2, E5' on test_freeze_refuses_an_uncovered_probe[standard]/[quick], green after de-parametrizing)

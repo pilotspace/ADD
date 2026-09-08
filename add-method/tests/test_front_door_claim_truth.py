@@ -146,11 +146,20 @@ def _assert_doctor_line(tree):
         "the line names `--sync` without saying what it writes"
 
 
-def test_the_skill_line_budget_is_unmoved():
-    """covers: E3 · a replacement, not an addition."""
-    for tree in SKILL_TREES:
-        n = len((tree / "SKILL.md").read_text(encoding="utf-8").splitlines())
-        assert n == 176, f"{tree}/SKILL.md is {n} lines — the pin is 176"
+def test_the_skill_trees_agree_on_their_length():
+    """covers: E3 · a replacement, not an addition — and the three trees are one file.
+
+    This asserted `n == 176` on every tree, which duplicated the line budget: a one-line overrun
+    reported here AND at the owning guard. The budget belongs to
+    `tests/skill/test_surface.py::test_router_within_line_budget` alone. What is unique here is
+    the MIRROR claim — three git-tracked copies of SKILL.md, which must not drift apart. That is
+    what this asserts now, in a unit the budget cannot move.
+    """
+    counts = {str(tree): len((tree / "SKILL.md").read_text(encoding="utf-8").splitlines())
+              for tree in SKILL_TREES}
+    assert len(set(counts.values())) == 1, (
+        "the skill trees have drifted apart — an edit landed in some mirrors and not others:\n"
+        + "\n".join(f"  {t}: {n} lines" for t, n in sorted(counts.items())))
 
 
 # --- M4/E4 — every version declaration ------------------------------------------------------

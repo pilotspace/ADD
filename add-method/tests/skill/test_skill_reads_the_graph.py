@@ -26,7 +26,6 @@ TREES = (SKILL,
          REPO / "src" / "add_method" / "_bundled" / "skill" / "add",
          REPO.parent / ".claude" / "skills" / "add")
 
-LINE_BUDGET, BYTE_BUDGET = 176, 13258
 
 
 def _skill() -> str:
@@ -79,18 +78,17 @@ def test_cookbook_shows_the_search_filters():
         assert flag in row, f"the search row does not show {flag}: {row}"
 
 
-def test_skill_stays_within_both_pins():
-    """covers: M4, R:BUDGET_BUMP, E1 — funded by compression, never by raising a pin."""
-    text = _skill()
-    lines, nbytes = len(text.splitlines()), len(text.encode())
-    assert lines <= LINE_BUDGET, f"SKILL.md is {lines} lines — over the {LINE_BUDGET} pin"
-    assert nbytes <= BYTE_BUDGET, f"SKILL.md is {nbytes} bytes — over the {BYTE_BUDGET} pin"
-
-    # The pins themselves must not have moved. Read from the guard that owns them, so raising
-    # one to fit this task reds here as well as there.
-    surface = (REPO / "tests" / "skill" / "test_surface.py").read_text(encoding="utf-8")
-    assert f"n <= {LINE_BUDGET}" in surface, "the line pin was moved to fit this task"
-    assert f"BYTE_BUDGET = {BYTE_BUDGET}" in surface, "the byte pin was moved to fit this task"
+# RETIRED: test_skill_stays_within_both_pins (M4, R:BUDGET_BUMP, E1)
+#
+# Every line of it was a second opinion about numbers another guard owns: it re-asserted the line
+# and byte budgets, held its own copies of both, and then pinned the OWNER'S SOURCE TEXT so a
+# re-pin would red here too. That is what made a one-line overrun report fourteen failures and a
+# re-pin a hunt for eight literals.
+#
+# Both budgets now live in tests/skill/skill_budget.py, asserted once each by the guards named
+# there, and `test_one_budget_one_guard.py` refuses a second assertion anywhere. Funding a line by
+# compression rather than by raising a pin is still the rule — it is enforced in one place.
+# Retired by `one-budget-one-guard`.
 
 
 def test_no_claim_was_deleted_by_compression():

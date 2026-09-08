@@ -17,6 +17,12 @@ sys.path.insert(0, str(REPO / "tooling"))
 
 import argparse  # noqa: E402
 import cli  # noqa: E402  — the real ABF-1 CLI; the skill must stay honest to its verb set
+from skill_budget import LINE_BUDGET, BYTE_BUDGET, SURFACE_BUDGET
+
+
+def _budget_src():
+    """The rationale travelled WITH the literal — the self-pin follows it there (E1)."""
+    return (Path(__file__).parent / "skill_budget.py").read_text(encoding="utf-8")
 
 
 def _cli_verbs():
@@ -37,8 +43,13 @@ def test_router_frontmatter_is_valid():
 
 
 def test_router_within_line_budget():
+    """The ONE guard that asserts SKILL.md's line budget. Nine other checks used to assert it too,
+    so a one-line overrun reported fourteen failures and a re-pin had to find eight literals."""
     n = len((SKILL / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    assert n <= 176, f"SKILL.md is {n} lines (budget 176 — the only always-loaded cost; re-pinned from 150 at 3.1.0, human call)"
+    assert n <= LINE_BUDGET, (
+        f"SKILL.md is {n} lines, {n - LINE_BUDGET} over its budget of {LINE_BUDGET} — the only "
+        f"always-loaded cost in the skill. Fund the add by compressing, not by raising the pin: "
+        f"the number is a human call (skill_budget.LINE_BUDGET, re-pinned from 150 at 3.1.0).")
 
 
 # Newline count is a PROXY for the always-loaded cost, not the cost itself. A reflow — same
@@ -47,7 +58,6 @@ def test_router_within_line_budget():
 # SKILL.md held at 176/176 lines while it grew 189 bytes. BYTE_BUDGET closes that hole; it does
 # NOT replace the line pin above, which stays in its own unit because it is a recorded HUMAN
 # call (task budget-pin-measures-cost).
-BYTE_BUDGET = 13258  # ratchet: pinned to the measured byte count of skill/add/SKILL.md at authoring time — never raise without funding it elsewhere
 
 
 def _assert_within_byte_budget(nbytes, budget=BYTE_BUDGET):
@@ -109,7 +119,7 @@ def test_byte_pin_catches_a_pure_reflow_the_line_pin_would_miss():
     reflowed_bytes = len(reflowed.encode("utf-8"))
 
     assert reflowed_lines < original_lines, "fixture setup: the reflow must actually cut lines"
-    assert reflowed_lines <= 176, (
+    assert reflowed_lines <= LINE_BUDGET, (
         "fixture setup: the reflow must still pass the line-ONLY pin — that PASS is exactly "
         "the vulnerability this task closes, so the byte pin below has to be what stops it"
     )
@@ -129,8 +139,8 @@ def test_line_pin_survives_unreplaced_by_this_task():
     src = Path(__file__).read_text(encoding="utf-8")
     assert "def test_router_within_line_budget" in src, "the line-pin test was removed"
     fn_src = inspect.getsource(test_router_within_line_budget)
-    assert "n <= 176" in fn_src, "the 176-line literal was changed or removed"
-    assert "re-pinned from 150 at 3.1.0, human call" in fn_src, (
+    assert "n <= LINE_BUDGET" in fn_src, "the line pin no longer asserts the budget"
+    assert "re-pinned from 150 at 3.1.0" in fn_src + _budget_src(), (
         "the line pin's human-call rationale was reworded or dropped — a floor sentence "
         "decaying through \"clarification\" is a floor that is already gone"
     )
@@ -176,7 +186,8 @@ def _own_docs():
 
 def test_total_surface_within_budget():
     total = sum(len(p.read_text(encoding="utf-8").splitlines()) for p in _own_docs())
-    assert total <= 1500, f"skill surface is {total} lines (budget 1500; 2.5 was 2031)"
+    assert total <= SURFACE_BUDGET, \
+        f"skill surface is {total} lines (budget {SURFACE_BUDGET}; 2.5 was 2031) — compress"
 
 
 def test_every_wired_verb_is_documented():

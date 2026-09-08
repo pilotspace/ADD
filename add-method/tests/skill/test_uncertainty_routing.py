@@ -50,4 +50,3 @@ def test_intake_within_budget():
     assert re.search(r"tally", text, re.I), "red until the tally step exists"
     assert len(text.splitlines()) <= 350, "intake.md over the 350-line file budget"
     skill_lines = len((SKILL / "SKILL.md").read_text(encoding="utf-8").splitlines())
-    assert skill_lines <= 176, f"SKILL.md at {skill_lines} lines — past the pinned budget (176; re-pinned from 150 at 3.1.0)"

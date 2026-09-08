@@ -121,7 +121,6 @@ def test_the_skill_summary_does_not_nest_edges_in_rules():
     flat = _flat(SKILL / "SKILL.md")
     assert "EDGES are the boundaries of those rules" not in flat, \
         "SKILL.md still presents EDGES as prose within the RULES bullet"
-    assert len((SKILL / "SKILL.md").read_text(encoding="utf-8").splitlines()) <= 176
 
 
 def test_format_md_and_the_guide_agree():
