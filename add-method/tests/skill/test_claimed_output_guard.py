@@ -358,15 +358,18 @@ def test_repaired_gather_step_still_has_a_trigger(tmp_path):
     assert "milestone_goal_unmet" in cue and "exit criteria" in cue, cue
 
 
-def test_no_engine_output_was_added():
-    """covers: M4, R:FEATURE_CREEP — add.py is untouched by this task.
-
-    Building the missing `status` surface is a real improvement and a SEPARATE task. A guard
-    that ships having made its own claims true has never once refused anything.
-    """
-    diff = subprocess.run(["git", "diff", "HEAD", "--", "tooling/add.py"],
-                          cwd=str(REPO), capture_output=True, text=True)
-    assert diff.stdout.strip() == "", "this task changed the engine:\n" + diff.stdout[:800]
+# RETIRED: test_no_engine_output_was_added (M4, R:FEATURE_CREEP)
+#
+# It protected a real claim — this task documented what `add status` printed and did not build
+# the surface it wished existed, because a guard that ships having made its own claims true has
+# never once refused anything. It asserted that claim with `git diff HEAD -- tooling/add.py`,
+# which guards the WORKING TREE, not the claim: red on every later branch that touches the engine
+# for any reason, and green the moment you type `git commit` (R:COMMITCLEAN).
+#
+# The claim was settled at merge. No diff can re-litigate a branch that already landed, and a
+# range diff against that merge is empty by construction — one silent pass traded for another.
+# The shape is now refused suite-wide by tests/engine/test_scope_guard_ranges.py, which is what
+# stops it being written again. Retired by `scope-guard-names-its-range`.
 
 
 def test_no_true_claim_was_deleted():

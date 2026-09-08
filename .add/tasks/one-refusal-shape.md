@@ -1,7 +1,7 @@
 ---
 type: Task
 title: freeze refuses with one falsy shape
-status: direction
+status: done
 depth: quick
 milestone: rules-that-hold-for-us
 scope:
@@ -15,11 +15,15 @@ generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: freeze, authority: process, direction: "sha256:3216892a6c058046", binding: "sha256:e9a79d98e3503d91" }
   - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:365bc072d4599db6" }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: refreeze, authority: process, direction: "sha256:65a601a24c7f3d3a", binding: "sha256:5b236f0e13444a03" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:7ee046e6806b9ee1" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/one-refusal-shape.d/runs/1.md }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: process, outcome: PASS, receipt: /tasks/one-refusal-shape.d/runs/1.md, brief: "sha256:c34f98cfc12853b4" }
 ---
 ## CARD
 goal: every refusal rung of freeze hands a caller the same falsy first element, so `node is None` sees all of them
 why: two inverted assertions in two different test files, hours apart, both written by a reader who had checked the OTHER rung — the shape is the bug, not the reader
-beat: direction · next: add freeze one-refusal-shape
+beat: done · next: add status
 
 ## RULES
 <must>

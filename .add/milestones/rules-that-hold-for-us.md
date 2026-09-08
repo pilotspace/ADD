@@ -24,7 +24,7 @@ risks:
 
 ## EXIT
 - [x] no check in the suite depends on the calendar date it is run: the search filter check pins its clock and still fails when the filter regresses   (a task)
-- [ ] `freeze` refuses with ONE falsy shape, and a check proves a caller testing that shape sees every rung   (a task)
+- [x] `freeze` refuses with ONE falsy shape, and a check proves a caller testing that shape sees every rung   (a task)
 - [ ] every scope guard names the commit range it guards; none is satisfied by committing   (a task)
 - [ ] the skill budget is asserted by ONE guard that the others call, and an overrun reports one failure   (a task)
 - [ ] the full suite is green with zero known failures, on any date   (all)
