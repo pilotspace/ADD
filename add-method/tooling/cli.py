@@ -144,9 +144,13 @@ def build_parser() -> argparse.ArgumentParser:
                         "HELD THEN; the interval is half-open [from, to), so a delta folded ON "
                         "this date is excluded")
 
-    s = sub.add_parser("fold", help="retag a named open delta folded (human consolidation)")
+    s = sub.add_parser("fold", help="retag a named open delta folded|rejected, optionally binding a decision")
     s.add_argument("lens", help="the spec: domain|system|experience|quality|method")
     s.add_argument("match", help="a substring naming the open delta to fold")
+    s.add_argument("--reject", action="store_true",
+                   help="retire the lesson as `rejected` instead of `folded` — it did not hold")
+    s.add_argument("--bind", metavar="DECISION",
+                   help="promote the lesson: write this sentence into the spec's `## Decisions that bind`")
 
     s = sub.add_parser("reopen", help="return a done task to a beat with a reset gate + reason")
     s.add_argument("ref")
@@ -353,7 +357,8 @@ def dispatch(args, run_cmd) -> int:
         return 0
 
     if args.verb == "fold":
-        ok, note = add.fold(root, DD_LENS.get(args.lens.lower(), args.lens), args.match)
+        ok, note = add.fold(root, DD_LENS.get(args.lens.lower(), args.lens), args.match,
+                            reject=args.reject, bind=args.bind)
         print(note)
         return 0 if ok else 1
 

@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "2732934691d74d1c4cb17053cfbf1155"  # re-aimed @ orientation-sees-carried-work: status names the open-delta total and the project goal, doctor gains unauthored_root + delta_count_drift, init seeds invariants: and open_deltas:, upgrade carries a 2.x goal forward. prior: 0c2c576c… @ search-structured-filters
+ENGINE_MD5 = "2acb890a97cb839783519844c5580d02"  # re-aimed @ deltas-drain-at-close: fold gains --reject (the first verb for `rejected`) and --bind (writes `## Decisions that bind`), milestone-done gains the windowed R:UNDRAINED rung. prior: 2732934691… @ orientation-sees-carried-work
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "fedfd72a3954ee841286ef92f5119898"  # re-aimed @ json-emission: both read verbs take --json. prior: 8fc70960… @ search-structured-filters
+ENGINE_PKG_MD5 = "51a23ee5d162e48817860fdeaf5b3ac3"  # re-aimed @ deltas-drain-at-close: two flags on the fold parser

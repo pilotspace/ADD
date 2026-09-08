@@ -2583,6 +2583,18 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                   f"next: add status")
 
 
+def milestone_window_anchor(fm: dict):
+    """The date a milestone's lesson window OPENS, or None when the engine cannot read one.
+
+    The drafted contract said "`generated.at`, or the first `verified` stamp, whichever is
+    earlier". The second clause is dead by construction and the probe says so: a node is created
+    before it is stamped, so no stamp can precede creation. One source, and a `None` that means
+    UNKNOWN — never today, never epoch (the `_as_date` rule).
+    """
+    gen = (fm or {}).get("generated")
+    return _as_date(gen.get("at")) if isinstance(gen, dict) else None
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -2627,6 +2639,37 @@ def milestone_done(root, cid: str) -> tuple:
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
 
+    # The drain, LAST (M7): a closer whose goal is still unmet must be told that first, not
+    # sent to consolidate lessons for a milestone that is not finished.
+    #
+    # WINDOWED, and that is the whole design. A rung over every open delta would have met this
+    # repo with a 75-lesson backlog and blocked every close until someone drained eighteen
+    # milestones of residue in one sitting — so the rung would have been deleted, not obeyed
+    # (M22's shape). A milestone is answerable for the lessons IT filed; the backlog stays a
+    # `doctor` finding and a `status` count, which is what those exist for.
+    anchor, skipped = milestone_window_anchor(node["fm"]), ""
+    if anchor is None:
+        # R:SILENTSKIP — a close that looks drained and was not is worse than one that admits
+        # it could not check. Never guess a date to make the rung fire.
+        skipped = (" — the drain rung did not run: this milestone carries no readable creation "
+                   "date, so the window its lessons would fall in cannot be computed")
+    else:
+        # An undated legacy delta has no filing date to place, so it is never in any window
+        # (A8, R:BACKLOGBLOCK). Inclusive on the anchor: created and taught on one day is the
+        # common case (A6).
+        undrained = [d for d in deltas(root, status="open")[0]
+                     if _as_date(d.valid_from) and d.valid_from >= anchor]
+        if undrained:
+            # `Delta` is a 3-tuple by design (spec, comp, text) with the rest riding as
+            # attributes — four suites unpack exactly three, so it has no `.lens`/`.text`.
+            named = "\n".join(f"  · {delta_address(d[0], d.id)}  {d[2].split(' (evidence:')[0][:88]}"
+                              for d in undrained)
+            return False, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
+                           f'{anchor}) -> "R:UNDRAINED"\n{named}\n'
+                           f'next: resolve each — add fold <lens> "<match>" '
+                           f'[--reject | --bind "<the decision it settles>"] — '
+                           f'then add milestone-done {slug}')
+
     _transition(root, cid, sets={"status": "done"})
     # 0 criteria => the goal-gate never fires (loop.md); close, but say the gate was empty.
     empty = "" if total else " — no exit criteria, so the goal-gate did not fire (add criteria to hold one open)"
@@ -2646,7 +2689,7 @@ def milestone_done(root, cid: str) -> tuple:
                 who.append(name)
     credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
     return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
-                  f"{empty}\nnext: add status")
+                  f"{empty}{skipped}\nnext: add status")
 
 
 def milestone_archive(root, cid: str) -> tuple:
@@ -3814,7 +3857,41 @@ def deltas(root, status: str = "open", lens: str = None,
     return items, "\n".join(rendered)
 
 
-def fold(root, lens: str, match: str) -> tuple:
+def _bind_decision(body: str, lens: str, sentence: str, ids: list) -> str:
+    """Write one decision into `## Decisions that bind`, citing the lessons it came from.
+
+    PREPENDED (A11): this corpus reads newest-first everywhere a sequence accumulates, and the
+    foundation-compaction milestone already settled that question for `## Deltas`. The scaffold
+    line is REPLACED rather than pushed down — a section holding one real decision and one
+    template slot is still a section `_placeholder_only` would have to special-case, and every
+    consumer that filters scaffolding would then need the same rule.
+
+    No new grammar is declared: a `(from: …)` tail mirrors the `(evidence: …)` tail the delta
+    line already carries, so `bind_sections`, `brief` and FORMAT are all untouched.
+    """
+    cite = ", ".join([delta_address(lens, ids[0])] + [f"#{i}" for i in ids[1:]]) if ids else ""
+    entry = f"- {sentence.strip()}" + (f" (from: {cite})" if cite else "") + "\n"
+    lines = body.splitlines(keepends=True)
+    start = None
+    for i, line in enumerate(lines):
+        if line.startswith("#") and "-".join(re.findall(r"[a-z0-9]+", line.lstrip("#").strip().lower())) \
+                == "decisions-that-bind":
+            start = i + 1
+            break
+    if start is None:                        # A10: create it rather than refuse into a hand edit
+        for i, line in enumerate(lines):
+            if line.startswith("## ") and line.strip().lower() == "## deltas":
+                return "".join(lines[:i] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[i:])
+        return "".join(lines + ["\n## Decisions that bind\n", "\n", entry])
+    end = next((j for j in range(start, len(lines)) if lines[j].startswith("#")), len(lines))
+    content = [j for j in range(start, end) if lines[j].strip()]
+    if content and _placeholder_only("".join(lines[j] for j in content)):
+        return "".join(lines[:content[0]] + [entry] + lines[content[-1] + 1:end] + lines[end:])
+    at = content[0] if content else start
+    return "".join(lines[:at] + [entry] + lines[at:])
+
+
+def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) -> tuple:
     """Retag the open delta(s) in `lens` whose text contains `match` as `folded`, CLOSING the
     validity interval at today. `(ok, note)`.
 
@@ -3826,14 +3903,23 @@ def fold(root, lens: str, match: str) -> tuple:
     nothing. Ids retire in place — no fold ever renumbers a survivor, because a renumber silently
     re-points every relation that targets them.
     """
+    if reject and bind:
+        return False, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
+                       '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
+                       'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
         return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
+    # ONE matcher, two verdicts. `rejected` has been in DELTA_STATUSES since the grammar was
+    # frozen and no command could produce it, so the only honest way to retire a wrong lesson
+    # was a hand edit — which the method forbids everywhere else. A separate code path would
+    # let the two verdicts drift; the verdict is a word, and only the word changes.
+    verdict = "rejected" if reject else "folded"
     node = read(path, "T2")
-    out, folded = [], 0
+    out, folded, ids = [], 0, []
     for line in node["body"].splitlines(keepends=True):
         m = DELTA_LINE.match(line.strip())
         if m:
@@ -3841,23 +3927,30 @@ def fold(root, lens: str, match: str) -> tuple:
             if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
                 head = m.group(1)
                 if rec["id"] is None:
-                    closed = f"{rec['comp']} · folded"
+                    closed = f"{rec['comp']} · {verdict}"
                 elif rec["valid_from"]:
-                    closed = (f"{rec['comp']} · {rec['id']} · folded · "
+                    closed = (f"{rec['comp']} · {rec['id']} · {verdict} · "
                               f"{rec['valid_from']}{DELTA_ARROW}{_today()}")
                 else:
-                    closed = f"{rec['comp']} · {rec['id']} · folded"
+                    closed = f"{rec['comp']} · {rec['id']} · {verdict}"
                 line = line.replace(f"[{head}]", f"[{closed}]", 1)
                 folded += 1
+                if rec["id"]:
+                    ids.append(rec["id"])
         out.append(line)
     if not folded:
         return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
     body = "".join(out)
+    # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
+    # the same call failed to retag.
+    if bind:
+        body = _bind_decision(body, lens, bind, ids)
     # Recomputed from the retagged body, so a match that retires three lessons moves the
     # counter by three (E3). A decrement-by-one would be right only for the commonest call.
     raw = set_key(node["raw"], "open_deltas", str(open_delta_count(body)))
     write(path, f"---\n{raw}\n---\n{body}")
-    return True, f"folded {folded} delta(s) in specs/{lens}\nnext: add status"
+    bound = f" · bound 1 decision citing {', '.join(ids)}" if bind else ""
+    return True, f"{verdict} {folded} delta(s) in specs/{lens}{bound}\nnext: add status"
 
 
 # ============================================ search — one lookup, at LESSON granularity
