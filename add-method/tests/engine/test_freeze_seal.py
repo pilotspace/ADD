@@ -75,7 +75,18 @@ def test_freeze_accepts_an_authored_node(bundle, draft):
 def test_a_non_lifecycle_node_is_unaffected(bundle):
     """covers: M1, E1 — a Milestone carries no RULES/CHECKS; the check must not invent a refusal."""
     cid, _ = add.new(bundle, "Milestone", "ms", title="A milestone")
-    node, note = add.freeze(bundle, cid, by="human:tindang")
+    # AUTHORED, deliberately. A bare `new` Milestone is a scaffold, and the scaffold rung refuses
+    # it before the placeholder check is ever reached — so for years this check asserted `is not
+    # None` against a rung that answered `False`, and passed on a refusal it mistook for a node.
+    path = bundle / cid.lstrip("/")
+    body = path.read_text()
+    for hole, filled in (("goal: <one line>", "goal: a goal a human wrote"),
+                         ("why: <why this milestone exists — required>", "why: a reason a human wrote"),
+                         ("evidence: <one row per task>", "evidence: recorded at close"),
+                         ("- [ ] <criterion>   (← <task>)", "- [ ] the one thing   (a task)")):
+        body = body.replace(hole, filled)
+    path.write_text(body)
+    node, note = add.freeze(bundle, cid, by="human:tindang", authority="plan")
     assert node is not None, f"freezing a Milestone should not trip the placeholder check: {note!r}"
 
 

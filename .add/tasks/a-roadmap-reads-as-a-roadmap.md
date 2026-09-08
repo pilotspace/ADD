@@ -1,7 +1,7 @@
 ---
 type: Task
 title: a roadmap of queued tasks is legible without opening every file
-status: build
+status: done
 depth: standard
 sensitivity: architecture
 milestone: rules-that-hold-for-us
@@ -24,6 +24,9 @@ verified:
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: plan, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/2.md, brief: "sha256:50292afa0f2bbf91" }
   - { by: loop, at: 2026-09-08, act: reopen, to: build, reason: "M4 named the front door (add new has no --goal) but its check exercised only the library; --goal was never wired into cli.py, so the Must was gated on a surface no planner types" }
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: refreeze, authority: plan, direction: "sha256:295588f69ae35eb5", binding: "sha256:056837997abb52b3" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:28f4d2fb11ce7a78" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/3.md }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: plan, outcome: PASS, receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/3.md, brief: "sha256:28f4d2fb11ce7a78" }
 ---
 ## CARD
 goal: a bundle of queued tasks says what it is queuing, from `status` alone, without opening one file

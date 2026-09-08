@@ -116,9 +116,12 @@ def test_nothing_to_ask_is_not_something_to_refuse(bundle):
     armed = milestone(bundle, "m-has-boxes")
     assert add.freeze(bundle, armed, by="Tin Dang", authority="human")[0] is None, \
         "the rung never fires, so an exemption from it proves nothing"
-    cid = milestone(bundle, "m-empty", criteria=[])
-    node, note = add.freeze(bundle, cid, by="Tin Dang", authority="human")
-    assert node is not None, f"a milestone with no criteria was refused:\n{note}"
+    # The reachable "nothing to ask" is a LOWER AUTHORITY, not an empty EXIT. A milestone with no
+    # boxes is a scaffold, so the scaffold rung refuses it first — the old fixture asserted `is
+    # not None` on a rung that answered `False` and was green on that refusal.
+    cid = milestone(bundle, "m-plan")
+    node, note = add.freeze(bundle, cid, by="Tin Dang", authority="plan")
+    assert node is not None, f"a stamp claiming no human was refused for want of a human:\n{note}"
 
 
 def test_the_record_invents_no_answer(bundle):

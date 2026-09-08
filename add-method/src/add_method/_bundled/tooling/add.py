@@ -2241,7 +2241,11 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
         # ONE human approval was stampable against a node stating no goal and no exit criterion.
         ms_stubs = _milestone_stubs(node_t2)
         if ms_stubs:
-            return False, (f"cannot freeze `{slug}` — this milestone is still a scaffold: "
+            # `None`, like every other rung — this one answered `False` alone, and a caller
+            # writing `if node is None` walked straight past it. Two inverted assertions in two
+            # test files, hours apart, both by a reader who had checked the OTHER rung
+            # -> "R:TWOSHAPES". The message is unchanged.
+            return None, (f"cannot freeze `{slug}` — this milestone is still a scaffold: "
                            + " · ".join(ms_stubs)
                            + f"\nnext: {AUTHOR_NEXT['Milestone'].format(slug=slug)}")
     stubs = placeholders_in(node_t2)
