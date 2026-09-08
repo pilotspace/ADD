@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: the rules we bound today hold for our own tree
-status: direction
+status: done
 generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: freeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
@@ -26,8 +26,8 @@ risks:
 - [x] no check in the suite depends on the calendar date it is run: the search filter check pins its clock and still fails when the filter regresses   (a task)
 - [x] `freeze` refuses with ONE falsy shape, and a check proves a caller testing that shape sees every rung   (a task)
 - [x] every scope guard names the commit range it guards; none is satisfied by committing   (a task)
-- [ ] the skill budget is asserted by ONE guard that the others call, and an overrun reports one failure   (a task)
-- [ ] the full suite is green with zero known failures, on any date   (all)
+- [x] the skill budget is asserted by ONE guard that the others call, and an overrun reports one failure   (a task)
+- [x] the full suite is green with zero known failures, on any date   (all)
 
 ## CLOSE
 evidence: one row per task, recorded at close

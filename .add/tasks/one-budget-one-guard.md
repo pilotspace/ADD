@@ -1,7 +1,7 @@
 ---
 type: Task
 title: one budget, one guard
-status: direction
+status: done
 depth: quick
 milestone: rules-that-hold-for-us
 scope:
@@ -30,11 +30,14 @@ verified:
   - { by: "builder", at: 2026-09-08, act: replan, authority: process, note: "A4's reading does not survive M2. It said test_front_door_claim_truth should keep asserting EQUALITY to the pin while sourcing the constant — but `n == LINE_BUDGET` still asserts the budget, so a one-line overrun would report TWO failures, not one. The check's real subject is that the three skill trees agree with EACH OTHER; that is what it now asserts, and the budget stays the owner's alone." }
   - { by: "builder", at: 2026-09-08, act: replan, authority: process, note: "A2's count was low, and the shape is worse than the exit imagined. Four more modules carry the budget as their OWN module-level constant (LINE_PIN/LINE_BUDGET = 176), which no literal-in-assert scan can see — and three of them then pin each other's SOURCE TEXT: test_skill_profile_truth regex-scrapes 'n <= (\\d+)' out of test_surface.py, and test_quick_lane_size_gate pins that scrape. A web of source-text pins on one number. All of it collapses to reading skill_budget.LINE_BUDGET; the 'the pin was not moved' rule is exactly what test_one_module_owns_the_budgets already asserts, once, in the owner. The meta-check is strengthened to flag a module-level ASSIGNMENT of a budget value, not only a literal inside an assert." }
   - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: refreeze, authority: process, direction: "sha256:9e1a493a990b9a13", binding: "sha256:e9a79d98e3503d91" }
+  - { by: "cli", at: 2026-09-08, act: brief, authority: process, brief: "sha256:4a0aefdf6eb84bc4" }
+  - { by: "process:run", at: 2026-09-08, act: run, authority: process, outcome: PASS, receipt: /tasks/one-budget-one-guard.d/runs/1.md }
+  - { by: "plan:rules-that-hold-for-us", at: 2026-09-08, act: gate, authority: process, outcome: PASS, receipt: /tasks/one-budget-one-guard.d/runs/1.md, brief: "sha256:534ff1e7d0bb37aa" }
 ---
 ## CARD
 goal: the skill budget lives in one module and is asserted by one guard, so a one-line overrun reports one failure and is re-pinned in one place
 why: SKILL.md went one line over its 176-line pin and FOURTEEN checks across seven files reported it. Fourteen failures for one fact — and re-pinning the budget means finding all eight literals, so the number drifts the first time someone finds only seven
-beat: direction · next: add freeze one-budget-one-guard
+beat: done · next: add status
 
 ## RULES
 <must>
