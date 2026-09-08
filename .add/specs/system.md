@@ -8,18 +8,19 @@ tags: [engine, pins, twins, vendored]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 12
-open_deltas: 1
+open_deltas: 0
 ---
 ## Now
 how it is built, and what that forecloses
 
 ## Decisions that bind
+- A verb has ONE refusal shape: every rejection returns the same falsy value, so a caller can test the outcome without memorising which rung refused. Two shapes silently invert the guards written against it. (from: /specs/system.md#S12)
 - A declared runtime floor is compiled in the suite itself, parsing add.py and cli.py at the floor's grammar, so a local run proves the floor before CI does. (from: /specs/system.md#S7)
 - A twin or mirror set is an explicit per-file list derived from the tree, never a glob and never memory; every copy is bound by a parity check or deleted, and both engine pins re-aim together. (from: /specs/system.md#S9, #S8)
 
 ## Deltas
 - <what changed, and the evidence that changed it>
-- [SDD · S12 · open · 2026-09-08] freeze returns False on the scaffold rung and None on every later rung, so a caller testing `node is None` reads a scaffold refusal as SUCCESS. It cost two wrong assertions in one session, in two different test files, both written by someone who had just read the function. A verb whose refusal has two falsy shapes has an API that must be memorised; return one shape, or the guards written against it will be silently inverted. (evidence: test_milestone_freeze_is_interviewed::test_the_rung_stays_last and test_one_oracle_one_truth::_exit_reads_authored — both asserted 'is None' and both passed a refusal as a freeze)
+- [SDD · S12 · folded · 2026-09-08→2026-09-08] freeze returns False on the scaffold rung and None on every later rung, so a caller testing `node is None` reads a scaffold refusal as SUCCESS. It cost two wrong assertions in one session, in two different test files, both written by someone who had just read the function. A verb whose refusal has two falsy shapes has an API that must be memorised; return one shape, or the guards written against it will be silently inverted. (evidence: test_milestone_freeze_is_interviewed::test_the_rung_stays_last and test_one_oracle_one_truth::_exit_reads_authored — both asserted 'is None' and both passed a refusal as a freeze)
 - [SDD · S11 · rejected · 2026-09-04→2026-09-08] A dedup key must carry every field that distinguishes two things. neighborhood() dedups relations on (family, label, src, ref, target) and drops relations()'s src_id, so two lessons refining the same target collapse into one row — 4 relations in the live bundle, 3 emitted. Worse, the edges[] schema pinned in FORMAT §11 has no field that could carry src_id, so a consumer cannot recover the loss even in principle. Before writing a dedup key, ask what the producer returns that the key does not. (evidence: /specs/method.md:13-14 M8 and M31 both refine #M4 · neighborhood() emits one row)
 - [SDD · S10 · folded · 2026-09-04→2026-09-08] One word for two vocabularies is a collision a scraper cannot see through. The new JSON payload named a result field 'kind' while the engine already spends 'kind' on the receipt-evidence ladder; test_stampable_rungs_are_documented read the payload literal as a receipt kind no doc named and failed correctly. The fix is to remove the collision, never to narrow the guard — a deliberately broad extractor is broad so a kind stamped in an unseen branch cannot shrink its set. Before naming a payload field, grep the engine for that key. (evidence: /tasks/json-emission.md · kind -> match, guard unchanged)
 - [SDD · S9 · folded · 2026-09-04→2026-09-08] A twin set is an explicit LIST, never a glob. Mirroring an engine edit with rglob('tooling/add.py') matched 120 paths — benchmark run workspaces, two sibling git worktrees, and the archived 2.x bundle — all gitignored, so 'git status' showed 2 modified files and the damage was invisible to the usual check. Recovery worked only because each vendored bundle carries its own engine_pin.py: the pin is a self-verifying restore key, so 86 copies were restored by md5 lookup against historical blobs and 23 more by matching their untouched sibling cli.py to its commit. (evidence: /tasks/one-address-per-concept.md · rglob clobbered 120 copies, restored 109, 2 disposable tmp/smoke left)

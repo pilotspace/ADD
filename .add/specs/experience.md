@@ -8,18 +8,19 @@ tags: [operator, listing, refusal, preview]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 9
-open_deltas: 1
+open_deltas: 0
 ---
 ## Now
 who uses it and what they feel
 
 ## Decisions that bind
+- A budget has ONE owner and ONE guard; a task asserting the budget held CALLS that guard rather than copying it, so one overrun reports one failure instead of one per task that ever touched the file. (from: /specs/experience.md#X9)
 - A listing an operator picks from renders each item whole, reassembling what the file wraps, and its check asserts the rendered line rather than the count or the parts. (from: /specs/experience.md#X3, #X2)
 - Every lens the bundle ships is written by a beat of the loop, not only by learn after the fact; a lens no beat engages is a category, and is cut or given a beat. (from: /specs/experience.md#X1)
 
 ## Deltas
 - <what changed, and the evidence that changed it>
-- [UDD · X9 · open · 2026-09-08] one line over the SKILL.md pin fired FOURTEEN guards across nine files — eleven budget assertions and three prose pins — because every task that ever touched the skill left its own budget check behind. The signal is one bit (over budget) reported fourteen times, and the author reads it as fourteen problems. A budget with one owner needs one guard; a task that wants to assert the budget held should call that guard, not copy it. (evidence: add-method/tests/skill/ — SKILL.md at 177/176 failed 14 tests; at 176 all 245 pass)
+- [UDD · X9 · folded · 2026-09-08→2026-09-08] one line over the SKILL.md pin fired FOURTEEN guards across nine files — eleven budget assertions and three prose pins — because every task that ever touched the skill left its own budget check behind. The signal is one bit (over budget) reported fourteen times, and the author reads it as fourteen problems. A budget with one owner needs one guard; a task that wants to assert the budget held should call that guard, not copy it. (evidence: add-method/tests/skill/ — SKILL.md at 177/176 failed 14 tests; at 176 all 245 pass)
 - [UDD · X8 · folded · 2026-09-04→2026-09-08] a trim that explains itself in every instance can cost more than what it removed: the first unauthored="true" marker carried a prose note and measured six bytes LARGER than the one-line scaffold it replaced — the saving only exists if the marker is shorter than the body (evidence: /tasks/output-trims.md)
 - [UDD · X7 · folded · 2026-09-04→2026-09-08] a trim that explains itself in every instance can cost more than what it removed: the first  marker carried a prose note and measured six bytes larger than the one-line scaffold it replaced (evidence: /tasks/output-trims.md)
 - [UDD · X6 · folded · 2026-09-04→2026-09-08] add-method/tests/skill/test_front_door_claims_hold.py still tells authors that 'deltas prints [LENS] spec: text' — true until this task, false now that it prints /specs/<lens>.md#<id>. The words sit in a docstring and a failure message, so no assertion caught the drift: prose inside a guard ages exactly like prose in a README, and nothing pins it. Out of this task's scope; declared, not repaired. (evidence: test_front_door_claims_hold.py:16 and :149)
