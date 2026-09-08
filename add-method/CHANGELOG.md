@@ -4,6 +4,64 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.6.0] — 2026-09-08
+
+**The loop drains, and our own tests stop passing on refusals.** Two milestones. The first closes
+a hole in the method — a milestone could close with the lessons its own tasks had filed still open.
+The second turned the method's own rules on the suite that enforces them, and found four checks
+that were passing on nothing.
+
+### Added
+- **`R:UNDRAINED` at `milestone-done`.** A lesson filed *during* a milestone's own work must be
+  folded, rejected, or bound before it closes. The rung is windowed on the milestone's
+  `generated.at`, so a lesson filed before the plan is not conscripted into it. It refused itself
+  first, on its own six lessons.
+- **`add fold --reject` and `--bind`.** A lesson can be retired as `rejected` (it did not hold) or
+  promoted into its spec's `## Decisions that bind`, which is what a drained lesson becomes when it
+  is a standing rule rather than a note.
+- **`add new --goal`.** The planner holds a one-line goal at creation and had nowhere to put it.
+  It is seeded into the CARD, where every reader and every guard already looks — never into
+  frontmatter, which would leave the node carrying two contradicting goal lines (`R:TWOGOALS`).
+- **`R:GHOSTFIELD` at `new`.** An unrecognised field used to land in frontmatter verbatim, as data
+  nothing wrote and no reader reads. `new` now refuses it by name and enumerates what it accepts.
+- **`tests/skill/skill_budget.py`.** The skill's line, byte and surface budgets, one literal each,
+  each naming the single guard that owns it.
+
+### Changed
+- **Orientation renders the title it was given.** A 40-task roadmap shipped for review with 38
+  nodes still scaffold, and the reviewer concluded ADD had missed the work. It had not — `doctor`
+  warned 38 times, every `status` row read `[scaffold]`, `todo` said `38 open task(s)`. What was
+  missing was that nothing in the orientation path showed the one field those nodes *had*
+  authored. `status` rows and the `show` header now carry the authored `title:`, and an unfilled
+  placeholder renders as nothing, so a scaffold stays visibly anonymous.
+- **`status` counts scaffolds** in its headline — `N scaffold (add todo)` — so the unauthored share
+  of a bundle is legible from the resume point, not only from a `doctor` run nobody was asked to make.
+- **`freeze` refuses with ONE falsy shape.** Ten rungs answered `None`; the milestone-scaffold rung
+  answered `False`. One line, and it mattered more than it read: **two checks were green only
+  because `False is not None`** — they asserted a successful freeze and passed on the refusal they
+  were written to rule out. Normalising the shape turned them red and exposed one premise that can
+  no longer exist at all.
+
+### Fixed
+- **No check fails by calendar.** A search-filter check built its fixture against a real clock and
+  compared it to a hardcoded date. It went red on its own four days later and stayed red, failing
+  CI on work that had nothing to do with it.
+- **Every scope guard names the range it guards.** Two guards asserted "this task did not touch X"
+  with a working-tree `git diff` — satisfied by typing `git commit`. One was vacuous three times
+  over: working-tree diff, gitignored path, and a file absent from the repo entirely. Both are
+  retired with a record, and the shape is now refused suite-wide.
+- **One budget, one guard.** A one-line SKILL.md overrun reported **fourteen** failures across
+  seven files, and a re-pin had to find eight literals. Four more modules held the budget as their
+  own module-level constant — invisible to a scan for literals — and three of those then pinned
+  each *other's source text*. Measured after the fix: one overrun, **one** failure.
+
+### Known and carried into 3.7
+Both bound as decisions rather than left silent:
+- eleven verbs still answer a refusal with `False` rather than `None`. Widening it touches ~40
+  return sites and every test asserting `is False`; `freeze` holds the rule today.
+- the SKILL.md sha256 prose pin is held in two files — the same class as the budget scatter, one
+  instance further on.
+
 ## [3.5.0] — 2026-09-04
 
 **A read is an address you can follow, and it costs what it is worth.** 3.4 made the bundle

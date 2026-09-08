@@ -9,5 +9,5 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 ---
 ## CARD
 goal: the method, its engine and its book — shipped, dogfooded on itself, and trustworthy because its own bundle holds
-state: 3.5.0 shipped · loop-that-drains open (1/5)
+state: 3.6.0 cut (unpublished) · loop-that-drains and rules-that-hold-for-us both closed
 next: add todo

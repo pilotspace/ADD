@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "0352185ca2b20112acbb1bf11f574469"  # re-aimed @ one-refusal-shape: the milestone-scaffold rung refuses with None like its ten siblings. prior: 688a5288… @ a-roadmap-reads-as-a-roadmap
+ENGINE_MD5 = "0e8a299fe6ccc0b65f075cd2308cdbce"  # re-aimed @ release-3-6-0: ENGINE stamp 3.5.0 -> 3.6.0. prior: 0352185c… @ one-refusal-shape
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "c62354e403dd451d2514b5a32cc78524"  # re-aimed @ a-roadmap-reads-as-a-roadmap: `new` gains --goal at the front door. prior: 51a23ee5… @ deltas-drain-at-close
