@@ -13,7 +13,8 @@ described a capability the engine does not have, in the places a reader meets fi
   and nothing reads that variable. The true statement — zero network — is strictly stronger.
 * `--stage mvp`, the Install section's only flag example, which the installer explicitly rejects.
 * `cli.py deltas` sold as "the per-lane scoreboard: what got gated, passed, healed". It prints
-  `[LENS] spec: text`. GEPA, per-lane, scoreboard and fast lane appear nowhere in the engine.
+  `/specs/<lens>.md#<id>  <text>` — the concept address a relations: entry can target.
+  GEPA, per-lane, scoreboard and fast lane appear nowhere in the engine.
 * `add upgrade` — a real verb that archives a 2.x bundle and writes MIGRATION.md — named in no
   README, while the engine's own 2.x refusal says `next: add init`, which writes a 3.0 bundle
   INTO the live 2.x directory and leaves a permanent doctor error.
@@ -146,7 +147,7 @@ def test_deltas_is_not_sold_as_a_scoreboard():
     bad = [f"{d.name}: {w}" for d in READMES + [GETTING_STARTED]
            for w in absent if w.lower() in _text(d).lower()]
     assert not bad, (
-        "these words name nothing in the engine — `deltas` prints `[LENS] spec: text`:\n  "
+        "these words name nothing in the engine — `deltas` prints `/specs/<lens>.md#<id>`:\n  "
         + "\n  ".join(bad))
 
 

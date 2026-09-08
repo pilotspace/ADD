@@ -5,6 +5,8 @@ status: direction
 generated: { by: add/3.5.0, at: 2026-09-08 }
 verified:
   - { by: "Tin Dang", at: 2026-09-08, act: freeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
+  - { by: "builder", at: 2026-09-08, act: replan, authority: process, note: "The human, shown the four true-but-unrepaired defects the drain would have recorded as lessons rather than fixed, asked for all four to be fixed. That is a scope ADDITION the frozen Out: list does not cover, so it lands as a sixth task and an eleventh EXIT criterion rather than being slipped into an existing one. Two of the four are load-bearing, not cosmetic: X5's angle-bracket oracle refused this milestone's own freeze and the placeholder oracle disagrees with itself in three places, and S6 means a space-separated covers: in CHECKS parses as one rule name and binds NOTHING silently — the vacuous-binding class this milestone is otherwise about." }
+  - { by: "plan:loop-that-drains", at: 2026-09-08, act: refreeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
 ---
 ## CARD
 goal: a lesson filed inside a milestone is drained at its close, a drained lesson can be promoted to a decision that binds every future brief, and no orientation surface reports zero carried work while lessons are open
@@ -35,6 +37,7 @@ risks:
 - [ ] `add interview` accepts a Milestone, and `freeze --authority human` refuses R:UNINTERVIEWED while an EXIT criterion is unanswered   (← milestone-freeze-is-interviewed)
 - [ ] no new verb is added: the verb set is unchanged from 3.5.0, and the change lands as flags, rungs and listings on existing verbs   (← all)
 - [ ] the skill surface stays within its 1500-line ceiling, every added line funded by a cut   (← all)
+- [ ] the placeholder oracle has ONE stripping rule, a covers: list parses one way, and no doc or persona states a number the engine contradicts   (← one-oracle-one-truth)
 
 ## CLOSE
 evidence: one row per task, recorded at close

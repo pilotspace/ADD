@@ -2804,11 +2804,11 @@ def _milestone_stubs(node: dict) -> list:
     out = []
     for line in card_of(body).splitlines():
         key, sep, value = line.partition(":")
-        if sep and key.strip() in ("goal", "why") and PLACEHOLDER.search(value):
+        if sep and key.strip() in ("goal", "why") and is_slot(value):
             out.append(f"CARD `{key.strip()}:`")
     exit_body = _section_of(body, "EXIT")
     boxes = _box_lines(exit_body) if _fence_balanced(exit_body) else []
-    if not boxes or any(PLACEHOLDER.search(text) for _, _, text, _ in boxes):
+    if not boxes or any(is_slot(text) for _, _, text, _ in boxes):
         out.append("`## EXIT` criteria")
     return out
 
@@ -4434,14 +4434,28 @@ def collapsed_surfaces(node: dict) -> list:
     return out
 
 
+def is_slot(text) -> bool:
+    """True when a line still stands in template scaffold. The ONE placeholder rule.
+
+    A backticked span is CODE, not a placeholder. Four readers used to answer this question and
+    only two applied that exclusion: `placeholders_in` and `_placeholder_only` stripped code
+    spans, while `gives_unauthored` and the milestone EXIT box check matched the raw text. So a
+    line written in the engine's own vocabulary — a criterion naming `E<n>`, a surface naming a
+    `<T>`-parameterised type — read as an unauthored slot, and this milestone's own freeze was
+    refused twice by it. One oracle, one rule; the disagreement was the defect.
+    """
+    return bool(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", str(text))))
+
+
 def gives_unauthored(node: dict) -> bool:
     """True when `gives:` is missing or still the scaffold — i.e. nothing to sweep.
 
     Without this the gate has a one-line off switch: delete `gives:`, get no surfaces,
-    sweep vacuously clean.
+    sweep vacuously clean. Absence is unchanged by the code-span rule (A7): the off switch
+    this closes is DELETING the key, which no amount of backticking reaches.
     """
     entries = (node.get("fm") or {}).get("gives") or []
-    return not entries or any("<" in str(e) for e in entries)
+    return not entries or any(is_slot(e) for e in entries)
 
 
 def assumption_sweep(node: dict) -> list:
@@ -4858,7 +4872,11 @@ def covers(node: dict) -> dict:
         if not match:
             continue
         check = match.group(1)
-        for rule in (r.strip() for r in match.group(2).split(",")):
+        # Commas OR whitespace (M2). The ASSUMPTIONS reader has always taken both; splitting on
+        # commas alone here meant `covers: M1 E1` parsed as ONE rule named "M1 E1", matched no
+        # rule, and bound NOTHING while reading as correct — a covers list that binds nothing is
+        # the exact defect class this milestone exists to close, hiding inside its own parser.
+        for rule in (r.strip() for r in re.split(r"[,\s]+", match.group(2))):
             if rule:
                 out.setdefault(rule, []).append(check)
     return out

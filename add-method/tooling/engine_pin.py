@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "9fee01fc1952dd585464246703632690"  # re-aimed @ milestone-freeze-is-interviewed: interview accepts a Milestone (EXIT criteria as C-ids, sidecar beside its own node), and R:UNINTERVIEWED arms on a CLAIMED human authority. prior: the freeze R:UNCOVERED rung
+ENGINE_MD5 = "4cb2bc82f54996cc83d0e842c31f934d"  # re-aimed @ one-oracle-one-truth: is_slot() is the ONE placeholder rule all four readers call, and covers: splits on commas OR whitespace. prior: the milestone interview rung
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "51a23ee5d162e48817860fdeaf5b3ac3"  # re-aimed @ deltas-drain-at-close: two flags on the fold parser
