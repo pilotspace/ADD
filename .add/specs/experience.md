@@ -7,13 +7,14 @@ description: who drives the loop and what it feels like at each beat — the ope
 tags: [operator, listing, refusal, preview]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 10
+delta_seq: 11
 open_deltas: 0
 ---
 ## Now
 who uses it and what they feel
 
 ## Decisions that bind
+- A count of pending work splits by the property the reader will act on, when that property is derivable. Which ones beats how many. (from: /specs/experience.md#X11)
 - An orientation verb renders the fields the author AUTHORED, not only the state the engine computed — a bundle whose every node is correctly warned about still reads as anonymous slugs if nothing shows the titles. (from: /specs/experience.md#X10)
 - A budget has ONE owner and ONE guard; a task asserting the budget held CALLS that guard rather than copying it, so one overrun reports one failure instead of one per task that ever touched the file. (from: /specs/experience.md#X9)
 - A listing an operator picks from renders each item whole, reassembling what the file wraps, and its check asserts the rendered line rather than the count or the parts. (from: /specs/experience.md#X3, #X2)
@@ -21,6 +22,7 @@ who uses it and what they feel
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [UDD · X11 · folded · 2026-09-10→2026-09-10] A count answers 'how many' and a reader is asking 'which ones': one number said 38 unauthored; `38 queued · 2 adrift` says which two need a decision. Splitting an existing count by a derivable property costs no new state and changes what the reader does next (evidence: status headline split · a-plan-says-what-it-wants)
 - [UDD · X10 · folded · 2026-09-08→2026-09-08] A warning that counts is not a warning that names: `doctor` reported 38 scaffolds and `todo` counted them, but no orientation verb rendered the authored `title:`, so a 40-node bundle read as 40 anonymous slugs and the human concluded the tool had missed the work (evidence: yowo PR #16 · a-roadmap-reads-as-a-roadmap)
 - [UDD · X9 · folded · 2026-09-08→2026-09-08] one line over the SKILL.md pin fired FOURTEEN guards across nine files — eleven budget assertions and three prose pins — because every task that ever touched the skill left its own budget check behind. The signal is one bit (over budget) reported fourteen times, and the author reads it as fourteen problems. A budget with one owner needs one guard; a task that wants to assert the budget held should call that guard, not copy it. (evidence: add-method/tests/skill/ — SKILL.md at 177/176 failed 14 tests; at 176 all 245 pass)
 - [UDD · X8 · folded · 2026-09-04→2026-09-08] a trim that explains itself in every instance can cost more than what it removed: the first unauthored="true" marker carried a prose note and measured six bytes LARGER than the one-line scaffold it replaced — the saving only exists if the marker is shorter than the body (evidence: /tasks/output-trims.md)

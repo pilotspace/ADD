@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 41
+delta_seq: 43
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,8 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- A close inspects what it holds. A milestone refuses to close over unauthored members, exactly as it refuses over undrained lessons — abandonment is a decision somebody makes, never a side effect of closing. (from: /specs/method.md#M43)
+- Every status the engine reads has a verb that writes it. A value only a reader knows is vocabulary that exists in prose and nowhere in the loop. (from: /specs/method.md#M42)
 - None is the refusal shape. freeze holds it today; widening it to the eleven verbs that still answer False is deliberate 3.7 scope, not an oversight — it touches ~40 return sites and every test asserting is False. (from: /specs/method.md#M41)
 - A check on what a VERB accepts crosses argv. add.py is a library that prints nothing; cli.py is the entrypoint, and a library-level check proves nothing about the surface a human types. (from: /specs/method.md#M40)
 - A verb writes only the fields it declares; an unrecognised one is refused by name, and the refusal enumerates what is accepted (R:GHOSTFIELD). (from: /specs/method.md#M39)
@@ -30,6 +32,8 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M43 · folded · 2026-09-10→2026-09-10] A closing verb that never looks at what it holds MANUFACTURES the abandonment it reports: `milestone-done` tallied exit criteria only, so a milestone closed and its queued tasks stopped being anybody's, silently — the same shape as R:UNDRAINED for lessons, one level up (evidence: R:SILENTABANDON · a-plan-says-what-it-wants)
+- [ADD · M42 · folded · 2026-09-10→2026-09-10] A word the engine READS that no verb can WRITE is vocabulary living only in the reader: `dropped` was a status three code paths handled and nothing could ever set, so withdrawing work meant deleting a file or letting it rot — and neither leaves a reason (evidence: add drop · a-plan-says-what-it-wants)
 - [ADD · M41 · folded · 2026-09-08→2026-09-08] One refusal shape is a BUNDLE-WIDE question, not a freeze question: 11 verbs answer a refusal with `False` and 22 with `None`, each self-consistent, so no single verb looks wrong — the caller crossing two verbs is the one who pays. Widening `None`-is-the-only-refusal to every verb touches ~40 return sites and every test asserting `is False` (evidence: AST survey of add.py · one-refusal-shape A2)
 - [ADD · M40 · folded · 2026-09-08→2026-09-08] A Must about what a VERB accepts is met only at the front door: the check called the library, gated green, and the CLI still refused the flag — `add.py` prints nothing and nobody invokes it, so a check that never crosses argv proves nothing about the surface a human types (evidence: cli.py new --goal · a-roadmap-reads-as-a-roadmap re-cross)
 - [ADD · M39 · folded · 2026-09-08→2026-09-08] A creation verb that accepts any keyword writes data nothing owns: an unrecognised field landed in frontmatter verbatim, indistinguishable from a key the engine reads — refuse the field, and name the verb that owns it (R:GHOSTFIELD) (evidence: add.py new() NEW_FIELDS · a-roadmap-reads-as-a-roadmap)

@@ -1,7 +1,7 @@
 ---
 type: Task
 title: a scaffold says whether a plan still wants it
-status: direction
+status: done
 depth: standard
 scope:
   - add-method/tooling/add.py
@@ -39,11 +39,14 @@ verified:
   - { by: "builder", at: 2026-09-10, act: replan, authority: process, note: "The 27th verb ripples wider than S2 implied: every registry that ENUMERATES the verb set has to learn it (CLI WIRED lists, three skill trees, two READMEs, the book command reference, four count pins), and four checks pinned the literal word 'scaffold' whose rule still holds but whose premise expired. Scope widened to the ripple; E6 records it." }
   - { by: "process:auto", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:70749f812df21795", binding: "sha256:311ab01c5825b9cf" }
   - { by: "process:auto", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:70749f812df21795", binding: "sha256:311ab01c5825b9cf" }
+  - { by: "cli", at: 2026-09-10, act: brief, authority: process, brief: "sha256:1b49b3b89d05361f" }
+  - { by: "process:run", at: 2026-09-10, act: run, authority: process, outcome: PASS, receipt: /tasks/a-plan-says-what-it-wants.d/runs/1.md }
+  - { by: "process:auto", at: 2026-09-10, act: gate, authority: process, outcome: PASS, receipt: /tasks/a-plan-says-what-it-wants.d/runs/1.md, brief: "sha256:6373612d64cf848f" }
 ---
 ## CARD
 goal: an unauthored task reports queued, abandoned or adrift, and a milestone cannot close leaving unauthored tasks behind in silence
 why: a 40-task roadmap shipped for review with 38 nodes unauthored. 3.6.0 made them legible — every row now carries its title and the headline counts them — but a reader still cannot tell a task the plan is WORKING TOWARD from one the plan walked away from. Both read `[scaffold]`. And `milestone-done` never looks at its member tasks, so a milestone closing on its exit criteria abandons whatever it queued, silently
-beat: direction · next: add freeze a-plan-says-what-it-wants
+beat: done · next: add status
 
 ## RULES
 <must>

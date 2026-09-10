@@ -55,6 +55,20 @@ that were passing on nothing.
   own module-level constant — invisible to a scan for literals — and three of those then pinned
   each *other's source text*. Measured after the fix: one overrun, **one** failure.
 
+- **A scaffold says whether a plan still wants it.** An unauthored task reported only that it was
+  unauthored, so a task the plan is working toward and one the plan walked away from read the same.
+  It now reports `queued` (a live milestone claims it), `abandoned` (its milestone closed without
+  it) or `adrift` (none does), and the `status` headline splits its count by the same three words.
+  Derived from the milestone that queued it — never a stored field that could drift out of step
+  with the plan it describes.
+- **`milestone-done` refuses to close over unauthored members.** It tallied exit criteria and never
+  looked at its member tasks, so closing a milestone abandoned whatever it had queued with nothing
+  said. It now names each one and offers all three exits — author it, drop it, or re-home it.
+- **`add drop <slug> --reason "<why>"` — the 27th verb.** `dropped` was a status the engine READ in
+  three places and no verb could WRITE. Withdrawing work meant deleting a file or letting it rot as
+  a scaffold, and neither left a reason. A `done` task is refused: that verdict was gated against a
+  receipt, and `reopen` is the verb that revisits it.
+
 ### Known and carried into 3.7
 Both bound as decisions rather than left silent:
 - eleven verbs still answer a refusal with `False` rather than `None`. Widening it touches ~40
