@@ -139,6 +139,23 @@ Scenario: insufficient funds          # covers: R:insufficient_funds
 
 The `And no balance changes` line does real work: it specifies that a rejected transfer leaves the world untouched — a property the AI could easily violate by deducting before checking.
 
+### The evidence router — which modes a change earns
+
+Not every rule is best proven by an example. The router keys on the change kind and the engine's computed authority floor (`process · plan · human`), so nothing new is declared. It is preferred, not enforced: the floor still computes from sensitivity, and a divergence is recorded on the PLAN line rather than hidden.
+
+| change kind | default frozen evidence | added at floor ≥ plan | usually not frozen |
+|---|---|---|---|
+| mechanical · refactor | existing regression + static/architecture check | diff-scope check | new acceptance checks |
+| small business rule | 1–3 acceptance examples | a property, if an invariant is nameable | a new unit suite |
+| algorithm · pricing · ranking | acceptance examples | properties + mutation on changed code | dozens of hand-picked edges |
+| API · event boundary (a consumed `gives:`) | acceptance + consumer contract | one integration smoke | a broad E2E suite |
+| data migration | data invariants as properties | rehearsal + rollback proof | unit-only evidence |
+| UI workflow | domain-level acceptance per screen state | 1–2 browser E2E + an accessibility check | every scenario through a browser |
+| concurrency | acceptance | invariant under stress / schedule probes | an example-only suite |
+| auth · payment · security (floor human) | acceptance + negative examples | properties + adversarial probes + a refute by a fresh session | builder-visible checks alone |
+
+A property, a consumer contract and a mutation score on changed code are all the same shape as the reconciliation checker in the skill's `domains.md`: a script that emits JUnit, whose threshold is a frozen Must and whose test id a `covers:` line names. Mutation runs once at Verify on the files the diff touched inside `scope:`, never inside the build loop.
+
 ### Every rule bound by a check that would fail without it
 
 Bind **every Must, every Reject, and every edge case that changes behavior to at least one check — each written to fail on the most plausible wrong implementation.** A check exists to discriminate, never to fill a quota: one check may cover several rules when it genuinely discriminates each, and a high-consequence rule may need two checks of different kind. Each check carries a `covers:` key naming the rule it proves — `M<n>` for a Must, `R:<code>` for a Reject, `E<n>` for an enumerated edge. A Must or Reject encoded in **no** check means the rules are not understood — stop and say so. Minor variants are build guidance, not gated checks.

@@ -98,6 +98,21 @@ no fit → `.add/personas-index/use-when.md`; none there → proceed. Record it:
 assumption you declared `· probe:`-able). Those six forms are the whole vocabulary the gate
 resolves; a `covers:` naming anything else binds nothing.
 
+## The evidence router — modes by change kind × computed floor
+
+| change kind | default frozen evidence | added at floor ≥ plan | not frozen |
+|---|---|---|---|
+| mechanical · refactor | existing regression + static/architecture check | diff-scope check | new acceptance checks |
+| small business rule | 1–3 acceptance examples | a property, if an invariant is nameable | a unit suite |
+| algorithm · pricing · ranking | acceptance examples | properties + mutation on changed code | hand-picked edge lists |
+| API · event boundary (a consumed `gives:`) | acceptance + consumer contract | one integration smoke | a broad e2e suite |
+| data migration | data invariants as properties | rehearsal + rollback proof | unit-only evidence |
+| UI workflow | acceptance per screen state | 1–2 browser e2e + a11y | every scenario in a browser |
+| concurrency | acceptance | invariant under stress / schedule probes | example-only suite |
+| auth · payment · security (floor human) | acceptance + negative examples | properties + probes + a fresh-session refute | builder-visible checks alone |
+
+Preferred, not enforced — the floor still computes from sensitivity; record a divergence on the PLAN line. Property, contract and mutation checks are checkers that emit JUnit: recipes in `domains.md` §1.
+
 ## Run red — for the right reason
 
 Author the checks and run them: they MUST fail, and fail because the behavior is absent, not because a
@@ -110,18 +125,15 @@ session that did not build.
 
 ## Get the working prompt from the graph
 
-`add brief <slug>` compiles the beat's XML prompt — the node's own body, T1 cards of its `depends_on`,
-the frozen `#gives` fragments it `needs:`, and the five specs' *Decisions that bind*. Its refs resolve
-**at brief time**, so editing a spec re-scopes every future prompt with no prompt edit. Never copy spec
-prose into a node — that is what makes scope changes expensive.
+`add brief <slug>` compiles the beat's XML prompt — the node's body, T1 cards of its `depends_on`, the
+frozen `#gives` fragments it `needs:`, the five specs' *Decisions that bind*. Refs resolve **at brief
+time**, so a spec edit re-scopes every future prompt. Never copy spec prose into a node.
 
 ## Author the contract edges yourself
 
-The graph, `brief`, downstream re-scoping AND the assumption sweep all read a node's `gives:` (the
-surfaces it publishes) and `needs:` (the frozen fragments it consumes) from **frontmatter**. `new`
-scaffolds `gives:` and `freeze` refuses while it is still template — it went unauthored in 3 of 3
-live runs when nothing asked for it. Give each surface an `S<n>` id; that id is what an ASSUMPTIONS
-line names in its `covers:`:
+The graph, `brief`, re-scoping AND the sweep read `gives:` (surfaces published) and `needs:` (frozen
+fragments consumed) from **frontmatter**; `freeze` refuses a template `gives:` — it went unauthored in
+3 of 3 live runs when nothing asked. Each surface gets an `S<n>` id, the one ASSUMPTIONS `covers:`:
 
 ```yaml
 gives:
@@ -147,11 +159,10 @@ Authority floor by sensitivity (unstrikeable): mechanical→process · data→pl
 **security→human, never derived, never batched**. A sensitive `scope:` path raises the floor to human
 regardless. The freeze is the single human decision of the whole task; present it via `gate.md`.
 
-**At a human floor the approval is interviewed first.** `add interview <slug>` compiles every
-non-`n/a` assumption and every Reject into a numbered question carrying the reading you took and the
-cost if it is wrong; `freeze` refuses until each is answered `confirm`, `correct` or `defer`
-(R:UNINTERVIEWED). Every other refusal above checks the DOCUMENT — this is the one that checks the
-CONVERSATION, because `## ASSUMPTIONS` is a list of silences YOU filled in on the human's behalf.
+**At a human floor the approval is interviewed first.** `add interview <slug>` compiles every non-`n/a`
+assumption, every Reject and every filled edge into a numbered question carrying the reading you took
+and the cost if wrong; `freeze` refuses until each is `confirm`, `correct` or `defer` (R:UNINTERVIEWED).
+Every other refusal checks the DOCUMENT — this one checks the CONVERSATION.
 
 Put the questions to the human for real, one decision at a time, in their own words.
 **Never record an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
