@@ -23,6 +23,9 @@ verified:
   - { by: "builder", at: 2026-09-10, act: replan, authority: process, note: "M3 found a bigger defect than the empty-board case it was written for. `BEAT_NEXT[build]` is 'add run {slug} -- <test cmd> --junitxml=...' — so EVERY frozen task's next: line hands back an unrunnable slot, not just the nothing-open branch. A notary genuinely cannot know a project's test command, but it does not have to guess: `run` is handed the real command every time it is called. It now REMEMBERS the last one on index.md, and the build hint replays it. The slot survives only until the first run, and after that the next: line is the command that actually worked here." }
   - { by: "builder", at: 2026-09-10, act: replan, authority: process, note: "M3 as written is too absolute, and the empty board is where it shows. A slot only the HUMAN can fill (a slug they have not chosen, a test command a notary cannot know) is legitimate guidance; a slot the ENGINE could have filled is the defect. The empty-board next: goes back to naming `add new`, because pointing a reader with nothing to do at `add doctor` answers a question they did not ask." }
   - { by: "process:auto", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:c80acbb0c1394afe", binding: "sha256:eee2d62f1dce3265" }
+  - { by: "cli", at: 2026-09-10, act: brief, authority: process, brief: "sha256:8592ddb0da18ad91" }
+  - { by: "process:run", at: 2026-09-10, act: run, authority: process, outcome: PASS, receipt: /tasks/status-answers-what-needs-me.d/runs/1.md }
+  - { by: "process:auto", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:7235daed01b007c2", binding: "sha256:eee2d62f1dce3265" }
 ---
 ## CARD
 goal: orientation shows the work that needs a decision, says so plainly when none does, and always ends in a command you can run
@@ -72,7 +75,7 @@ strategy: partition first (every rule reads it), then ordering, then the two hin
 - E6 the `last:` line on a bundle with NO stamps anywhere — absent, never a guessed date
 
 ## CHECKS
-- test_the_board_shows_only_what_needs_a_decision · covers: M1, R:DEADROW, A2, A4, E2, E3, E4 · done/archived/stateless never print as rows; an unknown status still does; an empty board answers in one line
+- test_the_board_shows_only_what_needs_a_decision · covers: M1, M5, R:DEADROW, A2, A4, E2, E3, E4 · done/archived/stateless never print as rows; an unknown status still does; an empty board answers in one line
 - test_rows_are_ordered_by_attention · covers: M2, A5, A10, E1 · the six beats sort in that order and ties break by slug, identically under `--all`
 - test_every_hint_names_something_that_runs · covers: M3, M4, R:DEADHINT, R:PLACEHOLDER_NEXT, R:NOWAYIN, A3, A7, A8 · no `<…>` in `next:`; `--all` never advises `--all`; every withheld row is reachable by the command the bare report names, driven for real
 - test_the_report_says_where_you_left_off · covers: M6, E6 · the last recorded act and its node appear, and are absent rather than guessed when no stamp exists
