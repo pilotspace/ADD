@@ -98,7 +98,7 @@ Its body is six sections, each with one job:
   check cites it (FORMAT.md §5.1).
 - `## PLAN` — the contract detail that becomes the frozen `gives:`, the build strategy, and the `scope:`.
 - `## EDGES` — optional enumerated boundary cases (`E<n>`) a check must cover.
-- `## CHECKS` — one check per Must / Reject / Edge, red-first, each carrying a `covers:` referent.
+- `## CHECKS` — every Must / Reject / Edge bound by at least one check, red-first, each carrying a `covers:` referent.
 - `## EVIDENCE` — the receipt link, the gate outcome, the scope check.
 - `## LESSONS` — deltas emitted onward via `add learn <lens>`.
 

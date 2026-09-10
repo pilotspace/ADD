@@ -104,8 +104,8 @@ and its assumptions, ordered lowest-confidence first.
 **`## EDGES`** — enumerated edge cases (`E1`, `E2`, …): boundary and failure conditions
 that must be covered like rules. Inert until authored, so a fresh task gates unchanged.
 
-**`## CHECKS`** — the red suite: one check per rule and per edge, each naming what it
-`covers:`.
+**`## CHECKS`** — the red suite: every rule and filled edge named by at least one check
+that would fail without it, each naming what it `covers:`.
 
 **`## EVIDENCE`** — the recorded receipt and the recorded verdict.
 

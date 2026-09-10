@@ -94,9 +94,12 @@ no fit → `.add/personas-index/use-when.md`; none there → proceed. Record it:
   a line you FILL becomes a gate-bound referent exactly like a Must, so `gate PASS` refuses until
   some check names it. The scaffold's untouched `<placeholder>` owes nothing — writing an edge is
   what binds it. Retire one by deleting the line, never by answering it `n/a`.
-- **`## CHECKS`** — the **red suite**: one check per `Must` and per `Reject`, each carrying a `covers:`
-  key naming the rule it proves. A `Must`/`Reject` encoded in **no** check means RULES is not
-  understood — **stop and say so**. Minor behaviors are build guidance, not gated checks.
+- **`## CHECKS`** — the **red suite**: at least one check per binding referent (`M` · `R` · filled
+  `E` · probed `A`), each carrying a `covers:` key naming what it proves, and each written to FAIL
+  on the most plausible wrong implementation — that is what a check is for, never a quota. One check
+  may cover several referents when it discriminates each; at a plan or human floor a Must carries
+  two checks of different mode (§ router). A `Must`/`Reject` encoded in **no** check means RULES is
+  not understood — **stop and say so**. Minor behaviors are build guidance, not gated checks.
 
 `covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at
 `standard|deep` it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an

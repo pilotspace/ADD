@@ -26,7 +26,7 @@ discipline the engine cannot see for you.
 - [ ] "Existing behavior" assumptions carry grep/line citations; wiring claims name the production caller chain.
 - [ ] The contract shape is authored into `gives:`, versioned in intent, and every rejection has a contracted response.
 - [ ] `scope:` lists the files or directories the build may touch.
-- [ ] There is one check per Must, per Reject, and per behavior-changing edge — each with a `covers:` referent. *(Engine: an uncovered rule or edge blocks the gate.)*
+- [ ] Every Must, Reject and behavior-changing edge is named by at least one check that would fail without it — each with a `covers:` referent. *(Engine: an uncovered rule or edge blocks the gate.)*
 - [ ] The suite (or the acceptance list) runs in the pipeline and is **red for the right reason** — no lying reds; an unimplemented path fails because it is unimplemented.
 - [ ] Checks assert observable behavior, not internals.
 - [ ] Collateral checks for globally-enumerated things are listed by exact name.

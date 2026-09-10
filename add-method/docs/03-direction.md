@@ -139,9 +139,9 @@ Scenario: insufficient funds          # covers: R:insufficient_funds
 
 The `And no balance changes` line does real work: it specifies that a rejected transfer leaves the world untouched — a property the AI could easily violate by deducting before checking.
 
-### One check per rule, each with a `covers:` referent
+### Every rule bound by a check that would fail without it
 
-Author **one check per Must, per Reject, and per edge case that changes behavior.** Each check carries a `covers:` key naming the rule it proves — `M<n>` for a Must, `R:<code>` for a Reject, `E<n>` for an enumerated edge. A Must or Reject encoded in **no** check means the rules are not understood — stop and say so. Minor variants are build guidance, not gated checks.
+Bind **every Must, every Reject, and every edge case that changes behavior to at least one check — each written to fail on the most plausible wrong implementation.** A check exists to discriminate, never to fill a quota: one check may cover several rules when it genuinely discriminates each, and a high-consequence rule may need two checks of different kind. Each check carries a `covers:` key naming the rule it proves — `M<n>` for a Must, `R:<code>` for a Reject, `E<n>` for an enumerated edge. A Must or Reject encoded in **no** check means the rules are not understood — stop and say so. Minor variants are build guidance, not gated checks.
 
 The `covers:` binding is enforced at the **gate**: it refuses a PASS while any `M<n>` or `R:<code>` is covered by no check, or when the named checks did not demonstrably pass on a fresh receipt. Freeze only stamps the node approved; the coverage proof is checked when the verdict is recorded. Coverage is a binding, not a label.
 
@@ -189,7 +189,7 @@ Not every task ships code. A documentation task, a release, or an infrastructure
 - [ ] every internal link resolves                                   # covers: M3
 ```
 
-Only the *form* is relaxed. Everything else holds — red before build, one check per rule, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite; the two modes never mix within one task.
+Only the *form* is relaxed. Everything else holds — red before build, every rule bound by a check, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite; the two modes never mix within one task.
 
 ---
 
@@ -213,7 +213,7 @@ Direction is done when:
 - [ ] Every required behavior is a Must; every rejection is a named error code; the success state-change is stated.
 - [ ] The assumptions are ordered lowest-confidence first, with the one `⚠` flag carrying *why* + *cost* — or, for trivial scope, an honest "none material" that still names the single biggest risk.
 - [ ] The contract shape is authored into `gives:`, versioned in intent, and every rejection has a contracted response.
-- [ ] There is one check per Must, per Reject, and per behavior-changing edge — each with a `covers:` referent.
+- [ ] Every Must, Reject and behavior-changing edge is named by at least one check that would fail without it — each with a `covers:` referent.
 - [ ] The suite (or the acceptance list) runs in the pipeline and is **red for the right reason**.
 - [ ] Checks assert observable behavior, not internals.
 

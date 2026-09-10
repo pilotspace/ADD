@@ -84,8 +84,8 @@ One task = one atomic node. Three beats, one human decision:
      `found: <what>` + its evidence on the line.
    - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
      `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
-   - `## CHECKS` — one per Must and per Reject, each with a `covers:` key binding EVERY referent
-     you name: Musts, Rejects, probed assumptions, edges. Run them **red for the right reason**.
+   - `## CHECKS` — at least one check per referent you name (Musts, Rejects, probed assumptions,
+     edges), `covers:`-bound, built to fail on the plausible wrong implementation. Run them **red**.
    - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, a
      FILLED edge or PROBED assumption no `covers:` names (**R:UNCOVERED** — bind it, never delete it),
      or — at a human floor, and on any Milestone stamped `--authority human` — a decision no human
@@ -169,7 +169,7 @@ else `process` — never from depth.
 - **deep** — full node + milestone strategy, lowest-confidence-first; a human owns freeze whenever the
   floor (or your judgment) calls for it.
 
-A coined term you cannot decode is in `terms.md` — load it once, not every session.
+A coined term you cannot decode is in `terms.md` — load it once.
 The method's **why** lives in `FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) —
 **referenced, never inlined** (load the State; reference the Story). Read it only when a decision is
 genuinely unclear. The AIDD book is deeper background and is **external** (not shipped with the skill)
