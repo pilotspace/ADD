@@ -275,16 +275,46 @@ def test_format_book_and_comment_state_the_sections_as_views():
         "the placeholder guard still claims a filling that does not exist"
 
 
+def _reseed_scaffolds(path: Path) -> bool:
+    """Put the pre-3.6 scaffold back into one done task's EVIDENCE and LESSONS — the defect this
+    test measures, constructed rather than hoped for. Returns whether anything was seeded."""
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    out, section, seeded, lessons_done = [], None, False, False
+    for line in lines:
+        if line.startswith("## "):
+            section = line.strip()
+            out.append(line)
+            if section == "## LESSONS":
+                out.append(SCAFFOLD_LESSON + "\n")
+                seeded, lessons_done = True, True
+            continue
+        if section == "## EVIDENCE" and line.startswith("receipt:"):
+            out.append(SCAFFOLD_RECEIPT + "\n")
+            seeded = True
+            continue
+        if section == "## LESSONS" and lessons_done and line.strip():
+            continue                                   # the harvested lines give way to the scaffold
+        out.append(line)
+    if seeded:
+        path.write_text("".join(out), encoding="utf-8")
+    return seeded
+
+
 def test_live_bundle_backfill_count(tmp_path):
-    """covers: M5 — on this repo's own bundle a sync leaves no done Task carrying either scaffold."""
+    """covers: M5 — on a copy of this repo's own bundle, re-seeded with the pre-3.6 scaffold in every
+    done Task, a sync leaves none carrying it. The subject is CONSTRUCTED: the live bundle was
+    backfilled by the commit that shipped the sync, so the earlier form of this check — which read
+    the defect from the live bundle — retired itself the moment it passed (a check that passes on
+    nothing, inverted)."""
     live = REPO.parent / ".add"
     assert (live / "tasks").is_dir(), "the dogfood bundle is not where the test expects it"
     root = tmp_path / ".add"
     shutil.copytree(live, root, ignore=shutil.ignore_patterns("graph.json", "__pycache__"))
-    before = [p for p in (root / "tasks").glob("*.md")
-              if "status: done" in p.read_text(encoding="utf-8")
-              and (SCAFFOLD_RECEIPT in p.read_text(encoding="utf-8") or SCAFFOLD_LESSON in p.read_text(encoding="utf-8"))]
-    assert before, "the live bundle no longer carries the defect this test measures — retire this check"
+    done = [p for p in (root / "tasks").glob("*.md") if "status: done" in p.read_text(encoding="utf-8")]
+    before = [p for p in done if _reseed_scaffolds(p)]
+    assert len(before) >= 10, f"only {len(before)} done task(s) could be re-seeded — the fixture is too thin to measure"
+    assert all(SCAFFOLD_RECEIPT in p.read_text(encoding="utf-8") or SCAFFOLD_LESSON in p.read_text(encoding="utf-8")
+               for p in before), "the re-seed wrote nothing"
     ok, note = add.doctor_sync(root)
     assert ok, note
     after = [p for p in before
