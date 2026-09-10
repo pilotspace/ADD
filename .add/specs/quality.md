@@ -7,7 +7,7 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 30
+delta_seq: 35
 relations:
   - Q9 refines /specs/method.md#M21
 open_deltas: 0
@@ -16,6 +16,11 @@ open_deltas: 0
 what counts as proof
 
 ## Decisions that bind
+- Implement a guard at exactly the width of its rule. A guard written broader goes red on true statements, and gets relaxed rather than narrowed. (from: /specs/quality.md#Q35)
+- A check that cannot establish its baseline reports that it could not, and never that the claim is false. Read only a ref every checkout has, or pin the content. (from: /specs/quality.md#Q34)
+- A survey over call sites must enumerate by CALLABLE, never by the arity of the result the first few happen to share. (from: /specs/quality.md#Q32)
+- When a producer widens, re-aim the FIXTURE so the pinned count is again about one thing; editing the expected number is how a check stops being about its rule. (from: /specs/quality.md#Q33)
+- A rule about a PROPERTY is written as a predicate on that property, never as a list of the types that happened to have it. (from: /specs/quality.md#Q31)
 - The SKILL.md sha256 prose pin is still scattered across two files — the same class as the budget scatter, carried into 3.7 knowingly rather than folded as done. (from: /specs/quality.md#Q30)
 - A pinned number lives in one module and is asserted by one named guard; a shared-constant guard flags the re-DECLARATION as well as the assertion, because a module-level constant asserts with no literal to find. (from: /specs/quality.md#Q29)
 - A scope guard names the commit range its claim is about, or asserts the premise that must still hold. A working-tree diff guards neither, and `git commit` alone satisfies it — a guard that fires on unrelated work is dismissed until it is worth less than no guard. (from: /specs/quality.md#Q28)
@@ -29,6 +34,11 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q35 · folded · 2026-09-10→2026-09-10] A guard written broader than its rule goes red on true statements. `no budget literal moved` was implemented as `the module is byte-identical`, so adding an unrelated constant to it reported a pin bump that never happened. (evidence: /tasks/one-home-for-the-prose-pin.md)
+- [TDD · Q34 · folded · 2026-09-10→2026-09-10] A check that cannot establish its baseline must not read that as the claim being false. `git merge-base HEAD origin/main` returns 128 on a depth-1 CI clone — the check passed locally and failed CI for a reason unrelated to what it asserts. Pin the content, or read only a ref every checkout has. (evidence: /tasks/the-message-pin-is-a-content-pin.md)
+- [TDD · Q33 · folded · 2026-09-10→2026-09-10] A check that pins a COUNT (`1 uncovered`) is pinned to its fixture's shape as much as to the rule. Widen the producer and the count moves — the repair is to re-aim the FIXTURE so the number is again about one thing, never to edit the expected number. (evidence: /tasks/uncovered-widens-to-rules.md)
+- [TDD · Q32 · folded · 2026-09-10→2026-09-10] A survey shaped by one return arity misses the verbs that do not share it: the AST pass looked at 2-tuples and reported 35 sites, while `done` hid two more behind a 3-tuple — the count was wrong in the direction that reads as complete (evidence: add.done 3-tuple · refuse-with-one-shape)
+- [TDD · Q31 · folded · 2026-09-10→2026-09-10] A rule written as a TYPE LIST leaves the gaps a PREDICATE would not: 'stateless Spec and Persona are collapsed' exempted Project and index from the rule authored to remove them, so on a finished bundle they were two of the three rows shown (evidence: constant() · status-answers-what-needs-me)
 - [TDD · Q30 · folded · 2026-09-08→2026-09-08] SKILL.md's sha256 prose pin is held in TWO files — test_surface.py holds it and test_skill_reads_the_graph.py pins test_surface's copy of it. Same class as the budget scatter, one instance further on: a re-aim must edit both or neither (evidence: test_prose_pin_was_re_aimed · one-budget-one-guard overrun probe)
 - [TDD · Q29 · folded · 2026-09-08→2026-09-08] The scatter that hides is the one with no literal: a module-level `LINE_PIN = 176` asserted via a name carries no number for a literal scan to find — four modules held the budget that way, and three then pinned each OTHER's source text, so one number could only be re-pinned everywhere at once or nowhere. A shared-constant guard must flag the re-declaration, not only the assertion (evidence: test_one_budget_one_guard._budget_uses · one-budget-one-guard)
 - [TDD · Q28 · folded · 2026-09-08→2026-09-08] A guard that fires on unrelated work trains its reader to dismiss it, and is then worth less than no guard: a working-tree `git diff` tripwire went red once a session all week and was waved past every time — the fix is to name the RANGE the claim is about, or, when the claim is settled at merge and no range can re-litigate it, retire it with a record (evidence: test_scope_guard_ranges · scope-guard-names-its-range)

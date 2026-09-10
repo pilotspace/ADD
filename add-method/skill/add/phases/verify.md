@@ -1,7 +1,9 @@
 # Beat 3 · Verify — trust on evidence, then the gate
 
 A change is trusted because its checks pass **and** the residue tests can't catch was examined — not
-because the diff reads plausible. Verify is where that trust is recorded, once.
+because the diff reads plausible. Verify is where that trust is recorded, once. Judge it through a
+**lens**: the `.add/personas/` entry whose `flow:` names verify (else advisor) and whose `task-kinds:`
+covers the node's `kind:`; no fit → `.add/personas-index/use-when.md`; none there → proceed. `add advise <slug> --persona <p>`.
 
 ## 1 · Gather the evidence — a fresh, bound receipt
 

@@ -119,6 +119,8 @@ def test_identity_is_unchanged():
     Checked against git rather than only against the working tree, so the guard compares what this
     task INHERITED, not what it happens to have written.
     """
+    # TRIPWIRE: working tree against `HEAD`, so `git commit` satisfies it. It guards the
+    # positioning edit while it is being written; after the merge it asserts nothing.
     for phrase in IDENTITY:
         present = [p for p in READMES if phrase in _text(p)]
         assert present, f"the identity string {phrase!r} is gone from both READMEs"

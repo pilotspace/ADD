@@ -31,8 +31,27 @@ RETIRED = {
 _WORKING_TREE = {"HEAD", "--cached", "--staged"}
 
 
-def _git_diff_calls():
-    """Every `git diff` invocation in the suite: (path, line, argv-as-written)."""
+# WIDENED (a-head-guard-declares-its-lifetime): this enumerated `git diff` alone, because that is
+# the spelling the two retired guards happened to use. Seven more sites resolve a ref through
+# `git show HEAD:<path>` and one through `git merge-base`, and every one of them is satisfied by
+# `git commit` exactly the same way. A rule enforced over one spelling of a shape is a rule the
+# other spellings do not have. `ls-files`, `rev-parse` and `status` are NOT here: they read the
+# index, not a revision, so nothing about them expires (A2).
+_REF_VERBS = ("diff", "show", "merge-base")
+
+
+def _enclosing(tree, node):
+    """The FunctionDef whose source span contains `node` — the unit that owns a lifetime."""
+    best = None
+    for fn in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]:
+        if fn.lineno <= node.lineno <= (fn.end_lineno or fn.lineno):
+            if best is None or fn.lineno > best.lineno:
+                best = fn
+    return best
+
+
+def _git_ref_calls():
+    """Every git invocation that resolves a REVISION: (path, line, argv, enclosing FunctionDef)."""
     out = []
     for f in sorted((REPO / "tests").rglob("test_*.py")):
         tree = ast.parse(f.read_text())
@@ -44,10 +63,21 @@ def _git_diff_calls():
                 continue
             words = [e.value for e in arg.elts if isinstance(e, ast.Constant)
                      and isinstance(e.value, str)]
-            if words[:2] != ["git", "diff"]:
+            if words[:1] != ["git"] or words[1:2] not in ([v] for v in _REF_VERBS):
                 continue                      # E3: a string literal saying "git diff" is prose
-            out.append((f.relative_to(REPO).as_posix(), n.lineno, words))
+            # An f-string ref (`f"HEAD:{rel}"`) contributes no Constant, so read the whole call's
+            # literals to see which revision it names — the argv list alone would miss it.
+            spelled = words + [c.value for c in ast.walk(arg)
+                               if isinstance(c, ast.Constant) and isinstance(c.value, str)
+                               and c.value not in words]
+            out.append((f.relative_to(REPO).as_posix(), n.lineno, words, spelled,
+                        _enclosing(tree, n)))
     return out
+
+
+def _git_diff_calls():
+    """The `git diff` subset, unchanged — the two rungs below were written against it."""
+    return [(p, ln, w) for p, ln, w, _, _ in _git_ref_calls() if w[1] == "diff"]
 
 
 def _names_a_range(words):
@@ -99,3 +129,69 @@ def test_the_retired_guards_left_a_record():
     assert not missing, (
         "M4 — a retired guard must leave its reason in the module it left, not only in a commit "
         "message nobody greps:\n" + "\n".join(missing))
+
+
+# Every ref a guard may resolve must exist in a FRESH SHALLOW checkout — which is what
+# `actions/checkout@v7` makes by default (depth 1, no remote branches). `HEAD` always does.
+# `origin/<branch>` does not, and reading its absence as a failed claim is what took CI red.
+_ABSENT_ON_A_SHALLOW_CLONE = ("origin/", "refs/remotes/")
+
+# The label a working-tree-vs-HEAD guard owes its reader. Deliberately a WORD in the function's
+# own source rather than a decorator: it is a warning to the next person editing the file, not a
+# token that satisfies a checker (A6).
+_TRIPWIRE = "TRIPWIRE"
+
+
+def test_no_guard_reads_a_ref_a_fresh_checkout_lacks():
+    """covers: M2, R:ABSENTREF, A2, A4, A5 — a ref CI does not have is not a baseline."""
+    calls = _git_ref_calls()
+    assert len(calls) >= 8, \
+        f"the enumeration found only {len(calls)} git-ref call(s); it is not reading the suite"
+    absent = [f"  {p}:{ln} — resolves {w!r}" for p, ln, _, spelled, _ in calls
+              for w in spelled if w.startswith(_ABSENT_ON_A_SHALLOW_CLONE)]
+    assert not absent, (
+        "R:ABSENTREF — these guards resolve a ref that `actions/checkout`'s depth-1 clone does "
+        "not have, so on CI they read `cannot establish a baseline` as `the claim is false`:\n"
+        + "\n".join(absent)
+        + "\n\nPin the content instead (`test_the_messages_are_untouched`), or name a range whose "
+          "ends the checkout actually fetches.")
+
+
+def test_a_worktree_guard_declares_it_is_a_tripwire():
+    """covers: M1, M3, R:SILENTTRIPWIRE, A1, A6 — say which of the two it is, in the source.
+
+    A `HEAD`-vs-working-tree guard is not worthless — it fires while the edit is being made,
+    which is when it can help. What is worthless is a green CI read as the claim having held,
+    because after `git commit` the two sides are the same bytes. So the guard stays and says so.
+    """
+    unlabelled = []
+    for path, line, _, spelled, fn in _git_ref_calls():
+        if not any(w.startswith("HEAD:") or w == "HEAD" for w in spelled):
+            continue                                   # a named range expires nothing
+        if fn is None:
+            unlabelled.append(f"  {path}:{line} — at module level, so it owns no lifetime")
+            continue
+        src = ast.get_source_segment((REPO / path).read_text(), fn) or ""
+        if _TRIPWIRE not in src:
+            unlabelled.append(f"  {path}:{line} — {fn.name}")
+    assert not unlabelled, (
+        "R:SILENTTRIPWIRE — these guards compare the working tree to `HEAD`, which `git commit` "
+        f"makes identical, and never say so:\n" + "\n".join(unlabelled)
+        + f"\n\nWrite {_TRIPWIRE} and a sentence in the function: it fires during the edit and "
+          "is inert once committed, so nobody reads a green CI as this claim holding. If the "
+          "claim must hold permanently, pin the content instead.")
+
+
+def test_the_widening_dropped_no_claim():
+    """covers: M4, R:CLAIMDROP, A3 — annotating a guard is not softening it."""
+    for path, _, _, spelled, fn in _git_ref_calls():
+        # `test_*` only. A private helper legitimately RETURNS the baseline for a check to
+        # assert on (`_at_head`); demanding an assert inside it would push the read back into
+        # every caller, which is the duplication the helper exists to remove.
+        if fn is None or not fn.name.startswith("test_") \
+                or not any(w.startswith("HEAD") for w in spelled):
+            continue
+        asserts = [n for n in ast.walk(fn) if isinstance(n, ast.Assert)]
+        assert asserts, (
+            f"R:CLAIMDROP — {path}::{fn.name} reads git and asserts nothing. This task labels "
+            f"guards; it does not empty them.")

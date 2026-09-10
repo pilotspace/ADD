@@ -99,7 +99,7 @@ def test_gate_pass_refuses_when_no_brief_entered_the_build(bundle, draft, tmp_pa
     cid = _frozen_task(bundle, draft)
     _green_receipt(bundle, cid, tmp_path)
     ok, note = add.gate(bundle, cid, "PASS", by="human:tindang")
-    assert ok is False, "an unbriefed build was gated PASS"
+    assert ok is None, "an unbriefed build was gated PASS"
     assert "brief" in note.lower(), note
     assert f"add brief" in note, f"the refusal must name the fix: {note!r}"
 
@@ -119,7 +119,7 @@ def test_a_brief_after_the_receipt_is_not_an_entry(bundle, draft, tmp_path):
     _green_receipt(bundle, cid, tmp_path)
     add.brief_stamp(bundle, cid, by="cli")
     ok, note = add.gate(bundle, cid, "PASS", by="human:tindang")
-    assert ok is False, "a post-hoc brief bought a PASS — the entry must precede the evidence"
+    assert ok is None, "a post-hoc brief bought a PASS — the entry must precede the evidence"
     assert "add run" in note, f"the fix is a re-run under the brief: {note!r}"
 
 
@@ -133,7 +133,7 @@ def test_a_refreeze_resets_the_entry(bundle, draft, tmp_path):
     assert node is not None, note
     _green_receipt(bundle, cid, tmp_path)
     ok, note = add.gate(bundle, cid, "PASS", by="human:tindang")
-    assert ok is False, "a pre-refreeze brief satisfied the post-refreeze build"
+    assert ok is None, "a pre-refreeze brief satisfied the post-refreeze build"
 
 
 def test_non_pass_verdicts_are_never_blocked(bundle, draft, tmp_path):

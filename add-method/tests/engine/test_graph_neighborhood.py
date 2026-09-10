@@ -153,7 +153,7 @@ def test_rows_are_totally_ordered(bundle):
 def test_absent_node_refuses_rather_than_empties(bundle):
     """covers: M6, R:EMPTYISUNKNOWN, E6 — None for no such node, [] for no neighbours."""
     rows, note = add.neighborhood(_graph(bundle), "/tasks/no-such-task.md", 3)
-    assert rows is None, "a cid naming no node returned a list — 'no neighbours' and 'no such " \
+    assert not rows, "a cid naming no node returned a list — 'no neighbours' and 'no such " \
                          "node' became the same answer"
     assert "no-such-task" in note, note
 

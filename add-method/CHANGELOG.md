@@ -4,6 +4,147 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [3.6.0] — 2026-09-08
+
+**The loop drains, and our own tests stop passing on refusals.** Two milestones. The first closes
+a hole in the method — a milestone could close with the lessons its own tasks had filed still open.
+The second turned the method's own rules on the suite that enforces them, and found four checks
+that were passing on nothing.
+
+### Added
+- **`R:UNDRAINED` at `milestone-done`.** A lesson filed *during* a milestone's own work must be
+  folded, rejected, or bound before it closes. The rung is windowed on the milestone's
+  `generated.at`, so a lesson filed before the plan is not conscripted into it. It refused itself
+  first, on its own six lessons.
+- **`add fold --reject` and `--bind`.** A lesson can be retired as `rejected` (it did not hold) or
+  promoted into its spec's `## Decisions that bind`, which is what a drained lesson becomes when it
+  is a standing rule rather than a note.
+- **`add new --goal`.** The planner holds a one-line goal at creation and had nowhere to put it.
+  It is seeded into the CARD, where every reader and every guard already looks — never into
+  frontmatter, which would leave the node carrying two contradicting goal lines (`R:TWOGOALS`).
+- **`R:GHOSTFIELD` at `new`.** An unrecognised field used to land in frontmatter verbatim, as data
+  nothing wrote and no reader reads. `new` now refuses it by name and enumerates what it accepts.
+- **`tests/skill/skill_budget.py`.** The skill's line, byte and surface budgets, one literal each,
+  each naming the single guard that owns it.
+
+### Changed
+- **Orientation renders the title it was given.** A 40-task roadmap shipped for review with 38
+  nodes still scaffold, and the reviewer concluded ADD had missed the work. It had not — `doctor`
+  warned 38 times, every `status` row read `[scaffold]`, `todo` said `38 open task(s)`. What was
+  missing was that nothing in the orientation path showed the one field those nodes *had*
+  authored. `status` rows and the `show` header now carry the authored `title:`, and an unfilled
+  placeholder renders as nothing, so a scaffold stays visibly anonymous.
+- **`status` counts scaffolds** in its headline — `N scaffold (add todo)` — so the unauthored share
+  of a bundle is legible from the resume point, not only from a `doctor` run nobody was asked to make.
+- **`freeze` refuses with ONE falsy shape.** Ten rungs answered `None`; the milestone-scaffold rung
+  answered `False`. One line, and it mattered more than it read: **two checks were green only
+  because `False is not None`** — they asserted a successful freeze and passed on the refusal they
+  were written to rule out. Normalising the shape turned them red and exposed one premise that can
+  no longer exist at all.
+
+### Fixed
+- **No check fails by calendar.** A search-filter check built its fixture against a real clock and
+  compared it to a hardcoded date. It went red on its own four days later and stayed red, failing
+  CI on work that had nothing to do with it.
+- **Every scope guard names the range it guards.** Two guards asserted "this task did not touch X"
+  with a working-tree `git diff` — satisfied by typing `git commit`. One was vacuous three times
+  over: working-tree diff, gitignored path, and a file absent from the repo entirely. Both are
+  retired with a record, and the shape is now refused suite-wide.
+- **One budget, one guard.** A one-line SKILL.md overrun reported **fourteen** failures across
+  seven files, and a re-pin had to find eight literals. Four more modules held the budget as their
+  own module-level constant — invisible to a scan for literals — and three of those then pinned
+  each *other's source text*. Measured after the fix: one overrun, **one** failure.
+
+- **A scaffold says whether a plan still wants it.** An unauthored task reported only that it was
+  unauthored, so a task the plan is working toward and one the plan walked away from read the same.
+  It now reports `queued` (a live milestone claims it), `abandoned` (its milestone closed without
+  it) or `adrift` (none does), and the `status` headline splits its count by the same three words.
+  Derived from the milestone that queued it — never a stored field that could drift out of step
+  with the plan it describes.
+- **`milestone-done` refuses to close over unauthored members.** It tallied exit criteria and never
+  looked at its member tasks, so closing a milestone abandoned whatever it had queued with nothing
+  said. It now names each one and offers all three exits — author it, drop it, or re-home it.
+- **`add drop <slug> --reason "<why>"` — the 27th verb.** `dropped` was a status the engine READ in
+  three places and no verb could WRITE. Withdrawing work meant deleting a file or letting it rot as
+  a scaffold, and neither left a reason. A `done` task is refused: that verdict was gated against a
+  receipt, and `reopen` is the verb that revisits it.
+
+- **`add status` answers "what needs me?"** It answered "what exists", and degraded at both ends
+  of a bundle's life: on a finished board it printed `PROJECT`, `index` and an **archived**
+  milestone while withholding 112 nodes; on a large one the only escape hatch, `--all`, printed
+  `(`--all` for done nodes)` — a hint advising the flag already in force. Rows now list work that
+  needs a decision, ordered by how close it is to needing a human (verify · build · direction ·
+  queued · abandoned · adrift) rather than by node type; every withheld row is reachable by a
+  command the report names and that is driven in a check; an empty board says so in one line; and
+  a new `last:` line names the most recent recorded act, absent rather than guessed.
+- **The build hint stops handing back `<test cmd>`.** A notary cannot know a project's test
+  command, but `run` is handed the real one on every call — it now records it and the hint replays
+  what actually worked in this project.
+- **Rows no longer wrap or misalign.** The beat column is padded, so the type column lines up
+  whatever the word is, and every line fits 100 columns with truncation on a word boundary.
+
+- **`None` is the refusal, bundle-wide.** The `False` that hid two green checks was not one rung's
+  habit — it was **37 return sites** across the engine. All 37 now answer `None`, enumerated by a
+  check so a 28th verb cannot answer differently. Three stay `False` on purpose and say why:
+  `fresh` distinguishes *stale* (False) from *cannot establish* (None), and `render_card` answers
+  *the card is current*. An empty collection from a query that ran is likewise an answer, not a
+  refusal — six verbs keep it. The messages and every `cli.py` exit code are byte-identical.
+- **No check asserts a refusal by truthiness where identity is meant.** A name bound from a verb's
+  first element and then tested for falsiness passes on `False` and on `None` alike, so it proves
+  nothing about either — the exact shape that let two checks pass on a refusal. The suite is swept
+  and the shape is now refused suite-wide by an AST check that flags only that binding.
+- **A check holds where CI runs it, or it does not hold.** The refusal-message guard read its
+  baseline from `git merge-base HEAD origin/main` — which returns 128 on `actions/checkout`'s
+  depth-1 clone. It passed locally, failed CI, and read *cannot establish a baseline* as *the
+  claim is false*. Behind that one failure was a class: nine call sites compared the working tree
+  to a git ref, and every one is satisfied by `git commit`. The message guard is now a **content
+  pin** — a digest over the messages themselves, with the task and reason on its line — and the
+  shape guard that already enforced this for `git diff` now enumerates `git show` and
+  `merge-base` too. Each of the seven remaining working-tree guards keeps its claim and states
+  its **lifetime**: a live-editing tripwire that fires while the edit is made and is inert once
+  committed, so a green CI is never mistaken for the claim holding.
+- **The SKILL.md prose pin has one home.** Carried out of the 3.6.0 cut as a known. The sha256
+  was a literal in `test_surface.py` while another check recovered it by *regexing that file's
+  source* — the same scatter `skill_budget.py` was built to end. Both prose pins are now named
+  constants there, imported rather than scraped.
+- **A fourth persona: `feature-builder`.** The roster had lenses for the method, the engine and
+  the gate, and none for building a user-facing behaviour — so every `kind: feature` task got no
+  candidate. 155 of 155 tasks now have a fitting lens.
+- **`specs/domain.md` is authored.** One of the five living specs still held the scaffold
+  placeholder in its `## Decisions that bind`, which `bind_sections()` fed into every brief.
+- **A persona loads by fit, on the path that does not spawn.** Personas were adopted only inside a
+  spawned subagent — measured over this bundle, **15 of 190** lifecycle nodes carried a lens, and 3
+  of 40 milestones, the one lane the skill already says must load one. The mandate was never
+  missing: it lives in `agents/add-worker.md` §2 (*"Become the persona FIRST"*), a file loaded only
+  on a spawn, while the three beat guides mentioned a persona zero, zero and once. `direction.md`,
+  `build.md` and `verify.md` now carry the same selector — project roster on `flow:` + `task-kinds:`,
+  teacher index second, proceed if neither fits — and the four copies of it are enumerated and
+  pinned to agree. SKILL.md stops calling the *load* opt-in; what is opt-in is the **roster**.
+  Funded, not re-pinned: +7 lines paid by 7 compressed from `streams.md`.
+- **An unlensed `brief` names the roster entries that fit.** `brief` emitted a persona only when
+  one was already recorded, and the only verb that records one is `add advise` — which no hint on
+  the normal path names, because the `todo` row refuses a second verb by design. A lens could
+  therefore reach a node only through an act nothing ever asked for. The no-lens element now lists
+  the fitting candidates and the verb that records a pick, sorted by slug — visibly not a ranking —
+  reading frontmatter only, and byte-identical to before when nothing fits.
+- **`freeze` demands a check for every Must and Reject, not only for edges.** The `R:UNCOVERED`
+  rung bound filled edges and probed assumptions, and held Musts out until the cost of widening
+  was *measured* rather than estimated. Measured over this bundle: **0 of 105** nodes carrying
+  RULES have an uncovered Must or Reject, and 21 carry no RULES at all. Nothing is newly refused —
+  the gate already refused it — so what the widening buys is the **timing**: the author is asked
+  while still holding the pen, not after the whole build. The rung is now one expression, so
+  freeze and gate read one definition of an obligation instead of two.
+
+### Known and carried into 3.7
+Both bound as decisions rather than left silent:
+- eleven verbs still answer a refusal with `False` rather than `None`. Widening it touches ~40
+  return sites and every test asserting `is False`; `freeze` holds the rule today.
+  **Resolved before 3.6.0 shipped** — the survey found 37 sites, not ~40 (`done` returns 3-tuples
+  and hid two); see *`None` is the refusal, bundle-wide* above. The line stands as written because
+  it was true when it was written, and this record does not get rewritten to match the present.
+- the SKILL.md sha256 prose pin is held in two files — the same class as the budget scatter, one
+  instance further on.
+
 ## [3.5.0] — 2026-09-04
 
 **A read is an address you can follow, and it costs what it is worth.** 3.4 made the bundle

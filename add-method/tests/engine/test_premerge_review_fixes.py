@@ -156,7 +156,7 @@ def test_an_unclosed_fence_in_exit_refuses_instead_of_closing(tmp_path):
                               "- [ ] a criterion nobody has met\n- [ ] and a second one\n")
 
     ok, note = add.milestone_done(tmp_path, cid)
-    assert ok is False, f"a milestone with an unreadable EXIT closed: {note}"
+    assert ok is None, f"a milestone with an unreadable EXIT closed: {note}"
     assert "unclosed code fence" in note, note
 
 
@@ -168,5 +168,5 @@ def test_a_balanced_fence_in_exit_still_tallies(tmp_path):
                               "- [ ] the one real criterion\n")
 
     ok, note = add.milestone_done(tmp_path, cid)
-    assert ok is False and "0/1" in note, note        # refuses on the UNMET criterion, not the fence
+    assert ok is None and "0/1" in note, note        # refuses on the UNMET criterion, not the fence
     assert "unclosed code fence" not in note, note

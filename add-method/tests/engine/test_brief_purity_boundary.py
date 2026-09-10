@@ -71,7 +71,7 @@ def test_an_unfrozen_node_records_none(tmp_path):
     cid = _authored(root, "unsealed")
     before = _fingerprint(root)
     digest, _note = add.brief_stamp(root, cid, by="cli")
-    assert not digest, "an unfrozen node recorded a brief entry"
+    assert digest is None, "an unfrozen node recorded a brief entry"
     assert _fingerprint(root) == before, "an unfrozen node was written to anyway"
 
 

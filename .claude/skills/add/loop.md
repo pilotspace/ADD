@@ -45,8 +45,8 @@ the cue:
 
 1. **Gather** the carried inventory:
    - open lessons — `add deltas` (still `open`);
-   - planned-but-unscaffolded tasks — the `scaffold` beat in `add todo`, which lists a node
-     that was created and never authored;
+   - unauthored tasks — `add todo` lists them by which plan wants them: `queued` (a live
+     milestone claims it), `abandoned` (its milestone closed without it), `adrift` (none does);
    - any reopened task — one a deepened verify returned to the flow (below).
 2. **Propose** the next tasks — with the best-fit advisor-flow persona loaded BEFORE drafting
    (`personas.md` § planning; a roster-less bundle skips silently): for each carried item worth

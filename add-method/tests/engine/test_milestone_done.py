@@ -34,7 +34,7 @@ def _status(root, cid):
 def test_refuses_while_a_criterion_is_unchecked(tmp_path):
     cid = _mk_milestone(tmp_path, "- [x] one done\n- [ ] two not yet\n")
     ok, note = add.milestone_done(tmp_path, cid)
-    assert ok is False, "must refuse while a box is unchecked"
+    assert ok is None, "must refuse while a box is unchecked"
     assert "milestone_goal_unmet" in note
     assert "1/2" in note, "the refusal must report the m/n tally"
     assert _status(tmp_path, cid) != "done", "a refused milestone must not be marked done"
@@ -51,4 +51,4 @@ def test_refuses_a_non_milestone(tmp_path):
     add.init(tmp_path, "code", "M")
     cid, _ = add.new(tmp_path, "Task", "a-task", title="t")
     ok, note = add.milestone_done(tmp_path, cid)
-    assert ok is False and "not a Milestone" in note, "milestone-done closes milestones only"
+    assert ok is None and "not a Milestone" in note, "milestone-done closes milestones only"

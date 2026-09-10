@@ -1334,7 +1334,7 @@ PROFILES = {
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
-ENGINE = "add/3.5.0"
+ENGINE = "add/3.6.0"
 # Where `init` vendors from: the engine lives beside this file; the seed corpus sits at the bundle
 # root as its own managed tree (`.add/personas-teacher/` installed; `add-method/personas-teacher/`
 # in the package). `parents[1]` resolves both. Module-level so a test can repoint them to simulate a
@@ -2380,7 +2380,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
-        return False, ["node"], f"no such node: {cid}\nnext: add status"
+        return None, ["node"], f"no such node: {cid}\nnext: add status"
 
     required = authority_for(graph, cid)
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
@@ -2451,7 +2451,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
                        "not happen, so this gate closed a node nobody ever approved")
         fix = f'add freeze {slug} --by "<name>", then re-gate'
     if missing:
-        return False, missing, ("cannot record `done` — " + "; ".join(missing) +
+        return None, missing, ("cannot record `done` — " + "; ".join(missing) +
                                 f"\nnext: {fix}")
 
     appends = []
@@ -2473,14 +2473,14 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     fm = node["fm"] or {}
     if fm.get("type") != "Task":
-        return False, f"{cid} is not a Task — reopen returns a task to a beat\nnext: add status"
+        return None, f"{cid} is not a Task — reopen returns a task to a beat\nnext: add status"
     if fm.get("status") != "done":
-        return False, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
+        return None, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
     if to not in ACTIVE_STATES:
-        return False, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
+        return None, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
     # a stamp is a pre-formatted ABF flow-map STRING, not a dict — a dict serialises as Python
     # repr (`{'by': …}`) and parses back with quoted keys, so `s.get("act")` would miss it.
     stamp = f'{{ by: loop, at: {_today()}, act: reopen, to: {to}, reason: "{reason}" }}'
@@ -2569,7 +2569,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     slug = cid.rsplit("/", 1)[-1][:-3]
     path = node["path"]
     doc = read(path, "T2")
@@ -2579,31 +2579,31 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
         headings = [ln.strip()[3:] for ln in body.splitlines() if ln.startswith("## ")]
         if not any(h.lower() == section.lower() for h in headings):
             carries = ", ".join(headings) if headings else "no `## ` sections at all"
-            return False, (f"no `## {section}` section in {cid} — it carries {carries}\n"
+            return None, (f"no `## {section}` section in {cid} — it carries {carries}\n"
                            f"next: add check {slug} <n> --section <one of those>")
 
     region = _section_of(body, section) if section else body
     where = f"`## {section}`" if section else "its body"
     if not _fence_balanced(region):
-        return False, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
+        return None, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
                        f"regions, so the index you counted off the file is not the index it would "
                        f"write to; NOTHING was written\n"
                        f"next: close the fence in {cid}, then add check {slug} <n>")
 
     boxes = _box_lines(body, section)
     if not boxes:
-        return False, (f"{cid} carries no checkbox in {where} — nothing to check\n"
+        return None, (f"{cid} carries no checkbox in {where} — nothing to check\n"
                        f"next: add a `- [ ] <criterion>` line first, or check a node that has one")
 
     listing = "\n".join(f"  {n}. [{'x' if m else ' '}] {text}"
                         for n, (_, m, text, _s) in enumerate(boxes, 1))
     if not indices:
-        return False, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
+        return None, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
                        f"{listing}\nnext: add check {slug} <n> [<n> …]   (or --all)")
 
     bad = [n for n in indices if not 1 <= n <= len(boxes)]
     if bad:
-        return False, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
+        return None, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
                        f"it has {len(boxes)} in {where}; NOTHING was written:\n{listing}\n"
                        f"next: add check {slug} <n> with an index in 1..{len(boxes)}")
 
@@ -2615,7 +2615,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                     if 1 <= n <= len(boxes) and PLACEHOLDER.search(boxes[n - 1][2])]
         if template:
             listed_t = "\n".join(f"  {n}. {text}" for n, text in template)
-            return False, (f"box {', '.join(str(n) for n, _ in template)} in {cid} is still "
+            return None, (f"box {', '.join(str(n) for n, _ in template)} in {cid} is still "
                            f"template text — checking it would release the gate on an unauthored "
                            f"criterion:\n{listed_t}\n"
                            f"next: author the criterion, then add check {slug} <n>")
@@ -2671,9 +2671,9 @@ def milestone_done(root, cid: str) -> tuple:
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     if (node["fm"] or {}).get("type") != "Milestone":
-        return False, (f"{cid} is not a Milestone — milestone-done closes milestones only\n"
+        return None, (f"{cid} is not a Milestone — milestone-done closes milestones only\n"
                        f"next: add done <task>  (for a task)")
 
     slug = cid.rsplit("/", 1)[-1][:-3]
@@ -2686,12 +2686,12 @@ def milestone_done(root, cid: str) -> tuple:
     m = re.search(r"(?mi)^\s*why:\s*(.*)$", card)
     why = (m.group(1).strip() if m else "")
     if not why or PLACEHOLDER.search(why):
-        return False, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
+        return None, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
                        f"next: state why {slug} exists in its CARD `why:`, then add milestone-done {slug}")
 
     exit_body = _section_of(body, "EXIT")
     if not _fence_balanced(exit_body):
-        return False, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
+        return None, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
                        f"so the goal-gate cannot tally its boxes; it does not close on an input it "
                        f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
                        f"then add milestone-done {slug}")
@@ -2699,9 +2699,29 @@ def milestone_done(root, cid: str) -> tuple:
     checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
 
     if unchecked:
-        return False, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
+        return None, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
+
+    # The MEMBERS, before the lesson drain: a milestone that closes on its exit criteria while
+    # still holding unauthored tasks abandons them, and until now said nothing at all. That is
+    # where a graveyard comes from — nobody decides to abandon forty tasks, a milestone just
+    # closes and they stop being anybody's -> "R:SILENTABANDON".
+    #
+    # Three exits, all named (A6). A refusal offering one fix does not present a choice, it
+    # applies pressure: name only `drop` and authors drop work they meant to keep.
+    left = sorted(c for c, n in graph.items()
+                  if (n["fm"] or {}).get("type") == "Task"
+                  and str((n["fm"] or {}).get("milestone") or "").strip() == slug
+                  and (n["fm"] or {}).get("status") not in ("done", "dropped", "archived")
+                  and _is_scaffold(n))
+    if left:
+        named = "\n".join(f"  · {c.rsplit('/', 1)[-1][:-3]}" for c in left)
+        return None, (f'milestone_members_unauthored ({len(left)} never authored) '
+                       f'-> "R:SILENTABANDON"\n{named}\n'
+                       f'next: for each — author it (add freeze <slug>), drop it '
+                       f'(add drop <slug> --reason "<why>"), or re-home it under a live '
+                       f'milestone — then add milestone-done {slug}')
 
     # The drain, LAST (M7): a closer whose goal is still unmet must be told that first, not
     # sent to consolidate lessons for a milestone that is not finished.
@@ -2728,7 +2748,7 @@ def milestone_done(root, cid: str) -> tuple:
             # attributes — four suites unpack exactly three, so it has no `.lens`/`.text`.
             named = "\n".join(f"  · {delta_address(d[0], d.id)}  {d[2].split(' (evidence:')[0][:88]}"
                               for d in undrained)
-            return False, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
+            return None, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
                            f'{anchor}) -> "R:UNDRAINED"\n{named}\n'
                            f'next: resolve each — add fold <lens> "<match>" '
                            f'[--reject | --bind "<the decision it settles>"] — '
@@ -2756,6 +2776,44 @@ def milestone_done(root, cid: str) -> tuple:
                   f"{empty}{skipped}\nnext: add status")
 
 
+def drop(root, cid: str, reason: str) -> tuple:
+    """Withdraw a task from the plan: `status: dropped`, with the reason on the record.
+
+    `dropped` was a word the engine READ in three places and no verb could WRITE — vocabulary
+    living only in the reader -> "R:DEADWORD". Withdrawing work was therefore something you did
+    by deleting a file or by leaving it to rot as a scaffold, and neither leaves a reason behind.
+
+    The reason is required for the same purpose the whole task serves: a task dropped without one
+    is the silent abandonment this prevents, merely relocated into a status field (A9). A `done`
+    task is refused — that verdict was recorded against a receipt, and the verb for revisiting it
+    is `reopen`, which resets the gate rather than overwriting it (A10).
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    fm = node["fm"] or {}
+    node_type = fm.get("type")
+    if node_type not in LIFECYCLE_TYPES:
+        return None, (f'only a lifecycle node can be dropped — `{cid}` is a {node_type}, which '
+                       f'has no plan to be withdrawn from -> "R:NOTATASK"\nnext: add status')
+    if fm.get("status") == "done":
+        return None, (f"`{cid}` is done — a gate recorded that verdict against a receipt, and "
+                       f"`drop` would overwrite it with a planning note\n"
+                       f"next: add reopen {cid.rsplit('/', 1)[-1][:-3]} --to <beat> --reason "
+                       f'"<why>"   # revisits a done task without erasing its gate')
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if fm.get("status") == "dropped":
+        return None, f"`{slug}` is already dropped\nnext: add status"
+    # A stamp is a pre-formatted ABF flow-map STRING, not a dict — `reopen` learned this the
+    # hard way; a dict serialises as Python and no reader parses it back.
+    stamp = f'{{ by: loop, at: {_today()}, act: drop, reason: "{reason}" }}'
+    _transition(root, cid, sets={"status": "dropped"}, appends=[("verified", stamp)])
+    return True, (f"`{slug}` dropped — {reason}\n"
+                  f"next: add status   # it leaves the worklist; the reason stays on the node")
+
+
 def milestone_archive(root, cid: str) -> tuple:
     """Retire a done milestone (status → `archived`). Refuses one not done (loop.md).
 
@@ -2765,13 +2823,13 @@ def milestone_archive(root, cid: str) -> tuple:
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     fm = node["fm"] or {}
     slug = cid.rsplit("/", 1)[-1][:-3]
     if fm.get("type") != "Milestone":
-        return False, f"{cid} is not a Milestone — archive retires milestones only\nnext: add status"
+        return None, f"{cid} is not a Milestone — archive retires milestones only\nnext: add status"
     if fm.get("status") != "done":
-        return False, (f"cannot archive — {cid} is `{fm.get('status')}`, not done "
+        return None, (f"cannot archive — {cid} is `{fm.get('status')}`, not done "
                        f"(close it first: add milestone-done {slug})\nnext: add status")
     _transition(root, cid, sets={"status": "archived"})
     return True, f"{cid} archived\nnext: add status"
@@ -2787,6 +2845,12 @@ def milestone_archive(root, cid: str) -> tuple:
 #   the contradiction e4's transition created rather than displaying it as current.
 
 MAX_LINES = 20
+# One row is one line at this width. 100 is the narrowest terminal orientation is expected to
+# survive; a wrapped row stops being a row, because the columns after the wrap are not columns.
+ROW_WIDTH, SLUG_W = 100, 28
+# The widest beat word plus its brackets (`[abandoned]`), so the type column lines up whatever
+# the beat is.
+BEAT_W = 11
 BEAT_KEYS = ("beat", "state")
 # The one canonical next verb per beat — read by `status`'s frontier hint and `render_card`, so a
 # repaired CARD's `next:` matches its beat instead of freezing at the direction-time affordance.
@@ -2807,12 +2871,26 @@ AUTHOR_NEXT = {
 BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              # braces DOUBLED: both consumers pass this through `.format(slug=…)`, and
              # `${TMPDIR:-/tmp}` would otherwise be read as a format field and raise KeyError.
+             # `<test cmd>` is the one slot a NOTARY cannot fill from the bundle — but it need
+             # not guess: `run` is handed the real command every time it is called, and now
+             # remembers the last one on `index.md`. Until the first run this stays a template;
+             # after it, the hint replays the command that actually worked in this project
+             # (`_last_test_cmd`) -> "R:PLACEHOLDER_NEXT".
              "build": ('add run {slug} -- <test cmd> '
                        '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
-BEAT_NAMES = ("scaffold", "direction", "build", "verify", "done")
+BEAT_NAMES = ("scaffold", "queued", "abandoned", "adrift",
+              "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
 ORIENT_RANK = {"Project": 0, "Milestone": 1, "Task": 2, "Spec": 5, "Persona": 6, "Prompt": 7}
+
+# Orientation sorts by how close the work is to needing a HUMAN, never by node type. Ranking by
+# type put an archived milestone above every open task, so the one work row on a finished bundle
+# was its deadest node while 112 others were withheld. An unrecognised beat sorts FIRST: the
+# engine does not know what it is, which is precisely when a person should look.
+ATTENTION_RANK = {"verify": 1, "build": 2, "direction": 3,
+                  "queued": 4, "abandoned": 5, "adrift": 6, "scaffold": 4}
+ANSWERED = ("done", "dropped", "archived")
 
 
 def _is_frozen(node) -> bool:
@@ -2936,7 +3014,9 @@ def card_drift(graph: dict, body_of=None) -> list:
         # freshly frozen node advertised `next: add freeze <slug>` — the approval it had just
         # passed — while `todo` and `status` derived `build`, and this reported it CLEAN
         # (2026-08-17 replan, A5 falsified). Two notions of beat, read by different surfaces.
-        beat = _beat_of(node)
+        # The graph goes in for the same reason: `doctor` saying `scaffold` where `status` says
+        # `queued` is exactly the second vocabulary M5 exists to prevent.
+        beat = _beat_of(node, None, graph)
         card = card_of(read_body(node["path"]))
         for line in card.splitlines():
             key, sep, value = line.partition(":")
@@ -3033,7 +3113,37 @@ def locate(root, query: str, all: bool = False) -> tuple:
 BEAT_TYPES = ("Task", "Milestone")
 
 
-def _beat_of(node, t2=None) -> str:
+SCAFFOLD_KINDS = ("queued", "abandoned", "adrift")
+# A milestone in either of these states has stopped queueing anything. `archived` is what happens
+# to a milestone AFTER it is done, so a task the plan left behind is abandoned under both.
+CLOSED_MILESTONE = ("done", "archived")
+
+
+def _scaffold_kind(graph: dict, node: dict) -> str:
+    """Which of `queued · abandoned · adrift` an UNAUTHORED task is — derived, never stored.
+
+    3.6.0 made a 40-node roadmap legible; every row carried its title and the headline counted the
+    unauthored ones. It still could not answer what a reviewer actually asks — is this a queue or a
+    graveyard? A task the plan is working toward and one the plan walked away from both read
+    `scaffold`.
+
+    The plan that queued a task IS its milestone, so the answer is already on disk in two places
+    that cannot disagree: the task's `milestone:` and that milestone's `status:`. Storing a third
+    copy would be a field that drifts out of step with the milestone it describes -> "R:NEWFIELD".
+
+    A `milestone:` naming nothing is `adrift`, exactly like no milestone at all: in both cases no
+    plan that exists claims this task, and a read verb must not raise on a typo (A4).
+    """
+    slug = str((node.get("fm") or {}).get("milestone") or "").strip()
+    if not slug:
+        return "adrift"
+    owner = graph.get(f"/milestones/{slug}.md")
+    if owner is None:
+        return "adrift"
+    return "abandoned" if (owner["fm"] or {}).get("status") in CLOSED_MILESTONE else "queued"
+
+
+def _beat_of(node, t2=None, graph=None) -> str:
     """A task's beat, DERIVED from its stamps — the same reasoning as `_is_frozen`.
 
     `status` runs `direction → done`: nothing in `freeze`/`run` advances it, so the field cannot
@@ -3049,7 +3159,12 @@ def _beat_of(node, t2=None) -> str:
         return "verify"
     if _is_frozen(node):
         return "build"
-    return "scaffold" if _is_scaffold(node, t2) else "direction"
+    if not _is_scaffold(node, t2):
+        return "direction"
+    # An unauthored task answers WHICH plan wants it. Every surface that already renders a beat
+    # inherits the word with no per-surface edit; a caller with no graph to hand still gets the
+    # old vocabulary rather than a wrong provenance.
+    return _scaffold_kind(graph, node) if graph is not None else "scaffold"
 
 
 def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
@@ -3071,7 +3186,15 @@ def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
                for i, s in enumerate(stamps))
 
 
-def _next_verb(graph: dict, cid: str, t2=None) -> str:
+def _last_test_cmd(root) -> str:
+    """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
+    index = Path(root) / "index.md"
+    if not index.is_file():
+        return ""
+    return str((read(index, "T0")["fm"] or {}).get("test_cmd") or "").strip()
+
+
+def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     """The one runnable next command for a task, by its stamp-derived beat.
 
     `t2` is the node's body when the caller already holds it — `todo` does. Without it the beat
@@ -3079,7 +3202,7 @@ def _next_verb(graph: dict, cid: str, t2=None) -> str:
     """
     slug = cid.rsplit("/", 1)[-1][:-3]
     node = graph[cid]
-    beat = _beat_of(node, t2)
+    beat = _beat_of(node, t2, graph)
     fm = node.get("fm") or {}
     # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
     # points at `add brief`, and moves on to the run the moment the entry is recorded.
@@ -3087,9 +3210,19 @@ def _next_verb(graph: dict, cid: str, t2=None) -> str:
             and str(fm.get("depth") or "standard") != "quick" \
             and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
         return f"add brief {slug}"
-    if beat == "scaffold":
+    # All three scaffold words mean the same unfinished work — the word says which plan wants it,
+    # not what to do about it. `abandoned` and `adrift` still point at authoring, because the OTHER
+    # exits (`add drop`, or re-homing it under a live milestone) are named by the milestone rung
+    # that produced the word, not by a per-row hint.
+    if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
-    return BEAT_NEXT.get(beat, "add status").format(slug=slug)
+    hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
+    # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
+    # is a sentence shaped like a command; a cold agent following it types angle brackets into a
+    # shell (R:PLACEHOLDER_NEXT).
+    if "<test cmd>" in hint and root is not None and (last := _last_test_cmd(root)):
+        hint = hint.replace("<test cmd>", last)
+    return hint
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -3114,11 +3247,14 @@ def todo(root, milestone: str = None) -> tuple:
         except (OSError, ValueError, KeyError, TypeError):
             t2 = None
         bodies[cid] = t2
-        items.append((cid, _beat_of(graph[cid], t2), _next_verb(graph, cid, t2)))
+        items.append((cid, _beat_of(graph[cid], t2, graph), _next_verb(graph, cid, t2, root)))
     if not items:
         where = f" under `{milestone}`" if milestone else ""
         return [], f"nothing open{where}\nnext: add status"
-    order = {"scaffold": -1, "direction": 0, "build": 1, "verify": 2}
+    # `adrift` and `abandoned` sort ABOVE `queued`: a task no live plan wants is the one a reader
+    # must decide about, and a queue of forty hides two strays at the bottom of the list.
+    order = {"adrift": -3, "abandoned": -2, "queued": -1, "scaffold": -1,
+             "direction": 0, "build": 1, "verify": 2}
     items.sort(key=lambda it: (order.get(it[1], 9), it[0]))
     lines, beat = [], None
     for cid, st, nxt in items:
@@ -3232,11 +3368,19 @@ def status(root, all: bool = False, check: bool = False) -> str:
     # roadmap shipped with 38 nodes in scaffold and every surface said so EXCEPT the one line a
     # reader starts from. Computed from the same predicate `doctor` uses (A4), so the headline
     # and the report can never disagree — and silent at zero (A9), like the delta clause.
-    scaffolds = sum(1 for n in graph.values()
-                    if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES and _is_scaffold(n))
-    queued = f"  ·  {scaffolds} scaffold (add todo)" if scaffolds else ""
+    # Split by the SAME three words the rows show. One count of forty said the roadmap was
+    # unfinished; `38 queued · 2 adrift` says which two a reader has to decide about. A `dropped`
+    # task is answered, not pending, and is counted in neither (M6).
+    pending = [n for n in graph.values()
+               if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES
+               and (n["fm"] or {}).get("status") != "dropped" and _is_scaffold(n)]
+    split = {k: sum(1 for n in pending if _scaffold_kind(graph, n) == k) for k in SCAFFOLD_KINDS}
+    shown = " · ".join(f"{c} {k}" for k, c in split.items() if c)
+    queued = f"  ·  {shown} (add todo)" if shown else ""
     out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
                f"  ·  {len(graph)} nodes{tally}{queued}")
+
+
 
     # Orientation is about WORK. Receipts are evidence — reachable from the task that owns
     # them, and never the thing a cold reader needs first. Ordering by ORIENT_RANK keeps the
@@ -3248,42 +3392,86 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # the engine wrote) put them in the roster; they belong with `Run`, out of it.
         if fm.get("type") in ("Run", "Interview"):
             return False
-        return all or fm.get("status") not in ("done", "dropped")
+        # `archived` was missing from this tuple, so the deadest state in the engine was the one
+        # work row a finished bundle showed. Answered is answered.
+        return all or fm.get("status") not in ANSWERED
 
     # A Spec or a Persona carrying no `status:` has no state to BE in — it is a lens, seeded once
     # and never advanced, and it printed a constant `[—]` row every session. Nine of thirteen rows
     # on the live bundle were exactly these. They are the bundle's vocabulary, not its board, so
     # the bare report counts them by type and `--all` still lists every one, unchanged
     # (M1 · M2 · R:NOWAYBACK). A node that carries a real status is never collapsed (R:HIDDENSTATE).
+    # A node with no `status:` at all has no state to BE in — it is the bundle's vocabulary, not
+    # its board, and it printed a constant `[—]` row every session. This was a TYPE LIST naming
+    # Spec and Persona, so `Project` and `index` kept their exemption from the rule written to
+    # remove them: on a finished bundle they were two of the three rows shown -> "R:DEADROW".
+    # A predicate has no such gaps. A node that carries a real status is never collapsed
+    # (R:HIDDENSTATE).
     def constant(cid):
-        fm = graph[cid]["fm"] or {}
-        return fm.get("type") in ("Spec", "Persona") and not fm.get("status")
+        return not (graph[cid]["fm"] or {}).get("status")
 
     hidden = [] if all else [c for c in graph if keep(c) and constant(c)]
+
+    def rank(cid):
+        # Vocabulary sorts LAST wherever it is shown — under `--all` it is context, never the
+        # board. An UNRECOGNISED beat sorts first: the engine does not know what it is, which is
+        # exactly when a person should look.
+        if constant(cid):
+            return 99
+        return ATTENTION_RANK.get(_beat_of(graph[cid], None, graph), 0)
+
     shown = sorted((c for c in graph if keep(c) and c not in set(hidden)),
-                   key=lambda c: (ORIENT_RANK.get((graph[c]["fm"] or {}).get("type"), 9), c))
-    for cid in shown[:MAX_LINES]:
+                   key=lambda c: (rank(c), c))
+    work = [c for c in shown if not constant(c)]
+    # `--all` is uncapped by design (A3), so it says how big "everything" is before it scrolls.
+    if all and shown:
+        out[0] += f"  ·  {len(shown)} row{'' if len(shown) == 1 else 's'}"
+    for cid in shown[:(len(shown) if all else MAX_LINES)]:
         fm = graph[cid]["fm"] or {}
         # The stamps, never the stored field. `freeze` appends and never `sets`, so
         # `status:` stays at `direction` for the whole life of a frozen task — orientation
         # read it and contradicted `todo`, `doctor` and its own `next:` line in one breath
         # (R:BEATLIE). `_beat_of` is frontmatter-only here, so the T0 read tier holds.
-        beat = _beat_of(graph[cid]) if fm.get("type") in BEAT_TYPES else fm.get("status", "—")
+        beat = _beat_of(graph[cid], None, graph) if fm.get("type") in BEAT_TYPES \
+            else fm.get("status", "—")
         # The one field a queued node HAS authored. Forty of them shipped for review carrying
         # real titles that no orientation verb rendered, so the roadmap read as forty anonymous
         # slugs and had to be opened file by file. Last in the row (A12), so every column a
         # guard already reads keeps its position, and truncated so the row cannot wrap.
-        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] "
-                   f"{fm.get('type', ''):<9} {_title_of(fm, 44)}".rstrip())
-    if len(shown) > MAX_LINES:
-        out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
+        # One row is ONE line, at ROW_WIDTH. The beat column is PADDED: it used to be bare
+        # `[{beat}]`, whose width varies with the word, so the type column after it never lined
+        # up — `[queued] Task` against `[direction] Milestone`. Every column is now fixed, and
+        # the title takes exactly what is left (M7 · A6).
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        lead = f"  · {slug[:SLUG_W]:<{SLUG_W}} {('[' + str(beat) + ']'):<{BEAT_W}} " \
+               f"{str(fm.get('type', '')):<9} "
+        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead))).rstrip())
+    if not all and len(shown) > MAX_LINES:
+        # The hint names a command that RUNS and actually produces the withheld rows. It used to
+        # print under `--all` too, advising the flag already in force — a hint that cannot change
+        # what it just printed, with no other route to those rows -> "R:DEADHINT" · "R:NOWAYIN".
+        out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} — add status --all")
     if hidden:
         tally = {}
         for c in hidden:
-            t = (graph[c]["fm"] or {}).get("type", "?")
+            # `index.md` is the bundle's MANIFEST, not a node with a missing type. Counting it
+            # as `1 ?` invited a hunt for a malformed file that does not exist.
+            t = (graph[c]["fm"] or {}).get("type") or (
+                "manifest" if c == "/index.md" else "untyped")
             tally[t] = tally.get(t, 0) + 1
         counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
         out.append(f"  … {counted} carrying no state — not listed (`--all`)")
+
+    # M6: a resume point that omits the last session is not a resume point. The most recent
+    # stamp across the board, named — ABSENT rather than guessed when nothing has happened (E6).
+    acts = []
+    for cid, n in graph.items():
+        for st in (n["fm"] or {}).get("verified") or []:
+            if isinstance(st, dict) and st.get("at") and st.get("act"):
+                acts.append((str(st["at"]), str(st["act"]), cid.rsplit("/", 1)[-1][:-3]))
+    if acts:
+        when, act, who = max(acts)
+        out.append(f"  last: {act} {who} · {when}")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -3312,11 +3500,22 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # Through `_next_verb`, so this hint and `todo`'s arrow cannot disagree — the stamp test
         # that used to live here was a third reading of the beat, and a node that was created and
         # never authored got advised toward the freeze that is structurally guaranteed to refuse it.
-        nxt = f"next: {_next_verb(graph, f0)}"
+        nxt = f"next: {_next_verb(graph, f0, root=root)}"
     elif any((n["fm"] or {}).get("type") == "Milestone" for n in graph.values()):
-        nxt = "next: add new task <slug>"
+        # A slot only the HUMAN can fill — a slug nobody has chosen — is legitimate guidance; the
+        # defect R:PLACEHOLDER_NEXT names is a slot the ENGINE could have filled and did not
+        # (`<test cmd>`, which `run` now remembers). Spelled in full, so what is typed around the
+        # slot is copy-pasteable.
+        nxt = 'next: add new Task <slug> --title "<one line>"'
     else:
-        nxt = "next: add new milestone <slug>"
+        nxt = 'next: add new Milestone <slug> --title "<one line>"' 
+    # WORK, not rows: `--all` widens the board with vocabulary, and that must not turn "nothing
+    # needs you" into silence (A9). The flag changes what is listed, never what empty means.
+    if not work:
+        # An empty board is an ANSWER, not an empty list. A finished bundle and a broken read
+        # printed the same thing: nothing (A4 · M5).
+        answered = sum(1 for c in graph if (graph[c]["fm"] or {}).get("status") in ANSWERED)
+        out.append(f"  nothing needs you — {answered} answered, {len(hidden)} carrying no state")
     return "\n".join(out + [nxt])
 
 
@@ -3416,11 +3615,17 @@ def scope_digest(root, scope: list) -> list:
 
 
 def fresh(receipt: dict, root) -> tuple:
-    """`(ok, why)` — recompute the digest and compare. Any difference is stale."""
+    """`(ok, why)` — THREE states, and the third is the point.
+
+    `True` fresh · `False` stale · `None` freshness cannot be established. Stale is an ANSWER —
+    the receipt observed code that has since changed, which is exactly what a caller asked. An
+    unmeasurable receipt is not that answer, and collapsing the two would report a clean `stale`
+    over a question the engine could not ask (R:UNKNOWNCLEAN, one verb further on).
+    """
     root = Path(root)
     recorded = receipt.get("scope_digest") or []
     if receipt.get("freshness") != "content" or not recorded:
-        return False, ("receipt carries no content digest — freshness cannot be established "
+        return None, ("receipt carries no content digest — freshness cannot be established "
                        "(the bundle parent was not a git working tree at run time, or the "
                        "node's `scope:` paths did not exist there)")
     # One batched hash over the existing files; the walk below keeps the original per-entry
@@ -3582,6 +3787,18 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     _transition(root, cid, appends=[("verified",
         f'{{ by: "process:run", at: {_today()}, act: run, authority: process, '
         f'outcome: {"PASS" if exit_code == 0 else "FAIL"}, receipt: {cid_run} }}')])
+    # REMEMBER the command. A notary cannot know a project's test command, but it is handed one
+    # on every run — so the build hint stops being `<test cmd>` after the first receipt and starts
+    # replaying what actually worked here. Recorded, never guessed; a failing run is still the
+    # command this project uses, so the exit code does not gate the memory.
+    index = root / "index.md"
+    if index.is_file():
+        try:
+            n_idx = read(index, "T2")
+            write(index, f"---\n{set_key(n_idx['raw'], 'test_cmd', ' '.join(str(c) for c in command))}"
+                         f"\n---\n{n_idx['body']}")
+        except (OSError, ValueError, KeyError, TypeError):
+            pass                    # orientation losing a convenience must never fail a receipt
     return {"path": runs / f"{n}.md", "receipt": receipt, "computation": " ".join(str(c) for c in command),
             "note": f"receipt {n} recorded (exit {exit_code})\nnext: add gate {slug}"}
 
@@ -3783,11 +4000,11 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     self-consolidates).
     """
     if not evidence:
-        return False, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
+        return None, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
-        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+        return None, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     comp = LENS_COMP.get(lens, lens.upper())
@@ -4002,13 +4219,13 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     re-points every relation that targets them.
     """
     if reject and bind:
-        return False, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
+        return None, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
                        '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
                        'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
-        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+        return None, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     # ONE matcher, two verdicts. `rejected` has been in DELTA_STATUSES since the grammar was
@@ -4037,7 +4254,7 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
                     ids.append(rec["id"])
         out.append(line)
     if not folded:
-        return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
+        return None, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
     body = "".join(out)
     # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
     # the same call failed to retag.
@@ -4940,15 +5157,26 @@ def covers(node: dict) -> dict:
 
 
 def uncovered_obligations(node: dict) -> list:
-    """FILLED edges and PROBED assumptions that no CHECKS `covers:` list names. Sorted.
+    """Every authored obligation that no CHECKS `covers:` list names — Musts, Rejects, filled
+    edges, probed assumptions. Sorted.
 
-    Calls the two functions `referents_of` composes — never a copy of the rule (R:SECOND_TRUTH),
-    so `freeze` and `gate` can never disagree about what an obligation is. And deliberately NOT
-    the third: `rules_of` stays out until the cost of widening to Musts and Rejects is MEASURED
-    rather than estimated (R:WIDENED). Narrow and true beats wide and guessed.
+    Calls the three functions `referents_of` composes — never a copy of the rule
+    (R:SECOND_TRUTH), so `freeze` and `gate` can never disagree about what an obligation is.
+
+    `rules_of` was held out until the cost of widening was MEASURED rather than estimated. It was
+    measured over this bundle at direction: **0 of 105** nodes carrying RULES have an uncovered
+    Must or Reject, and 21 carry no RULES at all. They cannot be uncovered — the GATE already
+    refuses one, so nothing could ever have shipped that way. The widening therefore costs
+    nothing and buys only the TIMING, which was the whole point: the gate is the wrong place to
+    learn a Must has no check, because by then the build is done and the fix is one line of
+    authoring that should have been asked for while the author still had the file open
+    -> "R:LATEREFUSAL".
+
+    The gate rung is unchanged and stays: `freeze` runs earlier and cannot see a check deleted
+    after the seal.
     """
     mapped = covers(node)
-    return sorted(set(edges_of(node) + probed_assumptions(node)) - set(mapped))
+    return sorted(set(referents_of(node)) - set(mapped))
 
 
 def bind(node: dict, reported: dict) -> tuple:
@@ -5056,6 +5284,58 @@ PHASE_OF = {"direction": "direction", "build": "build", "verify": "verify",
 
 def brief_budget(depth: str) -> int:
     return BRIEF_BUDGET.get(str(depth or "standard"), BRIEF_BUDGET["standard"])
+
+
+# The roster's own beat -> `flow:` surface map, exactly as `agents/add-worker.md` §2 states it for a
+# SPAWNED agent. Keeping one map means the sequential path cannot route a node to a different lens
+# than a delegated one would — which was the whole defect: the selector existed only on the spawn.
+LENS_SURFACE = {"direction": "design", "build": "build", "verify": "verify"}
+# Verify takes a `flow: verify` lens first and falls back to `advisor` when none declares verify —
+# again `add-worker.md` §2's rule, not a second one invented here.
+LENS_FALLBACK = {"verify": "advisor"}
+
+
+def _lens_terms(raw) -> list:
+    """A frontmatter list field as terms, whether it arrived as `a, b` or as a real list."""
+    items = raw if isinstance(raw, (list, tuple)) else str(raw or "").replace("\u00b7", ",").split(",")
+    return [str(t).strip() for t in items if str(t).strip()]
+
+
+def persona_candidates(graph: dict, node: dict, phase: str) -> list:
+    """Roster entries that FIT this node's beat and kind: `(slug, task-kinds)`, sorted by slug.
+
+    PRESENTS, never selects. The engine emits the fitting set and stops — ranking, choosing and
+    loading a lens stay the orchestrating agent's judgment, which is `personas.md`'s NO-EXEC floor
+    and not an obstacle to route around. Sorted by SLUG for the same reason: an alphabetical list
+    is visibly not a ranking, and any other order would be the engine expressing a preference it
+    has no basis for (R:ENGINEPICKS).
+
+    Only frontmatter is read. A candidate's body never opens, so a brief cannot grow by the size
+    of a persona it did not pick, and D-4 ("the corpus is referenced, never vendored") holds
+    structurally rather than by a filter someone could forget.
+    """
+    fm = node["fm"] or {}
+    kind = str(fm.get("kind") or "").strip()
+
+    def fitting(surface: str) -> list:
+        if not surface:
+            return []
+        out = []
+        for cid, n in graph.items():
+            pfm = n["fm"] or {}
+            if pfm.get("type") != "Persona" or surface not in _lens_terms(pfm.get("flow")):
+                continue
+            kinds = _lens_terms(pfm.get("task-kinds"))
+            # `kind:` is OPTIONAL on a Task. Gating the fit on a field most nodes never set would
+            # leave the roster dark for most of a bundle, so an absent kind skips the kind gate
+            # and `flow:` alone decides.
+            if kind and kinds and kind not in kinds:
+                continue
+            out.append((_wave_slug(cid), ", ".join(kinds)))
+        return sorted(out)
+
+    return fitting(LENS_SURFACE.get(str(phase), "")) \
+        or fitting(LENS_FALLBACK.get(str(phase), ""))
 
 
 def bind_sections(root) -> list:
@@ -5188,8 +5468,21 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             # had no note" — and the receipt recorded neither. The check that was supposed to
             # guard this passed only because its fixture's slug was the literal word `unlensed`,
             # which the brief echoed back; with any other slug it matched nothing.
-            out.append('  <persona ref="none" note="no lens resolved for this node — '
-                       'the generic reading is in force" />')
+            # ...and name who COULD fit. The lens could only ever reach a node through `add
+            # advise`, a verb no next-hint on the normal path names — the todo row refuses a
+            # second verb by design (A12) — so 175 of this bundle's 190 lifecycle nodes carried
+            # none. This closes that circle at the one surface that is already the agent's
+            # instructions. With nothing to offer it stays byte-identical to what it always was.
+            cands = persona_candidates(graph, node, phase)
+            note = "no lens resolved for this node — the generic reading is in force"
+            if not cands:
+                out.append(f'  <persona ref="none" note="{note}" />')
+            else:
+                out.append(f'  <persona ref="none" note="{note} until one is recorded">')
+                out += [f'    <candidate ref="personas/{ps}" task-kinds="{ks}"/>'
+                        for ps, ks in cands]
+                out.append(f'    <next>add advise {slug} --persona &lt;slug&gt;</next>')
+                out.append("  </persona>")
         out.append("  <context>")
         for dcid, card in cards:
             if card is None:
@@ -5434,7 +5727,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     slug = cid.rsplit("/", 1)[-1][:-3]
 
     def refuse(why: str, fix: str) -> tuple:
-        return False, f"cannot record `{verdict}` — {why}\nnext: {fix}"
+        return None, f"cannot record `{verdict}` — {why}\nnext: {fix}"
 
     if verdict not in VERDICTS:
         return refuse(f"unknown verdict {verdict!r}",
@@ -5527,7 +5820,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                  + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
-            return False, t_err + "\nnext: add status"
+            return None, t_err + "\nnext: add status"
         if closes:
             done(root, cid)
             render_card(root, cid)
@@ -5709,7 +6002,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
              + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
     if t_err:
-        return False, t_err + "\nnext: add status"
+        return None, t_err + "\nnext: add status"
 
     if closes:
         done(root, cid)
@@ -6304,7 +6597,7 @@ def doctor_sync(root) -> tuple:
             write(idx, f"---\n{set_key(n['raw'], 'tooling_engine', ENGINE)}\n---\n{n['body']}")
         changed.append("tooling engine (re-vendored)")
     if not changed:
-        return False, ("every compiled artifact already matches the nodes\n"
+        return None, ("every compiled artifact already matches the nodes\n"
                        "next: add doctor  (to see what is reported but not repairable)")
     return True, ("recomputed " + " · ".join(changed) +
                   "\nnext: add doctor  (orphaned receipts and gated claims are never repaired)")

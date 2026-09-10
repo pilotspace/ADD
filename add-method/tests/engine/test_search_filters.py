@@ -99,7 +99,7 @@ def test_an_ask_that_names_nothing_still_refuses(bundle):
     """covers: M3, R:REGRESS — making the positional optional must not re-open the hole."""
     for query in (None, "", "   "):
         hits, note = add.search(bundle, query)
-        assert hits is None, f"an empty ask answered instead of refusing: {query!r} -> {note}"
+        assert not hits, f"an empty ask answered instead of refusing: {query!r} -> {note}"
         assert "EMPTYQUERY" in note, note
 
 
@@ -108,7 +108,7 @@ def test_an_ask_that_names_nothing_still_refuses(bundle):
 def test_off_taxonomy_type_refuses_and_names_the_taxonomy(bundle):
     """covers: M4, R:UNKNOWNCLEAN, E7 — a typo refuses; a real-but-empty type answers []."""
     hits, note = add.search(bundle, None, type="Taks")
-    assert hits is None, "an off-taxonomy type returned a hit list, so a typo reads as no matches"
+    assert not hits, "an off-taxonomy type returned a hit list, so a typo reads as no matches"
     assert "Task" in note and "Milestone" in note, f"the refusal does not name the taxonomy: {note}"
 
     empty, _note = add.search(bundle, None, type="Prompt")

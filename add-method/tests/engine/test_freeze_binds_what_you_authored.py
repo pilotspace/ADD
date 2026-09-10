@@ -5,8 +5,10 @@ with no covering check. M38 recorded the FOURTH, on the milestone that exists to
 after a full build, a brief and three receipts. The gate is the last place in the loop, so the cost
 of learning there is the whole build. This moves the refusal to where the obligation is created.
 
-NARROW on purpose (M3, R:WIDENED): filled edges and probed assumptions only. A Must with no
-covering check still freezes, because that blast radius is estimated and not measured.
+It began NARROW on purpose (M3, R:WIDENED) — filled edges and probed assumptions only, because
+the cost of widening to Musts and Rejects was estimated and not measured. `uncovered-widens-to-
+rules` measured it (0 of 105 nodes) and widened the rung; the fixtures below cover their rules so
+that only the obligation each check is about can fire.
 """
 
 import sys
@@ -131,23 +133,26 @@ def test_the_rung_and_the_gate_agree(bundle):
     node = add.read(Path(bundle) / "tasks" / "agree.md", "T2")
     node["path"] = Path(bundle) / "tasks" / "agree.md"
     ours = add.uncovered_obligations(node)
-    theirs = [r for r in add.referents_of(node)
-              if r not in add.covers(node) and (r.startswith("E") or r.startswith("A"))]
+    # RE-AIMED (uncovered-widens-to-rules): this filtered to `E`/`A` ids because the rung
+    # deliberately excluded Musts and Rejects. It no longer does, and a filter that outlives its
+    # reason is what makes two definitions of one thing.
+    theirs = [r for r in add.referents_of(node) if r not in add.covers(node)]
     assert sorted(ours) == sorted(theirs), \
         f"the rung and the gate disagree about what an obligation is:\n  {ours}\n  {theirs}"
     assert ours, "the fixture produced no obligation, so this proves nothing"
 
 
-def test_the_rung_does_not_widen_to_musts(bundle):
-    """covers: M3, R:WIDENED, E4 — an unmeasured blast radius is not shipped on a guess."""
-    # Arm it: the same bundle must be able to refuse, or "it did not refuse" means nothing.
-    armed = task(bundle, "armed-edge", edges="- E1 a boundary case")
-    assert "UNCOVERED" in _freeze(bundle, armed)[1], "the rung never fires, so this proves nothing"
-
-    cid = task(bundle, "musts-only", edges="- E1 a boundary case",
-               checks="- test_one · covers: E1 · proves the edge and nothing else")
-    ok, note = _freeze(bundle, cid)
-    assert ok, f"a Must with no covering check refused (R:WIDENED):\n{note}"
+# RETIRED: test_the_rung_does_not_widen_to_musts (M3, R:WIDENED, E4)
+#
+# It held a real line — an unmeasured blast radius is not shipped on a guess — and it held it
+# until the measurement existed. `uncovered-widens-to-rules` ran it over this bundle: 0 of 105
+# nodes carrying RULES have an uncovered Must or Reject, and 21 carry no RULES at all. They
+# cannot be uncovered, because the GATE already refuses one.
+#
+# So the widening cost nothing and bought the timing, and a check asserting the rung must NOT
+# widen now asserts against its own condition being met. Retired by `uncovered-widens-to-rules`;
+# what replaces it is tests/engine/test_uncovered_widens_to_rules.py, which pins the exemptions
+# the rung still grants.
 
 
 def test_a_template_edge_is_not_an_obligation(bundle):
@@ -156,10 +161,12 @@ def test_a_template_edge_is_not_an_obligation(bundle):
     assert "UNCOVERED" in _freeze(bundle, armed)[1], "the rung never fires, so this proves nothing"
 
     cid = task(bundle, "template-edge",
-               edges="- E1 <a boundary or failure case a check must cover — optional>")
+               edges="- E1 <a boundary or failure case a check must cover — optional>",
+               checks="- test_one · covers: M1, R:THING · the rules, so only the edge is at issue")
     ok, note = _freeze(bundle, cid)
     assert ok, f"an untouched template edge was read as an obligation:\n{note}"
-    no_probe = task(bundle, "no-probe", edges="- E1 x", checks="- t · covers: M1, E1 · p")
+    no_probe = task(bundle, "no-probe", edges="- E1 x",
+                    checks="- t · covers: M1, R:THING, E1 · p")
     assert _freeze(bundle, no_probe)[0], "an assumption declaring no probe was read as one"
 
 
@@ -184,13 +191,20 @@ def test_an_absent_checks_section_still_refuses(bundle):
 
 
 def test_todo_names_the_uncovered_count(bundle):
-    """covers: M6, A4, A6, A8 — the count rides the hint chain; zero shows nothing."""
-    task(bundle, "dirty", edges="- E1 a boundary case")
+    """covers: M6, A4, A6, A8 — the count rides the hint chain; zero shows nothing.
+
+    RE-AIMED (uncovered-widens-to-rules): the rule is unchanged — ONE uncovered obligation reads
+    as `1 uncovered`. What expired is the premise that the default fixture carries exactly one:
+    the widened rung also counts R:THING, so the fixture now covers its Reject and the single
+    uncovered edge is again the only thing the count can be about.
+    """
+    task(bundle, "dirty", edges="- E1 a boundary case",
+         checks="- test_one · covers: M1, R:THING · the rules, so only the edge is uncovered")
     _, note = add.todo(bundle)
     assert "1 uncovered" in note, f"todo did not name the count:\n{note}"
 
     clean = task(bundle, "clean", edges="- E1 a boundary case",
-                 checks="- test_one · covers: M1, E1 · proves it")
+                 checks="- test_one · covers: M1, R:THING, E1 · proves it")
     _, note = add.todo(bundle)
     assert "clean" in note and "0 uncovered" not in note, f"A8 — a zero count was shown:\n{note}"
 

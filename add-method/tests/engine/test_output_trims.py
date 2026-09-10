@@ -145,7 +145,15 @@ def test_nothing_to_collapse_prints_no_line(tmp_path):
         for p in (Path(root) / d).glob("*.md"):
             p.unlink()
     out = add.status(root)
-    assert "not listed" not in out, f"a summary line about hiding nothing:\n{out}"
+    # RE-AIMED (status-answers-what-needs-me): "carrying no state" became a PREDICATE, so the
+    # Project node and the bundle manifest collapse alongside Spec and Persona — and a bundle
+    # with literally nothing hidden can no longer exist. The RULE is unchanged and is what this
+    # still asserts: the line reports what was actually withheld, and never a zero.
+    line = next((l for l in out.splitlines() if "not listed" in l), "")
+    assert line, f"nodes were withheld and no line said so:\n{out}"
+    assert " 0 " not in line, f"a summary line reporting zero of something:\n{line}"
+    withheld = len(add.status(root, all=True).splitlines()) - len(out.splitlines())
+    assert withheld > 0, f"the line claims a collapse that `--all` does not restore:\n{out}"
     add.new(root, "Task", "solo", title="s", scope="only.py")
     _, note = add.locate(root, "only.py")
     assert "not listed" not in note, f"a count line about zero closed owners:\n{note}"

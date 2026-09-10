@@ -51,7 +51,7 @@ def test_reopen_resets_the_gate(tmp_path):
     _make_done(tmp_path, cid)
     add.reopen(tmp_path, cid, "verify", "needs a fresh receipt")
     ok, _missing, _ = add.done(tmp_path, cid)
-    assert ok is False, "a stale pre-reopen gate must not entitle done"
+    assert ok is None, "a stale pre-reopen gate must not entitle done"
     add._transition(tmp_path, cid, appends=[("verified", _gate_stamp("y"))])
     ok, _missing, _ = add.done(tmp_path, cid)
     assert ok is True, "a gate that postdates the reopen re-entitles done"
@@ -62,4 +62,4 @@ def test_reopen_refuses_a_task_not_done(tmp_path):
     add.init(tmp_path, "code", "T")
     cid, _ = add.new(tmp_path, "Task", "t", title="t")  # status: direction
     ok, note = add.reopen(tmp_path, cid, "build", "reason")
-    assert ok is False and "done" in note.lower()
+    assert ok is None and "done" in note.lower()

@@ -119,7 +119,7 @@ def test_check_refuses_out_of_range_without_writing(tmp_path):
     mcid, _ = _bundle(tmp_path)
     before = (tmp_path / mcid.lstrip("/")).read_text(encoding="utf-8")
     ok, msg = add.check(tmp_path, mcid, [1, 2, 99], by="Tin")
-    assert not ok, f"add check: accepted out-of-range index 99 on {mcid}"
+    assert ok is None, f"add check: accepted out-of-range index 99 on {mcid}"
     assert "99" in msg, f"add check: the refusal on {mcid} does not name the bad index — {msg!r}"
     assert (tmp_path / mcid.lstrip("/")).read_text(encoding="utf-8") == before, \
         f"add check: a refused call on {mcid} still wrote boxes 1 and 2 (validate ALL before writing ANY)"
@@ -130,7 +130,7 @@ def test_check_refuses_bare_ref_by_listing_the_boxes(tmp_path):
     mcid, _ = _bundle(tmp_path)
     before = (tmp_path / mcid.lstrip("/")).read_text(encoding="utf-8")
     ok, msg = add.check(tmp_path, mcid, [], by="Tin")
-    assert not ok, f"add check {mcid} with no index must refuse, never tick everything"
+    assert ok is None, f"add check {mcid} with no index must refuse, never tick everything"
     for i, label in ((1, "a"), (2, "b"), (3, "c")):
         assert f"{i}" in msg and label in msg, \
             f"add check: the bare-ref refusal on {mcid} does not enumerate box {i} ({label!r}) — {msg!r}"
@@ -142,11 +142,11 @@ def test_check_refuses_missing_section_and_boxless_node(tmp_path):
     """covers: M4, A8, E3, R:SILENT_NOOP."""
     mcid, _ = _bundle(tmp_path)
     ok, msg = add.check(tmp_path, mcid, [1], section="NOPE", by="Tin")
-    assert not ok, f"add check --section NOPE: accepted a heading {mcid} does not carry"
+    assert ok is None, f"add check --section NOPE: accepted a heading {mcid} does not carry"
     assert "NOPE" in msg, f"add check: the missing-section refusal does not name `NOPE` — {msg!r}"
     empty, _ = _bundle(tmp_path / "b2", boxes=())
     ok, msg = add.check(tmp_path / "b2", empty, [1], by="Tin")
-    assert not ok, f"add check: accepted an index on {empty}, which carries no checkbox at all"
+    assert ok is None, f"add check: accepted an index on {empty}, which carries no checkbox at all"
     assert "box" in msg.lower(), f"add check: the boxless refusal does not say so — {msg!r}"
 
 
@@ -172,6 +172,10 @@ def test_milestone_done_names_who_checked(tmp_path):
     path = tmp_path / mcid.lstrip("/")
     raw = path.read_text(encoding="utf-8").replace("why: <why this task exists — optional>", "why: because")
     path.write_text(re.sub(r"(?m)^why: .*$", "why: because", raw), encoding="utf-8")
+    # The fixture's task exists to carry a PLAN box, not to be built. `milestone-done` now
+    # refuses to close over an unauthored member (R:SILENTABANDON), so resolve it the way the
+    # refusal says to — this check is about the CLOSE LINE, not about the member rung.
+    add.drop(tmp_path, "/tasks/t.md", "a fixture prop, never planned work")
     ok, msg = add.milestone_done(tmp_path, mcid)
     assert ok, f"milestone_done: refused a fully checked {mcid} — {msg}"
     assert "checked by" in msg, f"milestone_done: the close line does not name who checked — {msg!r}"
@@ -187,6 +191,7 @@ def test_milestone_done_says_by_hand_without_stamps(tmp_path):
     path = tmp_path / mcid.lstrip("/")
     text = path.read_text(encoding="utf-8").replace("- [ ] ", "- [x] ")
     path.write_text(re.sub(r"(?m)^why: .*$", "why: because", text), encoding="utf-8")
+    add.drop(tmp_path, "/tasks/t.md", "a fixture prop, never planned work")
     ok, msg = add.milestone_done(tmp_path, mcid)
     assert ok, f"milestone_done: refused a hand-checked {mcid} — {msg}"
     assert "by hand" in msg, \
@@ -330,7 +335,7 @@ def test_listing_joins_wrapped_criteria(tmp_path):
     path.write_text(text, encoding="utf-8")
 
     ok, msg = add.check(tmp_path, mcid, [], by="Ada")            # the bare-ref listing
-    assert not ok, "add check with no index must refuse"
+    assert ok is None, "add check with no index must refuse"
     assert "the Set-Cookie header rather than the handler source" in msg, \
         f"add check: the listing clips a wrapped criterion mid-sentence — {msg!r}"
     assert "proven by a test that reads the Set-Cookie" in msg, \

@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 41
+delta_seq: 48
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,13 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- A working-tree-vs-HEAD guard is a live-editing tripwire and must say so in its own source; a durable claim is pinned to content instead. (from: /specs/method.md#M48)
+- An instruction only exists on the paths that LOAD the file holding it. When a rule must hold on more than one path, enumerate the copies in a check rather than trusting one canonical statement to reach them. (from: /specs/method.md#M47)
+- None is the refusal for every engine verb; a verb that ANSWERS a question keeps its boolean, and an empty collection from a query that ran is an answer, not a refusal. (from: /specs/method.md#M45)
+- When a check exists only to hold a narrowing until a measurement lands, name the measurement in the check itself; the day it lands, RETIRE the check in place with a record block rather than leaving it to assert against its own condition. (from: /specs/method.md#M46)
+- A hint carrying a slot the engine could have filled is a defect; a slot only the human can fill is guidance. Where a verb is handed a value, it records it and replays it. (from: /specs/method.md#M44)
+- A close inspects what it holds. A milestone refuses to close over unauthored members, exactly as it refuses over undrained lessons — abandonment is a decision somebody makes, never a side effect of closing. (from: /specs/method.md#M43)
+- Every status the engine reads has a verb that writes it. A value only a reader knows is vocabulary that exists in prose and nowhere in the loop. (from: /specs/method.md#M42)
 - None is the refusal shape. freeze holds it today; widening it to the eleven verbs that still answer False is deliberate 3.7 scope, not an oversight — it touches ~40 return sites and every test asserting is False. (from: /specs/method.md#M41)
 - A check on what a VERB accepts crosses argv. add.py is a library that prints nothing; cli.py is the entrypoint, and a library-level check proves nothing about the surface a human types. (from: /specs/method.md#M40)
 - A verb writes only the fields it declares; an unrecognised one is refused by name, and the refusal enumerates what is accepted (R:GHOSTFIELD). (from: /specs/method.md#M39)
@@ -30,6 +37,13 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M48 · folded · 2026-09-10→2026-09-10] A guard comparing the working tree to HEAD is a live-editing TRIPWIRE, not an invariant: it fires while the edit is made and is inert once committed. That is a legitimate lifetime — the defect is leaving it unlabelled, so a green CI reads as the claim having held. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
+- [ADD · M47 · folded · 2026-09-10→2026-09-10] The mandate was in the right words in the wrong file: agents/add-worker.md §2 states the persona selector perfectly and loads ONLY on a spawn. A rule that lives in a file one path loads is not a rule the method has — it is a rule that path has. Check WHICH files carry an instruction, not whether it is written. (evidence: /milestones/personas-load-by-fit.md)
+- [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
+- [ADD · M45 · folded · 2026-09-10→2026-09-10] One sweep, two vocabularies: `None` is the refusal, but a verb that ANSWERS a question keeps its falsy answer — `fresh` says False for stale and None for unmeasurable, and six verbs answer an empty collection from a query that ran. Collapsing those into the refusal shape destroys the only thing those verbs are for (evidence: refuse-with-one-shape · RESULT_VERBS)
+- [ADD · M44 · folded · 2026-09-10→2026-09-10] A notary cannot INVENT a value, but it can REMEMBER one it was handed: the build hint carried an unrunnable <test cmd> forever, while run received the real command on every call — recording it turned a template into the command that actually worked in this project (evidence: _last_test_cmd · status-answers-what-needs-me)
+- [ADD · M43 · folded · 2026-09-10→2026-09-10] A closing verb that never looks at what it holds MANUFACTURES the abandonment it reports: `milestone-done` tallied exit criteria only, so a milestone closed and its queued tasks stopped being anybody's, silently — the same shape as R:UNDRAINED for lessons, one level up (evidence: R:SILENTABANDON · a-plan-says-what-it-wants)
+- [ADD · M42 · folded · 2026-09-10→2026-09-10] A word the engine READS that no verb can WRITE is vocabulary living only in the reader: `dropped` was a status three code paths handled and nothing could ever set, so withdrawing work meant deleting a file or letting it rot — and neither leaves a reason (evidence: add drop · a-plan-says-what-it-wants)
 - [ADD · M41 · folded · 2026-09-08→2026-09-08] One refusal shape is a BUNDLE-WIDE question, not a freeze question: 11 verbs answer a refusal with `False` and 22 with `None`, each self-consistent, so no single verb looks wrong — the caller crossing two verbs is the one who pays. Widening `None`-is-the-only-refusal to every verb touches ~40 return sites and every test asserting `is False` (evidence: AST survey of add.py · one-refusal-shape A2)
 - [ADD · M40 · folded · 2026-09-08→2026-09-08] A Must about what a VERB accepts is met only at the front door: the check called the library, gated green, and the CLI still refused the flag — `add.py` prints nothing and nobody invokes it, so a check that never crosses argv proves nothing about the surface a human types (evidence: cli.py new --goal · a-roadmap-reads-as-a-roadmap re-cross)
 - [ADD · M39 · folded · 2026-09-08→2026-09-08] A creation verb that accepts any keyword writes data nothing owns: an unrecognised field landed in frontmatter verbatim, indistinguishable from a key the engine reads — refuse the field, and name the verb that owns it (R:GHOSTFIELD) (evidence: add.py new() NEW_FIELDS · a-roadmap-reads-as-a-roadmap)

@@ -116,6 +116,9 @@ def test_no_existing_tree_entry_is_removed():
     The committed declarations are the baseline instead — an entry present at HEAD must still
     be present in both twins.
     """
+    # TRIPWIRE: the baseline is `HEAD`, so a removal that is already committed reads as no
+    # removal at all. It guards the edit, not the history — which is the point: reading the
+    # committed declarations beats restating today's answer as a literal set.
     import subprocess
     head = subprocess.run(["git", "show", "HEAD:add-method/src/add_method/_installer.py"],
                           cwd=str(PKG.parent), capture_output=True, text=True)

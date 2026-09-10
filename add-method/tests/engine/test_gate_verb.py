@@ -98,7 +98,7 @@ def test_gate_refuses_stale_receipt(repo):
     (repo / "src" / "service.py").write_text("def book():\n    return False\n")
 
     ok, note = add.gate(repo / ".add", CID, "PASS", by="human:tindang")
-    assert ok is False, "a gate was recorded against a stale receipt"
+    assert ok is None, "a gate was recorded against a stale receipt"
     assert "stale" in note.lower() or "fresh" in note.lower(), note
 
 
@@ -142,7 +142,7 @@ def test_card_scope_without_frontmatter_scope_is_refused(repo):
     add.run(repo / ".add", cid, [sys.executable, "-c", "pass"], cwd=repo)
 
     ok, note = add.gate(repo / ".add", cid, "PASS", by="human:tindang")
-    assert ok is False, "a node whose CARD claims a scope its frontmatter lacks was gated"
+    assert ok is None, "a node whose CARD claims a scope its frontmatter lacks was gated"
     assert "scope" in note.lower(), note
 
 
@@ -159,7 +159,7 @@ def test_declared_scope_without_a_digest_is_still_refused(repo):
     runs[-1].write_text(stripped)
 
     ok, note = add.gate(repo / ".add", CID, "PASS", by="human:tindang")
-    assert ok is False, "a scoped node was gated on a receipt carrying no digest"
+    assert ok is None, "a scoped node was gated on a receipt carrying no digest"
 
 
 def test_template_placeholders_are_refused_by_name(repo):
@@ -173,7 +173,7 @@ def test_template_placeholders_are_refused_by_name(repo):
     cid, _ = add.new(repo / ".add", "Task", "unauthored", title="Unauthored", scope=["src/service.py"])
     add.run(repo / ".add", cid, [sys.executable, "-c", "pass"], cwd=repo)
     ok, note = add.gate(repo / ".add", cid, "PASS", by="human:tindang")
-    assert ok is False
+    assert ok is None
     assert "placeholder" in note.lower(), f"the refusal did not name the real problem: {note}"
     assert "RISK-ACCEPTED" not in note, "it offered to accept a risk on an unauthored node"
 
@@ -196,7 +196,7 @@ def test_gate_refuses_unproven_must(repo):
     """
     _receipt(repo, ids=("test_one",))
     ok, note = add.gate(repo / ".add", CID, "PASS", by="human:tindang")
-    assert ok is False, "a PASS was recorded while a Must had no reported passing check"
+    assert ok is None, "a PASS was recorded while a Must had no reported passing check"
 
 
 def test_gate_refusal_names_the_unproven_rules(repo):
@@ -215,7 +215,7 @@ def test_gate_counts_a_failing_check_as_unproven(repo):
                    "</testsuite></testsuites>")
     add.run(repo / ".add", CID, [sys.executable, "-c", "pass"], cwd=repo, junit=xml)
     ok, note = add.gate(repo / ".add", CID, "PASS", by="human:tindang")
-    assert ok is False and "M2" in note, note
+    assert ok is None and "M2" in note, note
 
 
 # ----------------------------------------------------------- the stamp itself (M3)
@@ -262,7 +262,7 @@ def test_risk_accepted_requires_a_reason(repo):
     """covers: M3, R:SILENTREFUSE — an unexplained RISK-ACCEPTED is a PASS in disguise."""
     _receipt(repo, ids=("test_one",))
     ok, note = add.gate(repo / ".add", CID, "RISK-ACCEPTED", by="human:tindang")
-    assert ok is False and "reason" in note.lower(), note
+    assert ok is None and "reason" in note.lower(), note
 
 
 def test_hard_stop_does_not_transition(repo):
@@ -281,7 +281,7 @@ def test_gate_refusal_names_the_fix(repo):
     """covers: M4, R:SILENTREFUSE — every refusal ends in a command that would resolve it."""
     (repo / "src" / "service.py").write_text("# no receipt at all\n")
     ok, note = add.gate(repo / ".add", CID, "PASS", by="human:tindang")
-    assert ok is False
+    assert ok is None
     last = note.strip().splitlines()[-1]
     assert last.lower().startswith("next:") and "add " in last, \
         f"a refusal that names no fix is an error message, not a report: {note!r}"
@@ -291,7 +291,7 @@ def test_unknown_verdict_is_refused(repo):
     """covers: M4 — the verdict vocabulary is closed, and the refusal lists it."""
     _receipt(repo)
     ok, note = add.gate(repo / ".add", CID, "LGTM", by="human:tindang")
-    assert ok is False and "PASS" in note, note
+    assert ok is None and "PASS" in note, note
 
 
 # ----------------------------------------------------------- F3: run's own stamp (M5, R:ORPHAN)

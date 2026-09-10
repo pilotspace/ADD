@@ -76,10 +76,13 @@ def test_todo_beat_is_stamp_derived(tmp_path, draft):
     beats = {cid.rsplit("/", 1)[-1][:-3]: st for cid, st, _ in items}
     verbs = {cid.rsplit("/", 1)[-1][:-3]: nxt for cid, _, nxt in items}
     assert beats["open1"] == "build", f"a frozen task is at the build beat: {beats}"
+    # RE-AIMED (a-plan-says-what-it-wants): an unauthored task's beat word now names which plan
+    # wants it. The rule — it is NOT `direction` — is what this always meant.
     # RE-AIMED (authoring-beat-named, 2026-09-01): an unfrozen task that was never AUTHORED is
     # now its own beat. The Must this covers is that the beat comes from the stamps rather than
     # the `status:` field, and that still holds — it is the token that moved, not the derivation.
-    assert beats["open2"] == "scaffold", f"an unauthored task is at the scaffold beat: {beats}"
+    assert beats["open2"] in add.SCAFFOLD_KINDS, \
+        f"an unauthored task is at none of {add.SCAFFOLD_KINDS}: {beats}"
     # beta-2 (R:UNBRIEFED): the build beat's first verb is the ENTRY — a sealed task that has
     # not recorded a brief points at `add brief`; the run hint takes over once it has.
     assert "add brief" in verbs["open1"], f"the build beat points at the entry first: {verbs}"

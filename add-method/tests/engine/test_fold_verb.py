@@ -26,6 +26,6 @@ def test_fold_refuses_without_a_match(tmp_path):
     add.init(tmp_path, "code", "T")
     add.learn(tmp_path, "system", "a real open delta", evidence="e")
     ok, note = add.fold(tmp_path, "system", "nothing-like-this")
-    assert ok is False and "match" in note.lower()
+    assert ok is None and "match" in note.lower()
     assert any("a real open delta" in t for _, _, t in add.deltas(tmp_path, "open")[0]), \
         "a refused fold must leave the open delta untouched"

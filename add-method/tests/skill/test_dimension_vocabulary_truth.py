@@ -167,6 +167,10 @@ def test_living_prose_agrees_with_the_engine():
 
 def test_dated_announcements_keep_their_release_framing():
     """covers: R:REWRITE — GREEN at freeze, armed through the build against a too-wide edit."""
+    # TRIPWIRE: this compares the working tree to `HEAD`, so it fires while a dated file is
+    # being edited and is INERT once committed — a green CI says nothing about this claim.
+    # That is the right lifetime here: the claim is "do not rewrite a dated record", and the
+    # only moment it can be enforced is the moment someone rewrites one.
     for path in PINNED:
         reason = DATED[path]
         head = subprocess.run(["git", "show", f"HEAD:{_label(path)}"],

@@ -17,7 +17,7 @@ sys.path.insert(0, str(REPO / "tooling"))
 
 import argparse  # noqa: E402
 import cli  # noqa: E402  — the real ABF-1 CLI; the skill must stay honest to its verb set
-from skill_budget import LINE_BUDGET, BYTE_BUDGET, SURFACE_BUDGET
+from skill_budget import LINE_BUDGET, BYTE_BUDGET, SURFACE_BUDGET, PROSE_PINS
 
 
 def _budget_src():
@@ -160,13 +160,15 @@ def test_skill_tree_prose_unedited_by_this_task():
     """covers: M5, R:PROSE_FIX. A new pin that comes up red against shipped content is a
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
-    pinned = {
-        "SKILL.md": "f2375f9590f51325e2705f262d2c2a55b556b0d33cfe6e1b5e45d43f5567efe0",   # re-aimed @ loop-that-drains: fold --reject/--bind, R:UNCOVERED and R:UNDRAINED documented; funded by compressing the VERIFY, lessons and CHECKS prose. prior: be921c45…
-        "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
-    }
-    for name, want in pinned.items():
+    # The VALUES live in `skill_budget.PROSE_PINS` (one home, like the three budgets); this guard
+    # keeps owning the ASSERTION. `test_skill_reads_the_graph.py` used to recover the hash by
+    # regexing THIS file's source — the same scatter, one type further on.
+    for name, want in PROSE_PINS.items():
         got = hashlib.sha256((SKILL / name).read_bytes()).hexdigest()
-        assert got == want, f"{name}: sha256 changed — skill-tree prose was edited (R:PROSE_FIX)"
+        assert got == want, (
+            f"{name}: sha256 changed — skill-tree prose was edited (R:PROSE_FIX).\n"
+            f"  Restore it, or re-aim `PROSE_PINS[{name!r}]` in tests/skill/skill_budget.py "
+            f"with the task and the reason.\n  now: {got}")
 
 
 def test_no_single_ref_over_split_threshold():

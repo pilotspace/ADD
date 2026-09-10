@@ -115,7 +115,7 @@ def test_gate_refuses_when_the_probe_check_did_not_pass(bundle, draft, tmp_path)
     cid = _task(bundle, draft, "redprobe", PROBED_ASSUMPTIONS, PROBED_CHECKS)
     _receipt(bundle, cid, tmp_path, GREEN[:2])          # probe check never reported
     ok, note = add.gate(bundle, cid, "PASS", by="human:tindang")
-    assert ok is False
+    assert ok is None
     assert "A1" in note, note
 
 

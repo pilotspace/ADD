@@ -77,7 +77,7 @@ def test_uncovered_edge_refuses_gate(tmp_path):
                       checks=M1_CHECK + "\n- test_empty · covers: E1 · proves the edge",
                       report=("test_m1",))
     ok, note = add.gate(root, cid, "PASS", by="human:t")
-    assert ok is False, "an unproven declared edge must refuse PASS"
+    assert ok is None, "an unproven declared edge must refuse PASS"
     assert "E1" in note, note
 
 

@@ -141,7 +141,7 @@ def test_the_rung_stays_last(bundle):
     """covers: A8 — never put template text to a person."""
     cid = milestone(bundle, "m-unauthored", authored=False)
     node, note = add.freeze(bundle, cid, by="Tin Dang", authority="human")
-    assert not node, note
+    assert node is None, note
     assert "scaffold" in note, f"the scaffold check did not come first:\n{note}"
     assert "UNINTERVIEWED" not in note, f"the interview jumped the scaffold check:\n{note}"
     assert add.freeze(bundle, milestone(bundle, "m-authored"), by="Tin Dang",

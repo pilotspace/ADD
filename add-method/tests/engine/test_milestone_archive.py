@@ -30,7 +30,7 @@ def test_refuses_a_milestone_not_done(tmp_path):
     add.init(tmp_path, "code", "T")
     cid, _ = add.new(tmp_path, "Milestone", "m", title="m")  # status: direction
     ok, note = add.milestone_archive(tmp_path, cid)
-    assert ok is False and "done" in note.lower()
+    assert ok is None and "done" in note.lower()
     assert _status(tmp_path, cid) != "archived"
 
 
@@ -39,4 +39,4 @@ def test_refuses_a_non_milestone(tmp_path):
     add.init(tmp_path, "code", "T")
     cid, _ = add.new(tmp_path, "Task", "t", title="t")
     ok, note = add.milestone_archive(tmp_path, cid)
-    assert ok is False and "milestone" in note.lower()
+    assert ok is None and "milestone" in note.lower()

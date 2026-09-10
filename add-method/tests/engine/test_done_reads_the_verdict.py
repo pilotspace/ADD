@@ -117,7 +117,7 @@ def test_done_refuses_a_node_whose_only_gate_was_a_hard_stop(tmp_path):
     assert "HARD-STOP" in _outcomes(root, cid)
 
     ok, *rest = add.done(root, cid)
-    assert not ok, "a HARD-STOP closed the node — the stop was read as an entitlement"
+    assert ok is None, "a HARD-STOP closed the node — the stop was read as an entitlement"
     assert (add.scan(root)[cid]["fm"] or {}).get("status") != "done"
 
 
@@ -130,7 +130,7 @@ def test_the_security_walk_that_shipped_is_closed(tmp_path):
     add.gate(root, cid, "HARD-STOP", by="H", reason="SQL injection in login")
     ok, *rest = add.done(root, cid)
 
-    assert not ok, "a security task with a failed run and a HARD-STOP reached `done`"
+    assert ok is None, "a security task with a failed run and a HARD-STOP reached `done`"
     assert (add.scan(root)[cid]["fm"] or {}).get("status") != "done"
 
 
@@ -187,7 +187,7 @@ def test_a_hard_stop_before_the_reopen_does_not_block_a_later_pass(tmp_path):
     add.gate(root, cid, "HARD-STOP", by="H", reason="the gap is a finding")
 
     ok, *_ = add.done(root, cid)
-    assert not ok, "the reopened node closed on a HARD-STOP"
+    assert ok is None, "the reopened node closed on a HARD-STOP"
 
     add.gate(root, cid, "PASS", by="H")
     ok, *rest = add.done(root, cid)
@@ -211,7 +211,7 @@ def test_a_human_may_force_close_a_stopped_node_with_a_reason(tmp_path):
     add.gate(root, cid, "HARD-STOP", by="H", reason="SQL injection in login")
 
     ok, *_ = add.done(root, cid)
-    assert not ok, "the stop did not hold without an override"
+    assert ok is None, "the stop did not hold without an override"
 
     ok, *rest = add.done(root, cid, override="in dead code, tracked as SEC-412")
     assert ok, f"a human could not force-close a stopped node: {_msg((ok, *rest))}"
@@ -241,7 +241,7 @@ def test_an_override_without_a_reason_is_refused(tmp_path):
     add.gate(root, cid, "HARD-STOP", by="H", reason="the finding")
 
     ok, *rest = add.done(root, cid, override="")
-    assert not ok, "a stopped node was force-closed with no reason recorded"
+    assert ok is None, "a stopped node was force-closed with no reason recorded"
     assert "reason" in _msg((ok, *rest)).lower(), _msg((ok, *rest))
 
 
@@ -253,7 +253,7 @@ def test_the_override_does_not_bypass_the_seal(tmp_path):
     add.gate(root, cid, "HARD-STOP", by="H", reason="the finding")
 
     ok, *rest = add.done(root, cid, override="shipping anyway")
-    assert not ok, "the override waved through a node the ONE human approval never touched"
+    assert ok is None, "the override waved through a node the ONE human approval never touched"
 
 
 def test_gate_refuses_a_hard_stop_on_a_node_that_was_never_frozen(tmp_path):
@@ -263,7 +263,7 @@ def test_gate_refuses_a_hard_stop_on_a_node_that_was_never_frozen(tmp_path):
     add.run(root, cid, ["true"])
 
     ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="a finding")
-    assert not ok, "a HARD-STOP was recorded against a node nobody ever approved"
+    assert ok is None, "a HARD-STOP was recorded against a node nobody ever approved"
     assert "R:UNSEALED" in _msg((ok, *rest)), _msg((ok, *rest))
 
 

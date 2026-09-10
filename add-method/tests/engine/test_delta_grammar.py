@@ -46,7 +46,7 @@ def test_no_evidence_still_refused(tmp_path):
     """covers: R:NOEVIDENCE — an evidence-less lesson writes nothing."""
     add.init(tmp_path, "code", "T")
     ok, _ = add.learn(tmp_path, "method", "an opinion", evidence=None)
-    assert ok is False
+    assert ok is None
     assert "an opinion" not in _spec(tmp_path, "method")
 
 
@@ -54,4 +54,4 @@ def test_unknown_lens_refused(tmp_path):
     """covers: R:UNKNOWNLENS — a lens naming no spec file is refused."""
     add.init(tmp_path, "code", "T")
     ok, note = add.learn(tmp_path, "nonesuch", "x", evidence="e")
-    assert ok is False and "lens" in note.lower()
+    assert ok is None and "lens" in note.lower()

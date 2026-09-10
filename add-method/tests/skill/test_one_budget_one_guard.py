@@ -9,6 +9,8 @@ may READ a constant to build a message; asserting one outside its owner is what 
 """
 
 import ast
+import re
+import pytest
 import sys
 from pathlib import Path
 
@@ -135,3 +137,70 @@ def test_the_other_checks_keep_their_own_subject():
     asserted = [v for _, v in _asserted_numbers(REPO / "tests" / "test_front_door_claim_truth.py")]
     assert 176 not in asserted, \
         "R:SILENTPIN — the budget literal is still asserted in the parity check"
+
+
+# The prose pins joined this module's charge at `one-home-for-the-prose-pin`. They are the same
+# defect in a different type: a sha256 held as a literal in `test_surface.py` while
+# `test_skill_reads_the_graph.py` recovered it by REGEXING that file's source — three modules
+# pinning each other's source text is exactly what `skill_budget.py` exists to end (R:SILENTPIN).
+_HEX64 = re.compile(r"[0-9a-f]{64}")
+
+
+def test_one_module_owns_the_prose_pins():
+    """covers: M1, M2, A1, A2, R:SOURCESCRAPE — one home, and nobody scrapes for it."""
+    assert getattr(skill_budget, "PROSE_PINS", None), \
+        "PROSE_PINS is not in skill_budget.py — the prose pins have no single home"
+    for name in ("SKILL.md", "intake.md"):
+        assert name in skill_budget.PROSE_PINS, f"{name}'s prose pin did not move to the one home"
+
+    scattered, scraping = [], []
+    for f in sorted((REPO / "tests").rglob("test_*.py")):
+        if f.name == Path(__file__).name:
+            continue
+        text = f.read_text(encoding="utf-8")
+        for i, line in enumerate(text.splitlines(), 1):
+            if any(h in line for h in skill_budget.PROSE_PINS.values()):
+                scattered.append(f"  {f.relative_to(REPO).as_posix()}:{i}")
+        # R:SOURCESCRAPE — reading another CHECK's source to recover a value it holds.
+        if "test_surface.py" in text and _HEX64.search(text.split("test_surface.py")[1][:400]):
+            scraping.append(f"  {f.relative_to(REPO).as_posix()}")
+    assert not scattered, (
+        "R:SILENTPIN — a prose pin's hash is written outside skill_budget.py, so a re-aim has to "
+        "find every copy:\n" + "\n".join(scattered))
+    assert not scraping, (
+        "R:SOURCESCRAPE — these modules recover a pin by reading another check's source text. "
+        "Import `skill_budget.PROSE_PINS` instead:\n" + "\n".join(scraping))
+
+
+def test_the_prose_pins_kept_their_record():
+    """covers: M3, R:LOSTRECORD, A4, A5, A6 — a hash with no reason is a number nobody can audit."""
+    src = (REPO / "tests" / "skill" / "skill_budget.py").read_text(encoding="utf-8")
+    for name, digest in skill_budget.PROSE_PINS.items():
+        line = next((l for l in src.splitlines() if digest in l), "")
+        assert line, f"{name}'s pin is not written as a literal in its own home — it cannot carry a record"
+        record = line.split("#", 1)[1] if "#" in line else ""
+        assert "aimed @" in record, \
+            f"R:LOSTRECORD — {name}'s pin names no task that aimed it: {line.strip()[:90]}"
+        assert len(record.split("aimed @", 1)[1].strip()) > 40, \
+            f"R:LOSTRECORD — {name}'s pin names a task but no reason: {record.strip()[:90]}"
+
+
+def test_the_prose_claims_are_unchanged(tmp_path, monkeypatch):
+    """covers: M4 — moving the value is not relaxing the claim.
+
+    Drives the OWNING guard, not a re-implementation of it: point its `SKILL` at a tree whose
+    SKILL.md is one byte different and it must still raise. A check that only asserted the
+    constant exists would pass on a guard that had quietly stopped comparing.
+    """
+    import test_surface
+
+    for name in skill_budget.PROSE_PINS:
+        (tmp_path / name).write_bytes(
+            (test_surface.SKILL / name).read_bytes() + b"\n<!-- edited -->\n")
+    monkeypatch.setattr(test_surface, "SKILL", tmp_path)
+    with pytest.raises(AssertionError, match="R:PROSE_FIX"):
+        test_surface.test_skill_tree_prose_unedited_by_this_task()
+
+    # And it is not raising on everything: the real tree still passes.
+    monkeypatch.undo()
+    test_surface.test_skill_tree_prose_unedited_by_this_task()

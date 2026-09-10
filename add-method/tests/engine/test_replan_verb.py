@@ -70,7 +70,7 @@ def test_replan_refuses_closed_task(tmp_path):
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'done')}\n---\n{n['body']}")
     ok, note = add.replan(root, cid, note="too late", by="builder")
-    assert not ok, note
+    assert ok is None, note
     assert "act: replan" not in _fm_raw(root, cid)
 
 

@@ -81,7 +81,7 @@ def test_freeze_refuses_an_unswept_experience_pair(tmp_path, monkeypatch):
     older = tuple(d for d in add.SWEEP_DIMENSIONS if d != NEW)
     cid = _task(tmp_path, older)
     ok, note = add.freeze(tmp_path, cid, by="Tin Dang", authority="human")
-    assert not ok, (
+    assert ok is None, (
         "freeze accepted a task swept on every dimension EXCEPT the new one — the refusal is what "
         "makes this a question rather than a suggestion, and a suggestion is what UDD already was")
     assert f"{NEW}:S1" in note, (

@@ -98,6 +98,9 @@ def test_benchmark_claims_keep_their_code_framing():
 
 def test_identity_untouched_by_copy_pass():
     """M2 — this task edits the paragraphs the tagline lives in; prove it did not move it."""
+    # TRIPWIRE: a working-tree-vs-`HEAD` guard. It catches the copy pass eating an identity
+    # string as the pass is made, and goes inert the moment the change is committed. Do not
+    # read a green CI as proof the identity survived — read the diff.
     for phrase in IDENTITY:
         assert any(phrase in _text(p) for p in READMES), \
             f"the identity string {phrase!r} is gone from both READMEs"

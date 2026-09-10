@@ -83,7 +83,7 @@ def test_risk_accepted_refuses_an_unfrozen_node(tmp_path):
     _receipt(root, cid)
 
     ok, *_rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok, "RISK-ACCEPTED recorded on a node the ONE human approval never touched"
+    assert ok is None, "RISK-ACCEPTED recorded on a node the ONE human approval never touched"
     assert "R:UNSEALED" in _msg((ok, *_rest))
 
 
@@ -116,7 +116,7 @@ def test_risk_accepted_refuses_a_drifted_contract(tmp_path):
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok, "a silently rewritten Must was accepted under RISK-ACCEPTED"
+    assert ok is None, "a silently rewritten Must was accepted under RISK-ACCEPTED"
     assert "drift" in _msg((ok, *rest)).lower() or "refreez" in _msg((ok, *rest)).lower()
 
 
@@ -130,7 +130,7 @@ def test_risk_accepted_refuses_template_placeholders(tmp_path):
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok, "a body of template slots was signed for"
+    assert ok is None, "a body of template slots was signed for"
 
 
 # ------------------------------------------------- M4 · the security floor
@@ -167,7 +167,7 @@ def test_risk_accepted_refuses_an_undeclared_sensitive_path(tmp_path):
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok, "an undeclared sensitive edit was gated through the hatch"
+    assert ok is None, "an undeclared sensitive edit was gated through the hatch"
     assert "R:UNDECLARED_SENSITIVE" in _msg((ok, *rest))
 
 
@@ -212,8 +212,8 @@ def test_risk_accepted_reaches_no_state_pass_could_not(tmp_path):
 
     pass_ok, *pr = add.gate(root, cid, "PASS", by="H")
     risk_ok, *rr = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not pass_ok, "precondition: PASS must refuse an unfrozen node (R:UNSEALED, #206)"
-    assert not risk_ok, "PASS refused this node and RISK-ACCEPTED walked past it"
+    assert pass_ok is None, "precondition: PASS must refuse an unfrozen node (R:UNSEALED, #206)"
+    assert risk_ok is None, "PASS refused this node and RISK-ACCEPTED walked past it"
 
 
 # ---------------------------------------------------------------- M6 · done
@@ -235,7 +235,7 @@ def test_done_refuses_a_gate_that_no_freeze_precedes(tmp_path):
         "fixture did not forge a parseable gate stamp"
 
     ok, *rest = add.done(root, cid)
-    assert not ok, "a node the ONE approval never touched was walked to `done`"
+    assert ok is None, "a node the ONE approval never touched was walked to `done`"
     assert "freeze" in _msg((ok, *rest))
 
 
@@ -256,7 +256,7 @@ def test_a_receiptless_gate_still_hears_the_receipt_message(tmp_path):
     cid = _authored(root, "fresh")
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok
+    assert ok is None
     assert "receipt" in _msg((ok, *rest)).lower(), _msg((ok, *rest))
 
 
@@ -324,7 +324,7 @@ def test_integrity_refusals_precede_evidence_refusals(tmp_path):
     (root / "src" / "a.py").write_text("x = 2\n", encoding="utf-8")   # receipt now stale
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok
+    assert ok is None
     assert "R:UNSEALED" in _msg((ok, *rest)), \
         "the missing seal outranks the stale receipt: " + _msg((ok, *rest))
 
@@ -335,7 +335,7 @@ def test_every_new_refusal_names_a_next_verb(tmp_path):
     cid = _authored(root, "advice")
     _receipt(root, cid)
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok
+    assert ok is None
     assert re.search(r"next: add \w", _msg((ok, *rest))), _msg((ok, *rest))
 
 
@@ -369,7 +369,7 @@ def test_hard_stop_binds_the_seal_and_only_the_seal(tmp_path):
     _receipt(root, cid)
 
     ok, *rest = add.gate(root, cid, "HARD-STOP", by="H", reason="found a leak")
-    assert not ok, "a finding was recorded against a node nobody ever approved"
+    assert ok is None, "a finding was recorded against a node nobody ever approved"
     assert "R:UNSEALED" in _msg((ok, *rest)), _msg((ok, *rest))
 
     assert add._binds("unsealed", "HARD-STOP") is True

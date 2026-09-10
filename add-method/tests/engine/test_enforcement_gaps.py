@@ -61,7 +61,7 @@ def test_gate_refuses_pass_without_a_freeze_seal(tmp_path):
     _junit(tmp_path / "j.xml")
     add.run(root, cid, ["/usr/bin/true"], junit=str(tmp_path / "j.xml"))
     ok, msg = add.gate(root, cid, "PASS", by="Tin")
-    assert not ok, "gate: recorded a PASS on a node that was never frozen — the ONE approval is optional"
+    assert ok is None, "gate: recorded a PASS on a node that was never frozen — the ONE approval is optional"
     assert "freeze" in msg.lower(), f"gate: the refusal does not name the missing freeze — {msg!r}"
     assert (root / cid.lstrip("/")).read_text(encoding="utf-8").count("status: done") == 0, \
         "gate: the node closed despite the refusal"
@@ -75,7 +75,7 @@ def test_gate_refuses_without_a_seal_at_quick_depth_too(tmp_path):
     _junit(tmp_path / "j.xml")
     add.run(root, cid, ["/usr/bin/true"], junit=str(tmp_path / "j.xml"))
     ok, msg = add.gate(root, cid, "PASS", by="Tin")
-    assert not ok, "gate: --depth quick still closes without a freeze stamp"
+    assert ok is None, "gate: --depth quick still closes without a freeze stamp"
 
 
 # --- 2. the receipt must stand for the run that produced it -------------------------------
@@ -147,7 +147,7 @@ def test_gate_refuses_when_an_undeclared_sensitive_path_changed(tmp_path):
     add.brief_stamp(root, cid)
     add.run(root, cid, ["/usr/bin/true"], junit=str(tmp_path / "j.xml"))
     ok, msg = add.gate(root, cid, "PASS", by="Tin")
-    assert not ok, "gate: a build that changed an undeclared SENSITIVE path still recorded PASS"
+    assert ok is None, "gate: a build that changed an undeclared SENSITIVE path still recorded PASS"
     assert "auth.py" in msg, f"gate: the refusal does not name the undeclared sensitive file — {msg!r}"
 
 
@@ -218,7 +218,7 @@ def test_check_refuses_to_tick_a_template_placeholder(tmp_path):
     root = _bundle(tmp_path)
     mcid, _ = add.new(root, "Milestone", "ms", title="M")
     ok, msg = add.check(root, mcid, [1], by="Tin")
-    assert not ok, "check: ticked a template placeholder, releasing the goal-gate on unauthored text"
+    assert ok is None, "check: ticked a template placeholder, releasing the goal-gate on unauthored text"
     assert re.search(r"placeholder|template", msg, re.I), \
         f"check: the refusal does not say why the box was rejected — {msg!r}"
 

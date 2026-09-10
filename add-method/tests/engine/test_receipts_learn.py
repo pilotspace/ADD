@@ -151,7 +151,7 @@ def test_learn_without_evidence_refused(repo):
     """covers: M4, R:OPINION — a lesson with no evidence is an opinion."""
     before = (repo / ".add" / "specs" / "method.md").read_bytes()
     ok, note = add.learn(repo / ".add", "method", "I feel this is better", evidence=None)
-    assert ok is False
+    assert ok is None
     assert "evidence" in note.lower()
     assert (repo / ".add" / "specs" / "method.md").read_bytes() == before
 
