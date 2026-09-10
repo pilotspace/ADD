@@ -34,6 +34,6 @@ SURFACE_BUDGET = 1500
 # when a human deliberately edits the prose, in the same commit, with the reason on its line.
 # Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
 PROSE_PINS = {
-    "SKILL.md": "eacf1c6d85f15ebf4290706ecc588d9ef8f772291125832fcfebb2052ab16460",   # aimed @ refute-tier-and-changed: the cookbook line carries --tier/--changed. prior: c20224e2… @ refute-verb
+    "SKILL.md": "edccc3300f5e48020fd5bdf0935c1a96020b90c1c9f67edc6f45e38c44f298b4",   # aimed @ t2-refute-default: the VERIFY step names the T2 spawn. prior: eacf1c6d… @ refute-tier-and-changed
     "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
 }

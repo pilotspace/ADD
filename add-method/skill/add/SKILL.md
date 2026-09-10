@@ -100,10 +100,10 @@ One task = one atomic node. Three beats, one human decision:
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
    · architecture — **security HARD-STOP**), then `add run <slug> -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
    for a fresh, bound receipt — `run` reads the report path your command names. Wrap the **narrowest
-   command that reports every bound check**; the full suite rides CI (run it anyway before any receipt
-   touching the engine). **No runner for your domain? Write one** — `run` parses JUnit XML and does not
-   care what produced it (`domains.md`). Then **`add gate <slug> PASS --by "<name>"`** — a **PASS
-   auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
+   command that reports every bound check**; the full suite rides CI (run it before any engine receipt).
+   **No runner? Write one** — `run` parses any JUnit XML (`domains.md`). At floor ≥ plan SPAWN
+   `add-advisor` in refute mode (T2), record its line, then **`add gate <slug> PASS --by "<name>"`** —
+   a **PASS auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
 
 Emit **lessons** as you learn them, tagged by the spec they sharpen (`ddd · sdd · udd · tdd · add`);
 the close DRAINS the ones it filed (`loop.md`, `deltas.md`). Present every human decision — intake ·
@@ -140,7 +140,7 @@ add upgrade                                  # 2.x bundle? archive it whole, ini
 add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
-add locate <path>                            # which node's scope owns a path
+add locate <path>                            # whose scope owns a path
 add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
 add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat

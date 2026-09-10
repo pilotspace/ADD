@@ -55,8 +55,8 @@ Who refutes depends on the floor:
 | tier | who | default at | defends against |
 |---|---|---|---|
 | T0 | nobody — receipt and residue only | quick depth · process floor | a stale green, an unbound rule |
-| T1 | the building session, after its own green | standard depth · process floor (optional) | an input the author forgot |
-| T2 | a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node before it reads the diff | floor ≥ plan — what the gate's `R:UNREFUTED` asks for | the same misunderstanding in check and code |
+| T1 | the building session, after its own green | a prelude — optional at a process floor, never the rung's answer | an input the author forgot |
+| T2 | a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node before it reads the diff, its line recorded with `--tier T2` | the default at floor ≥ plan — spawned, never optional; what the gate's `R:UNREFUTED` asks for | the same misunderstanding in check and code |
 | T3 | a person, at the interview and the gate | floor human | a wrong oracle |
 | T4 | a protected holdout the builder cannot read | not shipped — a CI recipe | overfitting to a visible suite |
 

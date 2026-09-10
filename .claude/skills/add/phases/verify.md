@@ -46,7 +46,7 @@ Automation covers the checks; it does not cover everything. Examine, by hand, th
 This residue stays at human speed: as fast as automated verification carries you, no faster on the rest.
 
 **The refute-read.** Before a verdict, read the green as a skeptic and RECORD it: `add refute <slug>
---by "<name>" --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
+--by "<name>" --tier T2 --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
 is only *reported* — at a plan-or-human floor the gate refuses a PASS with no refute citing the receipt (R:UNREFUTED) or a refuted one (R:REFUTED); quick, process and explore are exempt.
 
 <!-- probe-derivation -->
@@ -60,10 +60,10 @@ refreeze; one that holds stays in the repo, unbound.
 <!-- /probe-derivation -->
 
 **Who refutes — the tier ladder.** T0 nobody (quick depth · process floor: receipt + residue) · T1 the
-building session, after its own green (optional at a process floor) · T2 a fresh session — `add-advisor`
-in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node BEFORE it reads the diff
-(what the rung asks for at floor ≥ plan) · T3 a human, at the interview and the gate (floor human) ·
-T4 a protected holdout the builder cannot read — a CI recipe, not shipped: a prompt is not isolation.
+building session, after its own green — a prelude, optional, never the rung's answer · T2 the DEFAULT at
+floor ≥ plan: SPAWN a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat —
+briefed from the frozen node before it reads the diff, and record the line it returns with `--tier T2` ·
+T3 a human, at the interview and the gate (floor human) · T4 a protected holdout the builder cannot read — a CI recipe, not shipped: a prompt is not isolation.
 
 ## 3 · The gate — one recorded outcome
 

@@ -90,8 +90,10 @@ ambiguity. Spawn it at the moments confidence is lowest:
   `propose-plan` mode; fold its plan + risks in so the human freezes the stronger shape.
 - **build** — on an architecture/approach fork the frozen contract does not settle: `advise-midflight`;
   take its decision as binding for the beat (it is delegated judgement, not a suggestion to weigh forever).
-- **verify** — before recording a verdict: `refute` mode — an independent skeptic reading
-  your earned-green. If it refutes, the green is not earned; fix before you record.
+- **verify** — before recording a verdict, at floor ≥ plan: SPAWN `add-advisor` in `refute` mode
+  (T2), briefed from the frozen node before the diff, and record the line it returns with
+  `--tier T2`. Your own read is T1 — a prelude that never discharges the rung. If it refutes,
+  the green is not earned; fix before you record.
 Only a SECURITY finding on an UNFROZEN contract halts for the human — everything else the
 advisor resolves so the beat keeps moving. The advisor advises; YOU still execute and the
 orchestrator still RECORDS.

@@ -24,7 +24,7 @@ beat keeps moving. Personas carry the expertise; you carry independent, first-pr
   not a refute; if a real attempt finds none, concede it holds and say so. Default to "not yet proven"
   when uncertain — catch the plausible-but-wrong before the human or the gate does. Read the frozen
   node BEFORE the diff. End the Return with the exact line the worker records — `add refute <slug>
-  --by "advisor:<persona>" --held --probes N` or `--found "<the input>"` — never a verdict.
+  --by "advisor:<persona>" --tier T2 --held --probes N` or `--found "<the input>"` — never a verdict.
 
 <!-- probe-derivation -->
 A probe is a check the builder never saw as a target. Derive one to three from the frozen node, and only
