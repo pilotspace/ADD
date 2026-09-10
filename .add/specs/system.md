@@ -8,12 +8,13 @@ tags: [engine, pins, twins, vendored]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
 delta_seq: 18
-open_deltas: 1
+open_deltas: 0
 ---
 ## Now
 how it is built, and what that forecloses
 
 ## Decisions that bind
+- at close, grep the book for the OLD framing's phrases — a milestone that changes a default names the sentences it retires, not only the sections it edits (from: /specs/system.md#S18)
 - An evidence mode (property · contract · mutation) is a checker that emits JUnit with its threshold frozen in a Must; it ships as a runnable script the guard executes, never as prose a phrase pin watches. (from: /specs/system.md#S17)
 - For code the default frozen check is an acceptance check: the readable example is a filled Given/When/Then edge a human confirms at the interview, and an acceptance check covers it. (from: /specs/system.md#S16)
 - A rule about CHECKS is stated as the binding the gate enforces (≥1 discriminating check per referent), never as a count; a count is read as a quota and produces tests in place of evidence. (from: /specs/system.md#S15)
@@ -25,7 +26,7 @@ how it is built, and what that forecloses
 
 ## Deltas
 - <what changed, and the evidence that changed it>
-- [SDD · S18 · open · 2026-09-11] a residual sentence can invert a milestone's new default: docs/03 still said acceptance mode was for 'where no unit test fits' after acceptance-first-checks made it the default for code — sweep the book for the OLD framing's phrases, not only the sections the task names (evidence: add-method/docs/03-direction.md)
+- [SDD · S18 · folded · 2026-09-11→2026-09-11] a residual sentence can invert a milestone's new default: docs/03 still said acceptance mode was for 'where no unit test fits' after acceptance-first-checks made it the default for code — sweep the book for the OLD framing's phrases, not only the sections the task names (evidence: add-method/docs/03-direction.md)
 - [SDD · S17 · folded · 2026-09-10→2026-09-10] An evidence MODE (property · contract · mutation) needs no schema: it is a checker that emits JUnit with its threshold frozen in a Must; ship it as a runnable script the guard executes, never as prose a phrase pin watches (evidence: add-method/tests/skill/test_evidence_router_and_recipes.py)
 - [SDD · S16 · folded · 2026-09-10→2026-09-10] A frozen check is the readable example bound to an executable id: the example lives as a Given/When/Then E-edge a human confirms, the check covers it; a test id with a caption is not an oracle a stakeholder can validate (evidence: add-method/tests/skill/test_acceptance_first_checks.py)
 - [SDD · S15 · folded · 2026-09-10→2026-09-10] A rule stated as a COUNT (one check per rule) is read by an agent as a quota and produces test count in place of evidence; state the rule the gate enforces (≥1 discriminating check per referent) and say what the check is FOR (evidence: add-method/tests/skill/test_checks_bind_not_count.py)
