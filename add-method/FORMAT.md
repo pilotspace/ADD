@@ -698,7 +698,13 @@ The stamp binds PRESENCE — a named party tried, when, against which run, with 
 does not bind honesty or the quality of the probes; that limit is §10's, restated here so the stamp
 is never read as a correctness proof. It writes no verdict and moves no floor.
 
-Derived from `add.py:refute`.
+The gate READS it: at `standard|deep` depth on a Task whose computed floor (§3.1) is `plan` or
+`human`, a `PASS` is refused while no refute stamp cites the gated receipt (`R:UNREFUTED`), and
+while the latest citing stamp reads `outcome: refuted` (`R:REFUTED`). Both are evidence-class
+(§8, like `unbriefed`): `RISK-ACCEPTED` and `HARD-STOP` are never refused by them. `depth: quick`,
+a `process` floor and `kind: explore` are exempt.
+
+Derived from `add.py:refute`, `add.py:_refute_of`, `add.py:gate`.
 
 ---
 

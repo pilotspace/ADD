@@ -3186,6 +3186,36 @@ def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
                for i, s in enumerate(stamps))
 
 
+def _refute_of(stamps: list, receipt_cid: str):
+    """The outcome of the LATEST `act: refute` stamp citing `receipt_cid`, or None when no stamp does.
+
+    A refute names the receipt it read (FORMAT §8.4), so "after the gated run" is decided by the
+    citation, not by a clock: a refute of an earlier green entered nothing for this one, and a
+    stamp with no `receipt:` cites nothing. Reads presence and outcome only — never `probes:`, the
+    note, or who signed (law 3: a notary that judged a probe would be a guard).
+    """
+    outcome = None
+    for s in stamps:
+        if isinstance(s, dict) and s.get("act") == "refute" \
+                and receipt_cid and str(s.get("receipt", "")) == receipt_cid:
+            outcome = str(s.get("outcome") or "")
+    return outcome
+
+
+def _latest_run_cid(stamps: list):
+    """The receipt cid of the newest `act: run` stamp, or None — read from the record, not the disk."""
+    return next((str(s.get("receipt") or "") for s in reversed(stamps)
+                 if isinstance(s, dict) and s.get("act") == "run"), None)
+
+
+def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
+    """Does the refute rung bind this node? standard|deep × computed floor plan|human × not explore."""
+    return fm.get("type") == "Task" \
+        and str(fm.get("depth") or "standard") != "quick" \
+        and str(fm.get("kind") or "") != "explore" \
+        and authority_for(graph, cid) in ("plan", "human")
+
+
 def _last_test_cmd(root) -> str:
     """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
     index = Path(root) / "index.md"
@@ -3216,6 +3246,14 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     # that produced the word, not by a per-row hint.
     if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
+    # The refute rung's affordance: at the verify beat a rung-bound task points at `add refute`
+    # until a refute cites its latest run — the gate would refuse R:UNREFUTED otherwise, and the
+    # first contact with a rung should be a hint, not a refusal.
+    if beat == "verify" and _rung_bound(graph, cid, fm):
+        stamps = fm.get("verified") or []
+        last_run = _latest_run_cid(stamps)
+        if last_run and _refute_of(stamps, last_run) is None:
+            return f'add refute {slug} --by "<name>" --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
     # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
     # is a sentence shaped like a command; a cold agent following it types angle brackets into a
@@ -3799,8 +3837,11 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
                          f"\n---\n{n_idx['body']}")
         except (OSError, ValueError, KeyError, TypeError):
             pass                    # orientation losing a convenience must never fail a receipt
+    # The next verb is DERIVED, not hard-coded: at a plan-or-human floor a green owes a refute
+    # before the gate (R:UNREFUTED), and the first contact with a rung should be this hint.
+    hint = _next_verb(scan(root), cid, root=root) if exit_code == 0 else f"add gate {slug}"
     return {"path": runs / f"{n}.md", "receipt": receipt, "computation": " ".join(str(c) for c in command),
-            "note": f"receipt {n} recorded (exit {exit_code})\nnext: add gate {slug}"}
+            "note": f"receipt {n} recorded (exit {exit_code})\nnext: {hint}"}
 
 
 # The living spec ↔ its 5-DD competency tag (deltas.md). A delta's tag names the competency the
@@ -5742,6 +5783,9 @@ EVIDENCE_REFUSALS = (
     # prompt, which is a fact about the run, and the seal, the drift check and the placeholder guard
     # all still bind every verdict, so the RECORD cannot be forged either way.
     "unbriefed",
+    # the refute rung: same class, same argument — signing for an unrefuted green is what
+    # RISK-ACCEPTED is for, and HARD-STOP must never get harder to write down.
+    "unrefuted",
 )
 
 
@@ -6034,6 +6078,24 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             return refuse(why + ' -> "R:UNBRIEFED"',
                           f"add brief {slug} to record the entry, then re-run "
                           f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
+
+    # The refute rung (evidence-over-tests) — a green nobody tried to break is REPORTED, not
+    # earned. At a plan-or-higher floor the gate demands a refute stamp citing THIS receipt
+    # (R:UNREFUTED) whose outcome is not `refuted` (R:REFUTED). Evidence-class, like `unbriefed`:
+    # RISK-ACCEPTED is precisely for signing an unrefuted green knowingly. Quick depth, the
+    # process floor and the explore lane are exempt — the rung is aimed at payments, not renames.
+    if sealed and _binds("unrefuted", verdict) and _rung_bound(graph, cid, sfm):
+        outcome = _refute_of(sfm.get("verified") or [], receipt_cid)
+        if outcome is None:
+            return refuse("no refute cites this receipt — the green was never read against its "
+                          'frozen intent, so it is reported, not earned -> "R:UNREFUTED"',
+                          f'add refute {slug} --by "<name>" --held|--found "<input>" '
+                          f"(probes derived from RULES/EDGES only), then add gate {slug} PASS")
+        if outcome == "refuted":
+            return refuse("the latest refute of this receipt found an input that breaks it "
+                          '-> "R:REFUTED"',
+                          f"fix the build (or refreeze with the edge it exposed), add run {slug} "
+                          f"-- <cmd>, then add refute {slug} again")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}

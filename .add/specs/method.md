@@ -7,12 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 48
+delta_seq: 49
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 0
+open_deltas: 1
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -37,6 +37,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M49 · open · 2026-09-10] A notary records a value as handed, but argv is where a TYPE is refused: --probes -1 was stamped verbatim because the library trusts its caller; the front door is the one place a count can be made a count (evidence: add-method/tooling/cli.py)
 - [ADD · M48 · folded · 2026-09-10→2026-09-10] A guard comparing the working tree to HEAD is a live-editing TRIPWIRE, not an invariant: it fires while the edit is made and is inert once committed. That is a legitimate lifetime — the defect is leaving it unlabelled, so a green CI reads as the claim having held. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
 - [ADD · M47 · folded · 2026-09-10→2026-09-10] The mandate was in the right words in the wrong file: agents/add-worker.md §2 states the persona selector perfectly and loads ONLY on a spawn. A rule that lives in a file one path loads is not a rule the method has — it is a rule that path has. Check WHICH files carry an instruction, not whether it is written. (evidence: /milestones/personas-load-by-fit.md)
 - [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)

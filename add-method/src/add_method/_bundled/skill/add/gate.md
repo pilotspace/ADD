@@ -87,6 +87,8 @@ APPROVE  <the question>
   show → ask → stamp → advance.
 - **security = HARD-STOP** — the one **un-persona-negotiable** floor: a security finding is never
   persona-softened; only the human may strike this carve-out.
+- **refute before PASS** — at a plan-or-human floor the verify report shows the refute stamp (who ·
+  receipt · held|refuted · probes) before the ask; the engine refuses R:UNREFUTED without it.
 
 <constraints>
 - **Summary-first.** Never bury the decision under a task list or a diff.
@@ -94,7 +96,6 @@ APPROVE  <the question>
 - **One report per decision point.** After an approval, point at the frozen artifact — do not re-render.
 - **Batch, don't serialize.** N same-gate decisions ready together render as ONE report; APPROVE
   covers the batch in one ask, any item held back by name.
-- **Honest scope.** "Done" means the request, not the last task: report "task 2/3", never "done"
-  while approved scope remains.
+- **Honest scope.** "Done" means the request, not the last task: report "task 2/3", never "done" while approved scope remains.
 - **Presentation only.** This file never adds a gate, moves a floor, or overrides a verdict.
 </constraints>

@@ -49,12 +49,12 @@ Automation covers the checks; it does not cover everything. Examine, by hand, th
 This residue stays at human speed. You may move as fast as your automated verification carries you, and
 no faster on the part only a human can check.
 
-**The refute-read.** Before you record a verdict, read your own green as a skeptic would: take the
-receipt as a claim and try to REFUTE it — name the input the bound checks never exercise, the state
-the fixture never reaches, the rule a `covers:` binds by id but not by behavior. A green that
-survives that read is *earned*; one that has not been read against is only *reported*. Delegating a
-beat? `add-advisor` in `refute` mode is an independent reader for exactly this — if it refutes, the
-green is not earned, and you fix before recording.
+**The refute-read.** Before a verdict, read your own green as a skeptic: name the input the bound
+checks never exercise, the state the fixture never reaches, the rule a `covers:` binds by id but not
+by behavior. A green that survives is *earned*; one never read against is only *reported*. Record it:
+`add refute <slug> --by "<name>" --held|--found "<input>"` — at a plan-or-human floor the gate
+refuses a PASS with no refute citing the receipt (R:UNREFUTED) or a refuted one (R:REFUTED); quick,
+process and explore are exempt. `add-advisor` in `refute` mode is the independent reader.
 
 ## 3 · The gate — one recorded outcome
 
@@ -70,13 +70,12 @@ Exactly one outcome, always recorded:
 - **RISK-ACCEPTED** — a known, signed acceptance of a non-security risk. Sign it with the reason the
   engine requires: `add gate <slug> RISK-ACCEPTED --by "<name>" --reason "<owner · ticket · expiry>"`.
 - **HARD-STOP** — a security finding, or a gate that cannot be honestly passed. The task does **not**
-  close: it stays open, and the finding goes back to **Direction** as a change-request (fix the build,
-  or add the Must the gate exposed), then you re-Verify. A **security** HARD-STOP always escalates to a
-  human and is **never** folded into a RISK-ACCEPTED — and this one is **engine-enforced**: `gate`
-  refuses a `RISK-ACCEPTED` on any **security-floored** node (resolve it to PASS, or HARD-STOP), and
-  refuses a `PASS` on one carrying no lens. Security-floored = `sensitivity: security`, **or** a
-  `scope:` entry matching `index.md`'s `sensitive_paths:` — the path floor arms both refusals, so a
-  task editing a sensitive path cannot sign itself away by omitting `sensitivity:`.
+  close: the finding goes back to **Direction** as a change-request (fix the build, or add the Must the
+  gate exposed), then re-Verify. A **security** HARD-STOP always escalates to a human and is **never**
+  folded into a RISK-ACCEPTED — engine-enforced: `gate` refuses a `RISK-ACCEPTED` on any
+  **security-floored** node (resolve it to PASS, or HARD-STOP) and a `PASS` on one carrying no lens.
+  Security-floored = `sensitivity: security`, **or** a `scope:` entry matching `index.md`'s
+  `sensitive_paths:` — so a task editing a sensitive path cannot sign itself away by omitting `sensitivity:`.
 
 No silent skips: a gate that isn't PASS is RISK-ACCEPTED or HARD-STOP, on the record with an owner.
 Present the gate via `gate.md`.
