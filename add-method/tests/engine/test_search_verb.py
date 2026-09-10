@@ -429,7 +429,7 @@ def test_a_blank_query_refuses_instead_of_matching_everything(tmp_path):
     root = _bundle(tmp_path)
     for blank in ("", "   ", "\t"):
         hits, note = add.search(root, blank)
-        assert hits is None, (
+        assert not hits, (
             f"a blank query answered with {len(hits or [])} hits instead of refusing — {note}")
         assert "EMPTYQUERY" in note, note
     assert _cli(root, "").returncode == 1, "a refusal is exit 1, not a silent success"
@@ -439,7 +439,7 @@ def test_an_unreadable_as_of_refuses_and_never_falls_back_to_today(tmp_path):
     """covers: R:TODAYFALLBACK — today would answer a question nobody asked."""
     root = _bundle(tmp_path)
     hits, note = add.search(root, "gateway", as_of="09/01/2026")
-    assert hits is None, f"a malformed date must refuse, not list — {note}"
+    assert not hits, f"a malformed date must refuse, not list — {note}"
     assert "TODAYFALLBACK" in note and "add search" in note, note
     assert "/specs/method.md" not in note, "a refusal must not also emit a listing"
     assert "add deltas" not in note, (

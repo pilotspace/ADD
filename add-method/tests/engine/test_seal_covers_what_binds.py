@@ -118,7 +118,7 @@ def test_deleting_a_frozen_edge_is_drift(tmp_path):
     _green_receipt(root, cid, tmp_path)
 
     ok, *rest = add.gate(root, cid, "PASS", by="H")
-    assert not ok, "a frozen edge was deleted after the freeze and the gate did not notice"
+    assert ok is None, "a frozen edge was deleted after the freeze and the gate did not notice"
     assert "drift" in _msg((ok, *rest)).lower() or "refreez" in _msg((ok, *rest)).lower()
 
 
@@ -130,7 +130,7 @@ def test_unprobing_a_frozen_assumption_is_drift(tmp_path):
     _green_receipt(root, cid, tmp_path)
 
     ok, *rest = add.gate(root, cid, "PASS", by="H")
-    assert not ok, "a probed assumption was silently unprobed and the gate did not notice"
+    assert ok is None, "a probed assumption was silently unprobed and the gate did not notice"
     assert "drift" in _msg((ok, *rest)).lower() or "refreez" in _msg((ok, *rest)).lower()
 
 
@@ -142,7 +142,7 @@ def test_the_drift_refusal_binds_every_verdict(tmp_path):
     _green_receipt(root, cid, tmp_path)
 
     ok, *rest = add.gate(root, cid, "RISK-ACCEPTED", by="H", reason="probing")
-    assert not ok, "RISK-ACCEPTED signed for a silently deleted obligation"
+    assert ok is None, "RISK-ACCEPTED signed for a silently deleted obligation"
 
 
 # ------------------------------------------------- M3 · it must not over-seal

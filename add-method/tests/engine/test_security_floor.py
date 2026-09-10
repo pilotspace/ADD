@@ -19,7 +19,7 @@ def test_security_risk_cannot_be_folded_into_risk_accepted(tmp_path):
     add.init(tmp_path, "code", "T")
     add.new(tmp_path, "Task", "sec", title="auth change", sensitivity="security", scope=["auth.py"])
     ok, note = add.gate(tmp_path, "/tasks/sec.md", "RISK-ACCEPTED", by="x", reason="looks fine to me")
-    assert ok is False, "a security risk must never be recordable as a signed acceptance"
+    assert ok is None, "a security risk must never be recordable as a signed acceptance"
     assert "security" in note.lower() and "HARD-STOP" in note, f"the refusal must name the security floor: {note!r}"
 
 

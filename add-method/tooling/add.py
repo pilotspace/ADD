@@ -2380,7 +2380,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
-        return False, ["node"], f"no such node: {cid}\nnext: add status"
+        return None, ["node"], f"no such node: {cid}\nnext: add status"
 
     required = authority_for(graph, cid)
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
@@ -2451,7 +2451,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
                        "not happen, so this gate closed a node nobody ever approved")
         fix = f'add freeze {slug} --by "<name>", then re-gate'
     if missing:
-        return False, missing, ("cannot record `done` — " + "; ".join(missing) +
+        return None, missing, ("cannot record `done` — " + "; ".join(missing) +
                                 f"\nnext: {fix}")
 
     appends = []
@@ -2473,14 +2473,14 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     fm = node["fm"] or {}
     if fm.get("type") != "Task":
-        return False, f"{cid} is not a Task — reopen returns a task to a beat\nnext: add status"
+        return None, f"{cid} is not a Task — reopen returns a task to a beat\nnext: add status"
     if fm.get("status") != "done":
-        return False, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
+        return None, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
     if to not in ACTIVE_STATES:
-        return False, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
+        return None, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
     # a stamp is a pre-formatted ABF flow-map STRING, not a dict — a dict serialises as Python
     # repr (`{'by': …}`) and parses back with quoted keys, so `s.get("act")` would miss it.
     stamp = f'{{ by: loop, at: {_today()}, act: reopen, to: {to}, reason: "{reason}" }}'
@@ -2569,7 +2569,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     slug = cid.rsplit("/", 1)[-1][:-3]
     path = node["path"]
     doc = read(path, "T2")
@@ -2579,31 +2579,31 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
         headings = [ln.strip()[3:] for ln in body.splitlines() if ln.startswith("## ")]
         if not any(h.lower() == section.lower() for h in headings):
             carries = ", ".join(headings) if headings else "no `## ` sections at all"
-            return False, (f"no `## {section}` section in {cid} — it carries {carries}\n"
+            return None, (f"no `## {section}` section in {cid} — it carries {carries}\n"
                            f"next: add check {slug} <n> --section <one of those>")
 
     region = _section_of(body, section) if section else body
     where = f"`## {section}`" if section else "its body"
     if not _fence_balanced(region):
-        return False, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
+        return None, (f"{cid}'s {where} has an unclosed code fence — `check` skips fenced "
                        f"regions, so the index you counted off the file is not the index it would "
                        f"write to; NOTHING was written\n"
                        f"next: close the fence in {cid}, then add check {slug} <n>")
 
     boxes = _box_lines(body, section)
     if not boxes:
-        return False, (f"{cid} carries no checkbox in {where} — nothing to check\n"
+        return None, (f"{cid} carries no checkbox in {where} — nothing to check\n"
                        f"next: add a `- [ ] <criterion>` line first, or check a node that has one")
 
     listing = "\n".join(f"  {n}. [{'x' if m else ' '}] {text}"
                         for n, (_, m, text, _s) in enumerate(boxes, 1))
     if not indices:
-        return False, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
+        return None, (f"add check needs an index — {cid} has {len(boxes)} boxes in {where}:\n"
                        f"{listing}\nnext: add check {slug} <n> [<n> …]   (or --all)")
 
     bad = [n for n in indices if not 1 <= n <= len(boxes)]
     if bad:
-        return False, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
+        return None, (f"no box {', '.join(str(n) for n in sorted(set(bad)))} in {cid} — "
                        f"it has {len(boxes)} in {where}; NOTHING was written:\n{listing}\n"
                        f"next: add check {slug} <n> with an index in 1..{len(boxes)}")
 
@@ -2615,7 +2615,7 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                     if 1 <= n <= len(boxes) and PLACEHOLDER.search(boxes[n - 1][2])]
         if template:
             listed_t = "\n".join(f"  {n}. {text}" for n, text in template)
-            return False, (f"box {', '.join(str(n) for n, _ in template)} in {cid} is still "
+            return None, (f"box {', '.join(str(n) for n, _ in template)} in {cid} is still "
                            f"template text — checking it would release the gate on an unauthored "
                            f"criterion:\n{listed_t}\n"
                            f"next: author the criterion, then add check {slug} <n>")
@@ -2671,9 +2671,9 @@ def milestone_done(root, cid: str) -> tuple:
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     if (node["fm"] or {}).get("type") != "Milestone":
-        return False, (f"{cid} is not a Milestone — milestone-done closes milestones only\n"
+        return None, (f"{cid} is not a Milestone — milestone-done closes milestones only\n"
                        f"next: add done <task>  (for a task)")
 
     slug = cid.rsplit("/", 1)[-1][:-3]
@@ -2686,12 +2686,12 @@ def milestone_done(root, cid: str) -> tuple:
     m = re.search(r"(?mi)^\s*why:\s*(.*)$", card)
     why = (m.group(1).strip() if m else "")
     if not why or PLACEHOLDER.search(why):
-        return False, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
+        return None, (f"milestone_why_unset — {cid}'s CARD `why:` is still a placeholder\n"
                        f"next: state why {slug} exists in its CARD `why:`, then add milestone-done {slug}")
 
     exit_body = _section_of(body, "EXIT")
     if not _fence_balanced(exit_body):
-        return False, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
+        return None, (f"milestone_exit_unreadable — {cid}'s `## EXIT` has an unclosed code fence, "
                        f"so the goal-gate cannot tally its boxes; it does not close on an input it "
                        f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
                        f"then add milestone-done {slug}")
@@ -2699,7 +2699,7 @@ def milestone_done(root, cid: str) -> tuple:
     checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
 
     if unchecked:
-        return False, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
+        return None, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
 
@@ -2717,7 +2717,7 @@ def milestone_done(root, cid: str) -> tuple:
                   and _is_scaffold(n))
     if left:
         named = "\n".join(f"  · {c.rsplit('/', 1)[-1][:-3]}" for c in left)
-        return False, (f'milestone_members_unauthored ({len(left)} never authored) '
+        return None, (f'milestone_members_unauthored ({len(left)} never authored) '
                        f'-> "R:SILENTABANDON"\n{named}\n'
                        f'next: for each — author it (add freeze <slug>), drop it '
                        f'(add drop <slug> --reason "<why>"), or re-home it under a live '
@@ -2748,7 +2748,7 @@ def milestone_done(root, cid: str) -> tuple:
             # attributes — four suites unpack exactly three, so it has no `.lens`/`.text`.
             named = "\n".join(f"  · {delta_address(d[0], d.id)}  {d[2].split(' (evidence:')[0][:88]}"
                               for d in undrained)
-            return False, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
+            return None, (f'milestone_deltas_undrained ({len(undrained)} filed on or after '
                            f'{anchor}) -> "R:UNDRAINED"\n{named}\n'
                            f'next: resolve each — add fold <lens> "<match>" '
                            f'[--reject | --bind "<the decision it settles>"] — '
@@ -2792,20 +2792,20 @@ def drop(root, cid: str, reason: str) -> tuple:
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     fm = node["fm"] or {}
     node_type = fm.get("type")
     if node_type not in LIFECYCLE_TYPES:
-        return False, (f'only a lifecycle node can be dropped — `{cid}` is a {node_type}, which '
+        return None, (f'only a lifecycle node can be dropped — `{cid}` is a {node_type}, which '
                        f'has no plan to be withdrawn from -> "R:NOTATASK"\nnext: add status')
     if fm.get("status") == "done":
-        return False, (f"`{cid}` is done — a gate recorded that verdict against a receipt, and "
+        return None, (f"`{cid}` is done — a gate recorded that verdict against a receipt, and "
                        f"`drop` would overwrite it with a planning note\n"
                        f"next: add reopen {cid.rsplit('/', 1)[-1][:-3]} --to <beat> --reason "
                        f'"<why>"   # revisits a done task without erasing its gate')
     slug = cid.rsplit("/", 1)[-1][:-3]
     if fm.get("status") == "dropped":
-        return False, f"`{slug}` is already dropped\nnext: add status"
+        return None, f"`{slug}` is already dropped\nnext: add status"
     # A stamp is a pre-formatted ABF flow-map STRING, not a dict — `reopen` learned this the
     # hard way; a dict serialises as Python and no reader parses it back.
     stamp = f'{{ by: loop, at: {_today()}, act: drop, reason: "{reason}" }}'
@@ -2823,13 +2823,13 @@ def milestone_archive(root, cid: str) -> tuple:
     root = Path(root)
     node = scan(root).get(cid)
     if node is None:
-        return False, f"no such node: {cid}\nnext: add status"
+        return None, f"no such node: {cid}\nnext: add status"
     fm = node["fm"] or {}
     slug = cid.rsplit("/", 1)[-1][:-3]
     if fm.get("type") != "Milestone":
-        return False, f"{cid} is not a Milestone — archive retires milestones only\nnext: add status"
+        return None, f"{cid} is not a Milestone — archive retires milestones only\nnext: add status"
     if fm.get("status") != "done":
-        return False, (f"cannot archive — {cid} is `{fm.get('status')}`, not done "
+        return None, (f"cannot archive — {cid} is `{fm.get('status')}`, not done "
                        f"(close it first: add milestone-done {slug})\nnext: add status")
     _transition(root, cid, sets={"status": "archived"})
     return True, f"{cid} archived\nnext: add status"
@@ -3615,11 +3615,17 @@ def scope_digest(root, scope: list) -> list:
 
 
 def fresh(receipt: dict, root) -> tuple:
-    """`(ok, why)` — recompute the digest and compare. Any difference is stale."""
+    """`(ok, why)` — THREE states, and the third is the point.
+
+    `True` fresh · `False` stale · `None` freshness cannot be established. Stale is an ANSWER —
+    the receipt observed code that has since changed, which is exactly what a caller asked. An
+    unmeasurable receipt is not that answer, and collapsing the two would report a clean `stale`
+    over a question the engine could not ask (R:UNKNOWNCLEAN, one verb further on).
+    """
     root = Path(root)
     recorded = receipt.get("scope_digest") or []
     if receipt.get("freshness") != "content" or not recorded:
-        return False, ("receipt carries no content digest — freshness cannot be established "
+        return None, ("receipt carries no content digest — freshness cannot be established "
                        "(the bundle parent was not a git working tree at run time, or the "
                        "node's `scope:` paths did not exist there)")
     # One batched hash over the existing files; the walk below keeps the original per-entry
@@ -3994,11 +4000,11 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     self-consolidates).
     """
     if not evidence:
-        return False, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
+        return None, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
-        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+        return None, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     comp = LENS_COMP.get(lens, lens.upper())
@@ -4213,13 +4219,13 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     re-points every relation that targets them.
     """
     if reject and bind:
-        return False, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
+        return None, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
                        '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
                        'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
-        return False, (f"no such spec lens: {lens} — the vocabulary is closed: "
+        return None, (f"no such spec lens: {lens} — the vocabulary is closed: "
                        f"{' | '.join(lenses)}"
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     # ONE matcher, two verdicts. `rejected` has been in DELTA_STATUSES since the grammar was
@@ -4248,7 +4254,7 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
                     ids.append(rec["id"])
         out.append(line)
     if not folded:
-        return False, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
+        return None, f"R:NOMATCH — no open delta in {lens} matching '{match}'\nnext: add deltas"
     body = "".join(out)
     # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
     # the same call failed to retag.
@@ -5645,7 +5651,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     slug = cid.rsplit("/", 1)[-1][:-3]
 
     def refuse(why: str, fix: str) -> tuple:
-        return False, f"cannot record `{verdict}` — {why}\nnext: {fix}"
+        return None, f"cannot record `{verdict}` — {why}\nnext: {fix}"
 
     if verdict not in VERDICTS:
         return refuse(f"unknown verdict {verdict!r}",
@@ -5738,7 +5744,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                  + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
-            return False, t_err + "\nnext: add status"
+            return None, t_err + "\nnext: add status"
         if closes:
             done(root, cid)
             render_card(root, cid)
@@ -5920,7 +5926,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
              + (f', reason: "{_oneline(reason)}"' if reason else "") + " }")
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
     if t_err:
-        return False, t_err + "\nnext: add status"
+        return None, t_err + "\nnext: add status"
 
     if closes:
         done(root, cid)
@@ -6515,7 +6521,7 @@ def doctor_sync(root) -> tuple:
             write(idx, f"---\n{set_key(n['raw'], 'tooling_engine', ENGINE)}\n---\n{n['body']}")
         changed.append("tooling engine (re-vendored)")
     if not changed:
-        return False, ("every compiled artifact already matches the nodes\n"
+        return None, ("every compiled artifact already matches the nodes\n"
                        "next: add doctor  (to see what is reported but not repairable)")
     return True, ("recomputed " + " · ".join(changed) +
                   "\nnext: add doctor  (orphaned receipts and gated claims are never repaired)")

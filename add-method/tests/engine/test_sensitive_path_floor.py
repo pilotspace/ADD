@@ -119,7 +119,7 @@ def test_path_floored_node_refuses_risk_accepted(tmp_path):
     """covers: R:SECURITYFOLD — a path-floored node cannot be folded into a RISK-ACCEPTED."""
     root, cid = _repo_with_node(tmp_path, "src/auth/login.py", ["src/auth/**"])
     ok, note = add.gate(root, cid, "RISK-ACCEPTED", by="human:tindang", reason="demo")
-    assert ok is False, "a path-floored node must not be signed into a RISK-ACCEPTED"
+    assert ok is None, "a path-floored node must not be signed into a RISK-ACCEPTED"
     assert "HARD-STOP" in note or "security" in note.lower(), note
     assert not _gate_stamped(root, cid), "a refused gate must record no stamp"
 
@@ -128,7 +128,7 @@ def test_path_floored_node_refuses_pass_without_lens(tmp_path):
     """covers: R:NOCOVERAGE — a path-floored node needs a named lens to be signed PASS."""
     root, cid = _repo_with_node(tmp_path, "src/auth/login.py", ["src/auth/**"])
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
-    assert ok is False, "a path-floored PASS with no lens must be refused"
+    assert ok is None, "a path-floored PASS with no lens must be refused"
     assert "R:NOCOVERAGE" in note or "lens" in note.lower(), note
     assert not _gate_stamped(root, cid), "a refused gate must record no stamp"
 

@@ -220,7 +220,7 @@ def test_a_milestone_why_guard_is_unchanged(tmp_path):
     add.init(root, profile="code", title="milestone probe")
     add.new(root, "Milestone", "theme")
     node, err = add.freeze(root, "/milestones/theme.md", by="t", authority="human")
-    assert not node, "freeze admitted a scaffold milestone"
+    assert node is None, "freeze admitted a scaffold milestone"
     assert "scaffold" in err.lower() and "why" in err.lower(), err
     assert "CARD" in err, "the milestone's own guard no longer names the sections it wants"
 

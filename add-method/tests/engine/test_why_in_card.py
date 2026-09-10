@@ -51,7 +51,7 @@ def test_refuses_unset_why_even_when_boxes_checked(tmp_path):
     cid, _ = add.new(tmp_path, "Milestone", "m", title="m")
     _fill_exit(tmp_path, cid, "- [x] all done\n")  # goal-gate satisfied; why: still a placeholder
     ok, note = add.milestone_done(tmp_path, cid)
-    assert ok is False, "an unset why: must refuse the close even with all boxes checked"
+    assert ok is None, "an unset why: must refuse the close even with all boxes checked"
     assert "why" in note.lower()
     assert (add.read(tmp_path / cid.lstrip("/"), "T0")["fm"] or {}).get("status") != "done"
 

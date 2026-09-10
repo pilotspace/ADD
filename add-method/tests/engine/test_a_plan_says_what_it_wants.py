@@ -95,7 +95,7 @@ def test_a_milestone_cannot_close_on_unauthored_tasks(bundle):
     _task(bundle, "t-left-behind", "m-holding")
     _task(bundle, "t-also-left", "m-holding")
     ok, note = add.milestone_done(bundle, holding)
-    assert not ok, "R:SILENTABANDON — the milestone closed and left two unauthored tasks behind"
+    assert ok is None, "R:SILENTABANDON — the milestone closed and left two unauthored tasks behind"
     for slug in ("t-left-behind", "t-also-left"):
         assert slug in note, f"A6 — the refusal did not name `{slug}`:\n{note}"
     for fix in ("author", "drop", "milestone"):
@@ -127,7 +127,7 @@ def test_drop_writes_the_status_the_engine_reads(bundle):
     n = add.read(path, "T2")
     add.write(path, f"---\n{add.set_key(n['raw'], 'status', 'done')}\n---\n{n['body']}")
     ok, note = add.drop(bundle, "/tasks/t-done.md", "changed my mind")
-    assert not ok, "A10 — `drop` overwrote a recorded `done` verdict"
+    assert ok is None, "A10 — `drop` overwrote a recorded `done` verdict"
     assert "reopen" in note, f"the refusal did not name the verb that does revisit a done task:\n{note}"
 
 

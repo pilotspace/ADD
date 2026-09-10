@@ -96,7 +96,7 @@ def test_done_refuses_without_gate(bundle):
     """covers: M3, R:FORGE — no gate stamp, no transition, and the note says why."""
     cid, _ = add.new(bundle, "Task", "ungated", title="U")
     ok, missing, note = add.done(bundle, cid)
-    assert ok is False
+    assert ok is None
     assert missing, "nothing was reported as missing"
     assert add.read(bundle / cid.lstrip("/"), "T0")["fm"]["status"] != "done"
 

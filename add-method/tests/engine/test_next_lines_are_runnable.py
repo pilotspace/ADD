@@ -116,7 +116,7 @@ def test_an_unbound_gate_names_the_run_idiom_when_the_receipt_carries_no_ids(tmp
     assert receipt["ids"] == "unknown", f"fixture did not reach ids:unknown: {receipt}"
 
     ok, note = add.gate(root, cid, "PASS", by="H")
-    assert not ok, f"an unbound gate was recorded as PASS: {note}"
+    assert ok is None, f"an unbound gate was recorded as PASS: {note}"
     # UNCONDITIONAL. This assertion used to sit under `if "no reported passing check" in note:`
     # and the fixture never reached that arm — the node was unauthored, so the gate refused for
     # its placeholders and the branch was dead. A guarded assertion in a test is a guard that
@@ -152,7 +152,7 @@ def test_an_unknown_lens_names_the_closed_set(tmp_path):
     """covers: M5, A5 — `next: add status` is not the fix for a five-word vocabulary."""
     root = _bundle(tmp_path)
     ok, note = add.learn(root, "testing", "a lesson", evidence="deadbeef")
-    assert not ok
+    assert ok is None
     named = [l for l in ("domain", "system", "experience", "quality", "method") if l in note]
     assert len(named) >= 4, f"the refusal does not name the closed set: {note!r}"
 

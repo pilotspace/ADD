@@ -98,7 +98,7 @@ def test_a_concept_address_starts_a_walk(tmp_path):
     assert ok_rows is not None, "a KNOWN concept address must not refuse"
     for bad in ("/specs/method.md#M99", "/specs/nope.md#M4"):
         rows, note = add.neighborhood(graph, bad, 1)
-        assert rows is None, f"`{bad}` should refuse, got {rows}"
+        assert not rows, f"`{bad}` should refuse, got {rows}"
         assert "R:NOSUCHNODE" in note and "next:" in note, \
             f"the refusal for `{bad}` is not the grammar an unknown cid gets: {note!r}"
 

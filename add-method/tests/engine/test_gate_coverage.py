@@ -97,7 +97,7 @@ def test_security_pass_without_lens_refuses(tmp_path):
     """covers: R:NOCOVERAGE — a security node with a green bound receipt but no lens refuses PASS."""
     root, cid = _repo_with_node(tmp_path, "security")
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
-    assert ok is False, "a security PASS with no lens must be refused"
+    assert ok is None, "a security PASS with no lens must be refused"
     assert "R:NOCOVERAGE" in note or "lens" in note.lower(), note
     fm = add.read(root / cid.lstrip("/"), "T2")["fm"]
     assert not any(s.get("act") == "gate" for s in (fm.get("verified") or []) if isinstance(s, dict)), \

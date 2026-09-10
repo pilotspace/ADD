@@ -65,7 +65,7 @@ def test_gate_refuses_open_questions_naming_them(tmp_path):
     ok, note = _freeze(root, cid)
     assert ok, note
     ok, note = add.gate(root, cid, "PASS", by="human:t")
-    assert not ok, "a PASS with zero findings must refuse"
+    assert ok is None, "a PASS with zero findings must refuse"
     assert "M1" in note and re.search(r"open", note, re.I), note
 
 
@@ -135,7 +135,7 @@ def test_gate_refuses_unfrozen_explore(tmp_path):
     _set_section(root, cid, "FINDINGS",
                  "- F1 (answers M1) · the admit path is atomic · (evidence: src/svc.py:42)")
     ok, note = add.gate(root, cid, "PASS", by="human:t")
-    assert not ok, "an unfrozen explore must not gate"
+    assert ok is None, "an unfrozen explore must not gate"
     assert "R:UNFROZEN_EXPLORE" in note, note
     assert add.scan(root)[cid]["fm"]["status"] != "done"
 

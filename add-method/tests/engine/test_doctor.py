@@ -389,7 +389,7 @@ def test_sync_is_idempotent(bundle):
     add.new(bundle, "Task", "settled", title="a bundle already in sync")
     add.doctor_sync(bundle)
     changed, note = add.doctor_sync(bundle)
-    assert not changed, f"a second sync still wanted to write: {note}"
+    assert changed is None, f"a second sync still wanted to write: {note}"
 
 
 def test_doctor_on_the_live_bundle_is_clean():

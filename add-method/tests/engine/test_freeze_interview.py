@@ -164,7 +164,7 @@ def test_freeze_refuses_an_uninterviewed_human_floor_node(tmp_path):
     cid = _human_floor(root, "unasked", na=4)
 
     node, note = add.freeze(root, cid, by="Tin Dang", authority="human")
-    assert not node, "the ONE approval was recorded for questions never asked"
+    assert node is None, "the ONE approval was recorded for questions never asked"
     assert "R:UNINTERVIEWED" in note, note
 
 
@@ -177,7 +177,7 @@ def test_freeze_refusal_keys_on_the_computed_floor(tmp_path):
     cid = _human_floor(root, "downgraded", na=4)
 
     node, note = add.freeze(root, cid, by="Tin Dang", authority="process")
-    assert not node, "`--authority process` switched the interview off on a security node"
+    assert node is None, "`--authority process` switched the interview off on a security node"
     assert "R:UNINTERVIEWED" in note, note
 
 
@@ -219,7 +219,7 @@ def test_a_corrected_item_leaves_the_interview_incomplete(tmp_path):
                                       for q in qs}, by="Tin Dang")
 
     node, note = add.freeze(root, cid, by="Tin Dang", authority="human")
-    assert not node, "an item the human asked to CORRECT was frozen as approved"
+    assert node is None, "an item the human asked to CORRECT was frozen as approved"
     assert "A6" in note, note
 
 
@@ -235,7 +235,7 @@ def test_editing_an_assumption_makes_the_interview_stale(tmp_path):
                  encoding="utf-8")
 
     node, note = add.freeze(root, cid, by="Tin Dang", authority="human")
-    assert not node, "an assumption was reworded after approval and the stamp still counted"
+    assert node is None, "an assumption was reworded after approval and the stamp still counted"
     assert "R:UNINTERVIEWED" in note, note
 
 
@@ -312,7 +312,7 @@ def test_interview_runs_last_in_the_ladder(tmp_path):
     cid, _ = add.new(root, "Task", "stub", title="stub", sensitivity="security")
 
     node, note = add.freeze(root, cid, by="Tin Dang", authority="human")
-    assert not node
+    assert node is None
     assert "R:UNINTERVIEWED" not in note, "asked the human about template slots: " + str(note)
     assert "placeholder" in str(note).lower(), note
 
@@ -398,7 +398,7 @@ def test_a_partial_interview_is_completed_by_a_second_pass(tmp_path):
     add.interview(root, cid, answers={q["id"]: "confirm" for q in first}, by="H")
 
     node, note = add.freeze(root, cid, by="H", authority="human")
-    assert not node, "a partial interview satisfied the gate"
+    assert node is None, "a partial interview satisfied the gate"
     for q in rest:
         assert q["id"] in note, f"{q['id']} is owed but not named: {note}"
 
@@ -419,5 +419,5 @@ def test_a_later_correct_overrides_an_earlier_confirm(tmp_path):
     add.interview(root, cid, answers={qs[0]["id"]: "correct"}, by="H")
 
     node, note = add.freeze(root, cid, by="H", authority="human")
-    assert not node, "a later `correct` was outranked by the earlier `confirm`"
+    assert node is None, "a later `correct` was outranked by the earlier `confirm`"
     assert qs[0]["id"] in note, note
