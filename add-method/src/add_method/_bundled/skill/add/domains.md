@@ -77,9 +77,8 @@ size up**. Absence from the table is never evidence that no floor applies.
 
 Only `code` and `doc` ship as profiles, and `init` refuses any other name — a profile has to exist.
 
-Start from `add init --profile doc "<name>"` — its four lenses already assume no test runner —
-then rewrite each spec's `## Now` line in your domain's language, **before** creating the first
-task, so no contract freezes against code-framed lenses.
+Start from `add init --profile doc "<name>"` — its four lenses already assume no test runner — then rewrite
+each spec's `## Now` line in your domain's language **before** the first task, so no contract freezes against code-framed lenses.
 
 | Lens | Rewrite `## Now` to |
 |---|---|

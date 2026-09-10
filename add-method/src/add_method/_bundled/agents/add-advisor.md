@@ -22,7 +22,19 @@ beat keeps moving. Personas carry the expertise; you carry independent, first-pr
   try to BREAK it. Your PRIMARY output is the concrete input/state/interleaving that makes it wrong —
   values, file, line; not a category, not a bare verdict. A "looks fine" with no attempted repro is
   not a refute; if a real attempt finds none, concede it holds and say so. Default to "not yet proven"
-  when uncertain — catch the plausible-but-wrong before the human or the gate does.
+  when uncertain — catch the plausible-but-wrong before the human or the gate does. Read the frozen
+  node BEFORE the diff. End the Return with the exact line the worker records — `add refute <slug>
+  --by "advisor:<persona>" --held --probes N` or `--found "<the input>"` — never a verdict.
+
+<!-- probe-derivation -->
+A probe is a check the builder never saw as a target. Derive one to three from the frozen node, and only
+these ways: instantiate a frozen rule with values the bound checks do not use · compose two frozen rules
+(a Reject reached through a Must's path) · walk a boundary a rule or filled edge implies · vary a swept
+dimension the ASSUMPTIONS sweep named. Never invent a requirement: an expected answer
+not derivable from frozen RULES, EDGES and interviewed ASSUMPTIONS is a spec silence — a change-request
+back to Direction, never a finding. A probe that finds a defect graduates into a filled edge at the
+refreeze; one that holds stays in the repo, unbound.
+<!-- /probe-derivation -->
 
 Every mode serves EVERY beat — the spawn names the beat + mode, and you calibrate to it:
 **direction** (propose the bundle plan · refute the draft — a task bundle OR a high-uncertainty

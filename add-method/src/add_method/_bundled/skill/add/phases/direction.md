@@ -18,12 +18,10 @@ silent skip. Keep it to one line; a full section would just re-weigh the bundle.
 
 ## Ground first (AI-owned, adds no approval)
 
-Before drafting, gather the real code the task touches — actual files, symbols, signatures,
-conventions — into a lean grounding map, and surface the **anchors** the contract will cite. In a
-milestone, ground is gathered ONCE on the milestone (`## GROUND`); tasks **project** from it and never
-re-ground the repo. Aim the bundle at reality, not assumption. Take the **lens** with it: the
-`.add/personas/` entry whose `flow:` names design and whose `task-kinds:` covers the node's `kind:`;
-no fit → `.add/personas-index/use-when.md`; none there → proceed. Record it: `add advise <slug> --persona <p>`.
+Before drafting, gather the real code the task touches — files, symbols, signatures, conventions — into
+a lean grounding map and surface the **anchors** the contract will cite. In a milestone, ground is gathered
+ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.add/personas/` entry whose
+`flow:` names design and whose `task-kinds:` covers the node's `kind:`; no fit → `.add/personas-index/use-when.md`; none → proceed. Record it: `add advise <slug> --persona <p>`.
 
 ## The five sections (all in the node body)
 
@@ -144,10 +142,9 @@ needs: [/tasks/session-store.md#gives]            # a frozen fragment it builds 
 
 ## The one approval — freeze
 
-`add freeze` **stamps direction closed** — the single human approval that opens Build. It does *not*
-bind coverage and does *not* write `gives:` (author that above). The `covers:`→rule binding — every
-`M<n>` and `R:<CODE>` covered by a passing check — is enforced later, at **`add gate`**, against a real
-receipt. Freeze is the approval; the gate is the proof.
+`add freeze` **stamps direction closed** — the single human approval that opens Build. It does *not* bind
+coverage and does *not* write `gives:` (author that above); the `covers:`→rule binding is enforced later, at
+**`add gate`**, against a real receipt. Freeze is the approval; the gate is the proof.
 
 ```bash
 add interview <slug>                                  # read the open decisions
@@ -164,14 +161,12 @@ assumption, every Reject and every filled edge into a numbered question carrying
 and the cost if wrong; `freeze` refuses until each is `confirm`, `correct` or `defer` (R:UNINTERVIEWED).
 Every other refusal checks the DOCUMENT — this one checks the CONVERSATION.
 
-Put the questions to the human for real, one decision at a time, in their own words.
-**Never record an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
-cleared by editing the item, which moves the digest and re-opens the pass. `defer` does complete
-one — a human may accept a risk knowingly. Reword an interviewed assumption afterwards and the
-interview goes stale; edit a Must and it does not, because the Musts came from them.
+Put the questions to the human for real, one decision at a time, in their own words. **Never record an
+answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is cleared by editing
+the item, which moves the digest and re-opens the pass; `defer` does — a human may accept a risk knowingly.
+Reword an interviewed assumption or edge and the interview goes stale; edit a Must and it does not.
 
 ## When Direction reveals a gap
 
-If drafting the checks exposes a missing rule, that is the method working — fold it into RULES and
-re-derive forward. Backward correction is always allowed; forward-skipping (building before checks are
-red) is forbidden. → then `phases/build.md`.
+If drafting the checks exposes a missing rule, that is the method working — fold it into RULES and re-derive
+forward. Backward correction is always allowed; forward-skipping (building before red) is forbidden. → `phases/build.md`.

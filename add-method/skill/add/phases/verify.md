@@ -8,8 +8,7 @@ covers the node's `kind:`; no fit → `.add/personas-index/use-when.md`; none th
 ## 1 · Gather the evidence — a fresh, bound receipt
 
 ```bash
-add run <slug> -- \
-    <the test command, carrying its own `--junitxml="${TMPDIR:-/tmp}/add-run.xml"`>
+add run <slug> -- <the test command, carrying its own `--junitxml="${TMPDIR:-/tmp}/add-run.xml"`>
 ```
 
 `run` executes your command, parses the JUnit report, and writes a **Run receipt** under
@@ -33,11 +32,9 @@ rides CI or a backgrounded run, and a slow unbound check stays out of the receip
 command's ceiling is **900 s**; a legitimately slow bound check raises it with `--timeout <s>` — a
 timeout is *recorded* as exit 124 and the gate refuses the PASS.
 
-Evidence kinds the engine can actually stamp, strongest first: `test-ids` (a runner reported the
-IDs your `covers:` names) > `command-exit` (the command exited 0, and nothing is bound to a named
-check). A findings-only explore gates on `sources` instead — cited questions closed, no run
-receipt. A weaker kind is a *visible* weakening (the receipt records which it earned), never a
-silent one — and a kind nothing can stamp is not a weak rung, it is a false one.
+Evidence kinds the engine can stamp, strongest first: `test-ids` (a runner reported the IDs your
+`covers:` names) > `command-exit` (exit 0, nothing bound). A findings-only explore gates on `sources`.
+A weaker kind is a *visible* weakening (the receipt records which it earned), never a silent one.
 
 ## 2 · Check the residue — three lenses
 
@@ -46,15 +43,27 @@ Automation covers the checks; it does not cover everything. Examine, by hand, th
 - **concurrency** — races, ordering, atomicity under load.
 - **architecture** — boundary and dependency violations a passing test won't reveal.
 
-This residue stays at human speed. You may move as fast as your automated verification carries you, and
-no faster on the part only a human can check.
+This residue stays at human speed: as fast as automated verification carries you, no faster on the rest.
 
-**The refute-read.** Before a verdict, read your own green as a skeptic: name the input the bound
-checks never exercise, the state the fixture never reaches, the rule a `covers:` binds by id but not
-by behavior. A green that survives is *earned*; one never read against is only *reported*. Record it:
-`add refute <slug> --by "<name>" --held|--found "<input>"` — at a plan-or-human floor the gate
-refuses a PASS with no refute citing the receipt (R:UNREFUTED) or a refuted one (R:REFUTED); quick,
-process and explore are exempt. `add-advisor` in `refute` mode is the independent reader.
+**The refute-read.** Before a verdict, read the green as a skeptic and RECORD it: `add refute <slug>
+--by "<name>" --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
+is only *reported* — at a plan-or-human floor the gate refuses a PASS with no refute citing the receipt (R:UNREFUTED) or a refuted one (R:REFUTED); quick, process and explore are exempt.
+
+<!-- probe-derivation -->
+A probe is a check the builder never saw as a target. Derive one to three from the frozen node, and only
+these ways: instantiate a frozen rule with values the bound checks do not use · compose two frozen rules
+(a Reject reached through a Must's path) · walk a boundary a rule or filled edge implies · vary a swept
+dimension the ASSUMPTIONS sweep named. Never invent a requirement: an expected answer
+not derivable from frozen RULES, EDGES and interviewed ASSUMPTIONS is a spec silence — a change-request
+back to Direction, never a finding. A probe that finds a defect graduates into a filled edge at the
+refreeze; one that holds stays in the repo, unbound.
+<!-- /probe-derivation -->
+
+**Who refutes — the tier ladder.** T0 nobody (quick depth · process floor: receipt + residue) · T1 the
+building session, after its own green (optional at a process floor) · T2 a fresh session — `add-advisor`
+in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node BEFORE it reads the diff
+(what the rung asks for at floor ≥ plan) · T3 a human, at the interview and the gate (floor human) ·
+T4 a protected holdout the builder cannot read — a CI recipe, not shipped: a prompt is not isolation.
 
 ## 3 · The gate — one recorded outcome
 
@@ -65,10 +74,8 @@ add gate <slug> PASS --by "<name>"          # a PASS auto-closes (add done only 
 Exactly one outcome, always recorded:
 - **PASS** — complete, fresh, bound evidence and clean residue. At **quick** depth, on a green,
   no-residue, `covers`-bound receipt the AI may record the PASS itself at `process` authority — an
-  explicit pass you run, never an engine auto-verdict. Residue, or a higher sensitivity floor,
-  escalates to a human.
-- **RISK-ACCEPTED** — a known, signed acceptance of a non-security risk. Sign it with the reason the
-  engine requires: `add gate <slug> RISK-ACCEPTED --by "<name>" --reason "<owner · ticket · expiry>"`.
+  explicit pass you run, never an engine auto-verdict; residue or a higher floor escalates to a human.
+- **RISK-ACCEPTED** — a known, signed acceptance of a non-security risk: `add gate <slug> RISK-ACCEPTED --by "<name>" --reason "<owner · ticket · expiry>"`.
 - **HARD-STOP** — a security finding, or a gate that cannot be honestly passed. The task does **not**
   close: the finding goes back to **Direction** as a change-request (fix the build, or add the Must the
   gate exposed), then re-Verify. A **security** HARD-STOP always escalates to a human and is **never**

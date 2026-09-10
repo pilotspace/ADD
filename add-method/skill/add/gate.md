@@ -21,9 +21,8 @@ So a human scanning a long chat spots "this needs me" without reading prose:
 ════════════════════════════════════════════════════════════════
 ```
 
-- Title is the real H1 (bolded), not the bare slug. Name the actual file(s) so the human opens them;
-  omit the milestone half for a milestone-free task.
-- Any `§`-named section referenced in the report is **bolded** (`**§3 PLAN**`) so a scanning eye lands.
+- Title is the real H1 (bolded), not the bare slug; name the actual file(s); omit the milestone half for a
+  milestone-free task. Any `§`-named section referenced in the report is **bolded** (`**§3 PLAN**`).
 
 ## The ARC — rendered next
 

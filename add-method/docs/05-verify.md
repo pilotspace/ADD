@@ -37,6 +37,31 @@ Automated checks are excellent at behavior on defined inputs and poor at a few s
 
 This residue stays at human speed. You may move as fast as your *automated* verification carries you, and no faster on the part only a human can check.
 
+### The refute — who tries to break the green, and how
+
+A green nobody has tried to break is *reported*, not *earned*. Before the gate, someone reads the receipt against the frozen intent and records the attempt with `add refute` (§8.4 of the bundle format). The probes they run are derived from the frozen node by a closed list — the same list the skill's `verify.md` and the advisor's `refute` mode carry:
+
+| derivation | example |
+|---|---|
+| instantiate a frozen rule with values the bound checks do not use | the transfer example at 0, at the exact balance, at balance + 1 |
+| compose two frozen rules | reach `R:forbidden` through the successful-transfer path |
+| walk a boundary a rule or filled edge implies | the inclusive end of a date range the Must names |
+| vary a swept dimension the ASSUMPTIONS named | two same-second transfers in the other order; an absent amount |
+
+Never invent a requirement: an expected answer that cannot be derived from frozen RULES, EDGES and interviewed ASSUMPTIONS is a spec silence — a change-request back to Direction, never a finding. A probe that finds a defect graduates into a filled edge at the refreeze; one that holds stays in the repository as an unbound regression test.
+
+Who refutes depends on the floor:
+
+| tier | who | default at | defends against |
+|---|---|---|---|
+| T0 | nobody — receipt and residue only | quick depth · process floor | a stale green, an unbound rule |
+| T1 | the building session, after its own green | standard depth · process floor (optional) | an input the author forgot |
+| T2 | a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node before it reads the diff | floor ≥ plan — what the gate's `R:UNREFUTED` asks for | the same misunderstanding in check and code |
+| T3 | a person, at the interview and the gate | floor human | a wrong oracle |
+| T4 | a protected holdout the builder cannot read | not shipped — a CI recipe | overfitting to a visible suite |
+
+T4 is a recipe on purpose: a CLI-only method cannot hide a file from an agent that reads the repository, and a prompt that says "do not read the hidden tests" is not isolation.
+
 ## The deep check — reviewer discipline, not an engine gate
 
 Two failures slip straight past green checks, and no engine can see them for you — this is diligence the reviewer owes, not a box the tool fills:
