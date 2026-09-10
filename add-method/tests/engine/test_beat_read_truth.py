@@ -86,9 +86,17 @@ def test_orientation_reads_no_node_body(bundle):
 
 
 def test_a_scaffold_reports_the_scaffold_beat(bundle):
-    """covers: A4, E4 · a never-authored node is not reported as direction-in-progress."""
+    """covers: A4, E4 · a never-authored node is not reported as direction-in-progress.
+
+    RE-AIMED (a-plan-says-what-it-wants): the beat word for an unauthored task is now one of
+    `queued · abandoned · adrift` — which plan wants it. The RULE this check exists for is
+    unchanged and is what it still asserts: whatever the word is, it is not `direction`.
+    """
     add.new(bundle, "Task", "untouched", depth="quick")
-    assert "[scaffold]" in _status_line(add.status(bundle), "untouched")
+    row = _status_line(add.status(bundle), "untouched")
+    assert any(f"[{k}]" in row for k in add.SCAFFOLD_KINDS), \
+        f"an unauthored task reports none of {add.SCAFFOLD_KINDS}: {row}"
+    assert "[direction]" not in row, f"a never-authored node reads as direction-in-progress: {row}"
 
 
 def test_a_reopened_task_reports_its_reset_beat(bundle):
@@ -155,7 +163,7 @@ def test_every_reader_derives_the_beat_through_one_function():
         assert "_beat_of" in called, f"{reader} does not derive the beat through `_beat_of`"
 
     # No second derivation: only `_beat_of` may read the stamp ledger to decide a beat word.
-    beats = {"scaffold", "direction", "build", "verify"}
+    beats = {"scaffold", "direction", "build", "verify"} | set(add.SCAFFOLD_KINDS)
     for name, fn in funcs.items():
         if name == "_beat_of":
             continue

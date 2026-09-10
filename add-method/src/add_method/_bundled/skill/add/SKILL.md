@@ -24,14 +24,14 @@ You turn intent into the right-sized task, then drive it. ADD keeps the AI fast 
 passing evidence**, not on a diff that reads plausible. The bundle survives; the code is disposable.
 
 **Engine.** `add` below = `python3 .add/tooling/cli.py` (the ABF-1 CLI) — the vendored copy the
-installer drops into your project, which stamps `tooling_engine:`; `status --check` warns if it drifts.
+installer drops in, which stamps `tooling_engine:`; `status --check` warns if it drifts.
 **First run in a fresh project** (no `.add/tooling/` yet): materialize it once with the package
-installer — `pilotspace-add init "<name>"` (pip) or `add init "<name>"` / `npx @pilotspace/add init
-"<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` when installed as the
-Claude Code plugin — then drive from `.add/tooling/cli.py`. State
-lives in the `.add/` bundle — files are the database, `graph.json` is a rebuildable cache. The engine
-records; it never runs the method or spawns an agent. The full loop surface — including `fold ·
-reopen · deltas · search · show · check · milestone-archive` — is wired.
+installer — `pilotspace-add init "<name>"` (pip), `add init "<name>"` / `npx @pilotspace/add init
+"<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` as the Claude
+Code plugin — then drive from `.add/tooling/cli.py`. State lives in the `.add/` bundle — files are
+the database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
+spawns an agent. The full loop surface — `fold · reopen · drop · deltas · search · show · check ·
+milestone-archive` — is wired.
 
 ## Always start here (orient — do not skip)
 
@@ -39,9 +39,8 @@ Run **`add status`** first, every session — it is your resume point, read from
 repo. Then branch:
 
 - **No `.add/` yet** → `add init --profile <code|doc> "<name>"` — those two ship, and `init`
-  refuses any other name rather than guess. Non-code domain? Take `doc`, then re-author its
-  lenses (`domains.md`). Offer to seed starter personas (`seed.md`,
-  opt-in), then size the request (Intake).
+  refuses any other name rather than guess. Non-code domain? Take `doc`, then re-author its lenses
+  (`domains.md`). Offer to seed starter personas (`seed.md`, opt-in), then size it (Intake).
 - **A task is active** (`status` not `done`) → `add show <slug>` — the node whole, its edges — and
   work the beat `add status` names next. The beat is **derived from the node's stamps**, not the
   `status` field — which stays `direction` until close: unfrozen → author + freeze; frozen with no
@@ -148,12 +147,13 @@ add advise <slug> --persona <p>              # record the lens that reviewed a s
 add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
-add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal untouched
+add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal intact
 add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
-add gate <slug> PASS --by "<name>"           # verdict — a PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
-add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a living spec
+add gate <slug> PASS --by "<name>"           # verdict — PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
+add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a spec
 add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson
-add milestone-done <slug>                    # close — refuses an unchecked goal box, or R:UNDRAINED
+add drop <slug> --reason "<why>"             # withdraw a task from the plan — the reason stays on the node
+add milestone-done <slug>                    # close — refuses an unchecked box, an open delta, or an unauthored task
 ```
 
 ## Depth dial — steps never change, ceremony does

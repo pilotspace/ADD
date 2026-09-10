@@ -56,9 +56,22 @@ def _drive_goal_unmet(tmp_path):
     return add.milestone_done(tmp_path, cid)[1]
 
 
-def _drive_scaffold_beat(tmp_path):
+def _drive_queued_beat(tmp_path):
+    """RE-AIMED (a-plan-says-what-it-wants): the sentence used to claim the word `scaffold`.
+
+    It now claims three — `queued · abandoned · adrift` — so two drivers replace the one, each
+    proving its word from real stdout. A task an OPEN milestone claims is `queued`.
+    """
     add.init(tmp_path, "code", "T")
-    add.new(tmp_path, "Task", "unauthored", title="unauthored")
+    add.new(tmp_path, "Milestone", "m-live", title="live")
+    add.new(tmp_path, "Task", "unauthored", title="unauthored", milestone="m-live")
+    return add.todo(tmp_path)[1]
+
+
+def _drive_adrift_beat(tmp_path):
+    """No milestone claims it — the word the same sentence promises for that case."""
+    add.init(tmp_path, "code", "T")
+    add.new(tmp_path, "Task", "unclaimed", title="unclaimed")
     return add.todo(tmp_path)[1]
 
 
@@ -130,7 +143,8 @@ def _drive_deltas(tmp_path):
 REGISTRY = {
     ("seed.md", "[—]"): (_drive_persona_dash, "[—]"),
     ("loop.md", "milestone_goal_unmet"): (_drive_goal_unmet, "milestone_goal_unmet"),
-    ("loop.md", "scaffold"): (_drive_scaffold_beat, "scaffold"),
+    ("loop.md", "queued"): (_drive_queued_beat, "queued"),
+    ("loop.md", "adrift"): (_drive_adrift_beat, "adrift"),
     ("deltas.md", "files, lists, and folds"): (_drive_deltas, "open"),
     ("SKILL.md", "names next"): (_drive_status_names_the_beat, "next:"),
     ("SKILL.md", "counts them down"): (_drive_todo_counts_unswept, "unswept"),
@@ -347,9 +361,14 @@ def test_a_costly_state_is_constructed_or_named(tmp_path):
 def test_repaired_sentences_are_registered():
     """covers: A5, M6 — the replacements are themselves entries, each driven in one command."""
     text = (TREES[0] / "loop.md").read_text(encoding="utf-8")
-    assert "milestone_goal_unmet" in text and "`scaffold` beat" in text, text[:200]
+    assert "milestone_goal_unmet" in text, text[:200]
     assert ("loop.md", "milestone_goal_unmet") in REGISTRY
-    assert ("loop.md", "scaffold") in REGISTRY
+    # RE-AIMED: the Gather step used to promise one word (`scaffold`); it now promises three,
+    # and each one that appears in the prose is registered and driven.
+    for word in ("queued", "abandoned", "adrift"):
+        assert word in text, f"the Gather step no longer names `{word}`: {text[:200]}"
+    for word in ("queued", "adrift"):
+        assert ("loop.md", word) in REGISTRY, f"`{word}` is claimed in prose and never driven"
 
 
 def test_repaired_gather_step_still_has_a_trigger(tmp_path):

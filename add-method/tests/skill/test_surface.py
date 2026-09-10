@@ -161,7 +161,7 @@ def test_skill_tree_prose_unedited_by_this_task():
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
     pinned = {
-        "SKILL.md": "a7e9bcb0d362f3e666ea9d4fca3423b4847d3b12f0d92efbe09158a765d4fd87",   # re-aimed @ release-3-6-0: the version stamp. prior: f2375f95…
+        "SKILL.md": "b44842dd377fe20c2a1f0cf785ade882fcaba7749b24314dc4041cb9194b7de3",   # re-aimed @ a-plan-says-what-it-wants: drop joins the wired surface and the cookbook, funded by compressing the Engine paragraph and three cookbook comments. prior: (3.6.0 version stamp)
         "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
     }
     for name, want in pinned.items():

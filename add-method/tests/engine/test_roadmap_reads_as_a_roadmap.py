@@ -43,7 +43,10 @@ def test_status_rows_carry_their_title(bundle):
     assert "Trust the ship" in _row(out, "m-one"), f"a Milestone row carried no title:\n{out}"
     assert "Bounded CLI memory" in _row(out, "t-one"), f"a Task row carried no title:\n{out}"
     # A12: the existing columns keep their positions — a guard reading the prefix still reads it.
-    assert "[scaffold] Task" in _row(out, "t-one"), _row(out, "t-one")
+    # RE-AIMED (a-plan-says-what-it-wants): the beat word for an unauthored task now names which
+    # plan wants it. What this check is for — the row carries its BEAT beside its title — holds.
+    row = _row(out, "t-one")
+    assert any(f"[{k}] Task" in row for k in add.SCAFFOLD_KINDS), row
 
 
 def test_a_slot_title_is_not_a_title(bundle):
@@ -65,7 +68,12 @@ def test_status_headline_names_the_scaffold_count(bundle):
     for n in range(3):
         add.new(bundle, "Task", f"t-{n}", title=f"Queued task {n}")
     head = add.status(bundle).splitlines()[0]
-    assert "3 scaffold" in head, f"the headline named no scaffold count: {head}"
+    # RE-AIMED: the one count became a split by the same words the rows use, so a reader sees
+    # WHICH three are unauthored, not only how many.
+    counted = sum(int(w) for w, k in
+                  ((head.split(f" {k}")[0].rsplit(" ", 1)[-1], k) for k in add.SCAFFOLD_KINDS)
+                  if f" {k}" in head and w.isdigit())
+    assert counted == 3, f"the headline counted {counted} unauthored tasks, not 3: {head}"
     doctored = len([f for f in add.doctor(bundle) if f["code"] == "unauthored_node"])
     assert doctored == 3, f"the fixture is not what this guard assumes: {doctored}"
 

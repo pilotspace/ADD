@@ -153,6 +153,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--bind", metavar="DECISION",
                    help="promote the lesson: write this sentence into the spec's `## Decisions that bind`")
 
+    s = sub.add_parser("drop", help="withdraw a task from the plan, with a reason on the record")
+    s.add_argument("ref")
+    s.add_argument("--reason", required=True, help="why it is being withdrawn")
+
     s = sub.add_parser("reopen", help="return a done task to a beat with a reset gate + reason")
     s.add_argument("ref")
     s.add_argument("--to", required=True, help="the beat: direction | build | verify")
@@ -360,6 +364,11 @@ def dispatch(args, run_cmd) -> int:
     if args.verb == "fold":
         ok, note = add.fold(root, DD_LENS.get(args.lens.lower(), args.lens), args.match,
                             reject=args.reject, bind=args.bind)
+        print(note)
+        return 0 if ok else 1
+
+    if args.verb == "drop":
+        ok, note = add.drop(root, _resolve(root, args.ref), args.reason)
         print(note)
         return 0 if ok else 1
 

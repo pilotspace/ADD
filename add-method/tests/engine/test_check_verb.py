@@ -172,6 +172,10 @@ def test_milestone_done_names_who_checked(tmp_path):
     path = tmp_path / mcid.lstrip("/")
     raw = path.read_text(encoding="utf-8").replace("why: <why this task exists — optional>", "why: because")
     path.write_text(re.sub(r"(?m)^why: .*$", "why: because", raw), encoding="utf-8")
+    # The fixture's task exists to carry a PLAN box, not to be built. `milestone-done` now
+    # refuses to close over an unauthored member (R:SILENTABANDON), so resolve it the way the
+    # refusal says to — this check is about the CLOSE LINE, not about the member rung.
+    add.drop(tmp_path, "/tasks/t.md", "a fixture prop, never planned work")
     ok, msg = add.milestone_done(tmp_path, mcid)
     assert ok, f"milestone_done: refused a fully checked {mcid} — {msg}"
     assert "checked by" in msg, f"milestone_done: the close line does not name who checked — {msg!r}"
@@ -187,6 +191,7 @@ def test_milestone_done_says_by_hand_without_stamps(tmp_path):
     path = tmp_path / mcid.lstrip("/")
     text = path.read_text(encoding="utf-8").replace("- [ ] ", "- [x] ")
     path.write_text(re.sub(r"(?m)^why: .*$", "why: because", text), encoding="utf-8")
+    add.drop(tmp_path, "/tasks/t.md", "a fixture prop, never planned work")
     ok, msg = add.milestone_done(tmp_path, mcid)
     assert ok, f"milestone_done: refused a hand-checked {mcid} — {msg}"
     assert "by hand" in msg, \

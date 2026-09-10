@@ -18,7 +18,8 @@ import cli  # noqa: E402
 
 # Verbs the CLI wires in v1 — every one has a real engine function.
 WIRED = {"init", "status", "new", "freeze", "run", "gate", "done", "brief", "learn", "show",
-         "milestone-done", "deltas", "fold", "reopen", "milestone-archive", "doctor", "wave", "join",
+         "milestone-done", "deltas", "fold", "reopen", "drop", "milestone-archive", "doctor",
+         "wave", "join",
          "advise", "locate", "todo", "upgrade", "replan", "check", "interview", "search"}
 
 

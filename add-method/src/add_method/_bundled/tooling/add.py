@@ -2703,6 +2703,26 @@ def milestone_done(root, cid: str) -> tuple:
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
 
+    # The MEMBERS, before the lesson drain: a milestone that closes on its exit criteria while
+    # still holding unauthored tasks abandons them, and until now said nothing at all. That is
+    # where a graveyard comes from — nobody decides to abandon forty tasks, a milestone just
+    # closes and they stop being anybody's -> "R:SILENTABANDON".
+    #
+    # Three exits, all named (A6). A refusal offering one fix does not present a choice, it
+    # applies pressure: name only `drop` and authors drop work they meant to keep.
+    left = sorted(c for c, n in graph.items()
+                  if (n["fm"] or {}).get("type") == "Task"
+                  and str((n["fm"] or {}).get("milestone") or "").strip() == slug
+                  and (n["fm"] or {}).get("status") not in ("done", "dropped", "archived")
+                  and _is_scaffold(n))
+    if left:
+        named = "\n".join(f"  · {c.rsplit('/', 1)[-1][:-3]}" for c in left)
+        return False, (f'milestone_members_unauthored ({len(left)} never authored) '
+                       f'-> "R:SILENTABANDON"\n{named}\n'
+                       f'next: for each — author it (add freeze <slug>), drop it '
+                       f'(add drop <slug> --reason "<why>"), or re-home it under a live '
+                       f'milestone — then add milestone-done {slug}')
+
     # The drain, LAST (M7): a closer whose goal is still unmet must be told that first, not
     # sent to consolidate lessons for a milestone that is not finished.
     #
@@ -2754,6 +2774,44 @@ def milestone_done(root, cid: str) -> tuple:
     credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
     return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
                   f"{empty}{skipped}\nnext: add status")
+
+
+def drop(root, cid: str, reason: str) -> tuple:
+    """Withdraw a task from the plan: `status: dropped`, with the reason on the record.
+
+    `dropped` was a word the engine READ in three places and no verb could WRITE — vocabulary
+    living only in the reader -> "R:DEADWORD". Withdrawing work was therefore something you did
+    by deleting a file or by leaving it to rot as a scaffold, and neither leaves a reason behind.
+
+    The reason is required for the same purpose the whole task serves: a task dropped without one
+    is the silent abandonment this prevents, merely relocated into a status field (A9). A `done`
+    task is refused — that verdict was recorded against a receipt, and the verb for revisiting it
+    is `reopen`, which resets the gate rather than overwriting it (A10).
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return False, f"no such node: {cid}\nnext: add status"
+    fm = node["fm"] or {}
+    node_type = fm.get("type")
+    if node_type not in LIFECYCLE_TYPES:
+        return False, (f'only a lifecycle node can be dropped — `{cid}` is a {node_type}, which '
+                       f'has no plan to be withdrawn from -> "R:NOTATASK"\nnext: add status')
+    if fm.get("status") == "done":
+        return False, (f"`{cid}` is done — a gate recorded that verdict against a receipt, and "
+                       f"`drop` would overwrite it with a planning note\n"
+                       f"next: add reopen {cid.rsplit('/', 1)[-1][:-3]} --to <beat> --reason "
+                       f'"<why>"   # revisits a done task without erasing its gate')
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if fm.get("status") == "dropped":
+        return False, f"`{slug}` is already dropped\nnext: add status"
+    # A stamp is a pre-formatted ABF flow-map STRING, not a dict — `reopen` learned this the
+    # hard way; a dict serialises as Python and no reader parses it back.
+    stamp = f'{{ by: loop, at: {_today()}, act: drop, reason: "{reason}" }}'
+    _transition(root, cid, sets={"status": "dropped"}, appends=[("verified", stamp)])
+    return True, (f"`{slug}` dropped — {reason}\n"
+                  f"next: add status   # it leaves the worklist; the reason stays on the node")
 
 
 def milestone_archive(root, cid: str) -> tuple:
@@ -2810,7 +2868,8 @@ BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              "build": ('add run {slug} -- <test cmd> '
                        '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
-BEAT_NAMES = ("scaffold", "direction", "build", "verify", "done")
+BEAT_NAMES = ("scaffold", "queued", "abandoned", "adrift",
+              "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
 ORIENT_RANK = {"Project": 0, "Milestone": 1, "Task": 2, "Spec": 5, "Persona": 6, "Prompt": 7}
 
@@ -2936,7 +2995,9 @@ def card_drift(graph: dict, body_of=None) -> list:
         # freshly frozen node advertised `next: add freeze <slug>` — the approval it had just
         # passed — while `todo` and `status` derived `build`, and this reported it CLEAN
         # (2026-08-17 replan, A5 falsified). Two notions of beat, read by different surfaces.
-        beat = _beat_of(node)
+        # The graph goes in for the same reason: `doctor` saying `scaffold` where `status` says
+        # `queued` is exactly the second vocabulary M5 exists to prevent.
+        beat = _beat_of(node, None, graph)
         card = card_of(read_body(node["path"]))
         for line in card.splitlines():
             key, sep, value = line.partition(":")
@@ -3033,7 +3094,37 @@ def locate(root, query: str, all: bool = False) -> tuple:
 BEAT_TYPES = ("Task", "Milestone")
 
 
-def _beat_of(node, t2=None) -> str:
+SCAFFOLD_KINDS = ("queued", "abandoned", "adrift")
+# A milestone in either of these states has stopped queueing anything. `archived` is what happens
+# to a milestone AFTER it is done, so a task the plan left behind is abandoned under both.
+CLOSED_MILESTONE = ("done", "archived")
+
+
+def _scaffold_kind(graph: dict, node: dict) -> str:
+    """Which of `queued · abandoned · adrift` an UNAUTHORED task is — derived, never stored.
+
+    3.6.0 made a 40-node roadmap legible; every row carried its title and the headline counted the
+    unauthored ones. It still could not answer what a reviewer actually asks — is this a queue or a
+    graveyard? A task the plan is working toward and one the plan walked away from both read
+    `scaffold`.
+
+    The plan that queued a task IS its milestone, so the answer is already on disk in two places
+    that cannot disagree: the task's `milestone:` and that milestone's `status:`. Storing a third
+    copy would be a field that drifts out of step with the milestone it describes -> "R:NEWFIELD".
+
+    A `milestone:` naming nothing is `adrift`, exactly like no milestone at all: in both cases no
+    plan that exists claims this task, and a read verb must not raise on a typo (A4).
+    """
+    slug = str((node.get("fm") or {}).get("milestone") or "").strip()
+    if not slug:
+        return "adrift"
+    owner = graph.get(f"/milestones/{slug}.md")
+    if owner is None:
+        return "adrift"
+    return "abandoned" if (owner["fm"] or {}).get("status") in CLOSED_MILESTONE else "queued"
+
+
+def _beat_of(node, t2=None, graph=None) -> str:
     """A task's beat, DERIVED from its stamps — the same reasoning as `_is_frozen`.
 
     `status` runs `direction → done`: nothing in `freeze`/`run` advances it, so the field cannot
@@ -3049,7 +3140,12 @@ def _beat_of(node, t2=None) -> str:
         return "verify"
     if _is_frozen(node):
         return "build"
-    return "scaffold" if _is_scaffold(node, t2) else "direction"
+    if not _is_scaffold(node, t2):
+        return "direction"
+    # An unauthored task answers WHICH plan wants it. Every surface that already renders a beat
+    # inherits the word with no per-surface edit; a caller with no graph to hand still gets the
+    # old vocabulary rather than a wrong provenance.
+    return _scaffold_kind(graph, node) if graph is not None else "scaffold"
 
 
 def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
@@ -3079,7 +3175,7 @@ def _next_verb(graph: dict, cid: str, t2=None) -> str:
     """
     slug = cid.rsplit("/", 1)[-1][:-3]
     node = graph[cid]
-    beat = _beat_of(node, t2)
+    beat = _beat_of(node, t2, graph)
     fm = node.get("fm") or {}
     # W1 (R:UNBRIEFED): at the build beat the ENTRY comes first — a sealed, unbriefed task
     # points at `add brief`, and moves on to the run the moment the entry is recorded.
@@ -3087,7 +3183,11 @@ def _next_verb(graph: dict, cid: str, t2=None) -> str:
             and str(fm.get("depth") or "standard") != "quick" \
             and sealed_direction(fm) and not _brief_entered(fm.get("verified") or []):
         return f"add brief {slug}"
-    if beat == "scaffold":
+    # All three scaffold words mean the same unfinished work — the word says which plan wants it,
+    # not what to do about it. `abandoned` and `adrift` still point at authoring, because the OTHER
+    # exits (`add drop`, or re-homing it under a live milestone) are named by the milestone rung
+    # that produced the word, not by a per-row hint.
+    if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
     return BEAT_NEXT.get(beat, "add status").format(slug=slug)
 
@@ -3114,11 +3214,14 @@ def todo(root, milestone: str = None) -> tuple:
         except (OSError, ValueError, KeyError, TypeError):
             t2 = None
         bodies[cid] = t2
-        items.append((cid, _beat_of(graph[cid], t2), _next_verb(graph, cid, t2)))
+        items.append((cid, _beat_of(graph[cid], t2, graph), _next_verb(graph, cid, t2)))
     if not items:
         where = f" under `{milestone}`" if milestone else ""
         return [], f"nothing open{where}\nnext: add status"
-    order = {"scaffold": -1, "direction": 0, "build": 1, "verify": 2}
+    # `adrift` and `abandoned` sort ABOVE `queued`: a task no live plan wants is the one a reader
+    # must decide about, and a queue of forty hides two strays at the bottom of the list.
+    order = {"adrift": -3, "abandoned": -2, "queued": -1, "scaffold": -1,
+             "direction": 0, "build": 1, "verify": 2}
     items.sort(key=lambda it: (order.get(it[1], 9), it[0]))
     lines, beat = [], None
     for cid, st, nxt in items:
@@ -3232,9 +3335,15 @@ def status(root, all: bool = False, check: bool = False) -> str:
     # roadmap shipped with 38 nodes in scaffold and every surface said so EXCEPT the one line a
     # reader starts from. Computed from the same predicate `doctor` uses (A4), so the headline
     # and the report can never disagree — and silent at zero (A9), like the delta clause.
-    scaffolds = sum(1 for n in graph.values()
-                    if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES and _is_scaffold(n))
-    queued = f"  ·  {scaffolds} scaffold (add todo)" if scaffolds else ""
+    # Split by the SAME three words the rows show. One count of forty said the roadmap was
+    # unfinished; `38 queued · 2 adrift` says which two a reader has to decide about. A `dropped`
+    # task is answered, not pending, and is counted in neither (M6).
+    pending = [n for n in graph.values()
+               if (n["fm"] or {}).get("type") in LIFECYCLE_TYPES
+               and (n["fm"] or {}).get("status") != "dropped" and _is_scaffold(n)]
+    split = {k: sum(1 for n in pending if _scaffold_kind(graph, n) == k) for k in SCAFFOLD_KINDS}
+    shown = " · ".join(f"{c} {k}" for k, c in split.items() if c)
+    queued = f"  ·  {shown} (add todo)" if shown else ""
     out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
                f"  ·  {len(graph)} nodes{tally}{queued}")
 
@@ -3268,7 +3377,8 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # `status:` stays at `direction` for the whole life of a frozen task — orientation
         # read it and contradicted `todo`, `doctor` and its own `next:` line in one breath
         # (R:BEATLIE). `_beat_of` is frontmatter-only here, so the T0 read tier holds.
-        beat = _beat_of(graph[cid]) if fm.get("type") in BEAT_TYPES else fm.get("status", "—")
+        beat = _beat_of(graph[cid], None, graph) if fm.get("type") in BEAT_TYPES \
+            else fm.get("status", "—")
         # The one field a queued node HAS authored. Forty of them shipped for review carrying
         # real titles that no orientation verb rendered, so the roadmap read as forty anonymous
         # slugs and had to be opened file by file. Last in the row (A12), so every column a

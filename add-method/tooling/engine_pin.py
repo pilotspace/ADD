@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "0e8a299fe6ccc0b65f075cd2308cdbce"  # re-aimed @ release-3-6-0: ENGINE stamp 3.5.0 -> 3.6.0. prior: 0352185c… @ one-refusal-shape
+ENGINE_MD5 = "e6db8b59a47b0d014215f7ab1653bd84"  # re-aimed @ a-plan-says-what-it-wants: a scaffold reports queued/abandoned/adrift, milestone-done refuses unauthored members, drop is the 27th verb. prior: 0e8a299f… @ release-3-6-0
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "c62354e403dd451d2514b5a32cc78524"  # re-aimed @ a-roadmap-reads-as-a-roadmap: `new` gains --goal at the front door. prior: 51a23ee5… @ deltas-drain-at-close
+ENGINE_PKG_MD5 = "de742b6deafc4a445b5d343cf1b30cbe"  # re-aimed @ a-plan-says-what-it-wants: the drop parser. prior: c62354e4… @ a-roadmap-reads-as-a-roadmap

@@ -34,7 +34,7 @@ def test_every_registry_learned_the_search_verb():
     # A VALUE, not a ceiling. `search` landed the 25th verb; `show` (task show-verb) landed the
     # 26th, which moves this number without weakening what the guard checks — that every
     # registry below is derived from the CLI rather than hand-maintained.
-    assert n == 26, f"the CLI ships {n} verbs; the pin was last re-aimed at `show` — {sorted(verbs)}"
+    assert n == 27, f"the CLI ships {n} verbs; the pin was last re-aimed at `drop` — {sorted(verbs)}"
 
     wired = (REPO / "tests" / "engine" / "test_cli.py").read_text(encoding="utf-8")
     block = wired[wired.find("WIRED = {"):wired.find("}", wired.find("WIRED = {"))]

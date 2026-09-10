@@ -40,6 +40,7 @@ Build to green, verify on evidence, record one outcome. `gate PASS` auto-closes 
 | `gate` | record the verdict: `PASS \| RISK-ACCEPTED \| HARD-STOP`. `--by`, `--authority`, `--reason` | `add gate reject-overlap PASS --by "tindang"` |
 | `done` | close a gated task (the normal path closes automatically at `gate PASS`) | `add done reject-overlap` |
 | `reopen` | return a done task to a beat with a reset gate. `--to direction\|build\|verify` and `--reason` both required | `add reopen reject-overlap --to build --reason "missed a race"` |
+| `drop` | withdraw a task from the plan — writes `status: dropped` with the reason on the record. Refuses a `done` task (that verdict was gated; use `reopen`) | `add drop cli-bounded-memory --reason "the API it wrapped was withdrawn"` |
 | `learn` | file a lesson into a living spec — `ddd\|sdd\|udd\|tdd\|add`. `--evidence` is the receipt or decision that caused it | `add learn ddd "overlap is half-open [start,end)" --evidence runs/2.md` |
 
 A `RISK-ACCEPTED` needs its reason: `add gate <slug> RISK-ACCEPTED --by "tindang" --reason "owner · ticket · expiry"`. Security is never batched — a security finding is always `HARD-STOP`.
