@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: a persona loads by fit, on the path that does not spawn
-status: direction
+status: done
 generated: { by: add/3.6.0, at: 2026-09-10 }
 verified:
   - { by: "human:tindang", at: 2026-09-10, act: interview, authority: human, interview: "sha256:634e5975e46b11d2", receipt: /tasks/personas-load-by-fit.d/interviews/1.md, answers: "C1=confirm|C2=confirm|C3=confirm|C4=confirm" }
@@ -25,10 +25,10 @@ risks:
   - naming a candidate is one step from CHOOSING one; the engine must present the roster and stop there, or the NO-EXEC floor is gone
 
 ## EXIT
-- [ ] each of the three beat guides names the two-tier selector, so an agent working a beat sequentially reads the same rule `add-worker.md` §2 gives a spawned one   (← persona-loads-on-every-path)
-- [ ] the router no longer calls the LOAD opt-in — the roster is optional, the load is by fit   (← persona-loads-on-every-path)
-- [ ] `brief` names the roster candidates that fit a node carrying no lens, and selects none of them   (← brief-names-the-candidate-lens)
-- [ ] every budget holds at its pinned ceiling, with the added lines funded by compression   (all)
+- [x] each of the three beat guides names the two-tier selector, so an agent working a beat sequentially reads the same rule `add-worker.md` §2 gives a spawned one   (← persona-loads-on-every-path)
+- [x] the router no longer calls the LOAD opt-in — the roster is optional, the load is by fit   (← persona-loads-on-every-path)
+- [x] `brief` names the roster candidates that fit a node carrying no lens, and selects none of them   (← brief-names-the-candidate-lens)
+- [x] every budget holds at its pinned ceiling, with the added lines funded by compression   (all)
 
 ## CLOSE
 evidence: recorded at close

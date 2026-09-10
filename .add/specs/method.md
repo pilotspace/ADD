@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 46
+delta_seq: 47
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,7 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- An instruction only exists on the paths that LOAD the file holding it. When a rule must hold on more than one path, enumerate the copies in a check rather than trusting one canonical statement to reach them. (from: /specs/method.md#M47)
 - None is the refusal for every engine verb; a verb that ANSWERS a question keeps its boolean, and an empty collection from a query that ran is an answer, not a refusal. (from: /specs/method.md#M45)
 - When a check exists only to hold a narrowing until a measurement lands, name the measurement in the check itself; the day it lands, RETIRE the check in place with a record block rather than leaving it to assert against its own condition. (from: /specs/method.md#M46)
 - A hint carrying a slot the engine could have filled is a defect; a slot only the human can fill is guidance. Where a verb is handed a value, it records it and replays it. (from: /specs/method.md#M44)
@@ -35,6 +36,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M47 · folded · 2026-09-10→2026-09-10] The mandate was in the right words in the wrong file: agents/add-worker.md §2 states the persona selector perfectly and loads ONLY on a spawn. A rule that lives in a file one path loads is not a rule the method has — it is a rule that path has. Check WHICH files carry an instruction, not whether it is written. (evidence: /milestones/personas-load-by-fit.md)
 - [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
 - [ADD · M45 · folded · 2026-09-10→2026-09-10] One sweep, two vocabularies: `None` is the refusal, but a verb that ANSWERS a question keeps its falsy answer — `fresh` says False for stale and None for unmeasurable, and six verbs answer an empty collection from a query that ran. Collapsing those into the refusal shape destroys the only thing those verbs are for (evidence: refuse-with-one-shape · RESULT_VERBS)
 - [ADD · M44 · folded · 2026-09-10→2026-09-10] A notary cannot INVENT a value, but it can REMEMBER one it was handed: the build hint carried an unrunnable <test cmd> forever, while run received the real command on every call — recording it turned a template into the command that actually worked in this project (evidence: _last_test_cmd · status-answers-what-needs-me)

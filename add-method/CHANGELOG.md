@@ -93,6 +93,21 @@ that were passing on nothing.
   first element and then tested for falsiness passes on `False` and on `None` alike, so it proves
   nothing about either — the exact shape that let two checks pass on a refusal. The suite is swept
   and the shape is now refused suite-wide by an AST check that flags only that binding.
+- **A persona loads by fit, on the path that does not spawn.** Personas were adopted only inside a
+  spawned subagent — measured over this bundle, **15 of 190** lifecycle nodes carried a lens, and 3
+  of 40 milestones, the one lane the skill already says must load one. The mandate was never
+  missing: it lives in `agents/add-worker.md` §2 (*"Become the persona FIRST"*), a file loaded only
+  on a spawn, while the three beat guides mentioned a persona zero, zero and once. `direction.md`,
+  `build.md` and `verify.md` now carry the same selector — project roster on `flow:` + `task-kinds:`,
+  teacher index second, proceed if neither fits — and the four copies of it are enumerated and
+  pinned to agree. SKILL.md stops calling the *load* opt-in; what is opt-in is the **roster**.
+  Funded, not re-pinned: +7 lines paid by 7 compressed from `streams.md`.
+- **An unlensed `brief` names the roster entries that fit.** `brief` emitted a persona only when
+  one was already recorded, and the only verb that records one is `add advise` — which no hint on
+  the normal path names, because the `todo` row refuses a second verb by design. A lens could
+  therefore reach a node only through an act nothing ever asked for. The no-lens element now lists
+  the fitting candidates and the verb that records a pick, sorted by slug — visibly not a ranking —
+  reading frontmatter only, and byte-identical to before when nothing fits.
 - **`freeze` demands a check for every Must and Reject, not only for edges.** The `R:UNCOVERED`
   rung bound filled edges and probed assumptions, and held Musts out until the cost of widening
   was *measured* rather than estimated. Measured over this bundle: **0 of 105** nodes carrying
