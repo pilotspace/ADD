@@ -7,8 +7,8 @@ description: how the engine is built and what that forecloses — notary discipl
 tags: [engine, pins, twins, vendored]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 14
-open_deltas: 0
+delta_seq: 17
+open_deltas: 3
 ---
 ## Now
 how it is built, and what that forecloses
@@ -22,6 +22,9 @@ how it is built, and what that forecloses
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [SDD · S17 · open · 2026-09-10] An evidence MODE (property · contract · mutation) needs no schema: it is a checker that emits JUnit with its threshold frozen in a Must; ship it as a runnable script the guard executes, never as prose a phrase pin watches (evidence: add-method/tests/skill/test_evidence_router_and_recipes.py)
+- [SDD · S16 · open · 2026-09-10] A frozen check is the readable example bound to an executable id: the example lives as a Given/When/Then E-edge a human confirms, the check covers it; a test id with a caption is not an oracle a stakeholder can validate (evidence: add-method/tests/skill/test_acceptance_first_checks.py)
+- [SDD · S15 · open · 2026-09-10] A rule stated as a COUNT (one check per rule) is read by an agent as a quota and produces test count in place of evidence; state the rule the gate enforces (≥1 discriminating check per referent) and say what the check is FOR (evidence: add-method/tests/skill/test_checks_bind_not_count.py)
 - [SDD · S14 · folded · 2026-09-10→2026-09-10] A rule enforced over one spelling of a shape is a rule the other spellings do not have. The scope guard enumerated `git diff` because that is what the two retired guards used; seven more sites read a ref through `git show` and one through `merge-base`, all satisfied by `git commit`. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
 - [SDD · S13 · folded · 2026-09-10→2026-09-10] `opt-in` described two different things and only one of them was true: the ROSTER is optional (a bundle may have none), the LOAD is not (if a persona fits, it loads). One word covering a subject and its object is how a capability turns itself off. (evidence: /tasks/persona-loads-on-every-path.md)
 - [SDD · S12 · folded · 2026-09-08→2026-09-08] freeze returns False on the scaffold rung and None on every later rung, so a caller testing `node is None` reads a scaffold refusal as SUCCESS. It cost two wrong assertions in one session, in two different test files, both written by someone who had just read the function. A verb whose refusal has two falsy shapes has an API that must be memorised; return one shape, or the guards written against it will be silently inverted. (evidence: test_milestone_freeze_is_interviewed::test_the_rung_stays_last and test_one_oracle_one_truth::_exit_reads_authored — both asserted 'is None' and both passed a refusal as a freeze)

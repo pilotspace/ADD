@@ -28,10 +28,10 @@ installer drops in, which stamps `tooling_engine:`; `status --check` warns if it
 **First run in a fresh project** (no `.add/tooling/` yet): materialize it once with the package
 installer — `pilotspace-add init "<name>"` (pip), `add init "<name>"` / `npx @pilotspace/add init
 "<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` as the Claude
-Code plugin — then drive from `.add/tooling/cli.py`. State lives in the `.add/` bundle — files are
-the database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
-spawns an agent. The full loop surface — `fold · reopen · drop · deltas · search · show · check ·
-milestone-archive` — is wired.
+Code plugin — then drive `.add/tooling/cli.py`. State lives in `.add/` — files are the
+database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
+spawns an agent. The full loop surface (`fold · reopen · drop · deltas · search · show · check ·
+milestone-archive`) is wired.
 
 ## Always start here (orient — do not skip)
 
@@ -140,19 +140,20 @@ add upgrade                                  # 2.x bundle? archive it whole, ini
 add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
-add locate <path>                            # which node's scope owns this file
+add locate <path>                            # which node's scope owns a path
 add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
 add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
+add refute <slug> --by "<name>" --held|--found "<input>" [--probes N]   # a refute-read of a green, on the record
 add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
-add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal intact
+add replan <slug> --note "<what changed>"    # a steering turn on a frozen task — seal intact
 add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a spec
 add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson
-add drop <slug> --reason "<why>"             # withdraw a task from the plan — the reason stays on the node
+add drop <slug> --reason "<why>"             # withdraw a task — the reason stays on the node
 add milestone-done <slug>                    # close — refuses an unchecked box, an open delta, or an unauthored task
 ```
 
@@ -163,14 +164,12 @@ Depth tunes **ceremony**, not the authority floor. The floor is computed by the 
 else `process` — never from depth.
 
 - **quick** — CARD · CHECKS · EVIDENCE; at a green, `covers`-bound receipt the AI may record the PASS
-  itself at `process` authority (an explicit pass you run, not an engine auto-verdict), unless the
-  sensitivity floor is higher.
+  itself at `process` authority — an explicit pass you run — unless the sensitivity floor is higher.
 - **standard** — the full node; evidence-gated, at whatever authority the floor computes.
 - **deep** — full node + milestone strategy, lowest-confidence-first; a human owns freeze whenever the
   floor (or your judgment) calls for it.
 
-A coined term you cannot decode is in `terms.md` — load it once.
-The method's **why** lives in `FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) —
-**referenced, never inlined** (load the State; reference the Story). Read it only when a decision is
-genuinely unclear. The AIDD book is deeper background and is **external** (not shipped with the skill)
-— treat it as optional; never block waiting to open a file the skill does not ship.
+A coined term you cannot decode is in `terms.md` — load it once. The method's **why** lives in
+`FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) — **referenced, never inlined** (load the
+State; reference the Story); read it only when genuinely unclear. The AIDD book is deeper,
+**external** background (not shipped with the skill) — optional; never block waiting to open a file the skill does not ship.

@@ -682,6 +682,24 @@ Multiple referents are comma-separated and each is validated independently again
 
 Derived from `validate_bundle.py:64-70`, `add.py:1680`.
 
+### §8.4 The refute stamp
+
+A green no one has tried to break is *reported*, not *earned*. `add refute` records the attempt
+as one `verified[]` stamp, and the stamp names the receipt it read so its place in the chronology
+is decidable from list order alone (§7 makes the same argument for `brief`):
+
+```
+{ by, at, act: refute, authority: process, outcome: held | refuted, probes: <n>,
+  receipt: <run cid>, note: "<what was tried — or the input that broke it>" }
+```
+
+`outcome: refuted` MUST carry the finding: a refutation with no input is a category, not evidence.
+The stamp binds PRESENCE — a named party tried, when, against which run, with how many probes. It
+does not bind honesty or the quality of the probes; that limit is §10's, restated here so the stamp
+is never read as a correctness proof. It writes no verdict and moves no floor.
+
+Derived from `add.py:refute`.
+
 ---
 
 ## §9 Conformance

@@ -14,7 +14,7 @@ verified: []
 ## CARD
 goal: <one line>
 why: <why this task exists — optional>
-beat: scaffold · next: author dogfood-and-measure's RULES, ASSUMPTIONS and CHECKS, then add freeze dogfood-and-measure
+beat: queued · next: author dogfood-and-measure's RULES, ASSUMPTIONS and CHECKS, then add freeze dogfood-and-measure
 
 ## RULES
 <must>

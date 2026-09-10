@@ -22,7 +22,7 @@ verified: []
 ## CARD
 goal: <one line>
 why: <why this task exists — optional>
-beat: scaffold · next: author refute-gate-rung's RULES, ASSUMPTIONS and CHECKS, then add freeze refute-gate-rung
+beat: queued · next: author refute-gate-rung's RULES, ASSUMPTIONS and CHECKS, then add freeze refute-gate-rung
 
 ## RULES
 <must>

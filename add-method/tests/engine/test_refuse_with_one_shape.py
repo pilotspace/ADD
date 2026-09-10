@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "bd6707ccc342a09415198d9a2eb54078a1aeee185018c10b78290fa33d7849ab"  # re-aimed @ the-message-pin-is-a-content-pin: the baseline was `git merge-base HEAD origin/main`, which returns 128 on CI's depth-1 clone and CONTAINS the change once merged. Same claim, a baseline that survives both. prior: (a git merge-base, never a digest)
-MESSAGE_COUNT = 98
+MESSAGE_DIGEST = "a7fa8b835e435659da0f1eda6f183b260bfd27bfb17bff576dd38f48432acaef"  # re-aimed @ refute-verb: seven refusal messages join with `refute()` (NOTATASK · UNSEALED · NORECEIPT · NOFINDING ×2 · transition) — no existing message reworded. prior: bd6707cc… @ the-message-pin-is-a-content-pin
+MESSAGE_COUNT = 105
 
 
 def _message_digest() -> tuple:

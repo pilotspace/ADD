@@ -12,7 +12,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
-    search · show
+    search · show · refute
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -45,6 +45,14 @@ def _split_run(argv):
         i = argv.index("--")
         return argv[:i], argv[i + 1:]
     return argv, []
+
+
+def _count(value: str) -> int:
+    """argparse type: a probe count is a non-negative integer — `-1` probes is not a number of attempts."""
+    n = int(value)
+    if n < 0:
+        raise argparse.ArgumentTypeError(f"{value}: a probe count cannot be negative")
+    return n
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -178,6 +186,15 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("advise", help="record a persona lens on a sequential beat (NO-EXEC; feeds the coverage floor)")
     s.add_argument("ref", help="the task/milestone to advise")
     s.add_argument("--persona", required=True, help="the Persona slug advising this beat")
+
+    s = sub.add_parser("refute", help="record a refute-read of a green — who tried to break it, against which receipt, what they found (NO-EXEC; no verdict)")
+    s.add_argument("ref", help="the task whose latest run receipt was read against its frozen intent")
+    s.add_argument("--by", required=True, help="who refuted — a fresh session, a persona, a person")
+    g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--held", action="store_true", help="a real attempt found no input the bound checks miss")
+    g.add_argument("--found", metavar="INPUT", help="the input / state / interleaving that makes the green wrong")
+    s.add_argument("--probes", type=_count, default=0, help="how many derived probes were run (recorded, never judged)")
+    s.add_argument("--note", help="what was tried (held) — a refuted outcome carries its finding instead")
 
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
@@ -397,6 +414,12 @@ def dispatch(args, run_cmd) -> int:
         out, note = add.advise(root, _resolve(root, args.ref), args.persona)
         print(note)
         return 0 if out else 1
+
+    if args.verb == "refute":
+        stamp, note = add.refute(root, _resolve(root, args.ref), by=args.by, held=args.held,
+                                 finding=args.found, probes=args.probes, note=args.note)
+        print(note)
+        return 0 if stamp else 1
 
     if args.verb == "locate":
         _hits, note = add.locate(root, args.path, all=args.all)

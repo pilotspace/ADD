@@ -4892,7 +4892,7 @@ INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
 
 
 def _open_decisions(node: dict) -> list:
-    """The decisions a human never made but will be held to: non-`n/a` assumptions, then Rejects.
+    """The decisions a human never made but will be held to: non-`n/a` assumptions, filled edges, then Rejects.
 
     An `n/a` retirement already states its own reason, and a Must came FROM the human — re-asking
     either is noise, and an interview people learn to click through buys nothing.
@@ -4924,6 +4924,14 @@ def _open_decisions(node: dict) -> list:
                     "cost": re.sub(r"^if wrong,?\s*", "",
                                    (cost.group(1) if cost else "").strip(), flags=re.I),
                     "text": line.strip()})
+    # The readable example: a FILLED `E<n>` is a claim the human never made in those words — the
+    # AI wrote the Given/When/Then — so it is put to them like an assumption. The scaffold line is
+    # not (same placeholder rule `edges_of` uses); backticked spans are code, not placeholders.
+    for line in _section_of(body, "EDGES").splitlines():
+        m = re.match(r"\s*-\s*(E\d+)\s+(.*)", line)
+        if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+            out.append({"id": m.group(1), "of": "edge", "dim": "edge",
+                        "reading": m.group(2).strip(), "cost": "", "text": line.strip()})
     for line in _section_of(body, "RULES").splitlines():
         m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
         if m:
@@ -5009,7 +5017,7 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
                  f"answer each `{' | '.join(INTERVIEW_VERDICTS)}`:"]
         for d in decisions:
             lines.append(f"\n{d['id']} [{d['dim']}]")
-            lines.append(f"  I took: {d['reading']}")
+            lines.append(f"  {'Example' if d['of'] == 'edge' else 'I took'}: {d['reading']}")
             if d["cost"]:
                 lines.append(f"  If wrong: {d['cost']}")
         lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
@@ -5607,6 +5615,58 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
         f'brief: "{digest}" }}')])
     return digest, (f"brief {digest} recorded as the build entry"
                     f"\nnext: add run {slug} -- <cmd>")
+
+
+def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int = 0,
+           note: str = None) -> tuple:
+    """Record a refute-read of a green: who tried to break it, against which receipt, what they
+    found. NO-EXEC — a lens on a green exactly as `advise` is a lens on a beat. `(stamp, note)`.
+
+    The stamp names the receipt it read (`receipt:`), so its place in the chronology is decidable
+    from `verified[]` order alone — the argument `brief_stamp` makes for the build entry. It binds
+    PRESENCE: a named party tried, when, against which run, with how many probes. It cannot bind
+    honesty or the quality of the probes (FORMAT §10); the tier ladder and the persona do that.
+    It writes no verdict, moves no `status:`, lowers no floor (R:NOVERDICT).
+    """
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    fm = node.get("fm") or {}
+    if fm.get("type") != "Task":
+        return None, (f'R:NOTATASK only a Task carries a run receipt to refute — `{cid}` is a '
+                      f'{fm.get("type")} -> "R:NOTATASK"\nnext: add status')
+    if not _is_frozen(node):
+        return None, (f"`{slug}` was never frozen — there is no approved intent to read the green "
+                      f'against -> "R:UNSEALED"\nnext: add freeze {slug}, build, add run {slug}, then refute')
+    receipt, receipt_cid = latest_receipt(root, cid)
+    if receipt is None:
+        return None, (f"`{slug}` has no run receipt — a refute reads a green, and nothing has run "
+                      f'-> "R:NORECEIPT"\nnext: add run {slug} -- <cmd>, then add refute {slug}')
+    finding = (finding or "").strip()
+    if held and finding:
+        return None, ('one outcome: `--held` says no input broke it, `--found` names the one that did '
+                      f'-> "R:NOFINDING"\nnext: add refute {slug} --held, or --found "<input>"')
+    if not held and not finding:
+        return None, ('a refutation names the input/state/interleaving that makes the green wrong — '
+                      f'a bare "it fails" is a category, not evidence -> "R:NOFINDING"'
+                      f'\nnext: add refute {slug} --found "<the input the bound checks never exercise>"')
+    text = finding if not held else (note or "").strip()
+    text = _oneline(text).replace('"', "'")
+    stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: refute, authority: process, '
+             f'outcome: {"held" if held else "refuted"}, probes: {int(probes or 0)}, '
+             f'receipt: {receipt_cid}' + (f', note: "{text}"' if text else "") + " }")
+    _, err = _transition(root, cid, appends=[("verified", stamp)])
+    if err:
+        return None, err + "\nnext: add status"
+    if held:
+        return stamp, (f"refute recorded against {receipt_cid}: held ({int(probes or 0)} probe(s)) — "
+                       f"NO-EXEC, no verdict\nnext: add gate {slug} PASS --by \"<name>\"")
+    return stamp, (f"refute recorded against {receipt_cid}: REFUTED — {text}\n"
+                   f"next: fix the build (or refreeze with the edge this exposes), add run {slug} -- <cmd>, "
+                   f"then add refute {slug} again")
 
 
 # ============================================ gate — the verdict, and its refusals (e13)
