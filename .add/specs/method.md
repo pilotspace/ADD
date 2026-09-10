@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 43
+delta_seq: 44
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,7 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- A hint carrying a slot the engine could have filled is a defect; a slot only the human can fill is guidance. Where a verb is handed a value, it records it and replays it. (from: /specs/method.md#M44)
 - A close inspects what it holds. A milestone refuses to close over unauthored members, exactly as it refuses over undrained lessons — abandonment is a decision somebody makes, never a side effect of closing. (from: /specs/method.md#M43)
 - Every status the engine reads has a verb that writes it. A value only a reader knows is vocabulary that exists in prose and nowhere in the loop. (from: /specs/method.md#M42)
 - None is the refusal shape. freeze holds it today; widening it to the eleven verbs that still answer False is deliberate 3.7 scope, not an oversight — it touches ~40 return sites and every test asserting is False. (from: /specs/method.md#M41)
@@ -32,6 +33,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M44 · folded · 2026-09-10→2026-09-10] A notary cannot INVENT a value, but it can REMEMBER one it was handed: the build hint carried an unrunnable <test cmd> forever, while run received the real command on every call — recording it turned a template into the command that actually worked in this project (evidence: _last_test_cmd · status-answers-what-needs-me)
 - [ADD · M43 · folded · 2026-09-10→2026-09-10] A closing verb that never looks at what it holds MANUFACTURES the abandonment it reports: `milestone-done` tallied exit criteria only, so a milestone closed and its queued tasks stopped being anybody's, silently — the same shape as R:UNDRAINED for lessons, one level up (evidence: R:SILENTABANDON · a-plan-says-what-it-wants)
 - [ADD · M42 · folded · 2026-09-10→2026-09-10] A word the engine READS that no verb can WRITE is vocabulary living only in the reader: `dropped` was a status three code paths handled and nothing could ever set, so withdrawing work meant deleting a file or letting it rot — and neither leaves a reason (evidence: add drop · a-plan-says-what-it-wants)
 - [ADD · M41 · folded · 2026-09-08→2026-09-08] One refusal shape is a BUNDLE-WIDE question, not a freeze question: 11 verbs answer a refusal with `False` and 22 with `None`, each self-consistent, so no single verb looks wrong — the caller crossing two verbs is the one who pays. Widening `None`-is-the-only-refusal to every verb touches ~40 return sites and every test asserting `is False` (evidence: AST survey of add.py · one-refusal-shape A2)

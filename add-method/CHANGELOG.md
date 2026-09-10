@@ -69,6 +69,20 @@ that were passing on nothing.
   a scaffold, and neither left a reason. A `done` task is refused: that verdict was gated against a
   receipt, and `reopen` is the verb that revisits it.
 
+- **`add status` answers "what needs me?"** It answered "what exists", and degraded at both ends
+  of a bundle's life: on a finished board it printed `PROJECT`, `index` and an **archived**
+  milestone while withholding 112 nodes; on a large one the only escape hatch, `--all`, printed
+  `(`--all` for done nodes)` — a hint advising the flag already in force. Rows now list work that
+  needs a decision, ordered by how close it is to needing a human (verify · build · direction ·
+  queued · abandoned · adrift) rather than by node type; every withheld row is reachable by a
+  command the report names and that is driven in a check; an empty board says so in one line; and
+  a new `last:` line names the most recent recorded act, absent rather than guessed.
+- **The build hint stops handing back `<test cmd>`.** A notary cannot know a project's test
+  command, but `run` is handed the real one on every call — it now records it and the hint replays
+  what actually worked in this project.
+- **Rows no longer wrap or misalign.** The beat column is padded, so the type column lines up
+  whatever the word is, and every line fits 100 columns with truncation on a word boundary.
+
 ### Known and carried into 3.7
 Both bound as decisions rather than left silent:
 - eleven verbs still answer a refusal with `False` rather than `None`. Widening it touches ~40

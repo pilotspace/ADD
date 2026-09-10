@@ -1,7 +1,7 @@
 ---
 type: Task
 title: status answers what needs me
-status: direction
+status: done
 depth: standard
 scope:
   - add-method/tooling/add.py
@@ -26,11 +26,14 @@ verified:
   - { by: "cli", at: 2026-09-10, act: brief, authority: process, brief: "sha256:8592ddb0da18ad91" }
   - { by: "process:run", at: 2026-09-10, act: run, authority: process, outcome: PASS, receipt: /tasks/status-answers-what-needs-me.d/runs/1.md }
   - { by: "process:auto", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:7235daed01b007c2", binding: "sha256:eee2d62f1dce3265" }
+  - { by: "cli", at: 2026-09-10, act: brief, authority: process, brief: "sha256:4b94df229d75bd4a" }
+  - { by: "process:run", at: 2026-09-10, act: run, authority: process, outcome: PASS, receipt: /tasks/status-answers-what-needs-me.d/runs/2.md }
+  - { by: "process:auto", at: 2026-09-10, act: gate, authority: process, outcome: PASS, receipt: /tasks/status-answers-what-needs-me.d/runs/2.md, brief: "sha256:4b94df229d75bd4a" }
 ---
 ## CARD
 goal: orientation shows the work that needs a decision, says so plainly when none does, and always ends in a command you can run
 why: on this bundle `status` prints three rows — PROJECT, `index`, and an ARCHIVED milestone — while hiding 112 nodes, and ends in `next: add new task <slug>`, which is not a command. It was tuned for a bundle mid-flight and degrades at both ends: nothing actionable on a nearly-done board, and 85% unreachable on a large one
-beat: direction · next: add freeze status-answers-what-needs-me
+beat: done · next: add status
 
 ## RULES
 <must>
