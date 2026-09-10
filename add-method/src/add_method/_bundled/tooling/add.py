@@ -2845,6 +2845,12 @@ def milestone_archive(root, cid: str) -> tuple:
 #   the contradiction e4's transition created rather than displaying it as current.
 
 MAX_LINES = 20
+# One row is one line at this width. 100 is the narrowest terminal orientation is expected to
+# survive; a wrapped row stops being a row, because the columns after the wrap are not columns.
+ROW_WIDTH, SLUG_W = 100, 28
+# The widest beat word plus its brackets (`[abandoned]`), so the type column lines up whatever
+# the beat is.
+BEAT_W = 11
 BEAT_KEYS = ("beat", "state")
 # The one canonical next verb per beat — read by `status`'s frontier hint and `render_card`, so a
 # repaired CARD's `next:` matches its beat instead of freezing at the direction-time affordance.
@@ -2865,6 +2871,11 @@ AUTHOR_NEXT = {
 BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              # braces DOUBLED: both consumers pass this through `.format(slug=…)`, and
              # `${TMPDIR:-/tmp}` would otherwise be read as a format field and raise KeyError.
+             # `<test cmd>` is the one slot a NOTARY cannot fill from the bundle — but it need
+             # not guess: `run` is handed the real command every time it is called, and now
+             # remembers the last one on `index.md`. Until the first run this stays a template;
+             # after it, the hint replays the command that actually worked in this project
+             # (`_last_test_cmd`) -> "R:PLACEHOLDER_NEXT".
              "build": ('add run {slug} -- <test cmd> '
                        '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
@@ -2872,6 +2883,14 @@ BEAT_NAMES = ("scaffold", "queued", "abandoned", "adrift",
               "direction", "build", "verify", "done")
 # What a cold reader needs, in order. `Run` is absent on purpose — see `status`.
 ORIENT_RANK = {"Project": 0, "Milestone": 1, "Task": 2, "Spec": 5, "Persona": 6, "Prompt": 7}
+
+# Orientation sorts by how close the work is to needing a HUMAN, never by node type. Ranking by
+# type put an archived milestone above every open task, so the one work row on a finished bundle
+# was its deadest node while 112 others were withheld. An unrecognised beat sorts FIRST: the
+# engine does not know what it is, which is precisely when a person should look.
+ATTENTION_RANK = {"verify": 1, "build": 2, "direction": 3,
+                  "queued": 4, "abandoned": 5, "adrift": 6, "scaffold": 4}
+ANSWERED = ("done", "dropped", "archived")
 
 
 def _is_frozen(node) -> bool:
@@ -3167,7 +3186,15 @@ def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
                for i, s in enumerate(stamps))
 
 
-def _next_verb(graph: dict, cid: str, t2=None) -> str:
+def _last_test_cmd(root) -> str:
+    """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
+    index = Path(root) / "index.md"
+    if not index.is_file():
+        return ""
+    return str((read(index, "T0")["fm"] or {}).get("test_cmd") or "").strip()
+
+
+def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     """The one runnable next command for a task, by its stamp-derived beat.
 
     `t2` is the node's body when the caller already holds it — `todo` does. Without it the beat
@@ -3189,7 +3216,13 @@ def _next_verb(graph: dict, cid: str, t2=None) -> str:
     # that produced the word, not by a per-row hint.
     if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
-    return BEAT_NEXT.get(beat, "add status").format(slug=slug)
+    hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
+    # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
+    # is a sentence shaped like a command; a cold agent following it types angle brackets into a
+    # shell (R:PLACEHOLDER_NEXT).
+    if "<test cmd>" in hint and root is not None and (last := _last_test_cmd(root)):
+        hint = hint.replace("<test cmd>", last)
+    return hint
 
 
 def todo(root, milestone: str = None) -> tuple:
@@ -3214,7 +3247,7 @@ def todo(root, milestone: str = None) -> tuple:
         except (OSError, ValueError, KeyError, TypeError):
             t2 = None
         bodies[cid] = t2
-        items.append((cid, _beat_of(graph[cid], t2, graph), _next_verb(graph, cid, t2)))
+        items.append((cid, _beat_of(graph[cid], t2, graph), _next_verb(graph, cid, t2, root)))
     if not items:
         where = f" under `{milestone}`" if milestone else ""
         return [], f"nothing open{where}\nnext: add status"
@@ -3347,6 +3380,8 @@ def status(root, all: bool = False, check: bool = False) -> str:
     out.append(f"{pfm.get('title', Path(root).name)} — {goal}"
                f"  ·  {len(graph)} nodes{tally}{queued}")
 
+
+
     # Orientation is about WORK. Receipts are evidence — reachable from the task that owns
     # them, and never the thing a cold reader needs first. Ordering by ORIENT_RANK keeps the
     # 20-line budget spent on milestones and tasks rather than on files named `1.md`.
@@ -3357,21 +3392,41 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # the engine wrote) put them in the roster; they belong with `Run`, out of it.
         if fm.get("type") in ("Run", "Interview"):
             return False
-        return all or fm.get("status") not in ("done", "dropped")
+        # `archived` was missing from this tuple, so the deadest state in the engine was the one
+        # work row a finished bundle showed. Answered is answered.
+        return all or fm.get("status") not in ANSWERED
 
     # A Spec or a Persona carrying no `status:` has no state to BE in — it is a lens, seeded once
     # and never advanced, and it printed a constant `[—]` row every session. Nine of thirteen rows
     # on the live bundle were exactly these. They are the bundle's vocabulary, not its board, so
     # the bare report counts them by type and `--all` still lists every one, unchanged
     # (M1 · M2 · R:NOWAYBACK). A node that carries a real status is never collapsed (R:HIDDENSTATE).
+    # A node with no `status:` at all has no state to BE in — it is the bundle's vocabulary, not
+    # its board, and it printed a constant `[—]` row every session. This was a TYPE LIST naming
+    # Spec and Persona, so `Project` and `index` kept their exemption from the rule written to
+    # remove them: on a finished bundle they were two of the three rows shown -> "R:DEADROW".
+    # A predicate has no such gaps. A node that carries a real status is never collapsed
+    # (R:HIDDENSTATE).
     def constant(cid):
-        fm = graph[cid]["fm"] or {}
-        return fm.get("type") in ("Spec", "Persona") and not fm.get("status")
+        return not (graph[cid]["fm"] or {}).get("status")
 
     hidden = [] if all else [c for c in graph if keep(c) and constant(c)]
+
+    def rank(cid):
+        # Vocabulary sorts LAST wherever it is shown — under `--all` it is context, never the
+        # board. An UNRECOGNISED beat sorts first: the engine does not know what it is, which is
+        # exactly when a person should look.
+        if constant(cid):
+            return 99
+        return ATTENTION_RANK.get(_beat_of(graph[cid], None, graph), 0)
+
     shown = sorted((c for c in graph if keep(c) and c not in set(hidden)),
-                   key=lambda c: (ORIENT_RANK.get((graph[c]["fm"] or {}).get("type"), 9), c))
-    for cid in shown[:MAX_LINES]:
+                   key=lambda c: (rank(c), c))
+    work = [c for c in shown if not constant(c)]
+    # `--all` is uncapped by design (A3), so it says how big "everything" is before it scrolls.
+    if all and shown:
+        out[0] += f"  ·  {len(shown)} row{'' if len(shown) == 1 else 's'}"
+    for cid in shown[:(len(shown) if all else MAX_LINES)]:
         fm = graph[cid]["fm"] or {}
         # The stamps, never the stored field. `freeze` appends and never `sets`, so
         # `status:` stays at `direction` for the whole life of a frozen task — orientation
@@ -3383,17 +3438,40 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # real titles that no orientation verb rendered, so the roadmap read as forty anonymous
         # slugs and had to be opened file by file. Last in the row (A12), so every column a
         # guard already reads keeps its position, and truncated so the row cannot wrap.
-        out.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{beat}] "
-                   f"{fm.get('type', ''):<9} {_title_of(fm, 44)}".rstrip())
-    if len(shown) > MAX_LINES:
-        out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} (`--all` for done nodes)")
+        # One row is ONE line, at ROW_WIDTH. The beat column is PADDED: it used to be bare
+        # `[{beat}]`, whose width varies with the word, so the type column after it never lined
+        # up — `[queued] Task` against `[direction] Milestone`. Every column is now fixed, and
+        # the title takes exactly what is left (M7 · A6).
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        lead = f"  · {slug[:SLUG_W]:<{SLUG_W}} {('[' + str(beat) + ']'):<{BEAT_W}} " \
+               f"{str(fm.get('type', '')):<9} "
+        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead))).rstrip())
+    if not all and len(shown) > MAX_LINES:
+        # The hint names a command that RUNS and actually produces the withheld rows. It used to
+        # print under `--all` too, advising the flag already in force — a hint that cannot change
+        # what it just printed, with no other route to those rows -> "R:DEADHINT" · "R:NOWAYIN".
+        out.append(f"  … {len(shown) - MAX_LINES} more of {len(shown)} — add status --all")
     if hidden:
         tally = {}
         for c in hidden:
-            t = (graph[c]["fm"] or {}).get("type", "?")
+            # `index.md` is the bundle's MANIFEST, not a node with a missing type. Counting it
+            # as `1 ?` invited a hunt for a malformed file that does not exist.
+            t = (graph[c]["fm"] or {}).get("type") or (
+                "manifest" if c == "/index.md" else "untyped")
             tally[t] = tally.get(t, 0) + 1
         counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
         out.append(f"  … {counted} carrying no state — not listed (`--all`)")
+
+    # M6: a resume point that omits the last session is not a resume point. The most recent
+    # stamp across the board, named — ABSENT rather than guessed when nothing has happened (E6).
+    acts = []
+    for cid, n in graph.items():
+        for st in (n["fm"] or {}).get("verified") or []:
+            if isinstance(st, dict) and st.get("at") and st.get("act"):
+                acts.append((str(st["at"]), str(st["act"]), cid.rsplit("/", 1)[-1][:-3]))
+    if acts:
+        when, act, who = max(acts)
+        out.append(f"  last: {act} {who} · {when}")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -3422,11 +3500,22 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # Through `_next_verb`, so this hint and `todo`'s arrow cannot disagree — the stamp test
         # that used to live here was a third reading of the beat, and a node that was created and
         # never authored got advised toward the freeze that is structurally guaranteed to refuse it.
-        nxt = f"next: {_next_verb(graph, f0)}"
+        nxt = f"next: {_next_verb(graph, f0, root=root)}"
     elif any((n["fm"] or {}).get("type") == "Milestone" for n in graph.values()):
-        nxt = "next: add new task <slug>"
+        # A slot only the HUMAN can fill — a slug nobody has chosen — is legitimate guidance; the
+        # defect R:PLACEHOLDER_NEXT names is a slot the ENGINE could have filled and did not
+        # (`<test cmd>`, which `run` now remembers). Spelled in full, so what is typed around the
+        # slot is copy-pasteable.
+        nxt = 'next: add new Task <slug> --title "<one line>"'
     else:
-        nxt = "next: add new milestone <slug>"
+        nxt = 'next: add new Milestone <slug> --title "<one line>"' 
+    # WORK, not rows: `--all` widens the board with vocabulary, and that must not turn "nothing
+    # needs you" into silence (A9). The flag changes what is listed, never what empty means.
+    if not work:
+        # An empty board is an ANSWER, not an empty list. A finished bundle and a broken read
+        # printed the same thing: nothing (A4 · M5).
+        answered = sum(1 for c in graph if (graph[c]["fm"] or {}).get("status") in ANSWERED)
+        out.append(f"  nothing needs you — {answered} answered, {len(hidden)} carrying no state")
     return "\n".join(out + [nxt])
 
 
@@ -3692,6 +3781,18 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     _transition(root, cid, appends=[("verified",
         f'{{ by: "process:run", at: {_today()}, act: run, authority: process, '
         f'outcome: {"PASS" if exit_code == 0 else "FAIL"}, receipt: {cid_run} }}')])
+    # REMEMBER the command. A notary cannot know a project's test command, but it is handed one
+    # on every run — so the build hint stops being `<test cmd>` after the first receipt and starts
+    # replaying what actually worked here. Recorded, never guessed; a failing run is still the
+    # command this project uses, so the exit code does not gate the memory.
+    index = root / "index.md"
+    if index.is_file():
+        try:
+            n_idx = read(index, "T2")
+            write(index, f"---\n{set_key(n_idx['raw'], 'test_cmd', ' '.join(str(c) for c in command))}"
+                         f"\n---\n{n_idx['body']}")
+        except (OSError, ValueError, KeyError, TypeError):
+            pass                    # orientation losing a convenience must never fail a receipt
     return {"path": runs / f"{n}.md", "receipt": receipt, "computation": " ".join(str(c) for c in command),
             "note": f"receipt {n} recorded (exit {exit_code})\nnext: add gate {slug}"}
 

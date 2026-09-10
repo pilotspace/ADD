@@ -61,7 +61,8 @@ persona seeded and never used by a milestone's end is a prune candidate at close
 
 <constraints>
 - **No lifecycle.** A persona never freezes and never gates — it is a living doc; `add new Persona`
-  creates it with no task status (it shows `[—]`, like a Spec). Do not drive it through the beats.
+  creates it with no task status — `add status` reports it as *carrying no state*, never as work
+  (`--all` lists it). Do not drive it through the beats.
 - **No behavior change on seed.** Writing a persona changes nothing until a task adopts it via the
   roster (`streams.md`). Seeding is preparation, not application.
 - **The human folds; the AI never self-grows.** Personas sharpen through the delta loop at close

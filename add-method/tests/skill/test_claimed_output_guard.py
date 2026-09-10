@@ -141,7 +141,9 @@ def _drive_deltas(tmp_path):
 # Keyed by the file the claim lives in plus a fragment identifying the sentence, so a reworded
 # claim falls out of the registry and fails as unregistered rather than silently matching.
 REGISTRY = {
-    ("seed.md", "[—]"): (_drive_persona_dash, "[—]"),
+    # RE-AIMED (status-answers-what-needs-me): a stateless node no longer prints a `[—]` row at
+    # all — it is counted as vocabulary. The claim moved with the behaviour, and is still driven.
+    ("seed.md", "carrying no state"): (_drive_persona_dash, "carrying no state"),
     ("loop.md", "milestone_goal_unmet"): (_drive_goal_unmet, "milestone_goal_unmet"),
     ("loop.md", "queued"): (_drive_queued_beat, "queued"),
     ("loop.md", "adrift"): (_drive_adrift_beat, "adrift"),
@@ -395,8 +397,13 @@ def test_no_true_claim_was_deleted():
     """covers: R:CULL — a true statement about engine output belongs in the skill."""
     claims = _claims_in(TREES[0])
     assert len(claims) >= 4, f"the corpus lost claims rather than repairing them: {claims}"
+    # RE-AIMED (status-answers-what-needs-me): the pinned claim was `[—]`, and it stopped being
+    # true — a stateless node is now counted as vocabulary, not printed as a `[—]` row. R:CULL
+    # forbids DELETING a true claim to reach green; repairing one that went false is the fix it
+    # asks for, so this pins the repaired claim instead.
     text = (TREES[0] / "seed.md").read_text(encoding="utf-8")
-    assert "[—]" in text, "a TRUE claim was culled to reach green"
+    assert "carrying no state" in text, "a TRUE claim was culled to reach green"
+    assert "[—]" not in text, "the claim that a stateless node prints a `[—]` row is no longer true"
 
 
 def test_status_flag_modes_are_driven_as_registered(tmp_path):

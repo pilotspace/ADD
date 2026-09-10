@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "e6db8b59a47b0d014215f7ab1653bd84"  # re-aimed @ a-plan-says-what-it-wants: a scaffold reports queued/abandoned/adrift, milestone-done refuses unauthored members, drop is the 27th verb. prior: 0e8a299f… @ release-3-6-0
+ENGINE_MD5 = "69146fdfbd01861166c3a40e4ee26efc"  # re-aimed @ status-answers-what-needs-me: orientation shows work needing a decision, ordered by attention; no dead hints. prior: (a-plan-says-what-it-wants)
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "de742b6deafc4a445b5d343cf1b30cbe"  # re-aimed @ a-plan-says-what-it-wants: the drop parser. prior: c62354e4… @ a-roadmap-reads-as-a-roadmap

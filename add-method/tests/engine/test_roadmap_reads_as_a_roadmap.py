@@ -46,7 +46,10 @@ def test_status_rows_carry_their_title(bundle):
     # RE-AIMED (a-plan-says-what-it-wants): the beat word for an unauthored task now names which
     # plan wants it. What this check is for — the row carries its BEAT beside its title — holds.
     row = _row(out, "t-one")
-    assert any(f"[{k}] Task" in row for k in add.SCAFFOLD_KINDS), row
+    # The beat column is PADDED now, so the type no longer abuts the bracket — that is the M7
+    # alignment fix, not a lost column. The rule is what it always was: the row carries its beat.
+    assert any(f"[{k}]" in row for k in add.SCAFFOLD_KINDS), row
+    assert "Task" in row, row
 
 
 def test_a_slot_title_is_not_a_title(bundle):
