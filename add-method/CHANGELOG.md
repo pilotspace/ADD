@@ -93,6 +93,25 @@ that were passing on nothing.
   first element and then tested for falsiness passes on `False` and on `None` alike, so it proves
   nothing about either — the exact shape that let two checks pass on a refusal. The suite is swept
   and the shape is now refused suite-wide by an AST check that flags only that binding.
+- **A check holds where CI runs it, or it does not hold.** The refusal-message guard read its
+  baseline from `git merge-base HEAD origin/main` — which returns 128 on `actions/checkout`'s
+  depth-1 clone. It passed locally, failed CI, and read *cannot establish a baseline* as *the
+  claim is false*. Behind that one failure was a class: nine call sites compared the working tree
+  to a git ref, and every one is satisfied by `git commit`. The message guard is now a **content
+  pin** — a digest over the messages themselves, with the task and reason on its line — and the
+  shape guard that already enforced this for `git diff` now enumerates `git show` and
+  `merge-base` too. Each of the seven remaining working-tree guards keeps its claim and states
+  its **lifetime**: a live-editing tripwire that fires while the edit is made and is inert once
+  committed, so a green CI is never mistaken for the claim holding.
+- **The SKILL.md prose pin has one home.** Carried out of the 3.6.0 cut as a known. The sha256
+  was a literal in `test_surface.py` while another check recovered it by *regexing that file's
+  source* — the same scatter `skill_budget.py` was built to end. Both prose pins are now named
+  constants there, imported rather than scraped.
+- **A fourth persona: `feature-builder`.** The roster had lenses for the method, the engine and
+  the gate, and none for building a user-facing behaviour — so every `kind: feature` task got no
+  candidate. 155 of 155 tasks now have a fitting lens.
+- **`specs/domain.md` is authored.** One of the five living specs still held the scaffold
+  placeholder in its `## Decisions that bind`, which `bind_sections()` fed into every brief.
 - **A persona loads by fit, on the path that does not spawn.** Personas were adopted only inside a
   spawned subagent — measured over this bundle, **15 of 190** lifecycle nodes carried a lens, and 3
   of 40 milestones, the one lane the skill already says must load one. The mandate was never

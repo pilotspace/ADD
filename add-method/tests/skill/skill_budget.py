@@ -26,3 +26,14 @@ BYTE_BUDGET = 13258
 # counted against this one.
 # Owner: tests/skill/test_surface.py::test_total_surface_within_budget
 SURFACE_BUDGET = 1500
+
+# --- Prose pins -------------------------------------------------------------------------------
+# Same charge, different type. A skill-tree file's sha256 was a literal in `test_surface.py` while
+# `test_skill_reads_the_graph.py` recovered it by REGEXING that file's source — three modules
+# pinning each other's source text, which is the shape this module exists to end. A pin moves only
+# when a human deliberately edits the prose, in the same commit, with the reason on its line.
+# Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
+PROSE_PINS = {
+    "SKILL.md": "952d73c513844724c5f817e139cf7bf7febbeefd1be4c478b7792967f2511f19",   # aimed @ persona-loads-on-every-path: the persona sentence stops calling the LOAD opt-in — the ROSTER is what is optional — funded in place (176/176 lines, 13258/13258 bytes). prior: b44842dd…
+    "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
+}

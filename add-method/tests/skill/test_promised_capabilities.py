@@ -186,6 +186,9 @@ def test_retired_promises_are_gone():
 
 def test_retirement_did_not_cull_a_true_claim():
     """covers: M4, R:CULL — GREEN by design, armed through the build against the cheap answer."""
+    # TRIPWIRE: the bullet-count baseline is `HEAD`, which the working tree equals once
+    # committed. It stops a retirement pass from reaching green by deleting true bullets
+    # WHILE the pass is happening — the identity assertions above are the durable half.
     both = " ".join(p.read_text(encoding="utf-8") for p in (ROOT_README, PKG_README))
     for phrase in IDENTITY:
         assert phrase in both, f"the identity string {phrase!r} is gone from both READMEs"

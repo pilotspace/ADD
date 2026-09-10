@@ -10,6 +10,7 @@ So the lens was a function of whether the human spawned an agent. These checks p
 onto the path that does not spawn, and pin the four copies of it to agree.
 """
 
+import ast
 import subprocess
 import sys
 from pathlib import Path
@@ -63,6 +64,9 @@ def _surface_lines(read):
 
 
 def _at_head(rel):
+    # TRIPWIRE: `HEAD` is the baseline, and the working tree equals it once committed — so the
+    # funding comparison below fires while the lines are being added and is inert in CI. The
+    # durable ceiling is `SURFACE_BUDGET`, owned by test_surface.py; this catches the growth.
     out = subprocess.run(["git", "show", f"HEAD:{rel}"],
                          cwd=REPO.parent, capture_output=True, text=True)
     return out.stdout if out.returncode == 0 else None
@@ -131,8 +135,17 @@ def test_the_addition_was_funded():
         f"the skill surface grew {after - before} line(s) ({before} -> {after}). The budgets are "
         f"ceilings, not baselines: fund the addition by compressing, or it is not designed yet.")
 
+    # NARROWED (one-home-for-the-prose-pin): this pinned the WHOLE module byte-for-byte, which is
+    # broader than the rule. The rule is that no budget LITERAL moved — `skill_budget.py` also
+    # became the home for the prose pins, and a true statement about budgets went red for it.
     rel = "add-method/tests/skill/skill_budget.py"
     head = _at_head(rel)
     assert head is not None, "skill_budget.py did not resolve at HEAD"
-    assert head == (REPO / "tests" / "skill" / "skill_budget.py").read_text(encoding="utf-8"), \
+    numbers = lambda text: [(n.targets[0].id, n.value.value)
+                            for n in ast.parse(text).body
+                            if isinstance(n, ast.Assign) and isinstance(n.value, ast.Constant)
+                            and isinstance(n.value.value, int)]
+    assert numbers(head), "the budget parser found no literals at HEAD, so this proves nothing"
+    assert numbers(head) == numbers((REPO / "tests" / "skill" / "skill_budget.py")
+                                    .read_text(encoding="utf-8")), \
         "R:PINBUMP — a budget literal moved. A ceiling raised to fit an addition is not a ceiling."

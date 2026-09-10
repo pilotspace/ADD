@@ -201,6 +201,9 @@ def test_the_benchmark_report_is_untouched():
     forbids exactly that, so this reads the report against git: it must be byte-identical to the
     committed version, and it must still carry the retraction the corrected README defers to.
     """
+    # TRIPWIRE: byte-identity against `HEAD`, so it is satisfied by `git commit`. It exists to
+    # catch the report being edited during THIS task's build, which is the cheap way to make a
+    # refuted claim true. The retraction assertion below is the durable half and needs no git.
     rel = BENCH.relative_to(ROOT)
     head = subprocess.run(["git", "show", f"HEAD:{rel.as_posix()}"],
                           cwd=str(ROOT), capture_output=True)

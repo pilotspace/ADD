@@ -136,9 +136,16 @@ def test_three_trees_are_byte_identical():
 def test_prose_pin_was_re_aimed():
     """covers: M6, E5 — the pin matches the shipped bytes and records where it came from."""
     import hashlib
-    surface = (REPO / "tests" / "skill" / "test_surface.py").read_text(encoding="utf-8")
-    line = next(ln for ln in surface.splitlines() if '"SKILL.md":' in ln)
-    pinned = re.search(r'"([0-9a-f]{64})"', line).group(1)
+    import sys
+    sys.path.insert(0, str(REPO / "tests" / "skill"))
+    from skill_budget import PROSE_PINS
+
+    # RE-AIMED (one-home-for-the-prose-pin): this recovered the hash by REGEXING
+    # `test_surface.py`'s source — a check pinning another check's source text, which is the
+    # scatter `skill_budget.py` exists to end. The claim is unchanged; it now imports.
+    pinned = PROSE_PINS["SKILL.md"]
     assert pinned == hashlib.sha256((SKILL / "SKILL.md").read_bytes()).hexdigest(), \
         "the prose pin does not match the shipped SKILL.md"
+    src = (REPO / "tests" / "skill" / "skill_budget.py").read_text(encoding="utf-8")
+    line = next(l for l in src.splitlines() if pinned in l)
     assert "prior:" in line, f"the re-aim records no prior hash: {line}"

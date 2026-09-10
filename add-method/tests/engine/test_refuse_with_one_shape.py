@@ -11,6 +11,7 @@ the question — did the verb DO its work, or ANSWER a question?
 """
 
 import ast
+import hashlib
 import inspect
 import subprocess
 import sys
@@ -135,28 +136,75 @@ def test_no_caller_is_blind_to_the_change():
           "falsy value it means.")
 
 
+
+MESSAGE_DIGEST = "bd6707ccc342a09415198d9a2eb54078a1aeee185018c10b78290fa33d7849ab"  # re-aimed @ the-message-pin-is-a-content-pin: the baseline was `git merge-base HEAD origin/main`, which returns 128 on CI's depth-1 clone and CONTAINS the change once merged. Same claim, a baseline that survives both. prior: (a git merge-base, never a digest)
+MESSAGE_COUNT = 98
+
+
+def _message_digest() -> tuple:
+    """`(sha256 over the sorted (verb, message) pairs, their count)` — the pin's own subject.
+
+    Computed by calling the module's own extractor, so there is exactly ONE reading of what a
+    refusal message is (M4). Sorted before hashing, so the digest is a function of the CONTENT and
+    not of the order `ast.walk` happened to yield (A5).
+    """
+    pairs = sorted((verb, " ".join(msg.split())) for verb, _, _, msg in _returns())
+    blob = "\n".join(f"{v}\x1f{m}" for v, m in pairs).encode()
+    return hashlib.sha256(blob).hexdigest(), len(pairs)
+
+
 def test_the_messages_are_untouched():
-    """covers: M5 — only the falsy first element moved."""
-    # Against the branch's MERGE-BASE, not HEAD. A working-tree diff goes green the moment you
-    # commit, which would make this check vacuous exactly when it matters — the lesson this repo
-    # bound as a decision two tasks ago (`a scope guard names the commit range it guards`).
-    base = subprocess.run(["git", "merge-base", "HEAD", "origin/main"],
-                          cwd=str(REPO.parent), capture_output=True, text=True)
-    assert base.returncode == 0, "no merge-base with origin/main; the message pin cannot run"
-    head = subprocess.run(["git", "show", f"{base.stdout.strip()}:add-method/tooling/add.py"],
-                          cwd=str(REPO.parent), capture_output=True, text=True)
-    assert head.returncode == 0, "the engine is not tracked; the message pin cannot run"
-    before = {(v, msg) for v, _, _, msg in _returns_from(head.stdout)}
-    after = {(v, msg) for v, _, _, msg in _returns()}
-    # LOSSES only. A reworded message shows up as one loss and one gain, so asserting the losses
-    # still catches every edit this task could make — while a message ADDED since the merge-base
-    # is a later rung's doing (`drop`, `R:SILENTABANDON`) and not this check's business. Asserting
-    # gains too would have made the pin fire on every stacked branch and be waved past.
-    lost = before - after
-    assert not lost, (
-        "M5 — this task moves the falsy first element and NOTHING else, but these refusal "
-        "messages were lost or reworded:\n"
-        + "".join(f"  - {v}: {m.strip()[:70]}\n" for v, m in sorted(lost)))
+    """covers: M5 — only the falsy first element moved.
+
+    RE-AIMED (the-message-pin-is-a-content-pin): this read its baseline from
+    `git merge-base HEAD origin/main`, which returns 128 on `actions/checkout`'s depth-1 clone —
+    so it passed locally and failed CI, reading *cannot establish a baseline* as *the claim is
+    false*. And a merge-base CONTAINS the change once the branch merges, so the day CI could run
+    it, it would have proved nothing. The claim is unchanged; the baseline is now a pin over the
+    content itself, the way `test_skill_tree_prose_unedited_by_this_task` and `engine_pin.py`
+    already hold theirs.
+    """
+    got, count = _message_digest()
+    assert got == MESSAGE_DIGEST, (
+        f"M5 — a refusal message was reworded or lost ({count} messages now, {MESSAGE_COUNT} when "
+        f"the pin was aimed).\n  pinned: {MESSAGE_DIGEST}\n  actual: {got}\n\n"
+        "Two exits, and only two: restore the wording, or re-aim the pin IN THE SAME COMMIT with "
+        "the task and the reason on its line. A digest cannot name which message moved — "
+        "`git diff` on the engine can, and knowing why is the point of re-aiming it by hand.")
+    assert count == MESSAGE_COUNT, \
+        f"the message COUNT moved ({MESSAGE_COUNT} -> {count}) — re-aim both, with the reason"
+
+
+def test_the_pin_records_why_it_points_here():
+    """covers: M3, R:SILENTREPIN, A1, A3 — a pin with no reason is a number nobody can audit."""
+    src = Path(__file__).read_text(encoding="utf-8")
+    line = next(l for l in src.splitlines() if l.startswith("MESSAGE_DIGEST ="))
+    assert "re-aimed @" in line, \
+        "R:SILENTREPIN — the digest names no task that aimed it"
+    assert len(line.split("re-aimed @", 1)[1].strip()) > 40, \
+        "R:SILENTREPIN — the digest names a task but no reason; a slug is not a why"
+
+
+def test_the_guard_never_degrades_to_green():
+    """covers: R:SKIPTOGREEN — the easy fix for a red baseline is the one that must not exist."""
+    # By AST, not substring: the docstring below says the word "returns", and a scan that flags
+    # prose trains the reader to ignore the check. Only real control flow counts.
+    tree = ast.parse(Path(__file__).read_text(encoding="utf-8"))
+    fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+              and n.name == "test_the_messages_are_untouched")
+    escapes = []
+    for n in ast.walk(fn):
+        if isinstance(n, (ast.Return, ast.Try)):
+            escapes.append(type(n).__name__)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) \
+                and n.func.attr in ("skip", "xfail"):
+            escapes.append(f"pytest.{n.func.attr}")
+        if isinstance(n, ast.Name) and n.id == "subprocess":
+            escapes.append("subprocess")
+    assert not escapes, (
+        f"R:SKIPTOGREEN — the message guard grew {sorted(set(escapes))}. A guard that goes green "
+        f"when it cannot establish its subject is worse than the red it replaced: it reports "
+        f"success on every possible engine. The pin exists so there is nothing to fail to reach.")
 
 
 def _returns_from(source: str):

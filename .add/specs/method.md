@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 47
+delta_seq: 48
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,7 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- A working-tree-vs-HEAD guard is a live-editing tripwire and must say so in its own source; a durable claim is pinned to content instead. (from: /specs/method.md#M48)
 - An instruction only exists on the paths that LOAD the file holding it. When a rule must hold on more than one path, enumerate the copies in a check rather than trusting one canonical statement to reach them. (from: /specs/method.md#M47)
 - None is the refusal for every engine verb; a verb that ANSWERS a question keeps its boolean, and an empty collection from a query that ran is an answer, not a refusal. (from: /specs/method.md#M45)
 - When a check exists only to hold a narrowing until a measurement lands, name the measurement in the check itself; the day it lands, RETIRE the check in place with a record block rather than leaving it to assert against its own condition. (from: /specs/method.md#M46)
@@ -36,6 +37,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M48 · folded · 2026-09-10→2026-09-10] A guard comparing the working tree to HEAD is a live-editing TRIPWIRE, not an invariant: it fires while the edit is made and is inert once committed. That is a legitimate lifetime — the defect is leaving it unlabelled, so a green CI reads as the claim having held. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
 - [ADD · M47 · folded · 2026-09-10→2026-09-10] The mandate was in the right words in the wrong file: agents/add-worker.md §2 states the persona selector perfectly and loads ONLY on a spawn. A rule that lives in a file one path loads is not a rule the method has — it is a rule that path has. Check WHICH files carry an instruction, not whether it is written. (evidence: /milestones/personas-load-by-fit.md)
 - [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
 - [ADD · M45 · folded · 2026-09-10→2026-09-10] One sweep, two vocabularies: `None` is the refusal, but a verb that ANSWERS a question keeps its falsy answer — `fresh` says False for stale and None for unmeasurable, and six verbs answer an empty collection from a query that ran. Collapsing those into the refusal shape destroys the only thing those verbs are for (evidence: refuse-with-one-shape · RESULT_VERBS)
