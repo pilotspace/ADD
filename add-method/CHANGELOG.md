@@ -83,10 +83,31 @@ that were passing on nothing.
 - **Rows no longer wrap or misalign.** The beat column is padded, so the type column lines up
   whatever the word is, and every line fits 100 columns with truncation on a word boundary.
 
+- **`None` is the refusal, bundle-wide.** The `False` that hid two green checks was not one rung's
+  habit — it was **37 return sites** across the engine. All 37 now answer `None`, enumerated by a
+  check so a 28th verb cannot answer differently. Three stay `False` on purpose and say why:
+  `fresh` distinguishes *stale* (False) from *cannot establish* (None), and `render_card` answers
+  *the card is current*. An empty collection from a query that ran is likewise an answer, not a
+  refusal — six verbs keep it. The messages and every `cli.py` exit code are byte-identical.
+- **No check asserts a refusal by truthiness where identity is meant.** A name bound from a verb's
+  first element and then tested for falsiness passes on `False` and on `None` alike, so it proves
+  nothing about either — the exact shape that let two checks pass on a refusal. The suite is swept
+  and the shape is now refused suite-wide by an AST check that flags only that binding.
+- **`freeze` demands a check for every Must and Reject, not only for edges.** The `R:UNCOVERED`
+  rung bound filled edges and probed assumptions, and held Musts out until the cost of widening
+  was *measured* rather than estimated. Measured over this bundle: **0 of 105** nodes carrying
+  RULES have an uncovered Must or Reject, and 21 carry no RULES at all. Nothing is newly refused —
+  the gate already refused it — so what the widening buys is the **timing**: the author is asked
+  while still holding the pen, not after the whole build. The rung is now one expression, so
+  freeze and gate read one definition of an obligation instead of two.
+
 ### Known and carried into 3.7
 Both bound as decisions rather than left silent:
 - eleven verbs still answer a refusal with `False` rather than `None`. Widening it touches ~40
   return sites and every test asserting `is False`; `freeze` holds the rule today.
+  **Resolved before 3.6.0 shipped** — the survey found 37 sites, not ~40 (`done` returns 3-tuples
+  and hid two); see *`None` is the refusal, bundle-wide* above. The line stands as written because
+  it was true when it was written, and this record does not get rewritten to match the present.
 - the SKILL.md sha256 prose pin is held in two files — the same class as the budget scatter, one
   instance further on.
 
